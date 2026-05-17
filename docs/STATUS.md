@@ -532,10 +532,12 @@ First-run developer experience built on top of the existing CLI dispatch:
 - **`czap completion <bash|zsh|fish>`** — shell tab-completion scripts.
   Drift-guarded by `tests/unit/cli/commands/completion.test.ts` parsing
   dispatch.ts.
-- **`pnpm setup`** — guided shakedown: doctor → install (if needed) →
-  build → test. Phase-by-phase progress with maritime ontology.
+- **`pnpm shakedown`** — guided shakedown: doctor → install (if needed) →
+  build → test. Phase-by-phase progress with maritime ontology. Named
+  `shakedown` (not `setup`) so it doesn't collide with pnpm's built-in
+  `pnpm setup` installer command.
 - **`scripts/postinstall.ts`** — mooring receipt on `pnpm install`,
-  points to `pnpm setup` for the shakedown.
+  points to `pnpm shakedown` for the shakedown.
 - **`scripts/clean.ts`** — dry-dock cleaner with named-bearing receipt.
 - **`scripts/scripts-index.ts`** — the deck plan (`pnpm scripts`).
 - **Engines minima dynamic** — doctor reads `engines.node` /

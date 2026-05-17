@@ -28,7 +28,7 @@ If something looks off — wrong Node, missing dist, unlinked git hook — run t
 pnpm run doctor   # quantizes env signals into ok/warn/fail bearings
 ```
 
-Or skip ahead to the one-command shake-down (`pnpm setup`) below.
+Or skip ahead to the one-command shake-down (`pnpm shakedown`) below.
 
 ## 2. Build everything
 
@@ -179,7 +179,7 @@ The `client:satellite` directive hydrates only the boundary evaluator (not a who
 For dev-loop ergonomics:
 
 ```bash
-pnpm setup            # first-run aggregate (doctor + build + test)
+pnpm shakedown        # first-run aggregate (doctor + build + test)
 pnpm run doctor       # preflight rig-check on demand
 pnpm dev              # vitest watch mode
 pnpm run clean        # wipe build/test artifacts (dry-dock)

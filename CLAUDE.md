@@ -17,7 +17,7 @@ Naming for prose: [docs/GLOSSARY.md](./docs/GLOSSARY.md).
 
 ### Dev experience (cast off / discovery)
 
-- `pnpm setup` -- Guided shakedown: doctor → install (if needed) → build → test. First-run aggregate.
+- `pnpm shakedown` -- Guided shakedown: doctor → install (if needed) → build → test. First-run aggregate. (Note: `pnpm setup` is pnpm's built-in installer command, not this script.)
 - `pnpm run doctor` (or `pnpm exec czap doctor`) -- Preflight rig check. JSON receipt + pretty TTY summary. Add `--fix` to auto-remediate the cheap cases (rebuild stale dist, link missing git hook), or `--ci` to fail on warnings.
 - `pnpm scripts` -- The deck plan: every npm script grouped by purpose.
 - `pnpm exec czap help` -- The chart: CLI verb table grouped by phase.
