@@ -230,14 +230,21 @@ describe('doctor command', () => {
       process.chdir(subdir);
       const { stdout } = await captureCli(() => doctor({ pretty: false }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-      // Every check has a status; modules + cli.built + git.hooks should
-      // not be sitting at the "missing file under wrong root" detail string.
-      const modules = receipt.checks.find((c: { id: string }) => c.id === 'modules');
-      expect(modules?.status).not.toBe('fail');
+      // The canonical probe ids (see doctor.ts:194 / :201 etc.) are
+      // dotted (`workspace.installed`, `cli.built`, `git.hooks`). The
+      // initial draft of this test used the bare `modules`, which made
+      // `find()` return undefined and the assertion vacuous — caught
+      // by both CodeRabbit and Codex on the second review pass.
+      const workspaceInstalled = receipt.checks.find(
+        (c: { id: string }) => c.id === 'workspace.installed',
+      );
+      expect(workspaceInstalled).toBeDefined();
+      expect(workspaceInstalled.status).not.toBe('fail');
       const cliBuilt = receipt.checks.find((c: { id: string }) => c.id === 'cli.built');
+      expect(cliBuilt).toBeDefined();
       // cli.built can be 'warn' (legitimately stale dist) but not 'fail'
       // (the "wrong root => path missing" mode pre-fix).
-      expect(['ok', 'warn']).toContain(cliBuilt?.status);
+      expect(['ok', 'warn']).toContain(cliBuilt.status);
     } finally {
       process.chdir(origCwd);
     }
