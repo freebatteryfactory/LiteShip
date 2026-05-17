@@ -13,7 +13,7 @@ cd LiteShip
 pnpm install
 
 # First-run shake-down: rig-check + build + test
-pnpm setup
+pnpm shakedown
 
 # Or step through it manually:
 pnpm run doctor       # preflight rig-check (Node, pnpm, build, hooks)
@@ -33,7 +33,7 @@ install (`pnpm exec playwright install` if needed).
 Discoverable verbs at the workspace root:
 
 ```bash
-pnpm setup            # rig-check + build + test (first-run aggregate)
+pnpm shakedown        # rig-check + build + test (first-run aggregate)
 pnpm run doctor       # preflight rig-check, emits JSON receipt + TTY summary
 pnpm dev              # vitest in watch mode (the inner loop)
 pnpm run clean        # dry-dock: wipe dist/, coverage/, reports/, .tsbuildinfo

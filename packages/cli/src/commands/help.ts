@@ -41,7 +41,7 @@ Servers:
   mcp [--http=<port>]     Start MCP server (stdio default)
 
 Hints (a working deck):
-  - First time? Run \`pnpm setup\` for the full shakedown.
+  - First time? Run \`pnpm shakedown\` for the full first-run aggregate.
   - Stuck? \`czap doctor\` triages your environment; \`czap doctor --fix\` repairs.
   - All commands emit JSON receipts on stdout; pretty output is on stderr.
   - Suppress color: NO_COLOR=1.  Force color in CI logs: FORCE_COLOR=1.

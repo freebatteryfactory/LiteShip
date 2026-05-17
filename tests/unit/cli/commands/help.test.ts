@@ -20,8 +20,10 @@ describe('help command', () => {
     }
   });
 
-  it('points the human at `pnpm setup` and `czap doctor` for triage', () => {
-    expect(HELP_TEXT).toContain('pnpm setup');
+  it('points the human at `pnpm shakedown` and `czap doctor` for triage', () => {
+    // `pnpm shakedown` (renamed from `pnpm setup` to avoid collision with
+    // pnpm's built-in `pnpm setup` installer command) — PR #3 P1 fix.
+    expect(HELP_TEXT).toContain('pnpm shakedown');
     expect(HELP_TEXT).toContain('czap doctor');
   });
 });

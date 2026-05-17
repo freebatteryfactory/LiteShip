@@ -31,7 +31,7 @@ function main(): void {
     lines.push('');
     lines.push('  First time aboard? One command runs the whole shakedown:');
     lines.push('');
-    lines.push(`    ${color('cyan', 'pnpm setup', on)}           ${color('dim', '# rig-check + build + test', on)}`);
+    lines.push(`    ${color('cyan', 'pnpm shakedown', on)}       ${color('dim', '# rig-check + build + test', on)}`);
     lines.push('');
     lines.push('  Or step through it yourself:');
     lines.push('');

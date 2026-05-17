@@ -77,7 +77,7 @@
     "format:check": "prettier --check \"packages/*/src/**/*.ts\"",
     "fix": "pnpm run format && pnpm run lint --fix",
     "cover": "pnpm run coverage",
-    "setup": "pnpm exec tsx scripts/setup.ts",
+    "shakedown": "pnpm exec tsx scripts/setup.ts",
     "doctor": "pnpm exec tsx scripts/doctor.ts",
     "dev": "vitest --config vitest.config.ts",
     "clean": "pnpm exec tsx scripts/clean.ts",
