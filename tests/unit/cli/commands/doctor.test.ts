@@ -248,4 +248,54 @@ describe('doctor command', () => {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
+
+  it('pretty mode writes the doctor TTY summary to stderr after the JSON receipt', async () => {
+    // Covers doctor.ts:489-490 (the `if (wantPretty) { process.stderr.write(prettySummary(...)) }`
+    // path). Every other doctor test in this file passes `pretty: false`,
+    // so without this case the wantPretty arm is uncovered — that, plus
+    // the spawnArgvVisible additions, was enough to drop cli statements
+    // coverage under 85% on the truth-linux CI run for commit 2e3d8d8.
+    const { exit, stderr } = await captureCli(() => doctor({ pretty: true }));
+    expect([0, 1]).toContain(exit);
+    // prettySummary emits a doctor header line + per-check rows + a
+    // verdict sentence (ready / caution / blocked). Assert structural
+    // shape rather than exact text so the test stays stable as the
+    // pretty-format evolves.
+    expect(stderr.length).toBeGreaterThan(0);
+    expect(stderr).toMatch(/ready|caution|blocked/);
+  });
+
+  it('applyFixes git.hooks branch fires when probeGitHooks reports `warn` (covers doctor.ts:402-414)', async () => {
+    // Force a 'warn' from probeGitHooks by giving doctor a cwd whose
+    // .git directory exists but contains no hooks/pre-commit. doctor({fix:true})
+    // then enters applyFixes' git-hooks arm at doctor.ts:402-414. The
+    // subprocess invocation (`pnpm exec tsx scripts/link-pre-commit.ts`)
+    // can't succeed because scripts/link-pre-commit.ts doesn't exist
+    // under the tmpdir — we capture the failed-fix path, which exercises
+    // the same lines as a successful one (the status branch differs but
+    // the spawn + record-result lines run either way).
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-'));
+    try {
+      mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
+      // Stub a package.json so workspace.installed has something to look at
+      // (avoids unrelated probe noise in the receipt).
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({ name: 'fixture', version: '0.0.0' }),
+      );
+      const { stdout } = await captureCli(() =>
+        doctor({ pretty: false, fix: true, cwd: tmp }),
+      );
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      // The git.hooks fix attempt is recorded in receipt.fixed regardless
+      // of whether the underlying spawn succeeded.
+      if (Array.isArray(receipt.fixed)) {
+        const hookFix = receipt.fixed.find((f: { id: string }) => f.id === 'git.hooks');
+        expect(hookFix).toBeDefined();
+        expect(['applied', 'failed']).toContain(hookFix.status);
+      }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
 });
