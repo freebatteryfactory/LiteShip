@@ -279,6 +279,21 @@ async function main() {
     console.error(`${'='.repeat(60)}`);
     console.error(`\n  ${errMsg}`);
     console.error(`\n  Failed after ${formatDuration(totalDuration)}\n`);
+    // Diagnostic dump: print each phase that ran (success + the failing one)
+    // with status so CI failure logs surface the exact phase even when the
+    // upload-artifact step that captures gauntlet-phase-timings.json is
+    // out-of-reach. The last entry in stepResults is the failing phase
+    // because the run() helper pushes via settle() before rejecting.
+    if (stepResults.length > 0) {
+      console.error('  Phase progress at failure:');
+      for (let i = 0; i < stepResults.length; i++) {
+        const step = stepResults[i]!;
+        const isLast = i === stepResults.length - 1;
+        const status = isLast ? 'FAILED' : 'ok';
+        console.error(`    ${(i + 1).toString().padStart(2)}. ${step.command.padEnd(50)} ${formatDuration(step.durationMs).padStart(8)}  ${status}`);
+      }
+      console.error('');
+    }
     writePhaseTimingsArtifact(totalDuration, 'failed', failedPhase);
     process.exit(1);
   }
