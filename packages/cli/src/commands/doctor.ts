@@ -16,8 +16,29 @@ import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
-import { spawnArgv, spawnArgvCapture } from '../lib/spawn.js';
+import { spawnArgvCapture, spawnArgvVisible } from '../lib/spawn.js';
 import { emit } from '../receipts.js';
+
+/**
+ * Walk up from `start` until a workspace marker is found. Probes need
+ * the workspace root, not the caller's cwd — running `czap doctor` from
+ * `packages/core` should still check the repo's `node_modules/.modules.yaml`,
+ * its `packages/cli/dist/`, and its `.git/hooks/`, not a phantom
+ * `packages/core/packages/cli/dist/` that never exists.
+ *
+ * Falls back to `start` itself when no marker is found (external install,
+ * single-package project) — probes will then warn/fail honestly rather
+ * than hide behind a wrong-root lookup.
+ */
+function findWorkspaceRoot(start: string): string {
+  let dir = start;
+  while (true) {
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return start;
+    dir = parent;
+  }
+}
 
 /** Bearing for a single probe — quantized from a continuous "is it set up?" signal. */
 export type DoctorBearing = 'ok' | 'warn' | 'fail';
@@ -387,7 +408,11 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
       const info = resolve(cwd, `packages/${pkg}/tsconfig.tsbuildinfo`);
       rmSync(info, { force: true });
     }
-    const r = await spawnArgv('pnpm', ['run', 'build'], { stdio: 'inherit', cwd }).catch(() => ({
+    // `spawnArgvVisible` keeps build progress on the user's terminal (piped
+    // to stderr) while leaving our stdout clean — doctor's contract is JSON
+    // receipt on stdout, and a plain stdio:'inherit' would interleave tsc's
+    // per-package compile lines into that stream and break `jq` consumers.
+    const r = await spawnArgvVisible('pnpm', ['run', 'build'], { cwd }).catch(() => ({
       exitCode: 1,
       stderrTail: 'spawn failed',
     }));
@@ -402,8 +427,8 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
   // Link the pre-commit hook.
   const needsHook = checks.some((c) => c.id === 'git.hooks' && c.status === 'warn');
   if (needsHook) {
-    const r = await spawnArgv('pnpm', ['exec', 'tsx', 'scripts/link-pre-commit.ts'], {
-      stdio: 'inherit',
+    // Same JSON-stdout-purity reason as the build invocation above.
+    const r = await spawnArgvVisible('pnpm', ['exec', 'tsx', 'scripts/link-pre-commit.ts'], {
       cwd,
     }).catch(() => ({ exitCode: 1, stderrTail: 'spawn failed' }));
     fixes.push({
@@ -433,7 +458,10 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
 export async function doctor(
   opts: { pretty?: boolean; fix?: boolean; ci?: boolean; cwd?: string } = {},
 ): Promise<number> {
-  const cwd = opts.cwd ?? process.cwd();
+  // Explicit cwd from tests/MCP is used verbatim (predictable fixtures).
+  // Default behavior anchors probes to the workspace root so `czap doctor`
+  // works correctly from any monorepo subdir, not just the repo root.
+  const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
   let checks = await runAllProbes(cwd);
 
   let fixes: readonly DoctorFix[] | undefined;

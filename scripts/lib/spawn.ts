@@ -9,6 +9,7 @@
 
 export {
   spawnArgv,
+  spawnArgvVisible,
   quoteWindowsArg,
   withSpawned,
   startSpawnHandle,

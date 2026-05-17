@@ -152,6 +152,39 @@ export function spawnArgv(command: string, args: readonly string[], opts: SpawnA
 }
 
 /**
+ * Run a subprocess whose progress should remain visible to humans, but whose
+ * stdout must NOT pollute our own stdout. Child stdout is piped to our
+ * stderr; child stderr inherits to our stderr; child stdin is closed.
+ *
+ * Use this for commands like `czap doctor --fix` whose stdout contract is
+ * JSON-only (the doctor receipt is written to stdout AFTER the fixes run,
+ * and would otherwise be preceded by the build's tsc output line by line).
+ *
+ * The stderrTail field of the returned SpawnResult is empty — both streams
+ * went through to the user, none of them are buffered for postmortem.
+ */
+export function spawnArgvVisible(
+  command: string,
+  args: readonly string[],
+  opts: { readonly cwd?: string } = {},
+): Promise<SpawnResult> {
+  const launcher = resolveLauncher(command, args);
+  return new Promise((resolvePromise, rejectPromise) => {
+    const proc = spawn(launcher.command, launcher.args as string[], {
+      stdio: ['ignore', 'pipe', 'inherit'],
+      shell: false,
+      cwd: opts.cwd,
+      windowsVerbatimArguments: process.platform === 'win32',
+    });
+    proc.stdout?.pipe(process.stderr);
+    proc.on('error', rejectPromise);
+    proc.on('close', (code) => {
+      resolvePromise({ exitCode: code ?? 1, stderrTail: '' });
+    });
+  });
+}
+
+/**
  * Run a subprocess and fully capture stdout + stderr to strings, with an
  * optional `cwd`. Used by ship/verify where the publisher needs the
  * subprocess output (pnpm pack's tarball path, pnpm publish --dry-run's
