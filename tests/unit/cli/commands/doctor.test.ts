@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { doctor, readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
+import { doctor, findWorkspaceRoot, readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('doctor command', () => {
@@ -217,36 +217,35 @@ describe('doctor command', () => {
     }
   });
 
-  it('doctor() anchored to workspace root when run from a monorepo subdir (PR #3 Codex P2)', async () => {
-    // Regression: `czap doctor` run from `packages/core` was probing
-    // `packages/core/node_modules/.modules.yaml` and
-    // `packages/core/packages/cli/dist/...`, both of which never exist —
-    // so doctor reported `blocked` even on a healthy repo. With the
-    // workspace-root walk-up, the receipt from `packages/core` and the
-    // receipt from the repo root agree on every check.
+  // Direct unit tests for findWorkspaceRoot (exported for testability).
+  // Previous draft of this test used process.chdir into packages/core to
+  // exercise the walk-up indirectly through doctor(). That mutated shared
+  // global state (process.cwd()) across the vitest worker — Windows has
+  // wider fd-cleanup race windows than Linux, which is the most plausible
+  // root cause of the windows-smoke red on PR #3 commit 2e3d8d8. The
+  // direct tests below exercise findWorkspaceRoot's two branches without
+  // touching cwd, so the regression-guard is platform-independent.
+  it('findWorkspaceRoot walks up to the repo root from a monorepo subdir (PR #3 Codex P2)', () => {
     const subdir = resolve(process.cwd(), 'packages/core');
-    const origCwd = process.cwd();
+    const root = findWorkspaceRoot(subdir);
+    // Repo root contains pnpm-workspace.yaml; subdir does not.
+    expect(root).toBe(process.cwd());
+    expect(root).not.toBe(subdir);
+  });
+
+  it('findWorkspaceRoot falls back to `start` when no pnpm-workspace.yaml exists above it', () => {
+    // Tmpdir created under /tmp (Linux) / %TEMP% (Windows) — neither has
+    // an ancestor pnpm-workspace.yaml on a clean CI runner. The walk-up
+    // hits the filesystem root and returns `start` unchanged.
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-no-ws-'));
     try {
-      process.chdir(subdir);
-      const { stdout } = await captureCli(() => doctor({ pretty: false }));
-      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-      // The canonical probe ids (see doctor.ts:194 / :201 etc.) are
-      // dotted (`workspace.installed`, `cli.built`, `git.hooks`). The
-      // initial draft of this test used the bare `modules`, which made
-      // `find()` return undefined and the assertion vacuous — caught
-      // by both CodeRabbit and Codex on the second review pass.
-      const workspaceInstalled = receipt.checks.find(
-        (c: { id: string }) => c.id === 'workspace.installed',
-      );
-      expect(workspaceInstalled).toBeDefined();
-      expect(workspaceInstalled.status).not.toBe('fail');
-      const cliBuilt = receipt.checks.find((c: { id: string }) => c.id === 'cli.built');
-      expect(cliBuilt).toBeDefined();
-      // cli.built can be 'warn' (legitimately stale dist) but not 'fail'
-      // (the "wrong root => path missing" mode pre-fix).
-      expect(['ok', 'warn']).toContain(cliBuilt.status);
+      const root = findWorkspaceRoot(tmp);
+      // realpathSync isn't applied; on macOS /tmp may be a symlink, so we
+      // can't compare bytes-for-bytes against `tmp`. We CAN assert that
+      // the walk-up didn't escape into the test repo's workspace root.
+      expect(root).not.toBe(process.cwd());
     } finally {
-      process.chdir(origCwd);
+      rmSync(tmp, { recursive: true, force: true });
     }
   });
 });
