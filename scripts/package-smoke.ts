@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 type PackageSpec = {
@@ -126,7 +127,12 @@ async function main(): Promise<void> {
     }
 
     const dependencies = Object.fromEntries([
-      ...PACKAGES.map((pkg) => [pkg.name, `file:${tarballByPackage.get(pkg.name)!}`]),
+      // pnpm accepts `file:<path>` specifiers, but on Windows a raw absolute
+      // path like `file:C:\Users\runner\…\.tgz` is malformed (backslashes,
+      // drive-letter colon collides with URL scheme parsing). pathToFileURL
+      // produces a proper `file:///C:/Users/runner/…/.tgz` URL that pnpm
+      // accepts on every platform.
+      ...PACKAGES.map((pkg) => [pkg.name, pathToFileURL(tarballByPackage.get(pkg.name)!).href]),
       ...PEER_INSTALLS.map((specifier) => {
         const atIndex = specifier.lastIndexOf('@');
         return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
