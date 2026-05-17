@@ -274,6 +274,13 @@ describe('doctor command', () => {
     // under the tmpdir — we capture the failed-fix path, which exercises
     // the same lines as a successful one (the status branch differs but
     // the spawn + record-result lines run either way).
+    //
+    // 60s timeout because cold-cache `pnpm exec tsx` startup (CI runners,
+    // first-call resolution) routinely exceeds vitest's 10s default; this
+    // was the suspected root cause of the truth-linux red on PR #3 commits
+    // 97495de / be7abc7 even though the test passed locally with a warm
+    // cache. Test body still runs in <2s on a healthy run; the 60s ceiling
+    // only kicks in when something is genuinely wrong with the subprocess.
     const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-'));
     try {
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
@@ -297,5 +304,5 @@ describe('doctor command', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
-  });
+  }, 60_000);
 });
