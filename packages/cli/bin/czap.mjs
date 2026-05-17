@@ -16,7 +16,7 @@ if (!existsSync(distEntry)) {
     'czap: Hull not yet laid (packages/cli/dist/ is missing).\n' +
       '  Lay the keel with: pnpm run build\n' +
       '  Or, for a one-shot rig-check without building: pnpm run doctor\n' +
-      '  Or, for the full shakedown:                    pnpm setup\n',
+      '  Or, for the full shakedown:                    pnpm shakedown\n',
   );
   process.exit(127);
 }
