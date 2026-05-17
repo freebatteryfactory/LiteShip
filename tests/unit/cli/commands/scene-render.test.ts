@@ -31,38 +31,43 @@ describe('scene render command — non-ffmpeg portions', () => {
     rmSync(workDir, { recursive: true, force: true });
   });
 
-  it('returns 1 with emitError when the --output path is empty (covers line 43-45)', async () => {
+  // Helper for parsing the trailing JSON line of stderr without `!` assertions
+  // (CodeRabbit nitpick on PR #3 commit be7abc7) — surfaces a clear failure
+  // message if the receipt didn't arrive instead of "Cannot read property of
+  // undefined" on the next access.
+  const parseStderrReceipt = (stderr: string): { command?: string; error: string } => {
+    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
+    expect(lines.length).toBeGreaterThan(0);
+    return JSON.parse(lines[lines.length - 1]!) as { command?: string; error: string };
+  };
+
+  it('returns 1 with emitError when the --output path is empty', async () => {
     const { exit, stderr } = await captureCli(() => sceneRender('any.ts', '', false, { cwd: workDir }));
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
-    const err = JSON.parse(lines[lines.length - 1]!) as { command: string; error: string };
+    const err = parseStderrReceipt(stderr);
     expect(err.command).toBe('scene.render');
     expect(err.error).toMatch(/missing --output/);
   });
 
-  it('returns 1 with emitError when the scene file does not exist (covers line 47-50)', async () => {
+  it('returns 1 with emitError when the scene file does not exist', async () => {
     const { exit, stderr } = await captureCli(() =>
       sceneRender('/__czap-nonexistent__.ts', join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
-    const err = JSON.parse(lines[lines.length - 1]!) as { error: string };
-    expect(err.error).toMatch(/scene not found:/);
+    expect(parseStderrReceipt(stderr).error).toMatch(/scene not found:/);
   });
 
-  it('returns 1 with emitError when the scene module exports no capsule or contract (covers line 74-76)', async () => {
+  it('returns 1 with emitError when the scene module exports no capsule or contract', async () => {
     const scenePath = join(workDir, 'empty-scene.mjs');
     writeFileSync(scenePath, 'export const nothing = 42;\n');
     const { exit, stderr } = await captureCli(() =>
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    const lines = stderr.trim().split('\n').filter((l) => l.startsWith('{'));
-    const err = JSON.parse(lines[lines.length - 1]!) as { error: string };
-    expect(err.error).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(parseStderrReceipt(stderr).error).toMatch(/no sceneComposition capsule or contract exported/);
   });
 
-  it('cache hit: primed cache + existing output file returns cached receipt without re-rendering (covers line 58-68)', async () => {
+  it('cache hit: primed cache + existing output file returns cached receipt without re-rendering', async () => {
     // Write a fake mp4 so the cache-staleness guard (line 65 `existsSync(cachedOutput)`)
     // passes and we go down the cache-hit arm at line 66-67 instead of falling
     // through to the ffmpeg pipeline.
