@@ -30,7 +30,7 @@ import { emit } from '../receipts.js';
  * single-package project) — probes will then warn/fail honestly rather
  * than hide behind a wrong-root lookup.
  */
-function findWorkspaceRoot(start: string): string {
+export function findWorkspaceRoot(start: string): string {
   let dir = start;
   while (true) {
     if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) return dir;
