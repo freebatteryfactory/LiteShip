@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
-import { quoteWindowsArg, spawnArgv, withSpawned } from '../../../scripts/lib/spawn.js';
+import { quoteWindowsArg, spawnArgv, spawnArgvVisible, withSpawned } from '../../../scripts/lib/spawn.js';
 
 describe('quoteWindowsArg', () => {
   it('quotes empty string as ""', () => {
@@ -56,6 +56,36 @@ describe('spawnArgv', () => {
       { stderrCapBytes: 1024 },
     );
     expect(result.stderrTail.length).toBeLessThanOrEqual(2048); // last chunk may push past cap by one chunk-size
+  });
+});
+
+describe('spawnArgvVisible', () => {
+  it('returns exitCode 0 and an empty stderrTail (both streams flowed through to the parent)', async () => {
+    const result = await spawnArgvVisible('node', ['-e', 'process.exit(0)']);
+    expect(result.exitCode).toBe(0);
+    // Contract: spawnArgvVisible doesn't buffer — both streams went to
+    // the user's terminal, so stderrTail is always empty even when the
+    // child wrote to stderr.
+    expect(result.stderrTail).toBe('');
+  });
+
+  it('captures nonzero exitCode without throwing (child stdout still went somewhere visible)', async () => {
+    const result = await spawnArgvVisible('node', ['-e', 'process.stdout.write("v"); process.exit(3)']);
+    expect(result.exitCode).toBe(3);
+    expect(result.stderrTail).toBe('');
+  });
+
+  it('does not call process.stderr.end() — parent stderr stays open after the child closes', async () => {
+    // Regression for the CodeRabbit major finding on PR #3 commit 2e3d8d8:
+    // `proc.stdout?.pipe(process.stderr)` defaults to ending the destination
+    // when the source closes, so subsequent process.stderr.write() calls
+    // silently fail. spawnArgvVisible now passes { end: false }; this test
+    // proves writes still go through after the helper resolves.
+    await spawnArgvVisible('node', ['-e', 'process.stdout.write("payload"); process.exit(0)']);
+    // If the pipe ended stderr, this throws ERR_STREAM_WRITE_AFTER_END.
+    const ok = process.stderr.write('');
+    expect(typeof ok).toBe('boolean');
+    expect(process.stderr.writable).toBe(true);
   });
 });
 

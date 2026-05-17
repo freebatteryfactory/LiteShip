@@ -8,6 +8,6 @@
 
 > **Video** = [`VideoTrack`](../../../interfaces/VideoTrack.md)
 
-Defined in: [scene/src/track.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L102)
+Defined in: scene/src/track.ts:102
 
 Video helper return.

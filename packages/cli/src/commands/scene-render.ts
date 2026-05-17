@@ -39,7 +39,12 @@ function isContract(v: unknown): v is ContractLike {
 }
 
 /** Execute the scene render command. */
-export async function sceneRender(scenePath: string, output: string, force = false): Promise<number> {
+export async function sceneRender(
+  scenePath: string,
+  output: string,
+  force = false,
+  opts: { readonly cwd?: string } = {},
+): Promise<number> {
   if (!output) {
     emitError('scene.render', 'missing --output / -o path');
     return 1;
@@ -54,6 +59,7 @@ export async function sceneRender(scenePath: string, output: string, force = fal
     command: 'scene.render',
     inputs: { scenePath: abs, output },
     force,
+    cwd: opts.cwd,
   };
   const cached = tryReadCache(ctx);
   if (cached) {
