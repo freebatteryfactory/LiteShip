@@ -216,4 +216,30 @@ describe('doctor command', () => {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
+
+  it('doctor() anchored to workspace root when run from a monorepo subdir (PR #3 Codex P2)', async () => {
+    // Regression: `czap doctor` run from `packages/core` was probing
+    // `packages/core/node_modules/.modules.yaml` and
+    // `packages/core/packages/cli/dist/...`, both of which never exist —
+    // so doctor reported `blocked` even on a healthy repo. With the
+    // workspace-root walk-up, the receipt from `packages/core` and the
+    // receipt from the repo root agree on every check.
+    const subdir = resolve(process.cwd(), 'packages/core');
+    const origCwd = process.cwd();
+    try {
+      process.chdir(subdir);
+      const { stdout } = await captureCli(() => doctor({ pretty: false }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      // Every check has a status; modules + cli.built + git.hooks should
+      // not be sitting at the "missing file under wrong root" detail string.
+      const modules = receipt.checks.find((c: { id: string }) => c.id === 'modules');
+      expect(modules?.status).not.toBe('fail');
+      const cliBuilt = receipt.checks.find((c: { id: string }) => c.id === 'cli.built');
+      // cli.built can be 'warn' (legitimately stale dist) but not 'fail'
+      // (the "wrong root => path missing" mode pre-fix).
+      expect(['ok', 'warn']).toContain(cliBuilt?.status);
+    } finally {
+      process.chdir(origCwd);
+    }
+  });
 });
