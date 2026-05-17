@@ -306,8 +306,12 @@ describe('doctor command', () => {
   it('applyFixes git.hooks branch fires when probeGitHooks reports `warn` (covers doctor.ts:402-414)', async () => {
     // Force a 'warn' from probeGitHooks by giving doctor a cwd whose
     // .git directory exists but contains no hooks/pre-commit. doctor({fix:true})
-    // then enters applyFixes' git-hooks arm at doctor.ts:402-414. The
-    // subprocess invocation (`pnpm exec tsx scripts/link-pre-commit.ts`)
+    // then enters applyFixes' git-hooks arm. The fixture's package.json
+    // claims name: 'czap' so isLiteShipWorkspace returns true and the
+    // git-hooks branch actually runs the spawn (vs the guard-reject path
+    // tested separately below).
+    //
+    // The subprocess invocation (`pnpm exec tsx scripts/link-pre-commit.ts`)
     // can't succeed because scripts/link-pre-commit.ts doesn't exist
     // under the tmpdir — we capture the failed-fix path, which exercises
     // the same lines as a successful one (the status branch differs but
@@ -322,11 +326,12 @@ describe('doctor command', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-'));
     try {
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
-      // Stub a package.json so workspace.installed has something to look at
-      // (avoids unrelated probe noise in the receipt).
+      // name: 'czap' so isLiteShipWorkspace returns true and the spawn
+      // path actually runs (the alternative — guard rejection — is the
+      // next test).
       writeFileSync(
         resolve(tmp, 'package.json'),
-        JSON.stringify({ name: 'fixture', version: '0.0.0' }),
+        JSON.stringify({ name: 'czap', version: '0.0.0' }),
       );
       const { stdout } = await captureCli(() =>
         doctor({ pretty: false, fix: true, cwd: tmp }),
@@ -338,9 +343,51 @@ describe('doctor command', () => {
         const hookFix = receipt.fixed.find((f: { id: string }) => f.id === 'git.hooks');
         expect(hookFix).toBeDefined();
         expect(['applied', 'failed']).toContain(hookFix.status);
+        // The action string must NOT be the guard-skip message — that
+        // would mean the spawn didn't fire and this test isn't actually
+        // exercising the branch it claims.
+        expect(hookFix.action).not.toMatch(/not the LiteShip workspace/);
       }
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
   }, 60_000);
+
+  it('applyFixes refuses to run the git.hooks fix outside the LiteShip workspace (Codex P1 follow-up)', async () => {
+    // Regression for PR #3 discussion on commit 3212fa4: previously the
+    // git.hooks fix branch ran `pnpm exec tsx scripts/link-pre-commit.ts`
+    // unconditionally on warn, even outside LiteShip. tsx would either
+    // execute an unrelated project's same-named script (rare but real)
+    // or fail in project-specific ways — same unintended-side-effect
+    // class as the build guard prevents.
+    //
+    // The guard mirrors the build branch: isLiteShipWorkspace check,
+    // skip the spawn if not in the LiteShip workspace, record a failed
+    // fix entry with the workspace-mismatch action message.
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-guard-'));
+    try {
+      // Imposter project: has .git/hooks/ (so probeGitHooks warns) but
+      // package.json name is NOT 'czap'.
+      mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({
+          name: 'imposter-project',
+          version: '0.0.0',
+          scripts: { build: 'echo "should never run"' },
+        }),
+      );
+      const { stdout } = await captureCli(() =>
+        doctor({ pretty: false, fix: true, cwd: tmp }),
+      );
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      expect(Array.isArray(receipt.fixed)).toBe(true);
+      const hookFix = receipt.fixed.find((f: { id: string }) => f.id === 'git.hooks');
+      expect(hookFix).toBeDefined();
+      expect(hookFix.status).toBe('failed');
+      expect(hookFix.action).toMatch(/not the LiteShip workspace/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
 });

@@ -464,7 +464,20 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
 
   // Link the pre-commit hook.
   const needsHook = checks.some((c) => c.id === 'git.hooks' && c.status === 'warn');
-  if (needsHook) {
+  if (needsHook && !inWorkspace) {
+    // Same isLiteShipWorkspace guard as the build branch above
+    // (Codex P1 follow-up on commit 3212fa4): scripts/link-pre-commit.ts
+    // is resolved relative to cwd; running it from an unrelated project
+    // would either execute that project's same-named script if it has
+    // one, or fail in project-specific ways — same unintended-side-effect
+    // class as the build guard prevents.
+    fixes.push({
+      id: 'git.hooks',
+      action: 'skipped: cwd is not the LiteShip workspace',
+      status: 'failed',
+      detail: 'doctor --fix only invokes pnpm exec tsx scripts/link-pre-commit.ts when root package.json name === "czap"',
+    });
+  } else if (needsHook) {
     // Same JSON-stdout-purity reason as the build invocation above.
     const r = await spawnArgvVisible('pnpm', ['exec', 'tsx', 'scripts/link-pre-commit.ts'], {
       cwd,
