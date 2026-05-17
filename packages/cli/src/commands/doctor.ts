@@ -475,7 +475,8 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
       id: 'git.hooks',
       action: 'skipped: cwd is not the LiteShip workspace',
       status: 'failed',
-      detail: 'doctor --fix only invokes pnpm exec tsx scripts/link-pre-commit.ts when root package.json name === "czap"',
+      detail:
+        'doctor --fix only invokes pnpm exec tsx scripts/link-pre-commit.ts when root package.json name === "czap"',
     });
   } else if (needsHook) {
     // Same JSON-stdout-purity reason as the build invocation above.
