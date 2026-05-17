@@ -176,7 +176,7 @@ export function spawnArgvVisible(
       cwd: opts.cwd,
       windowsVerbatimArguments: process.platform === 'win32',
     });
-    proc.stdout?.pipe(process.stderr);
+    proc.stdout?.pipe(process.stderr, { end: false });
     proc.on('error', rejectPromise);
     proc.on('close', (code) => {
       resolvePromise({ exitCode: code ?? 1, stderrTail: '' });
