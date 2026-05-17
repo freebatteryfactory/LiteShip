@@ -6,7 +6,7 @@
 
 # Interface: MorphRejection
 
-Defined in: [web/src/types.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L148)
+Defined in: web/src/types.ts:148
 
 Morph rejection when preserve constraints are violated.
 
@@ -16,7 +16,7 @@ Morph rejection when preserve constraints are violated.
 
 > `readonly` `optional` **missingIds?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L150)
+Defined in: web/src/types.ts:150
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:150](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **reason**: `string`
 
-Defined in: [web/src/types.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L152)
+Defined in: web/src/types.ts:152
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:152](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **slot?**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: [web/src/types.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L151)
+Defined in: web/src/types.ts:151
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:151](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **type**: `string`
 
-Defined in: [web/src/types.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L149)
+Defined in: web/src/types.ts:149
