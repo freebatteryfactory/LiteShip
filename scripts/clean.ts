@@ -34,6 +34,27 @@ function rmIfPresent(absPath: string): void {
   removed.push(rel);
 }
 
+/**
+ * Selective version of rmIfPresent — wipes a directory's contents while
+ * keeping the named entries. Used for benchmarks/raw where history.jsonl
+ * is the cross-run trend ledger (deleting it would skew bench:trend
+ * comparisons), but the rest of the dir is per-run scratch.
+ */
+function rmContentsExcept(dirPath: string, keep: ReadonlySet<string>): void {
+  const rel = dirPath.startsWith(repoRoot) ? dirPath.slice(repoRoot.length + 1) : dirPath;
+  if (!existsSync(dirPath)) {
+    skipped.push(rel);
+    return;
+  }
+  let rmCount = 0;
+  for (const entry of readdirSync(dirPath)) {
+    if (keep.has(entry)) continue;
+    rmSync(resolve(dirPath, entry), { recursive: true, force: true });
+    rmCount += 1;
+  }
+  if (rmCount > 0) removed.push(`${rel} (kept: ${[...keep].join(', ')})`);
+}
+
 function cleanPackages(): void {
   const packagesDir = resolve(repoRoot, 'packages');
   if (!existsSync(packagesDir)) return;
@@ -50,8 +71,15 @@ function cleanRoot(): void {
   rmIfPresent(resolve(repoRoot, 'tsconfig.scripts.tsbuildinfo'));
   rmIfPresent(resolve(repoRoot, 'tsconfig.tests.tsbuildinfo'));
   rmIfPresent(resolve(repoRoot, 'coverage'));
+  // The module docstring claims reports/ is wiped; previously cleanRoot
+  // didn't actually touch it, leaving stale reports/capsule-manifest.json
+  // and audit outputs to mislead later runs. Fix per Codex P2 review.
+  rmIfPresent(resolve(repoRoot, 'reports'));
   rmIfPresent(resolve(repoRoot, '.czap/generated'));
-  rmIfPresent(resolve(repoRoot, 'benchmarks/raw'));
+  // benchmarks/raw holds cross-run trend ledger (history.jsonl) plus
+  // per-run scratch. Wholesale rmIfPresent would erase the ledger and
+  // skew bench:trend comparisons. Keep history.jsonl, wipe the rest.
+  rmContentsExcept(resolve(repoRoot, 'benchmarks/raw'), new Set(['history.jsonl']));
 }
 
 cleanPackages();

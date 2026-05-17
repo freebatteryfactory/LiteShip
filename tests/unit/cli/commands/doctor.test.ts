@@ -265,6 +265,44 @@ describe('doctor command', () => {
     expect(stderr).toMatch(/ready|caution|blocked/);
   });
 
+  it('applyFixes refuses to run `pnpm run build` outside the LiteShip workspace (Codex P1 — safety guard)', async () => {
+    // Regression for PR #3 r3254680246: previously `czap doctor --fix` run
+    // from an unrelated project would (1) findWorkspaceRoot fall back to
+    // that project's cwd, (2) core.built/cli.built warn (no packages/<x>/dist
+    // in that project), (3) applyFixes spawn `pnpm run build` against THAT
+    // project's build script — high-impact arbitrary code execution for a
+    // diagnostics command.
+    //
+    // The guard: isLiteShipWorkspace() checks root package.json.name === 'czap'.
+    // If false, applyFixes records a skipped/failed build entry without
+    // spawning anything.
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-imposter-'));
+    try {
+      // Tmpdir poses as an unrelated project: has a package.json (so
+      // isLiteShipWorkspace can read it) with a non-czap name.
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({
+          name: 'imposter-project',
+          version: '0.0.0',
+          scripts: { build: 'echo "this build should NEVER run from doctor --fix"' },
+        }),
+      );
+      const { stdout } = await captureCli(() =>
+        doctor({ pretty: false, fix: true, cwd: tmp }),
+      );
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      // The build fix attempt is recorded as failed/skipped.
+      expect(Array.isArray(receipt.fixed)).toBe(true);
+      const buildFix = receipt.fixed.find((f: { id: string }) => f.id === 'build');
+      expect(buildFix).toBeDefined();
+      expect(buildFix.status).toBe('failed');
+      expect(buildFix.action).toMatch(/not the LiteShip workspace/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('applyFixes git.hooks branch fires when probeGitHooks reports `warn` (covers doctor.ts:402-414)', async () => {
     // Force a 'warn' from probeGitHooks by giving doctor a cwd whose
     // .git directory exists but contains no hooks/pre-commit. doctor({fix:true})
