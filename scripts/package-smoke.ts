@@ -115,17 +115,30 @@ async function main(): Promise<void> {
   await mkdir(tarballDir, { recursive: true });
   await mkdir(consumerDir, { recursive: true });
 
+  // Bracketed step prints so the failing step is identifiable from the CI log
+  // alone when artifact download or auth-gated logs aren't reachable. Each
+  // step gets a STEP/STEP-OK pair; the failing step's STEP-OK never prints.
+  const step = (label: string): void => {
+    console.log(`[package:smoke] ▸ ${label} (platform=${process.platform}, arch=${process.arch})`);
+  };
+  const stepOk = (label: string): void => {
+    console.log(`[package:smoke] ✓ ${label}`);
+  };
+
   try {
     const tarballs: string[] = [];
     const tarballByPackage = new Map<string, string>();
 
+    step(`pack ${PACKAGES.length} packages via pnpm pack`);
     for (const pkg of PACKAGES) {
       const cwd = resolve(ROOT, pkg.dir);
       const tarball = await packPackage(cwd, tarballDir);
       tarballs.push(tarball);
       tarballByPackage.set(pkg.name, tarball);
     }
+    stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
 
+    step('build consumer package.json (dependencies + pnpm.overrides as file:// URLs)');
     const dependencies = Object.fromEntries([
       // pnpm accepts `file:<path>` specifiers, but on Windows a raw absolute
       // path like `file:C:\Users\runner\…\.tgz` is malformed (backslashes,
@@ -160,13 +173,22 @@ async function main(): Promise<void> {
         2,
       ),
     );
+    // Diagnostic: print first @czap/* dep so the file:// URL shape is visible
+    // in CI logs (Windows debugging when path encoding is the suspect).
+    const sampleDep = dependencies[PACKAGES[0]!.name];
+    stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
 
+    step(`pnpm install in consumer dir (${consumerDir})`);
     run('pnpm', ['install'], consumerDir);
+    stepOk('pnpm install complete');
 
+    step('verify no workspace: protocols leaked into installed package.json files');
     for (const pkg of PACKAGES) {
       await ensureNoWorkspaceProtocols(consumerDir, pkg.name);
     }
+    stepOk('no workspace: protocols found');
 
+    step(`import-smoke ${PACKAGES.flatMap((pkg) => pkg.imports).length} module specifiers via node smoke.mjs`);
     const smokeModule = `
 const imports = ${JSON.stringify(PACKAGES.flatMap((pkg) => pkg.imports), null, 2)};
 for (const specifier of imports) {
@@ -178,8 +200,11 @@ for (const specifier of imports) {
 `;
     await writeFile(join(consumerDir, 'smoke.mjs'), smokeModule);
     run('node', ['smoke.mjs'], consumerDir);
+    stepOk('all imports resolved');
 
+    step('pnpm exec czap describe --format=json (binstub resolution check)');
     run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+    stepOk('czap binstub resolved and produced a describe receipt');
 
     console.log(`Package smoke passed for ${PACKAGES.length} packages.`);
   } finally {
