@@ -9,6 +9,7 @@
 
 export {
   spawnArgv,
+  spawnArgvCapture,
   spawnArgvVisible,
   quoteWindowsArg,
   withSpawned,
@@ -16,6 +17,8 @@ export {
 } from '../../packages/cli/src/lib/spawn.js';
 export type {
   SpawnArgvOpts,
+  SpawnCaptureOpts,
+  SpawnCaptureResult,
   SpawnResult,
   SpawnHandle,
 } from '../../packages/cli/src/lib/spawn.js';
