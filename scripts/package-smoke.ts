@@ -148,7 +148,12 @@ async function main(): Promise<void> {
           type: 'module',
           dependencies,
           pnpm: {
-            overrides: Object.fromEntries(PACKAGES.map((pkg) => [pkg.name, `file:${tarballByPackage.get(pkg.name)!}`])),
+            // Same pathToFileURL reason as the `dependencies` map at L135:
+            // `file:C:\path` is malformed on Windows; pathToFileURL produces
+            // `file:///C:/path` that pnpm accepts on every platform.
+            overrides: Object.fromEntries(
+              PACKAGES.map((pkg) => [pkg.name, pathToFileURL(tarballByPackage.get(pkg.name)!).href]),
+            ),
           },
         },
         null,
