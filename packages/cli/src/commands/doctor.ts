@@ -391,16 +391,54 @@ function prettySummary(checks: readonly DoctorCheck[], verdict: DoctorVerdict, f
   return lines.join('\n') + '\n';
 }
 
+/**
+ * Verify that `cwd` looks like the LiteShip workspace before applyFixes
+ * is allowed to run the build remediation. Without this guard, a user
+ * running `czap doctor --fix` from an unrelated project would:
+ *   1. `findWorkspaceRoot` falls back to that project's cwd (no
+ *      pnpm-workspace.yaml above means start === fallback).
+ *   2. core.built/cli.built warn because packages/core|cli/dist don't
+ *      exist in that project.
+ *   3. applyFixes runs `pnpm run build` against THAT project's package
+ *      — executing arbitrary code the user didn't intend.
+ *
+ * Codex P1 (PR #3 discussion r3254680246). Fix: refuse to --fix unless
+ * root package.json declares the @czap/* family (a name that's hard
+ * to fake unintentionally).
+ */
+function isLiteShipWorkspace(cwd: string): boolean {
+  const rootPkgPath = resolve(cwd, 'package.json');
+  if (!existsSync(rootPkgPath)) return false;
+  try {
+    const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf8')) as { name?: string };
+    // Repo root's package.json names itself "czap"; the workspace itself
+    // is the surface that owns the @czap/* package family.
+    return pkg.name === 'czap';
+  } catch {
+    return false;
+  }
+}
+
 /** Attempt the cheap, local fixes for whatever checks are fixable. */
 async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<readonly DoctorFix[]> {
   const fixes: DoctorFix[] = [];
+  const inWorkspace = isLiteShipWorkspace(cwd);
 
   // Rebuild stale dist/ — covers both core.built and cli.built in one shot.
   // tsc --build trusts tsbuildinfo more than the filesystem, so invalidate
   // the per-package tsbuildinfo first; otherwise tsc no-ops when dist/ is
   // missing-but-tsbuildinfo-claims-up-to-date.
   const needsBuild = checks.some((c) => (c.id === 'core.built' || c.id === 'cli.built') && c.status === 'warn');
-  if (needsBuild) {
+  if (needsBuild && !inWorkspace) {
+    // Safety guard: refuse to run `pnpm run build` outside the LiteShip
+    // workspace. See isLiteShipWorkspace doc for the security rationale.
+    fixes.push({
+      id: 'build',
+      action: 'skipped: cwd is not the LiteShip workspace',
+      status: 'failed',
+      detail: 'doctor --fix only invokes pnpm run build when root package.json name === "czap"',
+    });
+  } else if (needsBuild) {
     // Package list is read from root package.json's build script, so adding a
     // new package to the build never silently desyncs this loop. `force:true`
     // closes the TOCTOU window between existsSync and rmSync.
