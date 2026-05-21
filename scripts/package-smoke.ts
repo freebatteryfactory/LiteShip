@@ -129,6 +129,22 @@ function peerDependenciesOnly(): Record<string, string> {
   );
 }
 
+/** npm deps declared in packed manifests (e.g. mediabunny, cborg) — not installed by tar extract alone. */
+function collectPackedExternalDependencies(tarballByPackage: Map<string, string>): Record<string, string> {
+  const external: Record<string, string> = {};
+  for (const pkg of PACKAGES) {
+    const manifest = readPackedManifest(tarballByPackage.get(pkg.name)!);
+    for (const field of ['dependencies', 'optionalDependencies'] as const) {
+      for (const [name, version] of Object.entries(manifest[field] ?? {})) {
+        if (!name.startsWith('@czap/') && !version.startsWith('workspace:')) {
+          external[name] = version;
+        }
+      }
+    }
+  }
+  return external;
+}
+
 function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: string): void {
   const pkg = readPackedManifest(tarballPath);
 
@@ -192,6 +208,7 @@ async function main(): Promise<void> {
       }
       stepOk(`extracted ${PACKAGES.length} @czap/* packages into node_modules`);
 
+      const externalDeps = collectPackedExternalDependencies(tarballByPackage);
       await writeFile(
         join(consumerDir, 'package.json'),
         JSON.stringify(
@@ -199,13 +216,15 @@ async function main(): Promise<void> {
             name: 'czap-package-smoke-consumer',
             private: true,
             type: 'module',
-            dependencies: peerDependenciesOnly(),
+            dependencies: { ...peerDependenciesOnly(), ...externalDeps },
           },
           null,
           2,
         ),
       );
-      stepOk('consumer package.json written (peer deps only; @czap/* from tar extract)');
+      stepOk(
+        `consumer package.json written (peers + packed externals: ${Object.keys(externalDeps).join(', ') || 'none'})`,
+      );
 
       step(`pnpm install peer dependencies in consumer dir (${consumerDir})`);
       run('pnpm', ['install'], consumerDir);
