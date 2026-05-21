@@ -1,4 +1,4 @@
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -100,8 +100,18 @@ function run(command: string, args: readonly string[], cwd: string): string {
   }).trim();
 }
 
+function resolveInstalledPackageJson(consumerDir: string, packageName: string): string {
+  const direct = join(consumerDir, 'node_modules', ...packageName.split('/'), 'package.json');
+  if (existsSync(direct)) {
+    return direct;
+  }
+  throw new Error(
+    `${packageName} is missing from ${join(consumerDir, 'node_modules')} after pnpm install (expected ${direct}).`,
+  );
+}
+
 async function ensureNoWorkspaceProtocols(consumerDir: string, packageName: string): Promise<void> {
-  const packageJsonPath = join(consumerDir, 'node_modules', ...packageName.split('/'), 'package.json');
+  const packageJsonPath = resolveInstalledPackageJson(consumerDir, packageName);
   const raw = await readFile(packageJsonPath, 'utf8');
   const pkg = JSON.parse(raw) as {
     dependencies?: Record<string, string>;
@@ -200,6 +210,11 @@ async function main(): Promise<void> {
     // in CI logs (Windows debugging when path encoding is the suspect).
     const sampleDep = dependencies[PACKAGES[0]!.name];
     stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
+
+    // Windows CI uses pnpm's isolated linker by default; hoisted layout matches
+    // Linux/macOS smoke expectations so every @czap/* dep lands at
+    // node_modules/@czap/<name>/package.json for the workspace-protocol audit.
+    await writeFile(join(consumerDir, '.npmrc'), 'node-linker=hoisted\n');
 
     step(`pnpm install in consumer dir (${consumerDir})`);
     run('pnpm', ['install'], consumerDir);
