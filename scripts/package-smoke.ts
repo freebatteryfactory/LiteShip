@@ -209,6 +209,13 @@ async function main(): Promise<void> {
     const sampleDep = dependencies[PACKAGES[0]!.name];
     stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
 
+    // Hoist @czap/* so `import '@czap/…'` resolves on Windows (isolated linker
+    // can install deps without linking them into the consumer graph).
+    await writeFile(
+      join(consumerDir, '.npmrc'),
+      ['node-linker=hoisted', 'public-hoist-pattern[]=@czap/*', ''].join('\n'),
+    );
+
     step(`pnpm install in consumer dir (${consumerDir})`);
     run('pnpm', ['install'], consumerDir);
     stepOk('pnpm install complete');
@@ -230,7 +237,8 @@ for (const specifier of imports) {
 }
 `;
     await writeFile(join(consumerDir, 'smoke.mjs'), smokeModule);
-    run('node', ['smoke.mjs'], consumerDir);
+    // pnpm exec wires the consumer's node_modules graph on every platform.
+    run('pnpm', ['exec', 'node', 'smoke.mjs'], consumerDir);
     stepOk('all imports resolved');
 
     step('pnpm exec czap describe --format=json (binstub resolution check)');
