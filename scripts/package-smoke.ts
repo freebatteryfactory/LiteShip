@@ -1,4 +1,4 @@
-import { realpathSync } from 'node:fs';
+import { mkdirSync, realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -114,6 +114,21 @@ function readPackedManifest(tarballPath: string): {
   };
 }
 
+/** Expand a `pnpm pack` tarball into `node_modules/@czap/<name>/` (Windows-safe). */
+function extractPackedPackage(tarballPath: string, destinationDir: string): void {
+  mkdirSync(destinationDir, { recursive: true });
+  execFileSync('tar', ['-xzf', tarballPath, '-C', destinationDir, '--strip-components=1'], { stdio: 'inherit' });
+}
+
+function peerDependenciesOnly(): Record<string, string> {
+  return Object.fromEntries(
+    PEER_INSTALLS.map((specifier) => {
+      const atIndex = specifier.lastIndexOf('@');
+      return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
+    }),
+  );
+}
+
 function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: string): void {
   const pkg = readPackedManifest(tarballPath);
 
@@ -169,56 +184,69 @@ async function main(): Promise<void> {
     }
     stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
 
-    step('build consumer package.json (dependencies + pnpm.overrides as file:// URLs)');
-    const dependencies = Object.fromEntries([
-      // pnpm accepts `file:<path>` specifiers, but on Windows a raw absolute
-      // path like `file:C:\Users\runner\…\.tgz` is malformed (backslashes,
-      // drive-letter colon collides with URL scheme parsing). pathToFileURL
-      // produces a proper `file:///C:/Users/runner/…/.tgz` URL that pnpm
-      // accepts on every platform.
-      ...PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
-      ...PEER_INSTALLS.map((specifier) => {
-        const atIndex = specifier.lastIndexOf('@');
-        return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
-      }),
-    ]);
+    if (process.platform === 'win32') {
+      step(`materialize ${PACKAGES.length} packed @czap/* trees under consumer node_modules (Windows)`);
+      for (const pkg of PACKAGES) {
+        const dest = join(consumerDir, 'node_modules', ...pkg.name.split('/'));
+        extractPackedPackage(tarballByPackage.get(pkg.name)!, dest);
+      }
+      stepOk(`extracted ${PACKAGES.length} @czap/* packages into node_modules`);
 
-    await writeFile(
-      join(consumerDir, 'package.json'),
-      JSON.stringify(
-        {
-          name: 'czap-package-smoke-consumer',
-          private: true,
-          type: 'module',
-          dependencies,
-          pnpm: {
-            // Same pathToFileURL reason as the `dependencies` map at L135:
-            // `file:C:\path` is malformed on Windows; pathToFileURL produces
-            // `file:///C:/path` that pnpm accepts on every platform.
-            overrides: Object.fromEntries(
-              PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
-            ),
+      await writeFile(
+        join(consumerDir, 'package.json'),
+        JSON.stringify(
+          {
+            name: 'czap-package-smoke-consumer',
+            private: true,
+            type: 'module',
+            dependencies: peerDependenciesOnly(),
           },
-        },
-        null,
-        2,
-      ),
-    );
-    // Diagnostic: print first @czap/* dep so the file:// URL shape is visible
-    // in CI logs (Windows debugging when path encoding is the suspect).
-    const sampleDep = dependencies[PACKAGES[0]!.name];
-    stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
+          null,
+          2,
+        ),
+      );
+      stepOk('consumer package.json written (peer deps only; @czap/* from tar extract)');
 
-    // Hoist @czap/* so `import '@czap/…'` resolves on Windows (isolated linker
-    // can install deps without linking them into the consumer graph).
-    await writeFile(
-      join(consumerDir, '.npmrc'),
-      ['node-linker=hoisted', 'public-hoist-pattern[]=@czap/*', ''].join('\n'),
-    );
+      step(`pnpm install peer dependencies in consumer dir (${consumerDir})`);
+      run('pnpm', ['install'], consumerDir);
+      stepOk('pnpm install complete');
+    } else {
+      step('build consumer package.json (dependencies + pnpm.overrides as file:// URLs)');
+      const dependencies = Object.fromEntries([
+        // pnpm accepts `file:<path>` specifiers, but on Windows a raw absolute
+        // path like `file:C:\Users\runner\…\.tgz` is malformed (backslashes,
+        // drive-letter colon collides with URL scheme parsing). pathToFileURL
+        // produces a proper `file:///C:/Users/runner/…/.tgz` URL that pnpm
+        // accepts on every platform.
+        ...PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
+        ...Object.entries(peerDependenciesOnly()),
+      ]);
 
-    step(`pnpm install in consumer dir (${consumerDir})`);
-    run('pnpm', ['install'], consumerDir);
-    stepOk('pnpm install complete');
+      await writeFile(
+        join(consumerDir, 'package.json'),
+        JSON.stringify(
+          {
+            name: 'czap-package-smoke-consumer',
+            private: true,
+            type: 'module',
+            dependencies,
+            pnpm: {
+              overrides: Object.fromEntries(
+                PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
+              ),
+            },
+          },
+          null,
+          2,
+        ),
+      );
+      const sampleDep = dependencies[PACKAGES[0]!.name];
+      stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
+
+      step(`pnpm install in consumer dir (${consumerDir})`);
+      run('pnpm', ['install'], consumerDir);
+      stepOk('pnpm install complete');
+    }
 
     step('verify no workspace: protocols leaked into packed tarball manifests');
     for (const pkg of PACKAGES) {
@@ -237,8 +265,7 @@ for (const specifier of imports) {
 }
 `;
     await writeFile(join(consumerDir, 'smoke.mjs'), smokeModule);
-    // pnpm exec wires the consumer's node_modules graph on every platform.
-    run('pnpm', ['exec', 'node', 'smoke.mjs'], consumerDir);
+    run('node', ['smoke.mjs'], consumerDir);
     stepOk('all imports resolved');
 
     step('pnpm exec czap describe --format=json (binstub resolution check)');
