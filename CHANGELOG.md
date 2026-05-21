@@ -4,6 +4,16 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.1.3] — 2026-05-21
+
+CI greening release — no intentional public API changes beyond what shipped in 0.1.2.
+
+### Fixed
+- `package:smoke` audits `workspace:` leakage from packed tarballs (`tar -xOf`) instead of
+  `node_modules` layout, so Windows CI no longer depends on pnpm hoisting shape.
+- `animation.test.ts` waits for scheduler callback registration before driving frames,
+  eliminating 10s Vitest timeouts on loaded Linux runners.
+
 ## [0.1.2] — 2026-05-21
 
 Dev-experience layer plus CI publishability fixes. All **15** `@czap/*` packages ship at `0.1.2`.

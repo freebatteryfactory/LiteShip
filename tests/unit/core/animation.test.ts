@@ -29,6 +29,17 @@ async function settleAnimationCompletion(): Promise<void> {
   });
 }
 
+/** Wait until the animation fiber registers a scheduler callback (CI can be slower than local). */
+async function waitForSchedulerCallback(callbacks: Map<number, unknown>, id: number): Promise<void> {
+  for (let attempt = 0; attempt < 500; attempt++) {
+    if (callbacks.has(id)) {
+      return;
+    }
+    await settleAnimationRegistration();
+  }
+  throw new Error(`scheduler callback ${id} never registered`);
+}
+
 beforeEach(() => {
   vi.useRealTimers();
 });
@@ -92,9 +103,11 @@ describe('Animation.run', () => {
       ),
     );
 
-    await settleAnimationRegistration();
+    await waitForSchedulerCallback(callbacks, 1);
     callbacks.get(1)?.(0);
+    await waitForSchedulerCallback(callbacks, 2);
     callbacks.get(2)?.(250);
+    await waitForSchedulerCallback(callbacks, 3);
     callbacks.get(3)?.(500);
     await settleAnimationCompletion();
 
@@ -103,7 +116,7 @@ describe('Animation.run', () => {
     expect(frames.map((frame) => frame.progress)).toEqual([0, 0.5, 1]);
     expect(frames[1]?.eased).toBeCloseTo(0.25);
     expect(scheduler.cancel).toHaveBeenCalledWith(3);
-  });
+  }, 20_000);
 
   test('defaults to browser requestAnimationFrame scheduling when available', async () => {
     const callbacks = new Map<number, FrameRequestCallback>();
@@ -124,9 +137,11 @@ describe('Animation.run', () => {
 
     const collecting = Effect.runPromise(Stream.runCollect(Animation.run({ duration: Millis(32) })));
 
-    await settleAnimationRegistration();
+    await waitForSchedulerCallback(callbacks, 1);
     callbacks.get(1)?.(0);
+    await waitForSchedulerCallback(callbacks, 2);
     callbacks.get(2)?.(16);
+    await waitForSchedulerCallback(callbacks, 3);
     callbacks.get(3)?.(32);
     await settleAnimationCompletion();
 
@@ -134,7 +149,7 @@ describe('Animation.run', () => {
 
     expect(frames.map((frame) => frame.timestamp)).toEqual([0, 16, 32]);
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
-  });
+  }, 20_000);
 
   test('times out cleanly with the noop scheduler when requestAnimationFrame is unavailable', async () => {
     vi.stubGlobal('requestAnimationFrame', undefined as never);
