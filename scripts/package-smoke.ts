@@ -1,5 +1,5 @@
-import { existsSync, realpathSync } from 'node:fs';
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
+import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -100,24 +100,22 @@ function run(command: string, args: readonly string[], cwd: string): string {
   }).trim();
 }
 
-function resolveInstalledPackageJson(consumerDir: string, packageName: string): string {
-  const direct = join(consumerDir, 'node_modules', ...packageName.split('/'), 'package.json');
-  if (existsSync(direct)) {
-    return direct;
-  }
-  throw new Error(
-    `${packageName} is missing from ${join(consumerDir, 'node_modules')} after pnpm install (expected ${direct}).`,
-  );
-}
-
-async function ensureNoWorkspaceProtocols(consumerDir: string, packageName: string): Promise<void> {
-  const packageJsonPath = resolveInstalledPackageJson(consumerDir, packageName);
-  const raw = await readFile(packageJsonPath, 'utf8');
-  const pkg = JSON.parse(raw) as {
+/** Read `package/package.json` from a `pnpm pack` tarball (layout-stable on every OS). */
+function readPackedManifest(tarballPath: string): {
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+} {
+  const raw = execFileSync('tar', ['-xOf', tarballPath, 'package/package.json'], { encoding: 'utf8' });
+  return JSON.parse(raw) as {
     dependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
     optionalDependencies?: Record<string, string>;
   };
+}
+
+function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: string): void {
+  const pkg = readPackedManifest(tarballPath);
 
   for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies'] as const) {
     const entries = Object.entries(pkg[field] ?? {});
@@ -211,20 +209,15 @@ async function main(): Promise<void> {
     const sampleDep = dependencies[PACKAGES[0]!.name];
     stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
 
-    // Windows CI uses pnpm's isolated linker by default; hoisted layout matches
-    // Linux/macOS smoke expectations so every @czap/* dep lands at
-    // node_modules/@czap/<name>/package.json for the workspace-protocol audit.
-    await writeFile(join(consumerDir, '.npmrc'), 'node-linker=hoisted\n');
-
     step(`pnpm install in consumer dir (${consumerDir})`);
     run('pnpm', ['install'], consumerDir);
     stepOk('pnpm install complete');
 
-    step('verify no workspace: protocols leaked into installed package.json files');
+    step('verify no workspace: protocols leaked into packed tarball manifests');
     for (const pkg of PACKAGES) {
-      await ensureNoWorkspaceProtocols(consumerDir, pkg.name);
+      ensureNoWorkspaceProtocolsInTarball(tarballByPackage.get(pkg.name)!, pkg.name);
     }
-    stepOk('no workspace: protocols found');
+    stepOk('no workspace: protocols found in packed manifests');
 
     step(`import-smoke ${PACKAGES.flatMap((pkg) => pkg.imports).length} module specifiers via node smoke.mjs`);
     const smokeModule = `
