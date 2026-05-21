@@ -6,7 +6,7 @@
 
 # Interface: WASMDispatchAPI
 
-Defined in: core/src/wasm-dispatch.ts:205
+Defined in: [core/src/wasm-dispatch.ts:205](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L205)
 
 Public API of the [WASMDispatch](../variables/WASMDispatch.md) singleton: probe for WebAssembly,
 asynchronously load the Rust compute module, and hand back either WASM or
@@ -18,7 +18,7 @@ asynchronously load the Rust compute module, and hand back either WASM or
 
 > **detect**(): `boolean`
 
-Defined in: core/src/wasm-dispatch.ts:206
+Defined in: [core/src/wasm-dispatch.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L206)
 
 #### Returns
 
@@ -30,7 +30,7 @@ Defined in: core/src/wasm-dispatch.ts:206
 
 > **isLoaded**(): `boolean`
 
-Defined in: core/src/wasm-dispatch.ts:209
+Defined in: [core/src/wasm-dispatch.ts:209](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L209)
 
 #### Returns
 
@@ -42,7 +42,7 @@ Defined in: core/src/wasm-dispatch.ts:209
 
 > **kernels**(): [`WASMKernels`](WASMKernels.md)
 
-Defined in: core/src/wasm-dispatch.ts:208
+Defined in: [core/src/wasm-dispatch.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L208)
 
 #### Returns
 
@@ -54,7 +54,7 @@ Defined in: core/src/wasm-dispatch.ts:208
 
 > **load**(`wasmUrl`): `Promise`\<[`WASMKernels`](WASMKernels.md)\>
 
-Defined in: core/src/wasm-dispatch.ts:207
+Defined in: [core/src/wasm-dispatch.ts:207](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L207)
 
 #### Parameters
 
@@ -72,7 +72,7 @@ Defined in: core/src/wasm-dispatch.ts:207
 
 > **unload**(): `void`
 
-Defined in: core/src/wasm-dispatch.ts:210
+Defined in: [core/src/wasm-dispatch.ts:210](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wasm-dispatch.ts#L210)
 
 #### Returns
 

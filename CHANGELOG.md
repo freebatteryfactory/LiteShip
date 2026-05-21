@@ -4,6 +4,24 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.1.2] — 2026-05-21
+
+Dev-experience layer plus CI publishability fixes. All **15** `@czap/*` packages ship at `0.1.2`.
+
+### Added
+- `czap doctor` — preflight rig-check with JSON receipt; `--fix` for cheap repairs, `--ci` to fail on warnings.
+- `czap glossary [term]` — ontology lookup for LiteShip / CZAP prose register.
+- `czap help`, `czap completion <shell>`, `czap version`.
+- Root scripts: `pnpm shakedown` (first-run aggregate), `pnpm run doctor`, `pnpm scripts`, `pnpm run glossary`, `pnpm run fix`, `pnpm run dev`, `pnpm run clean`.
+- `postinstall` welcome + pointer to shakedown.
+
+### Changed
+- **Breaking (scripts only):** `pnpm setup` renamed to `pnpm shakedown` to avoid collision with pnpm's built-in `setup` command.
+
+### Fixed
+- `package:smoke` on Windows CI: avoid `%TEMP%` 8.3 paths (`RUNNER~1` → `RUNNER%7E1`) when building `file://` tarball URLs for the consumer fixture.
+- `docs/api/` regenerated so `docs:check` matches current TSDoc output after CLI surface growth.
+
 ## [0.1.1] — 2026-05-13 (release-automation patch)
 
 First release through the GitHub Actions release pipeline. No runtime

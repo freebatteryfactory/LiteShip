@@ -6,7 +6,7 @@
 
 # Interface: HLCBrand
 
-Defined in: core/src/brands.ts:62
+Defined in: [core/src/brands.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L62)
 
 Hybrid Logical Clock
 
@@ -16,7 +16,7 @@ Hybrid Logical Clock
 
 > `readonly` **counter**: `number`
 
-Defined in: core/src/brands.ts:64
+Defined in: [core/src/brands.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L64)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: core/src/brands.ts:64
 
 > `readonly` **node\_id**: `string`
 
-Defined in: core/src/brands.ts:65
+Defined in: [core/src/brands.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L65)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: core/src/brands.ts:65
 
 > `readonly` **wall\_ms**: `number`
 
-Defined in: core/src/brands.ts:63
+Defined in: [core/src/brands.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L63)

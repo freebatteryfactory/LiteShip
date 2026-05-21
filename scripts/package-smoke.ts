@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -11,6 +12,28 @@ type PackageSpec = {
 };
 
 const ROOT = process.cwd();
+
+/** Tarball path → `file://` URL for pnpm `dependencies` / `pnpm.overrides`. */
+function tarballFileUrl(absolutePath: string): string {
+  // Windows CI profiles often live under 8.3 short paths (`RUNNER~1`). pathToFileURL
+  // percent-encodes `~` as `%7E`; pnpm then looks for a path that does not exist.
+  const resolved = process.platform === 'win32' ? realpathSync.native(absolutePath) : absolutePath;
+  return pathToFileURL(resolved).href;
+}
+
+/**
+ * Scratch root for pack/install smoke. On Windows use a repo-local dir so we never
+ * depend on `%TEMP%` short paths; POSIX keeps `os.tmpdir()` to avoid writing under
+ * the workspace on dev machines.
+ */
+async function createScratchDir(): Promise<string> {
+  if (process.platform === 'win32') {
+    const base = join(ROOT, 'node_modules', '.cache', 'package-smoke');
+    await mkdir(base, { recursive: true });
+    return mkdtemp(join(base, 'run-'));
+  }
+  return mkdtemp(join(tmpdir(), 'czap-package-smoke-'));
+}
 
 /** Mirrors every publishable `@czap/*` scope under `packages/*` (see `pnpm-workspace.yaml`). */
 const PACKAGES: readonly PackageSpec[] = [
@@ -108,7 +131,7 @@ async function packPackage(cwd: string, tarballDir: string): Promise<string> {
 }
 
 async function main(): Promise<void> {
-  const scratch = await mkdtemp(join(tmpdir(), 'czap-package-smoke-'));
+  const scratch = await createScratchDir();
   const tarballDir = join(scratch, 'tarballs');
   const consumerDir = join(scratch, 'consumer');
 
@@ -145,7 +168,7 @@ async function main(): Promise<void> {
       // drive-letter colon collides with URL scheme parsing). pathToFileURL
       // produces a proper `file:///C:/Users/runner/…/.tgz` URL that pnpm
       // accepts on every platform.
-      ...PACKAGES.map((pkg) => [pkg.name, pathToFileURL(tarballByPackage.get(pkg.name)!).href]),
+      ...PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
       ...PEER_INSTALLS.map((specifier) => {
         const atIndex = specifier.lastIndexOf('@');
         return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
@@ -165,7 +188,7 @@ async function main(): Promise<void> {
             // `file:C:\path` is malformed on Windows; pathToFileURL produces
             // `file:///C:/path` that pnpm accepts on every platform.
             overrides: Object.fromEntries(
-              PACKAGES.map((pkg) => [pkg.name, pathToFileURL(tarballByPackage.get(pkg.name)!).href]),
+              PACKAGES.map((pkg) => [pkg.name, tarballFileUrl(tarballByPackage.get(pkg.name)!)]),
             ),
           },
         },
