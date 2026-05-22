@@ -5,7 +5,7 @@
  * a single-line hint instead of a Node ERR_MODULE_NOT_FOUND stack trace.
  */
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -21,6 +21,6 @@ if (!existsSync(distEntry)) {
   process.exit(127);
 }
 
-const { run } = await import(distEntry);
+const { run } = await import(pathToFileURL(distEntry).href);
 const exitCode = await run(process.argv.slice(2));
 process.exit(exitCode);
