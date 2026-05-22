@@ -313,8 +313,10 @@ async function main(): Promise<void> {
       );
       stepOk('consumer .npmrc written (hoisted linker)');
 
+      // Consumer scratch lives under the repo; without --ignore-workspace pnpm
+      // treats this as a workspace root install and never materializes cborg/mediabunny here.
       step(`pnpm install consumer dependencies in ${consumerDir}`);
-      run('pnpm', ['install'], consumerDir);
+      run('pnpm', ['install', '--ignore-workspace'], consumerDir);
       stepOk('pnpm install complete');
 
       for (const name of Object.keys(externalDeps)) {
