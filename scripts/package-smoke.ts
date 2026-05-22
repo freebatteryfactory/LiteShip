@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync, symlinkSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -89,11 +89,8 @@ function resolveExecutable(command: string): string {
   if (command === 'pnpm' && process.env['npm_execpath']) {
     return process.execPath;
   }
-  if (process.platform === 'win32') {
-    const winCmd = { pnpm: 'pnpm.cmd', npm: 'npm.cmd', npx: 'npx.cmd' } as const;
-    if (command in winCmd) {
-      return winCmd[command as keyof typeof winCmd];
-    }
+  if (process.platform === 'win32' && command === 'pnpm') {
+    return 'pnpm.cmd';
   }
   return command;
 }
@@ -161,6 +158,43 @@ function assertConsumerDependencyInstalled(consumerDir: string, packageName: str
     throw new Error(
       `${packageName} missing from ${join(consumerDir, 'node_modules')} after install — import-smoke cannot resolve it.`,
     );
+  }
+}
+
+/**
+ * Tar-extracted `@czap/*` trees live under nested `node_modules/`. Node resolves
+ * bare imports from the importing file upward; pnpm's default linker often leaves
+ * mediabunny/cborg only at the consumer root. Mirror them beside each package
+ * that declares them so `import 'mediabunny'` from `@czap/web/dist/...` works.
+ */
+function linkHoistedDepsBesidePackedPackages(
+  consumerDir: string,
+  tarballByPackage: Map<string, string>,
+  externalDeps: Record<string, string>,
+): void {
+  const peers = peerDependenciesOnly();
+  const linkable = new Set([...Object.keys(externalDeps), ...Object.keys(peers)]);
+
+  for (const pkg of PACKAGES) {
+    const manifest = readPackedManifest(tarballByPackage.get(pkg.name)!);
+    const pkgDir = join(consumerDir, 'node_modules', ...pkg.name.split('/'));
+    const nestedRoot = join(pkgDir, 'node_modules');
+
+    for (const field of ['dependencies', 'optionalDependencies'] as const) {
+      for (const name of Object.keys(manifest[field] ?? {})) {
+        if (!linkable.has(name)) {
+          continue;
+        }
+        const source = join(consumerDir, 'node_modules', ...name.split('/'));
+        const target = join(nestedRoot, ...name.split('/'));
+        if (!existsSync(join(source, 'package.json')) || existsSync(join(target, 'package.json'))) {
+          continue;
+        }
+        mkdirSync(nestedRoot, { recursive: true });
+        const linkTarget = process.platform === 'win32' ? resolve(source) : source;
+        symlinkSync(linkTarget, target, process.platform === 'win32' ? 'junction' : 'dir');
+      }
+    }
   }
 }
 
@@ -245,16 +279,24 @@ async function main(): Promise<void> {
         `consumer package.json written (peers + packed externals: ${Object.keys(externalDeps).join(', ') || 'none'})`,
       );
 
-      // npm produces a flat node_modules tree on Windows; pnpm's isolated linker
-      // often leaves mediabunny/cborg off the resolution path for tar-extracted @czap/*.
-      step(`npm install consumer dependencies in ${consumerDir}`);
-      run('npm', ['install', '--no-package-lock', '--no-audit', '--no-fund'], consumerDir);
-      stepOk('npm install complete');
+      await writeFile(
+        join(consumerDir, '.npmrc'),
+        ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'),
+      );
+      stepOk('consumer .npmrc written (hoisted linker)');
+
+      step(`pnpm install consumer dependencies in ${consumerDir}`);
+      run('pnpm', ['install'], consumerDir);
+      stepOk('pnpm install complete');
 
       for (const name of Object.keys(externalDeps)) {
         assertConsumerDependencyInstalled(consumerDir, name);
       }
       stepOk(`verified externals on disk: ${Object.keys(externalDeps).join(', ') || 'none'}`);
+
+      step('link hoisted peers/externals beside tar-extracted @czap/* packages (Windows)');
+      linkHoistedDepsBesidePackedPackages(consumerDir, tarballByPackage, externalDeps);
+      stepOk('nested node_modules links materialized');
     } else {
       step('build consumer package.json (dependencies + pnpm.overrides as file:// URLs)');
       const dependencies = Object.fromEntries([
@@ -313,12 +355,8 @@ for (const specifier of imports) {
     run('node', ['smoke.mjs'], consumerDir);
     stepOk('all imports resolved');
 
-    step('czap describe --format=json (binstub resolution check)');
-    if (process.platform === 'win32') {
-      run('npx', ['czap', 'describe', '--format=json'], consumerDir);
-    } else {
-      run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
-    }
+    step('pnpm exec czap describe --format=json (binstub resolution check)');
+    run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
     stepOk('czap binstub resolved and produced a describe receipt');
 
     console.log(`Package smoke passed for ${PACKAGES.length} packages.`);
