@@ -1,4 +1,4 @@
-import { mkdirSync, realpathSync } from 'node:fs';
+import { existsSync, mkdirSync, realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -131,18 +131,29 @@ function peerDependenciesOnly(): Record<string, string> {
 
 /** npm deps declared in packed manifests (e.g. mediabunny, cborg) — not installed by tar extract alone. */
 function collectPackedExternalDependencies(tarballByPackage: Map<string, string>): Record<string, string> {
+  const peers = peerDependenciesOnly();
   const external: Record<string, string> = {};
   for (const pkg of PACKAGES) {
     const manifest = readPackedManifest(tarballByPackage.get(pkg.name)!);
     for (const field of ['dependencies', 'optionalDependencies'] as const) {
       for (const [name, version] of Object.entries(manifest[field] ?? {})) {
-        if (!name.startsWith('@czap/') && !version.startsWith('workspace:')) {
-          external[name] = version;
+        if (name.startsWith('@czap/') || version.startsWith('workspace:') || name in peers) {
+          continue;
         }
+        external[name] = version;
       }
     }
   }
   return external;
+}
+
+function assertConsumerDependencyInstalled(consumerDir: string, packageName: string): void {
+  const installed = join(consumerDir, 'node_modules', ...packageName.split('/'));
+  if (!existsSync(join(installed, 'package.json'))) {
+    throw new Error(
+      `${packageName} missing from ${join(consumerDir, 'node_modules')} after install — import-smoke cannot resolve it.`,
+    );
+  }
 }
 
 function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: string): void {
@@ -226,9 +237,16 @@ async function main(): Promise<void> {
         `consumer package.json written (peers + packed externals: ${Object.keys(externalDeps).join(', ') || 'none'})`,
       );
 
-      step(`pnpm install peer dependencies in consumer dir (${consumerDir})`);
-      run('pnpm', ['install'], consumerDir);
-      stepOk('pnpm install complete');
+      // npm produces a flat node_modules tree on Windows; pnpm's isolated linker
+      // often leaves mediabunny/cborg off the resolution path for tar-extracted @czap/*.
+      step(`npm install consumer dependencies in ${consumerDir}`);
+      run('npm', ['install', '--no-package-lock', '--no-audit', '--no-fund'], consumerDir);
+      stepOk('npm install complete');
+
+      for (const name of Object.keys(externalDeps)) {
+        assertConsumerDependencyInstalled(consumerDir, name);
+      }
+      stepOk(`verified externals on disk: ${Object.keys(externalDeps).join(', ') || 'none'}`);
     } else {
       step('build consumer package.json (dependencies + pnpm.overrides as file:// URLs)');
       const dependencies = Object.fromEntries([
@@ -287,8 +305,12 @@ for (const specifier of imports) {
     run('node', ['smoke.mjs'], consumerDir);
     stepOk('all imports resolved');
 
-    step('pnpm exec czap describe --format=json (binstub resolution check)');
-    run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+    step('czap describe --format=json (binstub resolution check)');
+    if (process.platform === 'win32') {
+      run('npx', ['czap', 'describe', '--format=json'], consumerDir);
+    } else {
+      run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+    }
     stepOk('czap binstub resolved and produced a describe receipt');
 
     console.log(`Package smoke passed for ${PACKAGES.length} packages.`);
