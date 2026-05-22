@@ -254,14 +254,11 @@ async function main(): Promise<void> {
     stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
 
     if (process.platform === 'win32') {
-      step(`materialize ${PACKAGES.length} packed @czap/* trees under consumer node_modules (Windows)`);
-      for (const pkg of PACKAGES) {
-        const dest = join(consumerDir, 'node_modules', ...pkg.name.split('/'));
-        extractPackedPackage(tarballByPackage.get(pkg.name)!, dest);
-      }
-      stepOk(`extracted ${PACKAGES.length} @czap/* packages into node_modules`);
-
       const externalDeps = collectPackedExternalDependencies(tarballByPackage);
+
+      // Install peers + packed externals before extracting @czap/* tarballs. If the
+      // scoped trees land first, pnpm treats their package.json deps as already
+      // materialized and skips hoisting cborg/mediabunny to the consumer root.
       await writeFile(
         join(consumerDir, 'package.json'),
         JSON.stringify(
@@ -293,6 +290,13 @@ async function main(): Promise<void> {
         assertConsumerDependencyInstalled(consumerDir, name);
       }
       stepOk(`verified externals on disk: ${Object.keys(externalDeps).join(', ') || 'none'}`);
+
+      step(`materialize ${PACKAGES.length} packed @czap/* trees under consumer node_modules (Windows)`);
+      for (const pkg of PACKAGES) {
+        const dest = join(consumerDir, 'node_modules', ...pkg.name.split('/'));
+        extractPackedPackage(tarballByPackage.get(pkg.name)!, dest);
+      }
+      stepOk(`extracted ${PACKAGES.length} @czap/* packages into node_modules`);
 
       step('link hoisted peers/externals beside tar-extracted @czap/* packages (Windows)');
       linkHoistedDepsBesidePackedPackages(consumerDir, tarballByPackage, externalDeps);
