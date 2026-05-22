@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, realpathSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, realpathSync, symlinkSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -152,9 +152,40 @@ function collectPackedExternalDependencies(tarballByPackage: Map<string, string>
   return external;
 }
 
+/** Hoisted pnpm often keeps packages only under `node_modules/.pnpm/<pkg>@ver/node_modules/<pkg>`. */
+function findConsumerDependencyRoot(consumerDir: string, packageName: string): string | undefined {
+  const segments = packageName.split('/');
+  const direct = join(consumerDir, 'node_modules', ...segments);
+  if (existsSync(join(direct, 'package.json'))) {
+    return direct;
+  }
+
+  const hoisted = join(consumerDir, 'node_modules', '.pnpm', 'node_modules', ...segments);
+  if (existsSync(join(hoisted, 'package.json'))) {
+    return hoisted;
+  }
+
+  const store = join(consumerDir, 'node_modules', '.pnpm');
+  if (!existsSync(store)) {
+    return undefined;
+  }
+
+  const folderPrefix = `${packageName.replace('/', '+')}@`;
+  for (const entry of readdirSync(store)) {
+    if (!entry.startsWith(folderPrefix)) {
+      continue;
+    }
+    const candidate = join(store, entry, 'node_modules', ...segments);
+    if (existsSync(join(candidate, 'package.json'))) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
 function assertConsumerDependencyInstalled(consumerDir: string, packageName: string): void {
-  const installed = join(consumerDir, 'node_modules', ...packageName.split('/'));
-  if (!existsSync(join(installed, 'package.json'))) {
+  if (!findConsumerDependencyRoot(consumerDir, packageName)) {
     throw new Error(
       `${packageName} missing from ${join(consumerDir, 'node_modules')} after install — import-smoke cannot resolve it.`,
     );
@@ -185,9 +216,9 @@ function linkHoistedDepsBesidePackedPackages(
         if (!linkable.has(name)) {
           continue;
         }
-        const source = join(consumerDir, 'node_modules', ...name.split('/'));
+        const source = findConsumerDependencyRoot(consumerDir, name);
         const target = join(nestedRoot, ...name.split('/'));
-        if (!existsSync(join(source, 'package.json')) || existsSync(join(target, 'package.json'))) {
+        if (!source || existsSync(join(target, 'package.json'))) {
           continue;
         }
         mkdirSync(nestedRoot, { recursive: true });
