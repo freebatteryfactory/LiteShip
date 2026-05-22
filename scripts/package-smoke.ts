@@ -85,13 +85,21 @@ const PEER_INSTALLS = [
   'fast-check@4.7.0',
 ] as const;
 
+function resolveExecutable(command: string): string {
+  if (command === 'pnpm' && process.env['npm_execpath']) {
+    return process.execPath;
+  }
+  if (process.platform === 'win32') {
+    const winCmd = { pnpm: 'pnpm.cmd', npm: 'npm.cmd', npx: 'npx.cmd' } as const;
+    if (command in winCmd) {
+      return winCmd[command as keyof typeof winCmd];
+    }
+  }
+  return command;
+}
+
 function run(command: string, args: readonly string[], cwd: string): string {
-  const executable =
-    command === 'pnpm' && process.env['npm_execpath']
-      ? process.execPath
-      : process.platform === 'win32' && command === 'pnpm'
-        ? 'pnpm.cmd'
-        : command;
+  const executable = resolveExecutable(command);
   const commandArgs = command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
   return execFileSync(executable, commandArgs, {
     cwd,
