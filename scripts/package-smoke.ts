@@ -392,8 +392,14 @@ for (const specifier of imports) {
     run('node', ['smoke.mjs'], consumerDir);
     stepOk('all imports resolved');
 
-    step('pnpm exec czap describe --format=json (binstub resolution check)');
-    run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+    step('czap describe --format=json (binstub resolution check)');
+    if (process.platform === 'win32') {
+      // Tar-extracted @czap/cli has no node_modules/.bin shim; run the packed bin directly.
+      const czapBin = join(consumerDir, 'node_modules', '@czap', 'cli', 'bin', 'czap.mjs');
+      run('node', [czapBin, 'describe', '--format=json'], consumerDir);
+    } else {
+      run('pnpm', ['exec', 'czap', 'describe', '--format=json'], consumerDir);
+    }
     stepOk('czap binstub resolved and produced a describe receipt');
 
     console.log(`Package smoke passed for ${PACKAGES.length} packages.`);
