@@ -53,6 +53,50 @@ export type FrameworkRecommendation =
   | 'new_runtime_work'
   | 'documentation_clarification';
 
+/**
+ * Audit self-trust coverage class (CUT A0). Every audit check result carries one
+ * of these so a clean result can never be silently confused with an unchecked one.
+ *
+ * - `clean`            checked against real evidence / an explicit policy, no finding
+ * - `symbol-evidenced` verified at the symbol level
+ * - `file-proxy-only`  verified only at file granularity (coarser than the claim)
+ * - `allowlisted`      permitted by an explicit allowlist/policy entry
+ * - `policy-absent`    no policy exists to evaluate this subject
+ * - `not-checked`      out of scope for this check
+ */
+export type AuditCoverageClass =
+  | 'clean'
+  | 'symbol-evidenced'
+  | 'file-proxy-only'
+  | 'allowlisted'
+  | 'policy-absent'
+  | 'not-checked';
+
+export interface TopologyCoverageEntry {
+  readonly package: string;
+  /** `clean` when a topology policy governs this package; `policy-absent` when none exists. */
+  readonly coverage: AuditCoverageClass;
+}
+
+export interface AllowlistUnexercisedEntry {
+  readonly package: string;
+  readonly permitted: string;
+  readonly coverage: 'allowlisted';
+  readonly exercised: false;
+}
+
+export interface OrphanCoverage {
+  readonly coverage: 'file-proxy-only';
+  readonly candidateCount: number;
+  readonly note: string;
+}
+
+export interface StructureCoverageClassification {
+  readonly topology: readonly TopologyCoverageEntry[];
+  readonly orphan: OrphanCoverage;
+  readonly allowlistUnexercised: readonly AllowlistUnexercisedEntry[];
+}
+
 export interface AuditControlEvaluation {
   readonly family: string;
   readonly weight: number;
