@@ -187,7 +187,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'layered',
   },
   '@czap/web': {
-    allowedInternalImports: ['@czap/core', '@czap/quantizer', '@czap/compiler'],
+    // CUT A3: web imports only @czap/core; quantizer/compiler were permitted but
+    // never imported or declared (removed to make drift loud).
+    allowedInternalImports: ['@czap/core'],
     kind: 'layered',
   },
   '@czap/detect': {
@@ -203,11 +205,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'host-adjacent',
   },
   '@czap/vite': {
-    allowedInternalImports: ['@czap/core', '@czap/quantizer', '@czap/compiler'],
+    // CUT A3: vite imports core + compiler; quantizer was permitted but never imported.
+    allowedInternalImports: ['@czap/core', '@czap/compiler'],
     kind: 'host-adjacent',
   },
   '@czap/astro': {
-    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker'],
+    // CUT A3: astro deliberately does NOT depend on @czap/compiler (see the
+    // duplicated-predicate note in astro/src/runtime/boundary.ts; CUT A4 routes
+    // the shared predicate through @czap/core instead). compiler removed.
+    allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker'],
     kind: 'host-adjacent',
   },
   '@czap/remotion': {

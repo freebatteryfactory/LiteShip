@@ -736,10 +736,12 @@ export const ids = [
     expect(classification.orphan.candidateCount).toBe(runStructureAudit(root).summary.orphanCandidateCount);
 
     // (c) Allowlist entries permitting an import that never happens are reported as unexercised.
+    // (vite -> core: the fixture's vite/src only re-exports a local module, so core is
+    //  permitted-but-unexercised in the fixture both before and after CUT A3.)
     expect(classification.allowlistUnexercised.length).toBeGreaterThanOrEqual(1);
     expect(
       classification.allowlistUnexercised.some(
-        (entry) => entry.package === '@czap/web' && entry.permitted === '@czap/quantizer',
+        (entry) => entry.package === '@czap/vite' && entry.permitted === '@czap/core',
       ),
     ).toBe(true);
     expect(classification.allowlistUnexercised.every((entry) => entry.coverage === 'allowlisted' && entry.exercised === false)).toBe(true);
@@ -776,5 +778,19 @@ export const ids = [
       (finding) => finding.rule === 'package-topology' && finding.metadata?.targetPackage === '@czap/_spine',
     );
     expect(spineViolations).toHaveLength(0);
+  });
+
+  test('CUT A3: astro/web/vite allowlists no longer carry unexercised compiler/quantizer permits', () => {
+    // Runs against the REAL repo policy + sources (no fixture root). The dropped
+    // edges are imports those packages never make, so once removed from policy
+    // they cannot appear in allowlistUnexercised at all.
+    const unexercised = runStructureAudit().summary.coverageClassification.allowlistUnexercised;
+    const has = (pkg: string, permitted: string): boolean =>
+      unexercised.some((entry) => entry.package === pkg && entry.permitted === permitted);
+
+    expect(has('@czap/astro', '@czap/compiler')).toBe(false);
+    expect(has('@czap/web', '@czap/quantizer')).toBe(false);
+    expect(has('@czap/web', '@czap/compiler')).toBe(false);
+    expect(has('@czap/vite', '@czap/quantizer')).toBe(false);
   });
 });
