@@ -54,6 +54,7 @@ import type {
   ProtocolAreaId,
   ProtocolGapArea,
   ProtocolGapReport,
+  StructureCoverageClassification,
 } from './types.js';
 
 const { createCoverageMap } = libCoverage;
@@ -2017,6 +2018,22 @@ export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string
     `- Strike board items: ${report.strikeBoard.totalItems}${report.strikeBoard.topItemTitle ? `, top item "${report.strikeBoard.topItemTitle}"` : ''}.`,
     '',
   ];
+
+  const coverage = (report.structure.summary as { coverageClassification?: StructureCoverageClassification }).coverageClassification;
+  if (coverage) {
+    const policyAbsent = coverage.topology.filter((entry) => entry.coverage === 'policy-absent').map((entry) => entry.package);
+    const unexercised = coverage.allowlistUnexercised.map((entry) => `${entry.package} -> ${entry.permitted}`);
+    lines.push(
+      '## Audit Self-Trust',
+      '',
+      'Coverage classes distinguish a checked-clean result from an unchecked one (CUT A0). A zero here is not proof where coverage is `policy-absent` or `file-proxy-only`.',
+      '',
+      `- Topology policy-absent packages (no layering law evaluated): ${policyAbsent.length === 0 ? 'none' : policyAbsent.join(', ')}`,
+      `- Orphan-export check coverage: \`${coverage.orphan.coverage}\` (${coverage.orphan.candidateCount} candidate(s)). ${coverage.orphan.note}`,
+      `- Allowlisted-but-unexercised internal imports: ${unexercised.length === 0 ? 'none' : unexercised.join(', ')}`,
+      '',
+    );
+  }
 
   for (const section of report.sections) {
     lines.push(`## ${section.title}`, '');

@@ -13,7 +13,13 @@ import {
   relativeToRoot,
   writeTextFile,
 } from './shared.js';
-import type { AuditFinding, AuditSectionResult } from './types.js';
+import type {
+  AllowlistUnexercisedEntry,
+  AuditFinding,
+  AuditSectionResult,
+  StructureCoverageClassification,
+  TopologyCoverageEntry,
+} from './types.js';
 
 export interface StructureSummary {
   readonly packageCount: number;
@@ -28,6 +34,12 @@ export interface StructureSummary {
     readonly to: string;
     readonly count: number;
   }[];
+  /**
+   * Audit self-trust classification (CUT A0): how each structure check was
+   * actually evaluated, so `0` findings cannot be read as proof where the check
+   * is policy-absent or only a file-level proxy.
+   */
+  readonly coverageClassification: StructureCoverageClassification;
 }
 
 interface ExportedSymbol {
@@ -474,6 +486,38 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
     })
     .sort((left, right) => right.count - left.count || left.from.localeCompare(right.from) || left.to.localeCompare(right.to));
 
+  const orphanCandidateCount = partitioned.findings.filter((finding) => finding.rule === 'orphan-export-candidate').length;
+
+  // CUT A0 — classify how each structure check was evaluated so a clean result
+  // is never confused with an unchecked one. This does not change what is
+  // allowed or flagged; it only reports coverage honestly.
+  const edgeKeys = new Set(packageEdges.keys());
+  const topology: TopologyCoverageEntry[] = packageInfos.map((pkg) => ({
+    package: pkg.name,
+    coverage: packageTopology[pkg.name] ? 'clean' : 'policy-absent',
+  }));
+  const allowlistUnexercised: AllowlistUnexercisedEntry[] = packageInfos.flatMap((pkg) => {
+    const policy = packageTopology[pkg.name];
+    if (!policy) return [];
+    return policy.allowedInternalImports
+      .filter((dependency) => dependency !== pkg.name && !edgeKeys.has(`${pkg.name} -> ${dependency}`))
+      .map((dependency) => ({
+        package: pkg.name,
+        permitted: dependency,
+        coverage: 'allowlisted' as const,
+        exercised: false as const,
+      }));
+  });
+  const coverageClassification: StructureCoverageClassification = {
+    topology,
+    orphan: {
+      coverage: 'file-proxy-only',
+      candidateCount: orphanCandidateCount,
+      note: 'Orphan detection clears an entire file once any import resolves to it and skips index.ts files, so this count (including 0) does not prove every exported symbol has an in-repo consumer. Symbol-level evidence lands in CUT A6.',
+    },
+    allowlistUnexercised,
+  };
+
   return {
     section: 'structure',
     summary: {
@@ -482,9 +526,10 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
       internalImportEdges,
       externalImportCount,
       publicExportCount: exportedSymbols.length,
-      orphanCandidateCount: partitioned.findings.filter((finding) => finding.rule === 'orphan-export-candidate').length,
+      orphanCandidateCount,
       defaultExportCount,
       packageEdges: packageEdgeSummary,
+      coverageClassification,
     },
     findings: partitioned.findings,
     suppressed: partitioned.suppressed,

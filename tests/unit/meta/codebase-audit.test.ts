@@ -145,6 +145,28 @@ export function loadVirtualModule(id: string): string | undefined {
   };
 }
 
+function coverageClassificationFixtureFiles(): Record<string, string> {
+  const minimalPackage = (name: string): string =>
+    JSON.stringify({ name, type: 'module', exports: { '.': { development: './src/index.ts' } } }, null, 2);
+
+  return {
+    ...baseRepoFiles(),
+    // @czap/web has a topology policy permitting core, quantizer, compiler, but
+    // imports only core here -> quantizer and compiler are unexercised allowlist entries.
+    'packages/web/package.json': minimalPackage('@czap/web'),
+    'packages/web/src/index.ts': 'import { coreReady } from "@czap/core";\nexport const webReady = coreReady;\n',
+    // Four publishable packages absent from packageTopology -> policy-absent.
+    'packages/cli/package.json': minimalPackage('@czap/cli'),
+    'packages/cli/src/index.ts': 'export const cliReady = true;\n',
+    'packages/mcp-server/package.json': minimalPackage('@czap/mcp-server'),
+    'packages/mcp-server/src/index.ts': 'export const mcpReady = true;\n',
+    'packages/scene/package.json': minimalPackage('@czap/scene'),
+    'packages/scene/src/index.ts': 'export const sceneReady = true;\n',
+    'packages/assets/package.json': minimalPackage('@czap/assets'),
+    'packages/assets/src/index.ts': 'export const assetsReady = true;\n',
+  };
+}
+
 function readAstroDirectiveWrapper(relativePath: string): ts.SourceFile {
   const absolutePath = join(process.cwd(), relativePath);
   return ts.createSourceFile(absolutePath, readFileSync(absolutePath, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -682,5 +704,49 @@ export const ids = [
     expect(bundle.frameworkBlueprintDelta.capabilities.some((capability) => capability.status === 'absent')).toBe(true);
     expect(bundle.strikeBoard.items.some((item) => item.kind === 'file')).toBe(true);
     expect(bundle.strikeBoard.items.some((item) => item.kind === 'architecture')).toBe(true);
+  });
+
+  test('structure audit classifies coverage so clean is distinguishable from not-checked', () => {
+    const root = createRepo(coverageClassificationFixtureFiles());
+
+    const classification = runStructureAudit(root).summary.coverageClassification;
+
+    // (a) The four packages with no topology entry are reported as policy-absent, not silently clean.
+    const policyAbsent = new Set(
+      classification.topology.filter((entry) => entry.coverage === 'policy-absent').map((entry) => entry.package),
+    );
+    expect(policyAbsent.has('@czap/cli')).toBe(true);
+    expect(policyAbsent.has('@czap/mcp-server')).toBe(true);
+    expect(policyAbsent.has('@czap/scene')).toBe(true);
+    expect(policyAbsent.has('@czap/assets')).toBe(true);
+    // A package that does have a policy is not policy-absent.
+    expect(classification.topology.find((entry) => entry.package === '@czap/core')?.coverage).not.toBe('policy-absent');
+
+    // (b) Orphan detection is labelled file-proxy-only so its zero/count cannot be read as symbol-level proof.
+    expect(classification.orphan.coverage).toBe('file-proxy-only');
+    expect(classification.orphan.candidateCount).toBe(runStructureAudit(root).summary.orphanCandidateCount);
+
+    // (c) Allowlist entries permitting an import that never happens are reported as unexercised.
+    expect(classification.allowlistUnexercised.length).toBeGreaterThanOrEqual(1);
+    expect(
+      classification.allowlistUnexercised.some(
+        (entry) => entry.package === '@czap/web' && entry.permitted === '@czap/quantizer',
+      ),
+    ).toBe(true);
+    expect(classification.allowlistUnexercised.every((entry) => entry.coverage === 'allowlisted' && entry.exercised === false)).toBe(true);
+  });
+
+  test('audit markdown surfaces the self-trust classification', () => {
+    const root = createRepo(coverageClassificationFixtureFiles());
+
+    const report = buildCodebaseAuditReport({ root, generatedAt: '2026-05-24T00:00:00.000Z' });
+    const markdown = renderCodebaseAuditMarkdown(report);
+
+    expect(markdown).toContain('## Audit Self-Trust');
+    expect(markdown).toContain('policy-absent');
+    expect(markdown).toContain('@czap/cli');
+    expect(markdown).toContain('file-proxy-only');
+    // The aggregate score must remain the final line (pinned receipt invariant).
+    expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
   });
 });
