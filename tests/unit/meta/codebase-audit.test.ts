@@ -155,15 +155,27 @@ function coverageClassificationFixtureFiles(): Record<string, string> {
     // imports only core here -> quantizer and compiler are unexercised allowlist entries.
     'packages/web/package.json': minimalPackage('@czap/web'),
     'packages/web/src/index.ts': 'import { coreReady } from "@czap/core";\nexport const webReady = coreReady;\n',
-    // Four publishable packages absent from packageTopology -> policy-absent.
+    // CUT A2 brings these five under topology policy. cli/mcp-server import core;
+    // scene and assets each take a type-only edge to _spine; _spine imports nothing.
     'packages/cli/package.json': minimalPackage('@czap/cli'),
     'packages/cli/src/index.ts': 'export const cliReady = true;\n',
     'packages/mcp-server/package.json': minimalPackage('@czap/mcp-server'),
     'packages/mcp-server/src/index.ts': 'export const mcpReady = true;\n',
     'packages/scene/package.json': minimalPackage('@czap/scene'),
-    'packages/scene/src/index.ts': 'export const sceneReady = true;\n',
+    'packages/scene/src/index.ts':
+      'import { coreReady } from "@czap/core";\nimport type { SpineMarker } from "@czap/_spine";\nexport const sceneReady = coreReady;\nexport type SceneMarker = SpineMarker;\n',
     'packages/assets/package.json': minimalPackage('@czap/assets'),
-    'packages/assets/src/index.ts': 'export const assetsReady = true;\n',
+    'packages/assets/src/index.ts':
+      'import { coreReady } from "@czap/core";\nimport type { SpineMarker } from "@czap/_spine";\nexport const assetsReady = coreReady;\nexport type AssetMarker = SpineMarker;\n',
+    'packages/_spine/package.json': JSON.stringify(
+      { name: '@czap/_spine', type: 'module', exports: { '.': { development: './index.d.ts' } } },
+      null,
+      2,
+    ),
+    'packages/_spine/index.d.ts': 'export type SpineMarker = boolean;\n',
+    // A package with no topology policy at all -> stays policy-absent regardless of A2.
+    'packages/experimental/package.json': minimalPackage('@czap/experimental'),
+    'packages/experimental/src/index.ts': 'export const experimentalReady = true;\n',
   };
 }
 
@@ -711,14 +723,11 @@ export const ids = [
 
     const classification = runStructureAudit(root).summary.coverageClassification;
 
-    // (a) The four packages with no topology entry are reported as policy-absent, not silently clean.
+    // (a) A package with no topology entry is reported as policy-absent, not silently clean.
     const policyAbsent = new Set(
       classification.topology.filter((entry) => entry.coverage === 'policy-absent').map((entry) => entry.package),
     );
-    expect(policyAbsent.has('@czap/cli')).toBe(true);
-    expect(policyAbsent.has('@czap/mcp-server')).toBe(true);
-    expect(policyAbsent.has('@czap/scene')).toBe(true);
-    expect(policyAbsent.has('@czap/assets')).toBe(true);
+    expect(policyAbsent.has('@czap/experimental')).toBe(true);
     // A package that does have a policy is not policy-absent.
     expect(classification.topology.find((entry) => entry.package === '@czap/core')?.coverage).not.toBe('policy-absent');
 
@@ -744,9 +753,28 @@ export const ids = [
 
     expect(markdown).toContain('## Audit Self-Trust');
     expect(markdown).toContain('policy-absent');
-    expect(markdown).toContain('@czap/cli');
+    expect(markdown).toContain('@czap/experimental');
     expect(markdown).toContain('file-proxy-only');
     // The aggregate score must remain the final line (pinned receipt invariant).
     expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
+  });
+
+  test('CUT A2: topology coverage closes over the five formerly policy-absent packages', () => {
+    const root = createRepo(coverageClassificationFixtureFiles());
+    const result = runStructureAudit(root);
+    const coverageByPackage = new Map(
+      result.summary.coverageClassification.topology.map((entry) => [entry.package, entry.coverage] as const),
+    );
+
+    for (const pkg of ['@czap/cli', '@czap/mcp-server', '@czap/scene', '@czap/assets', '@czap/_spine']) {
+      expect(coverageByPackage.get(pkg)).toBeDefined();
+      expect(coverageByPackage.get(pkg)).not.toBe('policy-absent');
+    }
+
+    // scene -> _spine and assets -> _spine are allowed type-only edges, not topology violations.
+    const spineViolations = result.findings.filter(
+      (finding) => finding.rule === 'package-topology' && finding.metadata?.targetPackage === '@czap/_spine',
+    );
+    expect(spineViolations).toHaveLength(0);
   });
 });

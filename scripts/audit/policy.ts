@@ -214,6 +214,41 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: ['@czap/core'],
     kind: 'standalone',
   },
+  // CUT A2 — topology coverage closure. These five were policy-absent (surfaced
+  // by CUT A0's self-trust classification). Each entry reflects the package's
+  // actual internal import law today; no product code changed in A2.
+  '@czap/scene': {
+    // scene composes core primitives and takes a type-only edge to the spine
+    // (scene/src/contract.ts imports TrackId/TrackKind from @czap/_spine).
+    allowedInternalImports: ['@czap/core', '@czap/_spine'],
+    kind: 'layered',
+  },
+  '@czap/assets': {
+    // assets currently imports only core. @czap/_spine is pre-blessed as a
+    // type-only edge because CUT A5 will home the shared beat-projection
+    // contract in the spine; this is a modeled extension seam, not fantasy.
+    allowedInternalImports: ['@czap/core', '@czap/_spine'],
+    kind: 'layered',
+  },
+  '@czap/cli': {
+    // Terminal adapter: imports core, and assets (asset-analyze command).
+    // Note: the cli <-> mcp-server relationship is a dynamic import not tracked
+    // by this static topology check; CUT A1 reshapes that dependency law.
+    allowedInternalImports: ['@czap/core', '@czap/assets'],
+    kind: 'host-adjacent',
+  },
+  '@czap/mcp-server': {
+    // Protocol adapter: statically imports only core today (the cli edge is a
+    // dynamic import, reshaped in CUT A1).
+    allowedInternalImports: ['@czap/core'],
+    kind: 'host-adjacent',
+  },
+  '@czap/_spine': {
+    // The canonical type-only spine (ADR-0010). It is consumed by other
+    // packages as a type-only source and imports no internal package itself.
+    allowedInternalImports: [],
+    kind: 'standalone',
+  },
 };
 
 export const surfacePolicy = {
