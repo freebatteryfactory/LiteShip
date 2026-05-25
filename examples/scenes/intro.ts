@@ -10,9 +10,10 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
-import { Track, syncTo, compileScene } from '@czap/scene';
+import { Track, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract, SceneBeat } from '@czap/scene';
 import { AssetRef } from '@czap/assets';
+import type { BeatMarkerSet } from '@czap/assets';
 // Side-effect import registers introBed + introBedBeats in the asset registry.
 import './assets.js';
 
@@ -25,19 +26,25 @@ const heroId = Track.videoId('hero');
 const outroId = Track.videoId('outro');
 const bedId = Track.audioId('bed');
 
-// Pre-resolved beat markers spaced at 60_000/bpm milliseconds across the
-// scene duration. Production code would source these from the
-// introBedBeats BeatMarkerProjection at compile time; the simple
-// BPM-derived series proves the wiring path end-to-end without
-// requiring a real audio decode in CI.
-const _msPerBeat = 60_000 / 128;
-const _beatCount = Math.floor(4000 / _msPerBeat);
-const introBeats: readonly SceneBeat[] = Array.from({ length: _beatCount }, (_, i) => ({
-  kind: 'beat' as const,
-  timeMs: i * _msPerBeat,
-  strength: 1,
+// Beat markers, sourced through the official projection→scene bridge.
+// In production these come from running BeatMarkerProjection('intro-bed')
+// over decoded audio; here we synthesize the equivalent sample-space
+// projection (a steady 128bpm pulse) and feed it through the canonical
+// resolver, so the real wiring path is exercised end-to-end without a
+// real audio decode in CI. `samplesPerBeat` is integral at 48 kHz, so the
+// resolver's `index / sampleRate * 1000` reproduces exact 60_000/bpm spacing.
+const _sampleRate = 48_000;
+const _samplesPerBeat = (_sampleRate * 60) / 128;
+const _beatCount = Math.floor(4000 / (60_000 / 128));
+const introBeatProjection: BeatMarkerSet = {
+  bpm: 128,
+  beats: Array.from({ length: _beatCount }, (_, i) => i * _samplesPerBeat),
+};
+const introBeats: readonly SceneBeat[] = resolveBeatProjectionToSceneBeats({
+  projection: introBeatProjection,
+  sampleRate: _sampleRate,
   anchorTrackId: 'bed',
-}));
+});
 
 /** Intro scene contract — 4 second music-video intro at 60fps, BPM 128. */
 const contract: SceneContract = {

@@ -32,6 +32,10 @@
   // The broader test tree has accumulated type-errors that are tolerated
   // because tests/ was excluded from typecheck; expanding coverage is
   // follow-up cleanup, not in scope for Spec 1.1.
-  "include": ["tests/unit/track-id.test.ts", "tests/unit/spawn-quoting-drift.test.ts"],
+  "include": [
+    "tests/unit/track-id.test.ts",
+    "tests/unit/spawn-quoting-drift.test.ts",
+    "tests/unit/_spine/beat-contract.test.ts"
+  ],
   "exclude": ["node_modules", "**/dist/**"]
 }

@@ -249,6 +249,9 @@ importers:
 
   packages/assets:
     dependencies:
+      '@czap/_spine':
+        specifier: workspace:*
+        version: link:../_spine
       '@czap/core':
         specifier: workspace:*
         version: link:../core

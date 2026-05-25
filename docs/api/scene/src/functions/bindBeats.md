@@ -6,9 +6,9 @@
 
 # Function: bindBeats()
 
-> **bindBeats**(`beats`): readonly [`BeatSpawn`](../interfaces/BeatSpawn.md)[]
+> **bindBeats**(`beats`): readonly `BeatSpawn`[]
 
-Defined in: [scene/src/capsules/beat-binding.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L108)
+Defined in: [scene/src/capsules/beat-binding.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L110)
 
 Pure transform: BeatComponent[] → BeatSpawn[]. Each input beat becomes
 one spawn descriptor whose `components` field is suitable for direct
@@ -21,8 +21,8 @@ the input array; the output is a fresh, owned-by-runtime sequence.
 
 ### beats
 
-readonly [`BeatComponent`](../interfaces/BeatComponent.md)[]
+readonly `BeatComponent`[]
 
 ## Returns
 
-readonly [`BeatSpawn`](../interfaces/BeatSpawn.md)[]
+readonly `BeatSpawn`[]

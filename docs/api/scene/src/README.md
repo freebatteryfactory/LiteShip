@@ -18,9 +18,7 @@ ECS substrate in `@czap/core`.
 ## Interfaces
 
 - [AudioTrack](interfaces/AudioTrack.md)
-- [BeatComponent](interfaces/BeatComponent.md)
 - [BeatHandle](interfaces/BeatHandle.md)
-- [BeatSpawn](interfaces/BeatSpawn.md)
 - [CompiledScene](interfaces/CompiledScene.md)
 - [EffectTrack](interfaces/EffectTrack.md)
 - [FadeEnvelope](interfaces/FadeEnvelope.md)
@@ -37,6 +35,8 @@ ECS substrate in `@czap/core`.
 
 ## Type Aliases
 
+- [BeatComponent](type-aliases/BeatComponent.md)
+- [BeatSpawn](type-aliases/BeatSpawn.md)
 - [EaseFn](type-aliases/EaseFn.md)
 - [SceneBeat](type-aliases/SceneBeat.md)
 - [SceneSubscenePartial](type-aliases/SceneSubscenePartial.md)
@@ -67,6 +67,7 @@ ECS substrate in `@czap/core`.
 - [inheritContext](functions/inheritContext.md)
 - [PassThroughMixer](functions/PassThroughMixer.md)
 - [resolveBeat](functions/resolveBeat.md)
+- [resolveBeatProjectionToSceneBeats](functions/resolveBeatProjectionToSceneBeats.md)
 - [SyncSystem](functions/SyncSystem.md)
 - [TransitionSystem](functions/TransitionSystem.md)
 - [VideoSystem](functions/VideoSystem.md)

@@ -6,9 +6,9 @@
 
 # Function: BeatMarkerProjection()
 
-> **BeatMarkerProjection**(`audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, [`BeatMarkerSet`](../interfaces/BeatMarkerSet.md), `unknown`\>
+> **BeatMarkerProjection**(`audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, `BeatMarkerSet`, `unknown`\>
 
-Defined in: [assets/src/analysis/beat-markers.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L77)
+Defined in: [assets/src/analysis/beat-markers.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L80)
 
 Build a BeatMarkerProjection cachedProjection capsule for a named audio asset.
 
@@ -20,4 +20,4 @@ Build a BeatMarkerProjection cachedProjection capsule for a named audio asset.
 
 ## Returns
 
-`CapsuleDef`\<`"cachedProjection"`, `unknown`, [`BeatMarkerSet`](../interfaces/BeatMarkerSet.md), `unknown`\>
+`CapsuleDef`\<`"cachedProjection"`, `unknown`, `BeatMarkerSet`, `unknown`\>

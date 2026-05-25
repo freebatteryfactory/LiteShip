@@ -14,7 +14,7 @@ Top-level scene contract — typed declaration shape for an entire composition.
 
 ### beats?
 
-> `readonly` `optional` **beats?**: readonly [`BeatComponent`](BeatComponent.md)[]
+> `readonly` `optional` **beats?**: readonly `BeatComponent`[]
 
 Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L102)
 
