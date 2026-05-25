@@ -1,23 +1,18 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { spawnArgv } from '../../../scripts/lib/spawn.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
+import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
 describe('czap asset analyze', () => {
-  // capsule:compile is type-directed and can run ~5s cold. Hoist it once
-  // for the whole file: every test below needs the intro-bed capsule, and
-  // compile is idempotent given an unchanged tree.
-  //
-  // Use stdio array (not the string 'ignore') so spawnArgv can attach
-  // its stderr ring buffer — without this, r.stderrTail is always empty
-  // and a non-zero exit produces "capsule:compile failed: " with no detail,
-  // which is exactly the failure mode that surfaced during an earlier flake.
+  // capsule:compile is type-directed and can run ~5s cold. Hoist it once for the
+  // whole file: every test below needs the intro-bed capsule in the manifest.
+  // Manifest-only + temp manifest (CUT T1) so this never writes — or races —
+  // the shared reports/capsule-manifest.json or tests/generated/ dir.
+  let iso: IsolatedCapsules;
   beforeAll(async () => {
-    const r = await spawnArgv('pnpm', ['run', 'capsule:compile'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    if (r.exitCode !== 0) throw new Error(`capsule:compile failed: ${r.stderrTail}`);
+    iso = await compileManifestOnly('czap-asset-analyze');
   }, 120_000);
+  afterAll(() => iso?.restore());
 
   it('runs beat projection on intro-bed and emits markerCount', async () => {
     // Task 5 registered WavMetadataProjection('intro-bed') alongside the

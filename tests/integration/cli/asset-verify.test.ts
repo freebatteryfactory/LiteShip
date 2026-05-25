@@ -1,12 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { spawnArgv } from '../../../scripts/lib/spawn.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
+import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
 describe('czap asset verify', () => {
+  // Manifest-only + temp manifest (CUT T1): the verify runs the committed
+  // generated tests but this never rewrites the shared tests/generated/ dir.
+  let iso: IsolatedCapsules;
+  beforeAll(async () => {
+    iso = await compileManifestOnly('czap-asset-verify');
+  }, 120_000);
+  afterAll(() => iso?.restore());
+
   it('returns ok for a registered asset', async () => {
-    const r = await spawnArgv('pnpm', ['run', 'capsule:compile'], { stdio: 'ignore' });
-    if (r.exitCode !== 0) throw new Error(`capsule:compile failed: ${r.stderrTail}`);
     const { exit } = await captureCli(() => run(['asset', 'verify', 'intro-bed']));
     expect([0, 1]).toContain(exit);
   }, 120_000);
