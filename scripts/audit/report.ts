@@ -2030,6 +2030,7 @@ export function renderCodebaseAuditMarkdown(report: CodebaseAuditReport): string
       '',
       `- Topology policy-absent packages (no layering law evaluated): ${policyAbsent.length === 0 ? 'none' : policyAbsent.join(', ')}`,
       `- Orphan-export check coverage: \`${coverage.orphan.coverage}\` (${coverage.orphan.candidateCount} candidate(s)). ${coverage.orphan.note}`,
+      `- Symbol-level orphan evidence: \`${coverage.symbol.coverage}\` — ${coverage.symbol.consumedCount} consumed, ${coverage.symbol.starCoveredCount} star-import-covered, ${coverage.symbol.candidateCount} exported-but-unconsumed. ${coverage.symbol.note}`,
       `- Allowlisted-but-unexercised internal imports: ${unexercised.length === 0 ? 'none' : unexercised.join(', ')}`,
       '',
     );
