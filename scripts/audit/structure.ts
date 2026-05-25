@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
-import { packageTopology, reportPaths, surfacePolicy } from './policy.js';
+import { packageTopology, reportPaths, surfacePolicy, dynamicImportExemptions } from './policy.js';
 import {
   createCounts,
   isDirectExecution,
@@ -439,6 +439,42 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
           referencedNames.forEach((name) => refs.add(name));
           inboundReferences.set(targetRelativePath, refs);
           inboundFiles.add(targetRelativePath);
+        }
+      }
+
+      // Dynamic import — `import('@czap/...')`. The static branches above only
+      // visit import/export DECLARATIONS, so a dynamic package import would slip
+      // past the manifest audit entirely (the seam the cli↔mcp cycle hid behind).
+      // A1-T3: surface pkg→pkg dynamic imports of a workspace package that the
+      // importer doesn't declare in package.json and isn't on the exemption list.
+      if (
+        ts.isCallExpression(node) &&
+        node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+        node.arguments.length > 0 &&
+        ts.isStringLiteral(node.arguments[0]!)
+      ) {
+        const specifier = node.arguments[0]!.text;
+        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets);
+        if (
+          resolved.kind === 'internal-package' &&
+          resolved.targetPackage &&
+          resolved.targetPackage !== packageInfo.name &&
+          packageByName.has(resolved.targetPackage)
+        ) {
+          const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
+          if (!packageInfo.dependencies.includes(resolved.targetPackage) && !dynamicImportExemptions.has(edgeKey)) {
+            const { line, column } = lineAndColumn(record.sourceFile, node.arguments[0]!.getStart());
+            rawFindings.push({
+              id: `structure/manifest-mismatch-dynamic/${record.relativePath}:${line}:${column}`,
+              section: 'structure',
+              rule: 'missing-manifest-dependency-dynamic',
+              severity: 'warning',
+              title: 'Dynamic workspace import missing from package manifest',
+              summary: `Package ${packageInfo.name} dynamically imports ${resolved.targetPackage} but neither declares it in package.json nor is the edge exempt (scripts/audit/policy.ts dynamicImportExemptions).`,
+              location: { file: record.relativePath, line, column },
+              metadata: { packageName: packageInfo.name, targetPackage: resolved.targetPackage },
+            });
+          }
         }
       }
 

@@ -406,6 +406,57 @@ describe('codebase audit loop', () => {
     expect(result.findings.some((finding) => finding.rule === 'package-topology')).toBe(true);
   });
 
+  // CUT A1 — dynamic-import audit detector (A1-T1/T2/T3). The static visitor only
+  // sees import/export declarations; these prove the new CallExpression visitor
+  // surfaces dynamic pkg→pkg imports (and honors the cli→mcp exemption).
+  const pkgJson = (name: string): string =>
+    JSON.stringify({ name, type: 'module', exports: { '.': { development: './src/index.ts' } } }, null, 2);
+  const isCliMcp = (f: { metadata?: { packageName?: string; targetPackage?: string } }): boolean =>
+    f.metadata?.packageName === '@czap/cli' && f.metadata?.targetPackage === '@czap/mcp-server';
+
+  test('A1-T1: a STATIC cli → mcp-server import is flagged package-topology', () => {
+    const root = createRepo({
+      ...baseRepoFiles(),
+      'packages/cli/package.json': pkgJson('@czap/cli'),
+      'packages/cli/src/index.ts': 'import { start } from "@czap/mcp-server";\nexport const run = start;\n',
+      'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
+      'packages/mcp-server/src/index.ts': 'export const start = true;\n',
+    });
+    const result = runStructureAudit(root);
+    expect(result.findings.some((f) => f.rule === 'package-topology' && isCliMcp(f))).toBe(true);
+  });
+
+  test('A1-T2: a DYNAMIC cli → mcp-server import is exempt (no false positive)', () => {
+    const root = createRepo({
+      ...baseRepoFiles(),
+      'packages/cli/package.json': pkgJson('@czap/cli'),
+      'packages/cli/src/index.ts': 'export async function startMcp() {\n  return import("@czap/mcp-server");\n}\n',
+      'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
+      'packages/mcp-server/src/index.ts': 'export const start = true;\n',
+    });
+    const result = runStructureAudit(root);
+    // Dynamic form: not seen by the static package-topology check, and exempt
+    // from the dynamic manifest check — so neither rule fires on this edge.
+    expect(result.findings.some((f) => f.rule === 'missing-manifest-dependency-dynamic' && isCliMcp(f))).toBe(false);
+    expect(result.findings.some((f) => f.rule === 'package-topology' && isCliMcp(f))).toBe(false);
+  });
+
+  test('A1-T3: a non-exempt DYNAMIC pkg→pkg import absent from the manifest is flagged', () => {
+    const root = createRepo({
+      ...baseRepoFiles(),
+      'packages/web/package.json': pkgJson('@czap/web'),
+      'packages/web/src/index.ts': 'export async function load() {\n  return import("@czap/remotion");\n}\n',
+      'packages/remotion/package.json': pkgJson('@czap/remotion'),
+      'packages/remotion/src/index.ts': 'export const remotionReady = true;\n',
+    });
+    const result = runStructureAudit(root);
+    expect(
+      result.findings.some(
+        (f) => f.rule === 'missing-manifest-dependency-dynamic' && f.metadata?.targetPackage === '@czap/remotion',
+      ),
+    ).toBe(true);
+  });
+
   test('structure audit flags orphaned exports and suppresses Astro directive default exports', () => {
     const root = createRepo({
       ...baseRepoFiles(),
