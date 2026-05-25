@@ -259,6 +259,13 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: [],
     kind: 'standalone',
   },
+  '@czap/command': {
+    // CUT A1: shared command registry/dispatcher. Imports only @czap/core today
+    // (the command language, re-anchored from _spine). As handlers migrate in,
+    // this grows to include the domain packages they delegate to (scene/assets).
+    allowedInternalImports: ['@czap/core'],
+    kind: 'layered',
+  },
 };
 
 export const surfacePolicy = {

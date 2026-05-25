@@ -9,6 +9,9 @@ export const repoRoot = resolve(rootDir);
 export const alias: Record<string, string> = {
   ...Config.toTestAliases(Config.make({}), repoRoot),
   '@czap/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
+  // CUT A1: @czap/command is outside the design-layer alias set, so map it to
+  // source explicitly (the CLI and MCP adapter tests import it by name).
+  '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 
 export const coverageInclude = ['packages/*/src/**/*.ts'];

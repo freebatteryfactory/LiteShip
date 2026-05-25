@@ -14,6 +14,10 @@
 export { SignalInput, ThresholdValue, StateName, ContentAddress, IntegrityDigest, TokenRef, Millis } from './brands.js';
 export type { HLC as HLCBrand } from './brands.js';
 
+// Command language (CUT A1) — declaration-only contract re-anchored from
+// @czap/_spine; the registry/dispatcher runtime lives in @czap/command.
+export type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult, CommandAnnotations, CommandJsonSchema } from './command.js';
+
 // FNV-1a hash utility
 export { fnv1a, fnv1aBytes } from './fnv.js';
 
