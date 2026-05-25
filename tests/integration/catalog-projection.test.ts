@@ -34,6 +34,9 @@ describe('catalog projection — single source of command identity', () => {
       name: d.name,
       description: d.summary,
       inputSchema: d.inputSchema,
+      // CUT D2: handler-backed (hence all mcpExposed) descriptors carry outputSchema,
+      // and BOTH projections (describe --format=mcp and listTools) emit it.
+      ...(d.outputSchema ? { outputSchema: d.outputSchema } : {}),
     }));
     // describe --format=mcp == the catalog's mcpExposed subset, projected.
     expect(manifest.tools).toEqual(expected);

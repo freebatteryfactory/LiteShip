@@ -218,10 +218,12 @@ export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult
  * project, so MCP `tools/list` and `czap describe --format=mcp` agree by
  * construction.
  */
-export function listTools(): ReadonlyArray<{ name: string; description: string; inputSchema: object }> {
+export function listTools(): ReadonlyArray<{ name: string; description: string; inputSchema: object; outputSchema?: object }> {
   return mcpExposedDescriptors().map((descriptor) => ({
     name: descriptor.name,
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
+    // D2: handler-backed (hence all mcpExposed) descriptors declare outputSchema.
+    ...(descriptor.outputSchema ? { outputSchema: descriptor.outputSchema } : {}),
   }));
 }

@@ -43,6 +43,11 @@ export const sceneVerifyCommand: HandledCommand = {
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
     inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    outputSchema: {
+      type: 'object',
+      required: ['sceneId', 'generatedTests'],
+      properties: { sceneId: { type: 'string' }, generatedTests: { type: 'number' } },
+    },
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -78,6 +83,11 @@ export const sceneCompileCommand: HandledCommand = {
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
     inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    outputSchema: {
+      type: 'object',
+      required: ['sceneId', 'trackCount', 'durationMs'],
+      properties: { sceneId: { type: 'string' }, trackCount: { type: 'number' }, durationMs: { type: 'number' } },
+    },
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -113,6 +123,17 @@ export const sceneRenderCommand: HandledCommand = {
       type: 'object',
       required: ['scene', 'output'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
+    },
+    outputSchema: {
+      type: 'object',
+      required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
+      properties: {
+        sceneId: { type: 'string' },
+        output: { type: 'string' },
+        frameCount: { type: 'number' },
+        elapsedMs: { type: 'number' },
+        cached: { type: 'boolean' },
+      },
     },
     annotations: { mcpExposed: true, group: 'compose' },
   },

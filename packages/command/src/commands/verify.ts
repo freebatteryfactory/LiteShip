@@ -59,6 +59,16 @@ export const verifyCommand: HandledCommand = {
       required: ['tarball', 'capsule'],
       properties: { tarball: { type: 'string' }, capsule: { type: 'string' } },
     },
+    outputSchema: {
+      type: 'object',
+      required: ['tarball', 'capsule_id', 'checks', 'mismatches'],
+      properties: {
+        tarball: { type: 'string' },
+        capsule_id: { type: ['string', 'null'] },
+        checks: { type: 'object' },
+        mismatches: { type: 'array' },
+      },
+    },
     annotations: { readOnly: true, group: 'ship' },
   },
   handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

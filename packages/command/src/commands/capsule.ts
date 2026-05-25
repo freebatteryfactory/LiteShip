@@ -22,6 +22,9 @@ export const capsuleInspectCommand: HandledCommand = {
     name: 'capsule.inspect',
     summary: 'Inspect a capsule manifest entry.',
     inputSchema: INSPECT_SCHEMA,
+    // Minimal stable contract (decision #2): the entry is a manifest object;
+    // its internal fields are not mirrored here to avoid drift with the manifest.
+    outputSchema: { type: 'object', required: ['capsule'], properties: { capsule: { type: 'object' } } },
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -40,6 +43,11 @@ export const capsuleListCommand: HandledCommand = {
     name: 'capsule.list',
     summary: 'List capsules, optionally filtered by kind.',
     inputSchema: { type: 'object', properties: { kind: { type: 'string' } } },
+    outputSchema: {
+      type: 'object',
+      required: ['capsules', 'kind'],
+      properties: { capsules: { type: 'array' }, kind: { type: ['string', 'null'] } },
+    },
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -62,6 +70,7 @@ export const capsuleVerifyCommand: HandledCommand = {
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
+    outputSchema: { type: 'object', required: ['capsuleId'], properties: { capsuleId: { type: 'string' } } },
     annotations: { mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {

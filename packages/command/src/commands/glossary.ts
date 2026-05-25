@@ -230,6 +230,11 @@ export const glossaryCommand: HandledCommand = {
       properties: { term: { type: 'string', description: 'Term to look up; omit for the full catalog.' } },
       required: [],
     },
+    outputSchema: {
+      type: 'object',
+      required: ['term', 'entries'],
+      properties: { term: { type: ['string', 'null'] }, entries: { type: 'array' } },
+    },
     annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {
