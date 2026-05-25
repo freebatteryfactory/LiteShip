@@ -21,5 +21,5 @@
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }]
+  "references": [{ "path": "../core" }, { "path": "../command" }]
 }
