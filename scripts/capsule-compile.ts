@@ -22,6 +22,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
+import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 
 /**
  * Atomic write via tmp file + rename. Concurrent gauntlet test workers
@@ -192,6 +193,17 @@ function resolveCapsuleName(
 
 async function main(): Promise<void> {
   const cwd = resolve(process.cwd());
+  // Generated test/bench output dir — `tests/generated` by default, redirectable
+  // via CZAP_CAPSULE_GENERATED_DIR so parallel tests isolate their compile output
+  // and never race the shared dir on a renameSync (CUT T1).
+  const generatedDir = getCapsuleGeneratedDir(cwd);
+  // Manifest-only mode (CZAP_CAPSULE_MANIFEST_ONLY): build + write the manifest
+  // but SKIP writing the test/bench files. Tests that only need a fresh manifest
+  // pointing at the already-committed tests/generated/ files use this so they
+  // don't rewrite that shared dir while the parent vitest run is executing those
+  // same files (CUT T1). Production / gauntlet leave it unset → full compile.
+  const manifestOnly =
+    process.env.CZAP_CAPSULE_MANIFEST_ONLY === '1' || process.env.CZAP_CAPSULE_MANIFEST_ONLY === 'true';
   const allFiles = await fastGlob(
     ['packages/**/src/**/*.ts', 'examples/**/*.ts'],
     {
@@ -249,8 +261,8 @@ async function main(): Promise<void> {
     const stub = buildStubDef(d.kind, d.resolvedName);
 
     const slug = d.resolvedName.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-    const testPath = resolve('tests/generated', `${slug}.test.ts`);
-    const benchPath = resolve('tests/generated', `${slug}.bench.ts`);
+    const testPath = resolve(generatedDir, `${slug}.test.ts`);
+    const benchPath = resolve(generatedDir, `${slug}.bench.ts`);
 
     // Build a HarnessContext only when we have a binding name AND the call
     // is direct (`defineCapsule`, no factory wrapper). Factory wrappers
@@ -279,9 +291,13 @@ async function main(): Promise<void> {
     }
     const { testFile, benchFile } = dispatchHarness(d.kind, stub, harnessCtx);
 
-    mkdirSync(dirname(testPath), { recursive: true });
-    atomicWrite(testPath, testFile);
-    atomicWrite(benchPath, benchFile);
+    // Skip the file writes in manifest-only mode; the manifest entry below still
+    // records the (committed) testFile/benchFile paths so verify can run them.
+    if (!manifestOnly) {
+      mkdirSync(dirname(testPath), { recursive: true });
+      atomicWrite(testPath, testFile);
+      atomicWrite(benchPath, benchFile);
+    }
 
     const sourceRel = relative(cwd, d.file).replace(/\\/g, '/');
     const testRel = relative(cwd, testPath).replace(/\\/g, '/');

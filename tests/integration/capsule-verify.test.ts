@@ -1,34 +1,21 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawnArgv, withSpawned } from '../../scripts/lib/spawn.js';
-import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { withSpawned } from '../../scripts/lib/spawn.js';
+import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
 describe('capsule-verify', () => {
-  // CUT T1: isolate the manifest to a temp path so this test never races the
-  // shared reports/capsule-manifest.json. The spawned capsule:compile and
-  // capsule:verify children inherit process.env and both honor CZAP_CAPSULE_MANIFEST.
-  let tmpDir: string;
-  let priorEnv: string | undefined;
+  // CUT T1: manifest-only compile to a temp manifest whose entries point at the
+  // committed tests/generated/ files. This never rewrites that shared dir, so it
+  // can't race the parent vitest run (which is executing those same files) or
+  // other compile-spawning workers. The capsule:verify child inherits
+  // CZAP_CAPSULE_MANIFEST and runs the committed generated suite read-only.
+  let iso: IsolatedCapsules;
+  beforeAll(async () => {
+    iso = await compileManifestOnly('czap-capverify');
+  }, 90_000);
 
-  beforeAll(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'czap-capverify-'));
-    const manifestPath = join(tmpDir, 'reports', 'capsule-manifest.json');
-    mkdirSync(dirname(manifestPath), { recursive: true });
-    priorEnv = process.env.CZAP_CAPSULE_MANIFEST;
-    process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
-  });
-
-  afterAll(() => {
-    if (priorEnv === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
-    else process.env.CZAP_CAPSULE_MANIFEST = priorEnv;
-    rmSync(tmpDir, { recursive: true, force: true });
-  });
+  afterAll(() => iso?.restore());
 
   it('exits 0 when the manifest is fresh and all generated tests pass', async () => {
-    const compile = await spawnArgv('pnpm', ['run', 'capsule:compile'], { stdio: 'inherit' });
-    if (compile.exitCode !== 0) throw new Error(`capsule:compile failed: ${compile.stderrTail}`);
-
     const lines: string[] = [];
     await withSpawned(
       'pnpm',

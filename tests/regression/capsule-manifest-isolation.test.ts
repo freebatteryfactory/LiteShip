@@ -34,7 +34,12 @@ describe('capsule manifest isolation (CUT T1)', () => {
       writeFileSync(defaultManifest, sentinel, 'utf8');
 
       const priorEnv = process.env.CZAP_CAPSULE_MANIFEST;
+      const priorManifestOnly = process.env.CZAP_CAPSULE_MANIFEST_ONLY;
       process.env.CZAP_CAPSULE_MANIFEST = isolatedManifest;
+      // Manifest-only (CUT T1): this guard only inspects the manifest writer, so
+      // skip the test/bench writes — otherwise the spawned compile would rewrite
+      // the shared tests/generated/ dir and race the parent vitest run.
+      process.env.CZAP_CAPSULE_MANIFEST_ONLY = '1';
       try {
         const r = await spawnArgv('pnpm', ['run', 'capsule:compile'], { stdio: 'inherit' });
         expect(r.exitCode, `capsule:compile failed: ${r.stderrTail}`).toBe(0);
@@ -50,6 +55,8 @@ describe('capsule manifest isolation (CUT T1)', () => {
       } finally {
         if (priorEnv === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
         else process.env.CZAP_CAPSULE_MANIFEST = priorEnv;
+        if (priorManifestOnly === undefined) delete process.env.CZAP_CAPSULE_MANIFEST_ONLY;
+        else process.env.CZAP_CAPSULE_MANIFEST_ONLY = priorManifestOnly;
         if (defaultBefore === null) rmSync(defaultManifest, { force: true });
         else writeFileSync(defaultManifest, defaultBefore, 'utf8');
         rmSync(tmpDir, { recursive: true, force: true });

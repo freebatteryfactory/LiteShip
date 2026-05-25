@@ -1,17 +1,21 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { spawnArgv } from '../../../scripts/lib/spawn.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
+import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
 
 describe('czap capsule *', () => {
   // capsule:compile spins up a ts.Program for type-directed detection.
   // 90s tolerates cold tsx startup + program creation under shared CI load
   // AND v8-coverage instrumentation overhead during coverage:node:tracked
   // runs (NODE_V8_COVERAGE inheritance roughly doubles tsc-host work).
+  //
+  // Manifest-only + temp manifest (CUT T1): `capsule verify` runs the committed
+  // generated tests but this never rewrites the shared tests/generated/ dir.
+  let iso: IsolatedCapsules;
   beforeAll(async () => {
-    const r = await spawnArgv('pnpm', ['run', 'capsule:compile'], { stdio: 'ignore' });
-    if (r.exitCode !== 0) throw new Error(`capsule:compile failed: ${r.stderrTail}`);
+    iso = await compileManifestOnly('czap-capsule');
   }, 90_000);
+  afterAll(() => iso?.restore());
 
   it('inspect dumps a capsule manifest entry by name', async () => {
     const { exit, stdout } = await captureCli(() =>
