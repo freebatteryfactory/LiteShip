@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
+    "@czap/command": "workspace:*",
     "@czap/scene": "workspace:*",
     "@czap/assets": "workspace:*",
     "effect": ">=4.0.0-beta.32 <5"

@@ -241,10 +241,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'layered',
   },
   '@czap/cli': {
-    // Terminal adapter: imports core, and assets (asset-analyze command).
-    // Note: the cli <-> mcp-server relationship is a dynamic import not tracked
-    // by this static topology check; CUT A1 reshapes that dependency law.
-    allowedInternalImports: ['@czap/core', '@czap/assets'],
+    // Terminal adapter over @czap/command. Imports core, the shared command
+    // registry, and assets (asset-analyze). The cli <-> mcp-server relationship
+    // is a dynamic import not tracked here; CUT A1 reshapes that dependency law.
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets'],
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {
