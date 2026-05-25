@@ -8,7 +8,7 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics, BoundaryAttribute } from '@czap/core';
 import type { Boundary, StateUnion } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -35,21 +35,15 @@ export interface ARIACompileResult<S extends string = string> {
 // ---------------------------------------------------------------------------
 
 /**
- * Validate that a key looks like a valid ARIA attribute or role.
- * Accepts any aria-* prefixed attribute or the exact string 'role'.
- */
-function isValidAriaKey(key: string): boolean {
-  return key.startsWith('aria-') || key === 'role';
-}
-
-/**
- * Filter and validate ARIA attributes, keeping only valid ones.
- * Warns via Diagnostics when invalid keys are dropped.
+ * Filter and validate ARIA attributes, keeping only valid ones — the allowed
+ * keys are governed by the shared {@link BoundaryAttribute.isAllowedKey} policy
+ * in `@czap/core` (any `aria-*` attribute or the exact `role`). Warns via
+ * Diagnostics when invalid keys are dropped.
  */
 function validateAttributes(attrs: Record<string, string>): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(attrs)) {
-    if (isValidAriaKey(key)) {
+    if (BoundaryAttribute.isAllowedKey(key)) {
       result[key] = value;
     } else {
       Diagnostics.warn({

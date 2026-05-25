@@ -43,6 +43,9 @@ export { tupleMap } from './tuple.js';
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
+// Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
+// @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).
+export { BoundaryAttribute } from './boundary-attribute.js';
 
 // Token
 export { Token } from './token.js';

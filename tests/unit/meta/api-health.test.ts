@@ -24,6 +24,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   // ── Rendering primitives ──────────────────────────────────────────
   Boundary: { methods: ['make', 'evaluate', 'evaluateWithHysteresis'] },
   BoundarySpec: { methods: ['isActive'] },
+  BoundaryAttribute: { methods: ['isAllowedKey'] },
   Token: { methods: ['make', 'tap', 'cssVar'] },
   TokenBuffer: { methods: ['make'] },
   Style: { methods: ['make', 'tap', 'mergeLayers'] },

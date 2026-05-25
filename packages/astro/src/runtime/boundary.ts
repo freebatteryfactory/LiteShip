@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { Boundary } from '@czap/core';
+import { Boundary, BoundaryAttribute } from '@czap/core';
 
 /**
  * JSON shape produced on the server by `satelliteAttrs()` and read back
@@ -60,14 +60,6 @@ export interface BoundaryStateDetail {
 
 function isAllowedBoundaryCssProperty(property: string): boolean {
   return property.startsWith('--czap-');
-}
-
-// NOTE: This logic is intentionally duplicated from `isValidAriaKey` in
-// packages/compiler/src/aria.ts. @czap/astro does not depend on @czap/compiler,
-// so the check cannot be shared without introducing a new dependency. Keep the
-// two implementations in sync if either changes.
-function isAllowedBoundaryAttribute(attribute: string): boolean {
-  return attribute === 'role' || attribute.startsWith('aria-');
 }
 
 function parseBoundaryPayload(boundaryJson: string): Partial<SerializedBoundary> | null {
@@ -206,7 +198,7 @@ export function normalizeBoundaryState(state: {
     discrete: { ...(state.discrete ?? {}) },
     css: Object.fromEntries(Object.entries(css).filter(([property]) => isAllowedBoundaryCssProperty(property))),
     glsl: { ...(state.outputs?.glsl ?? {}), ...(state.glsl ?? {}) },
-    aria: Object.fromEntries(Object.entries(aria).filter(([attribute]) => isAllowedBoundaryAttribute(attribute))),
+    aria: Object.fromEntries(Object.entries(aria).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute))),
   };
 }
 
