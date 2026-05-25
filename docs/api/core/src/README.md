@@ -165,6 +165,7 @@ plan graph, ECS, capsule factory).
 - [AVRenderer](variables/AVRenderer.md)
 - [BlendTree](variables/BlendTree.md)
 - [Boundary](variables/Boundary.md)
+- [BoundaryAttribute](variables/BoundaryAttribute.md)
 - [boundaryEvaluateCapsule](variables/boundaryEvaluateCapsule.md)
 - [BoundarySpec](variables/BoundarySpec.md)
 - [CanonicalCbor](variables/CanonicalCbor.md)
