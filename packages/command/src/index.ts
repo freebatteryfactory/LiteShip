@@ -32,3 +32,13 @@ export type { CapsuleManifest, CapsuleManifestEntry } from './commands/manifest.
 export { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 export type { AssetAnalyzePayload } from './commands/asset.js';
 export { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
+export { verifyCommand } from './commands/verify.js';
+export type { VerifyPayload } from './commands/verify.js';
+export {
+  packageSlug,
+  selectTargets,
+  observedLifecycleScripts,
+  readPackageManagerVersion,
+  deriveBuildEnv,
+} from './commands/ship-planning.js';
+export type { PackageJsonLite, WorkspacePackage } from './commands/ship-planning.js';

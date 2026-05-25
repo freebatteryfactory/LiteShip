@@ -4,7 +4,7 @@
  *
  * @module
  */
-import type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult } from '@czap/core';
+import type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult, ContentAddress } from '@czap/core';
 
 /**
  * Injected I/O surface for command handlers. Handlers receive their Node-coupled
@@ -83,6 +83,25 @@ export interface CommandContext {
     readonly durationMs: number;
     readonly output: string;
   }) => Promise<{ readonly frameCount: number; readonly elapsedMs: number }>;
+  /** Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable. */
+  readonly readFileBytes?: (path: string) => Uint8Array | null;
+  /**
+   * Decode a ShipCapsule from CBOR bytes (adapter runs the Effect). Returns the
+   * capsule id + its claimed tarball-manifest address, or a decode error string.
+   */
+  readonly decodeShipCapsule?: (
+    bytes: Uint8Array,
+  ) => Promise<
+    | { readonly ok: true; readonly id: ContentAddress; readonly tarballManifestAddress: { readonly display_id: string; readonly integrity_digest: string } }
+    | { readonly ok: false; readonly error: string }
+  >;
+  /** Recompute a tarball's manifest address (adapter runs the Effect). */
+  readonly recomputeTarballAddress?: (
+    bytes: Uint8Array,
+  ) => Promise<
+    | { readonly ok: true; readonly display_id: string; readonly integrity_digest: string }
+    | { readonly ok: false; readonly error: string }
+  >;
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */

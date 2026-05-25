@@ -23,6 +23,15 @@ import { hostname } from 'node:os';
 import { Cause, Effect, Result } from 'effect';
 import { HLC, ShipCapsule, type AddressedDigest } from '@czap/core';
 import {
+  packageSlug,
+  selectTargets,
+  observedLifecycleScripts,
+  readPackageManagerVersion,
+  deriveBuildEnv,
+  type PackageJsonLite,
+  type WorkspacePackage,
+} from '@czap/command';
+import {
   lockfileAddress,
   normalizedDryRunAddress,
   tarballManifestAddress,
@@ -70,22 +79,6 @@ async function runEffect<A, E>(effect: Effect.Effect<A, E>): Promise<EffectResul
   };
 }
 
-const LIFECYCLE_KEYS = ['prepack', 'prepare', 'prepublishOnly', 'prepublish'] as const;
-
-interface PackageJsonLite {
-  readonly name?: string;
-  readonly version?: string;
-  readonly scripts?: Readonly<Record<string, string>>;
-  readonly private?: boolean;
-}
-
-interface WorkspacePackage {
-  readonly absolutePath: string;
-  readonly relativePath: string;
-  readonly packageJsonBytes: Uint8Array;
-  readonly packageJson: PackageJsonLite;
-}
-
 interface ShipOptions {
   readonly cwd: string;
   readonly filter?: string;
@@ -93,21 +86,6 @@ interface ShipOptions {
   readonly otp?: string;
   readonly provenance: boolean;
 }
-
-/**
- * Slug used by pnpm for tarball filenames (mirrors npm-packlist /
- * libnpmpack). `@scope/name` → `scope-name`. Plain `name` → `name`.
- * Validated against pnpm's actual output (`czap-_spine-0.1.0.tgz` for
- * `@czap/_spine@0.1.0`).
- */
-const packageSlug = (name: string): string => {
-  if (name.startsWith('@')) {
-    const [scope, local] = name.slice(1).split('/');
-    if (scope === undefined || local === undefined) return name;
-    return `${scope}-${local}`;
-  }
-  return name;
-};
 
 const readWorkspacePackagesGlobs = (cwd: string): string[] => {
   const ymlPath = join(cwd, 'pnpm-workspace.yaml');
@@ -179,18 +157,6 @@ const loadWorkspace = (cwd: string): WorkspacePackage[] => {
   return out;
 };
 
-const selectTargets = (workspace: readonly WorkspacePackage[], filter: string | undefined): WorkspacePackage[] => {
-  if (filter === undefined) return workspace.filter((p) => p.packageJson.private !== true);
-  // `--filter` accepts either a path-like value (`./packages/_spine`) or a
-  // package name (`@czap/core`). Anything else → unknown filter.
-  const filterNormalized = filter.replace(/^\.\//, '').replace(/\/$/, '');
-  return workspace.filter((p) => {
-    if (p.relativePath === filterNormalized) return true;
-    if (p.packageJson.name === filter) return true;
-    return false;
-  });
-};
-
 const lastNonEmptyLine = (text: string): string => {
   const lines = text.split(/\r?\n/);
   for (let i = lines.length - 1; i >= 0; i--) {
@@ -198,48 +164,6 @@ const lastNonEmptyLine = (text: string): string => {
     if (l.length > 0) return l;
   }
   return '';
-};
-
-const readPackageManagerVersion = (rootPackageJson: PackageJsonLite & { packageManager?: string }): string => {
-  const raw = rootPackageJson.packageManager;
-  if (typeof raw !== 'string') return 'unknown';
-  // Format is `pnpm@10.32.1` (and may carry a `+sha…` integrity suffix).
-  const at = raw.indexOf('@');
-  if (at < 0) return raw;
-  const tail = raw.slice(at + 1);
-  const plus = tail.indexOf('+');
-  return plus < 0 ? tail : tail.slice(0, plus);
-};
-
-const buildEnvFor = (pkgManagerVersion: string): ShipCapsule.BuildEnv => {
-  const os = process.platform;
-  const arch = process.arch;
-  // ShipCapsule.BuildEnv constrains os to linux|darwin|win32 and arch to
-  // x64|arm64. Anything outside that closure is not a v0.1.0 target and
-  // must surface as a hard failure rather than a silent cast.
-  if (os !== 'linux' && os !== 'darwin' && os !== 'win32') {
-    throw new Error(`czap ship: unsupported platform ${os} (ShipCapsule.BuildEnv only models linux/darwin/win32)`);
-  }
-  if (arch !== 'x64' && arch !== 'arm64') {
-    throw new Error(`czap ship: unsupported arch ${arch} (ShipCapsule.BuildEnv only models x64/arm64)`);
-  }
-  return {
-    node_version: process.version,
-    pnpm_version: pkgManagerVersion,
-    os,
-    arch,
-  };
-};
-
-const observedLifecycleScripts = (pkg: PackageJsonLite): readonly string[] => {
-  const scripts = pkg.scripts ?? {};
-  const out: string[] = [];
-  for (const key of LIFECYCLE_KEYS) {
-    if (typeof scripts[key] === 'string' && scripts[key]!.trim().length > 0) {
-      out.push(key);
-    }
-  }
-  return out;
 };
 
 /** Execute the ship command for one or more workspace packages. */
@@ -298,7 +222,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   const pmVersion = readPackageManagerVersion(rootPkg);
   let buildEnv: ShipCapsule.BuildEnv;
   try {
-    buildEnv = buildEnvFor(pmVersion);
+    buildEnv = deriveBuildEnv({ os: process.platform, arch: process.arch, nodeVersion: process.version, pmVersion });
   } catch (e) {
     emitError('ship', e instanceof Error ? e.message : String(e));
     return 1;
