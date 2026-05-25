@@ -21,6 +21,7 @@
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
+import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 
 /**
  * Atomic write via tmp file + rename. Concurrent gauntlet test workers
@@ -325,12 +326,17 @@ async function main(): Promise<void> {
     capsules,
   };
 
-  mkdirSync('reports', { recursive: true });
+  // Honor CZAP_CAPSULE_MANIFEST (same resolver the readers use, see
+  // packages/cli/src/receipts.ts). Default is reports/capsule-manifest.json, so
+  // production behavior is unchanged when the env var is unset; tests point both
+  // sides at a temp path to avoid racing the shared default (CUT T1).
+  const manifestPath = getCapsuleManifestPath();
+  mkdirSync(dirname(manifestPath), { recursive: true });
   // tmp+rename protects this write under concurrent test workers — manifest
   // content always changes (generatedAt is a fresh ISO timestamp per spawn),
   // so direct writeFileSync on the shared destination would race.
   atomicWrite(
-    'reports/capsule-manifest.json',
+    manifestPath,
     JSON.stringify(manifest, null, 2),
   );
 
