@@ -1,10 +1,14 @@
 /**
- * version — print czap, Node, and pnpm versions. Emits a JSON receipt
- * to stdout; pretty TTY summary to stderr when attached.
+ * version (CLI adapter) — thin projection over `@czap/command`'s version
+ * command. The structured payload (czap/node/pnpm) is assembled in
+ * `@czap/command`; this adapter injects the Node-coupled I/O (the CLI's own
+ * package version + the pnpm spawn probe), then renders the JSON receipt to
+ * stdout and a pretty one-liner to stderr.
  *
  * @module
  */
 
+import { versionCommand, type VersionPayload } from '@czap/command';
 import { spawnArgvCapture } from '../lib/spawn.js';
 import { emit } from '../receipts.js';
 import { readCliVersion } from './doctor.js';
@@ -19,21 +23,27 @@ export interface VersionReceipt {
   readonly pnpm: string | null;
 }
 
-async function probePnpmVersion(): Promise<string | null> {
-  const r = await spawnArgvCapture('pnpm', ['--version']).catch(() => null);
-  if (!r || r.exitCode !== 0) return null;
-  return r.stdout.trim() || null;
-}
-
 /** Execute the version command. */
 export async function version(opts: { pretty?: boolean; cwd?: string } = {}): Promise<number> {
+  const result = await versionCommand.handler(
+    { name: 'version', args: {} },
+    {
+      cwd: opts.cwd,
+      hostVersion: () => readCliVersion(opts.cwd),
+      spawnCapture: async (command, args) => {
+        const r = await spawnArgvCapture(command, args).catch(() => null);
+        return r ? { exitCode: r.exitCode, stdout: r.stdout } : { exitCode: 1, stdout: '' };
+      },
+    },
+  );
+  const payload = result.payload as VersionPayload;
   const receipt: VersionReceipt = {
     status: 'ok',
     command: 'version',
-    timestamp: new Date().toISOString(),
-    czap: readCliVersion(opts.cwd),
-    node: process.versions.node,
-    pnpm: await probePnpmVersion(),
+    timestamp: result.timestamp,
+    czap: payload.czap,
+    node: payload.node,
+    pnpm: payload.pnpm,
   };
   emit(receipt);
 
