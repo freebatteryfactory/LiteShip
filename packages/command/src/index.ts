@@ -16,8 +16,11 @@ export type {
 } from '@czap/core';
 
 export { CommandRegistry } from './registry.js';
-export type { CapsuleCommandHandler, CommandContext, RegisteredCommand } from './registry.js';
+export type { CapsuleCommandHandler, CommandContext, HandledCommand, RegisteredCommand } from './registry.js';
 export { CommandDispatcher } from './dispatcher.js';
+
+// The canonical command catalog — the single source CLI/MCP surfaces project from.
+export { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from './catalog.js';
 
 // Migrated commands (CUT A1, checkpoint 2+).
 export { glossaryCommand, GLOSSARY_ENTRIES, matchGlossaryEntries } from './commands/glossary.js';
