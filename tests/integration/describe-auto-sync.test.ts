@@ -72,10 +72,13 @@ describe('cli describe — auto-sync with dispatch', () => {
     expect(receipt.commands.map((c) => c.name)).toContain('mcp');
   });
 
-  it('regression: mcp appears in --format=mcp tool list', async () => {
+  it('catalog collapse: mcp is NOT an MCP tool (cannot start the server over MCP)', async () => {
+    // Before the catalog collapse, --format=mcp dumped every command (incl. mcp)
+    // with empty schemas — inconsistent with the real MCP tool set. Now it is the
+    // mcpExposed subset, so `mcp` (a long-running CLI-only server start) is absent.
     const { exit, stdout } = await captureCli(() => run(['describe', '--format=mcp']));
     expect(exit).toBe(0);
     const manifest = JSON.parse(stdout.trim()) as { tools: ReadonlyArray<{ name: string }> };
-    expect(manifest.tools.map((t) => t.name)).toContain('mcp');
+    expect(manifest.tools.map((t) => t.name)).not.toContain('mcp');
   });
 });

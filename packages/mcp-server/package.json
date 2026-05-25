@@ -46,7 +46,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@czap/core": "workspace:*"
+    "@czap/core": "workspace:*",
+    "@czap/command": "workspace:*"
   },
   "peerDependencies": {
     "@czap/cli": "workspace:^",

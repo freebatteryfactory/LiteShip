@@ -13,6 +13,7 @@
  * @module
  */
 
+import { mcpExposedDescriptors } from '@czap/command';
 import {
   type JsonRpcNotification,
   type JsonRpcRequest,
@@ -156,66 +157,17 @@ function buildArgv(call: McpToolCall): string[] {
   return [...segments, ...args];
 }
 
-/** Static list of MCP tools produced by czap's CLI. */
+/**
+ * MCP tool catalog — projected from the ONE canonical command catalog in
+ * @czap/command (the mcpExposed subset). No hand-maintained parallel table:
+ * this is the same descriptor source the CLI's `describe`/`completion`/`help`
+ * project, so MCP `tools/list` and `czap describe --format=mcp` agree by
+ * construction.
+ */
 export function listTools(): ReadonlyArray<{ name: string; description: string; inputSchema: object }> {
-  return [
-    {
-      name: 'describe',
-      description: 'Dump capsule catalog schema',
-      inputSchema: { type: 'object', properties: { format: { type: 'string', enum: ['json', 'mcp'] } } },
-    },
-    {
-      name: 'scene.compile',
-      description: 'Compile a scene capsule',
-      inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
-    },
-    {
-      name: 'scene.render',
-      description: 'Render scene to mp4',
-      inputSchema: {
-        type: 'object',
-        required: ['scene', 'output'],
-        properties: { scene: { type: 'string' }, output: { type: 'string' } },
-      },
-    },
-    {
-      name: 'scene.verify',
-      description: 'Run scene generated tests',
-      inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
-    },
-    {
-      name: 'asset.analyze',
-      description: 'Run cachedProjection on asset',
-      inputSchema: {
-        type: 'object',
-        required: ['asset', 'projection'],
-        properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
-      },
-    },
-    {
-      name: 'asset.verify',
-      description: 'Verify asset capsule',
-      inputSchema: { type: 'object', required: ['asset'], properties: { asset: { type: 'string' } } },
-    },
-    {
-      name: 'capsule.inspect',
-      description: 'Inspect a capsule manifest entry',
-      inputSchema: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
-    },
-    {
-      name: 'capsule.verify',
-      description: 'Verify capsule generated tests',
-      inputSchema: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
-    },
-    {
-      name: 'capsule.list',
-      description: 'List capsules filtered by kind',
-      inputSchema: { type: 'object', properties: { kind: { type: 'string' } } },
-    },
-    {
-      name: 'gauntlet',
-      description: 'Run the full gauntlet',
-      inputSchema: { type: 'object', properties: { 'dry-run': { type: 'boolean' } } },
-    },
-  ];
+  return mcpExposedDescriptors().map((descriptor) => ({
+    name: descriptor.name,
+    description: descriptor.summary,
+    inputSchema: descriptor.inputSchema,
+  }));
 }

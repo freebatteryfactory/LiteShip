@@ -8,38 +8,48 @@
  *   czap completion zsh  >> ~/.zshrc
  *   czap completion fish > ~/.config/fish/completions/czap.fish
  *
- * The verb lists are hand-maintained to mirror dispatch.ts, and a
- * regression test fails if they drift.
+ * The verb + subcommand lists are PROJECTED from the one canonical command
+ * catalog in `@czap/command` — there is no hand-maintained table to drift from
+ * dispatch.ts anymore. Top-level verbs are the distinct first segments of the
+ * catalog's dotted command names; subcommands are the remaining segments; the
+ * shell argument values come from the `completion` descriptor's input schema.
  *
  * @module
  */
 
+import { COMMAND_CATALOG, commandRegistry } from '@czap/command';
 import { emitError } from '../receipts.js';
 
-/** Top-level verbs the CLI dispatches. Mirrors dispatch.ts's switch. */
-export const TOP_LEVEL_VERBS = [
-  'completion',
-  'describe',
-  'doctor',
-  'glossary',
-  'help',
-  'version',
-  'scene',
-  'asset',
-  'capsule',
-  'gauntlet',
-  'ship',
-  'verify',
-  'mcp',
-] as const;
+/** Distinct top-level verbs, projected from the catalog's command names. */
+export const TOP_LEVEL_VERBS: readonly string[] = [
+  ...new Set(COMMAND_CATALOG.map((d) => d.name.split('.')[0]!)),
+];
 
-/** Subcommands by verb. Empty array means the verb takes no subcommand. */
-export const SUBCOMMANDS = {
-  scene: ['compile', 'render', 'verify', 'dev'],
-  asset: ['analyze', 'verify'],
-  capsule: ['inspect', 'list', 'verify'],
-  completion: ['bash', 'zsh', 'fish'],
-} as const satisfies Readonly<Record<string, readonly string[]>>;
+/** Read the shell-argument enum declared on the `completion` descriptor. */
+function shellValues(): readonly string[] {
+  const shell = commandRegistry.get('completion')?.descriptor.inputSchema.properties?.shell;
+  const enumValues = (shell as { enum?: readonly string[] } | undefined)?.enum;
+  return enumValues ?? [];
+}
+
+/**
+ * Subcommands by verb, projected from the catalog. Dotted command names
+ * (`scene.compile`) contribute `scene → [compile, …]`; the `completion` verb's
+ * subcommands are its shell-argument enum.
+ */
+export const SUBCOMMANDS: Readonly<Record<string, readonly string[]>> = (() => {
+  const byVerb: Record<string, string[]> = {};
+  for (const d of COMMAND_CATALOG) {
+    const dot = d.name.indexOf('.');
+    if (dot === -1) continue;
+    const verb = d.name.slice(0, dot);
+    const sub = d.name.slice(dot + 1);
+    (byVerb[verb] ??= []).push(sub);
+  }
+  const shells = shellValues();
+  if (shells.length > 0) byVerb['completion'] = [...shells];
+  return byVerb;
+})();
 
 type Shell = 'bash' | 'zsh' | 'fish';
 
@@ -49,10 +59,10 @@ function isShell(s: string | undefined): s is Shell {
 
 function bashScript(): string {
   const verbs = TOP_LEVEL_VERBS.join(' ');
-  const sceneSubs = SUBCOMMANDS.scene.join(' ');
-  const assetSubs = SUBCOMMANDS.asset.join(' ');
-  const capsuleSubs = SUBCOMMANDS.capsule.join(' ');
-  const shellSubs = SUBCOMMANDS.completion.join(' ');
+  const sceneSubs = (SUBCOMMANDS.scene ?? []).join(' ');
+  const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
+  const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
+  const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
   return `# czap bash completion
 _czap_completion() {
   local cur prev
@@ -75,10 +85,10 @@ complete -F _czap_completion czap
 
 function zshScript(): string {
   const verbs = TOP_LEVEL_VERBS.join(' ');
-  const sceneSubs = SUBCOMMANDS.scene.join(' ');
-  const assetSubs = SUBCOMMANDS.asset.join(' ');
-  const capsuleSubs = SUBCOMMANDS.capsule.join(' ');
-  const shellSubs = SUBCOMMANDS.completion.join(' ');
+  const sceneSubs = (SUBCOMMANDS.scene ?? []).join(' ');
+  const assetSubs = (SUBCOMMANDS.asset ?? []).join(' ');
+  const capsuleSubs = (SUBCOMMANDS.capsule ?? []).join(' ');
+  const shellSubs = (SUBCOMMANDS.completion ?? []).join(' ');
   return `# czap zsh completion
 _czap() {
   local -a verbs

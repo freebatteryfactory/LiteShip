@@ -35,12 +35,22 @@ describeTest('describe command', () => {
     expect(r.assemblyKinds.length).toBeGreaterThan(0);
   });
 
-  it('MCP mode without cache emits tools derived from COMMANDS', () => {
+  it('MCP mode without cache projects the mcpExposed catalog subset with real schemas', () => {
     if (existsSync(MANIFEST_PATH)) rmSync(MANIFEST_PATH);
-    const r = describe({ format: 'mcp' }) as { tools: ReadonlyArray<{ name: string; description: string; inputSchema: object }> };
-    expect(Array.isArray(r.tools)).toBe(true);
+    const r = describe({ format: 'mcp' }) as {
+      tools: ReadonlyArray<{ name: string; description: string; inputSchema: { type?: string; required?: string[] } }>;
+    };
     expect(r.tools.length).toBeGreaterThan(5);
-    expect(r.tools[0]!.inputSchema).toEqual({ type: 'object', properties: {} });
+    // Real object schemas now — the empty `{ properties: {} }` stand-in is gone.
+    for (const t of r.tools) expect(t.inputSchema.type).toBe('object');
+    const names = r.tools.map((t) => t.name);
+    // CLI-only / non-exposed commands never appear in the MCP tool manifest.
+    expect(names).not.toContain('help');
+    expect(names).not.toContain('version');
+    expect(names).not.toContain('mcp');
+    // Exposed compute tools carry their real input schemas.
+    const analyze = r.tools.find((t) => t.name === 'asset.analyze')!;
+    expect(analyze.inputSchema.required).toEqual(['asset', 'projection']);
   });
 
   it('MCP mode with cached manifest returns the cached tool list (covers L58 readFileSync branch)', () => {

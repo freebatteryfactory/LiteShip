@@ -358,6 +358,9 @@ importers:
       '@czap/cli':
         specifier: workspace:^
         version: link:../cli
+      '@czap/command':
+        specifier: workspace:*
+        version: link:../command
       '@czap/core':
         specifier: workspace:*
         version: link:../core
