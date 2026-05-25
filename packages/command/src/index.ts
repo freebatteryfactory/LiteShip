@@ -27,3 +27,5 @@ export { glossaryCommand, GLOSSARY_ENTRIES, matchGlossaryEntries } from './comma
 export type { GlossaryEntry, GlossaryPayload } from './commands/glossary.js';
 export { versionCommand } from './commands/version.js';
 export type { VersionPayload } from './commands/version.js';
+export { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
+export type { CapsuleManifest, CapsuleManifestEntry } from './commands/capsule.js';

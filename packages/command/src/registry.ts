@@ -29,6 +29,19 @@ export interface CommandContext {
    * adapter because the version is a fact about the host, not this package.
    */
   readonly hostVersion?: () => string;
+  /**
+   * Raw capsule-manifest JSON text, or null when absent. The adapter resolves
+   * the path (honoring CZAP_CAPSULE_MANIFEST) and reads it; the handler parses.
+   * Keeps path/env policy on the adapter side.
+   */
+  readonly manifestSource?: () => string | null;
+  /**
+   * Run a capsule's generated test files and report the outcome. Adapters back
+   * this with their vitest runner; handlers stay free of spawn.
+   */
+  readonly runVitest?: (
+    testFiles: readonly string[],
+  ) => Promise<{ readonly exitCode: number; readonly stderrTail: string }>;
 }
 
 /** A command handler: structured invocation in, structured result out. No stdout, no argv. */
