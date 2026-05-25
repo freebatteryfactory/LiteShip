@@ -16,6 +16,8 @@ import { CommandRegistry, type RegisteredCommand } from './registry.js';
 import { glossaryCommand } from './commands/glossary.js';
 import { versionCommand } from './commands/version.js';
 import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
+import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
+import { sceneVerifyCommand } from './commands/scene.js';
 
 /** Descriptors for commands whose handlers have not yet migrated into this package. */
 const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
@@ -60,32 +62,10 @@ const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { mcpExposed: true, group: 'compose' },
   },
   {
-    name: 'scene.verify',
-    summary: 'Run a scene capsule’s generated tests.',
-    inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'compose' },
-  },
-  {
     name: 'scene.dev',
     summary: 'Launch Vite + the browser scene player.',
     inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
     annotations: { longRunning: true, group: 'compose' },
-  },
-  {
-    name: 'asset.analyze',
-    summary: 'Run a cachedProjection (beat / onset / waveform) over an asset.',
-    inputSchema: {
-      type: 'object',
-      required: ['asset', 'projection'],
-      properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
-    },
-    annotations: { mcpExposed: true, group: 'compose' },
-  },
-  {
-    name: 'asset.verify',
-    summary: 'Verify an asset capsule.',
-    inputSchema: { type: 'object', required: ['asset'], properties: { asset: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'compose' },
   },
   {
     name: 'gauntlet',
@@ -120,6 +100,9 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
   capsuleInspectCommand,
   capsuleListCommand,
   capsuleVerifyCommand,
+  assetAnalyzeCommand,
+  assetVerifyCommand,
+  sceneVerifyCommand,
   ...PENDING_DESCRIPTORS.map((descriptor) => ({ descriptor })),
 ];
 

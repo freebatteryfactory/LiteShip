@@ -1,7 +1,9 @@
 /**
- * asset analyze — loads an asset from the registered registry, runs the
- * selected cachedProjection (beat | onset | waveform) on the decoded
- * audio, emits a receipt with markerCount.
+ * asset analyze (CLI adapter) — thin projection over `@czap/command`'s
+ * asset.analyze command. The structured branching (manifest / cache / source /
+ * result) lives in `@czap/command`; this adapter injects the Node-coupled I/O:
+ * the manifest read, asset-byte loading, the audio projection (DSP via
+ * @czap/assets), and the content-addressed receipt cache.
  *
  * @module
  */
@@ -9,74 +11,64 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@czap/assets';
+import { assetAnalyzeCommand, type AssetAnalyzePayload } from '@czap/command';
+import type { CommandContext } from '@czap/command';
 import { emit, emitError, getCapsuleManifestPath } from '../receipts.js';
 import { tryReadCache, writeCache } from '../idempotency.js';
-import type { IdempotencyCtx } from '../idempotency.js';
-
-interface ManifestEntry {
-  readonly name: string;
-  readonly source?: string;
-  readonly kind?: string;
-}
-
-interface Manifest {
-  readonly capsules: readonly ManifestEntry[];
-}
 
 type Projection = 'beat' | 'onset' | 'waveform';
 
-/** Execute the asset analyze command. */
-export async function assetAnalyze(assetId: string, projection: Projection, force = false): Promise<number> {
-  const manifestPath = getCapsuleManifestPath();
-  if (!existsSync(manifestPath)) {
-    emitError('asset.analyze', 'capsule manifest missing — run capsule:compile first');
-    return 1;
-  }
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest;
-  const entry = manifest.capsules.find((c) => c.name === assetId);
-  if (!entry) {
-    emitError('asset.analyze', `asset not registered in manifest: ${assetId}`);
-    return 1;
-  }
-
-  const ctx: IdempotencyCtx = {
-    command: 'asset.analyze',
-    inputs: { assetId, projection },
-    force,
-  };
-  const cached = tryReadCache(ctx);
-  if (cached) {
-    emit({ ...(cached as Record<string, unknown>), cached: true });
-    return 0;
-  }
-
-  // Assets typically live under examples/scenes/<id>.wav; try a few conventions.
-  const candidates = [resolve('examples/scenes', `${assetId}.wav`), entry.source ? resolve(entry.source) : ''].filter(
+/** Load an asset's raw bytes by source convention (examples/scenes/<id>.wav | manifest source). */
+function loadAssetBytes(assetId: string, source?: string): ArrayBuffer | null {
+  const candidates = [resolve('examples/scenes', `${assetId}.wav`), source ? resolve(source) : ''].filter(
     (p) => p && existsSync(p),
   );
+  if (candidates.length === 0) return null;
+  return readFileSync(candidates[0]!).buffer as ArrayBuffer;
+}
 
-  if (candidates.length === 0) {
-    emitError('asset.analyze', `asset source file not found for: ${assetId}`);
-    return 1;
-  }
-
-  const bytes = readFileSync(candidates[0]!).buffer as ArrayBuffer;
+/** Run the selected audio projection over decoded bytes and return the marker count. */
+async function runAudioProjection(bytes: ArrayBuffer, projection: Projection): Promise<number> {
   const decoded = await audioDecoder(bytes);
+  if (projection === 'beat') return detectBeats(decoded).beats.length;
+  if (projection === 'onset') return detectOnsets(decoded).length;
+  return computeWaveform(decoded, { bins: 512 }).length;
+}
 
-  let markerCount = 0;
-  if (projection === 'beat') markerCount = detectBeats(decoded).beats.length;
-  else if (projection === 'onset') markerCount = detectOnsets(decoded).length;
-  else markerCount = computeWaveform(decoded, { bins: 512 }).length;
+function analyzeContext(): CommandContext {
+  return {
+    manifestSource: () => {
+      const path = getCapsuleManifestPath();
+      return existsSync(path) ? readFileSync(path, 'utf8') : null;
+    },
+    loadAssetBytes,
+    runAudioProjection,
+    cache: {
+      read: (key) => tryReadCache({ command: key.command, inputs: key.inputs, force: key.force }),
+      write: (key, receipt) => writeCache({ command: key.command, inputs: key.inputs, force: key.force }, receipt),
+    },
+  };
+}
 
-  const receipt = {
+/** Execute the asset analyze command. */
+export async function assetAnalyze(assetId: string, projection: Projection, force = false): Promise<number> {
+  const result = await assetAnalyzeCommand.handler(
+    { name: 'asset.analyze', args: { asset: assetId, projection, force } },
+    analyzeContext(),
+  );
+  if (result.status === 'failed') {
+    emitError('asset.analyze', (result.payload as { error: string }).error);
+    return result.exitCode ?? 1;
+  }
+  const payload = result.payload as AssetAnalyzePayload;
+  emit({
     status: 'ok',
     command: 'asset.analyze',
-    timestamp: new Date().toISOString(),
-    assetId,
-    projection,
-    markerCount,
-  };
-  writeCache(ctx, receipt);
-  emit({ ...receipt, cached: false });
+    timestamp: result.timestamp,
+    assetId: payload.assetId,
+    projection: payload.projection,
+    markerCount: payload.markerCount,
+    cached: payload.cached,
+  });
   return 0;
 }
