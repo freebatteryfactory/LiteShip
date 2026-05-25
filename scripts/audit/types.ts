@@ -91,9 +91,29 @@ export interface OrphanCoverage {
   readonly note: string;
 }
 
+/**
+ * Symbol-level orphan evidence (CUT A6) — finer than {@link OrphanCoverage}.
+ * For each exported symbol in a file that IS imported, the audit checks whether
+ * that exact name is referenced (or re-exported by a barrel). This is what the
+ * file-level proxy cannot prove: a file imported for one export no longer
+ * launders its other exports.
+ */
+export interface SymbolOrphanCoverage {
+  readonly coverage: 'symbol-evidenced';
+  /** Exact-name references (incl. barrel re-exports) — proven consumed. */
+  readonly consumedCount: number;
+  /** Covered only by a namespace/`*` import — broad evidence, not exact proof. */
+  readonly starCoveredCount: number;
+  /** Exported but unreferenced despite the file being reached — the file-proxy gap. */
+  readonly candidateCount: number;
+  readonly note: string;
+}
+
 export interface StructureCoverageClassification {
   readonly topology: readonly TopologyCoverageEntry[];
   readonly orphan: OrphanCoverage;
+  /** Symbol-level orphan evidence layered on top of the file-level proxy (CUT A6). */
+  readonly symbol: SymbolOrphanCoverage;
   readonly allowlistUnexercised: readonly AllowlistUnexercisedEntry[];
 }
 

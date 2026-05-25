@@ -684,7 +684,7 @@ export const ids = [
 
     expect(stableJsonView.schemaVersion).toBe(2);
     expect(stableJsonView.inventoryCount).toBe(26);
-    expect(stableJsonView.aggregateScore).toBeCloseTo(85.91, 2);
+    expect(stableJsonView.aggregateScore).toBeCloseTo(85.71, 2);
     expect(stableJsonView.sectionScores.map((section) => section.id)).toEqual([
       '@czap/core',
       '@czap/quantizer',
@@ -738,6 +738,9 @@ export const ids = [
     expect(stableJsonView.findings).toEqual([
       { rule: 'runtime-seam-transport-note', severity: 'info', file: null },
       { rule: 'orphan-export-candidate', severity: 'info', file: 'packages/core/src/orphan.ts' },
+      // CUT A6: symbol-level evidence surfaces `ids` in the fixture's vite barrel
+      // (only loadVirtualModule is re-exported; ids is exported-but-unconsumed).
+      { rule: 'symbol-orphan-candidate', severity: 'info', file: 'packages/vite/src/virtual-modules.ts' },
     ]);
 
     const markdown = renderCodebaseAuditMarkdown(report);
@@ -810,6 +813,99 @@ export const ids = [
     expect(markdown).toContain('file-proxy-only');
     // The aggregate score must remain the final line (pinned receipt invariant).
     expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
+  });
+
+  // ── CUT A6 — symbol-level orphan evidence ────────────────────────────
+  // File-level orphan detection clears an entire file once any import resolves
+  // to it (the documented file-proxy). A6 adds symbol-level evidence on top:
+  // a file imported for one export no longer launders its OTHER exports.
+
+  function symbolPairFixture(): Record<string, string> {
+    return {
+      ...baseRepoFiles(),
+      // pair.ts exports two symbols; consumer imports only one by name.
+      'packages/core/src/pair.ts': 'export const usedExport = 1;\nexport const unusedExport = 2;\n',
+      'packages/core/src/consumer.ts': 'import { usedExport } from "./pair.js";\nexport const total = usedExport;\n',
+      // star-src exports two symbols consumed only via a namespace import (broad evidence).
+      'packages/core/src/star-src.ts': 'export const alpha = 1;\nexport const beta = 2;\n',
+      'packages/core/src/star-consumer.ts': 'import * as S from "./star-src.js";\nexport const sum = S.alpha + S.beta;\n',
+    };
+  }
+
+  test('CUT A6: symbol-level orphan surfaces an unused export in an otherwise-imported file', () => {
+    const result = runStructureAudit(createRepo(symbolPairFixture()));
+    // File-level (proxy) does NOT flag pair.ts — consumer imports usedExport, so the file is reached.
+    expect(
+      result.findings.some((f) => f.rule === 'orphan-export-candidate' && f.location?.file === 'packages/core/src/pair.ts'),
+    ).toBe(false);
+    // Symbol-level surfaces exactly the unused export — not the used one.
+    const orphanedSymbols = result.findings
+      .filter((f) => f.rule === 'symbol-orphan-candidate' && f.location?.file === 'packages/core/src/pair.ts')
+      .map((f) => f.metadata?.symbol);
+    expect(orphanedSymbols).toEqual(['unusedExport']);
+  });
+
+  test('CUT A6: barrel re-exports and namespace (star) imports are not flagged as symbol orphans', () => {
+    const result = runStructureAudit(createRepo(symbolPairFixture()));
+    const symbolOrphanFiles = result.findings
+      .filter((f) => f.rule === 'symbol-orphan-candidate')
+      .map((f) => f.location?.file);
+    // helper.ts is re-exported by the core index barrel (export { helper }) → consumed, not orphan.
+    expect(symbolOrphanFiles).not.toContain('packages/core/src/helper.ts');
+    // star-src.ts is covered by a namespace import → broad evidence, not an exact-name orphan.
+    expect(symbolOrphanFiles).not.toContain('packages/core/src/star-src.ts');
+    // index.ts barrels are out of symbol scope entirely.
+    expect(symbolOrphanFiles.every((file) => !file?.endsWith('/index.ts'))).toBe(true);
+  });
+
+  test('CUT A6: coverage reports symbol-level evidence distinct from the file-level proxy', () => {
+    const c = runStructureAudit(createRepo(symbolPairFixture())).summary.coverageClassification;
+    // The file-level proxy classification is preserved unchanged.
+    expect(c.orphan.coverage).toBe('file-proxy-only');
+    // A new symbol-level classification reports exact evidence.
+    expect(c.symbol.coverage).toBe('symbol-evidenced');
+    expect(c.symbol.candidateCount).toBeGreaterThanOrEqual(1); // unusedExport
+    expect(c.symbol.consumedCount).toBeGreaterThanOrEqual(1); // usedExport
+    expect(c.symbol.starCoveredCount).toBeGreaterThanOrEqual(2); // alpha + beta
+  });
+
+  test('CUT A6: self-trust markdown surfaces symbol-level evidence alongside the file proxy', () => {
+    const root = createRepo(coverageClassificationFixtureFiles());
+    const report = buildCodebaseAuditReport({ root, generatedAt: '2026-05-24T00:00:00.000Z' });
+    const markdown = renderCodebaseAuditMarkdown(report);
+    expect(markdown).toContain('file-proxy-only'); // preserved
+    expect(markdown).toContain('symbol-evidenced'); // new
+    // Aggregate score remains the pinned final line.
+    expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
+  });
+
+  test('CUT A6: a test-only symbol-orphan is classified honestly (suppressed with reason, not silently cleared)', () => {
+    const root = createRepo({
+      ...baseRepoFiles(),
+      // index re-exports readRuntimePolicy (so policy.ts is reached) but NOT the
+      // test-only reset hook → the hook is exported-but-unconsumed at symbol level.
+      'packages/astro/src/runtime/index.ts':
+        'export { bootstrapSlots } from "./slots.js";\nexport { loadWasmRuntime } from "./wasm.js";\nexport { readRuntimePolicy } from "./policy.js";\n',
+      'packages/astro/src/runtime/policy.ts':
+        'export const readRuntimePolicy = () => 1;\nexport const _resetRuntimePolicyForTests = () => 2;\n',
+    });
+    const result = runStructureAudit(root);
+    // Not an ACTIVE candidate (the allowlist caught it)…
+    expect(
+      result.findings.some(
+        (f) => f.rule === 'symbol-orphan-candidate' && f.metadata?.symbol === '_resetRuntimePolicyForTests',
+      ),
+    ).toBe(false);
+    // …and not silently dropped either — it is suppressed WITH a stated reason.
+    const suppressed = result.suppressed.find(
+      (e) => e.rule === 'symbol-orphan-candidate' && e.finding.metadata?.symbol === '_resetRuntimePolicyForTests',
+    );
+    expect(suppressed, 'test-only symbol-orphan must be suppressed with a reason').toBeDefined();
+    expect(suppressed?.reason).toContain('Test-only');
+    // The consumed sibling is not flagged at all.
+    expect(
+      result.findings.some((f) => f.rule === 'symbol-orphan-candidate' && f.metadata?.symbol === 'readRuntimePolicy'),
+    ).toBe(false);
   });
 
   test('CUT A2: topology coverage closes over the five formerly policy-absent packages', () => {

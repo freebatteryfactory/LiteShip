@@ -510,6 +510,41 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
     });
   }
 
+  // CUT A6 — symbol-level orphan evidence. The loop above is file-level: it
+  // clears every export of a file once any import resolves to it. Here we go
+  // finer — for each exported symbol in a file that IS reached, check whether
+  // the exact name is referenced (or re-exported by a barrel). Exact-name hits
+  // are consumed; a namespace/`*` import is broad coverage, not exact proof;
+  // the rest are exported-but-unconsumed despite the file being reached — the
+  // gap the file-level proxy launders. Never-imported files are already covered
+  // by the file-level finding above, so they are skipped here (no double-count).
+  let symbolConsumedCount = 0;
+  let symbolStarCoveredCount = 0;
+  for (const symbol of exportedSymbols) {
+    if (symbol.name === 'default' || symbol.file.endsWith('/index.ts')) continue;
+    if (knownSurfaceFiles.has(symbol.file)) continue;
+    if (!inboundFiles.has(symbol.file)) continue;
+    const inbound = inboundReferences.get(symbol.file);
+    if (inbound?.has(symbol.name)) {
+      symbolConsumedCount += 1;
+      continue;
+    }
+    if (inbound?.has('*')) {
+      symbolStarCoveredCount += 1;
+      continue;
+    }
+    rawFindings.push({
+      id: `structure/symbol-orphan/${symbol.file}:${symbol.line}:${symbol.column}:${symbol.name}`,
+      section: 'structure',
+      rule: 'symbol-orphan-candidate',
+      severity: 'info',
+      title: 'Exported symbol unused despite its file being imported',
+      summary: `Export "${symbol.name}" in ${symbol.file} is never referenced by name; the file is reached only via other exports (or a namespace import). File-level orphan detection clears it — symbol-level evidence does not.`,
+      location: { file: symbol.file, line: symbol.line, column: symbol.column },
+      metadata: { packageName: symbol.packageName, symbol: symbol.name, evidence: 'symbol-level' },
+    });
+  }
+
   const partitioned = partitionAllowlistedFindings(rawFindings);
   const packageEdgeSummary = [...packageEdges.entries()]
     .map(([edge, count]) => {
@@ -523,6 +558,7 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
     .sort((left, right) => right.count - left.count || left.from.localeCompare(right.from) || left.to.localeCompare(right.to));
 
   const orphanCandidateCount = partitioned.findings.filter((finding) => finding.rule === 'orphan-export-candidate').length;
+  const symbolOrphanCandidateCount = partitioned.findings.filter((finding) => finding.rule === 'symbol-orphan-candidate').length;
 
   // CUT A0 — classify how each structure check was evaluated so a clean result
   // is never confused with an unchecked one. This does not change what is
@@ -549,7 +585,14 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
     orphan: {
       coverage: 'file-proxy-only',
       candidateCount: orphanCandidateCount,
-      note: 'Orphan detection clears an entire file once any import resolves to it and skips index.ts files, so this count (including 0) does not prove every exported symbol has an in-repo consumer. Symbol-level evidence lands in CUT A6.',
+      note: 'Orphan detection clears an entire file once any import resolves to it and skips index.ts files, so this count (including 0) does not prove every exported symbol has an in-repo consumer. The finer-grained truth is in `symbol` below (CUT A6).',
+    },
+    symbol: {
+      coverage: 'symbol-evidenced',
+      consumedCount: symbolConsumedCount,
+      starCoveredCount: symbolStarCoveredCount,
+      candidateCount: symbolOrphanCandidateCount,
+      note: 'Symbol-level evidence (CUT A6): for each exported symbol in a file that IS imported, checks whether that exact name is referenced (or re-exported by a barrel). Exact-name hits are consumed; namespace/`*` imports are broad coverage, not exact proof; the remainder are exported-but-unconsumed despite the file being reached — the gap the file-level proxy launders. index.ts barrels, package entrypoints, and default exports are out of symbol scope; symbols in never-imported files stay with the file-level orphan finding. CONSUMER EVIDENCE IS PACKAGE-SOURCE ONLY — tests/ are not scanned — so a test-only helper or an intentionally-public export with no in-package by-name consumer also lands here. Treat candidates as a review list, not proof of deadness; allowlist the intentional ones (scripts/audit/policy.ts) so they classify as suppressed-with-reason rather than silently cleared.',
     },
     allowlistUnexercised,
   };

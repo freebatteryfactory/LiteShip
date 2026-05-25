@@ -365,6 +365,16 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     summaryIncludes: 'WebGPU',
     reason: 'GPU/WebGPU is an explicitly documented partial capability surface in the first wave.',
   },
+  {
+    // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumer is
+    // the runtime-policy test suite, which the audit does not scan, so symbol-level
+    // evidence cannot see it. Allowlisted so it classifies as suppressed-with-reason
+    // (test-only) rather than appearing as a dead-symbol candidate.
+    rule: 'symbol-orphan-candidate',
+    filePrefix: 'packages/astro/src/runtime/policy.ts',
+    summaryIncludes: '_resetRuntimePolicyForTests',
+    reason: 'Test-only reset hook consumed by the runtime-policy test suite (tests/ are not scanned by the symbol-level audit).',
+  },
 ];
 
 export function normalizeRepoPath(value: string): string {
