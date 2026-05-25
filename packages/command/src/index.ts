@@ -12,6 +12,7 @@ export type {
   CapsuleCommandInvocation,
   CapsuleCommandResult,
   CommandAnnotations,
+  CommandExecutionKind,
   CommandJsonSchema,
 } from '@czap/core';
 

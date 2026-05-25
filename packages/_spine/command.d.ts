@@ -38,17 +38,22 @@ export interface CommandAnnotations {
    * (MCP, describe) ignore it.
    */
   readonly group?: string;
-  /**
-   * The command's execution is owned by the CLI (terminal-streaming
-   * orchestration, destructive workflow, visible repair, long-running launch, or
-   * a catalog projection) — it intentionally has NO `@czap/command` handler. The
-   * registry still carries its descriptor for identity/discovery. This makes
-   * "descriptor without handler" an explicit, tested choice rather than a silent
-   * gap: a finite structured command missing its handler is a bug; a `cliOwned`
-   * one is by design.
-   */
-  readonly cliOwned?: boolean;
 }
+
+/**
+ * What execution shape a command is — the central command law:
+ *
+ *   - `handler`: finite structured invocation → returns a `CapsuleCommandResult`
+ *     via a `@czap/command` handler. The only kind eligible for MCP exposure.
+ *   - `cli-orchestration`: terminal UX, inherited stdio, long-running servers,
+ *     destructive workflows, visible repairs, streaming receipts, or catalog
+ *     projections. Registry-described for identity/discovery, but intentionally
+ *     has NO handler — the CLI owns its execution. Never MCP-exposed.
+ *
+ * Making this explicit (vs. inferring "no handler ⇒ fine") means a finite
+ * command that lost its handler is a detectable bug, not a silent gap.
+ */
+export type CommandExecutionKind = 'handler' | 'cli-orchestration';
 
 /** Identity + contract that drives CLI listing AND MCP tools/list from ONE source. */
 export interface CapsuleCommandDescriptor {
@@ -58,6 +63,8 @@ export interface CapsuleCommandDescriptor {
   readonly inputSchema: CommandJsonSchema;
   readonly outputSchema?: CommandJsonSchema;
   readonly annotations?: CommandAnnotations;
+  /** Execution shape — `handler` (structured) vs `cli-orchestration` (CLI-owned). */
+  readonly executionKind?: CommandExecutionKind;
 }
 
 /** A transport-neutral request to run a command with already-parsed (not argv) args. */

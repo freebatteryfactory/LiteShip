@@ -24,9 +24,10 @@ import { verifyCommand } from './commands/verify.js';
  * Descriptors for commands whose execution is owned by the CLI (terminal
  * orchestration, destructive/streaming workflows, host-probe batteries, catalog
  * projections) — they intentionally have NO `@czap/command` handler. They are
- * still first-class catalog entries for identity + discovery. Marked `cliOwned`
- * structurally at assembly below, so a CLI-owned entry can never silently look
- * like a finite command that lost its handler.
+ * still first-class catalog entries for identity + discovery. Tagged
+ * `executionKind: 'cli-orchestration'` structurally at assembly below, so a
+ * CLI-owned entry can never silently look like a finite command that lost its
+ * handler.
  */
 const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
   {
@@ -83,8 +84,8 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
   },
 ];
 
-/** Every registered command: migrated (descriptor + handler) and pending (descriptor only). */
-const ALL_COMMANDS: readonly RegisteredCommand[] = [
+/** Finite, structured, handler-backed commands. Each is tagged `executionKind: 'handler'`. */
+const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   glossaryCommand,
   versionCommand,
   capsuleInspectCommand,
@@ -96,10 +97,22 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
   sceneCompileCommand,
   sceneRenderCommand,
   verifyCommand,
-  // CLI-owned descriptors carry no handler; tag each `cliOwned` structurally so
-  // the handler-XOR-cliOwned invariant can never be satisfied by accident.
+];
+
+/**
+ * Every registered command, with `executionKind` injected structurally by list
+ * membership: handler-backed commands → `handler`; CLI-owned descriptors →
+ * `cli-orchestration`. A command can never be misclassified — a `HandledCommand`
+ * only lives in HANDLER_COMMANDS; a handler-less descriptor only in
+ * CLI_OWNED_DESCRIPTORS — and the catalog tests enforce the law.
+ */
+const ALL_COMMANDS: readonly RegisteredCommand[] = [
+  ...HANDLER_COMMANDS.map((command) => ({
+    ...command,
+    descriptor: { ...command.descriptor, executionKind: 'handler' as const },
+  })),
   ...CLI_OWNED_DESCRIPTORS.map((descriptor) => ({
-    descriptor: { ...descriptor, annotations: { ...descriptor.annotations, cliOwned: true } },
+    descriptor: { ...descriptor, executionKind: 'cli-orchestration' as const },
   })),
 ];
 

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
 
-/** Commands whose execution is CLI-owned (no @czap/command handler, by design). */
-const CLI_OWNED = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'mcp', 'scene.dev', 'ship'] as const;
+/** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
+const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'mcp', 'scene.dev', 'ship'] as const;
 
 /** Every command czap currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
@@ -55,47 +55,48 @@ describe('@czap/command canonical catalog', () => {
     expect(COMMAND_CATALOG.map((d) => d.name)).toEqual(commandRegistry.list().map((d) => d.name));
   });
 
-  it('finite commands carry handlers; CLI-owned commands are descriptor-only', () => {
+  it('finite commands are executionKind handler; CLI-owned commands are cli-orchestration', () => {
     expect(commandRegistry.get('glossary')?.handler).toBeTypeOf('function');
-    expect(commandRegistry.get('version')?.handler).toBeTypeOf('function');
+    expect(commandRegistry.get('glossary')?.descriptor.executionKind).toBe('handler');
     // CLI-owned: registry-described for identity, no handler (CLI dispatch runs it).
     expect(commandRegistry.get('ship')?.descriptor.name).toBe('ship');
     expect(commandRegistry.get('ship')?.handler).toBeUndefined();
-    expect(commandRegistry.get('ship')?.descriptor.annotations?.cliOwned).toBe(true);
+    expect(commandRegistry.get('ship')?.descriptor.executionKind).toBe('cli-orchestration');
   });
 
-  it('every command is EXACTLY one of: handled (structured) or cliOwned (orchestration)', () => {
+  it('executionKind matches handler presence EXACTLY (handler ⟺ executionKind "handler")', () => {
     for (const descriptor of commandRegistry.list()) {
       const command = commandRegistry.get(descriptor.name)!;
       const handled = typeof command.handler === 'function';
-      const cliOwned = descriptor.annotations?.cliOwned === true;
-      // XOR: a finite command missing its handler is a bug; a cliOwned one is by design.
-      expect(handled !== cliOwned, `${descriptor.name}: handled=${handled} cliOwned=${cliOwned} (must be exactly one)`).toBe(true);
+      const isHandlerKind = descriptor.executionKind === 'handler';
+      // A finite command missing its handler is a bug; a cli-orchestration one is by design.
+      expect(handled, `${descriptor.name}: handler=${handled} but executionKind=${descriptor.executionKind}`).toBe(isHandlerKind);
     }
   });
 
-  it('the CLI-owned set is exactly the descriptor-only set', () => {
-    const cliOwned = commandRegistry
+  it('the cli-orchestration set is exactly the handler-less set', () => {
+    const cliOrchestration = commandRegistry
       .list()
-      .filter((d) => d.annotations?.cliOwned === true)
+      .filter((d) => d.executionKind === 'cli-orchestration')
       .map((d) => d.name)
       .sort();
-    expect(cliOwned).toEqual([...CLI_OWNED]);
+    expect(cliOrchestration).toEqual([...CLI_ORCHESTRATION]);
   });
 
-  it('every mcpExposed command is handler-backed (mcpExposed ⟹ handler !== undefined)', () => {
+  it('every mcpExposed command is handler-backed (mcpExposed ⟹ executionKind "handler")', () => {
     // The gremlin guard: an MCP tool MUST be finite structured execution. A
-    // cliOwned (handler-less) command can never be advertised as an MCP tool.
+    // cli-orchestration (handler-less) command can never be advertised as a tool.
     for (const d of mcpExposedDescriptors()) {
+      expect(d.executionKind, `mcpExposed '${d.name}' is not executionKind handler`).toBe('handler');
       expect(commandRegistry.get(d.name)?.handler, `mcpExposed '${d.name}' has no handler`).toBeTypeOf('function');
     }
   });
 
-  it('mcpExposedDescriptors never includes a non-mcpExposed cliOwned command', () => {
+  it('mcpExposedDescriptors never includes a cli-orchestration command', () => {
     const mcpNames = new Set(mcpExposedDescriptors().map((d) => d.name));
     for (const d of commandRegistry.list()) {
-      if (d.annotations?.cliOwned === true && d.annotations?.mcpExposed !== true) {
-        expect(mcpNames.has(d.name), `${d.name} is cliOwned + non-mcpExposed but leaked into listTools`).toBe(false);
+      if (d.executionKind === 'cli-orchestration') {
+        expect(mcpNames.has(d.name), `${d.name} is cli-orchestration but leaked into listTools`).toBe(false);
       }
     }
   });
