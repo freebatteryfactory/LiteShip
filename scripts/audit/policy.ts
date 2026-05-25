@@ -183,7 +183,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'layered',
   },
   '@czap/compiler': {
-    allowedInternalImports: ['@czap/core', '@czap/quantizer'],
+    // A3b: compiler imports only @czap/core. @czap/quantizer was permitted but
+    // never imported or declared, and the architecture DAG (docs/ARCHITECTURE.md)
+    // places compiler and quantizer as siblings under core, not a compiler->quantizer
+    // edge — so this was permission mold, not a deliberate seam.
+    allowedInternalImports: ['@czap/core'],
     kind: 'layered',
   },
   '@czap/web': {
