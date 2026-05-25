@@ -6,8 +6,9 @@
  *      notifications/initialized accepted (no response), honest method-not-found
  *      for the resources/prompts surfaces D1 does not declare.
  *   2. result truth: tools/call returns structuredContent=payload, the LiteShip
- *      receipt identity in `_meta['dev.heyoub.liteship/result']`, a text mirror
- *      derived from the payload, and a content-addressed resultId.
+ *      receipt identity in `_meta['liteship/result']` (product-owned namespace —
+ *      no maintainer identity), a text mirror derived from the payload, and a
+ *      content-addressed resultId.
  *
  * @module
  */
@@ -18,7 +19,7 @@ import { dispatch, dispatchToolCall } from '../../../packages/mcp-server/src/dis
 import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-server/src/jsonrpc.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
-const RECEIPT_KEY = 'dev.heyoub.liteship/result';
+const RECEIPT_KEY = 'liteship/result';
 
 function req(method: string, params?: unknown, id: string | number = 1): JsonRpcRequest {
   return params === undefined
@@ -100,5 +101,25 @@ describe('D1 result-truth floor — receipt-backed envelope', () => {
     expect(receipt).toBeDefined();
     expect(receipt!.command).toBe('capsule.inspect');
     expect(receipt!.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
+  });
+});
+
+describe('D1 namespace law — protocol surfaces are product-owned, not maintainer-owned', () => {
+  it('the result _meta carries EXACTLY the product key "liteship/result" (no maintainer namespace)', async () => {
+    const result = await dispatchToolCall({ name: 'glossary', arguments: { term: 'boundary' } });
+    // The wire key is exactly the product-owned namespace — nothing else rides in _meta.
+    expect(Object.keys(result._meta ?? {})).toEqual(['liteship/result']);
+    // And no maintainer/user identity leaks into any _meta key.
+    expect(Object.keys(result._meta ?? {}).some((k) => k.includes('heyoub'))).toBe(false);
+  });
+
+  it('REGRESSION GUARD: no maintainer namespace (dev.heyoub.liteship) in MCP protocol-surface source', () => {
+    // Scoped to protocol-surface SOURCE only — package metadata, LICENSE, repo URLs,
+    // and attribution may legitimately contain "heyoub", so this is NOT a global ban.
+    const protocolSurfaces = ['packages/_spine/command.d.ts', 'packages/mcp-server/src/dispatch.ts'];
+    for (const rel of protocolSurfaces) {
+      const src = readFileSync(resolve(REPO, rel), 'utf8');
+      expect(src, `${rel} must not embed a maintainer namespace in a protocol surface`).not.toContain('dev.heyoub.liteship');
+    }
   });
 });
