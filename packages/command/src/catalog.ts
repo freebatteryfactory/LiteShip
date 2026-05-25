@@ -17,7 +17,7 @@ import { glossaryCommand } from './commands/glossary.js';
 import { versionCommand } from './commands/version.js';
 import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
 import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
-import { sceneVerifyCommand } from './commands/scene.js';
+import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 
 /** Descriptors for commands whose handlers have not yet migrated into this package. */
 const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
@@ -44,22 +44,6 @@ const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     summary: 'Emit a shell tab-completion script for sourcing into a shell rc.',
     inputSchema: { type: 'object', required: ['shell'], properties: { shell: { type: 'string', enum: ['bash', 'zsh', 'fish'] } } },
     annotations: { cliOnly: true, group: 'castoff' },
-  },
-  {
-    name: 'scene.compile',
-    summary: 'Compile a scene capsule.',
-    inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'compose' },
-  },
-  {
-    name: 'scene.render',
-    summary: 'Render a scene to mp4.',
-    inputSchema: {
-      type: 'object',
-      required: ['scene', 'output'],
-      properties: { scene: { type: 'string' }, output: { type: 'string' } },
-    },
-    annotations: { mcpExposed: true, group: 'compose' },
   },
   {
     name: 'scene.dev',
@@ -103,6 +87,8 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
   assetAnalyzeCommand,
   assetVerifyCommand,
   sceneVerifyCommand,
+  sceneCompileCommand,
+  sceneRenderCommand,
   ...PENDING_DESCRIPTORS.map((descriptor) => ({ descriptor })),
 ];
 

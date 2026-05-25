@@ -1,0 +1,142 @@
+import { describe, it, expect } from 'vitest';
+import { sceneCompileCommand, sceneRenderCommand } from '@czap/command';
+
+const COMPILE_MOD = {
+  cap: { _kind: 'sceneComposition', id: 's1', name: 'intro' },
+  contract: { tracks: [1, 2, 3] },
+  compile: () => {},
+};
+const RENDER_MOD = {
+  cap: { _kind: 'sceneComposition', id: 's1', name: 'intro' },
+  contract: { fps: 30, duration: 1000, tracks: [1] },
+};
+
+describe('@czap/command scene.compile', () => {
+  it('ok with sceneId + trackCount, runs the compile fn', async () => {
+    let ran = false;
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => COMPILE_MOD, runSceneCompile: async () => { ran = true; } },
+    );
+    expect(r.status).toBe('ok');
+    const p = r.payload as { sceneId: string; trackCount: number };
+    expect(p.sceneId).toBe('s1');
+    expect(p.trackCount).toBe(3);
+    expect(ran).toBe(true);
+  });
+
+  it('missing scene file → failed exit 1', async () => {
+    const r = await sceneCompileCommand.handler({ name: 'scene.compile', args: { scene: 's.ts' } }, { fileExists: () => false });
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+  });
+
+  it('no capsule/contract export → failed exit 1', async () => {
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => ({ nothing: 1 }) },
+    );
+    expect(r.exitCode).toBe(1);
+  });
+
+  it('compile fn throwing → failed exit 1', async () => {
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => COMPILE_MOD, runSceneCompile: async () => { throw new Error('boom'); } },
+    );
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+  });
+});
+
+describe('@czap/command scene.render', () => {
+  it('missing --output → failed exit 1', async () => {
+    const r = await sceneRenderCommand.handler({ name: 'scene.render', args: { scene: 's.ts', output: '' } }, {});
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(1);
+  });
+
+  it('missing scene file → failed exit 1', async () => {
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      { fileExists: () => false },
+    );
+    expect(r.exitCode).toBe(1);
+  });
+
+  it('fresh render → ok cached:false and writes cache', async () => {
+    const writes: unknown[] = [];
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: (_k, v) => writes.push(v) },
+        loadSceneModule: async () => RENDER_MOD,
+        renderScene: async (params) => {
+          expect(params.fps).toBe(30);
+          return { frameCount: 30, elapsedMs: 5 };
+        },
+      },
+    );
+    expect(r.status).toBe('ok');
+    const p = r.payload as { sceneId: string; frameCount: number; cached: boolean };
+    expect(p.frameCount).toBe(30);
+    expect(p.cached).toBe(false);
+    expect(writes).toHaveLength(1);
+  });
+
+  it('cache hit with output still on disk → cached:true, no render', async () => {
+    let rendered = false;
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => ({ sceneId: 's1', output: 'o.mp4', frameCount: 30, elapsedMs: 5 }), write: () => {} },
+        loadSceneModule: async () => { rendered = true; return RENDER_MOD; },
+        renderScene: async () => { rendered = true; return { frameCount: 0, elapsedMs: 0 }; },
+      },
+    );
+    const p = r.payload as { cached: boolean; sceneId: string };
+    expect(p.cached).toBe(true);
+    expect(p.sceneId).toBe('s1');
+    expect(rendered).toBe(false);
+  });
+
+  it('stale cache (output gone) falls through to a real render', async () => {
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        // scene file exists; cached output does NOT.
+        fileExists: (p) => p !== 'o.mp4',
+        cache: { read: () => ({ sceneId: 's1', output: 'o.mp4', frameCount: 9, elapsedMs: 1 }), write: () => {} },
+        loadSceneModule: async () => RENDER_MOD,
+        renderScene: async () => ({ frameCount: 30, elapsedMs: 5 }),
+      },
+    );
+    const p = r.payload as { cached: boolean; frameCount: number };
+    expect(p.cached).toBe(false);
+    expect(p.frameCount).toBe(30);
+  });
+
+  it('ffmpeg/render failure → failed exit 5', async () => {
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: () => {} },
+        loadSceneModule: async () => RENDER_MOD,
+        renderScene: async () => { throw new Error('ffmpeg boom'); },
+      },
+    );
+    expect(r.status).toBe('failed');
+    expect(r.exitCode).toBe(5);
+  });
+
+  it('no capsule/contract export → failed exit 1', async () => {
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      { fileExists: () => true, cache: { read: () => null, write: () => {} }, loadSceneModule: async () => ({ x: 1 }) },
+    );
+    expect(r.exitCode).toBe(1);
+  });
+});

@@ -31,4 +31,4 @@ export { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from 
 export type { CapsuleManifest, CapsuleManifestEntry } from './commands/manifest.js';
 export { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 export type { AssetAnalyzePayload } from './commands/asset.js';
-export { sceneVerifyCommand } from './commands/scene.js';
+export { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';

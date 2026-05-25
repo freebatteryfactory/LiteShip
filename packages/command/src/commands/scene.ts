@@ -11,8 +11,8 @@ import type { CapsuleCommandResult } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
 import { loadManifest } from './manifest.js';
 
-function failed(error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command: 'scene.verify', timestamp: new Date().toISOString(), exitCode, payload: { error } };
+function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
+  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
 }
 
 interface SceneCapsule {
@@ -29,6 +29,14 @@ function findSceneCapsule(mod: Record<string, unknown>): SceneCapsule | undefine
   );
 }
 
+/** Find the scene contract (the export carrying a `tracks` array). */
+function findContract(mod: Record<string, unknown>): Record<string, unknown> | undefined {
+  return Object.values(mod).find(
+    (v): v is Record<string, unknown> =>
+      typeof v === 'object' && v !== null && 'tracks' in v && Array.isArray((v as { tracks: unknown }).tracks),
+  );
+}
+
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
 export const sceneVerifyCommand: HandledCommand = {
   descriptor: {
@@ -39,21 +47,21 @@ export const sceneVerifyCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = String(invocation.args.scene ?? '');
-    if (!context.fileExists?.(scenePath)) return failed(`scene not found: ${scenePath}`, 1);
+    if (!context.fileExists?.(scenePath)) return failed('scene.verify', `scene not found: ${scenePath}`, 1);
 
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
-    if (!cap) return failed('no sceneComposition capsule exported', 1);
+    if (!cap) return failed('scene.verify', 'no sceneComposition capsule exported', 1);
 
     const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule manifest missing; run capsule:compile first', 1);
+    if (!manifest) return failed('scene.verify', 'capsule manifest missing; run capsule:compile first', 1);
     const entry = manifest.capsules.find((c) => c.name === cap.name);
-    if (!entry?.generated) return failed(`capsule ${cap.name} not in manifest`, 1);
+    if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 
-    if (!context.runVitest) return failed('vitest runner unavailable', 2);
+    if (!context.runVitest) return failed('scene.verify', 'vitest runner unavailable', 2);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile, entry.generated.benchFile]);
     if (exitCode !== 0) {
-      return failed(`generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
+      return failed('scene.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
     }
     return {
       status: 'ok',
@@ -61,5 +69,94 @@ export const sceneVerifyCommand: HandledCommand = {
       timestamp: new Date().toISOString(),
       payload: { sceneId: cap.id, generatedTests: 2 },
     };
+  },
+};
+
+/** `scene compile <scene.ts>` — load the scene module + run its compile pipeline. */
+export const sceneCompileCommand: HandledCommand = {
+  descriptor: {
+    name: 'scene.compile',
+    summary: 'Compile a scene capsule.',
+    inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    annotations: { mcpExposed: true, group: 'compose' },
+  },
+  handler: async (invocation, context): Promise<CapsuleCommandResult> => {
+    const scenePath = String(invocation.args.scene ?? '');
+    if (!context.fileExists?.(scenePath)) return failed('scene.compile', `scene file not found: ${scenePath}`, 1);
+
+    const mod = await context.loadSceneModule?.(scenePath);
+    const cap = mod ? findSceneCapsule(mod) : undefined;
+    const contract = mod ? findContract(mod) : undefined;
+    if (!cap || !contract) return failed('scene.compile', 'no sceneComposition capsule or scene contract exported', 1);
+
+    const start = Date.now();
+    try {
+      if (context.runSceneCompile) await context.runSceneCompile(mod!);
+    } catch (err) {
+      return failed('scene.compile', String(err), 1);
+    }
+    return {
+      status: 'ok',
+      command: 'scene.compile',
+      timestamp: new Date().toISOString(),
+      payload: { sceneId: cap.id, trackCount: (contract.tracks as readonly unknown[]).length, durationMs: Date.now() - start },
+    };
+  },
+};
+
+/** `scene render <scene.ts> -o <out.mp4>` — compile + render to mp4 (idempotent). */
+export const sceneRenderCommand: HandledCommand = {
+  descriptor: {
+    name: 'scene.render',
+    summary: 'Render a scene to mp4.',
+    inputSchema: {
+      type: 'object',
+      required: ['scene', 'output'],
+      properties: { scene: { type: 'string' }, output: { type: 'string' } },
+    },
+    annotations: { mcpExposed: true, group: 'compose' },
+  },
+  handler: async (invocation, context): Promise<CapsuleCommandResult> => {
+    const scenePath = String(invocation.args.scene ?? '');
+    const output = String(invocation.args.output ?? '');
+    if (!output) return failed('scene.render', 'missing --output / -o path', 1);
+    if (!context.fileExists?.(scenePath)) return failed('scene.render', `scene not found: ${scenePath}`, 1);
+
+    const force = invocation.args.force === true;
+    const key = { command: 'scene.render', inputs: { scenePath, output }, force };
+    const cached = context.cache?.read(key) as
+      | { sceneId: string; output: string; frameCount: number; elapsedMs: number }
+      | null
+      | undefined;
+    // A cache hit only counts if the rendered output is still on disk.
+    if (cached && typeof cached.output === 'string' && context.fileExists?.(cached.output)) {
+      return {
+        status: 'ok',
+        command: 'scene.render',
+        timestamp: new Date().toISOString(),
+        payload: { ...cached, cached: true },
+      };
+    }
+
+    const mod = await context.loadSceneModule?.(scenePath);
+    const cap = mod ? findSceneCapsule(mod) : undefined;
+    const contract = mod ? findContract(mod) : undefined;
+    if (!cap || !contract || typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
+      return failed('scene.render', 'no sceneComposition capsule or contract exported', 1);
+    }
+    if (!context.renderScene) return failed('scene.render', 'render backend unavailable', 5);
+
+    try {
+      const { frameCount, elapsedMs } = await context.renderScene({
+        fps: contract.fps,
+        durationMs: contract.duration,
+        output,
+      });
+      const payload = { sceneId: cap.id, output, frameCount, elapsedMs };
+      context.cache?.write(key, payload);
+      return { status: 'ok', command: 'scene.render', timestamp: new Date().toISOString(), payload: { ...payload, cached: false } };
+    } catch (err) {
+      return failed('scene.render', String(err), 5);
+    }
   },
 };
