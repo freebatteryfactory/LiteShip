@@ -10,6 +10,7 @@ import type {
   CapsuleCommandInvocation as _CapsuleCommandInvocation,
   CapsuleCommandResult as _CapsuleCommandResult,
   CommandAnnotations as _CommandAnnotations,
+  CommandExecutionKind as _CommandExecutionKind,
   CommandJsonSchema as _CommandJsonSchema,
 } from '@czap/_spine';
 
@@ -17,6 +18,8 @@ import type {
 export type CommandJsonSchema = _CommandJsonSchema;
 /** Surface hints (longRunning/readOnly/destructive/cliOnly/mcpExposed) carried as data. */
 export type CommandAnnotations = _CommandAnnotations;
+/** Execution shape: `handler` (finite structured) vs `cli-orchestration` (CLI-owned). */
+export type CommandExecutionKind = _CommandExecutionKind;
 /** Identity + contract driving CLI listing AND MCP tools/list from one source. */
 export type CapsuleCommandDescriptor = _CapsuleCommandDescriptor;
 /** Transport-neutral request: a command name + already-parsed args. */
