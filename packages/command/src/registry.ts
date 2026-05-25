@@ -67,6 +67,22 @@ export interface CommandContext {
   readonly loadSceneModule?: (scenePath: string) => Promise<Record<string, unknown> | null>;
   /** Content-addressed receipt cache (adapter-backed; fs on the CLI side). */
   readonly cache?: CommandCache;
+  /**
+   * Execute a loaded scene module's compile function (the adapter runs it,
+   * including any Effect). Keeps the `effect` runtime + arbitrary-user-code
+   * execution out of @czap/command. Throws on compile failure.
+   */
+  readonly runSceneCompile?: (sceneModule: Record<string, unknown>) => Promise<void>;
+  /**
+   * Render a scene to the output path via the host's compositor + ffmpeg
+   * pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
+   * + ffmpeg spawn); keeps the render backend out of @czap/command.
+   */
+  readonly renderScene?: (params: {
+    readonly fps: number;
+    readonly durationMs: number;
+    readonly output: string;
+  }) => Promise<{ readonly frameCount: number; readonly elapsedMs: number }>;
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */
