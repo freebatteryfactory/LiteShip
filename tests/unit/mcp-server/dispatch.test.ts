@@ -163,19 +163,20 @@ describe('dispatchToolCall — argv builder + stdout capture', () => {
 });
 
 describe('listTools — static tool catalog', () => {
-  it('lists at least the 10 spec-required czap tools', () => {
-    const tools = listTools();
-    const names = tools.map((t) => t.name);
-    expect(names).toContain('describe');
-    expect(names).toContain('scene.compile');
-    expect(names).toContain('scene.render');
-    expect(names).toContain('scene.verify');
-    expect(names).toContain('asset.analyze');
-    expect(names).toContain('asset.verify');
-    expect(names).toContain('capsule.inspect');
-    expect(names).toContain('capsule.verify');
-    expect(names).toContain('capsule.list');
-    expect(names).toContain('gauntlet');
+  it('lists exactly the 8 handler-backed compute/verify tools', () => {
+    // describe (catalog projection) + gauntlet (terminal orchestration) were
+    // dropped: an MCP tool must be finite, handler-backed structured execution.
+    const names = listTools().map((t) => t.name).sort();
+    expect(names).toEqual([
+      'asset.analyze',
+      'asset.verify',
+      'capsule.inspect',
+      'capsule.list',
+      'capsule.verify',
+      'scene.compile',
+      'scene.render',
+      'scene.verify',
+    ]);
   });
 
   it('every tool carries an inputSchema object', () => {

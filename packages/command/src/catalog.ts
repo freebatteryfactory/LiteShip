@@ -39,7 +39,9 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     name: 'describe',
     summary: 'Dump the capsule catalog + command schema (the AI discovery surface).',
     inputSchema: { type: 'object', properties: { format: { type: 'string', enum: ['json', 'mcp'] } } },
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    // NOT mcpExposed: describe is a catalog projection — MCP already serves that
+    // via tools/list, so exposing it as a callable tool is duplicate ontology.
+    annotations: { readOnly: true, group: 'castoff' },
   },
   {
     name: 'help',
@@ -63,7 +65,9 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     name: 'gauntlet',
     summary: 'Run the full release-grade gauntlet.',
     inputSchema: { type: 'object', properties: { 'dry-run': { type: 'boolean' } } },
-    annotations: { mcpExposed: true, group: 'ship' },
+    // NOT mcpExposed: gauntlet is a blocking spawnSync(stdio:inherit) that streams
+    // a 28-phase run to a terminal — terminal orchestration, not an MCP tool.
+    annotations: { group: 'ship' },
   },
   {
     name: 'ship',
