@@ -780,7 +780,7 @@ export const ids = [
     expect(spineViolations).toHaveLength(0);
   });
 
-  test('CUT A3: astro/web/vite allowlists no longer carry unexercised compiler/quantizer permits', () => {
+  test('CUT A3/A3b: astro/web/vite/compiler allowlists carry no unexercised compiler/quantizer permits', () => {
     // Runs against the REAL repo policy + sources (no fixture root). The dropped
     // edges are imports those packages never make, so once removed from policy
     // they cannot appear in allowlistUnexercised at all.
@@ -792,5 +792,8 @@ export const ids = [
     expect(has('@czap/web', '@czap/quantizer')).toBe(false);
     expect(has('@czap/web', '@czap/compiler')).toBe(false);
     expect(has('@czap/vite', '@czap/quantizer')).toBe(false);
+    // A3b: compiler imports only core (no @czap/quantizer import, not in its
+    // manifest, no compiler->quantizer edge in the architecture DAG).
+    expect(has('@czap/compiler', '@czap/quantizer')).toBe(false);
   });
 });
