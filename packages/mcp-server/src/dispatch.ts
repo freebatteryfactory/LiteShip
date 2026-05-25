@@ -18,7 +18,10 @@
  */
 
 import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@czap/command';
+import { fnv1a } from '@czap/core';
+import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@czap/core';
 import { createNodeCommandContext } from '@czap/command/host';
+import { serverInfo } from './server-info.js';
 import {
   type JsonRpcNotification,
   type JsonRpcRequest,
@@ -29,6 +32,12 @@ import {
   InvalidParams,
   InternalError,
 } from './jsonrpc.js';
+
+/** MCP protocol revision D1 implements (lifecycle floor). */
+const PROTOCOL_VERSION = '2025-11-25';
+
+/** Reverse-DNS `_meta` key under which the LiteShip result receipt rides (never an MCP-reserved prefix). */
+const RECEIPT_META_KEY: CapsuleResultMetaKey = 'dev.heyoub.liteship/result';
 
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
 const dispatcher = CommandDispatcher.make(commandRegistry);
@@ -55,11 +64,18 @@ export interface McpToolCall {
   readonly arguments: Record<string, unknown>;
 }
 
-/** MCP tools/call result envelope. `structuredContent` is the command payload. */
+/**
+ * MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
+ * (what a D2 `outputSchema` will describe); LiteShip result identity rides in
+ * `_meta` under {@link RECEIPT_META_KEY} (provenance, not the semantic result);
+ * `content[0].text` is a compatibility JSON mirror of the payload.
+ */
 export interface McpToolResult {
   readonly content: ReadonlyArray<{ type: 'text'; text: string }>;
   readonly structuredContent: unknown;
   readonly isError: boolean;
+  /** MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key. */
+  readonly _meta?: Readonly<Record<string, unknown>>;
 }
 
 /**
@@ -102,6 +118,26 @@ function ok(value: unknown): InvokeResult {
 
 async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<InvokeResult> {
   switch (msg.method) {
+    case 'initialize': {
+      // Lifecycle floor: require a well-formed protocolVersion (malformed → -32602).
+      // We support exactly PROTOCOL_VERSION and respond with it (spec negotiation:
+      // a client that cannot speak it disconnects). Declare ONLY `tools` — resources
+      // and prompts are intentionally omitted (honest absence) until D3, so calls to
+      // them return method-not-found rather than a toast-handshake empty success.
+      const params = msg.params as { protocolVersion?: unknown } | undefined;
+      if (!params || typeof params.protocolVersion !== 'string') {
+        throw new InvalidParamsError('initialize requires { protocolVersion: string }', { received: params });
+      }
+      return ok({
+        protocolVersion: PROTOCOL_VERSION,
+        capabilities: { tools: { listChanged: false } },
+        serverInfo: serverInfo(),
+      });
+    }
+    case 'notifications/initialized':
+      // Accept-and-track (v1): acknowledge the lifecycle notification rather than
+      // 404 it. It's a notification, so dispatch() returns null regardless.
+      return ok(null);
     case 'tools/list':
       return ok({ tools: listTools() });
     case 'tools/call': {
@@ -119,20 +155,59 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
   }
 }
 
+/** Canonical JSON (recursively sorted keys) so field/key order never perturbs a resultId. */
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  const obj = value as Record<string, unknown>;
+  return `{${Object.keys(obj)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`)
+    .join(',')}}`;
+}
+
+/**
+ * Content address over the STABLE result — command + status + payload + verdict?
+ * + exitCode?. Excludes the volatile `timestamp` (idempotency) and any text-mirror
+ * formatting. Pure (`fnv1a`, no host); advisory identity, not an integrity digest.
+ */
+function computeResultId(result: CapsuleCommandResult): ContentAddress {
+  return fnv1a(
+    canonicalJson({
+      command: result.command,
+      status: result.status,
+      payload: result.payload ?? null,
+      ...(result.verdict !== undefined ? { verdict: result.verdict } : {}),
+      ...(result.exitCode !== undefined ? { exitCode: result.exitCode } : {}),
+    }),
+  );
+}
+
 /**
  * Dispatch a tools/call through the shared registry dispatcher. The structured
- * `arguments` object passes through as the invocation args verbatim (nested
- * objects preserved — no `String(v)` / `[object Object]` flattening), and the
- * resulting `CapsuleCommandResult.payload` is returned as `structuredContent`.
- * The text content is a faithful JSON mirror of that same payload — never
- * captured stdout.
+ * `arguments` object passes through verbatim (nested objects preserved — no
+ * `[object Object]` flattening). The result envelope (CUT D1):
+ *   - `structuredContent` = the command PAYLOAD (what D2's outputSchema describes);
+ *   - `_meta[dev.heyoub.liteship/result]` = the LiteShip receipt (command, content-
+ *     addressed resultId, timestamp, verdict?/exitCode?) — provenance, not payload;
+ *   - `content[0].text` = JSON mirror of the payload (compatibility, never stdout);
+ *   - `isError` reflects a tool-execution failure (NOT a JSON-RPC protocol error).
  */
 export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult> {
   const result = await dispatcher.dispatch({ name: call.name, args: call.arguments }, createNodeCommandContext());
+  const payload = result.payload ?? null;
+  const receipt: CapsuleResultReceipt = {
+    command: result.command,
+    resultId: computeResultId(result),
+    timestamp: result.timestamp,
+    ...(result.verdict !== undefined ? { verdict: result.verdict } : {}),
+    ...(result.exitCode !== undefined ? { exitCode: result.exitCode } : {}),
+  };
   return {
-    content: [{ type: 'text', text: JSON.stringify(result.payload ?? null) }],
-    structuredContent: result.payload ?? null,
+    content: [{ type: 'text', text: JSON.stringify(payload) }],
+    structuredContent: payload,
     isError: result.status === 'failed',
+    _meta: { [RECEIPT_META_KEY]: receipt },
   };
 }
 

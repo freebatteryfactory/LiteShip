@@ -9,6 +9,8 @@ import type {
   CapsuleCommandDescriptor as _CapsuleCommandDescriptor,
   CapsuleCommandInvocation as _CapsuleCommandInvocation,
   CapsuleCommandResult as _CapsuleCommandResult,
+  CapsuleResultReceipt as _CapsuleResultReceipt,
+  CapsuleResultMetaKey as _CapsuleResultMetaKey,
   CommandAnnotations as _CommandAnnotations,
   CommandExecutionKind as _CommandExecutionKind,
   CommandJsonSchema as _CommandJsonSchema,
@@ -26,3 +28,7 @@ export type CapsuleCommandDescriptor = _CapsuleCommandDescriptor;
 export type CapsuleCommandInvocation = _CapsuleCommandInvocation;
 /** Structured command outcome; CLI serializes `payload`, MCP returns it as structuredContent. */
 export type CapsuleCommandResult<P = unknown> = _CapsuleCommandResult<P>;
+/** LiteShip result identity carried in an MCP result's `_meta` (CUT D1). */
+export type CapsuleResultReceipt = _CapsuleResultReceipt;
+/** Reverse-DNS `_meta` key for the result receipt. */
+export type CapsuleResultMetaKey = _CapsuleResultMetaKey;

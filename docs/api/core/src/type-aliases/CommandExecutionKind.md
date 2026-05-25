@@ -8,6 +8,6 @@
 
 > **CommandExecutionKind** = `_CommandExecutionKind`
 
-Defined in: [core/src/command.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L22)
+Defined in: [core/src/command.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L24)
 
 Execution shape: `handler` (finite structured) vs `cli-orchestration` (CLI-owned).

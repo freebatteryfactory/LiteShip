@@ -120,6 +120,8 @@ plan graph, ECS, capsule factory).
 - [CapsuleCommandDescriptor](type-aliases/CapsuleCommandDescriptor.md)
 - [CapsuleCommandInvocation](type-aliases/CapsuleCommandInvocation.md)
 - [CapsuleCommandResult](type-aliases/CapsuleCommandResult.md)
+- [CapsuleResultMetaKey](type-aliases/CapsuleResultMetaKey.md)
+- [CapsuleResultReceipt](type-aliases/CapsuleResultReceipt.md)
 - [CellKind](type-aliases/CellKind.md)
 - [ChainValidationError](type-aliases/ChainValidationError.md)
 - [CommandAnnotations](type-aliases/CommandAnnotations.md)

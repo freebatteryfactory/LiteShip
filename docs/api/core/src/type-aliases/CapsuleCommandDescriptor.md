@@ -8,6 +8,6 @@
 
 > **CapsuleCommandDescriptor** = `_CapsuleCommandDescriptor`
 
-Defined in: [core/src/command.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L24)
+Defined in: [core/src/command.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L26)
 
 Identity + contract driving CLI listing AND MCP tools/list from one source.
