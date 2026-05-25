@@ -18,3 +18,7 @@ export type {
 export { CommandRegistry } from './registry.js';
 export type { CapsuleCommandHandler, CommandContext, RegisteredCommand } from './registry.js';
 export { CommandDispatcher } from './dispatcher.js';
+
+// Migrated commands (CUT A1, checkpoint 2+).
+export { glossaryCommand, GLOSSARY_ENTRIES, matchGlossaryEntries } from './commands/glossary.js';
+export type { GlossaryEntry, GlossaryPayload } from './commands/glossary.js';
