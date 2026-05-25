@@ -6,7 +6,7 @@
 
 # Interface: McpPromptArgument
 
-Defined in: [mcp-server/src/prompts.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L23)
+Defined in: [mcp-server/src/prompts.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L24)
 
 An MCP prompt argument descriptor.
 
@@ -16,7 +16,7 @@ An MCP prompt argument descriptor.
 
 > `readonly` **description**: `string`
 
-Defined in: [mcp-server/src/prompts.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L25)
+Defined in: [mcp-server/src/prompts.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L26)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/prompts.ts:25](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/prompts.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L24)
+Defined in: [mcp-server/src/prompts.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L25)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [mcp-server/src/prompts.ts:24](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **required**: `boolean`
 
-Defined in: [mcp-server/src/prompts.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L26)
+Defined in: [mcp-server/src/prompts.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L27)

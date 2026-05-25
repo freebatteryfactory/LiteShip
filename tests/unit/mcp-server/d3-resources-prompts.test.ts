@@ -16,6 +16,7 @@ import { COMMAND_CATALOG, GLOSSARY_ENTRIES, mcpExposedDescriptors, commandRegist
 import { fnv1a } from '@czap/core';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { listResources, readResource } from '../../../packages/mcp-server/src/resources.js';
+import { listUiResources } from '../../../packages/mcp-server/src/ui-resources.js';
 import { listPrompts, getPrompt } from '../../../packages/mcp-server/src/prompts.js';
 import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js';
 
@@ -62,24 +63,29 @@ describe('D3 capabilities — declared because implemented, minimal honest flags
 });
 
 describe('D3 resources/list — projection of the registry + glossary', () => {
-  it('returns the concrete resource set in stable order', async () => {
+  it('the JSON (liteship://) resources appear in stable order and are unique', async () => {
     const r = await result<{ resources: Array<{ uri: string; mimeType: string }> }>('resources/list', {});
     const uris = r.resources.map((x) => x.uri);
-    expect(uris.slice(0, 3)).toEqual(['liteship://registry/commands', 'liteship://server/info', 'liteship://glossary']);
-    // every resource is liteship:// + application/json; URIs are unique
-    expect(r.resources.every((x) => x.uri.startsWith('liteship://'))).toBe(true);
-    expect(r.resources.every((x) => x.mimeType === 'application/json')).toBe(true);
-    expect(new Set(uris).size).toBe(uris.length);
+    // The D3 JSON surface is the prefix of the list (CUT D4 appends ui:// resources).
+    const jsonResources = r.resources.filter((x) => x.uri.startsWith('liteship://'));
+    expect(jsonResources.slice(0, 3).map((x) => x.uri)).toEqual([
+      'liteship://registry/commands',
+      'liteship://server/info',
+      'liteship://glossary',
+    ]);
+    expect(jsonResources.every((x) => x.mimeType === 'application/json')).toBe(true);
+    expect(new Set(uris).size).toBe(uris.length); // unique across JSON + UI
   });
 
-  it('cardinality is pinned: registry/commands + server/info + glossary index + one per glossary term', async () => {
-    const r = await result<{ resources: unknown[] }>('resources/list', {});
-    expect(r.resources.length).toBe(3 + GLOSSARY_ENTRIES.length);
+  it('cardinality of the JSON surface is pinned: commands + server/info + glossary index + one per term', async () => {
+    const r = await result<{ resources: Array<{ uri: string }> }>('resources/list', {});
+    const jsonResources = r.resources.filter((x) => x.uri.startsWith('liteship://'));
+    expect(jsonResources.length).toBe(3 + GLOSSARY_ENTRIES.length);
   });
 
-  it('listResources() helper agrees byte-for-byte with the resources/list projection', async () => {
+  it('resources/list is exactly the JSON projection followed by the UI projection (D4 additive)', async () => {
     const r = await result<{ resources: unknown[] }>('resources/list', {});
-    expect(r.resources).toEqual(listResources());
+    expect(r.resources).toEqual([...listResources(), ...listUiResources()]);
   });
 });
 
@@ -223,7 +229,7 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
   it('no maintainer identity (heyoub) and no czap:// scheme in the D3 protocol-surface source', () => {
-    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts']) {
+    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts']) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
       expect(src, `${file} must use the liteship:// scheme, not czap://`).not.toContain('czap://');

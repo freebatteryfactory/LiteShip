@@ -1,7 +1,8 @@
 /**
  * MCP prompt projection (CUT D3) — exactly two registry-backed prompts. Each
  * renders deterministic messages from the canonical command catalog; neither
- * invents prose or assumes a UI/widget surface.
+ * invents prose nor claims a live tool-result UI (none exists until D5 — though
+ * static MCP Apps UI resources exist as of D4).
  *
  *   - `liteship.command.inspect` (arg `command`): explains any catalog command
  *     from its descriptor (name, summary, executionKind, mcpExposed, schemas).
@@ -120,6 +121,7 @@ function renderTool(d: CapsuleCommandDescriptor): string {
     'Call this tool via MCP tools/call. Result envelope: the tool payload is returned in `structuredContent` ' +
       '(described by the output schema above); a LiteShip receipt rides in `_meta["liteship/result"]`; ' +
       '`content[0].text` is a JSON mirror of the payload. Explain how to call this tool with valid arguments. ' +
-      'Assume no UI or widget surface.',
+      'This tool has no linked UI template — consume its result from `structuredContent`. (LiteShip exposes ' +
+      'static MCP Apps UI resources for fixed catalog/glossary views, but no live tool-result UI exists yet.)',
   ].join('\n');
 }

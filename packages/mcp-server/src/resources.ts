@@ -11,9 +11,10 @@
  *   - `liteship://glossary/<term>`   ← one `GLOSSARY_ENTRIES` entry, listed as a
  *     CONCRETE resource per term (so `resources/templates/list` stays unimplemented).
  *
- * All resources are `application/json`. The set is static and small → a single
- * `resources/list` page (no cursor machinery). No widgets, no `text/html`, no
- * `ui://` scheme.
+ * All resources HERE are `application/json` non-widget data resources. The set is
+ * static and small → a single `resources/list` page (no cursor machinery). The
+ * `ui://` MCP Apps UI resources are a SEPARATE projection class and live in
+ * `ui-resources.ts` (CUT D4) — `liteship://` = JSON data, `ui://` = UI.
  *
  * @module
  */

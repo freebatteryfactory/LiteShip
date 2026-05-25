@@ -23,6 +23,10 @@
 - [McpResourceContents](interfaces/McpResourceContents.md)
 - [McpToolCall](interfaces/McpToolCall.md)
 - [McpToolResult](interfaces/McpToolResult.md)
+- [McpUiResource](interfaces/McpUiResource.md)
+- [McpUiResourceContents](interfaces/McpUiResourceContents.md)
+- [McpUiResourceCsp](interfaces/McpUiResourceCsp.md)
+- [McpUiResourceMeta](interfaces/McpUiResourceMeta.md)
 - [StartOpts](interfaces/StartOpts.md)
 
 ## Type Aliases
@@ -52,7 +56,9 @@
 - [listPrompts](functions/listPrompts.md)
 - [listResources](functions/listResources.md)
 - [listTools](functions/listTools.md)
+- [listUiResources](functions/listUiResources.md)
 - [readResource](functions/readResource.md)
+- [readUiResource](functions/readUiResource.md)
 - [runHttp](functions/runHttp.md)
 - [runStdio](functions/runStdio.md)
 - [start](functions/start.md)
