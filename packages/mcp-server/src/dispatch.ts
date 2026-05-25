@@ -22,6 +22,10 @@ import { fnv1a } from '@czap/core';
 import type { ContentAddress, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey } from '@czap/core';
 import { createNodeCommandContext } from '@czap/command/host';
 import { serverInfo } from './server-info.js';
+import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
+import { listResources, readResource } from './resources.js';
+import { listPrompts, getPrompt } from './prompts.js';
+import { InvalidParamsError, ResourceNotFoundError, RESOURCE_NOT_FOUND } from './errors.js';
 import {
   type JsonRpcNotification,
   type JsonRpcRequest,
@@ -33,30 +37,11 @@ import {
   InternalError,
 } from './jsonrpc.js';
 
-/** MCP protocol revision D1 implements (lifecycle floor). */
-const PROTOCOL_VERSION = '2025-11-25';
-
 /** Product-owned `_meta` key under which the LiteShip result receipt rides (no maintainer identity; never an MCP-reserved prefix). */
 const RECEIPT_META_KEY: CapsuleResultMetaKey = 'liteship/result';
 
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
 const dispatcher = CommandDispatcher.make(commandRegistry);
-
-/**
- * Sentinel for invalid-params throws inside method invocations. Caught
- * by `dispatch` and mapped to JSON-RPC 2.0 §5.1 code -32602 (the spec
- * code for malformed parameters). Generic `Error`s remain -32603
- * (Internal error).
- */
-class InvalidParamsError extends Error {
-  constructor(
-    message: string,
-    readonly detail?: unknown,
-  ) {
-    super(message);
-    this.name = 'InvalidParamsError';
-  }
-}
 
 /** Shape of an MCP tools/call parameter object. */
 export interface McpToolCall {
@@ -105,6 +90,11 @@ export async function dispatch(msg: JsonRpcRequest | JsonRpcNotification): Promi
     if (err instanceof InvalidParamsError) {
       return errorResponse(id, InvalidParams, err.message, err.detail);
     }
+    if (err instanceof ResourceNotFoundError) {
+      // MCP resource-not-found is -32002 (resource-specific), NOT -32601 (which means
+      // the resources/read METHOD is missing — it is not).
+      return errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', { uri: err.uri });
+    }
     return errorResponse(id, InternalError, 'Internal error', { detail: String(err) });
   }
 }
@@ -121,16 +111,18 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     case 'initialize': {
       // Lifecycle floor: require a well-formed protocolVersion (malformed → -32602).
       // We support exactly PROTOCOL_VERSION and respond with it (spec negotiation:
-      // a client that cannot speak it disconnects). Declare ONLY `tools` — resources
-      // and prompts are intentionally omitted (honest absence) until D3, so calls to
-      // them return method-not-found rather than a toast-handshake empty success.
+      // a client that cannot speak it disconnects). Capabilities come from the ONE
+      // shared source SERVER_CAPABILITIES — the same object liteship://server/info
+      // reports, so handshake and resource truth cannot drift. As of D3, resources
+      // and prompts ARE declared (their methods are implemented); their unimplemented
+      // sub-methods (templates/list, subscribe) still return honest method-not-found.
       const params = msg.params as { protocolVersion?: unknown } | undefined;
       if (!params || typeof params.protocolVersion !== 'string') {
         throw new InvalidParamsError('initialize requires { protocolVersion: string }', { received: params });
       }
       return ok({
         protocolVersion: PROTOCOL_VERSION,
-        capabilities: { tools: { listChanged: false } },
+        capabilities: SERVER_CAPABILITIES,
         serverInfo: serverInfo(),
       });
     }
@@ -150,7 +142,33 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       const result = await dispatchToolCall(params);
       return ok(result);
     }
+    case 'resources/list':
+      // Single static page — the catalog is fixed at process start (no cursor machinery).
+      return ok({ resources: listResources() });
+    case 'resources/read': {
+      const params = msg.params as { uri?: unknown } | undefined;
+      if (!params || typeof params.uri !== 'string') {
+        throw new InvalidParamsError('resources/read requires { uri: string }', { received: params });
+      }
+      // Unknown uri → ResourceNotFoundError → -32002 (mapped in dispatch's catch).
+      return ok(readResource(params.uri));
+    }
+    case 'prompts/list':
+      return ok({ prompts: listPrompts() });
+    case 'prompts/get': {
+      const params = msg.params as { name?: unknown; arguments?: unknown } | undefined;
+      if (!params || typeof params.name !== 'string') {
+        throw new InvalidParamsError('prompts/get requires { name: string, arguments?: object }', { received: params });
+      }
+      const args = (params.arguments ?? {}) as Record<string, unknown>;
+      // Unknown prompt name / missing / invalid argument → InvalidParamsError → -32602.
+      return ok(getPrompt(params.name, args));
+    }
     default:
+      // Everything not handled above — including resources/templates/list,
+      // resources/subscribe, resources/unsubscribe, and any prompts/* beyond
+      // list+get — is an honest method-not-found (-32601): the method is genuinely
+      // unregistered. (resources/read's unknown-uri case is -32002, handled above.)
       return { kind: 'method-not-found' };
   }
 }

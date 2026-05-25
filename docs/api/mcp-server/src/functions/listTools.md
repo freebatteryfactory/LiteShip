@@ -8,7 +8,7 @@
 
 > **listTools**(): readonly `object`[]
 
-Defined in: [mcp-server/src/dispatch.ts:221](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L221)
+Defined in: [mcp-server/src/dispatch.ts:239](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L239)
 
 MCP tool catalog — projected from the ONE canonical command catalog in
 @czap/command (the mcpExposed subset). No hand-maintained parallel table:

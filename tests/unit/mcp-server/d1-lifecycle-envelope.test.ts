@@ -36,9 +36,10 @@ describe('D1 lifecycle floor — initialize / initialized / honest absence', () 
     const result = (r as { result: { protocolVersion: string; capabilities: Record<string, unknown>; serverInfo: { name: string; version: string } } }).result;
     expect(result.protocolVersion).toBe('2025-11-25');
     expect(result.capabilities.tools).toBeDefined();
-    // Honest absence: surfaces D1 does not serve are NOT declared (omitted, not false).
-    expect('resources' in result.capabilities).toBe(false);
-    expect('prompts' in result.capabilities).toBe(false);
+    // As of D3, resources + prompts ARE declared (their methods are implemented).
+    // The exact capability shape is pinned in the D3 capabilities test.
+    expect(result.capabilities.resources).toBeDefined();
+    expect(result.capabilities.prompts).toBeDefined();
     // serverInfo.version is the real @czap/mcp-server package version, not a literal.
     const pkgVersion = (JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as { version: string }).version;
     expect(result.serverInfo.name).toBeTypeOf('string');
@@ -55,11 +56,13 @@ describe('D1 lifecycle floor — initialize / initialized / honest absence', () 
     expect(await dispatch(note('notifications/initialized'))).toBeNull();
   });
 
-  it('resources/list and prompts/list are honest method-not-found (not declared in D1)', async () => {
-    const res = await dispatch(req('resources/list', {}));
-    expect((res as { error: { code: number } }).error.code).toBe(-32601);
-    const prm = await dispatch(req('prompts/list', {}));
-    expect((prm as { error: { code: number } }).error.code).toBe(-32601);
+  it('unimplemented resource sub-methods stay honest method-not-found (templates/list, subscribe)', async () => {
+    // D3 declares the resources capability but implements only list+read; the optional
+    // sub-methods remain genuinely unregistered → -32601 (not a false empty success).
+    const templates = await dispatch(req('resources/templates/list', {}));
+    expect((templates as { error: { code: number } }).error.code).toBe(-32601);
+    const subscribe = await dispatch(req('resources/subscribe', { uri: 'liteship://server/info' }));
+    expect((subscribe as { error: { code: number } }).error.code).toBe(-32601);
   });
 
   it('tools/list still projects the registry catalog (A1-T4 preserved)', async () => {
