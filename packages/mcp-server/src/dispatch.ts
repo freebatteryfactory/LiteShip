@@ -24,6 +24,7 @@ import { createNodeCommandContext } from '@czap/command/host';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
+import { listUiResources, readUiResource } from './ui-resources.js';
 import { listPrompts, getPrompt } from './prompts.js';
 import { InvalidParamsError, ResourceNotFoundError, RESOURCE_NOT_FOUND } from './errors.js';
 import {
@@ -143,15 +144,17 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       return ok(result);
     }
     case 'resources/list':
-      // Single static page — the catalog is fixed at process start (no cursor machinery).
-      return ok({ resources: listResources() });
+      // Single static page — D3 JSON resources (liteship://) + D4 static MCP Apps
+      // UI resources (ui://). Both fixed at process start (no cursor machinery).
+      return ok({ resources: [...listResources(), ...listUiResources()] });
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
         throw new InvalidParamsError('resources/read requires { uri: string }', { received: params });
       }
-      // Unknown uri → ResourceNotFoundError → -32002 (mapped in dispatch's catch).
-      return ok(readResource(params.uri));
+      // ui:// → MCP Apps UI resource (D4); liteship:// → JSON resource (D3). Unknown
+      // uri in either registry → ResourceNotFoundError → -32002 (mapped in catch).
+      return ok(params.uri.startsWith('ui://') ? readUiResource(params.uri) : readResource(params.uri));
     }
     case 'prompts/list':
       return ok({ prompts: listPrompts() });
