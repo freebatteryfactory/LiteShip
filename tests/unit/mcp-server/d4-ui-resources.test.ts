@@ -39,14 +39,15 @@ async function errCode(method: string, params?: unknown): Promise<number> {
 describe('D4 — UI resources in resources/list', () => {
   it('resources/list includes both ui:// resources with the mcp-app mimeType', async () => {
     const r = await result<{ resources: Array<{ uri: string; mimeType: string }> }>('resources/list', {});
-    const ui = r.resources.filter((x) => x.uri.startsWith('ui://'));
+    // Static UI class = ui:// but NOT the D5 live app class (ui://liteship/app/…).
+    const ui = r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'));
     expect(ui.map((x) => x.uri)).toEqual([CMD_URI, GLOSSARY_URI]);
     expect(ui.every((x) => x.mimeType === UI_MIME)).toBe(true);
   });
 
   it('listUiResources() agrees with the ui:// slice of resources/list', async () => {
     const r = await result<{ resources: Array<{ uri: string }> }>('resources/list', {});
-    expect(r.resources.filter((x) => x.uri.startsWith('ui://'))).toEqual(listUiResources());
+    expect(r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'))).toEqual(listUiResources());
   });
 
   it('cardinality is pinned: exactly two static UI resources', () => {

@@ -36,12 +36,13 @@ export interface McpToolDescriptor {
   readonly description: string;
   readonly inputSchema: object;
   readonly outputSchema?: object;
+  readonly _meta?: { ui: { resourceUri: string } };
 }
 
 /**
  * Project the mcpExposed catalog subset into MCP tool descriptors. Must stay
  * byte-identical to @czap/mcp-server's `listTools()` (A1-T4 parity), so it emits
- * `outputSchema` for the same handler-backed descriptors (CUT D2).
+ * `outputSchema` (CUT D2) and `_meta.ui.resourceUri` (CUT D5) for the same descriptors.
  */
 function mcpTools(): readonly McpToolDescriptor[] {
   return mcpExposedDescriptors().map((descriptor) => ({
@@ -49,6 +50,7 @@ function mcpTools(): readonly McpToolDescriptor[] {
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
     ...(descriptor.outputSchema ? { outputSchema: descriptor.outputSchema } : {}),
+    ...(descriptor.ui ? { _meta: { ui: { resourceUri: descriptor.ui.resourceUri } } } : {}),
   }));
 }
 

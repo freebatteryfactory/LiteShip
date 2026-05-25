@@ -83,9 +83,11 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
     expect(jsonResources.length).toBe(3 + GLOSSARY_ENTRIES.length);
   });
 
-  it('resources/list is exactly the JSON projection followed by the UI projection (D4 additive)', async () => {
+  it('resources/list begins with the JSON projection, then the static UI projection (downstream classes additive)', async () => {
     const r = await result<{ resources: unknown[] }>('resources/list', {});
-    expect(r.resources).toEqual([...listResources(), ...listUiResources()]);
+    const jsonLen = listResources().length;
+    expect(r.resources.slice(0, jsonLen)).toEqual(listResources());
+    expect(r.resources.slice(jsonLen, jsonLen + listUiResources().length)).toEqual(listUiResources());
   });
 });
 
@@ -229,7 +231,7 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
   it('no maintainer identity (heyoub) and no czap:// scheme in the D3 protocol-surface source', () => {
-    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts']) {
+    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts']) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
       expect(src, `${file} must use the liteship:// scheme, not czap://`).not.toContain('czap://');

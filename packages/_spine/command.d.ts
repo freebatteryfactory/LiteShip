@@ -67,6 +67,13 @@ export interface CapsuleCommandDescriptor {
   readonly annotations?: CommandAnnotations;
   /** Execution shape — `handler` (structured) vs `cli-orchestration` (CLI-owned). */
   readonly executionKind?: CommandExecutionKind;
+  /**
+   * Optional MCP Apps UI link (CUT D5): the `ui://` resource that renders this
+   * tool's result as a live widget. The MCP skin projects this to a tool's
+   * `_meta.ui.resourceUri`; CSP lives on the RESOURCE, never here. Registry-
+   * governed (the link is part of command identity, not a side table).
+   */
+  readonly ui?: { readonly resourceUri: string };
 }
 
 /** A transport-neutral request to run a command with already-parsed (not argv) args. */

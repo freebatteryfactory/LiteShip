@@ -120,8 +120,11 @@ function renderTool(d: CapsuleCommandDescriptor): string {
     '',
     'Call this tool via MCP tools/call. Result envelope: the tool payload is returned in `structuredContent` ' +
       '(described by the output schema above); a LiteShip receipt rides in `_meta["liteship/result"]`; ' +
-      '`content[0].text` is a JSON mirror of the payload. Explain how to call this tool with valid arguments. ' +
-      'This tool has no linked UI template — consume its result from `structuredContent`. (LiteShip exposes ' +
-      'static MCP Apps UI resources for fixed catalog/glossary views, but no live tool-result UI exists yet.)',
+      '`content[0].text` is a JSON mirror of the payload. Explain how to call this tool with valid arguments.',
+    d.ui
+      ? `This tool has a linked live MCP Apps view (${d.ui.resourceUri}): a conforming host renders it in a ` +
+        'sandboxed iframe and injects the result via the bridge. The structuredContent + text result remains the fallback.'
+      : 'This tool has no linked UI view — consume its result from `structuredContent`. (Live UI exists only for ' +
+        'tools whose descriptor carries `_meta.ui.resourceUri`; static catalog/glossary UI resources exist separately.)',
   ].join('\n');
 }

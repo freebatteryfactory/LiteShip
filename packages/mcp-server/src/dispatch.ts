@@ -25,6 +25,7 @@ import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
 import { listUiResources, readUiResource } from './ui-resources.js';
+import { listAppResources, readAppResource } from './app-resources.js';
 import { listPrompts, getPrompt } from './prompts.js';
 import { InvalidParamsError, ResourceNotFoundError, RESOURCE_NOT_FOUND } from './errors.js';
 import {
@@ -145,16 +146,23 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     }
     case 'resources/list':
       // Single static page — D3 JSON resources (liteship://) + D4 static MCP Apps
-      // UI resources (ui://). Both fixed at process start (no cursor machinery).
-      return ok({ resources: [...listResources(), ...listUiResources()] });
+      // UI resources (ui://liteship/…) + D5 live app resources (ui://liteship/app/…).
+      // All fixed at process start (no cursor machinery).
+      return ok({ resources: [...listResources(), ...listUiResources(), ...listAppResources()] });
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
         throw new InvalidParamsError('resources/read requires { uri: string }', { received: params });
       }
-      // ui:// → MCP Apps UI resource (D4); liteship:// → JSON resource (D3). Unknown
-      // uri in either registry → ResourceNotFoundError → -32002 (mapped in catch).
-      return ok(params.uri.startsWith('ui://') ? readUiResource(params.uri) : readResource(params.uri));
+      // ui://liteship/app/ → D5 live app resource; other ui:// → D4 static UI; liteship://
+      // → D3 JSON. Unknown uri in any registry → ResourceNotFoundError → -32002 (catch).
+      const uri = params.uri;
+      const contents = uri.startsWith('ui://liteship/app/')
+        ? readAppResource(uri)
+        : uri.startsWith('ui://')
+          ? readUiResource(uri)
+          : readResource(uri);
+      return ok(contents);
     }
     case 'prompts/list':
       return ok({ prompts: listPrompts() });
@@ -239,12 +247,20 @@ export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult
  * project, so MCP `tools/list` and `czap describe --format=mcp` agree by
  * construction.
  */
-export function listTools(): ReadonlyArray<{ name: string; description: string; inputSchema: object; outputSchema?: object }> {
+export function listTools(): ReadonlyArray<{
+  name: string;
+  description: string;
+  inputSchema: object;
+  outputSchema?: object;
+  _meta?: { ui: { resourceUri: string } };
+}> {
   return mcpExposedDescriptors().map((descriptor) => ({
     name: descriptor.name,
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
     // D2: handler-backed (hence all mcpExposed) descriptors declare outputSchema.
     ...(descriptor.outputSchema ? { outputSchema: descriptor.outputSchema } : {}),
+    // D5: a tool with a linked live MCP Apps view projects _meta.ui.resourceUri.
+    ...(descriptor.ui ? { _meta: { ui: { resourceUri: descriptor.ui.resourceUri } } } : {}),
   }));
 }
