@@ -30,6 +30,11 @@ export const versionCommand: HandledCommand = {
     name: 'version',
     summary: 'Report czap, Node, and pnpm versions.',
     inputSchema: { type: 'object', properties: {}, required: [] },
+    outputSchema: {
+      type: 'object',
+      required: ['czap', 'node', 'pnpm'],
+      properties: { czap: { type: 'string' }, node: { type: 'string' }, pnpm: { type: ['string', 'null'] } },
+    },
     annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({

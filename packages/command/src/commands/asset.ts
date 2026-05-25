@@ -35,6 +35,16 @@ export const assetAnalyzeCommand: HandledCommand = {
       required: ['asset', 'projection'],
       properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
     },
+    outputSchema: {
+      type: 'object',
+      required: ['assetId', 'projection', 'markerCount', 'cached'],
+      properties: {
+        assetId: { type: 'string' },
+        projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] },
+        markerCount: { type: 'number' },
+        cached: { type: 'boolean' },
+      },
+    },
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -79,6 +89,11 @@ export const assetVerifyCommand: HandledCommand = {
     name: 'asset.verify',
     summary: 'Verify an asset capsule.',
     inputSchema: { type: 'object', required: ['asset'], properties: { asset: { type: 'string' } } },
+    outputSchema: {
+      type: 'object',
+      required: ['assetId', 'invariantsChecked'],
+      properties: { assetId: { type: 'string' }, invariantsChecked: { type: 'number' } },
+    },
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {

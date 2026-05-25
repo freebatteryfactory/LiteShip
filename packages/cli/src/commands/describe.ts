@@ -35,14 +35,20 @@ export interface McpToolDescriptor {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: object;
+  readonly outputSchema?: object;
 }
 
-/** Project the mcpExposed catalog subset into MCP tool descriptors. */
+/**
+ * Project the mcpExposed catalog subset into MCP tool descriptors. Must stay
+ * byte-identical to @czap/mcp-server's `listTools()` (A1-T4 parity), so it emits
+ * `outputSchema` for the same handler-backed descriptors (CUT D2).
+ */
 function mcpTools(): readonly McpToolDescriptor[] {
   return mcpExposedDescriptors().map((descriptor) => ({
     name: descriptor.name,
     description: descriptor.summary,
     inputSchema: descriptor.inputSchema,
+    ...(descriptor.outputSchema ? { outputSchema: descriptor.outputSchema } : {}),
   }));
 }
 
