@@ -11,7 +11,7 @@
  * JSON for the full `capsule verify` timeout window.
  */
 import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join as pathJoin } from 'node:path';
 import { run } from '../../../packages/cli/src/dispatch.js';
@@ -48,7 +48,12 @@ async function capture(fn: () => Promise<number>): Promise<CaptureResult> {
   }
 }
 
-const MANIFEST_PATH = 'reports/capsule-manifest.json';
+// CUT T1: assigned to a temp path in beforeAll so this suite never writes the
+// shared reports/capsule-manifest.json (it was the poisoner that raced
+// capsule-verify/capsule-compile in parallel workers).
+let MANIFEST_PATH: string;
+let manifestTmpRoot: string;
+let priorManifestEnv: string | undefined;
 
 const FIXTURE_MANIFEST = {
   generatedAt: '2026-04-25T00:00:00.000Z',
@@ -74,34 +79,28 @@ const FIXTURE_MANIFEST = {
   ],
 };
 
-let savedManifest: string | undefined;
-/** Bytes on disk immediately before each `beforeEach` — restored in `afterEach` for other workers. */
-let manifestSnapBeforeEach: string | undefined;
-
 describe('cli — manifest-dependent commands (serialized)', () => {
+  // CUT T1: the whole suite operates on a temp manifest via CZAP_CAPSULE_MANIFEST.
+  // The CLI commands under test resolve the manifest through getCapsuleManifestPath(),
+  // which honors this env var, so nothing here touches the shared real path.
   beforeAll(() => {
-    if (existsSync(MANIFEST_PATH)) savedManifest = readFileSync(MANIFEST_PATH, 'utf8');
+    manifestTmpRoot = mkdtempSync(pathJoin(tmpdir(), 'czap-manifest-dep-'));
+    MANIFEST_PATH = pathJoin(manifestTmpRoot, 'reports', 'capsule-manifest.json');
+    mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
+    priorManifestEnv = process.env.CZAP_CAPSULE_MANIFEST;
+    process.env.CZAP_CAPSULE_MANIFEST = MANIFEST_PATH;
   });
   beforeEach(() => {
-    manifestSnapBeforeEach = existsSync(MANIFEST_PATH)
-      ? readFileSync(MANIFEST_PATH, 'utf8')
-      : undefined;
+    // Re-assert the override (the nested override-describe deletes it) and reset content.
+    process.env.CZAP_CAPSULE_MANIFEST = MANIFEST_PATH;
     mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
     writeFileSync(MANIFEST_PATH, JSON.stringify(FIXTURE_MANIFEST), 'utf8');
     if (existsSync('.czap/cache')) rmSync('.czap/cache', { recursive: true, force: true });
   });
-  afterEach(() => {
-    const restore = manifestSnapBeforeEach ?? savedManifest;
-    if (restore !== undefined) {
-      mkdirSync(dirname(MANIFEST_PATH), { recursive: true });
-      writeFileSync(MANIFEST_PATH, restore, 'utf8');
-    } else if (existsSync(MANIFEST_PATH)) {
-      rmSync(MANIFEST_PATH);
-    }
-  });
   afterAll(() => {
-    if (savedManifest !== undefined) writeFileSync(MANIFEST_PATH, savedManifest, 'utf8');
-    else if (existsSync(MANIFEST_PATH)) rmSync(MANIFEST_PATH);
+    if (priorManifestEnv === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
+    else process.env.CZAP_CAPSULE_MANIFEST = priorManifestEnv;
+    rmSync(manifestTmpRoot, { recursive: true, force: true });
   });
 
   // ---------- capsule inspect / list / verify ----------
