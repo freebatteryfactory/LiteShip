@@ -6,7 +6,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { RegisteredCommand } from '../registry.js';
+import type { HandledCommand } from '../registry.js';
 
 /** One ontology term. Mirrors a row in docs/GLOSSARY.md. */
 export interface GlossaryEntry {
@@ -221,7 +221,7 @@ export function matchGlossaryEntries(query: string | null): readonly GlossaryEnt
 }
 
 /** The glossary command: descriptor + handler returning a structured result. */
-export const glossaryCommand: RegisteredCommand = {
+export const glossaryCommand: HandledCommand = {
   descriptor: {
     name: 'glossary',
     summary: 'Look up a term in the LiteShip prose register (maritime + product naming).',
@@ -230,7 +230,7 @@ export const glossaryCommand: RegisteredCommand = {
       properties: { term: { type: 'string', description: 'Term to look up; omit for the full catalog.' } },
       required: [],
     },
-    annotations: { readOnly: true },
+    annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (invocation): Promise<CapsuleCommandResult<GlossaryPayload>> => {
     const raw = invocation.args.term;

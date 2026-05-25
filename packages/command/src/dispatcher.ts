@@ -27,6 +27,17 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
           payload: { error: 'unknown_command', name: invocation.name },
         };
       }
+      if (!command.handler) {
+        // Declared in the catalog but not yet migrated into this package — the
+        // CLI still routes it via legacy dispatch. Fail structurally here too.
+        return {
+          status: 'failed',
+          command: invocation.name,
+          timestamp: new Date().toISOString(),
+          exitCode: 1,
+          payload: { error: 'no_registry_handler', name: invocation.name },
+        };
+      }
       return command.handler(invocation, context);
     },
   };

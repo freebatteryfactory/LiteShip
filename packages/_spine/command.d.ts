@@ -25,8 +25,19 @@ export interface CommandAnnotations {
   readonly destructive?: boolean;
   /** Emits raw text (help/completion), not a JSON receipt. */
   readonly cliOnly?: boolean;
-  /** Whether the command is exposed as an MCP tool. Defaults true unless longRunning/cliOnly. */
+  /**
+   * Explicit opt-in: the command is exposed as an MCP tool. Absent / false means
+   * not exposed. (The exposed set is a deliberate curation, not derivable from
+   * longRunning/cliOnly — e.g. glossary is read-only but intentionally CLI-only.)
+   */
   readonly mcpExposed?: boolean;
+  /**
+   * Presentation phase used to group the command in the CLI help chart
+   * ("the chart: CLI verb table grouped by phase"). Identity, not chrome: the
+   * adapter maps a group key to a human label + order. Surfaces that don't group
+   * (MCP, describe) ignore it.
+   */
+  readonly group?: string;
 }
 
 /** Identity + contract that drives CLI listing AND MCP tools/list from ONE source. */

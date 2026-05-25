@@ -36,9 +36,23 @@ export interface CapsuleCommandHandler {
   (invocation: CapsuleCommandInvocation, context: CommandContext): Promise<CapsuleCommandResult>;
 }
 
-/** A descriptor paired with its handler — the unit the registry indexes. */
+/**
+ * A descriptor paired with its handler — the unit the registry indexes. The
+ * handler is optional: a descriptor-only entry declares a command's identity in
+ * the canonical catalog while its handler is still legacy-backed (routed by the
+ * CLI's own dispatch) and pending migration into this package.
+ */
 export interface RegisteredCommand {
   readonly descriptor: CapsuleCommandDescriptor;
+  readonly handler?: CapsuleCommandHandler;
+}
+
+/**
+ * A fully-migrated command: descriptor + a guaranteed handler. Migrated command
+ * modules type their export as this so adapters can invoke `.handler` directly
+ * without a presence check. Assignable to {@link RegisteredCommand}.
+ */
+export interface HandledCommand extends RegisteredCommand {
   readonly handler: CapsuleCommandHandler;
 }
 

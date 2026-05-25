@@ -7,7 +7,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { CommandContext, RegisteredCommand } from '../registry.js';
+import type { CommandContext, HandledCommand } from '../registry.js';
 
 /** Structured payload returned by the version command. */
 export interface VersionPayload {
@@ -25,12 +25,12 @@ async function probePnpm(context: CommandContext): Promise<string | null> {
 }
 
 /** The version command: descriptor + handler returning a structured result. */
-export const versionCommand: RegisteredCommand = {
+export const versionCommand: HandledCommand = {
   descriptor: {
     name: 'version',
     summary: 'Report czap, Node, and pnpm versions.',
     inputSchema: { type: 'object', properties: {}, required: [] },
-    annotations: { readOnly: true },
+    annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({
     status: 'ok',
