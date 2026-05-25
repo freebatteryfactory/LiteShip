@@ -14,6 +14,21 @@ import type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommand
 export interface CommandContext {
   /** Working directory for path resolution; defaults to `process.cwd()` at the adapter. */
   readonly cwd?: string;
+  /**
+   * Capture a subprocess's stdout + exit code. Adapters back this with their
+   * own spawn helper (e.g. @czap/cli's `spawnArgvCapture`); handlers stay free
+   * of `node:child_process`. Absent in pure/test contexts — handlers must
+   * degrade gracefully (treat as "not available").
+   */
+  readonly spawnCapture?: (
+    command: string,
+    args: readonly string[],
+  ) => Promise<{ readonly exitCode: number; readonly stdout: string }>;
+  /**
+   * The host adapter's own czap version (its package version). Supplied by the
+   * adapter because the version is a fact about the host, not this package.
+   */
+  readonly hostVersion?: () => string;
 }
 
 /** A command handler: structured invocation in, structured result out. No stdout, no argv. */
