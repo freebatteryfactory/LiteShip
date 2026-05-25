@@ -7,27 +7,8 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { CommandContext, HandledCommand } from '../registry.js';
-
-/** One capsule-manifest entry. */
-export interface CapsuleManifestEntry {
-  readonly name: string;
-  readonly kind: string;
-  readonly source: string;
-  readonly generated: { readonly testFile: string; readonly benchFile: string };
-}
-
-/** The capsule manifest document. */
-export interface CapsuleManifest {
-  readonly capsules: readonly CapsuleManifestEntry[];
-}
-
-/** Parse the injected manifest source. Null when the manifest is absent. */
-function loadManifest(context: CommandContext): CapsuleManifest | null {
-  const source = context.manifestSource?.();
-  if (!source) return null;
-  return JSON.parse(source) as CapsuleManifest;
-}
+import type { HandledCommand } from '../registry.js';
+import { loadManifest } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
@@ -89,6 +70,7 @@ export const capsuleVerifyCommand: HandledCommand = {
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.verify', `capsule not found: ${id}`, 1);
+    if (!entry.generated) return failed('capsule.verify', `capsule has no generated tests: ${id}`, 2);
     if (!context.runVitest) return failed('capsule.verify', 'vitest runner unavailable', 2);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile]);
     if (exitCode !== 0) {

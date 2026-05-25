@@ -42,6 +42,44 @@ export interface CommandContext {
   readonly runVitest?: (
     testFiles: readonly string[],
   ) => Promise<{ readonly exitCode: number; readonly stderrTail: string }>;
+  /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
+  readonly fileExists?: (path: string) => boolean;
+  /**
+   * Load an asset's raw audio bytes (the adapter resolves source conventions +
+   * reads the file). Null when no source file is found.
+   */
+  readonly loadAssetBytes?: (assetId: string, source?: string) => ArrayBuffer | null;
+  /**
+   * Run an audio projection over decoded bytes and return the marker count.
+   * Adapter-backed by @czap/assets — injected (not imported) so @czap/command
+   * does not yet take a domain-package build edge. (Heavy-tier decision: whether
+   * command should depend on assets/scene directly, or keep injecting.)
+   */
+  readonly runAudioProjection?: (
+    bytes: ArrayBuffer,
+    projection: 'beat' | 'onset' | 'waveform',
+  ) => Promise<number>;
+  /**
+   * Dynamically load a user scene module (the adapter owns the dynamic import,
+   * keeping @czap/command free of it — relevant to the A1-T3 dynamic-import
+   * audit). Null when the module can't be loaded.
+   */
+  readonly loadSceneModule?: (scenePath: string) => Promise<Record<string, unknown> | null>;
+  /** Content-addressed receipt cache (adapter-backed; fs on the CLI side). */
+  readonly cache?: CommandCache;
+}
+
+/** Idempotency key: command + structured inputs + force-bypass flag. */
+export interface CommandCacheKey {
+  readonly command: string;
+  readonly inputs: Record<string, unknown>;
+  readonly force: boolean;
+}
+
+/** A receipt cache the adapter backs (content-addressed on the CLI side). */
+export interface CommandCache {
+  readonly read: (key: CommandCacheKey) => unknown | null;
+  readonly write: (key: CommandCacheKey, receipt: unknown) => void;
 }
 
 /** A command handler: structured invocation in, structured result out. No stdout, no argv. */

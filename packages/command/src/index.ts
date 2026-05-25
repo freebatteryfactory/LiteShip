@@ -28,4 +28,7 @@ export type { GlossaryEntry, GlossaryPayload } from './commands/glossary.js';
 export { versionCommand } from './commands/version.js';
 export type { VersionPayload } from './commands/version.js';
 export { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
-export type { CapsuleManifest, CapsuleManifestEntry } from './commands/capsule.js';
+export type { CapsuleManifest, CapsuleManifestEntry } from './commands/manifest.js';
+export { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
+export type { AssetAnalyzePayload } from './commands/asset.js';
+export { sceneVerifyCommand } from './commands/scene.js';
