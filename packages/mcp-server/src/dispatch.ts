@@ -36,8 +36,8 @@ import {
 /** MCP protocol revision D1 implements (lifecycle floor). */
 const PROTOCOL_VERSION = '2025-11-25';
 
-/** Reverse-DNS `_meta` key under which the LiteShip result receipt rides (never an MCP-reserved prefix). */
-const RECEIPT_META_KEY: CapsuleResultMetaKey = 'dev.heyoub.liteship/result';
+/** Product-owned `_meta` key under which the LiteShip result receipt rides (no maintainer identity; never an MCP-reserved prefix). */
+const RECEIPT_META_KEY: CapsuleResultMetaKey = 'liteship/result';
 
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
 const dispatcher = CommandDispatcher.make(commandRegistry);
@@ -188,8 +188,8 @@ function computeResultId(result: CapsuleCommandResult): ContentAddress {
  * `arguments` object passes through verbatim (nested objects preserved — no
  * `[object Object]` flattening). The result envelope (CUT D1):
  *   - `structuredContent` = the command PAYLOAD (what D2's outputSchema describes);
- *   - `_meta[dev.heyoub.liteship/result]` = the LiteShip receipt (command, content-
- *     addressed resultId, timestamp, verdict?/exitCode?) — provenance, not payload;
+ *   - `_meta[liteship/result]` = the LiteShip receipt (command, content-addressed
+ *     resultId, timestamp, verdict?/exitCode?) — provenance, not payload;
  *   - `content[0].text` = JSON mirror of the payload (compatibility, never stdout);
  *   - `isError` reflects a tool-execution failure (NOT a JSON-RPC protocol error).
  */

@@ -114,5 +114,5 @@ export interface CapsuleResultReceipt {
   readonly exitCode?: number;
 }
 
-/** Reverse-DNS `_meta` key under which a {@link CapsuleResultReceipt} rides on an MCP result. */
-export type CapsuleResultMetaKey = 'dev.heyoub.liteship/result';
+/** Product-owned `_meta` key under which a {@link CapsuleResultReceipt} rides on an MCP result (no maintainer identity). */
+export type CapsuleResultMetaKey = 'liteship/result';
