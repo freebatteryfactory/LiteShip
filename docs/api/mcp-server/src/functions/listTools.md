@@ -8,9 +8,13 @@
 
 > **listTools**(): readonly `object`[]
 
-Defined in: [mcp-server/src/dispatch.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L160)
+Defined in: [mcp-server/src/dispatch.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L146)
 
-Static list of MCP tools produced by czap's CLI.
+MCP tool catalog — projected from the ONE canonical command catalog in
+@czap/command (the mcpExposed subset). No hand-maintained parallel table:
+this is the same descriptor source the CLI's `describe`/`completion`/`help`
+project, so MCP `tools/list` and `czap describe --format=mcp` agree by
+construction.
 
 ## Returns
 
