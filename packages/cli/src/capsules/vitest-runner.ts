@@ -19,7 +19,11 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
-import { spawnArgv } from '../spawn-helpers.js';
+
+// The runtime callable now lives in @czap/command/host (CUT A1 capstone-1); this
+// module keeps only the capsule DECLARATION (walked into the manifest as
+// `cli.vitest-runner`) and re-exports the runtime for stable import sites.
+export { VitestRunner } from '@czap/command/host';
 
 const VitestRunnerInput = Schema.Struct({
   testFiles: Schema.Array(Schema.String),
@@ -30,16 +34,6 @@ const VitestRunnerOutput = Schema.Struct({
   testFiles: Schema.Array(Schema.String),
   stderrTail: Schema.String,
 });
-
-interface VitestRunInput {
-  readonly testFiles: readonly string[];
-}
-
-interface VitestRunOutput {
-  readonly exitCode: number;
-  readonly testFiles: readonly string[];
-  readonly stderrTail: string;
-}
 
 /**
  * Declared capsule for the no-shell vitest runner. Registered in the
@@ -86,25 +80,3 @@ export const vitestRunnerCapsule = defineCapsule({
     },
   ],
 });
-
-/**
- * Runtime callable for the vitest-runner capsule. Verify commands import
- * this and invoke `VitestRunner.run({ testFiles })`.
- */
-export const VitestRunner = {
-  run: async (input: VitestRunInput): Promise<VitestRunOutput> => {
-    const result = await spawnArgv('pnpm', ['exec', 'vitest', 'run', ...input.testFiles]);
-    return {
-      exitCode: result.exitCode,
-      testFiles: input.testFiles,
-      stderrTail: result.stderrTail,
-    };
-  },
-} as const;
-
-export declare namespace VitestRunner {
-  /** Input shape accepted by {@link VitestRunner.run}. */
-  export type Input = VitestRunInput;
-  /** Output shape returned by {@link VitestRunner.run}. */
-  export type Output = VitestRunOutput;
-}

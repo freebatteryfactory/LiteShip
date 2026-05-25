@@ -28,6 +28,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./host": {
+      "types": "./dist/host/index.d.ts",
+      "import": "./dist/host/index.js",
+      "development": "./src/host/index.ts"
     }
   },
   "files": [
@@ -40,7 +45,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*"
+    "@czap/core": "workspace:*",
+    "@czap/assets": "workspace:*"
   },
   "peerDependencies": {
     "effect": ">=4.0.0-beta.0"

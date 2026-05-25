@@ -262,10 +262,13 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'standalone',
   },
   '@czap/command': {
-    // CUT A1: shared command registry/dispatcher. Imports only @czap/core today
-    // (the command language, re-anchored from _spine). As handlers migrate in,
-    // this grows to include the domain packages they delegate to (scene/assets).
-    allowedInternalImports: ['@czap/core'],
+    // CUT A1: shared command registry/dispatcher + the @czap/command/host Node
+    // execution surface (createNodeCommandContext). Main entry imports @czap/core
+    // (the command language, re-anchored from _spine); the /host subpath also
+    // imports @czap/assets for the audio-projection DSP the asset.analyze handler
+    // runs. Host execution (spawn/ffmpeg/vitest) lives here so CLI and MCP share
+    // one factory and mcp-server never imports cli.
+    allowedInternalImports: ['@czap/core', '@czap/assets'],
     kind: 'layered',
   },
 };
