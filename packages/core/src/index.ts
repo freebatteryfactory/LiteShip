@@ -16,7 +16,7 @@ export type { HLC as HLCBrand } from './brands.js';
 
 // Command language (CUT A1) — declaration-only contract re-anchored from
 // @czap/_spine; the registry/dispatcher runtime lives in @czap/command.
-export type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult, CommandAnnotations, CommandExecutionKind, CommandJsonSchema } from './command.js';
+export type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult, CapsuleResultReceipt, CapsuleResultMetaKey, CommandAnnotations, CommandExecutionKind, CommandJsonSchema } from './command.js';
 
 // FNV-1a hash utility
 export { fnv1a, fnv1aBytes } from './fnv.js';

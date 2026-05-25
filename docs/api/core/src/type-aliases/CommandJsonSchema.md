@@ -8,6 +8,6 @@
 
 > **CommandJsonSchema** = `_CommandJsonSchema`
 
-Defined in: [core/src/command.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L18)
+Defined in: [core/src/command.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L20)
 
 Minimal JSON-Schema object shape for a command's input/output contract.

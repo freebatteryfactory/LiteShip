@@ -5,6 +5,8 @@
  * are projection adapters. These types carry no runtime behavior.
  */
 
+import type { ContentAddress } from './core.d.ts';
+
 /** Minimal JSON-Schema object shape for a command's input/output contract. */
 export interface CommandJsonSchema {
   readonly type: 'object';
@@ -88,3 +90,29 @@ export interface CapsuleCommandResult<P = unknown> {
   /** Process exit code the CLI adapter maps from the result (0 = ok). */
   readonly exitCode?: number;
 }
+
+/**
+ * LiteShip result identity carried in an MCP tool result's `_meta` under the
+ * reverse-DNS key {@link CapsuleResultMetaKey} (CUT D1). Provenance, NOT the
+ * semantic payload: `structuredContent` carries the payload (what an
+ * `outputSchema` will describe in D2); this carries who produced it plus a
+ * content-addressed identity. A cross-adapter pure type — the MCP skin
+ * populates it now; the CLI may project the same identity later.
+ */
+export interface CapsuleResultReceipt {
+  /** Canonical command id that produced the result. */
+  readonly command: string;
+  /**
+   * Content address over the STABLE result (command + status + payload +
+   * verdict? + exitCode?). Excludes the volatile `timestamp` so identical
+   * outcomes share an id (idempotency). Advisory identity, not an integrity digest.
+   */
+  readonly resultId: ContentAddress;
+  /** ISO timestamp the command stamped — carried as-is, NOT part of `resultId`. */
+  readonly timestamp: string;
+  readonly verdict?: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
+  readonly exitCode?: number;
+}
+
+/** Reverse-DNS `_meta` key under which a {@link CapsuleResultReceipt} rides on an MCP result. */
+export type CapsuleResultMetaKey = 'dev.heyoub.liteship/result';
