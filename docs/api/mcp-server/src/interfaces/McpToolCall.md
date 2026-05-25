@@ -6,7 +6,7 @@
 
 # Interface: McpToolCall
 
-Defined in: [mcp-server/src/dispatch.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L48)
+Defined in: [mcp-server/src/dispatch.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L49)
 
 Shape of an MCP tools/call parameter object.
 
@@ -16,7 +16,7 @@ Shape of an MCP tools/call parameter object.
 
 > `readonly` **arguments**: `Record`\<`string`, `unknown`\>
 
-Defined in: [mcp-server/src/dispatch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L50)
+Defined in: [mcp-server/src/dispatch.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L51)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/dispatch.ts:50](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/dispatch.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L49)
+Defined in: [mcp-server/src/dispatch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L50)

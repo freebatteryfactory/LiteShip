@@ -1,0 +1,147 @@
+/**
+ * CUT D5 — live MCP Apps VIEW resource + capsule.inspect linkage (node-side law).
+ *
+ * LiteShip is the PROVIDER: it ships one interactive `ui://liteship/app/*` resource
+ * and links the `capsule.inspect` tool to it via `_meta.ui.resourceUri`. The AI host
+ * owns the iframe + postMessage bridge and injects the result; the server NEVER
+ * pushes — it rejects `ui/*` with -32601. D3 JSON + D4 static surfaces stay frozen.
+ *
+ * @module
+ */
+import { describe, it, expect } from 'vitest';
+import { COMMAND_CATALOG } from '@czap/command';
+import { fnv1a } from '@czap/core';
+import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
+import { listUiResources, readUiResource } from '../../../packages/mcp-server/src/ui-resources.js';
+import { listAppResources, readAppResource } from '../../../packages/mcp-server/src/app-resources.js';
+import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js';
+
+const APP_URI = 'ui://liteship/app/capsule-inspect';
+const UI_MIME = 'text/html;profile=mcp-app';
+
+function req(method: string, params?: unknown, id: string | number = 1): JsonRpcRequest {
+  return params === undefined
+    ? { jsonrpc: '2.0', id, method }
+    : { jsonrpc: '2.0', id, method, params: params as Record<string, unknown> };
+}
+async function result<T>(method: string, params?: unknown): Promise<T> {
+  return ((await dispatch(req(method, params))) as { result: T }).result;
+}
+async function errCode(method: string, params?: unknown): Promise<number> {
+  return ((await dispatch(req(method, params))) as { error: { code: number } }).error.code;
+}
+
+describe('D5 — D4 static surface stays frozen', () => {
+  it('the D4 static UI registry is unchanged (still exactly the two twins) and its pin holds', () => {
+    expect(listUiResources().map((r) => r.uri)).toEqual(['ui://liteship/registry/commands', 'ui://liteship/glossary']);
+    const pin = fnv1a(
+      JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
+    );
+    expect(pin).toBe('fnv1a:8004e919');
+  });
+});
+
+describe('D5 — app resource is an additive third class', () => {
+  it('resources/list is [JSON…, static UI…, app…] in that order', async () => {
+    const r = await result<{ resources: Array<{ uri: string }> }>('resources/list', {});
+    const uris = r.resources.map((x) => x.uri);
+    const apps = uris.filter((u) => u.startsWith('ui://liteship/app/'));
+    expect(apps).toEqual([APP_URI]);
+    // app resources are the suffix — after the JSON prefix and the static-UI middle.
+    expect(uris[uris.length - 1]).toBe(APP_URI);
+    expect(new Set(uris).size).toBe(uris.length);
+  });
+
+  it('listAppResources() agrees with the app slice and is mcp-app mimeType', async () => {
+    const r = await result<{ resources: Array<{ uri: string; mimeType: string }> }>('resources/list', {});
+    expect(r.resources.filter((x) => x.uri.startsWith('ui://liteship/app/'))).toEqual(listAppResources());
+    expect(listAppResources().every((x) => x.mimeType === UI_MIME)).toBe(true);
+  });
+});
+
+describe('D5 — capsule.inspect tool linkage (registry-governed, additive)', () => {
+  it('exactly capsule.inspect carries _meta.ui.resourceUri; no other tool does', () => {
+    const tools = listTools();
+    const linked = tools.filter((t) => t._meta?.ui?.resourceUri);
+    expect(linked.map((t) => t.name)).toEqual(['capsule.inspect']);
+    expect(linked[0]!._meta!.ui.resourceUri).toBe(APP_URI);
+  });
+
+  it('the descriptor carries the ui link and CSP is NOT on tool metadata', () => {
+    const d = COMMAND_CATALOG.find((c) => c.name === 'capsule.inspect')!;
+    expect(d.ui?.resourceUri).toBe(APP_URI);
+    expect((d as { _meta?: unknown })._meta).toBeUndefined();
+    expect((d.annotations as { csp?: unknown } | undefined)?.csp).toBeUndefined();
+  });
+
+  it('the linked resourceUri resolves to a real app resource (not -32002, not a D4 static URI)', async () => {
+    const linkedUri = listTools().find((t) => t.name === 'capsule.inspect')!._meta!.ui.resourceUri;
+    expect(listUiResources().map((r) => r.uri)).not.toContain(linkedUri); // not a static twin
+    const read = await result<{ contents: Array<{ uri: string }> }>('resources/read', { uri: linkedUri });
+    expect(read.contents[0]!.uri).toBe(linkedUri);
+  });
+});
+
+describe('D5 — the app resource is genuinely interactive + safe', () => {
+  it('the app body embeds the view-side bridge (script + message listener + tool-result branch)', () => {
+    const html = readAppResource(APP_URI).contents[0]!.text;
+    expect(html).toContain('<script');
+    expect(html).toContain("addEventListener('message'");
+    expect(html).toContain('ui/notifications/tool-result');
+    expect(html).toContain('ui/initialize');
+  });
+
+  it('the app body has a waiting/empty state and renders via textContent (no innerHTML injection)', () => {
+    const html = readAppResource(APP_URI).contents[0]!.text;
+    expect(html).toContain('Waiting for capsule result');
+    expect(html).toContain('.textContent');
+    expect(html).not.toContain('.innerHTML');
+  });
+
+  it('the app body uses ONLY the bridge — no network/eval/inline-handlers/remote sinks', () => {
+    const html = readAppResource(APP_URI).contents[0]!.text;
+    for (const banned of ['fetch(', 'XMLHttpRequest', 'eval(', 'new Function', 'http://', 'https://', 'src="', 'href="']) {
+      expect(html, `app body must not contain '${banned}'`).not.toContain(banned);
+    }
+    expect(/\son[a-z]+\s*=/i.test(html), 'app body must have no inline event-handler attributes').toBe(false);
+  });
+
+  it('CSP is default-deny on the RESOURCE meta', () => {
+    const meta = readAppResource(APP_URI).contents[0]!._meta;
+    expect(meta.ui.csp).toEqual({ connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] });
+  });
+
+  it('an unknown app uri → -32002 (consistent with D3/D4)', async () => {
+    expect(await errCode('resources/read', { uri: 'ui://liteship/app/__nope__' })).toBe(-32002);
+  });
+});
+
+describe('D5 — server honesty (no faked push channel)', () => {
+  it('the server rejects ui/* methods with -32601 — the bridge is host↔iframe, not a server method', async () => {
+    expect(await errCode('ui/initialize', {})).toBe(-32601);
+    expect(await errCode('ui/notifications/tool-result', {})).toBe(-32601);
+    expect(await errCode('ui/notifications/initialized', {})).toBe(-32601);
+  });
+
+  it('no new SERVER capability is declared (MCP Apps is client-advertised)', async () => {
+    const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
+    expect(caps).toEqual({ tools: { listChanged: false }, resources: { listChanged: false }, prompts: { listChanged: false } });
+    expect('apps' in caps).toBe(false);
+    expect('ui' in caps).toBe(false);
+  });
+});
+
+describe('D5 — D1/D2 non-regression', () => {
+  it('D1: capsule.inspect tools/call still returns the envelope with a text fallback', async () => {
+    const r = await dispatchToolCall({ name: 'capsule.inspect', arguments: { id: '__x__' } });
+    expect(typeof r.content[0]!.text).toBe('string');
+    expect(r.content[0]!.text).toBe(JSON.stringify(r.structuredContent));
+    expect(r._meta?.['liteship/result']).toBeDefined();
+  });
+
+  it('D2: tools/list still emits 8 tools each with an object outputSchema', () => {
+    const tools = listTools();
+    expect(tools.length).toBe(8);
+    for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
+  });
+});

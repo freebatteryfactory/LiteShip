@@ -14,6 +14,9 @@ export type { McpPrompt, McpPromptArgument, GetPromptResult } from './prompts.js
 // Static MCP Apps UI resources (CUT D4) — the `ui://` visible twins of the D3 JSON resources.
 export { listUiResources, readUiResource } from './ui-resources.js';
 export type { McpUiResource, McpUiResourceContents, McpUiResourceMeta, McpUiResourceCsp } from './ui-resources.js';
+
+// Live MCP Apps app resources (CUT D5) — interactive `ui://liteship/app/…` views linked from tools.
+export { listAppResources, readAppResource } from './app-resources.js';
 export { runStdio } from './stdio.js';
 export { runHttp } from './http.js';
 

@@ -26,6 +26,8 @@ export const capsuleInspectCommand: HandledCommand = {
     // its internal fields are not mirrored here to avoid drift with the manifest.
     outputSchema: { type: 'object', required: ['capsule'], properties: { capsule: { type: 'object' } } },
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
+    // CUT D5: link a live MCP Apps view that renders this tool's result (host-injected).
+    ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const manifest = loadManifest(context);
