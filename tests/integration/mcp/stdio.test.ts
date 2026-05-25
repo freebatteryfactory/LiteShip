@@ -11,13 +11,14 @@ describe('MCP stdio transport', () => {
     expect(response.result.tools.length).toBeGreaterThan(0);
   });
 
-  it('tools/call describe returns text content', async () => {
-    const result = await dispatchToolCall({ name: 'describe', arguments: {} });
+  it('tools/call returns a structuredContent envelope (text mirrors the payload)', async () => {
+    // capsule.inspect with no manifest on disk → a structured failed result;
+    // the envelope shape (content + structuredContent + isError) is what matters.
+    const result = await dispatchToolCall({ name: 'capsule.inspect', arguments: { id: 'absent' } });
     expect(Array.isArray(result.content)).toBe(true);
-    expect(result.content.length).toBeGreaterThan(0);
     expect(result.content[0]!.type).toBe('text');
-    // describe command returns JSON with assemblyKinds
-    const parsed = JSON.parse(result.content[0]!.text);
-    expect(Array.isArray(parsed.assemblyKinds)).toBe(true);
+    // structuredContent is the command payload; the text content is its JSON mirror.
+    expect(result.content[0]!.text).toBe(JSON.stringify(result.structuredContent));
+    expect(result.isError).toBe(true);
   });
 });
