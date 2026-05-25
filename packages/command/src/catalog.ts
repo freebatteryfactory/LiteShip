@@ -20,8 +20,15 @@ import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 import { verifyCommand } from './commands/verify.js';
 
-/** Descriptors for commands whose handlers have not yet migrated into this package. */
-const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
+/**
+ * Descriptors for commands whose execution is owned by the CLI (terminal
+ * orchestration, destructive/streaming workflows, host-probe batteries, catalog
+ * projections) — they intentionally have NO `@czap/command` handler. They are
+ * still first-class catalog entries for identity + discovery. Marked `cliOwned`
+ * structurally at assembly below, so a CLI-owned entry can never silently look
+ * like a finite command that lost its handler.
+ */
+const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
   {
     name: 'doctor',
     summary: 'Preflight rig-check: Node, pnpm, workspace, build artifacts, git hooks.',
@@ -85,7 +92,11 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
   sceneCompileCommand,
   sceneRenderCommand,
   verifyCommand,
-  ...PENDING_DESCRIPTORS.map((descriptor) => ({ descriptor })),
+  // CLI-owned descriptors carry no handler; tag each `cliOwned` structurally so
+  // the handler-XOR-cliOwned invariant can never be satisfied by accident.
+  ...CLI_OWNED_DESCRIPTORS.map((descriptor) => ({
+    descriptor: { ...descriptor, annotations: { ...descriptor.annotations, cliOwned: true } },
+  })),
 ];
 
 /** The single canonical registry instance. CLI and MCP both project from this. */
