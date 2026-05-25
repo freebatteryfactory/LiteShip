@@ -18,6 +18,7 @@ import { versionCommand } from './commands/version.js';
 import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
 import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
+import { verifyCommand } from './commands/verify.js';
 
 /** Descriptors for commands whose handlers have not yet migrated into this package. */
 const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
@@ -64,12 +65,6 @@ const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { destructive: true, group: 'ship' },
   },
   {
-    name: 'verify',
-    summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
-    inputSchema: { type: 'object', required: ['tarball', 'capsule'], properties: { tarball: { type: 'string' }, capsule: { type: 'string' } } },
-    annotations: { readOnly: true, group: 'ship' },
-  },
-  {
     name: 'mcp',
     summary: 'Start the MCP server (stdio default; --http=PORT for HTTP).',
     inputSchema: { type: 'object', properties: { http: { type: 'string' } } },
@@ -89,6 +84,7 @@ const ALL_COMMANDS: readonly RegisteredCommand[] = [
   sceneVerifyCommand,
   sceneCompileCommand,
   sceneRenderCommand,
+  verifyCommand,
   ...PENDING_DESCRIPTORS.map((descriptor) => ({ descriptor })),
 ];
 
