@@ -304,6 +304,9 @@ importers:
 
   packages/command:
     dependencies:
+      '@czap/assets':
+        specifier: workspace:*
+        version: link:../assets
       '@czap/core':
         specifier: workspace:*
         version: link:../core

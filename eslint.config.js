@@ -213,7 +213,9 @@ export default tseslint.config(
   {
     files: ['packages/**/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts'],
     ignores: [
-      // (1) Canonical helper + thin re-exports.
+      // (1) Canonical helper + thin re-exports. CUT A1 capstone-1: the canonical
+      // spawn impl now lives in @czap/command/host; cli/lib/spawn.ts is a re-export.
+      'packages/command/src/host/spawn.ts',
       'packages/cli/src/lib/spawn.ts',
       'scripts/lib/spawn.ts',
       'scripts/support/pnpm-process.ts',
@@ -227,7 +229,7 @@ export default tseslint.config(
       'scripts/package-smoke.ts', // reason: execFileSync — sync packaging smoke test
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
-      'packages/cli/src/render-backend/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming
+      'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)
       'packages/cli/src/commands/gauntlet.ts', // reason: spawnSync('pnpm run gauntlet:full', { shell: true }) — needs shell
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes

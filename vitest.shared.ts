@@ -10,7 +10,10 @@ export const alias: Record<string, string> = {
   ...Config.toTestAliases(Config.make({}), repoRoot),
   '@czap/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
   // CUT A1: @czap/command is outside the design-layer alias set, so map it to
-  // source explicitly (the CLI and MCP adapter tests import it by name).
+  // source explicitly (the CLI and MCP adapter tests import it by name). The
+  // /host subpath (Node host execution) is aliased separately; the longer key
+  // is listed first so it takes precedence.
+  '@czap/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
   '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 
@@ -72,12 +75,13 @@ export const coverageExclude = [
   // ship.ts itself stays excluded as long as it's pure orchestration
   // of git + pnpm + npm subprocesses.
   'packages/cli/src/commands/ship.ts',
-  // ffmpeg.ts (render-backend) spawns the system `ffmpeg` binary to encode
+  // ffmpeg.ts (render backend) spawns the system `ffmpeg` binary to encode
   // VideoFrameOutput streams to mp4. Coverage requires ffmpeg on PATH —
   // tests/smoke/intro-render.test.ts skips when it isn't, so this surface
   // is structurally 0% on machines without ffmpeg installed. Matches the
-  // audio/processor-bootstrap.ts pattern (host-realm-dependent).
-  'packages/cli/src/render-backend/ffmpeg.ts',
+  // audio/processor-bootstrap.ts pattern (host-realm-dependent). Moved to
+  // @czap/command/host in CUT A1 capstone-1 (the cli path is now a re-export).
+  'packages/command/src/host/ffmpeg.ts',
   // spawn-helpers.ts is a re-export shim — its only body is `export {...}
   // from './lib/spawn.js'`. The actual implementation in cli/src/lib/spawn.ts
   // is measured normally; v8 reports 0% on the shim because there are no

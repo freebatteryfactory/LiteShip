@@ -6,8 +6,11 @@
  * @module
  */
 
-import { resolve } from 'node:path';
 import type { ContentAddress } from '@czap/core';
+
+// Manifest-path resolution moved to @czap/command/host (CUT A1 capstone-1);
+// re-exported here so CLI command import sites resolve unchanged.
+export { getCapsuleManifestPath } from '@czap/command/host';
 
 /** Base shape carried by every CLI command receipt. */
 export interface BaseReceipt {
@@ -88,11 +91,3 @@ export function emitError(command: string, message: string): void {
   );
 }
 
-const DEFAULT_CAPSULE_MANIFEST_RELATIVE = 'reports/capsule-manifest.json';
-
-/** Override default manifest path with `CZAP_CAPSULE_MANIFEST` (relative to cwd or absolute). */
-export function getCapsuleManifestPath(cwd: string = process.cwd()): string {
-  const raw = process.env.CZAP_CAPSULE_MANIFEST?.trim();
-  if (!raw) return resolve(cwd, DEFAULT_CAPSULE_MANIFEST_RELATIVE);
-  return resolve(cwd, raw);
-}

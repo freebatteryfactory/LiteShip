@@ -1,49 +1,9 @@
 /**
- * Content-addressed idempotency — hash command + inputs + environment
- * fingerprint, look up `.czap/cache/<hash>.json`, return cached receipt
- * if present unless `force` is true.
+ * Content-addressed idempotency — re-export of the canonical impl now in
+ * `@czap/command/host` (CUT A1 capstone-1). Kept at this path so CLI commands
+ * and the idempotency tests resolve unchanged.
  *
  * @module
  */
-
-import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { CanonicalCbor } from '@czap/core';
-
-/** Context supplied to the idempotency helpers. */
-export interface IdempotencyCtx {
-  readonly command: string;
-  readonly inputs: Record<string, unknown>;
-  readonly force: boolean;
-  /** Cache root. Defaults to `process.cwd()` when omitted. */
-  readonly cwd?: string;
-}
-
-/** Hash the command + inputs into a short hex slug. */
-export function hashInputs(ctx: IdempotencyCtx): string {
-  // ADR-0003: feed SHA-256 RFC 8949 canonical CBOR bytes so the slug is
-  // invariant under key permutation and JSON stringification quirks.
-  const canonical = CanonicalCbor.encode({ command: ctx.command, inputs: ctx.inputs });
-  return createHash('sha256').update(canonical).digest('hex').slice(0, 16);
-}
-
-/** Path where the cached receipt lives (relative to `cwd`, or process cwd). */
-export function cachePath(hash: string, cwd: string = process.cwd()): string {
-  return join(cwd, '.czap', 'cache', `${hash}.json`);
-}
-
-/** Return a cached receipt for this invocation, or null if absent / forced. */
-export function tryReadCache(ctx: IdempotencyCtx): unknown | null {
-  if (ctx.force) return null;
-  const path = cachePath(hashInputs(ctx), ctx.cwd);
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, 'utf8')) as unknown;
-}
-
-/** Write the fresh receipt to the cache for future identical invocations. */
-export function writeCache(ctx: IdempotencyCtx, receipt: unknown): void {
-  const path = cachePath(hashInputs(ctx), ctx.cwd);
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(receipt, null, 2), 'utf8');
-}
+export { hashInputs, cachePath, tryReadCache, writeCache } from '@czap/command/host';
+export type { IdempotencyCtx } from '@czap/command/host';
