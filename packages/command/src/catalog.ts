@@ -15,6 +15,7 @@ import type { CapsuleCommandDescriptor } from '@czap/core';
 import { CommandRegistry, type RegisteredCommand } from './registry.js';
 import { glossaryCommand } from './commands/glossary.js';
 import { versionCommand } from './commands/version.js';
+import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from './commands/capsule.js';
 
 /** Descriptors for commands whose handlers have not yet migrated into this package. */
 const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
@@ -87,24 +88,6 @@ const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { mcpExposed: true, group: 'compose' },
   },
   {
-    name: 'capsule.inspect',
-    summary: 'Inspect a capsule manifest entry.',
-    inputSchema: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'manifest' },
-  },
-  {
-    name: 'capsule.verify',
-    summary: 'Verify a capsule’s generated tests.',
-    inputSchema: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'manifest' },
-  },
-  {
-    name: 'capsule.list',
-    summary: 'List capsules, optionally filtered by kind.',
-    inputSchema: { type: 'object', properties: { kind: { type: 'string' } } },
-    annotations: { mcpExposed: true, group: 'manifest' },
-  },
-  {
     name: 'gauntlet',
     summary: 'Run the full release-grade gauntlet.',
     inputSchema: { type: 'object', properties: { 'dry-run': { type: 'boolean' } } },
@@ -134,6 +117,9 @@ const PENDING_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
 const ALL_COMMANDS: readonly RegisteredCommand[] = [
   glossaryCommand,
   versionCommand,
+  capsuleInspectCommand,
+  capsuleListCommand,
+  capsuleVerifyCommand,
   ...PENDING_DESCRIPTORS.map((descriptor) => ({ descriptor })),
 ];
 

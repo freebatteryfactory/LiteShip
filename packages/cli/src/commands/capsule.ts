@@ -1,93 +1,77 @@
 /**
- * capsule inspect / verify / list — read operations on the manifest.
- * inspect returns one entry; list returns all (optionally filtered by
- * --kind); verify runs the generated test for a capsule.
+ * capsule inspect / verify / list (CLI adapter) — thin projections over
+ * `@czap/command`'s capsule commands. The manifest read (path resolution via
+ * getCapsuleManifestPath, honoring CZAP_CAPSULE_MANIFEST) and the vitest run
+ * are injected here; the structured decisions live in `@czap/command`. This
+ * adapter renders the exact JSON receipts to stdout and errors to stderr.
  *
  * @module
  */
 
 import { existsSync, readFileSync } from 'node:fs';
+import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from '@czap/command';
+import type { CommandContext } from '@czap/command';
 import { emit, emitError, getCapsuleManifestPath } from '../receipts.js';
 import { VitestRunner } from '../capsules/vitest-runner.js';
 
-interface ManifestEntry {
-  readonly name: string;
-  readonly kind: string;
-  readonly source: string;
-  readonly generated: { testFile: string; benchFile: string };
-}
-
-interface Manifest {
-  readonly capsules: readonly ManifestEntry[];
-}
-
-function loadManifest(): Manifest | null {
-  const path = getCapsuleManifestPath();
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, 'utf8')) as Manifest;
+/** Build the injected I/O surface the capsule handlers need. */
+function capsuleContext(): CommandContext {
+  return {
+    manifestSource: () => {
+      const path = getCapsuleManifestPath();
+      return existsSync(path) ? readFileSync(path, 'utf8') : null;
+    },
+    runVitest: (testFiles) => VitestRunner.run({ testFiles: [...testFiles] }),
+  };
 }
 
 /** Execute `capsule inspect <id>`. */
 export async function capsuleInspect(id: string): Promise<number> {
-  const m = loadManifest();
-  if (!m) {
-    emitError('capsule.inspect', 'manifest missing');
-    return 1;
-  }
-  const entry = m.capsules.find((c) => c.name === id);
-  if (!entry) {
-    emitError('capsule.inspect', `capsule not found: ${id}`);
-    return 1;
+  const result = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id } }, capsuleContext());
+  if (result.status === 'failed') {
+    emitError('capsule.inspect', (result.payload as { error: string }).error);
+    return result.exitCode ?? 1;
   }
   emit({
     status: 'ok',
     command: 'capsule.inspect',
-    timestamp: new Date().toISOString(),
-    capsule: entry,
+    timestamp: result.timestamp,
+    capsule: (result.payload as { capsule: unknown }).capsule,
   });
   return 0;
 }
 
 /** Execute `capsule list [--kind=<kind>]`. */
 export async function capsuleList(kind?: string): Promise<number> {
-  const m = loadManifest();
-  if (!m) {
-    emitError('capsule.list', 'manifest missing');
-    return 1;
+  const args = kind ? { kind } : {};
+  const result = await capsuleListCommand.handler({ name: 'capsule.list', args }, capsuleContext());
+  if (result.status === 'failed') {
+    emitError('capsule.list', (result.payload as { error: string }).error);
+    return result.exitCode ?? 1;
   }
-  const capsules = kind ? m.capsules.filter((c) => c.kind === kind) : m.capsules;
+  const payload = result.payload as { capsules: unknown; kind: string | null };
   emit({
     status: 'ok',
     command: 'capsule.list',
-    timestamp: new Date().toISOString(),
-    capsules,
-    kind: kind ?? null,
+    timestamp: result.timestamp,
+    capsules: payload.capsules,
+    kind: payload.kind,
   });
   return 0;
 }
 
 /** Execute `capsule verify <id>`. */
 export async function capsuleVerify(id: string): Promise<number> {
-  const m = loadManifest();
-  if (!m) {
-    emitError('capsule.verify', 'manifest missing');
-    return 1;
-  }
-  const entry = m.capsules.find((c) => c.name === id);
-  if (!entry) {
-    emitError('capsule.verify', `capsule not found: ${id}`);
-    return 1;
-  }
-  const { exitCode, stderrTail } = await VitestRunner.run({ testFiles: [entry.generated.testFile] });
-  if (exitCode !== 0) {
-    emitError('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`);
-    return 2;
+  const result = await capsuleVerifyCommand.handler({ name: 'capsule.verify', args: { id } }, capsuleContext());
+  if (result.status === 'failed') {
+    emitError('capsule.verify', (result.payload as { error: string }).error);
+    return result.exitCode ?? 1;
   }
   emit({
     status: 'ok',
     command: 'capsule.verify',
-    timestamp: new Date().toISOString(),
-    capsuleId: entry.name,
+    timestamp: result.timestamp,
+    capsuleId: (result.payload as { capsuleId: string }).capsuleId,
   });
   return 0;
 }
