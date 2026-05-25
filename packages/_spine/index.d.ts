@@ -15,4 +15,5 @@ export * from './worker.d.ts';
 export * from './remotion.d.ts';
 export * from './config.d.ts';
 export * from './scene.d.ts';
+export * from './beats.d.ts';
 export * from './command.d.ts';

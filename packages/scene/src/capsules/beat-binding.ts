@@ -19,20 +19,19 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
+import type { BeatComponent as _BeatComponent, BeatSpawn as _BeatSpawn } from '@czap/_spine';
 
-/** Component shape for beat entities — what SyncSystem queries via `world.query('Beat')`. */
-export interface BeatComponent {
-  readonly kind: 'beat';
-  readonly timeMs: number;
-  readonly strength: number;
-  /** Optional pointer back to the audio source track that anchored this beat. */
-  readonly anchorTrackId?: string;
-}
+/**
+ * Component shape for beat entities — what SyncSystem queries via
+ * `world.query('Beat')`. Aliased to the canonical spine contract (CUT A5):
+ * the scene/world timeline-space stage of the beat family. The raw
+ * asset/sample-space sibling is `@czap/assets`' `BeatMarkerSet`; the official
+ * bridge between them is `resolveBeatProjectionToSceneBeats` (./beat-projection).
+ */
+export type BeatComponent = _BeatComponent;
 
 /** Spawn descriptor returned by the binding — the runtime spawns these into the world. */
-export interface BeatSpawn {
-  readonly components: BeatComponent;
-}
+export type BeatSpawn = _BeatSpawn;
 
 const BeatComponentSchema = Schema.Struct({
   kind: Schema.Literal('beat'),
@@ -61,6 +60,9 @@ export const beatBindingCapsule = defineCapsule({
   _kind: 'sceneComposition',
   name: 'scene.beat-binding',
   site: ['node', 'browser'],
+  // `asset:beats` carries the raw asset-space `BeatMarkerSet` (bpm + sample
+  // indices) produced by `@czap/assets`; it is resolved to scene-space
+  // BeatComponent[] via resolveBeatProjectionToSceneBeats before binding.
   capabilities: { reads: ['scene', 'asset:beats'], writes: ['ecs.world'] },
   input: BindingInputSchema,
   output: BindingOutputSchema,

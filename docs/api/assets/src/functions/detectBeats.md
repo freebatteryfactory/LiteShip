@@ -6,9 +6,9 @@
 
 # Function: detectBeats()
 
-> **detectBeats**(`audio`): [`BeatMarkerSet`](../interfaces/BeatMarkerSet.md)
+> **detectBeats**(`audio`): `BeatMarkerSet`
 
-Defined in: [assets/src/analysis/beat-markers.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L22)
+Defined in: [assets/src/analysis/beat-markers.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L25)
 
 Detect downbeats on a decoded audio buffer.
 
@@ -26,4 +26,4 @@ Detect downbeats on a decoded audio buffer.
 
 ## Returns
 
-[`BeatMarkerSet`](../interfaces/BeatMarkerSet.md)
+`BeatMarkerSet`

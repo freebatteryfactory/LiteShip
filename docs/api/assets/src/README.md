@@ -9,7 +9,6 @@
 ## Interfaces
 
 - [AssetDecl](interfaces/AssetDecl.md)
-- [BeatMarkerSet](interfaces/BeatMarkerSet.md)
 - [DecodedAudio](interfaces/DecodedAudio.md)
 - [DecodedImage](interfaces/DecodedImage.md)
 - [DecodedVideo](interfaces/DecodedVideo.md)
@@ -18,6 +17,7 @@
 ## Type Aliases
 
 - [AssetKind](type-aliases/AssetKind.md)
+- [BeatMarkerSet](type-aliases/BeatMarkerSet.md)
 - [FourCC](type-aliases/FourCC.md)
 - [WavChunk](type-aliases/WavChunk.md)
 
