@@ -274,6 +274,22 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
 };
 
+/**
+ * Dynamic package imports — `import('@czap/...')` — that are deliberately
+ * allowed despite the importer not declaring the target in its package.json.
+ * Format: `"<importer> -> <target>"`. Everything else that dynamic-imports a
+ * workspace package absent from its manifest is flagged
+ * (`missing-manifest-dependency-dynamic`) so dynamic edges can't smuggle a
+ * dependency past the static audit. (CUT A1 — A1-T3.)
+ */
+export const dynamicImportExemptions: ReadonlySet<string> = new Set([
+  // The `czap mcp` verb launches the MCP server via a ONE-WAY dynamic import.
+  // @czap/cli deliberately does not declare @czap/mcp-server as a dependency —
+  // declaring it (or importing statically) would re-form the cli↔mcp cycle A1
+  // deleted. This is the lone sanctioned manifest-absent dynamic edge.
+  '@czap/cli -> @czap/mcp-server',
+]);
+
 export const surfacePolicy = {
   astroPackage: '@czap/astro',
   astroClientDirectives: ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'] as const,
