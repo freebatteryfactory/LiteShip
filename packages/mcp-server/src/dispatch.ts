@@ -1,19 +1,24 @@
 /**
- * MCP tool dispatch — maps tools/call params to czap CLI command
- * executions. Captures CLI stdout and returns it as MCP text content.
+ * MCP tool dispatch — routes tools/call through the ONE shared command
+ * registry/dispatcher (`@czap/command`) and returns the structured
+ * `CapsuleCommandResult.payload` as `structuredContent`. No CLI argv, no
+ * stdout capture, no `process.stdout.write` monkey-patch: MCP and CLI are
+ * sibling skins over the same dispatcher, and `@czap/mcp-server` never imports
+ * `@czap/cli`.
  *
  * Entry point `dispatch` accepts a typed JSON-RPC `Request | Notification`
  * (post-`JsonRpcServer.parse` classification) and produces a
  * `JsonRpcResponse | null`. `null` is returned for notifications: per
  * JSON-RPC 2.0 §4.1 the server MUST NOT send a response for them.
  *
- * `dispatchToolCall` remains exported for tests that exercise the CLI
- * dispatch path directly without going through the JSON-RPC envelope.
+ * `dispatchToolCall` remains exported for tests that exercise the dispatch
+ * path directly without the JSON-RPC envelope.
  *
  * @module
  */
 
-import { mcpExposedDescriptors } from '@czap/command';
+import { CommandDispatcher, commandRegistry, mcpExposedDescriptors } from '@czap/command';
+import { createNodeCommandContext } from '@czap/command/host';
 import {
   type JsonRpcNotification,
   type JsonRpcRequest,
@@ -24,6 +29,9 @@ import {
   InvalidParams,
   InternalError,
 } from './jsonrpc.js';
+
+/** The single dispatcher over the canonical registry — same instance the CLI uses. */
+const dispatcher = CommandDispatcher.make(commandRegistry);
 
 /**
  * Sentinel for invalid-params throws inside method invocations. Caught
@@ -41,28 +49,16 @@ class InvalidParamsError extends Error {
   }
 }
 
-type RunFn = (argv: readonly string[]) => Promise<number>;
-
-let cachedRun: RunFn | undefined;
-
-/** Lazy-load `@czap/cli` so `@czap/mcp-server` does not declare a package dependency cycle. */
-async function getRun(): Promise<RunFn> {
-  if (!cachedRun) {
-    const mod = await import('@czap/cli');
-    cachedRun = mod.run;
-  }
-  return cachedRun;
-}
-
 /** Shape of an MCP tools/call parameter object. */
 export interface McpToolCall {
   readonly name: string;
   readonly arguments: Record<string, unknown>;
 }
 
-/** MCP tools/call result envelope. */
+/** MCP tools/call result envelope. `structuredContent` is the command payload. */
 export interface McpToolResult {
   readonly content: ReadonlyArray<{ type: 'text'; text: string }>;
+  readonly structuredContent: unknown;
   readonly isError: boolean;
 }
 
@@ -123,38 +119,21 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
   }
 }
 
-/** Translate a tools/call into argv, run the CLI, capture stdout. */
+/**
+ * Dispatch a tools/call through the shared registry dispatcher. The structured
+ * `arguments` object passes through as the invocation args verbatim (nested
+ * objects preserved — no `String(v)` / `[object Object]` flattening), and the
+ * resulting `CapsuleCommandResult.payload` is returned as `structuredContent`.
+ * The text content is a faithful JSON mirror of that same payload — never
+ * captured stdout.
+ */
 export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult> {
-  const args = buildArgv(call);
-  const originalWrite = process.stdout.write.bind(process.stdout);
-  let captured = '';
-  (process.stdout as unknown as { write: unknown }).write = (chunk: string | Uint8Array) => {
-    captured += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
-    return true;
+  const result = await dispatcher.dispatch({ name: call.name, args: call.arguments }, createNodeCommandContext());
+  return {
+    content: [{ type: 'text', text: JSON.stringify(result.payload ?? null) }],
+    structuredContent: result.payload ?? null,
+    isError: result.status === 'failed',
   };
-  try {
-    const run = await getRun();
-    const code = await run(args);
-    return {
-      content: [{ type: 'text', text: captured.trim() }],
-      isError: code !== 0,
-    };
-  } finally {
-    (process.stdout as unknown as { write: typeof originalWrite }).write = originalWrite;
-  }
-}
-
-function buildArgv(call: McpToolCall): string[] {
-  const segments = call.name.split('.');
-  const args: string[] = [];
-  for (const [k, v] of Object.entries(call.arguments)) {
-    if (typeof v === 'boolean') {
-      if (v) args.push(`--${k}`);
-    } else {
-      args.push(`--${k}=${String(v)}`);
-    }
-  }
-  return [...segments, ...args];
 }
 
 /**

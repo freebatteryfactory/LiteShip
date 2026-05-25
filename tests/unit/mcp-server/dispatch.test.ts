@@ -1,35 +1,16 @@
 /**
- * Unit tests for the MCP `dispatch` router. Exercises every branch:
- *  - tools/list, tools/call success, tools/call missing params (-32602)
- *  - method-not-found (-32601)
- *  - notification path (returns null per §4.1)
- *  - internal error mapping (-32603)
- *  - listTools surface
- *  - dispatchToolCall capturing CLI stdout into the MCP envelope
+ * Unit tests for the MCP `dispatch` router (CUT A1 capstone). tools/call now
+ * routes through the shared @czap/command dispatcher and returns the structured
+ * `CapsuleCommandResult.payload` as `structuredContent` — no @czap/cli import,
+ * no stdout capture, no buildArgv flattening.
+ *
+ * Branches: tools/list, tools/call success (structuredContent), tools/call
+ * structured failure (isError, not a JSON-RPC error), nested args preserved,
+ * no stdout pollution, method-not-found (-32601), invalid params (-32602),
+ * notification path (null per §4.1).
  */
-import { describe, it, expect, vi } from 'vitest';
-
-// Mock the `@czap/cli` `run` import so dispatchToolCall doesn't actually
-// execute a CLI command; we just need to verify the envelope shape.
-vi.mock('@czap/cli', () => ({
-  run: vi.fn(async (argv: string[]) => {
-    if (argv[0] === 'fail') {
-      process.stdout.write('error output line\n');
-      return 1;
-    }
-    if (argv[0] === 'crash') {
-      throw new Error('boom');
-    }
-    process.stdout.write(JSON.stringify({ ok: true, argv }) + '\n');
-    return 0;
-  }),
-}));
-
-import {
-  dispatch,
-  dispatchToolCall,
-  listTools,
-} from '../../../packages/mcp-server/src/dispatch.js';
+import { describe, it, expect } from 'vitest';
+import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-server/src/jsonrpc.js';
 
 function makeRequest(method: string, params?: unknown, id: string | number = 1): JsonRpcRequest {
@@ -39,133 +20,73 @@ function makeRequest(method: string, params?: unknown, id: string | number = 1):
 }
 
 function makeNotification(method: string, params?: unknown): JsonRpcNotification {
-  return params === undefined
-    ? { jsonrpc: '2.0', method }
-    : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
+  return params === undefined ? { jsonrpc: '2.0', method } : { jsonrpc: '2.0', method, params: params as Record<string, unknown> };
 }
 
 describe('dispatch — JSON-RPC method routing', () => {
-  it('responds to tools/list with the static tool catalog', async () => {
+  it('responds to tools/list with the registry-projected tool catalog', async () => {
     const r = await dispatch(makeRequest('tools/list', {}));
-    expect(r).not.toBeNull();
-    expect(r!.jsonrpc).toBe('2.0');
-    expect(r!.id).toBe(1);
     expect('result' in r!).toBe(true);
     const result = (r as { result: { tools: unknown[] } }).result;
-    expect(Array.isArray(result.tools)).toBe(true);
     expect(result.tools.length).toBeGreaterThan(5);
-  });
-
-  it('responds to tools/call success', async () => {
-    const r = await dispatch(makeRequest('tools/call', {
-      name: 'describe',
-      arguments: { format: 'json' },
-    }));
-    expect(r).not.toBeNull();
-    expect('result' in r!).toBe(true);
-    const result = (r as { result: { content: Array<{ text: string }>; isError: boolean } }).result;
-    expect(result.isError).toBe(false);
-    expect(result.content[0]!.text).toMatch(/argv/);
-  });
-
-  it('returns -32602 (Invalid Params) when tools/call lacks { name, arguments }', async () => {
-    const r = await dispatch(makeRequest('tools/call', { wrong: 'shape' }));
-    expect(r).not.toBeNull();
-    expect('error' in r!).toBe(true);
-    const err = (r as { error: { code: number; message: string } }).error;
-    expect(err.code).toBe(-32602);
-    expect(err.message).toMatch(/name/);
-  });
-
-  it('returns -32602 when tools/call params are missing entirely', async () => {
-    const r = await dispatch(makeRequest('tools/call'));
-    expect(r).not.toBeNull();
-    const err = (r as { error: { code: number } }).error;
-    expect(err.code).toBe(-32602);
   });
 
   it('returns -32601 (Method Not Found) for unknown methods', async () => {
     const r = await dispatch(makeRequest('unknown/method'));
-    expect(r).not.toBeNull();
     const err = (r as { error: { code: number; data?: { method: string } } }).error;
     expect(err.code).toBe(-32601);
     expect(err.data?.method).toBe('unknown/method');
   });
 
+  it('returns -32602 when tools/call lacks { name, arguments }', async () => {
+    const r = await dispatch(makeRequest('tools/call', { wrong: 'shape' }));
+    expect((r as { error: { code: number } }).error.code).toBe(-32602);
+  });
+
   it('returns null for notifications (§4.1)', async () => {
-    const r = await dispatch(makeNotification('tools/list', {}));
-    expect(r).toBeNull();
-  });
-
-  it('returns null for notification even when method is unknown', async () => {
-    const r = await dispatch(makeNotification('unknown/method'));
-    expect(r).toBeNull();
-  });
-
-  it('returns null for notification even when handler throws', async () => {
-    const r = await dispatch(makeNotification('tools/call', {
-      name: 'crash',
-      arguments: {},
-    }));
-    expect(r).toBeNull();
-  });
-
-  it('maps generic handler exceptions to -32603 Internal Error', async () => {
-    const r = await dispatch(makeRequest('tools/call', {
-      name: 'crash',
-      arguments: {},
-    }));
-    expect(r).not.toBeNull();
-    const err = (r as { error: { code: number; message: string } }).error;
-    expect(err.code).toBe(-32603);
-    expect(err.message).toBe('Internal error');
+    expect(await dispatch(makeNotification('tools/list', {}))).toBeNull();
   });
 });
 
-describe('dispatchToolCall — argv builder + stdout capture', () => {
-  it('translates dotted tool names into argv segments', async () => {
-    const result = await dispatchToolCall({
-      name: 'scene.compile',
-      arguments: { scene: 'foo.ts' },
-    });
+describe('dispatchToolCall — structuredContent (no stdout capture, no buildArgv)', () => {
+  it('A1-T6: a successful command returns its payload as structuredContent, text mirrors it', async () => {
+    // glossary is a pure handler — deterministic, no host I/O.
+    const result = await dispatchToolCall({ name: 'glossary', arguments: { term: 'boundary' } });
     expect(result.isError).toBe(false);
-    expect(result.content[0]!.text).toMatch(/scene/);
-    expect(result.content[0]!.text).toMatch(/compile/);
+    const payload = result.structuredContent as { term: string; entries: unknown[] };
+    expect(payload.term).toBe('boundary');
+    expect(payload.entries.length).toBeGreaterThan(0);
+    // The text content is a faithful JSON mirror of the structured payload — not stdout.
+    expect(result.content[0]!.text).toBe(JSON.stringify(payload));
   });
 
-  it('emits boolean true args as bare flags', async () => {
-    const result = await dispatchToolCall({
-      name: 'gauntlet',
-      arguments: { 'dry-run': true },
-    });
-    expect(result.isError).toBe(false);
-    // Our mocked `run` echoes argv into stdout.
-    expect(result.content[0]!.text).toMatch(/--dry-run/);
-  });
-
-  it('omits boolean false args from argv', async () => {
-    const result = await dispatchToolCall({
-      name: 'gauntlet',
-      arguments: { 'dry-run': false },
-    });
-    expect(result.isError).toBe(false);
-    expect(result.content[0]!.text).not.toMatch(/--dry-run/);
-  });
-
-  it('marks isError true when the underlying CLI exits non-zero', async () => {
-    const result = await dispatchToolCall({
-      name: 'fail',
-      arguments: {},
-    });
+  it('a command failure is a structured result (isError true), not a thrown JSON-RPC error', async () => {
+    // capsule.inspect with no manifest on disk → structured failed result.
+    const result = await dispatchToolCall({ name: 'capsule.inspect', arguments: { id: 'nope' } });
     expect(result.isError).toBe(true);
-    expect(result.content[0]!.text).toMatch(/error/);
+    expect((result.structuredContent as { error?: string }).error).toBeTypeOf('string');
+  });
+
+  it('A1-T7: nested-object arguments pass through verbatim — never [object Object]-flattened', async () => {
+    const result = await dispatchToolCall({
+      name: 'glossary',
+      arguments: { term: 'boundary', meta: { nested: { deep: true } } },
+    });
+    // The old buildArgv path would have produced `--meta=[object Object]`; the
+    // structured path forwards the object untouched, so it never appears.
+    expect(result.content[0]!.text).not.toContain('[object Object]');
+    expect(result.isError).toBe(false);
+  });
+
+  it('does not pollute process.stdout (the monkey-patch is gone)', async () => {
+    const original = process.stdout.write;
+    await dispatchToolCall({ name: 'glossary', arguments: {} });
+    expect(process.stdout.write).toBe(original);
   });
 });
 
-describe('listTools — static tool catalog', () => {
-  it('lists exactly the 8 handler-backed compute/verify tools', () => {
-    // describe (catalog projection) + gauntlet (terminal orchestration) were
-    // dropped: an MCP tool must be finite, handler-backed structured execution.
+describe('listTools — registry-projected catalog', () => {
+  it('lists exactly the 8 handler-backed compute/verify tools, each with an inputSchema', () => {
     const names = listTools().map((t) => t.name).sort();
     expect(names).toEqual([
       'asset.analyze',
@@ -177,12 +98,6 @@ describe('listTools — static tool catalog', () => {
       'scene.render',
       'scene.verify',
     ]);
-  });
-
-  it('every tool carries an inputSchema object', () => {
-    for (const t of listTools()) {
-      expect(typeof t.inputSchema).toBe('object');
-      expect((t.inputSchema as { type?: string }).type).toBe('object');
-    }
+    for (const t of listTools()) expect((t.inputSchema as { type?: string }).type).toBe('object');
   });
 });

@@ -358,9 +358,6 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@czap/cli':
-        specifier: workspace:^
-        version: link:../cli
       '@czap/command':
         specifier: workspace:*
         version: link:../command

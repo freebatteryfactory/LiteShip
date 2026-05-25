@@ -248,10 +248,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {
-    // Protocol adapter over @czap/command. CUT A1 catalog collapse: listTools()
-    // projects the canonical command catalog from @czap/command (so MCP and CLI
-    // agree by construction). The cli edge remains a dynamic import (reshaped
-    // further when the MCP dispatch adapter migrates off stdout capture).
+    // Protocol adapter over @czap/command. CUT A1 capstone: tools/list projects
+    // the canonical catalog and tools/call dispatches through the shared
+    // registry + @czap/command/host context → structuredContent. The mcp->cli
+    // edge is GONE (no more stdout capture / dynamic import of @czap/cli);
+    // mcp-server imports only core + command now.
     allowedInternalImports: ['@czap/core', '@czap/command'],
     kind: 'host-adjacent',
   },
