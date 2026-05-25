@@ -38,6 +38,16 @@ export interface CommandAnnotations {
    * (MCP, describe) ignore it.
    */
   readonly group?: string;
+  /**
+   * The command's execution is owned by the CLI (terminal-streaming
+   * orchestration, destructive workflow, visible repair, long-running launch, or
+   * a catalog projection) — it intentionally has NO `@czap/command` handler. The
+   * registry still carries its descriptor for identity/discovery. This makes
+   * "descriptor without handler" an explicit, tested choice rather than a silent
+   * gap: a finite structured command missing its handler is a bug; a `cliOwned`
+   * one is by design.
+   */
+  readonly cliOwned?: boolean;
 }
 
 /** Identity + contract that drives CLI listing AND MCP tools/list from ONE source. */

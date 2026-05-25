@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
 
+/** Commands whose execution is CLI-owned (no @czap/command handler, by design). */
+const CLI_OWNED = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'mcp', 'scene.dev', 'ship'] as const;
+
 /** Every command czap currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
   'asset.analyze',
@@ -49,12 +52,41 @@ describe('@czap/command canonical catalog', () => {
     expect(COMMAND_CATALOG.map((d) => d.name)).toEqual(commandRegistry.list().map((d) => d.name));
   });
 
-  it('exposes migrated commands with handlers and pending commands descriptor-only', () => {
+  it('finite commands carry handlers; CLI-owned commands are descriptor-only', () => {
     expect(commandRegistry.get('glossary')?.handler).toBeTypeOf('function');
     expect(commandRegistry.get('version')?.handler).toBeTypeOf('function');
-    // Declared, routed by legacy CLI dispatch, no registry handler yet.
+    // CLI-owned: registry-described for identity, no handler (CLI dispatch runs it).
     expect(commandRegistry.get('ship')?.descriptor.name).toBe('ship');
     expect(commandRegistry.get('ship')?.handler).toBeUndefined();
+    expect(commandRegistry.get('ship')?.descriptor.annotations?.cliOwned).toBe(true);
+  });
+
+  it('every command is EXACTLY one of: handled (structured) or cliOwned (orchestration)', () => {
+    for (const descriptor of commandRegistry.list()) {
+      const command = commandRegistry.get(descriptor.name)!;
+      const handled = typeof command.handler === 'function';
+      const cliOwned = descriptor.annotations?.cliOwned === true;
+      // XOR: a finite command missing its handler is a bug; a cliOwned one is by design.
+      expect(handled !== cliOwned, `${descriptor.name}: handled=${handled} cliOwned=${cliOwned} (must be exactly one)`).toBe(true);
+    }
+  });
+
+  it('the CLI-owned set is exactly the descriptor-only set', () => {
+    const cliOwned = commandRegistry
+      .list()
+      .filter((d) => d.annotations?.cliOwned === true)
+      .map((d) => d.name)
+      .sort();
+    expect(cliOwned).toEqual([...CLI_OWNED]);
+  });
+
+  it('mcpExposedDescriptors never includes a non-mcpExposed cliOwned command', () => {
+    const mcpNames = new Set(mcpExposedDescriptors().map((d) => d.name));
+    for (const d of commandRegistry.list()) {
+      if (d.annotations?.cliOwned === true && d.annotations?.mcpExposed !== true) {
+        expect(mcpNames.has(d.name), `${d.name} is cliOwned + non-mcpExposed but leaked into listTools`).toBe(false);
+      }
+    }
   });
 
   it('mcpExposedDescriptors() is the explicit opt-in subset', () => {
