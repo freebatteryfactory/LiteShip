@@ -27,15 +27,18 @@ const EXPECTED_NAMES = [
   'version',
 ] as const;
 
-/** Exactly the MCP-exposed subset (matches the legacy hand-written listTools). */
+/**
+ * The MCP-exposed subset: the 8 finite, handler-backed compute/verify commands.
+ * describe (catalog projection — tools/list already serves it) and gauntlet
+ * (terminal-streaming orchestration) were dropped from the legacy 10: an MCP
+ * tool must be handler-backed structured execution, never CLI-owned orchestration.
+ */
 const EXPECTED_MCP_NAMES = [
   'asset.analyze',
   'asset.verify',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
-  'describe',
-  'gauntlet',
   'scene.compile',
   'scene.render',
   'scene.verify',
@@ -78,6 +81,14 @@ describe('@czap/command canonical catalog', () => {
       .map((d) => d.name)
       .sort();
     expect(cliOwned).toEqual([...CLI_OWNED]);
+  });
+
+  it('every mcpExposed command is handler-backed (mcpExposed ⟹ handler !== undefined)', () => {
+    // The gremlin guard: an MCP tool MUST be finite structured execution. A
+    // cliOwned (handler-less) command can never be advertised as an MCP tool.
+    for (const d of mcpExposedDescriptors()) {
+      expect(commandRegistry.get(d.name)?.handler, `mcpExposed '${d.name}' has no handler`).toBeTypeOf('function');
+    }
   });
 
   it('mcpExposedDescriptors never includes a non-mcpExposed cliOwned command', () => {
