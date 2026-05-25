@@ -8,7 +8,7 @@
 
 > **dispatch**(`msg`): `Promise`\<[`JsonRpcResponse`](../type-aliases/JsonRpcResponse.md) \| `null`\>
 
-Defined in: [mcp-server/src/dispatch.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L89)
+Defined in: [mcp-server/src/dispatch.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L74)
 
 Route a parsed JSON-RPC message to its method handler.
 

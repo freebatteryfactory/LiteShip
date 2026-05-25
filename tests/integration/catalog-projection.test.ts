@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '@czap/cli';
 import { COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
-import { listTools } from '@czap/mcp-server';
+import { listTools, readResource } from '@czap/mcp-server';
 import { TOP_LEVEL_VERBS } from '../../packages/cli/src/commands/completion.js';
 import { HELP_TEXT } from '../../packages/cli/src/commands/help.js';
 import { captureCli } from './cli/capture.js';
@@ -52,6 +52,11 @@ describe('catalog projection — single source of command identity', () => {
     const mcpOut = (await captureCli(() => run(['describe', '--format=mcp']))).stdout;
     const tools = lastJson(mcpOut) as { tools: ReadonlyArray<{ name: string }> };
     expect(tools.tools.map((t) => t.name)).not.toContain('mcp');
+  });
+
+  it('the MCP liteship://registry/commands resource is a projection of the one catalog (CUT D3)', () => {
+    const contents = readResource('liteship://registry/commands').contents;
+    expect(JSON.parse(contents[0]!.text)).toEqual(COMMAND_CATALOG);
   });
 
   it('completion top-level verbs are derived from the catalog (no hand-maintained list)', () => {
