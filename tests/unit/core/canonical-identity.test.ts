@@ -12,11 +12,18 @@
  * again minted through cborg / `TypedRef.canonicalize` / raw `JSON.stringify`,
  * and (3) proves the seam is key-order-deterministic.
  *
+ * CUT B5a extends the cage to `packages/core/src/config.ts` — `Config.make` was
+ * the LAST internal `fnv1a:` minter still on the off-doctrine path (top-level-only
+ * key sort + `JSON.stringify`), so it is now folded into IDENTITY_FILES. The one
+ * deliberate exception — `mcp-server` `canonicalJson` behind `resultId` — is a
+ * JSON-PROTOCOL identity (MCP wire is JSON; D1/B2 law), not an internal content
+ * address; it is guarded separately below as the single allowed JSON canonicalizer.
+ *
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import { encode as cborgEncode } from 'cborg';
 import { CanonicalCbor, fnv1aBytes } from '@czap/core';
 
@@ -47,6 +54,7 @@ describe('B1 — identity is minted only through CanonicalCbor (source guard, th
     'packages/quantizer/src/quantizer.ts',
     'packages/core/src/composable.ts',
     'packages/core/src/ecs.ts',
+    'packages/core/src/config.ts', // CUT B5a — Config.make folded into the cage
   ];
 
   for (const rel of IDENTITY_FILES) {
@@ -66,5 +74,36 @@ describe('B1 — the canonical seam is key-order deterministic', () => {
   it('CanonicalCbor sorts map keys, so identity is permutation-stable', () => {
     expect(fnv1aBytes(CanonicalCbor.encode({ a: 1, b: 2 }))).toBe(fnv1aBytes(CanonicalCbor.encode({ b: 2, a: 1 })));
     expect(fnv1aBytes(CanonicalCbor.encode({ x: 0.5, y: 1.5 }))).toBe(fnv1aBytes(CanonicalCbor.encode({ y: 1.5, x: 0.5 })));
+  });
+});
+
+describe('B5a — exactly one JSON canonicalizer, and it is the protocol-bound resultId carve-out', () => {
+  /** Recursively collect every `.ts` source under packages/*‍/src (skipping dist/node_modules). */
+  const walkPackageSources = (): string[] => {
+    const out: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name === 'dist') continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) out.push(full);
+      }
+    };
+    walk(resolve(REPO, 'packages'));
+    return out;
+  };
+
+  it('only ONE `canonicalJson` definition exists under packages/, and it lives in mcp-server dispatch', () => {
+    const definers = walkPackageSources().filter((f) => /function\s+canonicalJson\b|canonicalJson\s*=/.test(readFileSync(f, 'utf8')));
+    expect(definers).toHaveLength(1);
+    expect(definers[0].replace(/\\/g, '/')).toMatch(/packages\/mcp-server\/src\/dispatch\.ts$/);
+  });
+
+  it('the resultId canonicalizer is documented as JSON-PROTOCOL identity, not an internal content address', () => {
+    const src = readFileSync(resolve(REPO, 'packages/mcp-server/src/dispatch.ts'), 'utf8');
+    // The carve-out must announce WHY it is JSON, not CanonicalCbor (the B1 doctrine).
+    expect(src).toMatch(/JSON[- ]protocol/i);
+    // resultId stays on the fnv1a(canonicalJson(...)) path — deliberately NOT CanonicalCbor.
+    expect(src).toMatch(/fnv1a\(\s*\n?\s*canonicalJson/);
   });
 });

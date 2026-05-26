@@ -189,7 +189,16 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
   }
 }
 
-/** Canonical JSON (recursively sorted keys) so field/key order never perturbs a resultId. */
+/**
+ * Canonical JSON (recursively sorted keys) so field/key order never perturbs a
+ * resultId. CUT B5a: this is the ONE deliberate exception to the CanonicalCbor
+ * identity doctrine (ADR-0003 / B1). `resultId` is a JSON-PROTOCOL identity, not
+ * an internal content address — the MCP tool-result payload is JSON-shaped (D1:
+ * `structuredContent` = payload), the receipt rides the JSON wire, and B1's
+ * float-width CBOR gremlin cannot occur over JSON text (`0.5` → `"0.5"` always).
+ * It stays JSON on purpose; the single-canonicalizer guard pins it as the only
+ * `canonicalJson` in the tree so a SECOND JSON identity scheme can't drift in.
+ */
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
