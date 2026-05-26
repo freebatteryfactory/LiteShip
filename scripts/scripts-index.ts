@@ -103,7 +103,6 @@ const CATEGORIES: readonly CategorySpec[] = [
       'ship',
       'verify',
       'gauntlet:full',
-      'gauntlet:serial',
       'package:smoke',
       'release:notes',
     ],

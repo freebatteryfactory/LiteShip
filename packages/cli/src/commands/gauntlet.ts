@@ -7,38 +7,10 @@
 
 import { spawnSync } from 'node:child_process';
 import { emit, emitError } from '../receipts.js';
+import { gauntletPhaseLabels } from '../gauntlet-phases.js';
 
-/** Canonical phase list mirroring scripts/gauntlet.ts. */
-const PHASES = [
-  'build',
-  'capsule:compile',
-  'typecheck',
-  'lint',
-  'docs:check',
-  'invariants',
-  'test',
-  'test:vite',
-  'test:astro',
-  'test:tailwind',
-  'test:e2e',
-  'test:e2e:stress',
-  'test:e2e:stream-stress',
-  'test:flake',
-  'test:redteam',
-  'bench',
-  'bench:gate',
-  'bench:reality',
-  'package:smoke',
-  'coverage:node',
-  'coverage:merge',
-  'report:runtime-seams',
-  'audit',
-  'report:satellite-scan',
-  'feedback:verify',
-  'runtime:gate',
-  'capsule:verify',
-  'flex:verify',
-] as const;
+/** The canonical phase labels (CUT D8) — projected from the ONE source the executor runs. */
+const PHASES = gauntletPhaseLabels();
 
 /** Execute the gauntlet command. */
 export async function gauntlet(dryRun: boolean): Promise<number> {
