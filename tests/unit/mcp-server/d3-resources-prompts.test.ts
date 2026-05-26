@@ -79,7 +79,10 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
 
   it('cardinality of the JSON surface is pinned: commands + server/info + glossary index + one per term', async () => {
     const r = await result<{ resources: Array<{ uri: string }> }>('resources/list', {});
-    const jsonResources = r.resources.filter((x) => x.uri.startsWith('liteship://'));
+    // D3 JSON class = liteship:// but NOT the D6 manifest class (liteship://mcp-app/…).
+    const jsonResources = r.resources.filter(
+      (x) => x.uri.startsWith('liteship://') && !x.uri.startsWith('liteship://mcp-app/'),
+    );
     expect(jsonResources.length).toBe(3 + GLOSSARY_ENTRIES.length);
   });
 
@@ -231,7 +234,7 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
 
 describe('D3 namespace law — protocol surfaces stay product-owned', () => {
   it('no maintainer identity (heyoub) and no czap:// scheme in the D3 protocol-surface source', () => {
-    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts']) {
+    for (const file of ['resources.ts', 'prompts.ts', 'capabilities.ts', 'dispatch.ts', 'ui-resources.ts', 'ui-render.ts', 'app-resources.ts', 'app-render.ts', 'manifest-resource.ts']) {
       const src = readFileSync(resolve(SRC, file), 'utf8');
       expect(src, `${file} must not embed maintainer identity`).not.toContain('heyoub');
       expect(src, `${file} must use the liteship:// scheme, not czap://`).not.toContain('czap://');

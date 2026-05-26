@@ -17,6 +17,9 @@ export type { McpUiResource, McpUiResourceContents, McpUiResourceMeta, McpUiReso
 
 // Live MCP Apps app resources (CUT D5) — interactive `ui://liteship/app/…` views linked from tools.
 export { listAppResources, readAppResource } from './app-resources.js';
+
+// MCP-app manifest (CUT D6) — the reachable `liteship://mcp-app/manifest` projection over all surfaces.
+export { mcpAppManifest, listManifestResources, readManifestResource } from './manifest-resource.js';
 export { runStdio } from './stdio.js';
 export { runHttp } from './http.js';
 

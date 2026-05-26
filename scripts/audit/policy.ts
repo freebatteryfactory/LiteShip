@@ -251,9 +251,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // Protocol adapter over @czap/command. CUT A1 capstone: tools/list projects
     // the canonical catalog and tools/call dispatches through the shared
     // registry + @czap/command/host context → structuredContent. The mcp->cli
-    // edge is GONE (no more stdout capture / dynamic import of @czap/cli);
-    // mcp-server imports only core + command now.
-    allowedInternalImports: ['@czap/core', '@czap/command'],
+    // edge is GONE (no more stdout capture / dynamic import of @czap/cli).
+    // CUT D6: mcp-server → compiler is an allowed acyclic edge — the server feeds
+    // its real registries to the pure compiler's compileMcpAppManifest projector
+    // (compiler → mcp-server remains forbidden).
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/compiler'],
     kind: 'host-adjacent',
   },
   '@czap/_spine': {

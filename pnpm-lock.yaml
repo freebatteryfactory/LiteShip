@@ -364,6 +364,9 @@ importers:
       '@czap/command':
         specifier: workspace:*
         version: link:../command
+      '@czap/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@czap/core':
         specifier: workspace:*
         version: link:../core

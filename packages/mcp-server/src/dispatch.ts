@@ -26,6 +26,7 @@ import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { listResources, readResource } from './resources.js';
 import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
+import { listManifestResources, readManifestResource } from './manifest-resource.js';
 import { listPrompts, getPrompt } from './prompts.js';
 import { InvalidParamsError, ResourceNotFoundError, RESOURCE_NOT_FOUND } from './errors.js';
 import {
@@ -146,22 +147,26 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     }
     case 'resources/list':
       // Single static page — D3 JSON resources (liteship://) + D4 static MCP Apps
-      // UI resources (ui://liteship/…) + D5 live app resources (ui://liteship/app/…).
-      // All fixed at process start (no cursor machinery).
-      return ok({ resources: [...listResources(), ...listUiResources(), ...listAppResources()] });
+      // UI resources (ui://liteship/…) + D5 live app resources (ui://liteship/app/…)
+      // + the D6 MCP-app manifest (liteship://mcp-app/manifest). Fixed at process start.
+      return ok({
+        resources: [...listResources(), ...listUiResources(), ...listAppResources(), ...listManifestResources()],
+      });
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
         throw new InvalidParamsError('resources/read requires { uri: string }', { received: params });
       }
-      // ui://liteship/app/ → D5 live app resource; other ui:// → D4 static UI; liteship://
-      // → D3 JSON. Unknown uri in any registry → ResourceNotFoundError → -32002 (catch).
+      // ui://liteship/app/ → D5 live app; other ui:// → D4 static UI; liteship://mcp-app/
+      // → D6 manifest; other liteship:// → D3 JSON. Unknown in any registry → -32002 (catch).
       const uri = params.uri;
       const contents = uri.startsWith('ui://liteship/app/')
         ? readAppResource(uri)
         : uri.startsWith('ui://')
           ? readUiResource(uri)
-          : readResource(uri);
+          : uri.startsWith('liteship://mcp-app/')
+            ? readManifestResource(uri)
+            : readResource(uri);
       return ok(contents);
     }
     case 'prompts/list':
