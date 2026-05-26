@@ -24,6 +24,13 @@ export interface ReceiptSubject {
  */
 export interface ReceiptEnvelope {
   readonly kind: string;
+  /**
+   * Causal clock (CUT B2): an {@link HLC}, NOT a wall-clock string. It is
+   * INCLUDED in `hashEnvelope` and monotonic-validated by `validateChain`
+   * (`hlc_not_increasing`) — i.e. identity- and ordering-bearing. Not
+   * interchangeable with a `WallClockTimestamp` (the volatile, identity-irrelevant
+   * ISO stamp on command/CLI receipts).
+   */
   readonly timestamp: HLC;
   readonly subject: ReceiptSubject;
   readonly payload: TypedRef.Shape;

@@ -503,6 +503,10 @@ export function verifyRuntimeSeamsReport(
         : 'Runtime seams, coverage-meta, bench, and startup reality artifacts do not share the same gauntlet run id.',
     ),
   );
+  // CUT B2 (recorded hazard, not fixed here): this uses the VOLATILE wall-clock
+  // `generatedAt` (a WallClockTimestamp, Date.parse'd) as a same-run happened-after
+  // heuristic — NOT causal proof. It holds only within one machine/run; it is not
+  // an HLC ordering. Tightening this to a causal signal is a separate cut.
   checks.push(
     buildCheck(
       'runtime-seams-ordering',

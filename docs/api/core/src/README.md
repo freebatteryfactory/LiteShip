@@ -158,6 +158,7 @@ plan graph, ECS, capsule factory).
 - [TokenCategory](type-aliases/TokenCategory.md)
 - [TokenRef](type-aliases/TokenRef.md)
 - [UIQualityTier](type-aliases/UIQualityTier.md)
+- [WallClockTimestamp](type-aliases/WallClockTimestamp.md)
 
 ## Variables
 
