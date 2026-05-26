@@ -17,6 +17,8 @@
 import { execSync, spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { gauntletPhases } from '../packages/cli/src/gauntlet-phases.js';
+import { isDirectExecution } from './audit/shared.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
@@ -199,64 +201,17 @@ async function main() {
   const gauntletStart = Date.now();
 
   try {
-    // ── Phase 1: Build + validate ──────────────────────────────────────
-    await run('build', 'pnpm run build');
-    await run('capsule:compile', 'pnpm run capsule:compile');
-    await run('typecheck', 'pnpm run typecheck');
-    await run('lint', 'pnpm run lint');
-    await run('docs:check', 'pnpm run docs:check');
-    await run('invariants', 'pnpm exec tsx scripts/check-invariants.ts');
-
-    // ── Phase 2: Unit tests ────────────────────────────────────────────
-    await run('test (unit + component + property + integration)', 'pnpm test');
-
-    // ── Phase 4: Integration, e2e, stress, bench ───────────────────────
-    // Browser coverage USED to fork in the background here for wall-clock
-    // savings, but on Windows under v8 coverage instrumentation that
-    // parallelism caused catastrophic resource contention (port exhaustion
-    // from concurrent Vite spawns, vitest worker crashes, native
-    // STATUS_ACCESS_VIOLATIONs in subprocess pipelines). Browser coverage
-    // now runs sequentially in Phase 5. ~30 min wall-clock cost; reliable.
-    await run('test:vite', 'pnpm run test:vite');
-    await run('test:astro', 'pnpm run test:astro');
-    await run('test:tailwind', 'pnpm run test:tailwind');
-    await run('test:e2e', 'pnpm run test:e2e');
-    await run('test:e2e:stress', 'pnpm run test:e2e:stress');
-    await run('test:e2e:stream-stress', 'pnpm run test:e2e:stream-stress');
-    await run('test:flake', 'pnpm run test:flake');
-    await run('test:redteam', 'pnpm run test:redteam');
-    await run('bench', 'pnpm run bench');
-    await run('bench:gate', 'pnpm run bench:gate');
-    await run('bench:trend', 'pnpm run bench:trend');
-    await run('bench:reality', 'pnpm run bench:reality');
-    await run('package:smoke', 'pnpm run package:smoke');
-
-    // ── Phase 5: Coverage (sequential) + merge ─────────────────────────
-    // coverage:node:tracked sets NODE_V8_COVERAGE so spawn-helper subprocesses
-    // emit raw v8 dumps into coverage/subprocess-raw. merge-subprocess-v8
-    // then converts via v8-to-istanbul and unions into coverage/node/coverage-final.json
-    // before merge-coverage.ts gates the merged report.
-    await run('coverage:wipe-subprocess', 'rimraf coverage/subprocess-raw');
-    await run('coverage:node:tracked', 'pnpm run coverage:node:tracked');
-    // Vitest browser on Windows can hang during Chromium teardown after the v8
-    // coverage report has already been emitted. The doneMarker fires on the
-    // report header; the 90s grace lets the table finish printing, then we
-    // tree-kill any orphan Chromium so the gauntlet can advance.
-    await run('coverage:browser', 'pnpm run coverage:browser', {
-      doneMarker: /Coverage report from v8/,
-      gracePeriodMs: 90_000,
-    });
-    await run('merge-subprocess-v8', 'tsx scripts/merge-subprocess-v8.ts');
-    await run('coverage:merge', 'tsx scripts/merge-coverage.ts');
-
-    // ── Phase 6: Reports + gates ───────────────────────────────────────
-    await run('report:runtime-seams', 'pnpm run report:runtime-seams');
-    await run('audit', 'pnpm run audit');
-    await run('report:satellite-scan', 'pnpm run report:satellite-scan');
-    await run('feedback:verify', 'pnpm run feedback:verify');
-    await run('runtime:gate', 'pnpm run runtime:gate');
-    await run('capsule:verify', 'pnpm run capsule:verify');
-    await run('flex:verify', 'pnpm run flex:verify');
+    // CUT D8: the phase sequence is the ONE canonical list in
+    // packages/cli/src/gauntlet-phases.ts (the CLI dry-run projects the same
+    // source). The executor loops it; global concerns (env, cwd, watchdog,
+    // timings, exit) stay here in run()/main().
+    for (const phase of gauntletPhases) {
+      await run(
+        phase.label,
+        phase.command,
+        phase.doneMarker ? { doneMarker: phase.doneMarker, gracePeriodMs: phase.gracePeriodMs } : {},
+      );
+    }
 
     // ── Summary ────────────────────────────────────────────────────────
     const totalDuration = Date.now() - gauntletStart;
@@ -299,4 +254,6 @@ async function main() {
   }
 }
 
-main();
+if (isDirectExecution(import.meta.url)) {
+  void main();
+}

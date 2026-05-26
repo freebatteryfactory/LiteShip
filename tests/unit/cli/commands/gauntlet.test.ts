@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { gauntlet } from '../../../../packages/cli/src/commands/gauntlet.js';
+import { gauntletPhaseLabels } from '../../../../packages/cli/src/gauntlet-phases.js';
 
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
@@ -34,5 +35,11 @@ describe('gauntlet command (unit)', () => {
     expect(receipt.phases.length).toBeGreaterThan(10);
     expect(receipt.phases).toContain('build');
     expect(receipt.phases).toContain('flex:verify');
+  });
+
+  it('dry-run phases are exactly the canonical projection (CUT D8 — no private CLI copy)', async () => {
+    const { stdout } = await captureStdout(() => gauntlet(true));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!) as { phases: string[] };
+    expect(receipt.phases).toEqual(gauntletPhaseLabels());
   });
 });
