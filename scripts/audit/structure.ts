@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
-import { packageTopology, reportPaths, surfacePolicy, dynamicImportExemptions } from './policy.js';
+import { reportPaths } from './policy.js';
+import { liteshipDevopsProfile } from '../config/devops-profile.js';
+import type { DevopsProfile } from '../config/devops-profile.js';
 import {
   createCounts,
   isDirectExecution,
@@ -128,8 +130,9 @@ function buildPackageExportTargets(root = repoRoot): Map<string, PackageExportTa
 function resolveInternalPackageImport(
   specifier: string,
   packageExportTargets: Map<string, PackageExportTarget>,
+  internalPrefix: string,
 ): ResolvedImport {
-  if (!specifier.startsWith('@czap/')) {
+  if (!specifier.startsWith(internalPrefix)) {
     return {
       specifier,
       targetFile: null,
@@ -194,6 +197,7 @@ function resolveImport(
   specifier: string,
   containingFile: string,
   packageExportTargets: Map<string, PackageExportTarget>,
+  internalPrefix: string,
 ): ResolvedImport {
   if (specifier.startsWith('.')) {
     return {
@@ -204,7 +208,7 @@ function resolveImport(
     };
   }
 
-  return resolveInternalPackageImport(specifier, packageExportTargets);
+  return resolveInternalPackageImport(specifier, packageExportTargets, internalPrefix);
 }
 
 function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: number }[] {
@@ -235,13 +239,16 @@ function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: num
   return [];
 }
 
-export function runStructureAudit(root = repoRoot): AuditSectionResult<StructureSummary> {
+export function runStructureAudit(
+  root = repoRoot,
+  profile: DevopsProfile = liteshipDevopsProfile,
+): AuditSectionResult<StructureSummary> {
   const packageInfos = listPackageManifests(root);
   const packageByName = new Map(packageInfos.map((pkg) => [pkg.name, pkg] as const));
   const packageExportTargets = buildPackageExportTargets(root);
   const knownSurfaceFiles = new Set<string>([
-    ...surfacePolicy.astroRuntimeFiles,
-    ...surfacePolicy.astroClientDirectives.map((directive) => `packages/astro/src/client-directives/${directive}.ts`),
+    ...profile.surfacePolicy.astroRuntimeFiles,
+    ...profile.surfacePolicy.astroClientDirectives.map((directive) => `packages/astro/src/client-directives/${directive}.ts`),
     'packages/astro/src/middleware.ts',
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
@@ -320,7 +327,7 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
 
       if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
         const specifier = node.moduleSpecifier.text;
-        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets);
+        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets, profile.internalPackagePrefix);
 
         if (resolved.kind === 'external') {
           externalImportCount += 1;
@@ -384,7 +391,7 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
               });
             }
 
-            const policy = packageTopology[packageInfo.name];
+            const policy = profile.packageTopology[packageInfo.name];
             if (resolved.targetPackage !== packageInfo.name && policy && !policy.allowedInternalImports.includes(resolved.targetPackage)) {
               rawFindings.push({
                 id: `structure/layer-violation/${record.relativePath}:${line}:${column}`,
@@ -454,7 +461,7 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
         ts.isStringLiteral(node.arguments[0]!)
       ) {
         const specifier = node.arguments[0]!.text;
-        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets);
+        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets, profile.internalPackagePrefix);
         if (
           resolved.kind === 'internal-package' &&
           resolved.targetPackage &&
@@ -462,7 +469,7 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
           packageByName.has(resolved.targetPackage)
         ) {
           const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
-          if (!packageInfo.dependencies.includes(resolved.targetPackage) && !dynamicImportExemptions.has(edgeKey)) {
+          if (!packageInfo.dependencies.includes(resolved.targetPackage) && !profile.dynamicImportExemptions.has(edgeKey)) {
             const { line, column } = lineAndColumn(record.sourceFile, node.arguments[0]!.getStart());
             rawFindings.push({
               id: `structure/manifest-mismatch-dynamic/${record.relativePath}:${line}:${column}`,
@@ -566,10 +573,10 @@ export function runStructureAudit(root = repoRoot): AuditSectionResult<Structure
   const edgeKeys = new Set(packageEdges.keys());
   const topology: TopologyCoverageEntry[] = packageInfos.map((pkg) => ({
     package: pkg.name,
-    coverage: packageTopology[pkg.name] ? 'clean' : 'policy-absent',
+    coverage: profile.packageTopology[pkg.name] ? 'clean' : 'policy-absent',
   }));
   const allowlistUnexercised: AllowlistUnexercisedEntry[] = packageInfos.flatMap((pkg) => {
-    const policy = packageTopology[pkg.name];
+    const policy = profile.packageTopology[pkg.name];
     if (!policy) return [];
     return policy.allowedInternalImports
       .filter((dependency) => dependency !== pkg.name && !edgeKeys.has(`${pkg.name} -> ${dependency}`))

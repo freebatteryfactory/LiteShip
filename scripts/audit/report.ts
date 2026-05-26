@@ -30,6 +30,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
+import { liteshipDevopsProfile } from '../config/devops-profile.js';
+import type { DevopsProfile } from '../config/devops-profile.js';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,
@@ -103,6 +105,8 @@ interface FileSignals {
 export interface BuildReportOptions {
   readonly root?: string;
   readonly generatedAt?: string;
+  /** CUT D7: the devops profile that drives the (structure) audit. Defaults to the LiteShip profile. */
+  readonly profile?: DevopsProfile;
 }
 
 const PROTOCOL_AREA_TITLES: Record<ProtocolAreaId, string> = {
@@ -1891,9 +1895,10 @@ export interface AuditArtifactBundle {
 
 export function buildAuditArtifactBundle(options: BuildReportOptions = {}): AuditArtifactBundle {
   const root = options.root ?? repoRoot;
+  const profile: DevopsProfile = options.profile ?? liteshipDevopsProfile;
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const context = ensureArtifactContext(root);
-  const structure = runStructureAudit(root);
+  const structure = runStructureAudit(root, profile);
   const integrity = runIntegrityAudit(root);
   const surface = runSurfaceAudit(root);
 
