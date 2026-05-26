@@ -76,7 +76,7 @@ Current browser-security posture:
 | `pnpm run bench`            | green                                                   | any                |
 | `pnpm run bench:gate`       | green, replicated statistical gate                      | any                |
 | `pnpm run bench:reality`    | green, browser cold-start evidence artifact             | any                |
-| `pnpm run package:smoke`    | green, pack/install/export smoke for all 15 publishable `@czap/*` scopes | any           |
+| `pnpm run package:smoke`    | green, pack/install/export smoke for every publishable `@czap/*` scope | any           |
 | `pnpm run coverage:node`    | green, v8 coverage output                               | any                |
 | `pnpm run coverage:browser` | green, Vitest browser mode with Chromium-only coverage collection (matrix correctness runs separately) | any |
 | `pnpm run coverage:merge`   | green, merged thresholds enforced                       | any                |
@@ -179,40 +179,13 @@ Startup steering now follows a generic `paired-truth` model:
 - Capsule catalog closure -- any new assembly arm proposal must go through an ADR amendment with first concrete instance in the same PR (ADR-0008). Governance watch, not a bench watch.
 - `ReceiptDAG.nodes` has no pruning, TTL, or max-size guard; per-session DAGs grow until `tracker.reset()` on session close. Bounded by user behavior in normal flows, but worth a future `linearizeFrom`-or-pruning policy if long-lived LLM sessions become common. Not a bench watch; a memory-shape watch.
 
-`pnpm run gauntlet:full` is the canonical sequential order (counted directly against `await run(...)` calls in `scripts/gauntlet.ts`):
-
-1. `pnpm run build`
-2. `pnpm run capsule:compile`
-3. `pnpm run typecheck`
-4. `pnpm run lint`
-5. `pnpm run docs:check`
-6. `pnpm exec tsx scripts/check-invariants.ts`
-7. `pnpm test`
-8. `pnpm run test:vite`
-9. `pnpm run test:astro`
-10. `pnpm run test:tailwind`
-11. `pnpm run test:e2e`
-12. `pnpm run test:e2e:stress`
-13. `pnpm run test:e2e:stream-stress`
-14. `pnpm run test:flake`
-15. `pnpm run test:redteam`
-16. `pnpm run bench`
-17. `pnpm run bench:gate`
-18. `pnpm run bench:trend`
-19. `pnpm run bench:reality`
-20. `pnpm run package:smoke`
-21. `rimraf coverage/subprocess-raw` (wipe before tracked coverage)
-22. `pnpm run coverage:node:tracked`
-23. `pnpm run coverage:browser`
-24. `tsx scripts/merge-subprocess-v8.ts`
-25. `tsx scripts/merge-coverage.ts`
-26. `pnpm run report:runtime-seams`
-27. `pnpm run audit`
-28. `pnpm run report:satellite-scan`
-29. `pnpm run feedback:verify`
-30. `pnpm run runtime:gate`
-31. `pnpm run capsule:verify`
-32. `pnpm run flex:verify`
+`pnpm run gauntlet:full` runs the canonical phase sequence. That sequence has ONE
+source of truth — `packages/cli/src/gauntlet-phases.ts` (CUT D8) — and `scripts/gauntlet.ts`
+simply loops it; there are no per-phase `run(...)` call sites to count against. Do not
+re-list the phases here (a hand-maintained mirror drifts the moment a phase is added,
+removed, or reordered). To see the live ordered sequence, run `czap gauntlet --dry-run`
+or read `gauntlet-phases.ts` directly. The per-phase timing table below is a captured
+**performance snapshot**, not the authoritative sequence.
 
 ### Per-phase wall-time ranges
 
@@ -220,7 +193,7 @@ Total across all 32 phases: 15–22 minutes end-to-end; recent local datapoint 1
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 
-Captured 2026-05-10 on Linux x64, 8 vCPU (Node 22). Phases 1–11 are measured wall times from the captured run; phases 12 onward are marked `see artifact` (the captured run failed at `test:e2e` because the sandbox lacked Playwright dep-install). The phase numbers below match `scripts/gauntlet.ts`'s `await run(...)` order.
+Captured 2026-05-10 on Linux x64, 8 vCPU (Node 22). Phases 1–11 are measured wall times from the captured run; phases 12 onward are marked `see artifact` (the captured run failed at `test:e2e` because the sandbox lacked Playwright dep-install). The phase numbers below follow the canonical order in `packages/cli/src/gauntlet-phases.ts` at capture time — this table is a snapshot, not the authoritative list.
 
 | Phase # | Name | Command | Wall time | Source |
 | --- | --- | --- | --- | --- |
@@ -527,8 +500,8 @@ First-run developer experience built on top of the existing CLI dispatch:
   `strict: true` in the receipt.
 - **`czap glossary [term]`** — terminal access to the prose register
   (LiteShip / CZAP / @czap/* naming + maritime CLI ontology).
-- **`czap help`** — verb table grouped by phase (cast off, describe + MCP,
-  compose + render, manifest, ship out).
+- **`czap help`** — verb table grouped by phase (cast off, compose + render,
+  manifest, ship out, servers); `czap help` projects the live grouping.
 - **`czap completion <bash|zsh|fish>`** — shell tab-completion scripts.
   Drift-guarded by `tests/unit/cli/commands/completion.test.ts` parsing
   dispatch.ts.
@@ -679,7 +652,8 @@ through `workspace:*` links until each external npm cut.
 - package surfaces, `dist/` outputs, export maps, and type entrypoints must
   stay release-ready
 - `package:smoke` is required proof for every publishable `@czap/*` scope
-  (15 packages, including type-only `@czap/_spine`)
+  (including type-only `@czap/_spine`); the roster is derived from the package
+  manifests and guarded by `tests/unit/devops/package-smoke-roster.test.ts`
 - external publishing remains a deliberate release decision, not an accidental
   side effect of package shape
 

@@ -93,7 +93,7 @@ The repo includes a dedicated red-team regression lane:
 pnpm run test:redteam
 ```
 
-It runs as phase 16 of `pnpm run gauntlet:full` (see [STATUS.md](./docs/STATUS.md#gates)) and on every PR through `.github/workflows/ci.yml`. New security-relevant findings should be encoded as a regression test there to prevent re-introduction.
+It runs as the red-team gate in `pnpm run gauntlet:full` (the canonical phase sequence lives in `packages/cli/src/gauntlet-phases.ts`; `czap gauntlet --dry-run` projects the live order) and on every PR through `.github/workflows/ci.yml`. New security-relevant findings should be encoded as a regression test there to prevent re-introduction.
 
 ## Disclosure timeline
 

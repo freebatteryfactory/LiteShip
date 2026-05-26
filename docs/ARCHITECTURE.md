@@ -23,8 +23,13 @@ Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core`
 compiler -> vite -> astro
 detect -> edge -> astro
 web + worker -> astro
-scene + assets -> cli -> mcp-server
+core + assets -> command -> cli -> mcp-server   (command also -> mcp-server directly)
+@czap/audit                                       (standalone: zero @czap/* deps; consumed by cli + the gauntlet)
 ```
+
+`@czap/command` is the shared command registry both `@czap/cli` and `@czap/mcp-server`
+dispatch through (CUT A1) — not a direct `cli -> mcp-server` edge. `@czap/audit` (CUT D9b)
+is a standalone leaf with no `@czap/*` dependencies.
 
 Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.
 
@@ -45,6 +50,8 @@ API docs per package live at [`docs/api/<name>/`](./api/); import guidance at [`
 - `@czap/remotion` — Remotion adapter
 - `@czap/scene` — ECS scene composition
 - `@czap/assets` — asset capsules + projections
+- `@czap/command` — shared command registry + dispatcher (CLI + MCP)
+- `@czap/audit` — profile-driven structure/integrity/surface audit engine (standalone)
 - `@czap/cli` — JSON-first CLI
 - `@czap/mcp-server` — MCP server
 

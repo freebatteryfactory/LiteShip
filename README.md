@@ -102,6 +102,13 @@ Reach for the rest only when the surface meaning justifies the runtime escalatio
 | [`@czap/mcp-server`](./packages/mcp-server) | Model Context Protocol server for AI tooling integration |
 | [`@czap/_spine`](./packages/_spine) | Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene` |
 
+You don't install these directly — they back the CLI, the MCP server, and the release tooling:
+
+| Package | Description |
+| --- | --- |
+| [`@czap/command`](./packages/command) | Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters |
+| [`@czap/audit`](./packages/audit) | Profile-driven structure / integrity / surface audit engine (standalone — zero `@czap/*` dependencies) |
+
 Plus `crates/czap-compute/`: a Rust `#![no_std]` WASM crate (spring, boundary, blend kernels) for the working-line compute escape hatch.
 
 ## Frameworks and stacks
@@ -210,7 +217,7 @@ Fresh local run on 2026-05-09 (Linux x64, 8 vCPU, Node 22, pnpm 10):
 - `pnpm run gauntlet:full` passed end-to-end in 14m47s.
 - `flex:verify` passed: `project is 10/10 by every rating dimension`.
 - `bench:gate` passed: 7 hard gates, 0 failed, 5 replicates.
-- `package:smoke` passed for all 15 publishable `@czap/*` scopes.
+- `package:smoke` passed for every publishable `@czap/*` scope.
 
 | Hard-gated pair | Median directive | Median baseline | Median overhead | Threshold |
 | --- | ---: | ---: | ---: | ---: |

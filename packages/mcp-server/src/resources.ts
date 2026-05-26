@@ -2,7 +2,7 @@
  * MCP resource projection (CUT D3) — `liteship://` resources are PROJECTIONS of
  * existing sources of truth, never a hand-maintained parallel surface:
  *
- *   - `liteship://registry/commands` ← `COMMAND_CATALOG` (the full 19-descriptor
+ *   - `liteship://registry/commands` ← `COMMAND_CATALOG` (the full descriptor
  *     superset of `tools/list`: includes CLI-owned commands + executionKind +
  *     annotations + group);
  *   - `liteship://server/info`       ← `serverInfo()` + the shared `PROTOCOL_VERSION`

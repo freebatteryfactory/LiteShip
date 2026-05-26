@@ -21,6 +21,7 @@ Every command emits a JSON receipt to stdout. Pretty TTY summaries (when stderr 
 | `czap glossary [term]` | Ontology lookup. Mirrors `docs/GLOSSARY.md` so AI agents can resolve register without leaving the shell. |
 | `czap completion <bash\|zsh\|fish>` | Emit a tab-completion script. `eval "$(czap completion bash)"` to load. |
 | `czap version` | Print the @czap/cli version. |
+| `czap audit [--profile <path>]` | Profile-driven structure / integrity / surface audit (CUT D9b). JSON receipt on stdout; `--profile` points at a devops profile. |
 
 ### Describe + MCP (machine interface)
 
@@ -52,7 +53,7 @@ Every command emits a JSON receipt to stdout. Pretty TTY summaries (when stderr 
 
 | Verb | What it does |
 | --- | --- |
-| `czap gauntlet` | Run the release-grade gate (32 phases). |
+| `czap gauntlet` | Run the release-grade gate (the full phase sequence in `@czap/cli`'s `gauntlet-phases.ts`; `czap gauntlet --dry-run` projects it). |
 | `czap ship <pkg>` | Publish a package to npm (idempotent). `czap ship` ties packages up at the quay; `czap verify` checks the receipt before they sail. |
 | `czap verify` | Post-ship verification (ADR-0011 four-verdict local verifier). |
 

@@ -1,6 +1,6 @@
 # @czap/compiler
 
-Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind (11 compilers).
+Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind — the compiler targets exported from `src/index.ts`.
 
 ## Docs
 
