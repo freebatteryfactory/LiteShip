@@ -1,6 +1,30 @@
-export type AuditSeverity = 'error' | 'warning' | 'info';
+/**
+ * Audit types — split (CUT D9b-1). The reusable ENGINE types live in
+ * `@czap/audit` and are re-exported here so existing `./types.js` importers are
+ * unchanged. The LiteShip HICP REPORT types (section taxonomy, file scoring,
+ * full-tree/protocol/framework/strike-board reports) stay repo-local below.
+ *
+ * @module
+ */
+export type {
+  AuditSeverity,
+  AuditSection,
+  AuditCoverageClass,
+  AuditLocation,
+  AuditFinding,
+  AuditSuppression,
+  AuditCounts,
+  AuditSectionResult,
+  TopologyCoverageEntry,
+  AllowlistUnexercisedEntry,
+  OrphanCoverage,
+  SymbolOrphanCoverage,
+  StructureCoverageClassification,
+} from '@czap/audit';
 
-export type AuditSection = 'structure' | 'integrity' | 'surface';
+import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } from '@czap/audit';
+
+// ── LiteShip HICP report types (repo-local) ──────────────────────────────
 
 export type FullAuditSectionId =
   | '@czap/core'
@@ -53,70 +77,6 @@ export type FrameworkRecommendation =
   | 'new_runtime_work'
   | 'documentation_clarification';
 
-/**
- * Audit self-trust coverage class (CUT A0). Every audit check result carries one
- * of these so a clean result can never be silently confused with an unchecked one.
- *
- * - `clean`            checked against real evidence / an explicit policy, no finding
- * - `symbol-evidenced` verified at the symbol level
- * - `file-proxy-only`  verified only at file granularity (coarser than the claim)
- * - `allowlisted`      permitted by an explicit allowlist/policy entry
- * - `policy-absent`    no policy exists to evaluate this subject
- * - `not-checked`      out of scope for this check
- */
-export type AuditCoverageClass =
-  | 'clean'
-  | 'symbol-evidenced'
-  | 'file-proxy-only'
-  | 'allowlisted'
-  | 'policy-absent'
-  | 'not-checked';
-
-export interface TopologyCoverageEntry {
-  readonly package: string;
-  /** `clean` when a topology policy governs this package; `policy-absent` when none exists. */
-  readonly coverage: AuditCoverageClass;
-}
-
-export interface AllowlistUnexercisedEntry {
-  readonly package: string;
-  readonly permitted: string;
-  readonly coverage: 'allowlisted';
-  readonly exercised: false;
-}
-
-export interface OrphanCoverage {
-  readonly coverage: 'file-proxy-only';
-  readonly candidateCount: number;
-  readonly note: string;
-}
-
-/**
- * Symbol-level orphan evidence (CUT A6) — finer than {@link OrphanCoverage}.
- * For each exported symbol in a file that IS imported, the audit checks whether
- * that exact name is referenced (or re-exported by a barrel). This is what the
- * file-level proxy cannot prove: a file imported for one export no longer
- * launders its other exports.
- */
-export interface SymbolOrphanCoverage {
-  readonly coverage: 'symbol-evidenced';
-  /** Exact-name references (incl. barrel re-exports) — proven consumed. */
-  readonly consumedCount: number;
-  /** Covered only by a namespace/`*` import — broad evidence, not exact proof. */
-  readonly starCoveredCount: number;
-  /** Exported but unreferenced despite the file being reached — the file-proxy gap. */
-  readonly candidateCount: number;
-  readonly note: string;
-}
-
-export interface StructureCoverageClassification {
-  readonly topology: readonly TopologyCoverageEntry[];
-  readonly orphan: OrphanCoverage;
-  /** Symbol-level orphan evidence layered on top of the file-level proxy (CUT A6). */
-  readonly symbol: SymbolOrphanCoverage;
-  readonly allowlistUnexercised: readonly AllowlistUnexercisedEntry[];
-}
-
 export interface AuditControlEvaluation {
   readonly family: string;
   readonly weight: number;
@@ -162,42 +122,6 @@ export interface FullAuditSection {
   readonly score: number;
   readonly notes: readonly string[];
   readonly files: readonly FileAuditEntry[];
-}
-
-export interface AuditLocation {
-  readonly file: string;
-  readonly line?: number;
-  readonly column?: number;
-}
-
-export interface AuditFinding {
-  readonly id: string;
-  readonly section: AuditSection | 'support';
-  readonly rule: string;
-  readonly severity: AuditSeverity;
-  readonly title: string;
-  readonly summary: string;
-  readonly location?: AuditLocation;
-  readonly metadata?: Record<string, unknown>;
-}
-
-export interface AuditSuppression {
-  readonly rule: string;
-  readonly reason: string;
-  readonly finding: AuditFinding;
-}
-
-export interface AuditCounts {
-  readonly error: number;
-  readonly warning: number;
-  readonly info: number;
-}
-
-export interface AuditSectionResult<TSummary> {
-  readonly section: AuditSection;
-  readonly summary: TSummary;
-  readonly findings: readonly AuditFinding[];
-  readonly suppressed: readonly AuditSuppression[];
 }
 
 export interface AuditArtifactStatus {

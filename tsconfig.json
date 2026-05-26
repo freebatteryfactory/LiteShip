@@ -31,6 +31,7 @@
     { "path": "./packages/remotion" },
     { "path": "./packages/scene" },
     { "path": "./packages/assets" },
+    { "path": "./packages/audit" },
     { "path": "./packages/command" },
     { "path": "./packages/cli" },
     { "path": "./packages/mcp-server" }
