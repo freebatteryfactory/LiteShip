@@ -21,7 +21,7 @@ import type {
   HLCBrand,
 } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import { ContentAddress as mkContentAddress, StateName as mkStateName, TypedRef, Easing, fnv1aBytes } from '@czap/core';
+import { ContentAddress as mkContentAddress, StateName as mkStateName, CanonicalCbor, Easing, fnv1aBytes } from '@czap/core';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -227,7 +227,10 @@ export interface QuantizerBuilder<B extends Boundary.Shape> {
 type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Boundary.Shape>>;
 
 // ---------------------------------------------------------------------------
-// Content-address via CBOR canonical encoding + FNV-1a hash (matches @czap/core)
+// Content-address via the ONE canonical encoder (CUT B1): CanonicalCbor (RFC
+// 8949 §4.2.1, always-float64) + FNV-1a. Identity-bearing fnv1a addresses must
+// NOT be minted through cborg (smallest-float) — see tests/unit/core/
+// canonical-identity.test.ts for the divergence that made this a substrate bug.
 // ---------------------------------------------------------------------------
 
 function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
@@ -235,7 +238,7 @@ function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
   outputs: O,
 ): ContentAddress {
   const payload = { boundaryId: boundary.id, outputs };
-  return fnv1aBytes(TypedRef.canonicalize(payload));
+  return fnv1aBytes(CanonicalCbor.encode(payload));
 }
 
 // ---------------------------------------------------------------------------

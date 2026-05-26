@@ -17,7 +17,7 @@ import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
 import { fnv1aBytes } from './fnv.js';
-import { TypedRef } from './typed-ref.js';
+import { CanonicalCbor } from './cbor.js';
 import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
@@ -57,7 +57,10 @@ interface ComposableFactory {
 
 function makeEntityId(components: EntityComponents): ContentAddress {
   const canonical = canonicalizeForAddress(components);
-  return fnv1aBytes(TypedRef.canonicalize(canonical));
+  // CUT B1: identity is minted through the one canonical encoder (CanonicalCbor,
+  // always-float64), never cborg (smallest-float) — the two diverge on
+  // float16-exact values, which silently forked QuantizerConfig/EntityId ids.
+  return fnv1aBytes(CanonicalCbor.encode(canonical));
 }
 
 function canonicalizeForAddress(value: unknown): unknown {
