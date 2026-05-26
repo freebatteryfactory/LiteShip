@@ -72,6 +72,9 @@ const PACKAGES: readonly PackageSpec[] = [
   { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
   { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets', '@czap/assets/testing'] },
   { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
+  // Shared command registry (CUT A1) — the dispatch layer @czap/cli and
+  // @czap/mcp-server both consume. `./host` carries the Node-only manifest helpers.
+  { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
   { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
   { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
 ];
