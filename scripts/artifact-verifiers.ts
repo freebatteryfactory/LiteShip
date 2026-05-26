@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+// CUT B5b — slash normalization routes through the one @czap/audit home (aliased).
+import { normalizeRepoPath as normalizePath } from '@czap/audit';
 import { repoRoot } from '../vitest.shared.js';
 import { buildCurrentArtifactContext } from './artifact-context.js';
 import {
@@ -42,9 +44,6 @@ function compareJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function normalizePath(value: string): string {
-  return value.replace(/\\/g, '/');
-}
 
 function buildCheck(
   code: string,

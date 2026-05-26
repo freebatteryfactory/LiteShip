@@ -9,6 +9,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 
 export interface Invariant {
   name: string;
@@ -83,7 +84,7 @@ function walkTsFiles(dir: string): string[] {
 
 function isExcluded(relativePath: string, excludes: readonly string[] | undefined): boolean {
   if (!excludes || excludes.length === 0) return false;
-  const normalized = relativePath.replace(/\\/g, '/');
+  const normalized = normalizeRepoPath(relativePath);
   return excludes.some((prefix) => normalized.includes(prefix));
 }
 
@@ -92,7 +93,9 @@ export function findViolations(invariant: Invariant, root = repoRoot): Violation
 
   for (const dir of invariant.dirs) {
     for (const file of walkTsFiles(resolve(root, dir))) {
-      const rel = relative(root, file).replace(/\\/g, '/');
+      // relative-then-normalize (a relativeToRoot composition); the slash step is
+      // normalizeRepoPath applied to a repo-relative path (CUT B5b).
+      const rel = normalizeRepoPath(relative(root, file));
       if (isExcluded(rel, invariant.exclude)) continue;
 
       const lines = readFileSync(file, 'utf8').split(/\r?\n/);
@@ -145,7 +148,7 @@ export function parseLineEndingRules(gitattributesContent: string): readonly Lin
 }
 
 export function expectedLineEnding(relativePath: string, rules: readonly LineEndingRule[]): LineEndingRule['eol'] | null {
-  const normalized = relativePath.replace(/\\/g, '/');
+  const normalized = normalizeRepoPath(relativePath);
 
   for (let index = rules.length - 1; index >= 0; index--) {
     const rule = rules[index]!;
@@ -177,7 +180,7 @@ export function findLineEndingViolations(root = repoRoot): readonly string[] {
     }
 
     const [, indexEol, , attr, file] = match;
-    const rel = file.replace(/\\/g, '/');
+    const rel = normalizeRepoPath(file);
     if (rel.endsWith('.map')) {
       continue;
     }

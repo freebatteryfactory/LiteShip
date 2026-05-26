@@ -2,6 +2,8 @@ import { randomUUID, createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import fg from 'fast-glob';
+// CUT B5b — slash normalization routes through the one @czap/audit home (aliased).
+import { normalizeRepoPath as normalizePath } from '@czap/audit';
 import { repoRoot, nodeTestInclude } from '../vitest.shared.js';
 import { writeTextFile } from './audit/shared.js';
 import { DIRECTIVE_BENCH_PAIRS, DIRECTIVE_BENCH_TASKS } from './bench/directive-suite.js';
@@ -25,9 +27,6 @@ export interface ArtifactContext {
   readonly expectedCounts: ArtifactExpectedCounts;
 }
 
-function normalizePath(value: string): string {
-  return value.replace(/\\/g, '/');
-}
 
 function hashText(content: string): string {
   return `sha256:${createHash('sha256').update(content).digest('hex')}`;

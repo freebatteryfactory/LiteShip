@@ -11,6 +11,7 @@ import {
   hicpNamedOffenseRules,
   hicpSectionOrder,
   hicpSectionTitles,
+  normalizeRepoPath,
   reportPaths,
   resolveReportPath,
   sectionForInventoryPath,
@@ -483,8 +484,10 @@ function buildCoverageFileSet(root: string): ReadonlySet<string> {
   const coverage = JSON.parse(readFileSync(coveragePath, 'utf8')) as Record<string, unknown>;
   return new Set(
     Object.keys(coverage).map((key) => {
-      const normalized = key.replace(/\\/g, '/');
-      return normalized.includes(`${root.replace(/\\/g, '/')}/`)
+      const normalized = normalizeRepoPath(key);
+      // relativeToRoot for under-root keys; the regex fallback (a distinct op, CUT
+      // B5b) trims foreign-root coverage keys to a known top-level dir — kept inline.
+      return normalized.includes(`${normalizeRepoPath(root)}/`)
         ? relativeToRoot(normalized, root)
         : normalized.replace(/^.*?\/(?=packages\/|scripts\/|tests\/|docs\/|examples\/|crates\/|\.github\/)/u, '');
     }),
