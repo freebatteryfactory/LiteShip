@@ -11,6 +11,8 @@ import {
   writeTextFile,
 } from './shared.js';
 import { reportPaths } from './policy.js';
+import { liteshipDevopsProfile } from '../config/devops-profile.js';
+import type { DevopsProfile } from '../config/devops-profile.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
 export interface IntegritySummary {
@@ -72,7 +74,8 @@ function findCatchReturn(block: ts.Block): ts.ReturnStatement | null {
   return sawThrow ? null : found;
 }
 
-export function runIntegrityAudit(root = repoRoot): AuditSectionResult<IntegritySummary> {
+export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<IntegritySummary> {
+  const root = profile.repoRoot;
   const sourceRecords = readSourceFileRecords(root);
   const rawFindings: AuditFinding[] = [];
   let stubCount = 0;
@@ -90,7 +93,7 @@ export function runIntegrityAudit(root = repoRoot): AuditSectionResult<Integrity
     const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && node.importClause && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
         const specifier = node.moduleSpecifier.text;
-        if (specifier.startsWith('@czap/')) {
+        if (specifier.startsWith(profile.internalPackagePrefix)) {
           if (node.importClause.name) {
             internalImports.set(node.importClause.name.text, node.importClause.name.getStart());
           }

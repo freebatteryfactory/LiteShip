@@ -62,3 +62,14 @@ export const liteshipDevopsProfile: DevopsProfile = {
   dynamicImportExemptions,
   surfacePolicy,
 };
+
+/**
+ * Derive a profile pointed at a different repo root (CUT D9a). `repoRoot` is the
+ * single source of the audit target — the engines read `profile.repoRoot`, never
+ * a parallel `root` param. A caller (or test) that wants to audit another tree
+ * constructs a profile with this helper rather than passing a second argument
+ * that would silently shadow the profile's own root.
+ */
+export function withRepoRoot(profile: DevopsProfile, repoRoot: string): DevopsProfile {
+  return { ...profile, repoRoot };
+}

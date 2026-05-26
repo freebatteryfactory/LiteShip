@@ -13,6 +13,7 @@ import {
   type RuntimeSeamsReportArtifact,
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
+import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import { buildRuntimeSeamsReport, renderRuntimeSeamsMarkdown } from '../../../scripts/report-runtime-seams.js';
@@ -377,7 +378,7 @@ function writeRuntimeSeamsArtifacts(
 function writeAuditArtifact(root: string, generatedAt = '2099-01-01T00:01:00.000Z'): void {
   mkdirSync(join(root, 'reports'), { recursive: true });
   const audit = buildCodebaseAuditReport({
-    root,
+    profile: withRepoRoot(liteshipDevopsProfile, root),
     generatedAt,
   });
   writeFileSync(join(root, 'reports/codebase-audit.json'), JSON.stringify(audit, null, 2));
