@@ -10,7 +10,8 @@ import type { Boundary } from './boundary.js';
 import type { Token } from './token.js';
 import type { Theme } from './theme.js';
 import type { Style } from './style.js';
-import { fnv1a } from './fnv.js';
+import { fnv1aBytes } from './fnv.js';
+import { CanonicalCbor } from './cbor.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -49,17 +50,21 @@ export interface AstroConfig {
 export const Config = {
   /** Build a frozen, content-addressed {@link Config.Shape} from raw input. */
   make(input: Config.Input): Config.Shape {
-    // Sort named collection keys so insertion order doesn't affect the hash.
-    const sortKeys = <V>(obj: Record<string, V>): Record<string, V> => Object.fromEntries(Object.entries(obj).sort());
-    const canonical = JSON.stringify({
-      boundaries: sortKeys(input.boundaries ?? {}),
-      tokens: sortKeys(input.tokens ?? {}),
-      themes: sortKeys(input.themes ?? {}),
-      styles: sortKeys(input.styles ?? {}),
-      vite: input.vite,
-      astro: input.astro,
-    });
-    const id = fnv1a(canonical);
+    // CUT B5a — mint the internal identity through the CanonicalCbor doctrine
+    // (RFC 8949 §4.2.1, recursive key sort, always-float64), the same path as
+    // every other `fnv1a:` content address. This replaces the old top-level-only
+    // `JSON.stringify` sort, which left nested non-`id` fields insertion-order
+    // dependent. CanonicalCbor sorts keys recursively, so no manual sort is needed.
+    const id = fnv1aBytes(
+      CanonicalCbor.encode({
+        boundaries: input.boundaries ?? {},
+        tokens: input.tokens ?? {},
+        themes: input.themes ?? {},
+        styles: input.styles ?? {},
+        vite: input.vite,
+        astro: input.astro,
+      }),
+    );
     return Object.freeze({
       _tag: 'ConfigDef' as const,
       id,
