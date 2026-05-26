@@ -16,7 +16,8 @@ export type EntityId = string & { readonly _brand: 'EntityId' };
 /** Brand an arbitrary string as an `EntityId`. Sanctioned single-site cast. */
 export const EntityId = (value: string): EntityId => value as EntityId;
 
-import { fnv1a } from './fnv.js';
+import { fnv1aBytes } from './fnv.js';
+import { CanonicalCbor } from './cbor.js';
 
 interface EntityShape {
   readonly id: EntityId;
@@ -195,7 +196,10 @@ function _makeWorld(): Effect.Effect<WorldShape, never, Scope.Scope> {
       spawn(components?: Record<string, unknown>): Effect.Effect<EntityId> {
         return Effect.gen(function* () {
           const seq = nextEntitySeq++;
-          const id = EntityId(`entity-${seq}:${fnv1a(JSON.stringify(components ?? {}))}`);
+          // CUT B1: route the identity suffix through the one canonical encoder
+          // (CanonicalCbor sorts map keys) so it is deterministic under component
+          // key permutation — `JSON.stringify` was key-order-dependent.
+          const id = EntityId(`entity-${seq}:${fnv1aBytes(CanonicalCbor.encode(components ?? {}))}`);
           const componentMap = new Map<string, unknown>();
           if (components) {
             for (const [name, value] of Object.entries(components)) {
