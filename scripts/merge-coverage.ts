@@ -4,6 +4,7 @@ import fg from 'fast-glob';
 import libCoverage from 'istanbul-lib-coverage';
 import libReport from 'istanbul-lib-report';
 import reports from 'istanbul-reports';
+import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { buildCoverageFacts, buildCoverageMetaArtifact } from './artifact-integrity.js';
 import { ensureArtifactContext } from './artifact-context.js';
 import { writeTextFile } from './audit/shared.js';
@@ -181,8 +182,8 @@ const runtimeFiles = fg
     onlyFiles: true,
     ignore: coverageExclude,
   })
-  .map((file) => file.replace(/\\/g, '/'));
-const coveredFiles = new Set(coverageMap.files().map((file) => file.replace(/\\/g, '/')));
+  .map((file) => normalizeRepoPath(file));
+const coveredFiles = new Set(coverageMap.files().map((file) => normalizeRepoPath(file)));
 const missingRuntimeFiles = runtimeFiles.filter((file) => !coveredFiles.has(file));
 
 // Build a set of explicitly-excluded files so we can skip them when walking
@@ -193,10 +194,12 @@ const missingRuntimeFiles = runtimeFiles.filter((file) => !coveredFiles.has(file
 const runtimeFilesSet = new Set(runtimeFiles);
 
 for (const file of coverageMap.files()) {
-  const normalized = file.replace(/\\/g, '/');
+  const normalized = normalizeRepoPath(file);
   // Files matched by an exclude pattern shouldn't contribute to package totals
   // or trip the zero-coverage drift guard.
   if (!runtimeFilesSet.has(normalized)) continue;
+  // Distinct op (NOT slash normalization): regex prefix-trim to a packages/-relative
+  // display key. A heuristic, not path.relative — left inline by design (CUT B5b).
   const relativePath = normalized.replace(/^.*?packages\//, 'packages/');
   const packageMatch = normalized.match(/packages\/([^/]+)\/src\//);
   const packageName = packageMatch?.[1] ?? 'other';

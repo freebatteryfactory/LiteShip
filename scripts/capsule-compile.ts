@@ -22,6 +22,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
+import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 
 /**
@@ -270,15 +271,11 @@ async function main(): Promise<void> {
     // for the harness to reach — fall back to skip.
     let harnessCtx: HarnessContext | undefined;
     if (d.binding !== undefined && d.factory === undefined) {
-      const sourceModule = relative(dirname(testPath), d.file)
-        .replace(/\\/g, '/')
-        .replace(/\.ts$/, '.js');
+      const sourceModule = normalizeRepoPath(relative(dirname(testPath), d.file)).replace(/\.ts$/, '.js');
       const arbitraryAbs = resolve(
         'packages/core/src/harness/arbitrary-from-schema.ts',
       );
-      const arbitraryModule = relative(dirname(testPath), arbitraryAbs)
-        .replace(/\\/g, '/')
-        .replace(/\.ts$/, '.js');
+      const arbitraryModule = normalizeRepoPath(relative(dirname(testPath), arbitraryAbs)).replace(/\.ts$/, '.js');
       harnessCtx = {
         bindingImport: sourceModule.startsWith('.')
           ? sourceModule
@@ -299,9 +296,9 @@ async function main(): Promise<void> {
       atomicWrite(benchPath, benchFile);
     }
 
-    const sourceRel = relative(cwd, d.file).replace(/\\/g, '/');
-    const testRel = relative(cwd, testPath).replace(/\\/g, '/');
-    const benchRel = relative(cwd, benchPath).replace(/\\/g, '/');
+    const sourceRel = normalizeRepoPath(relative(cwd, d.file));
+    const testRel = normalizeRepoPath(relative(cwd, testPath));
+    const benchRel = normalizeRepoPath(relative(cwd, benchPath));
 
     const entry: ManifestEntry =
       d.factory !== undefined

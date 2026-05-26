@@ -154,6 +154,8 @@ export function plugin(config?: PluginConfig): Plugin {
           return `export const wasmUrl = import.meta.ROLLUP_FILE_URL_${emittedWasmRefId};`;
         }
 
+        // Distinct op (NOT repo-path normalization, CUT B5b): a `/@fs/` browser URL
+        // segment for the Vite dev server — a URL, not a filesystem path. Left inline.
         const browserUrl =
           resolvedWasm.source === 'public' ? '/czap-compute.wasm' : `/@fs/${resolvedWasm.filePath.replace(/\\/g, '/')}`;
 

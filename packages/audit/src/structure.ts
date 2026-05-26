@@ -9,6 +9,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
+import { normalizeRepoPath } from './policy.js';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import {
@@ -93,7 +94,7 @@ function resolveRelativeImport(specifier: string, containingFile: string): strin
           ? candidate.replace(/\.jsx$/, '.tsx')
           : candidate;
     if (existsSync(tsCandidate)) {
-      return tsCandidate.replace(/\\/g, '/');
+      return normalizeRepoPath(tsCandidate);
     }
   }
   return null;
@@ -108,7 +109,7 @@ function buildPackageExportTargets(root = defaultRoot()): Map<string, PackageExp
 
     for (const [subpath, rawValue] of entries) {
       if (typeof rawValue === 'string') {
-        packageTargets[subpath] = resolve(pkg.dir, rawValue).replace(/\\/g, '/');
+        packageTargets[subpath] = normalizeRepoPath(resolve(pkg.dir, rawValue));
         continue;
       }
 
@@ -116,11 +117,11 @@ function buildPackageExportTargets(root = defaultRoot()): Map<string, PackageExp
         const developmentPath = (rawValue as { development?: string }).development;
         const importPath = (rawValue as { import?: string }).import;
         if (developmentPath) {
-          packageTargets[subpath] = resolve(pkg.dir, developmentPath).replace(/\\/g, '/');
+          packageTargets[subpath] = normalizeRepoPath(resolve(pkg.dir, developmentPath));
           continue;
         }
         if (importPath) {
-          packageTargets[subpath] = resolve(pkg.dir, importPath).replace(/\\/g, '/');
+          packageTargets[subpath] = normalizeRepoPath(resolve(pkg.dir, importPath));
         }
       }
     }
@@ -163,7 +164,7 @@ function resolveInternalPackageImport(
   if (directMatch) {
     return {
       specifier,
-      targetFile: directMatch.replace(/\\/g, '/'),
+      targetFile: normalizeRepoPath(directMatch),
       targetPackage: packageName,
       kind: 'internal-package',
     };
@@ -174,7 +175,7 @@ function resolveInternalPackageImport(
     const suffix = subpath.slice(2);
     return {
       specifier,
-      targetFile: wildcard.replace('*', suffix).replace(/\\/g, '/'),
+      targetFile: normalizeRepoPath(wildcard.replace('*', suffix)),
       targetPackage: packageName,
       kind: 'internal-package',
     };

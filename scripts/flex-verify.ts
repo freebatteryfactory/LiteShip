@@ -21,6 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import fg from 'fast-glob';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
+import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import {
   ACCEPTED_BENCH_STABILITY_NOISY_LABELS,
   LLM_STEADY_DIRECTIVE_P99_MAX_NS,
@@ -119,7 +120,7 @@ const scanFiles = (
   const files = fg.sync(patterns, { cwd: process.cwd() });
   const hits: MatchHit[] = [];
   for (const file of files) {
-    if (excludeSanctioned && SANCTIONED_CAST_FILES.has(file.replace(/\\/g, '/'))) continue;
+    if (excludeSanctioned && SANCTIONED_CAST_FILES.has(normalizeRepoPath(file))) continue;
     const lines = readFileSync(file, 'utf8').split('\n');
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];

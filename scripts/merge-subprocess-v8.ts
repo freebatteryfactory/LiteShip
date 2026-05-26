@@ -96,6 +96,9 @@ for (const dumpName of dumpFiles) {
     const normalized = process.platform === 'win32' && filePath.startsWith('/')
       ? filePath.slice(1).replace(/\//g, '\\')
       : filePath;
+    // Distinct op (NOT plain slash normalization, CUT B5b): a file:// URL↔fs path
+    // round-trip — forward→back (native abs for V8ToIstanbul) then back→forward with a
+    // repo-root prefix strip for glob matching. Intentionally inline.
     const relForGlob = normalized.replace(/\\/g, '/').replace(`${repoRoot.replace(/\\/g, '/')}/`, '');
 
     const included = coverageInclude.some((pat) => minimatch(relForGlob, pat));

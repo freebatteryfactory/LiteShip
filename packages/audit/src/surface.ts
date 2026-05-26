@@ -9,6 +9,7 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeRepoPath } from './policy.js';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { listPackageManifests, partitionAllowlistedFindings } from './shared.js';
@@ -50,7 +51,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       if (!candidate) continue;
       if (candidate.includes('*')) continue;
 
-      const filePath = resolve(pkg.dir, candidate).replace(/\\/g, '/');
+      const filePath = normalizeRepoPath(resolve(pkg.dir, candidate));
       if (!existsSync(filePath)) {
         rawFindings.push({
           id: `surface/package-export/${pkg.name}:${subpath}`,
@@ -103,7 +104,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
         });
       }
 
-      const directivePath = resolve(root, `packages/astro/src/client-directives/${directive}.ts`).replace(/\\/g, '/');
+      const directivePath = normalizeRepoPath(resolve(root, `packages/astro/src/client-directives/${directive}.ts`));
       if (!existsSync(directivePath)) {
         rawFindings.push({
           id: `surface/astro-file/${directive}`,
@@ -120,7 +121,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     }
 
     for (const runtimeFile of surfacePolicy.astroRuntimeFiles) {
-      const runtimePath = resolve(root, runtimeFile).replace(/\\/g, '/');
+      const runtimePath = normalizeRepoPath(resolve(root, runtimeFile));
       if (!existsSync(runtimePath)) {
         rawFindings.push({
           id: `surface/runtime-file/${runtimeFile}`,
@@ -138,7 +139,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
   }
 
   if (surfacePolicy.viteVirtualModules.length > 0) {
-    const virtualModulesPath = resolve(root, 'packages/vite/src/virtual-modules.ts').replace(/\\/g, '/');
+    const virtualModulesPath = normalizeRepoPath(resolve(root, 'packages/vite/src/virtual-modules.ts'));
     const virtualModulesSource = existsSync(virtualModulesPath) ? readFileSync(virtualModulesPath, 'utf8') : '';
 
     if (!virtualModulesSource) {

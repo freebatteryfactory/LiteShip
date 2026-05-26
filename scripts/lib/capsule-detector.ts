@@ -12,6 +12,7 @@
 
 import ts from 'typescript';
 import { resolve } from 'node:path';
+import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 
 /**
  * Workspace `@czap/*` -> source-tree path map. Mirrors
@@ -245,13 +246,13 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
 
   const program = createProgram(files);
   const checker = program.getTypeChecker();
-  const rootSet = new Set(files.map((f) => resolve(f).replace(/\\/g, '/')));
+  const rootSet = new Set(files.map((f) => normalizeRepoPath(resolve(f))));
 
   const hits: RawHit[] = [];
 
   for (const sourceFile of program.getSourceFiles()) {
     if (sourceFile.isDeclarationFile) continue;
-    const normalized = resolve(sourceFile.fileName).replace(/\\/g, '/');
+    const normalized = normalizeRepoPath(resolve(sourceFile.fileName));
     if (!rootSet.has(normalized)) continue;
 
     visit(sourceFile);

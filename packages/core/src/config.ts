@@ -98,7 +98,9 @@ export const Config = {
   /** Materialize the `@czap/*` → source-path alias map used by the vitest runner. */
   toTestAliases(cfg: Config.Shape, repoRoot: string): Record<string, string> {
     void cfg; // cfg reserved for future per-project customisation
-    // Use forward-slash join so paths are portable across platforms.
+    // Distinct op (NOT repo-path normalization, CUT B5b): a vitest-alias URL join.
+    // Kept inline on purpose — @czap/core is product runtime and must NOT import the
+    // devops-layer @czap/audit normalizeRepoPath. Forward-slash join for portability.
     const r = (sub: string) => `${repoRoot.replace(/\\/g, '/')}/${sub}`;
     // NOTE: longer prefixes MUST come before shorter ones — vitest's alias
     // resolver matches the first prefix in iteration order, so e.g.

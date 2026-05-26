@@ -3,6 +3,9 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import libCoverage from 'istanbul-lib-coverage';
+// CUT B5b — pure repo-path slash normalization routes through the one @czap/audit
+// home; aliased to the local name so call sites are unchanged (identical body).
+import { normalizeRepoPath as normalizePath } from '@czap/audit';
 import { coverageExclude, coverageInclude, repoRoot } from '../vitest.shared.js';
 import type { ArtifactExpectedCounts } from './artifact-context.js';
 import {
@@ -83,10 +86,6 @@ function summaryToObject(
     functions: normalizeMetric(raw.functions),
     branches: normalizeMetric(raw.branches),
   };
-}
-
-function normalizePath(value: string): string {
-  return value.replace(/\\/g, '/');
 }
 
 export function buildCoveragePolicyFingerprint(): string {
