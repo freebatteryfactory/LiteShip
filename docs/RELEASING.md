@@ -129,7 +129,7 @@ with these exact values:
 | Workflow filename | `release.yml` |
 | Environment name | (leave blank) |
 
-Once all 15 have the trusted publisher configured, drop `NPM_TOKEN` from the
+Once every publishable `@czap/*` scope has the trusted publisher configured, drop `NPM_TOKEN` from the
 workflow and add `--provenance` — future releases will need zero auth setup.
 
 ### Cutting a release
@@ -144,7 +144,7 @@ workflow and add `--provenance` — future releases will need zero auth setup.
    ```
 5. The `Release (NPM_TOKEN auth)` workflow auto-fires on the tag. It runs
    the release-certification gate (`build` / `typecheck` / `lint` / `test` /
-   `package:smoke`), then idempotently ships all 15 packages, then creates
+   `package:smoke`), then idempotently ships every publishable package, then creates
    the GitHub Release and attaches the ShipCapsules.
 
 ### Hotfix or partial publish

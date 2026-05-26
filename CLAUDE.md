@@ -10,7 +10,7 @@ Naming for prose: [docs/GLOSSARY.md](./docs/GLOSSARY.md).
 
 ### Build / test / typecheck
 
-- `pnpm run build` -- TypeScript build (`tsc --build` across 14 compiled packages; `@czap/_spine` is type-only)
+- `pnpm run build` -- TypeScript build (`tsc --build` across the compiled packages; `@czap/_spine` is type-only — the authoritative list is the `tsc --build` argument list in the root `package.json`)
 - `pnpm test` -- Run all tests (vitest; last green main: ~241 files / ~3098 tests — always trust local `pnpm test` output)
 - `pnpm run typecheck` -- Type check without emit
 - `pnpm run bench` -- Run benchmarks (tinybench)
@@ -32,7 +32,7 @@ JSON receipts on every CLI command (`status`, `command`, `timestamp`, plus comma
 | --------------- | ------------------- | -------------------------------------------------------------------------------------------- |
 | @czap/core      | packages/core/      | Primitives: Boundary, Token, Style, Theme, Signal, Compositor, ECS, HLC, DAG, Plan, AVBridge |
 | @czap/quantizer | packages/quantizer/ | Q.from() builder, boundary evaluation, animated transitions, MotionTier gating               |
-| @czap/compiler  | packages/compiler/  | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind (11 compilers)                      |
+| @czap/compiler  | packages/compiler/  | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind (compiler targets in `src/index.ts`) |
 | @czap/web       | packages/web/       | DOM runtime: Morph, SlotRegistry, SSE client, Physical state, LLMAdapter, AudioWorklet       |
 | @czap/detect    | packages/detect/    | Device capability probes, GPU tier, DesignTier/MotionTier mapping                            |
 | @czap/vite      | packages/vite/      | Vite 8 plugin: @token/@theme/@style/@quantize CSS transforms + HMR                           |
@@ -42,6 +42,8 @@ JSON receipts on every CLI command (`status`, `command`, `timestamp`, plus comma
 | @czap/remotion  | packages/remotion/  | Remotion adapter: React hooks + composition helpers                                          |
 | @czap/scene     | packages/scene/     | ECS-backed scene composition + timeline authoring                                            |
 | @czap/assets    | packages/assets/    | Asset capsules + analysis projections (audio waveform, beat markers, …)                    |
+| @czap/audit     | packages/audit/     | Profile-driven structure/integrity/surface audit engine (CUT D9b; zero `@czap/*` edges)      |
+| @czap/command   | packages/command/   | Shared capsule command registry + dispatcher (CUT A1) — one command truth for CLI + MCP      |
 | @czap/cli       | packages/cli/        | `czap` CLI — AI-first JSON I/O + MCP bridge                                                 |
 | @czap/mcp-server | packages/mcp-server/ | Model Context Protocol server over capsule factory dispatch                                |
 | @czap/_spine    | packages/_spine/     | Type-only declaration spine shared across published `.d.ts` output                           |

@@ -36,7 +36,7 @@ Or skip ahead to the one-command shake-down (`pnpm shakedown`) below.
 pnpm run build
 ```
 
-This runs `tsc --build` across 14 compiled packages (everything under `packages/*` except type-only `@czap/_spine`). `@czap/_spine` is validated via `pnpm run typecheck:spine`. Together there are 15 publishable `@czap/*` scopes on npm. Composite project references mean `tsc` figures out the order; you don't have to.
+This runs `tsc --build` across the compiled packages (everything under `packages/*` except type-only `@czap/_spine`). `@czap/_spine` is validated via `pnpm run typecheck:spine`. Together they cover every publishable `@czap/*` scope on npm (the authoritative set is the `tsc --build` list in the root `package.json`, plus `@czap/_spine`). Composite project references mean `tsc` figures out the order; you don't have to.
 
 ## 3. Run the fast test loop
 

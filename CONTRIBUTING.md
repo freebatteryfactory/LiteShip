@@ -17,7 +17,7 @@ pnpm shakedown
 
 # Or step through it manually:
 pnpm run doctor       # preflight rig-check (Node, pnpm, build, hooks)
-pnpm run build        # tsc --build across 14 packages
+pnpm run build        # tsc --build across the compiled packages
 pnpm test             # fast inner loop (~75s)
 
 # Full release-grade gate (~22min)
