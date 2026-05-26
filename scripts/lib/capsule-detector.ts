@@ -40,6 +40,7 @@ export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
   '@czap/scene': ['packages/scene/src/index.ts'],
   '@czap/assets/testing': ['packages/assets/src/testing.ts'],
   '@czap/assets': ['packages/assets/src/index.ts'],
+  '@czap/audit': ['packages/audit/src/index.ts'],
   '@czap/cli': ['packages/cli/src/index.ts'],
   '@czap/mcp-server': ['packages/mcp-server/src/index.ts'],
   '@czap/edge': ['packages/edge/src/index.ts'],

@@ -138,9 +138,11 @@ describe('D9a — the whole bundle decouples (all three passes follow the profil
   });
 });
 
-describe('D9a — no repo-local @czap/ gate remains in the audit engine (source-grep)', () => {
-  it('integrity.ts + report.ts classify by profile prefix, not a @czap/ literal', () => {
-    const integrity = readFileSync(resolve(REPO, 'scripts/audit/integrity.ts'), 'utf8');
+describe('D9a/D9b — no repo-local @czap/ gate remains in the audit engine (source-grep)', () => {
+  // CUT D9b-1 relocated the engine into @czap/audit; report.ts (the HICP bundle)
+  // stays repo-local, so its test-import classifier is still greppable in scripts.
+  it('integrity + report classify by profile prefix, not a @czap/ literal', () => {
+    const integrity = readFileSync(resolve(REPO, 'packages/audit/src/integrity.ts'), 'utf8');
     expect(integrity).not.toMatch(/startsWith\(\s*['"]@czap\//);
     expect(integrity).toContain('profile.internalPackagePrefix');
 
@@ -148,14 +150,14 @@ describe('D9a — no repo-local @czap/ gate remains in the audit engine (source-
     expect(report).not.toMatch(/startsWith\(\s*['"]@czap\//);
   });
 
-  it('surface.ts reads its surface policy from the profile, not the policy const', () => {
-    const surface = readFileSync(resolve(REPO, 'scripts/audit/surface.ts'), 'utf8');
+  it('surface reads its surface policy from the profile, not the policy const', () => {
+    const surface = readFileSync(resolve(REPO, 'packages/audit/src/surface.ts'), 'utf8');
     expect(surface).not.toMatch(/import\s*\{[^}]*\bsurfacePolicy\b[^}]*\}\s*from\s*['"]\.\/policy\.js['"]/);
     expect(surface).toMatch(/const\s*\{\s*surfacePolicy\s*\}\s*=\s*profile/);
   });
 
   it('the @czap/ prefix literal lives only in the default profile (single source)', () => {
-    const profileSrc = readFileSync(resolve(REPO, 'scripts/config/devops-profile.ts'), 'utf8');
+    const profileSrc = readFileSync(resolve(REPO, 'packages/audit/src/devops-profile.ts'), 'utf8');
     expect(profileSrc).toContain("internalPackagePrefix: '@czap/'");
   });
 });

@@ -71,6 +71,7 @@ const PACKAGES: readonly PackageSpec[] = [
   { dir: 'packages/remotion', name: '@czap/remotion', imports: ['@czap/remotion'] },
   { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
   { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets', '@czap/assets/testing'] },
+  { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
   { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
   { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
 ];
@@ -83,6 +84,9 @@ const PEER_INSTALLS = [
   'react-dom@19.2.0',
   'remotion@4.0.440',
   'fast-check@4.7.0',
+  // @czap/audit's runtime deps — the engine parses + globs the target repo.
+  'typescript@5.9.3',
+  'fast-glob@3.3.3',
 ] as const;
 
 function resolveExecutable(command: string): string {

@@ -117,6 +117,7 @@ export const Config = {
       '@czap/scene': r('packages/scene/src/index.ts'),
       '@czap/assets/testing': r('packages/assets/src/testing.ts'),
       '@czap/assets': r('packages/assets/src/index.ts'),
+      '@czap/audit': r('packages/audit/src/index.ts'),
       '@czap/cli': r('packages/cli/src/index.ts'),
       '@czap/mcp-server': r('packages/mcp-server/src/index.ts'),
       '@czap/edge': r('packages/edge/src/index.ts'),

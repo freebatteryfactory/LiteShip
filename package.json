@@ -18,7 +18,7 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "build": "tsc --build packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/remotion packages/scene packages/assets packages/command packages/cli packages/mcp-server",
+    "build": "tsc --build packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/remotion packages/scene packages/assets packages/audit packages/command packages/cli packages/mcp-server",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm run typecheck:scripts && pnpm run typecheck:tests",
     "typecheck:scripts": "tsc --project tsconfig.scripts.json",
     "typecheck:tests": "tsc --project tsconfig.tests.json",
@@ -87,6 +87,7 @@
   },
   "devDependencies": {
     "@czap/astro": "workspace:*",
+    "@czap/audit": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/core": "workspace:*",
     "@czap/detect": "workspace:*",
