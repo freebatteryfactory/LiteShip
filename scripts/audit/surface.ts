@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { reportPaths, surfacePolicy } from './policy.js';
+import { reportPaths } from './policy.js';
+import { liteshipDevopsProfile } from '../config/devops-profile.js';
+import type { DevopsProfile } from '../config/devops-profile.js';
 import {
   createCounts,
   isDirectExecution,
@@ -32,7 +34,9 @@ function asDevelopmentPath(value: unknown): string | null {
   return null;
 }
 
-export function runSurfaceAudit(root = repoRoot): AuditSectionResult<SurfaceSummary> {
+export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
+  const root = profile.repoRoot;
+  const { surfacePolicy } = profile;
   const packageInfos = listPackageManifests(root);
   const rawFindings: AuditFinding[] = [];
   let packageExportCount = 0;
@@ -62,8 +66,14 @@ export function runSurfaceAudit(root = repoRoot): AuditSectionResult<SurfaceSumm
     }
   }
 
-  const astroPackage = packageInfos.find((pkg) => pkg.name === surfacePolicy.astroPackage);
-  if (!astroPackage) {
+  // CUT D9a: host-surface checks are profile-owned. A profile with an empty
+  // astroPackage (a downstream project with no Astro host) carries no astro
+  // assumptions, so neither the missing-package error nor the directive checks
+  // fire — the audit only asserts a surface the profile actually declares.
+  const astroPackage = surfacePolicy.astroPackage
+    ? (packageInfos.find((pkg) => pkg.name === surfacePolicy.astroPackage) ?? null)
+    : null;
+  if (surfacePolicy.astroPackage && !astroPackage) {
     rawFindings.push({
       id: 'surface/astro-package-missing',
       section: 'surface',
@@ -75,7 +85,7 @@ export function runSurfaceAudit(root = repoRoot): AuditSectionResult<SurfaceSumm
         file: 'packages/astro/package.json',
       },
     });
-  } else {
+  } else if (astroPackage) {
     for (const directive of surfacePolicy.astroClientDirectives) {
       const exportKey = `./client-directives/${directive}`;
       if (!(exportKey in astroPackage.exports)) {
@@ -129,7 +139,7 @@ export function runSurfaceAudit(root = repoRoot): AuditSectionResult<SurfaceSumm
   const virtualModulesPath = resolve(root, 'packages/vite/src/virtual-modules.ts').replace(/\\/g, '/');
   const virtualModulesSource = existsSync(virtualModulesPath) ? readFileSync(virtualModulesPath, 'utf8') : '';
 
-  if (!virtualModulesSource) {
+  if (surfacePolicy.viteVirtualModules.length > 0 && !virtualModulesSource) {
     rawFindings.push({
       id: 'surface/vite-virtual-modules-missing',
       section: 'surface',

@@ -103,9 +103,13 @@ interface FileSignals {
 }
 
 export interface BuildReportOptions {
-  readonly root?: string;
   readonly generatedAt?: string;
-  /** CUT D7: the devops profile that drives the (structure) audit. Defaults to the LiteShip profile. */
+  /**
+   * CUT D7→D9a: the devops profile that drives the WHOLE audit (structure +
+   * integrity + surface). `profile.repoRoot` is the authoritative audit target —
+   * there is no separate `root` option. To audit another tree, pass a profile
+   * derived with `withRepoRoot(profile, root)`. Defaults to the LiteShip profile.
+   */
   readonly profile?: DevopsProfile;
 }
 
@@ -446,13 +450,13 @@ function hasFakeSuccessRisk(text: string): boolean {
   return /return\s+\{\s*(?:ok|success|passed)\s*:\s*true\b/u.test(text);
 }
 
-function hasProductionImport(relativePath: string, importSpecifiers: readonly string[]): boolean {
+function hasProductionImport(relativePath: string, importSpecifiers: readonly string[], internalPrefix: string): boolean {
   if (sectionForInventoryPath(relativePath) !== 'tests') {
     return importSpecifiers.length > 0;
   }
 
   return importSpecifiers.some((specifier) =>
-    specifier.startsWith('@czap/') ||
+    specifier.startsWith(internalPrefix) ||
     specifier.includes('/scripts/') ||
     specifier.includes('../scripts/') ||
     specifier.includes('../../scripts/') ||
@@ -461,13 +465,13 @@ function hasProductionImport(relativePath: string, importSpecifiers: readonly st
   );
 }
 
-function hasShadowTestRisk(relativePath: string, text: string, importSpecifiers: readonly string[]): boolean {
+function hasShadowTestRisk(relativePath: string, text: string, importSpecifiers: readonly string[], internalPrefix: string): boolean {
   if (sectionForInventoryPath(relativePath) !== 'tests') {
     return false;
   }
 
   const definesLocalTypes = /\b(interface|type|class)\s+[A-Z][A-Za-z0-9_]*/u.test(text);
-  return definesLocalTypes && !hasProductionImport(relativePath, importSpecifiers);
+  return definesLocalTypes && !hasProductionImport(relativePath, importSpecifiers, internalPrefix);
 }
 
 function buildCoverageFileSet(root: string): ReadonlySet<string> {
@@ -492,6 +496,7 @@ function buildSignals(
   text: string,
   relatedFindings: readonly AuditFinding[],
   coverageFiles: ReadonlySet<string>,
+  internalPrefix: string,
 ): FileSignals {
   const importSpecifiers = importSpecifiersFromText(text);
   const ruleSet = new Set(relatedFindings.map((finding) => finding.rule));
@@ -505,7 +510,7 @@ function buildSignals(
     hasCoverage: coverageFiles.has(relativePath),
     lineCount: text.split(/\r?\n/u).length,
     importSpecifiers,
-    hasProductionImport: hasProductionImport(relativePath, importSpecifiers),
+    hasProductionImport: hasProductionImport(relativePath, importSpecifiers, internalPrefix),
     hasExpectation: /\b(expect|assert)\s*\(/u.test(text),
     weakExpectationCount: countMatches(
       text,
@@ -526,7 +531,7 @@ function buildSignals(
     hasHardcodedSecret: hasHardcodedSecret(text),
     hasWrongLanguage: hasWrongLanguageArtifact(relativePath, text),
     hasConstantReturn: hasConstantReturn(relativePath, text),
-    hasShadowTestRisk: hasShadowTestRisk(relativePath, text, importSpecifiers),
+    hasShadowTestRisk: hasShadowTestRisk(relativePath, text, importSpecifiers, internalPrefix),
     hasFakeSuccessRisk: hasFakeSuccessRisk(text),
     hasLargeFile: text.split(/\r?\n/u).length > 220,
   };
@@ -1226,11 +1231,12 @@ function buildFileEntry(
   findingsByFile: ReadonlyMap<string, readonly AuditFinding[]>,
   coverageFiles: ReadonlySet<string>,
   supportingArtifacts: CodebaseAuditReport['supportingArtifacts'],
+  internalPrefix: string,
 ): FileAuditEntry {
   const sectionId = sectionForInventoryPath(relativePath);
   const fileClass = fileClassForInventoryPath(relativePath, sectionId);
   const relatedFindings = findingsByFile.get(relativePath) ?? [];
-  const signals = buildSignals(relativePath, text, relatedFindings, coverageFiles);
+  const signals = buildSignals(relativePath, text, relatedFindings, coverageFiles, internalPrefix);
   const namedOffenses = namedOffensesForFile(signals);
   const forbiddenRemedies = forbiddenRemediesForFile(signals);
   const controlEvaluations = evaluateControls(relativePath, fileClass, text, signals, forbiddenRemedies, supportingArtifacts);
@@ -1326,6 +1332,7 @@ function sectionNotes(section: FullAuditSection): readonly string[] {
 
 function buildFullAuditSections(
   root: string,
+  internalPrefix: string,
   findings: readonly AuditFinding[],
   supportingArtifacts: CodebaseAuditReport['supportingArtifacts'],
 ): readonly FullAuditSection[] {
@@ -1339,7 +1346,7 @@ function buildFullAuditSections(
   }
 
   const inventory = readInventoryFileRecords(root).map((record) =>
-    buildFileEntry(record.relativePath, record.text, findingsByFile, coverageFiles, supportingArtifacts),
+    buildFileEntry(record.relativePath, record.text, findingsByFile, coverageFiles, supportingArtifacts, internalPrefix),
   );
 
   return hicpSectionOrder.map<FullAuditSection>((sectionId) => {
@@ -1894,13 +1901,13 @@ export interface AuditArtifactBundle {
 }
 
 export function buildAuditArtifactBundle(options: BuildReportOptions = {}): AuditArtifactBundle {
-  const root = options.root ?? repoRoot;
   const profile: DevopsProfile = options.profile ?? liteshipDevopsProfile;
+  const root = profile.repoRoot;
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const context = ensureArtifactContext(root);
-  const structure = runStructureAudit(root, profile);
-  const integrity = runIntegrityAudit(root);
-  const surface = runSurfaceAudit(root);
+  const structure = runStructureAudit(profile);
+  const integrity = runIntegrityAudit(profile);
+  const surface = runSurfaceAudit(profile);
 
   const supportingArtifacts = {
     invariants: buildInvariantStatus(root),
@@ -1923,7 +1930,7 @@ export function buildAuditArtifactBundle(options: BuildReportOptions = {}): Audi
     ...surface.suppressed,
     ...support.suppressed,
   ]);
-  const sections = buildFullAuditSections(root, findings, supportingArtifacts);
+  const sections = buildFullAuditSections(root, profile.internalPackagePrefix, findings, supportingArtifacts);
   const fullTreeAccounting = buildFullTreeAccountingReport(root, sections.flatMap((section) => section.files.map((file) => file.path)));
   const protocolGap = buildProtocolGapReport(root, sections, findings);
   const frameworkBlueprintDelta = buildFrameworkBlueprintReport(root);

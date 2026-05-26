@@ -64,7 +64,7 @@ describe('D7 — the default profile references the existing policy consts (sing
 describe('D7 — default profile reproduces current audit behavior (no drift)', () => {
   it('runStructureAudit with the explicit default profile equals the implicit-default run', () => {
     const implicit = runStructureAudit();
-    const explicit = runStructureAudit(repoRoot, liteshipDevopsProfile);
+    const explicit = runStructureAudit(liteshipDevopsProfile);
     expect(explicit.findings).toEqual(implicit.findings);
     expect(explicit.suppressed).toEqual(implicit.suppressed);
     expect(explicit.summary.coverageClassification).toEqual(implicit.summary.coverageClassification);
@@ -80,7 +80,7 @@ describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)'
       'packages/app/package.json': PKG('@acme/app', { '@acme/core': 'workspace:*' }),
       'packages/app/src/index.ts': "import { coreThing } from '@acme/core';\nexport const appThing = coreThing + 1;\n",
     });
-    const result = runStructureAudit(root, acmeProfile(root));
+    const result = runStructureAudit(acmeProfile(root));
     expect(result.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/core', count: 1 });
   });
 
@@ -91,7 +91,7 @@ describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)'
       'packages/app/package.json': PKG('@acme/app', { '@acme/core': 'workspace:*' }),
       'packages/app/src/index.ts': "import { coreThing } from '@acme/core';\nexport const appThing = coreThing + 1;\n",
     });
-    const result = runStructureAudit(root, acmeProfile(root));
+    const result = runStructureAudit(acmeProfile(root));
     expect(result.findings.some((f) => f.rule === 'package-topology')).toBe(false);
   });
 
@@ -102,7 +102,7 @@ describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)'
       'packages/app/package.json': PKG('@acme/app'),
       'packages/app/src/index.ts': 'export const appThing = 1;\n',
     });
-    const result = runStructureAudit(root, acmeProfile(root));
+    const result = runStructureAudit(acmeProfile(root));
     const violation = result.findings.find((f) => f.rule === 'package-topology');
     expect(violation, 'core importing app violates the synthetic topology').toBeDefined();
     expect(violation!.metadata?.packageName).toBe('@acme/core');

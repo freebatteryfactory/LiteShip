@@ -240,9 +240,12 @@ function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: num
 }
 
 export function runStructureAudit(
-  root = repoRoot,
   profile: DevopsProfile = liteshipDevopsProfile,
 ): AuditSectionResult<StructureSummary> {
+  // CUT D9a: `profile.repoRoot` is the single, authoritative audit target — no
+  // parallel `root` param that could silently shadow it. Callers that want a
+  // different tree derive a profile with `withRepoRoot(profile, root)`.
+  const root = profile.repoRoot;
   const packageInfos = listPackageManifests(root);
   const packageByName = new Map(packageInfos.map((pkg) => [pkg.name, pkg] as const));
   const packageExportTargets = buildPackageExportTargets(root);

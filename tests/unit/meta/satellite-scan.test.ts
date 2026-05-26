@@ -10,6 +10,7 @@ import {
   type BenchArtifact,
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
+import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import {
@@ -379,7 +380,7 @@ function writeStartupRealityArtifact(root: string): void {
 function writeAuditArtifact(root: string): void {
   mkdirSync(join(root, 'reports'), { recursive: true });
   const audit = buildCodebaseAuditReport({
-    root,
+    profile: withRepoRoot(liteshipDevopsProfile, root),
     generatedAt: '2099-01-01T00:01:00.000Z',
   });
   writeFileSync(join(root, 'reports/codebase-audit.json'), JSON.stringify(audit, null, 2));

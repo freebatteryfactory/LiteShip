@@ -11,6 +11,12 @@ import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
+import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
+
+// CUT D9a — the audit target is `profile.repoRoot`, not a positional `root`.
+// These fixtures use @czap/ package names, so the LiteShip default profile
+// (prefix + topology + surfacePolicy) applies; only the root is repointed.
+const at = (root: string) => withRepoRoot(liteshipDevopsProfile, root);
 
 const tempRoots: string[] = [];
 
@@ -402,7 +408,7 @@ describe('codebase audit loop', () => {
       'packages/remotion/src/index.ts': 'export const remotionReady = true;\n',
     });
 
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     expect(result.findings.some((finding) => finding.rule === 'package-topology')).toBe(true);
   });
 
@@ -422,7 +428,7 @@ describe('codebase audit loop', () => {
       'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
       'packages/mcp-server/src/index.ts': 'export const start = true;\n',
     });
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     expect(result.findings.some((f) => f.rule === 'package-topology' && isCliMcp(f))).toBe(true);
   });
 
@@ -434,7 +440,7 @@ describe('codebase audit loop', () => {
       'packages/mcp-server/package.json': pkgJson('@czap/mcp-server'),
       'packages/mcp-server/src/index.ts': 'export const start = true;\n',
     });
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     // Dynamic form: not seen by the static package-topology check, and exempt
     // from the dynamic manifest check — so neither rule fires on this edge.
     expect(result.findings.some((f) => f.rule === 'missing-manifest-dependency-dynamic' && isCliMcp(f))).toBe(false);
@@ -449,7 +455,7 @@ describe('codebase audit loop', () => {
       'packages/remotion/package.json': pkgJson('@czap/remotion'),
       'packages/remotion/src/index.ts': 'export const remotionReady = true;\n',
     });
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     expect(
       result.findings.some(
         (f) => f.rule === 'missing-manifest-dependency-dynamic' && f.metadata?.targetPackage === '@czap/remotion',
@@ -463,7 +469,7 @@ describe('codebase audit loop', () => {
       'packages/core/src/orphan.ts': 'export const orphanValue = 1;\n',
     });
 
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     expect(result.findings.some((finding) => finding.rule === 'orphan-export-candidate' && finding.location?.file === 'packages/core/src/orphan.ts')).toBe(true);
     expect(result.suppressed.some((entry) => entry.rule === 'default-export')).toBe(true);
   });
@@ -474,7 +480,7 @@ describe('codebase audit loop', () => {
       'packages/astro/src/client-directives/experimental.ts': 'export default () => null;\n',
     });
 
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     expect(
       result.findings.some(
         (finding) =>
@@ -510,7 +516,7 @@ describe('codebase audit loop', () => {
       'packages/core/src/stub.ts': 'export function later(): never { throw new Error("not implemented"); }\n',
     });
 
-    const result = runIntegrityAudit(root);
+    const result = runIntegrityAudit(at(root));
     expect(result.findings.some((finding) => finding.rule === 'stub-marker')).toBe(true);
   });
 
@@ -521,7 +527,7 @@ describe('codebase audit loop', () => {
         'export function fallback(): boolean { try { throw new Error("boom"); } catch { return false; } }\n',
     });
 
-    const result = runIntegrityAudit(root);
+    const result = runIntegrityAudit(at(root));
     expect(result.findings.some((finding) => finding.rule === 'fallback-laundering')).toBe(true);
   });
 
@@ -539,14 +545,14 @@ export const ids = [
 `.trim(),
     });
 
-    const result = runSurfaceAudit(root);
+    const result = runSurfaceAudit(at(root));
     expect(result.findings.some((finding) => finding.rule === 'virtual-module-surface')).toBe(true);
   });
 
   test('report aggregation clearly reports missing supporting artifacts', () => {
     const root = createRepo(baseRepoFiles());
     const report = buildCodebaseAuditReport({
-      root,
+      profile: at(root),
       generatedAt: '2026-03-27T12:00:00.000Z',
     });
 
@@ -587,7 +593,7 @@ export const ids = [
     );
 
     const report = buildCodebaseAuditReport({
-      root,
+      profile: at(root),
       generatedAt: '2026-03-27T12:00:00.000Z',
     });
 
@@ -603,7 +609,7 @@ export const ids = [
     writeSupportArtifacts(root);
 
     const report = buildCodebaseAuditReport({
-      root,
+      profile: at(root),
       generatedAt: '2026-03-27T12:00:00.000Z',
     });
 
@@ -760,7 +766,7 @@ export const ids = [
     writeSupportArtifacts(root);
 
     const bundle = buildAuditArtifactBundle({
-      root,
+      profile: at(root),
       generatedAt: '2026-03-27T12:00:00.000Z',
     });
 
@@ -775,7 +781,7 @@ export const ids = [
   test('structure audit classifies coverage so clean is distinguishable from not-checked', () => {
     const root = createRepo(coverageClassificationFixtureFiles());
 
-    const classification = runStructureAudit(root).summary.coverageClassification;
+    const classification = runStructureAudit(at(root)).summary.coverageClassification;
 
     // (a) A package with no topology entry is reported as policy-absent, not silently clean.
     const policyAbsent = new Set(
@@ -787,7 +793,7 @@ export const ids = [
 
     // (b) Orphan detection is labelled file-proxy-only so its zero/count cannot be read as symbol-level proof.
     expect(classification.orphan.coverage).toBe('file-proxy-only');
-    expect(classification.orphan.candidateCount).toBe(runStructureAudit(root).summary.orphanCandidateCount);
+    expect(classification.orphan.candidateCount).toBe(runStructureAudit(at(root)).summary.orphanCandidateCount);
 
     // (c) Allowlist entries permitting an import that never happens are reported as unexercised.
     // (vite -> core: the fixture's vite/src only re-exports a local module, so core is
@@ -804,7 +810,7 @@ export const ids = [
   test('audit markdown surfaces the self-trust classification', () => {
     const root = createRepo(coverageClassificationFixtureFiles());
 
-    const report = buildCodebaseAuditReport({ root, generatedAt: '2026-05-24T00:00:00.000Z' });
+    const report = buildCodebaseAuditReport({ profile: at(root), generatedAt: '2026-05-24T00:00:00.000Z' });
     const markdown = renderCodebaseAuditMarkdown(report);
 
     expect(markdown).toContain('## Audit Self-Trust');
@@ -833,7 +839,7 @@ export const ids = [
   }
 
   test('CUT A6: symbol-level orphan surfaces an unused export in an otherwise-imported file', () => {
-    const result = runStructureAudit(createRepo(symbolPairFixture()));
+    const result = runStructureAudit(at(createRepo(symbolPairFixture())));
     // File-level (proxy) does NOT flag pair.ts — consumer imports usedExport, so the file is reached.
     expect(
       result.findings.some((f) => f.rule === 'orphan-export-candidate' && f.location?.file === 'packages/core/src/pair.ts'),
@@ -846,7 +852,7 @@ export const ids = [
   });
 
   test('CUT A6: barrel re-exports and namespace (star) imports are not flagged as symbol orphans', () => {
-    const result = runStructureAudit(createRepo(symbolPairFixture()));
+    const result = runStructureAudit(at(createRepo(symbolPairFixture())));
     const symbolOrphanFiles = result.findings
       .filter((f) => f.rule === 'symbol-orphan-candidate')
       .map((f) => f.location?.file);
@@ -859,7 +865,7 @@ export const ids = [
   });
 
   test('CUT A6: coverage reports symbol-level evidence distinct from the file-level proxy', () => {
-    const c = runStructureAudit(createRepo(symbolPairFixture())).summary.coverageClassification;
+    const c = runStructureAudit(at(createRepo(symbolPairFixture()))).summary.coverageClassification;
     // The file-level proxy classification is preserved unchanged.
     expect(c.orphan.coverage).toBe('file-proxy-only');
     // A new symbol-level classification reports exact evidence.
@@ -871,7 +877,7 @@ export const ids = [
 
   test('CUT A6: self-trust markdown surfaces symbol-level evidence alongside the file proxy', () => {
     const root = createRepo(coverageClassificationFixtureFiles());
-    const report = buildCodebaseAuditReport({ root, generatedAt: '2026-05-24T00:00:00.000Z' });
+    const report = buildCodebaseAuditReport({ profile: at(root), generatedAt: '2026-05-24T00:00:00.000Z' });
     const markdown = renderCodebaseAuditMarkdown(report);
     expect(markdown).toContain('file-proxy-only'); // preserved
     expect(markdown).toContain('symbol-evidenced'); // new
@@ -889,7 +895,7 @@ export const ids = [
       'packages/astro/src/runtime/policy.ts':
         'export const readRuntimePolicy = () => 1;\nexport const _resetRuntimePolicyForTests = () => 2;\n',
     });
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     // Not an ACTIVE candidate (the allowlist caught it)…
     expect(
       result.findings.some(
@@ -910,7 +916,7 @@ export const ids = [
 
   test('CUT A2: topology coverage closes over the five formerly policy-absent packages', () => {
     const root = createRepo(coverageClassificationFixtureFiles());
-    const result = runStructureAudit(root);
+    const result = runStructureAudit(at(root));
     const coverageByPackage = new Map(
       result.summary.coverageClassification.topology.map((entry) => [entry.package, entry.coverage] as const),
     );
