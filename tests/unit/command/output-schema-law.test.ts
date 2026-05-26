@@ -25,9 +25,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 11 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 12 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(11);
+    expect(handlers.length).toBe(12);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -71,6 +71,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     'scene.render': { sceneId: 'intro', output: 'out.mp4', frameCount: 240, elapsedMs: 1200, cached: false },
     'scene.verify': { sceneId: 'intro', generatedTests: 2 },
     verify: { tarball: 't.tgz', capsule_id: null, checks: { tarball_manifest: 'skipped' }, mismatches: [] },
+    audit: { errorCount: 0, warningCount: 6, infoCount: 282, findingCount: 288, suppressedCount: 15, passFindingCounts: { structure: 1, integrity: 2, surface: 0 }, repoRoot: '/repo', profileSource: 'default' },
   };
 
   it('each handler outputSchema accepts its documented success payload', () => {

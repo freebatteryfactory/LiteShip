@@ -25,6 +25,7 @@
     { "path": "../core" },
     { "path": "../command" },
     { "path": "../scene" },
-    { "path": "../assets" }
+    { "path": "../assets" },
+    { "path": "../audit" }
   ]
 }

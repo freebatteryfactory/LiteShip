@@ -111,10 +111,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
   '@czap/cli': {
     // Terminal adapter over @czap/command. Imports core, the shared command
-    // registry, and assets (asset-analyze). The cli <-> mcp-server relationship
-    // is a dynamic import not tracked here; CUT A1 reshapes that dependency law.
-    // CUT D9b-2 adds the @czap/audit edge when `czap audit` actually imports it.
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets'],
+    // registry, assets (asset-analyze), and @czap/audit (CUT D9b-2: the CLI is
+    // the sole adapter that wires the runAudit capability for `czap audit`). The
+    // cli <-> mcp-server relationship is a dynamic import not tracked here.
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit'],
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {

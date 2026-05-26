@@ -19,6 +19,7 @@ import { capsuleInspectCommand, capsuleListCommand, capsuleVerifyCommand } from 
 import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 import { verifyCommand } from './commands/verify.js';
+import { auditCommand } from './commands/audit.js';
 
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal
@@ -97,6 +98,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   sceneCompileCommand,
   sceneRenderCommand,
   verifyCommand,
+  auditCommand,
 ];
 
 /**

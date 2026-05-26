@@ -304,6 +304,9 @@ importers:
       '@czap/assets':
         specifier: workspace:*
         version: link:../assets
+      '@czap/audit':
+        specifier: workspace:*
+        version: link:../audit
       '@czap/command':
         specifier: workspace:*
         version: link:../command

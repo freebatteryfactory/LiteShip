@@ -15,6 +15,7 @@ import { sceneCompile } from './commands/scene-compile.js';
 import { sceneDev } from './commands/scene-dev.js';
 import { sceneRender } from './commands/scene-render.js';
 import { sceneVerify } from './commands/scene-verify.js';
+import { audit } from './commands/audit.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
@@ -87,6 +88,12 @@ export async function run(argv: readonly string[]): Promise<number> {
       if (sub === 'list') return capsuleList(parseFlag(subRest, '--kind'));
       emitError('capsule', `unknown subcommand: ${sub ?? '<missing>'}`);
       return 1;
+    }
+    case 'audit': {
+      const eq = parseFlag(rest, '--profile');
+      const idx = rest.indexOf('--profile');
+      const profile = eq ?? (idx >= 0 ? rest[idx + 1] : undefined);
+      return audit(profile ? { profile } : {});
     }
     case 'gauntlet': {
       return gauntlet(rest.includes('--dry-run'));

@@ -153,6 +153,7 @@ describe('D4 — projection drift pin', () => {
       }),
     );
     // Re-pin intentionally (and only) when the UI resource surface changes on purpose.
-    expect(address).toBe('fnv1a:8004e919');
+    // CUT D9b-2: `audit` joined COMMAND_CATALOG, so the registry/commands UI body changed.
+    expect(address).toBe('fnv1a:9ec825ea');
   });
 });

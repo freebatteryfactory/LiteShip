@@ -8,6 +8,7 @@ const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help
 const EXPECTED_NAMES = [
   'asset.analyze',
   'asset.verify',
+  'audit',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
