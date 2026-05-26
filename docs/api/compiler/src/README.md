@@ -21,7 +21,7 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [AIToolDefinition](interfaces/AIToolDefinition.md)
 - [ARIACompileResult](interfaces/ARIACompileResult.md)
 - [ARIAStates](interfaces/ARIAStates.md)
-- [CompileAIManifestInput](interfaces/CompileAIManifestInput.md)
+- [CompileMcpAppManifestInput](interfaces/CompileMcpAppManifestInput.md)
 - [ConfigTemplateResult](interfaces/ConfigTemplateResult.md)
 - [CSSCompileResult](interfaces/CSSCompileResult.md)
 - [CSSContainerRule](interfaces/CSSContainerRule.md)
@@ -29,7 +29,11 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [GLSLCompileResult](interfaces/GLSLCompileResult.md)
 - [GLSLDefine](interfaces/GLSLDefine.md)
 - [GLSLUniform](interfaces/GLSLUniform.md)
-- [McpCommandDescriptor](interfaces/McpCommandDescriptor.md)
+- [ManifestPromptView](interfaces/ManifestPromptView.md)
+- [ManifestResourceView](interfaces/ManifestResourceView.md)
+- [ManifestToolView](interfaces/ManifestToolView.md)
+- [ManifestUiResourceView](interfaces/ManifestUiResourceView.md)
+- [McpAppManifest](interfaces/McpAppManifest.md)
 - [StyleCSSResult](interfaces/StyleCSSResult.md)
 - [ThemeCSSResult](interfaces/ThemeCSSResult.md)
 - [TokenCSSResult](interfaces/TokenCSSResult.md)
@@ -65,6 +69,6 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 
 ## Functions
 
-- [compileAIManifest](functions/compileAIManifest.md)
+- [compileMcpAppManifest](functions/compileMcpAppManifest.md)
 - [dispatch](functions/dispatch.md)
 - [generatePropertyRegistrations](functions/generatePropertyRegistrations.md)

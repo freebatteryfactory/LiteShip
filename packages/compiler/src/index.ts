@@ -17,7 +17,7 @@ export type { WGSLType, WGSLBinding, WGSLStruct, WGSLCompileResult } from './wgs
 export { ARIACompiler } from './aria.js';
 export type { ARIACompileResult } from './aria.js';
 
-export { AIManifestCompiler, compileAIManifest } from './ai-manifest.js';
+export { AIManifestCompiler } from './ai-manifest.js';
 export type {
   AIManifest,
   AIDimension,
@@ -27,9 +27,18 @@ export type {
   AIConstraint,
   AIToolDefinition,
   AIManifestCompileResult,
-  McpCommandDescriptor,
-  CompileAIManifestInput,
 } from './ai-manifest.js';
+
+// CUT D6: pure MCP-app manifest projection over the real MCP/MCP-Apps surfaces.
+export { compileMcpAppManifest } from './mcp-app-manifest.js';
+export type {
+  McpAppManifest,
+  CompileMcpAppManifestInput,
+  ManifestToolView,
+  ManifestResourceView,
+  ManifestUiResourceView,
+  ManifestPromptView,
+} from './mcp-app-manifest.js';
 
 export { dispatch } from './dispatch.js';
 export type {

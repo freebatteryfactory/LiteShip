@@ -600,78 +600,10 @@ export const AIManifestCompiler = {
   generateToolDefinitions,
 } as const;
 
-// ---------------------------------------------------------------------------
-// compileAIManifest — MCP-target free function (Task 71)
-// ---------------------------------------------------------------------------
-
-/**
- * A command descriptor used when `target === 'mcp'` to build the MCP tools
- * array. Distinct from {@link AIAction} — it accepts pre-built JSON Schema
- * input schemas rather than the czap param-schema DSL.
- */
-export interface McpCommandDescriptor {
-  /** MCP tool name (dot-separated, e.g. `scene.render`). */
-  readonly name: string;
-  /** Human-readable description surfaced to the LLM. */
-  readonly description: string;
-  /** Full JSON Schema object for the tool's input. */
-  readonly inputSchema: object;
-}
-
-/**
- * Input to {@link compileAIManifest}.
- *
- * When `target === 'mcp'`, only `commands` is used — the `capsules` field is
- * reserved for future catalog emission and is accepted but currently ignored.
- * When `target === 'json'` (default), delegates to {@link AIManifestCompiler.compile}
- * with an empty manifest and returns the compile result.
- */
-export interface CompileAIManifestInput {
-  /** Output target: `'mcp'` emits `{ tools: [...] }`; `'json'` returns the compile result object. */
-  readonly target?: 'mcp' | 'json';
-  /** Capsule catalog — reserved for future use. */
-  readonly capsules: readonly unknown[];
-  /** MCP tool descriptors used when `target === 'mcp'`. */
-  readonly commands?: readonly McpCommandDescriptor[];
-}
-
-/**
- * Compile an AI manifest or MCP tool list from a high-level descriptor.
- *
- * - `target === 'mcp'` → returns `{ tools: McpCommandDescriptor[] }`
- * - `target === 'json'` (default) → delegates to {@link AIManifestCompiler.compile}
- *   with an empty manifest and returns the {@link AIManifestCompileResult}
- *
- * @example
- * ```ts
- * import { compileAIManifest } from '@czap/compiler';
- *
- * const out = compileAIManifest({
- *   target: 'mcp',
- *   capsules: [],
- *   commands: [{ name: 'scene.render', description: 'Render to mp4', inputSchema: { type: 'object' } }],
- * });
- * // out => { tools: [{ name: 'scene.render', description: 'Render to mp4', inputSchema: { type: 'object' } }] }
- * ```
- */
-export function compileAIManifest(
-  input: CompileAIManifestInput,
-): { tools: readonly McpCommandDescriptor[] } | AIManifestCompileResult {
-  if (input.target === 'mcp') {
-    const tools = (input.commands ?? []).map((cmd) => ({
-      name: cmd.name,
-      description: cmd.description,
-      inputSchema: cmd.inputSchema,
-    }));
-    return { tools };
-  }
-  // Default: 'json' — compile an empty manifest (preserves existing shape).
-  const emptyManifest: AIManifest = {
-    version: '1.0',
-    dimensions: {},
-    slots: {},
-    actions: {},
-    constraints: [],
-  };
-  return compile(emptyManifest);
-}
+// NOTE (CUT D6): the former `compileAIManifest({ target:'mcp', capsules, commands })`
+// free function was an ORPHANED fantasy MCP target — a no-op passthrough backed by
+// no registry, the `capsules` field "reserved and ignored". It was deleted. The real
+// MCP-app projection now lives in `mcp-app-manifest.ts` (`compileMcpAppManifest`),
+// which projects over the actual MCP/MCP-Apps surfaces. The `AIManifest` authoring
+// DSL above (dimensions/slots/actions/constraints + the `AICompiler` dispatch arm)
+// is unaffected — it is a real authoring language, not a registry projection.

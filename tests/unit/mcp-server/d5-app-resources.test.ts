@@ -47,8 +47,8 @@ describe('D5 — app resource is an additive third class', () => {
     const uris = r.resources.map((x) => x.uri);
     const apps = uris.filter((u) => u.startsWith('ui://liteship/app/'));
     expect(apps).toEqual([APP_URI]);
-    // app resources are the suffix — after the JSON prefix and the static-UI middle.
-    expect(uris[uris.length - 1]).toBe(APP_URI);
+    // app resources follow the JSON + static-UI classes; the D6 manifest is the final entry.
+    expect(uris[uris.length - 1]).toBe('liteship://mcp-app/manifest');
     expect(new Set(uris).size).toBe(uris.length);
   });
 
