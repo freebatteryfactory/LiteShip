@@ -11,6 +11,7 @@ import type { SignalInput, ThresholdValue, ContentAddress } from './brands.js';
 import { SignalInput as mkSignalInput, ThresholdValue as mkThresholdValue } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
+import { toBoundaryF32 } from './boundary-f32.js';
 import { CzapValidationError } from './validation-error.js';
 
 /** The core primitive. Source of truth for quantization boundaries. */
@@ -79,6 +80,11 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
   const { thresholds, states } = boundary;
   const len = thresholds.length;
 
+  // CUT B1.5: compare in f32 so scalar JS, the JS batch fallback, and the f32
+  // WASM batch kernel all select the SAME state index near a threshold.
+  const v = toBoundaryF32(value);
+  const t = (i: number): number => toBoundaryF32(thresholds[i] as number);
+
   // Fast path: unrolled if-chain for small threshold arrays (≤4).
   // Avoids loop overhead and branch prediction misses of binary search.
   // Check from highest threshold downward; first match wins.
@@ -87,18 +93,18 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
       return states[0]!;
     }
     if (len === 2) {
-      if (value >= (thresholds[1] as number)) return states[1]!;
+      if (v >= t(1)) return states[1]!;
       return states[0]!;
     }
     if (len === 3) {
-      if (value >= (thresholds[2] as number)) return states[2]!;
-      if (value >= (thresholds[1] as number)) return states[1]!;
+      if (v >= t(2)) return states[2]!;
+      if (v >= t(1)) return states[1]!;
       return states[0]!;
     }
     // len === 4
-    if (value >= (thresholds[3] as number)) return states[3]!;
-    if (value >= (thresholds[2] as number)) return states[2]!;
-    if (value >= (thresholds[1] as number)) return states[1]!;
+    if (v >= t(3)) return states[3]!;
+    if (v >= t(2)) return states[2]!;
+    if (v >= t(1)) return states[1]!;
     return states[0]!;
   }
 
@@ -107,7 +113,7 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
   let hi = len;
   while (lo < hi) {
     const mid = (lo + hi) >>> 1;
-    if ((thresholds[mid] as number) <= value) {
+    if (t(mid) <= v) {
       lo = mid + 1;
     } else {
       hi = mid;
@@ -146,10 +152,12 @@ function _evaluateWithHysteresis<B extends BoundaryDef>(
   // Unknown previous state -- fall back to raw evaluation
   if (prevIdx === -1) return _evaluate(boundary, value);
 
-  // Find raw state via linear scan (matching evaluate semantics)
+  // Find raw state via linear scan (matching evaluate semantics, incl. CUT B1.5
+  // f32-canonical comparison — the dead-zone refinement below stays f64).
+  const vF32 = toBoundaryF32(value);
   let rawIdx = 0;
   for (let i = thresholds.length - 1; i >= 0; i--) {
-    if (value >= thresholds[i]!) {
+    if (vF32 >= toBoundaryF32(thresholds[i]!)) {
       rawIdx = i;
       break;
     }

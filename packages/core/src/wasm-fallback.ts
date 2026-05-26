@@ -8,6 +8,7 @@
  */
 
 import type { WASMKernels } from './wasm-dispatch.js';
+import { toBoundaryF32 } from './boundary-f32.js';
 
 function springCurve(stiffness: number, damping: number, mass: number, samples: number): Float32Array {
   const m = mass <= 0 ? 1 : mass;
@@ -47,11 +48,13 @@ function batchBoundaryEval(thresholds: Float64Array, values: Float64Array): Uint
   const out = new Uint32Array(vLen);
 
   for (let vi = 0; vi < vLen; vi++) {
-    const value = values[vi]!;
+    // CUT B1.5: f32-canonical comparison — matches the f32 WASM batch kernel and
+    // the scalar path, so state selection agrees regardless of WASM availability.
+    const value = toBoundaryF32(values[vi]!);
     let stateIdx = 0;
 
     for (let ti = tLen - 1; ti >= 0; ti--) {
-      if (value >= thresholds[ti]!) {
+      if (value >= toBoundaryF32(thresholds[ti]!)) {
         stateIdx = ti;
         break;
       }
