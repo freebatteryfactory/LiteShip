@@ -10,14 +10,14 @@
 
 import { versionCommand, type VersionPayload } from '@czap/command';
 import { spawnArgvCapture } from '../lib/spawn.js';
-import { emit } from '../receipts.js';
+import { emit, type WallClockTimestamp } from '../receipts.js';
 import { readCliVersion } from './doctor.js';
 
 /** Receipt shape emitted by `czap version`. */
 export interface VersionReceipt {
   readonly status: 'ok';
   readonly command: 'version';
-  readonly timestamp: string;
+  readonly timestamp: WallClockTimestamp;
   readonly czap: string;
   readonly node: string;
   readonly pnpm: string | null;

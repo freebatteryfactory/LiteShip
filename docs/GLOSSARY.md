@@ -56,6 +56,18 @@ User-facing CLI strings (`czap doctor`, `pnpm shakedown`, postinstall, clean, di
 | **quay** | The release surface. Where a package ties up before shipping to npm. "Tied up at the quay" = packed and capsule written, awaiting `npm publish`. | `czap help` "Ship out (quay-side, release)" section + release hint |
 | **bearing** *(verdict sense)* | One of `ok` / `warn` / `fail` for a probe; or `ready` / `caution` / `blocked` for the rolled-up verdict. Same metaphor as the boundary-bearing primitive — a discrete state projected from a continuous signal. | `czap doctor` receipts |
 
+## Time semantics (two clocks, one rule)
+
+A `timestamp` field names *which* clock by its TYPE, never by the bare word. The two must never be confused — one bears identity, one does not.
+
+| Term | What it is | Contract |
+| --- | --- | --- |
+| **HLC** *(causal clock)* | A hybrid logical clock `{wall_ms, counter, node_id}` (`@czap/core` `HLC`). | Ordered + monotonic. **Included** in the receipt hash (`hashEnvelope`) and validated by the chain (`hlc_not_increasing`). Identity- and ordering-bearing. The capsule's `generated_at` is an HLC. |
+| **WallClockTimestamp** *(wall clock)* | A volatile ISO-8601 string stamped when a result is produced (`@czap/core` `WallClockTimestamp`). | **Excluded** from `resultId`; never used for causal ordering. Provenance/display only. The `timestamp` on CLI / MCP / command receipts is this. |
+| **media / performance time** | Frame presentation time (µs/ms) or `performance.now()` relative ms. | A different axis entirely — not a clock for identity or causality. Out of the HLC↔wall-clock split. |
+
+Rule: an identity-adjacent command/result type must type a volatile stamp as `WallClockTimestamp` (or `HLC` for a causal one) — never a bare `timestamp: string`. Wiring a wall clock where an HLC belongs corrupts identity; the type names the contract so it can't happen silently.
+
 ## Drift check
 
 After editing docs, run the sweep: mixed boundary verbs (*wire* vs *rig*), banned words, accidental rename of `@czap/*` or public APIs. The glossary holds; the prose comes back to it.

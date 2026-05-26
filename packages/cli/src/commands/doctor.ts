@@ -16,6 +16,7 @@ import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
+import type { WallClockTimestamp } from '../receipts.js';
 import { spawnArgvCapture, spawnArgvVisible } from '../lib/spawn.js';
 import { emit } from '../receipts.js';
 
@@ -69,7 +70,7 @@ export interface DoctorFix {
 export interface DoctorReceipt {
   readonly status: 'ok' | 'failed';
   readonly command: 'doctor';
-  readonly timestamp: string;
+  readonly timestamp: WallClockTimestamp;
   readonly verdict: DoctorVerdict;
   readonly checks: readonly DoctorCheck[];
   readonly fixed?: readonly DoctorFix[];

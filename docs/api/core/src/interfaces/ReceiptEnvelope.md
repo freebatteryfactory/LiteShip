@@ -18,7 +18,7 @@ optionally MAC-signed via `Receipt.macEnvelope`.
 
 > `readonly` **hash**: `string`
 
-Defined in: [core/src/receipt.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L30)
+Defined in: [core/src/receipt.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L37)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/receipt.ts:26](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **payload**: `TypedRefShape`
 
-Defined in: [core/src/receipt.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L29)
+Defined in: [core/src/receipt.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L36)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [core/src/receipt.ts:29](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **previous**: `string` \| readonly `string`[]
 
-Defined in: [core/src/receipt.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L31)
+Defined in: [core/src/receipt.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L38)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [core/src/receipt.ts:31](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **signature?**: `string`
 
-Defined in: [core/src/receipt.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L32)
+Defined in: [core/src/receipt.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L39)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [core/src/receipt.ts:32](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **subject**: [`ReceiptSubject`](ReceiptSubject.md)
 
-Defined in: [core/src/receipt.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L28)
+Defined in: [core/src/receipt.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L35)
 
 ***
 
@@ -66,4 +66,10 @@ Defined in: [core/src/receipt.ts:28](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **timestamp**: [`HLCBrand`](HLCBrand.md)
 
-Defined in: [core/src/receipt.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L27)
+Defined in: [core/src/receipt.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L34)
+
+Causal clock (CUT B2): an [HLC](HLCBrand.md), NOT a wall-clock string. It is
+INCLUDED in `hashEnvelope` and monotonic-validated by `validateChain`
+(`hlc_not_increasing`) — i.e. identity- and ordering-bearing. Not
+interchangeable with a `WallClockTimestamp` (the volatile, identity-irrelevant
+ISO stamp on command/CLI receipts).

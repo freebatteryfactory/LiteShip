@@ -8,7 +8,7 @@
 
 > **CapsuleCommandResult**\<`P`\> = `_CapsuleCommandResult`\<`P`\>
 
-Defined in: [core/src/command.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L30)
+Defined in: [core/src/command.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L31)
 
 Structured command outcome; CLI serializes `payload`, MCP returns it as structuredContent.
 

@@ -14,6 +14,7 @@ import type {
   CommandAnnotations as _CommandAnnotations,
   CommandExecutionKind as _CommandExecutionKind,
   CommandJsonSchema as _CommandJsonSchema,
+  WallClockTimestamp as _WallClockTimestamp,
 } from '@czap/_spine';
 
 /** Minimal JSON-Schema object shape for a command's input/output contract. */
@@ -32,3 +33,5 @@ export type CapsuleCommandResult<P = unknown> = _CapsuleCommandResult<P>;
 export type CapsuleResultReceipt = _CapsuleResultReceipt;
 /** Reverse-DNS `_meta` key for the result receipt. */
 export type CapsuleResultMetaKey = _CapsuleResultMetaKey;
+/** Volatile wall-clock ISO stamp (CUT B2) — identity-irrelevant; never an HLC. */
+export type WallClockTimestamp = _WallClockTimestamp;

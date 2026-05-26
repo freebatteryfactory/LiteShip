@@ -7,6 +7,16 @@
 
 import type { ContentAddress } from './core.d.ts';
 
+/**
+ * A volatile wall-clock timestamp (CUT B2): an ISO-8601 string stamped at the
+ * moment a result/receipt is produced. It is **identity-irrelevant** — excluded
+ * from `resultId` (idempotency) and never used for causal ordering. It is NOT an
+ * {@link ./core.d.ts!HLC} (the causal, monotonic, hash/chain-relevant clock). Use
+ * this alias for every volatile command/result timestamp so the contract is
+ * visible at the type level without a breaking field rename.
+ */
+export type WallClockTimestamp = string;
+
 /** Minimal JSON-Schema object shape for a command's input/output contract. */
 export interface CommandJsonSchema {
   readonly type: 'object';
@@ -90,7 +100,8 @@ export interface CapsuleCommandInvocation {
 export interface CapsuleCommandResult<P = unknown> {
   readonly status: 'ok' | 'failed';
   readonly command: string;
-  readonly timestamp: string;
+  /** Volatile wall-clock stamp — see {@link WallClockTimestamp}. Not causal, not in `resultId`. */
+  readonly timestamp: WallClockTimestamp;
   /** Only verdict-bearing commands (ship verify) set this. */
   readonly verdict?: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
   readonly payload?: P;
@@ -115,8 +126,8 @@ export interface CapsuleResultReceipt {
    * outcomes share an id (idempotency). Advisory identity, not an integrity digest.
    */
   readonly resultId: ContentAddress;
-  /** ISO timestamp the command stamped — carried as-is, NOT part of `resultId`. */
-  readonly timestamp: string;
+  /** Volatile wall-clock stamp ({@link WallClockTimestamp}) — carried as-is, NOT part of `resultId`. */
+  readonly timestamp: WallClockTimestamp;
   readonly verdict?: 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
   readonly exitCode?: number;
 }

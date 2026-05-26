@@ -6,7 +6,10 @@
  * @module
  */
 
-import type { ContentAddress } from '@czap/core';
+import type { ContentAddress, WallClockTimestamp } from '@czap/core';
+
+/** Re-exported so CLI receipt structs share one wall-clock-timestamp vocabulary (CUT B2). */
+export type { WallClockTimestamp } from '@czap/core';
 
 // Manifest-path resolution moved to @czap/command/host (CUT A1 capstone-1);
 // re-exported here so CLI command import sites resolve unchanged.
@@ -16,7 +19,8 @@ export { getCapsuleManifestPath } from '@czap/command/host';
 export interface BaseReceipt {
   readonly status: 'ok' | 'failed';
   readonly command: string;
-  readonly timestamp: string;
+  /** Volatile wall-clock stamp ({@link WallClockTimestamp}) — not causal, not identity. */
+  readonly timestamp: WallClockTimestamp;
 }
 
 /** Receipt emitted by `scene compile`. */

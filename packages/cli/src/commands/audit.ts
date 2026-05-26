@@ -10,13 +10,13 @@
 import { auditCommand, type AuditPayload, type AuditEngineSummary } from '@czap/command';
 import { runAuditPasses } from '@czap/audit';
 import { loadProfile } from '../lib/load-profile.js';
-import { emit, emitError } from '../receipts.js';
+import { emit, emitError, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `czap audit`. */
 export interface AuditReceipt extends AuditPayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'audit';
-  readonly timestamp: string;
+  readonly timestamp: WallClockTimestamp;
 }
 
 /** Exit code when the engine/profile load fails before producing a summary. */
