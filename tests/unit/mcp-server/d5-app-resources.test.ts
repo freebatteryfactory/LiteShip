@@ -37,7 +37,8 @@ describe('D5 — D4 static surface stays frozen', () => {
     const pin = fnv1a(
       JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
     );
-    expect(pin).toBe('fnv1a:8004e919');
+    // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
+    expect(pin).toBe('fnv1a:9ec825ea');
   });
 });
 

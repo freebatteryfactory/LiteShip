@@ -42,6 +42,15 @@ export interface CommandContext {
   readonly runVitest?: (
     testFiles: readonly string[],
   ) => Promise<{ readonly exitCode: number; readonly stderrTail: string }>;
+  /**
+   * Run the profile-driven audit engine (structure/integrity/surface) and return
+   * a structured summary. Adapter-backed by `@czap/audit`, which is INJECTED here
+   * (not imported) so `@czap/command` — and therefore `@czap/mcp-server` — never
+   * takes a build edge on the TypeScript-compiler/fast-glob audit engine. Only
+   * `@czap/cli` provides it; `audit` is not MCP-exposed, so the capability is
+   * absent in the MCP context and the handler degrades to a structured failure.
+   */
+  readonly runAudit?: (input: { readonly profilePath?: string }) => Promise<AuditEngineSummary>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
   /**
@@ -102,6 +111,26 @@ export interface CommandContext {
     | { readonly ok: true; readonly display_id: string; readonly integrity_digest: string }
     | { readonly ok: false; readonly error: string }
   >;
+}
+
+/**
+ * Structured summary returned by the injected {@link CommandContext.runAudit}
+ * capability — a structural mirror of `@czap/audit`'s pass result, declared here
+ * so the contract lives in `@czap/command` without an import of the engine.
+ */
+export interface AuditEngineSummary {
+  readonly errorCount: number;
+  readonly warningCount: number;
+  readonly infoCount: number;
+  readonly findingCount: number;
+  readonly suppressedCount: number;
+  readonly passFindingCounts: {
+    readonly structure: number;
+    readonly integrity: number;
+    readonly surface: number;
+  };
+  readonly repoRoot: string;
+  readonly profileSource: 'default' | 'file';
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */

@@ -17,7 +17,7 @@ export type {
 } from '@czap/core';
 
 export { CommandRegistry } from './registry.js';
-export type { CapsuleCommandHandler, CommandContext, HandledCommand, RegisteredCommand } from './registry.js';
+export type { AuditEngineSummary, CapsuleCommandHandler, CommandContext, HandledCommand, RegisteredCommand } from './registry.js';
 export { CommandDispatcher } from './dispatcher.js';
 
 // The canonical command catalog — the single source CLI/MCP surfaces project from.
@@ -35,6 +35,8 @@ export type { AssetAnalyzePayload } from './commands/asset.js';
 export { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 export { verifyCommand } from './commands/verify.js';
 export type { VerifyPayload } from './commands/verify.js';
+export { auditCommand } from './commands/audit.js';
+export type { AuditPayload } from './commands/audit.js';
 export {
   packageSlug,
   selectTargets,
