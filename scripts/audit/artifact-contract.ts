@@ -1,4 +1,5 @@
 import type { CodebaseAuditReport } from './types.js';
+import type { WallClockTimestamp } from '@czap/core';
 
 export const CODEBASE_AUDIT_SCHEMA_VERSION = 2;
 
@@ -6,7 +7,7 @@ export type CodebaseAuditRuntimeSeamsStatus = CodebaseAuditReport['supportingArt
 
 export interface CodebaseAuditArtifactEnvelope {
   readonly schemaVersion?: number;
-  readonly generatedAt?: string;
+  readonly generatedAt?: WallClockTimestamp;
   readonly gauntletRunId?: string;
   readonly sourceFingerprint?: string;
   readonly environmentFingerprint?: string;

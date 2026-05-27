@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import { build } from 'vite';
 import { chromium } from 'playwright';
 import { repoRoot } from '../vitest.shared.js';
@@ -83,7 +84,7 @@ interface RawStartupRealityBrowserResult {
 
 interface StartupRealityArtifact {
   readonly schemaVersion: 4;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;
@@ -92,7 +93,7 @@ interface StartupRealityArtifact {
     readonly bench: {
       readonly path: string;
       readonly fingerprint: string;
-      readonly generatedAt: string | null;
+      readonly generatedAt: WallClockTimestamp | null;
     };
   };
   readonly nodeProxy: {

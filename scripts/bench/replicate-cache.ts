@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import { writeTextFile } from '../audit/shared.js';
 import type { ReplicateResult } from './directive-suite.ts';
 
@@ -25,7 +26,7 @@ export const DIRECTIVE_BENCH_ARTIFACT_PATH = 'benchmarks/directive-bench.json';
 
 export interface DirectiveBenchArtifact {
   readonly schemaVersion: 1;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;
   readonly replicateCount: number;

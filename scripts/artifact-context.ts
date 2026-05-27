@@ -1,4 +1,5 @@
 import { randomUUID, createHash } from 'node:crypto';
+import type { WallClockTimestamp } from '@czap/core';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import fg from 'fast-glob';
@@ -21,7 +22,7 @@ export interface ArtifactExpectedCounts {
 export interface ArtifactContext {
   readonly schemaVersion: 1;
   readonly gauntletRunId: string;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;
   readonly expectedCounts: ArtifactExpectedCounts;

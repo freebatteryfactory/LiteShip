@@ -21,6 +21,7 @@
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
@@ -77,7 +78,7 @@ interface ManifestEntry {
 
 /** The shape written to reports/capsule-manifest.json. */
 interface CapsuleManifest {
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly capsules: readonly ManifestEntry[];
 }
 

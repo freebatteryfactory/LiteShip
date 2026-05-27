@@ -63,10 +63,17 @@ A `timestamp` field names *which* clock by its TYPE, never by the bare word. The
 | Term | What it is | Contract |
 | --- | --- | --- |
 | **HLC** *(causal clock)* | A hybrid logical clock `{wall_ms, counter, node_id}` (`@czap/core` `HLC`). | Ordered + monotonic. **Included** in the receipt hash (`hashEnvelope`) and validated by the chain (`hlc_not_increasing`). Identity- and ordering-bearing. The capsule's `generated_at` is an HLC. |
-| **WallClockTimestamp** *(wall clock)* | A volatile ISO-8601 string stamped when a result is produced (`@czap/core` `WallClockTimestamp`). | **Excluded** from `resultId`; never used for causal ordering. Provenance/display only. The `timestamp` on CLI / MCP / command receipts is this. |
+| **WallClockTimestamp** *(wall clock)* | A volatile ISO-8601 string stamped when a result is produced (`@czap/core` `WallClockTimestamp`). | **Excluded** from `resultId`; never used for causal ordering. Provenance/display only. The `timestamp` on CLI / MCP / command receipts AND the `generatedAt` on report/artifact shapes are this. |
 | **media / performance time** | Frame presentation time (µs/ms) or `performance.now()` relative ms. | A different axis entirely — not a clock for identity or causality. Out of the HLC↔wall-clock split. |
 
 Rule: an identity-adjacent command/result type must type a volatile stamp as `WallClockTimestamp` (or `HLC` for a causal one) — never a bare `timestamp: string`. Wiring a wall clock where an HLC belongs corrupts identity; the type names the contract so it can't happen silently.
+
+The two generated-time names follow the same rule by their TYPE, not by being renamed:
+
+- **`generated_at`** (snake_case) — the ship-capsule's HLC: causal, public, **identity-bearing** (hashed into the content address). Preserve it.
+- **`generatedAt`** (camelCase) — report/artifact provenance: a volatile `WallClockTimestamp`. Stable field key, typed as the alias.
+
+For *same-run coherence* of gauntlet artifacts, the authoritative signal is **`gauntletRunId`** (a per-run UUID stamped into every artifact), NOT a `generatedAt` comparison. Any `Date.parse(generatedAt)` vs file-mtime check is a secondary wall-clock heuristic, not causal proof.
 
 ## Drift check
 

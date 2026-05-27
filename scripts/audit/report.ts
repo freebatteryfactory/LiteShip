@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
@@ -64,7 +65,7 @@ const { createCoverageMap } = libCoverage;
 const RUNTIME_SEAMS_BRANCH_HOTSPOT_FINDING_THRESHOLD_PCT = 75;
 
 type BenchArtifact = {
-  generatedAt: string;
+  generatedAt: WallClockTimestamp;
   summary: {
     passed: boolean;
     failedHardGates: string[];
@@ -104,7 +105,7 @@ interface FileSignals {
 }
 
 export interface BuildReportOptions {
-  readonly generatedAt?: string;
+  readonly generatedAt?: WallClockTimestamp;
   /**
    * CUT D7→D9a: the devops profile that drives the WHOLE audit (structure +
    * integrity + surface). `profile.repoRoot` is the authoritative audit target —

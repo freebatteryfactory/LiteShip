@@ -24,6 +24,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { repoRoot } from '../vitest.shared.js';
+import type { WallClockTimestamp } from '@czap/core';
 
 /** Number of most-recent distinct entries to consider as the rolling window. */
 const ROLLING_WINDOW = 10;
@@ -34,7 +35,7 @@ const MIN_HISTORY_FOR_GATE = 3;
 
 interface HistoryEntry {
   readonly schemaVersion: number;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;

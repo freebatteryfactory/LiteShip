@@ -1,5 +1,6 @@
 import type { ArtifactExpectedCounts } from './artifact-context.js';
 import type { PairedTruthEntry } from './paired-truth.js';
+import type { WallClockTimestamp } from '@czap/core';
 
 export type MetricKey = 'lines' | 'statements' | 'functions' | 'branches';
 
@@ -45,7 +46,7 @@ export interface CoverageHotspot {
 
 export interface CoverageMetaArtifact {
   readonly schemaVersion: number;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;
@@ -83,7 +84,7 @@ export interface RuntimeSeamPairSummary {
 
 export interface BenchArtifact {
   readonly schemaVersion?: number;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId?: string;
   readonly sourceFingerprint?: string;
   readonly environmentFingerprint?: string;
@@ -274,7 +275,7 @@ export interface StartupRealityFacts {
 
 export interface StartupRealityArtifact {
   readonly schemaVersion?: number;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId?: string;
   readonly sourceFingerprint?: string;
   readonly environmentFingerprint?: string;
@@ -351,7 +352,7 @@ export interface RuntimeSeamsSourceArtifact {
   readonly fingerprint: string;
   readonly sizeBytes: number;
   readonly mtime: string;
-  readonly generatedAt: string | null;
+  readonly generatedAt: WallClockTimestamp | null;
   readonly summary: Record<string, unknown>;
 }
 
@@ -364,13 +365,13 @@ export interface RuntimeSeamsIntegrityCheck {
 
 export interface RuntimeSeamsReportArtifact {
   readonly schemaVersion?: number;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId?: string;
   readonly sourceFingerprint?: string;
   readonly environmentFingerprint?: string;
   readonly expectedCounts?: ArtifactExpectedCounts;
   readonly previousReport?: {
-    readonly generatedAt: string;
+    readonly generatedAt: WallClockTimestamp;
   } | null;
   readonly sourceArtifacts?: {
     readonly coverage?: RuntimeSeamsSourceArtifact;
