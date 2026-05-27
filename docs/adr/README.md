@@ -20,6 +20,8 @@ Prose vocabulary: [../GLOSSARY.md](../GLOSSARY.md).
 | [0008](./0008-capsule-assembly-catalog.md) | Capsule assembly catalog (7 arms + closure rule) | Accepted |
 | [0009](./0009-ecs-scene-composition.md) | ECS as scene composition substrate | Accepted |
 | [0010](./0010-spine-canonical-type-source.md) | Spine as canonical type source | Accepted |
+| [0011](./0011-ship-capsule.md) | Ship capsule (addressed digest + release input manifest) | Accepted |
+| [0012](./0012-devops-profile-boundary.md) | DevopsProfile boundary (reusable seam vs repo-local contracts) | Accepted |
 
 ## Template
 
