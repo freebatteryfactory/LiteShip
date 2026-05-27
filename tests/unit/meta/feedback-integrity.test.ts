@@ -419,6 +419,24 @@ describe('feedback integrity', { timeout: 30_000 }, () => {
     expect(renderRuntimeSeamsMarkdown(report)).toContain('## Paired Truth');
   });
 
+  test('skewed wall-clock generatedAt does not fail coherence when gauntletRunId matches (CUT generated-time-ordering)', () => {
+    const root = createRepo(baseRepoFiles());
+    ensureArtifactContext(root);
+    writeCoverageArtifacts(root);
+    writeBenchArtifact(root);
+    writeStartupRealityArtifact(root);
+
+    // A BACKDATED wall clock — before the upstream artifacts on disk. The gauntletRunId
+    // still matches, so the artifacts ARE coherent. The wall clock must not overrule that:
+    // gauntletRunId is the authoritative same-run signal, not Date.parse(generatedAt).
+    const report = buildRuntimeSeamsReport(root, '2000-01-01T00:00:00.000Z');
+    const codes = report.integrity.checks.map((check) => check.code);
+
+    expect(report.integrity.passed).toBe(true); // skewed wall clock is NOT a coherence failure
+    expect(codes).toContain('runtime-seams-run-coherence'); // gauntletRunId proves same-run
+    expect(codes).not.toContain('runtime-seams-ordering'); // the wall-clock ordering gate is gone
+  });
+
   test('feedback verifier fails when the satellite scan is missing', () => {
     const root = createRepo(baseRepoFiles());
     writeCoverageArtifacts(root);
@@ -502,7 +520,6 @@ describe('feedback integrity', { timeout: 30_000 }, () => {
     expect(failedCodes).toEqual(
       expect.arrayContaining([
         'runtime-seams-source-coverage-fingerprint',
-        'runtime-seams-ordering',
         'runtime-seams-hard-gates',
         'audit-runtime-seams-status',
         'satellite-scan-runtime-seams-integrity',

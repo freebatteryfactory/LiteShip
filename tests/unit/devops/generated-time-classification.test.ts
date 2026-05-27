@@ -83,12 +83,18 @@ describe('generated-time — the committed artifact JSON keys are UNCHANGED (no 
   }
 });
 
-describe('generated-time — ordering coherence is classified (gauntletRunId, fix is a separate cut)', () => {
-  it('artifact-verifiers records gauntletRunId as the same-run coherence signal', () => {
+describe('generated-time — gauntletRunId is the coherence signal; wall-clock ordering is gone (CUT generated-time-ordering)', () => {
+  it('artifact-verifiers proves same-run coherence via gauntletRunId, not a wall-clock ordering gate', () => {
     const src = read('scripts/artifact-verifiers.ts');
-    expect(src).toMatch(/runtime-seams-run-coherence/); // the gauntletRunId equality check
+    expect(src).toMatch(/runtime-seams-run-coherence/); // the gauntletRunId equality check stays
     expect(src).toMatch(/gauntletRunId/);
-    // The volatile-timestamp ordering is documented as a secondary heuristic, not causal proof.
-    expect(src).toMatch(/gauntletRunId/i);
+    // The removed wall-clock gate must not return: no 'runtime-seams-ordering' check.
+    expect(src).not.toMatch(/'runtime-seams-ordering'/);
+  });
+
+  it('report-satellite-scan proves coherence via gauntletRunId, with no wall-clock ordering gate', () => {
+    const src = read('scripts/report-satellite-scan.ts');
+    expect(src).toMatch(/satellite-scan-run-coherence/); // gauntletRunId equality stays
+    expect(src).not.toMatch(/'satellite-scan-ordering'/); // the wall-clock gate is gone
   });
 });

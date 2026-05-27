@@ -458,10 +458,6 @@ export function verifyRuntimeSeamsReport(
     ),
   );
 
-  const reportGeneratedAt = Date.parse(report.generatedAt);
-  const coverageMtime = Date.parse(coverageFacts.artifact.mtime);
-  const benchMtime = Date.parse(benchFacts.artifact.mtime);
-  const startupRealityMtime = Date.parse(startupRealityFacts.artifact.mtime);
   checks.push(
     buildCheck(
       'runtime-seams-source-fingerprint',
@@ -502,28 +498,11 @@ export function verifyRuntimeSeamsReport(
         : 'Runtime seams, coverage-meta, bench, and startup reality artifacts do not share the same gauntlet run id.',
     ),
   );
-  // CUT B2 / generated-time (recorded hazard, not fixed here): this uses the VOLATILE
-  // wall-clock `generatedAt` (a WallClockTimestamp, Date.parse'd) as a same-run
-  // happened-after heuristic — NOT causal proof. It holds only within one machine/run;
-  // it is not an HLC ordering. The AUTHORITATIVE same-run coherence signal is already
-  // `gauntletRunId` (the `runtime-seams-run-coherence` check above); this mtime compare
-  // is a secondary heuristic. Tightening/removing it is a separate correctness cut
-  // (`fix(devops): CUT generated-time-ordering — use gauntletRunId as coherence signal`).
-  checks.push(
-    buildCheck(
-      'runtime-seams-ordering',
-      Number.isFinite(reportGeneratedAt) &&
-        reportGeneratedAt >= coverageMtime &&
-        reportGeneratedAt >= benchMtime &&
-        reportGeneratedAt >= startupRealityMtime,
-      Number.isFinite(reportGeneratedAt) &&
-        reportGeneratedAt >= coverageMtime &&
-        reportGeneratedAt >= benchMtime &&
-        reportGeneratedAt >= startupRealityMtime
-        ? 'Runtime seams was generated after the current coverage, bench, and startup reality artifacts.'
-        : 'Runtime seams predates one of its upstream artifacts or has an invalid generatedAt timestamp.',
-    ),
-  );
+  // CUT generated-time-ordering: the wall-clock `generatedAt` vs file-mtime "ordering"
+  // gate was REMOVED. Same-run coherence is proven by `runtime-seams-run-coherence`
+  // (gauntletRunId equality) above; a Date.parse(generatedAt) compare added nothing once
+  // that passes, and false-failed on benign within-run clock skew. `generatedAt` stays a
+  // WallClockTimestamp for provenance/display — never a coherence judge.
 
   checks.push(
     buildCheck(
@@ -830,11 +809,9 @@ export function verifyFeedbackArtifacts(root = repoRoot): FeedbackVerification {
   const auditPath = resolve(root, 'reports', 'codebase-audit.json');
   if (existsSync(auditPath)) {
     const audit = readJson<CodebaseAuditArtifactEnvelope>(auditPath);
-    const auditGeneratedAt = Date.parse(audit.generatedAt ?? '');
-    const runtimeSeamsGeneratedAt = Date.parse(runtimeSeams.generatedAt);
-    const auditIsCurrent =
-      audit.gauntletRunId === runtimeSeams.gauntletRunId &&
-      (!Number.isFinite(runtimeSeamsGeneratedAt) || !Number.isFinite(auditGeneratedAt) || auditGeneratedAt >= runtimeSeamsGeneratedAt);
+    // CUT generated-time-ordering: "current" = same gauntlet run (gauntletRunId), not a
+    // wall-clock `generatedAt` comparison. The Date.parse(generatedAt) clause was dropped.
+    const auditIsCurrent = audit.gauntletRunId === runtimeSeams.gauntletRunId;
     if (auditIsCurrent) {
       const currentContext = buildCurrentArtifactContext(root);
       const runtimeSeamsStatus = getCodebaseAuditRuntimeSeamsStatus(audit);
