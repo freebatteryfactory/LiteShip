@@ -44,6 +44,12 @@ export interface SpawnCaptureResult {
   readonly exitCode: number;
   readonly stdout: string;
   readonly stderr: string;
+  /**
+   * True when the spawn was killed by {@link SpawnCaptureOpts.timeoutMs} before it
+   * closed on its own — distinguishable from a normal nonzero exit. Absent (falsy)
+   * for every spawn that completed or that was launched without `timeoutMs`.
+   */
+  readonly timedOut?: boolean;
 }
 
 /** Options for spawnArgvCapture. */
@@ -52,6 +58,13 @@ export interface SpawnCaptureOpts {
   readonly cwd?: string;
   /** Maximum bytes retained per stream. Defaults to 1 MiB. */
   readonly captureBytes?: number;
+  /**
+   * If set, kill the child after this many ms and resolve with `timedOut: true`
+   * (never rejects on timeout). For bounding short external probes (e.g. `czap
+   * doctor`'s `pnpm --version`) so a slow/wedged tool can't hang the caller.
+   * Omitted → existing behavior (resolve only on the child's `close`).
+   */
+  readonly timeoutMs?: number;
 }
 
 /** Live handle on a running spawn — used by withSpawned. */
@@ -218,13 +231,55 @@ export function spawnArgvCapture(
     proc.stderr?.on('data', (chunk: Buffer) => {
       stderrBytes = pushBoundedStderr(stderrChunks, stderrBytes, chunk, cap);
     });
-    proc.on('error', rejectPromise);
+    // Single-settlement guard: a timeout, a close, and an error all race; whichever
+    // fires first wins and the others become no-ops (no double resolve/reject).
+    let settled = false;
+    const text = (chunks: Buffer[]): string => Buffer.concat(chunks as unknown as Uint8Array[]).toString('utf8');
+
+    // Prompt kill for the timeout path. These are short probes (`--version`,
+    // `git config`), not long-lived servers — no graceful grace period needed.
+    // spawnArgvCapture does not detach, so there is no POSIX process group to
+    // signal; on Windows the launcher may be cmd.exe, so reap the tree with taskkill.
+    const killNow = (): void => {
+      if (proc.pid === undefined) return;
+      if (process.platform === 'win32') {
+        try {
+          execSync(`taskkill /T /F /PID ${proc.pid}`, { stdio: 'ignore' });
+        } catch {
+          /* already dead */
+        }
+        return;
+      }
+      try {
+        proc.kill('SIGKILL');
+      } catch {
+        /* already dead */
+      }
+    };
+
+    const timer =
+      opts.timeoutMs !== undefined
+        ? setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            killNow();
+            // 124 = conventional "killed by timeout" exit code; `timedOut` is the
+            // load-bearing signal callers branch on.
+            resolvePromise({ exitCode: 124, stdout: text(stdoutChunks), stderr: text(stderrChunks), timedOut: true });
+          }, opts.timeoutMs)
+        : null;
+
+    proc.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      rejectPromise(err);
+    });
     proc.on('close', (code) => {
-      resolvePromise({
-        exitCode: code ?? 1,
-        stdout: Buffer.concat(stdoutChunks as unknown as Uint8Array[]).toString('utf8'),
-        stderr: Buffer.concat(stderrChunks as unknown as Uint8Array[]).toString('utf8'),
-      });
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolvePromise({ exitCode: code ?? 1, stdout: text(stdoutChunks), stderr: text(stderrChunks) });
     });
   });
 }
