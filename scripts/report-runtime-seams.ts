@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import { repoRoot } from '../vitest.shared.js';
 import { ensureArtifactContext } from './artifact-context.js';
 import { isDirectExecution, writeTextFile } from './audit/shared.js';
@@ -35,7 +36,7 @@ type PreviousStartupBreakdownEntry = {
 interface ExtendedRuntimeSeamsReport extends RuntimeSeamsReportArtifact {
   readonly schemaVersion: 7;
   readonly previousReport: {
-    readonly generatedAt: string;
+    readonly generatedAt: WallClockTimestamp;
   } | null;
   readonly hardGates: {
     readonly passed: boolean;

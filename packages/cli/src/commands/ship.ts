@@ -308,8 +308,9 @@ export async function ship(args: readonly string[]): Promise<number> {
     const publishDryRunAddr = dryAddrResult.value;
 
     // Each capsule advances the seed HLC so a multi-package ship batch
-    // carries strictly-monotone generated_at values.
-    const generatedAt = HLC.increment(i === 0 ? seedHlc : seedHlc, Date.now() + i);
+    // carries strictly-monotone generated_at values. Named generatedHlc — it is an
+    // HLC (causal, identity-bearing), NOT a wall-clock string (CUT generated-time).
+    const generatedHlc = HLC.increment(i === 0 ? seedHlc : seedHlc, Date.now() + i);
 
     const input: ShipCapsule.Input = {
       _kind: 'shipCapsule',
@@ -326,7 +327,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       package_manager_version: pmVersion,
       publish_dry_run_address: publishDryRunAddr,
       lifecycle_scripts_observed: observedLifecycleScripts(pkg.packageJson),
-      generated_at: generatedAt,
+      generated_at: generatedHlc,
       previous_ship_capsule: null,
     };
 
@@ -356,7 +357,7 @@ export async function ship(args: readonly string[]): Promise<number> {
       capsule_id: capsule.id,
       capsule_path: capsulePath,
       tarball_path: tarballPath,
-      generated_at: generatedAt,
+      generated_at: generatedHlc,
       dry_run: opts.dryRun,
     };
     emit(receipt);

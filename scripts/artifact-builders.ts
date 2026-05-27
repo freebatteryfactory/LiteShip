@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
+import type { WallClockTimestamp } from '@czap/core';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
@@ -739,7 +740,7 @@ export function buildExpectedPairedTruth(
 
 export function buildCoverageMetaArtifact(
   facts: CoverageFacts,
-  generatedAt: string,
+  generatedAt: WallClockTimestamp,
   context: {
     readonly gauntletRunId: string;
     readonly sourceFingerprint: string;

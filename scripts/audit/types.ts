@@ -6,6 +6,8 @@
  *
  * @module
  */
+import type { WallClockTimestamp } from '@czap/core';
+
 export type {
   AuditSeverity,
   AuditSection,
@@ -151,7 +153,7 @@ export interface FullTreeAccountingSummary {
 
 export interface FullTreeAccountingReport {
   readonly schemaVersion: 1;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly root: string;
   readonly summary: FullTreeAccountingSummary;
   readonly entries: readonly FullTreeAccountingEntry[];
@@ -168,7 +170,7 @@ export interface ProtocolGapArea {
 
 export interface ProtocolGapReport {
   readonly schemaVersion: 1;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly root: string;
   readonly areas: readonly ProtocolGapArea[];
 }
@@ -185,7 +187,7 @@ export interface FrameworkBlueprintCapability {
 
 export interface FrameworkBlueprintReport {
   readonly schemaVersion: 1;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly root: string;
   readonly capabilities: readonly FrameworkBlueprintCapability[];
 }
@@ -202,7 +204,7 @@ export interface AuditStrikeItem {
 
 export interface AuditStrikeBoardReport {
   readonly schemaVersion: 1;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly root: string;
   readonly items: readonly AuditStrikeItem[];
 }
@@ -213,7 +215,7 @@ export interface CodebaseAuditReport<
   TSurfaceSummary = Record<string, unknown>,
 > {
   readonly schemaVersion: 2;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;

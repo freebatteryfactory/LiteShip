@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { WallClockTimestamp } from '@czap/core';
 import { repoRoot } from '../vitest.shared.js';
 import { buildCurrentArtifactContext, ensureArtifactContext } from './artifact-context.js';
 import {
@@ -41,7 +42,7 @@ interface SatelliteScanVerification {
 
 export interface SatelliteScanReport {
   readonly schemaVersion: 6;
-  readonly generatedAt: string;
+  readonly generatedAt: WallClockTimestamp;
   readonly gauntletRunId: string;
   readonly sourceFingerprint: string;
   readonly environmentFingerprint: string;
@@ -50,17 +51,17 @@ export interface SatelliteScanReport {
     readonly runtimeSeams: {
       readonly path: string;
       readonly fingerprint: string;
-      readonly generatedAt: string;
+      readonly generatedAt: WallClockTimestamp;
     };
     readonly audit: {
       readonly path: string;
       readonly fingerprint: string;
-      readonly generatedAt: string;
+      readonly generatedAt: WallClockTimestamp;
     };
     readonly startupReality: {
       readonly path: string;
       readonly fingerprint: string;
-      readonly generatedAt: string;
+      readonly generatedAt: WallClockTimestamp;
     };
   };
   readonly truthModel: 'paired-truth';
