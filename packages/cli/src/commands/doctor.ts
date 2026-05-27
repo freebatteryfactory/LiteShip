@@ -155,8 +155,26 @@ function probeNode(minima: EngineMinima): DoctorCheck {
   return { id: 'node.version', label: 'Node.js', status: 'ok', detail: version };
 }
 
+/**
+ * Per-probe subprocess bound (CUT test-flake). External probes (`pnpm`/`cargo`/`git`)
+ * shell out; under parallel load those spawns can drag past the test timeout. A bound
+ * keeps `czap doctor` deterministic and non-hanging: a slow/wedged tool degrades to a
+ * `warn` ("didn't answer in time") instead of blocking forever. Concurrency (see
+ * runAllProbes) makes the path "max single probe", not the sum — so 4s is comfortable.
+ */
+const DOCTOR_PROBE_TIMEOUT_MS = 4_000;
+
 async function probePnpm(minima: EngineMinima): Promise<DoctorCheck> {
-  const r = await spawnArgvCapture('pnpm', ['--version']).catch(() => null);
+  const r = await spawnArgvCapture('pnpm', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+  if (r?.timedOut) {
+    return {
+      id: 'pnpm.version',
+      label: 'pnpm',
+      status: 'warn',
+      detail: `no response within ${DOCTOR_PROBE_TIMEOUT_MS}ms (pnpm slow or contended)`,
+      hint: 'Re-run on a less-loaded machine, or check pnpm directly: pnpm --version',
+    };
+  }
   if (!r || r.exitCode !== 0) {
     return {
       id: 'pnpm.version',
@@ -291,9 +309,18 @@ async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
     return { id: 'git.config', label: 'git config', status: 'ok', detail: 'no .git (not a worktree)' };
   }
   const [email, name] = await Promise.all([
-    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd }).catch(() => null),
-    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd }).catch(() => null),
+    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
+    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
   ]);
+  if (email?.timedOut || name?.timedOut) {
+    return {
+      id: 'git.config',
+      label: 'git config',
+      status: 'warn',
+      detail: `git config did not respond within ${DOCTOR_PROBE_TIMEOUT_MS}ms (slow or contended)`,
+      hint: 'Re-run on a less-loaded machine, or check: git config --get user.email',
+    };
+  }
   const haveEmail = !!email && email.exitCode === 0 && email.stdout.trim().length > 0;
   const haveName = !!name && name.exitCode === 0 && name.stdout.trim().length > 0;
   if (haveEmail && haveName) {
@@ -317,7 +344,16 @@ async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
 async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | null> {
   const cratesDir = resolve(cwd, 'crates');
   if (!existsSync(cratesDir)) return null;
-  const r = await spawnArgvCapture('cargo', ['--version']).catch(() => null);
+  const r = await spawnArgvCapture('cargo', ['--version'], { timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null);
+  if (r?.timedOut) {
+    return {
+      id: 'wasm.toolchain',
+      label: 'WASM toolchain',
+      status: 'warn',
+      detail: `cargo did not respond within ${DOCTOR_PROBE_TIMEOUT_MS}ms (slow or contended)`,
+      hint: 'Re-run on a less-loaded machine, or check: cargo --version',
+    };
+  }
   if (!r || r.exitCode !== 0) {
     return {
       id: 'wasm.toolchain',
@@ -332,15 +368,23 @@ async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | null> {
 
 async function runAllProbes(cwd: string): Promise<readonly DoctorCheck[]> {
   const minima = loadEngineMinima(cwd);
-  const wasm = await probeWasmToolchain(cwd);
+  // The three external (spawn-bearing) probes are independent — run them
+  // concurrently so the wall time is the slowest single probe, not the serial
+  // sum of cargo + pnpm + git (CUT test-flake). Sync probes stay sync. Receipt
+  // order below is preserved regardless of completion order.
+  const [wasm, pnpm, gitConfig] = await Promise.all([
+    probeWasmToolchain(cwd),
+    probePnpm(minima),
+    probeGitConfig(cwd),
+  ]);
   return [
     probeNode(minima),
-    await probePnpm(minima),
+    pnpm,
     probeWorkspaceInstalled(cwd),
     probeBuilt(cwd, 'core', '@czap/core build'),
     probeBuilt(cwd, 'cli', '@czap/cli build'),
     probeGitHooks(cwd),
-    await probeGitConfig(cwd),
+    gitConfig,
     probePlaywright(cwd),
     ...(wasm ? [wasm] : []),
   ];
