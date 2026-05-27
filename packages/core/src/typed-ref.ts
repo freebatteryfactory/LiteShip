@@ -1,7 +1,30 @@
 /**
- * TypedRef -- content-addressed payload references.
+ * TypedRef -- payload references hashed for the receipt/mutation chain.
  *
- * Uses CBOR canonical encoding (cborg) and SHA-256 via crypto.subtle.
+ * THE RECEIPT BYTE LAW. `canonicalize` here encodes via `cborg` (deterministic,
+ * smallest-float canonical CBOR) and `hash` digests those bytes with SHA-256
+ * (`crypto.subtle`) into a `sha256:<hex>` content hash. Every consumer feeds
+ * canonicalize → SHA-256: TypedRef.create, Receipt.hashEnvelope/createEnvelope,
+ * LiveCell.make/makeBoundary.
+ *
+ * This is DELIBERATELY NOT the `fnv1a:` identity byte law. Internal `fnv1a:`
+ * content addresses are minted only through `CanonicalCbor` (ADR-0003,
+ * always-float64, cross-payload agreement; CUT B1). The two byte laws are
+ * distinct on purpose:
+ *
+ *   - IDENTITY  (`fnv1a:`):  CanonicalCbor, always-float64. Needs cross-payload
+ *     agreement — two structurally-equal payloads must mint the same address,
+ *     so it normalizes float width.
+ *   - RECEIPT   (`sha256:`): TypedRef.canonicalize (cborg). Needs only
+ *     intra-chain determinism + permanence. A receipt chain only ever compares
+ *     its own cborg→sha256 bytes against its own; it never cross-compares the
+ *     two encoders, so cborg's smallest-float form is harmless here. cborg is
+ *     retained (not migrated to CanonicalCbor) because migrating would invalidate
+ *     persisted sha256 receipts for zero correctness gain — and cborg is needed
+ *     for decode regardless (CanonicalCbor is encode-only).
+ *
+ * See `tests/unit/core/receipt-byte-law.test.ts` for the cage and the pinned,
+ * intentional cborg-vs-CanonicalCbor float divergence.
  *
  * @module
  */
@@ -9,14 +32,16 @@
 import { Effect } from 'effect';
 import { encode } from 'cborg';
 
-// Content-addressed identity: CBOR-canonical payload → FNV-1a hash. Same definition = same address.
-
 interface TypedRefShape {
   readonly schema_hash: string;
   readonly content_hash: string;
 }
 
-/** Canonicalize value to CBOR bytes using canonical (deterministic) encoding. */
+/**
+ * Canonicalize a value to deterministic CBOR bytes via `cborg` — the input to
+ * SHA-256 receipt/mutation hashing. NOT the `fnv1a:` identity encoder: identity
+ * addresses use `CanonicalCbor` (always-float64). See the module header.
+ */
 export const canonicalize = (value: unknown): Uint8Array => encode(value);
 
 /**
@@ -67,7 +92,7 @@ export const TypedRef = {
   create: _create,
   /** Structural equality over schema + content hashes. */
   equals: _equals,
-  /** Canonical-CBOR-ish serialization used to compute the content hash. */
+  /** cborg deterministic-CBOR serialization feeding the SHA-256 content hash (the receipt byte law). */
   canonicalize,
   /** Hash a canonicalized payload to its content address. */
   hash,

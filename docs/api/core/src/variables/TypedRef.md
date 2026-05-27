@@ -8,7 +8,7 @@
 
 > `const` **TypedRef**: `object`
 
-Defined in: [core/src/typed-ref.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/typed-ref.ts#L65)
+Defined in: [core/src/typed-ref.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/typed-ref.ts#L90)
 
 TypedRef — schema-plus-content-hash pointer used by the receipt pipeline.
 Lets a receipt reference a payload by its content address without embedding
@@ -20,9 +20,11 @@ the payload itself, while still binding it to a schema identity.
 
 > **canonicalize**: (`value`) => `Uint8Array`
 
-Canonical-CBOR-ish serialization used to compute the content hash.
+cborg deterministic-CBOR serialization feeding the SHA-256 content hash (the receipt byte law).
 
-Canonicalize value to CBOR bytes using canonical (deterministic) encoding.
+Canonicalize a value to deterministic CBOR bytes via `cborg` — the input to
+SHA-256 receipt/mutation hashing. NOT the `fnv1a:` identity encoder: identity
+addresses use `CanonicalCbor` (always-float64). See the module header.
 
 #### Parameters
 

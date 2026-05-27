@@ -71,3 +71,31 @@ path it advertises.
 CLI idempotency (`packages/cli/src/idempotency.ts`) routes through
 the same encoder so `czap` command receipts remain stable across
 key-order permutations on disk.
+
+## Two byte laws (2026-05-27, CUT typed-ref)
+
+There are intentionally **two** canonical byte laws, and they are not
+interchangeable:
+
+- **Identity (`fnv1a:`):** `CanonicalCbor` governs all internal
+  `fnv1a:` content addresses. Always-float64 (it normalizes float
+  width) because identity needs **cross-payload agreement** — two
+  structurally-equal payloads must mint the same address.
+- **Receipt/mutation (`sha256:`):** the SHA-256 chains
+  (`TypedRef.canonicalize` in `typed-ref.ts`, consumed by
+  `receipt.ts` and `live-cell.ts`) use a separate, `cborg`-backed
+  deterministic-CBOR byte law. `cborg` uses smallest-float canonical
+  form; that is acceptable here because a receipt chain only ever
+  compares its own `cborg→sha256` bytes against its own — it never
+  cross-compares the two encoders. The encoder is deliberately *not*
+  migrated to `CanonicalCbor`: doing so would invalidate persisted
+  sha256 receipts for no correctness gain, and `cborg` is required for
+  decode regardless (`CanonicalCbor` is encode-only).
+
+The two are guarded distinct in
+`tests/unit/core/canonical-identity.test.ts` (fnv1a never mints
+through cborg/`TypedRef.canonicalize`) and
+`tests/unit/core/receipt-byte-law.test.ts` (the receipt law stays
+cborg-backed and the float divergence is pinned as intentional).
+So the "floating-point representation" normalization noted above
+applies to the **identity** law specifically, not to the receipt law.
