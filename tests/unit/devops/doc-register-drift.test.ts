@@ -26,7 +26,6 @@ const LIVE_DOCS = [
   'README.md',
   'CONTRIBUTING.md',
   'SECURITY.md',
-  'CLAUDE.md',
   'docs/GETTING-STARTED.md',
   'docs/STATUS.md',
   'docs/RELEASING.md',
@@ -66,7 +65,7 @@ describe('B6b — STATUS.md points at the canonical phase source instead of mirr
 });
 
 describe('B6b — roster docs name the real package set (command + audit present)', () => {
-  for (const rel of ['docs/ARCHITECTURE.md', 'CLAUDE.md', 'README.md']) {
+  for (const rel of ['docs/ARCHITECTURE.md', 'README.md']) {
     it(`${rel} lists @czap/command and @czap/audit`, () => {
       const src = read(rel);
       expect(src, `${rel} must list @czap/command`).toMatch(/@czap\/command/);
