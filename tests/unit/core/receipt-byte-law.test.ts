@@ -4,9 +4,11 @@
  * B1 collapsed the `fnv1a:` IDENTITY encoder fork onto `CanonicalCbor`
  * (always-float64, cross-payload agreement). One cborg path stayed behind on
  * purpose: `TypedRef.canonicalize` (cborg.encode) → SHA-256 receipt/mutation
- * hashing. The survey found ZERO `fnv1a:` consumers of it — its whole consumer
- * family is the sha256 chain (`TypedRef.create`, `Receipt.hashEnvelope`/
- * `createEnvelope`, `LiveCell.make`/`makeBoundary`).
+ * hashing. The survey found ZERO `fnv1a:` consumers of it — its consumer family
+ * is the receipt chain (`TypedRef.create`, `Receipt.hashEnvelope`/`createEnvelope`).
+ * (`LiveCell.make`/`makeBoundary` once borrowed this path for its envelope id;
+ * CUT live-cell migrated that id to the fnv1a IDENTITY law — it is content-
+ * addressing that auto-invalidates on change, not a signed/chained receipt digest.)
  *
  * That is correct, not a B1 miss: a receipt chain only compares its own
  * cborg→sha256 bytes against its own cborg→sha256 bytes — there is no
@@ -108,6 +110,15 @@ describe('typed-ref — no fnv1a identity path feeds through TypedRef.canonicali
       }
     }
     expect(offenders, `fnv1a identity must never mint through TypedRef.canonicalize: ${offenders.join(', ')}`).toEqual([]);
+  });
+
+  it('LiveCell mints its envelope id via the fnv1a IDENTITY law, never the sha256 receipt path', () => {
+    // CUT live-cell — LiveCell is content-addressing, not a receipt. It must mint
+    // through CanonicalCbor → fnv1a and never import the typed-ref receipt hashers.
+    const src = read('packages/core/src/live-cell.ts');
+    expect(src).toMatch(/fnv1aBytes\(\s*CanonicalCbor\.encode/);
+    // No IMPORT of the typed-ref receipt hashers (the bare token appears in prose).
+    expect(src, 'live-cell must not import the sha256 receipt hashers').not.toMatch(/from\s*['"]\.\/typed-ref/);
   });
 
   it('the B1 identity files do not reference TypedRef.canonicalize at all', () => {

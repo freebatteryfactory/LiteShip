@@ -114,7 +114,30 @@ describe('LiveCell', () => {
     expect(env.meta.version).toBe(1);
     expect(env.meta.created).toBeDefined();
     expect(env.meta.updated).toBeDefined();
-    expect(env.id).toMatch(/^sha256:/);
+    expect(env.id).toMatch(/^fnv1a:[0-9a-f]{8}$/);
+  });
+
+  test('content address is deterministic: same kind+value yields the same id', async () => {
+    const [id1, id2] = await runScoped(
+      Effect.gen(function* () {
+        const a = yield* LiveCell.make('state', { x: 1, y: 2 });
+        const b = yield* LiveCell.make('state', { x: 1, y: 2 });
+        return [(yield* a.envelope).id, (yield* b.envelope).id] as const;
+      }),
+    );
+    expect(id1).toBe(id2);
+    expect(id1).toMatch(/^fnv1a:[0-9a-f]{8}$/);
+  });
+
+  test('content address is permutation-stable on object values (CanonicalCbor sorts keys)', async () => {
+    const [id1, id2] = await runScoped(
+      Effect.gen(function* () {
+        const a = yield* LiveCell.make('state', { x: 1, y: 2 });
+        const b = yield* LiveCell.make('state', { y: 2, x: 1 });
+        return [(yield* a.envelope).id, (yield* b.envelope).id] as const;
+      }),
+    );
+    expect(id1).toBe(id2);
   });
 
   test('envelope version increments on set', async () => {
