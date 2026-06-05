@@ -13,10 +13,11 @@ import { Effect, Stream, PubSub, Ref } from 'effect';
 import { Cell } from './cell.js';
 import type { CellKind, CellMeta, CellEnvelope } from './protocol.js';
 import type { ContentAddress, HLC as HLCBrand } from './brands.js';
-import { ContentAddress as mkContentAddress, StateName as mkStateName } from './brands.js';
+import { StateName as mkStateName } from './brands.js';
 import type { BoundaryCrossing } from './type-utils.js';
 import { HLC } from './hlc.js';
-import { canonicalize, hash } from './typed-ref.js';
+import { fnv1aBytes } from './fnv.js';
+import { CanonicalCbor } from './cbor.js';
 import { Boundary } from './boundary.js';
 
 interface LiveCellShape<K extends CellKind, T> extends Omit<Cell.Shape<T>, '_tag'> {
@@ -37,11 +38,12 @@ function _make<K extends CellKind, T>(kind: K, initial: T): Effect.Effect<LiveCe
     const createdRef = yield* Ref.make<HLCBrand>(createdHlc);
     const updatedRef = yield* Ref.make<HLCBrand>(createdHlc);
 
+    // CUT live-cell — the envelope id is a content-address IDENTITY (auto-invalidates
+    // when the value changes), minted through the ONE canonical encoder (CanonicalCbor
+    // → fnv1a). It is NOT a receipt digest: LiveCell is never signed, chained, or
+    // persisted, so it must not borrow the sha256 receipt byte law (typed-ref).
     const computeId = (value: T): Effect.Effect<ContentAddress> =>
-      Effect.gen(function* () {
-        const h = yield* hash(canonicalize({ kind, value }));
-        return mkContentAddress(h);
-      });
+      Effect.sync(() => fnv1aBytes(CanonicalCbor.encode({ kind, value })));
 
     const initialId = yield* computeId(initial);
     const idRef = yield* Ref.make<ContentAddress>(initialId);
@@ -110,11 +112,9 @@ function _makeBoundary<I extends string, S extends readonly [string, ...string[]
     const updatedRef = yield* Ref.make<HLCBrand>(createdHlc);
     const kind = 'boundary' as const;
 
+    // CUT live-cell — fnv1a IDENTITY (CanonicalCbor), not a sha256 receipt digest. See _make.
     const computeId = (value: number): Effect.Effect<ContentAddress> =>
-      Effect.gen(function* () {
-        const h = yield* hash(canonicalize({ kind, value }));
-        return mkContentAddress(h);
-      });
+      Effect.sync(() => fnv1aBytes(CanonicalCbor.encode({ kind, value })));
 
     const initialId = yield* computeId(initial);
     const idRef = yield* Ref.make<ContentAddress>(initialId);

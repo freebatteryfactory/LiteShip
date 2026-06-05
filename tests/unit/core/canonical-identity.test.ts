@@ -19,6 +19,11 @@
  * JSON-PROTOCOL identity (MCP wire is JSON; D1/B2 law), not an internal content
  * address; it is guarded separately below as the single allowed JSON canonicalizer.
  *
+ * CUT live-cell folds `packages/core/src/live-cell.ts` into the cage too: the
+ * `CellEnvelope.id` is a content-address IDENTITY (auto-invalidates on value
+ * change), so it mints `fnv1a:` via CanonicalCbor like the rest of the family —
+ * it had been borrowing the sha256 receipt byte law by accident.
+ *
  * @module
  */
 import { describe, it, expect } from 'vitest';
@@ -55,6 +60,7 @@ describe('B1 — identity is minted only through CanonicalCbor (source guard, th
     'packages/core/src/composable.ts',
     'packages/core/src/ecs.ts',
     'packages/core/src/config.ts', // CUT B5a — Config.make folded into the cage
+    'packages/core/src/live-cell.ts', // CUT live-cell — envelope id is fnv1a identity, not a sha256 receipt
   ];
 
   for (const rel of IDENTITY_FILES) {
