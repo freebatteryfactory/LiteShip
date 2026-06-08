@@ -28,6 +28,23 @@ Required versions: Node.js 22+, pnpm 10+. The repo runs on Windows + Linux,
 PowerShell + bash. WebKit/Firefox/Chromium tests run on the system Playwright
 install (`pnpm exec playwright install` if needed).
 
+### System dependencies (match CI)
+
+CI (`truth-linux` in `.github/workflows/ci.yml`) installs **ffmpeg with
+libx264** before `gauntlet:full`. Scene-render integration tests and the smoke
+render use the same encoder path as production — a bare `ffmpeg` binary without
+`libx264` (common on Fedora `ffmpeg-free`) will skip those tests via
+`czap doctor` / the shared render probe, not hang for minutes.
+
+| Platform | ffmpeg with libx264 |
+| --- | --- |
+| Ubuntu / Debian (CI) | `sudo apt-get install -y ffmpeg` |
+| Fedora / Nobara | `sudo dnf swap ffmpeg-free ffmpeg --allowerasing` (RPM Fusion) |
+| Dev Container | Reopen in Container (`.devcontainer/`) — post-create installs the CI stack |
+
+Preflight: `pnpm run doctor` (or `czap doctor`) reports `ffmpeg (libx264)` as
+`ok` or `warn` with distro-specific hints before you run `pnpm run gauntlet:full`.
+
 ## Dev-experience shortcuts
 
 Discoverable verbs at the workspace root:

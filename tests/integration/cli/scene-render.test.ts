@@ -1,33 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '@czap/cli';
-import { accessSync, constants, existsSync, unlinkSync, mkdirSync } from 'node:fs';
-import { delimiter, resolve, dirname, join } from 'node:path';
-
-function commandOnPath(command: string): boolean {
-  const extensions = process.platform === 'win32' ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT').split(';') : [''];
-  const mode = process.platform === 'win32' ? constants.F_OK : constants.X_OK;
-  for (const dir of (process.env.PATH ?? '').split(delimiter)) {
-    for (const extension of extensions) {
-      try {
-        accessSync(join(dir, `${command}${extension.toLowerCase()}`), mode);
-        return true;
-      } catch {
-        // Try the next PATH entry.
-      }
-      if (extension !== extension.toUpperCase()) {
-        try {
-          accessSync(join(dir, `${command}${extension.toUpperCase()}`), mode);
-          return true;
-        } catch {
-          // Try the next extension.
-        }
-      }
-    }
-  }
-  return false;
-}
-
-const FFMPEG_AVAILABLE = commandOnPath('ffmpeg');
+import { existsSync, unlinkSync, mkdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
 function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; stderr: string }> {
   let stdout = '';
@@ -53,7 +28,7 @@ function capture<T>(fn: () => Promise<T>): Promise<{ exit: T; stdout: string; st
 describe('czap scene render', () => {
   const out = resolve('tests/integration/cli/.out-intro.mp4');
 
-  const renderIt = FFMPEG_AVAILABLE ? it : it.skip;
+  const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;
 
   renderIt(
     'renders the intro example scene to an mp4',

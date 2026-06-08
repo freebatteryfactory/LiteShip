@@ -41,6 +41,7 @@ describe('doctor command', () => {
     expect(ids).toContain('git.hooks');
     expect(ids).toContain('git.config');
     expect(ids).toContain('playwright.installed');
+    expect(ids).toContain('ffmpeg.libx264');
   });
 
   it('includes wasm.toolchain when crates/ is present (skipped otherwise)', async () => {

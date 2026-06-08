@@ -19,14 +19,16 @@
  *     can resolve `@czap/scene` from a sibling-of-packages location.
  *   - The compile/render/ffmpeg chain is unchanged either way.
  *
- * Skipped automatically if ffmpeg isn't on PATH so CI without
- * ffmpeg doesn't false-fail.
+ * Skipped when the shared libx264 render probe fails (ffmpeg-free,
+ * missing binary, etc.) so machines without a CI-capable ffmpeg don't
+ * false-fail or hang — see `czap doctor` / tests/helpers/ffmpeg.ts.
  *
  * @module
  */
 
 import { describe, it, expect } from 'vitest';
 import { execSync, spawnSync } from 'node:child_process';
+import { FFMPEG_RENDER_CAPABLE } from '../helpers/ffmpeg.js';
 import {
   existsSync,
   mkdirSync,
@@ -36,15 +38,6 @@ import {
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { run } from '@czap/cli';
-
-const FFMPEG_AVAILABLE = (() => {
-  try {
-    const r = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
-    return r.status === 0;
-  } catch {
-    return false;
-  }
-})();
 
 const FFPROBE_AVAILABLE = (() => {
   try {
@@ -70,8 +63,8 @@ async function quiet<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 describe('Spec 1.1 E2E smoke — intro scene render', () => {
-  if (!FFMPEG_AVAILABLE) {
-    it.skip('skipped — ffmpeg not on PATH', () => {});
+  if (!FFMPEG_RENDER_CAPABLE) {
+    it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});
     return;
   }
 

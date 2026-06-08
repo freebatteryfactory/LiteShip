@@ -6,9 +6,10 @@
  * @module
  */
 
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
 import type { VideoFrameOutput } from '@czap/core';
+import { probeFfmpegRender } from './ffmpeg-probe.js';
 
 /** Options for `renderWithFfmpeg`. */
 export interface RenderOpts {
@@ -60,12 +61,18 @@ export async function renderWithFfmpeg(
   try {
     for await (const frame of frames) {
       const buf = frameToRGBA(frame, opts.width, opts.height);
-      const ok = proc.stdin.write(buf);
-      if (!ok) {
-        await new Promise<void>((resolve) => proc.stdin.once('drain', () => resolve()));
-      }
+      await writeStdin(proc.stdin, buf);
       frameCount++;
     }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (/EPIPE|stdin/i.test(message)) {
+      throw new Error(
+        `ffmpeg stdin closed before render finished (is libx264 available?): ${stderrBuf.slice(-500) || message}`,
+        { cause: err },
+      );
+    }
+    throw err;
   } finally {
     proc.stdin.end();
   }
@@ -103,13 +110,39 @@ export async function renderWithFfmpeg(
 }
 
 function assertFfmpegAvailable(): void {
-  const probe = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
-  if (probe.error) {
-    throw new Error(`ffmpeg is required for scene rendering but was not found on PATH: ${probe.error.message}`);
+  const probe = probeFfmpegRender();
+  if (!probe.ok) {
+    throw new Error(
+      probe.hint
+        ? `ffmpeg scene rendering unavailable: ${probe.detail}. ${probe.hint}`
+        : `ffmpeg scene rendering unavailable: ${probe.detail}`,
+    );
   }
-  if (probe.status !== 0) {
-    throw new Error(`ffmpeg is required for scene rendering but failed its version probe with status ${probe.status}`);
-  }
+}
+
+function writeStdin(stream: NodeJS.WritableStream, buf: Uint8Array): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onError = (err: Error) => {
+      cleanup();
+      reject(err);
+    };
+    const cleanup = () => {
+      stream.off('error', onError);
+      stream.off('drain', onDrain);
+    };
+    const onDrain = () => {
+      cleanup();
+      resolve();
+    };
+    stream.once('error', onError);
+    const ok = stream.write(buf);
+    if (ok) {
+      cleanup();
+      resolve();
+    } else {
+      stream.once('drain', onDrain);
+    }
+  });
 }
 
 /**

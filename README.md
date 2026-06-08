@@ -193,6 +193,9 @@ Pre-1.0 break policy is aggressive on purpose. If an API or internal contract is
 
 ## Working in this repo
 
+**Dev Container:** reopen in `.devcontainer/` for the same Node 22 + pnpm 10 +
+ffmpeg (libx264) + Playwright stack CI uses on `ubuntu-latest`.
+
 ```bash
 pnpm install
 pnpm shakedown            # first-run aggregate: doctor → install → build → test
