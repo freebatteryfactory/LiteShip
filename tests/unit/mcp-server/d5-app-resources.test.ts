@@ -38,7 +38,9 @@ describe('D5 — D4 static surface stays frozen', () => {
       JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
     );
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
-    expect(pin).toBe('fnv1a:45812ab8');
+    // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
+    // (rig-check + audit:floor), re-pinning the glossary UI body.
+    expect(pin).toBe('fnv1a:0d2ae099');
   });
 });
 

@@ -156,6 +156,8 @@ describe('D4 — projection drift pin', () => {
     );
     // Re-pin intentionally (and only) when the UI resource surface changes on purpose.
     // CUT D9b-2: `audit` joined COMMAND_CATALOG, so the registry/commands UI body changed.
-    expect(address).toBe('fnv1a:45812ab8');
+    // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
+    // (rig-check + audit:floor), re-pinning the glossary UI body.
+    expect(address).toBe('fnv1a:0d2ae099');
   });
 });
