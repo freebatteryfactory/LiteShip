@@ -71,6 +71,10 @@ jobs:
     needs: release-certified
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # setup-node's registry-url + includeIf gitdir credentials override
+      # a bare ~/.npmrc append; NODE_AUTH_TOKEN is the supported hook.
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
