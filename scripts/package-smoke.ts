@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync, readdirSync, realpathSync, symlinkSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, realpathSync, symlinkSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
@@ -229,9 +229,15 @@ function linkHoistedDepsBesidePackedPackages(
         if (!source || existsSync(join(target, 'package.json'))) {
           continue;
         }
-        mkdirSync(nestedRoot, { recursive: true });
-        const linkTarget = process.platform === 'win32' ? resolve(source) : source;
-        symlinkSync(linkTarget, target, process.platform === 'win32' ? 'junction' : 'dir');
+        mkdirSync(dirname(target), { recursive: true });
+        if (process.platform === 'win32') {
+          // Junction symlinks are brittle on GHA Windows (ENOENT when the
+          // hoisted store path and nested @czap/*/node_modules layout diverge).
+          // A recursive copy matches Linux symlink semantics for import-smoke.
+          cpSync(source, target, { recursive: true });
+        } else {
+          symlinkSync(source, target, 'dir');
+        }
       }
     }
   }
