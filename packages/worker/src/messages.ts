@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput } from '@czap/core';
+import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Worker configuration
@@ -38,8 +38,8 @@ interface InitMessage {
 interface AddQuantizerMessage {
   readonly type: 'add-quantizer';
   readonly name: string;
-  readonly boundaryId: string;
-  readonly states: readonly string[];
+  readonly boundaryId: ContentAddress;
+  readonly states: readonly StateName[];
   readonly thresholds: Float64Array | readonly number[];
 }
 
@@ -53,13 +53,13 @@ export interface BootstrapQuantizerRegistration {
   /** Stable quantizer name (key in the registry). */
   readonly name: string;
   /** Boundary content-address this quantizer is anchored to. */
-  readonly boundaryId: string;
+  readonly boundaryId: ContentAddress;
   /** Ordered discrete state labels. */
-  readonly states: readonly string[];
+  readonly states: readonly StateName[];
   /** Threshold boundaries (length = states.length - 1). */
   readonly thresholds: Float64Array | readonly number[];
   /** Optional initial discrete state (defaults to the first state). */
-  readonly initialState?: string;
+  readonly initialState?: StateName;
   /** Optional initial blend weights, keyed by state label. */
   readonly blendWeights?: Record<string, number>;
 }
@@ -88,7 +88,7 @@ export interface ResolvedStateEntry {
   /** Quantizer name. */
   readonly name: string;
   /** Resolved discrete state label. */
-  readonly state: string;
+  readonly state: StateName;
   /** Monotonically-increasing generation counter. */
   readonly generation: number;
 }
@@ -232,7 +232,7 @@ interface ResolvedStateAckMessage {
   readonly generation: number;
   readonly states: readonly {
     readonly name: string;
-    readonly state: string;
+    readonly state: StateName;
   }[];
   readonly additionalOutputsChanged: boolean;
 }

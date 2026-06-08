@@ -161,6 +161,13 @@ describe('lite parseEventId', () => {
     expect(result.timestamp).toBe(1700000000);
   });
 
+  test('parses canonical HLC.encode wire format (colon-separated hex)', () => {
+    const result = parseEventId('0000000003e8:0005:node-1');
+    expect(result.sequence).toBe(5);
+    expect(result.timestamp).toBe(1000);
+    expect(result.nodeId).toBe('node-1');
+  });
+
   test('returns 0 sequence for unparseable ID', () => {
     const result = parseEventId('totally-random');
     expect(result.sequence).toBe(0);

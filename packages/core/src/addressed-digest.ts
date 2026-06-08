@@ -5,6 +5,7 @@
  * @module
  */
 
+import { blake3 } from '@noble/hashes/blake3';
 import { Effect } from 'effect';
 import type { AddressedDigest as _AddressedDigest } from './brands.js';
 import { IntegrityDigest as mkIntegrityDigest } from './brands.js';
@@ -30,16 +31,20 @@ const sha256Hex = (bytes: Uint8Array): Effect.Effect<string> =>
     catch: (error) => new Error(`SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`),
   }).pipe(Effect.orDie);
 
-/** Derive an {@link AddressedDigest} from raw bytes. v0.1.0 implements `sha256` only. */
+const blake3Hex = (bytes: Uint8Array): string => bytesToHex(blake3(bytes));
+
+/** Derive an {@link AddressedDigest} from raw bytes. Supports `sha256` and `blake3`. */
 export const AddressedDigestOf = (
   bytes: Uint8Array,
   algo: 'sha256' | 'blake3' = 'sha256',
 ): Effect.Effect<_AddressedDigest, Error> =>
   Effect.gen(function* () {
-    if (algo !== 'sha256') {
-      return yield* Effect.fail(new Error(`AddressedDigest: algo "${algo}" not yet implemented (v0.2)`));
-    }
     const display_id = fnv1aBytes(bytes);
+    if (algo === 'blake3') {
+      const hex = blake3Hex(bytes);
+      const integrity_digest = mkIntegrityDigest(`blake3:${hex}`);
+      return { display_id, integrity_digest, algo: 'blake3' as const };
+    }
     const hex = yield* sha256Hex(bytes);
     const integrity_digest = mkIntegrityDigest(`sha256:${hex}`);
     return { display_id, integrity_digest, algo: 'sha256' as const };

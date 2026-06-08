@@ -20,8 +20,9 @@ import type {
   OutputsFor,
   HLCBrand,
 } from '@czap/core';
+import { HLC } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import { ContentAddress as mkContentAddress, StateName as mkStateName, CanonicalCbor, Easing, fnv1aBytes } from '@czap/core';
+import { StateName as mkStateName, CanonicalCbor, Easing, fnv1aBytes } from '@czap/core';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -241,6 +242,21 @@ function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
   return fnv1aBytes(CanonicalCbor.encode(payload));
 }
 
+/** Output-cache identity: a derived tuple minted as a true fnv1a ContentAddress. */
+function outputCacheAddress(
+  configId: ContentAddress,
+  state: string,
+  springCSS: string | null,
+): ContentAddress {
+  return fnv1aBytes(
+    CanonicalCbor.encode({
+      configId,
+      state,
+      springCSS: springCSS ? 1 : 0,
+    }),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Memoization caches
 // ---------------------------------------------------------------------------
@@ -279,7 +295,7 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
   springCSS: string | null,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
   // Check output cache
-  const cacheKey = mkContentAddress(`${configId}:${state as string}:${springCSS ? '1' : '0'}`);
+  const cacheKey = outputCacheAddress(configId, state as string, springCSS);
   const cached = outputCache.get(cacheKey);
   if (cached) return cached;
 
@@ -311,10 +327,10 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
 }
 
 // ---------------------------------------------------------------------------
-// Monotonic HLC for sync evaluate() -- uses Date.now() + incrementing counter
+// Monotonic HLC for sync evaluate() — HLC.increment, not ad-hoc counter++
 // ---------------------------------------------------------------------------
 
-let hlcCounter = 0;
+let quantizerHlc = HLC.create('quantizer');
 
 // ---------------------------------------------------------------------------
 // Spring CSS computation with caching
@@ -419,10 +435,11 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
                 const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
 
                 if (result.crossed) {
+                  quantizerHlc = HLC.increment(quantizerHlc, Date.now());
                   const crossing: BoundaryCrossing<StateUnion<B> & string> = {
                     from: mkStateName<StateUnion<B> & string>(previousState),
                     to: mkStateName(result.state),
-                    timestamp: { wall_ms: Date.now(), counter: hlcCounter++, node_id: 'quantizer' } satisfies HLCBrand,
+                    timestamp: quantizerHlc satisfies HLCBrand,
                     value,
                   };
                   previousState = result.state;

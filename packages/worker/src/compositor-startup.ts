@@ -5,7 +5,7 @@
  * @module
  */
 
-import { RuntimeCoordinator } from '@czap/core';
+import { RuntimeCoordinator, StateName } from '@czap/core';
 import type {
   ToWorkerMessage,
   WorkerUpdate,
@@ -309,7 +309,7 @@ export function setStartupPacketInitialState(
           const { initialState: _initialState, ...withoutInitialState } = currentRegistration;
           return withoutInitialState;
         })()
-      : { ...currentRegistration, initialState: state };
+      : { ...currentRegistration, initialState: StateName(state) };
   const nextInitialState = 'initialState' in nextRegistration ? nextRegistration.initialState : undefined;
   if (
     currentRegistration.boundaryId !== nextRegistration.boundaryId ||
@@ -660,7 +660,7 @@ export function evaluateRegistrationState(registration: BootstrapQuantizerRegist
 export function toResolvedStateEntriesFromAck(ack: ResolvedStateAckPayload): readonly ResolvedStateEntry[] {
   return ack.states.map((state) => ({
     name: state.name,
-    state: state.state,
+    state: StateName(state.state),
     generation: ack.generation,
   }));
 }

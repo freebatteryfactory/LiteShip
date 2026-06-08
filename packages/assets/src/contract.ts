@@ -10,6 +10,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { AttributionDecl, Invariant, CapsuleDef } from '@czap/core';
+import { mkAssetRefId, type AssetRefId } from './brands.js';
 
 /** Supported asset kinds. */
 export type AssetKind = 'audio' | 'video' | 'image' | 'beat-markers' | 'onsets' | 'waveform';
@@ -46,12 +47,12 @@ export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCa
   return cap;
 }
 
-/** Resolve an asset id to itself after confirming it's registered. Throws on unknown ids. */
-export function AssetRef(id: string): string {
+/** Resolve an asset id to a branded {@link AssetRefId} after confirming it's registered. Throws on unknown ids. */
+export function AssetRef(id: string): AssetRefId {
   if (!registry.has(id)) {
     throw new Error(`AssetRef('${id}') not registered — did you call defineAsset?`);
   }
-  return id;
+  return mkAssetRefId(id);
 }
 
 /** Read-only snapshot of the asset registry. */

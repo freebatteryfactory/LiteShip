@@ -6,15 +6,31 @@
  * @module
  */
 
+import { HLC } from '@czap/core';
+
 /**
  * Parse an event ID to extract sequence number and other components.
  *
- * Supports: numeric ("123"), prefixed ("evt-123"),
- * HLC-style ("1234567890-5-node1"), HLC simple ("1234567890-5").
+ * Primary: canonical HLC wire format (`HLC.encode` — colon-separated hex).
+ * Legacy: numeric ("123"), prefixed ("evt-123"), dash-decimal resumption ids.
  */
 export const parseEventId = (
   eventId: string,
 ): { raw: string; sequence: number; timestamp?: number; nodeId?: string } => {
+  if (eventId.includes(':')) {
+    try {
+      const decoded = HLC.decode(eventId);
+      return {
+        raw: eventId,
+        sequence: decoded.counter,
+        timestamp: decoded.wall_ms,
+        nodeId: decoded.node_id,
+      };
+    } catch {
+      // Not canonical HLC — fall through to legacy parsers.
+    }
+  }
+
   const numericMatch = eventId.match(/^(\d+)$/);
   if (numericMatch) {
     return { raw: eventId, sequence: parseInt(numericMatch[1]!, 10) };
