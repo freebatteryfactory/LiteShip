@@ -230,6 +230,7 @@ export default tseslint.config(
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)
+      'packages/command/src/host/ffmpeg-probe.ts', // reason: spawnSync libx264 availability probe — sync, shared by doctor + tests
       'packages/cli/src/commands/gauntlet.ts', // reason: spawnSync('pnpm run gauntlet:full', { shell: true }) — needs shell
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes

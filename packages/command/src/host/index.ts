@@ -25,6 +25,8 @@ export type { SpawnResult, SpawnArgvOpts, SpawnCaptureResult, SpawnCaptureOpts, 
 export { VitestRunner } from './vitest-runner.js';
 export { renderWithFfmpeg } from './ffmpeg.js';
 export type { RenderOpts, RenderResult } from './ffmpeg.js';
+export { ffmpegRenderCapable, probeFfmpegRender } from './ffmpeg-probe.js';
+export type { FfmpegRenderProbe } from './ffmpeg-probe.js';
 export { tryReadCache, writeCache, hashInputs, cachePath } from './idempotency.js';
 export type { IdempotencyCtx } from './idempotency.js';
 export { getCapsuleManifestPath } from './manifest-path.js';

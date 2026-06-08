@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
 import type { WallClockTimestamp } from '../receipts.js';
 import { spawnArgvCapture, spawnArgvVisible } from '../lib/spawn.js';
+import { probeFfmpegRender } from '@czap/command/host';
 import { emit } from '../receipts.js';
 
 /**
@@ -286,6 +287,20 @@ function probeGitHooks(cwd: string): DoctorCheck {
   return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'pre-commit rigged' };
 }
 
+function probeFfmpegRenderCheck(): DoctorCheck {
+  const probe = probeFfmpegRender();
+  if (probe.ok) {
+    return { id: 'ffmpeg.libx264', label: 'ffmpeg (libx264)', status: 'ok', detail: probe.detail };
+  }
+  return {
+    id: 'ffmpeg.libx264',
+    label: 'ffmpeg (libx264)',
+    status: 'warn',
+    detail: probe.detail,
+    hint: probe.hint,
+  };
+}
+
 function probePlaywright(cwd: string): DoctorCheck {
   // Playwright stashes browser binaries under ms-playwright/. We probe the
   // package.json + node_modules path rather than running playwright itself
@@ -386,6 +401,7 @@ async function runAllProbes(cwd: string): Promise<readonly DoctorCheck[]> {
     probeGitHooks(cwd),
     gitConfig,
     probePlaywright(cwd),
+    probeFfmpegRenderCheck(),
     ...(wasm ? [wasm] : []),
   ];
 }
