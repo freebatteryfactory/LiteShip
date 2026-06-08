@@ -11,11 +11,7 @@ import { defineCapsule } from '@czap/core';
 const ClientHintsInputSchema = Schema.Record(Schema.String, Schema.String);
 
 const BoundaryResolutionSchema = Schema.Struct({
-  cacheStatus: Schema.Union([
-    Schema.Literal('disabled'),
-    Schema.Literal('hit'),
-    Schema.Literal('miss'),
-  ]),
+  cacheStatus: Schema.Union([Schema.Literal('disabled'), Schema.Literal('hit'), Schema.Literal('miss')]),
   htmlAttributes: Schema.String,
 });
 
