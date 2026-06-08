@@ -1,7 +1,7 @@
 /**
  * Canonical gauntlet phase profile (CUT D8) — the ONE source of truth for the
  * release-grade gauntlet sequence. Every projection derives from this list:
- *   - the executor `scripts/gauntlet.ts` (imports + loops these);
+ *   - the executor `scripts/gauntlet.ts` (imports + loops these serially);
  *   - the CLI dry-run (`czap gauntlet --dry-run` projects `label`s);
  *   - the meta tests.
  *
@@ -31,8 +31,11 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 32-phase gauntlet sequence, in execution order. */
+/** The canonical 34-phase gauntlet sequence, in execution order. */
 export const gauntletPhases: readonly GauntletPhase[] = [
+  // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
+  { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
+
   // ── Phase 1: Build + validate ──────────────────────────────────────
   { label: 'build', command: 'pnpm run build' },
   { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
@@ -40,6 +43,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
   { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'audit:floor', command: 'pnpm run audit:floor' },
 
   // ── Phase 2: Unit tests ────────────────────────────────────────────
   { label: 'test (unit + component + property + integration)', command: 'pnpm test' },
@@ -55,7 +59,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'test:redteam', command: 'pnpm run test:redteam' },
   { label: 'bench', command: 'pnpm run bench' },
   { label: 'bench:gate', command: 'pnpm run bench:gate' },
-  { label: 'bench:trend', command: 'pnpm run bench:trend' },
+  { label: 'bench:trend', command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend' },
   { label: 'bench:reality', command: 'pnpm run bench:reality' },
   { label: 'package:smoke', command: 'pnpm run package:smoke' },
 

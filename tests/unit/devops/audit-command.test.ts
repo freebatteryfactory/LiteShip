@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@czap/command';
 import { audit } from '../../../packages/cli/src/commands/audit.js';
+import { AUDIT_WARNING_FLOOR, collectWarningInventory } from '../../../scripts/lib/audit-floor.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -151,6 +152,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     expect(receipt.status).toBe('ok');
     expect(receipt.errorCount).toBe(0);
     expect(receipt.warningCount).toBe(6); // the artifact-independent three-pass engine floor
+    expect(collectWarningInventory()).toEqual(AUDIT_WARNING_FLOOR);
     expect(receipt.profileSource).toBe('default');
     expect(result).toBe(0);
   });

@@ -78,6 +78,8 @@ export interface DoctorReceipt {
   readonly fixed?: readonly DoctorFix[];
   /** Present when `--ci` was passed — warns escalate to exit 1. */
   readonly strict?: true;
+  /** Present when `--preflight` was passed — `*.built` probes excluded from verdict. */
+  readonly preflight?: true;
 }
 
 /** Engine minima read from root package.json `engines`. Fallback to safe defaults. */
@@ -323,11 +325,13 @@ function playwrightBrowsersDir(): string | null {
 function hasChromiumBuild(): boolean {
   const dir = playwrightBrowsersDir();
   if (!dir || !existsSync(dir)) return false;
+  let found = false;
   try {
-    return readdirSync(dir).some((entry) => entry.startsWith('chromium'));
+    found = readdirSync(dir).some((entry) => entry.startsWith('chromium'));
   } catch {
-    return false;
+    /* unreadable cache dir — treat as no chromium */
   }
+  return found;
 }
 
 function probePlaywright(cwd: string): DoctorCheck {
@@ -607,7 +611,7 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
  * @returns process exit code: 0 when ready (and, without --ci, also caution).
  */
 export async function doctor(
-  opts: { pretty?: boolean; fix?: boolean; ci?: boolean; cwd?: string } = {},
+  opts: { pretty?: boolean; fix?: boolean; ci?: boolean; preflight?: boolean; cwd?: string } = {},
 ): Promise<number> {
   // Explicit cwd from tests/MCP is used verbatim (predictable fixtures).
   // Default behavior anchors probes to the workspace root so `czap doctor`
@@ -621,7 +625,8 @@ export async function doctor(
     if (fixes.length > 0) checks = await runAllProbes(cwd);
   }
 
-  const verdict = aggregate(checks);
+  const scoped = opts.preflight ? checks.filter((c) => !c.id.endsWith('.built')) : checks;
+  const verdict = aggregate(scoped);
   const exitCode = verdict === 'blocked' || (opts.ci && verdict === 'caution') ? 1 : 0;
   const status: 'ok' | 'failed' = exitCode === 0 ? 'ok' : 'failed';
 
@@ -633,12 +638,22 @@ export async function doctor(
     checks,
     ...(fixes && fixes.length > 0 ? { fixed: fixes } : {}),
     ...(opts.ci ? { strict: true as const } : {}),
+    ...(opts.preflight ? { preflight: true as const } : {}),
   };
   emit(receipt);
 
   const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
   if (wantPretty) {
     process.stderr.write(prettySummary(checks, verdict, fixes));
+    if (verdict === 'caution') {
+      process.stderr.write(
+        color(
+          'dim',
+          '  zsh paste trap: one command per line — no inline # comments with (parentheses).\n',
+          colorEnabled(),
+        ),
+      );
+    }
   }
 
   return exitCode;

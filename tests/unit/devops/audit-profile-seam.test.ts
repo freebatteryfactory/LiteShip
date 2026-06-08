@@ -19,6 +19,11 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
+import {
+  AUDIT_WARNING_FLOOR,
+  collectWarningInventory,
+  diffInventories,
+} from '../../../scripts/lib/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
 import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
 import type { DevopsProfile } from '../../../scripts/config/devops-profile.js';
@@ -173,9 +178,14 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
       ...runSurfaceAudit().findings,
     ];
     const bySeverity = (s: string) => all.filter((f) => f.severity === s).length;
+    const inventory = collectWarningInventory();
+    const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
     // Hard floor — D9a must not move these.
     expect(bySeverity('error')).toBe(0);
     expect(bySeverity('warning')).toBe(6);
+    expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
+    expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
+    expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);
     // info is tracked-file-count sensitive — loose by design (Decision 5).
     expect(bySeverity('info')).toBeGreaterThanOrEqual(1);
   }, 60_000);

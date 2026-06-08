@@ -8,12 +8,19 @@
 import { spawnSync } from 'node:child_process';
 import { emit, emitError } from '../receipts.js';
 import { gauntletPhaseLabels } from '../gauntlet-phases.js';
+import { formatUnexpectedArgvReceipt, parseGauntletArgv } from '../gauntlet-argv.js';
 
 /** The canonical phase labels (CUT D8) — projected from the ONE source the executor runs. */
 const PHASES = gauntletPhaseLabels();
 
 /** Execute the gauntlet command. */
-export async function gauntlet(dryRun: boolean): Promise<number> {
+export async function gauntlet(rest: readonly string[]): Promise<number> {
+  const { dryRun, unexpected } = parseGauntletArgv(rest);
+  if (unexpected.length > 0) {
+    process.stderr.write(formatUnexpectedArgvReceipt(unexpected));
+    emitError('gauntlet', `unexpected_argv: ${unexpected.join(' ')}`);
+    return 1;
+  }
   if (dryRun) {
     emit({
       status: 'ok',
@@ -21,6 +28,7 @@ export async function gauntlet(dryRun: boolean): Promise<number> {
       timestamp: new Date().toISOString(),
       phases: PHASES,
       dryRun: true,
+      argvPolicy: 'reject-unknown',
     });
     return 0;
   }
@@ -38,6 +46,7 @@ export async function gauntlet(dryRun: boolean): Promise<number> {
     phases: PHASES,
     elapsedMs,
     dryRun: false,
+    argvPolicy: 'reject-unknown',
   });
   return 0;
 }

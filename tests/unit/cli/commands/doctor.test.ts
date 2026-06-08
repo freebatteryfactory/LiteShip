@@ -4,11 +4,12 @@
  * (every check has a status + label) rather than specific verdicts so
  * the test stays stable across machines.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { doctor, findWorkspaceRoot, readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
+import * as spawnLib from '../../../../packages/cli/src/lib/spawn.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('doctor command', () => {
@@ -250,6 +251,49 @@ describe('doctor command', () => {
     }
   });
 
+  it('records preflight scope in the receipt', async () => {
+    const { stdout } = await captureCli(() => doctor({ pretty: false, preflight: true }));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.preflight).toBe(true);
+  });
+
+  it('--preflight + --ci excludes *.built probes from the verdict', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-preflight-'));
+    try {
+      mkdirSync(resolve(tmp, 'packages', 'core'), { recursive: true });
+      mkdirSync(resolve(tmp, 'packages', 'cli'), { recursive: true });
+      mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({
+          name: 'czap',
+          version: '0.0.0',
+          engines: { node: '>=20.0.0', pnpm: '>=9.0.0' },
+        }),
+      );
+      const { exit, stdout } = await captureCli(() =>
+        doctor({ pretty: false, preflight: true, ci: true, cwd: tmp }),
+      );
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const built = receipt.checks.filter((c: { id: string }) => c.id.endsWith('.built'));
+      expect(built.length).toBe(2);
+      expect(built.every((c: { status: string }) => c.status === 'warn')).toBe(true);
+      // Scoped verdict ignores built warns — only non-built probes gate exit.
+      const scopedVerdict =
+        receipt.checks.filter((c: { id: string }) => !c.id.endsWith('.built')).some((c: { status: string }) => c.status === 'fail')
+          ? 'blocked'
+          : receipt.checks.filter((c: { id: string }) => !c.id.endsWith('.built')).some((c: { status: string }) => c.status === 'warn')
+            ? 'caution'
+            : 'ready';
+      expect(receipt.verdict).toBe(scopedVerdict);
+      if (scopedVerdict === 'ready') {
+        expect(exit).toBe(0);
+      }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('pretty mode writes the doctor TTY summary to stderr after the JSON receipt', async () => {
     // Covers doctor.ts:489-490 (the `if (wantPretty) { process.stderr.write(prettySummary(...)) }`
     // path). Every other doctor test in this file passes `pretty: false`,
@@ -305,31 +349,14 @@ describe('doctor command', () => {
   });
 
   it('applyFixes git.hooks branch fires when probeGitHooks reports `warn` (covers doctor.ts:402-414)', async () => {
-    // Force a 'warn' from probeGitHooks by giving doctor a cwd whose
-    // .git directory exists but contains no hooks/pre-commit. doctor({fix:true})
-    // then enters applyFixes' git-hooks arm. The fixture's package.json
-    // claims name: 'czap' so isLiteShipWorkspace returns true and the
-    // git-hooks branch actually runs the spawn (vs the guard-reject path
-    // tested separately below).
-    //
-    // The subprocess invocation (`pnpm exec tsx scripts/link-pre-commit.ts`)
-    // can't succeed because scripts/link-pre-commit.ts doesn't exist
-    // under the tmpdir — we capture the failed-fix path, which exercises
-    // the same lines as a successful one (the status branch differs but
-    // the spawn + record-result lines run either way).
-    //
-    // 60s timeout because cold-cache `pnpm exec tsx` startup (CI runners,
-    // first-call resolution) routinely exceeds vitest's 10s default; this
-    // was the suspected root cause of the truth-linux red on PR #3 commits
-    // 97495de / be7abc7 even though the test passed locally with a warm
-    // cache. Test body still runs in <2s on a healthy run; the 60s ceiling
-    // only kicks in when something is genuinely wrong with the subprocess.
+    const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({
+      exitCode: 1,
+      stdout: '',
+      stderr: '',
+    });
     const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-'));
     try {
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
-      // name: 'czap' so isLiteShipWorkspace returns true and the spawn
-      // path actually runs (the alternative — guard rejection — is the
-      // next test).
       writeFileSync(
         resolve(tmp, 'package.json'),
         JSON.stringify({ name: 'czap', version: '0.0.0' }),
@@ -338,21 +365,18 @@ describe('doctor command', () => {
         doctor({ pretty: false, fix: true, cwd: tmp }),
       );
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-      // The git.hooks fix attempt is recorded in receipt.fixed regardless
-      // of whether the underlying spawn succeeded.
+      expect(spy).toHaveBeenCalled();
       if (Array.isArray(receipt.fixed)) {
         const hookFix = receipt.fixed.find((f: { id: string }) => f.id === 'git.hooks');
         expect(hookFix).toBeDefined();
         expect(['applied', 'failed']).toContain(hookFix.status);
-        // The action string must NOT be the guard-skip message — that
-        // would mean the spawn didn't fire and this test isn't actually
-        // exercising the branch it claims.
         expect(hookFix.action).not.toMatch(/not the LiteShip workspace/);
       }
     } finally {
+      spy.mockRestore();
       rmSync(tmp, { recursive: true, force: true });
     }
-  }, 60_000);
+  });
 
   it('applyFixes refuses to run the git.hooks fix outside the LiteShip workspace (Codex P1 follow-up)', async () => {
     // Regression for PR #3 discussion on commit 3212fa4: previously the

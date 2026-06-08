@@ -11,5 +11,6 @@ import { doctor } from '../packages/cli/src/commands/doctor.js';
 
 const fix = process.argv.includes('--fix');
 const ci = process.argv.includes('--ci');
-const exitCode = await doctor({ fix, ci });
+const preflight = process.argv.includes('--preflight');
+const exitCode = await doctor({ fix, ci, preflight });
 process.exit(exitCode);

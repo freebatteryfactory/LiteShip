@@ -15,14 +15,18 @@ pnpm install
 # First-run shake-down: rig-check + build + test
 pnpm shakedown
 
-# Or step through it manually:
-pnpm run doctor       # preflight rig-check (Node, pnpm, build, hooks)
-pnpm run build        # tsc --build across the compiled packages
-pnpm test             # fast inner loop (~75s)
+# Or step through it manually (one command per line — see Shell paste traps below):
+pnpm run doctor
+pnpm run build
+pnpm test
 
-# Full release-grade gate (~22min)
+# Full release-grade gate (~22min) — rig-check is enforced at entry
 pnpm run gauntlet:full
 ```
+
+### Shell paste traps (zsh)
+
+Interactive zsh does **not** treat `#` as a comment unless you run `setopt interactivecomments`. Pasting a command with an inline comment — especially one containing parentheses like `(libx264):` — can fail with `zsh: no matches found` before the command runs. **Paste one command per line.** Put expectations in prose below the block, not on the same line as the command.
 
 Required versions: Node.js 22+, pnpm 10+. The repo runs on Windows + Linux,
 PowerShell + bash. WebKit/Firefox/Chromium tests run on the system Playwright
@@ -77,9 +81,10 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 32 phases (see `docs/STATUS.md` for the canonical ordered list):
+`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 34 phases (see `docs/STATUS.md` for the canonical ordered list):
 
-- build, capsule:compile, typecheck, lint, docs:check, invariants
+- rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
+- build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
 - the full vitest test surface (unit + component + property + integration)
 - Vite, Astro, Tailwind integration smokes
 - Playwright e2e + 10x stress + 10x stream-stress + 5x flake harness
@@ -94,9 +99,10 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 **Bench trend gate (`bench:trend`):** it reads `benchmarks/history.jsonl` (one
 JSON line per `bench:gate` run) and only enforces drift once there are three
-distinct historical fingerprints. Until then it prints a skip message and
-exits zero. Run the gauntlet (or `bench:gate`) a few times on `main` to warm
-the file, or expect `bench:trend` to stay in "skipping" mode on fresh clones.
+distinct historical fingerprints. Until then it prints a `[ceremonial-skip]`
+tagged message and exits zero (fresh clones are not trapped). The gauntlet runs
+`bench:trend` with `BENCH_TREND_STRICT=1` so regression failures are enforced
+when history exists.
 
 The gauntlet exits cleanly with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed. Not a stylistic gate; a correctness gate. PRs need to be green here before merge.
 
@@ -247,7 +253,7 @@ The test now lives permanently in `tests/regression/` and runs on every `pnpm te
 
 ### Gauntlet integration
 
-Worth noting: `pnpm test` is phase 7 of `pnpm run gauntlet:full` and covers the full vitest surface including `tests/regression/`; see [docs/STATUS.md](./docs/STATUS.md) for the complete phase list.
+Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after rig-check, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [docs/STATUS.md](./docs/STATUS.md) for the complete phase list.
 
 ## Architecture changes
 
