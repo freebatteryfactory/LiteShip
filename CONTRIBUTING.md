@@ -81,7 +81,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 34 phases (see `docs/STATUS.md` for the canonical ordered list):
+`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 35 phases (see `docs/STATUS.md` for the canonical ordered list):
 
 - rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor

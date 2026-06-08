@@ -38,6 +38,7 @@ export type FullAuditSectionId =
   | '@czap/worker'
   | '@czap/vite'
   | '@czap/astro'
+  | '@czap/cloudflare'
   | '@czap/remotion'
   | 'czap-compute'
   | 'packages/_spine'

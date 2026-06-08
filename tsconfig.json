@@ -28,6 +28,7 @@
     { "path": "./packages/worker" },
     { "path": "./packages/vite" },
     { "path": "./packages/astro" },
+    { "path": "./packages/cloudflare" },
     { "path": "./packages/remotion" },
     { "path": "./packages/scene" },
     { "path": "./packages/assets" },

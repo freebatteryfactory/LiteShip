@@ -2,7 +2,7 @@
 
 From a fresh clone to a runnable boundary cast to CSS and hydrating through Astro, in about ten minutes on a fast machine. Drag a window edge and the boundary state changes; the CSS re-paints; the ARIA attribute updates.
 
-LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md).
+LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [hosting/cloudflare.md](./hosting/cloudflare.md) and [examples/cloudflare-astro/](../examples/cloudflare-astro/).
 
 ## Prerequisites
 

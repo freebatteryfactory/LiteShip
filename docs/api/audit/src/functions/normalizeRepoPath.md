@@ -8,7 +8,7 @@
 
 > **normalizeRepoPath**(`value`): `string`
 
-Defined in: [audit/src/policy.ts:281](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L281)
+Defined in: [audit/src/policy.ts:285](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L285)
 
 ## Parameters
 

@@ -11,7 +11,7 @@ Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below s
 Current first-class support target (tier-1, CI-gated):
 
 - Node 22 + pnpm 10
-- Vite 8 + Astro 6
+- Vite 8 + Astro 6 + Cloudflare Workers (`@astrojs/cloudflare` v13+, Wrangler 4)
 - Windows + Linux (`windows-latest` smoke sweep + `ubuntu-latest` full gauntlet via `.github/workflows/ci.yml`)
 - PowerShell + bash
 - Chromium + Firefox + WebKit shared-runtime browser lane
@@ -19,7 +19,7 @@ Current first-class support target (tier-1, CI-gated):
 
 macOS (tier-2, best-effort, real CI signal):
 
-`macos-smoke` runs every PR on `macos-latest` via `.github/workflows/ci.yml`. The job is `continue-on-error: true`, so a macOS regression will not block merge to main; it surfaces as a yellow check, not silence. The smoke covers: build, typecheck, lint, invariants, test, test:vite, test:astro, test:tailwind, test:redteam, package:smoke. Playwright-browser-dependent lanes (`test:e2e`, `coverage:browser`) stay Linux-only because Playwright dep install on macOS is a separate path. Known divergence areas the smoke does not catch:
+`macos-smoke` runs every PR on `macos-latest` via `.github/workflows/ci.yml`. The job is `continue-on-error: true`, so a macOS regression will not block merge to main; it surfaces as a yellow check, not silence. The smoke covers: build, typecheck, lint, invariants, test, test:vite, test:astro, test:cloudflare, test:tailwind, test:redteam, package:smoke. Playwright-browser-dependent lanes (`test:e2e`, `coverage:browser`) stay Linux-only because Playwright dep install on macOS is a separate path. Known divergence areas the smoke does not catch:
 
 - Vite filesystem watchers use FSEvents on APFS vs inotify / ReadDirectoryChangesW on ext4 / NTFS; HMR behavior under `@czap/vite` may differ.
 - Worker startup on Apple Silicon is faster than the Linux baseline the bench gates are calibrated against; hard gates should still pass, distributions will differ.
@@ -67,6 +67,7 @@ Current browser-security posture:
 | `pnpm test`                 | green, see fresh local Vitest output for current counts | any                |
 | `pnpm run test:vite`        | green                                                   | PowerShell + bash  |
 | `pnpm run test:astro`       | green                                                   | PowerShell + bash  |
+| `pnpm run test:cloudflare`  | green, Astro 6 + Cloudflare adapter + KV middleware     | PowerShell + bash  |
 | `pnpm run test:tailwind`    | green                                                   | PowerShell + bash  |
 | `pnpm run test:e2e`         | green, `retries: 0`                                     | any                |
 | `pnpm run test:e2e:stress`  | green, 10x repeated WebCodecs capture run               | any                |
@@ -86,7 +87,7 @@ Current browser-security posture:
 | `pnpm run report:satellite-scan` | green, writes local `reports/satellite-scan.json` + `.md` | any         |
 | `pnpm run runtime:gate`     | green, final fail-closed telemetry enforcement            | any                |
 | `pnpm run gauntlet:full`    | canonical full sequential gauntlet                      | any                |
-| `pnpm run capsule:compile`  | green, emits reports/capsule-manifest.json + .czap/generated/mcp-manifest.json | any |
+| `pnpm run capsule:compile`  | green, emits reports/capsule-manifest.json + tests/generated/* harness files | any |
 | `pnpm run capsule:verify`   | green, runs all generated tests + benches               | any                |
 | `pnpm exec czap describe`   | green, emits JSON schema of catalog + commands          | any                |
 | `pnpm exec czap mcp`        | runs indefinitely on stdio; MCP tools/list + tools/call | any                |
@@ -189,7 +190,7 @@ or read `gauntlet-phases.ts` directly. The per-phase timing table below is a cap
 
 ### Per-phase wall-time ranges
 
-Total across all 34 phases: 15–22 minutes end-to-end; recent local datapoint 14m47s on Linux x64, 8 vCPU (per the README's gauntlet snapshot). Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
+Total across all 35 phases: 15–22 minutes end-to-end; recent local datapoint 14m47s on Linux x64, 8 vCPU (per the README's gauntlet snapshot). Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 
@@ -234,7 +235,7 @@ Phase 23 (`coverage:browser`) is the only phase with a meaningfully bimodal cost
 
 For the canonical, current truth, read `benchmarks/gauntlet-phase-timings.json` after a fresh `pnpm run gauntlet:full`. The snapshot above is a reference anchor, not the live ledger.
 
-**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 34 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
+**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 35 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
 
 ---
 
@@ -264,6 +265,7 @@ logic.
 | `host-wired` | `@czap/core` runtime coordination + WASM / GenUI surfaces | Compositor and worker host paths now expose shared `RuntimeCoordinator` state; Astro wasm uses `WASMDispatch`; Astro llm uses `TokenBuffer`, `UIQuality`, `GenFrame`, `Receipt`, and `DAG`-ordered replay plumbing |
 | `host-wired` | `@czap/vite` wasm asset path | `virtual:czap/wasm-url` is wired into the real plugin/integration path |
 | `host-wired` | `@czap/edge` request + cache/theme host path | Astro middleware now routes through `createEdgeHostAdapter`, which resolves `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` in one host path |
+| `host-wired` | `@czap/cloudflare` Workers KV glue | `cloudflareMiddleware` maps `cloudflare:workers` env bindings to `@czap/edge` KV cache; proof at `examples/cloudflare-astro/` |
 | `standalone subsystem` | `@czap/remotion` | supported video branch, not part of the default Astro/Web runtime path |
 | `host-wired` | `@czap/core` `Plan` / `ECS` | promoted through `RuntimeCoordinator`; the compositor and worker host paths now use a real plan graph plus ECS-backed dense stores for runtime bookkeeping |
 
@@ -535,8 +537,7 @@ so `czap doctor | jq` and MCP-mode usage keep working.
 
 ### B.1: DECIDED -- examples/remotion-demo is standalone
 
-`examples/remotion-demo` is excluded from both workspaces and tsconfig.
-It's a standalone demo requiring its own `cd examples/remotion-demo && pnpm install`.
+`examples/*` is included in the pnpm workspace (`pnpm-workspace.yaml`) but excluded from the root TypeScript composite (`tsconfig.json`). `examples/remotion-demo` uses `file:` deps and its own `tsconfig.json`; install from the repo root with `pnpm install`.
 Documented in README.
 
 ### B.2: DECIDED -- Node/PNPM wrappers are the supported feedback loop

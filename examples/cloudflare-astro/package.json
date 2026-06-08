@@ -1,0 +1,22 @@
+{
+  "name": "@czap/cloudflare-astro-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.0.0",
+    "@czap/astro": "workspace:*",
+    "@czap/cloudflare": "workspace:*",
+    "@czap/core": "workspace:*",
+    "@czap/edge": "workspace:*",
+    "astro": "^6.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0"
+  }
+}

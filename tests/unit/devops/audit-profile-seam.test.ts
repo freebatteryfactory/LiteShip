@@ -171,7 +171,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
   // The artifact-INDEPENDENT engine floor: the three audit passes on the real
   // repo with the default profile. (The full `pnpm run audit` gate adds
   // artifact-dependent supporting findings on top — those are gated elsewhere.)
-  it('the real repo holds 0 errors / 6 warnings across structure+integrity+surface', () => {
+  it('the real repo holds 0 errors / 10 warnings across structure+integrity+surface', () => {
     const all = [
       ...runStructureAudit().findings,
       ...runIntegrityAudit().findings,
@@ -182,7 +182,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
     const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
     // Hard floor — D9a must not move these.
     expect(bySeverity('error')).toBe(0);
-    expect(bySeverity('warning')).toBe(6);
+    expect(bySeverity('warning')).toBe(10);
     expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
     expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
     expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);

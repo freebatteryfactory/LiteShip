@@ -32,4 +32,20 @@ describe('@czap/command version command', () => {
     expect(p.pnpm).toBeNull();
     expect(p.node).toBe(process.versions.node);
   });
+
+  it('reports pnpm:null when spawnCapture rejects', async () => {
+    const result = await versionCommand.handler(
+      { name: 'version', args: {} },
+      { hostVersion: () => '1.0.0', spawnCapture: async () => Promise.reject(new Error('spawn failed')) },
+    );
+    expect((result.payload as VersionPayload).pnpm).toBeNull();
+  });
+
+  it('reports pnpm:null when the probe returns blank stdout', async () => {
+    const result = await versionCommand.handler(
+      { name: 'version', args: {} },
+      { hostVersion: () => '1.0.0', spawnCapture: async () => ({ exitCode: 0, stdout: '   \n' }) },
+    );
+    expect((result.payload as VersionPayload).pnpm).toBeNull();
+  });
 });

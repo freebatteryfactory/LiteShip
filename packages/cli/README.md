@@ -16,7 +16,7 @@ Every command emits a JSON receipt to stdout. Pretty TTY summaries (when stderr 
 
 | Verb | What it does |
 | --- | --- |
-| `czap doctor [--fix] [--ci]` | Preflight rig check. Probes Node, pnpm, workspace install, built dist/, git hooks, git config, Playwright, WASM toolchain (if `crates/` present). `--fix` auto-remediates cheap cases; `--ci` escalates warnings to exit 1. |
+| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare]` | Preflight rig check. Default profile probes Node, pnpm, workspace install, built dist/, git hooks, git config, Playwright, WASM toolchain (if `crates/` present). `--target cloudflare` runs a focused Cloudflare Workers profile (Astro 6, `@astrojs/cloudflare` v13+, Wrangler, wrangler config). `--fix` auto-remediates cheap cases; `--ci` escalates warnings to exit 1; `--preflight` excludes `*.built` from the verdict. |
 | `czap help` | The chart — every verb grouped by phase. |
 | `czap glossary [term]` | Ontology lookup. Mirrors `docs/GLOSSARY.md` so AI agents can resolve register without leaving the shell. |
 | `czap completion <bash\|zsh\|fish>` | Emit a tab-completion script. `eval "$(czap completion bash)"` to load. |

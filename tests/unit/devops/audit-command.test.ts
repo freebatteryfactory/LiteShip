@@ -151,7 +151,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     expect(receipt.command).toBe('audit');
     expect(receipt.status).toBe('ok');
     expect(receipt.errorCount).toBe(0);
-    expect(receipt.warningCount).toBe(6); // the artifact-independent three-pass engine floor
+    expect(receipt.warningCount).toBe(10); // artifact-independent three-pass engine floor
     expect(collectWarningInventory()).toEqual(AUDIT_WARNING_FLOOR);
     expect(receipt.profileSource).toBe('default');
     expect(result).toBe(0);

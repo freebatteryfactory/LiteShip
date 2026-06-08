@@ -16,6 +16,10 @@ packages/*/src/**/*.d.ts.map
 examples/remotion-demo/out/
 examples/remotion-demo/node_modules/
 
+# Cloudflare / wrangler + miniflare local state (dev cache, KV/cache sqlite,
+# deploy config) — per-machine generated state, never tracked.
+.wrangler/
+
 # Test artifacts
 test-results/
 tests/_results/

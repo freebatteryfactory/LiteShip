@@ -34,7 +34,15 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
   {
     name: 'doctor',
     summary: 'Preflight rig-check: Node, pnpm, workspace, build artifacts, git hooks.',
-    inputSchema: { type: 'object', properties: { fix: { type: 'boolean' }, ci: { type: 'boolean' } } },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        fix: { type: 'boolean' },
+        ci: { type: 'boolean' },
+        preflight: { type: 'boolean' },
+        target: { type: 'string', enum: ['cloudflare'] },
+      },
+    },
     annotations: { group: 'castoff' },
   },
   {

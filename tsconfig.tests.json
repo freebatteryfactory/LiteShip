@@ -24,6 +24,7 @@
       "@czap/cli": ["./packages/cli/src/index.ts"],
       "@czap/mcp-server": ["./packages/mcp-server/src/index.ts"],
       "@czap/edge": ["./packages/edge/src/index.ts"],
+      "@czap/cloudflare": ["./packages/cloudflare/src/index.ts"],
       "@czap/worker": ["./packages/worker/src/index.ts"],
       "@czap/_spine": ["./packages/_spine"]
     }

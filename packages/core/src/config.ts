@@ -128,6 +128,7 @@ export const Config = {
       '@czap/cli': r('packages/cli/src/index.ts'),
       '@czap/mcp-server': r('packages/mcp-server/src/index.ts'),
       '@czap/edge': r('packages/edge/src/index.ts'),
+      '@czap/cloudflare': r('packages/cloudflare/src/index.ts'),
       '@czap/worker': r('packages/worker/src/index.ts'),
       '@czap/_spine': r('packages/_spine'),
     };

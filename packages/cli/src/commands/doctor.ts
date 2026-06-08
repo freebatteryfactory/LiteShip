@@ -49,6 +49,9 @@ export type DoctorBearing = 'ok' | 'warn' | 'fail';
 /** Overall sailing readiness. Aggregates the per-check bearings. */
 export type DoctorVerdict = 'ready' | 'caution' | 'blocked';
 
+/** Host deployment target for focused probe profiles. */
+export type DoctorTarget = 'cloudflare';
+
 /** One probe outcome. */
 export interface DoctorCheck {
   readonly id: string;
@@ -80,6 +83,8 @@ export interface DoctorReceipt {
   readonly strict?: true;
   /** Present when `--preflight` was passed — `*.built` probes excluded from verdict. */
   readonly preflight?: true;
+  /** Present when `--target` was passed — names the focused host profile. */
+  readonly target?: DoctorTarget;
 }
 
 /** Engine minima read from root package.json `engines`. Fallback to safe defaults. */
@@ -222,6 +227,34 @@ function probeWorkspaceInstalled(cwd: string): DoctorCheck {
     };
   }
   return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
+}
+
+/** Consumer-app install probe — accepts workspace-linked `node_modules/` without a local `.modules.yaml`. */
+function probeConsumerInstalled(cwd: string): DoctorCheck {
+  const localYaml = resolve(cwd, 'node_modules/.modules.yaml');
+  if (existsSync(localYaml)) {
+    return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
+  }
+  const localModules = resolve(cwd, 'node_modules');
+  const rootYaml = resolve(findWorkspaceRoot(cwd), 'node_modules/.modules.yaml');
+  if (existsSync(localModules) && existsSync(rootYaml)) {
+    return {
+      id: 'workspace.installed',
+      label: 'workspace install',
+      status: 'ok',
+      detail: 'workspace-linked node_modules present',
+    };
+  }
+  if (existsSync(localModules)) {
+    return { id: 'workspace.installed', label: 'workspace install', status: 'ok', detail: 'node_modules present' };
+  }
+  return {
+    id: 'workspace.installed',
+    label: 'workspace install',
+    status: 'fail',
+    detail: 'node_modules missing or stale',
+    hint: 'Cast off: pnpm install',
+  };
 }
 
 function probeBuilt(cwd: string, pkg: string, label: string): DoctorCheck {
@@ -427,7 +460,261 @@ async function probeWasmToolchain(cwd: string): Promise<DoctorCheck | null> {
   return { id: 'wasm.toolchain', label: 'WASM toolchain', status: 'ok', detail: r.stdout.trim() };
 }
 
-async function runAllProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+interface RunProbesOptions {
+  readonly target?: DoctorTarget;
+}
+
+function readCwdPackageJson(cwd: string): Record<string, unknown> | null {
+  const pkgPath = resolve(cwd, 'package.json');
+  if (!existsSync(pkgPath)) return null;
+  try {
+    return JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function readInstalledVersion(cwd: string, pkgName: string): string | null {
+  const pkgPath = resolve(cwd, 'node_modules', pkgName, 'package.json');
+  if (!existsSync(pkgPath)) return null;
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string };
+    return typeof pkg.version === 'string' ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasDep(cwd: string, pkgName: string): boolean {
+  const pkg = readCwdPackageJson(cwd);
+  if (!pkg) return false;
+  const deps = pkg.dependencies as Record<string, string> | undefined;
+  const devDeps = pkg.devDependencies as Record<string, string> | undefined;
+  return !!(deps?.[pkgName] ?? devDeps?.[pkgName] ?? readInstalledVersion(cwd, pkgName));
+}
+
+function findAstroConfig(cwd: string): string | null {
+  for (const name of ['astro.config.mjs', 'astro.config.ts', 'astro.config.js', 'astro.config.cjs']) {
+    const path = resolve(cwd, name);
+    if (existsSync(path)) return path;
+  }
+  return null;
+}
+
+function probeCloudflareAstro(cwd: string): DoctorCheck {
+  if (!hasDep(cwd, 'astro')) {
+    return {
+      id: 'cloudflare.astro',
+      label: 'Astro',
+      status: 'fail',
+      detail: 'astro not in package.json or node_modules',
+      hint: 'Add Astro 6+: pnpm add astro@^6',
+    };
+  }
+  const version = readInstalledVersion(cwd, 'astro');
+  if (!version) {
+    return {
+      id: 'cloudflare.astro',
+      label: 'Astro',
+      status: 'warn',
+      detail: 'astro declared but package.json not resolved in node_modules',
+      hint: 'Run pnpm install',
+    };
+  }
+  const major = parseMajor(version);
+  if (major === null || major < 6) {
+    return {
+      id: 'cloudflare.astro',
+      label: 'Astro',
+      status: 'fail',
+      detail: `${version} (need >= 6 for @astrojs/cloudflare v13+)`,
+      hint: 'Upgrade: pnpm add astro@^6',
+    };
+  }
+  return { id: 'cloudflare.astro', label: 'Astro', status: 'ok', detail: version };
+}
+
+function probeCloudflareAdapter(cwd: string): DoctorCheck {
+  if (!hasDep(cwd, '@astrojs/cloudflare')) {
+    return {
+      id: 'cloudflare.adapter',
+      label: '@astrojs/cloudflare',
+      status: 'fail',
+      detail: '@astrojs/cloudflare not in package.json or node_modules',
+      hint: 'Add the adapter: pnpm add @astrojs/cloudflare@^13',
+    };
+  }
+  const version = readInstalledVersion(cwd, '@astrojs/cloudflare');
+  if (!version) {
+    return {
+      id: 'cloudflare.adapter',
+      label: '@astrojs/cloudflare',
+      status: 'warn',
+      detail: 'adapter declared but not resolved in node_modules',
+      hint: 'Run pnpm install',
+    };
+  }
+  const major = parseMajor(version);
+  if (major === null || major < 13) {
+    return {
+      id: 'cloudflare.adapter',
+      label: '@astrojs/cloudflare',
+      status: 'warn',
+      detail: `${version} (Astro 6 requires @astrojs/cloudflare v13+)`,
+      hint: 'Upgrade: pnpm add @astrojs/cloudflare@^13',
+    };
+  }
+  return { id: 'cloudflare.adapter', label: '@astrojs/cloudflare', status: 'ok', detail: version };
+}
+
+async function probeCloudflareWrangler(cwd: string): Promise<DoctorCheck> {
+  const pkgVersion = readInstalledVersion(cwd, 'wrangler');
+  const r = await spawnArgvCapture('wrangler', ['--version'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
+    () => null,
+  );
+  if (r?.timedOut) {
+    return {
+      id: 'cloudflare.wrangler',
+      label: 'Wrangler',
+      status: 'warn',
+      detail: `no response within ${DOCTOR_PROBE_TIMEOUT_MS}ms`,
+      hint: 'Check wrangler directly: wrangler --version',
+    };
+  }
+  const cliVersion = r && r.exitCode === 0 ? r.stdout.trim() : null;
+  if (!cliVersion && !pkgVersion) {
+    return {
+      id: 'cloudflare.wrangler',
+      label: 'Wrangler',
+      status: 'warn',
+      detail: 'wrangler not on PATH and not in node_modules',
+      hint: 'Add Wrangler 4+: pnpm add -D wrangler@^4',
+    };
+  }
+  const version = cliVersion ?? pkgVersion ?? 'unknown';
+  const major = parseMajor(version);
+  if (major !== null && major < 4) {
+    return {
+      id: 'cloudflare.wrangler',
+      label: 'Wrangler',
+      status: 'warn',
+      detail: `${version} (recommend >= 4)`,
+      hint: 'Upgrade: pnpm add -D wrangler@^4',
+    };
+  }
+  return { id: 'cloudflare.wrangler', label: 'Wrangler', status: 'ok', detail: version };
+}
+
+function readWranglerConfig(cwd: string): string | null {
+  for (const name of ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml']) {
+    const path = resolve(cwd, name);
+    if (existsSync(path)) {
+      try {
+        return readFileSync(path, 'utf8');
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+function probeCloudflareConfig(cwd: string): DoctorCheck {
+  const raw = readWranglerConfig(cwd);
+  if (!raw) {
+    return {
+      id: 'cloudflare.config',
+      label: 'Wrangler config',
+      status: 'warn',
+      detail: 'no wrangler.jsonc / wrangler.toml (optional when using adapter defaults)',
+      hint: 'Add wrangler.jsonc when you need KV/D1/R2 bindings — see docs/hosting/cloudflare.md',
+    };
+  }
+  const issues: string[] = [];
+  if (!/compatibility_date/i.test(raw)) issues.push('compatibility_date');
+  if (!/nodejs_compat/i.test(raw)) issues.push('nodejs_compat');
+  if (!/kv_namespaces/i.test(raw) && !/CZAP_BOUNDARY_CACHE/i.test(raw)) {
+    issues.push('kv_namespaces binding for boundary cache');
+  }
+  if (issues.length > 0) {
+    return {
+      id: 'cloudflare.config',
+      label: 'Wrangler config',
+      status: 'warn',
+      detail: `present but missing: ${issues.join(', ')}`,
+      hint: 'Declare CZAP_BOUNDARY_CACHE in kv_namespaces when using @czap/edge boundary cache',
+    };
+  }
+  return { id: 'cloudflare.config', label: 'Wrangler config', status: 'ok', detail: 'bindings and compatibility flags present' };
+}
+
+function probeCloudflareOutput(cwd: string): DoctorCheck {
+  const configPath = findAstroConfig(cwd);
+  if (!configPath) {
+    return {
+      id: 'cloudflare.output',
+      label: 'Astro output mode',
+      status: 'warn',
+      detail: 'no astro.config.* found',
+      hint: 'Set output: "server" and adapter: cloudflare() in astro.config',
+    };
+  }
+  let raw = '';
+  try {
+    raw = readFileSync(configPath, 'utf8');
+  } catch {
+    return {
+      id: 'cloudflare.output',
+      label: 'Astro output mode',
+      status: 'warn',
+      detail: 'astro.config unreadable',
+    };
+  }
+  const hasAdapter = /@astrojs\/cloudflare|cloudflare\s*\(/.test(raw);
+  const hasServer = /output\s*:\s*['"]server['"]/.test(raw);
+  if (!hasAdapter || !hasServer) {
+    const missing = [!hasServer ? 'output: server' : null, !hasAdapter ? 'adapter: cloudflare()' : null]
+      .filter(Boolean)
+      .join(', ');
+    return {
+      id: 'cloudflare.output',
+      label: 'Astro output mode',
+      status: 'warn',
+      detail: `astro.config may be missing ${missing}`,
+      hint: 'Use output: "server" and adapter: cloudflare() for Workers SSR',
+    };
+  }
+  return { id: 'cloudflare.output', label: 'Astro output mode', status: 'ok', detail: 'server output + cloudflare adapter' };
+}
+
+function probeCloudflareCsp(): DoctorCheck {
+  return {
+    id: 'cloudflare.csp',
+    label: 'CSP / isolation',
+    status: 'ok',
+    detail: 'advisory — doctor cannot read deployed response headers',
+    hint: "Host CSP: worker-src 'self' blob:; connect-src for SSE/LLM; add COOP/COEP if using client:worker",
+  };
+}
+
+async function runCloudflareProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+  const minima = loadEngineMinima(cwd);
+  const [pnpm, wrangler] = await Promise.all([probePnpm(minima), probeCloudflareWrangler(cwd)]);
+  return [
+    probeNode(minima),
+    pnpm,
+    probeConsumerInstalled(cwd),
+    probeCloudflareAstro(cwd),
+    probeCloudflareAdapter(cwd),
+    wrangler,
+    probeCloudflareConfig(cwd),
+    probeCloudflareOutput(cwd),
+    probeCloudflareCsp(),
+  ];
+}
+
+async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
+  if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them
   // concurrently so the wall time is the slowest single probe, not the serial
@@ -611,18 +898,25 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
  * @returns process exit code: 0 when ready (and, without --ci, also caution).
  */
 export async function doctor(
-  opts: { pretty?: boolean; fix?: boolean; ci?: boolean; preflight?: boolean; cwd?: string } = {},
+  opts: {
+    pretty?: boolean;
+    fix?: boolean;
+    ci?: boolean;
+    preflight?: boolean;
+    target?: DoctorTarget;
+    cwd?: string;
+  } = {},
 ): Promise<number> {
   // Explicit cwd from tests/MCP is used verbatim (predictable fixtures).
   // Default behavior anchors probes to the workspace root so `czap doctor`
   // works correctly from any monorepo subdir, not just the repo root.
   const cwd = opts.cwd ?? findWorkspaceRoot(process.cwd());
-  let checks = await runAllProbes(cwd);
+  let checks = await runAllProbes(cwd, { target: opts.target });
 
   let fixes: readonly DoctorFix[] | undefined;
   if (opts.fix) {
     fixes = await applyFixes(checks, cwd);
-    if (fixes.length > 0) checks = await runAllProbes(cwd);
+    if (fixes.length > 0) checks = await runAllProbes(cwd, { target: opts.target });
   }
 
   const scoped = opts.preflight ? checks.filter((c) => !c.id.endsWith('.built')) : checks;
@@ -639,6 +933,7 @@ export async function doctor(
     ...(fixes && fixes.length > 0 ? { fixed: fixes } : {}),
     ...(opts.ci ? { strict: true as const } : {}),
     ...(opts.preflight ? { preflight: true as const } : {}),
+    ...(opts.target ? { target: opts.target } : {}),
   };
   emit(receipt);
 

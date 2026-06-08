@@ -8,7 +8,7 @@
 
 > `const` **surfacePolicy**: `object`
 
-Defined in: [audit/src/policy.ts:173](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L173)
+Defined in: [audit/src/policy.ts:177](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L177)
 
 ## Type Declaration
 
