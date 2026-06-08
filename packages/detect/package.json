@@ -1,6 +1,6 @@
 {
   "name": "@czap/detect",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Device capability detection and tier mapping",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
