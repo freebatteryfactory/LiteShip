@@ -194,11 +194,13 @@ export const surfacePolicy = {
   knownCapabilityNotes: [
     {
       file: 'packages/astro/src/runtime/gpu.ts',
-      summary: 'GPU directive currently exposes WebGL2 runtime with an explicit WebGPU/WGSL partial-capability warning path.',
+      summary:
+        'GPU directive currently exposes WebGL2 runtime with an explicit WebGPU/WGSL partial-capability warning path.',
     },
     {
       file: 'packages/vite/src/virtual-modules.ts',
-      summary: 'Virtual modules intentionally ship placeholder stubs that are populated by the Vite transform pipeline.',
+      summary:
+        'Virtual modules intentionally ship placeholder stubs that are populated by the Vite transform pipeline.',
     },
   ] as const,
 };
@@ -252,14 +254,16 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // runtime placeholders.
     rule: 'placeholder-content',
     filePrefix: 'packages/audit/src/integrity.ts',
-    reason: "The integrity detector's own placeholder/debug summary strings — detector copy, not a runtime placeholder.",
+    reason:
+      "The integrity detector's own placeholder/debug summary strings — detector copy, not a runtime placeholder.",
   },
   {
     // The audit policy's documented-stub allowlist reason + the vite virtual-module
     // capability note both contain the word "placeholder" describing OTHER files.
     rule: 'placeholder-content',
     filePrefix: 'packages/audit/src/policy.ts',
-    reason: "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
+    reason:
+      "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
   },
   {
     // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumer is
@@ -269,7 +273,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     rule: 'symbol-orphan-candidate',
     filePrefix: 'packages/astro/src/runtime/policy.ts',
     summaryIncludes: '_resetRuntimePolicyForTests',
-    reason: 'Test-only reset hook consumed by the runtime-policy test suite (tests/ are not scanned by the symbol-level audit).',
+    reason:
+      'Test-only reset hook consumed by the runtime-policy test suite (tests/ are not scanned by the symbol-level audit).',
   },
 ];
 

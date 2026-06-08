@@ -41,6 +41,9 @@ export interface ManifestUiResourceView {
         readonly frameDomains: readonly string[];
         readonly baseUriDomains: readonly string[];
       };
+      readonly permissions?: readonly string[];
+      readonly domain?: string;
+      readonly prefersBorder?: boolean;
     };
   };
 }

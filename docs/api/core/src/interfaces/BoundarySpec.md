@@ -6,15 +6,16 @@
 
 # Interface: BoundarySpec
 
-Defined in: [core/src/boundary.ts:324](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L324)
+Defined in: [core/src/boundary.ts:325](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L325)
 
 BoundarySpec: optional filter that gates whether a boundary is active.
 Enables A/B testing, time-bounded experiments, and device targeting
 without external wrapping logic.
 
-**Phase 2**: Spec evaluation is implemented and tested but not yet wired
-into the Compositor evaluation loop. Call `BoundarySpec.isActive()` or
-`Boundary.isActive()` manually to check activation in the interim.
+Wired into the Astro runtime `evaluateBoundary` path (host-side gating before
+state transitions). JSON-serializable fields
+(`timeRange`, `experimentId`) round-trip through `data-czap-boundary`;
+`deviceFilter` is host-only (functions cannot cross the wire).
 
 ## Properties
 
@@ -22,7 +23,7 @@ into the Compositor evaluation loop. Call `BoundarySpec.isActive()` or
 
 > `readonly` `optional` **deviceFilter?**: (`capabilities`) => `boolean`
 
-Defined in: [core/src/boundary.ts:326](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L326)
+Defined in: [core/src/boundary.ts:327](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L327)
 
 Only evaluate this boundary when the device filter returns true.
 
@@ -42,7 +43,7 @@ Only evaluate this boundary when the device filter returns true.
 
 > `readonly` `optional` **experimentId?**: `string`
 
-Defined in: [core/src/boundary.ts:330](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L330)
+Defined in: [core/src/boundary.ts:331](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L331)
 
 Only evaluate this boundary for participants in this experiment.
 
@@ -52,7 +53,7 @@ Only evaluate this boundary for participants in this experiment.
 
 > `readonly` `optional` **timeRange?**: `object`
 
-Defined in: [core/src/boundary.ts:328](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L328)
+Defined in: [core/src/boundary.ts:329](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L329)
 
 Only evaluate this boundary within this time range (epoch ms).
 

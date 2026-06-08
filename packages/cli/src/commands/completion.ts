@@ -21,9 +21,7 @@ import { COMMAND_CATALOG, commandRegistry } from '@czap/command';
 import { emitError } from '../receipts.js';
 
 /** Distinct top-level verbs, projected from the catalog's command names. */
-export const TOP_LEVEL_VERBS: readonly string[] = [
-  ...new Set(COMMAND_CATALOG.map((d) => d.name.split('.')[0]!)),
-];
+export const TOP_LEVEL_VERBS: readonly string[] = [...new Set(COMMAND_CATALOG.map((d) => d.name.split('.')[0]!))];
 
 /** Read the shell-argument enum declared on the `completion` descriptor. */
 function shellValues(): readonly string[] {

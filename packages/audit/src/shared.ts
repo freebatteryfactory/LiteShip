@@ -110,7 +110,9 @@ export function readSourceFileRecords(root = defaultRoot()): readonly SourceFile
     );
 
     const packageName =
-      [...packageBySrcDir.entries()].find(([srcDir]) => normalizeRepoPath(absolutePath).startsWith(srcDir + '/'))?.[1] ?? null;
+      [...packageBySrcDir.entries()].find(([srcDir]) =>
+        normalizeRepoPath(absolutePath).startsWith(srcDir + '/'),
+      )?.[1] ?? null;
 
     return {
       absolutePath,

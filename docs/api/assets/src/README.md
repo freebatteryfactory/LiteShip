@@ -17,6 +17,7 @@
 ## Type Aliases
 
 - [AssetKind](type-aliases/AssetKind.md)
+- [AssetRefId](type-aliases/AssetRefId.md)
 - [BeatMarkerSet](type-aliases/BeatMarkerSet.md)
 - [FourCC](type-aliases/FourCC.md)
 - [WavChunk](type-aliases/WavChunk.md)

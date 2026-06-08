@@ -27,7 +27,13 @@ export interface AuditPayload {
 }
 
 function failed(message: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command: 'audit', timestamp: new Date().toISOString(), exitCode, payload: { error: message } };
+  return {
+    status: 'failed',
+    command: 'audit',
+    timestamp: new Date().toISOString(),
+    exitCode,
+    payload: { error: message },
+  };
 }
 
 /** `audit [--profile <path>]` — run the engine, emit a structured summary. */
@@ -41,7 +47,15 @@ export const auditCommand: HandledCommand = {
     },
     outputSchema: {
       type: 'object',
-      required: ['errorCount', 'warningCount', 'infoCount', 'findingCount', 'passFindingCounts', 'repoRoot', 'profileSource'],
+      required: [
+        'errorCount',
+        'warningCount',
+        'infoCount',
+        'findingCount',
+        'passFindingCounts',
+        'repoRoot',
+        'profileSource',
+      ],
       properties: {
         errorCount: { type: 'number' },
         warningCount: { type: 'number' },

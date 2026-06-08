@@ -109,8 +109,8 @@ Re-export of the Effect-free event-id parser from `./resumption-pure.js`.
 
 Parse an event ID to extract sequence number and other components.
 
-Supports: numeric ("123"), prefixed ("evt-123"),
-HLC-style ("1234567890-5-node1"), HLC simple ("1234567890-5").
+Primary: canonical HLC wire format (`HLC.encode` — colon-separated hex).
+Legacy: numeric ("123"), prefixed ("evt-123"), dash-decimal resumption ids.
 
 #### Parameters
 

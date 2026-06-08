@@ -27,6 +27,11 @@ export interface SerializedBoundary {
   readonly states: readonly [string, ...string[]];
   /** Optional hysteresis band applied during evaluation. */
   readonly hysteresis?: number;
+  /** Optional activation filter (JSON-serializable subset of {@link Boundary.Spec}). */
+  readonly spec?: {
+    readonly timeRange?: { readonly from?: number; readonly until?: number };
+    readonly experimentId?: string;
+  };
 }
 
 /**
@@ -119,7 +124,32 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
       input: parsed.input,
       at,
       ...(typeof parsed.hysteresis === 'number' ? { hysteresis: parsed.hysteresis } : {}),
+      ...(parsed.spec ? { spec: parsed.spec } : {}),
     }),
+  };
+}
+
+/** Build activation context for {@link Boundary.isActive} from the live document. */
+export function buildBoundaryActivationContext(): {
+  capabilities: Record<string, unknown>;
+  nowMs: number;
+  activeExperiments: readonly string[];
+} {
+  const experimentsAttr =
+    typeof document !== 'undefined' ? document.documentElement.getAttribute('data-czap-experiments') : null;
+  const activeExperiments = experimentsAttr
+    ? experimentsAttr
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+  return {
+    capabilities: {
+      webgpu: typeof navigator !== 'undefined' && 'gpu' in navigator,
+      webgl2: typeof document !== 'undefined' && !!document.createElement('canvas').getContext('webgl2'),
+    },
+    nowMs: Date.now(),
+    activeExperiments,
   };
 }
 
@@ -167,6 +197,11 @@ export function readSignalValue(input: string): number | undefined {
  * hysteresis band.
  */
 export function evaluateBoundary(boundary: RuntimeBoundary, value: number, previousState?: string): string {
+  const context = buildBoundaryActivationContext();
+  if (!Boundary.isActive(boundary.boundary, context)) {
+    return previousState ?? boundary.boundary.states[0]!;
+  }
+
   if (previousState && boundary.boundary.hysteresis) {
     return Boundary.evaluateWithHysteresis(boundary.boundary, value, previousState);
   }

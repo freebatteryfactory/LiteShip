@@ -33,7 +33,10 @@ function compileContext(): CommandContext {
 
 /** Execute the scene compile command. */
 export async function sceneCompile(scenePath: string): Promise<number> {
-  const result = await sceneCompileCommand.handler({ name: 'scene.compile', args: { scene: scenePath } }, compileContext());
+  const result = await sceneCompileCommand.handler(
+    { name: 'scene.compile', args: { scene: scenePath } },
+    compileContext(),
+  );
   if (result.status === 'failed') {
     emitError('scene.compile', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;

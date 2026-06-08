@@ -31,7 +31,8 @@ const REGISTRY: readonly AppEntry[] = [
     resource: {
       uri: 'ui://liteship/app/capsule-inspect',
       name: 'app/capsule-inspect',
-      description: 'Live MCP Apps view that renders a capsule.inspect result (host-injected via ui/notifications/tool-result).',
+      description:
+        'Live MCP Apps view that renders a capsule.inspect result (host-injected via ui/notifications/tool-result).',
       mimeType: UI_MIME,
       _meta: SELF_CONTAINED_META,
     },

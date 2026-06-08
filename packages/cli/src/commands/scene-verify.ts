@@ -33,7 +33,10 @@ function verifyContext(): CommandContext {
 
 /** Execute the scene verify command. */
 export async function sceneVerify(scenePath: string): Promise<number> {
-  const result = await sceneVerifyCommand.handler({ name: 'scene.verify', args: { scene: scenePath } }, verifyContext());
+  const result = await sceneVerifyCommand.handler(
+    { name: 'scene.verify', args: { scene: scenePath } },
+    verifyContext(),
+  );
   if (result.status === 'failed') {
     emitError('scene.verify', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;

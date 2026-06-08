@@ -35,7 +35,12 @@ export const capsuleInspectCommand: HandledCommand = {
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.inspect', `capsule not found: ${id}`, 1);
-    return { status: 'ok', command: 'capsule.inspect', timestamp: new Date().toISOString(), payload: { capsule: entry } };
+    return {
+      status: 'ok',
+      command: 'capsule.inspect',
+      timestamp: new Date().toISOString(),
+      payload: { capsule: entry },
+    };
   },
 };
 
@@ -87,6 +92,11 @@ export const capsuleVerifyCommand: HandledCommand = {
     if (exitCode !== 0) {
       return failed('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
     }
-    return { status: 'ok', command: 'capsule.verify', timestamp: new Date().toISOString(), payload: { capsuleId: entry.name } };
+    return {
+      status: 'ok',
+      command: 'capsule.verify',
+      timestamp: new Date().toISOString(),
+      payload: { capsuleId: entry.name },
+    };
   },
 };

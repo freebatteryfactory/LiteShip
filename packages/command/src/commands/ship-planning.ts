@@ -44,10 +44,7 @@ export function packageSlug(name: string): string {
  * Select the packages to ship. No filter → all non-private packages. A filter
  * matches either a relative path (`./packages/core`) or a package name.
  */
-export function selectTargets(
-  workspace: readonly WorkspacePackage[],
-  filter: string | undefined,
-): WorkspacePackage[] {
+export function selectTargets(workspace: readonly WorkspacePackage[], filter: string | undefined): WorkspacePackage[] {
   if (filter === undefined) return workspace.filter((p) => p.packageJson.private !== true);
   const filterNormalized = filter.replace(/^\.\//, '').replace(/\/$/, '');
   return workspace.filter((p) => p.relativePath === filterNormalized || p.packageJson.name === filter);

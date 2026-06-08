@@ -54,6 +54,7 @@ describe('D3 capabilities — declared because implemented, minimal honest flags
     const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
     const listMethod: Record<string, string> = { tools: 'tools/list', resources: 'resources/list', prompts: 'prompts/list' };
     for (const cap of Object.keys(caps)) {
+      if (cap === 'ui') continue; // D10: ui.callServerTool is a host-bridge flag, not a *_list surface.
       const method = listMethod[cap];
       expect(method, `declared capability '${cap}' has no known list method`).toBeDefined();
       const r = await dispatch(req(method!, {}));

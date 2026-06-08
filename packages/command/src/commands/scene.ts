@@ -109,7 +109,11 @@ export const sceneCompileCommand: HandledCommand = {
       status: 'ok',
       command: 'scene.compile',
       timestamp: new Date().toISOString(),
-      payload: { sceneId: cap.id, trackCount: (contract.tracks as readonly unknown[]).length, durationMs: Date.now() - start },
+      payload: {
+        sceneId: cap.id,
+        trackCount: (contract.tracks as readonly unknown[]).length,
+        durationMs: Date.now() - start,
+      },
     };
   },
 };
@@ -175,7 +179,12 @@ export const sceneRenderCommand: HandledCommand = {
       });
       const payload = { sceneId: cap.id, output, frameCount, elapsedMs };
       context.cache?.write(key, payload);
-      return { status: 'ok', command: 'scene.render', timestamp: new Date().toISOString(), payload: { ...payload, cached: false } };
+      return {
+        status: 'ok',
+        command: 'scene.render',
+        timestamp: new Date().toISOString(),
+        payload: { ...payload, cached: false },
+      };
     } catch (err) {
       return failed('scene.render', String(err), 5);
     }

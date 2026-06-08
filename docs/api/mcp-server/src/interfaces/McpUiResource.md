@@ -6,7 +6,7 @@
 
 # Interface: McpUiResource
 
-Defined in: [mcp-server/src/ui-resources.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L37)
+Defined in: [mcp-server/src/ui-resources.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L51)
 
 An MCP Apps UI resource descriptor as emitted by `resources/list`.
 
@@ -16,7 +16,7 @@ An MCP Apps UI resource descriptor as emitted by `resources/list`.
 
 > `readonly` **\_meta**: [`McpUiResourceMeta`](McpUiResourceMeta.md)
 
-Defined in: [mcp-server/src/ui-resources.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L42)
+Defined in: [mcp-server/src/ui-resources.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L56)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/ui-resources.ts:42](https://github.com/heyoub/LiteSh
 
 > `readonly` **description**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L40)
+Defined in: [mcp-server/src/ui-resources.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L54)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [mcp-server/src/ui-resources.ts:40](https://github.com/heyoub/LiteSh
 
 > `readonly` **mimeType**: `"text/html;profile=mcp-app"`
 
-Defined in: [mcp-server/src/ui-resources.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L41)
+Defined in: [mcp-server/src/ui-resources.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L55)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [mcp-server/src/ui-resources.ts:41](https://github.com/heyoub/LiteSh
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L39)
+Defined in: [mcp-server/src/ui-resources.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L53)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [mcp-server/src/ui-resources.ts:39](https://github.com/heyoub/LiteSh
 
 > `readonly` **uri**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L38)
+Defined in: [mcp-server/src/ui-resources.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L52)

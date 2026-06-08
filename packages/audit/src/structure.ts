@@ -69,7 +69,9 @@ interface PackageExportTarget {
 }
 
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
-  return ts.canHaveModifiers(node) ? (ts.getModifiers(node)?.some((modifier) => modifier.kind === kind) ?? false) : false;
+  return ts.canHaveModifiers(node)
+    ? (ts.getModifiers(node)?.some((modifier) => modifier.kind === kind) ?? false)
+    : false;
 }
 
 function candidatePaths(basePath: string): readonly string[] {
@@ -217,20 +219,33 @@ function resolveImport(
 }
 
 function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: number }[] {
-  if (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node) || ts.isEnumDeclaration(node)) {
+  if (
+    ts.isFunctionDeclaration(node) ||
+    ts.isClassDeclaration(node) ||
+    ts.isInterfaceDeclaration(node) ||
+    ts.isTypeAliasDeclaration(node) ||
+    ts.isEnumDeclaration(node)
+  ) {
     return node.name ? [{ name: node.name.text, pos: node.name.getStart() }] : [];
   }
 
   if (ts.isVariableStatement(node)) {
     return node.declarationList.declarations
-      .filter((declaration): declaration is ts.VariableDeclaration & { name: ts.Identifier } => ts.isIdentifier(declaration.name))
+      .filter((declaration): declaration is ts.VariableDeclaration & { name: ts.Identifier } =>
+        ts.isIdentifier(declaration.name),
+      )
       .map((declaration) => ({
         name: declaration.name.text,
         pos: declaration.name.getStart(),
       }));
   }
 
-  if (ts.isExportDeclaration(node) && !node.moduleSpecifier && node.exportClause && ts.isNamedExports(node.exportClause)) {
+  if (
+    ts.isExportDeclaration(node) &&
+    !node.moduleSpecifier &&
+    node.exportClause &&
+    ts.isNamedExports(node.exportClause)
+  ) {
     return node.exportClause.elements.map((element) => ({
       name: element.name.text,
       pos: element.name.getStart(),
@@ -256,7 +271,9 @@ export function runStructureAudit(
   const packageExportTargets = buildPackageExportTargets(root);
   const knownSurfaceFiles = new Set<string>([
     ...profile.surfacePolicy.astroRuntimeFiles,
-    ...profile.surfacePolicy.astroClientDirectives.map((directive) => `packages/astro/src/client-directives/${directive}.ts`),
+    ...profile.surfacePolicy.astroClientDirectives.map(
+      (directive) => `packages/astro/src/client-directives/${directive}.ts`,
+    ),
     'packages/astro/src/middleware.ts',
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
@@ -333,9 +350,18 @@ export function runStructureAudit(
         }
       }
 
-      if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+      if (
+        (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+        node.moduleSpecifier &&
+        ts.isStringLiteral(node.moduleSpecifier)
+      ) {
         const specifier = node.moduleSpecifier.text;
-        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets, profile.internalPackagePrefix);
+        const resolved = resolveImport(
+          specifier,
+          record.absolutePath,
+          packageExportTargets,
+          profile.internalPackagePrefix,
+        );
 
         if (resolved.kind === 'external') {
           externalImportCount += 1;
@@ -379,7 +405,10 @@ export function runStructureAudit(
             const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
             packageEdges.set(edgeKey, (packageEdges.get(edgeKey) ?? 0) + 1);
 
-            if (resolved.targetPackage !== packageInfo.name && !packageInfo.dependencies.includes(resolved.targetPackage)) {
+            if (
+              resolved.targetPackage !== packageInfo.name &&
+              !packageInfo.dependencies.includes(resolved.targetPackage)
+            ) {
               rawFindings.push({
                 id: `structure/manifest-mismatch/${record.relativePath}:${line}:${column}`,
                 section: 'structure',
@@ -400,7 +429,11 @@ export function runStructureAudit(
             }
 
             const policy = profile.packageTopology[packageInfo.name];
-            if (resolved.targetPackage !== packageInfo.name && policy && !policy.allowedInternalImports.includes(resolved.targetPackage)) {
+            if (
+              resolved.targetPackage !== packageInfo.name &&
+              policy &&
+              !policy.allowedInternalImports.includes(resolved.targetPackage)
+            ) {
               rawFindings.push({
                 id: `structure/layer-violation/${record.relativePath}:${line}:${column}`,
                 section: 'structure',
@@ -469,7 +502,12 @@ export function runStructureAudit(
         ts.isStringLiteral(node.arguments[0]!)
       ) {
         const specifier = node.arguments[0]!.text;
-        const resolved = resolveImport(specifier, record.absolutePath, packageExportTargets, profile.internalPackagePrefix);
+        const resolved = resolveImport(
+          specifier,
+          record.absolutePath,
+          packageExportTargets,
+          profile.internalPackagePrefix,
+        );
         if (
           resolved.kind === 'internal-package' &&
           resolved.targetPackage &&
@@ -477,7 +515,10 @@ export function runStructureAudit(
           packageByName.has(resolved.targetPackage)
         ) {
           const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
-          if (!packageInfo.dependencies.includes(resolved.targetPackage) && !profile.dynamicImportExemptions.has(edgeKey)) {
+          if (
+            !packageInfo.dependencies.includes(resolved.targetPackage) &&
+            !profile.dynamicImportExemptions.has(edgeKey)
+          ) {
             const { line, column } = lineAndColumn(record.sourceFile, node.arguments[0]!.getStart());
             rawFindings.push({
               id: `structure/manifest-mismatch-dynamic/${record.relativePath}:${line}:${column}`,
@@ -570,10 +611,17 @@ export function runStructureAudit(
         count,
       };
     })
-    .sort((left, right) => right.count - left.count || left.from.localeCompare(right.from) || left.to.localeCompare(right.to));
+    .sort(
+      (left, right) =>
+        right.count - left.count || left.from.localeCompare(right.from) || left.to.localeCompare(right.to),
+    );
 
-  const orphanCandidateCount = partitioned.findings.filter((finding) => finding.rule === 'orphan-export-candidate').length;
-  const symbolOrphanCandidateCount = partitioned.findings.filter((finding) => finding.rule === 'symbol-orphan-candidate').length;
+  const orphanCandidateCount = partitioned.findings.filter(
+    (finding) => finding.rule === 'orphan-export-candidate',
+  ).length;
+  const symbolOrphanCandidateCount = partitioned.findings.filter(
+    (finding) => finding.rule === 'symbol-orphan-candidate',
+  ).length;
 
   // CUT A0 — classify how each structure check was evaluated so a clean result
   // is never confused with an unchecked one. This does not change what is

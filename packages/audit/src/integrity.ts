@@ -33,7 +33,11 @@ const PLACEHOLDER_PATTERN = /\b(TODO|FIXME|DEBUG|placeholder|lorem ipsum)\b/i;
 const NOT_IMPLEMENTED_PATTERN = /\b(not implemented|not-yet-supported)\b/i;
 
 function isConsoleCall(node: ts.CallExpression): boolean {
-  return ts.isPropertyAccessExpression(node.expression) && ts.isIdentifier(node.expression.expression) && node.expression.expression.text === 'console';
+  return (
+    ts.isPropertyAccessExpression(node.expression) &&
+    ts.isIdentifier(node.expression.expression) &&
+    node.expression.expression.text === 'console'
+  );
 }
 
 function getStringLikeText(node: ts.Node): string | null {
@@ -78,7 +82,9 @@ function findCatchReturn(block: ts.Block): ts.ReturnStatement | null {
   return sawThrow ? null : found;
 }
 
-export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<IntegritySummary> {
+export function runIntegrityAudit(
+  profile: DevopsProfile = liteshipDevopsProfile,
+): AuditSectionResult<IntegritySummary> {
   const root = profile.repoRoot;
   const sourceRecords = readSourceFileRecords(root);
   const rawFindings: AuditFinding[] = [];
@@ -95,7 +101,12 @@ export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile
     let localImplementationCount = 0;
 
     const visit = (node: ts.Node): void => {
-      if (ts.isImportDeclaration(node) && node.importClause && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+      if (
+        ts.isImportDeclaration(node) &&
+        node.importClause &&
+        node.moduleSpecifier &&
+        ts.isStringLiteral(node.moduleSpecifier)
+      ) {
         const specifier = node.moduleSpecifier.text;
         if (specifier.startsWith(profile.internalPackagePrefix)) {
           if (node.importClause.name) {
@@ -103,7 +114,10 @@ export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile
           }
           if (node.importClause.namedBindings) {
             if (ts.isNamespaceImport(node.importClause.namedBindings)) {
-              internalImports.set(node.importClause.namedBindings.name.text, node.importClause.namedBindings.name.getStart());
+              internalImports.set(
+                node.importClause.namedBindings.name.text,
+                node.importClause.namedBindings.name.getStart(),
+              );
             } else {
               node.importClause.namedBindings.elements.forEach((element) => {
                 internalImports.set(element.name.text, element.name.getStart());
@@ -135,7 +149,8 @@ export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile
           rule: 'console-call',
           severity: 'warning',
           title: 'Raw console call in runtime source',
-          summary: 'Runtime package source should route boundary logging through Diagnostics rather than raw console.* calls.',
+          summary:
+            'Runtime package source should route boundary logging through Diagnostics rather than raw console.* calls.',
           location: {
             file: record.relativePath,
             line,
@@ -166,7 +181,9 @@ export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile
       }
 
       if (ts.isCallExpression(node)) {
-        const message = node.arguments.map((argument) => getStringLikeText(argument)).find((value): value is string => Boolean(value));
+        const message = node.arguments
+          .map((argument) => getStringLikeText(argument))
+          .find((value): value is string => Boolean(value));
         if (message && NOT_IMPLEMENTED_PATTERN.test(message)) {
           const { line, column } = lineAndColumn(record.sourceFile, node.getStart());
           missingCapabilityCount += 1;
@@ -207,7 +224,10 @@ export function runIntegrityAudit(profile: DevopsProfile = liteshipDevopsProfile
         }
       }
 
-      if (ts.isDebuggerStatement(node) || (getStringLikeText(node) && PLACEHOLDER_PATTERN.test(getStringLikeText(node)!))) {
+      if (
+        ts.isDebuggerStatement(node) ||
+        (getStringLikeText(node) && PLACEHOLDER_PATTERN.test(getStringLikeText(node)!))
+      ) {
         const { line, column } = lineAndColumn(record.sourceFile, node.getStart());
         placeholderCount += 1;
         rawFindings.push({

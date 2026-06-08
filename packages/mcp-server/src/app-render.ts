@@ -22,6 +22,8 @@
 /** The view-side bridge IIFE. ES2015+ (every MCP Apps host is a modern browser iframe). */
 const BRIDGE_SCRIPT = `(function () {
   const PROTOCOL = '2026-01-26';
+  let nextId = 2;
+  const pending = new Map();
   function post(msg) { window.parent.postMessage(msg, '*'); }
   function setStatus(text) { const el = document.getElementById('status'); if (el) { el.textContent = text; } }
   function render(toolResult) {
@@ -36,6 +38,13 @@ const BRIDGE_SCRIPT = `(function () {
     if (detail) { detail.hidden = false; }
     setStatus('');
   }
+  window.callServerTool = function (name, args) {
+    return new Promise(function (resolve, reject) {
+      const id = nextId++;
+      pending.set(id, { resolve: resolve, reject: reject });
+      post({ jsonrpc: '2.0', id: id, method: 'ui/call-tool', params: { name: name, arguments: args || {} } });
+    });
+  };
   window.addEventListener('message', function (event) {
     if (event.source && event.source !== window.parent) { return; }
     const data = event.data;
@@ -44,9 +53,14 @@ const BRIDGE_SCRIPT = `(function () {
       post({ jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} });
       return;
     }
-    if (data.method === 'ui/notifications/tool-result') { render(data.params); }
+    if (data.method === 'ui/notifications/tool-result') { render(data.params); return; }
+    if (typeof data.id === 'number' && pending.has(data.id)) {
+      const entry = pending.get(data.id);
+      pending.delete(data.id);
+      if (data.error) { entry.reject(data.error); } else { entry.resolve(data.result); }
+    }
   });
-  post({ jsonrpc: '2.0', id: 1, method: 'ui/initialize', params: { appInfo: { name: 'liteship.capsule-inspect', version: '1' }, appCapabilities: {}, protocolVersion: PROTOCOL } });
+  post({ jsonrpc: '2.0', id: 1, method: 'ui/initialize', params: { appInfo: { name: 'liteship.capsule-inspect', version: '1' }, appCapabilities: { callServerTool: true }, protocolVersion: PROTOCOL } });
 })();`;
 
 /** The fixed interactive widget document for `ui://liteship/app/capsule-inspect`. */
@@ -57,6 +71,7 @@ export function renderCapsuleInspectWidget(): string {
 <body>
 <h1>Capsule</h1>
 <p id="status">Waiting for capsule result…</p>
+<button id="refresh-btn" type="button">Refresh</button>
 <dl id="detail" hidden>
 <dt>Name</dt><dd id="capsule-name"></dd>
 <dt>Kind</dt><dd id="capsule-kind"></dd>

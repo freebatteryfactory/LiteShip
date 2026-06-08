@@ -18,7 +18,9 @@ import { tarballManifestAddress } from '../ship-manifest.js';
 import { emit, emitError } from '../receipts.js';
 import type { ShipVerifyReceipt } from '../receipts.js';
 
-async function runEffect<A, E>(effect: Effect.Effect<A, E>): Promise<{ ok: true; value: A } | { ok: false; error: string }> {
+async function runEffect<A, E>(
+  effect: Effect.Effect<A, E>,
+): Promise<{ ok: true; value: A } | { ok: false; error: string }> {
   const exit = await Effect.runPromiseExit(effect);
   if (exit._tag === 'Success') return { ok: true, value: exit.value };
   const found = Cause.findError(exit.cause);
@@ -26,7 +28,12 @@ async function runEffect<A, E>(effect: Effect.Effect<A, E>): Promise<{ ok: true;
     const err = Result.getOrThrow(found) as unknown;
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
-  return { ok: false, error: Cause.prettyErrors(exit.cause).map((e) => e.message).join('; ') };
+  return {
+    ok: false,
+    error: Cause.prettyErrors(exit.cause)
+      .map((e) => e.message)
+      .join('; '),
+  };
 }
 
 function verifyContext(): CommandContext {
@@ -89,7 +96,13 @@ function parseArgs(args: readonly string[]): ParsedVerifyArgs {
 export async function verify(args: readonly string[]): Promise<number> {
   const parsed = parseArgs(args);
   const result = await verifyCommand.handler(
-    { name: 'verify', args: { ...(parsed.tarball !== undefined ? { tarball: parsed.tarball } : {}), ...(parsed.capsule !== undefined ? { capsule: parsed.capsule } : {}) } },
+    {
+      name: 'verify',
+      args: {
+        ...(parsed.tarball !== undefined ? { tarball: parsed.tarball } : {}),
+        ...(parsed.capsule !== undefined ? { capsule: parsed.capsule } : {}),
+      },
+    },
     verifyContext(),
   );
 

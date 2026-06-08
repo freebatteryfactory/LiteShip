@@ -180,6 +180,17 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       // Unknown prompt name / missing / invalid argument → InvalidParamsError → -32602.
       return ok(getPrompt(params.name, args));
     }
+    case 'ui/call-tool': {
+      const params = msg.params as { name?: unknown; arguments?: unknown } | undefined;
+      if (!params || typeof params.name !== 'string') {
+        throw new InvalidParamsError('ui/call-tool requires { name: string, arguments?: object }', {
+          received: params,
+        });
+      }
+      const args = (params.arguments ?? {}) as Record<string, unknown>;
+      const result = await dispatchToolCall({ name: params.name, arguments: args });
+      return ok(result);
+    }
     default:
       // Everything not handled above — including resources/templates/list,
       // resources/subscribe, resources/unsubscribe, and any prompts/* beyond

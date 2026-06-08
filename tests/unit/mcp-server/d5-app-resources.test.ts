@@ -38,7 +38,7 @@ describe('D5 — D4 static surface stays frozen', () => {
       JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
     );
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
-    expect(pin).toBe('fnv1a:9ec825ea');
+    expect(pin).toBe('fnv1a:45812ab8');
   });
 });
 
@@ -118,17 +118,23 @@ describe('D5 — the app resource is genuinely interactive + safe', () => {
 });
 
 describe('D5 — server honesty (no faked push channel)', () => {
-  it('the server rejects ui/* methods with -32601 — the bridge is host↔iframe, not a server method', async () => {
+  it('the server rejects host-only ui/* notifications with -32601; ui/call-tool is implemented (D10)', async () => {
     expect(await errCode('ui/initialize', {})).toBe(-32601);
     expect(await errCode('ui/notifications/tool-result', {})).toBe(-32601);
     expect(await errCode('ui/notifications/initialized', {})).toBe(-32601);
+    const call = await dispatch(req('ui/call-tool', { name: 'capsule.list', arguments: {} }));
+    expect('result' in (call as object)).toBe(true);
   });
 
-  it('no new SERVER capability is declared (MCP Apps is client-advertised)', async () => {
+  it('D10 declares ui.callServerTool capability honestly', async () => {
     const caps = (await result<{ capabilities: Record<string, unknown> }>('initialize', { protocolVersion: '2025-11-25' })).capabilities;
-    expect(caps).toEqual({ tools: { listChanged: false }, resources: { listChanged: false }, prompts: { listChanged: false } });
+    expect(caps).toEqual({
+      tools: { listChanged: false },
+      resources: { listChanged: false },
+      prompts: { listChanged: false },
+      ui: { callServerTool: true },
+    });
     expect('apps' in caps).toBe(false);
-    expect('ui' in caps).toBe(false);
   });
 });
 

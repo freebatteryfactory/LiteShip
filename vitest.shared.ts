@@ -14,6 +14,7 @@ export const alias: Record<string, string> = {
   // /host subpath (Node host execution) is aliased separately; the longer key
   // is listed first so it takes precedence.
   '@czap/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
+  '@czap/command/host-browser': resolve(repoRoot, 'packages/command/src/host-browser/index.ts'),
   '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 

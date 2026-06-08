@@ -8,7 +8,7 @@
 
 > **compileMcpAppManifest**(`input`): [`McpAppManifest`](../interfaces/McpAppManifest.md)
 
-Defined in: [compiler/src/mcp-app-manifest.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L119)
+Defined in: [compiler/src/mcp-app-manifest.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L122)
 
 Compile the MCP-app manifest. Pure + total: tools are projected from
 `toolDescriptors`; resources/prompts/UI surfaces pass through verbatim; the

@@ -4,7 +4,12 @@
  *
  * @module
  */
-import type { CapsuleCommandDescriptor, CapsuleCommandInvocation, CapsuleCommandResult, ContentAddress } from '@czap/core';
+import type {
+  CapsuleCommandDescriptor,
+  CapsuleCommandInvocation,
+  CapsuleCommandResult,
+  ContentAddress,
+} from '@czap/core';
 
 /**
  * Injected I/O surface for command handlers. Handlers receive their Node-coupled
@@ -64,10 +69,7 @@ export interface CommandContext {
    * does not yet take a domain-package build edge. (Heavy-tier decision: whether
    * command should depend on assets/scene directly, or keep injecting.)
    */
-  readonly runAudioProjection?: (
-    bytes: ArrayBuffer,
-    projection: 'beat' | 'onset' | 'waveform',
-  ) => Promise<number>;
+  readonly runAudioProjection?: (bytes: ArrayBuffer, projection: 'beat' | 'onset' | 'waveform') => Promise<number>;
   /**
    * Dynamically load a user scene module (the adapter owns the dynamic import,
    * keeping @czap/command free of it — relevant to the A1-T3 dynamic-import
@@ -98,10 +100,12 @@ export interface CommandContext {
    * Decode a ShipCapsule from CBOR bytes (adapter runs the Effect). Returns the
    * capsule id + its claimed tarball-manifest address, or a decode error string.
    */
-  readonly decodeShipCapsule?: (
-    bytes: Uint8Array,
-  ) => Promise<
-    | { readonly ok: true; readonly id: ContentAddress; readonly tarballManifestAddress: { readonly display_id: string; readonly integrity_digest: string } }
+  readonly decodeShipCapsule?: (bytes: Uint8Array) => Promise<
+    | {
+        readonly ok: true;
+        readonly id: ContentAddress;
+        readonly tarballManifestAddress: { readonly display_id: string; readonly integrity_digest: string };
+      }
     | { readonly ok: false; readonly error: string }
   >;
   /** Recompute a tarball's manifest address (adapter runs the Effect). */

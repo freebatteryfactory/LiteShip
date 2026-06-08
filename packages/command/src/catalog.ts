@@ -54,7 +54,11 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
   {
     name: 'completion',
     summary: 'Emit a shell tab-completion script for sourcing into a shell rc.',
-    inputSchema: { type: 'object', required: ['shell'], properties: { shell: { type: 'string', enum: ['bash', 'zsh', 'fish'] } } },
+    inputSchema: {
+      type: 'object',
+      required: ['shell'],
+      properties: { shell: { type: 'string', enum: ['bash', 'zsh', 'fish'] } },
+    },
     annotations: { cliOnly: true, group: 'castoff' },
   },
   {

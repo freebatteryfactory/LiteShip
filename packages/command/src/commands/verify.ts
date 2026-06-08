@@ -116,7 +116,8 @@ export const verifyCommand: HandledCommand = {
     const claimed = decoded.tarballManifestAddress;
     const mismatches: string[] = [];
     if (recomputed.display_id !== claimed.display_id) mismatches.push('tarball_manifest_address.display_id');
-    if (recomputed.integrity_digest !== claimed.integrity_digest) mismatches.push('tarball_manifest_address.integrity_digest');
+    if (recomputed.integrity_digest !== claimed.integrity_digest)
+      mismatches.push('tarball_manifest_address.integrity_digest');
 
     if (mismatches.length > 0) {
       return verdictResult('Mismatch', 2, {

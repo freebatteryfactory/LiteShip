@@ -33,6 +33,11 @@
       "types": "./dist/host/index.d.ts",
       "import": "./dist/host/index.js",
       "development": "./src/host/index.ts"
+    },
+    "./host-browser": {
+      "types": "./dist/host-browser/index.d.ts",
+      "import": "./dist/host-browser/index.js",
+      "development": "./src/host-browser/index.ts"
     }
   },
   "files": [

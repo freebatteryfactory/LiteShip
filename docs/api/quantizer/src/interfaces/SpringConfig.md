@@ -6,7 +6,7 @@
 
 # Interface: SpringConfig
 
-Defined in: [quantizer/src/quantizer.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L113)
+Defined in: [quantizer/src/quantizer.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L114)
 
 Spring physics parameters for CSS easing auto-generation.
 
@@ -20,7 +20,7 @@ so native `linear()` timing matches the physical spring response.
 
 > `readonly` **damping**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L117)
+Defined in: [quantizer/src/quantizer.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L118)
 
 Damping coefficient; higher = less oscillation.
 
@@ -30,7 +30,7 @@ Damping coefficient; higher = less oscillation.
 
 > `readonly` `optional` **mass?**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L119)
+Defined in: [quantizer/src/quantizer.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L120)
 
 Mass of the animated body; defaults to `1`.
 
@@ -40,6 +40,6 @@ Mass of the animated body; defaults to `1`.
 
 > `readonly` **stiffness**: `number`
 
-Defined in: [quantizer/src/quantizer.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L115)
+Defined in: [quantizer/src/quantizer.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L116)
 
 Spring constant (force per unit displacement); higher = snappier.

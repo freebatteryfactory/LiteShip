@@ -33,9 +33,7 @@ import type { BeatComponent, BeatProjectionResolutionInput } from '@czap/_spine'
  * zero/negative/NaN rate cannot define a timeline, so we fail loudly rather
  * than emit `Infinity`/`NaN` beat times.
  */
-export function resolveBeatProjectionToSceneBeats(
-  input: BeatProjectionResolutionInput,
-): readonly BeatComponent[] {
+export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutionInput): readonly BeatComponent[] {
   const { projection, sampleRate, anchorTrackId, defaultStrength = 1 } = input;
 
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
