@@ -136,7 +136,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 
 ### Quantizer
 
-- TIER_TARGETS now a public export
+- TIER_TARGETS and MemoCache moved to `@czap/quantizer/testing` (not main export)
 - MotionTier re-exported from @czap/core
 
 ### Web

@@ -1,9 +1,11 @@
 # LiteShip — agent instructions
 
-This file is the entry point for AI coding tools that read `AGENTS.md` (Codex, some shell-out integrations). The substantive instructions are identical to [CLAUDE.md](./CLAUDE.md): repo conventions, command list, architecture patterns, source-of-truth docs.
+This file is the entry point for AI coding tools that read `AGENTS.md` (Codex, some shell-out integrations). Repo conventions, command list, architecture patterns, and source-of-truth docs live in the canonical docs below — not in drift-prone prose mirrors.
 
-**Read [CLAUDE.md](./CLAUDE.md) for the full context.** Keeping a single canonical document avoids drift between two near-identical guides.
+**Read these for full context:**
 
-If you're an agent that prefers `AGENTS.md` over `CLAUDE.md`, treat the two files as equivalent: anything in `CLAUDE.md` applies to you.
+- [docs/STATUS.md](./docs/STATUS.md) — gates, remaining work, runtime steering
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — package topology and seams
+- [docs/GLOSSARY.md](./docs/GLOSSARY.md) — product naming and gate vocabulary
 
 Public naming: LiteShip (product), CZAP (engine), `@czap/*` (packages). See [docs/GLOSSARY.md](./docs/GLOSSARY.md).

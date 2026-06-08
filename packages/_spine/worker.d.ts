@@ -2,7 +2,7 @@
  * @czap/worker type spine -- off-main-thread compositor and render workers.
  */
 
-import type { CompositeState, VideoConfig, VideoFrameOutput } from './core.d.ts';
+import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, StateName } from './core.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. MESSAGES
@@ -20,17 +20,17 @@ interface InitMessage {
 interface AddQuantizerMessage {
   readonly type: 'add-quantizer';
   readonly name: string;
-  readonly boundaryId: string;
-  readonly states: readonly string[];
+  readonly boundaryId: ContentAddress;
+  readonly states: readonly StateName[];
   readonly thresholds: readonly number[];
 }
 
 interface BootstrapQuantizerRegistration {
   readonly name: string;
-  readonly boundaryId: string;
-  readonly states: readonly string[];
+  readonly boundaryId: ContentAddress;
+  readonly states: readonly StateName[];
   readonly thresholds: readonly number[];
-  readonly initialState?: string;
+  readonly initialState?: StateName;
   readonly blendWeights?: Record<string, number>;
 }
 
@@ -231,8 +231,8 @@ export interface CompositorWorkerShape {
   addQuantizer(
     name: string,
     boundary: {
-      readonly id: string;
-      readonly states: readonly string[];
+      readonly id: ContentAddress;
+      readonly states: readonly StateName[];
       readonly thresholds: readonly number[];
     },
   ): void;

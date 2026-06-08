@@ -1,6 +1,5 @@
 /**
  * Config.make() — content addressing, projections, freezing.
- * Bang 1: all tests fail because Config.make throws 'not implemented'.
  */
 
 import { describe, test, expect } from 'vitest';

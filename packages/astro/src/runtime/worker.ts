@@ -1,4 +1,4 @@
-import { Diagnostics } from '@czap/core';
+import { Diagnostics, StateName } from '@czap/core';
 import { WorkerHost } from '@czap/worker';
 import {
   applyBoundaryState,
@@ -156,7 +156,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       const payload = [
         {
           name: boundary.name,
-          state: stateName,
+          state: StateName(stateName),
           generation,
         },
       ] as const;
@@ -183,7 +183,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
 
     workerHost.compositor.addQuantizer(boundary.name, {
       id: boundary.boundary.id,
-      states: boundary.boundary.states,
+      states: boundary.boundary.states.map((s) => StateName(s)),
       thresholds: boundary.boundary.thresholds,
     });
 

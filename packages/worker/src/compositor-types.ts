@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { RuntimeCoordinator, CompositeState } from '@czap/core';
+import type { RuntimeCoordinator, CompositeState, ContentAddress, StateName } from '@czap/core';
 import type {
   WorkerUpdate,
   BootstrapQuantizerRegistration,
@@ -35,7 +35,7 @@ export interface ResolvedStateAckPayload {
   /** The state transitions the worker actually observed. */
   readonly states: readonly {
     readonly name: string;
-    readonly state: string;
+    readonly state: StateName;
   }[];
   /** Whether non-discrete outputs (blend, CSS, etc.) changed in this round. */
   readonly additionalOutputsChanged: boolean;
@@ -57,8 +57,8 @@ export interface CompositorWorkerShape {
   addQuantizer(
     name: string,
     boundary: {
-      readonly id: string;
-      readonly states: readonly string[];
+      readonly id: ContentAddress;
+      readonly states: readonly StateName[];
       readonly thresholds: readonly number[];
     },
   ): void;

@@ -85,7 +85,8 @@ Main surfaces:
 - `evaluate`
 - `Transition`
 - `AnimatedQuantizer`
-- `MemoCache`
+
+Testing-only surfaces (`@czap/quantizer/testing`): `MemoCache`, `TIER_TARGETS`
 
 ---
 
