@@ -1,6 +1,6 @@
+import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { spawnArgvCapture } from './lib/spawn.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const source = resolve(repoRoot, 'scripts', 'pre-commit.sh');
@@ -18,13 +18,17 @@ if (!existsSync(resolve(repoRoot, '.git')) || !existsSync(source)) {
  * real hooks dir (commit 0d86b0b) but this script wrote to a phantom
  * `<worktree>/.git/hooks/` path that does not exist (Codex P2 on commit
  * 25467b2a).
+ *
+ * Uses node:child_process directly — this script runs from the `prepare`
+ * lifecycle hook before `pnpm run build`, so it must not import
+ * scripts/lib/spawn (which re-exports @czap/cli → @czap/command dist).
  */
-async function resolveGitHooksDir(): Promise<string> {
-  const r = await spawnArgvCapture('git', ['rev-parse', '--git-path', 'hooks'], {
+function resolveGitHooksDir(): string {
+  const r = spawnSync('git', ['rev-parse', '--git-path', 'hooks'], {
     cwd: repoRoot,
-  }).catch(() => null);
-  if (r && r.exitCode === 0) {
-    // git rev-parse returns a path relative to cwd; normalize to absolute.
+    encoding: 'utf8',
+  });
+  if (r.status === 0 && r.stdout.trim()) {
     return resolve(repoRoot, r.stdout.trim());
   }
   // git not on PATH or rev-parse failed — fall back to the legacy
@@ -34,7 +38,7 @@ async function resolveGitHooksDir(): Promise<string> {
   return resolve(repoRoot, '.git', 'hooks');
 }
 
-const gitHooksDir = await resolveGitHooksDir();
+const gitHooksDir = resolveGitHooksDir();
 const target = resolve(gitHooksDir, 'pre-commit');
 
 mkdirSync(gitHooksDir, { recursive: true });

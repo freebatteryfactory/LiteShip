@@ -226,6 +226,7 @@ export default tseslint.config(
       'scripts/check-invariants.ts', // reason: execFileSync('git', ['ls-files', '--eol']) — sync
       'scripts/docs-check.ts', // reason: spawnSync for typedoc + git diff — sync CI gate
       'scripts/flex-verify.ts', // reason: spawnSync with shell:true for arbitrary verifier commands
+      'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@czap/command dist)
       'scripts/package-smoke.ts', // reason: execFileSync — sync packaging smoke test
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
