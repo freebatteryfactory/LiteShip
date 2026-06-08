@@ -211,7 +211,7 @@ Dev-loop ergonomics: `pnpm dev` (vitest watch), `pnpm run clean` (dry-dock), `pn
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-two phases (see `docs/STATUS.md` for the full ordered list), fifteen to twenty-two minutes end-to-end depending on cold caches and machine speed (recent local: 14m47s on Linux x64, 8 vCPU). It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
+`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-four phases (see `docs/STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to twenty-two minutes end-to-end depending on cold caches and machine speed (recent local: 14m47s on Linux x64, 8 vCPU). It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
 
 ## Latest gauntlet benchmark snapshot
 
@@ -242,7 +242,7 @@ For run-by-run truth (current test counts, coverage totals, benchmark posture, w
 
 ## Appendix: Windows / PowerShell log capture
 
-The gauntlet emits UTF-8 (vitest reporter glyphs, JSON receipts). PowerShell's `>` redirect writes UTF-16 LE by default, and viewers using cp437 then mis-render unicode arrows (`↓`, `✓`) as `Γåô` / `Γ£ô` mojibake against the repo's UTF-8 stream. To capture clean logs:
+The gauntlet emits UTF-8 (vitest reporter glyphs, JSON receipts). **zsh paste trap:** interactive zsh does not treat `#` as a comment unless `setopt interactivecomments`; inline comments with parentheses (e.g. `(libx264):`) can glob-fail before the command runs — paste one command per line. PowerShell's `>` redirect writes UTF-16 LE by default, and viewers using cp437 then mis-render unicode arrows (`↓`, `✓`) as `Γåô` / `Γ£ô` mojibake against the repo's UTF-8 stream. To capture clean logs:
 
 ```powershell
 pnpm run gauntlet:full | Out-File -Encoding utf8 .log

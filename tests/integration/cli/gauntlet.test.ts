@@ -11,5 +11,7 @@ describe('czap gauntlet', () => {
     expect(receipt.command).toBe('gauntlet');
     expect(Array.isArray(receipt.phases)).toBe(true);
     expect(receipt.phases.length).toBeGreaterThan(10);
+    expect(receipt.phases[0]).toBe('rig-check');
+    expect(receipt.argvPolicy).toBe('reject-unknown');
   });
 });

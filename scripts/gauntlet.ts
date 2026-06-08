@@ -1,26 +1,22 @@
 /**
- * Gauntlet orchestrator — runs the full gauntlet pipeline with browser coverage
- * executing in parallel alongside integration tests, e2e, benchmarks, etc.
+ * Gauntlet orchestrator — runs the canonical CUT D8 phase sequence serially.
  *
- * This avoids the ~81 min browser coverage bottleneck by overlapping it with
- * ~15 min of other serial work that doesn't depend on coverage results.
+ * Phase list is the ONE source of truth in `packages/cli/src/gauntlet-phases.ts`.
+ * The executor loops it; global concerns (env, cwd, watchdog, timings, exit)
+ * stay here in run()/main().
  *
- * Phases:
- *   1. Build + validate (serial)
- *   2. Unit tests (serial) — must pass before coverage makes sense
- *   3. Fork browser coverage in background (slow, runs concurrently)
- *   4. Integration, e2e, stress, flake, redteam, bench (serial, overlapping with 3)
- *   5. Node coverage (fast ~38s), wait for browser coverage, merge
- *   6. Reports + gates (serial)
+ * @module
  */
 
 import { execSync, spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { gauntletPhases } from '../packages/cli/src/gauntlet-phases.js';
+import { formatUnexpectedArgvReceipt, parseGauntletArgv } from '../packages/cli/src/gauntlet-argv.js';
 import { isDirectExecution } from './audit/shared.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
+const STDERR_TAIL_CAP = 8192;
 
 interface StepResult {
   command: string;
@@ -41,6 +37,7 @@ interface RunOptions {
 }
 
 const stepResults: StepResult[] = [];
+let lastFailedStderrTail: string | undefined;
 
 function killTree(pid: number): void {
   try {
@@ -57,6 +54,7 @@ function killTree(pid: number): void {
 function run(label: string, command: string, opts: RunOptions = {}): Promise<void> {
   const start = Date.now();
   const useDoneMarker = opts.doneMarker !== undefined;
+  let stderrTail = '';
   return new Promise((resolveStep, rejectStep) => {
     console.log(`\n${'='.repeat(60)}`);
     console.log(`  ${label}`);
@@ -64,7 +62,7 @@ function run(label: string, command: string, opts: RunOptions = {}): Promise<voi
 
     const child = spawn(command, {
       shell: true,
-      stdio: useDoneMarker ? ['inherit', 'pipe', 'inherit'] : 'inherit',
+      stdio: useDoneMarker ? ['inherit', 'pipe', 'pipe'] : ['inherit', 'inherit', 'pipe'],
       cwd: ROOT,
       // CZAP_GAUNTLET=1 lets downstream gates (e.g. flex-verify) detect that
       // they're running mid-gauntlet so they can trust prior gauntlet phases
@@ -72,6 +70,13 @@ function run(label: string, command: string, opts: RunOptions = {}): Promise<voi
       // and tripping on intermediate fingerprint drift.
       env: { ...process.env, FORCE_COLOR: '1', CZAP_GAUNTLET: '1' },
     });
+
+    if (child.stderr) {
+      child.stderr.on('data', (chunk: Buffer) => {
+        process.stderr.write(chunk);
+        stderrTail = (stderrTail + chunk.toString('utf8')).slice(-STDERR_TAIL_CAP);
+      });
+    }
 
     let watchdog: NodeJS.Timeout | undefined;
     let postKill: NodeJS.Timeout | undefined;
@@ -94,6 +99,7 @@ function run(label: string, command: string, opts: RunOptions = {}): Promise<voi
         }
         resolveStep();
       } else {
+        lastFailedStderrTail = stderrTail;
         rejectStep(new Error(`"${label}" failed with exit code ${code}`));
       }
     };
@@ -146,6 +152,7 @@ function run(label: string, command: string, opts: RunOptions = {}): Promise<voi
       settled = true;
       if (watchdog) clearTimeout(watchdog);
       if (postKill) clearTimeout(postKill);
+      lastFailedStderrTail = stderrTail;
       rejectStep(new Error(`"${label}" spawn error: ${err.message}`));
     });
   });
@@ -164,7 +171,12 @@ function formatDuration(ms: number): string {
  * can reference real per-phase numbers instead of guessing. Called from both
  * the success and failure paths so partial runs still produce data.
  */
-function writePhaseTimingsArtifact(totalDurationMs: number, status: 'passed' | 'failed', failedPhase?: string): void {
+function writePhaseTimingsArtifact(
+  totalDurationMs: number,
+  status: 'passed' | 'failed',
+  failedPhase?: string,
+  failedStderrTail?: string,
+): void {
   try {
     const benchmarksDir = resolve(ROOT, 'benchmarks');
     mkdirSync(benchmarksDir, { recursive: true });
@@ -174,6 +186,7 @@ function writePhaseTimingsArtifact(totalDurationMs: number, status: 'passed' | '
       timestamp: new Date().toISOString(),
       status,
       failedPhase: failedPhase ?? null,
+      failedStderrTail: failedStderrTail ?? null,
       environment: {
         platform: process.platform,
         arch: process.arch,
@@ -198,6 +211,12 @@ function writePhaseTimingsArtifact(totalDurationMs: number, status: 'passed' | '
 }
 
 async function main() {
+  const { unexpected } = parseGauntletArgv(process.argv.slice(2));
+  if (unexpected.length > 0) {
+    process.stderr.write(formatUnexpectedArgvReceipt(unexpected));
+    process.exit(1);
+  }
+
   const gauntletStart = Date.now();
 
   try {
@@ -249,7 +268,12 @@ async function main() {
       }
       console.error('');
     }
-    writePhaseTimingsArtifact(totalDuration, 'failed', failedPhase);
+    if (lastFailedStderrTail) {
+      console.error('  Failed phase stderr tail:');
+      console.error(lastFailedStderrTail);
+      console.error('');
+    }
+    writePhaseTimingsArtifact(totalDuration, 'failed', failedPhase, lastFailedStderrTail);
     process.exit(1);
   }
 }

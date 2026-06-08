@@ -15,8 +15,10 @@
  * fingerprint) are deduplicated to the most-recent entry — they don't
  * represent a new measurement of the system.
  *
- * Skips silently when fewer than `MIN_HISTORY_FOR_GATE` distinct entries
- * are available, so a fresh checkout doesn't start failing immediately.
+ * Skips when fewer than `MIN_HISTORY_FOR_GATE` distinct entries are
+ * available, so a fresh checkout doesn't start failing immediately.
+ * Under `BENCH_TREND_STRICT=1`, skips are tagged `[ceremonial-skip]` and
+ * regression failures are enforced when history exists.
  *
  * @module
  */
@@ -32,6 +34,8 @@ const ROLLING_WINDOW = 10;
 const DRIFT_THRESHOLD = 0.2;
 /** Minimum number of distinct prior runs required before the gate is active. */
 const MIN_HISTORY_FOR_GATE = 3;
+
+const CEREMONIAL_SKIP_TAG = '[ceremonial-skip]';
 
 interface HistoryEntry {
   readonly schemaVersion: number;
@@ -98,18 +102,23 @@ interface TrendIssue {
   readonly driftPct: number;
 }
 
+function ceremonialSkip(message: string): void {
+  console.log(`${CEREMONIAL_SKIP_TAG} bench:trend — ${message}`);
+}
+
 function main(): void {
+  const strict = process.env.BENCH_TREND_STRICT === '1';
   const historyPath = resolve(repoRoot, 'benchmarks', 'history.jsonl');
   const all = readHistory(historyPath);
   if (all.length === 0) {
-    console.log('bench:trend — no history yet (benchmarks/history.jsonl missing or empty). Skipping.');
+    ceremonialSkip('no history yet (benchmarks/history.jsonl missing or empty). Skipping.');
     return;
   }
   const deduped = dedupeByFingerprint(all);
   const window = deduped.slice(-ROLLING_WINDOW);
   if (window.length < MIN_HISTORY_FOR_GATE) {
-    console.log(
-      `bench:trend — ${window.length} distinct historical run(s) (need ${MIN_HISTORY_FOR_GATE} to gate). ` +
+    ceremonialSkip(
+      `${window.length} distinct historical run(s) (need ${MIN_HISTORY_FOR_GATE} to gate). ` +
         `Skipping until more runs accumulate.`,
     );
     return;
@@ -117,13 +126,13 @@ function main(): void {
   const latest = window[window.length - 1];
   const prior = window.slice(0, -1);
   if (!latest) {
-    console.log('bench:trend — no latest entry found after windowing. Skipping.');
+    ceremonialSkip('no latest entry found after windowing. Skipping.');
     return;
   }
 
   console.log(
     `\nbench:trend — latest vs rolling median of ${prior.length} prior distinct run(s) ` +
-      `(drift threshold: ${(DRIFT_THRESHOLD * 100).toFixed(0)}%)\n`,
+      `(drift threshold: ${(DRIFT_THRESHOLD * 100).toFixed(0)}%${strict ? ', strict mode' : ''})\n`,
   );
 
   const issues: TrendIssue[] = [];

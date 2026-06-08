@@ -96,7 +96,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       return audit(profile ? { profile } : {});
     }
     case 'gauntlet': {
-      return gauntlet(rest.includes('--dry-run'));
+      return gauntlet(rest);
     }
     case 'ship': {
       return ship(rest);

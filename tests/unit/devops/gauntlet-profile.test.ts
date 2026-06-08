@@ -1,7 +1,7 @@
 /**
  * CUT D8 — the canonical gauntlet phase profile is the ONE source of truth.
  *
- * Pins the 32-phase order to the executor's real run-order (no drift), proves the
+ * Pins the 34-phase order to the executor's real run-order (no drift), proves the
  * executor + CLI both DERIVE from this list (no hand-maintained copies left), and
  * preserves the coverage:browser watchdog options across the migration.
  *
@@ -14,14 +14,16 @@ import { gauntletPhases, gauntletPhaseLabels } from '../../../packages/cli/src/g
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 32 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical 34 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
+  { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
   { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
   { label: 'typecheck', command: 'pnpm run typecheck' },
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
   { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'audit:floor', command: 'pnpm run audit:floor' },
   { label: 'test (unit + component + property + integration)', command: 'pnpm test' },
   { label: 'test:vite', command: 'pnpm run test:vite' },
   { label: 'test:astro', command: 'pnpm run test:astro' },
@@ -33,7 +35,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'test:redteam', command: 'pnpm run test:redteam' },
   { label: 'bench', command: 'pnpm run bench' },
   { label: 'bench:gate', command: 'pnpm run bench:gate' },
-  { label: 'bench:trend', command: 'pnpm run bench:trend' },
+  { label: 'bench:trend', command: 'BENCH_TREND_STRICT=1 pnpm run bench:trend' },
   { label: 'bench:reality', command: 'pnpm run bench:reality' },
   { label: 'package:smoke', command: 'pnpm run package:smoke' },
   { label: 'coverage:wipe-subprocess', command: 'rimraf coverage/subprocess-raw' },
@@ -51,9 +53,9 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 32 phases', () => {
-    expect(gauntletPhases.length).toBe(32);
-    expect(gauntletPhaseLabels().length).toBe(32);
+  it('has exactly 34 phases', () => {
+    expect(gauntletPhases.length).toBe(34);
+    expect(gauntletPhaseLabels().length).toBe(34);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {
@@ -63,6 +65,10 @@ describe('D8 — canonical gauntlet phase profile', () => {
   it('phase labels are unique (no dup-rename drift)', () => {
     const labels = gauntletPhaseLabels();
     expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('rig-check is the entry phase', () => {
+    expect(gauntletPhases[0]!.label).toBe('rig-check');
   });
 
   it('preserves the coverage:browser watchdog options', () => {
