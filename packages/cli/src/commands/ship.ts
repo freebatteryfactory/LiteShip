@@ -167,6 +167,42 @@ const lastNonEmptyLine = (text: string): string => {
 };
 
 /** Execute the ship command for one or more workspace packages. */
+/**
+ * Re-read the freshly packed `package/package.json` and return any
+ * dependency specs that still resolve through the `workspace:` protocol.
+ *
+ * `pnpm publish`/`pnpm pack` are expected to rewrite `workspace:*` to the
+ * concrete version, but a leaked spec slips past that rewrite under some
+ * environments (observed in the published `@czap/core@0.1.4`, which shipped
+ * `"@czap/_spine": "workspace:*"`). A leaked spec makes the package
+ * uninstallable for any consumer outside a pnpm workspace — `pnpm add`
+ * fails with `ERR_PNPM_WORKSPACE_PKG_NOT_FOUND`. The publisher must never
+ * upload such a tarball, so we read the packed manifest (not the on-disk
+ * source manifest, which legitimately carries `workspace:*`) and report
+ * leaks for the caller to abort on.
+ *
+ * Uses `tar -xOf` to stream `package/package.json` to stdout — the same
+ * OS-stable extraction `scripts/package-smoke.ts` relies on.
+ */
+async function findWorkspaceSpecLeaks(tarballPath: string): Promise<string[]> {
+  const res = await spawnArgvCapture('tar', ['-xOf', tarballPath, 'package/package.json']);
+  if (res.exitCode !== 0) {
+    throw new Error(`could not read package/package.json from ${tarballPath}: ${res.stderr.trim()}`);
+  }
+  const manifest = JSON.parse(res.stdout) as Record<string, Record<string, string> | undefined>;
+  const leaks: string[] = [];
+  for (const field of ['dependencies', 'optionalDependencies', 'peerDependencies'] as const) {
+    const deps = manifest[field];
+    if (deps === undefined) continue;
+    for (const [depName, spec] of Object.entries(deps)) {
+      if (typeof spec === 'string' && spec.startsWith('workspace:')) {
+        leaks.push(`${field}.${depName} = ${spec}`);
+      }
+    }
+  }
+  return leaks;
+}
+
 export async function ship(args: readonly string[]): Promise<number> {
   const cwd = process.cwd();
   const opts = parseArgs(args, cwd);
@@ -277,6 +313,28 @@ export async function ship(args: readonly string[]): Promise<number> {
       return 1;
     }
     const tarballBytes = new Uint8Array(readFileSync(tarballPath));
+
+    // Refuse to ship a tarball whose manifest still carries `workspace:`
+    // specs — they make the package uninstallable for downstream consumers
+    // (see findWorkspaceSpecLeaks). This runs before the publish hand-off,
+    // so a leak aborts the whole batch rather than reaching npm.
+    let workspaceSpecLeaks: string[];
+    try {
+      workspaceSpecLeaks = await findWorkspaceSpecLeaks(tarballPath);
+    } catch (e) {
+      emitError('ship', `${pkg.relativePath}: ${e instanceof Error ? e.message : String(e)}`);
+      return 1;
+    }
+    if (workspaceSpecLeaks.length > 0) {
+      emitError(
+        'ship',
+        `${pkg.relativePath}: packed tarball leaks workspace: protocol specs that the publish step ` +
+          `failed to rewrite (${workspaceSpecLeaks.join('; ')}). Such a tarball is uninstallable for ` +
+          `consumers outside a pnpm workspace. Refusing to ship — run \`pnpm install\` to relink the ` +
+          `workspace, confirm the dependency target is itself publishable, then re-run ship.`,
+      );
+      return 1;
+    }
 
     const tmAddrResult = await runEffect(tarballManifestAddress(tarballBytes));
     if (!tmAddrResult.ok) {
