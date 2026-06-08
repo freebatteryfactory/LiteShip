@@ -12,7 +12,8 @@
  * @module
  */
 
-import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
@@ -301,10 +302,38 @@ function probeFfmpegRenderCheck(): DoctorCheck {
   };
 }
 
+/**
+ * Resolve Playwright's browser cache directory the same way Playwright does:
+ * `PLAYWRIGHT_BROWSERS_PATH` when set, else the per-OS default. Returns null
+ * when the path can't be determined (no HOME).
+ */
+function playwrightBrowsersDir(): string | null {
+  const override = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  if (override && override !== '0') return override;
+  const home = homedir();
+  if (!home) return null;
+  if (process.platform === 'darwin') return resolve(home, 'Library/Caches/ms-playwright');
+  if (process.platform === 'win32') {
+    return resolve(process.env.LOCALAPPDATA ?? resolve(home, 'AppData/Local'), 'ms-playwright');
+  }
+  return resolve(home, '.cache/ms-playwright');
+}
+
+/** True when the browser cache holds at least one downloaded chromium build. */
+function hasChromiumBuild(): boolean {
+  const dir = playwrightBrowsersDir();
+  if (!dir || !existsSync(dir)) return false;
+  try {
+    return readdirSync(dir).some((entry) => entry.startsWith('chromium'));
+  } catch {
+    return false;
+  }
+}
+
 function probePlaywright(cwd: string): DoctorCheck {
-  // Playwright stashes browser binaries under ms-playwright/. We probe the
-  // package.json + node_modules path rather than running playwright itself
-  // to avoid a slow subprocess on every doctor call.
+  // Filesystem-only probe (no slow subprocess): check the @playwright/test
+  // package AND the downloaded browser binaries. The package alone is not
+  // enough — `test:e2e` / `coverage:browser` need the chromium build too.
   const pwPkg = resolve(cwd, 'node_modules/@playwright/test/package.json');
   if (!existsSync(pwPkg)) {
     return {
@@ -312,10 +341,19 @@ function probePlaywright(cwd: string): DoctorCheck {
       label: 'Playwright',
       status: 'warn',
       detail: '@playwright/test not in node_modules (e2e tests will not run)',
-      hint: 'Stow the browsers: pnpm install && pnpm exec playwright install',
+      hint: 'Stow the browsers: pnpm install && pnpm exec playwright install chromium',
     };
   }
-  return { id: 'playwright.installed', label: 'Playwright', status: 'ok', detail: 'package present' };
+  if (!hasChromiumBuild()) {
+    return {
+      id: 'playwright.installed',
+      label: 'Playwright',
+      status: 'warn',
+      detail: 'package present but no chromium browser binary downloaded (e2e/browser tests will not run)',
+      hint: 'Stow the browsers: pnpm exec playwright install chromium chromium-headless-shell',
+    };
+  }
+  return { id: 'playwright.installed', label: 'Playwright', status: 'ok', detail: 'package + chromium present' };
 }
 
 async function probeGitConfig(cwd: string): Promise<DoctorCheck> {

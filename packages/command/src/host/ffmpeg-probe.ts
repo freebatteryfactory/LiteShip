@@ -7,7 +7,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 /** Result of {@link probeFfmpegRender}. */
 export interface FfmpegRenderProbe {
@@ -69,11 +69,14 @@ export function probeFfmpegRender(): FfmpegRenderProbe {
 }
 
 function readOsRelease(): string {
+  if (!existsSync('/etc/os-release')) return '';
+  let contents = '';
   try {
-    return readFileSync('/etc/os-release', 'utf8');
+    contents = readFileSync('/etc/os-release', 'utf8');
   } catch {
-    return '';
+    // /etc/os-release unreadable (permissions, non-Linux) — fall back to generic hint.
   }
+  return contents;
 }
 
 function libx264MissingHint(): string {
