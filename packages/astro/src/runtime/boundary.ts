@@ -197,9 +197,16 @@ export function readSignalValue(input: string): number | undefined {
  * hysteresis band.
  */
 export function evaluateBoundary(boundary: RuntimeBoundary, value: number, previousState?: string): string {
-  const context = buildBoundaryActivationContext();
-  if (!Boundary.isActive(boundary.boundary, context)) {
-    return previousState ?? boundary.boundary.states[0]!;
+  // Activation gating only matters when the boundary carries a spec
+  // (time-range / experiment / device filter). For the common spec-less
+  // case `isActive` is unconditionally true, so building the activation
+  // context here — which allocates and, in a browser, creates a canvas +
+  // WebGL2 context on every call — is pure hot-path waste. Skip it.
+  if (boundary.boundary.spec) {
+    const context = buildBoundaryActivationContext();
+    if (!Boundary.isActive(boundary.boundary, context)) {
+      return previousState ?? boundary.boundary.states[0]!;
+    }
   }
 
   if (previousState && boundary.boundary.hysteresis) {
