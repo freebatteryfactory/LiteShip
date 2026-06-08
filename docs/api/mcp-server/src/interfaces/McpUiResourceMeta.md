@@ -6,7 +6,7 @@
 
 # Interface: McpUiResourceMeta
 
-Defined in: [mcp-server/src/ui-resources.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L32)
+Defined in: [mcp-server/src/ui-resources.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L41)
 
 MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never on a tool.
 
@@ -16,8 +16,20 @@ MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never 
 
 > `readonly` **ui**: `object`
 
-Defined in: [mcp-server/src/ui-resources.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L33)
+Defined in: [mcp-server/src/ui-resources.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L42)
 
 #### csp
 
 > `readonly` **csp**: [`McpUiResourceCsp`](McpUiResourceCsp.md)
+
+#### domain?
+
+> `readonly` `optional` **domain?**: `string`
+
+#### permissions?
+
+> `readonly` `optional` **permissions?**: `McpUiPermissions`
+
+#### prefersBorder?
+
+> `readonly` `optional` **prefersBorder?**: `boolean`

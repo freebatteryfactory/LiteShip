@@ -1,6 +1,6 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-05-07
+Last updated: 2026-06-08
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
 Current node lane: run `pnpm test` for the fresh pass/fail and file-count truth.
@@ -656,6 +656,26 @@ through `workspace:*` links until each external npm cut.
   manifests and guarded by `tests/unit/devops/package-smoke-roster.test.ts`
 - external publishing remains a deliberate release decision, not an accidental
   side effect of package shape
+
+---
+
+## CUT Campaign Closeout (2026-06-08)
+
+Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (WebMCP) landed on `main`:
+
+| Cut | Receipt |
+| --- | ------- |
+| `quantizer-cache-key` | Output cache ids minted via `CanonicalCbor + fnv1aBytes` (no composite `mkContentAddress` forgery) |
+| `quantizer-hlc` | `HLC.increment` replaces ad-hoc `hlcCounter++` |
+| `worker-typed-boundary` | Worker wire types use `ContentAddress` / `StateName` |
+| `asset-ref-brand` | `AssetRef()` returns branded `AssetRefId` |
+| `resumption-hlc` | `parseEventId` reads canonical `HLC.encode` wire format |
+| `blake3-digest` | `AddressedDigest` implements `blake3` via `@noble/hashes` |
+| `boundary-spec-wiring` | `evaluateBoundary` gates on `Boundary.isActive` |
+| `wgsl-gpu-runtime` | WGSL directives use WebGPU path (`wgpu.ts`) with WebGL2 fallback |
+| `mcp-apps-spec-completeness` | UI resources emit `_meta.ui.permissions` + `prefersBorder` |
+| `d10-interactive-widgets` | View bridge `callServerTool` + server `ui/call-tool` handler |
+| `webmcp-host-browser` | `@czap/command/host-browser` + `registerWebMcpTools()` |
 
 ---
 

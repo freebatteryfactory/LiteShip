@@ -317,9 +317,10 @@ export const Boundary: BoundaryFactory & {
  * Enables A/B testing, time-bounded experiments, and device targeting
  * without external wrapping logic.
  *
- * **Phase 2**: Spec evaluation is implemented and tested but not yet wired
- * into the Compositor evaluation loop. Call `BoundarySpec.isActive()` or
- * `Boundary.isActive()` manually to check activation in the interim.
+ * Wired into the Astro runtime `evaluateBoundary` path (host-side gating before
+ * state transitions). JSON-serializable fields
+ * (`timeRange`, `experimentId`) round-trip through `data-czap-boundary`;
+ * `deviceFilter` is host-only (functions cannot cross the wire).
  */
 export interface BoundarySpec {
   /** Only evaluate this boundary when the device filter returns true. */

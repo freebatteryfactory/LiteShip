@@ -29,7 +29,8 @@ function renderContext(opts: { readonly cwd?: string }): CommandContext {
     fileExists: (path) => existsSync(resolve(path)),
     cache: {
       read: (key) => tryReadCache({ command: key.command, inputs: key.inputs, force: key.force, cwd: opts.cwd }),
-      write: (key, receipt) => writeCache({ command: key.command, inputs: key.inputs, force: key.force, cwd: opts.cwd }, receipt),
+      write: (key, receipt) =>
+        writeCache({ command: key.command, inputs: key.inputs, force: key.force, cwd: opts.cwd }, receipt),
     },
     loadSceneModule: async (scenePath) =>
       (await import(/* @vite-ignore */ pathToFileURL(resolve(scenePath)).href)) as Record<string, unknown>,
@@ -38,8 +39,13 @@ function renderContext(opts: { readonly cwd?: string }): CommandContext {
         Effect.scoped(
           Effect.gen(function* () {
             const compositor = yield* Compositor.create();
-            const renderer = VideoRenderer.make({ fps, width: WIDTH, height: HEIGHT, durationMs: durationMs as Millis }, compositor);
-            return yield* Effect.promise(() => renderWithFfmpeg(renderer.frames(), { output, width: WIDTH, height: HEIGHT, fps }));
+            const renderer = VideoRenderer.make(
+              { fps, width: WIDTH, height: HEIGHT, durationMs: durationMs as Millis },
+              compositor,
+            );
+            return yield* Effect.promise(() =>
+              renderWithFfmpeg(renderer.frames(), { output, width: WIDTH, height: HEIGHT, fps }),
+            );
           }),
         ),
       ),

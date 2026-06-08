@@ -1,6 +1,7 @@
 import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
 
 const DEFAULT_VERTEX_SHADER = `#version 300 es
 precision mediump float;
@@ -91,12 +92,35 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement):
   }
 
   if (shaderType === 'wgsl') {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.gpu',
-      code: 'wgsl-not-yet-supported',
-      message:
-        'WGSL shader directives are not yet wired into the Astro GPU runtime. Use WGSLCompiler directly for WGSL output.',
-    });
+    let canvas: HTMLCanvasElement;
+    if (el instanceof HTMLCanvasElement) {
+      canvas = el;
+    } else {
+      canvas = document.createElement('canvas');
+      canvas.width = el.clientWidth || CANVAS_FALLBACK_WIDTH;
+      canvas.height = el.clientHeight || CANVAS_FALLBACK_HEIGHT;
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      el.appendChild(canvas);
+    }
+
+    void (async () => {
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '');
+      if (!dispose) {
+        warnWebGpuUnavailable();
+        const gl = canvas.getContext('webgl2');
+        if (gl) {
+          Diagnostics.warnOnce({
+            source: 'czap/astro.gpu',
+            code: 'wgsl-fallback-webgl2',
+            message: 'WebGPU unavailable; WGSL directive fell back to WebGL2 default shader.',
+          });
+        }
+      } else {
+        el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
+        el.addEventListener('czap:reinit', dispose, { once: true });
+      }
+    })();
     load();
     return;
   }

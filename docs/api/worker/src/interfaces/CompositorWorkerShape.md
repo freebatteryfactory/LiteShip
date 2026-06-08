@@ -53,11 +53,11 @@ Register a quantizer in the worker.
 
 ###### id
 
-`string`
+`ContentAddress`
 
 ###### states
 
-readonly `string`[]
+readonly `StateName`[]
 
 ###### thresholds
 

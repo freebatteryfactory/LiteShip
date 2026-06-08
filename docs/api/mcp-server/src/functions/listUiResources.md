@@ -8,7 +8,7 @@
 
 > **listUiResources**(): readonly [`McpUiResource`](../interfaces/McpUiResource.md)[]
 
-Defined in: [mcp-server/src/ui-resources.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L92)
+Defined in: [mcp-server/src/ui-resources.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L110)
 
 Project the UI registry into `resources/list` descriptors (stable order).
 

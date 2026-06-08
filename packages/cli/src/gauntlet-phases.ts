@@ -65,7 +65,12 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // Browser coverage on Windows can hang during Chromium teardown after the v8
   // report is already emitted; the doneMarker + 90s grace lets the table finish,
   // then the executor tree-kills any orphan Chromium so the gauntlet advances.
-  { label: 'coverage:browser', command: 'pnpm run coverage:browser', doneMarker: /Coverage report from v8/, gracePeriodMs: 90_000 },
+  {
+    label: 'coverage:browser',
+    command: 'pnpm run coverage:browser',
+    doneMarker: /Coverage report from v8/,
+    gracePeriodMs: 90_000,
+  },
   { label: 'merge-subprocess-v8', command: 'tsx scripts/merge-subprocess-v8.ts' },
   { label: 'coverage:merge', command: 'tsx scripts/merge-coverage.ts' },
 

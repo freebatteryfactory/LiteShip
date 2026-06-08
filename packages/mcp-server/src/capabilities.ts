@@ -26,4 +26,6 @@ export const SERVER_CAPABILITIES = {
   tools: { listChanged: false },
   resources: { listChanged: false },
   prompts: { listChanged: false },
+  /** D10: interactive MCP Apps views may call back into tools via ui/call-tool. */
+  ui: { callServerTool: true },
 } as const;

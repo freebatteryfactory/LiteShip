@@ -8,7 +8,7 @@
 
 > **getPrompt**(`name`, `args`): [`GetPromptResult`](../interfaces/GetPromptResult.md)
 
-Defined in: [mcp-server/src/prompts.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L62)
+Defined in: [mcp-server/src/prompts.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L67)
 
 Resolve a prompt by name. Unknown prompt / missing / invalid argument → InvalidParamsError (-32602).
 

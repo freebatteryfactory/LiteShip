@@ -37,14 +37,19 @@ export interface McpPrompt {
 /** The `prompts/get` result: a description + a deterministic message sequence (text content only). */
 export interface GetPromptResult {
   readonly description: string;
-  readonly messages: ReadonlyArray<{ readonly role: 'user'; readonly content: { readonly type: 'text'; readonly text: string } }>;
+  readonly messages: ReadonlyArray<{
+    readonly role: 'user';
+    readonly content: { readonly type: 'text'; readonly text: string };
+  }>;
 }
 
 const PROMPTS: readonly McpPrompt[] = [
   {
     name: 'liteship.command.inspect',
     description: 'Explain a LiteShip command from its canonical registry descriptor.',
-    arguments: [{ name: 'command', description: 'Canonical command id to inspect (e.g. scene.render).', required: true }],
+    arguments: [
+      { name: 'command', description: 'Canonical command id to inspect (e.g. scene.render).', required: true },
+    ],
   },
   {
     name: 'liteship.tool.use',
@@ -81,7 +86,10 @@ function inspectCommand(args: Readonly<Record<string, unknown>>): GetPromptResul
   }
   const descriptor = COMMAND_CATALOG.find((d) => d.name === command);
   if (!descriptor) throw new InvalidParamsError(`unknown command: ${command}`, { command });
-  return { description: `Inspect the LiteShip command ${command}.`, messages: [userMessage(renderCommand(descriptor))] };
+  return {
+    description: `Inspect the LiteShip command ${command}.`,
+    messages: [userMessage(renderCommand(descriptor))],
+  };
 }
 
 function useTool(args: Readonly<Record<string, unknown>>): GetPromptResult {

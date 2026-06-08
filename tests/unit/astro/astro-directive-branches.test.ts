@@ -671,7 +671,7 @@ describe('astro directive branch coverage', () => {
     expect(cleanupGl.deleteProgram).toHaveBeenCalled();
   });
 
-  test('gpu directive short-circuits for static tiers and wgsl directives without duplicating warnings', () => {
+  test('gpu directive short-circuits for static tiers and wgsl directives without duplicating warnings', async () => {
     const load = vi.fn(async () => {});
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
@@ -693,9 +693,11 @@ describe('astro directive branch coverage', () => {
 
     gpuDirective(load, {}, wgslHost);
     gpuDirective(load, {}, secondWgslHost);
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(load).toHaveBeenCalledTimes(3);
-    expect(events.filter((event) => event.code === 'wgsl-not-yet-supported')).toHaveLength(1);
+    expect(events.filter((event) => event.code === 'webgpu-unavailable')).toHaveLength(1);
   });
 
   test('gpu directive ignores malformed boundary payloads and non-numeric css uniform updates', async () => {

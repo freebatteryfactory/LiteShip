@@ -8,7 +8,7 @@
 
 > **sortSuppressions**\<`T`\>(`suppressions`): `T`[]
 
-Defined in: [audit/src/shared.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L153)
+Defined in: [audit/src/shared.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L155)
 
 ## Type Parameters
 

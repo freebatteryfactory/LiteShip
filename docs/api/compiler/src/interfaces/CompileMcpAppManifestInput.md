@@ -6,7 +6,7 @@
 
 # Interface: CompileMcpAppManifestInput
 
-Defined in: [compiler/src/mcp-app-manifest.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L65)
+Defined in: [compiler/src/mcp-app-manifest.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L68)
 
 Inputs to [compileMcpAppManifest](../functions/compileMcpAppManifest.md) — all supplied as plain data by the caller (server/tests).
 
@@ -16,7 +16,7 @@ Inputs to [compileMcpAppManifest](../functions/compileMcpAppManifest.md) — all
 
 > `readonly` **appResources**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L73)
+Defined in: [compiler/src/mcp-app-manifest.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L76)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/heyoub/Lite
 
 > `readonly` **capabilities**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [compiler/src/mcp-app-manifest.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L68)
+Defined in: [compiler/src/mcp-app-manifest.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L71)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:68](https://github.com/heyoub/Lite
 
 > `readonly` **prompts**: readonly [`ManifestPromptView`](ManifestPromptView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L74)
+Defined in: [compiler/src/mcp-app-manifest.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L77)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/heyoub/Lite
 
 > `readonly` **protocolVersion**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L67)
+Defined in: [compiler/src/mcp-app-manifest.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L70)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:67](https://github.com/heyoub/Lite
 
 > `readonly` **resources**: readonly [`ManifestResourceView`](ManifestResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L71)
+Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L74)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:71](https://github.com/heyoub/Lite
 
 > `readonly` **serverInfo**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L66)
+Defined in: [compiler/src/mcp-app-manifest.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L69)
 
 #### name
 
@@ -72,7 +72,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:66](https://github.com/heyoub/Lite
 
 > `readonly` **toolDescriptors**: readonly `CapsuleCommandDescriptor`[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L70)
+Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L73)
 
 The MCP-exposed command descriptors (e.g. `mcpExposedDescriptors()`).
 
@@ -82,4 +82,4 @@ The MCP-exposed command descriptors (e.g. `mcpExposedDescriptors()`).
 
 > `readonly` **uiResources**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L72)
+Defined in: [compiler/src/mcp-app-manifest.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L75)

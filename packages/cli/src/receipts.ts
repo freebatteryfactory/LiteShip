@@ -94,4 +94,3 @@ export function emitError(command: string, message: string): void {
     }) + '\n',
   );
 }
-

@@ -309,8 +309,12 @@ async function probeGitConfig(cwd: string): Promise<DoctorCheck> {
     return { id: 'git.config', label: 'git config', status: 'ok', detail: 'no .git (not a worktree)' };
   }
   const [email, name] = await Promise.all([
-    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
-    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(() => null),
+    spawnArgvCapture('git', ['config', '--get', 'user.email'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
+      () => null,
+    ),
+    spawnArgvCapture('git', ['config', '--get', 'user.name'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
+      () => null,
+    ),
   ]);
   if (email?.timedOut || name?.timedOut) {
     return {
@@ -372,11 +376,7 @@ async function runAllProbes(cwd: string): Promise<readonly DoctorCheck[]> {
   // concurrently so the wall time is the slowest single probe, not the serial
   // sum of cargo + pnpm + git (CUT test-flake). Sync probes stay sync. Receipt
   // order below is preserved regardless of completion order.
-  const [wasm, pnpm, gitConfig] = await Promise.all([
-    probeWasmToolchain(cwd),
-    probePnpm(minima),
-    probeGitConfig(cwd),
-  ]);
+  const [wasm, pnpm, gitConfig] = await Promise.all([probeWasmToolchain(cwd), probePnpm(minima), probeGitConfig(cwd)]);
   return [
     probeNode(minima),
     pnpm,

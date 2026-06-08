@@ -448,6 +448,15 @@ describe('astro shared runtime adapters', () => {
     expect(evaluateBoundary(parsedBoundary!, 780, 'mobile')).toBe('mobile');
     expect(evaluateBoundary(parsedBoundary!, 789, 'mobile')).toBe('tablet');
     expect(readSignalValue('viewport.width')).toBe(780);
+
+    const inactiveBoundary = parseBoundary(
+      JSON.stringify({
+        ...boundary,
+        spec: { timeRange: { until: 1 } },
+      }),
+    );
+    expect(inactiveBoundary).not.toBeNull();
+    expect(evaluateBoundary(inactiveBoundary!, 1024, 'mobile')).toBe('mobile');
     expect(readSignalValue('signal.depth')).toBeUndefined();
 
     const element = document.createElement('div');

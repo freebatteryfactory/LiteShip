@@ -42,6 +42,18 @@ Defined in: [compiler/src/mcp-app-manifest.ts:36](https://github.com/heyoub/Lite
 
 > `readonly` **resourceDomains**: readonly `string`[]
 
+##### ui.domain?
+
+> `readonly` `optional` **domain?**: `string`
+
+##### ui.permissions?
+
+> `readonly` `optional` **permissions?**: readonly `string`[]
+
+##### ui.prefersBorder?
+
+> `readonly` `optional` **prefersBorder?**: `boolean`
+
 ***
 
 ### description

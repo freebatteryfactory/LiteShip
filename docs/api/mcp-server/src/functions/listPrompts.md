@@ -8,7 +8,7 @@
 
 > **listPrompts**(): readonly [`McpPrompt`](../interfaces/McpPrompt.md)[]
 
-Defined in: [mcp-server/src/prompts.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L57)
+Defined in: [mcp-server/src/prompts.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L62)
 
 The two registry-backed prompts, in stable order.
 

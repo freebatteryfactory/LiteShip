@@ -28,9 +28,23 @@ export interface McpUiResourceCsp {
   readonly baseUriDomains: readonly string[];
 }
 
+/** MCP Apps UI permissions (SEP-1865). Default-deny when empty. */
+export type McpUiPermissions = readonly (
+  | 'camera'
+  | 'microphone'
+  | 'geolocation'
+  | 'clipboard-read'
+  | 'clipboard-write'
+)[];
+
 /** MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never on a tool. */
 export interface McpUiResourceMeta {
-  readonly ui: { readonly csp: McpUiResourceCsp };
+  readonly ui: {
+    readonly csp: McpUiResourceCsp;
+    readonly permissions?: McpUiPermissions;
+    readonly domain?: string;
+    readonly prefersBorder?: boolean;
+  };
 }
 
 /** An MCP Apps UI resource descriptor as emitted by `resources/list`. */
@@ -52,9 +66,13 @@ export interface McpUiResourceContents {
   }>;
 }
 
-/** Self-contained static widget: default-deny CSP — no external connect/resource/frame/base domains. */
+/** Self-contained static widget: default-deny CSP + permissions; sandbox hints for hosts. */
 const SELF_CONTAINED_META: McpUiResourceMeta = {
-  ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } },
+  ui: {
+    csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] },
+    permissions: [],
+    prefersBorder: true,
+  },
 };
 
 interface UiEntry {

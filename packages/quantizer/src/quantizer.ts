@@ -243,11 +243,7 @@ function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
 }
 
 /** Output-cache identity: a derived tuple minted as a true fnv1a ContentAddress. */
-function outputCacheAddress(
-  configId: ContentAddress,
-  state: string,
-  springCSS: string | null,
-): ContentAddress {
+function outputCacheAddress(configId: ContentAddress, state: string, springCSS: string | null): ContentAddress {
   return fnv1aBytes(
     CanonicalCbor.encode({
       configId,

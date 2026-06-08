@@ -59,6 +59,8 @@ describe('D4 — UI resource metadata (CSP on the resource, never the tool)', ()
   it('each UI resource carries _meta.ui.csp with the camelCase domain allowlists', () => {
     for (const r of listUiResources()) {
       expect(r._meta.ui.csp).toEqual({ connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] });
+      expect(r._meta.ui.permissions).toEqual([]);
+      expect(r._meta.ui.prefersBorder).toBe(true);
     }
   });
 
@@ -154,6 +156,6 @@ describe('D4 — projection drift pin', () => {
     );
     // Re-pin intentionally (and only) when the UI resource surface changes on purpose.
     // CUT D9b-2: `audit` joined COMMAND_CATALOG, so the registry/commands UI body changed.
-    expect(address).toBe('fnv1a:9ec825ea');
+    expect(address).toBe('fnv1a:45812ab8');
   });
 });

@@ -68,7 +68,8 @@ const REGISTRY: readonly ResourceEntry[] = [
     resource: {
       uri: `${SCHEME}registry/commands`,
       name: 'registry/commands',
-      description: 'The full LiteShip command catalog (superset of tools/list): every descriptor with executionKind, annotations, and schemas.',
+      description:
+        'The full LiteShip command catalog (superset of tools/list): every descriptor with executionKind, annotations, and schemas.',
       mimeType: JSON_MIME,
     },
     read: () => json(COMMAND_CATALOG),

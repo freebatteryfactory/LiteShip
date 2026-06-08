@@ -8,7 +8,7 @@
 
 > **createCounts**(`findings`): [`AuditCounts`](../interfaces/AuditCounts.md)
 
-Defined in: [audit/src/shared.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L125)
+Defined in: [audit/src/shared.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L127)
 
 ## Parameters
 
