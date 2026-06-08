@@ -11,6 +11,7 @@
 - [astro/src](astro/src/README.md)
 - [audit/src](audit/src/README.md)
 - [cli/src](cli/src/README.md)
+- [cloudflare/src](cloudflare/src/README.md)
 - [compiler/src](compiler/src/README.md)
 - [core/src](core/src/README.md)
 - [detect/src](detect/src/README.md)

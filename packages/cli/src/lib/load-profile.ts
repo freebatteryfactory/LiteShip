@@ -50,7 +50,7 @@ function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsPro
 
 /** Coerce a module's export(s) into a DevopsProfile (object or `(cwd) => profile` factory). */
 async function profileFromModule(modPath: string, cwd: string): Promise<DevopsProfile> {
-  const mod = (await import(pathToFileURL(modPath).href)) as Record<string, unknown>;
+  const mod = (await import(/* @vite-ignore */ pathToFileURL(modPath).href)) as Record<string, unknown>;
   const candidate = mod['default'] ?? mod['profile'] ?? mod['devopsProfile'];
   if (candidate === undefined) {
     throw new Error(`profile module must export a default (or named "profile"/"devopsProfile"): ${modPath}`);

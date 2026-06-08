@@ -10,7 +10,7 @@ Defined in: [mcp-server/src/dispatch.ts:61](https://github.com/heyoub/LiteShip/b
 
 MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 (what a D2 `outputSchema` will describe); LiteShip result identity rides in
-`_meta` under RECEIPT\_META\_KEY (provenance, not the semantic result);
+`_meta` under [RECEIPT\_META\_KEY](#) (provenance, not the semantic result);
 `content[0].text` is a compatibility JSON mirror of the payload.
 
 ## Properties

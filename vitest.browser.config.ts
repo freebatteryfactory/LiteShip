@@ -58,7 +58,16 @@ export default defineConfig({
       reportsDirectory: './coverage/browser',
       reporter: [...coverageReporters],
       include: coverageInclude,
-      exclude: coverageExclude,
+      // The browser v8 provider statically re-parses every *included* source
+      // for its uncovered-file report (even untouched ones). @czap/cloudflare
+      // is Workers/workerd-only — never loaded in a browser test — and its
+      // edge middleware tripped Rolldown's parser (`import type {…}` →
+      // "Expected `from`"), printing a warning and silently dropping the file.
+      // Exclude the package from the BROWSER pass only; the node pass
+      // (vitest.config.ts) still measures it and is the merge's completeness
+      // source. Spread keeps the shared coverageExclude intact (its length is
+      // pinned by tests/unit/meta/coverage-config.test.ts).
+      exclude: [...coverageExclude, 'packages/cloudflare/src/**'],
     },
   },
 });

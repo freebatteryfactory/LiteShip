@@ -112,6 +112,7 @@ jobs:
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro
+      - run: pnpm run test:cloudflare
       - run: pnpm run test:tailwind
       - run: pnpm run test:redteam
       - run: pnpm run package:smoke
@@ -142,6 +143,7 @@ jobs:
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro
+      - run: pnpm run test:cloudflare
       - run: pnpm run test:tailwind
       - run: pnpm run test:redteam
       - run: pnpm run package:smoke

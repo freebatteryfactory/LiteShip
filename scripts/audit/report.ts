@@ -1720,8 +1720,8 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       group: 'features',
       title: 'Workerd/edge-first optimization',
       status: 'partial',
-      summary: 'The repo is edge-aware and Cloudflare-conscious, but it is not yet a first-party Workerd framework with platform-owned runtime contracts.',
-      evidence: ['docs/ARCHITECTURE.md', 'packages/edge/src/client-hints.ts'],
+      summary: '@czap/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
+      evidence: ['docs/hosting/cloudflare.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
       recommendation: 'architecture_hardening',
     },
     {

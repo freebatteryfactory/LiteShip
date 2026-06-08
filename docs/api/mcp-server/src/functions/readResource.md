@@ -10,7 +10,7 @@
 
 Defined in: [mcp-server/src/resources.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L114)
 
-Read one resource by exact URI. Throws ResourceNotFoundError (→ -32002) for an unknown URI.
+Read one resource by exact URI. Throws [ResourceNotFoundError](#) (→ -32002) for an unknown URI.
 
 ## Parameters
 

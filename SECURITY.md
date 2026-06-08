@@ -85,6 +85,14 @@ If the host enforces Trusted Types via the `require-trusted-types-for 'script'` 
 - LiteShip itself: when `window.trustedTypes` is available, the runtime looks up (or creates a passthrough) `czap` policy automatically. Hosts with stricter requirements pre-install their own.
 - LiteShip itself: no auto-set CSP. The host owns the policy.
 
+## Cloudflare Workers (workerd)
+
+When hosting on Cloudflare Workers via `@czap/cloudflare`:
+
+- **CSP:** Same browser CSP requirements as above apply to HTML responses served from the Worker. `worker-src 'self' blob:` remains required for `client:worker` off-thread paths in the browser.
+- **Cross-origin isolation:** If you enable `workers: { enabled: true }` in `@czap/astro`, emit `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` on HTML responses (see `packages/astro/src/headers.ts`). Without these headers, `SharedArrayBuffer` and full off-thread worker paths are unavailable in the browser.
+- **KV trust boundary:** Workers KV is a host-controlled cache for boundary compile outputs, not a secrets store. Bindings are declared in `wrangler.jsonc` and accessed via `cloudflare:workers` `env`. See [docs/hosting/cloudflare.md](docs/hosting/cloudflare.md).
+
 ## Red-team regression suite
 
 The repo includes a dedicated red-team regression lane:

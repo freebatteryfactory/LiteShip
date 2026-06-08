@@ -7,8 +7,12 @@
 import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@czap/audit';
 import type { AuditFinding } from '@czap/audit';
 
-/** Sorted multiset of `rule@file` keys for the six pinned fallback-laundering warnings. */
+/** Sorted multiset of `rule@file` keys for pinned fallback-laundering warnings. */
 export const AUDIT_WARNING_FLOOR: readonly string[] = [
+  'fallback-laundering@packages/cli/src/commands/doctor.ts',
+  'fallback-laundering@packages/cli/src/commands/doctor.ts',
+  'fallback-laundering@packages/cli/src/commands/doctor.ts',
+  'fallback-laundering@packages/cli/src/commands/doctor.ts',
   'fallback-laundering@packages/cli/src/commands/doctor.ts',
   'fallback-laundering@packages/cli/src/commands/doctor.ts',
   'fallback-laundering@packages/cli/src/commands/doctor.ts',

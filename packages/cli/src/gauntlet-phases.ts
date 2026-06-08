@@ -31,7 +31,7 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 34-phase gauntlet sequence, in execution order. */
+/** The canonical 35-phase gauntlet sequence, in execution order. */
 export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
@@ -51,6 +51,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 4: Integration, e2e, stress, bench ───────────────────────
   { label: 'test:vite', command: 'pnpm run test:vite' },
   { label: 'test:astro', command: 'pnpm run test:astro' },
+  { label: 'test:cloudflare', command: 'pnpm run test:cloudflare' },
   { label: 'test:tailwind', command: 'pnpm run test:tailwind' },
   { label: 'test:e2e', command: 'pnpm run test:e2e' },
   { label: 'test:e2e:stress', command: 'pnpm run test:e2e:stress' },

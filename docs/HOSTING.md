@@ -2,7 +2,7 @@
 
 LiteShip runs inside the host application's security boundary: the host's CSP, the host's Trusted Types policy, the host's runtime endpoints. This page is the **minimum host checklist** to get a v0.1.x install through its first page render without surprises.
 
-For the security architecture this checklist enforces, see [SECURITY.md](../SECURITY.md). For an end-to-end tutorial, see [docs/GETTING-STARTED.md](./GETTING-STARTED.md).
+For the security architecture this checklist enforces, see [SECURITY.md](../SECURITY.md). For an end-to-end tutorial, see [docs/GETTING-STARTED.md](./GETTING-STARTED.md). For Cloudflare Workers, see [docs/hosting/cloudflare.md](./hosting/cloudflare.md).
 
 ## Minimum versions
 

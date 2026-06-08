@@ -11,7 +11,7 @@ Remotion's license is also a consideration: commercial use above three employees
 
 ## Decision
 
-Host integrations are `siteAdapter` capsule instances. `@czap/remotion` is the first such instance. Future integrations (Revideo, Twick, custom hosts) are added as peer capsules, not as primary-surface changes to `@czap/core`.
+Host integrations are `siteAdapter` capsule instances. `@czap/remotion` is the first such instance; `@czap/cloudflare` (`cloudflare.workers-kv-boundary`) is the second — Cloudflare Workers KV boundary cache via `@czap/astro` middleware glue. Future integrations (Revideo, Twick, custom hosts) are added as peer capsules, not as primary-surface changes to `@czap/core`.
 
 Every adapter capsule declares:
 
@@ -32,6 +32,7 @@ The repo compiler's harness template for `siteAdapter` emits round-trip tests (n
 ## Supporting evidence
 
 - `packages/remotion/src/capsules/remotion-adapter.ts`: first `siteAdapter` capsule instance (Task 24, commit `6b1e266`)
+- `packages/cloudflare/src/capsules/cloudflare-adapter.ts`: second `siteAdapter` capsule instance — Cloudflare Workers KV boundary cache
 - `packages/core/src/harness/site-adapter.ts`: harness template (Task 9, commit `3e607d0`)
 - `reports/capsule-manifest.json`: `remotion.video-frame-output` entry with `Remotion-Company-License` attribution
 - Spec §4 assembly catalog + §11 phased rollout

@@ -418,7 +418,7 @@ const checks: Check[] = [
         //   cachedProjection  — defineAsset / BeatMarkerProjection / WavMetadataProjection
         //   sceneComposition  — examples.intro, scene.beat-binding
         // siteAdapter and policyGate stay reportable but ungated — siteAdapter
-        // ships one (Remotion) and policyGate has no Spec 1.1 surface yet.
+        // siteAdapter ships two instances (Remotion + Cloudflare); policyGate has no Spec 1.1 surface yet.
         const requiredArms = [
           'pureTransform',
           'receiptedMutation',

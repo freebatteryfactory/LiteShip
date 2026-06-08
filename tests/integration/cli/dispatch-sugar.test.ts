@@ -58,6 +58,21 @@ describe('czap dispatch — dev-experience verbs', () => {
     expect(receipt.checks.length).toBeGreaterThan(0);
   });
 
+  it('`czap doctor --preflight` records preflight in the receipt', async () => {
+    const { stdout } = await captureCli(() => run(['doctor', '--preflight']));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.preflight).toBe(true);
+  });
+
+  it('`czap doctor --target=cloudflare` records target and runs cloudflare probes', async () => {
+    const { stdout } = await captureCli(() => run(['doctor', '--target=cloudflare']));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.target).toBe('cloudflare');
+    const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
+    expect(ids).toContain('cloudflare.astro');
+    expect(ids.has('core.built')).toBe(false);
+  });
+
   it('`czap glossary` with no term returns the full catalog', async () => {
     const { exit, stdout } = await captureCli(() => run(['glossary']));
     expect(exit).toBe(0);

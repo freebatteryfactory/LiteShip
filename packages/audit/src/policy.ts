@@ -89,6 +89,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker'],
     kind: 'host-adjacent',
   },
+  '@czap/cloudflare': {
+    allowedInternalImports: ['@czap/core', '@czap/edge', '@czap/astro'],
+    kind: 'host-adjacent',
+  },
   '@czap/remotion': {
     allowedInternalImports: ['@czap/core'],
     kind: 'standalone',

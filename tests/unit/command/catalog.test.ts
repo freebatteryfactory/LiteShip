@@ -122,6 +122,15 @@ describe('@czap/command canonical catalog', () => {
       type: 'object',
       properties: { 'dry-run': { type: 'boolean' } },
     });
+    expect(byName.get('doctor')).toEqual({
+      type: 'object',
+      properties: {
+        fix: { type: 'boolean' },
+        ci: { type: 'boolean' },
+        preflight: { type: 'boolean' },
+        target: { type: 'string', enum: ['cloudflare'] },
+      },
+    });
   });
 
   it('assigns every command a presentation group (drives help grouping)', () => {

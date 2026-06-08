@@ -35,8 +35,18 @@ export async function run(argv: readonly string[]): Promise<number> {
       return help();
     case 'version':
       return version();
-    case 'doctor':
-      return doctor({ fix: rest.includes('--fix'), ci: rest.includes('--ci') });
+    case 'doctor': {
+      const targetEq = parseFlag(rest, '--target');
+      const targetIdx = rest.indexOf('--target');
+      const targetRaw = targetEq ?? (targetIdx >= 0 ? rest[targetIdx + 1] : undefined);
+      const target = targetRaw === 'cloudflare' ? ('cloudflare' as const) : undefined;
+      return doctor({
+        fix: rest.includes('--fix'),
+        ci: rest.includes('--ci'),
+        preflight: rest.includes('--preflight'),
+        ...(target ? { target } : {}),
+      });
+    }
     case 'glossary': {
       const term = rest[0] && !rest[0].startsWith('-') ? rest[0] : null;
       return glossary(term);

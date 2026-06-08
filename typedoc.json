@@ -11,6 +11,7 @@
     "packages/edge/src/index.ts",
     "packages/vite/src/index.ts",
     "packages/astro/src/index.ts",
+    "packages/cloudflare/src/index.ts",
     "packages/remotion/src/index.ts",
     "packages/scene/src/index.ts",
     "packages/assets/src/index.ts",
@@ -51,6 +52,14 @@
     "@czap/scene": {
       "CANONICAL_SYSTEM_COUNT": "#",
       "DEFAULT_MIX_RECEIPT_CAP": "#"
+    },
+    "@czap/edge": {
+      "KVNamespace": "#"
+    },
+    "@czap/mcp-server": {
+      "ResourceNotFoundError": "#",
+      "InvalidParamsError": "#",
+      "RECEIPT_META_KEY": "#"
     },
     "effect": {
       "": "#",

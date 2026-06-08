@@ -272,6 +272,27 @@ The default Astro host path now routes through `createEdgeHostAdapter`, which co
 
 ---
 
+## `@czap/cloudflare`
+
+Source: [`packages/cloudflare/src/index.ts`](../packages/cloudflare/src/index.ts)
+
+The Cloudflare Workers siteAdapter. Runtime status: `host-wired` on workerd.
+
+Reach for it when you need:
+
+- Workers KV binding glue for `@czap/edge` boundary cache
+- Astro middleware pre-wired for `cloudflare:workers` env
+
+Main surfaces:
+
+- `cloudflareMiddleware`
+- `createCloudflareEdgeCache`
+- `cloudflareAdapterCapsule`
+
+See [hosting/cloudflare.md](./hosting/cloudflare.md) for the full deploy guide.
+
+---
+
 ## `@czap/worker`
 
 Source: [`packages/worker/src/index.ts`](../packages/worker/src/index.ts)
