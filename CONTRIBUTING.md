@@ -36,14 +36,17 @@ render use the same encoder path as production — a bare `ffmpeg` binary withou
 `libx264` (common on Fedora `ffmpeg-free`) will skip those tests via
 `czap doctor` / the shared render probe, not hang for minutes.
 
-| Platform | ffmpeg with libx264 |
+| Dependency | Install |
 | --- | --- |
-| Ubuntu / Debian (CI) | `sudo apt-get install -y ffmpeg` |
-| Fedora / Nobara | `sudo dnf swap ffmpeg-free ffmpeg --allowerasing` (RPM Fusion) |
-| Dev Container | Reopen in Container (`.devcontainer/`) — post-create installs the CI stack |
+| ffmpeg + libx264 (Ubuntu/Debian, CI) | `sudo apt-get install -y ffmpeg` |
+| ffmpeg + libx264 (Fedora/Nobara) | `sudo dnf swap ffmpeg-free ffmpeg --allowerasing` (RPM Fusion) |
+| Playwright browsers (e2e / coverage:browser) | `pnpm exec playwright install chromium chromium-headless-shell` |
+| Everything at once | Reopen in Dev Container (`.devcontainer/`) — post-create installs the full CI stack |
 
-Preflight: `pnpm run doctor` (or `czap doctor`) reports `ffmpeg (libx264)` as
-`ok` or `warn` with distro-specific hints before you run `pnpm run gauntlet:full`.
+Preflight: `pnpm run doctor` (or `czap doctor`) reports `ffmpeg (libx264)` and
+`Playwright` as `ok` or `warn` with the exact fix command, so missing system
+deps surface before `pnpm run gauntlet:full` (which runs `test:e2e`) rather than
+mid-run.
 
 ## Dev-experience shortcuts
 

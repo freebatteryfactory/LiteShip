@@ -10,6 +10,6 @@ corepack prepare pnpm@10.32.1 --activate
 
 pnpm install
 pnpm run build
-pnpm exec playwright install --with-deps chromium
+pnpm exec playwright install --with-deps chromium chromium-headless-shell
 
 echo "LiteShip dev container ready — run: pnpm run doctor && pnpm test"
