@@ -645,7 +645,12 @@ function probeCloudflareConfig(cwd: string): DoctorCheck {
       hint: 'Declare CZAP_BOUNDARY_CACHE in kv_namespaces when using @czap/edge boundary cache',
     };
   }
-  return { id: 'cloudflare.config', label: 'Wrangler config', status: 'ok', detail: 'bindings and compatibility flags present' };
+  return {
+    id: 'cloudflare.config',
+    label: 'Wrangler config',
+    status: 'ok',
+    detail: 'bindings and compatibility flags present',
+  };
 }
 
 function probeCloudflareOutput(cwd: string): DoctorCheck {
@@ -684,7 +689,12 @@ function probeCloudflareOutput(cwd: string): DoctorCheck {
       hint: 'Use output: "server" and adapter: cloudflare() for Workers SSR',
     };
   }
-  return { id: 'cloudflare.output', label: 'Astro output mode', status: 'ok', detail: 'server output + cloudflare adapter' };
+  return {
+    id: 'cloudflare.output',
+    label: 'Astro output mode',
+    status: 'ok',
+    detail: 'server output + cloudflare adapter',
+  };
 }
 
 function probeCloudflareCsp(): DoctorCheck {
