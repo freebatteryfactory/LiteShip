@@ -4,6 +4,25 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.1.4] — 2026-06-08
+
+Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0.1.4`
+(including first npm publish of `@czap/cloudflare`, `@czap/audit`, and `@czap/command`).
+
+### Added
+- `@czap/cloudflare` — Workers siteAdapter, KV edge cache, and Astro middleware glue.
+- `czap doctor --target cloudflare` — probes Astro, Wrangler, adapter output, and config bindings.
+- `examples/cloudflare-astro/` — end-to-end Astro + Cloudflare adapter example.
+- `pnpm run test:cloudflare` gauntlet phase; Windows and macOS CI smoke run it.
+- Hosting guide: `docs/hosting/cloudflare.md`.
+
+### Fixed
+- `prepare` hook (`link-pre-commit.ts`) no longer imports built `@czap/command` before `tsc --build`.
+- CI: build workspace before `gauntlet:full`; git identity for `doctor --ci` on GHA runners.
+- Windows `package:smoke`: copy hoisted deps beside tar-extracted `@czap/*` (junction ENOENT on GHA).
+- TypeDoc link mappings for `@czap/edge` / `@czap/mcp-server`; browser coverage excludes Workers-only sources.
+- Prettier drift in `doctor.ts` and `cloudflare-adapter.ts`; `.wrangler/` gitignored.
+
 ## [0.1.3] — 2026-05-21
 
 CI greening release — no intentional public API changes beyond what shipped in 0.1.2.
