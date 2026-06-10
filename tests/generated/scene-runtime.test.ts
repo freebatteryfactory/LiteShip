@@ -13,6 +13,11 @@ describe('scene.runtime', () => {
   } catch (err) {
     arbError = err;
   }
+  if (arbError !== undefined && !(arbError instanceof UnsupportedSchemaError)) {
+    // Only a non-derivable schema is honest-skip material; anything else
+    // (a defect in the arbitrary builder, a malformed capsule) must fail.
+    throw arbError;
+  }
   if (cap.step === undefined || cap.initialState === undefined || arbError !== undefined) {
     it.skip(
       arbError instanceof UnsupportedSchemaError
