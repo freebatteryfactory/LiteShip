@@ -8,4 +8,4 @@
 
 > `const` **auditSourceGlobs**: readonly \[`"packages/*/src/**/*.ts"`, `"packages/*/src/**/*.tsx"`\]
 
-Defined in: [audit/src/policy.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
+Defined in: [audit/src/policy.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L44)

@@ -17,6 +17,8 @@ import {
   consumerDevopsProfile,
   discoverInstalledPackageRoots,
   runAuditPasses,
+  runIntegrityAudit,
+  runStructureAudit,
   runSurfaceAudit,
   type DevopsProfile,
 } from '@czap/audit';
@@ -296,6 +298,92 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
     // 0 errors for the default profile, which this rule must not disturb.
     const result = runSurfaceAudit();
     expect(result.findings.filter((f) => f.rule === 'export-target-missing')).toHaveLength(0);
+  });
+});
+
+describe('consumer mode — allowlist entries follow the package, not the monorepo layout', () => {
+  // 0.1.5 re-dogfood report: a clean consumer install read 24 warnings, every
+  // one a finding the monorepo allowlist already suppresses. Root cause: the
+  // entries matched repo-relative `packages/...` prefixes, which can never
+  // match a node_modules path. Entries now carry `{ package, filePrefix }`
+  // (package-relative), resolved through the profile's discovered roots.
+
+  function czapBase(topology: Record<string, { allowedInternalImports: string[]; kind: 'standalone' }>): DevopsProfile {
+    return {
+      ...acmeBase(),
+      internalPackagePrefix: '@czap/',
+      packageTopology: topology,
+    };
+  }
+
+  const STANDALONE = { allowedInternalImports: [] as string[], kind: 'standalone' as const };
+
+  it('suppresses default-export on an installed @czap/astro client directive (report finding 1)', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@czap/astro/package.json': PKG('@czap/astro'),
+      'node_modules/@czap/astro/src/index.ts': 'export const astroReady = true;\n',
+      'node_modules/@czap/astro/src/client-directives/satellite.ts':
+        'export default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  void load;\n  void el;\n};\n',
+    });
+    const result = runStructureAudit(consumerDevopsProfile(root, czapBase({ '@czap/astro': STANDALONE })));
+    expect(result.findings.filter((f) => f.rule === 'default-export')).toHaveLength(0);
+    const suppressed = result.suppressed.filter((s) => s.rule === 'default-export');
+    expect(suppressed).toHaveLength(1);
+    expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@czap/astro/src/client-directives/satellite.ts');
+  });
+
+  it('suppresses the audit policy placeholder self-match in an installed @czap/audit (report finding 2)', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@czap/audit/package.json': PKG('@czap/audit'),
+      'node_modules/@czap/audit/src/index.ts': 'export const auditReady = true;\n',
+      'node_modules/@czap/audit/src/policy.ts':
+        "export const stubReason = 'documented placeholder stubs populated by the transform pipeline';\n",
+    });
+    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/audit': STANDALONE })));
+    expect(result.findings.filter((f) => f.rule === 'placeholder-content')).toHaveLength(0);
+    expect(result.suppressed.filter((s) => s.rule === 'placeholder-content')).toHaveLength(1);
+  });
+
+  it('suppresses the doctor fail-closed fallback in an installed @czap/cli (report finding 3)', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@czap/cli/package.json': PKG('@czap/cli'),
+      'node_modules/@czap/cli/src/index.ts': 'export const cliReady = true;\n',
+      'node_modules/@czap/cli/src/commands/doctor.ts':
+        'export function isWorkspace(read: () => string): boolean {\n' +
+        '  try {\n' +
+        "    return read() === 'czap';\n" +
+        '  } catch {\n' +
+        '    return false;\n' +
+        '  }\n' +
+        '}\n',
+    });
+    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/cli': STANDALONE })));
+    expect(result.findings.filter((f) => f.rule === 'fallback-laundering')).toHaveLength(0);
+    expect(result.suppressed.filter((s) => s.rule === 'fallback-laundering')).toHaveLength(1);
+  });
+
+  it('does NOT suppress the same file shape under a different package (entries pin the package name)', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@czap/web/package.json': PKG('@czap/web'),
+      'node_modules/@czap/web/src/index.ts': 'export const webReady = true;\n',
+      // Same package-relative path + same catch shape as the allowlisted
+      // @czap/cli doctor entry — but in @czap/web, so it must stay a finding.
+      'node_modules/@czap/web/src/commands/doctor.ts':
+        'export function isWorkspace(read: () => string): boolean {\n' +
+        '  try {\n' +
+        "    return read() === 'czap';\n" +
+        '  } catch {\n' +
+        '    return false;\n' +
+        '  }\n' +
+        '}\n',
+    });
+    const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/web': STANDALONE })));
+    expect(result.findings.filter((f) => f.rule === 'fallback-laundering')).toHaveLength(1);
+    expect(result.suppressed.filter((s) => s.rule === 'fallback-laundering')).toHaveLength(0);
   });
 });
 

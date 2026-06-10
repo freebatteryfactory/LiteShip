@@ -6,7 +6,7 @@
 
 # Interface: PackagePolicy
 
-Defined in: [audit/src/policy.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L21)
+Defined in: [audit/src/policy.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L39)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/policy.ts:21](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **allowedInternalImports**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L22)
+Defined in: [audit/src/policy.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L40)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [audit/src/policy.ts:22](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **kind**: `"core"` \| `"layered"` \| `"host-adjacent"` \| `"standalone"`
 
-Defined in: [audit/src/policy.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L23)
+Defined in: [audit/src/policy.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L41)

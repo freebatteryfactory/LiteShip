@@ -8,7 +8,7 @@
 
 > **sortFindings**\<`T`\>(`findings`): `T`[]
 
-Defined in: [audit/src/shared.ts:197](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L197)
+Defined in: [audit/src/shared.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L198)
 
 ## Type Parameters
 

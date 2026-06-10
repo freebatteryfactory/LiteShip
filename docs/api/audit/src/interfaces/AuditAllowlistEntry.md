@@ -14,7 +14,23 @@ Defined in: [audit/src/policy.ts:14](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **filePrefix?**: `string`
 
-Defined in: [audit/src/policy.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L16)
+Defined in: [audit/src/policy.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
+
+***
+
+### package?
+
+> `readonly` `optional` **package?**: `string`
+
+Defined in: [audit/src/policy.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L25)
+
+npm package name owning the allowlisted file. When set, `filePrefix` is
+PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
+resolves the finding's file through the profile's discovered package
+roots — so the same entry suppresses in the monorepo
+(`packages/astro/...`) and in a consumer install
+(`node_modules/.pnpm/.../@czap/astro/...`). Without it, `filePrefix` is
+matched against the repo-root-relative finding path verbatim.
 
 ***
 
@@ -22,7 +38,7 @@ Defined in: [audit/src/policy.ts:16](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/policy.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L18)
+Defined in: [audit/src/policy.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L28)
 
 ***
 
@@ -38,4 +54,4 @@ Defined in: [audit/src/policy.ts:15](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **summaryIncludes?**: `string`
 
-Defined in: [audit/src/policy.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L17)
+Defined in: [audit/src/policy.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L27)
