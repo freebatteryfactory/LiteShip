@@ -8,7 +8,7 @@
 
 > **readProfileSourceFileRecords**(`profile`): readonly [`SourceFileRecord`](../interfaces/SourceFileRecord.md)[]
 
-Defined in: [audit/src/shared.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L158)
+Defined in: [audit/src/shared.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L159)
 
 Profile-aware source walking. With `profile.packageRoots`, glob each
 package's `src/` individually — the global `auditSourceGlobs` assume a

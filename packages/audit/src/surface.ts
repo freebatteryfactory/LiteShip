@@ -257,7 +257,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     .filter((note) => existsSync(resolve(root, note.file)))
     .map((note) => note.summary);
 
-  const partitioned = partitionAllowlistedFindings(rawFindings);
+  const partitioned = partitionAllowlistedFindings(rawFindings, profile);
   return {
     section: 'surface',
     summary: {
