@@ -1,8 +1,8 @@
 /**
  * Client-runtime helpers for parsing serialized boundaries out of
- * `data-czap-boundary` attributes, attaching viewport observers,
- * evaluating boundaries live, and applying the resulting state to a
- * satellite element.
+ * `data-czap-boundary` attributes, attaching signal observers
+ * (viewport, scroll), evaluating boundaries live, and applying the
+ * resulting state to a satellite element.
  *
  * Consumed by the Astro `client:satellite` / `client:worker` directives
  * when they hydrate a server-rendered `<div data-czap-boundary="...">`.
@@ -153,19 +153,8 @@ export function buildBoundaryActivationContext(): {
   };
 }
 
-/**
- * Attach a ResizeObserver on `document.documentElement` that calls `callback`
- * whenever the viewport resizes, but only when `input` is a viewport signal
- * (i.e. starts with `"viewport."`) and `ResizeObserver` is available.
- *
- * Returns a cleanup function that disconnects the observer, or `null` when no
- * observer was attached (non-viewport input or no ResizeObserver support).
- *
- * Centralises the identical `observeIfNeeded` blocks that previously lived in
- * satellite.ts and worker.ts.
- */
-export function attachViewportObserver(input: string, callback: () => void): (() => void) | null {
-  if (!input.startsWith('viewport.') || typeof ResizeObserver === 'undefined') {
+function attachResizeObserver(callback: () => void): (() => void) | null {
+  if (typeof ResizeObserver === 'undefined') {
     return null;
   }
 
@@ -174,21 +163,109 @@ export function attachViewportObserver(input: string, callback: () => void): (()
   return () => observer.disconnect();
 }
 
+function attachScrollListener(input: string, callback: () => void): (() => void) | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  // rAF-throttle: scroll fires per frame (or faster); one pending frame
+  // coalesces bursts so boundary evaluation runs at most once per frame.
+  let frame: number | null = null;
+  const handler = (): void => {
+    if (frame !== null) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      callback();
+    });
+  };
+
+  window.addEventListener('scroll', handler, { passive: true });
+  // scroll.progress depends on scrollHeight - innerHeight, so resizes
+  // move the value even when scrollY is unchanged.
+  const observeResize = input === 'scroll.progress';
+  if (observeResize) {
+    window.addEventListener('resize', handler, { passive: true });
+  }
+
+  return () => {
+    window.removeEventListener('scroll', handler);
+    if (observeResize) {
+      window.removeEventListener('resize', handler);
+    }
+    if (frame !== null) {
+      cancelAnimationFrame(frame);
+      frame = null;
+    }
+  };
+}
+
 /**
- * Read the current numeric value for a signal `input` (e.g.
- * `"viewport.width"`). Returns `undefined` for unknown inputs; returns
- * `0` in non-DOM environments so callers can treat SSR and malformed
- * signals uniformly.
+ * Attach the observer matching a signal `input` and call `callback`
+ * whenever the underlying signal may have changed:
+ *
+ * - `viewport.*` — ResizeObserver on `document.documentElement`
+ * - `scroll.*`   — passive scroll listener, rAF-throttled
+ *   (`scroll.progress` also observes resize: its denominator is
+ *   viewport-dependent)
+ *
+ * Returns a cleanup function, or `null` when no observer was attached
+ * (unknown signal family or missing platform support). Callers treat
+ * `null` as "this boundary will never re-evaluate" — the same frozen
+ * semantics {@link readSignalValue} has for unknown inputs.
+ */
+export function attachSignalObserver(input: string, callback: () => void): (() => void) | null {
+  if (input.startsWith('viewport.')) {
+    return attachResizeObserver(callback);
+  }
+
+  if (input.startsWith('scroll.')) {
+    return attachScrollListener(input, callback);
+  }
+
+  return null;
+}
+
+/**
+ * Attach a ResizeObserver for viewport signals.
+ *
+ * @deprecated Use {@link attachSignalObserver}, which also handles
+ * `scroll.*` signals. Kept as a delegating alias for the shipped 0.1.x
+ * d.ts surface; removal planned for 0.2.
+ */
+export function attachViewportObserver(input: string, callback: () => void): (() => void) | null {
+  return attachSignalObserver(input, callback);
+}
+
+/**
+ * Read the current numeric value for a signal `input`. Supported:
+ * `viewport.width` / `viewport.height`, `scroll.x` / `scroll.y`, and the
+ * derived `scroll.progress` (document scroll position as 0–100).
+ * Returns `undefined` for unknown inputs (`audio.*` and `network.*`
+ * have no built-in reader — feed those through `@czap/quantizer`'s
+ * `live.evaluate()` instead); returns `0` in non-DOM environments so
+ * callers can treat SSR and malformed signals uniformly.
  */
 export function readSignalValue(input: string): number | undefined {
   if (typeof window === 'undefined') return 0;
 
-  if (!input.startsWith('viewport.')) {
+  if (input.startsWith('viewport.')) {
+    const axis = input.slice('viewport.'.length);
+    return axis === 'height' ? window.innerHeight : window.innerWidth;
+  }
+
+  if (input.startsWith('scroll.')) {
+    const axis = input.slice('scroll.'.length);
+    if (axis === 'x') return window.scrollX;
+    if (axis === 'y') return window.scrollY;
+    if (axis === 'progress') {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max <= 0) return 0;
+      return Math.min(100, Math.max(0, (window.scrollY / max) * 100));
+    }
     return undefined;
   }
 
-  const axis = input.slice('viewport.'.length);
-  return axis === 'height' ? window.innerHeight : window.innerWidth;
+  return undefined;
 }
 
 /**

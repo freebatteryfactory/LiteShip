@@ -1,6 +1,6 @@
 import {
   applyBoundaryState,
-  attachViewportObserver,
+  attachSignalObserver,
   evaluateBoundary,
   parseBoundary,
   readSignalValue,
@@ -60,7 +60,7 @@ export function initSatelliteDirective(load: () => Promise<unknown>, element: HT
   const init = (): void => {
     updateState();
     if (runtimeBoundary) {
-      cleanupObserver = attachViewportObserver(runtimeBoundary.input, updateState);
+      cleanupObserver = attachSignalObserver(runtimeBoundary.input, updateState);
     }
   };
 
