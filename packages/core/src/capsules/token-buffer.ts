@@ -33,9 +33,14 @@ type BufferState = Schema.Schema.Type<typeof BufferStateSchema>;
  * through its real push/drain/reset surface, then drain to re-snapshot.
  * A parallel reimplementation of the ring-buffer logic here would be the
  * exact shadow-double drift this harness channel exists to prevent.
+ *
+ * The rebuild uses the production DEFAULT capacity (256) — an expanding
+ * capacity would let the snapshot grow without bound and never exercise
+ * the ring's oldest-overwrite overflow, diverging from the hot path this
+ * harness probes (Codex P2, PR #15).
  */
 function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
-  const buffer = TokenBuffer.make<string>({ capacity: state.tokens.length + 1 });
+  const buffer = TokenBuffer.make<string>();
   for (const token of state.tokens) buffer.push(token);
 
   switch (event._tag) {
