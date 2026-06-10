@@ -33,35 +33,26 @@ These are no longer roadmap aspirations; they are current repo reality:
 
 ## Near-Term Hardening Epics
 
-### 1. Runtime branch-hotspot sweep
+### 1. Runtime branch-hotspot sweep — watch state
 
-Keep reducing the current hotspot cluster surfaced by `reports/runtime-seams.*`, especially:
+The 2026-04-08 hotspot cluster and the 2026-06-08 top-10 table are both
+cleared (see Completed below). The epic stays open only as a standing watch:
+each gauntlet regenerates `reports/runtime-seams.*`, and any file that
+surfaces there gets real behavior-branch tests, not synthetic padding.
 
-- `packages/vite/src/style-transform.ts`
-- `packages/core/src/signal.ts`
-- `packages/quantizer/src/animated-quantizer.ts`
-- `packages/vite/src/plugin.ts`
-- `packages/compiler/src/ai-manifest.ts`
-- `packages/worker/src/compositor-worker.ts`
-- `packages/astro/src/runtime/worker.ts`
-- `packages/astro/src/runtime/stream.ts`
-- `packages/astro/src/headers.ts`
-- `packages/astro/src/runtime/receipt-chain.ts`
+### 2. Advisory audit cleanup — warning floor is zero
 
-Success condition:
-- hotspot tables stop surfacing obviously under-covered runtime seams
-- added coverage corresponds to real behavior branches, not synthetic padding
+The pinned warning floor hit **zero** on 2026-06-10 (see Completed below);
+any new advisory warning is a regression against `AUDIT_WARNING_FLOOR = []`.
+Remaining advisory pressure is info-level strike-board pockets:
 
-### 2. Advisory audit cleanup
-
-Work down the remaining advisory pressure without cargo-culting the detector:
-
-- remove or better justify fallback/default paths that look like semantic laundering
-- improve helper traceability where files still read like isolated doubles
-- shrink "partial proof inventory" pockets in runtime files that still rely on one-sided evidence
+- shadow-test helpers (`tests/helpers/mock-*.ts`, `tests/support/`) with no
+  production imports
+- assertion-free `tests/generated/*` files
+- `crates/czap-compute` traceability evidence
 
 Success condition:
-- advisory warning/info count trends down without hiding real diagnostics
+- info-level pressure trends down without hiding real diagnostics
 
 ### 3. CI and release truth parity
 
@@ -75,7 +66,36 @@ Keep enforcing the same source of truth everywhere:
 Success condition:
 - local truth, CI truth, and release/package truth stop drifting
 
+### 4. v0.2 release-trust pivot
+
+Queued for the next minor (all pre-wired, see `docs/RELEASING.md` and
+`.github/workflows/release.yml` comments):
+
+- OIDC trusted publishing: configure a trusted publisher for each of the 19
+  packages on npmjs.com, then drop `NPM_TOKEN` in a single workflow edit
+  (`id-token: write` is already enabled). Kills publish-token handling
+  permanently.
+- `--provenance` once OIDC lands.
+- `czap ship` graceful already-published handling (replaces the release
+  workflow's per-package idempotent loop).
+- Remove the deprecated `attachViewportObserver` alias
+  (`packages/astro/src/runtime/boundary.ts`) — superseded by
+  `attachSignalObserver` in 0.1.5.
+
 ## Completed Since Last Revision (2026-05-17)
+
+**Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
+The live runtime-seams top-10 (wgpu 4%, ffmpeg-probe 15%, host-browser
+context 15%, scene-dev server 20%, gauntlet cmd 30%, video decoder 47%,
+audit CLI adapter 52%, three 1/2-branch harness files) all prove 100%
+branches with behavior tests. The 10-warning fallback-laundering floor went
+to zero honestly: doctor probes surface read/parse failures as structured
+details (`Readout<T>`), the integrity detector credits only catches whose
+error binding is meaningfully read before/within the fallback return, and
+the two deliberate fail-closed defaults carry allowlist reasons. Same PR:
+coverage/load-aware `scaledTimeout` test policy, consumer-mode dist-truth
+verification (`export-target-missing`), and a real-browser e2e of the built
+Astro example.
 
 **Epic #4 — `@czap/cli` coverage back to package defaults (closed 2026-05-17).**
 The v0.1.0 ShipCapsule slice landed with sub-85% coverage on
