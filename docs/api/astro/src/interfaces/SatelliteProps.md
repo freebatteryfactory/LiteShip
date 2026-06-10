@@ -6,7 +6,7 @@
 
 # Interface: SatelliteProps
 
-Defined in: [astro/src/Satellite.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L22)
+Defined in: [astro/src/Satellite.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L23)
 
 Server-render props for a satellite container. Astro components
 typically destructure these and pass them to [satelliteAttrs](../functions/satelliteAttrs.md).
@@ -17,7 +17,7 @@ typically destructure these and pass them to [satelliteAttrs](../functions/satel
 
 > `readonly` `optional` **boundary?**: [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
 
-Defined in: [astro/src/Satellite.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L24)
+Defined in: [astro/src/Satellite.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L25)
 
 Boundary whose state the satellite tracks.
 
@@ -27,7 +27,7 @@ Boundary whose state the satellite tracks.
 
 > `readonly` `optional` **class?**: `string`
 
-Defined in: [astro/src/Satellite.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L28)
+Defined in: [astro/src/Satellite.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L29)
 
 Extra CSS class names to merge with `czap-satellite`.
 
@@ -37,9 +37,23 @@ Extra CSS class names to merge with `czap-satellite`.
 
 > `readonly` `optional` **component?**: [`Shape`](#)\<[`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>, readonly `string`[]\>
 
-Defined in: [astro/src/Satellite.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L26)
+Defined in: [astro/src/Satellite.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L27)
 
 Component definition used to identify the satellite on the client.
+
+***
+
+### directive?
+
+> `readonly` `optional` **directive?**: `false` \| `DirectiveName`
+
+Defined in: [astro/src/Satellite.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L39)
+
+Which client directive the boot scanner should activate for this
+satellite (serialised into `data-czap-directive`). Defaults to
+`'satellite'` when a boundary is present — a serialized boundary
+with no evaluator is exactly the inert-island bug. Pass `false`
+for a CSS-only shell that ships zero runtime.
 
 ***
 
@@ -47,6 +61,6 @@ Component definition used to identify the satellite on the client.
 
 > `readonly` `optional` **initialState?**: `string`
 
-Defined in: [astro/src/Satellite.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L30)
+Defined in: [astro/src/Satellite.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L31)
 
 Server-side initial state (serialised into `data-czap-state`).

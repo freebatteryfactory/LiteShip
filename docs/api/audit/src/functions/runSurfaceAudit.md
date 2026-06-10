@@ -8,7 +8,7 @@
 
 > **runSurfaceAudit**(`profile?`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`SurfaceSummary`](../interfaces/SurfaceSummary.md)\>
 
-Defined in: [audit/src/surface.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L39)
+Defined in: [audit/src/surface.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L58)
 
 ## Parameters
 

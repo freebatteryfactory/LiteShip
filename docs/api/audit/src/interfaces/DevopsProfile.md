@@ -6,7 +6,7 @@
 
 # Interface: DevopsProfile
 
-Defined in: [audit/src/devops-profile.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L30)
+Defined in: [audit/src/devops-profile.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L44)
 
 The devops profile that drives the audit engine. `repoRoot` is the single
 AUTHORITATIVE audit target (CUT D9a) — there is no parallel `root` parameter.
@@ -17,7 +17,7 @@ AUTHORITATIVE audit target (CUT D9a) — there is no parallel `root` parameter.
 
 > `readonly` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/devops-profile.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L38)
+Defined in: [audit/src/devops-profile.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L52)
 
 Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`).
 
@@ -27,9 +27,23 @@ Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`).
 
 > `readonly` **internalPackagePrefix**: `string`
 
-Defined in: [audit/src/devops-profile.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L34)
+Defined in: [audit/src/devops-profile.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L48)
 
 Internal workspace package prefix — replaces the hardcoded `'@czap/'` import gate.
+
+***
+
+### packageRoots?
+
+> `readonly` `optional` **packageRoots?**: `Readonly`\<`Record`\<`string`, `string`\>\>
+
+Defined in: [audit/src/devops-profile.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L62)
+
+Optional explicit package-root map: package name → ABSOLUTE package dir.
+When present, the passes enumerate THESE roots instead of globbing
+`repoRoot/packages/*` — the consumer-install seam. Build one with
+`consumerDevopsProfile()` / `discoverInstalledPackageRoots()` to audit
+the `@czap/*` packages installed in a downstream repo's node_modules.
 
 ***
 
@@ -37,7 +51,7 @@ Internal workspace package prefix — replaces the hardcoded `'@czap/'` import g
 
 > `readonly` **packageTopology**: `Record`\<`string`, [`PackagePolicy`](PackagePolicy.md)\>
 
-Defined in: [audit/src/devops-profile.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L36)
+Defined in: [audit/src/devops-profile.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L50)
 
 Package layering law: package → { allowedInternalImports, kind }.
 
@@ -47,7 +61,7 @@ Package layering law: package → { allowedInternalImports, kind }.
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [audit/src/devops-profile.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L32)
+Defined in: [audit/src/devops-profile.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L46)
 
 Repo root all engine paths resolve against — the authoritative audit target.
 
@@ -57,6 +71,6 @@ Repo root all engine paths resolve against — the authoritative audit target.
 
 > `readonly` **surfacePolicy**: [`SurfacePolicyShape`](SurfacePolicyShape.md)
 
-Defined in: [audit/src/devops-profile.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L40)
+Defined in: [audit/src/devops-profile.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L54)
 
 Known public-surface files (orphan-detection seed).
