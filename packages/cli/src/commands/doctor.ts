@@ -946,7 +946,10 @@ async function applyFixes(checks: readonly DoctorCheck[], cwd: string): Promise<
   }
 
   // Link the pre-commit hook.
-  const needsHook = checks.some((c) => c.id === 'git.hooks' && c.status === 'warn');
+  // Keyed off `fixable`, not the warn status alone: an unresolved hooks dir
+  // (corrupt .git pointer) also reports git.hooks/warn but linking the
+  // pre-commit hook is not its remediation (Codex, PR #11).
+  const needsHook = checks.some((c) => c.id === 'git.hooks' && c.status === 'warn' && c.fixable === true);
   if (needsHook && !inWorkspace) {
     // Same isLiteShipWorkspace guard as the build branch above
     // (Codex P1 follow-up on commit 3212fa4): scripts/link-pre-commit.ts
