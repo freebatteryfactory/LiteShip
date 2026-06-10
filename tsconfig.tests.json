@@ -29,14 +29,25 @@
       "@czap/_spine": ["./packages/_spine"]
     }
   },
-  // Scoped to tests that carry compile-time assertions (@ts-expect-error).
-  // The broader test tree has accumulated type-errors that are tolerated
-  // because tests/ was excluded from typecheck; expanding coverage is
-  // follow-up cleanup, not in scope for Spec 1.1.
+  // Scoped to tests that carry compile-time assertions (@ts-expect-error and
+  // the helper conformance seams). The broader test tree has accumulated
+  // type-errors that are tolerated because tests/ was excluded from
+  // typecheck; expanding coverage is follow-up cleanup.
+  // The conformance helpers are listed explicitly: their production-surface
+  // assertions (MockWebSocket -> WireSocket, MockWorker -> WorkerLike, ...)
+  // only bite if this project typechecks them. They import the consumed
+  // production modules DIRECTLY (not package indexes) so the typecheck
+  // surface stays scoped to the contracts under assertion.
   "include": [
     "tests/unit/track-id.test.ts",
     "tests/unit/spawn-quoting-drift.test.ts",
-    "tests/unit/_spine/beat-contract.test.ts"
+    "tests/unit/_spine/beat-contract.test.ts",
+    "tests/helpers/mock-websocket.ts",
+    "tests/helpers/mock-event-source.ts",
+    "tests/helpers/mock-worker.ts",
+    "tests/helpers/mock-dom.ts",
+    "tests/helpers/mock-browser.ts",
+    "tests/support/structural-schema.ts"
   ],
   "exclude": ["node_modules", "**/dist/**"]
 }

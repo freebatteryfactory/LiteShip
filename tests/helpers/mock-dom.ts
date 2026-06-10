@@ -12,7 +12,7 @@
  * the structural surface WorkerHost.attachCanvas (packages/worker/src/host.ts)
  * actually needs — so host/double drift breaks the build.
  */
-import type { TransferableCanvas } from '@czap/worker';
+import type { TransferableCanvas } from '../../packages/worker/src/host.js';
 
 type Listener = EventListenerOrEventListenerObject;
 

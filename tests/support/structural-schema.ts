@@ -14,7 +14,7 @@
  * @module
  */
 
-import type { CommandJsonSchema } from '@czap/command';
+import type { CommandJsonSchema } from '@czap/_spine';
 
 /** The minimal JSON-Schema subset these schemas use. */
 export interface StructuralSchema {
