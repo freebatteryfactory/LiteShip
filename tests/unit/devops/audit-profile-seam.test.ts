@@ -13,6 +13,7 @@
  * @module
  */
 import { describe, it, expect, afterEach } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
@@ -188,7 +189,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
     expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);
     // info is tracked-file-count sensitive — loose by design (Decision 5).
     expect(bySeverity('info')).toBeGreaterThanOrEqual(1);
-  }, 60_000);
+  }, scaledTimeout(60_000));
   // (Default-profile == implicit-default reproduction is structurally guaranteed —
   // the default param IS liteshipDevopsProfile — and the structure pass is already
   // pinned in tests/unit/devops/profile.test.ts. The 0/6 floor above is the live

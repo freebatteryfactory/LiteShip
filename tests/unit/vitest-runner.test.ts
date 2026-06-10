@@ -16,10 +16,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { VitestRunner, vitestRunnerCapsule } from '../../packages/cli/src/capsules/vitest-runner.js';
 
 describe('VitestRunner', () => {
-  it('returns nonzero exit when no tests match', { timeout: 60_000 }, async () => {
+  it('returns nonzero exit when no tests match', { timeout: scaledTimeout(60_000) }, async () => {
     const result = await VitestRunner.run({
       testFiles: ['tests/__nonexistent_for_runner_test__.test.ts'],
     });
@@ -28,7 +29,7 @@ describe('VitestRunner', () => {
     expect(result.testFiles).toEqual(['tests/__nonexistent_for_runner_test__.test.ts']);
   });
 
-  it('does not interpret shell metacharacters in paths (argv form)', { timeout: 60_000 }, async () => {
+  it('does not interpret shell metacharacters in paths (argv form)', { timeout: scaledTimeout(60_000) }, async () => {
     // Path containing shell metacharacters. If VitestRunner were using
     // shell interpolation (e.g. `execSync('vitest run ' + path)`), the
     // sentinel sequence `; echo should-not-execute` would fork a second

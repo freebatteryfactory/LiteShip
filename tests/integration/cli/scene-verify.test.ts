@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
@@ -9,7 +10,7 @@ describe('czap scene verify', () => {
   let iso: IsolatedCapsules;
   beforeAll(async () => {
     iso = await compileManifestOnly('czap-scene-verify');
-  }, 120_000);
+  }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 
   it('runs generated tests for the intro scene and emits an ok receipt', async () => {
@@ -18,5 +19,5 @@ describe('czap scene verify', () => {
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('ok');
     expect(receipt.generatedTests).toBeGreaterThan(0);
-  }, 120_000);
+  }, scaledTimeout(120_000));
 });
