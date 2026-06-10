@@ -8,6 +8,7 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '../assembly.js';
+import { TokenBuffer } from '../token-buffer.js';
 
 const TokenEventSchema = Schema.Union([
   Schema.Struct({ _tag: Schema.Literal('push'), token: Schema.String }),
@@ -22,6 +23,40 @@ const BufferStateSchema = Schema.Struct({
   tokens: Schema.Array(Schema.String),
   totalBytes: Schema.Number,
 });
+
+type TokenEvent = Schema.Schema.Type<typeof TokenEventSchema>;
+type BufferState = Schema.Schema.Type<typeof BufferStateSchema>;
+
+/**
+ * Fold one event into a state snapshot by driving the PRODUCTION
+ * TokenBuffer: rebuild the ring buffer from the snapshot, apply the event
+ * through its real push/drain/reset surface, then drain to re-snapshot.
+ * A parallel reimplementation of the ring-buffer logic here would be the
+ * exact shadow-double drift this harness channel exists to prevent.
+ */
+function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
+  const buffer = TokenBuffer.make<string>({ capacity: state.tokens.length + 1 });
+  for (const token of state.tokens) buffer.push(token);
+
+  switch (event._tag) {
+    case 'push':
+      buffer.push(event.token);
+      break;
+    case 'flush':
+      buffer.drain();
+      break;
+    case 'reset':
+      buffer.reset();
+      break;
+  }
+
+  const tokens = buffer.drain();
+  return {
+    phase: event._tag === 'reset' ? 'idle' : event._tag === 'flush' ? 'draining' : tokens.length > 0 ? 'buffering' : 'idle',
+    tokens,
+    totalBytes: tokens.reduce((sum, token) => sum + token.length, 0),
+  };
+}
 
 /**
  * Declared capsule for TokenBuffer. Registered in the module-level
@@ -54,4 +89,6 @@ export const tokenBufferCapsule = defineCapsule({
   ],
   budgets: { p95Ms: 0.5, allocClass: 'bounded' },
   site: ['node', 'browser'],
+  initialState: { phase: 'idle', tokens: [], totalBytes: 0 },
+  step: stepTokenBuffer,
 });

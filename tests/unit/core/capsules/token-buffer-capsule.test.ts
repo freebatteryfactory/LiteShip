@@ -45,4 +45,35 @@ describe('tokenBufferCapsule', () => {
       inv!.check(undefined, { tokens: [], totalBytes: 0 }),
     ).toBe(true);
   });
+
+  it('declares the harness channel: initialState + step', () => {
+    expect(tokenBufferCapsule.initialState).toEqual({ phase: 'idle', tokens: [], totalBytes: 0 });
+    expect(typeof tokenBufferCapsule.step).toBe('function');
+  });
+
+  it('step drives the production TokenBuffer through push/flush/reset', () => {
+    const step = tokenBufferCapsule.step!;
+    const initial = tokenBufferCapsule.initialState!;
+
+    const afterPush = step(initial, { _tag: 'push', token: 'hello' });
+    expect(afterPush).toEqual({ phase: 'buffering', tokens: ['hello'], totalBytes: 5 });
+
+    const afterSecond = step(afterPush, { _tag: 'push', token: 'ab' });
+    expect(afterSecond).toEqual({ phase: 'buffering', tokens: ['hello', 'ab'], totalBytes: 7 });
+
+    const afterFlush = step(afterSecond, { _tag: 'flush' });
+    expect(afterFlush).toEqual({ phase: 'draining', tokens: [], totalBytes: 0 });
+
+    const afterReset = step(afterSecond, { _tag: 'reset' });
+    expect(afterReset).toEqual({ phase: 'idle', tokens: [], totalBytes: 0 });
+  });
+
+  it('step preserves FIFO order through the ring buffer rebuild', () => {
+    const step = tokenBufferCapsule.step!;
+    let state = tokenBufferCapsule.initialState!;
+    for (const token of ['a', 'b', 'c', 'd']) {
+      state = step(state, { _tag: 'push', token });
+    }
+    expect(state.tokens).toEqual(['a', 'b', 'c', 'd']);
+  });
 });
