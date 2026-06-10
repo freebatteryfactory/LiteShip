@@ -65,12 +65,29 @@ function markBound(element: HTMLElement, name: DirectiveName): void {
   element.setAttribute(BOUND_ATTRIBUTE, [...names].join(' '));
 }
 
+function unmarkBound(element: HTMLElement, name: DirectiveName): void {
+  const names = boundNames(element);
+  names.delete(name);
+  if (names.size === 0) {
+    element.removeAttribute(BOUND_ATTRIBUTE);
+  } else {
+    element.setAttribute(BOUND_ATTRIBUTE, [...names].join(' '));
+  }
+}
+
 function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
   // CSS.escape is unnecessary: both selectors are built from the fixed
   // DirectiveName union, never from page content.
   const canonical = `[data-czap-directive~="${name}"]`;
   const legacy = `[client\\:${name}]`;
-  return Array.from(root.querySelectorAll<HTMLElement>(`${canonical},${legacy}`));
+  const selector = `${canonical},${legacy}`;
+  const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
+  // querySelectorAll only sees descendants; a marked element passed AS the
+  // scan root (e.g. a freshly swapped-in fragment) must activate too.
+  if (root instanceof HTMLElement && root.matches(selector)) {
+    matches.unshift(root);
+  }
+  return matches;
 }
 
 /**
@@ -111,6 +128,9 @@ export async function scanAndBootDirectives(
       if (boundNames(element).has(name)) {
         continue;
       }
+      // Pre-mark so overlapping scans can't double-activate; a failed
+      // activation unmarks below so a later re-scan (astro:after-swap)
+      // can retry after a transient chunk-load error.
       markBound(element, name);
       activations.push(
         LOADERS[name]()
@@ -118,6 +138,7 @@ export async function scanAndBootDirectives(
             mod.default(() => Promise.resolve(), {}, element);
           })
           .catch((error: unknown) => {
+            unmarkBound(element, name);
             Diagnostics.warn({
               source: 'czap/astro.directive-boot',
               code: 'directive-activation-failed',
