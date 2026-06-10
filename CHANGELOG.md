@@ -4,10 +4,11 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [Unreleased]
+## [0.1.5] — 2026-06-10
 
 Fixes and features upstreamed from a deep dogfood of the published `0.1.4`
-artifacts on a zero-React Astro 6 site.
+artifacts on a zero-React Astro 6 site, plus the new `liteship` umbrella
+package. All **19** packages (18 `@czap/*` + `liteship`) ship at `0.1.5`.
 
 ### Added
 

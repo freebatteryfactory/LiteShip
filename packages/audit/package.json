@@ -1,6 +1,6 @@
 {
   "name": "@czap/audit",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Profile-driven structure/integrity/surface audit engine for czap — packageable, downstream-installable",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
