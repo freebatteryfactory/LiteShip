@@ -30,7 +30,7 @@
 
 // Messages
 export { Messages } from './messages.js';
-export type { ToWorkerMessage, FromWorkerMessage, WorkerConfig } from './messages.js';
+export type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } from './messages.js';
 
 // SPSC Ring Buffer
 export { SPSCRing } from './spsc-ring.js';
@@ -46,4 +46,4 @@ export type { RenderWorkerShape } from './render-worker.js';
 
 // Host
 export { WorkerHost } from './host.js';
-export type { WorkerHostShape } from './host.js';
+export type { WorkerHostShape, TransferableCanvas } from './host.js';

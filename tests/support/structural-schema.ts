@@ -14,6 +14,8 @@
  * @module
  */
 
+import type { CommandJsonSchema } from '@czap/_spine';
+
 /** The minimal JSON-Schema subset these schemas use. */
 export interface StructuralSchema {
   readonly type?: string | readonly string[];
@@ -59,3 +61,10 @@ export function validateStructural(schema: StructuralSchema, value: unknown): re
   check(schema, value, '$', errors);
   return errors;
 }
+
+// Compile-time conformance: every CommandJsonSchema (the production command
+// input/output contract from @czap/command) is validatable as a
+// StructuralSchema. If the production schema shape grows past this subset,
+// the build breaks here instead of the validator silently under-checking.
+const _commandSchemaIsStructural = (schema: CommandJsonSchema): StructuralSchema => schema;
+void _commandSchemaIsStructural;

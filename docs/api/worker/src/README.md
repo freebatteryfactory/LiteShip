@@ -45,8 +45,10 @@ separate worker entry files or bundler configuration.
 - [CompositorWorkerShape](interfaces/CompositorWorkerShape.md)
 - [RenderWorkerShape](interfaces/RenderWorkerShape.md)
 - [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
+- [TransferableCanvas](interfaces/TransferableCanvas.md)
 - [WorkerConfig](interfaces/WorkerConfig.md)
 - [WorkerHostShape](interfaces/WorkerHostShape.md)
+- [WorkerLike](interfaces/WorkerLike.md)
 
 ## Type Aliases
 

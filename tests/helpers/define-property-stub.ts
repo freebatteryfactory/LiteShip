@@ -33,19 +33,3 @@ export function createStubRegistry() {
     },
   };
 }
-
-/**
- * Stubs the common Worker + SharedArrayBuffer + crossOriginIsolated pattern
- * used by worker-mode tests. Requires `vi` from vitest for stubGlobal calls.
- */
-export function stubWorkerEnvironment(
-  stubs: ReturnType<typeof createStubRegistry>,
-  vi: { stubGlobal: (name: string, value: unknown) => void },
-): void {
-  vi.stubGlobal('Worker', class MockWorker {});
-  vi.stubGlobal('SharedArrayBuffer', class MockSharedArrayBuffer {});
-  stubs.define(globalThis, 'crossOriginIsolated', {
-    configurable: true,
-    value: true,
-  });
-}

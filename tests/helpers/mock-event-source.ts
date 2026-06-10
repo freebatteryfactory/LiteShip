@@ -8,7 +8,12 @@
  * - EventSource constructor arguments used by stream and llm directives
  * - readyState/close() transitions used by reconnect logic
  * - onopen/onmessage/onerror callback delivery used by the SSE runtime
+ *
+ * Conformance is compile-checked against {@link SSEEventSource} — the
+ * structural surface the SSE client (packages/web/src/stream/sse.ts)
+ * actually drives — so consumer/double drift breaks the build.
  */
+import type { SSEEventSource } from '../../packages/web/src/stream/sse.js';
 
 export class MockEventSource {
   static readonly CONNECTING = 0;
@@ -59,7 +64,10 @@ export class MockEventSource {
 
   /** Install as globalThis.EventSource and return a cleanup function. */
   static install(): () => void {
-    const runtime = globalThis as typeof globalThis & { EventSource?: typeof MockEventSource };
+    // The global slot is treated as unknown at the install seam: the double
+    // is a subset of the lib.dom class by design (conformance to the
+    // production-consumed surface is asserted below instead).
+    const runtime = globalThis as { EventSource?: unknown };
     const original = runtime.EventSource;
     runtime.EventSource = MockEventSource;
     MockEventSource.instances = [];
@@ -69,3 +77,8 @@ export class MockEventSource {
     };
   }
 }
+
+// Compile-time conformance: the double must stay installable wherever the
+// SSE client consumes an EventSource. Drift in either direction is a build error.
+const _asSSEEventSource = (mock: MockEventSource): SSEEventSource => mock;
+void _asSSEEventSource;

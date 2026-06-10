@@ -63,7 +63,7 @@ export type { SlotRegistryShape } from './slot/registry.js';
 export { SlotAddressing } from './slot/addressing.js';
 
 // Stream
-export type { SSEClient } from './stream/sse.js';
+export type { SSEClient, SSEEventSource } from './stream/sse.js';
 export { SSE } from './stream/sse.js';
 export { Resumption } from './stream/resumption.js';
 

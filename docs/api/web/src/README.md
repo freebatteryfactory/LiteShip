@@ -54,6 +54,7 @@ It ships:
 - [SlotRegistryShape](interfaces/SlotRegistryShape.md)
 - [SSEClient](interfaces/SSEClient.md)
 - [SSEConfig](interfaces/SSEConfig.md)
+- [SSEEventSource](interfaces/SSEEventSource.md)
 - [WebCodecsCaptureOptions](interfaces/WebCodecsCaptureOptions.md)
 
 ## Type Aliases

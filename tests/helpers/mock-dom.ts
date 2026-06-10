@@ -7,7 +7,12 @@
  * Production contracts mirrored here:
  * - HTMLElement add/removeEventListener behavior used by runtime helpers
  * - HTMLCanvasElement.transferControlToOffscreen() lifecycle used by worker hosts
+ *
+ * The canvas double is compile-checked against {@link TransferableCanvas} —
+ * the structural surface WorkerHost.attachCanvas (packages/worker/src/host.ts)
+ * actually needs — so host/double drift breaks the build.
  */
+import type { TransferableCanvas } from '../../packages/worker/src/host.js';
 
 type Listener = EventListenerOrEventListenerObject;
 
@@ -64,10 +69,9 @@ export interface MockOffscreenCanvas {
   readonly height: number;
 }
 
-export interface MockCanvasShape {
+export interface MockCanvasShape extends TransferableCanvas {
   readonly width: number;
   readonly height: number;
-  transferControlToOffscreen(): MockOffscreenCanvas;
   _transferCalled: number;
 }
 
@@ -81,14 +85,15 @@ export function mockCanvas(width = 640, height = 480): MockCanvasShape {
     height,
     _transferCalled: 0,
 
-    transferControlToOffscreen(): MockOffscreenCanvas {
+    transferControlToOffscreen(): OffscreenCanvas {
       transferCount++;
       // Real browsers only allow this once
       if (transferCount > 1) {
         throw new DOMException('Cannot transfer control from a canvas for a second time.', 'InvalidStateError');
       }
       canvas._transferCalled = transferCount;
-      return { width, height };
+      // Minimal double: hosts only forward this object to the render worker.
+      return { width, height } as unknown as OffscreenCanvas;
     },
   };
 

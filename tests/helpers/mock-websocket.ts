@@ -7,7 +7,12 @@
  * Production contracts mirrored here:
  * - WebSocket readyState/send()/close() semantics used by wire/runtime helpers
  * - constructor protocol capture and callback lifecycle used by tests
+ *
+ * Conformance is compile-checked against {@link WireSocket} — the structural
+ * surface `Wire.fromWebSocket` (packages/core/src/wire.ts) actually drives —
+ * so consumer/double drift breaks the build.
  */
+import type { WireSocket } from '../../packages/core/src/wire.js';
 
 export class MockWebSocket {
   static readonly CONNECTING = 0;
@@ -86,7 +91,10 @@ export class MockWebSocket {
 
   /** Install as globalThis.WebSocket and return a cleanup function. */
   static install(): () => void {
-    const runtime = globalThis as typeof globalThis & { WebSocket?: typeof MockWebSocket };
+    // The global slot is treated as unknown at the install seam: the double
+    // is a subset of the lib.dom class by design (conformance to the
+    // production-consumed surface is asserted below instead).
+    const runtime = globalThis as { WebSocket?: unknown };
     const original = runtime.WebSocket;
     runtime.WebSocket = MockWebSocket;
     MockWebSocket.instances = [];
@@ -96,3 +104,8 @@ export class MockWebSocket {
     };
   }
 }
+
+// Compile-time conformance: the double must stay installable wherever the
+// Wire consumes a WebSocket. Drift in either direction is a build error.
+const _asWireSocket = (mock: MockWebSocket): WireSocket => mock;
+void _asWireSocket;

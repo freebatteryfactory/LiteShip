@@ -24,9 +24,13 @@ declare global {
   }
 }
 
-// Forward-declare NavigatorConnectionInfo here; the full interface is defined
-// below alongside its probe function.
-interface NavigatorConnectionInfo {
+/**
+ * The structural shape the connection probe reads off `navigator.connection`.
+ * Exported so test doubles (tests/helpers/mock-browser.ts) conform to the
+ * SAME shape the probe consumes — probe/double drift breaks the build.
+ * Forward-declared here; the probe lives below alongside its alias.
+ */
+export interface NavigatorConnectionInfo {
   readonly effectiveType: string;
   readonly downlink: number;
   readonly saveData: boolean;
