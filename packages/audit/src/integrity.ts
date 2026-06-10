@@ -86,12 +86,18 @@ function findCatchReturn(clause: ts.CatchClause): ts.ReturnStatement | null {
   // failure context — that is a deliberate degradation contract, not
   // laundering. Only flag blocks that ignore the error entirely: either no
   // binding at all (`catch {`) or a binding that is never meaningfully read.
-  // Qodo (PR #11): a meaningful read excludes declaration names, property
-  // positions (`obj.e`, `{ e: ... }`), and `void e` discards; any same-name
-  // declaration inside the block shadows the binding, so no occurrence is
-  // credited (without symbol resolution, conservative-and-flagging beats
-  // crediting the wrong variable).
+  // Qodo + Codex (PR #11): a meaningful read excludes declaration names,
+  // property positions (`obj.e`, `{ e: ... }`), and `void e` discards; it
+  // must occur BEFORE the flagged return or INSIDE its returned expression
+  // (a value that embeds the error has surfaced it; dead code after the
+  // return never runs) and OUTSIDE nested function bodies (an uncalled
+  // closure surfaces nothing); any same-name declaration inside the block
+  // shadows the binding, so no occurrence is credited (without symbol
+  // resolution, conservative-and-flagging beats crediting the wrong
+  // variable).
   if (found && clause.variableDeclaration && ts.isIdentifier(clause.variableDeclaration.name)) {
+    const returnStart = (found as ts.ReturnStatement).getStart();
+    const returnEnd = (found as ts.ReturnStatement).getEnd();
     const bindingName = clause.variableDeclaration.name.text;
     let bindingUsed = false;
     let shadowed = false;
@@ -114,17 +120,29 @@ function findCatchReturn(clause: ts.CatchClause): ts.ReturnStatement | null {
         (ts.isQualifiedName(parent) && parent.right === id)
       );
     };
-    const scan = (node: ts.Node): void => {
+    const scan = (node: ts.Node, inNestedFunction: boolean): void => {
       if (ts.isIdentifier(node) && node.text === bindingName) {
         if (isDeclarationName(node)) {
           shadowed = true;
-        } else if (!isPropertyPosition(node) && !ts.isVoidExpression(node.parent)) {
+        } else if (
+          !inNestedFunction &&
+          (node.getStart() < returnStart || node.getEnd() <= returnEnd) &&
+          !isPropertyPosition(node) &&
+          !ts.isVoidExpression(node.parent)
+        ) {
           bindingUsed = true;
         }
       }
-      ts.forEachChild(node, scan);
+      const crossesFunctionBoundary =
+        ts.isFunctionDeclaration(node) ||
+        ts.isFunctionExpression(node) ||
+        ts.isArrowFunction(node) ||
+        ts.isMethodDeclaration(node) ||
+        ts.isGetAccessorDeclaration(node) ||
+        ts.isSetAccessorDeclaration(node);
+      ts.forEachChild(node, (child) => scan(child, inNestedFunction || crossesFunctionBoundary));
     };
-    ts.forEachChild(block, scan);
+    ts.forEachChild(block, (child) => scan(child, false));
     if (bindingUsed && !shadowed) return null;
   }
   return found;

@@ -255,6 +255,29 @@ describe('fallback-laundering — the error-binding rule (advisory cleanup wave)
     expect(launderingIn(root)).toHaveLength(1);
   });
 
+  it('a read in dead code AFTER the fallback return gets no credit — still flags (Codex, PR #11)', () => {
+    const root = fixtureWith(
+      'export function deadCode(): number | null { try { return compute(); } catch (e) { return null; emit(String(e)); } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('a read inside an uncalled nested closure gets no credit — still flags', () => {
+    const root = fixtureWith(
+      'export function closureOnly(): number | null { try { return compute(); } catch (e) { const log = (): void => emit(String(e)); void log; return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('an error EMBEDDED in the returned value is surfaced context — not laundering', () => {
+    // The doctor.ts probe shape: the returned structured check carries the
+    // failure reason, so the read lives inside the return expression itself.
+    const root = fixtureWith(
+      'export function embeds(): { detail: string } { try { compute(); return { detail: String(compute()) }; } catch (e) { return { detail: String(e) }; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(0);
+  });
+
   it('a catch that rethrows keeps its existing exemption', () => {
     const root = fixtureWith(
       'export function rethrows(): number | null { try { return compute(); } catch { if (compute() > 1) { throw new Error(\'up\'); } return null; } }\n',
