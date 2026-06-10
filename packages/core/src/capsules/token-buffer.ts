@@ -52,7 +52,8 @@ function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
 
   const tokens = buffer.drain();
   return {
-    phase: event._tag === 'reset' ? 'idle' : event._tag === 'flush' ? 'draining' : tokens.length > 0 ? 'buffering' : 'idle',
+    phase:
+      event._tag === 'reset' ? 'idle' : event._tag === 'flush' ? 'draining' : tokens.length > 0 ? 'buffering' : 'idle',
     tokens,
     totalBytes: tokens.reduce((sum, token) => sum + token.length, 0),
   };
