@@ -52,6 +52,8 @@ describe('generateStateMachine', () => {
     // capsule without step/initialState must self-report as a skip there.
     expect(testFile).toContain('cap.step === undefined || cap.initialState === undefined');
     expect(testFile).toContain('it.skip');
+    // Non-UnsupportedSchemaError derivation failures must fail, not skip.
+    expect(testFile).toContain('throw arbError');
     expect(testFile).toContain('invariants hold after every step');
     expect(testFile).toContain('replays deterministically');
   });
