@@ -2,7 +2,7 @@ import { Diagnostics, StateName } from '@czap/core';
 import { WorkerHost } from '@czap/worker';
 import {
   applyBoundaryState,
-  attachViewportObserver,
+  attachSignalObserver,
   evaluateBoundary,
   normalizeBoundaryState,
   parseBoundary,
@@ -140,7 +140,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
 
     update(true);
     if (runtimeBoundary) {
-      cleanupObserver = attachViewportObserver(runtimeBoundary.input, () => update(false));
+      cleanupObserver = attachSignalObserver(runtimeBoundary.input, () => update(false));
     }
   };
 
@@ -265,7 +265,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
       applyHostResolvedState(initialState, 1);
       syncResolvedState(initialState, 1, true);
     }
-    cleanupObserver = attachViewportObserver(boundary.input, update);
+    cleanupObserver = attachSignalObserver(boundary.input, update);
   };
 
   const init = (): void => {
