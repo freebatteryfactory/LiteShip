@@ -1,13 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
+import { satelliteAttrs } from '@czap/astro';
+import { Boundary } from '@czap/core';
 
 const czap = Astro.locals.czap as {
   tier?: { cap: string; motion: string; design: string };
   edge?: { cacheStatus?: string };
 } | undefined;
+
+const example = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'compact'],
+    [768, 'wide'],
+  ] as const,
+});
 ---
 <Base title="LiteShip Cloudflare Workers">
-  <main data-czap-boundary="cloudflare-example" client:satellite>
+  <main {...satelliteAttrs({ boundary: example })}>
     <h1>LiteShip on Cloudflare Workers</h1>
     <p>Edge tier: {czap?.tier?.cap ?? 'detecting…'}</p>
     <p>KV cache: {czap?.edge?.cacheStatus ?? 'n/a'}</p>

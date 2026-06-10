@@ -240,6 +240,7 @@ Main surfaces:
 Host-owned shared runtime surfaces:
 
 - `@czap/astro/runtime` slot bootstrap and swap reinit helpers
+- `@czap/astro/runtime` directive boot scanner (`bootstrapDirectives`, `scanAndBootDirectives`) — activates `data-czap-directive` / legacy `client:*` markers on plain elements and `.astro` output
 - `@czap/astro/runtime` wasm runtime configuration and loading
 - internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, and `wasm`
 

@@ -186,6 +186,7 @@ export const surfacePolicy = {
     'packages/astro/src/runtime/wasm.ts',
     'packages/astro/src/runtime/boundary.ts',
     'packages/astro/src/runtime/slots.ts',
+    'packages/astro/src/runtime/directive-boot.ts',
   ] as const,
   viteVirtualModules: [
     'virtual:czap/tokens',
