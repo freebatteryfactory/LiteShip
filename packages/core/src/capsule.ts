@@ -77,6 +77,26 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * end-to-end. Only meaningful for `pureTransform` arms today.
    */
   readonly run?: (input: In) => Out;
+  /**
+   * Optional state-machine step handler: folds one decoded event (`In`)
+   * into a decoded state (`Out`). With {@link CapsuleContract.initialState}
+   * present, the harness drives randomized event sequences and checks every
+   * declared {@link Invariant} after each step, plus deterministic replay.
+   * Only meaningful for `stateMachine` arms.
+   */
+  readonly step?: (state: Out, event: In) => Out;
+  /**
+   * Optional initial state for `stateMachine` arms — the fold seed for
+   * {@link CapsuleContract.step}-driven harness tests.
+   */
+  readonly initialState?: Out;
+  /**
+   * Optional projection handler for `cachedProjection` arms: derives the
+   * decoded output from a decoded source. The harness checks determinism
+   * (same source → deep-equal output) and every declared {@link Invariant}
+   * under random sources.
+   */
+  readonly derive?: (source: In) => Out;
 }
 
 /**
