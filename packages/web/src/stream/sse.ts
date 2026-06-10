@@ -16,6 +16,18 @@ import { SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint } from '../types.js';
 
 /**
+ * The EventSource surface the SSE client actually drives (assign, onmessage,
+ * onerror, close). Named so the dependency is structural rather than ambient:
+ * test doubles (tests/helpers/mock-event-source.ts) conform to THIS type, and
+ * drift between consumer and double breaks the build.
+ */
+export interface SSEEventSource {
+  onmessage: ((event: MessageEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  close(): void;
+}
+
+/**
  * SSE client instance.
  */
 export interface SSEClient {
@@ -87,7 +99,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
     const machine: {
       status: SSEState;
       lastEventId: string | null;
-      source: EventSource | null;
+      source: SSEEventSource | null;
       reconnectAttempt: number;
       bufferSize: number;
       reconnectHandle: ReturnType<typeof setTimeout> | null;
@@ -130,7 +142,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
 
     const setupSource = (): void => {
       const url = buildUrl(config.url, config.artifactId, machine.lastEventId ?? undefined);
-      const source = new EventSource(url);
+      const source: SSEEventSource = new EventSource(url);
       machine.source = source;
       resetHeartbeat();
 

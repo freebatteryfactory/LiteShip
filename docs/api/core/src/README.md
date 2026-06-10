@@ -110,6 +110,7 @@ plan graph, ECS, capsule factory).
 - [VideoFrameOutput](interfaces/VideoFrameOutput.md)
 - [WASMDispatchAPI](interfaces/WASMDispatchAPI.md)
 - [WASMKernels](interfaces/WASMKernels.md)
+- [WireSocket](interfaces/WireSocket.md)
 
 ## Type Aliases
 

@@ -6,7 +6,7 @@
 
 # Interface: SSEClient
 
-Defined in: [web/src/stream/sse.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L21)
+Defined in: [web/src/stream/sse.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L33)
 
 SSE client instance.
 
@@ -16,7 +16,7 @@ SSE client instance.
 
 > `readonly` **backpressure**: `Effect`\<[`BackpressureHint`](BackpressureHint.md)\>
 
-Defined in: [web/src/stream/sse.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L27)
+Defined in: [web/src/stream/sse.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L39)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/stream/sse.ts:27](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **lastEventId**: `Effect`\<`string` \| `null`\>
 
-Defined in: [web/src/stream/sse.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L26)
+Defined in: [web/src/stream/sse.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L38)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/stream/sse.ts:26](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **messages**: `Stream`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: [web/src/stream/sse.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L22)
+Defined in: [web/src/stream/sse.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L34)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/stream/sse.ts:22](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **state**: `Effect`\<[`SSEState`](../type-aliases/SSEState.md)\>
 
-Defined in: [web/src/stream/sse.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L23)
+Defined in: [web/src/stream/sse.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L35)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [web/src/stream/sse.ts:23](https://github.com/heyoub/LiteShip/blob/m
 
 > **close**(): `Effect`\<`void`\>
 
-Defined in: [web/src/stream/sse.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L24)
+Defined in: [web/src/stream/sse.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L36)
 
 #### Returns
 
@@ -60,7 +60,7 @@ Defined in: [web/src/stream/sse.ts:24](https://github.com/heyoub/LiteShip/blob/m
 
 > **reconnect**(): `Effect`\<`void`\>
 
-Defined in: [web/src/stream/sse.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L25)
+Defined in: [web/src/stream/sse.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L37)
 
 #### Returns
 
