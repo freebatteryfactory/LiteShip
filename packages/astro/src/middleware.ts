@@ -11,6 +11,7 @@ import { ClientHints, createEdgeHostAdapter, EdgeTier } from '@czap/edge';
 import type { CompiledOutputs, EdgeHostAdapterConfig, ThemeCompileResult } from '@czap/edge';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
+import type { CrossOriginEmbedderPolicy } from './headers.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,8 +51,13 @@ export interface CzapMiddlewareConfig {
   readonly edge?: EdgeHostAdapterConfig;
   /** Whether to include the Client Hints request headers (default `true`). */
   readonly detect?: boolean;
-  /** Whether to emit COOP/COEP headers for worker features. */
-  readonly workers?: { readonly enabled?: boolean };
+  /**
+   * Whether to emit COOP/COEP headers for worker features. `coep`
+   * selects the embedder policy value (default `'require-corp'`);
+   * `'credentialless'` keeps cross-origin isolation while tolerating
+   * CORP-less third-party assets.
+   */
+  readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };
 }
 
 interface MiddlewareContext {
@@ -87,6 +93,7 @@ export function czapMiddleware(
   }
   const detectEnabled = config?.detect !== false;
   const workersEnabled = config?.workers?.enabled === true;
+  const coep = config?.workers?.coep;
 
   return async (context: MiddlewareContext, next: () => Promise<Response>): Promise<Response> => {
     const edgeResolution = edgeAdapter ? await edgeAdapter.resolve(context.request.headers) : null;
@@ -120,6 +127,7 @@ export function czapMiddleware(
     const headers = applyCzapHeaders(new Headers(response.headers), {
       detectEnabled,
       workersEnabled,
+      ...(coep ? { coep } : {}),
       acceptCH: edgeResolution?.responseHeaders.acceptCH ?? ClientHints.acceptCHHeader(),
       criticalCH: edgeResolution?.responseHeaders.criticalCH ?? ClientHints.criticalCHHeader(),
     });
