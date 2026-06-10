@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import { alias, coverageExclude, coverageInclude } from './vitest.shared.js';
+import { alias, coverageExclude, coverageInclude, scaledTimeout } from './vitest.shared.js';
 import { startSceneDev, stopSceneDev } from './tests/browser/commands/scene-dev-spawn.js';
 
 const coverageEnabled = process.argv.includes('--coverage');
@@ -42,6 +42,12 @@ export default defineConfig({
   cacheDir: 'node_modules/.vite-browser',
   test: {
     include: ['tests/browser/**/*.test.ts'],
+    // Browser test files can't import vitest.shared.ts (node:path), so this
+    // lane sets lane-wide budgets here instead of per-test literals: 30s
+    // covers the slowest case (scene-dev-player's spawned dev server) and
+    // coverage runs clamp to the shared 240s floor via scaledTimeout.
+    testTimeout: scaledTimeout(30_000),
+    hookTimeout: scaledTimeout(30_000),
     browser: {
       enabled: true,
       provider: playwright(),

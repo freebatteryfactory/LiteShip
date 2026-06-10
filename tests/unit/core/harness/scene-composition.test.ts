@@ -26,4 +26,19 @@ describe('generateSceneComposition', () => {
     expect(benchFile).toContain("bench('demo.intro");
     expect(benchFile).toContain('{ time: 2000 }');
   });
+
+  it('renders n/a in the per-frame budget test title when no p95 budget is declared', () => {
+    const cap = defineCapsule({
+      _kind: 'sceneComposition',
+      name: 'demo.noBudget',
+      input: Schema.Unknown,
+      output: Schema.Unknown,
+      capabilities: { reads: [], writes: [] },
+      invariants: [],
+      budgets: {},
+      site: ['node'],
+    });
+    const { testFile } = Harness.generateSceneComposition(cap);
+    expect(testFile).toContain('declared budget (n/a' + 'ms)');
+  });
 });

@@ -38,6 +38,27 @@ function asDevelopmentPath(value: unknown): string | null {
 }
 
 /**
+ * Every concrete file target reachable from an exports-map value, labelled by
+ * its condition chain (e.g. `import`, `types`). Wildcard targets are skipped —
+ * they cannot be enumerated without resolution intent. Fallback arrays and
+ * nested condition objects are walked.
+ */
+function collectExportTargets(value: unknown, condition = ''): Array<{ condition: string; target: string }> {
+  if (typeof value === 'string') {
+    return value.includes('*') ? [] : [{ condition: condition || 'default', target: value }];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => collectExportTargets(entry, condition));
+  }
+  if (value && typeof value === 'object') {
+    return Object.entries(value).flatMap(([key, nested]) =>
+      collectExportTargets(nested, condition ? `${condition}.${key}` : key),
+    );
+  }
+  return [];
+}
+
+/**
  * Resolve a profile-listed astro file against the astro PACKAGE root, so the
  * check holds wherever the package lives (the monorepo workspace layout or a
  * consumer install under node_modules). Entries starting with `packages/`
@@ -66,6 +87,35 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     const exportEntries = Object.entries(pkg.exports);
     packageExportCount += exportEntries.length;
     for (const [subpath, value] of exportEntries) {
+      // Consumer mode (profile.packageRoots present) audits INSTALLED
+      // packages, where the published artifact is the truth: every concrete
+      // exports condition (types/import/default — not just development) must
+      // resolve, or the install is broken / the tarball shipped without its
+      // dist. Runs BEFORE the development-candidate gate so types-only
+      // exports (e.g. @czap/_spine) are verified too (Codex P2, PR #11).
+      // The monorepo skips this — dist/ legitimately doesn't exist on a
+      // fresh clone, and package:smoke proves the tarball side at release.
+      if (profile.packageRoots !== undefined) {
+        for (const { condition, target } of collectExportTargets(value)) {
+          // The development condition is the package-export-surface rule's
+          // domain (checked below for every profile) — skip it here so one
+          // missing file doesn't report twice.
+          if (condition === 'development' || condition.endsWith('.development')) continue;
+          if (existsSync(resolve(pkg.dir, target))) continue;
+          rawFindings.push({
+            id: `surface/export-target/${pkg.name}:${subpath}:${condition}`,
+            section: 'surface',
+            rule: 'export-target-missing',
+            severity: 'error',
+            title: 'Installed package exports target is missing',
+            summary: `Export "${subpath}" (${condition}) for ${pkg.name} points at ${target}, which does not exist in the installed package — broken install or a tarball that shipped without it.`,
+            location: {
+              file: pkg.packageJsonPath,
+            },
+          });
+        }
+      }
+
       const candidate = asDevelopmentPath(value);
       if (!candidate) continue;
       if (candidate.includes('*')) continue;

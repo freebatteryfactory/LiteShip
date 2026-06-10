@@ -11,6 +11,7 @@
  */
 
 import { describe, test, expect, vi } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import fc from 'fast-check';
 import { WASMDispatch, fallbackKernels, Boundary } from '@czap/core';
 
@@ -687,5 +688,5 @@ describe('WASMDispatch concurrent loading properties', () => {
       instantiateSpy.mockRestore();
       WASMDispatch.unload();
     }
-  }, 10000); // Increase timeout for this complex async test
+  }, scaledTimeout(10_000)); // Increase timeout for this complex async test
 });

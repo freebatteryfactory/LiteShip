@@ -4,6 +4,7 @@
  * so coverage is captured for `packages/scene/src/dev/server.ts`.
  */
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../../vitest.shared.js';
 import { startDevServer } from '../../../../packages/scene/src/dev/server.js';
 
 describe('startDevServer', () => {
@@ -14,7 +15,7 @@ describe('startDevServer', () => {
     } finally {
       await handle.close();
     }
-  }, 30_000);
+  }, scaledTimeout(30_000));
 
   it('close() resolves cleanly and the port is released', async () => {
     const handle = await startDevServer('examples/scenes/intro.ts');
@@ -23,5 +24,5 @@ describe('startDevServer', () => {
     const second = await startDevServer('examples/scenes/intro.ts');
     expect(second.url).toMatch(/^http:\/\//);
     await second.close();
-  }, 30_000);
+  }, scaledTimeout(30_000));
 });

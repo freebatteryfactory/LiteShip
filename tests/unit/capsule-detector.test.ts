@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { resolve } from 'node:path';
 import { detectCapsuleCalls, WORKSPACE_ALIASES } from '../../scripts/lib/capsule-detector.js';
 import { Config } from '@czap/core';
@@ -21,7 +22,7 @@ const BEAT_MARKERS = resolve('packages/assets/src/analysis/beat-markers.ts');
 
 describe(
   'detectCapsuleCalls',
-  { timeout: 90_000, hookTimeout: 90_000 },
+  { timeout: scaledTimeout(90_000), hookTimeout: scaledTimeout(90_000) },
   () => {
     let allCalls: ReturnType<typeof detectCapsuleCalls>;
 

@@ -145,5 +145,5 @@ describe('scene-dev player UI', () => {
       delete window.__czap_player_ready;
       await commands.stopSceneDev();
     }
-  }, 30000);
+  });
 });
