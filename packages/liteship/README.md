@@ -25,5 +25,12 @@ installed; pick the entry points your host needs.
 If you only want one slice, install it directly — `@czap/astro` pulls the
 core rendering stack transitively for the Astro path.
 
+> **pnpm users:** pnpm's strict `node_modules` does not hoist transitive
+> dependencies, and since `liteship` re-exports nothing, importing
+> `@czap/core` through it will not resolve. Either add the `@czap/*` packages
+> you import as explicit dependencies (recommended), or hoist the scope in
+> `.npmrc` with `public-hoist-pattern[]=@czap/*`. The umbrella works as-is
+> under npm and yarn's hoisted layouts.
+
 Docs: [GETTING-STARTED](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md) ·
 [package surfaces](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
