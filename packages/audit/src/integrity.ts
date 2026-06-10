@@ -15,7 +15,7 @@ import {
   lineAndColumn,
   nodeText,
   partitionAllowlistedFindings,
-  readSourceFileRecords,
+  readProfileSourceFileRecords,
 } from './shared.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
@@ -85,8 +85,7 @@ function findCatchReturn(block: ts.Block): ts.ReturnStatement | null {
 export function runIntegrityAudit(
   profile: DevopsProfile = liteshipDevopsProfile,
 ): AuditSectionResult<IntegritySummary> {
-  const root = profile.repoRoot;
-  const sourceRecords = readSourceFileRecords(root);
+  const sourceRecords = readProfileSourceFileRecords(profile);
   const rawFindings: AuditFinding[] = [];
   let stubCount = 0;
   let missingCapabilityCount = 0;

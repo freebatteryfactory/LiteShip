@@ -22,13 +22,21 @@ export interface AuditReceipt extends AuditPayload {
 /** Exit code when the engine/profile load fails before producing a summary. */
 const LOAD_FAILURE_EXIT = 1;
 
-/** Execute `czap audit [--profile <path>]`. */
-export async function audit(opts: { profile?: string; pretty?: boolean; cwd?: string } = {}): Promise<number> {
+/** Execute `czap audit [--profile <path>] [--consumer]`. */
+export async function audit(
+  opts: { profile?: string; consumer?: boolean; pretty?: boolean; cwd?: string } = {},
+): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   // The CLI-only runAudit capability: load the profile + run the engine.
-  const runAudit = async ({ profilePath }: { profilePath?: string }): Promise<AuditEngineSummary> => {
-    const { profile, source } = await loadProfile(profilePath, cwd);
+  const runAudit = async ({
+    profilePath,
+    consumer,
+  }: {
+    profilePath?: string;
+    consumer?: boolean;
+  }): Promise<AuditEngineSummary> => {
+    const { profile, source } = await loadProfile(profilePath, cwd, consumer ? { consumer } : {});
     const result = runAuditPasses(profile);
     return {
       errorCount: result.counts.error,
@@ -49,7 +57,13 @@ export async function audit(opts: { profile?: string; pretty?: boolean; cwd?: st
   let result;
   try {
     result = await auditCommand.handler(
-      { name: 'audit', args: opts.profile ? { profile: opts.profile } : {} },
+      {
+        name: 'audit',
+        args: {
+          ...(opts.profile ? { profile: opts.profile } : {}),
+          ...(opts.consumer ? { consumer: true } : {}),
+        },
+      },
       { cwd, runAudit },
     );
   } catch (error) {

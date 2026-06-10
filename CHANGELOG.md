@@ -4,12 +4,63 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [Unreleased]
+
+Fixes and features upstreamed from a deep dogfood of the published `0.1.4`
+artifacts on a zero-React Astro 6 site.
+
+### Added
+
+- `@czap/astro` — directive boot scanner: `data-czap-directive` markers (and
+  legacy literal `client:*` attributes on plain elements) now activate on
+  plain HTML and `Satellite.astro` output. Astro only fires custom `client:*`
+  directives on framework islands, so every documented plain-element wiring
+  was silently inert. `satelliteAttrs()` emits the marker automatically when
+  a boundary is present (`directive: false` opts out).
+- `@czap/astro` — `scroll.x` / `scroll.y` / `scroll.progress` signals with a
+  rAF-throttled passive observer (`attachSignalObserver`; the viewport-only
+  `attachViewportObserver` remains as a deprecated alias).
+- `@czap/astro` — `workers.coep` integration/middleware option
+  (`'require-corp' | 'credentialless'`); COOP/COEP are now set only when
+  absent, so consumer middleware can override them in either `sequence()` order.
+- `@czap/audit` — consumer mode: `czap audit --consumer` /
+  `consumerDevopsProfile(cwd)` audit the `@czap/*` packages installed in a
+  downstream repo's node_modules (publish-integrity gate). New
+  `DevopsProfile.packageRoots` seam; discovery walks node_modules (pnpm
+  virtual store included).
+- `@czap/cli` — `czap audit --findings` includes the findings array in the
+  JSON receipt and per-finding lines in `--pretty` stderr output.
+
+### Fixed
+
+- `@czap/quantizer` — config/output cache identity now includes `tier`,
+  `spring`, and `force()` targets; previously the first config minted for a
+  boundary+outputs pair was served for every later variant, so e.g. a
+  `tier: 'physics'` quantizer created after a `tier: 'transitions'` one never
+  emitted glsl outputs. **Note:** `QuantizerConfig.id` values change.
+- Examples/tutorial pages with broken or missing boundary payloads
+  (`examples/default`, `examples/cloudflare-astro`, `examples/showcase`
+  worker page, tutorial live demo) now serialize real boundaries via
+  `satelliteAttrs()`.
+
+### Changed
+
+- `@czap/audit` — `surfacePolicy.astroRuntimeFiles` entries are now
+  astro-package-relative (e.g. `'src/runtime/boundary.ts'`); entries starting
+  with `packages/` keep resolving repo-root-relative for back-compat. New
+  optional `surfacePolicy.vitePackage` / `viteVirtualModulesFile` fields
+  replace the hardcoded `packages/vite` path (legacy fallback retained).
+- Docs: signal list now distinguishes built-in observers from quantizer-fed
+  signals (`network.effectiveType` moved to tier detection); Astro docs show
+  `<Satellite boundary={...}>` without `client:satellite`.
+
 ## [0.1.4] — 2026-06-08
 
 Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0.1.4`
 (including first npm publish of `@czap/cloudflare`, `@czap/audit`, and `@czap/command`).
 
 ### Added
+
 - `@czap/cloudflare` — Workers siteAdapter, KV edge cache, and Astro middleware glue.
 - `czap doctor --target cloudflare` — probes Astro, Wrangler, adapter output, and config bindings.
 - `examples/cloudflare-astro/` — end-to-end Astro + Cloudflare adapter example.
@@ -17,6 +68,7 @@ Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0
 - Hosting guide: `docs/hosting/cloudflare.md`.
 
 ### Fixed
+
 - `prepare` hook (`link-pre-commit.ts`) no longer imports built `@czap/command` before `tsc --build`.
 - CI: build workspace before `gauntlet:full`; git identity for `doctor --ci` on GHA runners.
 - Windows `package:smoke`: copy hoisted deps beside tar-extracted `@czap/*` (junction ENOENT on GHA).
@@ -28,6 +80,7 @@ Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0
 CI greening release — no intentional public API changes beyond what shipped in 0.1.2.
 
 ### Fixed
+
 - `package:smoke` audits `workspace:` leakage from packed tarballs (`tar -xOf`) instead of
   `node_modules` layout, so Windows CI no longer depends on pnpm hoisting shape.
 - Windows `package:smoke`: `--ignore-workspace` consumer install, hoisted linker, junction links
@@ -41,6 +94,7 @@ CI greening release — no intentional public API changes beyond what shipped in
 Dev-experience layer plus CI publishability fixes. All **15** `@czap/*` packages ship at `0.1.2`.
 
 ### Added
+
 - `czap doctor` — preflight rig-check with JSON receipt; `--fix` for cheap repairs, `--ci` to fail on warnings.
 - `czap glossary [term]` — ontology lookup for LiteShip / CZAP prose register.
 - `czap help`, `czap completion <shell>`, `czap version`.
@@ -48,9 +102,11 @@ Dev-experience layer plus CI publishability fixes. All **15** `@czap/*` packages
 - `postinstall` welcome + pointer to shakedown.
 
 ### Changed
+
 - **Breaking (scripts only):** `pnpm setup` renamed to `pnpm shakedown` to avoid collision with pnpm's built-in `setup` command.
 
 ### Fixed
+
 - `package:smoke` on Windows CI: avoid `%TEMP%` 8.3 paths (`RUNNER~1` → `RUNNER%7E1`) when building `file://` tarball URLs for the consumer fixture.
 - `docs/api/` regenerated so `docs:check` matches current TSDoc output after CLI surface growth.
 
@@ -61,6 +117,7 @@ API changes — this version exists to exercise the release-automation
 substrate end-to-end on a real publish before any code change rides it.
 
 ### Release infrastructure
+
 - `.github/workflows/release.yml` cuts releases on `v*.*.*` tag push.
   Runs the full gauntlet for release certification, then loops
   `czap ship --filter @czap/<pkg>` over all 15 packages, then creates
@@ -70,9 +127,10 @@ substrate end-to-end on a real publish before any code change rides it.
   once each package has its trusted-publisher configured at
   `https://www.npmjs.com/package/@czap/<name>/access`.
 - `czap ship --provenance` flag added (passthrough to `pnpm publish
-  --provenance`); reserved for the v0.2 OIDC pivot.
+--provenance`); reserved for the v0.2 OIDC pivot.
 
 ### Documentation
+
 - `docs/RELEASING.md` documents the v0.1.1+ release-cutting flow
   (`git tag -a vX.Y.Z` → workflow auto-fires) and the per-package
   trusted-publisher form values for the eventual OIDC pivot.
@@ -85,6 +143,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 `0.1.0` regardless of their internal history.
 
 ### Public-API surface
+
 - Test-only helpers moved off main entries to dedicated `/testing` sub-paths.
   Consumers must now `import { resetCapsuleCatalog } from '@czap/core/testing'`,
   `import { resetAssetRegistry } from '@czap/assets/testing'`, and
@@ -106,6 +165,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
   from `@czap/vite` (internal lookup table that powers `resolvePrimitive`).
 
 ### Package metadata
+
 - All 15 packages now have `keywords`, full `repository`/`bugs`/`homepage`
   fields, `sideEffects: false` (or a precise array for `@czap/web`'s
   capture init), and `license: MIT`.
@@ -116,6 +176,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
   double bundle weight).
 
 ### Documentation
+
 - README restructured for OSS first impressions: hook → quick start →
   package table → docs index. Internal hygiene (operational telemetry,
   PowerShell mojibake note) moved to appendix.
@@ -126,6 +187,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
   public surface.
 
 ### Hygiene
+
 - Removed ~700KB of internal AI-session plans and Six Sigma debug threads
   from `docs/superpowers/` and `docs/sixsigma/` — kept locally as private
   notes via `.gitignore`.
@@ -173,7 +235,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 
 - Added effect peer dependency
 
-### Type Contracts (_spine)
+### Type Contracts (\_spine)
 
 - Removed deprecated type aliases from all 5 spine files
 - Added MotionTier, SpringConfig, TIER_TARGETS, QuantizerFromOptions to quantizer spine
