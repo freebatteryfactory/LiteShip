@@ -1,12 +1,24 @@
 /**
- * Unit test for `gauntlet` command. Only the --dry-run path is exercised
- * in-process — the live spawn path delegates to `pnpm run gauntlet:full`
- * which is far too heavy for a unit test (and is covered by the gauntlet
- * suite itself).
+ * Unit test for `gauntlet` command. The --dry-run path runs in-process;
+ * the live path's spawnSync is mocked (the real `pnpm run gauntlet:full`
+ * is far too heavy for a unit test and is covered by the gauntlet suite
+ * itself) so the exit-status arms — success receipt, nonzero status, and
+ * signal death — are still proven.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+
+const { spawnSyncMock } = vi.hoisted(() => ({ spawnSyncMock: vi.fn() }));
+vi.mock('node:child_process', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  spawnSync: spawnSyncMock,
+}));
+
 import { gauntlet } from '../../../../packages/cli/src/commands/gauntlet.js';
 import { gauntletPhaseLabels } from '../../../../packages/cli/src/gauntlet-phases.js';
+
+afterEach(() => {
+  spawnSyncMock.mockReset();
+});
 
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
@@ -78,5 +90,33 @@ describe('gauntlet command (unit)', () => {
     const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
     expect(receipt.error).toBe('unexpected_argv');
     expect(receipt.argv[0]).toBe('#');
+  });
+
+  it('live run (spawn mocked, exit 0) emits an ok receipt with elapsedMs', async () => {
+    spawnSyncMock.mockReturnValue({ status: 0 });
+    const { result, stdout } = await captureStdout(() => gauntlet([]));
+    expect(result).toBe(0);
+    expect(spawnSyncMock).toHaveBeenCalledWith('pnpm', ['run', 'gauntlet:full'], { stdio: 'inherit', shell: true });
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.status).toBe('ok');
+    expect(receipt.dryRun).toBe(false);
+    expect(typeof receipt.elapsedMs).toBe('number');
+  });
+
+  it('live run failure propagates the gauntlet exit status', async () => {
+    spawnSyncMock.mockReturnValue({ status: 7 });
+    const { result, stderr } = await captureStderr(() => gauntlet([]));
+    expect(result).toBe(7);
+    const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+    expect(receipt.status).toBe('failed');
+    expect(receipt.error).toBe('gauntlet exited with status 7');
+  });
+
+  it('live run killed by a signal (status null) reports signal and exits 1', async () => {
+    spawnSyncMock.mockReturnValue({ status: null });
+    const { result, stderr } = await captureStderr(() => gauntlet([]));
+    expect(result).toBe(1);
+    const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+    expect(receipt.error).toBe('gauntlet exited with status signal');
   });
 });
