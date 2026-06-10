@@ -92,16 +92,26 @@ export function discoverInstalledPackageRoots(cwd: string, packageNames: readonl
  * Build a consumer-mode profile: the base profile (LiteShip's by default)
  * re-rooted at `cwd` with `packageRoots` resolved from the installed
  * `@czap/*` packages. Packages from the topology that aren't installed are
- * simply absent — a consumer audits what it actually ships.
+ * simply absent — a consumer audits what it actually ships — and the same
+ * principle prunes the host-surface policy: a consumer that doesn't install
+ * the astro/vite host packages should not eat `*-missing` errors for
+ * surfaces it never shipped.
  */
 export function consumerDevopsProfile(
   cwd: string = process.cwd(),
   base: DevopsProfile = liteshipDevopsProfile,
 ): DevopsProfile {
   const discovery = discoverInstalledPackageRoots(cwd, Object.keys(base.packageTopology));
+  const astroInstalled = !base.surfacePolicy.astroPackage || base.surfacePolicy.astroPackage in discovery.packageRoots;
+  const viteInstalled = !base.surfacePolicy.vitePackage || base.surfacePolicy.vitePackage in discovery.packageRoots;
   return {
     ...base,
     repoRoot: normalizeRepoPath(cwd),
     packageRoots: discovery.packageRoots,
+    surfacePolicy: {
+      ...base.surfacePolicy,
+      ...(astroInstalled ? {} : { astroPackage: '', astroClientDirectives: [], astroRuntimeFiles: [] }),
+      ...(viteInstalled ? {} : { viteVirtualModules: [] }),
+    },
   };
 }

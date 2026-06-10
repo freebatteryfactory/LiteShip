@@ -46,6 +46,21 @@ async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdo
   }
 }
 
+async function captureStdio<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string; stderr: string }> {
+  let stderr = '';
+  const orig = process.stderr.write.bind(process.stderr);
+  (process.stderr as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
+    stderr += typeof c === 'string' ? c : Buffer.from(c).toString();
+    return true;
+  };
+  try {
+    const { result, stdout } = await captureStdout(fn);
+    return { result, stdout, stderr };
+  } finally {
+    (process.stderr as unknown as { write: typeof orig }).write = orig;
+  }
+}
+
 /** Build a synthetic @acme/ repo and an explicit profile file; return both paths. */
 function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: string } {
   const root = mkdtempSync(join(tmpdir(), 'czap-d9b2-'));
@@ -253,5 +268,34 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     const { root, profilePath } = acmeFixture('json');
     const code = await audit({ profile: profilePath, consumer: true, cwd: root, pretty: false });
     expect(code).toBe(1);
+  });
+
+  it('--consumer builds the installed-package profile (profileSource: consumer)', async () => {
+    const { root } = acmeFixture('json');
+    const { result, stdout } = await captureStdout(() => audit({ consumer: true, cwd: root, pretty: false }));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.profileSource).toBe('consumer');
+    // Nothing from the czap topology is installed in the fixture: zero
+    // packages, and the unshipped host surface is pruned, not error-spammed.
+    expect(receipt.errorCount).toBe(0);
+    expect(receipt.status).toBe('ok');
+    expect(result).toBe(0);
+  });
+
+  it('--findings with --pretty writes per-finding stderr lines with locations', async () => {
+    const { root, profilePath } = acmeFixture('json');
+    // A default export produces a located warning finding for the pretty lane.
+    writeFileSync(
+      resolve(root, 'packages/core/src/extra.ts'),
+      'const defaultThing = 1;\nexport default defaultThing;\n',
+      'utf8',
+    );
+    const { stdout, stderr } = await captureStdio(() =>
+      audit({ profile: profilePath, cwd: root, findings: true, pretty: true }),
+    );
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.warningCount).toBeGreaterThanOrEqual(1);
+    expect(stderr).toMatch(/audit: \d+ error\(s\)/);
+    expect(stderr).toMatch(/\[warning\] packages\/core\/src\/extra\.ts:\d+:\d+ default-export — /);
   });
 });
