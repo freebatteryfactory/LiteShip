@@ -33,6 +33,16 @@ release, and the two deferred dogfood items.
   `core.token-buffer` runs live by wrapping the production `TokenBuffer`;
   capsules without handlers or with non-derivable schemas self-report as
   honest skips.
+- Rust/WASM parity harness: `crates/czap-compute` joins the proof system —
+  crate unit tests, a CI job (`rust-wasm-parity`) that builds the wasm32
+  artifact from source, and a property suite loading it through the real
+  `WASMDispatch.load()` against `fallbackKernels` (boundary state indices
+  exact, spring trajectories within f32 tolerance, blend bit-identical).
+  The suite self-skips locally when the artifact is absent.
+- `czap-compute` — `blend_normalize` accumulates its total and computes the
+  reciprocal in f64, matching the TS fallback op-for-op: an f32 reciprocal
+  overflowed to `inf` for subnormal weight totals where the fallback
+  normalized to 1.0 (caught by the new parity suite on its first run).
 
 ### Changed
 
@@ -49,6 +59,21 @@ release, and the two deferred dogfood items.
   ffmpeg-probe 15%→100%, browser host context 15%→100%, scene-dev server
   20%→100%, gauntlet command 30%→100%, video decoder 47%→100%, audit CLI
   adapter 52%→100% branches, plus the three 1/2-branch harness files.
+
+### Fixed
+
+- `@czap/audit` — allowlist entries are **package-relative**
+  (`{ package: '@czap/astro', filePrefix: 'src/...' }`) and resolve through
+  the profile's discovered package roots. A clean consumer install
+  (`czap audit --consumer`) previously surfaced 24 warnings — Astro-mandated
+  directive default exports, the policy file's own placeholder strings, the
+  documented fail-closed fallbacks — because the entries matched repo-relative
+  `packages/...` prefixes that can never match a `node_modules` path. Consumer
+  runs now classify them suppressed-with-reason, same as the monorepo
+  (0.1.5 re-dogfood report, findings 1–3).
+- `liteship` README documents pnpm's strict `node_modules`: the umbrella
+  does not make transitive `@czap/*` imports resolvable under pnpm — keep
+  explicit scoped deps or hoist the scope (0.1.5 re-dogfood report).
 
 ## [0.1.5] — 2026-06-10
 

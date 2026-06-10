@@ -28,6 +28,7 @@ package — it stays repo-local and composes these passes.
 - [IntegritySummary](interfaces/IntegritySummary.md)
 - [OrphanCoverage](interfaces/OrphanCoverage.md)
 - [PackageManifestInfo](interfaces/PackageManifestInfo.md)
+- [PackagePathResolution](interfaces/PackagePathResolution.md)
 - [PackagePolicy](interfaces/PackagePolicy.md)
 - [SourceFileRecord](interfaces/SourceFileRecord.md)
 - [StructureCoverageClassification](interfaces/StructureCoverageClassification.md)
@@ -42,6 +43,7 @@ package — it stays repo-local and composes these passes.
 - [AuditCoverageClass](type-aliases/AuditCoverageClass.md)
 - [AuditSection](type-aliases/AuditSection.md)
 - [AuditSeverity](type-aliases/AuditSeverity.md)
+- [PackagePathResolver](type-aliases/PackagePathResolver.md)
 
 ## Variables
 
@@ -58,6 +60,7 @@ package — it stays repo-local and composes these passes.
 - [compareSeverity](functions/compareSeverity.md)
 - [consumerDevopsProfile](functions/consumerDevopsProfile.md)
 - [createCounts](functions/createCounts.md)
+- [createPackagePathResolver](functions/createPackagePathResolver.md)
 - [defaultRoot](functions/defaultRoot.md)
 - [discoverInstalledPackageRoots](functions/discoverInstalledPackageRoots.md)
 - [findAllowlistReason](functions/findAllowlistReason.md)

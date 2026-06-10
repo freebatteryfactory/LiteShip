@@ -3,8 +3,6 @@
 //! Generates evenly-spaced samples of a spring easing function.
 //! Writes to a static output buffer — zero allocation.
 
-use core::f32::consts::PI;
-
 /// Maximum samples the static buffer can hold.
 const MAX_SAMPLES: usize = 256;
 
@@ -59,5 +57,58 @@ pub extern "C" fn spring_curve(
         }
     }
 
-    unsafe { SPRING_BUF.as_ptr() }
+    core::ptr::addr_of!(SPRING_BUF) as *const f32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    extern crate std;
+    use std::vec::Vec;
+
+    fn curve(stiffness: f32, damping: f32, mass: f32, samples: u32) -> Vec<f32> {
+        let ptr = spring_curve(stiffness, damping, mass, samples);
+        unsafe { core::slice::from_raw_parts(ptr, samples as usize + 1) }.to_vec()
+    }
+
+    #[test]
+    fn endpoints_are_exact() {
+        for &(k, c, m) in &[(170.0, 26.0, 1.0), (50.0, 5.0, 2.0), (300.0, 60.0, 1.0)] {
+            let out = curve(k, c, m, 16);
+            assert_eq!(out[0], 0.0, "t=0 must be exactly 0");
+            assert_eq!(out[16], 1.0, "t=1 must be exactly 1");
+        }
+    }
+
+    #[test]
+    fn underdamped_overshoots_then_settles_near_one() {
+        // zeta ≈ 0.19 — visibly oscillatory spring.
+        let out = curve(170.0, 5.0, 1.0, 64);
+        let max = out.iter().cloned().fold(f32::MIN, f32::max);
+        assert!(max > 1.0, "underdamped spring must overshoot, max was {max}");
+    }
+
+    #[test]
+    fn overdamped_never_exceeds_one() {
+        // zeta ≈ 2.3 — heavily damped, monotonic approach.
+        let out = curve(170.0, 60.0, 1.0, 64);
+        for (i, v) in out.iter().enumerate() {
+            assert!(*v <= 1.0 + 1e-6, "overdamped sample {i} exceeded 1: {v}");
+        }
+    }
+
+    #[test]
+    fn non_positive_mass_is_treated_as_one() {
+        assert_eq!(curve(170.0, 26.0, 0.0, 16), curve(170.0, 26.0, 1.0, 16));
+        assert_eq!(curve(170.0, 26.0, -3.0, 16), curve(170.0, 26.0, 1.0, 16));
+    }
+
+    #[test]
+    fn samples_clamp_to_buffer_capacity() {
+        // 4096 requested → clamped to 255 inner samples; index 255 readable.
+        let ptr = spring_curve(170.0, 26.0, 1.0, 4096);
+        let out = unsafe { core::slice::from_raw_parts(ptr, 256) };
+        assert_eq!(out[255], 1.0);
+    }
 }

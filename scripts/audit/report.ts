@@ -1920,7 +1920,7 @@ export function buildAuditArtifactBundle(options: BuildReportOptions = {}): Audi
     runtimeSeams: buildRuntimeSeamsStatus(root),
   } as const;
 
-  const support = partitionAllowlistedFindings(supportingFindings(root, supportingArtifacts));
+  const support = partitionAllowlistedFindings(supportingFindings(root, supportingArtifacts), profile);
 
   const findings = sortFindings([
     ...structure.findings,

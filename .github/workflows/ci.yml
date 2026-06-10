@@ -99,6 +99,38 @@ jobs:
             playwright-report
           if-no-files-found: ignore
 
+  # Rust/WASM kernel truth: the czap-compute crate's unit tests, a fresh
+  # wasm32 build from source, and the WASM-vs-fallbackKernels parity
+  # property suite running against that fresh artifact — the "build truth"
+  # doctrine applied to the compute kernels (nothing prebuilt is trusted).
+  rust-wasm-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo test
+        working-directory: crates/czap-compute
+        env:
+          RUSTFLAGS: -D warnings
+      - run: cargo build --release --target wasm32-unknown-unknown
+        working-directory: crates/czap-compute
+        env:
+          RUSTFLAGS: -D warnings
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Artifact must exist — otherwise the parity suite self-skips
+        run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
+      - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts
+        env:
+          CI: true
+
   windows-smoke:
     runs-on: windows-latest
     timeout-minutes: 60
@@ -161,5 +193,6 @@ jobs:
       - truth-linux
       - browser-e2e
       - windows-smoke
+      - rust-wasm-parity
     steps:
       - run: echo "CI truth lanes passed."

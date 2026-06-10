@@ -609,7 +609,7 @@ export function runStructureAudit(
     });
   }
 
-  const partitioned = partitionAllowlistedFindings(rawFindings);
+  const partitioned = partitionAllowlistedFindings(rawFindings, profile);
   const packageEdgeSummary = [...packageEdges.entries()]
     .map(([edge, count]) => {
       const [from, to] = edge.split(' -> ');
