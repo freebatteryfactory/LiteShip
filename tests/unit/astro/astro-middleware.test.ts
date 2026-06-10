@@ -81,6 +81,42 @@ describe('czapMiddleware', () => {
     expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
   });
 
+  test('workers.coep selects the COEP value', async () => {
+    const middleware = czapMiddleware({
+      workers: { enabled: true, coep: 'credentialless' },
+    });
+    const context = makeContext();
+
+    const response = await middleware(context, makeNext());
+
+    expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('credentialless');
+  });
+
+  test('pre-existing COOP/COEP set by inner middleware win over czap defaults', async () => {
+    const middleware = czapMiddleware({
+      workers: { enabled: true },
+    });
+    const context = makeContext();
+    const next = (): Promise<Response> =>
+      Promise.resolve(
+        new Response('OK', {
+          status: 200,
+          headers: {
+            'Cross-Origin-Embedder-Policy': 'credentialless',
+            'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+          },
+        }),
+      );
+
+    const response = await middleware(context, next);
+
+    expect(response.headers.get('Cross-Origin-Embedder-Policy')).toBe('credentialless');
+    expect(response.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin-allow-popups');
+    // Client-hints headers remain czap-owned and are still applied.
+    expect(response.headers.get('Accept-CH')).toBeTruthy();
+  });
+
   test('can disable client-hint headers while still preserving worker isolation headers', async () => {
     const middleware = czapMiddleware({
       detect: false,
