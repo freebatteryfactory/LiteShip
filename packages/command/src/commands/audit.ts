@@ -8,7 +8,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { CommandContext, HandledCommand } from '../registry.js';
+import type { AuditEngineFinding, CommandContext, HandledCommand } from '../registry.js';
 
 /** Structured payload returned by `audit`. */
 export interface AuditPayload {
@@ -24,6 +24,8 @@ export interface AuditPayload {
   };
   readonly repoRoot: string;
   readonly profileSource: 'default' | 'file' | 'consumer';
+  /** Present only when `--findings` was requested — receipt shape is stable by default. */
+  readonly findings?: readonly AuditEngineFinding[];
 }
 
 function failed(message: string, exitCode: number): CapsuleCommandResult {
@@ -36,14 +38,14 @@ function failed(message: string, exitCode: number): CapsuleCommandResult {
   };
 }
 
-/** `audit [--profile <path>] [--consumer]` — run the engine, emit a structured summary. */
+/** `audit [--profile <path>] [--consumer] [--findings]` — run the engine, emit a structured summary. */
 export const auditCommand: HandledCommand = {
   descriptor: {
     name: 'audit',
     summary: 'Run the profile-driven structure/integrity/surface audit; report a structured summary.',
     inputSchema: {
       type: 'object',
-      properties: { profile: { type: 'string' }, consumer: { type: 'boolean' } },
+      properties: { profile: { type: 'string' }, consumer: { type: 'boolean' }, findings: { type: 'boolean' } },
     },
     outputSchema: {
       type: 'object',
@@ -65,6 +67,7 @@ export const auditCommand: HandledCommand = {
         passFindingCounts: { type: 'object' },
         repoRoot: { type: 'string' },
         profileSource: { type: 'string', enum: ['default', 'file', 'consumer'] },
+        findings: { type: 'array' },
       },
     },
     // NOT mcpExposed: the engine is CLI-injected (runAudit); cli-only by design.
@@ -76,10 +79,12 @@ export const auditCommand: HandledCommand = {
     const profile = invocation.args.profile;
     const profilePath = typeof profile === 'string' && profile.length > 0 ? profile : undefined;
     const consumer = invocation.args.consumer === true;
+    const includeFindings = invocation.args.findings === true;
 
     const summary = await context.runAudit({
       ...(profilePath ? { profilePath } : {}),
       ...(consumer ? { consumer } : {}),
+      ...(includeFindings ? { includeFindings } : {}),
     });
 
     return {
@@ -96,6 +101,7 @@ export const auditCommand: HandledCommand = {
         passFindingCounts: summary.passFindingCounts,
         repoRoot: summary.repoRoot,
         profileSource: summary.profileSource,
+        ...(summary.findings ? { findings: summary.findings } : {}),
       },
     };
   },

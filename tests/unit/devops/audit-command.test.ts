@@ -34,10 +34,10 @@ function tsFiles(dir: string): string[] {
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string }> {
   let stdout = '';
   const orig = process.stdout.write.bind(process.stdout);
-  (process.stdout as unknown as { write: unknown }).write = ((c: string | Uint8Array) => {
+  (process.stdout as unknown as { write: unknown }).write = (c: string | Uint8Array) => {
     stdout += typeof c === 'string' ? c : Buffer.from(c).toString();
     return true;
-  });
+  };
   try {
     const result = await fn();
     return { result, stdout };
@@ -52,15 +52,37 @@ function acmeFixture(profileExt: 'json' | 'mjs'): { root: string; profilePath: s
   fixtures.push(root);
   const files: Record<string, string> = {
     'package.json': JSON.stringify({ name: 'acme-root', private: true, type: 'module' }),
-    'packages/core/package.json': JSON.stringify({ name: '@acme/core', exports: { '.': { development: './src/index.ts' } } }),
+    'packages/core/package.json': JSON.stringify({
+      name: '@acme/core',
+      exports: { '.': { development: './src/index.ts' } },
+    }),
     'packages/core/src/index.ts': 'export const coreThing = 1;\n',
-    'packages/app/package.json': JSON.stringify({ name: '@acme/app', dependencies: { '@acme/core': 'workspace:*' }, exports: { '.': { development: './src/index.ts' } } }),
+    'packages/app/package.json': JSON.stringify({
+      name: '@acme/app',
+      dependencies: { '@acme/core': 'workspace:*' },
+      exports: { '.': { development: './src/index.ts' } },
+    }),
     'packages/app/src/index.ts': "import { coreThing } from '@acme/core';\nexport const appThing = coreThing + 1;\n",
   };
-  const emptySurface = { astroPackage: '', astroClientDirectives: [], astroRuntimeFiles: [], viteVirtualModules: [], knownCapabilityNotes: [] };
-  const topology = { '@acme/app': { allowedInternalImports: ['@acme/core'], kind: 'layered' }, '@acme/core': { allowedInternalImports: [], kind: 'core' } };
+  const emptySurface = {
+    astroPackage: '',
+    astroClientDirectives: [],
+    astroRuntimeFiles: [],
+    viteVirtualModules: [],
+    knownCapabilityNotes: [],
+  };
+  const topology = {
+    '@acme/app': { allowedInternalImports: ['@acme/core'], kind: 'layered' },
+    '@acme/core': { allowedInternalImports: [], kind: 'core' },
+  };
   if (profileExt === 'json') {
-    files['czap.profile.json'] = JSON.stringify({ repoRoot: root, internalPackagePrefix: '@acme/', packageTopology: topology, dynamicImportExemptions: [], surfacePolicy: emptySurface });
+    files['czap.profile.json'] = JSON.stringify({
+      repoRoot: root,
+      internalPackagePrefix: '@acme/',
+      packageTopology: topology,
+      dynamicImportExemptions: [],
+      surfacePolicy: emptySurface,
+    });
   } else {
     files['czap.profile.mjs'] =
       `export default ${JSON.stringify({ repoRoot: root, internalPackagePrefix: '@acme/', packageTopology: topology, dynamicImportExemptions: [], surfacePolicy: emptySurface })};\n`;
@@ -95,7 +117,16 @@ describe('D9b-2 — the handler is engine-agnostic (context.runAudit injection)'
       runAudit: async ({ profilePath }) => {
         called = true;
         expect(profilePath).toBe('./p.json');
-        return { errorCount: 0, warningCount: 2, infoCount: 5, findingCount: 7, suppressedCount: 1, passFindingCounts: { structure: 1, integrity: 1, surface: 0 }, repoRoot: '/x', profileSource: 'file' };
+        return {
+          errorCount: 0,
+          warningCount: 2,
+          infoCount: 5,
+          findingCount: 7,
+          suppressedCount: 1,
+          passFindingCounts: { structure: 1, integrity: 1, surface: 0 },
+          repoRoot: '/x',
+          profileSource: 'file',
+        };
       },
     };
     const result = await auditCommand.handler({ name: 'audit', args: { profile: './p.json' } }, ctx);
@@ -113,7 +144,16 @@ describe('D9b-2 — the handler is engine-agnostic (context.runAudit injection)'
 
   it('reports a nonzero exit when the engine finds errors', async () => {
     const ctx: CommandContext = {
-      runAudit: async () => ({ errorCount: 3, warningCount: 0, infoCount: 0, findingCount: 3, suppressedCount: 0, passFindingCounts: { structure: 3, integrity: 0, surface: 0 }, repoRoot: '/x', profileSource: 'default' }),
+      runAudit: async () => ({
+        errorCount: 3,
+        warningCount: 0,
+        infoCount: 0,
+        findingCount: 3,
+        suppressedCount: 0,
+        passFindingCounts: { structure: 3, integrity: 0, surface: 0 },
+        repoRoot: '/x',
+        profileSource: 'default',
+      }),
     };
     const result = await auditCommand.handler({ name: 'audit', args: {} }, ctx);
     expect(result.status).toBe('failed');
@@ -132,7 +172,9 @@ describe('D9b-2 — @czap/command + @czap/mcp-server never take the engine edge'
     for (const file of tsFiles(resolve(REPO, 'packages/mcp-server/src'))) {
       expect(readFileSync(file, 'utf8'), file).not.toMatch(/@czap\/audit/);
     }
-    const pkg = JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as { dependencies?: Record<string, string> };
+    const pkg = JSON.parse(readFileSync(resolve(REPO, 'packages/mcp-server/package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+    };
     expect(pkg.dependencies?.['@czap/audit']).toBeUndefined();
   });
 });
@@ -178,6 +220,38 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
 
   it('fails clearly on a missing/invalid profile path (no walk-up, no silent default)', async () => {
     const code = await audit({ profile: './does-not-exist.json', cwd: REPO, pretty: false });
+    expect(code).toBe(1);
+  });
+
+  it('--findings includes the shaped findings array; the default receipt stays findings-free', async () => {
+    const { root, profilePath } = acmeFixture('json');
+
+    const withFindings = await captureStdout(() =>
+      audit({ profile: profilePath, cwd: root, findings: true, pretty: false }),
+    );
+    const receipt = JSON.parse(withFindings.stdout.trim().split('\n').pop()!);
+    expect(Array.isArray(receipt.findings)).toBe(true);
+    expect(receipt.findings.length).toBe(receipt.findingCount);
+    for (const finding of receipt.findings as Array<Record<string, unknown>>) {
+      expect(finding).toMatchObject({
+        id: expect.any(String),
+        section: expect.any(String),
+        rule: expect.any(String),
+        severity: expect.stringMatching(/^(error|warning|info)$/),
+        title: expect.any(String),
+        summary: expect.any(String),
+      });
+    }
+
+    // Receipt-shape stability: without the flag, no findings key at all.
+    const without = await captureStdout(() => audit({ profile: profilePath, cwd: root, pretty: false }));
+    const plainReceipt = JSON.parse(without.stdout.trim().split('\n').pop()!);
+    expect('findings' in plainReceipt).toBe(false);
+  });
+
+  it('--consumer and --profile are mutually exclusive (structured failure)', async () => {
+    const { root, profilePath } = acmeFixture('json');
+    const code = await audit({ profile: profilePath, consumer: true, cwd: root, pretty: false });
     expect(code).toBe(1);
   });
 });

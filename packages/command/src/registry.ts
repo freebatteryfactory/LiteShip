@@ -58,6 +58,7 @@ export interface CommandContext {
   readonly runAudit?: (input: {
     readonly profilePath?: string;
     readonly consumer?: boolean;
+    readonly includeFindings?: boolean;
   }) => Promise<AuditEngineSummary>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
@@ -121,6 +122,22 @@ export interface CommandContext {
 }
 
 /**
+ * One audit finding — a structural mirror of `@czap/audit`'s `AuditFinding`,
+ * declared here so the contract lives in `@czap/command` without an import of
+ * the engine.
+ */
+export interface AuditEngineFinding {
+  readonly id: string;
+  readonly section: string;
+  readonly rule: string;
+  readonly severity: 'error' | 'warning' | 'info';
+  readonly title: string;
+  readonly summary: string;
+  readonly location?: { readonly file: string; readonly line?: number; readonly column?: number };
+  readonly metadata?: Record<string, unknown>;
+}
+
+/**
  * Structured summary returned by the injected {@link CommandContext.runAudit}
  * capability — a structural mirror of `@czap/audit`'s pass result, declared here
  * so the contract lives in `@czap/command` without an import of the engine.
@@ -138,6 +155,8 @@ export interface AuditEngineSummary {
   };
   readonly repoRoot: string;
   readonly profileSource: 'default' | 'file' | 'consumer';
+  /** Present only when the caller asked for findings (`--findings`). */
+  readonly findings?: readonly AuditEngineFinding[];
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */
