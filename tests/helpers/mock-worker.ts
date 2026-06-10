@@ -13,7 +13,7 @@
  * surface czap's worker hosts (packages/worker/src) actually drive — so
  * host/double drift breaks the build.
  */
-import type { WorkerLike } from '@czap/worker';
+import type { WorkerLike } from '../../packages/worker/src/messages.js';
 import type { createStubRegistry } from './define-property-stub.js';
 
 type MessageHandler = (event: MessageEvent) => void;
@@ -49,7 +49,7 @@ export class MockWorker {
     this.postedMessages.push({ data, transfer });
   }
 
-  addEventListener(type: string, handler: EventListenerOrEventListenerObject): void {
+  addEventListener(type: string, handler: EventListenerOrEventListenerObject | MessageHandler): void {
     if (type === 'message') {
       this._messageHandlers.add(handler as MessageHandler);
     } else if (type === 'error') {
@@ -57,7 +57,7 @@ export class MockWorker {
     }
   }
 
-  removeEventListener(type: string, handler: EventListenerOrEventListenerObject): void {
+  removeEventListener(type: string, handler: EventListenerOrEventListenerObject | MessageHandler): void {
     if (type === 'message') {
       this._messageHandlers.delete(handler as MessageHandler);
     } else if (type === 'error') {
@@ -91,7 +91,10 @@ export class MockWorker {
 
   /** Install as globalThis.Worker and return a cleanup function. */
   static install(): () => void {
-    const runtime = globalThis as typeof globalThis & { Worker?: typeof MockWorker };
+    // The global slot is treated as unknown at the install seam: the double
+    // is a subset of the lib.dom class by design (conformance to the
+    // production-consumed surface is asserted below instead).
+    const runtime = globalThis as { Worker?: unknown };
     const original = runtime.Worker;
     runtime.Worker = MockWorker;
     MockWorker.instances = [];

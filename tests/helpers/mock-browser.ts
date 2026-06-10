@@ -13,7 +13,7 @@
  * the structural shape @czap/detect's connection probe actually reads — so
  * probe/double drift breaks the build.
  */
-import type { NavigatorConnectionInfo } from '@czap/detect';
+import type { NavigatorConnectionInfo } from '../../packages/detect/src/detect.js';
 
 // ---------------------------------------------------------------------------
 // Navigator mock
@@ -75,9 +75,13 @@ export interface MockMediaQueryList {
   _setMatches(val: boolean): void;
 }
 
-type RuntimeBrowserGlobals = typeof globalThis & {
+// Deliberately NOT intersected with `typeof globalThis`: these mocks install
+// subset doubles into the global slots, and the lib.dom declarations would
+// otherwise demand the full interfaces. This alias is the seam where the
+// double meets the ambient global.
+type RuntimeBrowserGlobals = {
   matchMedia?: (query: string) => MockMediaQueryList;
-  document?: Document & { createElement?: (tag: string) => unknown };
+  document?: { createElement?: (tag: string) => unknown };
   innerWidth?: number;
   innerHeight?: number;
   devicePixelRatio?: number;
@@ -89,7 +93,7 @@ type RuntimeBrowserGlobals = typeof globalThis & {
  * @param defaults - Map from media query string to initial `matches` value.
  */
 export function mockMatchMedia(defaults: Record<string, boolean> = {}): () => void {
-  const runtime = globalThis as RuntimeBrowserGlobals;
+  const runtime = globalThis as unknown as RuntimeBrowserGlobals;
   const original = runtime.matchMedia;
   const queries = new Map<string, MockMediaQueryList>();
 
@@ -134,7 +138,7 @@ export function mockWebGL(renderer = 'ANGLE (NVIDIA GeForce GTX 1060)'): () => v
   const RENDERER = 0x1f01;
   const UNMASKED_RENDERER_WEBGL = 0x9246;
 
-  const runtime = globalThis as RuntimeBrowserGlobals;
+  const runtime = globalThis as unknown as RuntimeBrowserGlobals;
   const original = runtime.document;
 
   const mockContext = {
@@ -154,7 +158,7 @@ export function mockWebGL(renderer = 'ANGLE (NVIDIA GeForce GTX 1060)'): () => v
 
   // Minimal document mock
   if (typeof runtime.document === 'undefined') {
-    runtime.document = {} as Document;
+    runtime.document = {};
   }
 
   const origCreateElement = runtime.document.createElement;
@@ -188,7 +192,7 @@ export function mockWebGL(renderer = 'ANGLE (NVIDIA GeForce GTX 1060)'): () => v
  * Install mock window dimensions and return a cleanup function.
  */
 export function mockViewport(width = 1920, height = 1080, devicePixelRatio = 1): () => void {
-  const runtime = globalThis as RuntimeBrowserGlobals;
+  const runtime = globalThis as unknown as RuntimeBrowserGlobals;
   const origW = runtime.innerWidth;
   const origH = runtime.innerHeight;
   const origDpr = runtime.devicePixelRatio;

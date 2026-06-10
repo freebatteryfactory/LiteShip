@@ -13,7 +13,7 @@
  * structural surface the SSE client (packages/web/src/stream/sse.ts)
  * actually drives — so consumer/double drift breaks the build.
  */
-import type { SSEEventSource } from '@czap/web';
+import type { SSEEventSource } from '../../packages/web/src/stream/sse.js';
 
 export class MockEventSource {
   static readonly CONNECTING = 0;
@@ -64,7 +64,10 @@ export class MockEventSource {
 
   /** Install as globalThis.EventSource and return a cleanup function. */
   static install(): () => void {
-    const runtime = globalThis as typeof globalThis & { EventSource?: typeof MockEventSource };
+    // The global slot is treated as unknown at the install seam: the double
+    // is a subset of the lib.dom class by design (conformance to the
+    // production-consumed surface is asserted below instead).
+    const runtime = globalThis as { EventSource?: unknown };
     const original = runtime.EventSource;
     runtime.EventSource = MockEventSource;
     MockEventSource.instances = [];
