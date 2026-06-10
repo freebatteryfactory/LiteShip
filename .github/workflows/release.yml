@@ -92,46 +92,14 @@ jobs:
 
       - run: pnpm run build
 
-      # ─── per-package ship loop ───────────────────────────────────────
-      # One `czap ship` per package: the explicit list keeps publish order
-      # reviewable in PR and guarantees `liteship` (whose deps must already
-      # exist on the registry at the new version) publishes LAST. ship
-      # itself treats already-published versions as idempotent success
-      # (ShipSkippedReceipt), so workflow re-runs after a mid-batch
-      # failure are safe with no grep fallback. --provenance links each
-      # published tarball to this workflow run via OIDC.
-      - name: czap ship (per package, OIDC + provenance)
-        run: |
-          set -euo pipefail
-          DRY_RUN_FLAG=""
-          if [ "${{ inputs.dry-run }}" = "true" ]; then
-            DRY_RUN_FLAG="--dry-run"
-          fi
-
-          # Drift guard: the per-package loop below carries an explicit list
-          # so publish order is reviewable in PR. If a non-private package is
-          # added or removed in packages/, this assertion fails loud rather
-          # than silently skipping the new one. Update both the EXPECTED
-          # count and the loop list in the same commit.
-          EXPECTED_PUBLISHABLE=19
-          ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
-            | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \
-            | wc -l)
-          if [ "$ACTUAL_PUBLISHABLE" -ne "$EXPECTED_PUBLISHABLE" ]; then
-            echo "::error::Workspace has $ACTUAL_PUBLISHABLE publishable packages but release.yml's loop expects $EXPECTED_PUBLISHABLE. Update the EXPECTED count and the explicit pkg list together."
-            exit 1
-          fi
-
-          # Full package names: 18 @czap/* scopes + the unscoped `liteship`
-          # umbrella (published LAST so its workspace deps already exist at
-          # the new version on the registry).
-          for pkg in @czap/_spine @czap/core @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server liteship; do
-            echo "::group::$pkg"
-            node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
-            echo "::endgroup::"
-          done
-
-      # ─── GitHub Release attachment ────────────────────────────────────
+      # ─── GitHub Release FIRST, then the ship loop ────────────────────
+      # The Release is created BEFORE any package publishes so each
+      # package's ShipCapsule can be attached the moment it is minted
+      # (inside the loop below). If capsules were only swept up after a
+      # fully successful loop, a mid-batch failure would strand the
+      # capsules of already-published packages in the dead runner — a
+      # retry skips those packages (already on the registry) and can
+      # never re-mint their publish evidence (Codex P1, PR #17).
       - name: Resolve version from tag
         if: ${{ inputs.dry-run != 'true' }}
         id: ver
@@ -155,11 +123,77 @@ jobs:
               --notes-file "RELEASE_NOTES_v${{ steps.ver.outputs.version }}.md"
           fi
 
-      - name: Attach ShipCapsules to GitHub Release
+      # ─── per-package ship loop ───────────────────────────────────────
+      # One `czap ship` per package: the explicit list keeps publish order
+      # reviewable in PR and guarantees `liteship` (whose deps must already
+      # exist on the registry at the new version) publishes LAST. ship
+      # itself treats already-published versions as idempotent success
+      # (ShipSkippedReceipt), so workflow re-runs after a mid-batch
+      # failure are safe with no grep fallback. --provenance links each
+      # published tarball to this workflow run via OIDC. Each package's
+      # capsule uploads IMMEDIATELY after its ship so no later failure can
+      # orphan it; a skipped package mints no capsule — its capsule is
+      # already attached by the run that published it.
+      - name: czap ship (per package, OIDC + provenance, attach-as-minted)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATTACH: ${{ inputs.dry-run != 'true' && github.ref_type == 'tag' }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry-run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+          UPLOADED_LIST=$(mktemp)
+
+          # Drift guard: the per-package loop below carries an explicit list
+          # so publish order is reviewable in PR. If a non-private package is
+          # added or removed in packages/, this assertion fails loud rather
+          # than silently skipping the new one. Update both the EXPECTED
+          # count and the loop list in the same commit.
+          EXPECTED_PUBLISHABLE=19
+          ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
+            | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \
+            | wc -l)
+          if [ "$ACTUAL_PUBLISHABLE" -ne "$EXPECTED_PUBLISHABLE" ]; then
+            echo "::error::Workspace has $ACTUAL_PUBLISHABLE publishable packages but release.yml's loop expects $EXPECTED_PUBLISHABLE. Update the EXPECTED count and the explicit pkg list together."
+            exit 1
+          fi
+
+          # Full package names: 18 @czap/* scopes + the unscoped `liteship`
+          # umbrella (published LAST so its workspace deps already exist at
+          # the new version on the registry).
+          for pkg in @czap/_spine @czap/core @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server liteship; do
+            echo "::group::$pkg"
+            node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
+            if [ "$ATTACH" = "true" ]; then
+              shopt -s nullglob
+              capsules=(packages/*/*-"$VERSION".shipcapsule.cbor)
+              shopt -u nullglob
+              for capsule in "${capsules[@]}"; do
+                if ! grep -qxF "$capsule" "$UPLOADED_LIST"; then
+                  gh release upload "${GITHUB_REF_NAME}" "$capsule" --clobber
+                  echo "$capsule" >> "$UPLOADED_LIST"
+                fi
+              done
+            fi
+            echo "::endgroup::"
+          done
+
+      # Final sweep — belt and braces over the per-package uploads. The
+      # nullglob guard keeps a fully-skipped re-run (every capsule already
+      # attached by an earlier run, none minted here) from failing on an
+      # unmatched glob.
+      - name: Attach ShipCapsules to GitHub Release (sweep)
         if: ${{ inputs.dry-run != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${GITHUB_REF_NAME}" \
-            packages/*/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor \
-            --clobber
+          shopt -s nullglob
+          capsules=(packages/*/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor)
+          if [ ${#capsules[@]} -gt 0 ]; then
+            gh release upload "${GITHUB_REF_NAME}" "${capsules[@]}" --clobber
+          else
+            echo "No locally-minted capsules to sweep (fully idempotent re-run) — capsules were attached by the original publishing run."
+          fi
