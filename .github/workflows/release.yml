@@ -82,11 +82,28 @@ jobs:
 
       - uses: pnpm/action-setup@v6
 
+      # No registry-url here: setup-node's registry-url writes an
+      # `_authToken=${NODE_AUTH_TOKEN}` line into ~/.npmrc, and with no
+      # token in the env that dangling reference breaks npmrc parsing
+      # before OIDC ever runs. pnpm's trusted-publishing flow needs no
+      # npmrc auth at all — it exchanges the runner's OIDC token at
+      # publish time (registry defaults to registry.npmjs.org).
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+
+      # Fail loud BEFORE minting anything if the OIDC environment is
+      # absent (id-token: write missing or running outside Actions) —
+      # otherwise the failure surfaces mid-batch at the first publish.
+      - name: OIDC preflight
+        if: ${{ inputs.dry-run != 'true' }}
+        run: |
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::No OIDC token endpoint in the job environment (id-token: write missing?). Trusted publishing cannot authenticate."
+            exit 1
+          fi
+          echo "OIDC endpoint present; pnpm $(pnpm --version) will exchange the token at publish time."
 
       - run: pnpm install --frozen-lockfile
 
