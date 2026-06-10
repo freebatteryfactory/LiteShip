@@ -60,6 +60,19 @@ export interface ShipReceipt extends BaseReceipt {
   readonly dry_run: boolean;
 }
 
+/**
+ * Receipt emitted by `czap ship` when a package's version is already on the
+ * registry. Idempotent re-runs (a release workflow retried mid-batch) are
+ * success, not failure — the package on npm already matches the canonical
+ * state, so there is nothing to mint or publish.
+ */
+export interface ShipSkippedReceipt extends BaseReceipt {
+  readonly command: 'ship';
+  readonly package_name: string;
+  readonly package_version: string;
+  readonly already_published: true;
+}
+
 /** Per-input check outcomes recorded by `czap verify`. Forward-compat fields stay `'skipped'` in v0.1.0. */
 export interface ShipVerifyChecks {
   readonly tarball_manifest: 'match' | 'mismatch' | 'skipped';

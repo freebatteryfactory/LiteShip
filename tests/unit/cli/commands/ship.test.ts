@@ -6,7 +6,7 @@
  * this file just exercises the clean error path and asserts receipt shape.
  */
 import { describe, it, expect } from 'vitest';
-import { ship } from '../../../../packages/cli/src/commands/ship.js';
+import { ship, isAlreadyPublishedFailure } from '../../../../packages/cli/src/commands/ship.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('ship command (smoke)', () => {
@@ -32,5 +32,30 @@ describe('ship command (smoke)', () => {
     const { stderr } = await captureCli(() => ship(['--filter', 'no-such-package-xyz']));
     const event = JSON.parse(stderr.trim().split('\n').pop()!) as { error: string };
     expect(event.error).toContain('no-such-package-xyz');
+  });
+});
+
+describe('isAlreadyPublishedFailure (ship idempotency contract, ROADMAP §4)', () => {
+  // The release workflow used to grep publish output for these signatures
+  // and translate them to success; ship now owns the decision, so workflow
+  // re-runs after a mid-batch failure need no shell fallback.
+
+  it('recognizes the npm registry conflict shapes for an already-published version', () => {
+    expect(
+      isAlreadyPublishedFailure(
+        'npm error 403 Forbidden - PUT https://registry.npmjs.org/@czap/core - You cannot publish over the previously published versions: 0.1.5.',
+      ),
+    ).toBe(true);
+    expect(isAlreadyPublishedFailure('ERR_PNPM_GIT_UNKNOWN cannot publish over existing version')).toBe(true);
+    expect(isAlreadyPublishedFailure('npm error code EPUBLISHCONFLICT')).toBe(true);
+  });
+
+  it('does NOT swallow real failures (auth, network, validation)', () => {
+    expect(isAlreadyPublishedFailure('npm error code E401 - unable to authenticate')).toBe(false);
+    expect(isAlreadyPublishedFailure('npm error code ENOTFOUND registry.npmjs.org')).toBe(false);
+    expect(isAlreadyPublishedFailure('npm error 404 Not Found - PUT https://registry.npmjs.org/@czap/core')).toBe(
+      false,
+    );
+    expect(isAlreadyPublishedFailure('')).toBe(false);
   });
 });

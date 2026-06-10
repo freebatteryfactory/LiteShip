@@ -29,7 +29,6 @@ import { createRuntimeSession } from '../../../packages/astro/src/runtime/runtim
 import {
   applyBoundaryState,
   attachSignalObserver,
-  attachViewportObserver,
   evaluateBoundary,
   parseBoundary,
   readSignalValue,
@@ -624,11 +623,6 @@ describe('astro shared runtime adapters', () => {
 
     expect(attachSignalObserver('audio.level', vi.fn())).toBeNull();
     expect(attachSignalObserver('network.effectiveType', vi.fn())).toBeNull();
-
-    // Deprecated alias delegates to the registry (scroll now supported).
-    const aliasCleanup = attachViewportObserver('scroll.y', vi.fn());
-    expect(aliasCleanup).not.toBeNull();
-    aliasCleanup!();
 
     addSpy.mockRestore();
   });

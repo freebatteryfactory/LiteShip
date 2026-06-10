@@ -226,17 +226,6 @@ export function attachSignalObserver(input: string, callback: () => void): (() =
 }
 
 /**
- * Attach a ResizeObserver for viewport signals.
- *
- * @deprecated Use {@link attachSignalObserver}, which also handles
- * `scroll.*` signals. Kept as a delegating alias for the shipped 0.1.x
- * d.ts surface; removal planned for 0.2.
- */
-export function attachViewportObserver(input: string, callback: () => void): (() => void) | null {
-  return attachSignalObserver(input, callback);
-}
-
-/**
  * Read the current numeric value for a signal `input`. Supported:
  * `viewport.width` / `viewport.height`, `scroll.x` / `scroll.y`, and the
  * derived `scroll.progress` (document scroll position as 0–100).
