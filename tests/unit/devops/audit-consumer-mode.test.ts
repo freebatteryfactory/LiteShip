@@ -219,6 +219,67 @@ describe('consumer mode — surface checks resolve through discovered package ro
   });
 });
 
+describe('consumer mode — installed exports targets are verified (dist truth)', () => {
+  it('a declared dist target missing from the installed package is an error', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
+        './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
+      }),
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+      'node_modules/@acme/core/src/extra.ts': 'export const extra = 1;\n',
+      // dist/extra.d.ts exists; dist/extra.js deliberately does NOT.
+      'node_modules/@acme/core/dist/extra.d.ts': 'export declare const extra: number;\n',
+    });
+    const result = runSurfaceAudit(consumerDevopsProfile(root, acmeBase()));
+    const missing = result.findings.filter((f) => f.rule === 'export-target-missing');
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.id).toBe('surface/export-target/@acme/core:./extra:import');
+    expect(missing[0]!.severity).toBe('error');
+    expect(missing[0]!.location?.file).toContain('node_modules/@acme/core');
+  });
+
+  it('a fully shipped install (all conditions resolve) carries no export-target findings', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
+        './extra': { types: './dist/extra.d.ts', import: './dist/extra.js', development: './src/extra.ts' },
+        // Wildcard subpaths and fallback arrays are tolerated shapes.
+        './wild/*': { import: './dist/wild/*.js' },
+        './fallback': ['./dist/fallback.js', './src/fallback.ts'],
+      }),
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+      'node_modules/@acme/core/src/extra.ts': 'export const extra = 1;\n',
+      'node_modules/@acme/core/src/fallback.ts': 'export const fb = 1;\n',
+      'node_modules/@acme/core/dist/extra.d.ts': 'export declare const extra: number;\n',
+      'node_modules/@acme/core/dist/extra.js': 'export const extra = 1;\n',
+      'node_modules/@acme/core/dist/fallback.js': 'export const fb = 1;\n',
+    });
+    const result = runSurfaceAudit(consumerDevopsProfile(root, acmeBase()));
+    expect(result.findings.filter((f) => f.rule === 'export-target-missing')).toHaveLength(0);
+  });
+
+  it('a missing development target does not double-report (package-export-surface owns it)', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': PKG('@acme/core', {}, {
+        './gone': { development: './src/gone.ts' },
+      }),
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+    });
+    const result = runSurfaceAudit(consumerDevopsProfile(root, acmeBase()));
+    expect(result.findings.filter((f) => f.rule === 'package-export-surface')).toHaveLength(1);
+    expect(result.findings.filter((f) => f.rule === 'export-target-missing')).toHaveLength(0);
+  });
+
+  it('the monorepo default profile (no packageRoots) never runs the dist check', () => {
+    // dist/ legitimately may not exist on a fresh clone; the floor suites pin
+    // 0 errors for the default profile, which this rule must not disturb.
+    const result = runSurfaceAudit();
+    expect(result.findings.filter((f) => f.rule === 'export-target-missing')).toHaveLength(0);
+  });
+});
+
 describe('consumer mode — no monorepo path templates remain in the passes (source-grep)', () => {
   it('structure.ts carries no packages/astro or packages/vite literals', () => {
     const structure = readFileSync(resolve(REPO, 'packages/audit/src/structure.ts'), 'utf8');

@@ -45,6 +45,14 @@ what it ships.
 The previous workaround — symlinking installed packages into a synthetic
 `packages/` directory and re-rooting the default profile — is obsolete.
 
+Consumer mode also verifies **dist truth**: every concrete exports-map
+condition (`types`, `import`, `default`, …) of every discovered package must
+resolve to a real file in the install (`export-target-missing`, error). The
+monorepo profile skips this — `dist/` legitimately doesn't exist on a fresh
+clone, and `package:smoke` proves the tarball side at release. Wildcard
+subpaths are skipped (not enumerable without resolution intent); the
+`development` condition stays the `package-export-surface` rule's domain.
+
 ## Profile semantics
 
 - `DevopsProfile.packageRoots` (optional): explicit package name → absolute
