@@ -6,15 +6,19 @@
 
 # Function: partitionAllowlistedFindings()
 
-> **partitionAllowlistedFindings**(`findings`): `object`
+> **partitionAllowlistedFindings**(`findings`, `profile`): `object`
 
-Defined in: [audit/src/shared.ts:213](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L213)
+Defined in: [audit/src/shared.ts:237](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L237)
 
 ## Parameters
 
 ### findings
 
 readonly [`AuditFinding`](../interfaces/AuditFinding.md)[]
+
+### profile
+
+[`DevopsProfile`](../interfaces/DevopsProfile.md)
 
 ## Returns
 

@@ -8,4 +8,4 @@
 
 > `const` **auditIgnoreGlobs**: readonly \[`"**/dist/**"`, `"**/node_modules/**"`, `"**/*.d.ts"`, `"coverage/**"`, `"reports/**"`, `"docs/**"`, `"examples/**"`, `"benchmarks/**"`, `"tests/e2e/fixtures/**"`\]
 
-Defined in: [audit/src/policy.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L28)
+Defined in: [audit/src/policy.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L46)
