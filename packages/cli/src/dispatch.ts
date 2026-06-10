@@ -104,9 +104,11 @@ export async function run(argv: readonly string[]): Promise<number> {
       const idx = rest.indexOf('--profile');
       const profile = eq ?? (idx >= 0 ? rest[idx + 1] : undefined);
       const consumer = rest.includes('--consumer');
+      const findings = rest.includes('--findings');
       return audit({
         ...(profile ? { profile } : {}),
         ...(consumer ? { consumer } : {}),
+        ...(findings ? { findings } : {}),
       });
     }
     case 'gauntlet': {
