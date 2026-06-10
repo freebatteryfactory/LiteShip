@@ -234,21 +234,41 @@ type CachedQuantizerConfig = QuantizerConfig<Boundary.Shape, QuantizerOutputs<Bo
 // canonical-identity.test.ts for the divergence that made this a substrate bug.
 // ---------------------------------------------------------------------------
 
+/**
+ * Config identity covers EVERYTHING the cached config closes over: boundary,
+ * outputs, tier (gates `allowedTargets`), spring (drives `--czap-easing`),
+ * and `force()` targets. Omitting any of these lets the first config minted
+ * for a boundary+outputs pair poison later configs built with different
+ * options — the same outputs at `tier: 'physics'` would silently reuse a
+ * `tier: 'transitions'` config and never emit glsl.
+ */
 function contentAddress<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
   boundary: B,
   outputs: O,
+  tier: MotionTier | undefined,
+  spring: SpringConfig | undefined,
+  forcedTargets: ReadonlySet<OutputTarget> | null,
 ): ContentAddress {
-  const payload = { boundaryId: boundary.id, outputs };
+  const payload = {
+    boundaryId: boundary.id,
+    outputs,
+    tier: tier ?? null,
+    spring: spring ? { stiffness: spring.stiffness, damping: spring.damping, mass: spring.mass ?? 1 } : null,
+    force: forcedTargets ? [...forcedTargets].sort() : null,
+  };
   return fnv1aBytes(CanonicalCbor.encode(payload));
 }
 
-/** Output-cache identity: a derived tuple minted as a true fnv1a ContentAddress. */
-function outputCacheAddress(configId: ContentAddress, state: string, springCSS: string | null): ContentAddress {
+/**
+ * Output-cache identity: a derived tuple minted as a true fnv1a ContentAddress.
+ * `configId` already covers tier/spring/force, so `{configId, state}` is the
+ * complete identity of a resolved output table.
+ */
+function outputCacheAddress(configId: ContentAddress, state: string): ContentAddress {
   return fnv1aBytes(
     CanonicalCbor.encode({
       configId,
       state,
-      springCSS: springCSS ? 1 : 0,
     }),
   );
 }
@@ -291,7 +311,7 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
   springCSS: string | null,
 ): Partial<{ [K in OutputTarget]: Record<string, unknown> }> {
   // Check output cache
-  const cacheKey = outputCacheAddress(configId, state as string, springCSS);
+  const cacheKey = outputCacheAddress(configId, state as string);
   const cached = outputCache.get(cacheKey);
   if (cached) return cached;
 
@@ -387,7 +407,8 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
 
   const builder: QuantizerBuilder<B> = {
     outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O> {
-      const id = contentAddress(boundary, outputs);
+      const frozenForced = forcedTargets;
+      const id = contentAddress(boundary, outputs, tier, spring, frozenForced);
 
       // Check config cache
       const cachedConfig = configCache.get(id);
@@ -395,8 +416,6 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
 
       // Compute spring CSS if spring config present and CSS outputs exist
       const springCSS = spring && outputs.css ? getSpringCSS(spring) : null;
-
-      const frozenForced = forcedTargets;
 
       const config: QuantizerConfig<B, O> = {
         boundary,

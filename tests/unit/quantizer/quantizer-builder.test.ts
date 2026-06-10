@@ -9,13 +9,7 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { Effect, Fiber, Scope, Stream } from 'effect';
 import { Boundary } from '@czap/core';
-import {
-  Q,
-  type OutputTarget,
-  type MotionTier,
-  type QuantizerConfig,
-  type LiveQuantizer,
-} from '@czap/quantizer';
+import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@czap/quantizer';
 import { TIER_TARGETS, MemoCache } from '@czap/quantizer/testing';
 
 // ---------------------------------------------------------------------------
@@ -222,6 +216,92 @@ describe('MotionTier gating', () => {
     expect(outputs.css).toBeDefined();
     expect(outputs.glsl).toBeDefined();
     expect(outputs.aria).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Config identity covers tier/spring/force (cross-config cache poisoning)
+// ---------------------------------------------------------------------------
+
+describe('config identity includes tier/spring/force', () => {
+  // Deliberately reuse IDENTICAL boundary + outputs across configs: the
+  // content-address must diverge on the options alone. Before the fix the
+  // first config minted for a boundary+outputs pair was served from the
+  // config cache for every later tier/spring/force variant, so a
+  // `tier: 'physics'` quantizer created after a `tier: 'transitions'` one
+  // never emitted glsl (the downstream 0.1.4 repro).
+  const sharedOutputs = {
+    css: {
+      compact: { '--identity-gap': '0.5rem' },
+      medium: { '--identity-gap': '1rem' },
+      expanded: { '--identity-gap': '2rem' },
+    } as Record<string, Record<string, string | number>>,
+    glsl: {
+      compact: { u_identity_scale: 0.5 },
+      medium: { u_identity_scale: 1.0 },
+      expanded: { u_identity_scale: 1.5 },
+    } as Record<string, Record<string, number>>,
+    aria: {
+      compact: { 'aria-label': 'identity-compact' },
+      medium: { 'aria-label': 'identity-medium' },
+      expanded: { 'aria-label': 'identity-expanded' },
+    } as Record<string, Record<string, string>>,
+  };
+
+  test('same outputs at a lower tier do not poison a later physics-tier config', async () => {
+    const b = viewport();
+    const transitions = Q.from(b, { tier: 'transitions' }).outputs(sharedOutputs);
+    const physics = Q.from(b, { tier: 'physics' }).outputs(sharedOutputs);
+    const ungated = Q.from(b).outputs(sharedOutputs);
+
+    expect(transitions.id).not.toBe(physics.id);
+    expect(physics.id).not.toBe(ungated.id);
+
+    const lqTransitions = await Effect.runPromise(Effect.scoped(transitions.create()));
+    const lqPhysics = await Effect.runPromise(Effect.scoped(physics.create()));
+    const lqUngated = await Effect.runPromise(Effect.scoped(ungated.create()));
+
+    expect((await Effect.runPromise(lqTransitions.currentOutputs)).glsl).toBeUndefined();
+    expect((await Effect.runPromise(lqPhysics.currentOutputs)).glsl).toBeDefined();
+    expect((await Effect.runPromise(lqUngated.currentOutputs)).glsl).toBeDefined();
+
+    // Crossing-time resolution must stay per-config too (output cache key).
+    lqPhysics.evaluate(800);
+    const physicsOutputs = await Effect.runPromise(lqPhysics.currentOutputs);
+    expect(physicsOutputs.glsl).toEqual({ u_identity_scale: 1.0 });
+    lqTransitions.evaluate(800);
+    expect((await Effect.runPromise(lqTransitions.currentOutputs)).glsl).toBeUndefined();
+  });
+
+  test('distinct springs with identical outputs produce distinct configs and easings', async () => {
+    const b = viewport();
+    const stiff = Q.from(b, { spring: { stiffness: 400, damping: 10 } }).outputs(sharedOutputs);
+    const soft = Q.from(b, { spring: { stiffness: 80, damping: 30 } }).outputs(sharedOutputs);
+
+    expect(stiff.id).not.toBe(soft.id);
+
+    const lqStiff = await Effect.runPromise(Effect.scoped(stiff.create()));
+    const lqSoft = await Effect.runPromise(Effect.scoped(soft.create()));
+    const stiffCss = (await Effect.runPromise(lqStiff.currentOutputs)).css ?? {};
+    const softCss = (await Effect.runPromise(lqSoft.currentOutputs)).css ?? {};
+
+    expect(stiffCss['--czap-easing']).toBeDefined();
+    expect(softCss['--czap-easing']).toBeDefined();
+    expect(stiffCss['--czap-easing']).not.toBe(softCss['--czap-easing']);
+  });
+
+  test('force() targets are part of config identity', async () => {
+    const b = viewport();
+    const plain = Q.from(b, { tier: 'none' }).outputs(sharedOutputs);
+    const forced = Q.from(b, { tier: 'none' }).force('glsl').outputs(sharedOutputs);
+
+    expect(plain.id).not.toBe(forced.id);
+
+    const lqPlain = await Effect.runPromise(Effect.scoped(plain.create()));
+    const lqForced = await Effect.runPromise(Effect.scoped(forced.create()));
+
+    expect((await Effect.runPromise(lqPlain.currentOutputs)).glsl).toBeUndefined();
+    expect((await Effect.runPromise(lqForced.currentOutputs)).glsl).toBeDefined();
   });
 });
 
