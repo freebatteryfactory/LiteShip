@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { satelliteAttrs } from '@czap/astro';
 import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
@@ -14,15 +15,7 @@ import { layout } from '../boundaries/layout.boundaries.ts';
   </header>
 
   <section class="worker-demo">
-    <div
-      class="worker-container"
-      data-czap-boundary={JSON.stringify({
-        input: 'viewport.width',
-        at: [[0, 'mobile'], [768, 'tablet'], [1280, 'desktop']],
-        hysteresis: 40,
-      })}
-      client:worker
-    >
+    <div {...satelliteAttrs({ boundary: layout, directive: 'worker', class: 'worker-container' })}>
       <div class="worker-panel">
         <h2>Worker State</h2>
         <div class="worker-status">

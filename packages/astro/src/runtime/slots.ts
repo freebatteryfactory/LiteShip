@@ -11,7 +11,8 @@ interface RuntimeWindow extends Window {
   };
 }
 
-const REINIT_SELECTOR = '[data-czap-boundary],[data-czap-stream-url],[data-czap-llm-url],[data-czap-wasm]';
+const REINIT_SELECTOR =
+  '[data-czap-boundary],[data-czap-stream-url],[data-czap-llm-url],[data-czap-wasm],[data-czap-shader-src],[data-czap-directive]';
 
 function isSlotRegistryShape(value: unknown): value is SlotRegistry.Shape {
   if (typeof value !== 'object' || value === null) return false;

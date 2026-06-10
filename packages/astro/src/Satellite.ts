@@ -10,6 +10,7 @@
  */
 
 import type { Boundary, Component } from '@czap/core';
+import type { DirectiveName } from './runtime/directive-boot.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,6 +29,14 @@ export interface SatelliteProps {
   readonly class?: string;
   /** Server-side initial state (serialised into `data-czap-state`). */
   readonly initialState?: string;
+  /**
+   * Which client directive the boot scanner should activate for this
+   * satellite (serialised into `data-czap-directive`). Defaults to
+   * `'satellite'` when a boundary is present — a serialized boundary
+   * with no evaluator is exactly the inert-island bug. Pass `false`
+   * for a CSS-only shell that ships zero runtime.
+   */
+  readonly directive?: DirectiveName | false;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,6 +67,9 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       states: props.boundary.states,
       hysteresis: props.boundary.hysteresis,
     });
+    if (props.directive !== false) {
+      attrs['data-czap-directive'] = props.directive ?? 'satellite';
+    }
   }
 
   if (props.initialState) {

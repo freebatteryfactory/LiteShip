@@ -17,6 +17,7 @@ import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { getCzapHeaderEntries } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
+import type { DirectiveName } from './runtime/directive-boot.js';
 import {
   normalizeRuntimeSecurityPolicy,
   type RuntimeHtmlPolicy,
@@ -126,12 +127,13 @@ function serializeInlineRuntimePolicy(policy: RuntimeSecurityPolicy): string {
   return JSON.stringify(policy).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
 }
 
-function runtimeBootstrapScript(policy: RuntimeSecurityPolicy): string {
+function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: readonly DirectiveName[]): string {
   return `
-import { bootstrapSlots, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
+import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
 
 configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
 bootstrapSlots();
+bootstrapDirectives(${JSON.stringify(directives)});
 installSwapReinit();
 `.trim();
 }
@@ -190,6 +192,16 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     endpointPolicy: config?.security?.endpointPolicy,
     htmlPolicy: config?.security?.htmlPolicy,
   });
+  // Mirrors the addClientDirective registrations below exactly; the boot
+  // scanner activates the same set on plain elements / .astro output.
+  const enabledDirectives: readonly DirectiveName[] = [
+    'satellite',
+    ...(streamEnabled ? (['stream'] as const) : []),
+    ...(llmEnabled ? (['llm'] as const) : []),
+    ...(workersEnabled ? (['worker'] as const) : []),
+    ...(gpuEnabled ? (['gpu'] as const) : []),
+    ...(wasmEnabled ? (['wasm'] as const) : []),
+  ];
 
   return {
     name: '@czap/astro',
@@ -274,7 +286,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           }
         }
 
-        injectScript('page', runtimeBootstrapScript(runtimePolicy));
+        injectScript('page', runtimeBootstrapScript(runtimePolicy, enabledDirectives));
 
         if (wasmEnabled) {
           injectScript('page', WASM_RUNTIME_SCRIPT);
