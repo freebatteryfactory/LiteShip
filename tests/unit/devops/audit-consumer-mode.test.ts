@@ -123,6 +123,31 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.counts.error).toBe(0);
   });
 
+  it('prunes host-surface policy for packages the consumer never installed', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': PKG('@acme/core'),
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+    });
+    // Base declares an astro host surface + vite virtual modules, but the
+    // consumer installed neither — no *-missing errors for unshipped surfaces.
+    const base: DevopsProfile = {
+      ...acmeBase(),
+      surfacePolicy: {
+        astroPackage: '@acme/astro',
+        astroClientDirectives: ['satellite'],
+        astroRuntimeFiles: ['src/runtime/boundary.ts'],
+        viteVirtualModules: ['virtual:acme/tokens'],
+        vitePackage: '@acme/vite',
+        knownCapabilityNotes: [],
+      },
+    };
+
+    const result = runSurfaceAudit(consumerDevopsProfile(root, base));
+    expect(result.findings.filter((f) => f.rule === 'host-surface')).toHaveLength(0);
+    expect(result.findings.filter((f) => f.rule === 'virtual-module-surface')).toHaveLength(0);
+  });
+
   it('reports not-installed topology packages as missing, not as errors', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
