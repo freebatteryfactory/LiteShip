@@ -116,6 +116,14 @@ async function main(): Promise<void> {
   const reinitInJs = anyFileContains(DIST_DIR, '.js', 'czap:reinit');
   assert(reinitInHtml || reinitInJs, 'view-transition reinit script emitted (czap:reinit in HTML or JS)');
 
+  // Verify Satellite.astro emitted the canonical directive marker and the
+  // injected bootstrap carries the boot scanner. Function names get
+  // minified, so probe for the scanner's window-global string literal.
+  assert(html.includes('data-czap-directive="satellite"'), 'Satellite shell emits data-czap-directive marker');
+  const bootInHtml = html.includes('__CZAP_DIRECTIVE_BOOTSTRAPPED__');
+  const bootInJs = anyFileContains(DIST_DIR, '.js', '__CZAP_DIRECTIVE_BOOTSTRAPPED__');
+  assert(bootInHtml || bootInJs, 'directive boot scanner emitted (__CZAP_DIRECTIVE_BOOTSTRAPPED__ in HTML or JS)');
+
   console.log('\n=== ALL CHECKS PASSED ===\n');
 }
 

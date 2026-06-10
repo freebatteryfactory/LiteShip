@@ -76,6 +76,20 @@ describe('satelliteAttrs', () => {
     expect(parsed.states).toEqual(boundary.states);
   });
 
+  test('emits the data-czap-directive marker when a boundary is present', () => {
+    const boundary = makeBoundary('viewport', [
+      [0, 'compact'],
+      [768, 'wide'],
+    ]);
+
+    expect(satelliteAttrs({ boundary })['data-czap-directive']).toBe('satellite');
+    expect(satelliteAttrs({ boundary, directive: 'worker' })['data-czap-directive']).toBe('worker');
+    // CSS-only shells opt out of any client runtime.
+    expect(satelliteAttrs({ boundary, directive: false })['data-czap-directive']).toBeUndefined();
+    // No boundary -> nothing for a directive to evaluate -> no marker.
+    expect(satelliteAttrs({})['data-czap-directive']).toBeUndefined();
+  });
+
   test('serializes hysteresis in data-czap-boundary when present', () => {
     const boundary = makeBoundary(
       'viewport',
@@ -322,7 +336,9 @@ describe('resolveInitialState', () => {
       states: [],
       thresholds: [],
     };
-    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedTier: 'gpu' })).toBe('');
+    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedTier: 'gpu' })).toBe(
+      '',
+    );
   });
 });
 
@@ -420,9 +436,12 @@ describe('integration', () => {
         plugins: [expect.objectContaining({ name: '@czap/vite' })],
       },
     });
-    const detectScript = scripts.find((script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'));
+    const detectScript = scripts.find(
+      (script) => script.stage === 'head-inline' && script.content.includes('__CZAP_DETECT__'),
+    );
     const gpuUpgradeScript = scripts.find(
-      (script) => script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__CZAP_DETECT__'),
+      (script) =>
+        script.stage === 'page' && script.content.includes('gpuTier') && script.content.includes('__CZAP_DETECT__'),
     );
 
     expect(detectScript).toBeDefined();

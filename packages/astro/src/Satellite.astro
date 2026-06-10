@@ -3,10 +3,12 @@
  * Satellite -- the canonical adaptive shell for an Astro page.
  *
  * Wraps a `<div>` with `data-czap-*` attributes derived from a Boundary
- * (and optionally a Component or initial state), so the `client:satellite`
- * directive can hydrate the boundary evaluator on the client. CSS
- * transitions handle visual changes; the directive's only runtime job
- * is to evaluate live signals and update `data-czap-state`.
+ * (and optionally a Component or initial state). The integration's
+ * injected directive boot scanner reads `data-czap-directive` and
+ * activates the boundary evaluator on the client — no `client:*`
+ * attribute needed (Astro never fires those on `.astro` components).
+ * CSS transitions handle visual changes; the directive's only runtime
+ * job is to evaluate live signals and update `data-czap-state`.
  *
  * @example
  * ```astro
@@ -15,7 +17,7 @@
  * import { heroLayout } from '../boundaries.js';
  * ---
  *
- * <Satellite boundary={heroLayout} client:satellite>
+ * <Satellite boundary={heroLayout}>
  *   <section class="hero">...</section>
  * </Satellite>
  * ```

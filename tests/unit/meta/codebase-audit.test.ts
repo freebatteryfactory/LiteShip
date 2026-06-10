@@ -6,7 +6,11 @@ import { afterEach, describe, expect, test } from 'vitest';
 import { ensureArtifactContext } from '../../../scripts/artifact-context.js';
 import { buildCoverageFacts, buildCoverageMetaArtifact } from '../../../scripts/artifact-integrity.js';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
-import { buildAuditArtifactBundle, buildCodebaseAuditReport, renderCodebaseAuditMarkdown } from '../../../scripts/audit/report.js';
+import {
+  buildAuditArtifactBundle,
+  buildCodebaseAuditReport,
+  renderCodebaseAuditMarkdown,
+} from '../../../scripts/audit/report.js';
 import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
@@ -127,7 +131,8 @@ export function loadVirtualModule(id: string): string | undefined {
     'packages/astro/package.json': astroPackageJson(),
     'packages/astro/src/index.ts': 'export const astroReady = true;\n',
     'packages/astro/src/middleware.ts': 'export const onRequest = () => null;\n',
-    'packages/astro/src/runtime/index.ts': 'export { bootstrapSlots } from "./slots.js";\nexport { loadWasmRuntime } from "./wasm.js";\n',
+    'packages/astro/src/runtime/index.ts':
+      'export { bootstrapSlots } from "./slots.js";\nexport { loadWasmRuntime } from "./wasm.js";\n',
     'packages/astro/src/runtime/satellite.ts': 'export const satelliteRuntime = true;\n',
     'packages/astro/src/runtime/stream.ts': 'export const streamRuntime = true;\n',
     'packages/astro/src/runtime/llm.ts': 'export const llmRuntime = true;\n',
@@ -136,6 +141,7 @@ export function loadVirtualModule(id: string): string | undefined {
     'packages/astro/src/runtime/wasm.ts': 'export const wasmRuntime = true;\n',
     'packages/astro/src/runtime/boundary.ts': 'export const boundaryRuntime = true;\n',
     'packages/astro/src/runtime/slots.ts': 'export const bootstrapSlots = () => true;\n',
+    'packages/astro/src/runtime/directive-boot.ts': 'export const bootstrapDirectives = () => true;\n',
     'packages/astro/src/client-directives/satellite.ts':
       'import { initSatelliteDirective } from "../runtime/satellite.js";\nexport default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {\n  initSatelliteDirective(load, el);\n};\n',
     'packages/astro/src/client-directives/stream.ts':
@@ -187,7 +193,13 @@ function coverageClassificationFixtureFiles(): Record<string, string> {
 
 function readAstroDirectiveWrapper(relativePath: string): ts.SourceFile {
   const absolutePath = join(process.cwd(), relativePath);
-  return ts.createSourceFile(absolutePath, readFileSync(absolutePath, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  return ts.createSourceFile(
+    absolutePath,
+    readFileSync(absolutePath, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
 }
 
 function writeSupportArtifacts(root: string): void {
@@ -239,18 +251,84 @@ function writeSupportArtifacts(root: string): void {
           {
             replicate: 0,
             startupBreakdown: [
-              { stage: 'claim-or-create', label: 'worker claim or create', modeled: true, meanNs: 6000, p75Ns: 6200, p95Ns: 6300, p99Ns: 6400 },
-              { stage: 'coordinator-reset-or-create', label: 'runtime coordinator reset or create', modeled: true, meanNs: 4200, p75Ns: 4300, p95Ns: 4400, p99Ns: 4500 },
-              { stage: 'listener-bind', label: 'worker listener binding', modeled: true, meanNs: 1800, p75Ns: 1900, p95Ns: 2000, p99Ns: 2100 },
-              { stage: 'quantizer-bootstrap', label: 'startup quantizer bootstrap', modeled: true, meanNs: 2500, p75Ns: 2600, p95Ns: 2700, p99Ns: 2800 },
-              { stage: 'request-compute', label: 'compute request dispatch', modeled: true, meanNs: 3400, p75Ns: 3500, p95Ns: 3600, p99Ns: 3700 },
-              { stage: 'state-delivery', label: 'first state delivery', modeled: true, meanNs: 2900, p75Ns: 3000, p95Ns: 3100, p99Ns: 3200 },
-              { stage: 'dispose', label: 'host disposal', modeled: true, meanNs: 1400, p75Ns: 1500, p95Ns: 1600, p99Ns: 1700 },
+              {
+                stage: 'claim-or-create',
+                label: 'worker claim or create',
+                modeled: true,
+                meanNs: 6000,
+                p75Ns: 6200,
+                p95Ns: 6300,
+                p99Ns: 6400,
+              },
+              {
+                stage: 'coordinator-reset-or-create',
+                label: 'runtime coordinator reset or create',
+                modeled: true,
+                meanNs: 4200,
+                p75Ns: 4300,
+                p95Ns: 4400,
+                p99Ns: 4500,
+              },
+              {
+                stage: 'listener-bind',
+                label: 'worker listener binding',
+                modeled: true,
+                meanNs: 1800,
+                p75Ns: 1900,
+                p95Ns: 2000,
+                p99Ns: 2100,
+              },
+              {
+                stage: 'quantizer-bootstrap',
+                label: 'startup quantizer bootstrap',
+                modeled: true,
+                meanNs: 2500,
+                p75Ns: 2600,
+                p95Ns: 2700,
+                p99Ns: 2800,
+              },
+              {
+                stage: 'request-compute',
+                label: 'compute request dispatch',
+                modeled: true,
+                meanNs: 3400,
+                p75Ns: 3500,
+                p95Ns: 3600,
+                p99Ns: 3700,
+              },
+              {
+                stage: 'state-delivery',
+                label: 'first state delivery',
+                modeled: true,
+                meanNs: 2900,
+                p75Ns: 3000,
+                p95Ns: 3100,
+                p99Ns: 3200,
+              },
+              {
+                stage: 'dispose',
+                label: 'host disposal',
+                modeled: true,
+                meanNs: 1400,
+                p75Ns: 1500,
+                p95Ns: 1600,
+                p99Ns: 1700,
+              },
             ],
             results: [
-              { name: '[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute', meanNs: 5000, p75Ns: 5200, p99Ns: 5400 },
+              {
+                name: '[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute',
+                meanNs: 5000,
+                p75Ns: 5200,
+                p99Ns: 5400,
+              },
               { name: '[GATE] llm-startup-shared -- first token boundary', meanNs: 3000, p75Ns: 3200, p99Ns: 3400 },
-              { name: '[GATE] llm-promoted-startup-shared -- second token boundary', meanNs: 4500, p75Ns: 4700, p99Ns: 4900 },
+              {
+                name: '[GATE] llm-promoted-startup-shared -- second token boundary',
+                meanNs: 4500,
+                p75Ns: 4700,
+                p99Ns: 4900,
+              },
             ],
             pairs: [
               { label: 'satellite', overhead: 0.05 },
@@ -341,9 +419,25 @@ function writeSupportArtifacts(root: string): void {
               totalStartupMs: { min: 0.5, median: 0.6, p75: 0.62, p95: 0.64, p99: 0.65, max: 0.65, mean: 0.6 },
               stages: {
                 'claim-or-create': { min: 0.1, median: 0.12, p75: 0.13, p95: 0.14, p99: 0.15, max: 0.15, mean: 0.12 },
-                'coordinator-reset-or-create': { min: 0.14, median: 0.16, p75: 0.17, p95: 0.18, p99: 0.19, max: 0.19, mean: 0.16 },
+                'coordinator-reset-or-create': {
+                  min: 0.14,
+                  median: 0.16,
+                  p75: 0.17,
+                  p95: 0.18,
+                  p99: 0.19,
+                  max: 0.19,
+                  mean: 0.16,
+                },
                 'listener-bind': { min: 0.02, median: 0.03, p75: 0.03, p95: 0.04, p99: 0.04, max: 0.04, mean: 0.03 },
-                'quantizer-bootstrap': { min: 0.03, median: 0.05, p75: 0.05, p95: 0.06, p99: 0.06, max: 0.06, mean: 0.05 },
+                'quantizer-bootstrap': {
+                  min: 0.03,
+                  median: 0.05,
+                  p75: 0.05,
+                  p95: 0.06,
+                  p99: 0.06,
+                  max: 0.06,
+                  mean: 0.05,
+                },
                 'request-compute': { min: 0.04, median: 0.06, p75: 0.07, p95: 0.08, p99: 0.08, max: 0.08, mean: 0.06 },
                 'state-delivery': { min: 0.1, median: 0.12, p75: 0.13, p95: 0.14, p99: 0.15, max: 0.15, mean: 0.12 },
                 dispose: { min: 0.03, median: 0.04, p75: 0.05, p95: 0.05, p99: 0.06, max: 0.06, mean: 0.04 },
@@ -395,7 +489,8 @@ describe('codebase audit loop', () => {
         null,
         2,
       ),
-      'packages/web/src/index.ts': 'import { remotionReady } from "@czap/remotion";\nexport const webReady = remotionReady;\n',
+      'packages/web/src/index.ts':
+        'import { remotionReady } from "@czap/remotion";\nexport const webReady = remotionReady;\n',
       'packages/remotion/package.json': JSON.stringify(
         {
           name: '@czap/remotion',
@@ -470,7 +565,12 @@ describe('codebase audit loop', () => {
     });
 
     const result = runStructureAudit(at(root));
-    expect(result.findings.some((finding) => finding.rule === 'orphan-export-candidate' && finding.location?.file === 'packages/core/src/orphan.ts')).toBe(true);
+    expect(
+      result.findings.some(
+        (finding) =>
+          finding.rule === 'orphan-export-candidate' && finding.location?.file === 'packages/core/src/orphan.ts',
+      ),
+    ).toBe(true);
     expect(result.suppressed.some((entry) => entry.rule === 'default-export')).toBe(true);
   });
 
@@ -505,7 +605,9 @@ describe('codebase audit loop', () => {
       const sourceFile = readAstroDirectiveWrapper(relativePath);
       expect(sourceFile.statements).toHaveLength(2);
       expect(ts.isImportDeclaration(sourceFile.statements[0]!)).toBe(true);
-      expect(((sourceFile.statements[0] as ts.ImportDeclaration).moduleSpecifier as ts.StringLiteral).text).toBe(runtimeSpecifier);
+      expect(((sourceFile.statements[0] as ts.ImportDeclaration).moduleSpecifier as ts.StringLiteral).text).toBe(
+        runtimeSpecifier,
+      );
       expect(ts.isExportAssignment(sourceFile.statements[1]!)).toBe(true);
     }
   });
@@ -689,8 +791,8 @@ export const ids = [
     };
 
     expect(stableJsonView.schemaVersion).toBe(2);
-    expect(stableJsonView.inventoryCount).toBe(26);
-    expect(stableJsonView.aggregateScore).toBeCloseTo(85.71, 2);
+    expect(stableJsonView.inventoryCount).toBe(27);
+    expect(stableJsonView.aggregateScore).toBeCloseTo(85.78, 2);
     expect(stableJsonView.sectionScores.map((section) => section.id)).toEqual([
       '@czap/core',
       '@czap/quantizer',
@@ -755,7 +857,9 @@ export const ids = [
     expect(markdown).toContain('## @czap/core');
     expect(markdown).toContain('## repo/system/devops');
     expect(markdown).toContain('| packages/core/src/orphan.ts |');
-    expect(markdown).toContain('| path | file class | applicable control families | score | manual review | blocking signals | road to 100 | named offenses | forbidden remedies | notes |');
+    expect(markdown).toContain(
+      '| path | file class | applicable control families | score | manual review | blocking signals | road to 100 | named offenses | forbidden remedies | notes |',
+    );
     expect(markdown.trim().split('\n').at(-1)).toBe(report.aggregateScore.toFixed(2));
   });
 
@@ -805,7 +909,11 @@ export const ids = [
         (entry) => entry.package === '@czap/vite' && entry.permitted === '@czap/core',
       ),
     ).toBe(true);
-    expect(classification.allowlistUnexercised.every((entry) => entry.coverage === 'allowlisted' && entry.exercised === false)).toBe(true);
+    expect(
+      classification.allowlistUnexercised.every(
+        (entry) => entry.coverage === 'allowlisted' && entry.exercised === false,
+      ),
+    ).toBe(true);
   });
 
   test('audit markdown surfaces the self-trust classification', () => {
@@ -835,7 +943,8 @@ export const ids = [
       'packages/core/src/consumer.ts': 'import { usedExport } from "./pair.js";\nexport const total = usedExport;\n',
       // star-src exports two symbols consumed only via a namespace import (broad evidence).
       'packages/core/src/star-src.ts': 'export const alpha = 1;\nexport const beta = 2;\n',
-      'packages/core/src/star-consumer.ts': 'import * as S from "./star-src.js";\nexport const sum = S.alpha + S.beta;\n',
+      'packages/core/src/star-consumer.ts':
+        'import * as S from "./star-src.js";\nexport const sum = S.alpha + S.beta;\n',
     };
   }
 
@@ -843,7 +952,9 @@ export const ids = [
     const result = runStructureAudit(at(createRepo(symbolPairFixture())));
     // File-level (proxy) does NOT flag pair.ts — consumer imports usedExport, so the file is reached.
     expect(
-      result.findings.some((f) => f.rule === 'orphan-export-candidate' && f.location?.file === 'packages/core/src/pair.ts'),
+      result.findings.some(
+        (f) => f.rule === 'orphan-export-candidate' && f.location?.file === 'packages/core/src/pair.ts',
+      ),
     ).toBe(false);
     // Symbol-level surfaces exactly the unused export — not the used one.
     const orphanedSymbols = result.findings

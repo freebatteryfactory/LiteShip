@@ -66,9 +66,9 @@ const viewport = Boundary.make({
 });
 
 // Evaluate the boundary against a sample value
-console.log(Boundary.evaluate(viewport, 320));   // 'mobile'
-console.log(Boundary.evaluate(viewport, 1024));  // 'tablet'
-console.log(Boundary.evaluate(viewport, 1440));  // 'desktop'
+console.log(Boundary.evaluate(viewport, 320)); // 'mobile'
+console.log(Boundary.evaluate(viewport, 1024)); // 'tablet'
+console.log(Boundary.evaluate(viewport, 1440)); // 'desktop'
 
 // A token can have axis variants (theme, density, motion-tier...)
 const primary = Token.make({
@@ -79,7 +79,7 @@ const primary = Token.make({
   fallback: '#00e5ff',
 });
 
-console.log(Token.cssVar(primary));              // 'var(--czap-primary)'
+console.log(Token.cssVar(primary)); // 'var(--czap-primary)'
 console.log(Token.tap(primary, { theme: 'dark' })); // '#00e5ff'
 
 // A style that responds to the boundary
@@ -92,7 +92,7 @@ const card = Style.make({
   },
 });
 
-console.log(card.boundary === viewport);  // true
+console.log(card.boundary === viewport); // true
 ```
 
 Run it (the repo's devDependencies already include `tsx` for executing TypeScript directly; you don't need to install anything):
@@ -107,7 +107,7 @@ By the way, `Boundary.evaluate` unrolls the lookup for thresholds with four or f
 
 ## 5. Cast to CSS
 
-The boundary above doesn't *do* anything until something casts it. Add the CSS compiler. `compile()` takes the boundary, a per-state property map, and an optional selector:
+The boundary above doesn't _do_ anything until something casts it. Add the CSS compiler. `compile()` takes the boundary, a per-state property map, and an optional selector:
 
 ```ts
 import { CSSCompiler } from '@czap/compiler';
@@ -157,14 +157,14 @@ Then in any `.astro` page:
 import Satellite from '@czap/astro/Satellite';
 ---
 
-<Satellite boundary={viewport} client:satellite>
+<Satellite boundary={viewport}>
   <div class="card">
     Resize the window to see the boundary state change.
   </div>
 </Satellite>
 ```
 
-The `client:satellite` directive hydrates only the boundary evaluator (not a whole React tree), and the compiled CSS handles the visual response without round-tripping through JavaScript.
+`Satellite` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole React tree), and the compiled CSS handles the visual response without round-tripping through JavaScript. Plain elements work too: spread `satelliteAttrs({ boundary })` onto any element, or write the `data-czap-boundary` / `data-czap-directive` attributes yourself.
 
 ## 7. Where to go from here
 
@@ -202,7 +202,7 @@ After `pnpm run build`, the same lookup is available as `czap glossary <term>`,
 
 **The same value evaluates to different states each call.** You probably reused a state name across the threshold list. `Boundary.make` requires unique state names; passing `[[0, 'small'], [768, 'small']]` throws at construction with a `CzapValidationError`. If the error fires at runtime in a hot path, the boundary was constructed lazily inside a render function — hoist it out.
 
-**The CSS doesn't update when the window resizes.** Two usual suspects: the `Satellite` shell is hydrating with the wrong directive (boundaries need `client:satellite`; `client:visible` or `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
+**The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-czap-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 
 **The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
 

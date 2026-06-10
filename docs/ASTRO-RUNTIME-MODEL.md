@@ -26,7 +26,6 @@ LiteShip should own:
 - authored visual state outputs
 - media, worker, and shader runtime behavior where needed
 
-
 ---
 
 ## The main Astro surfaces
@@ -120,7 +119,7 @@ These are not interchangeable. They represent different escalation levels.
 
 Use when a surface needs adaptive state tracking tied to authored boundaries.
 
-The shape of an authored Astro page using LiteShip is small. Boundaries are imported as plain TypeScript values; the `Satellite` shell wraps the markup the boundary should drive, and `client:satellite` is the directive that wires the boundary evaluator on the client. Static HTML and compiled CSS carry the rest.
+The shape of an authored Astro page using LiteShip is small. Boundaries are imported as plain TypeScript values; the `Satellite` shell wraps the markup the boundary should drive and serializes a `data-czap-directive` marker that the integration's injected boot scanner activates on the client. Static HTML and compiled CSS carry the rest.
 
 ```astro
 ---
@@ -129,13 +128,15 @@ import Satellite from '@czap/astro/Satellite';
 import { heroLayout } from '../boundaries.js';
 ---
 
-<Satellite boundary={heroLayout} client:satellite>
+<Satellite boundary={heroLayout}>
   <section class="hero">
     <h1>The hull is in the water.</h1>
     <p>Drag the window edge; the layout re-trims at the named bearings.</p>
   </section>
 </Satellite>
 ```
+
+How activation works: Astro fires custom `client:*` directives only on framework-component islands, never on plain elements or `.astro` components — czap's island primitive is a plain annotated div. So the integration injects a per-page boot scanner that activates `data-czap-directive="<name>"` markers (and, for back-compat, literal `client:satellite`-style attributes on plain elements), loading the same code-split directive chunk Astro's island path would. On framework components, the registered `client:*` directives still apply natively.
 
 The corresponding `boundaries.js` is plain TypeScript:
 
@@ -157,10 +158,20 @@ export const heroLayout = Boundary.make({
 And the compiled CSS the Vite plugin emits for `.hero` (from a paired `Style.make({...})` definition) looks like:
 
 ```css
-.hero { display: grid; gap: var(--czap-space-section); }
-[data-czap-state="stacked"] .hero { grid-template-columns: 1fr; }
-[data-czap-state="split"] .hero { grid-template-columns: 1.1fr 0.9fr; }
-[data-czap-state="cinematic"] .hero { grid-template-columns: 1.2fr 0.8fr; min-height: 80vh; }
+.hero {
+  display: grid;
+  gap: var(--czap-space-section);
+}
+[data-czap-state='stacked'] .hero {
+  grid-template-columns: 1fr;
+}
+[data-czap-state='split'] .hero {
+  grid-template-columns: 1.1fr 0.9fr;
+}
+[data-czap-state='cinematic'] .hero {
+  grid-template-columns: 1.2fr 0.8fr;
+  min-height: 80vh;
+}
 ```
 
 The directive's only runtime job is to evaluate `heroLayout` against the live viewport and write the resolved state to the satellite's `data-czap-state` attribute; the CSS attribute selectors do the visible work without round-tripping through JavaScript.

@@ -1,8 +1,21 @@
 ---
 /**
  * Minimal page to validate @czap/astro integration builds without errors.
- * The detect script should be injected into <head> by the integration.
+ * The detect script should be injected into <head> by the integration,
+ * and the Satellite shell should serialize its boundary + directive
+ * marker for the injected boot scanner.
  */
+import Satellite from '@czap/astro/Satellite';
+import { Boundary } from '@czap/core';
+
+const layout = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'compact'],
+    [768, 'medium'],
+    [1280, 'full'],
+  ] as const,
+});
 ---
 
 <html lang="en">
@@ -12,8 +25,11 @@
   </head>
   <body>
     <h1>czap integration test</h1>
-    <div data-czap-boundary='{"id":"test","input":"viewport.width","thresholds":[0,768,1280],"states":["compact","medium","full"]}'>
+    <Satellite boundary={layout}>
       <p>Satellite boundary test element</p>
+    </Satellite>
+    <div data-czap-boundary='{"id":"test","input":"viewport.width","thresholds":[0,768,1280],"states":["compact","medium","full"]}'>
+      <p>Plain boundary test element</p>
     </div>
   </body>
 </html>
