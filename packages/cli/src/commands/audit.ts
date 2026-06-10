@@ -22,9 +22,9 @@ export interface AuditReceipt extends AuditPayload {
 /** Exit code when the engine/profile load fails before producing a summary. */
 const LOAD_FAILURE_EXIT = 1;
 
-/** Execute `czap audit [--profile <path>] [--consumer]`. */
+/** Execute `czap audit [--profile <path>] [--consumer] [--findings]`. */
 export async function audit(
-  opts: { profile?: string; consumer?: boolean; pretty?: boolean; cwd?: string } = {},
+  opts: { profile?: string; consumer?: boolean; findings?: boolean; pretty?: boolean; cwd?: string } = {},
 ): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
@@ -32,9 +32,11 @@ export async function audit(
   const runAudit = async ({
     profilePath,
     consumer,
+    includeFindings,
   }: {
     profilePath?: string;
     consumer?: boolean;
+    includeFindings?: boolean;
   }): Promise<AuditEngineSummary> => {
     const { profile, source } = await loadProfile(profilePath, cwd, consumer ? { consumer } : {});
     const result = runAuditPasses(profile);
@@ -51,6 +53,9 @@ export async function audit(
       },
       repoRoot: profile.repoRoot,
       profileSource: source,
+      // Engine findings are already pass-merged and per-pass sorted, and are
+      // structurally assignable to the @czap/command AuditEngineFinding mirror.
+      ...(includeFindings ? { findings: result.findings } : {}),
     };
   };
 
@@ -62,6 +67,7 @@ export async function audit(
         args: {
           ...(opts.profile ? { profile: opts.profile } : {}),
           ...(opts.consumer ? { consumer: true } : {}),
+          ...(opts.findings ? { findings: true } : {}),
         },
       },
       { cwd, runAudit },
@@ -92,6 +98,12 @@ export async function audit(
       `audit: ${payload.errorCount} error(s), ${payload.warningCount} warning(s), ${payload.infoCount} info — ` +
         `${payload.findingCount} finding(s) over ${payload.repoRoot} (${payload.profileSource} profile)\n`,
     );
+    for (const finding of payload.findings ?? []) {
+      const where = finding.location
+        ? `${finding.location.file}${finding.location.line ? `:${finding.location.line}` : ''}${finding.location.column ? `:${finding.location.column}` : ''} `
+        : '';
+      process.stderr.write(`  [${finding.severity}] ${where}${finding.rule} — ${finding.title}\n`);
+    }
   }
 
   return typeof result.exitCode === 'number' ? result.exitCode : 0;
