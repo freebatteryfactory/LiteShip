@@ -17,6 +17,10 @@ import { build } from 'vite';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const FIXTURES = resolve(import.meta.dirname, 'fixtures');
+// The astro integration fixture's built output (tests/integration/astro/test.ts
+// runs `astro build` earlier in the gauntlet). Served under /astro-example/ so
+// the directive-boot e2e drives the REAL built page, not a synthetic fixture.
+const ASTRO_DIST = resolve(import.meta.dirname, '../integration/astro/dist');
 const PORT = Number(process.env.PORT ?? 3456);
 const WATCH = process.argv.includes('--watch');
 
@@ -106,6 +110,31 @@ const server = createServer(async (req, res) => {
     }
     res.writeHead(200, { 'Content-Type': 'application/javascript' });
     res.end(bundleResult);
+    return;
+  }
+
+  // Serve the built astro example (when the integration build has run).
+  // The built HTML references its hashed assets root-absolute (/_astro/*),
+  // so that prefix maps into the same dist.
+  if (path.startsWith('/astro-example') || path.startsWith('/_astro/')) {
+    const sub = path.startsWith('/_astro/')
+      ? path.slice(1)
+      : path.replace(/^\/astro-example\/?/, '') || 'index.html';
+    const astroPath = resolve(ASTRO_DIST, sub);
+    if (!astroPath.startsWith(ASTRO_DIST)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
+    }
+    try {
+      await stat(astroPath);
+      const content = await readFile(astroPath);
+      res.writeHead(200, { 'Content-Type': MIME[extname(astroPath)] ?? 'application/octet-stream' });
+      res.end(content);
+    } catch {
+      res.writeHead(404);
+      res.end('astro example not built (run: pnpm exec tsx tests/integration/astro/test.ts)');
+    }
     return;
   }
 
