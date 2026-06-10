@@ -4,6 +4,44 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [Unreleased]
+
+Hardening follow-ups to the 0.1.5 dogfood wave: ROADMAP epics #1 (branch
+hotspots) and #2 (advisory cleanup), the timeout-flake class seen during the
+release, and the two deferred dogfood items.
+
+### Added
+
+- `@czap/audit` — consumer mode verifies **dist truth**: every concrete
+  exports-map condition of every installed package must resolve to a real
+  file (`export-target-missing`, error). Catches broken installs and
+  tarballs that shipped without their build output.
+- e2e — the built Astro example now runs in a real browser
+  (`tests/e2e/astro-directives.e2e.ts`): the directive boot scanner
+  activates the Satellite element and `data-czap-state` tracks
+  `viewport.width` across thresholds — the exact scenario that shipped
+  inert in 0.1.4.
+- Test infra — `scaledTimeout` (vitest.shared.ts): explicit test timeouts
+  clamp to the 240s floor under coverage (a raw literal silently LOWERED
+  the budget before) and honor `CZAP_TEST_TIMEOUT_SCALE` on loaded
+  machines. A meta source guard rejects raw timeout literals.
+
+### Changed
+
+- The advisory audit warning floor is **zero** (was 10 pinned
+  `fallback-laundering` warnings). `czap doctor` probes now surface
+  read/parse failures as structured check details instead of collapsing
+  them into "absent" (a corrupt package.json no longer misdiagnoses as a
+  missing dependency); the integrity detector recognizes catches that
+  consume their error binding before returning a default (the
+  emit-then-exit-code contract); the two deliberate fail-closed defaults
+  (html-trust CSP fallback, doctor --fix workspace guard) carry allowlist
+  reasons and classify as suppressed.
+- Runtime-seams branch-hotspot table cleared: wgpu runtime 4%→100%,
+  ffmpeg-probe 15%→100%, browser host context 15%→100%, scene-dev server
+  20%→100%, gauntlet command 30%→100%, video decoder 47%→100%, audit CLI
+  adapter 52%→100% branches, plus the three 1/2-branch harness files.
+
 ## [0.1.5] — 2026-06-10
 
 Fixes and features upstreamed from a deep dogfood of the published `0.1.4`
