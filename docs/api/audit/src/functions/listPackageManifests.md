@@ -8,7 +8,7 @@
 
 > **listPackageManifests**(`root?`): readonly [`PackageManifestInfo`](../interfaces/PackageManifestInfo.md)[]
 
-Defined in: [audit/src/shared.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L87)
+Defined in: [audit/src/shared.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L88)
 
 ## Parameters
 
