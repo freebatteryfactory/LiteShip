@@ -106,19 +106,23 @@ exist on npm yet (npm requires a package to exist before you can configure a
 trusted publisher). From v0.1.1 onward, releases run through
 `.github/workflows/release.yml`.
 
-v0.1.1 authenticates via the `NPM_TOKEN` repo secret — a granular access
+v0.1.x authenticated via the `NPM_TOKEN` repo secret — a granular access
 token with `bypass_2fa: true`, installed into `~/.npmrc` before the
-`czap ship` step. v0.2 pivots to OIDC trusted publishing: drop the
-`~/.npmrc` step and the `NPM_TOKEN` env, add `--provenance` to the
-`czap ship` call. The `id-token: write` permission and `registry-url`
-are already in the workflow so the pivot is a single edit. The
-prerequisite is configuring a trusted publisher per package, form values
-below.
+`czap ship` step. That token has been revoked. **v0.2 onward uses OIDC
+trusted publishing**: the workflow carries `id-token: write`, pnpm
+(>= 10.13; we pin 10.32) exchanges the GitHub Actions OIDC token for a
+short-lived publish credential at publish time, and `czap ship` runs
+with `--provenance` so every tarball links back to its workflow run.
+There are no publish tokens anywhere — nothing to rotate, leak, or
+revoke. The one remaining prerequisite is configuring a trusted
+publisher per package, form values below.
 
-### One-time trusted-publisher setup (per package, before v0.2)
+### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
-For each of the 15 `@czap/*` packages, open
-`https://www.npmjs.com/package/@czap/<name>/access` and add a trusted publisher
+For each of the 19 publishable packages (18 `@czap/*` + `liteship`), open
+`https://www.npmjs.com/package/<name>/access` (e.g.
+`https://www.npmjs.com/package/@czap/core/access`,
+`https://www.npmjs.com/package/liteship/access`) and add a trusted publisher
 with these exact values:
 
 | Field | Value |
@@ -129,8 +133,12 @@ with these exact values:
 | Workflow filename | `release.yml` |
 | Environment name | (leave blank) |
 
-Once every publishable `@czap/*` scope has the trusted publisher configured, drop `NPM_TOKEN` from the
-workflow and add `--provenance` — future releases will need zero auth setup.
+A package without a trusted publisher fails its publish with an auth
+error; configure it and re-run the workflow — `czap ship` treats
+already-published versions as idempotent success (`ShipSkippedReceipt`),
+so partial-batch re-runs are safe. Once configured, future releases need
+zero auth setup, and the dead `NPM_TOKEN` secret can be deleted from the
+repo settings.
 
 ### Cutting a release
 
@@ -142,10 +150,11 @@ workflow and add `--provenance` — future releases will need zero auth setup.
    git tag -a v0.1.1 -m "v0.1.1"
    git push origin v0.1.1
    ```
-5. The `Release (NPM_TOKEN auth)` workflow auto-fires on the tag. It runs
-   the release-certification gate (`build` / `typecheck` / `lint` / `test` /
-   `package:smoke`), then idempotently ships every publishable package, then creates
-   the GitHub Release and attaches the ShipCapsules.
+5. The `Release (OIDC trusted publishing)` workflow auto-fires on the tag.
+   It runs the release-certification gate (`build` / `typecheck` / `lint` /
+   `test` / `package:smoke`), then idempotently ships every publishable
+   package with `--provenance`, then creates the GitHub Release and
+   attaches the ShipCapsules.
 
 ### Hotfix or partial publish
 

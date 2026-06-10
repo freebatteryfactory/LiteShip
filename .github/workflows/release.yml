@@ -1,18 +1,22 @@
-name: Release (NPM_TOKEN auth)
+name: Release (OIDC trusted publishing)
 
 # Triggers on push of a v*.*.* tag. The tag itself is created by the
 # maintainer after a release commit lands on the release branch:
-#   git tag -a v0.1.1 -m "v0.1.1"
-#   git push origin v0.1.1
+#   git tag -a v0.2.0 -m "v0.2.0"
+#   git push origin v0.2.0
 #
-# v0.1.x interim auth: the publish step uses the NPM_TOKEN repo secret
-# (a granular access token with bypass_2fa: true). The id-token: write
-# permission and `registry-url` are left in place so that switching to
-# OIDC trusted publishing in v0.2 is a single-commit pivot (drop the
-# .npmrc step + NPM_TOKEN env, add --provenance to the ship call) once
-# all 18 @czap/* packages have a trusted publisher configured at
-# https://www.npmjs.com/package/@czap/<name>/access — see RELEASING.md
-# §v0.1.1+ for the form values.
+# v0.2 auth: OIDC trusted publishing — no tokens anywhere. pnpm >= 10.13
+# (we pin 10.32 via packageManager) exchanges the GitHub Actions OIDC
+# token (id-token: write below) for a short-lived publish credential at
+# publish time. PREREQUISITE: every publishable package must have a
+# trusted publisher configured at
+# https://www.npmjs.com/package/<name>/access (org: heyoub/LiteShip,
+# workflow: release.yml — see RELEASING.md §Trusted publishing). A
+# package without one fails its publish loudly with an auth error; fix
+# the npm-side config and re-run the workflow — `czap ship` treats
+# already-published versions as idempotent success, so re-runs are safe.
+# The NPM_TOKEN repo secret is dead (its token was revoked) and is no
+# longer read.
 
 on:
   push:
@@ -31,7 +35,7 @@ on:
 
 permissions:
   contents: write       # creating the GitHub Release + uploading capsule assets
-  id-token: write       # left enabled so v0.2 OIDC pivot is a single edit
+  id-token: write       # OIDC trusted publishing (pnpm exchanges this for the publish credential)
 
 concurrency:
   group: release-${{ github.ref }}
@@ -71,10 +75,6 @@ jobs:
     needs: release-certified
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      # setup-node's registry-url + includeIf gitdir credentials override
-      # a bare ~/.npmrc append; NODE_AUTH_TOKEN is the supported hook.
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -88,39 +88,21 @@ jobs:
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
-      # npm self-upgrade dropped: the bundled npm 10.x is sufficient
-      # for NPM_TOKEN auth (v0.1.x). When we pivot to OIDC trusted
-      # publishing in v0.2 we'll need npm >= 11.5.1; reintroduce the
-      # upgrade then via a more robust path (e.g. setup-node's
-      # always-auth + scope-url combo rather than a self-replacing
-      # global install that corrupts mid-flight in CI).
-
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run build
 
-      # Install the granular access token so pnpm publish picks it up
-      # from ~/.npmrc. NODE_AUTH_TOKEN-only doesn't survive the pnpm
-      # → npm subprocess hop reliably; explicit ~/.npmrc does.
-      - name: Configure npm auth
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       # ─── per-package ship loop ───────────────────────────────────────
-      # czap ship's bulk mode dies on already-published versions because
-      # its dry-run pre-check errors on "cannot publish over previously
-      # published 0.1.x". Looping per-package skips the bulk dry-run
-      # collision and lets pnpm publish report "already published"
-      # cleanly for any in-flight repeat. v0.1.x workaround until
-      # ship.ts handles this gracefully (ROADMAP §4).
-      #
-      # Already-published is treated as success (idempotent re-runs are
-      # safe — the package already on npm matches the canonical state).
-      - name: czap ship + npm publish (per package, idempotent)
+      # One `czap ship` per package: the explicit list keeps publish order
+      # reviewable in PR and guarantees `liteship` (whose deps must already
+      # exist on the registry at the new version) publishes LAST. ship
+      # itself treats already-published versions as idempotent success
+      # (ShipSkippedReceipt), so workflow re-runs after a mid-batch
+      # failure are safe with no grep fallback. --provenance links each
+      # published tarball to this workflow run via OIDC.
+      - name: czap ship (per package, OIDC + provenance)
         run: |
-          set -uo pipefail
+          set -euo pipefail
           DRY_RUN_FLAG=""
           if [ "${{ inputs.dry-run }}" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
@@ -140,27 +122,14 @@ jobs:
             exit 1
           fi
 
-          OUTLOG=$(mktemp)
-          FAILED=()
           # Full package names: 18 @czap/* scopes + the unscoped `liteship`
           # umbrella (published LAST so its workspace deps already exist at
           # the new version on the registry).
           for pkg in @czap/_spine @czap/core @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server liteship; do
             echo "::group::$pkg"
-            if node packages/cli/bin/czap.mjs ship --filter "$pkg" $DRY_RUN_FLAG 2>&1 | tee "$OUTLOG"; then
-              echo "✅ $pkg published"
-            elif grep -qE "previously published|cannot publish over|EPUBLISHCONFLICT|You cannot publish over" "$OUTLOG"; then
-              echo "✅ $pkg already at this version on npm (idempotent skip)"
-            else
-              echo "❌ $pkg failed for non-idempotency reason"
-              FAILED+=("$pkg")
-            fi
+            node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
             echo "::endgroup::"
           done
-          if [ ${#FAILED[@]} -gt 0 ]; then
-            echo "::error::Publish failed for: ${FAILED[*]}"
-            exit 1
-          fi
 
       # ─── GitHub Release attachment ────────────────────────────────────
       - name: Resolve version from tag
