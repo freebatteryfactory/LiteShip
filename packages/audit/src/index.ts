@@ -12,6 +12,7 @@ export * from './types.js';
 export * from './policy.js';
 export * from './shared.js';
 export * from './devops-profile.js';
+export * from './consumer.js';
 export * from './structure.js';
 export * from './integrity.js';
 export * from './surface.js';

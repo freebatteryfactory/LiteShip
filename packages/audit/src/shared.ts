@@ -11,10 +11,11 @@
  * @module
  */
 import { readFileSync } from 'node:fs';
-import { dirname, relative } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import fg from 'fast-glob';
 import ts from 'typescript';
 import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
+import type { DevopsProfile } from './devops-profile.js';
 import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression } from './types.js';
 
 export interface PackageManifestInfo {
@@ -56,6 +57,33 @@ export function walkAuditSourceFiles(root = defaultRoot()): readonly string[] {
     .sort((a, b) => a.localeCompare(b));
 }
 
+function manifestInfoFromPackageJson(packageJsonPath: string, root: string): PackageManifestInfo {
+  const manifest = readJsonFile<{
+    name: string;
+    exports?: Record<string, unknown>;
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  }>(packageJsonPath);
+  const dir = normalizeRepoPath(dirname(packageJsonPath));
+  const relativeDir = normalizeRepoPath(relative(root, dir));
+  const dependencies = [
+    ...Object.keys(manifest.dependencies ?? {}),
+    ...Object.keys(manifest.peerDependencies ?? {}),
+    ...Object.keys(manifest.devDependencies ?? {}),
+  ].sort((a, b) => a.localeCompare(b));
+
+  return {
+    name: manifest.name,
+    dir,
+    relativeDir,
+    srcDir: `${dir}/src`,
+    packageJsonPath: normalizeRepoPath(relative(root, packageJsonPath)),
+    dependencies,
+    exports: manifest.exports ?? {},
+  };
+}
+
 export function listPackageManifests(root = defaultRoot()): readonly PackageManifestInfo[] {
   const packageJsons = fg
     .sync(['packages/*/package.json'], {
@@ -66,62 +94,88 @@ export function listPackageManifests(root = defaultRoot()): readonly PackageMani
     .map((file) => normalizeRepoPath(file))
     .sort((a, b) => a.localeCompare(b));
 
-  return packageJsons.map((packageJsonPath) => {
-    const manifest = readJsonFile<{
-      name: string;
-      exports?: Record<string, unknown>;
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-      peerDependencies?: Record<string, string>;
-    }>(packageJsonPath);
-    const dir = normalizeRepoPath(dirname(packageJsonPath));
-    const relativeDir = normalizeRepoPath(relative(root, dir));
-    const dependencies = [
-      ...Object.keys(manifest.dependencies ?? {}),
-      ...Object.keys(manifest.peerDependencies ?? {}),
-      ...Object.keys(manifest.devDependencies ?? {}),
-    ].sort((a, b) => a.localeCompare(b));
+  return packageJsons.map((packageJsonPath) => manifestInfoFromPackageJson(packageJsonPath, root));
+}
 
-    return {
-      name: manifest.name,
-      dir,
-      relativeDir,
-      srcDir: `${dir}/src`,
-      packageJsonPath: normalizeRepoPath(relative(root, packageJsonPath)),
-      dependencies,
-      exports: manifest.exports ?? {},
-    };
-  });
+/**
+ * Profile-aware package discovery: with `profile.packageRoots`, enumerate
+ * exactly those roots (the consumer-install seam — packages live under
+ * node_modules, not `repoRoot/packages/*`); otherwise delegate to the
+ * legacy monorepo glob, byte-identical to before.
+ */
+export function listProfilePackageManifests(profile: DevopsProfile): readonly PackageManifestInfo[] {
+  if (!profile.packageRoots) {
+    return listPackageManifests(profile.repoRoot);
+  }
+
+  return Object.values(profile.packageRoots)
+    .map((pkgDir) => normalizeRepoPath(resolve(pkgDir, 'package.json')))
+    .sort((a, b) => a.localeCompare(b))
+    .map((packageJsonPath) => manifestInfoFromPackageJson(packageJsonPath, profile.repoRoot));
+}
+
+function sourceRecordFromFile(
+  absolutePath: string,
+  root: string,
+  packageBySrcDir: ReadonlyMap<string, string>,
+): SourceFileRecord {
+  const relativePath = normalizeRepoPath(relative(root, absolutePath));
+  const text = readFileSync(absolutePath, 'utf8');
+  const sourceFile = ts.createSourceFile(
+    absolutePath,
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    absolutePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  );
+
+  const packageName =
+    [...packageBySrcDir.entries()].find(([srcDir]) => normalizeRepoPath(absolutePath).startsWith(srcDir + '/'))?.[1] ??
+    null;
+
+  return {
+    absolutePath,
+    relativePath,
+    text,
+    sourceFile,
+    packageName,
+  };
 }
 
 export function readSourceFileRecords(root = defaultRoot()): readonly SourceFileRecord[] {
   const packageInfos = listPackageManifests(root);
   const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
 
-  return walkAuditSourceFiles(root).map((absolutePath) => {
-    const relativePath = normalizeRepoPath(relative(root, absolutePath));
-    const text = readFileSync(absolutePath, 'utf8');
-    const sourceFile = ts.createSourceFile(
-      absolutePath,
-      text,
-      ts.ScriptTarget.Latest,
-      true,
-      absolutePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
-    );
+  return walkAuditSourceFiles(root).map((absolutePath) => sourceRecordFromFile(absolutePath, root, packageBySrcDir));
+}
 
-    const packageName =
-      [...packageBySrcDir.entries()].find(([srcDir]) =>
-        normalizeRepoPath(absolutePath).startsWith(srcDir + '/'),
-      )?.[1] ?? null;
+/**
+ * Profile-aware source walking. With `profile.packageRoots`, glob each
+ * package's `src/` individually — the global `auditSourceGlobs` assume a
+ * `packages/*` layout and `auditIgnoreGlobs` exclude `node_modules`, which
+ * is exactly where consumer-installed packages live.
+ */
+export function readProfileSourceFileRecords(profile: DevopsProfile): readonly SourceFileRecord[] {
+  if (!profile.packageRoots) {
+    return readSourceFileRecords(profile.repoRoot);
+  }
 
-    return {
-      absolutePath,
-      relativePath,
-      text,
-      sourceFile,
-      packageName,
-    };
-  });
+  const packageInfos = listProfilePackageManifests(profile);
+  const packageBySrcDir = new Map(packageInfos.map((pkg) => [pkg.srcDir, pkg.name] as const));
+
+  const files = packageInfos
+    .flatMap((pkg) =>
+      fg.sync(['src/**/*.ts', 'src/**/*.tsx'], {
+        cwd: pkg.dir,
+        absolute: true,
+        onlyFiles: true,
+        ignore: ['**/*.d.ts', '**/node_modules/**'],
+      }),
+    )
+    .map((file) => normalizeRepoPath(file))
+    .sort((a, b) => a.localeCompare(b));
+
+  return files.map((absolutePath) => sourceRecordFromFile(absolutePath, profile.repoRoot, packageBySrcDir));
 }
 
 export function createCounts(findings: readonly AuditFinding[]): AuditCounts {

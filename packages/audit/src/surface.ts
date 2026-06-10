@@ -12,7 +12,8 @@ import { resolve } from 'node:path';
 import { normalizeRepoPath } from './policy.js';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
-import { listPackageManifests, partitionAllowlistedFindings } from './shared.js';
+import { listProfilePackageManifests, partitionAllowlistedFindings, relativeToRoot } from './shared.js';
+import type { PackageManifestInfo } from './shared.js';
 import type { AuditFinding, AuditSectionResult } from './types.js';
 
 export interface SurfaceSummary {
@@ -36,10 +37,28 @@ function asDevelopmentPath(value: unknown): string | null {
   return null;
 }
 
+/**
+ * Resolve a profile-listed astro file against the astro PACKAGE root, so the
+ * check holds wherever the package lives (the monorepo workspace layout or a
+ * consumer install under node_modules). Entries starting with `packages/`
+ * are legacy repo-root-relative profile data and resolve against `root`.
+ */
+export function resolveAstroPackageFile(root: string, astroPackageDir: string, file: string): string {
+  return normalizeRepoPath(file.startsWith('packages/') ? resolve(root, file) : resolve(astroPackageDir, file));
+}
+
+/** The astro client-directive source path, via the exports map when present. */
+function astroDirectiveSourcePath(astroPackage: PackageManifestInfo, directive: string): string {
+  const exportTarget = asDevelopmentPath(astroPackage.exports[`./client-directives/${directive}`]);
+  const candidate =
+    exportTarget && !exportTarget.includes('*') ? exportTarget : `src/client-directives/${directive}.ts`;
+  return normalizeRepoPath(resolve(astroPackage.dir, candidate));
+}
+
 export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
   const root = profile.repoRoot;
   const { surfacePolicy } = profile;
-  const packageInfos = listPackageManifests(root);
+  const packageInfos = listProfilePackageManifests(profile);
   const rawFindings: AuditFinding[] = [];
   let packageExportCount = 0;
 
@@ -82,9 +101,9 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       rule: 'host-surface',
       severity: 'error',
       title: 'Astro package manifest missing',
-      summary: '@czap/astro package.json is required for the host-wired surface inventory.',
+      summary: `${surfacePolicy.astroPackage} package.json is required for the host-wired surface inventory.`,
       location: {
-        file: 'packages/astro/package.json',
+        file: surfacePolicy.astroPackage,
       },
     });
   } else if (astroPackage) {
@@ -97,41 +116,43 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
           rule: 'host-surface',
           severity: 'error',
           title: 'Astro client directive export is missing',
-          summary: `@czap/astro should export ${exportKey} as part of the documented host surface.`,
+          summary: `${astroPackage.name} should export ${exportKey} as part of the documented host surface.`,
           location: {
             file: astroPackage.packageJsonPath,
           },
         });
       }
 
-      const directivePath = normalizeRepoPath(resolve(root, `packages/astro/src/client-directives/${directive}.ts`));
+      const directivePath = astroDirectiveSourcePath(astroPackage, directive);
       if (!existsSync(directivePath)) {
+        const displayPath = relativeToRoot(directivePath, root);
         rawFindings.push({
           id: `surface/astro-file/${directive}`,
           section: 'surface',
           rule: 'host-surface',
           severity: 'error',
           title: 'Astro client directive source file is missing',
-          summary: `packages/astro/src/client-directives/${directive}.ts should exist for the documented directive surface.`,
+          summary: `${displayPath} should exist for the documented directive surface.`,
           location: {
-            file: `packages/astro/src/client-directives/${directive}.ts`,
+            file: displayPath,
           },
         });
       }
     }
 
     for (const runtimeFile of surfacePolicy.astroRuntimeFiles) {
-      const runtimePath = normalizeRepoPath(resolve(root, runtimeFile));
+      const runtimePath = resolveAstroPackageFile(root, astroPackage.dir, runtimeFile);
       if (!existsSync(runtimePath)) {
+        const displayPath = relativeToRoot(runtimePath, root);
         rawFindings.push({
           id: `surface/runtime-file/${runtimeFile}`,
           section: 'surface',
           rule: 'host-surface',
           severity: 'error',
           title: 'Shared runtime adapter file is missing',
-          summary: `${runtimeFile} is expected by the shared-runtime audit policy but is not present.`,
+          summary: `${displayPath} is expected by the shared-runtime audit policy but is not present.`,
           location: {
-            file: runtimeFile,
+            file: displayPath,
           },
         });
       }
@@ -139,7 +160,16 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
   }
 
   if (surfacePolicy.viteVirtualModules.length > 0) {
-    const virtualModulesPath = normalizeRepoPath(resolve(root, 'packages/vite/src/virtual-modules.ts'));
+    // Resolve the inventory file through the profile's vitePackage when
+    // declared; fall back to the legacy repo-root-relative location so
+    // pre-consumer-mode profiles keep working.
+    const vitePackage = surfacePolicy.vitePackage
+      ? (packageInfos.find((pkg) => pkg.name === surfacePolicy.vitePackage) ?? null)
+      : null;
+    const virtualModulesPath = vitePackage
+      ? normalizeRepoPath(resolve(vitePackage.dir, surfacePolicy.viteVirtualModulesFile ?? 'src/virtual-modules.ts'))
+      : normalizeRepoPath(resolve(root, 'packages/vite/src/virtual-modules.ts'));
+    const virtualModulesDisplayPath = relativeToRoot(virtualModulesPath, root);
     const virtualModulesSource = existsSync(virtualModulesPath) ? readFileSync(virtualModulesPath, 'utf8') : '';
 
     if (!virtualModulesSource) {
@@ -149,9 +179,9 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
         rule: 'virtual-module-surface',
         severity: 'error',
         title: 'Vite virtual module source file is missing',
-        summary: 'packages/vite/src/virtual-modules.ts is required to inventory the virtual module surface.',
+        summary: `${virtualModulesDisplayPath} is required to inventory the virtual module surface.`,
         location: {
-          file: 'packages/vite/src/virtual-modules.ts',
+          file: virtualModulesDisplayPath,
         },
       });
     } else {
@@ -165,7 +195,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
             title: 'Virtual module is missing from the Vite surface',
             summary: `${virtualId} is expected by the repo-native Vite policy but was not found in virtual-modules.ts.`,
             location: {
-              file: 'packages/vite/src/virtual-modules.ts',
+              file: virtualModulesDisplayPath,
             },
           });
         }

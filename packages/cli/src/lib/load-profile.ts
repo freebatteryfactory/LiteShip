@@ -14,11 +14,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { liteshipDevopsProfile, withRepoRoot, type DevopsProfile } from '@czap/audit';
+import { consumerDevopsProfile, liteshipDevopsProfile, withRepoRoot, type DevopsProfile } from '@czap/audit';
 
 export interface LoadedProfile {
   readonly profile: DevopsProfile;
-  readonly source: 'default' | 'file';
+  readonly source: 'default' | 'file' | 'consumer';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -65,8 +65,20 @@ async function profileFromModule(modPath: string, cwd: string): Promise<DevopsPr
 /**
  * Resolve a profile from an explicit path (or the LiteShip default rooted at cwd).
  * Throws a clear Error on an unknown extension, a missing file, or an invalid shape.
+ *
+ * `consumer: true` (czap audit --consumer) builds the profile from the
+ * `@czap/*` packages installed under cwd's node_modules — still explicit,
+ * no walk-up magic — and is mutually exclusive with `--profile`.
  */
-export async function loadProfile(profilePath: string | undefined, cwd: string): Promise<LoadedProfile> {
+export async function loadProfile(
+  profilePath: string | undefined,
+  cwd: string,
+  opts: { readonly consumer?: boolean } = {},
+): Promise<LoadedProfile> {
+  if (opts.consumer) {
+    if (profilePath) throw new Error('--consumer and --profile are mutually exclusive');
+    return { profile: consumerDevopsProfile(cwd), source: 'consumer' };
+  }
   if (!profilePath) {
     return { profile: withRepoRoot(liteshipDevopsProfile, cwd), source: 'default' };
   }
