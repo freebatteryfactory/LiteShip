@@ -415,4 +415,20 @@ describe('doctor command', () => {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
+
+  it('a malformed .git pointer file reads as a warn, not "no .git" ok', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-badgit-'));
+    try {
+      // Worktree-style `.git` FILE without a gitdir: line — previously this
+      // fell into the catch-all and misreported as "no .git (not a worktree)".
+      writeFileSync(resolve(tmp, '.git'), 'garbage with no pointer\n');
+      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const hooks = receipt.checks.find((c: { id: string }) => c.id === 'git.hooks');
+      expect(hooks.status).toBe('warn');
+      expect(hooks.detail).toMatch(/hooks dir unresolved: \.git pointer file has no gitdir: line/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
 });

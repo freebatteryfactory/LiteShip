@@ -108,6 +108,62 @@ describe('doctor --target cloudflare', () => {
     }
   });
 
+  it('a corrupt package.json reports unreadable, not a bogus missing-dependency fail', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-'));
+    try {
+      writeCloudflareSandbox(tmp);
+      writeFileSync(join(tmp, 'package.json'), '{ this is not json');
+      const { stdout } = await captureCli(() => doctor({ pretty: false, target: 'cloudflare', cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const astro = receipt.checks.find((c: { id: string }) => c.id === 'cloudflare.astro');
+      // Diagnosis, not misdiagnosis: the manifest exists but cannot be parsed.
+      expect(astro.status).toBe('warn');
+      expect(astro.detail).toMatch(/package\.json unreadable: /);
+      const adapter = receipt.checks.find((c: { id: string }) => c.id === 'cloudflare.adapter');
+      expect(adapter.status).toBe('warn');
+      expect(adapter.detail).toMatch(/package\.json unreadable: /);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a corrupt INSTALLED manifest reports unreadable, not "not resolved"', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-installed-'));
+    try {
+      writeCloudflareSandbox(tmp);
+      writeFileSync(join(tmp, 'node_modules', 'astro', 'package.json'), '<<not json>>');
+      const { stdout } = await captureCli(() => doctor({ pretty: false, target: 'cloudflare', cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const astro = receipt.checks.find((c: { id: string }) => c.id === 'cloudflare.astro');
+      expect(astro.status).toBe('warn');
+      expect(astro.detail).toMatch(/installed astro manifest unreadable: /);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a corrupt installed wrangler manifest (no CLI on PATH) reports unreadable', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-cf-corrupt-wrangler-'));
+    try {
+      writeCloudflareSandbox(tmp);
+      writeFileSync(join(tmp, 'node_modules', 'wrangler', 'package.json'), '!!!');
+      const spawnSpy = vi.spyOn(spawnLib, 'spawnArgvCapture').mockResolvedValue({
+        exitCode: 1,
+        stdout: '',
+        stderr: '',
+        timedOut: false,
+      });
+      const { stdout } = await captureCli(() => doctor({ pretty: false, target: 'cloudflare', cwd: tmp }));
+      spawnSpy.mockRestore();
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const wrangler = receipt.checks.find((c: { id: string }) => c.id === 'cloudflare.wrangler');
+      expect(wrangler.status).toBe('warn');
+      expect(wrangler.detail).toMatch(/installed manifest unreadable: /);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('omits cloudflare probes without --target', async () => {
     const { stdout } = await captureCli(() => doctor({ pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
