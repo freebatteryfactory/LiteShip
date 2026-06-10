@@ -10,6 +10,7 @@
  * @module
  */
 import { describe, it, expect, afterEach } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
@@ -208,11 +209,13 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     expect(receipt.command).toBe('audit');
     expect(receipt.status).toBe('ok');
     expect(receipt.errorCount).toBe(0);
-    expect(receipt.warningCount).toBe(10); // artifact-independent three-pass engine floor
+    expect(receipt.warningCount).toBe(0); // artifact-independent three-pass engine floor (zero since the advisory cleanup)
     expect(collectWarningInventory()).toEqual(AUDIT_WARNING_FLOOR);
     expect(receipt.profileSource).toBe('default');
     expect(result).toBe(0);
-  });
+    // Full three-pass engine over the real repo: blows the 10s default under
+    // parallel vitest load on a busy machine. Honest work, explicit budget.
+  }, scaledTimeout(60_000));
 
   it('loads an explicit .json profile and audits the @acme/ fixture tree', async () => {
     const { root, profilePath } = acmeFixture('json');

@@ -25,4 +25,19 @@ describe('generateCachedProjection', () => {
     expect(benchFile).toContain("bench('demo.audioDecode");
     expect(benchFile).toContain('{ time: 500 }');
   });
+
+  it('renders n/a in the bench comment when no p95 budget is declared', () => {
+    const cap = defineCapsule({
+      _kind: 'cachedProjection',
+      name: 'demo.noBudget',
+      input: Schema.Unknown,
+      output: Schema.Unknown,
+      capabilities: { reads: ['fs.read'], writes: [] },
+      invariants: [],
+      budgets: {},
+      site: ['node'],
+    });
+    const { benchFile } = Harness.generateCachedProjection(cap);
+    expect(benchFile).toContain('p95 vs budget (n/a' + 'ms)');
+  });
 });

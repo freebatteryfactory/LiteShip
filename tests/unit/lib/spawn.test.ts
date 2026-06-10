@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { quoteWindowsArg, spawnArgv, spawnArgvVisible, withSpawned } from '../../../scripts/lib/spawn.js';
 
 describe('quoteWindowsArg', () => {
@@ -179,5 +180,5 @@ describe('withSpawned lifecycle', () => {
     // Brief grace for the kill to propagate across the tree.
     await new Promise<void>((r) => setTimeout(r, 500));
     expect(isAlive(grandchildPid!)).toBe(false);
-  }, 15_000);
+  }, scaledTimeout(15_000));
 });

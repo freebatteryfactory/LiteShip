@@ -18,4 +18,17 @@ describe('TransitionSystem', () => {
     });
     await Effect.runPromise(Effect.scoped(program));
   });
+
+  it('executes without a world handle (blend annotated locally, no component write)', async () => {
+    const entity = {
+      id: 1,
+      components: new Map<string, unknown>([
+        ['TransitionKind', 'crossfade'],
+        ['FrameRange', { from: 0, to: 10 }],
+        ['Between', ['a', 'b']],
+      ]),
+    };
+    await Effect.runPromise(TransitionSystem(5).execute([entity as never]));
+    expect((entity as unknown as { _blend: number })._blend).toBeCloseTo(0.5, 2);
+  });
 });

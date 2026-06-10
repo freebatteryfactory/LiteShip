@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { compileCapsulesIsolated, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
@@ -18,7 +19,7 @@ describe('capsule-compile', () => {
   beforeAll(async () => {
     iso = await compileCapsulesIsolated('czap-capcompile');
     manifestPath = iso.manifestPath;
-  }, 90_000);
+  }, scaledTimeout(90_000));
 
   afterAll(() => iso?.restore());
 

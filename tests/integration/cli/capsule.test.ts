@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
@@ -14,7 +15,7 @@ describe('czap capsule *', () => {
   let iso: IsolatedCapsules;
   beforeAll(async () => {
     iso = await compileManifestOnly('czap-capsule');
-  }, 90_000);
+  }, scaledTimeout(90_000));
   afterAll(() => iso?.restore());
 
   it('inspect dumps a capsule manifest entry by name', async () => {
@@ -49,5 +50,5 @@ describe('czap capsule *', () => {
       run(['capsule', 'verify', 'core.boundary.evaluate']),
     );
     expect(exit).toBe(0);
-  }, 90_000);
+  }, scaledTimeout(90_000));
 });

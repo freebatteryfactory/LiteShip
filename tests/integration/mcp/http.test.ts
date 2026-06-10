@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { withSpawned, type SpawnHandle } from '../../../scripts/lib/spawn.js';
 
 interface JsonRpcResponse {
@@ -89,5 +90,5 @@ describe('MCP http transport (spawned)', () => {
       },
       { stdio: ['ignore', 'pipe', 'pipe'] },
     );
-  }, 25000);
+  }, scaledTimeout(25000));
 });

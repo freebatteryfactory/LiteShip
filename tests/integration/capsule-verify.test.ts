@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
@@ -11,7 +12,7 @@ describe('capsule-verify', () => {
   let iso: IsolatedCapsules;
   beforeAll(async () => {
     iso = await compileManifestOnly('czap-capverify');
-  }, 90_000);
+  }, scaledTimeout(90_000));
 
   afterAll(() => iso?.restore());
 
@@ -37,5 +38,5 @@ describe('capsule-verify', () => {
     expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
     const receipt = JSON.parse(receiptLine!);
     expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
-  }, 90_000);
+  }, scaledTimeout(90_000));
 });

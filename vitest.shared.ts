@@ -92,6 +92,52 @@ export const coverageExclude = [
   'packages/cli/src/spawn-helpers.ts',
 ];
 
+/**
+ * Timeout floor applied to every per-test timeout when coverage
+ * instrumentation is on. V8 instrumentation multiplies wall-clock for
+ * subprocess-heavy suites far beyond its nominal ~2x (tsx startup,
+ * ts.Program builds, ffmpeg piping all re-instrument), so explicit
+ * per-test timeouts must never undercut this floor — a literal
+ * `}, 60_000)` under coverage silently LOWERS the config default and
+ * turns an honest slow run into a flake.
+ */
+export const COVERAGE_TIMEOUT_FLOOR_MS = 240_000;
+
+const timeoutScale = (): number => {
+  const parsed = Number(process.env['CZAP_TEST_TIMEOUT_SCALE'] ?? '1');
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+};
+
+// CZAP_COVERAGE is authoritative when present: test workers always receive it
+// from the configs' `test.env` injection ('1' or '0'), while their argv never
+// carries --coverage. The argv probe only decides for the config process
+// itself, where the env var hasn't been injected yet.
+const coverageActive = (): boolean => {
+  const env = process.env['CZAP_COVERAGE'];
+  if (env !== undefined) return env === '1';
+  return process.argv.includes('--coverage');
+};
+
+/**
+ * The ONLY sanctioned way to set an explicit vitest timeout (per-test
+ * third argument, config default, or hook timeout).
+ *
+ * - Coverage runs (`--coverage` in the config process, `CZAP_COVERAGE=1`
+ *   inside test workers — injected by the configs via `test.env`) clamp
+ *   to {@link COVERAGE_TIMEOUT_FLOOR_MS} so explicit timeouts only ever
+ *   raise the budget, never lower it.
+ * - `CZAP_TEST_TIMEOUT_SCALE=<n>` multiplies every budget for machines
+ *   running sibling workloads (slow hardware is not a test failure).
+ *   CI does not set it, so gate semantics there are unchanged.
+ *
+ * Raw numeric timeout literals in test files are rejected by
+ * tests/unit/meta/test-timeout-policy.test.ts.
+ */
+export function scaledTimeout(baseMs: number): number {
+  const scaled = baseMs * timeoutScale();
+  return coverageActive() ? Math.max(scaled, COVERAGE_TIMEOUT_FLOOR_MS) : scaled;
+}
+
 export const nodeTestInclude = [
   'tests/unit/**/*.test.ts',
   'tests/integration/**/*.test.ts',

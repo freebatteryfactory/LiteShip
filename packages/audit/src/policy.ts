@@ -285,6 +285,30 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
   },
   {
+    // html-trust's Trusted Types policy creation can fail under restrictive
+    // CSP (name disallowed, or 'czap' already defined differently). The null
+    // fallback is the DESIGNED signal: assignment proceeds with the raw
+    // string, which throws under enforcement and tells the host to install a
+    // 'czap' policy. There is no richer context a browser runtime could
+    // surface here without logging (banned by the console-call rule).
+    rule: 'fallback-laundering',
+    filePrefix: 'packages/web/src/security/html-trust.ts',
+    summaryIncludes: 'returns null',
+    reason:
+      'Trusted Types policy creation under restrictive CSP: the null fallback deliberately lets enforcement throw, signalling the host to install a czap policy — designed fail-closed degradation, not laundering.',
+  },
+  {
+    // doctor --fix workspace guard (Codex P1, PR #3): an unreadable root
+    // manifest must read as "not the LiteShip workspace" and refuse --fix.
+    // Returning false without context IS the security contract — applyFixes
+    // separately records the skip in the receipt.
+    rule: 'fallback-laundering',
+    filePrefix: 'packages/cli/src/commands/doctor.ts',
+    summaryIncludes: 'returns false',
+    reason:
+      'Fail-closed workspace guard for doctor --fix: unreadable root manifest must refuse fixes (Codex P1); the skip is surfaced in the fixes receipt, so no context is laundered.',
+  },
+  {
     // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumer is
     // the runtime-policy test suite, which the audit does not scan, so symbol-level
     // evidence cannot see it. Allowlisted so it classifies as suppressed-with-reason

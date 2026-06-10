@@ -69,6 +69,7 @@ failing the lane by default.
 ### Surface
 
 - package-export-surface
+- export-target-missing (consumer mode only — installed exports must resolve)
 - host-surface
 - virtual-module-surface
 

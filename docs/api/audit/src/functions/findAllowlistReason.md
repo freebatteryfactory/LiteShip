@@ -8,7 +8,7 @@
 
 > **findAllowlistReason**(`finding`): `string` \| `null`
 
-Defined in: [audit/src/policy.ts:304](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L304)
+Defined in: [audit/src/policy.ts:328](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L328)
 
 ## Parameters
 
