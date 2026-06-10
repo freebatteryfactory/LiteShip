@@ -15,6 +15,7 @@ import { plugin } from '@czap/vite';
 import type { PluginConfig } from '@czap/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { getCzapHeaderEntries } from './headers.js';
+import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
 import {
   normalizeRuntimeSecurityPolicy,
@@ -43,8 +44,13 @@ export interface IntegrationConfig {
   readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
   /** GPU runtime configuration. */
   readonly gpu?: { readonly enabled?: boolean; readonly preferWebGPU?: boolean };
-  /** Off-thread worker runtime configuration. */
-  readonly workers?: { readonly enabled?: boolean };
+  /**
+   * Off-thread worker runtime configuration. `coep` selects the
+   * Cross-Origin-Embedder-Policy value emitted with COOP (default
+   * `'require-corp'`); `'credentialless'` keeps cross-origin isolation
+   * while tolerating CORP-less third-party assets.
+   */
+  readonly workers?: { readonly enabled?: boolean; readonly coep?: CrossOriginEmbedderPolicy };
   /** SSE streaming runtime configuration. */
   readonly stream?: { readonly enabled?: boolean };
   /** LLM streaming runtime configuration. */
@@ -175,6 +181,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const detectEnabled = config?.detect !== false;
   const serverIslandsEnabled = config?.serverIslands === true;
   const workersEnabled = config?.workers?.enabled === true;
+  const coep = config?.workers?.coep;
   const gpuEnabled = config?.gpu?.enabled !== false;
   const streamEnabled = config?.stream?.enabled !== false;
   const llmEnabled = config?.llm?.enabled !== false;
@@ -293,7 +300,11 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
         if (detectEnabled || workersEnabled) {
           server.middlewares.use((_req: unknown, res: { setHeader(k: string, v: string): void }, next: () => void) => {
-            for (const [header, value] of getCzapHeaderEntries({ detectEnabled, workersEnabled })) {
+            for (const [header, value] of getCzapHeaderEntries({
+              detectEnabled,
+              workersEnabled,
+              ...(coep ? { coep } : {}),
+            })) {
               res.setHeader(header, value);
             }
             next();

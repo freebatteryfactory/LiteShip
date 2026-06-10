@@ -28,3 +28,4 @@ export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';
 export type { SatelliteProps } from './Satellite.js';
 export { czapMiddleware } from './middleware.js';
 export type { CzapLocals, CzapMiddlewareConfig } from './middleware.js';
+export type { CrossOriginEmbedderPolicy } from './headers.js';

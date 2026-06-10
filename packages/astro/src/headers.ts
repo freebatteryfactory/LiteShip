@@ -19,14 +19,28 @@ export const CLIENT_HINTS_HEADERS: Record<string, string> = {
 };
 
 /**
+ * COEP values czap can emit. Both establish cross-origin isolation
+ * (required for `SharedArrayBuffer`); `credentialless` loads CORP-less
+ * third-party subresources without credentials instead of blocking them.
+ */
+export type CrossOriginEmbedderPolicy = 'require-corp' | 'credentialless';
+
+/**
  * COOP/COEP header pair required for `SharedArrayBuffer` (used by
  * `@czap/worker`'s SPSC ring). Applied only when the integration is
- * configured with `workers: { enabled: true }`.
+ * configured with `workers: { enabled: true }`; the COEP value is
+ * overridable via `workers.coep`.
  */
 export const CROSS_ORIGIN_HEADERS: Record<string, string> = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
+
+/** Header names whose pre-existing response values czap must not clobber. */
+const CONSUMER_OVERRIDABLE_HEADERS: ReadonlySet<string> = new Set([
+  'Cross-Origin-Opener-Policy',
+  'Cross-Origin-Embedder-Policy',
+]);
 
 /**
  * Build the `[header, value]` entries czap wants to emit for a given
@@ -36,6 +50,7 @@ export const CROSS_ORIGIN_HEADERS: Record<string, string> = {
 export function getCzapHeaderEntries(options: {
   readonly detectEnabled: boolean;
   readonly workersEnabled: boolean;
+  readonly coep?: CrossOriginEmbedderPolicy;
   readonly acceptCH?: string;
   readonly criticalCH?: string;
 }): Array<readonly [string, string]> {
@@ -54,7 +69,7 @@ export function getCzapHeaderEntries(options: {
 
   if (options.workersEnabled) {
     for (const [header, value] of Object.entries(CROSS_ORIGIN_HEADERS)) {
-      entries.push([header, value]);
+      entries.push([header, header === 'Cross-Origin-Embedder-Policy' ? (options.coep ?? value) : value]);
     }
   }
 
@@ -66,17 +81,28 @@ export function getCzapHeaderEntries(options: {
  * return it (for chaining). Convenience wrapper over
  * {@link getCzapHeaderEntries} for middleware that already has a
  * `Headers` object in hand.
+ *
+ * COOP/COEP are set only when absent: a consumer middleware (or route
+ * handler) that explicitly set either one wins regardless of
+ * `sequence()` order. Weakening or removing them is then on the
+ * consumer — workers still need cross-origin isolation to get
+ * `SharedArrayBuffer`. Client-hints headers are always czap's to own
+ * and are set unconditionally.
  */
 export function applyCzapHeaders(
   headers: Headers,
   options: {
     readonly detectEnabled: boolean;
     readonly workersEnabled: boolean;
+    readonly coep?: CrossOriginEmbedderPolicy;
     readonly acceptCH?: string;
     readonly criticalCH?: string;
   },
 ): Headers {
   for (const [header, value] of getCzapHeaderEntries(options)) {
+    if (CONSUMER_OVERRIDABLE_HEADERS.has(header) && headers.has(header)) {
+      continue;
+    }
     headers.set(header, value);
   }
 
