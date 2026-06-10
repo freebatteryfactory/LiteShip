@@ -154,6 +154,7 @@ export { Store } from './store.js';
 
 // Wire
 export { Wire } from './wire.js';
+export type { WireSocket } from './wire.js';
 
 // Op
 export { Op } from './op.js';

@@ -8,7 +8,7 @@
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:589](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L589)
+Defined in: [detect/src/detect.ts:593](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L593)
 
 Device capability detection namespace.
 

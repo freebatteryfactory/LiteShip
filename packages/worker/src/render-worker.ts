@@ -15,7 +15,7 @@
  */
 
 import { Diagnostics, type VideoConfig, type VideoFrameOutput } from '@czap/core';
-import type { ToWorkerMessage, FromWorkerMessage } from './messages.js';
+import type { ToWorkerMessage, FromWorkerMessage, WorkerLike } from './messages.js';
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 
 // ---------------------------------------------------------------------------
@@ -316,7 +316,7 @@ self.addEventListener("message", function (e) {
 // Factory helpers
 // ---------------------------------------------------------------------------
 
-function _send(worker: Worker, msg: ToWorkerMessage, transfer?: Transferable[]): void {
+function _send(worker: WorkerLike, msg: ToWorkerMessage, transfer?: Transferable[]): void {
   if (transfer && transfer.length > 0) {
     worker.postMessage(msg, transfer);
   } else {
