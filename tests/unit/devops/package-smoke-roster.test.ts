@@ -41,7 +41,9 @@ function derivePublishableScopes(): string[] {
 /** The names listed in the package-smoke PACKAGES roster, read from source (it self-runs on import). */
 function smokeRosterScopes(): string[] {
   const src = readFileSync(resolve(REPO, 'scripts/package-smoke.ts'), 'utf8');
-  return [...src.matchAll(/name:\s*'(@czap\/[^']+)'/g)].map((m) => m[1]).sort();
+  // Anchor on the roster-entry shape (dir + name) so unscoped names like
+  // `liteship` count but unrelated `name:` literals in the script don't.
+  return [...src.matchAll(/dir:\s*'packages\/[^']+',\s*name:\s*'([^']+)'/g)].map((m) => m[1]!).sort();
 }
 
 describe('B6a — package-smoke covers exactly the publishable @czap/* roster', () => {

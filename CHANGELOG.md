@@ -11,6 +11,10 @@ artifacts on a zero-React Astro 6 site.
 
 ### Added
 
+- `liteship` — the umbrella package: one `npm install liteship` brings every
+  publishable `@czap/*` package into node_modules. Deliberately re-exports
+  nothing (host integrations carry host-specific peer expectations); imports
+  stay on the individual `@czap/*` scopes.
 - `@czap/astro` — directive boot scanner: `data-czap-directive` markers (and
   legacy literal `client:*` attributes on plain elements) now activate on
   plain HTML and `Satellite.astro` output. Astro only fires custom `client:*`

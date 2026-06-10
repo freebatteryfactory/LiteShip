@@ -138,6 +138,14 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: [],
     kind: 'standalone',
   },
+  liteship: {
+    // The umbrella package: manifest-level dependencies on every publishable
+    // @czap/* scope, ZERO source imports (a barrel over the host integrations
+    // would force their peer expectations on every consumer). Its index ships
+    // only the installed-package manifest const.
+    allowedInternalImports: [],
+    kind: 'standalone',
+  },
   '@czap/command': {
     // CUT A1: shared command registry/dispatcher + the @czap/command/host Node
     // execution surface (createNodeCommandContext). Main entry imports @czap/core
