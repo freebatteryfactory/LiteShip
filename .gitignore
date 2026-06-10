@@ -69,3 +69,6 @@ scripts/**/*.d.ts.map
 
 # Astro-generated content/types (regenerated on every astro dev / sync)
 **/.astro/
+
+# Scratch scripts from sibling projects (borrow this repo's Playwright install)
+.fbf-*.mjs
