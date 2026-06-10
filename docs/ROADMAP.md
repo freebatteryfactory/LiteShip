@@ -68,19 +68,19 @@ Success condition:
 
 ### 4. v0.2 release-trust pivot
 
-Queued for the next minor (all pre-wired, see `docs/RELEASING.md` and
-`.github/workflows/release.yml` comments):
+Code side landed 2026-06-10: the release workflow IS the OIDC pivot
+(renamed `Release (OIDC trusted publishing)`; token steps deleted;
+`czap ship --provenance` per package), ship emits `ShipSkippedReceipt`
+for already-published versions so workflow re-runs need no shell
+fallback, and the deprecated `attachViewportObserver` alias is removed
+(superseded by `attachSignalObserver` in 0.1.5).
 
-- OIDC trusted publishing: configure a trusted publisher for each of the 19
-  packages on npmjs.com, then drop `NPM_TOKEN` in a single workflow edit
-  (`id-token: write` is already enabled). Kills publish-token handling
-  permanently.
-- `--provenance` once OIDC lands.
-- `czap ship` graceful already-published handling (replaces the release
-  workflow's per-package idempotent loop).
-- Remove the deprecated `attachViewportObserver` alias
-  (`packages/astro/src/runtime/boundary.ts`) — superseded by
-  `attachSignalObserver` in 0.1.5.
+**Remaining (maintainer, one-time, npm-side):** configure a trusted
+publisher for each of the 19 packages at
+`npmjs.com/package/<name>/access` — form values in RELEASING.md. Until
+then a v0.2.0 tag fails its publish step loudly with an auth error
+(re-runs are safe and idempotent). Afterwards, delete the dead
+`NPM_TOKEN` secret from repo settings.
 
 ## Completed Since Last Revision (2026-05-17)
 
