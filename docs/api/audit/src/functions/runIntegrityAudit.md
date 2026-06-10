@@ -8,7 +8,7 @@
 
 > **runIntegrityAudit**(`profile?`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`IntegritySummary`](../interfaces/IntegritySummary.md)\>
 
-Defined in: [audit/src/integrity.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L85)
+Defined in: [audit/src/integrity.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L133)
 
 ## Parameters
 

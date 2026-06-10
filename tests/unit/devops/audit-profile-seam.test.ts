@@ -233,6 +233,28 @@ describe('fallback-laundering — the error-binding rule (advisory cleanup wave)
     expect(launderingIn(root)).toHaveLength(1);
   });
 
+  it('`void e` is a discard, not consumption — still flags (Qodo, PR #11)', () => {
+    const root = fixtureWith(
+      'export function discards(): number | null { try { return compute(); } catch (e) { void e; return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('a shadowing declaration inside the catch gets no credit — still flags', () => {
+    const root = fixtureWith(
+      'export function shadows(): number | null { try { return compute(); } catch (e) { { const e = compute(); emit(String(e)); } return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('a same-name property access is not a read of the binding — still flags', () => {
+    const root = fixtureWith(
+      'const holder = { e: 1 };\n' +
+        'export function propertyOnly(): number | null { try { return compute(); } catch (e) { emit(String(holder.e)); return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
   it('a catch that rethrows keeps its existing exemption', () => {
     const root = fixtureWith(
       'export function rethrows(): number | null { try { return compute(); } catch { if (compute() > 1) { throw new Error(\'up\'); } return null; } }\n',

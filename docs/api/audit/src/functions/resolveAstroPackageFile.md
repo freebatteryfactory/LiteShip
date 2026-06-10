@@ -8,7 +8,7 @@
 
 > **resolveAstroPackageFile**(`root`, `astroPackageDir`, `file`): `string`
 
-Defined in: [audit/src/surface.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L46)
+Defined in: [audit/src/surface.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L67)
 
 Resolve a profile-listed astro file against the astro PACKAGE root, so the
 check holds wherever the package lives (the monorepo workspace layout or a
