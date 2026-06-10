@@ -28,6 +28,8 @@ import { createStreamScheduler } from '../../../packages/astro/src/runtime/strea
 import { createRuntimeSession } from '../../../packages/astro/src/runtime/runtime-session.js';
 import {
   applyBoundaryState,
+  attachSignalObserver,
+  attachViewportObserver,
   evaluateBoundary,
   parseBoundary,
   readSignalValue,
@@ -95,9 +97,7 @@ describe('astro shared runtime adapters', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
 
     expect(registry.get('/hero' as never)?.mode).toBe('replace');
-    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(
-      document.querySelector('[data-czap-slot="/hero"]'),
-    );
+    expect(getSlotRegistry().get('/hero' as never)?.element).toBe(document.querySelector('[data-czap-slot="/hero"]'));
 
     let reinitCount = 0;
     document.getElementById('widget')?.addEventListener('czap:reinit', () => {
@@ -137,9 +137,7 @@ describe('astro shared runtime adapters', () => {
     installSwapReinit();
     installSwapReinit();
 
-    expect(
-      addEventListenerSpy.mock.calls.filter(([type]) => type === 'astro:after-swap'),
-    ).toHaveLength(1);
+    expect(addEventListenerSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
     expect(runtimeWindow.__CZAP_SWAP_REINIT__).toBe(true);
     expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SWAP_REINIT__')).toBe(false);
   });
@@ -464,14 +462,12 @@ describe('astro shared runtime adapters', () => {
     const runtimeBoundary = parseBoundary(JSON.stringify(boundary));
     expect(runtimeBoundary).not.toBeNull();
 
-    let detail:
-      | {
-          discrete: Record<string, string>;
-          css: Record<string, string | number>;
-          glsl: Record<string, number>;
-          aria: Record<string, string>;
-        }
-      | null = null;
+    let detail: {
+      discrete: Record<string, string>;
+      css: Record<string, string | number>;
+      glsl: Record<string, number>;
+      aria: Record<string, string>;
+    } | null = null;
 
     element.addEventListener('czap:shared-boundary', ((event: CustomEvent<typeof detail>) => {
       detail = event.detail;
@@ -563,6 +559,80 @@ describe('astro shared runtime adapters', () => {
     vi.stubGlobal('window', originalWindow as never);
   });
 
+  test('readSignalValue reads scroll.x/scroll.y and derives scroll.progress', () => {
+    vi.stubGlobal('scrollX', 40);
+    vi.stubGlobal('scrollY', 150);
+    vi.stubGlobal('innerHeight', 500);
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 2000, configurable: true });
+
+    expect(readSignalValue('scroll.x')).toBe(40);
+    expect(readSignalValue('scroll.y')).toBe(150);
+    // (150 / (2000 - 500)) * 100 = 10
+    expect(readSignalValue('scroll.progress')).toBe(10);
+
+    // Unscrollable document: denominator <= 0 clamps to 0 instead of NaN/Infinity.
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 400, configurable: true });
+    expect(readSignalValue('scroll.progress')).toBe(0);
+
+    // Unknown axes and signal families without a built-in reader stay undefined.
+    expect(readSignalValue('scroll.bogus')).toBeUndefined();
+    expect(readSignalValue('audio.level')).toBeUndefined();
+    expect(readSignalValue('network.effectiveType')).toBeUndefined();
+  });
+
+  test('attachSignalObserver wires a throttled passive scroll listener with cleanup', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const frames: Array<() => void> = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+      frames.push(cb);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+    const callback = vi.fn();
+    const cleanup = attachSignalObserver('scroll.y', callback);
+    expect(cleanup).not.toBeNull();
+    expect(addSpy).toHaveBeenCalledWith('scroll', expect.any(Function), { passive: true });
+
+    const handler = addSpy.mock.calls.find(([event]) => event === 'scroll')?.[1] as () => void;
+    handler();
+    handler();
+    handler();
+    expect(callback).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(1);
+    frames[0]!();
+    expect(callback).toHaveBeenCalledOnce();
+
+    cleanup!();
+    expect(removeSpy).toHaveBeenCalledWith('scroll', handler);
+
+    addSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
+  test('attachSignalObserver adds a resize listener only for scroll.progress and returns null for unknown signals', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+
+    const cleanupY = attachSignalObserver('scroll.y', vi.fn());
+    expect(addSpy.mock.calls.filter(([event]) => event === 'resize')).toHaveLength(0);
+    cleanupY!();
+
+    const cleanupProgress = attachSignalObserver('scroll.progress', vi.fn());
+    expect(addSpy.mock.calls.filter(([event]) => event === 'resize')).toHaveLength(1);
+    cleanupProgress!();
+
+    expect(attachSignalObserver('audio.level', vi.fn())).toBeNull();
+    expect(attachSignalObserver('network.effectiveType', vi.fn())).toBeNull();
+
+    // Deprecated alias delegates to the registry (scroll now supported).
+    const aliasCleanup = attachViewportObserver('scroll.y', vi.fn());
+    expect(aliasCleanup).not.toBeNull();
+    aliasCleanup!();
+
+    addSpy.mockRestore();
+  });
+
   test('applyBoundaryState skips redundant data-czap-state writes while preserving event detail', () => {
     const parsed = parseBoundary(
       JSON.stringify({
@@ -595,9 +665,7 @@ describe('astro shared runtime adapters', () => {
       'czap:shared-boundary',
     );
 
-    expect(
-      setAttributeSpy.mock.calls.filter(([name]) => name === 'data-czap-state'),
-    ).toHaveLength(0);
+    expect(setAttributeSpy.mock.calls.filter(([name]) => name === 'data-czap-state')).toHaveLength(0);
     expect(detailEvents).toEqual([
       {
         discrete: { hero: 'compact' },
@@ -1155,11 +1223,7 @@ describe('astro shared runtime adapters', () => {
     host.emitToolEnd('search', { query: 'czap' });
     host.emitDone('hello');
 
-    expect(events).toEqual([
-      'tool-start:search',
-      'tool-end:search:{"query":"czap"}',
-      'done:hello',
-    ]);
+    expect(events).toEqual(['tool-start:search', 'tool-end:search:{"query":"czap"}', 'done:hello']);
   });
 
   test('llm support host keeps token value handlers on the direct path when other non-token callbacks are present', () => {
@@ -1186,10 +1250,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener(
-      'czap:llm-token',
-      ((event: CustomEvent<{ text: string; accumulated: string }>) => tokenEvents.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+      tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1252,10 +1314,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener(
-      'czap:llm-token',
-      ((event: CustomEvent<{ text: string; accumulated: string }>) => tokenEvents.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+      tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1467,10 +1527,8 @@ describe('astro shared runtime adapters', () => {
     document.body.appendChild(host);
 
     const doneEvents: Array<{ accumulated: string }> = [];
-    host.addEventListener(
-      'czap:llm-done',
-      ((event: CustomEvent<{ accumulated: string }>) => doneEvents.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-done', ((event: CustomEvent<{ accumulated: string }>) =>
+      doneEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1607,10 +1665,8 @@ describe('astro shared runtime adapters', () => {
 
     let tier: 'none' | 'animations' = 'animations';
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener(
-      'czap:llm-token',
-      ((event: CustomEvent<{ text: string; accumulated: string }>) => tokenEvents.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+      tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1649,10 +1705,8 @@ describe('astro shared runtime adapters', () => {
 
     let tier: 'none' | 'animations' = 'animations';
     const tokenEvents: Array<{ text: string; accumulated: string }> = [];
-    host.addEventListener(
-      'czap:llm-token',
-      ((event: CustomEvent<{ text: string; accumulated: string }>) => tokenEvents.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-token', ((event: CustomEvent<{ text: string; accumulated: string }>) =>
+      tokenEvents.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1679,14 +1733,10 @@ describe('astro shared runtime adapters', () => {
 
     const toolStarts: string[] = [];
     const toolEnds: Array<{ name: string; args: unknown }> = [];
-    host.addEventListener(
-      'czap:llm-tool-start',
-      ((event: CustomEvent<{ name: string }>) => toolStarts.push(event.detail.name)) as EventListener,
-    );
-    host.addEventListener(
-      'czap:llm-tool-end',
-      ((event: CustomEvent<{ name: string; args: unknown }>) => toolEnds.push(event.detail)) as EventListener,
-    );
+    host.addEventListener('czap:llm-tool-start', ((event: CustomEvent<{ name: string }>) =>
+      toolStarts.push(event.detail.name)) as EventListener);
+    host.addEventListener('czap:llm-tool-end', ((event: CustomEvent<{ name: string; args: unknown }>) =>
+      toolEnds.push(event.detail)) as EventListener);
 
     const session = createLLMSession({
       element: host,
@@ -1696,9 +1746,7 @@ describe('astro shared runtime adapters', () => {
     });
 
     expect(session.ingest({ type: 'tool-call-start', partial: false })).toBe('continue');
-    expect(session.ingest({ type: 'tool-call-end', partial: false })).toBe(
-      'continue',
-    );
+    expect(session.ingest({ type: 'tool-call-end', partial: false })).toBe('continue');
 
     expect(toolStarts).toEqual(['']);
     expect(toolEnds).toEqual([{ name: '', args: undefined }]);
@@ -1854,9 +1902,11 @@ describe('astro shared runtime adapters', () => {
 
     runtime.dispose();
     expect(runtime.clearTimer(null)).toBeNull();
-    expect(runtime.setTimer(() => {
-      calls.push('timer');
-    }, 0)).toBeNull();
+    expect(
+      runtime.setTimer(() => {
+        calls.push('timer');
+      }, 0),
+    ).toBeNull();
 
     runtime.activate();
     runtime.beginReconnect();
@@ -1942,9 +1992,11 @@ describe('astro shared runtime adapters', () => {
 
     expect(applied).toEqual([]);
     expect(scheduler.clearReconnectTimer(null)).toBeNull();
-    expect(scheduler.setReconnectTimer(() => {
-      applied.push('timer');
-    }, 0)).toBeNull();
+    expect(
+      scheduler.setReconnectTimer(() => {
+        applied.push('timer');
+      }, 0),
+    ).toBeNull();
     expect(scheduler.state).toBe('disposed');
   });
 
