@@ -13,10 +13,28 @@ import type { AuditFinding } from './types.js';
 
 export interface AuditAllowlistEntry {
   readonly rule: string;
+  /**
+   * npm package name owning the allowlisted file. When set, `filePrefix` is
+   * PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
+   * resolves the finding's file through the profile's discovered package
+   * roots — so the same entry suppresses in the monorepo
+   * (`packages/astro/...`) and in a consumer install
+   * (`node_modules/.pnpm/.../@czap/astro/...`). Without it, `filePrefix` is
+   * matched against the repo-root-relative finding path verbatim.
+   */
+  readonly package?: string;
   readonly filePrefix?: string;
   readonly summaryIncludes?: string;
   readonly reason: string;
 }
+
+/** A finding file resolved to its owning package + package-relative path. */
+export interface PackagePathResolution {
+  readonly packageName: string;
+  readonly packageRelativePath: string;
+}
+
+export type PackagePathResolver = (file: string) => PackagePathResolution | null;
 
 export interface PackagePolicy {
   readonly allowedInternalImports: readonly string[];
@@ -227,42 +245,50 @@ export const surfacePolicy = {
 export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/satellite.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/satellite.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/stream.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/stream.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/llm.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/llm.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/worker.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/worker.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/gpu.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/gpu.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'default-export',
-    filePrefix: 'packages/astro/src/client-directives/wasm.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/wasm.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
     rule: 'placeholder-content',
-    filePrefix: 'packages/vite/src/virtual-modules.ts',
+    package: '@czap/vite',
+    filePrefix: 'src/virtual-modules.ts',
     reason: 'Virtual module placeholders are documented stubs for bundler/type-checker compatibility.',
   },
   {
     rule: 'missing-runtime-capability',
-    filePrefix: 'packages/astro/src/client-directives/gpu.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/gpu.ts',
     summaryIncludes: 'WebGPU',
     reason: 'GPU/WebGPU is an explicitly documented partial capability surface in the first wave.',
   },
@@ -272,7 +298,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // "placeholder/debug marker" message it emits). Those are detector copy, not
     // runtime placeholders.
     rule: 'placeholder-content',
-    filePrefix: 'packages/audit/src/integrity.ts',
+    package: '@czap/audit',
+    filePrefix: 'src/integrity.ts',
     reason:
       "The integrity detector's own placeholder/debug summary strings — detector copy, not a runtime placeholder.",
   },
@@ -280,7 +307,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // The audit policy's documented-stub allowlist reason + the vite virtual-module
     // capability note both contain the word "placeholder" describing OTHER files.
     rule: 'placeholder-content',
-    filePrefix: 'packages/audit/src/policy.ts',
+    package: '@czap/audit',
+    filePrefix: 'src/policy.ts',
     reason:
       "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
   },
@@ -292,7 +320,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // 'czap' policy. There is no richer context a browser runtime could
     // surface here without logging (banned by the console-call rule).
     rule: 'fallback-laundering',
-    filePrefix: 'packages/web/src/security/html-trust.ts',
+    package: '@czap/web',
+    filePrefix: 'src/security/html-trust.ts',
     summaryIncludes: 'returns null',
     reason:
       'Trusted Types policy creation under restrictive CSP: the null fallback deliberately lets enforcement throw, signalling the host to install a czap policy — designed fail-closed degradation, not laundering.',
@@ -303,7 +332,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // Returning false without context IS the security contract — applyFixes
     // separately records the skip in the receipt.
     rule: 'fallback-laundering',
-    filePrefix: 'packages/cli/src/commands/doctor.ts',
+    package: '@czap/cli',
+    filePrefix: 'src/commands/doctor.ts',
     summaryIncludes: 'returns false',
     reason:
       'Fail-closed workspace guard for doctor --fix: unreadable root manifest must refuse fixes (Codex P1); the skip is surfaced in the fixes receipt, so no context is laundered.',
@@ -314,7 +344,8 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     // evidence cannot see it. Allowlisted so it classifies as suppressed-with-reason
     // (test-only) rather than appearing as a dead-symbol candidate.
     rule: 'symbol-orphan-candidate',
-    filePrefix: 'packages/astro/src/runtime/policy.ts',
+    package: '@czap/astro',
+    filePrefix: 'src/runtime/policy.ts',
     summaryIncludes: '_resetRuntimePolicyForTests',
     reason:
       'Test-only reset hook consumed by the runtime-policy test suite (tests/ are not scanned by the symbol-level audit).',
@@ -325,11 +356,24 @@ export function normalizeRepoPath(value: string): string {
   return value.replace(/\\/g, '/');
 }
 
-export function findAllowlistReason(finding: AuditFinding): string | null {
+/**
+ * Match a finding against the allowlist. Entries carrying `package` need
+ * `resolvePackagePath` to map the finding's repo-relative file to its owning
+ * package — without a resolver those entries can never match (consumer-mode
+ * findings live under node_modules paths the repo-relative prefixes can't
+ * reach, which is exactly the bug package-relative entries fix).
+ */
+export function findAllowlistReason(finding: AuditFinding, resolvePackagePath?: PackagePathResolver): string | null {
   const file = finding.location?.file ?? '';
+  const resolved = resolvePackagePath?.(file) ?? null;
   for (const entry of auditAllowlist) {
     if (entry.rule !== finding.rule) continue;
-    if (entry.filePrefix && !file.startsWith(entry.filePrefix)) continue;
+    if (entry.package !== undefined) {
+      if (resolved === null || resolved.packageName !== entry.package) continue;
+      if (entry.filePrefix && !resolved.packageRelativePath.startsWith(entry.filePrefix)) continue;
+    } else if (entry.filePrefix && !file.startsWith(entry.filePrefix)) {
+      continue;
+    }
     if (entry.summaryIncludes && !finding.summary.includes(entry.summaryIncludes)) continue;
     return entry.reason;
   }

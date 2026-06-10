@@ -8,7 +8,7 @@
 
 > **nodeText**(`node`, `sourceFile`): `string`
 
-Defined in: [audit/src/shared.ts:239](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L239)
+Defined in: [audit/src/shared.ts:267](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L267)
 
 ## Parameters
 

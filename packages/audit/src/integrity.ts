@@ -336,7 +336,7 @@ export function runIntegrityAudit(
     }
   }
 
-  const partitioned = partitionAllowlistedFindings(rawFindings);
+  const partitioned = partitionAllowlistedFindings(rawFindings, profile);
   return {
     section: 'integrity',
     summary: {

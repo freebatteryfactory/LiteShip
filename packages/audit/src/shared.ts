@@ -15,6 +15,7 @@ import { dirname, relative, resolve } from 'node:path';
 import fg from 'fast-glob';
 import ts from 'typescript';
 import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
+import type { PackagePathResolver } from './policy.js';
 import type { DevopsProfile } from './devops-profile.js';
 import type { AuditCounts, AuditFinding, AuditSeverity, AuditSuppression } from './types.js';
 
@@ -210,15 +211,42 @@ export function sortSuppressions<T extends AuditSuppression>(suppressions: reado
   return [...suppressions].sort((left, right) => left.finding.id.localeCompare(right.finding.id));
 }
 
-export function partitionAllowlistedFindings(findings: readonly AuditFinding[]): {
+/**
+ * Map repo-relative finding paths to their owning package via the profile's
+ * discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@czap/astro` +
+ * `src/x.ts`. Consumer install: the same file resolves identically from its
+ * `node_modules/.../@czap/astro` root, so package-relative allowlist entries
+ * suppress in both layouts. Longest root wins (pnpm virtual-store roots nest
+ * under `node_modules/.pnpm/...`).
+ */
+export function createPackagePathResolver(profile: DevopsProfile): PackagePathResolver {
+  const roots = listProfilePackageManifests(profile)
+    .map((manifest) => ({ prefix: `${manifest.relativeDir}/`, name: manifest.name }))
+    .sort((a, b) => b.prefix.length - a.prefix.length);
+
+  return (file) => {
+    for (const root of roots) {
+      if (file.startsWith(root.prefix)) {
+        return { packageName: root.name, packageRelativePath: file.slice(root.prefix.length) };
+      }
+    }
+    return null;
+  };
+}
+
+export function partitionAllowlistedFindings(
+  findings: readonly AuditFinding[],
+  profile: DevopsProfile,
+): {
   readonly findings: AuditFinding[];
   readonly suppressed: AuditSuppression[];
 } {
   const active: AuditFinding[] = [];
   const suppressed: AuditSuppression[] = [];
+  const resolvePackagePath = createPackagePathResolver(profile);
 
   for (const finding of findings) {
-    const reason = findAllowlistReason(finding);
+    const reason = findAllowlistReason(finding, resolvePackagePath);
     if (reason) {
       suppressed.push({
         rule: finding.rule,

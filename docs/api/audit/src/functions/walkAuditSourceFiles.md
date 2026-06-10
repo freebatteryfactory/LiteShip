@@ -8,7 +8,7 @@
 
 > **walkAuditSourceFiles**(`root?`): readonly `string`[]
 
-Defined in: [audit/src/shared.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L48)
+Defined in: [audit/src/shared.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L49)
 
 ## Parameters
 
