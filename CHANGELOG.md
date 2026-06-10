@@ -25,6 +25,14 @@ release, and the two deferred dogfood items.
   clamp to the 240s floor under coverage (a raw literal silently LOWERED
   the budget before) and honor `CZAP_TEST_TIMEOUT_SCALE` on loaded
   machines. A meta source guard rejects raw timeout literals.
+- `@czap/core` — capsule harness handlers wave 1: `CapsuleContract` gains
+  optional `step`/`initialState` (stateMachine) and `derive`
+  (cachedProjection); the harness generators emit runtime-probing property
+  tests that import the real binding (invariants after every step across
+  random event sequences, deterministic replay, projection determinism).
+  `core.token-buffer` runs live by wrapping the production `TokenBuffer`;
+  capsules without handlers or with non-derivable schemas self-report as
+  honest skips.
 
 ### Changed
 
