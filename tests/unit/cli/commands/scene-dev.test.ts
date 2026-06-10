@@ -5,6 +5,7 @@
  * except the long-running wait.
  */
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../../vitest.shared.js';
 import { sceneDev, sceneDevSetup } from '../../../../packages/cli/src/commands/scene-dev.js';
 
 async function captureStdout<T>(fn: () => Promise<T>): Promise<{ result: T; stdout: string; stderr: string }> {
@@ -55,7 +56,7 @@ describe('sceneDevSetup', () => {
     } finally {
       await result.handle.close();
     }
-  }, 30_000);
+  }, scaledTimeout(30_000));
 
   it('sceneDev: full SIGINT-await loop resolves with 0 when a SIGINT is delivered', async () => {
     // Capture stdout (the receipt) then trigger SIGINT after the server boots
@@ -83,7 +84,7 @@ describe('sceneDevSetup', () => {
 
     const { exit } = await captureRun;
     expect(exit).toBe(0);
-  }, 30_000);
+  }, scaledTimeout(30_000));
 
   it('sceneDev returns the missing-scene exit code without entering the SIGINT loop', async () => {
     // captureStdout to keep emitError's stderr write off the gauntlet log —

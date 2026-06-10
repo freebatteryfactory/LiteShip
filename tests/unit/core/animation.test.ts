@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { Effect, Stream } from 'effect';
 import { Animation, Millis, Scheduler, Easing } from '@czap/core';
 import { interpolate as rawInterpolate } from '../../../packages/core/src/interpolate.js';
@@ -116,7 +117,7 @@ describe('Animation.run', () => {
     expect(frames.map((frame) => frame.progress)).toEqual([0, 0.5, 1]);
     expect(frames[1]?.eased).toBeCloseTo(0.25);
     expect(scheduler.cancel).toHaveBeenCalledWith(3);
-  }, 20_000);
+  }, scaledTimeout(20_000));
 
   test('defaults to browser requestAnimationFrame scheduling when available', async () => {
     const callbacks = new Map<number, FrameRequestCallback>();
@@ -149,7 +150,7 @@ describe('Animation.run', () => {
 
     expect(frames.map((frame) => frame.timestamp)).toEqual([0, 16, 32]);
     expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(3);
-  }, 20_000);
+  }, scaledTimeout(20_000));
 
   test('times out cleanly with the noop scheduler when requestAnimationFrame is unavailable', async () => {
     vi.stubGlobal('requestAnimationFrame', undefined as never);

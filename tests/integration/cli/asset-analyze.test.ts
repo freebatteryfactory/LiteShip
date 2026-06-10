@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { run } from '@czap/cli';
 import { captureCli } from './capture.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../../setup/isolated-capsules.js';
@@ -11,7 +12,7 @@ describe('czap asset analyze', () => {
   let iso: IsolatedCapsules;
   beforeAll(async () => {
     iso = await compileManifestOnly('czap-asset-analyze');
-  }, 120_000);
+  }, scaledTimeout(120_000));
   afterAll(() => iso?.restore());
 
   it('runs beat projection on intro-bed and emits markerCount', async () => {
@@ -25,7 +26,7 @@ describe('czap asset analyze', () => {
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.projection).toBe('beat');
     expect(typeof receipt.markerCount).toBe('number');
-  }, 60_000);
+  }, scaledTimeout(60_000));
 
   it('exits 1 for unknown asset', async () => {
     const { exit } = await captureCli(() =>
@@ -57,7 +58,7 @@ describe('czap asset analyze', () => {
     expect(second.exit).toBe(0);
     const secondReceipt = JSON.parse(second.stdout.trim().split('\n').pop()!);
     expect(secondReceipt.cached).toBe(true);
-  }, 60_000);
+  }, scaledTimeout(60_000));
 
   it('runs waveform projection and emits markerCount (covers the else arm)', async () => {
     const { exit, stdout } = await captureCli(() =>
@@ -69,5 +70,5 @@ describe('czap asset analyze', () => {
     expect(typeof receipt.markerCount).toBe('number');
     // waveform computes 512 bins, so markerCount should be > 0.
     expect(receipt.markerCount).toBeGreaterThan(0);
-  }, 60_000);
+  }, scaledTimeout(60_000));
 });

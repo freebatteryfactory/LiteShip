@@ -106,6 +106,17 @@ when history exists.
 
 The gauntlet exits cleanly with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails closed. Not a stylistic gate; a correctness gate. PRs need to be green here before merge.
 
+**Slow machine?** Timing-sensitive phases (test timeouts, spawn deadlines)
+flake when sibling workloads load the box. Set `CZAP_TEST_TIMEOUT_SCALE=<n>`
+(e.g. `CZAP_TEST_TIMEOUT_SCALE=3 pnpm run gauntlet:full`) to multiply every
+vitest budget without changing gate semantics — CI never sets it, so the
+cloud `truth-linux` job stays the arbiter. Explicit per-test timeouts must go
+through `scaledTimeout` (vitest.shared.ts); a raw literal silently *lowers*
+the budget under `--coverage` and is rejected by
+`tests/unit/meta/test-timeout-policy.test.ts`. Bench-gate thresholds are
+load-sensitive by nature and are not covered by the scale knob — re-run those
+on an idle box or trust CI.
+
 For Windows users: PowerShell's `>` redirect writes UTF-16 LE; use
 `Out-File -Encoding utf8` or run `chcp 65001` first to keep gauntlet logs
 readable.

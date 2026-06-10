@@ -11,6 +11,7 @@
  * JSON for the full `capsule verify` timeout window.
  */
 import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join as pathJoin } from 'node:path';
@@ -177,7 +178,7 @@ describe('cli — manifest-dependent commands (serialized)', () => {
     );
     const r = await capture(() => capsuleVerify('broken.capsule'));
     expect(r.exit).toBe(2);
-  }, 30_000);
+  }, scaledTimeout(30_000));
 
   // ---------- asset analyze ----------
 

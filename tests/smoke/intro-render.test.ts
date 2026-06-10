@@ -27,6 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { execSync, spawnSync } from 'node:child_process';
 import { FFMPEG_RENDER_CAPABLE } from '../helpers/ffmpeg.js';
 import {
@@ -106,5 +107,5 @@ describe('Spec 1.1 E2E smoke — intro scene render', () => {
     } catch {
       // Ignore — Windows file locks occasionally prevent immediate unlink.
     }
-  }, 240_000);
+  }, scaledTimeout(240_000));
 });

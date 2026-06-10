@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { withSpawned, type SpawnHandle } from '../../../scripts/lib/spawn.js';
 
 async function pipeOneRequest(handle: SpawnHandle, request: unknown): Promise<string> {
@@ -32,5 +33,5 @@ describe('MCP stdio transport (auto-run guard, spawned)', () => {
       },
       { stdio: ['pipe', 'pipe', 'pipe'] },
     );
-  }, 15000);
+  }, scaledTimeout(30_000));
 });
