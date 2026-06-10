@@ -8,7 +8,15 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 Hardening follow-ups to the 0.1.5 dogfood wave: ROADMAP epics #1 (branch
 hotspots) and #2 (advisory cleanup), the timeout-flake class seen during the
-release, and the two deferred dogfood items.
+release, and the two deferred dogfood items. Plus the v0.2 release-trust
+pivot (epic #4) — these notes ship as 0.2.0.
+
+### Removed
+
+- **BREAKING** `@czap/astro` — the deprecated `attachViewportObserver`
+  alias is gone; use `attachSignalObserver` (handles `viewport.*` and
+  `scroll.*`). It was never re-exported from `@czap/astro/runtime`'s
+  index; both known consumer repos are grep-clean.
 
 ### Added
 
@@ -36,8 +44,20 @@ release, and the two deferred dogfood items.
   overflowed to `inf` for subnormal weight totals where the fallback
   normalized to 1.0 (caught by the new parity suite on its first run).
 
+- `czap ship` — graceful already-published handling: a registry version
+  conflict in the publish pre-check emits a `ShipSkippedReceipt`
+  (`already_published: true`) and continues; a run where every package is
+  already published exits 0. Release-workflow re-runs after a mid-batch
+  failure need no shell grep fallback.
+
 ### Changed
 
+- Release workflow — **OIDC trusted publishing**: no publish tokens
+  anywhere. `id-token: write` + pnpm's native OIDC exchange replace the
+  `NPM_TOKEN` secret and `~/.npmrc` step; `czap ship` runs with
+  `--provenance` so every published tarball links to its workflow run.
+  One-time prerequisite: a trusted publisher per package on npmjs.com
+  (RELEASING.md).
 - The advisory audit warning floor is **zero** (was 10 pinned
   `fallback-laundering` warnings). `czap doctor` probes now surface
   read/parse failures as structured check details instead of collapsing

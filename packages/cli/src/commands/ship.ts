@@ -39,7 +39,7 @@ import {
 } from '../ship-manifest.js';
 import { spawnArgv, spawnArgvCapture } from '../spawn-helpers.js';
 import { emit, emitError } from '../receipts.js';
-import type { ShipReceipt } from '../receipts.js';
+import type { ShipReceipt, ShipSkippedReceipt } from '../receipts.js';
 import { ShipEmit } from '../capsules/ship-emit.js';
 
 interface EffectOk<A> {
@@ -85,6 +85,24 @@ interface ShipOptions {
   readonly dryRun: boolean;
   readonly otp?: string;
   readonly provenance: boolean;
+}
+
+/**
+ * npm/pnpm registry-conflict signatures for "this exact version is already
+ * published". Idempotent re-runs (a release workflow retried mid-batch) hit
+ * this in the publish pre-check; ship treats it as success-with-skip rather
+ * than failure. Mirrors the patterns the release workflow's per-package
+ * loop used to grep for before ship owned the idempotency contract.
+ */
+const ALREADY_PUBLISHED_PATTERN = /previously published|cannot publish over|EPUBLISHCONFLICT/i;
+
+/**
+ * Decide whether a failed publish pre-check means "this exact version is
+ * already on the registry" (idempotent skip) as opposed to a real failure
+ * (auth, network, packument validation) that must stop the ship.
+ */
+export function isAlreadyPublishedFailure(output: string): boolean {
+  return ALREADY_PUBLISHED_PATTERN.test(output);
 }
 
 const readWorkspacePackagesGlobs = (cwd: string): string[] => {
@@ -240,6 +258,7 @@ export async function ship(args: readonly string[]): Promise<number> {
   // Per-package emission loop. Any failure aborts before we hand off to
   // `pnpm publish` — we never publish without a capsule.
   const mintedNames: string[] = [];
+  let skippedCount = 0;
   for (let i = 0; i < targets.length; i++) {
     const pkg = targets[i]!;
     const name = pkg.packageJson.name;
@@ -293,6 +312,24 @@ export async function ship(args: readonly string[]): Promise<number> {
       cwd: pkg.absolutePath,
     });
     if (dryRes.exitCode !== 0) {
+      const failureText = `${dryRes.stderr}\n${dryRes.stdout}`;
+      if (isAlreadyPublishedFailure(failureText)) {
+        // Idempotent re-run: this exact version is already on the registry.
+        // The package on npm matches the canonical state — skip mint+publish
+        // for it and keep going (ROADMAP §4: replaces the release workflow's
+        // per-package grep fallback).
+        const skipped: ShipSkippedReceipt = {
+          status: 'ok',
+          command: 'ship',
+          timestamp: new Date().toISOString(),
+          package_name: name,
+          package_version: version,
+          already_published: true,
+        };
+        emit(skipped);
+        skippedCount += 1;
+        continue;
+      }
       emitError(
         'ship',
         `pnpm publish --dry-run failed in ${pkg.relativePath}: ${dryRes.stderr.trim() || dryRes.stdout.trim()}`,
@@ -367,6 +404,11 @@ export async function ship(args: readonly string[]): Promise<number> {
   if (opts.dryRun) return 0;
 
   if (mintedNames.length === 0) {
+    if (skippedCount > 0) {
+      // Every selected package is already at this version on the registry —
+      // a fully idempotent re-run succeeds with the skip receipts above.
+      return 0;
+    }
     emitError('ship', 'no packages were minted; nothing to publish');
     return 1;
   }
