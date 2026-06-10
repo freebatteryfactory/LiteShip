@@ -88,12 +88,15 @@ describe('${cap.name}', () => {
     );
   } else {
     const step = cap.step!;
-    const initialState = cap.initialState!;
+    // The contract's step(state, event) signature permits implementations
+    // that mutate and return their state object — a shared seed would let
+    // one fast-check case contaminate the next. Clone the seed per fold.
+    const seedState = (): unknown => structuredClone(cap.initialState!);
 
     it('invariants hold after every step across random event paths', () => {
       fc.assert(
         fc.property(fc.array(eventArb, { maxLength: 50 }), (events) => {
-          let state = initialState;
+          let state = seedState();
           for (const event of events) {
             state = step(state as never, event as never);
             for (const inv of cap.invariants) {
@@ -110,7 +113,7 @@ describe('${cap.name}', () => {
       fc.assert(
         fc.property(fc.array(eventArb, { maxLength: 50 }), (events) => {
           const replay = (): unknown =>
-            events.reduce((state, event) => step(state as never, event as never), initialState as unknown);
+            events.reduce((state, event) => step(state as never, event as never), seedState());
           expect(replay()).toEqual(replay());
         }),
         { numRuns: 50 },
