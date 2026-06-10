@@ -121,6 +121,14 @@ For Windows users: PowerShell's `>` redirect writes UTF-16 LE; use
 `Out-File -Encoding utf8` or run `chcp 65001` first to keep gauntlet logs
 readable.
 
+**Rust kernels** (`crates/czap-compute`): the WASM/TS parity suite
+(`tests/unit/core/wasm-parity.test.ts`) self-skips when the wasm32 artifact
+is absent, so a Rust toolchain is NOT required locally. To run it:
+`rustup target add wasm32-unknown-unknown`, then
+`cargo build --release --target wasm32-unknown-unknown` inside the crate.
+CI's `rust-wasm-parity` job always builds from source and runs the full
+parity gate (`cargo test` + property suite against the fresh artifact).
+
 ## PR conventions
 
 - One concern per PR. Tightly-coupled changes (e.g. moving a sub-path
