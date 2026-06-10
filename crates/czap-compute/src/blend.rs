@@ -18,8 +18,14 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
         return;
     }
 
-    // Pass 1: clamp negatives, compute sum
-    let mut total: f32 = 0.0;
+    // Pass 1: clamp negatives, compute sum.
+    //
+    // The sum and the reciprocal are computed in f64, mirroring the TS
+    // fallback (JS number arithmetic) op-for-op so results are
+    // bit-identical. An f32 reciprocal overflows to inf for subnormal
+    // totals (e.g. a single 1.4e-45 weight) where f64 normalizes to 1.0 —
+    // caught by the wasm-parity property suite.
+    let mut total: f64 = 0.0;
 
     #[cfg(feature = "simd")]
     {
@@ -46,7 +52,7 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
                 *weights_ptr.add(base + 2) = v2;
                 *weights_ptr.add(base + 3) = v3;
 
-                total += v0 + v1 + v2 + v3;
+                total += v0 as f64 + v1 as f64 + v2 as f64 + v3 as f64;
             }
         }
 
@@ -55,7 +61,7 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
                 let mut v = *weights_ptr.add(i);
                 if v < 0.0 { v = 0.0; }
                 *weights_ptr.add(i) = v;
-                total += v;
+                total += v as f64;
             }
         }
     }
@@ -69,18 +75,55 @@ pub extern "C" fn blend_normalize(weights_ptr: *mut f32, len: u32) {
                     v = 0.0;
                     *weights_ptr.add(i) = v;
                 }
-                total += v;
+                total += v as f64;
             }
         }
     }
 
-    // Pass 2: normalize if total > 0
+    // Pass 2: normalize if total > 0 (f64 multiply, f32 store — same
+    // rounding as the fallback's Float32Array assignment)
     if total > 0.0 {
         let inv = 1.0 / total;
         for i in 0..len {
             unsafe {
-                *weights_ptr.add(i) *= inv;
+                *weights_ptr.add(i) = (*weights_ptr.add(i) as f64 * inv) as f32;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn normalize(weights: &mut [f32]) {
+        blend_normalize(weights.as_mut_ptr(), weights.len() as u32);
+    }
+
+    #[test]
+    fn positive_weights_sum_to_one() {
+        let mut w = [1.0, 3.0, 4.0];
+        normalize(&mut w);
+        assert_eq!(w, [0.125, 0.375, 0.5]);
+    }
+
+    #[test]
+    fn negative_weights_clamp_to_zero_before_normalizing() {
+        let mut w = [-2.0, 1.0, 1.0];
+        normalize(&mut w);
+        assert_eq!(w, [0.0, 0.5, 0.5]);
+    }
+
+    #[test]
+    fn all_zero_or_negative_stays_zero() {
+        let mut w = [-1.0, 0.0, -0.5];
+        normalize(&mut w);
+        assert_eq!(w, [0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn empty_slice_is_a_no_op() {
+        let mut w: [f32; 0] = [];
+        normalize(&mut w);
     }
 }

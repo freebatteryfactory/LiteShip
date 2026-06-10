@@ -48,5 +48,54 @@ pub extern "C" fn batch_boundary_eval(
         }
     }
 
-    unsafe { BOUNDARY_BUF.as_ptr() }
+    core::ptr::addr_of!(BOUNDARY_BUF) as *const u32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    extern crate std;
+    use std::vec::Vec;
+
+    fn eval(thresholds: &[f32], values: &[f32]) -> Vec<u32> {
+        let ptr = batch_boundary_eval(
+            thresholds.as_ptr(),
+            thresholds.len() as u32,
+            values.as_ptr(),
+            values.len() as u32,
+        );
+        unsafe { core::slice::from_raw_parts(ptr, values.len()) }.to_vec()
+    }
+
+    #[test]
+    fn below_all_thresholds_is_state_zero() {
+        assert_eq!(eval(&[10.0, 20.0, 30.0], &[5.0]), [0]);
+    }
+
+    #[test]
+    fn exact_threshold_selects_its_index() {
+        assert_eq!(eval(&[10.0, 20.0, 30.0], &[20.0]), [1]);
+    }
+
+    #[test]
+    fn above_all_selects_last_index() {
+        assert_eq!(eval(&[10.0, 20.0, 30.0], &[99.0]), [2]);
+    }
+
+    #[test]
+    fn duplicate_thresholds_select_highest_index() {
+        // Reverse scan: the HIGHEST index whose threshold matches wins.
+        assert_eq!(eval(&[10.0, 20.0, 20.0, 30.0], &[20.0]), [2]);
+    }
+
+    #[test]
+    fn empty_thresholds_yield_state_zero() {
+        assert_eq!(eval(&[], &[1.0, -1.0]), [0, 0]);
+    }
+
+    #[test]
+    fn batch_evaluates_each_value_independently() {
+        assert_eq!(eval(&[0.0, 50.0], &[-1.0, 0.0, 49.9, 50.0, 100.0]), [0, 0, 0, 1, 1]);
+    }
 }
