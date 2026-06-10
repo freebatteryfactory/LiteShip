@@ -341,3 +341,17 @@ export declare namespace Messages {
   /** Single resolved-state entry delivered to a worker. */
   export type ResolvedState = ResolvedStateEntry;
 }
+
+/**
+ * The DOM Worker surface czap's hosts actually drive (postMessage with
+ * transfer, terminate, message listening). Named so the dependency is
+ * structural rather than ambient: test doubles (tests/helpers/mock-worker.ts)
+ * conform to THIS type, and drift between host usage and the double breaks
+ * the build.
+ */
+export interface WorkerLike {
+  postMessage(message: unknown, transfer?: Transferable[]): void;
+  terminate(): void;
+  addEventListener(type: string, listener: (event: MessageEvent) => void): void;
+  removeEventListener(type: string, listener: (event: MessageEvent) => void): void;
+}

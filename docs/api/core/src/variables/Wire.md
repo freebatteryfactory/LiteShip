@@ -8,7 +8,7 @@
 
 > `const` **Wire**: `object`
 
-Defined in: [core/src/wire.ts:260](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wire.ts#L260)
+Defined in: [core/src/wire.ts:275](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/wire.ts#L275)
 
 Wire -- fluent stream wrapper with chainable operators for map, filter,
 scan, debounce, throttle, merge, and more. Wraps Effect Streams.
@@ -112,9 +112,6 @@ await Effect.runPromise(Wire.runForEach(parsed, msg => Effect.log(msg)));
 
 > **fromWebSocket**: (`url`, `protocols?`) => `WireShape`\<`MessageEvent`\<`any`\>, `Error`\> = `_fromWebSocket`
 
-Creates a Wire from a WebSocket connection.
-The socket is closed when the stream finalizes.
-
 #### Parameters
 
 ##### url
@@ -128,14 +125,6 @@ The socket is closed when the stream finalizes.
 #### Returns
 
 `WireShape`\<`MessageEvent`\<`any`\>, `Error`\>
-
-#### Example
-
-```ts
-const wire = Wire.fromWebSocket('wss://example.com/ws');
-const messages = wire.map(evt => evt.data as string);
-await Effect.runPromise(Wire.runForEach(messages, m => Effect.log(m)));
-```
 
 ### merge
 

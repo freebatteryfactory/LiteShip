@@ -8,7 +8,12 @@
  * - EventSource constructor arguments used by stream and llm directives
  * - readyState/close() transitions used by reconnect logic
  * - onopen/onmessage/onerror callback delivery used by the SSE runtime
+ *
+ * Conformance is compile-checked against {@link SSEEventSource} — the
+ * structural surface the SSE client (packages/web/src/stream/sse.ts)
+ * actually drives — so consumer/double drift breaks the build.
  */
+import type { SSEEventSource } from '@czap/web';
 
 export class MockEventSource {
   static readonly CONNECTING = 0;
@@ -69,3 +74,8 @@ export class MockEventSource {
     };
   }
 }
+
+// Compile-time conformance: the double must stay installable wherever the
+// SSE client consumes an EventSource. Drift in either direction is a build error.
+const _asSSEEventSource = (mock: MockEventSource): SSEEventSource => mock;
+void _asSSEEventSource;

@@ -20,6 +20,7 @@ network connection quality. Maps detected capabilities to the
 - [DeviceCapabilities](interfaces/DeviceCapabilities.md)
 - [ExtendedDetectionResult](interfaces/ExtendedDetectionResult.md)
 - [ExtendedDeviceCapabilities](interfaces/ExtendedDeviceCapabilities.md)
+- [NavigatorConnectionInfo](interfaces/NavigatorConnectionInfo.md)
 
 ## Type Aliases
 

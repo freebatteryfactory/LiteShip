@@ -3,7 +3,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics } from '@czap/core';
 import { bootstrapSlots, getSlotRegistry, installSwapReinit, rescanSlots } from '../../../packages/astro/src/runtime/slots.js';
-import { createStubRegistry, stubWorkerEnvironment } from '../../helpers/define-property-stub.js';
+import { createStubRegistry } from '../../helpers/define-property-stub.js';
+import { stubWorkerEnvironment } from '../../helpers/mock-worker.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import type * as RuntimeBoundary from '../../../packages/astro/src/runtime/boundary.js';
 

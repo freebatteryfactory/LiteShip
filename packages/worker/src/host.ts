@@ -24,6 +24,16 @@ type WorkerHostState = CompositeState & {
 // ---------------------------------------------------------------------------
 
 /**
+ * The canvas surface {@link WorkerHostShape.attachCanvas} actually needs:
+ * one transferable handoff. Structural rather than `HTMLCanvasElement` so
+ * the dependency is named — test doubles (tests/helpers/mock-dom.ts) conform
+ * to THIS type, and non-DOM canvas implementations work unchanged.
+ */
+export interface TransferableCanvas {
+  transferControlToOffscreen(): OffscreenCanvas;
+}
+
+/**
  * Host-facing surface of a worker host. Owns a compositor worker and,
  * optionally, a render worker created on demand via
  * {@link WorkerHostShape.attachCanvas}. Returned by {@link WorkerHost.create}.
@@ -45,7 +55,7 @@ export interface WorkerHostShape {
    * This can only be called once per canvas element -- the browser
    * does not allow transferring control multiple times.
    */
-  attachCanvas(canvas: HTMLCanvasElement): void;
+  attachCanvas(canvas: TransferableCanvas): void;
 
   /** Start off-thread video rendering with the given configuration. */
   startRender(config: VideoConfig): void;
@@ -88,7 +98,7 @@ function _createWorkerHost(
       return renderer;
     },
 
-    attachCanvas(canvas: HTMLCanvasElement): void {
+    attachCanvas(canvas: TransferableCanvas): void {
       if (renderer === null) {
         renderer = RenderWorker.create();
       }

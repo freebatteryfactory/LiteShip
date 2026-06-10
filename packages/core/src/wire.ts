@@ -133,10 +133,25 @@ const _fromSSE = (url: string, options?: EventSourceInit): WireShape<MessageEven
  * await Effect.runPromise(Wire.runForEach(messages, m => Effect.log(m)));
  * ```
  */
+/**
+ * The WebSocket surface {@link Wire.fromWebSocket} actually drives. Named so
+ * the dependency is structural rather than ambient: test doubles
+ * (tests/helpers/mock-websocket.ts) conform to THIS type, and any drift
+ * between what the Wire consumes and what the double provides breaks the
+ * build instead of silently diverging.
+ */
+export interface WireSocket {
+  onmessage: ((event: MessageEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onclose: ((event: CloseEvent) => void) | null;
+  readonly readyState: number;
+  close(): void;
+}
+
 const _fromWebSocket = (url: string, protocols?: string | string[]): WireShape<MessageEvent, Error> => {
   const stream = Stream.callback<MessageEvent, Error>((queue) =>
     Effect.gen(function* () {
-      const ws = new WebSocket(url, protocols);
+      const ws: WireSocket = new WebSocket(url, protocols);
       let closed = false;
 
       const shutdown = (): void => {

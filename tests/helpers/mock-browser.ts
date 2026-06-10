@@ -8,7 +8,12 @@
  * - navigator capability reads in packages/detect/src/detect.ts
  * - matchMedia listener semantics used by runtime detection/bootstrap code
  * - canvas.getContext('webgl'|'webgl2') probing used by GPU/detect paths
+ *
+ * The connection override is typed against {@link NavigatorConnectionInfo} —
+ * the structural shape @czap/detect's connection probe actually reads — so
+ * probe/double drift breaks the build.
  */
+import type { NavigatorConnectionInfo } from '@czap/detect';
 
 // ---------------------------------------------------------------------------
 // Navigator mock
@@ -19,11 +24,7 @@ export interface NavigatorOverrides {
   deviceMemory?: number;
   maxTouchPoints?: number;
   gpu?: boolean;
-  connection?: {
-    effectiveType?: string;
-    downlink?: number;
-    saveData?: boolean;
-  };
+  connection?: Partial<NavigatorConnectionInfo>;
 }
 
 /**
@@ -37,11 +38,11 @@ export function mockNavigator(overrides: NavigatorOverrides = {}): () => void {
     maxTouchPoints: overrides.maxTouchPoints ?? 0,
     gpu: overrides.gpu ? {} : undefined,
     connection: overrides.connection
-      ? {
+      ? ({
           effectiveType: overrides.connection.effectiveType ?? '4g',
           downlink: overrides.connection.downlink ?? 10,
           saveData: overrides.connection.saveData ?? false,
-        }
+        } satisfies NavigatorConnectionInfo)
       : undefined,
     userAgent: 'MockBrowser/1.0',
   };
