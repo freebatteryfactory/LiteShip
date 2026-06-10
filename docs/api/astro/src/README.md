@@ -34,6 +34,10 @@ const config = defineConfig({
 - [SatelliteProps](interfaces/SatelliteProps.md)
 - [ServerIslandContext](interfaces/ServerIslandContext.md)
 
+## Type Aliases
+
+- [CrossOriginEmbedderPolicy](type-aliases/CrossOriginEmbedderPolicy.md)
+
 ## Functions
 
 - [czapMiddleware](functions/czapMiddleware.md)

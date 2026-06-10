@@ -34,7 +34,12 @@ Defined in: [audit/src/devops-profile.ts:19](https://github.com/heyoub/LiteShip/
 
 > `readonly` **astroRuntimeFiles**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L21)
+Defined in: [audit/src/devops-profile.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L27)
+
+Shared runtime adapter files, relative to the astro PACKAGE root (e.g.
+`'src/runtime/boundary.ts'`). Entries starting with `packages/` are
+treated as repo-root-relative for back-compat with pre-consumer-mode
+profiles.
 
 ***
 
@@ -42,7 +47,19 @@ Defined in: [audit/src/devops-profile.ts:21](https://github.com/heyoub/LiteShip/
 
 > `readonly` **knownCapabilityNotes**: readonly `object`[]
 
-Defined in: [audit/src/devops-profile.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L23)
+Defined in: [audit/src/devops-profile.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L37)
+
+***
+
+### vitePackage?
+
+> `readonly` `optional` **vitePackage?**: `string`
+
+Defined in: [audit/src/devops-profile.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L34)
+
+Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
+When absent, the legacy repo-root-relative `packages/vite/...` location
+is used so existing profiles keep working.
 
 ***
 
@@ -50,4 +67,14 @@ Defined in: [audit/src/devops-profile.ts:23](https://github.com/heyoub/LiteShip/
 
 > `readonly` **viteVirtualModules**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L22)
+Defined in: [audit/src/devops-profile.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L28)
+
+***
+
+### viteVirtualModulesFile?
+
+> `readonly` `optional` **viteVirtualModulesFile?**: `string`
+
+Defined in: [audit/src/devops-profile.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L36)
+
+Virtual-module inventory file, relative to `vitePackage`'s root.

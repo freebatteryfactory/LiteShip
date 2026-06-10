@@ -8,7 +8,7 @@
 
 > **runStructureAudit**(`profile?`): [`AuditSectionResult`](../interfaces/AuditSectionResult.md)\<[`StructureSummary`](../interfaces/StructureSummary.md)\>
 
-Defined in: [audit/src/structure.ts:262](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L262)
+Defined in: [audit/src/structure.ts:263](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L263)
 
 ## Parameters
 

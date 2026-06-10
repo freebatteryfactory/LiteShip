@@ -6,7 +6,7 @@
 
 # Interface: CzapLocals
 
-Defined in: [astro/src/middleware.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L24)
+Defined in: [astro/src/middleware.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L25)
 
 Shape of `context.locals.czap` injected by [czapMiddleware](../functions/czapMiddleware.md).
 Astro components (and downstream middleware) read this to drive
@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](#)
 
-Defined in: [astro/src/middleware.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L32)
+Defined in: [astro/src/middleware.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L33)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L34)
+Defined in: [astro/src/middleware.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L35)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -54,7 +54,7 @@ Edge-host resolution result, present when an edge adapter is configured.
 
 > `readonly` **tier**: `object`
 
-Defined in: [astro/src/middleware.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L26)
+Defined in: [astro/src/middleware.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L27)
 
 Resolved tiers (capability, motion, design).
 
