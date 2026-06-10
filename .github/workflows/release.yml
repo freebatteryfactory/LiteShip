@@ -67,7 +67,7 @@ jobs:
           CI: true
 
   publish:
-    name: Publish 18 @czap/* packages + attach ShipCapsules
+    name: Publish 18 @czap/* packages + the liteship umbrella + attach ShipCapsules
     needs: release-certified
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -131,7 +131,7 @@ jobs:
           # added or removed in packages/, this assertion fails loud rather
           # than silently skipping the new one. Update both the EXPECTED
           # count and the loop list in the same commit.
-          EXPECTED_PUBLISHABLE=18
+          EXPECTED_PUBLISHABLE=19
           ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
             | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \
             | wc -l)
@@ -142,15 +142,18 @@ jobs:
 
           OUTLOG=$(mktemp)
           FAILED=()
-          for pkg in _spine core quantizer compiler web detect vite astro edge cloudflare worker remotion scene assets audit command cli mcp-server; do
-            echo "::group::@czap/$pkg"
-            if node packages/cli/bin/czap.mjs ship --filter "@czap/$pkg" $DRY_RUN_FLAG 2>&1 | tee "$OUTLOG"; then
-              echo "✅ @czap/$pkg published"
+          # Full package names: 18 @czap/* scopes + the unscoped `liteship`
+          # umbrella (published LAST so its workspace deps already exist at
+          # the new version on the registry).
+          for pkg in @czap/_spine @czap/core @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server liteship; do
+            echo "::group::$pkg"
+            if node packages/cli/bin/czap.mjs ship --filter "$pkg" $DRY_RUN_FLAG 2>&1 | tee "$OUTLOG"; then
+              echo "✅ $pkg published"
             elif grep -qE "previously published|cannot publish over|EPUBLISHCONFLICT|You cannot publish over" "$OUTLOG"; then
-              echo "✅ @czap/$pkg already at this version on npm (idempotent skip)"
+              echo "✅ $pkg already at this version on npm (idempotent skip)"
             else
-              echo "❌ @czap/$pkg failed for non-idempotency reason"
-              FAILED+=("@czap/$pkg")
+              echo "❌ $pkg failed for non-idempotency reason"
+              FAILED+=("$pkg")
             fi
             echo "::endgroup::"
           done
@@ -189,5 +192,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${GITHUB_REF_NAME}" \
-            packages/*/czap-*-${{ steps.ver.outputs.version }}.shipcapsule.cbor \
+            packages/*/*-${{ steps.ver.outputs.version }}.shipcapsule.cbor \
             --clobber

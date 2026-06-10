@@ -420,6 +420,63 @@ importers:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
 
+  packages/liteship:
+    dependencies:
+      '@czap/_spine':
+        specifier: workspace:*
+        version: link:../_spine
+      '@czap/assets':
+        specifier: workspace:*
+        version: link:../assets
+      '@czap/astro':
+        specifier: workspace:*
+        version: link:../astro
+      '@czap/audit':
+        specifier: workspace:*
+        version: link:../audit
+      '@czap/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@czap/cloudflare':
+        specifier: workspace:*
+        version: link:../cloudflare
+      '@czap/command':
+        specifier: workspace:*
+        version: link:../command
+      '@czap/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@czap/core':
+        specifier: workspace:*
+        version: link:../core
+      '@czap/detect':
+        specifier: workspace:*
+        version: link:../detect
+      '@czap/edge':
+        specifier: workspace:*
+        version: link:../edge
+      '@czap/mcp-server':
+        specifier: workspace:*
+        version: link:../mcp-server
+      '@czap/quantizer':
+        specifier: workspace:*
+        version: link:../quantizer
+      '@czap/remotion':
+        specifier: workspace:*
+        version: link:../remotion
+      '@czap/scene':
+        specifier: workspace:*
+        version: link:../scene
+      '@czap/vite':
+        specifier: workspace:*
+        version: link:../vite
+      '@czap/web':
+        specifier: workspace:*
+        version: link:../web
+      '@czap/worker':
+        specifier: workspace:*
+        version: link:../worker
+
   packages/mcp-server:
     dependencies:
       '@czap/command':

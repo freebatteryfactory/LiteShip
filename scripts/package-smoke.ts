@@ -78,6 +78,9 @@ const PACKAGES: readonly PackageSpec[] = [
   { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
   { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
   { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
+  // The unscoped umbrella — manifest-level deps on every @czap/* scope,
+  // zero source imports; smoke verifies its own entrypoint resolves.
+  { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
 ];
 
 const PEER_INSTALLS = [
@@ -250,7 +253,9 @@ function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: s
     const entries = Object.entries(pkg[field] ?? {});
     for (const [dependency, version] of entries) {
       if (version.startsWith('workspace:')) {
-        throw new Error(`${packageName} packed metadata still contains workspace protocol for ${dependency}: ${version}`);
+        throw new Error(
+          `${packageName} packed metadata still contains workspace protocol for ${dependency}: ${version}`,
+        );
       }
     }
   }
@@ -321,10 +326,7 @@ async function main(): Promise<void> {
         `consumer package.json written (peers + packed externals: ${Object.keys(externalDeps).join(', ') || 'none'})`,
       );
 
-      await writeFile(
-        join(consumerDir, '.npmrc'),
-        ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'),
-      );
+      await writeFile(join(consumerDir, '.npmrc'), ['node-linker=hoisted', 'public-hoist-pattern[]=*', ''].join('\n'));
       stepOk('consumer .npmrc written (hoisted linker)');
 
       // Consumer scratch lives under the repo; without --ignore-workspace pnpm
@@ -394,7 +396,11 @@ async function main(): Promise<void> {
 
     step(`import-smoke ${PACKAGES.flatMap((pkg) => pkg.imports).length} module specifiers via node smoke.mjs`);
     const smokeModule = `
-const imports = ${JSON.stringify(PACKAGES.flatMap((pkg) => pkg.imports), null, 2)};
+const imports = ${JSON.stringify(
+      PACKAGES.flatMap((pkg) => pkg.imports),
+      null,
+      2,
+    )};
 for (const specifier of imports) {
   const mod = await import(specifier);
   if (!mod || typeof mod !== 'object') {

@@ -1,0 +1,68 @@
+{
+  "name": "liteship",
+  "version": "0.1.4",
+  "description": "LiteShip umbrella — installs the full @czap/* constraint-based adaptive rendering stack in one dependency",
+  "license": "MIT",
+  "author": "Eassa Ayoub <eassa@heyoub.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heyoub/LiteShip",
+    "directory": "packages/liteship"
+  },
+  "bugs": "https://github.com/heyoub/LiteShip/issues",
+  "homepage": "https://github.com/heyoub/LiteShip#readme",
+  "keywords": [
+    "liteship",
+    "czap",
+    "adaptive-rendering",
+    "boundary",
+    "astro",
+    "typescript"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "development": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "@czap/_spine": "workspace:*",
+    "@czap/assets": "workspace:*",
+    "@czap/astro": "workspace:*",
+    "@czap/audit": "workspace:*",
+    "@czap/cli": "workspace:*",
+    "@czap/cloudflare": "workspace:*",
+    "@czap/command": "workspace:*",
+    "@czap/compiler": "workspace:*",
+    "@czap/core": "workspace:*",
+    "@czap/detect": "workspace:*",
+    "@czap/edge": "workspace:*",
+    "@czap/mcp-server": "workspace:*",
+    "@czap/quantizer": "workspace:*",
+    "@czap/remotion": "workspace:*",
+    "@czap/scene": "workspace:*",
+    "@czap/vite": "workspace:*",
+    "@czap/web": "workspace:*",
+    "@czap/worker": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
