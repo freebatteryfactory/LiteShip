@@ -177,16 +177,20 @@ export const dynamicImportExemptions: ReadonlySet<string> = new Set([
 export const surfacePolicy = {
   astroPackage: '@czap/astro',
   astroClientDirectives: ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'] as const,
+  // Astro-package-relative (consumer-mode seam): resolved against wherever
+  // @czap/astro actually lives — `packages/astro` in the monorepo, a
+  // node_modules install downstream. Legacy `packages/`-prefixed entries in
+  // external profiles still resolve repo-root-relative.
   astroRuntimeFiles: [
-    'packages/astro/src/runtime/satellite.ts',
-    'packages/astro/src/runtime/stream.ts',
-    'packages/astro/src/runtime/llm.ts',
-    'packages/astro/src/runtime/worker.ts',
-    'packages/astro/src/runtime/gpu.ts',
-    'packages/astro/src/runtime/wasm.ts',
-    'packages/astro/src/runtime/boundary.ts',
-    'packages/astro/src/runtime/slots.ts',
-    'packages/astro/src/runtime/directive-boot.ts',
+    'src/runtime/satellite.ts',
+    'src/runtime/stream.ts',
+    'src/runtime/llm.ts',
+    'src/runtime/worker.ts',
+    'src/runtime/gpu.ts',
+    'src/runtime/wasm.ts',
+    'src/runtime/boundary.ts',
+    'src/runtime/slots.ts',
+    'src/runtime/directive-boot.ts',
   ] as const,
   viteVirtualModules: [
     'virtual:czap/tokens',
@@ -196,6 +200,8 @@ export const surfacePolicy = {
     'virtual:czap/hmr-client',
     'virtual:czap/wasm-url',
   ] as const,
+  vitePackage: '@czap/vite',
+  viteVirtualModulesFile: 'src/virtual-modules.ts',
   knownCapabilityNotes: [
     {
       file: 'packages/astro/src/runtime/gpu.ts',

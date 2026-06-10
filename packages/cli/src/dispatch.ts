@@ -103,7 +103,11 @@ export async function run(argv: readonly string[]): Promise<number> {
       const eq = parseFlag(rest, '--profile');
       const idx = rest.indexOf('--profile');
       const profile = eq ?? (idx >= 0 ? rest[idx + 1] : undefined);
-      return audit(profile ? { profile } : {});
+      const consumer = rest.includes('--consumer');
+      return audit({
+        ...(profile ? { profile } : {}),
+        ...(consumer ? { consumer } : {}),
+      });
     }
     case 'gauntlet': {
       return gauntlet(rest);

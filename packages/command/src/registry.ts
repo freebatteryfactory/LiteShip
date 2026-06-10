@@ -55,7 +55,10 @@ export interface CommandContext {
    * `@czap/cli` provides it; `audit` is not MCP-exposed, so the capability is
    * absent in the MCP context and the handler degrades to a structured failure.
    */
-  readonly runAudit?: (input: { readonly profilePath?: string }) => Promise<AuditEngineSummary>;
+  readonly runAudit?: (input: {
+    readonly profilePath?: string;
+    readonly consumer?: boolean;
+  }) => Promise<AuditEngineSummary>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
   /**
@@ -134,7 +137,7 @@ export interface AuditEngineSummary {
     readonly surface: number;
   };
   readonly repoRoot: string;
-  readonly profileSource: 'default' | 'file';
+  readonly profileSource: 'default' | 'file' | 'consumer';
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */

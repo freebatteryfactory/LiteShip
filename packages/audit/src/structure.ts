@@ -13,13 +13,14 @@ import { normalizeRepoPath } from './policy.js';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import {
-  defaultRoot,
   lineAndColumn,
-  listPackageManifests,
+  listProfilePackageManifests,
   partitionAllowlistedFindings,
-  readSourceFileRecords,
+  readProfileSourceFileRecords,
   relativeToRoot,
 } from './shared.js';
+import type { PackageManifestInfo } from './shared.js';
+import { resolveAstroPackageFile } from './surface.js';
 import type {
   AllowlistUnexercisedEntry,
   AuditFinding,
@@ -102,10 +103,10 @@ function resolveRelativeImport(specifier: string, containingFile: string): strin
   return null;
 }
 
-function buildPackageExportTargets(root = defaultRoot()): Map<string, PackageExportTarget> {
+function buildPackageExportTargets(packageInfos: readonly PackageManifestInfo[]): Map<string, PackageExportTarget> {
   const targets = new Map<string, PackageExportTarget>();
 
-  for (const pkg of listPackageManifests(root)) {
+  for (const pkg of packageInfos) {
     const packageTargets: Record<string, string> = {};
     const entries = Object.entries(pkg.exports);
 
@@ -266,15 +267,22 @@ export function runStructureAudit(
   // parallel `root` param that could silently shadow it. Callers that want a
   // different tree derive a profile with `withRepoRoot(profile, root)`.
   const root = profile.repoRoot;
-  const packageInfos = listPackageManifests(root);
+  const packageInfos = listProfilePackageManifests(profile);
   const packageByName = new Map(packageInfos.map((pkg) => [pkg.name, pkg] as const));
-  const packageExportTargets = buildPackageExportTargets(root);
+  const packageExportTargets = buildPackageExportTargets(packageInfos);
+  // Known-surface seed: profile-listed astro runtime files (resolved against
+  // the astro PACKAGE root — the consumer-install seam) plus every non-wildcard
+  // export target of every package. Client-directive and middleware sources
+  // arrive through the exports map; they need no literal path templates here.
+  const astroPackageInfo = profile.surfacePolicy.astroPackage
+    ? (packageInfos.find((pkg) => pkg.name === profile.surfacePolicy.astroPackage) ?? null)
+    : null;
   const knownSurfaceFiles = new Set<string>([
-    ...profile.surfacePolicy.astroRuntimeFiles,
-    ...profile.surfacePolicy.astroClientDirectives.map(
-      (directive) => `packages/astro/src/client-directives/${directive}.ts`,
-    ),
-    'packages/astro/src/middleware.ts',
+    ...(astroPackageInfo
+      ? profile.surfacePolicy.astroRuntimeFiles.map((file) =>
+          relativeToRoot(resolveAstroPackageFile(root, astroPackageInfo.dir, file), root),
+        )
+      : profile.surfacePolicy.astroRuntimeFiles),
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
         .map((value) => {
@@ -290,7 +298,7 @@ export function runStructureAudit(
         .filter((value): value is string => Boolean(value)),
     ),
   ]);
-  const sourceRecords = readSourceFileRecords(root);
+  const sourceRecords = readProfileSourceFileRecords(profile);
   const sourceByPath = new Map(sourceRecords.map((record) => [record.absolutePath, record] as const));
 
   const rawFindings: AuditFinding[] = [];

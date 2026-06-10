@@ -18,8 +18,22 @@ import type { PackagePolicy } from './policy.js';
 export interface SurfacePolicyShape {
   readonly astroPackage: string;
   readonly astroClientDirectives: readonly string[];
+  /**
+   * Shared runtime adapter files, relative to the astro PACKAGE root (e.g.
+   * `'src/runtime/boundary.ts'`). Entries starting with `packages/` are
+   * treated as repo-root-relative for back-compat with pre-consumer-mode
+   * profiles.
+   */
   readonly astroRuntimeFiles: readonly string[];
   readonly viteVirtualModules: readonly string[];
+  /**
+   * Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
+   * When absent, the legacy repo-root-relative `packages/vite/...` location
+   * is used so existing profiles keep working.
+   */
+  readonly vitePackage?: string;
+  /** Virtual-module inventory file, relative to `vitePackage`'s root. */
+  readonly viteVirtualModulesFile?: string;
   readonly knownCapabilityNotes: readonly { readonly file: string; readonly summary: string }[];
 }
 
@@ -38,6 +52,14 @@ export interface DevopsProfile {
   readonly dynamicImportExemptions: ReadonlySet<string>;
   /** Known public-surface files (orphan-detection seed). */
   readonly surfacePolicy: SurfacePolicyShape;
+  /**
+   * Optional explicit package-root map: package name → ABSOLUTE package dir.
+   * When present, the passes enumerate THESE roots instead of globbing
+   * `repoRoot/packages/*` — the consumer-install seam. Build one with
+   * `consumerDevopsProfile()` / `discoverInstalledPackageRoots()` to audit
+   * the `@czap/*` packages installed in a downstream repo's node_modules.
+   */
+  readonly packageRoots?: Readonly<Record<string, string>>;
 }
 
 /**
