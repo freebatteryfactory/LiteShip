@@ -19,31 +19,19 @@ describe('tokenBufferCapsule', () => {
     const inv = tokenBufferCapsule.invariants.find((i) => i.name === 'phase-matches-content');
     expect(inv).toBeDefined();
     // Empty + buffering → invalid.
-    expect(
-      inv!.check({ _tag: 'reset' }, { phase: 'buffering', tokens: [], totalBytes: 0 }),
-    ).toBe(false);
+    expect(inv!.check({ _tag: 'reset' }, { phase: 'buffering', tokens: [], totalBytes: 0 })).toBe(false);
     // Empty + idle → ok.
-    expect(
-      inv!.check({ _tag: 'reset' }, { phase: 'idle', tokens: [], totalBytes: 0 }),
-    ).toBe(true);
+    expect(inv!.check({ _tag: 'reset' }, { phase: 'idle', tokens: [], totalBytes: 0 })).toBe(true);
     // Non-empty + buffering → ok.
-    expect(
-      inv!.check({ _tag: 'push', token: 'a' }, { phase: 'buffering', tokens: ['a'], totalBytes: 1 }),
-    ).toBe(true);
+    expect(inv!.check({ _tag: 'push', token: 'a' }, { phase: 'buffering', tokens: ['a'], totalBytes: 1 })).toBe(true);
   });
 
   it('totalBytes-tracks-tokens rejects mismatched byte total', () => {
     const inv = tokenBufferCapsule.invariants.find((i) => i.name === 'totalBytes-tracks-tokens');
     expect(inv).toBeDefined();
-    expect(
-      inv!.check(undefined, { tokens: ['ab', 'c'], totalBytes: 3 }),
-    ).toBe(true);
-    expect(
-      inv!.check(undefined, { tokens: ['ab', 'c'], totalBytes: 5 }),
-    ).toBe(false);
-    expect(
-      inv!.check(undefined, { tokens: [], totalBytes: 0 }),
-    ).toBe(true);
+    expect(inv!.check(undefined, { tokens: ['ab', 'c'], totalBytes: 3 })).toBe(true);
+    expect(inv!.check(undefined, { tokens: ['ab', 'c'], totalBytes: 5 })).toBe(false);
+    expect(inv!.check(undefined, { tokens: [], totalBytes: 0 })).toBe(true);
   });
 
   it('declares the harness channel: initialState + step', () => {
@@ -75,5 +63,20 @@ describe('tokenBufferCapsule', () => {
       state = step(state, { _tag: 'push', token });
     }
     expect(state.tokens).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('step exercises the production overflow: capacity stays 256 and the oldest token drops', () => {
+    // The rebuild must use the production default capacity, not an
+    // expanding one — otherwise the harness never reaches the ring's
+    // oldest-overwrite path and the state diverges from the hot path.
+    const step = tokenBufferCapsule.step!;
+    let state = tokenBufferCapsule.initialState!;
+    for (let i = 0; i < 257; i++) {
+      state = step(state, { _tag: 'push', token: `t${i}` });
+    }
+    expect(state.tokens).toHaveLength(256);
+    expect(state.tokens[0]).toBe('t1'); // t0 overwritten by the 257th push
+    expect(state.tokens[255]).toBe('t256');
+    expect(state.totalBytes).toBe(state.tokens.reduce((s, t) => s + t.length, 0));
   });
 });
