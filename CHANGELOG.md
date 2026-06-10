@@ -25,6 +25,16 @@ release, and the two deferred dogfood items.
   clamp to the 240s floor under coverage (a raw literal silently LOWERED
   the budget before) and honor `CZAP_TEST_TIMEOUT_SCALE` on loaded
   machines. A meta source guard rejects raw timeout literals.
+- Rust/WASM parity harness: `crates/czap-compute` joins the proof system —
+  crate unit tests, a CI job (`rust-wasm-parity`) that builds the wasm32
+  artifact from source, and a property suite loading it through the real
+  `WASMDispatch.load()` against `fallbackKernels` (boundary state indices
+  exact, spring trajectories within f32 tolerance, blend bit-identical).
+  The suite self-skips locally when the artifact is absent.
+- `czap-compute` — `blend_normalize` accumulates its total and computes the
+  reciprocal in f64, matching the TS fallback op-for-op: an f32 reciprocal
+  overflowed to `inf` for subnormal weight totals where the fallback
+  normalized to 1.0 (caught by the new parity suite on its first run).
 
 ### Changed
 
