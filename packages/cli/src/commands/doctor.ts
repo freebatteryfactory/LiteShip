@@ -71,6 +71,22 @@ export interface DoctorFix {
   readonly detail?: string;
 }
 
+/**
+ * Discriminated read result for environment probes. Doctor's one job is
+ * diagnosis, so file probes must not collapse "the file is absent" (often
+ * fine) and "the file exists but cannot be read or parsed" (always a real
+ * environment problem worth reporting) into one falsy value — that turns a
+ * corrupt manifest into a bogus "dependency missing" verdict.
+ */
+type Readout<T> =
+  | { readonly kind: 'ok'; readonly value: T }
+  | { readonly kind: 'absent' }
+  | { readonly kind: 'unreadable'; readonly detail: string };
+
+function unreadable(e: unknown): { kind: 'unreadable'; detail: string } {
+  return { kind: 'unreadable', detail: e instanceof Error ? e.message : String(e) };
+}
+
 /** Receipt shape emitted by `czap doctor`. */
 export interface DoctorReceipt {
   readonly status: 'ok' | 'failed';
@@ -116,20 +132,19 @@ function loadEngineMinima(cwd: string): EngineMinima {
 
 /**
  * Read the build-script's package list out of root package.json so the
- * doctor and the build never drift. Falls back to a static list if
- * package.json is unreadable.
+ * doctor and the build never drift. No catch: every caller is gated by
+ * `isLiteShipWorkspace(cwd)`, which already parsed this same manifest — a
+ * parse failure here is a real bug and must surface, not silently skip
+ * tsbuildinfo invalidation (which would let `pnpm run build` no-op against
+ * stale dist/).
  */
 function loadBuiltPackages(cwd: string): readonly string[] {
-  try {
-    const pkgPath = resolve(cwd, 'package.json');
-    if (!existsSync(pkgPath)) return [];
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: { build?: string } };
-    const build = pkg.scripts?.build ?? '';
-    const matches = Array.from(build.matchAll(/packages\/([\w-]+)/g));
-    return matches.flatMap((m) => (m[1] ? [m[1]] : []));
-  } catch {
-    return [];
-  }
+  const pkgPath = resolve(cwd, 'package.json');
+  if (!existsSync(pkgPath)) return [];
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: { build?: string } };
+  const build = pkg.scripts?.build ?? '';
+  const matches = Array.from(build.matchAll(/packages\/([\w-]+)/g));
+  return matches.flatMap((m) => (m[1] ? [m[1]] : []));
 }
 
 /** Parse `vMAJOR.MINOR.PATCH` (or `MAJOR.MINOR.PATCH`) into a major-version number. */
@@ -277,39 +292,49 @@ function probeBuilt(cwd: string, pkg: string, label: string): DoctorCheck {
  * just `<cwd>/.git/hooks`; in a git worktree, `<cwd>/.git` is a file
  * containing `gitdir: <path>` pointing at the real gitdir (which itself
  * contains a `commondir` file pointing at the main repo's gitdir, where
- * the hooks live). Returns null when no `.git` is present.
+ * the hooks live). `absent` when no `.git` is present; `unreadable` when
+ * `.git` exists but its pointer chain cannot be followed — a doctor must
+ * report that as a finding, not shrug it off as "not a repo".
  */
-function resolveGitHooksDir(cwd: string): string | null {
+function resolveGitHooksDir(cwd: string): Readout<string> {
   const dotGit = resolve(cwd, '.git');
-  if (!existsSync(dotGit)) return null;
+  if (!existsSync(dotGit)) return { kind: 'absent' };
   try {
     if (statSync(dotGit).isDirectory()) {
-      return resolve(dotGit, 'hooks');
+      return { kind: 'ok', value: resolve(dotGit, 'hooks') };
     }
     // Worktree: `.git` is a file like `gitdir: /abs/path/.git/worktrees/foo`.
     const pointer = readFileSync(dotGit, 'utf8');
     const m = pointer.match(/^gitdir:\s*(.+)\s*$/m);
-    if (!m) return null;
+    if (!m) return { kind: 'unreadable', detail: '.git pointer file has no gitdir: line' };
     const worktreeGitDir = resolve(cwd, m[1]!);
     // Hooks live in the main repo's gitdir, not the per-worktree one.
     // `commondir` (relative to worktreeGitDir) points there.
     const commondirFile = resolve(worktreeGitDir, 'commondir');
     if (existsSync(commondirFile)) {
       const commondir = resolve(worktreeGitDir, readFileSync(commondirFile, 'utf8').trim());
-      return resolve(commondir, 'hooks');
+      return { kind: 'ok', value: resolve(commondir, 'hooks') };
     }
-    return resolve(worktreeGitDir, 'hooks');
-  } catch {
-    return null;
+    return { kind: 'ok', value: resolve(worktreeGitDir, 'hooks') };
+  } catch (e) {
+    return unreadable(e);
   }
 }
 
 function probeGitHooks(cwd: string): DoctorCheck {
   const hooksDir = resolveGitHooksDir(cwd);
-  if (hooksDir === null) {
+  if (hooksDir.kind === 'absent') {
     return { id: 'git.hooks', label: 'git hooks', status: 'ok', detail: 'no .git (not a worktree)' };
   }
-  const hook = resolve(hooksDir, 'pre-commit');
+  if (hooksDir.kind === 'unreadable') {
+    return {
+      id: 'git.hooks',
+      label: 'git hooks',
+      status: 'warn',
+      detail: `.git present but hooks dir unresolved: ${hooksDir.detail}`,
+    };
+  }
+  const hook = resolve(hooksDir.value, 'pre-commit');
   if (!existsSync(hook)) {
     return {
       id: 'git.hooks',
@@ -464,33 +489,32 @@ interface RunProbesOptions {
   readonly target?: DoctorTarget;
 }
 
-function readCwdPackageJson(cwd: string): Record<string, unknown> | null {
+function readCwdPackageJson(cwd: string): Readout<Record<string, unknown>> {
   const pkgPath = resolve(cwd, 'package.json');
-  if (!existsSync(pkgPath)) return null;
+  if (!existsSync(pkgPath)) return { kind: 'absent' };
   try {
-    return JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>;
-  } catch {
-    return null;
+    return { kind: 'ok', value: JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown> };
+  } catch (e) {
+    return unreadable(e);
   }
 }
 
-function readInstalledVersion(cwd: string, pkgName: string): string | null {
+function readInstalledVersion(cwd: string, pkgName: string): Readout<string> {
   const pkgPath = resolve(cwd, 'node_modules', pkgName, 'package.json');
-  if (!existsSync(pkgPath)) return null;
+  if (!existsSync(pkgPath)) return { kind: 'absent' };
   try {
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string };
-    return typeof pkg.version === 'string' ? pkg.version : null;
-  } catch {
-    return null;
+    return typeof pkg.version === 'string' ? { kind: 'ok', value: pkg.version } : { kind: 'absent' };
+  } catch (e) {
+    return unreadable(e);
   }
 }
 
-function hasDep(cwd: string, pkgName: string): boolean {
-  const pkg = readCwdPackageJson(cwd);
-  if (!pkg) return false;
-  const deps = pkg.dependencies as Record<string, string> | undefined;
-  const devDeps = pkg.devDependencies as Record<string, string> | undefined;
-  return !!(deps?.[pkgName] ?? devDeps?.[pkgName] ?? readInstalledVersion(cwd, pkgName));
+function hasDep(manifest: Record<string, unknown> | null, cwd: string, pkgName: string): boolean {
+  const deps = manifest?.['dependencies'] as Record<string, string> | undefined;
+  const devDeps = manifest?.['devDependencies'] as Record<string, string> | undefined;
+  if (deps?.[pkgName] ?? devDeps?.[pkgName]) return true;
+  return readInstalledVersion(cwd, pkgName).kind === 'ok';
 }
 
 function findAstroConfig(cwd: string): string | null {
@@ -502,7 +526,17 @@ function findAstroConfig(cwd: string): string | null {
 }
 
 function probeCloudflareAstro(cwd: string): DoctorCheck {
-  if (!hasDep(cwd, 'astro')) {
+  const manifest = readCwdPackageJson(cwd);
+  if (manifest.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.astro',
+      label: 'Astro',
+      status: 'warn',
+      detail: `package.json unreadable: ${manifest.detail}`,
+      hint: 'Fix the JSON before trusting dependency probes',
+    };
+  }
+  if (!hasDep(manifest.kind === 'ok' ? manifest.value : null, cwd, 'astro')) {
     return {
       id: 'cloudflare.astro',
       label: 'Astro',
@@ -511,8 +545,17 @@ function probeCloudflareAstro(cwd: string): DoctorCheck {
       hint: 'Add Astro 6+: pnpm add astro@^6',
     };
   }
-  const version = readInstalledVersion(cwd, 'astro');
-  if (!version) {
+  const installed = readInstalledVersion(cwd, 'astro');
+  if (installed.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.astro',
+      label: 'Astro',
+      status: 'warn',
+      detail: `installed astro manifest unreadable: ${installed.detail}`,
+      hint: 'Run pnpm install',
+    };
+  }
+  if (installed.kind === 'absent') {
     return {
       id: 'cloudflare.astro',
       label: 'Astro',
@@ -521,6 +564,7 @@ function probeCloudflareAstro(cwd: string): DoctorCheck {
       hint: 'Run pnpm install',
     };
   }
+  const version = installed.value;
   const major = parseMajor(version);
   if (major === null || major < 6) {
     return {
@@ -535,7 +579,17 @@ function probeCloudflareAstro(cwd: string): DoctorCheck {
 }
 
 function probeCloudflareAdapter(cwd: string): DoctorCheck {
-  if (!hasDep(cwd, '@astrojs/cloudflare')) {
+  const manifest = readCwdPackageJson(cwd);
+  if (manifest.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.adapter',
+      label: '@astrojs/cloudflare',
+      status: 'warn',
+      detail: `package.json unreadable: ${manifest.detail}`,
+      hint: 'Fix the JSON before trusting dependency probes',
+    };
+  }
+  if (!hasDep(manifest.kind === 'ok' ? manifest.value : null, cwd, '@astrojs/cloudflare')) {
     return {
       id: 'cloudflare.adapter',
       label: '@astrojs/cloudflare',
@@ -544,8 +598,17 @@ function probeCloudflareAdapter(cwd: string): DoctorCheck {
       hint: 'Add the adapter: pnpm add @astrojs/cloudflare@^13',
     };
   }
-  const version = readInstalledVersion(cwd, '@astrojs/cloudflare');
-  if (!version) {
+  const installed = readInstalledVersion(cwd, '@astrojs/cloudflare');
+  if (installed.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.adapter',
+      label: '@astrojs/cloudflare',
+      status: 'warn',
+      detail: `installed adapter manifest unreadable: ${installed.detail}`,
+      hint: 'Run pnpm install',
+    };
+  }
+  if (installed.kind === 'absent') {
     return {
       id: 'cloudflare.adapter',
       label: '@astrojs/cloudflare',
@@ -554,6 +617,7 @@ function probeCloudflareAdapter(cwd: string): DoctorCheck {
       hint: 'Run pnpm install',
     };
   }
+  const version = installed.value;
   const major = parseMajor(version);
   if (major === null || major < 13) {
     return {
@@ -568,7 +632,8 @@ function probeCloudflareAdapter(cwd: string): DoctorCheck {
 }
 
 async function probeCloudflareWrangler(cwd: string): Promise<DoctorCheck> {
-  const pkgVersion = readInstalledVersion(cwd, 'wrangler');
+  const installed = readInstalledVersion(cwd, 'wrangler');
+  const pkgVersion = installed.kind === 'ok' ? installed.value : null;
   const r = await spawnArgvCapture('wrangler', ['--version'], { cwd, timeoutMs: DOCTOR_PROBE_TIMEOUT_MS }).catch(
     () => null,
   );
@@ -582,6 +647,15 @@ async function probeCloudflareWrangler(cwd: string): Promise<DoctorCheck> {
     };
   }
   const cliVersion = r && r.exitCode === 0 ? r.stdout.trim() : null;
+  if (!cliVersion && installed.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.wrangler',
+      label: 'Wrangler',
+      status: 'warn',
+      detail: `wrangler not on PATH and installed manifest unreadable: ${installed.detail}`,
+      hint: 'Run pnpm install',
+    };
+  }
   if (!cliVersion && !pkgVersion) {
     return {
       id: 'cloudflare.wrangler',
@@ -605,23 +679,31 @@ async function probeCloudflareWrangler(cwd: string): Promise<DoctorCheck> {
   return { id: 'cloudflare.wrangler', label: 'Wrangler', status: 'ok', detail: version };
 }
 
-function readWranglerConfig(cwd: string): string | null {
+function readWranglerConfig(cwd: string): Readout<string> {
   for (const name of ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml']) {
     const path = resolve(cwd, name);
     if (existsSync(path)) {
       try {
-        return readFileSync(path, 'utf8');
-      } catch {
-        return null;
+        return { kind: 'ok', value: readFileSync(path, 'utf8') };
+      } catch (e) {
+        return unreadable(e);
       }
     }
   }
-  return null;
+  return { kind: 'absent' };
 }
 
 function probeCloudflareConfig(cwd: string): DoctorCheck {
-  const raw = readWranglerConfig(cwd);
-  if (!raw) {
+  const config = readWranglerConfig(cwd);
+  if (config.kind === 'unreadable') {
+    return {
+      id: 'cloudflare.config',
+      label: 'Wrangler config',
+      status: 'warn',
+      detail: `wrangler config present but unreadable: ${config.detail}`,
+    };
+  }
+  if (config.kind === 'absent') {
     return {
       id: 'cloudflare.config',
       label: 'Wrangler config',
@@ -630,6 +712,7 @@ function probeCloudflareConfig(cwd: string): DoctorCheck {
       hint: 'Add wrangler.jsonc when you need KV/D1/R2 bindings — see docs/hosting/cloudflare.md',
     };
   }
+  const raw = config.value;
   const issues: string[] = [];
   if (!/compatibility_date/i.test(raw)) issues.push('compatibility_date');
   if (!/nodejs_compat/i.test(raw)) issues.push('nodejs_compat');
@@ -667,12 +750,12 @@ function probeCloudflareOutput(cwd: string): DoctorCheck {
   let raw = '';
   try {
     raw = readFileSync(configPath, 'utf8');
-  } catch {
+  } catch (e) {
     return {
       id: 'cloudflare.output',
       label: 'Astro output mode',
       status: 'warn',
-      detail: 'astro.config unreadable',
+      detail: `astro.config unreadable: ${e instanceof Error ? e.message : String(e)}`,
     };
   }
   const hasAdapter = /@astrojs\/cloudflare|cloudflare\s*\(/.test(raw);

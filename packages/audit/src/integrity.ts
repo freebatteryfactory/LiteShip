@@ -64,7 +64,8 @@ function findStringLiteral(node: ts.Node, pattern: RegExp): string | null {
   return matched;
 }
 
-function findCatchReturn(block: ts.Block): ts.ReturnStatement | null {
+function findCatchReturn(clause: ts.CatchClause): ts.ReturnStatement | null {
+  const block = clause.block;
   let sawThrow = false;
   let found: ts.ReturnStatement | null = null;
   const visit = (node: ts.Node): void => {
@@ -79,7 +80,27 @@ function findCatchReturn(block: ts.Block): ts.ReturnStatement | null {
     ts.forEachChild(node, visit);
   };
   ts.forEachChild(block, visit);
-  return sawThrow ? null : found;
+  if (sawThrow) return null;
+  // A catch block that CONSUMES its error binding (emits it, wraps it,
+  // attaches it to a receipt) before returning a default has surfaced the
+  // failure context — that is a deliberate degradation contract, not
+  // laundering. Only flag blocks that ignore the error entirely: either no
+  // binding at all (`catch {`) or a binding that is never referenced.
+  if (found && clause.variableDeclaration && ts.isIdentifier(clause.variableDeclaration.name)) {
+    const bindingName = clause.variableDeclaration.name.text;
+    let bindingUsed = false;
+    const scan = (node: ts.Node): void => {
+      if (bindingUsed) return;
+      if (ts.isIdentifier(node) && node.text === bindingName) {
+        bindingUsed = true;
+        return;
+      }
+      ts.forEachChild(node, scan);
+    };
+    ts.forEachChild(block, scan);
+    if (bindingUsed) return null;
+  }
+  return found;
 }
 
 export function runIntegrityAudit(
@@ -203,7 +224,7 @@ export function runIntegrityAudit(
       }
 
       if (ts.isCatchClause(node) && node.block) {
-        const returned = findCatchReturn(node.block);
+        const returned = findCatchReturn(node);
         if (returned) {
           const { line, column } = lineAndColumn(record.sourceFile, returned.getStart());
           fallbackCount += 1;

@@ -172,7 +172,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
   // The artifact-INDEPENDENT engine floor: the three audit passes on the real
   // repo with the default profile. (The full `pnpm run audit` gate adds
   // artifact-dependent supporting findings on top — those are gated elsewhere.)
-  it('the real repo holds 0 errors / 10 warnings across structure+integrity+surface', () => {
+  it('the real repo holds 0 errors / 0 warnings across structure+integrity+surface', () => {
     const all = [
       ...runStructureAudit().findings,
       ...runIntegrityAudit().findings,
@@ -183,7 +183,7 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
     const delta = diffInventories(AUDIT_WARNING_FLOOR, inventory);
     // Hard floor — D9a must not move these.
     expect(bySeverity('error')).toBe(0);
-    expect(bySeverity('warning')).toBe(10);
+    expect(bySeverity('warning')).toBe(0);
     expect(inventory).toEqual(AUDIT_WARNING_FLOOR);
     expect(delta.added, `added warnings: ${delta.added.join(', ')}`).toEqual([]);
     expect(delta.removed, `removed warnings: ${delta.removed.join(', ')}`).toEqual([]);
@@ -194,4 +194,49 @@ describe('D9a — default-profile engine floor is unchanged (no drift)', () => {
   // the default param IS liteshipDevopsProfile — and the structure pass is already
   // pinned in tests/unit/devops/profile.test.ts. The 0/6 floor above is the live
   // no-drift guard across all three passes.)
+});
+
+describe('fallback-laundering — the error-binding rule (advisory cleanup wave)', () => {
+  const HELPERS =
+    'function emit(msg: string): void { void msg; }\n' +
+    'function compute(): number { return 2; }\n';
+
+  const fixtureWith = (body: string): string =>
+    makeFixture({
+      'packages/core/package.json': PKG('@acme/core'),
+      'packages/core/src/index.ts': HELPERS + body,
+    });
+
+  const launderingIn = (root: string) =>
+    runIntegrityAudit(acmeProfile(root)).findings.filter((f) => f.rule === 'fallback-laundering');
+
+  it('a catch that CONSUMES its error binding before returning a default is not laundering', () => {
+    // The ship.ts shape: emitError(e) then return exit code 1. Context is
+    // surfaced; the default return is a deliberate degradation contract.
+    const root = fixtureWith(
+      'export function consumed(): number { try { return compute(); } catch (e) { emit(String(e)); return 1; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(0);
+  });
+
+  it('a bare catch returning a default still flags (error ignored entirely)', () => {
+    const root = fixtureWith(
+      'export function bare(): number | null { try { return compute(); } catch { return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('a DECLARED but unreferenced error binding still flags (declaring is not consuming)', () => {
+    const root = fixtureWith(
+      'export function unused(): number | null { try { return compute(); } catch (e) { return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(1);
+  });
+
+  it('a catch that rethrows keeps its existing exemption', () => {
+    const root = fixtureWith(
+      'export function rethrows(): number | null { try { return compute(); } catch { if (compute() > 1) { throw new Error(\'up\'); } return null; } }\n',
+    );
+    expect(launderingIn(root)).toHaveLength(0);
+  });
 });
