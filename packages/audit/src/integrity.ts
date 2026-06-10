@@ -85,20 +85,47 @@ function findCatchReturn(clause: ts.CatchClause): ts.ReturnStatement | null {
   // attaches it to a receipt) before returning a default has surfaced the
   // failure context — that is a deliberate degradation contract, not
   // laundering. Only flag blocks that ignore the error entirely: either no
-  // binding at all (`catch {`) or a binding that is never referenced.
+  // binding at all (`catch {`) or a binding that is never meaningfully read.
+  // Qodo (PR #11): a meaningful read excludes declaration names, property
+  // positions (`obj.e`, `{ e: ... }`), and `void e` discards; any same-name
+  // declaration inside the block shadows the binding, so no occurrence is
+  // credited (without symbol resolution, conservative-and-flagging beats
+  // crediting the wrong variable).
   if (found && clause.variableDeclaration && ts.isIdentifier(clause.variableDeclaration.name)) {
     const bindingName = clause.variableDeclaration.name.text;
     let bindingUsed = false;
+    let shadowed = false;
+    const isDeclarationName = (id: ts.Identifier): boolean => {
+      const parent = id.parent;
+      return (
+        (ts.isVariableDeclaration(parent) ||
+          ts.isParameter(parent) ||
+          ts.isBindingElement(parent) ||
+          ts.isFunctionDeclaration(parent) ||
+          ts.isClassDeclaration(parent)) &&
+        parent.name === id
+      );
+    };
+    const isPropertyPosition = (id: ts.Identifier): boolean => {
+      const parent = id.parent;
+      return (
+        (ts.isPropertyAccessExpression(parent) && parent.name === id) ||
+        (ts.isPropertyAssignment(parent) && parent.name === id) ||
+        (ts.isQualifiedName(parent) && parent.right === id)
+      );
+    };
     const scan = (node: ts.Node): void => {
-      if (bindingUsed) return;
       if (ts.isIdentifier(node) && node.text === bindingName) {
-        bindingUsed = true;
-        return;
+        if (isDeclarationName(node)) {
+          shadowed = true;
+        } else if (!isPropertyPosition(node) && !ts.isVoidExpression(node.parent)) {
+          bindingUsed = true;
+        }
       }
       ts.forEachChild(node, scan);
     };
     ts.forEachChild(block, scan);
-    if (bindingUsed) return null;
+    if (bindingUsed && !shadowed) return null;
   }
   return found;
 }

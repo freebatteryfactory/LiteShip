@@ -9,7 +9,7 @@
  *   tsx tests/e2e/server.ts --watch   # Watch mode (rebuild on change)
  */
 
-import { resolve, join, extname } from 'path';
+import { resolve, join, extname, relative, isAbsolute } from 'path';
 import { createServer } from 'http';
 import { readFile, stat } from 'fs/promises';
 import { watch } from 'fs';
@@ -116,12 +116,16 @@ const server = createServer(async (req, res) => {
   // Serve the built astro example (when the integration build has run).
   // The built HTML references its hashed assets root-absolute (/_astro/*),
   // so that prefix maps into the same dist.
-  if (path.startsWith('/astro-example') || path.startsWith('/_astro/')) {
+  if (path === '/astro-example' || path.startsWith('/astro-example/') || path.startsWith('/_astro/')) {
     const sub = path.startsWith('/_astro/')
       ? path.slice(1)
       : path.replace(/^\/astro-example\/?/, '') || 'index.html';
     const astroPath = resolve(ASTRO_DIST, sub);
-    if (!astroPath.startsWith(ASTRO_DIST)) {
+    // Containment via path.relative, not a string prefix — a prefix check
+    // admits sibling dirs like dist-evil and traversal that resolves back
+    // under a same-prefix path (Qodo, PR #11).
+    const rel = relative(ASTRO_DIST, astroPath);
+    if (rel.startsWith('..') || isAbsolute(rel)) {
       res.writeHead(403);
       res.end('Forbidden');
       return;

@@ -239,6 +239,25 @@ describe('consumer mode — installed exports targets are verified (dist truth)'
     expect(missing[0]!.location?.file).toContain('node_modules/@acme/core');
   });
 
+  it('a types-only export (no development/import condition) is still verified (Codex P2)', () => {
+    // The @czap/_spine shape: { ".": { types: "./index.d.ts" } }. The
+    // development-candidate gate must not skip it in consumer mode.
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/core/package.json': JSON.stringify({
+        name: '@acme/core',
+        version: '0.0.0',
+        exports: { '.': { types: './index.d.ts' } },
+      }),
+      // index.d.ts deliberately absent.
+      'node_modules/@acme/core/src/index.ts': 'export const coreThing = 1;\n',
+    });
+    const result = runSurfaceAudit(consumerDevopsProfile(root, acmeBase()));
+    const missing = result.findings.filter((f) => f.rule === 'export-target-missing');
+    expect(missing).toHaveLength(1);
+    expect(missing[0]!.id).toBe('surface/export-target/@acme/core:.:types');
+  });
+
   it('a fully shipped install (all conditions resolve) carries no export-target findings', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
