@@ -8,7 +8,7 @@
 
 > **lineAndColumn**(`sourceFile`, `position`): `object`
 
-Defined in: [audit/src/shared.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L189)
+Defined in: [audit/src/shared.ts:243](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L243)
 
 ## Parameters
 
