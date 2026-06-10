@@ -14,6 +14,14 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { bootstrapDirectives, scanAndBootDirectives } from '../../packages/astro/src/runtime/directive-boot.js';
 
+// Failure-path stand-in: the llm directive throws on init so the scanner's
+// transient-failure handling (unmark + diagnostic) is testable.
+vi.mock('../../packages/astro/src/client-directives/llm.js', () => ({
+  default: () => {
+    throw new Error('simulated chunk init failure');
+  },
+}));
+
 const boundary = JSON.stringify({
   id: 'hero',
   input: 'viewport.width',
@@ -95,6 +103,28 @@ describe('directive boot scanner', () => {
     // A second init would re-evaluate and overwrite the sentinel.
     expect(el.getAttribute('data-czap-state')).toBe('sentinel');
     expect(el.getAttribute('data-czap-directive-bound')).toBe('satellite');
+  });
+
+  test('a marked element passed AS the scan root activates (not only descendants)', async () => {
+    vi.stubGlobal('innerWidth', 500);
+    const el = makeMarkedElement({ 'data-czap-boundary': boundary, 'data-czap-directive': 'satellite' });
+
+    await scanAndBootDirectives(['satellite'], el);
+
+    expect(el.getAttribute('data-czap-state')).toBe('compact');
+  });
+
+  test('a failed activation unmarks the element so a later re-scan retries', async () => {
+    vi.stubGlobal('innerWidth', 500);
+    // The llm directive module is mocked (top of file) to throw on init —
+    // the transient-failure path. The element must NOT stay branded as
+    // bound, or astro:after-swap re-scans could never retry it.
+    const el = makeMarkedElement({ 'data-czap-boundary': boundary, 'data-czap-directive': 'llm' });
+
+    await scanAndBootDirectives(['llm']);
+
+    expect(el.hasAttribute('data-czap-directive-bound')).toBe(false);
+    expect(el.getAttribute('data-czap-state')).toBeNull();
   });
 
   test('bootstrapDirectives re-scans swapped-in DOM on astro:after-swap', async () => {
