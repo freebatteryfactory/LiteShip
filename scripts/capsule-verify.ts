@@ -74,30 +74,47 @@ const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
  * ever collecting it; the temp manifest lives in the system tmpdir so
  * no manifest artifact can leak into the repo.
  */
-function confirmStaleByRegeneration(suspects: readonly ManifestEntry[]): string[] {
+function confirmStaleByRegeneration(
+  suspects: readonly ManifestEntry[],
+  committedNames: ReadonlySet<string>,
+): string[] {
   const tmp = mkdtempSync(join(process.cwd(), 'tests', '.czap-verify-fresh-'));
   const tmpManifest = join(mkdtempSync(join(tmpdir(), 'czap-verify-manifest-')), 'capsule-manifest.json');
   try {
-    execSync('pnpm run capsule:compile', {
-      stdio: ['ignore', process.stderr, process.stderr],
-      env: {
-        ...process.env,
-        CZAP_CAPSULE_GENERATED_DIR: tmp,
-        CZAP_CAPSULE_MANIFEST: tmpManifest,
-        // A test harness may have left manifest-only mode set (the iso
-        // helpers leave their env for following spawns) — this compile
-        // must WRITE the temp files or every comparison reads as missing.
-        CZAP_CAPSULE_MANIFEST_ONLY: '0',
-      },
-    });
+    try {
+      execSync('pnpm run capsule:compile', {
+        stdio: ['ignore', process.stderr, process.stderr],
+        env: {
+          ...process.env,
+          CZAP_CAPSULE_GENERATED_DIR: tmp,
+          CZAP_CAPSULE_MANIFEST: tmpManifest,
+          // A test harness may have left manifest-only mode set (the iso
+          // helpers leave their env for following spawns) — this compile
+          // must WRITE the temp files or every comparison reads as missing.
+          CZAP_CAPSULE_MANIFEST_ONLY: '0',
+        },
+      });
+    } catch {
+      // Fail CLOSED with the receipt contract intact: an unconfirmable
+      // suspect stays stale rather than crashing without a JSON verdict.
+      return suspects.map((cap) => `${cap.name} (regeneration compile failed — run \`pnpm run capsule:compile\` to see why)`);
+    }
     const regenerated = JSON.parse(readFileSync(tmpManifest, 'utf8')) as { capsules: ManifestEntry[] };
+
+    // A touched source can ADD a capsule while its existing capsules
+    // regenerate byte-identically — then every suspect passes but the
+    // committed MANIFEST is stale. Any name-set drift is staleness.
+    const drift = regenerated.capsules.filter((c) => !committedNames.has(c.name)).map((c) => c.name);
+    if (drift.length > 0) {
+      return drift.map((name) => `${name} (capsule exists in a fresh compile but not in the committed manifest)`);
+    }
     const byName = new Map(regenerated.capsules.map((c) => [c.name, c]));
 
     const confirmed: string[] = [];
     for (const cap of suspects) {
       const fresh = byName.get(cap.name);
       if (!fresh) {
-        confirmed.push(cap.name); // vanished from a fresh compile — definitely stale
+        confirmed.push(`${cap.name} (vanished from a fresh compile)`);
         continue;
       }
       const pairs: ReadonlyArray<readonly [string, string]> = [
@@ -110,7 +127,7 @@ function confirmStaleByRegeneration(suspects: readonly ManifestEntry[]): string[
         if (!existsSync(committedPath) || !existsSync(regenPath)) return true;
         return readFileSync(committedPath, 'utf8') !== readFileSync(regenPath, 'utf8');
       });
-      if (differs) confirmed.push(cap.name);
+      if (differs) confirmed.push(`${cap.name} (source changed and regeneration differs from the committed generated files)`);
     }
     return confirmed;
   } finally {
@@ -165,11 +182,9 @@ function main(): Verdict {
   // mtime comparison false-positive whenever a source changes without
   // changing its generated output.
   if (mtimeSuspects.length > 0) {
-    for (const name of confirmStaleByRegeneration(mtimeSuspects)) {
-      errors.push(
-        `stale: ${name} (source changed and regeneration differs from the committed generated files — ` +
-          `run \`pnpm run capsule:compile\` and commit the tests/generated changes)`,
-      );
+    const committedNames = new Set(manifest.capsules.map((c) => c.name));
+    for (const detail of confirmStaleByRegeneration(mtimeSuspects, committedNames)) {
+      errors.push(`stale: ${detail}; run \`pnpm run capsule:compile\` and commit the resulting changes`);
     }
   }
 
