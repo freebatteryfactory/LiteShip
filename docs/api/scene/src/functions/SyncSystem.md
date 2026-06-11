@@ -8,7 +8,7 @@
 
 > **SyncSystem**(`frameIndex`, `fps?`): `SystemShape`
 
-Defined in: [scene/src/systems/sync.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L48)
+Defined in: [scene/src/systems/sync.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/sync.ts#L55)
 
 Build a SyncSystem keyed to a frame index. Resolves the current scene
 time from `frameIndex / fps`, queries the world for `Beat`-tagged
@@ -16,8 +16,10 @@ entities, picks the most recent beat at-or-before the current time,
 and writes `_intensity = exp(-msSinceBeat / 250)` onto every
 SyncAnchor entity. When the entity also carries `Envelope` +
 `FrameRange` components (an effect track declaring both `syncTo`
-and `envelope`), the decay is multiplied by the envelope factor —
-sync sets the base, the envelope modulates it (see module docblock).
+and `envelope`) and `frameIndex` falls inside the half-open
+`[range.from, range.to)` window, the decay is multiplied by the
+envelope factor — sync sets the base, the envelope modulates it
+(see module docblock). Outside the window the write is plain decay.
 
 ## Parameters
 
