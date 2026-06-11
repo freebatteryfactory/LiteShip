@@ -123,6 +123,7 @@ function dispatchHarness(
     case 'stateMachine':
       return generateStateMachine(
         cap as CapsuleDef<'stateMachine', unknown, unknown, unknown>,
+        ctx,
       );
     case 'siteAdapter':
       return generateSiteAdapter(
@@ -135,6 +136,7 @@ function dispatchHarness(
     case 'cachedProjection':
       return generateCachedProjection(
         cap as CapsuleDef<'cachedProjection', unknown, unknown, unknown>,
+        ctx,
       );
     case 'sceneComposition':
       return generateSceneComposition(
