@@ -31,3 +31,19 @@ export const text = Token.make({
   values: { light: '#1e293b', dark: '#e2e8f0' },
   fallback: '#1e293b',
 });
+
+export const muted = Token.make({
+  name: 'muted',
+  category: 'color',
+  axes: ['theme'] as const,
+  values: { light: '#64748b', dark: '#94a3b8' },
+  fallback: '#64748b',
+});
+
+export const border = Token.make({
+  name: 'border',
+  category: 'color',
+  axes: ['theme'] as const,
+  values: { light: '#e2e8f0', dark: '#334155' },
+  fallback: '#e2e8f0',
+});

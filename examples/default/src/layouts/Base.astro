@@ -13,16 +13,17 @@ const { title = 'czap starter' } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <style>
-      @token {
-        --czap-font-size-sm;
-        --czap-font-size-md;
-        --czap-font-size-lg;
-        --czap-spacing-sm;
-        --czap-spacing-md;
-        --czap-spacing-lg;
-        --czap-color-text;
-        --czap-color-surface;
-      }
+      /* Each named @token block resolves against an export in
+         src/tokens/base.tokens.ts and compiles to a :root custom
+         property (--czap-<token-name>) plus an @property registration. */
+      @token fontSizeSm {}
+      @token fontSizeMd {}
+      @token fontSizeLg {}
+      @token spacingSm {}
+      @token spacingMd {}
+      @token spacingLg {}
+      @token colorText {}
+      @token colorSurface {}
 
       *,
       *::before,

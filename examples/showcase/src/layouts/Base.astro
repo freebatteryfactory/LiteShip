@@ -11,15 +11,16 @@ const { title = 'czap showcase' } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <style>
-      /* ── Token layer ── */
-      :root {
-        @token primary: var(--czap-primary, #4f46e5);
-        @token secondary: var(--czap-secondary, #0d9488);
-        @token surface: var(--czap-surface, #ffffff);
-        @token text: var(--czap-text, #1e293b);
-        @token muted: var(--czap-muted, #64748b);
-        @token border: var(--czap-border, #e2e8f0);
-      }
+      /* ── Token layer ──
+         Each named @token block resolves against an export in
+         src/tokens/colors.tokens.ts and compiles to a :root custom
+         property (--czap-<token-name>) plus an @property registration. */
+      @token primary {}
+      @token secondary {}
+      @token surface {}
+      @token text {}
+      @token muted {}
+      @token border {}
 
       /* ── Theme layer ── */
       @theme dark {
