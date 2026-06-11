@@ -6,7 +6,7 @@
 
 # Interface: ReconnectConfig
 
-Defined in: [web/src/types.ts:213](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L213)
+Defined in: [web/src/types.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L222)
 
 Reconnection configuration.
 
@@ -16,7 +16,7 @@ Reconnection configuration.
 
 > `readonly` **factor**: `number`
 
-Defined in: [web/src/types.ts:217](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L217)
+Defined in: [web/src/types.ts:226](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L226)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:217](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **initialDelay**: `Millis`
 
-Defined in: [web/src/types.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L215)
+Defined in: [web/src/types.ts:224](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L224)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:215](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **maxAttempts**: `number`
 
-Defined in: [web/src/types.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L214)
+Defined in: [web/src/types.ts:223](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L223)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:214](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **maxDelay**: `Millis`
 
-Defined in: [web/src/types.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L216)
+Defined in: [web/src/types.ts:225](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L225)
