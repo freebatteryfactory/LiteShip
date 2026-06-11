@@ -8,7 +8,7 @@
  */
 import type { CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
-import { loadManifest } from './manifest.js';
+import { loadManifest, manifestUnavailable } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
@@ -30,8 +30,9 @@ export const capsuleInspectCommand: HandledCommand = {
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.inspect', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded);
+    const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.inspect', `capsule not found: ${id}`, 1);
@@ -58,8 +59,9 @@ export const capsuleListCommand: HandledCommand = {
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.list', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.list', loaded);
+    const { manifest } = loaded;
     const kind = typeof invocation.args.kind === 'string' ? invocation.args.kind : undefined;
     const capsules = kind ? manifest.capsules.filter((c) => c.kind === kind) : manifest.capsules;
     return {
@@ -82,8 +84,9 @@ export const capsuleVerifyCommand: HandledCommand = {
     annotations: { mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.verify', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded);
+    const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.verify', `capsule not found: ${id}`, 1);

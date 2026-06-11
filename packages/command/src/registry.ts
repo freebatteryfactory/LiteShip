@@ -246,7 +246,9 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
   for (const command of commands) {
     const { name } = command.descriptor;
     if (byName.has(name)) {
-      throw new Error(`@czap/command: duplicate command name "${name}"`);
+      throw new Error(
+        `@czap/command: duplicate command name "${name}" — two RegisteredCommand entries share descriptor.name; check HANDLER_COMMANDS / CLI_OWNED_DESCRIPTORS in catalog.ts`,
+      );
     }
     byName.set(name, command);
   }

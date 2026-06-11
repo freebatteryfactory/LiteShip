@@ -70,15 +70,21 @@ describe('renderScene MCP delegation (fetch stubbed)', () => {
     expect(await context.renderScene!({} as never)).toEqual({ frameCount: 0, elapsedMs: 0 });
   });
 
-  it('a JSON-RPC error response throws the delegation failure', async () => {
+  it('a JSON-RPC error response throws the delegation failure naming the server + remote payload', async () => {
     stubFetch({ error: { code: -32000, message: 'boom' } });
     const context = createBrowserCommandContext({ mcpServerUrl: URL });
-    await expect(context.renderScene!({} as never)).rejects.toThrow('scene.render delegation failed');
+    const failure = await context.renderScene!({} as never).then(
+      () => undefined,
+      (err: Error) => err.message,
+    );
+    expect(failure).toContain(`scene.render delegation to ${URL} failed`);
+    expect(failure).toContain('"boom"');
+    expect(failure).toContain('czap mcp --http=PORT');
   });
 
   it('result.isError throws the delegation failure too', async () => {
     stubFetch({ result: { isError: true, structuredContent: { frameCount: 1 } } });
     const context = createBrowserCommandContext({ mcpServerUrl: URL });
-    await expect(context.renderScene!({} as never)).rejects.toThrow('scene.render delegation failed');
+    await expect(context.renderScene!({} as never)).rejects.toThrow(`scene.render delegation to ${URL} failed`);
   });
 });
