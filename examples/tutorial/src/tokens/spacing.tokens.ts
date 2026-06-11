@@ -12,9 +12,9 @@
  * The `fallback` is used when no axis value matches.
  *
  * In CSS, these become:
- *   --gap-sm: <resolved value>;
- *   --gap-md: <resolved value>;
- *   --gap-lg: <resolved value>;
+ *   --czap-gap-sm: <resolved value>;
+ *   --czap-gap-md: <resolved value>;
+ *   --czap-gap-lg: <resolved value>;
  */
 
 import { Token } from '@czap/core';

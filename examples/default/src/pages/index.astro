@@ -1,18 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import { satelliteAttrs } from '@czap/astro';
-import { Boundary } from '@czap/core';
-
-// Quantize viewport width into named layout states. satelliteAttrs()
-// serializes the boundary and emits the data-czap-directive marker the
-// integration's injected boot scanner activates on the client.
-const layout = Boundary.make({
-  input: 'viewport.width',
-  at: [
-    [0, 'stacked'],
-    [900, 'grid'],
-  ] as const,
-});
+// The shared layout boundary (mobile / tablet / desktop) drives both
+// halves of the adaptive story: satelliteAttrs() serializes it for the
+// client runtime (data-czap-state updates), and the @quantize block in
+// the <style> below resolves the same export to compile static
+// @container queries.
+import { layout } from '../boundaries/layout.boundaries.js';
 ---
 
 <Base>
@@ -21,7 +15,7 @@ const layout = Boundary.make({
     <p>Constraint-based adaptive rendering</p>
   </header>
 
-  <main data-czap="layout" {...satelliteAttrs({ boundary: layout, class: 'grid' })}>
+  <main {...satelliteAttrs({ boundary: layout, class: 'grid' })}>
     <article class="card">
       <h2>Boundaries</h2>
       <p>Define quantization points where your layout adapts.</p>
