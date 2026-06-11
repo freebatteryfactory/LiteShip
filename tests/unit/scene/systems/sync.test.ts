@@ -139,6 +139,60 @@ describe('SyncSystem (world-query path)', () => {
     await Effect.runPromise(Effect.scoped(program));
   });
 
+  // Codex P2 follow-up: the envelope contribution must be GATED on the
+  // effect's FrameRange — outside the window the write must be the
+  // plain decay (exactly what pre-envelope sync did), not
+  // decay × envelopeFactor. The gate uses the same half-open idiom as
+  // EffectSystem: `range.from <= frameIndex < range.to`.
+  describe('FrameRange gating of the envelope contribution', () => {
+    /** Spawn one SyncAnchor+Envelope+FrameRange entity and one beat at
+     * 500 ms (= frame 30 @ 60fps → decay = exp(0) = 1), tick SyncSystem
+     * at frame 30, and return the written intensity. */
+    const intensityAtFrame30 = (range: { from: number; to: number }) =>
+      Effect.runPromise(
+        Effect.scoped(
+          Effect.gen(function* () {
+            const world = yield* World.make();
+            yield* world.spawn({
+              SyncAnchor: { anchor: 'bed', mode: 'beat' },
+              // periodFrames 30 → at any multiple-of-30 offset from
+              // range.from the pulse factor is 1.5; at other phases it
+              // is still ≠ 1, so any envelope leak is observable.
+              Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
+              FrameRange: range,
+            });
+            yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+            yield* world.addSystem(SyncSystem(30, 60));
+            yield* world.tick();
+            const fx = yield* world.query('SyncAnchor');
+            return fx[0]?.components.get('_intensity') as number;
+          }),
+        ),
+      );
+
+    it('writes plain decay (no envelope factor) when frameIndex is before the FrameRange', async () => {
+      // Frame 30 < from(40): dormant effect. Pre-fix the pulse leaked a
+      // factor of 1 + 0.5·(1 − 20/30) ≈ 1.1667; the gate restores 1.
+      expect(await intensityAtFrame30({ from: 40, to: 60 })).toBeCloseTo(1, 5);
+    });
+
+    it('writes plain decay (no envelope factor) when frameIndex is after the FrameRange', async () => {
+      // Frame 30 ≥ to(20): effect window already over.
+      expect(await intensityAtFrame30({ from: 0, to: 20 })).toBeCloseTo(1, 5);
+    });
+
+    it('composes decay × envelope exactly at range.from (inclusive lower bound, EffectSystem idiom)', async () => {
+      // Frame 30 === from: in range, pulse phase 0 → factor 1.5.
+      expect(await intensityAtFrame30({ from: 30, to: 60 })).toBeCloseTo(1.5, 5);
+    });
+
+    it('writes plain decay exactly at range.to (exclusive upper bound, EffectSystem idiom)', async () => {
+      // Frame 30 === to: out of range per the half-open window. Pre-fix
+      // the pulse peaked here (phase 0 → 1.5); the gate restores 1.
+      expect(await intensityAtFrame30({ from: 0, to: 30 })).toBeCloseTo(1, 5);
+    });
+  });
+
   it('skips Beat entities whose Beat component is missing or has a non-numeric timeMs', async () => {
     // Forces the L48-49 / L51 guard branches: a Beat-tagged entity with
     // an unrelated component shape, plus another with a non-numeric

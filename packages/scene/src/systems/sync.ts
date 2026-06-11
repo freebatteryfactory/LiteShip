@@ -17,9 +17,14 @@
  * SyncAnchor entity also carries `Envelope` + `FrameRange`, this
  * system composes multiplicatively: **sync sets the base intensity
  * (beat decay), the envelope multiplies it** via
- * {@link envelopeFactor}. Entities without an envelope keep the plain
- * decay write, and an envelope without a `FrameRange` (no span to
- * evaluate against) degrades gracefully to plain decay.
+ * {@link envelopeFactor}. The composition only applies while the
+ * effect is active — `frameIndex` inside the half-open
+ * `[range.from, range.to)` window, the same gate EffectSystem uses —
+ * so a pulse envelope cannot modulate intensity outside the effect's
+ * window. Entities without an envelope keep the plain decay write,
+ * and an envelope without a `FrameRange` (no span to evaluate
+ * against) or with the frame outside its range degrades gracefully
+ * to plain decay.
  *
  * @module
  */
@@ -39,8 +44,10 @@ const DECAY_TAU_MS = 250;
  * and writes `_intensity = exp(-msSinceBeat / 250)` onto every
  * SyncAnchor entity. When the entity also carries `Envelope` +
  * `FrameRange` components (an effect track declaring both `syncTo`
- * and `envelope`), the decay is multiplied by the envelope factor —
- * sync sets the base, the envelope modulates it (see module docblock).
+ * and `envelope`) and `frameIndex` falls inside the half-open
+ * `[range.from, range.to)` window, the decay is multiplied by the
+ * envelope factor — sync sets the base, the envelope modulates it
+ * (see module docblock). Outside the window the write is plain decay.
  *
  * @param frameIndex — current frame number, supplied by the runtime per tick
  * @param fps        — scene frames per second; defaults to 60 for parity with VideoSystem
@@ -88,11 +95,20 @@ export function SyncSystem(frameIndex: number, fps: number = 60): System {
           // sync decay is the base intensity, the envelope multiplies
           // it (Spec 1 §5.4 — envelopes modulate, they don't race).
           // Without a FrameRange there is no span to evaluate the
-          // envelope against, so we fall back to plain decay.
+          // envelope against, so we fall back to plain decay. The
+          // envelope only applies while the effect is active: gate on
+          // the FrameRange with the same half-open idiom EffectSystem
+          // uses (`from <= frameIndex < to`), so out-of-range frames
+          // behave exactly as pre-envelope sync did (plain decay)
+          // instead of letting a pulse modulate a dormant effect
+          // (Codex P2 follow-up).
           const env = e.components.get('Envelope') as ResolvedEnvelope | undefined;
           const range = e.components.get('FrameRange') as { from: number; to: number } | undefined;
+          const inRange = range !== undefined && frameIndex >= range.from && frameIndex < range.to;
           const intensity =
-            env !== undefined && range !== undefined ? decay * envelopeFactor(env, frameIndex, range) : decay;
+            env !== undefined && range !== undefined && inRange
+              ? decay * envelopeFactor(env, frameIndex, range)
+              : decay;
           // Direct property write preserves the legacy in-place mutation
           // path used by some downstream tests; setComponent persists
           // through the canonical world-state map for query consumers.
