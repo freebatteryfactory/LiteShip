@@ -43,6 +43,26 @@ export interface CSSContainerRule {
 }
 
 /**
+ * Structured per-state input for {@link CSSCompiler.compile}: bare
+ * properties that style the boundary selector itself, plus nested rules
+ * that each carry their own selector (the `@quantize` nested-selector
+ * authoring form).
+ */
+export interface CSSStateBody {
+  /** Properties applied to the boundary selector (the `selector` param, default `.czap-boundary`). */
+  readonly bareProps?: Record<string, string>;
+  /** Per-selector rules emitted verbatim into the state's `@container` block. */
+  readonly rules?: readonly CSSRule[];
+}
+
+/**
+ * Per-state input accepted by {@link CSSCompiler.compile}: either a flat
+ * property map (the documented bare-props form, back-compat) or a
+ * {@link CSSStateBody} carrying nested selector rules.
+ */
+export type CSSStateInput = Record<string, string> | CSSStateBody;
+
+/**
  * Output of {@link CSSCompiler.compile}.
  *
  * `raw` is the serialized form of `containerRules`, pre-joined so most
@@ -120,8 +140,25 @@ function buildContainerQuery(thresholds: readonly number[], stateIndex: number, 
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a boundary definition and per-state CSS property maps into
+ * Distinguish the structured {@link CSSStateBody} form from a flat
+ * property map. A flat map only ever carries string values, so an
+ * object-valued `bareProps` or array-valued `rules` key is unambiguous.
+ */
+function isStateBody(input: CSSStateInput): input is CSSStateBody {
+  const candidate = input as CSSStateBody;
+  return (
+    (candidate.bareProps !== undefined && typeof candidate.bareProps === 'object') || Array.isArray(candidate.rules)
+  );
+}
+
+/**
+ * Compile a boundary definition and per-state CSS inputs into
  * `@container` query rules.
+ *
+ * Each state accepts either a flat property map (applied to `selector`)
+ * or a {@link CSSStateBody} whose nested rules each become one
+ * {@link CSSRule} with their own selector inside the state's
+ * `@container` block.
  *
  * @example
  * ```ts
@@ -134,21 +171,24 @@ function buildContainerQuery(thresholds: readonly number[], stateIndex: number, 
  * });
  * const result = CSSCompiler.compile(boundary, {
  *   sm: { 'font-size': '14px' },
- *   lg: { 'font-size': '18px' },
+ *   lg: {
+ *     bareProps: { 'font-size': '18px' },
+ *     rules: [{ selector: '.grid', properties: { gap: '2rem' } }],
+ *   },
  * }, '.card');
  * console.log(result.raw);
  * // @container width (width < 768px) { .card { font-size: 14px; } }
- * // @container width (width >= 768px) { .card { font-size: 18px; } }
+ * // @container width (width >= 768px) { .card { font-size: 18px; } .grid { gap: 2rem; } }
  * ```
  *
  * @param boundary - The boundary definition with states and thresholds
- * @param states   - Per-state CSS property maps
- * @param selector - Optional CSS selector (defaults to `.czap-boundary`)
+ * @param states   - Per-state CSS inputs (flat property maps or structured bodies)
+ * @param selector - Optional CSS selector for bare properties (defaults to `.czap-boundary`)
  * @returns A {@link CSSCompileResult} with structured rules and raw CSS text
  */
 function compile<B extends Boundary.Shape>(
   boundary: B,
-  states: { readonly [S in StateUnion<B> & string]?: Record<string, string> },
+  states: { readonly [S in StateUnion<B> & string]?: CSSStateInput },
   selector?: string,
 ): CSSCompileResult {
   const sel = selector ?? '.czap-boundary';
@@ -162,16 +202,36 @@ function compile<B extends Boundary.Shape>(
 
   for (let i = 0; i < stateNames.length; i++) {
     const stateName = stateNames[i]!;
-    const props = states[stateName];
-    if (!props || Object.keys(props).length === 0) continue;
+    const entry: CSSStateInput | undefined = states[stateName];
+    if (!entry) continue;
+
+    let bareProps: Record<string, string>;
+    let nestedRules: readonly CSSRule[];
+    if (isStateBody(entry)) {
+      bareProps = entry.bareProps ?? {};
+      nestedRules = entry.rules ?? [];
+    } else {
+      bareProps = entry;
+      nestedRules = [];
+    }
+
+    const rules: CSSRule[] = [];
+    if (Object.keys(bareProps).length > 0) {
+      rules.push({ selector: sel, properties: bareProps });
+    }
+    for (const rule of nestedRules) {
+      if (Object.keys(rule.properties).length > 0) {
+        rules.push(rule);
+      }
+    }
+    if (rules.length === 0) continue;
 
     const query = buildContainerQuery(thresholds, i, stateNames.length);
-    const rule: CSSRule = { selector: sel, properties: props };
 
     containerRules.push({
       name: containerName,
       query,
-      rules: [rule],
+      rules,
     });
   }
 
