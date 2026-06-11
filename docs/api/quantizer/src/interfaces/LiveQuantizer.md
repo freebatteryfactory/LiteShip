@@ -10,7 +10,7 @@ Defined in: [quantizer/src/quantizer.ts:215](https://github.com/heyoub/LiteShip/
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
-Extends the core [Quantizer](#) with a reactive outputs table: as
+Extends the core [Quantizer](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) with a reactive outputs table: as
 boundary crossings are detected, `currentOutputs` updates and
 `outputChanges` streams the new per-target record. Consumers typically
 subscribe via `Stream.runForEach(liveQuantizer.outputChanges, …)`.
@@ -37,13 +37,13 @@ Effect.runSync(Effect.scoped(Effect.gen(function* () {
 
 ## Extends
 
-- [`Quantizer`](#)\<`B`\>
+- [`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ### O
 

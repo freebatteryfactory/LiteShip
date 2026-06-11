@@ -34,7 +34,7 @@ or a [CSSStateBody](../interfaces/CSSStateBody.md) whose nested rules each becom
 
 ##### B
 
-`B` *extends* [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

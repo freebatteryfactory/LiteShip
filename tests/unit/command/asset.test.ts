@@ -15,8 +15,11 @@ describe('@czap/command asset.analyze', () => {
       {
         manifestSource: () => MANIFEST,
         loadAssetBytes: () => new ArrayBuffer(8),
-        runAudioProjection: async (_bytes, projection) => {
+        runAudioProjection: async (_bytes, projection, assetId) => {
           expect(projection).toBe('beat');
+          // The handler must forward the asset id so adapters can resolve
+          // the asset's OWN decoder (AssetDecl.decoder) from the registry.
+          expect(assetId).toBe('intro-bed');
           return 42;
         },
         cache: { read: () => null, write: (_k, v) => writes.push(v) },

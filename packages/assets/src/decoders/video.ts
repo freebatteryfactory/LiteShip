@@ -4,13 +4,15 @@
  * not decode video frames in this layer; the render pipeline uses an
  * ffmpeg subprocess for actual decode.
  *
+ * Node-only dependencies (child_process / fs / os / path) load lazily
+ * inside {@link videoDecoder} — never at module scope — so browser
+ * bundles that transitively import this module (e.g. via the package
+ * index) stay valid. The decoder itself still REQUIRES node at decode
+ * time, which is why builtin-decoded video capsules declare
+ * `site: ['node']` (see `builtinDecoderSiteFor` in the asset contract).
+ *
  * @module
  */
-
-import { spawnSync } from 'node:child_process';
-import { writeFileSync, mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 /** Decoded video container + codec metadata. */
 export interface DecodedVideo {
@@ -25,6 +27,12 @@ export interface DecodedVideo {
 /** Probe a video buffer for container/codec metadata. */
 export async function videoDecoder(bytes: ArrayBuffer): Promise<DecodedVideo> {
   if (bytes.byteLength === 0) throw new Error('videoDecoder: empty buffer');
+  const [{ spawnSync }, { writeFileSync, mkdtempSync, rmSync }, { tmpdir }, { join }] = await Promise.all([
+    import('node:child_process'),
+    import('node:fs'),
+    import('node:os'),
+    import('node:path'),
+  ]);
   const dir = mkdtempSync(join(tmpdir(), 'czap-video-'));
   const file = join(dir, 'input.bin');
   try {

@@ -25,7 +25,7 @@ to the valid frame range and fall back to a structurally-empty
 
 ### frames
 
-readonly [`VideoFrameOutput`](#)[]
+readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
 
 Precomputed frames (see [precomputeFrames](precomputeFrames.md)).
 

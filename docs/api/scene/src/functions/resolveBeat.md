@@ -8,7 +8,7 @@
 
 > **resolveBeat**(`handle`, `ctx`): `number`
 
-Defined in: [scene/src/sugar/beat.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L23)
+Defined in: [scene/src/sugar/beat.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L38)
 
 Resolve a BeatHandle to a frame index using scene BPM and fps.
 
@@ -16,7 +16,7 @@ Resolve a BeatHandle to a frame index using scene BPM and fps.
 
 ### handle
 
-[`BeatHandle`](../interfaces/BeatHandle.md)
+`BeatHandle`
 
 ### ctx
 

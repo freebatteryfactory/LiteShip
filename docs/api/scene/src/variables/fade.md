@@ -8,7 +8,7 @@
 
 > `const` **fade**: `object`
 
-Defined in: [scene/src/sugar/envelope.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L34)
+Defined in: [scene/src/sugar/envelope.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L41)
 
 Fade constructors.
 
@@ -16,7 +16,7 @@ Fade constructors.
 
 ### in
 
-> `readonly` **in**: (`span`) => [`FadeEnvelope`](../interfaces/FadeEnvelope.md)
+> `readonly` **in**: (`span`) => `FadeEnvelope`
 
 Linear fade-in over the given span.
 
@@ -24,15 +24,15 @@ Linear fade-in over the given span.
 
 ##### span
 
-[`BeatHandle`](../interfaces/BeatHandle.md)
+`BeatHandle`
 
 #### Returns
 
-[`FadeEnvelope`](../interfaces/FadeEnvelope.md)
+`FadeEnvelope`
 
 ### out
 
-> `readonly` **out**: (`span`) => [`FadeEnvelope`](../interfaces/FadeEnvelope.md)
+> `readonly` **out**: (`span`) => `FadeEnvelope`
 
 Linear fade-out over the given span.
 
@@ -40,8 +40,8 @@ Linear fade-out over the given span.
 
 ##### span
 
-[`BeatHandle`](../interfaces/BeatHandle.md)
+`BeatHandle`
 
 #### Returns
 
-[`FadeEnvelope`](../interfaces/FadeEnvelope.md)
+`FadeEnvelope`
