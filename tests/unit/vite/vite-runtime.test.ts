@@ -1499,21 +1499,51 @@ describe('@czap/vite plugin', () => {
   });
 
   test('parses quantize declarations with escaped quotes, invalid colonless lines, and trailing whitespace at EOF', () => {
+    // CSS error recovery consumes a malformed declaration up to the next
+    // `;` — so the semicolon-terminated garbage line is dropped alone and
+    // the valid trailing `color: red` (unterminated before `}`) is still
+    // captured. An UNterminated garbage line would swallow what follows
+    // per the same spec rule; that drop is correct, not a parser bug.
     const css = `
 @quantize layout {
   mobile {
     content: "say \\"hi\\"";
-    invalid declaration
+    invalid declaration;
     color: red
-  }   
+  }
 }`;
 
     const [block] = parseQuantizeBlocks(css, 'escaped.css');
     expect(block?.states.mobile).toEqual({
       bareProps: {
         content: '"say \\"hi\\""',
+        color: 'red',
       },
       rules: [],
+    });
+  });
+
+  test('custom-property block values in quantize states stay whole declarations, not nested rules', () => {
+    // Only \`--*\` properties may take block-token values; the scanner must
+    // not mistake \`--theme: {\` for a selector opening a nested rule
+    // (selectors can contain \`:\` via pseudo-classes but never start
+    // with \`--\`).
+    const css = `
+@quantize layout {
+  mobile {
+    --theme: { color: red; };
+    color: blue;
+    .grid:hover { opacity: 0.5; }
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, 'block-values.css');
+    expect(block?.states.mobile).toEqual({
+      bareProps: {
+        '--theme': '{ color: red; }',
+        color: 'blue',
+      },
+      rules: [{ selector: '.grid:hover', props: { opacity: '0.5' } }],
     });
   });
 
