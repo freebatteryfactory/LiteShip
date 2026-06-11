@@ -146,7 +146,8 @@ export const buildChain = (
 /**
  * Validate a receipt chain: genesis link, hash integrity, chain continuity, HLC ordering.
  *
- * Returns true on success or fails with an Error describing the violation.
+ * The ergonomic everyday check: resolves only to `true` and signals every
+ * violation through the `Error` channel with a human-readable message.
  *
  * @example
  * ```ts
@@ -154,6 +155,8 @@ export const buildChain = (
  * const valid = yield* Receipt.validateChain(chain);
  * // valid === true
  * ```
+ *
+ * @see validateChainDetailed for typed `ChainValidationError` handling.
  */
 export const validateChain = (chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<boolean, Error> =>
   Effect.gen(function* () {
@@ -185,8 +188,9 @@ export const validateChain = (chain: ReadonlyArray<ReceiptEnvelope>): Effect.Eff
 /**
  * Validate a receipt chain with detailed, structured error reporting.
  *
- * Returns `true` on success or fails with a typed `ChainValidationError`
- * discriminated union (not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
+ * The typed taxonomy for programmatic handling: returns `true` on success
+ * or fails with a `ChainValidationError` discriminated union
+ * (not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
  *
  * @example
  * ```ts
@@ -196,6 +200,8 @@ export const validateChain = (chain: ReadonlyArray<ReceiptEnvelope>): Effect.Eff
  * // result._tag === 'Right' on success
  * // result._tag === 'Left' with .left.type on failure
  * ```
+ *
+ * @see validateChain for the simple Error-channel form.
  */
 export const validateChainDetailed = (
   chain: ReadonlyArray<ReceiptEnvelope>,

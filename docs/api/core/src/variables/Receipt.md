@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:426](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L426)
+Defined in: [core/src/receipt.ts:432](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L432)
 
 Receipt namespace -- chain validation and envelope construction.
 
@@ -353,7 +353,8 @@ const first = Receipt.tail(chain);
 
 Validate a receipt chain: genesis link, hash integrity, chain continuity, HLC ordering.
 
-Returns true on success or fails with an Error describing the violation.
+The ergonomic everyday check: resolves only to `true` and signals every
+violation through the `Error` channel with a human-readable message.
 
 #### Parameters
 
@@ -373,14 +374,19 @@ const valid = yield* Receipt.validateChain(chain);
 // valid === true
 ```
 
+#### See
+
+validateChainDetailed for typed `ChainValidationError` handling.
+
 ### validateChainDetailed
 
 > **validateChainDetailed**: (`chain`) => `Effect`\<`true`, [`ChainValidationError`](../type-aliases/ChainValidationError.md)\>
 
 Validate a receipt chain with detailed, structured error reporting.
 
-Returns `true` on success or fails with a typed `ChainValidationError`
-discriminated union (not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
+The typed taxonomy for programmatic handling: returns `true` on success
+or fails with a `ChainValidationError` discriminated union
+(not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
 
 #### Parameters
 
@@ -401,6 +407,10 @@ const result = yield* Effect.either(Receipt.validateChainDetailed(chain));
 // result._tag === 'Right' on success
 // result._tag === 'Left' with .left.type on failure
 ```
+
+#### See
+
+validateChain for the simple Error-channel form.
 
 ### verifyMAC
 
