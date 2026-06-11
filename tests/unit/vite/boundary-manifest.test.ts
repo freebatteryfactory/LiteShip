@@ -325,6 +325,39 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(second).not.toContain(referenceBoundary.id);
   });
 
+  test('hotUpdate on a .astro style edit invalidates the boundary manifest virtual module', async () => {
+    // .astro components feed the manifest scan; editing one must drop the
+    // cached manifest AND invalidate the virtual module, same as CSS.
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    const page = '---\n---\n<div />\n<style>\n@quantize viewport {\n  compact { .grid { gap: 4px; } }\n}\n</style>\n';
+    writeModule(srcDir, 'Page.astro', page);
+
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(first).toContain('gap: 4px');
+
+    writeModule(srcDir, 'Page.astro', page.replace('4px', '9px'));
+    const { invalidated, moduleGraph } = makeModuleGraphMock();
+    (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+      { environment: { moduleGraph } },
+      { file: join(srcDir, 'Page.astro').replace(/\\/g, '/') },
+    );
+    expect(invalidated).toContain('\0virtual:czap/boundaries');
+
+    const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(second).toContain('9px');
+  });
+
   test('hotUpdate on @quantize CSS invalidates the virtual module so importers see recompiled outputs', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');
