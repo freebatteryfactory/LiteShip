@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync, utimesSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
@@ -72,4 +72,55 @@ describe('capsule-verify', () => {
     expect(receipt.benches.placeholder).not.toContain('intro-bed');
     expect(receipt.benches.real).toBeGreaterThanOrEqual(1);
   }, scaledTimeout(90_000));
+
+  it('a source newer by mtime whose regeneration is byte-identical is NOT stale', async () => {
+    // git does not preserve mtimes: pulling a commit that edits a capsule's
+    // source without changing its generated output leaves "source newer"
+    // forever. Raw mtime comparison false-flagged every incremental
+    // checkout (broke `pnpm test` for anyone pulling main); staleness must
+    // mean "capsule:compile would change the committed file".
+    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
+      capsules: { name: string; source: string }[];
+    };
+    // Two suspect shapes: a placeholder capsule (examples.intro) AND a
+    // binding-carrying capsule (core.token-buffer) whose generated test
+    // embeds relative imports — regeneration must reproduce those imports
+    // byte-identically (the temp dir sits at tests/<dir>, the same depth
+    // as tests/generated, exactly for this).
+    const suspects = ['examples.intro', 'core.token-buffer'].map((name) => {
+      const cap = manifest.capsules.find((c) => c.name === name);
+      expect(cap, name).toBeDefined();
+      const sourcePath = resolve(cap!.source);
+      return { sourcePath, original: statSync(sourcePath) };
+    });
+    try {
+      // Future-date the sources so the mtime fast-path flags them as
+      // suspects (inside the try so any failure still restores mtimes).
+      for (const s of suspects) {
+        utimesSync(s.sourcePath, s.original.atime, new Date(Date.now() + 5_000));
+      }
+      const lines: string[] = [];
+      await withSpawned(
+        'pnpm',
+        ['run', 'capsule:verify'],
+        async (handle) => {
+          for await (const line of handle.readline()) {
+            lines.push(line);
+          }
+        },
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+      const receiptLine = lines
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('{') && line.endsWith('}'))
+        .pop();
+      expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
+      const receipt = JSON.parse(receiptLine!);
+      expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
+    } finally {
+      for (const s of suspects) {
+        utimesSync(s.sourcePath, s.original.atime, s.original.mtime);
+      }
+    }
+  }, scaledTimeout(180_000));
 });
