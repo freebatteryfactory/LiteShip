@@ -14,7 +14,7 @@ Device capability detection namespace.
 
 Probes browser APIs for GPU tier, CPU cores, memory, input modality,
 user preferences, and network info. Maps detected capabilities to
-[CapLevel](#), [CapSet](#), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
+[CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md), [CapSet](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
 Supports live watching for preference and viewport changes.
 
 ## Type Declaration
@@ -72,7 +72,7 @@ const tier = Effect.runSync(Detect.detectGPUTier());
 
 ### watchCapabilities
 
-> **watchCapabilities**: (`onChange`) => `Effect`\<`void`, `never`, [`Scope`](#)\>
+> **watchCapabilities**: (`onChange`) => `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or
@@ -90,7 +90,7 @@ Callback invoked with fresh detection results on change
 
 #### Returns
 
-`Effect`\<`void`, `never`, [`Scope`](#)\>
+`Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 An Effect (scoped) that sets up listeners
 

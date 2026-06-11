@@ -8,7 +8,7 @@
 
 > **Transition**: `object`
 
-Defined in: [quantizer/src/transition.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L45)
+Defined in: [quantizer/src/transition.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L52)
 
 Transition resolver namespace.
 
@@ -35,17 +35,17 @@ Resolution order:
 
 ##### B
 
-`B` *extends* [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 
 ##### \_quantizer
 
-[`Quantizer`](#)\<`B`\>
+[`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ##### transitionConfig
 
-[`TransitionMap`](../interfaces/TransitionMap.md)\<`StateUnion`\<`B`\>\>
+[`TransitionMap`](../type-aliases/TransitionMap.md)\<`StateUnion`\<`B`\>\>
 
 #### Returns
 

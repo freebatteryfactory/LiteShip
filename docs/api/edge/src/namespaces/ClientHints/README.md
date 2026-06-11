@@ -9,7 +9,7 @@
 Client Hints namespace.
 
 Parses HTTP Client Hints headers into the same
-[ExtendedDeviceCapabilities](#) structure used by `@czap/detect`,
+[ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure used by `@czap/detect`,
 enabling server-side / edge-side tier mapping without browser APIs.
 Also generates the `Accept-CH` and `Critical-CH` response headers needed
 to request hints from the browser.

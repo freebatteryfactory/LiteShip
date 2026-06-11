@@ -26,7 +26,7 @@ Flat Client Hints header map.
 
 ### detectedTier
 
-> `readonly` **detectedTier**: [`CapLevel`](#)
+> `readonly` **detectedTier**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
 Defined in: [astro/src/quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 

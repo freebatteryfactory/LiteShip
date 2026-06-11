@@ -22,7 +22,7 @@ CSS custom property declarations. Delegates to the canonical
 
 ### token
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)
 
 ## Returns
 
