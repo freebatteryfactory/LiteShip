@@ -99,40 +99,56 @@ function serializeRule(rule: CSSRule): string {
 }
 
 /**
+ * The container-query size axis a boundary input measures: inputs whose
+ * final dot-segment is `height` (`viewport.height`, bare `height`)
+ * compile to `(height ...)` conditions; every other input keeps the
+ * width axis. Height containers must declare `container-type: size` —
+ * `inline-size` containment leaves block-axis queries unevaluable.
+ */
+function queryAxisOf(input: string): 'width' | 'height' {
+  return input === 'height' || input.endsWith('.height') ? 'height' : 'width';
+}
+
+/**
  * Build the `@container` query string for a given state index based on
- * the boundary thresholds array.
+ * the boundary thresholds array and the boundary's size axis.
  *
  * For N states and N-1 thresholds (first threshold is always 0 and
  * is implicitly the lower bound):
- *   - First state:  `(width < thresholds[1])`
- *   - Middle state: `(width >= thresholds[i]) and (width < thresholds[i+1])`
- *   - Last state:   `(width >= thresholds[last])`
+ *   - First state:  `(<axis> < thresholds[1])`
+ *   - Middle state: `(<axis> >= thresholds[i]) and (<axis> < thresholds[i+1])`
+ *   - Last state:   `(<axis> >= thresholds[last])`
  *
  * The thresholds array from BoundaryDef has length = `states.length`.
  * `thresholds[0]` is the start of the first state, `thresholds[1]` is
  * the boundary between state 0 and state 1, etc.
  */
-function buildContainerQuery(thresholds: readonly number[], stateIndex: number, stateCount: number): string {
-  if (stateCount === 1) return '(width >= 0px)';
+function buildContainerQuery(
+  thresholds: readonly number[],
+  stateIndex: number,
+  stateCount: number,
+  axis: 'width' | 'height',
+): string {
+  if (stateCount === 1) return `(${axis} >= 0px)`;
 
   // The threshold at index `i` is the lower bound for state `i`.
-  // State 0: width < thresholds[1]
-  // State i (middle): width >= thresholds[i] and width < thresholds[i+1]
-  // State last: width >= thresholds[last]
+  // State 0: axis < thresholds[1]
+  // State i (middle): axis >= thresholds[i] and axis < thresholds[i+1]
+  // State last: axis >= thresholds[last]
 
   if (stateIndex === 0) {
     const upper = thresholds[1];
-    return `(width < ${upper}px)`;
+    return `(${axis} < ${upper}px)`;
   }
 
   if (stateIndex === stateCount - 1) {
     const lower = thresholds[stateIndex];
-    return `(width >= ${lower}px)`;
+    return `(${axis} >= ${lower}px)`;
   }
 
   const lower = thresholds[stateIndex];
   const upper = thresholds[stateIndex + 1];
-  return `(width >= ${lower}px) and (width < ${upper}px)`;
+  return `(${axis} >= ${lower}px) and (${axis} < ${upper}px)`;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,6 +209,7 @@ function compile<B extends Boundary.Shape>(
 ): CSSCompileResult {
   const sel = selector ?? '.czap-boundary';
   const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
+  const axis = queryAxisOf(boundary.input);
   // The state map is keyed by StateUnion<B> & string literals; treat the runtime array
   // as that keyed shape so indexing with boundary.states[i] is exact.
   const stateNames: ReadonlyArray<StateUnion<B> & string> = boundary.states as ReadonlyArray<StateUnion<B> & string>;
@@ -226,7 +243,7 @@ function compile<B extends Boundary.Shape>(
     }
     if (rules.length === 0) continue;
 
-    const query = buildContainerQuery(thresholds, i, stateNames.length);
+    const query = buildContainerQuery(thresholds, i, stateNames.length, axis);
 
     containerRules.push({
       name: containerName,

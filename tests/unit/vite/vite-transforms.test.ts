@@ -1016,10 +1016,7 @@ describe('viewport containment aggregation', () => {
     expect(containment).toBe(':root {\n  container-type: inline-size;\n  container-name: viewport-width viewport;\n}');
   });
 
-  test('viewport.height is NOT auto-contained: width-based containment would track the wrong dimension', () => {
-    // container-type: inline-size measures WIDTH and the compiler
-    // serializes (width ...) queries — auto-containment for a height
-    // boundary would silently make height breakpoints follow the width.
+  test('viewport.height joins the auto-containment path with (height ...) queries and no diagnostic', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
     const heightBoundary = makeBoundary('viewport.height', [
       [0, 'short'],
@@ -1032,6 +1029,50 @@ describe('viewport containment aggregation', () => {
       events: [...captured],
     }));
 
+    expect([...sheet.viewportContainerNames]).toEqual(['viewport-height']);
+    expect(compiled).toContain('@container viewport-height (height < 600px)');
+    expect(compiled).not.toContain('(width');
+    expect(events).toEqual([]);
+  });
+
+  test('a height container name upgrades the :root rule to size containment with a pinned block size', () => {
+    // `inline-size` containment leaves (height ...) queries unevaluable,
+    // and size containment computes :root's height as if it were empty —
+    // the rule must pin block-size to the dynamic viewport height.
+    const containment = viewportContainmentRule(['viewport-width', 'viewport-height']);
+    expect(containment).toBe(
+      ':root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-width viewport-height;\n}',
+    );
+  });
+
+  test('without a sheet context a single viewport.height block inlines its size :root rule', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const heightBoundary = makeBoundary('viewport.height', [
+      [0, 'short'],
+      [600, 'tall'],
+    ]);
+
+    const compiled = compileQuantizeBlock(blocks[1]!, heightBoundary);
+
+    expect(compiled).toContain(
+      ':root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
+    );
+    expect(compiled).toContain('@container viewport-height (height < 600px)');
+  });
+
+  test('an unrecognized viewport axis still warns instead of claiming a dimension it cannot measure', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const aspectBoundary = makeBoundary('viewport.aspect', [
+      [0, 'narrow'],
+      [2, 'wide'],
+    ]);
+    const sheet = { viewportContainerNames: new Set<string>() };
+
+    const { compiled, events } = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, aspectBoundary, sheet),
+      events: [...captured],
+    }));
+
     expect(sheet.viewportContainerNames.size).toBe(0);
     expect(compiled).not.toContain(':root');
     expect(events).toEqual(
@@ -1039,7 +1080,7 @@ describe('viewport containment aggregation', () => {
         expect.objectContaining({
           source: 'czap/vite.css-quantize',
           code: 'container-not-declared',
-          message: expect.stringContaining('width-based'),
+          message: expect.stringContaining('viewport.height'),
         }),
       ]),
     );
