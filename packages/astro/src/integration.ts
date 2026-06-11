@@ -10,8 +10,12 @@
  * @module
  */
 
+import { writeFileSync } from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
-import { plugin } from '@czap/vite';
+import type { BoundaryManifestFile } from '@czap/edge';
+import { collectBoundaryManifest, plugin } from '@czap/vite';
 import type { PluginConfig } from '@czap/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { getCzapHeaderEntries } from './headers.js';
@@ -203,6 +207,8 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     ...(wasmEnabled ? (['wasm'] as const) : []),
   ];
 
+  let projectRoot: string | null = null;
+
   return {
     name: '@czap/astro',
 
@@ -304,6 +310,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
       },
 
       'astro:config:done': ({ config: astroConfig, logger }) => {
+        projectRoot = fileURLToPath(astroConfig.root);
         logger.info(`@czap configured for ${astroConfig.output} output`);
       },
 
@@ -324,7 +331,25 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         }
       },
 
-      'astro:build:done': ({ logger }) => {
+      'astro:build:done': async ({ dir, logger }) => {
+        // Emit the build-derived boundary manifest for hosts that read it
+        // from disk instead of importing `virtual:czap/boundaries` (e.g. a
+        // worker entry assembled outside this Vite build).
+        if (projectRoot && dir) {
+          const boundaries = await collectBoundaryManifest(projectRoot, {
+            boundaryDir: config?.vite?.dirs?.boundary,
+          });
+          if (Object.keys(boundaries).length > 0) {
+            const manifestFile: BoundaryManifestFile = {
+              _tag: 'CzapBoundaryManifest',
+              _version: 1,
+              boundaries,
+            };
+            const outPath = path.join(fileURLToPath(dir), 'czap-boundary-manifest.json');
+            writeFileSync(outPath, JSON.stringify(manifestFile, null, 2));
+            logger.info(`Emitted boundary manifest (${Object.keys(boundaries).length} boundaries) to ${outPath}`);
+          }
+        }
         logger.info('@czap build integration complete');
       },
     },

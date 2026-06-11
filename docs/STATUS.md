@@ -265,7 +265,7 @@ logic.
 | `host-wired` | `@czap/core` runtime coordination + WASM / GenUI surfaces | Compositor and worker host paths now expose shared `RuntimeCoordinator` state; Astro wasm uses `WASMDispatch`; Astro llm uses `TokenBuffer`, `UIQuality`, `GenFrame`, `Receipt`, and `DAG`-ordered replay plumbing |
 | `host-wired` | `@czap/vite` wasm asset path | `virtual:czap/wasm-url` is wired into the real plugin/integration path |
 | `host-wired` | `@czap/edge` request + cache/theme host path | Astro middleware now routes through `createEdgeHostAdapter`, which resolves `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` in one host path |
-| `host-wired` | `@czap/cloudflare` Workers KV glue | `cloudflareMiddleware` maps `cloudflare:workers` env bindings to `@czap/edge` KV cache; proof at `examples/cloudflare-astro/` |
+| `host-wired` | `@czap/cloudflare` Workers KV glue | `cloudflareMiddleware` maps `cloudflare:workers` env bindings to `@czap/edge` KV cache; cache config is build-derived from the `virtual:czap/boundaries` manifest (minted ids + precompiled per-tier outputs); proof at `examples/cloudflare-astro/` |
 | `standalone subsystem` | `@czap/remotion` | supported video branch, not part of the default Astro/Web runtime path |
 | `host-wired` | `@czap/core` `Plan` / `ECS` | promoted through `RuntimeCoordinator`; the compositor and worker host paths now use a real plan graph plus ECS-backed dense stores for runtime bookkeeping |
 

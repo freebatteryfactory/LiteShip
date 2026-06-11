@@ -6,7 +6,7 @@
 
 # Interface: PluginConfig
 
-Defined in: [vite/src/plugin.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L36)
+Defined in: [vite/src/plugin.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L38)
 
 Configuration options for the [plugin](../functions/plugin.md) factory. Every field
 is optional; omitted values use convention-based defaults.
@@ -15,9 +15,9 @@ is optional; omitted values use convention-based defaults.
 
 ### dirs?
 
-> `readonly` `optional` **dirs?**: `Partial`\<`Record`\<`"style"` \| `"boundary"` \| `"token"` \| `"theme"`, `string`\>\>
+> `readonly` `optional` **dirs?**: `Partial`\<`Record`\<`"boundary"` \| `"style"` \| `"token"` \| `"theme"`, `string`\>\>
 
-Defined in: [vite/src/plugin.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L38)
+Defined in: [vite/src/plugin.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L40)
 
 Override source directories for each primitive kind.
 
@@ -27,7 +27,7 @@ Override source directories for each primitive kind.
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [vite/src/plugin.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L42)
+Defined in: [vite/src/plugin.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L44)
 
 Named Vite environments to configure (browser / server / shader).
 
@@ -37,7 +37,7 @@ Named Vite environments to configure (browser / server / shader).
 
 > `readonly` `optional` **hmr?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L40)
+Defined in: [vite/src/plugin.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L42)
 
 Toggle surgical HMR emission (default `true`).
 
@@ -47,7 +47,7 @@ Toggle surgical HMR emission (default `true`).
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [vite/src/plugin.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L44)
+Defined in: [vite/src/plugin.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L46)
 
 Opt-in WASM runtime configuration.
 

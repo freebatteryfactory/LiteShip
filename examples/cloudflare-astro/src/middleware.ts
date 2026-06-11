@@ -1,13 +1,12 @@
 import { cloudflareMiddleware } from '@czap/cloudflare';
+import { boundaries } from 'virtual:czap/boundaries';
 
-const BOUNDARY_ID = 'fnv1a:cloudflare-example';
-
+// `boundaries` is the build-derived manifest: each entry carries the
+// boundary's minted content address (Boundary.make's `id`) plus the
+// precompiled per-tier outputs from the @quantize CSS block -- nothing
+// here is hand-typed, and the worker bundle stays compiler-free.
 export const onRequest = cloudflareMiddleware({
   binding: 'CZAP_BOUNDARY_CACHE',
-  boundaryId: BOUNDARY_ID,
-  compile: async () => ({
-    css: '/* cloudflare example boundary */',
-    propertyRegistrations: '',
-    containerQueries: '',
-  }),
+  manifest: boundaries,
+  boundary: 'viewport',
 });

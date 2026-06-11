@@ -19,6 +19,9 @@ export type { EdgeTierResult } from './edge-tier.js';
 export { createBoundaryCache, KVCache } from './kv-cache.js';
 export type { KVNamespace, BoundaryCache, CompiledOutputs } from './kv-cache.js';
 
+export { MOTION_TIERS, DESIGN_TIERS, tierKey, enumerateTierKeys } from './manifest.js';
+export type { TierKey, BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from './manifest.js';
+
 export { compileTheme } from './theme-compiler.js';
 export type { ThemeCompileConfig, ThemeCompileResult } from './theme-compiler.js';
 

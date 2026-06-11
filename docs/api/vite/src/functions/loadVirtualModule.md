@@ -6,20 +6,20 @@
 
 # Function: loadVirtualModule()
 
-> **loadVirtualModule**(`id`): `string` \| `undefined`
+> **loadVirtualModule**(`id`, `data?`): `string` \| `undefined`
 
-Defined in: [vite/src/virtual-modules.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L87)
+Defined in: [vite/src/virtual-modules.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L102)
 
 Return the source for a resolved virtual module ID.
 
-Data modules (tokens, boundaries, themes) return empty-object stubs
-that provide valid JS/CSS so downstream tooling (type-checkers,
-bundlers) can operate without the full transform pipeline running.
-Their real content flows through the CSS transform hooks in the
-plugin -- at build time the transform replaces token, theme, and
-quantize blocks inline, so these stubs are only hit when a consumer
-explicitly imports the virtual module (e.g. for runtime JS access
-to definitions).
+`virtual:czap/boundaries` exports the build-derived boundary manifest
+when the plugin passes one via `data.boundaries`; without data it
+degrades to an empty-object stub (valid JS for type-checkers and
+bundlers running outside the plugin).
+
+The remaining data modules (tokens, themes) return empty-object stubs
+-- their real content flows through the CSS transform hooks in the
+plugin, which replaces token, theme, and quantize blocks inline.
 
 The `hmr-client` module is the client-side HMR handler that the
 plugin injects into the page via `transformIndexHtml`.
@@ -29,6 +29,10 @@ plugin injects into the page via `transformIndexHtml`.
 ### id
 
 `string`
+
+### data?
+
+[`VirtualModuleData`](../interfaces/VirtualModuleData.md)
 
 ## Returns
 

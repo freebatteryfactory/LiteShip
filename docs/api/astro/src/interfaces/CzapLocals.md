@@ -34,7 +34,7 @@ Edge-host resolution result, present when an edge adapter is configured.
 
 #### cacheStatus
 
-> `readonly` **cacheStatus**: `"disabled"` \| `"hit"` \| `"miss"`
+> `readonly` **cacheStatus**: `EdgeHostCacheStatus`
 
 #### compiledOutputs?
 

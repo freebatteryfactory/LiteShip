@@ -6,9 +6,9 @@
 
 # Variable: cloudflareAdapterCapsule
 
-> `const` **cloudflareAdapterCapsule**: `CapsuleDef`\<`"siteAdapter"`, \{\[`key`: `string`\]: `string`; \}, \{ `cacheStatus`: `"disabled"` \| `"hit"` \| `"miss"`; `htmlAttributes`: `string`; \}, `unknown`\>
+> `const` **cloudflareAdapterCapsule**: `CapsuleDef`\<`"siteAdapter"`, \{\[`key`: `string`\]: `string`; \}, \{ `cacheStatus`: `"precompiled"` \| `"disabled"` \| `"hit"` \| `"miss"`; `htmlAttributes`: `string`; \}, `unknown`\>
 
-Defined in: [cloudflare/src/capsules/cloudflare-adapter.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/capsules/cloudflare-adapter.ts#L22)
+Defined in: [cloudflare/src/capsules/cloudflare-adapter.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/capsules/cloudflare-adapter.ts#L27)
 
 Declared capsule for `@czap/cloudflare`. Registered in the module-level
 catalog at import time; walked by the factory compiler.

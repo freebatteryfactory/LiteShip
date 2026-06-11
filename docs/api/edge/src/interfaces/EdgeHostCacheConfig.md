@@ -6,14 +6,15 @@
 
 # Interface: EdgeHostCacheConfig
 
-Defined in: [edge/src/host-adapter.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L55)
+Defined in: [edge/src/host-adapter.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L58)
 
 Cache configuration for the edge host adapter.
 
-When set, per-boundary compiled outputs are memoized in the supplied KV
-namespace keyed by `(boundaryId, tier)`. `compile` is the user-provided
-function that produces the outputs on a cache miss; its result is
-written back to KV with the configured `ttl`.
+Outputs are resolved in order: `precompiled` (build-derived manifest
+entry, no KV round-trip), then the KV cache keyed by
+`(boundaryId, tier)`, then `compile` on a miss (result written back to
+KV with the configured `ttl`). At least one of `precompiled` or
+`compile` must be provided.
 
 ## Properties
 
@@ -21,19 +22,19 @@ written back to KV with the configured `ttl`.
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L59)
+Defined in: [edge/src/host-adapter.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L62)
 
-Content address of the boundary being compiled.
+Content address of the boundary being compiled (`Boundary.make`'s `id`).
 
 ***
 
-### compile
+### compile?
 
-> `readonly` **compile**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
+> `readonly` `optional` **compile?**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
 
-Defined in: [edge/src/host-adapter.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L61)
+Defined in: [edge/src/host-adapter.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L70)
 
-Compile function invoked on cache miss.
+Compile function invoked when neither `precompiled` nor KV has the tier.
 
 #### Parameters
 
@@ -51,9 +52,21 @@ Compile function invoked on cache miss.
 
 > `readonly` **kv**: [`KVNamespace`](KVNamespace.md)
 
-Defined in: [edge/src/host-adapter.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L57)
+Defined in: [edge/src/host-adapter.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L60)
 
 KV namespace backing the boundary cache.
+
+***
+
+### precompiled?
+
+> `readonly` `optional` **precompiled?**: `Readonly`\<`Record`\<`string`, [`CompiledOutputs`](CompiledOutputs.md)\>\>
+
+Defined in: [edge/src/host-adapter.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L68)
+
+Build-derived outputs keyed by tier key (`"<motionTier>:<designTier>"`)
+-- the `outputsByTier` field of a boundary manifest entry. Checked
+before KV; a covered tier never touches the network.
 
 ***
 
@@ -61,7 +74,7 @@ KV namespace backing the boundary cache.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L71)
+Defined in: [edge/src/host-adapter.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L80)
 
 Optional KV key prefix.
 
@@ -71,7 +84,7 @@ Optional KV key prefix.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [edge/src/host-adapter.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L69)
+Defined in: [edge/src/host-adapter.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L78)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
 knob. Entries are content-addressed and never go stale; deploys that

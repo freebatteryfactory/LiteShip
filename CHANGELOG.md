@@ -20,6 +20,30 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
+  boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
+  `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the
+  boundary's minted `ContentAddress` plus precompiled `CompiledOutputs`
+  for the full (motion x design) tier grid. Dev imports stay fresh via
+  hotUpdate invalidation; `@czap/vite/virtual` ships ambient types for
+  the virtual modules.
+- `@czap/astro` — `astro:build:done` emits `czap-boundary-manifest.json`
+  (versioned envelope) into the build output for hosts that read the
+  manifest from disk instead of importing `virtual:czap/boundaries`.
+- `@czap/edge` — boundary manifest contract (`BoundaryManifest`,
+  `BoundaryManifestEntry`, `BoundaryManifestFile`, `TierKey`, `tierKey`,
+  `enumerateTierKeys`, `MOTION_TIERS`, `DESIGN_TIERS`);
+  `EdgeHostCacheConfig.precompiled` serves manifest outputs without a KV
+  round-trip (new `cacheStatus: 'precompiled'`), with `compile` now an
+  optional fallback (config validation teaches the fix when both are
+  missing).
+- `@czap/cloudflare` — `cloudflareMiddleware` accepts `manifest` (+
+  optional `boundary` selector) and derives `boundaryId` + precompiled
+  outputs from it; the hand-built `boundaryId` + `compile` form remains
+  as an escape hatch. `examples/cloudflare-astro` now runs the derived
+  path end-to-end (real boundary module, `@quantize` CSS, manifest-fed
+  middleware) instead of compiling a placeholder constant.
+
 - `@czap/audit` — consumer mode verifies **dist truth**: every concrete
   exports-map condition of every installed package must resolve to a real
   file (`export-target-missing`, error). Catches broken installs and
@@ -82,6 +106,12 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- Cloudflare boundary-cache truth repairs: the middleware docblock and
+  docs taught `boundaryId: 'sha256:…'` — the wrong identity family
+  (ADR-0003 mints `fnv1a:xxxxxxxx`) with no sanctioned way to obtain a
+  real id. Docs/README/example now derive ids from the build manifest,
+  and the integration test mints a real address instead of casting a
+  fabricated one (`as never`).
 - `@czap/scene` — `compileScene` now evaluates `SceneContract.invariants`
   and throws `CzapValidationError` on violation, as the `SceneInvariant`
   docblock always documented. Every declared check runs against the
