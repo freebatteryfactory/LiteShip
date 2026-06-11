@@ -4,9 +4,9 @@
 [![npm](https://img.shields.io/npm/v/@czap/core.svg)](https://www.npmjs.com/package/@czap/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-LiteShip rigs continuous signals into a small set of named bearings and casts each bearing to whatever surface the host runs. Viewport width slides as the user drags. Network latency wobbles. The dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. All of that comes in continuous; your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. The rig is in between.
+Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip rigs those continuous signals into a small set of named bearings and casts each bearing to whatever surface the host runs. The rig is in between.
 
-From one definition, the system can emit a CSS variable, a GLSL preamble, an ARIA attribute on the body, an AI manifest, and a TypeScript union. Same boundary, five surfaces, content-addressed via FNV-1a + canonical CBOR (see [ADR-0003](./docs/adr/0003-content-addressing.md)). No silent drift between projection layers.
+From one definition, the system can emit a CSS variable, a GLSL preamble, an ARIA attribute on the body, an AI manifest, and a TypeScript union. Same boundary, five surfaces, no silent drift between projection layers. Every output is computed from a content address of the definition, so if it renders right once, it renders right everywhere — the engine can prove it ([ADR-0003](./docs/adr/0003-content-addressing.md)).
 
 *LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.*
 
@@ -15,8 +15,10 @@ This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI. Nami
 ## Quick start
 
 ```bash
-pnpm add @czap/core @czap/quantizer @czap/compiler
+pnpm add @czap/core effect
 ```
+
+`effect` is `@czap/core`'s one peer dependency (currently the Effect 4 beta — see the [support matrix](#support-matrix) for the pin and the stabilization plan). That's the whole install for the snippet below; further packages arrive when you first import them.
 
 ```ts
 import { Boundary, Token, Style } from '@czap/core';
@@ -27,14 +29,14 @@ const viewport = Boundary.make({
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
-  ] as const,
+  ],
   hysteresis: 20,
 });
 
 const primary = Token.make({
   name: 'primary',
   category: 'color',
-  axes: ['theme'] as const,
+  axes: ['theme'],
   values: { dark: '#00e5ff', light: 'hsl(175 70% 50%)' },
   fallback: '#00e5ff',
 });
@@ -72,7 +74,7 @@ This is not a replacement for media queries (use them where they're enough), CSS
 
 ## What's in the box
 
-The packages you install in the Quick Start above are the smallest useful set for authoring + casting end-to-end. The Quick Start snippet imports from `@czap/core`; you reach for `@czap/quantizer` to evaluate boundaries against live signals (`Q.from()`) and `@czap/compiler` to cast a boundary to a target output (`CSSCompiler.compile()` and friends).
+The Quick Start installs the smallest useful set: `@czap/core` (the snippet's only import) plus its `effect` peer. The first time you need more, install it at the import site: `pnpm add @czap/quantizer` to evaluate boundaries against live signals (`Q.from()`), `pnpm add @czap/compiler` to cast a boundary to a target output (`CSSCompiler.compile()` and friends).
 
 | Package | Description |
 | --- | --- |
