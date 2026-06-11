@@ -293,22 +293,72 @@ export function parseQuantizeBlocks(css: string, sourceFile: string): readonly Q
 // ---------------------------------------------------------------------------
 
 /**
- * Build the containment rule that makes the compiled `@container`
- * queries actually match: a `@container <name> (...)` query only fires
- * inside an ancestor that declares `container-type` and a matching
- * `container-name` — nothing in the runtime emits one.
+ * Sheet-level aggregation context shared across every
+ * {@link compileQuantizeBlock} call for one stylesheet.
+ *
+ * `container-name` is a replaced (non-accumulating) property: when two
+ * viewport-based boundaries in the same sheet each emitted their own
+ * `:root { container-name: X }` rule, the last rule won and the earlier
+ * boundary's `@container` queries matched nothing. Aggregating the
+ * names here lets the caller emit ONE `:root` rule in the
+ * space-separated multi-name form
+ * (`container-name: viewport-width viewport-height`) via
+ * {@link viewportContainmentRule}, so every query keeps a matching
+ * container.
+ */
+export interface QuantizeSheetContext {
+  /** Viewport container names collected across the sheet's blocks. */
+  readonly viewportContainerNames: Set<string>;
+}
+
+/** Sanitize a boundary input identifier into its CSS container name. */
+function containerNameOf(boundary: Boundary.Shape): string {
+  return boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+
+/** Whether the boundary measures the viewport (root element is the natural container). */
+function isViewportInput(input: string): boolean {
+  return input === 'viewport' || input.startsWith('viewport.');
+}
+
+/**
+ * Build the single `:root` containment rule for a sheet's viewport-based
+ * boundaries: `container-type: inline-size` plus every collected
+ * container name in CSS's space-separated multi-name form, so each
+ * compiled `@container <name> (...)` query finds its container.
+ *
+ * Returns `null` when no viewport container names were collected
+ * (non-viewport boundaries declare their own containers; see the
+ * `container-not-declared` diagnostic).
+ */
+export function viewportContainmentRule(names: Iterable<string>): string | null {
+  const unique = [...new Set(names)];
+  if (unique.length === 0) return null;
+  return `:root {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
+}
+
+/**
+ * Account for the containment a block's compiled queries need: a
+ * `@container <name> (...)` query only fires inside an ancestor that
+ * declares `container-type` and a matching `container-name` — nothing
+ * in the runtime emits one.
  *
  * For `viewport.*` boundaries the root element is the natural container
- * (its inline size IS the viewport width), so a `:root` containment rule
- * is emitted alongside the queries. For other inputs there is no
+ * (its inline size IS the viewport width), so the container name is
+ * recorded on the sheet context (aggregated emission) or returned as a
+ * standalone `:root` rule (no context). For other inputs there is no
  * element the compiler can safely claim as the container, so a
  * {@link Diagnostics.warn} teaches the literal declaration to add.
  */
-function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape): string | null {
-  const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
+function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?: QuantizeSheetContext): string | null {
+  const containerName = containerNameOf(boundary);
 
-  if (boundary.input === 'viewport' || boundary.input.startsWith('viewport.')) {
-    return `:root {\n  container-type: inline-size;\n  container-name: ${containerName};\n}`;
+  if (isViewportInput(boundary.input)) {
+    if (sheet) {
+      sheet.viewportContainerNames.add(containerName);
+      return null; // caller emits the aggregated rule once per sheet
+    }
+    return viewportContainmentRule([containerName]);
   }
 
   Diagnostics.warn({
@@ -333,11 +383,23 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape): string
  *
  * Bare declarations keep the default `.czap-boundary` selector; nested
  * rules each compile to their own selector inside the state's
- * `@container` block. For viewport-based boundaries the output also
- * declares `:root` as the named query container; other inputs emit a
- * `container-not-declared` diagnostic naming the declaration to add.
+ * `@container` block.
+ *
+ * Containment: pass a shared {@link QuantizeSheetContext} when
+ * compiling multiple blocks from one stylesheet — viewport container
+ * names are collected on it and the caller emits ONE aggregated `:root`
+ * rule via {@link viewportContainmentRule} (`container-name` is a
+ * replaced property, so per-block `:root` rules would overwrite each
+ * other). Without a context, a viewport-based block inlines its own
+ * `:root` rule (single-block convenience form). Non-viewport inputs
+ * emit a `container-not-declared` diagnostic naming the declaration to
+ * add.
  */
-export function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary.Shape): string {
+export function compileQuantizeBlock(
+  block: QuantizeBlock,
+  boundary: Boundary.Shape,
+  sheet?: QuantizeSheetContext,
+): string {
   const states: Record<string, CSSStateInput> = {};
   for (const [stateName, body] of Object.entries(block.states)) {
     const rules: CSSRule[] = body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props }));
@@ -349,7 +411,7 @@ export function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary.Sh
     return CSSCompiler.serialize(result);
   }
 
-  const containment = containmentRule(block, boundary);
+  const containment = containmentRule(block, boundary, sheet);
   const serialized = CSSCompiler.serialize(result);
   return containment ? `${containment}\n\n${serialized}` : serialized;
 }

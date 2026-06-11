@@ -6,7 +6,7 @@
 
 # Interface: QuantizeNestedRule
 
-Defined in: [vite/src/css-quantize.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L24)
+Defined in: [vite/src/css-quantize.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L30)
 
 A nested rule inside a `@quantize` state: a CSS selector plus the
 property map applied to it when the state is active.
@@ -17,7 +17,7 @@ property map applied to it when the state is active.
 
 > `readonly` **props**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L28)
+Defined in: [vite/src/css-quantize.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L34)
 
 `{ cssProp: value }` declarations inside the nested rule.
 
@@ -27,6 +27,6 @@ Defined in: [vite/src/css-quantize.ts:28](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **selector**: `string`
 
-Defined in: [vite/src/css-quantize.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L26)
+Defined in: [vite/src/css-quantize.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L32)
 
 CSS selector exactly as authored (e.g. `.grid`, `.hero__title`).

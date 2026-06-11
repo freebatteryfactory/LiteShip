@@ -16,6 +16,7 @@ import {
   compileStyleBlock,
   parseQuantizeBlocks,
   compileQuantizeBlock,
+  viewportContainmentRule,
 } from '@czap/vite';
 import { Boundary } from '@czap/core';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
@@ -924,6 +925,105 @@ describe('compileQuantizeBlock nested selectors', () => {
     ]);
 
     expect(compileQuantizeBlock(block!, boundary)).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sheet-level viewport containment aggregation (Codex P2 regression)
+//
+// `container-name` is a replaced property: two per-block `:root` rules
+// (one per viewport boundary) would overwrite each other and the earlier
+// boundary's @container queries would match nothing. With a shared
+// QuantizeSheetContext the names aggregate into ONE `:root` rule using
+// CSS's space-separated multi-name form.
+// ---------------------------------------------------------------------------
+
+describe('viewport containment aggregation', () => {
+  const css = `
+@quantize layoutW {
+  narrow {
+    .grid { grid-template-columns: 1fr; }
+  }
+}
+
+@quantize layoutH {
+  short {
+    .grid { max-height: 50vh; }
+  }
+}`;
+
+  function compileBoth() {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const widthBoundary = makeBoundary('viewport.width', [
+      [0, 'narrow'],
+      [768, 'wide'],
+    ]);
+    const heightBoundary = makeBoundary('viewport.height', [
+      [0, 'short'],
+      [600, 'tall'],
+    ]);
+    const sheet = { viewportContainerNames: new Set<string>() };
+    const compiledWidth = compileQuantizeBlock(blocks[0]!, widthBoundary, sheet);
+    const compiledHeight = compileQuantizeBlock(blocks[1]!, heightBoundary, sheet);
+    return { sheet, compiledWidth, compiledHeight };
+  }
+
+  test('blocks compiled with a sheet context emit no per-block :root rule', () => {
+    const { compiledWidth, compiledHeight } = compileBoth();
+
+    expect(compiledWidth).not.toContain(':root');
+    expect(compiledHeight).not.toContain(':root');
+    expect(compiledWidth).toContain('@container viewport-width (width < 768px)');
+    expect(compiledHeight).toContain('@container viewport-height (width < 600px)');
+  });
+
+  test('viewportContainmentRule emits one :root rule naming every collected container', () => {
+    const { sheet } = compileBoth();
+
+    expect([...sheet.viewportContainerNames]).toEqual(['viewport-width', 'viewport-height']);
+
+    const containment = viewportContainmentRule(sheet.viewportContainerNames);
+    expect(containment).toBe(':root {\n  container-type: inline-size;\n  container-name: viewport-width viewport-height;\n}');
+  });
+
+  test('viewportContainmentRule dedupes repeated names and returns null for none', () => {
+    expect(viewportContainmentRule(['viewport-width', 'viewport-width'])).toBe(
+      ':root {\n  container-type: inline-size;\n  container-name: viewport-width;\n}',
+    );
+    expect(viewportContainmentRule([])).toBeNull();
+  });
+
+  test('without a sheet context a single viewport block keeps its inline :root rule', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const widthBoundary = makeBoundary('viewport.width', [
+      [0, 'narrow'],
+      [768, 'wide'],
+    ]);
+
+    const compiled = compileQuantizeBlock(blocks[0]!, widthBoundary);
+
+    expect(compiled).toContain(':root {\n  container-type: inline-size;\n  container-name: viewport-width;\n}');
+  });
+
+  test('non-viewport boundaries warn instead of contributing a container name', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const scrollBoundary = makeBoundary('scroll.y', [
+      [0, 'narrow'],
+      [400, 'wide'],
+    ]);
+    const sheet = { viewportContainerNames: new Set<string>() };
+
+    const { events } = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, scrollBoundary, sheet),
+      events: [...captured],
+    }));
+
+    expect(sheet.viewportContainerNames.size).toBe(0);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
+      ]),
+    );
   });
 });
 

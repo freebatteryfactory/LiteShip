@@ -8,7 +8,7 @@
 
 > **compileThemeBlock**(`block`, `theme`): `string`
 
-Defined in: [vite/src/theme-transform.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L88)
+Defined in: [vite/src/theme-transform.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L90)
 
 Compile a parsed [ThemeBlock](../interfaces/ThemeBlock.md) plus a resolved `ThemeDef` into
 `html[data-theme]` selector blocks and transition declarations.

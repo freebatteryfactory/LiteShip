@@ -47,6 +47,7 @@ const config = defineConfig({
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
 - [QuantizeBlock](interfaces/QuantizeBlock.md)
 - [QuantizeNestedRule](interfaces/QuantizeNestedRule.md)
+- [QuantizeSheetContext](interfaces/QuantizeSheetContext.md)
 - [QuantizeStateBody](interfaces/QuantizeStateBody.md)
 - [StyleBlock](interfaces/StyleBlock.md)
 - [ThemeBlock](interfaces/ThemeBlock.md)
@@ -78,3 +79,4 @@ const config = defineConfig({
 - [resolveVirtualId](functions/resolveVirtualId.md)
 - [resolveWASM](functions/resolveWASM.md)
 - [transformHTML](functions/transformHTML.md)
+- [viewportContainmentRule](functions/viewportContainmentRule.md)

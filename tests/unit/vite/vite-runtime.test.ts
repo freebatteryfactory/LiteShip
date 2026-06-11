@@ -768,6 +768,81 @@ describe('@czap/vite plugin', () => {
     expect(transformed?.code).toContain('@container');
   });
 
+  test('aggregates viewport container names into one :root rule when a sheet quantizes multiple viewport boundaries', async () => {
+    // Regression (Codex P2): `container-name` is a replaced property, so
+    // per-block `:root` rules would overwrite each other and only the
+    // LAST viewport boundary's @container queries could ever match. The
+    // sheet must emit ONE `:root` rule naming every viewport container.
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const widthBoundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'narrow'],
+        [768, 'wide'],
+      ] as const,
+    });
+    const heightBoundary = Boundary.make({
+      input: 'viewport.height',
+      at: [
+        [0, 'short'],
+        [600, 'tall'],
+      ] as const,
+    });
+
+    writeFileSync(
+      join(cssDir, 'boundaries.ts'),
+      `export const layoutW = ${JSON.stringify(widthBoundary, null, 2)};\n` +
+        `export const layoutH = ${JSON.stringify(heightBoundary, null, 2)};\n`,
+    );
+
+    const css = `
+@quantize layoutW {
+  narrow {
+    .grid { grid-template-columns: 1fr; }
+  }
+}
+
+@quantize layoutH {
+  short {
+    .grid { max-height: 50vh; }
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const transformed = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      },
+      css,
+      join(cssDir, 'layouts.css'),
+    );
+
+    expect(warnings).toEqual([]);
+    expect(transformed).not.toBeNull();
+
+    const output = transformed!.code;
+
+    // Exactly ONE :root containment rule, naming BOTH containers in the
+    // space-separated multi-name form.
+    const rootRules = output.match(/:root \{[^}]*\}/g) ?? [];
+    expect(rootRules).toHaveLength(1);
+    expect(rootRules[0]).toContain('container-type: inline-size');
+    expect(rootRules[0]).toContain('container-name: viewport-width viewport-height');
+
+    // Each boundary's queries reference a name the :root rule declares.
+    expect(output).toContain('@container viewport-width (width < 768px)');
+    expect(output).toContain('@container viewport-height (width < 600px)');
+  });
+
   test('leaves string-value at-rule decoys untouched while transforming the real blocks after them', async () => {
     // Regression (Codex P2): a `content: "@token accent {"` declaration
     // must neither parse as a block nor be spliced out as the

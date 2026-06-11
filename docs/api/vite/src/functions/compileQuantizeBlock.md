@@ -6,9 +6,9 @@
 
 # Function: compileQuantizeBlock()
 
-> **compileQuantizeBlock**(`block`, `boundary`): `string`
+> **compileQuantizeBlock**(`block`, `boundary`, `sheet?`): `string`
 
-Defined in: [vite/src/css-quantize.ts:333](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L333)
+Defined in: [vite/src/css-quantize.ts:398](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L398)
 
 Compile a parsed [QuantizeBlock](../interfaces/QuantizeBlock.md) plus its resolved
 [Boundary.Shape](#) into CSS `@container` query rules. Delegates
@@ -17,9 +17,17 @@ logic.
 
 Bare declarations keep the default `.czap-boundary` selector; nested
 rules each compile to their own selector inside the state's
-`@container` block. For viewport-based boundaries the output also
-declares `:root` as the named query container; other inputs emit a
-`container-not-declared` diagnostic naming the declaration to add.
+`@container` block.
+
+Containment: pass a shared [QuantizeSheetContext](../interfaces/QuantizeSheetContext.md) when
+compiling multiple blocks from one stylesheet — viewport container
+names are collected on it and the caller emits ONE aggregated `:root`
+rule via [viewportContainmentRule](viewportContainmentRule.md) (`container-name` is a
+replaced property, so per-block `:root` rules would overwrite each
+other). Without a context, a viewport-based block inlines its own
+`:root` rule (single-block convenience form). Non-viewport inputs
+emit a `container-not-declared` diagnostic naming the declaration to
+add.
 
 ## Parameters
 
@@ -30,6 +38,10 @@ declares `:root` as the named query container; other inputs emit a
 ### boundary
 
 [`Shape`](#)
+
+### sheet?
+
+[`QuantizeSheetContext`](../interfaces/QuantizeSheetContext.md)
 
 ## Returns
 

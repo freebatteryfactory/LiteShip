@@ -8,7 +8,7 @@
 
 > **parseTokenBlocks**(`css`, `sourceFile`): readonly [`TokenBlock`](../interfaces/TokenBlock.md)[]
 
-Defined in: [vite/src/token-transform.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/token-transform.ts#L54)
+Defined in: [vite/src/token-transform.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/token-transform.ts#L56)
 
 Parse every `@token` block from CSS source text.
 
@@ -21,9 +21,11 @@ mid-line, e.g. inside compiler-re-serialized CSS):
 }
 ```
 
-At-rule markers are located on a comment-blanked copy of the source
-(same offsets) so commented-out blocks never match; declarations are
-parsed character-by-character from the original source.
+At-rule markers are located on a comment- and string-blanked copy of
+the source (same offsets) so neither commented-out blocks nor marker
+text inside string values or data URLs ever match; declarations are
+parsed character-by-character from the original source, so real
+string values are preserved.
 
 ## Parameters
 
