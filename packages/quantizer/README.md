@@ -4,7 +4,7 @@ Q.from() builder, boundary evaluation, animated transitions, MotionTier gating.
 
 ## Docs
 
-- [Naming & vocabulary](../../docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
+- [Naming & vocabulary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
 
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/quantizer/) — generated from source TSDoc
 - [Architecture index](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)

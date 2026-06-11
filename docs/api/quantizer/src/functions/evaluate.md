@@ -8,7 +8,7 @@
 
 > **evaluate**\<`B`\>(`boundary`, `value`, `previousState?`): [`EvaluateResult`](../interfaces/EvaluateResult.md)\<`StateUnion`\<`B`\>\>
 
-Defined in: [quantizer/src/evaluate.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L55)
+Defined in: [quantizer/src/evaluate.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L56)
 
 Find which state a value maps to via binary search over sorted thresholds.
 With hysteresis: if previousState is provided and the value is within the
@@ -56,8 +56,9 @@ import { Boundary } from '@czap/core';
 import { evaluate } from '@czap/quantizer';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'md', 'lg'] as const,
-  thresholds: [0, 640, 1024], hysteresis: 20,
+  input: 'width',
+  at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
+  hysteresis: 20,
 });
 const result = evaluate(boundary, 800);
 // result => { state: 'md', index: 1, value: 800, crossed: false }

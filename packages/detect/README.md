@@ -4,7 +4,7 @@ Device capability probes, GPU tier, DesignTier/MotionTier mapping.
 
 ## Docs
 
-- [Naming & vocabulary](../../docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
+- [Naming & vocabulary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
 
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/detect/) — generated from source TSDoc
 - [Architecture index](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)

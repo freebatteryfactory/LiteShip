@@ -70,6 +70,15 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
  * from the nearest {@link Provider}. Returns a structurally-empty state
  * when no provider is mounted (or it holds no frames) so callers never
  * crash at the boundary.
+ *
+ * This is the implicit context-lookup half of a deliberate pair: mount a
+ * {@link Provider} once and call `useCzapState()` anywhere in the subtree
+ * — no prop threading. Its sibling, `useCompositeState(frames)` in
+ * `hooks.js`, takes the frames array explicitly for shallow trees and
+ * pure components. Both clamp to the valid frame range and fall back to a
+ * structurally-empty `CompositeState`.
+ *
+ * @see useCompositeState for the explicit prop-threading form.
  */
 export function useCzapState(): CompositeState {
   const frames = useContext(CzapContext);

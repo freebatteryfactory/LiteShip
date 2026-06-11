@@ -23,6 +23,11 @@ The plugin hooks into Vite's `resolveId`, `load`, `transform`, and
   shader uniforms, and boundary definitions update without a full
   page reload.
 
+Definitions are discovered by convention (`tokens.ts` / `*.tokens.ts`,
+`themes.ts` / `*.themes.ts`, ... next to the referencing file, then at
+the project root) — no listing required. Override the search directory
+per primitive kind via [PluginConfig.dirs](interfaces/PluginConfig.md#dirs).
+
 ## Example
 
 ```ts
@@ -31,7 +36,7 @@ import { defineConfig } from 'vite';
 import { plugin as czap } from '@czap/vite';
 
 const config = defineConfig({
-  plugins: [czap({ themes: ['./themes/default.ts'] })],
+  plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
 });
 ```
 
@@ -66,6 +71,7 @@ const config = defineConfig({
 - [parseThemeBlocks](functions/parseThemeBlocks.md)
 - [parseTokenBlocks](functions/parseTokenBlocks.md)
 - [plugin](functions/plugin.md)
+- [primitiveSearchPatterns](functions/primitiveSearchPatterns.md)
 - [resolvePrimitive](functions/resolvePrimitive.md)
 - [resolveVirtualId](functions/resolveVirtualId.md)
 - [resolveWASM](functions/resolveWASM.md)

@@ -17,20 +17,20 @@ the current interpolated output record.
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
 import { Effect } from 'effect';
 
 const boundary = Boundary.make({
-  input: 'scroll', states: ['top', 'bottom'] as const,
-  thresholds: [0, 500],
+  input: 'scroll',
+  at: [[0, 'top'], [500, 'bottom']],
 });
 const config = Q.from(boundary).outputs({});
 const program = Effect.scoped(Effect.gen(function* () {
   const live = yield* config.create();
   const animated = yield* AnimatedQuantizer.make(
     live,
-    { '*->*': { duration: 200 } },
+    { '*': { duration: Millis(200) } },
   );
   return animated.transition; // TransitionResolver
 }));

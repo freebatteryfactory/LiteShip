@@ -129,8 +129,8 @@ function buildContainerQuery(thresholds: readonly number[], stateIndex: number, 
  * import { CSSCompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const result = CSSCompiler.compile(boundary, {
  *   sm: { 'font-size': '14px' },
@@ -292,8 +292,8 @@ export function generatePropertyRegistrations(states: Record<string, Record<stri
  * import { CSSCompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const result = CSSCompiler.compile(boundary, {
  *   sm: { '--gap': '8px' }, lg: { '--gap': '24px' },

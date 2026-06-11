@@ -11,10 +11,11 @@
  */
 
 import { readFileSync } from 'node:fs';
+import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import { parseQuantizeBlocks, compileQuantizeBlock } from './css-quantize.js';
-import { resolvePrimitive } from './primitive-resolve.js';
+import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
 import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
@@ -41,6 +42,46 @@ export interface PluginConfig {
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
   /** Opt-in WASM runtime configuration. */
   readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostics
+// ---------------------------------------------------------------------------
+
+/** Factory namespace users type to produce each primitive kind. */
+const KIND_FACTORY: Record<PrimitiveKind, string> = {
+  boundary: 'Boundary',
+  token: 'Token',
+  theme: 'Theme',
+  style: 'Style',
+};
+
+/**
+ * Doctor-style warning for an unresolved primitive: what happened (the
+ * name and the file that referenced it), why probably (none of the
+ * searched convention modules exported it), and the literal next thing
+ * to type (the factory export, or the `dirs` override).
+ */
+function unresolvedPrimitiveWarning(
+  kind: PrimitiveKind,
+  name: string,
+  id: string,
+  line: number,
+  projectRoot: string,
+  userDir: string | undefined,
+): string {
+  const searched = primitiveSearchPatterns(kind, id, projectRoot, userDir)
+    .map((pattern) => {
+      const rel = path.relative(projectRoot, pattern);
+      return rel.startsWith('..') ? pattern : rel;
+    })
+    .join(', ');
+  return (
+    `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
+    `Searched for an export named "${name}" in: ${searched} (none matched). ` +
+    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
+    `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -210,7 +251,9 @@ export function plugin(config?: PluginConfig): Plugin {
           }
 
           if (token === null) {
-            this.warn(`Could not resolve token "${block.tokenName}" referenced in ${id}:${block.line}`);
+            this.warn(
+              unresolvedPrimitiveWarning('token', block.tokenName, id, block.line, projectRoot, config?.dirs?.token),
+            );
             continue;
           }
 
@@ -238,7 +281,9 @@ export function plugin(config?: PluginConfig): Plugin {
           }
 
           if (theme === null) {
-            this.warn(`Could not resolve theme "${block.themeName}" referenced in ${id}:${block.line}`);
+            this.warn(
+              unresolvedPrimitiveWarning('theme', block.themeName, id, block.line, projectRoot, config?.dirs?.theme),
+            );
             continue;
           }
 
@@ -266,7 +311,9 @@ export function plugin(config?: PluginConfig): Plugin {
           }
 
           if (style === null) {
-            this.warn(`Could not resolve style "${block.styleName}" referenced in ${id}:${block.line}`);
+            this.warn(
+              unresolvedPrimitiveWarning('style', block.styleName, id, block.line, projectRoot, config?.dirs?.style),
+            );
             continue;
           }
 
@@ -300,7 +347,16 @@ export function plugin(config?: PluginConfig): Plugin {
           }
 
           if (boundary === null) {
-            this.warn(`Could not resolve boundary "${block.boundaryName}" referenced in ${id}:${block.line}`);
+            this.warn(
+              unresolvedPrimitiveWarning(
+                'boundary',
+                block.boundaryName,
+                id,
+                block.line,
+                projectRoot,
+                config?.dirs?.boundary,
+              ),
+            );
             continue;
           }
 

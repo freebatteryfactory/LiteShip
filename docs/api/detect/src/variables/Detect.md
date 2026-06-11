@@ -41,8 +41,8 @@ import { Effect } from 'effect';
 
 const result = Effect.runSync(Detect.detect());
 console.log(result.capabilities.gpu);       // 0-3
-console.log(result.tier);                   // 'low' | 'mid' | 'high'
-console.log(result.designTier);             // 'basic' | 'standard' | 'rich'
+console.log(result.tier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
 console.log(result.confidence);             // 0.5 - 1.0
 ```
