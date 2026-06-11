@@ -527,6 +527,18 @@ describe('parseStyleBlocks scanner regressions (css-scan port)', () => {
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.8' });
   });
+
+  test('@style text inside a declaration value is value text, not a block (Codex P2, PR #30)', () => {
+    // An unquoted custom-property payload can contain a full at-rule token
+    // sequence — only the TOP-LEVEL marker is a real block; splicing the
+    // in-value range would corrupt the .x rule.
+    const css = '.x{--snippet:@style card{hover{opacity:0}};} @style card { hover { opacity: 0.5; } }';
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.5' });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -671,6 +683,15 @@ describe('parseQuantizeBlocks', () => {
 
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.states['state1']?.bareProps['color']).toBe('red');
+  });
+
+  test('@quantize text inside a declaration value is value text, not a block (same guard as @style)', () => {
+    const css = '.x{--snippet:@quantize layout{mobile{gap:0}};} @quantize layout { mobile { gap: 1rem; } }';
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['mobile']?.bareProps['gap']).toBe('1rem');
   });
 });
 

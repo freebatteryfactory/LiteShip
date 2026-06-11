@@ -14,6 +14,7 @@ import { StyleCSSCompiler } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
   blankCssCommentsAndStrings,
+  braceDepthDelta,
   lineOfOffset,
   parseFlatDeclarations,
   skipSegment,
@@ -75,8 +76,18 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
   const atRule = /@style\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;
   const statePattern = /([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/y;
 
+  // Running depth from the last accepted scan position — markers are only
+  // at-rules at the sheet's top level; `@style name {` text inside a
+  // declaration value (e.g. a custom property holding a snippet) is value
+  // text, and splicing it would corrupt the surrounding declaration.
+  let depthFrom = 0;
+  let depth = 0;
+
   let match: RegExpExecArray | null;
   while ((match = atRule.exec(blanked)) !== null) {
+    depth = braceDepthDelta(blanked, depthFrom, match.index, depth);
+    depthFrom = match.index;
+    if (depth > 0) continue;
     const styleName = match[1]!;
     const blockStartLine = lineOfOffset(normalized, match.index);
     const states: Record<string, Record<string, string>> = {};
@@ -112,8 +123,11 @@ export function parseStyleBlocks(css: string, sourceFile: string): readonly Styl
     blocks.push({ styleName, states, sourceFile, line: blockStartLine });
 
     // Resume marker search after this block so state bodies are never
-    // re-matched as new at-rules.
+    // re-matched as new at-rules. The block just consumed is balanced, so
+    // the depth at `pos` is the depth where it began (top level).
     atRule.lastIndex = pos;
+    depthFrom = pos;
+    depth = 0;
   }
 
   return blocks;
