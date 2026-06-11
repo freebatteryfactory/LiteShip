@@ -185,6 +185,67 @@ describe('compiler branch coverage', () => {
     ).toContain('.empty {}');
   });
 
+  test('CSSCompiler emits one rule per nested selector from structured state bodies', () => {
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'mobile'],
+        [768, 'desktop'],
+      ] as const,
+    });
+
+    const compiled = CSSCompiler.compile(
+      boundary,
+      {
+        mobile: {
+          bareProps: { gap: '0.5rem' },
+          rules: [
+            { selector: '.grid', properties: { 'grid-template-columns': '1fr' } },
+            { selector: '.hero', properties: { padding: '2rem 1rem' } },
+          ],
+        },
+        desktop: {
+          rules: [{ selector: '.grid', properties: { 'grid-template-columns': 'repeat(3, 1fr)' } }],
+        },
+      },
+      '.card',
+    );
+
+    expect(compiled.containerRules).toHaveLength(2);
+    expect(compiled.containerRules[0]!.rules).toEqual([
+      { selector: '.card', properties: { gap: '0.5rem' } },
+      { selector: '.grid', properties: { 'grid-template-columns': '1fr' } },
+      { selector: '.hero', properties: { padding: '2rem 1rem' } },
+    ]);
+    expect(compiled.raw).toContain(
+      '@container viewport-width (width < 768px) {\n.card {\n  gap: 0.5rem;\n}\n.grid {\n  grid-template-columns: 1fr;\n}\n.hero {\n  padding: 2rem 1rem;\n}\n}',
+    );
+    expect(compiled.raw).toContain(
+      '@container viewport-width (width >= 768px) {\n.grid {\n  grid-template-columns: repeat(3, 1fr);\n}\n}',
+    );
+  });
+
+  test('CSSCompiler skips structured states whose bare props and nested rules are all empty', () => {
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'mobile'],
+        [768, 'desktop'],
+      ] as const,
+    });
+
+    const compiled = CSSCompiler.compile(boundary, {
+      mobile: { bareProps: {}, rules: [{ selector: '.grid', properties: {} }] },
+      desktop: { bareProps: { color: 'blue' }, rules: [] },
+    });
+
+    expect(compiled.containerRules).toHaveLength(1);
+    expect(compiled.containerRules[0]!.query).toBe('(width >= 768px)');
+    expect(compiled.containerRules[0]!.rules).toEqual([
+      { selector: '.czap-boundary', properties: { color: 'blue' } },
+    ]);
+  });
+
   test('CSSCompiler ignores unsupported custom property values and emits frequency registrations', () => {
     const registrations = CSSCompiler.generatePropertyRegistrations({
       compact: {

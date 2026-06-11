@@ -20,9 +20,15 @@ const DATA_CZAP_PATTERN = /data-czap="([^"]+)"/g;
  * @param source - The HTML/Astro source string
  * @param fromFile - The file path of the source (for resolution context)
  * @param projectRoot - The project root directory
+ * @param boundaryDir - Optional boundary definition directory (the plugin's `dirs.boundary` override)
  * @returns The transformed source, or the original if no transforms needed
  */
-export async function transformHTML(source: string, fromFile: string, projectRoot: string): Promise<string> {
+export async function transformHTML(
+  source: string,
+  fromFile: string,
+  projectRoot: string,
+  boundaryDir?: string,
+): Promise<string> {
   const matches = [...source.matchAll(DATA_CZAP_PATTERN)];
   if (matches.length === 0) return source;
 
@@ -32,7 +38,7 @@ export async function transformHTML(source: string, fromFile: string, projectRoo
     const fullMatch = match[0]!;
     const boundaryName = match[1]!;
 
-    const resolution = await resolvePrimitive('boundary', boundaryName, fromFile, projectRoot);
+    const resolution = await resolvePrimitive('boundary', boundaryName, fromFile, projectRoot, boundaryDir);
     if (!resolution) {
       Diagnostics.warn({
         source: 'czap/vite.html-transform',
