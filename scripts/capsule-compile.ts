@@ -268,12 +268,16 @@ async function main(): Promise<void> {
     const testPath = resolve(generatedDir, `${slug}.test.ts`);
     const benchPath = resolve(generatedDir, `${slug}.bench.ts`);
 
-    // Build a HarnessContext only when we have a binding name AND the call
-    // is direct (`defineCapsule`, no factory wrapper). Factory wrappers
-    // return a contract value but don't expose a stable importable binding
-    // for the harness to reach — fall back to skip.
+    // Build a HarnessContext when we have a binding name AND either the call
+    // is direct (`defineCapsule`, no factory wrapper) or it is a `defineAsset`
+    // call bound to an EXPORTED const (e.g. `export const introBed =
+    // defineAsset({...})` in examples/scenes/assets.ts) — the harness can
+    // import that binding and probe the capsule's derive handler. Other
+    // factory wrappers (BeatMarkerProjection, ...) still fall back to skip:
+    // their capsules carry no derive handler to probe yet.
+    const factoryBindable = d.factory === 'defineAsset' && d.exported === true;
     let harnessCtx: HarnessContext | undefined;
-    if (d.binding !== undefined && d.factory === undefined) {
+    if (d.binding !== undefined && (d.factory === undefined || factoryBindable)) {
       const sourceModule = normalizeRepoPath(relative(dirname(testPath), d.file)).replace(/\.ts$/, '.js');
       const arbitraryAbs = resolve(
         'packages/core/src/harness/arbitrary-from-schema.ts',
@@ -287,6 +291,10 @@ async function main(): Promise<void> {
         arbitraryImport: arbitraryModule.startsWith('.')
           ? arbitraryModule
           : `./${arbitraryModule}`,
+        // Asset decls name their canonical byte source (repo-relative) —
+        // the cachedProjection harness uses it for fixture-based
+        // determinism tests and the real decode bench.
+        ...(d.declSource !== undefined ? { fixturePath: normalizeRepoPath(d.declSource) } : {}),
       };
     }
     const { testFile, benchFile } = dispatchHarness(d.kind, stub, harnessCtx);

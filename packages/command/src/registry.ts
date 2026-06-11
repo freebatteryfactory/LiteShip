@@ -72,8 +72,16 @@ export interface CommandContext {
    * Adapter-backed by @czap/assets — injected (not imported) so @czap/command
    * does not yet take a domain-package build edge. (Heavy-tier decision: whether
    * command should depend on assets/scene directly, or keep injecting.)
+   *
+   * `assetId` (supplied by the asset.analyze handler) lets the adapter honor
+   * the asset's OWN decoder (`AssetDecl.decoder`, resolved through the asset
+   * registry) instead of hardwiring the audio built-in.
    */
-  readonly runAudioProjection?: (bytes: ArrayBuffer, projection: 'beat' | 'onset' | 'waveform') => Promise<number>;
+  readonly runAudioProjection?: (
+    bytes: ArrayBuffer,
+    projection: 'beat' | 'onset' | 'waveform',
+    assetId?: string,
+  ) => Promise<number>;
   /**
    * Dynamically load a user scene module (the adapter owns the dynamic import,
    * keeping @czap/command free of it — relevant to the A1-T3 dynamic-import

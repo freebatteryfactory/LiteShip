@@ -1,0 +1,54 @@
+import { describe, it, expect } from 'vitest';
+import { classifyBenchSource } from '../../../scripts/lib/bench-classify.ts';
+
+// Pins the real-vs-placeholder semantics the capsule:verify receipt is built
+// on. The integration test derives its expected receipt from this classifier,
+// so this is the one place that asserts the classification against literal
+// sources rather than generated files.
+describe('classifyBenchSource', () => {
+  it('classifies a bench with an executable closure body as real', () => {
+    const src = [
+      "import { bench } from 'vitest';",
+      "bench('demo — decode throughput', async () => {",
+      '  await cap.derive(bytes);',
+      '}, { time: 500 });',
+    ].join('\n');
+    expect(classifyBenchSource(src)).toBe('real');
+  });
+
+  it('classifies a comment-only closure body as placeholder', () => {
+    const src = [
+      "import { bench } from 'vitest';",
+      "bench('demo — decode throughput', () => {",
+      '  // TODO: invoke the derive handler (harness-handlers epic)',
+      '  /* placeholder until real invocations land */',
+      '}, { time: 500 });',
+    ].join('\n');
+    expect(classifyBenchSource(src)).toBe('placeholder');
+  });
+
+  it('classifies an empty closure body as placeholder', () => {
+    expect(classifyBenchSource("bench('x', () => {});")).toBe('placeholder');
+  });
+
+  it('classifies a file with no bench call as placeholder', () => {
+    expect(classifyBenchSource('// GENERATED — no benches yet\n')).toBe('placeholder');
+  });
+
+  it('one real closure among placeholders makes the file real', () => {
+    const src = [
+      "bench('a', () => {",
+      '  // comment only',
+      '});',
+      "bench('b', () => {",
+      '  doWork();',
+      '});',
+    ].join('\n');
+    expect(classifyBenchSource(src)).toBe('real');
+  });
+
+  it('survives nested braces in the body (truncated capture is still non-empty)', () => {
+    const src = "bench('n', () => { if (x) { y(); } });";
+    expect(classifyBenchSource(src)).toBe('real');
+  });
+});
