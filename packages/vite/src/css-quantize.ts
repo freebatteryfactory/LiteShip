@@ -160,6 +160,29 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
         continue;
       }
 
+      if (parenDepth === 0 && sc === '{' && /^\s*--[^:{};]*:/.test(buf)) {
+        // A custom-property declaration taking a block-token value
+        // (`--theme: { color: red; };`) — only `--*` properties may hold
+        // block values in CSS, while selectors (which can contain `:` via
+        // pseudo-classes) never start with `--`. Consume the balanced
+        // block into the declaration instead of opening a nested rule.
+        let blockDepth = 0;
+        while (pos < css.length) {
+          const bc = css[pos]!;
+          buf += bc;
+          if (bc === '{') blockDepth++;
+          if (bc === '}') {
+            blockDepth--;
+            if (blockDepth === 0) {
+              pos++;
+              break;
+            }
+          }
+          pos++;
+        }
+        continue;
+      }
+
       if (parenDepth === 0 && (sc === '{' || sc === ';' || sc === '}')) {
         terminator = sc;
         break;
