@@ -94,9 +94,11 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * Optional projection handler for `cachedProjection` arms: derives the
    * decoded output from a decoded source. The harness checks determinism
    * (same source → deep-equal output) and every declared {@link Invariant}
-   * under random sources.
+   * under random sources. May be async — asset decoders
+   * (`AssetDecl.decoder` and the `@czap/assets` built-ins) all return
+   * Promises, so the harness awaits every probe.
    */
-  readonly derive?: (source: In) => Out;
+  readonly derive?: (source: In) => Out | Promise<Out>;
 }
 
 /**

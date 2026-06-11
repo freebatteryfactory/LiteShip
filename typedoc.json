@@ -34,38 +34,38 @@
   "hideGenerator": true,
   "externalSymbolLinkMappings": {
     "@czap/core": {
-      "Boundary.Shape": "#",
-      "Token.Shape": "#",
-      "Theme.Shape": "#",
-      "Style.Shape": "#",
-      "Component.Shape": "#",
-      "VideoRenderer.Shape": "#",
-      "VideoFrameOutput": "#",
-      "ContentAddress": "#",
-      "Millis": "#",
-      "CapLevel": "#",
-      "CapSet": "#",
-      "Quantizer": "#",
+      "Boundary.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
+      "Token.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
+      "Theme.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",
+      "Style.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md",
+      "Component.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md",
+      "VideoRenderer.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md",
+      "VideoFrameOutput": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md",
+      "ContentAddress": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md",
+      "Millis": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
+      "CapLevel": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
+      "CapSet": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
+      "Quantizer": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",
       "CzapValidationError": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md"
     },
     "@czap/detect": {
-      "ExtendedDeviceCapabilities": "#"
+      "ExtendedDeviceCapabilities": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md"
     },
     "@czap/scene": {
-      "CANONICAL_SYSTEM_COUNT": "#",
-      "DEFAULT_MIX_RECEIPT_CAP": "#"
+      "CANONICAL_SYSTEM_COUNT": "https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts",
+      "DEFAULT_MIX_RECEIPT_CAP": "https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts"
     },
     "@czap/edge": {
-      "KVNamespace": "#"
+      "KVNamespace": "https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md"
     },
     "@czap/mcp-server": {
-      "ResourceNotFoundError": "#",
-      "InvalidParamsError": "#",
-      "RECEIPT_META_KEY": "#"
+      "ResourceNotFoundError": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
+      "InvalidParamsError": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
+      "RECEIPT_META_KEY": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts"
     },
     "effect": {
-      "": "#",
-      "Scope": "#"
+      "": "https://effect.website/docs",
+      "Scope": "https://effect-ts.github.io/effect/effect/Scope.ts.html"
     },
     "typescript": {
       "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map"

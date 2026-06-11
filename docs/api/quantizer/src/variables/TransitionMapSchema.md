@@ -10,4 +10,4 @@
 
 Defined in: [quantizer/src/schemas.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/schemas.ts#L26)
 
-Runtime schema for a [TransitionMap](../interfaces/TransitionMap.md) record.
+Runtime schema for a [TransitionMap](../type-aliases/TransitionMap.md) record.

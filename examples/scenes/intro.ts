@@ -10,7 +10,7 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
-import { Track, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
+import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract, SceneBeat } from '@czap/scene';
 import { AssetRef } from '@czap/assets';
 import type { BeatMarkerSet } from '@czap/assets';
@@ -46,20 +46,35 @@ const introBeats: readonly SceneBeat[] = resolveBeatProjectionToSceneBeats({
   anchorTrackId: 'bed',
 });
 
-/** Intro scene contract — 4 second music-video intro at 60fps, BPM 128. */
+/**
+ * Intro scene contract — 4 second music-video intro at 60fps, BPM 128.
+ *
+ * Track ranges are authored in musical time per Spec 1 §5.1 —
+ * `from: Beat(0), to: Beat(8)` — and `compileScene` resolves each
+ * `Beat(n)` to a frame index via the scene's BPM + fps (one beat at
+ * 128 bpm / 60 fps = 28.125 frames, so Beat(8) = frame 225). The hero
+ * video fades in over one beat, the audio bed fades out over the last
+ * two, and the hero→outro crossfade eases with the cubic curve.
+ */
 const contract: SceneContract = {
   name: 'intro',
   duration: 4000,
   fps: 60,
   bpm: 128,
   tracks: [
-    Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-boundary' } }),
-    Track.video('outro', { from: 120, to: 240, source: { _t: 'quantizer', id: 'outro-boundary' } }),
-    Track.audio('bed', { from: 0, to: 240, source: AssetRef('intro-bed'), mix: { volume: -6 } }),
-    Track.transition('fade-in', { from: 0, to: 30, kind: 'crossfade', between: [heroId, heroId] }),
-    Track.transition('hero-outro', { from: 110, to: 130, kind: 'crossfade', between: [heroId, outroId] }),
+    Track.video('hero', {
+      from: Beat(0), to: Beat(4), source: { _t: 'quantizer', id: 'hero-boundary' }, envelope: fade.in(Beat(1)),
+    }),
+    Track.video('outro', { from: Beat(4), to: Beat(8), source: { _t: 'quantizer', id: 'outro-boundary' } }),
+    Track.audio('bed', {
+      from: Beat(0), to: Beat(8), source: AssetRef('intro-bed'), mix: { volume: -6 }, envelope: fade.out(Beat(2)),
+    }),
+    Track.transition('fade-in', { from: Beat(0), to: Beat(1), kind: 'crossfade', between: [heroId, heroId] }),
+    Track.transition('hero-outro', {
+      from: Beat(3.5), to: Beat(4.5), kind: 'crossfade', between: [heroId, outroId], ease: 'cubic',
+    }),
     Track.effect('beat-pulse', {
-      from: 0, to: 240, kind: 'pulse', target: heroId, syncTo: syncTo.beat(bedId),
+      from: Beat(0), to: Beat(8), kind: 'pulse', target: heroId, syncTo: syncTo.beat(bedId),
     }),
   ],
   invariants: [

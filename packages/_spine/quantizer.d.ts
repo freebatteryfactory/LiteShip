@@ -97,10 +97,11 @@ export interface TransitionConfig {
   readonly delay?: number;
 }
 
-export interface TransitionMap<S extends string = string> {
+export type TransitionMap<S extends string = string> = {
   readonly '*'?: TransitionConfig;
-  readonly [key: `${string}->${string}`]: TransitionConfig;
-}
+} & {
+  readonly [K in `${S}->${S}`]?: TransitionConfig;
+};
 
 export interface Transition<B extends Boundary.Shape> {
   readonly config: TransitionMap<StateUnion<B> & string>;

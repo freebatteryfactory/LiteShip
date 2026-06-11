@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
+import { classifyBenchSource } from '../../scripts/lib/bench-classify.js';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
 describe('capsule-verify', () => {
@@ -38,5 +41,35 @@ describe('capsule-verify', () => {
     expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
     const receipt = JSON.parse(receiptLine!);
     expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
+
+    // Bench honesty: the receipt classifies every generated bench instead of
+    // existence-only checking. Comment-only closures (most harness templates —
+    // real invocations land with the harness-handlers epic) must surface as
+    // 'placeholder' so a green verdict cannot be mistaken for benchmark
+    // coverage; asset capsules with a known fixture (intro-bed) already emit
+    // a REAL decode bench and must NOT be listed as placeholders.
+    expect(receipt.benches, `receipt: ${JSON.stringify(receipt)}`).toBeDefined();
+    expect(receipt.benches.total).toBe(receipt.capsuleCount);
+    expect(receipt.benches.real + receipt.benches.placeholder.length).toBe(receipt.benches.total);
+
+    // Derive the expected classification from the manifest the verify run
+    // actually read (no hardcoded counts — they drift every time a harness
+    // generator graduates a bench from placeholder to real).
+    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
+      capsules: { name: string; generated: { benchFile: string } }[];
+    };
+    const expectedPlaceholders = manifest.capsules
+      .filter((cap) => classifyBenchSource(readFileSync(resolve(cap.generated.benchFile), 'utf8')) === 'placeholder')
+      .map((cap) => cap.name)
+      .sort();
+    expect([...receipt.benches.placeholder].sort()).toEqual(expectedPlaceholders);
+    expect(receipt.benches.real).toBe(manifest.capsules.length - expectedPlaceholders.length);
+
+    // Independent anchor (not derived via the classifier, so a classifier
+    // regression to all-'placeholder' cannot self-justify): intro-bed's
+    // generated bench awaits the capsule's real derive handler and must be
+    // counted as real.
+    expect(receipt.benches.placeholder).not.toContain('intro-bed');
+    expect(receipt.benches.real).toBeGreaterThanOrEqual(1);
   }, scaledTimeout(90_000));
 });

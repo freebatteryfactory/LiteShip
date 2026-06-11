@@ -20,7 +20,7 @@ For smarter resolution with client hints and user agent parsing, use
 
 ### boundary
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Returns
 

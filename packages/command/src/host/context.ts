@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Effect } from 'effect';
 import { Compositor, VideoRenderer, type Millis } from '@czap/core';
-import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@czap/assets';
+import { resolveAssetDecoder, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
@@ -58,8 +58,14 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
     },
     runVitest: (testFiles) => VitestRunner.run({ testFiles: [...testFiles] }),
     loadAssetBytes,
-    runAudioProjection: async (bytes, projection) => {
-      const decoded = await audioDecoder(bytes);
+    runAudioProjection: async (bytes, projection, assetId) => {
+      // The asset's OWN decoder (AssetDecl.decoder override or the kind
+      // built-in, via its capsule's derive handler) — not a hardwired
+      // audioDecoder. Falls back to the audio built-in when the asset isn't
+      // registered in this process. The three projections are audio
+      // analyses, so the decoded shape must be DecodedAudio (enforced on
+      // AssetDecl.decoder for kind 'audio').
+      const decoded = (await resolveAssetDecoder(assetId ?? '')(bytes)) as DecodedAudio;
       if (projection === 'beat') return detectBeats(decoded).beats.length;
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;

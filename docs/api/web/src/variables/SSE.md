@@ -75,7 +75,7 @@ Calculate reconnection delay using exponential backoff with jitter.
 
 ### create
 
-> **create**: (`config`) => `Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](#)\>
+> **create**: (`config`) => `Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 Create an SSE client that manages a Server-Sent Events connection with
 automatic reconnection, heartbeat timeout tracking, and backpressure-aware
@@ -109,7 +109,7 @@ SSE connection configuration
 
 #### Returns
 
-`Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](#)\>
+`Effect`\<[`SSEClient`](../interfaces/SSEClient.md), `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 An Effect yielding an [SSEClient](../interfaces/SSEClient.md) (scoped)
 

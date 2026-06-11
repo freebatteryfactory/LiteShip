@@ -22,14 +22,17 @@ Per-frame hot paths use dense `Part` stores (`Part.dense('Opacity', N)`, `Part.d
 - Adding a new Track kind requires an ADR amendment (same closure rule as the assembly catalog in ADR-0008).
 - Property tests walk the entity seed statically; generated scene harnesses derive determinism, sync-accuracy, and per-frame-budget checks from the world schema.
 - Task 33-35 introduced two additive ECS primitives to make the pattern ergonomic: `World.setComponent(id, name, value)` for schema-free write-back, and entity query results that spread component values as direct properties alongside the `.components` Map. Both are backward-compatible; existing ECS consumers are unaffected.
+- The authoring sugar promised by the Spec 1 design (§5.1/§5.3/§5.4) is wired through the same compile-to-components path: track `from`/`to` accept `Beat(n)` marks (`FrameMark`) that `compileScene` resolves to frame indices via scene BPM/fps BEFORE invariants run; `fade.in`/`fade.out`/`pulse.every` declarations compile to pre-resolved `Envelope` components read by VideoSystem (`_opacity`), AudioSystem (`_gain`), and EffectSystem (`_intensity`); transition `ease:` tags compile to an `Ease` component TransitionSystem maps through the closed easing catalog. Sugar catalogs follow the same cap-the-catalog closure rule — new envelope curves or easings require an ADR amendment.
 
 ## Supporting evidence
 
 - `packages/core/src/ecs.ts` (`_makeWorld` at L187; namespace export `World.make` is wired downstream of this declaration)
-- `packages/scene/src/compile.ts`: introduced with this ADR
+- `packages/scene/src/compile.ts`: introduced with this ADR; resolves `Beat()` marks, envelope spans, and ease tags into pure-data components at compile time
 - `packages/scene/src/systems/*.ts`: 6 canonical systems (VideoSystem, AudioSystem, TransitionSystem, EffectSystem, SyncSystem, PassThroughMixer)
-- `examples/scenes/intro.ts`: reference music-video scene proving end-to-end composition
+- `packages/scene/src/sugar/{beat,envelope,ease}.ts`: authoring sugar (`Beat`/`resolveFrameMark`, `fade`/`pulse`/`envelopeFactor`, `ease`/`easeFnFor`) consumed by `compileScene` and the canonical systems
+- `examples/scenes/intro.ts`: reference music-video scene proving end-to-end composition, authored in `Beat()` musical time with envelope + ease sugar
 - `tests/integration/scene-intro-example.test.ts`: validates 6-entity world compilation + structural determinism
+- `tests/integration/scene-sugar-wiring.test.ts`: validates Beat-resolved ranges, envelope `_opacity`/`_gain` modulation, and eased `_blend` across live runtime ticks
 
 ## References
 
