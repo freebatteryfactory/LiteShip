@@ -62,6 +62,29 @@ function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {
 }
 
 /**
+ * CUT A0: clean must never read as unchecked. Zero discovered packages means
+ * nothing was audited, so the run carries a support-section ERROR instead of
+ * a deceptively green zero-findings result.
+ */
+function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
+  const prefix = profile.internalPackagePrefix || '@czap/';
+  const summary = profile.packageRoots
+    ? `No installed packages from the profile's packageTopology were found under ${profile.repoRoot} — ` +
+      `nothing was audited. Install the ${prefix}* packages you ship, or audit a workspace by passing --profile instead.`
+    : `No packages were discovered under ${profile.repoRoot}/packages/* — nothing was audited. ` +
+      `If this repo consumes ${prefix}* packages from npm, run \`czap audit --consumer\`; ` +
+      `otherwise pass --profile pointing at your workspace.`;
+  return {
+    id: 'support/no-packages',
+    section: 'support',
+    rule: 'no-packages-discovered',
+    severity: 'error',
+    title: 'Nothing was audited',
+    summary,
+  };
+}
+
+/**
  * Run all three engine passes against a profile and merge their findings. This
  * is the reusable, repo-agnostic audit — it does NOT compute the LiteShip HICP
  * score, verify artifacts, or render reports (those compose this in scripts/).
@@ -79,6 +102,7 @@ export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsP
     ...structure.findings,
     ...integrity.findings,
     ...surface.findings,
+    ...(structure.summary.packageCount === 0 ? [nothingAuditedFinding(resolved)] : []),
     ...consumerMissingFindings(resolved),
   ];
   const suppressed = [...structure.suppressed, ...integrity.suppressed, ...surface.suppressed];
