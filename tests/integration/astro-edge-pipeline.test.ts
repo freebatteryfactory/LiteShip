@@ -1,9 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import { Boundary } from '@czap/core';
 import { czapMiddleware } from '@czap/astro';
 
 describe('Astro edge host pipeline integration', () => {
   test('resolves hints, tier, theme, and cached outputs through the middleware host path', async () => {
     const cacheStore = new Map<string, string>();
+    // Real minted address -- the KV keyspace is content-addressed (ADR-0003),
+    // so tests use Boundary.make ids rather than fabricated strings.
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ],
+    });
     const middleware = czapMiddleware({
       edge: {
         theme: ({ tier }) => ({
@@ -22,7 +32,7 @@ describe('Astro edge host pipeline integration', () => {
               cacheStore.set(key, value);
             },
           },
-          boundaryId: 'fnv1a:integration-edge' as any,
+          boundaryId: boundary.id,
           compile: ({ tier, theme }) => ({
             css: `${theme?.css ?? ''}\n[data-tier="${tier.designTier}"]{display:block;}`,
             propertyRegistrations: '@property --edge-tier {}',

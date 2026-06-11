@@ -1,0 +1,30 @@
+/* The @quantize block compiles against the `viewport` boundary exported
+ * from src/boundaries.ts. At build time it becomes @container queries in
+ * the page CSS AND per-tier precompiled outputs in the boundary manifest
+ * that src/middleware.ts serves from Workers KV-backed edge resolution. */
+
+/* stylelint-disable -- @quantize is czap's custom at-rule (its state names
+ * are not type selectors); @czap/vite compiles this block away at build
+ * time, so linters never see it in the emitted CSS. */
+@quantize viewport {
+  compact {
+    --example-gap: 8px;
+    --example-accent: #2563eb;
+  }
+  wide {
+    --example-gap: 24px;
+    --example-accent: #7c3aed;
+  }
+}
+/* stylelint-enable */
+
+main {
+  display: grid;
+  gap: var(--example-gap, 16px);
+  padding: 2rem;
+  font-family: system-ui, sans-serif;
+}
+
+h1 {
+  color: var(--example-accent, inherit);
+}
