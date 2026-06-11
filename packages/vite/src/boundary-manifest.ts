@@ -53,9 +53,22 @@ function scanProject(projectRoot: string): ProjectScan {
   const boundaryFiles: string[] = [];
   const cssFiles: string[] = [];
   const stack: string[] = [projectRoot];
+  // Physical (realpath) identity of every directory already walked --
+  // symlinked directories are followed below, so without this a circular
+  // link (`dir/loop -> dir`) would recurse forever.
+  const visited = new Set<string>();
 
   while (stack.length > 0) {
     const dir = stack.pop()!;
+    let realDir: string;
+    try {
+      realDir = fs.realpathSync(dir);
+    } catch {
+      // Broken link or vanished dir; readdir below reports the details.
+      realDir = path.resolve(dir);
+    }
+    if (visited.has(realDir)) continue;
+    visited.add(realDir);
     let entries: fs.Dirent[] = [];
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -69,15 +82,29 @@ function scanProject(projectRoot: string): ProjectScan {
       continue;
     }
     for (const entry of entries) {
-      if (entry.isDirectory()) {
-        if (!SKIP_DIRS.has(entry.name)) stack.push(path.join(dir, entry.name));
+      const entryPath = path.join(dir, entry.name);
+      let isDirectory = entry.isDirectory();
+      let isFile = entry.isFile();
+      if (entry.isSymbolicLink()) {
+        // Follow links to their targets (linked source dirs scan like
+        // real ones); the visited set above contains circular links.
+        try {
+          const stat = fs.statSync(entryPath);
+          isDirectory = stat.isDirectory();
+          isFile = stat.isFile();
+        } catch {
+          continue; // Dangling symlink -- nothing to scan.
+        }
+      }
+      if (isDirectory) {
+        if (!SKIP_DIRS.has(entry.name)) stack.push(entryPath);
         continue;
       }
-      if (!entry.isFile()) continue;
+      if (!isFile) continue;
       if (isBoundaryModuleFile(entry.name)) {
-        boundaryFiles.push(path.join(dir, entry.name));
+        boundaryFiles.push(entryPath);
       } else if (entry.name.endsWith('.css')) {
-        cssFiles.push(path.join(dir, entry.name));
+        cssFiles.push(entryPath);
       }
     }
   }
