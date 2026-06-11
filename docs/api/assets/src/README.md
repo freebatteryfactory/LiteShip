@@ -30,6 +30,7 @@
 - [audioDecoder](functions/audioDecoder.md)
 - [BeatMarkerProjection](functions/BeatMarkerProjection.md)
 - [builtinDecoderFor](functions/builtinDecoderFor.md)
+- [builtinDecoderSiteFor](functions/builtinDecoderSiteFor.md)
 - [computeWaveform](functions/computeWaveform.md)
 - [defineAsset](functions/defineAsset.md)
 - [detectBeats](functions/detectBeats.md)

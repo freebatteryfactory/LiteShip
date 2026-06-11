@@ -14,7 +14,7 @@
 
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
-import type { AttributionDecl, Invariant, CapsuleDef } from '@czap/core';
+import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
 import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
 import { videoDecoder, type DecodedVideo } from './decoders/video.js';
@@ -81,6 +81,19 @@ export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
 }
 
 /**
+ * Sites a media kind's BUILT-IN decoder can honestly run on. The video
+ * built-in shells out to ffprobe (node:child_process / fs / os), so a
+ * builtin-decoded video capsule is node-only — declaring 'browser' would
+ * lie to bundlers and site routers. The audio built-in (pure RIFF walk)
+ * and image built-in (header sniff) are byte-level and run anywhere.
+ * Analysis kinds have no byte decoder, so they keep the permissive
+ * default; their dedicated projection factories declare their own sites.
+ */
+export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
+  return kind === 'video' ? ['node'] : ['node', 'browser'];
+}
+
+/**
  * Raw asset byte source. A Declaration-tagged schema (instanceOf), so the
  * harness honestly reports "not arbitrary-derivable" instead of feeding
  * `fc.anything()` garbage into real decoders that only accept ArrayBuffer.
@@ -92,9 +105,16 @@ const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<un
  * module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
  * and wires it as the capsule's `derive` handler (the harness decode
  * bench + determinism probes and the host commands run through it).
+ *
+ * The capsule's `site` follows the decoder that actually runs: builtin
+ * decoders use {@link builtinDecoderSiteFor} (video → `['node']`, because
+ * ffprobe needs node:child_process), while a declared custom `decoder`
+ * keeps `['node', 'browser']` — the declarer owns its runtime safety
+ * (e.g. a WebCodecs-based video decoder is legitimately browser-capable).
  */
 export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCapsule {
   const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
+  const site: readonly Site[] = decl.decoder !== undefined ? ['node', 'browser'] : builtinDecoderSiteFor(decl.kind);
   const cap = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
@@ -103,7 +123,7 @@ export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCa
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: decl.invariants,
     budgets: { p95Ms: decl.budgets.decodeP95Ms, memoryMb: decl.budgets.memoryMb },
-    site: ['node', 'browser'],
+    site,
     attribution: decl.attribution,
     ...(decode !== undefined ? { derive: (source: unknown) => decode(source as ArrayBuffer) } : {}),
   });
