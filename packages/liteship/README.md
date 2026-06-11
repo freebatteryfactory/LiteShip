@@ -1,19 +1,47 @@
 # liteship
 
 The umbrella package for [LiteShip](https://github.com/heyoub/LiteShip) —
-constraint-based adaptive rendering on the CZAP engine.
+constraint-based adaptive rendering on the CZAP engine (Content-Zoned
+Adaptive Projection, "see-zap"). The mental model is one sentence: a
+continuous signal crosses boundaries into named states, and named states
+project into outputs (CSS, ARIA, shaders).
 
 ```bash
-npm install liteship        # or: pnpm add liteship
+npm install liteship        # or yarn add liteship
 ```
 
-One dependency installs every publishable `@czap/*` package. You still import
-from the individual scopes exactly as the docs show:
+One dependency installs every publishable `@czap/*` package. Each release
+ships in lockstep: `liteship` 0.1.5 pins every `@czap/*` package at exactly
+0.1.5, so the fleet is always version-consistent.
+
+> **pnpm users:** pnpm's strict `node_modules` does not hoist transitive
+> dependencies, and since `liteship` re-exports nothing, importing
+> `@czap/core` through it will not resolve. Add the `@czap/*` packages you
+> import as explicit dependencies (recommended):
+>
+> ```bash
+> pnpm add @czap/core @czap/astro
+> ```
+>
+> or hoist the scope in `.npmrc` with `public-hoist-pattern[]=@czap/*`. The
+> umbrella works as-is under npm and yarn's hoisted layouts.
+
+You import from the individual scopes exactly as the docs show:
 
 ```ts
 import { Boundary } from '@czap/core';
-import { Q } from '@czap/quantizer';
-import { integration as czap } from '@czap/astro';
+import { integration as czap, satelliteAttrs } from '@czap/astro';
+
+const viewport = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1280, 'desktop'],
+  ],
+});
+// Spread satelliteAttrs({ boundary: viewport }) onto any element;
+// the integration's boot scanner activates the evaluator on the client.
 ```
 
 This package deliberately re-exports nothing: the host integrations
@@ -25,12 +53,6 @@ installed; pick the entry points your host needs.
 If you only want one slice, install it directly — `@czap/astro` pulls the
 core rendering stack transitively for the Astro path.
 
-> **pnpm users:** pnpm's strict `node_modules` does not hoist transitive
-> dependencies, and since `liteship` re-exports nothing, importing
-> `@czap/core` through it will not resolve. Either add the `@czap/*` packages
-> you import as explicit dependencies (recommended), or hoist the scope in
-> `.npmrc` with `public-hoist-pattern[]=@czap/*`. The umbrella works as-is
-> under npm and yarn's hoisted layouts.
-
 Docs: [GETTING-STARTED](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md) ·
-[package surfaces](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) ·
+[vocabulary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md)

@@ -1,6 +1,6 @@
 # `@czap/_spine`
 
-Type-only declaration spine for LiteShip. Vocabulary: [../../docs/GLOSSARY.md](../../docs/GLOSSARY.md).
+Type-only declaration spine for LiteShip. Vocabulary: [docs/GLOSSARY.md](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md).
 
 Published `.d.ts` from `@czap/core` and
 `@czap/scene` reference symbols defined here so consumers' `tsc` can resolve

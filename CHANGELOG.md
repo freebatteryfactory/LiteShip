@@ -395,7 +395,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - @czap/remotion package: React adapter for Remotion video rendering
 - useCompositeState: frame-indexed state hook
 - cssVarsFromState: CompositeState → CSS custom properties
-- FxProvider + useFxState: React context for frame data
+- Provider + useCzapState: React context for frame data (shipped under these names; an early draft called them FxProvider + useFxState)
 - precomputeFrames: async frame precomputation
 
 ### Benchmarks

@@ -94,7 +94,6 @@ Untracking a file does not remove old blobs. See [HISTORY_SCRUB.md](./HISTORY_SC
 
 ## MCP and CLI
 
-`@czap/mcp-server` requires `@czap/cli` as a peer (lazy `import()` at runtime).
 `@czap/cli` loads `@czap/mcp-server` only for the `czap mcp` subcommand (dynamic
 `import()`); add `@czap/mcp-server` when you use MCP mode. Ship matching versions
 whenever you publish either package.
