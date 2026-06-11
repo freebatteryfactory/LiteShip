@@ -26,7 +26,7 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 ## CLI + MCP
 
 - `packages/cli/`: dual-audience surface. JSON receipts by default; TTY-detect for human-pretty summaries. Commands: describe / scene.{compile,render,verify,dev} / asset.{analyze,verify} / capsule.{inspect,verify,list} / gauntlet / mcp.
-- `packages/mcp-server/`: thin MCP runner. Stdio default, `--http=:port` optional. Dispatches tools/call to `@czap/cli`.
+- `packages/mcp-server/`: thin MCP runner. Stdio default, `--http=:port` optional. Dispatches tools/call through `@czap/command`.
 
 ## Spine as Canonical Types
 
