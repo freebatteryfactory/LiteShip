@@ -73,11 +73,45 @@ Defined in: [core/src/capsule.ts:69](https://github.com/heyoub/LiteShip/blob/mai
 
 ***
 
+### derive?
+
+> `readonly` `optional` **derive?**: (`source`) => `Out`
+
+Defined in: [core/src/capsule.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L99)
+
+Optional projection handler for `cachedProjection` arms: derives the
+decoded output from a decoded source. The harness checks determinism
+(same source → deep-equal output) and every declared [Invariant](Invariant.md)
+under random sources.
+
+#### Parameters
+
+##### source
+
+`In`
+
+#### Returns
+
+`Out`
+
+***
+
 ### id
 
 > `readonly` **id**: `ContentAddress`
 
 Defined in: [core/src/capsule.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L65)
+
+***
+
+### initialState?
+
+> `readonly` `optional` **initialState?**: `Out`
+
+Defined in: [core/src/capsule.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L92)
+
+Optional initial state for `stateMachine` arms — the fold seed for
+[CapsuleContract.step](#step)-driven harness tests.
 
 ***
 
@@ -140,3 +174,31 @@ end-to-end. Only meaningful for `pureTransform` arms today.
 > `readonly` **site**: readonly [`Site`](../type-aliases/Site.md)[]
 
 Defined in: [core/src/capsule.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L72)
+
+***
+
+### step?
+
+> `readonly` `optional` **step?**: (`state`, `event`) => `Out`
+
+Defined in: [core/src/capsule.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L87)
+
+Optional state-machine step handler: folds one decoded event (`In`)
+into a decoded state (`Out`). With [CapsuleContract.initialState](#initialstate)
+present, the harness drives randomized event sequences and checks every
+declared [Invariant](Invariant.md) after each step, plus deterministic replay.
+Only meaningful for `stateMachine` arms.
+
+#### Parameters
+
+##### state
+
+`Out`
+
+##### event
+
+`In`
+
+#### Returns
+
+`Out`
