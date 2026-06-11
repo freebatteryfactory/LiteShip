@@ -8,7 +8,7 @@
 
 > `const` **pulse**: `object`
 
-Defined in: [scene/src/sugar/envelope.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L42)
+Defined in: [scene/src/sugar/envelope.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L49)
 
 Pulse constructors.
 
@@ -16,7 +16,7 @@ Pulse constructors.
 
 ### every
 
-> `readonly` **every**: (`period`, `opts`) => [`PulseEnvelope`](../interfaces/PulseEnvelope.md)
+> `readonly` **every**: (`period`, `opts`) => `PulseEnvelope`
 
 Periodic pulse with amplitude and period.
 
@@ -24,7 +24,7 @@ Periodic pulse with amplitude and period.
 
 ##### period
 
-[`BeatHandle`](../interfaces/BeatHandle.md)
+`BeatHandle`
 
 ##### opts
 
@@ -34,4 +34,4 @@ Periodic pulse with amplitude and period.
 
 #### Returns
 
-[`PulseEnvelope`](../interfaces/PulseEnvelope.md)
+`PulseEnvelope`

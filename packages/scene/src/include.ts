@@ -6,7 +6,8 @@
  * @module
  */
 
-import type { SceneContract, Track, TrackId, TrackKind } from './contract.js';
+import type { FrameMark, SceneContract, Track, TrackId, TrackKind } from './contract.js';
+import { addFrameMarks } from './sugar/beat.js';
 import { SceneRuntime } from './runtime.js';
 
 /**
@@ -21,8 +22,16 @@ export type SceneSubscenePartial = Omit<SceneContract, 'bpm' | 'fps'> & {
 
 /** Scene composition helpers. */
 export const Scene = {
-  /** Include a sub-scene's tracks with the given offset and id prefix. */
-  include(sub: SceneContract, opts: { offset: number }): readonly Track[] {
+  /**
+   * Include a sub-scene's tracks with the given offset and id prefix.
+   *
+   * The offset accepts any {@link FrameMark} — Spec 1 §5.3:
+   * `Scene.include(subScene, { offset: Beat(8) })`. Beat offsets stay
+   * deferred (the sub-scene "shares the outer world's BPM/fps", which
+   * `include` does not know); `compileScene` resolves them against the
+   * PARENT scene's bpm/fps when the combined contract compiles.
+   */
+  include(sub: SceneContract, opts: { offset: FrameMark }): readonly Track[] {
     return sub.tracks.map((t) => shift(t, sub.name, opts.offset));
   },
   /**
@@ -54,13 +63,13 @@ export const Scene = {
 /** Re-prefix a phantom-kinded TrackId. The brand is preserved across the cast. */
 const prefixed = <K extends TrackKind>(prefix: string, id: TrackId<K>): TrackId<K> => `${prefix}/${id}` as TrackId<K>;
 
-function shift(t: Track, prefix: string, offset: number): Track {
+function shift(t: Track, prefix: string, offset: FrameMark): Track {
   if (t.kind === 'transition') {
     return {
       ...t,
       id: prefixed(prefix, t.id),
-      from: t.from + offset,
-      to: t.to + offset,
+      from: addFrameMarks(t.from, offset),
+      to: addFrameMarks(t.to, offset),
       between: [prefixed(prefix, t.between[0]), prefixed(prefix, t.between[1])] as const,
     };
   }
@@ -68,14 +77,14 @@ function shift(t: Track, prefix: string, offset: number): Track {
     return {
       ...t,
       id: prefixed(prefix, t.id),
-      from: t.from + offset,
-      to: t.to + offset,
+      from: addFrameMarks(t.from, offset),
+      to: addFrameMarks(t.to, offset),
       target: prefixed(prefix, t.target),
       syncTo: t.syncTo !== undefined ? { ...t.syncTo, anchor: prefixed(prefix, t.syncTo.anchor) } : undefined,
     };
   }
   if (t.kind === 'audio') {
-    return { ...t, id: prefixed(prefix, t.id), from: t.from + offset, to: t.to + offset };
+    return { ...t, id: prefixed(prefix, t.id), from: addFrameMarks(t.from, offset), to: addFrameMarks(t.to, offset) };
   }
-  return { ...t, id: prefixed(prefix, t.id), from: t.from + offset, to: t.to + offset };
+  return { ...t, id: prefixed(prefix, t.id), from: addFrameMarks(t.from, offset), to: addFrameMarks(t.to, offset) };
 }

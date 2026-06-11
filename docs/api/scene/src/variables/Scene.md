@@ -8,7 +8,7 @@
 
 > `const` **Scene**: `object`
 
-Defined in: [scene/src/include.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/include.ts#L23)
+Defined in: [scene/src/include.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/include.ts#L24)
 
 Scene composition helpers.
 
@@ -48,6 +48,12 @@ ECS-as-scene-substrate discipline.
 
 Include a sub-scene's tracks with the given offset and id prefix.
 
+The offset accepts any [FrameMark](../type-aliases/FrameMark.md) — Spec 1 §5.3:
+`Scene.include(subScene, { offset: Beat(8) })`. Beat offsets stay
+deferred (the sub-scene "shares the outer world's BPM/fps", which
+`include` does not know); `compileScene` resolves them against the
+PARENT scene's bpm/fps when the combined contract compiles.
+
 #### Parameters
 
 ##### sub
@@ -58,7 +64,7 @@ Include a sub-scene's tracks with the given offset and id prefix.
 
 ###### offset
 
-`number`
+`FrameMark`
 
 #### Returns
 

@@ -20,6 +20,23 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/scene` — the authoring sugar is now WIRED (Spec 1 §5.1/§5.3/§5.4;
+  it shipped as orphaned exports): track `from`/`to` accept `Beat(n)` marks
+  (`FrameMark = number | BeatHandle | FrameMarkSum`), resolved to frame
+  indices by `compileScene` via scene BPM/fps BEFORE invariants run —
+  invariant checks now receive a `ResolvedSceneContract` with numeric
+  ranges; `Scene.include` accepts a `Beat()` offset (deferred via
+  `addFrameMarks`, resolved against the parent's BPM/fps); video/audio/
+  effect tracks accept `envelope: fade.in/fade.out/pulse.every(...)`,
+  compiled to pre-resolved `Envelope` components that VideoSystem
+  (`_opacity`), AudioSystem (new `_gain` write), and EffectSystem
+  (`_intensity`) read each tick; transitions accept `ease: 'cubic' |
+  'spring' | 'bounce' | { stepped: n }`, compiled to an `Ease` component
+  TransitionSystem maps through the closed catalog (`easeFnFor`). New
+  public helpers: `resolveFrameMark`, `addFrameMarks`, `resolveEnvelope`,
+  `envelopeFactor`, `easeFnFor`; canonical types land in
+  `@czap/_spine/scene.d.ts` per ADR-0010. `examples/scenes/intro.ts` is
+  now authored in musical time end-to-end.
 - `@czap/audit` — consumer mode verifies **dist truth**: every concrete
   exports-map condition of every installed package must resolve to a real
   file (`export-target-missing`, error). Catches broken installs and
