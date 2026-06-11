@@ -8,8 +8,8 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@czap/core": "file:../../packages/core",
-    "@czap/astro": "file:../../packages/astro",
+    "@czap/core": "workspace:*",
+    "@czap/astro": "workspace:*",
     "astro": "^6.0.0",
     "typescript": "^5.7.0"
   }
