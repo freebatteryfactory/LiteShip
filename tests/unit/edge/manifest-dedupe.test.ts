@@ -105,4 +105,17 @@ describe('manifest tier-grid dedupe', () => {
 
     expect(() => resolveOutputsByTier(legacy)).toThrowError(/_version: 2/);
   });
+
+  test('a true v1 entry (no outputs pool at all) gets the rebuild teaching error, not a TypeError', () => {
+    // A previously-emitted v1 czap-boundary-manifest.json entry has NO
+    // `outputs` field — the error template itself must not dereference the
+    // missing pool while explaining the problem.
+    const v1 = {
+      outputsByTier: {
+        'transitions:standard': { css: 'x', propertyRegistrations: '', containerQueries: 'x' },
+      },
+    } as unknown as Parameters<typeof resolveOutputsByTier>[0];
+
+    expect(() => resolveOutputsByTier(v1)).toThrowError(/_version: 2/);
+  });
 });
