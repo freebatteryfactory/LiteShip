@@ -6,7 +6,7 @@
 
 # Interface: LiveQuantizer\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:197](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L197)
+Defined in: [quantizer/src/quantizer.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L215)
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
@@ -23,7 +23,8 @@ import { Q } from '@czap/quantizer';
 import { Effect, Stream } from 'effect';
 
 const b = Boundary.make({
-  input: 'w', states: ['sm', 'lg'] as const, thresholds: [0, 768],
+  input: 'w',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const config = Q.from(b).outputs({
   css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } },
@@ -90,7 +91,7 @@ Defined in: core/dist/quantizer-types.d.ts:25
 
 > `readonly` **config**: [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:202](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L202)
+Defined in: [quantizer/src/quantizer.ts:220](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L220)
 
 The config this quantizer was created from.
 
@@ -100,7 +101,7 @@ The config this quantizer was created from.
 
 > `readonly` **currentOutputs**: `Effect`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:204](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L204)
+Defined in: [quantizer/src/quantizer.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
 
 Read the currently-active per-target output record.
 
@@ -110,7 +111,7 @@ Read the currently-active per-target output record.
 
 > `readonly` **outputChanges**: `Stream`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L206)
+Defined in: [quantizer/src/quantizer.ts:224](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L224)
 
 Stream of per-target output records emitted on each boundary crossing.
 
