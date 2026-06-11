@@ -155,7 +155,7 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
       Diagnostics.warn({
         source: 'czap/web.SlotRegistry',
         code: 'invalid-slot-path',
-        message: `Invalid slot path "${slotPath}". Must start with "/" and contain only alphanumeric, hyphens, underscores.`,
+        message: `Invalid slot path "${slotPath}". Must start with "/" and contain only alphanumeric, hyphens, underscores, e.g. "/hero" or "/sidebar/nav".`,
       });
     }
   }

@@ -103,7 +103,7 @@ export const morphWithState = (
           Diagnostics.warn({
             source: 'czap/web.morph',
             code: 'preserve-id-missing',
-            message: `Preserve ID "${id}" was not found in the old DOM tree.`,
+            message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
           });
         }
       }
@@ -115,7 +115,12 @@ export const morphWithState = (
     if (rejection) {
       oldNode.dispatchEvent(
         new CustomEvent('czap:morph-rejected', {
-          detail: rejection,
+          // `recovery` is additive and only true on this path — bare
+          // rejectIfMissing callers get no snapshot dispatch.
+          detail: {
+            ...rejection,
+            recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+          },
           bubbles: true,
         }),
       );

@@ -212,7 +212,7 @@ export const rejectIfMissing = (hints: MorphHints, element: Element): MorphRejec
     return {
       type: 'preserve_violation',
       missingIds,
-      reason: `Required elements missing after morph: ${missingIds.join(', ')}`,
+      reason: `Morph rejected: elements [${missingIds.join(', ')}] were required by a preserve hint but are missing from the new HTML. Keep these data-czap-id elements in the server response, or drop them from the preserve hint.`,
     };
   }
 

@@ -19,7 +19,7 @@ const ROOT: SlotPath = SlotPath('/');
 export const parse = (path: string): SlotPath => {
   if (!isValid(path)) {
     throw new Error(
-      `Invalid slot path: ${path}. Must start with "/" and contain only alphanumeric, hyphens, underscores.`,
+      `Invalid slot path: ${path}. Must start with "/" and contain only alphanumeric, hyphens, underscores, e.g. "/hero" or "/sidebar/nav".`,
     );
   }
   return path;
