@@ -25,6 +25,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+/** Appended to missing-field errors so the fix is copy-pasteable. */
+const MINIMAL_PROFILE = 'A minimal profile: { "internalPackagePrefix": "@acme/", "packageTopology": {} }';
+
 /** Normalize a parsed JSON object into a DevopsProfile (arrays → Sets), failing clearly. */
 function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsProfile {
   if (!isRecord(raw)) throw new Error(`profile JSON must be an object: ${jsonPath}`);
@@ -33,8 +36,12 @@ function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsPro
   // Optional: every SurfacePolicyShape field defaults to "surface not
   // declared", so a profile with no Astro/Vite host simply omits it.
   const surface = raw['surfacePolicy'] ?? {};
-  if (typeof prefix !== 'string') throw new Error(`profile JSON missing string "internalPackagePrefix": ${jsonPath}`);
-  if (!isRecord(topology)) throw new Error(`profile JSON missing object "packageTopology": ${jsonPath}`);
+  if (typeof prefix !== 'string') {
+    throw new Error(`profile JSON missing string "internalPackagePrefix": ${jsonPath}. ${MINIMAL_PROFILE}`);
+  }
+  if (!isRecord(topology)) {
+    throw new Error(`profile JSON missing object "packageTopology": ${jsonPath}. ${MINIMAL_PROFILE}`);
+  }
   if (!isRecord(surface)) throw new Error(`profile JSON "surfacePolicy" must be an object when present: ${jsonPath}`);
   const exemptions = raw['dynamicImportExemptions'];
   if (exemptions !== undefined && !Array.isArray(exemptions)) {

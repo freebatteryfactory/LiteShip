@@ -114,7 +114,10 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
             rule: 'export-target-missing',
             severity: 'error',
             title: 'Installed package exports target is missing',
-            summary: `Export "${subpath}" (${condition}) for ${pkg.name} points at ${target}, which does not exist in the installed package — broken install or a tarball that shipped without it.`,
+            summary:
+              `Export "${subpath}" (${condition}) for ${pkg.name} points at ${target}, which does not exist ` +
+              `in the installed package — broken install or a tarball that shipped without it. Reinstall the ` +
+              `package; if it persists, the publisher's files[] omitted dist.`,
             location: {
               file: pkg.packageJsonPath,
             },
@@ -157,7 +160,10 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       rule: 'host-surface',
       severity: 'error',
       title: 'Astro package manifest missing',
-      summary: `${surfacePolicy.astroPackage} package.json is required for the host-wired surface inventory.`,
+      summary:
+        `${surfacePolicy.astroPackage} is named in surfacePolicy.astroPackage but no such package was ` +
+        `discovered. If this project has no Astro host, omit astroPackage (or set it to '') in your ` +
+        `profile — or run \`czap audit --consumer\`, which prunes host surfaces you don't ship.`,
       location: {
         file: surfacePolicy.astroPackage,
       },
@@ -249,7 +255,10 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
             rule: 'virtual-module-surface',
             severity: 'error',
             title: 'Virtual module is missing from the Vite surface',
-            summary: `${virtualId} is expected by the repo-native Vite policy but was not found in virtual-modules.ts.`,
+            summary:
+              `${virtualId} is listed in surfacePolicy.viteVirtualModules but does not appear in ` +
+              `${virtualModulesDisplayPath}. Add the module id to that file, or remove it from the ` +
+              `profile's list if you no longer ship it.`,
             location: {
               file: virtualModulesDisplayPath,
             },
