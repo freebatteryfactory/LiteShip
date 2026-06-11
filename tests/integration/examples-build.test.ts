@@ -21,7 +21,14 @@ const examplesRoot = resolve(import.meta.dirname, '../../examples');
 const buildable = readdirSync(examplesRoot).filter((name) => {
   const manifest = join(examplesRoot, name, 'package.json');
   if (!existsSync(manifest)) return false;
-  const pkg = JSON.parse(readFileSync(manifest, 'utf8')) as { scripts?: Record<string, string> };
+  let pkg: { scripts?: Record<string, string> };
+  try {
+    pkg = JSON.parse(readFileSync(manifest, 'utf8')) as { scripts?: Record<string, string> };
+  } catch (cause) {
+    // A bare JSON.parse throw aborts the suite at collection time with no
+    // file attribution — name the offending manifest.
+    throw new Error(`examples/${name}/package.json is not valid JSON`, { cause });
+  }
   return typeof pkg.scripts?.build === 'string';
 });
 
@@ -46,7 +53,6 @@ describe.sequential('examples build', () => {
         const tail = (result.stderr || result.stdout).split('\n').slice(-30).join('\n');
         expect.fail(`examples/${name} build exited ${result.exitCode}:\n${tail}`);
       }
-      expect(result.exitCode).toBe(0);
     }, scaledTimeout(180_000));
   }
 });
