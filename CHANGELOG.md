@@ -94,6 +94,29 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `liteship` README documents pnpm's strict `node_modules`: the umbrella
   does not make transitive `@czap/*` imports resolvable under pnpm — keep
   explicit scoped deps or hoist the scope (0.1.5 re-dogfood report).
+- `@czap/vite` / `@czap/astro` — the module docblock examples showed a
+  `themes: string[]` plugin option that never existed; themes are
+  discovered by convention (`themes.ts` / `*.themes.ts`, override the
+  directory via `dirs.theme` on `PluginConfig`). The examples now use the
+  real config fields.
+- `@czap/vite` — "Could not resolve token/theme/style/boundary" warnings
+  now list the exact convention modules that were searched (in search
+  order) and the literal fix: the `Token.make`-style factory export to
+  add, or the `dirs` override to point elsewhere.
+- `@czap/worker` — the threshold contract was documented two contradictory
+  ways: `Messages` docs said `thresholds.length = states.length - 1` while
+  the evaluators implement the canonical quantizer contract
+  (`thresholds[i]` is the lower bound of `states[i]`,
+  `thresholds.length === states.length`). Following the old doc, the
+  flagship `CompositorWorker` example (`states: ['dim','bright'],
+  thresholds: [0.5]`) made `'bright'` unreachable. Docs and example now
+  match the implementation (`thresholds: [0, 0.5]`).
+- `@czap/web` — SSE/Resumption seam is documented: the SSE client handles
+  transport-level reconnect only (backoff + `lastEventId` cursor) and
+  gap recovery is host-wired via the `Resumption` namespace; `SSE.create`
+  carries a composed example mirroring the Astro reference wiring. The two
+  `Resumption.saveState` docblock examples omitted the required
+  `timestamp` field and did not typecheck — fixed.
 
 ## [0.1.5] — 2026-06-10
 

@@ -131,7 +131,7 @@ Reach for it when you need:
 
 - DOM morphing
 - slot registration
-- SSE and resumption
+- SSE and resumption — `SSE` is the transport, `Resumption` is the recovery protocol; hosts compose them (see [`packages/astro/src/runtime/stream.ts`](../packages/astro/src/runtime/stream.ts) for the reference wiring)
 - physical state capture and restore
 - WebCodecs capture
 - LLM chunk adaptation
