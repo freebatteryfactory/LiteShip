@@ -1547,6 +1547,25 @@ describe('@czap/vite plugin', () => {
     });
   });
 
+  test('braces inside strings within custom-property block values do not close the block early', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    --theme: { content: "}"; color: red; };
+    color: blue;
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, 'block-string.css');
+    expect(block?.states.mobile).toEqual({
+      bareProps: {
+        '--theme': '{ content: "}"; color: red; }',
+        color: 'blue',
+      },
+      rules: [],
+    });
+  });
+
   test('handles prefixed names, escaped strings, and nested url parens when replacing at-rule blocks', async () => {
     const root = makeTempDir();
     const cssDir = join(root, 'src');
