@@ -4,7 +4,7 @@ CDN-edge: Client Hints, tier detection, KV boundary cache, theme compilation.
 
 ## Docs
 
-- [Naming & vocabulary](../../docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
+- [Naming & vocabulary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — LiteShip, CZAP, `@czap/*`
 
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/edge/) — generated from source TSDoc
 - [Architecture index](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)

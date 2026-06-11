@@ -61,7 +61,7 @@ KV namespace backing the boundary cache.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L65)
+Defined in: [edge/src/host-adapter.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L71)
 
 Optional KV key prefix.
 
@@ -71,6 +71,10 @@ Optional KV key prefix.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [edge/src/host-adapter.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L63)
+Defined in: [edge/src/host-adapter.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L69)
 
-Cache entry TTL in seconds.
+Cache entry TTL in seconds — an eviction/cost knob, not a freshness
+knob. Entries are content-addressed and never go stale; deploys that
+change boundary content mint a new `ContentAddress` and orphan the old
+`boundaryId` x tier keys, which KV stores (and bills) forever unless a
+TTL reclaims them. Omit to cache indefinitely.
