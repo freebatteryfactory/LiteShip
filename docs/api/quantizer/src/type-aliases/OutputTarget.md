@@ -15,4 +15,4 @@ Compilation target for quantizer per-state outputs.
 `css` emits style declarations, `glsl`/`wgsl` emit shader uniforms,
 `aria` emits accessibility attributes, `ai` emits model-facing signals.
 MotionTier gates which targets a device is permitted to receive; see
-`TIER_TARGETS` (in `@czap/quantizer/testing`).
+[QuantizerFromOptions.tier](../interfaces/QuantizerFromOptions.md#tier) for the tier → targets table.

@@ -50,7 +50,7 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * `css` emits style declarations, `glsl`/`wgsl` emit shader uniforms,
  * `aria` emits accessibility attributes, `ai` emits model-facing signals.
  * MotionTier gates which targets a device is permitted to receive; see
- * `TIER_TARGETS` (in `@czap/quantizer/testing`).
+ * {@link QuantizerFromOptions.tier} for the tier → targets table.
  */
 export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
 
@@ -127,11 +127,28 @@ export interface SpringConfig {
 /**
  * Options accepted by {@link Q.from}.
  *
- * `tier` gates which output targets get produced (see `TIER_TARGETS` (in `@czap/quantizer/testing`)).
+ * `tier` gates which output targets get produced (see the table on
+ * {@link QuantizerFromOptions.tier}).
  * `spring` enables automatic CSS `--czap-easing` injection on CSS outputs.
  */
 export interface QuantizerFromOptions {
-  /** MotionTier for output gating; omit to allow all targets. */
+  /**
+   * MotionTier for output gating; omit to allow all targets.
+   *
+   * Each tier permits a fixed set of output targets (higher tiers include
+   * lower-tier targets):
+   *
+   * | tier          | allowed targets                     |
+   * | ------------- | ----------------------------------- |
+   * | `none`        | `aria`                              |
+   * | `transitions` | `css`, `aria`                       |
+   * | `animations`  | `css`, `aria`                       |
+   * | `physics`     | `css`, `glsl`, `aria`               |
+   * | `compute`     | `css`, `glsl`, `wgsl`, `aria`, `ai` |
+   *
+   * Outputs defined for a gated-off target are silently dropped;
+   * `.force(...targets)` overrides the gating per target.
+   */
   readonly tier?: MotionTier;
   /** Spring config that drives CSS easing generation for CSS outputs. */
   readonly spring?: SpringConfig;
@@ -156,7 +173,7 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
   readonly outputs: O;
   /** Content-addressed identity (FNV-1a of boundary id + outputs). */
   readonly id: ContentAddress;
-  /** Motion tier gating active targets; see `TIER_TARGETS` (in `@czap/quantizer/testing`). */
+  /** Motion tier gating active targets; see {@link QuantizerFromOptions.tier} for the tier → targets table. */
   readonly tier?: MotionTier;
   /** Spring config driving CSS easing injection. */
   readonly spring?: SpringConfig;
@@ -183,7 +200,8 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
  * import { Effect, Stream } from 'effect';
  *
  * const b = Boundary.make({
- *   input: 'w', states: ['sm', 'lg'] as const, thresholds: [0, 768],
+ *   input: 'w',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const config = Q.from(b).outputs({
  *   css: { sm: { fontSize: '14px' }, lg: { fontSize: '18px' } },
@@ -380,8 +398,8 @@ function getSpringCSS(spring: SpringConfig): string {
  * import { Effect } from 'effect';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'md', 'lg'] as const,
- *   thresholds: [0, 640, 1024],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
  * });
  * const config = Q.from(boundary).outputs({
  *   css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } },
@@ -511,8 +529,8 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
  * import { Effect } from 'effect';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const config = Q.from(boundary).outputs({
  *   css: { sm: { display: 'block' }, lg: { display: 'grid' } },

@@ -49,6 +49,15 @@ export interface BoundaryCache {
 // ---------------------------------------------------------------------------
 
 interface CacheOptions {
+  /**
+   * Cache entry TTL in seconds. This is an eviction/cost knob, not a
+   * freshness knob: entries are content-addressed and never go stale, but
+   * each deploy that changes boundary content mints a new `ContentAddress`,
+   * orphaning the old `boundaryId` x tier keys — and Workers KV never
+   * evicts on its own and bills storage. Set a TTL to garbage-collect
+   * entries for superseded boundary builds and bound KV storage cost.
+   * Omit to cache indefinitely.
+   */
   readonly ttl?: number;
   readonly prefix?: string;
 }

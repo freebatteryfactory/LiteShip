@@ -32,7 +32,7 @@ import { Token } from '@czap/core';
 
 const spacing = Token.make({
   name: 'gap', category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: { 'compact': '4px', 'comfortable': '8px' },
   fallback: '6px',
 });

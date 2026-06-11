@@ -82,6 +82,7 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+<<<<<<< HEAD
 - `@czap/scene` — `compileScene` now evaluates `SceneContract.invariants`
   and throws `CzapValidationError` on violation, as the `SceneInvariant`
   docblock always documented. Every declared check runs against the
@@ -89,6 +90,26 @@ pivot (epic #4) — these notes ship as 0.2.0.
   a violation, and ALL violations are reported in one error carrying each
   invariant's name and message. Previously the required `invariants`
   field was declaration-only — never read.
+=======
+- docs(compiler/quantizer) — all 16 `Boundary.make` docblock examples
+  (CSS/GLSL/WGSL/ARIA compilers, `dispatch`, `evaluate`, `Q.from`,
+  `AnimatedQuantizer`) used the dead pre-rename
+  `states: [...] as const, thresholds: [...]` form; rewritten to the real
+  `at: [[0, 'sm'], [768, 'lg']]` API. Every example now typechecks as
+  pasted. No runtime behavior changed.
+- docs(quantizer) — `AnimatedQuantizer` examples used a `'*->*'` transition
+  key that never matched (the supported any-to-any wildcard is `'*'`) and
+  bare-number durations that fail the `Millis` brand; anyone who copied the
+  example silently got duration-0 (instant) transitions. The tier → targets
+  table now lives on `QuantizerFromOptions.tier` instead of three pointers
+  to `TIER_TARGETS` in `@czap/quantizer/testing`. No runtime behavior
+  changed.
+- docs(detect) — `detect()` `@example` taught a pre-rename tier vocabulary
+  (`'low'/'mid'/'high'`, `'basic'`); actual unions are `CapLevel`
+  (`'static' | 'styled' | 'reactive' | 'animated' | 'gpu'`) and `DesignTier`
+  (`'minimal' | 'standard' | 'enhanced' | 'rich'`). No runtime or type
+  changes.
+>>>>>>> origin/main
 - `@czap/audit` — allowlist entries are **package-relative**
   (`{ package: '@czap/astro', filePrefix: 'src/...' }`) and resolve through
   the profile's discovered package roots. A clean consumer install
@@ -101,6 +122,29 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `liteship` README documents pnpm's strict `node_modules`: the umbrella
   does not make transitive `@czap/*` imports resolvable under pnpm — keep
   explicit scoped deps or hoist the scope (0.1.5 re-dogfood report).
+- `@czap/vite` / `@czap/astro` — the module docblock examples showed a
+  `themes: string[]` plugin option that never existed; themes are
+  discovered by convention (`themes.ts` / `*.themes.ts`, override the
+  directory via `dirs.theme` on `PluginConfig`). The examples now use the
+  real config fields.
+- `@czap/vite` — "Could not resolve token/theme/style/boundary" warnings
+  now list the exact convention modules that were searched (in search
+  order) and the literal fix: the `Token.make`-style factory export to
+  add, or the `dirs` override to point elsewhere.
+- `@czap/worker` — the threshold contract was documented two contradictory
+  ways: `Messages` docs said `thresholds.length = states.length - 1` while
+  the evaluators implement the canonical quantizer contract
+  (`thresholds[i]` is the lower bound of `states[i]`,
+  `thresholds.length === states.length`). Following the old doc, the
+  flagship `CompositorWorker` example (`states: ['dim','bright'],
+  thresholds: [0.5]`) made `'bright'` unreachable. Docs and example now
+  match the implementation (`thresholds: [0, 0.5]`).
+- `@czap/web` — SSE/Resumption seam is documented: the SSE client handles
+  transport-level reconnect only (backoff + `lastEventId` cursor) and
+  gap recovery is host-wired via the `Resumption` namespace; `SSE.create`
+  carries a composed example mirroring the Astro reference wiring. The two
+  `Resumption.saveState` docblock examples omitted the required
+  `timestamp` field and did not typecheck — fixed.
 
 ## [0.1.5] — 2026-06-10
 
@@ -361,7 +405,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - @czap/remotion package: React adapter for Remotion video rendering
 - useCompositeState: frame-indexed state hook
 - cssVarsFromState: CompositeState → CSS custom properties
-- FxProvider + useFxState: React context for frame data
+- Provider + useCzapState: React context for frame data (shipped under these names; an early draft called them FxProvider + useFxState)
 - precomputeFrames: async frame precomputation
 
 ### Benchmarks

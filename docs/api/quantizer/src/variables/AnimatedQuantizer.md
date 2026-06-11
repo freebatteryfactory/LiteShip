@@ -68,13 +68,13 @@ An Effect yielding an [AnimatedQuantizerShape](../interfaces/AnimatedQuantizerSh
 #### Example
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
 import { Effect, Stream } from 'effect';
 
 const boundary = Boundary.make({
-  input: 'scroll', states: ['top', 'bottom'] as const,
-  thresholds: [0, 500],
+  input: 'scroll',
+  at: [[0, 'top'], [500, 'bottom']],
 });
 const config = Q.from(boundary).outputs({
   css: { top: { opacity: '1' }, bottom: { opacity: '0.5' } },
@@ -83,7 +83,7 @@ const program = Effect.scoped(Effect.gen(function* () {
   const live = yield* config.create();
   const animated = yield* AnimatedQuantizer.make(
     live,
-    { '*->*': { duration: 300 } },
+    { '*': { duration: Millis(300) } },
     { top: { opacity: 1 }, bottom: { opacity: 0.5 } },
   );
   live.evaluate(600); // triggers interpolation
@@ -94,20 +94,20 @@ const program = Effect.scoped(Effect.gen(function* () {
 ## Example
 
 ```ts
-import { Boundary } from '@czap/core';
+import { Boundary, Millis } from '@czap/core';
 import { Q, AnimatedQuantizer } from '@czap/quantizer';
 import { Effect } from 'effect';
 
 const boundary = Boundary.make({
-  input: 'scroll', states: ['top', 'bottom'] as const,
-  thresholds: [0, 500],
+  input: 'scroll',
+  at: [[0, 'top'], [500, 'bottom']],
 });
 const config = Q.from(boundary).outputs({});
 const program = Effect.scoped(Effect.gen(function* () {
   const live = yield* config.create();
   const animated = yield* AnimatedQuantizer.make(
     live,
-    { '*->*': { duration: 200 } },
+    { '*': { duration: Millis(200) } },
   );
   return animated.transition; // TransitionResolver
 }));

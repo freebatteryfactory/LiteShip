@@ -8,6 +8,6 @@
 
 > **BootstrapRegistration** = `BootstrapQuantizerRegistration`
 
-Defined in: [worker/src/messages.ts:350](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L350)
+Defined in: [worker/src/messages.ts:355](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L355)
 
 Single quantizer bootstrap registration.

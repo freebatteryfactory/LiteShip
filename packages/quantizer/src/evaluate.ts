@@ -37,8 +37,9 @@ export interface EvaluateResult<S extends string = string> {
  * import { evaluate } from '@czap/quantizer';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'md', 'lg'] as const,
- *   thresholds: [0, 640, 1024], hysteresis: 20,
+ *   input: 'width',
+ *   at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
+ *   hysteresis: 20,
  * });
  * const result = evaluate(boundary, 800);
  * // result => { state: 'md', index: 1, value: 800, crossed: false }
@@ -147,8 +148,9 @@ export function evaluate<B extends Boundary.Shape>(
  * import { Evaluate } from '@czap/quantizer';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768], hysteresis: 10,
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
+ *   hysteresis: 10,
  * });
  * const r1 = Evaluate.evaluate(boundary, 500);
  * // r1.state => 'sm', r1.crossed => false

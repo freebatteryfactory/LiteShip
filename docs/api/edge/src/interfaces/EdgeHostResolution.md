@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostResolution
 
-Defined in: [edge/src/host-adapter.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L92)
+Defined in: [edge/src/host-adapter.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L98)
 
 Full per-request resolution output from [EdgeHostAdapter.resolve](EdgeHostAdapter.md#resolve).
 
@@ -24,7 +24,7 @@ Carries the device context, optional theme and compiled outputs, the
 
 > `readonly` **cacheStatus**: [`EdgeHostCacheStatus`](../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [edge/src/host-adapter.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L107)
+Defined in: [edge/src/host-adapter.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L113)
 
 Whether the boundary outputs came from cache, were computed and stored, or caching is off.
 
@@ -48,7 +48,7 @@ Capabilities parsed from Client Hints.
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L96)
+Defined in: [edge/src/host-adapter.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L102)
 
 Compiled per-state outputs for the configured boundary, if caching is enabled.
 
@@ -58,7 +58,7 @@ Compiled per-state outputs for the configured boundary, if caching is enabled.
 
 > `readonly` **htmlAttributes**: `string`
 
-Defined in: [edge/src/host-adapter.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L98)
+Defined in: [edge/src/host-adapter.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L104)
 
 `data-czap-cap`/`data-czap-motion`/`data-czap-design` string for `<html>`.
 
@@ -68,7 +68,7 @@ Defined in: [edge/src/host-adapter.ts:98](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **responseHeaders**: `object`
 
-Defined in: [edge/src/host-adapter.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L100)
+Defined in: [edge/src/host-adapter.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L106)
 
 Response headers to send back so the browser will supply hints next time.
 
@@ -90,7 +90,7 @@ Response headers to send back so the browser will supply hints next time.
 
 > `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
 
-Defined in: [edge/src/host-adapter.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L94)
+Defined in: [edge/src/host-adapter.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L100)
 
 Compiled theme result, if a theme config was resolved for this request.
 

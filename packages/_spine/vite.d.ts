@@ -111,6 +111,19 @@ export declare function resolvePrimitive<K extends PrimitiveKind>(
   userDir?: string,
 ): Promise<PrimitiveResolution<K> | null>;
 
+/**
+ * The convention module paths {@link resolvePrimitive} searches for a
+ * primitive kind, in search order — the single source of truth behind the
+ * unresolved-primitive warnings and available to custom Vite plugin layers
+ * that surface their own resolution diagnostics.
+ */
+export declare function primitiveSearchPatterns(
+  kind: PrimitiveKind,
+  fromFile: string,
+  projectRoot: string,
+  userDir?: string,
+): readonly string[];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 11. VIRTUAL MODULES
 // ═══════════════════════════════════════════════════════════════════════════════

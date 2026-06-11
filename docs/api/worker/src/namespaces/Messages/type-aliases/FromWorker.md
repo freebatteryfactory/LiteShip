@@ -8,6 +8,6 @@
 
 > **FromWorker** = [`FromWorkerMessage`](../../../type-aliases/FromWorkerMessage.md)
 
-Defined in: [worker/src/messages.ts:344](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L344)
+Defined in: [worker/src/messages.ts:349](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L349)
 
 Every message a worker may send back to the main thread.

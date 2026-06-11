@@ -8,11 +8,18 @@
 
 > **useCompositeState**(`frames`): `CompositeState`
 
-Defined in: [remotion/src/hooks.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L92)
+Defined in: [remotion/src/hooks.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L101)
 
 Remotion-aware hook that returns the `CompositeState` for the current
 frame. Internally calls Remotion's `useCurrentFrame` and defers to
 [stateAtFrame](stateAtFrame.md) for lookup.
+
+This is the explicit prop-threading half of a deliberate pair: pass the
+`frames` array directly — pure, no provider required. Its sibling,
+`Provider` + `useCzapState()` in `composition.js`, resolves the same
+state via implicit context lookup for deep component trees. Both clamp
+to the valid frame range and fall back to a structurally-empty
+`CompositeState`.
 
 ## Parameters
 
@@ -27,6 +34,10 @@ Precomputed frames (see [precomputeFrames](precomputeFrames.md)).
 `CompositeState`
 
 State for the current Remotion frame.
+
+## See
+
+useCzapState for the context-lookup form (no prop threading).
 
 ## Example
 
