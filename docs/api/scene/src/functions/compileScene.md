@@ -8,15 +8,22 @@
 
 > **compileScene**(`scene`): [`CompiledScene`](../interfaces/CompiledScene.md)
 
-Defined in: [scene/src/compile.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L80)
+Defined in: [scene/src/compile.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L98)
 
 Compile a [SceneContract](../interfaces/SceneContract.md) into a pure [CompiledScene](../interfaces/CompiledScene.md)
 descriptor. No world is constructed here — see [SceneRuntime](../namespaces/SceneRuntime/README.md).
 
+The contract is normalized FIRST: every `Beat()` / frame-mark on a
+track's `from` / `to` resolves to a numeric frame index using the
+scene's `bpm` + `fps` (see `sugar/beat.ts`). Invariants run against
+that [ResolvedSceneContract](../type-aliases/ResolvedSceneContract.md), so checks like
+`t.to <= (duration / 1000) * fps` always operate on numbers — never
+on unresolved beat handles.
+
 Every declared [SceneInvariant](../interfaces/SceneInvariant.md) is evaluated against the
-contract before any compilation work happens. A check that returns
-`false` — or throws — counts as a violation. ALL violations are
-collected, then reported together in a single
+normalized contract before any compilation work happens. A check that
+returns `false` — or throws — counts as a violation. ALL violations
+are collected, then reported together in a single
 [CzapValidationError](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md) (module `'compileScene'`) listing each
 violated invariant's name and message, so one compile run surfaces
 every problem instead of stopping at the first.

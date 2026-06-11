@@ -4,19 +4,35 @@
 
 [LiteShip](../../../modules.md) / [scene/src](../README.md) / VideoTrack
 
-# Interface: VideoTrack
+# Interface: VideoTrack\<M\>
 
-Defined in: [scene/src/contract.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L23)
+Defined in: [scene/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L42)
 
 Video track — renders a quantizer-driven source for its frame range.
 
+## Type Parameters
+
+### M
+
+`M` *extends* [`FrameMark`](../type-aliases/FrameMark.md) = [`FrameMark`](../type-aliases/FrameMark.md)
+
 ## Properties
+
+### envelope?
+
+> `readonly` `optional` **envelope?**: `TrackEnvelope`
+
+Defined in: [scene/src/contract.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L50)
+
+Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick.
+
+***
 
 ### from
 
-> `readonly` **from**: `number`
+> `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L26)
+Defined in: [scene/src/contract.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L45)
 
 ***
 
@@ -24,7 +40,7 @@ Defined in: [scene/src/contract.ts:26](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
 
-Defined in: [scene/src/contract.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L25)
+Defined in: [scene/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L44)
 
 ***
 
@@ -32,7 +48,7 @@ Defined in: [scene/src/contract.ts:25](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **kind**: `"video"`
 
-Defined in: [scene/src/contract.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L24)
+Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L43)
 
 ***
 
@@ -40,7 +56,7 @@ Defined in: [scene/src/contract.ts:24](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **layer?**: `number`
 
-Defined in: [scene/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L29)
+Defined in: [scene/src/contract.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L48)
 
 ***
 
@@ -48,12 +64,12 @@ Defined in: [scene/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **source**: `unknown`
 
-Defined in: [scene/src/contract.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L28)
+Defined in: [scene/src/contract.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L47)
 
 ***
 
 ### to
 
-> `readonly` **to**: `number`
+> `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L27)
+Defined in: [scene/src/contract.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L46)
