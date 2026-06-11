@@ -108,10 +108,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `TransitionMap<string>` call sites are unaffected.
 - `capsule:verify` — the JSON receipt classifies every generated bench
   (`benches: { total, real, placeholder }`) instead of existence-only
-  checking. The harness templates still emit comment-only bench closures,
-  so all 15 currently report as `placeholder` — a green verdict can no
-  longer be mistaken for benchmark coverage. Real bench bodies land with
-  the harness-handlers epic's later waves.
+  checking. Most harness templates still emit comment-only bench closures
+  and report as `placeholder` — a green verdict can no longer be mistaken
+  for benchmark coverage; the `intro-bed` decode-throughput bench (asset
+  decoder channel, above) is already real and counts in `real`. Remaining
+  real bench bodies land with the harness-handlers epic's later waves. The
+  integration test derives its expected classification from the manifest
+  via the shared `scripts/lib/bench-classify.ts` classifier instead of
+  hardcoded counts.
 
 ### Fixed
 
