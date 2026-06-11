@@ -62,7 +62,24 @@ export interface QuantizeBlock {
 
 export declare function parseQuantizeBlocks(css: string, sourceFile: string): readonly QuantizeBlock[];
 
-export declare function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary.Shape): string;
+/**
+ * Sheet-level aggregation context for viewport containment: thread ONE
+ * instance through every `compileQuantizeBlock` call of a stylesheet and
+ * emit a single `:root` rule via {@link viewportContainmentRule}
+ * (`container-name` is a replaced property -- per-block rules would
+ * overwrite each other).
+ */
+export interface QuantizeSheetContext {
+  readonly viewportContainerNames: Set<string>;
+}
+
+export declare function compileQuantizeBlock(
+  block: QuantizeBlock,
+  boundary: Boundary.Shape,
+  sheet?: QuantizeSheetContext,
+): string;
+
+export declare function viewportContainmentRule(names: Iterable<string>): string | null;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 4. @token CSS TRANSFORM
