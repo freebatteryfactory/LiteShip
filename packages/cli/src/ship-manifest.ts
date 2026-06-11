@@ -136,6 +136,40 @@ export const tarballManifestAddress = (tarballBytes: Uint8Array): Effect.Effect<
     return yield* AddressedDigest.of(canonical);
   });
 
+/**
+ * Workspace-protocol leak check: read `package/package.json` out of the
+ * packed tarball and return every dependency entry (dependencies /
+ * optionalDependencies / peerDependencies) still carrying the
+ * `workspace:` protocol — specs npm consumers cannot install.
+ * `@czap/core@0.1.4` shipped exactly this defect; `package:smoke` gates
+ * it in CI, and this guard closes the manual/local `czap ship` path,
+ * where a tarball with workspace specs would also poison the
+ * ShipCapsule's publish evidence.
+ *
+ * Throws when the tarball has no parseable `package/package.json` —
+ * that tarball is broken regardless of specs.
+ */
+export function findWorkspaceSpecLeaks(tarballBytes: Uint8Array): readonly string[] {
+  const unzipped = new Uint8Array(gunzipSync(tarballBytes));
+  const entry = parseTar(unzipped).find((candidate) => candidate.path === 'package/package.json');
+  if (!entry) {
+    throw new Error('tarball has no package/package.json entry');
+  }
+  const manifest = JSON.parse(new TextDecoder().decode(entry.bytes)) as Record<
+    string,
+    Record<string, string> | undefined
+  >;
+  const leaks: string[] = [];
+  for (const section of ['dependencies', 'optionalDependencies', 'peerDependencies'] as const) {
+    for (const [dep, spec] of Object.entries(manifest[section] ?? {})) {
+      if (typeof spec === 'string' && spec.startsWith('workspace:')) {
+        leaks.push(`${section}.${dep}: ${spec}`);
+      }
+    }
+  }
+  return leaks;
+}
+
 /** Address a pnpm-lock.yaml (or equivalent) by its raw file bytes. YAML is its own normalization. */
 export const lockfileAddress = (lockfileBytes: Uint8Array): Effect.Effect<AddressedDigestType, Error> =>
   AddressedDigest.of(lockfileBytes);
