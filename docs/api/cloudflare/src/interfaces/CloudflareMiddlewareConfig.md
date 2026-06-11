@@ -22,12 +22,14 @@ KV namespace binding name in wrangler.jsonc.
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: `string`
+> `readonly` `optional` **boundary?**: `string` \| readonly `string`[]
 
-Defined in: [cloudflare/src/middleware.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L32)
+Defined in: [cloudflare/src/middleware.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L34)
 
-Which manifest boundary to serve. Optional when the manifest has
-exactly one entry.
+Which manifest boundaries to serve: a single name, a list of names,
+or omitted to serve every boundary in the manifest. Each served
+boundary keeps its own cache identity (content address), so
+boundaries on the same page cannot poison each other's cached CSS.
 
 ***
 
@@ -35,7 +37,7 @@ exactly one entry.
 
 > `readonly` `optional` **boundaryId?**: `ContentAddress`
 
-Defined in: [cloudflare/src/middleware.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L39)
+Defined in: [cloudflare/src/middleware.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L41)
 
 Escape hatch for custom hosts without a manifest: the boundary's
 content address. Must be a real minted id (`Boundary.make(...).id`,
@@ -48,10 +50,12 @@ fabricated id breaks the never-stale invariant.
 
 > `readonly` `optional` **compile?**: (`context`) => `CompiledOutputs` \| `Promise`\<`CompiledOutputs`\>
 
-Defined in: [cloudflare/src/middleware.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L44)
+Defined in: [cloudflare/src/middleware.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L48)
 
 Escape hatch / fallback: compile function invoked when neither the
-manifest nor KV covers the request's tier.
+manifest nor KV covers the request's tier. With multiple boundaries
+the callback is shared -- branch on `context.boundaryName` /
+`context.boundaryId` to return the right boundary's outputs.
 
 #### Parameters
 
@@ -69,7 +73,7 @@ manifest nor KV covers the request's tier.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [cloudflare/src/middleware.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L59)
+Defined in: [cloudflare/src/middleware.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L63)
 
 Whether to parse Client Hints (default `true`).
 
@@ -79,7 +83,7 @@ Whether to parse Client Hints (default `true`).
 
 > `readonly` `optional` **env?**: [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md) \| (() => [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md))
 
-Defined in: [cloudflare/src/middleware.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L66)
+Defined in: [cloudflare/src/middleware.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L70)
 
 Override the Workers env source. Default reads `env` from `cloudflare:workers`.
 Pass a getter in tests or when env is injected by the host framework.
@@ -103,7 +107,7 @@ and per-tier precompiled outputs from it, so nothing is hand-typed.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L57)
+Defined in: [cloudflare/src/middleware.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L61)
 
 Optional KV key prefix.
 
@@ -113,7 +117,7 @@ Optional KV key prefix.
 
 > `readonly` `optional` **theme?**: `ThemeCompileConfig` \| ((`context`) => `ThemeCompileConfig` \| `null` \| `undefined`)
 
-Defined in: [cloudflare/src/middleware.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L46)
+Defined in: [cloudflare/src/middleware.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L50)
 
 Optional theme config or per-request resolver.
 
@@ -123,7 +127,7 @@ Optional theme config or per-request resolver.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [cloudflare/src/middleware.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L55)
+Defined in: [cloudflare/src/middleware.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L59)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
 knob. Compiled outputs are content-addressed and never go stale; each
@@ -138,7 +142,7 @@ keys for superseded builds. Omit to cache indefinitely.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [cloudflare/src/middleware.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L61)
+Defined in: [cloudflare/src/middleware.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L65)
 
 Whether to emit COOP/COEP for `client:worker`.
 
