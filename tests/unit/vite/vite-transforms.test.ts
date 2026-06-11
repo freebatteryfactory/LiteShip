@@ -977,32 +977,61 @@ describe('viewport containment aggregation', () => {
       [0, 'narrow'],
       [768, 'wide'],
     ]);
-    const heightBoundary = makeBoundary('viewport.height', [
+    const bareBoundary = makeBoundary('viewport', [
       [0, 'short'],
       [600, 'tall'],
     ]);
     const sheet = { viewportContainerNames: new Set<string>() };
     const compiledWidth = compileQuantizeBlock(blocks[0]!, widthBoundary, sheet);
-    const compiledHeight = compileQuantizeBlock(blocks[1]!, heightBoundary, sheet);
-    return { sheet, compiledWidth, compiledHeight };
+    const compiledBare = compileQuantizeBlock(blocks[1]!, bareBoundary, sheet);
+    return { sheet, compiledWidth, compiledBare };
   }
 
   test('blocks compiled with a sheet context emit no per-block :root rule', () => {
-    const { compiledWidth, compiledHeight } = compileBoth();
+    const { compiledWidth, compiledBare } = compileBoth();
 
     expect(compiledWidth).not.toContain(':root');
-    expect(compiledHeight).not.toContain(':root');
+    expect(compiledBare).not.toContain(':root');
     expect(compiledWidth).toContain('@container viewport-width (width < 768px)');
-    expect(compiledHeight).toContain('@container viewport-height (width < 600px)');
+    expect(compiledBare).toContain('@container viewport (width < 600px)');
   });
 
   test('viewportContainmentRule emits one :root rule naming every collected container', () => {
     const { sheet } = compileBoth();
 
-    expect([...sheet.viewportContainerNames]).toEqual(['viewport-width', 'viewport-height']);
+    expect([...sheet.viewportContainerNames]).toEqual(['viewport-width', 'viewport']);
 
     const containment = viewportContainmentRule(sheet.viewportContainerNames);
-    expect(containment).toBe(':root {\n  container-type: inline-size;\n  container-name: viewport-width viewport-height;\n}');
+    expect(containment).toBe(':root {\n  container-type: inline-size;\n  container-name: viewport-width viewport;\n}');
+  });
+
+  test('viewport.height is NOT auto-contained: width-based containment would track the wrong dimension', () => {
+    // container-type: inline-size measures WIDTH and the compiler
+    // serializes (width ...) queries — auto-containment for a height
+    // boundary would silently make height breakpoints follow the width.
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const heightBoundary = makeBoundary('viewport.height', [
+      [0, 'short'],
+      [600, 'tall'],
+    ]);
+    const sheet = { viewportContainerNames: new Set<string>() };
+
+    const { compiled, events } = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[1]!, heightBoundary, sheet),
+      events: [...captured],
+    }));
+
+    expect(sheet.viewportContainerNames.size).toBe(0);
+    expect(compiled).not.toContain(':root');
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'czap/vite.css-quantize',
+          code: 'container-not-declared',
+          message: expect.stringContaining('width-based'),
+        }),
+      ]),
+    );
   });
 
   test('viewportContainmentRule dedupes repeated names and returns null for none', () => {
