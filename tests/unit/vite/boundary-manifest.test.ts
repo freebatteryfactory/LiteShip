@@ -288,6 +288,28 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     );
   });
 
+  test('duplicate NESTED-selector declarations across files also warn on conflicts', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(srcDir, 'a.css', '@quantize viewport { compact { .grid { gap: 4px; } } }');
+    writeModule(srcDir, 'b.css', '@quantize viewport { compact { .grid { gap: 9px; } } }');
+
+    const { events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectBoundaryManifest(root),
+      events: [...captured],
+    }));
+
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'duplicate-declaration-conflict',
+          message: expect.stringContaining('.grid'),
+        }),
+      ]),
+    );
+  });
+
   test('editing an EXISTING boundaries module busts the ESM import cache on reload', async () => {
     // Native ESM caches dynamic imports by URL; re-collecting after an
     // edit to the SAME file must not serve the stale exports (Codex P2).
