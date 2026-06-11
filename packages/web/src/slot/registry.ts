@@ -6,7 +6,7 @@
 
 import { Effect } from 'effect';
 import type { Scope } from 'effect';
-import type { SlotPath, SlotEntry, IslandMode } from '../types.js';
+import type { SlotPath, SlotEntry, SlotEntryInput, IslandMode } from '../types.js';
 import { Diagnostics } from '@czap/core';
 import { SlotAddressing, SlotPath as mkSlotPath } from './addressing.js';
 
@@ -33,7 +33,7 @@ const readIslandMode = (element: Element): IslandMode | null =>
  */
 export interface SlotRegistryShape {
   get(path: SlotPath): SlotEntry | undefined;
-  register(entry: SlotEntry): void;
+  register(entry: SlotEntryInput): void;
   unregister(path: SlotPath): void;
   has(path: SlotPath): boolean;
   entries(): ReadonlyMap<SlotPath, SlotEntry>;
@@ -49,12 +49,9 @@ export interface SlotRegistryShape {
  *
  * const heroPath = SlotAddressing.brand('/hero');
  * const registry = SlotRegistry.create();
- * registry.register({
- *   path: heroPath, element: document.querySelector('#hero')!,
- *   mode: 'partial', mounted: true,
- * });
+ * registry.register({ path: heroPath, element: document.querySelector('#hero')! });
  * const entry = registry.get(heroPath);
- * console.log(entry?.element.id); // 'hero'
+ * console.log(entry?.mode); // 'partial' (default; mounted defaults to true)
  * ```
  *
  * @returns A new {@link SlotRegistryShape} instance
@@ -65,12 +62,27 @@ export const create = (): SlotRegistryShape => {
   return {
     get: (path: SlotPath) => registry.get(path),
 
-    /** Registers a slot entry. Dispatches `czap:slot-mounted` on the entry element (public observability event). */
-    register: (entry: SlotEntry) => {
-      registry.set(entry.path, entry);
-      entry.element.dispatchEvent(
+    /**
+     * Registers a slot entry (`mode` defaults to `'partial'`, `mounted` to `true`).
+     * Dispatches `czap:slot-mounted` on the entry element (public observability
+     * event). Idempotent: re-registering the same path with the same element and
+     * mode is a no-op, so `scanDOM` + `observe` never double-dispatch.
+     */
+    register: (entry: SlotEntryInput) => {
+      const normalized: SlotEntry = {
+        path: entry.path,
+        element: entry.element,
+        mode: entry.mode ?? 'partial',
+        mounted: entry.mounted ?? true,
+      };
+      const existing = registry.get(normalized.path);
+      if (existing && existing.element === normalized.element && existing.mode === normalized.mode) {
+        return;
+      }
+      registry.set(normalized.path, normalized);
+      normalized.element.dispatchEvent(
         new CustomEvent('czap:slot-mounted', {
-          detail: { path: entry.path, mode: entry.mode },
+          detail: { path: normalized.path, mode: normalized.mode },
           bubbles: true,
         }),
       );
@@ -150,9 +162,13 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
 };
 
 /**
- * Create a `MutationObserver` that automatically registers/unregisters slots
- * as DOM elements with `data-czap-slot` are added or removed. The observer
- * is disconnected when the enclosing Effect scope closes.
+ * Scan `root` for pre-existing slots, then create a `MutationObserver` that
+ * automatically registers/unregisters slots as DOM elements with
+ * `data-czap-slot` are added or removed. The observer is disconnected when
+ * the enclosing Effect scope closes.
+ *
+ * A separate {@link scanDOM} call before `observe` is no longer required
+ * (and stays harmless: `register` is idempotent per path+element+mode).
  *
  * @example
  * ```ts
@@ -162,16 +178,19 @@ export const scanDOM = (registry: SlotRegistryShape, root: Element, defaultMode:
  * const program = Effect.scoped(Effect.gen(function* () {
  *   const registry = SlotRegistry.create();
  *   yield* SlotRegistry.observe(registry, document.body);
- *   // Observer is now active; slots auto-register on DOM changes
+ *   // Pre-existing slots are registered; new slots auto-register on DOM changes
  * }));
  * ```
  *
  * @param registry - The slot registry to keep in sync
- * @param root     - The DOM root to observe
+ * @param root     - The DOM root to scan and observe
  * @returns An Effect (scoped) that starts observation
  */
 export const observe = (registry: SlotRegistryShape, root: Element): Effect.Effect<void, never, Scope.Scope> => {
   return Effect.gen(function* () {
+    // Pre-existing DOM first; the observer below only sees future mutations.
+    scanDOM(registry, root);
+
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         for (const node of Array.from(mutation.addedNodes)) {

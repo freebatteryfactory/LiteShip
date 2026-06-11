@@ -4,6 +4,7 @@
  * Builder utilities for creating and merging morph hints.
  */
 
+import { Diagnostics } from '@czap/core';
 import type { MorphHints, MorphRejection, PhysicalState } from '../types.js';
 import * as SemanticIdModule from './semantic-id.js';
 
@@ -166,8 +167,14 @@ export const fromElement = (element: Element): MorphHints => {
     try {
       const parsed = JSON.parse(idMapAttr) as Record<string, string>;
       result.idMap = new Map(Object.entries(parsed));
-    } catch {
-      // Invalid JSON, skip id map
+    } catch (cause) {
+      // The hint must not break the morph, but a typo'd map should be visible.
+      Diagnostics.warn({
+        source: 'czap/web.morph',
+        code: 'invalid-morph-id-map',
+        message: `data-morph-id-map contains invalid JSON: ${idMapAttr}. The id map was skipped. Expected a JSON object mapping old ids to new ids, e.g. data-morph-id-map='{"old-id":"new-id"}'.`,
+        cause,
+      });
     }
   }
 
