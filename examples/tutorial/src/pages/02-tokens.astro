@@ -55,7 +55,7 @@ import { gapSm, gapMd, gapLg } from '../tokens/spacing.tokens.js';
 
        Here's the TypeScript definition from spacing.tokens.ts.
        Each token has:
-         - name:     CSS property name (becomes --gap-sm, etc.)
+         - name:     token name (compiles to --czap-gap-sm, etc.)
          - category: semantic grouping (spacing, color, typography...)
          - axes:     which dimensions this token varies along
          - values:   a map of axis values to design values
@@ -105,17 +105,15 @@ export const gapLg = Token.make({'{'}&br;
        The @czap/vite plugin transforms @token CSS blocks at build
        time. When you write:
 
-         @token {
-           gap: var(--gap-md);
-         }
+         @token gapMd {}
 
-       The Vite plugin resolves --gap-md against the token registry,
-       applies the current axis values, and emits the resolved CSS
-       custom property.
+       The Vite plugin resolves "gapMd" against the exports of your
+       *.tokens.ts modules, and replaces the block with the compiled
+       custom property plus its @property registration.
 
        At runtime, the tokens land as standard CSS custom properties
-       on the element or :root. You use them like any other custom
-       property: var(--gap-md).
+       on :root. You use them like any other custom property:
+       var(--czap-gap-md).
   -->
 
   <h2>Tokens as CSS Custom Properties</h2>
@@ -123,31 +121,37 @@ export const gapLg = Token.make({'{'}&br;
   <p>
     czap compiles each token to a CSS custom property. The property name
     is derived from the token's <code>name</code> field, prefixed with
-    <code>--</code>:
+    <code>--czap-</code>:
   </p>
 
-  <pre><code>/* After compilation, your CSS can reference tokens directly: */
+  <pre><code>/* A named @token block declares the dependency. The name matches
+   the export in src/tokens/spacing.tokens.ts (gapSm, gapMd, gapLg): */
+
+@token gapSm {'{'}{'}'}
+@token gapMd {'{'}{'}'}
+@token gapLg {'{'}{'}'}
+
+/* The Vite plugin replaces each block with the resolved custom
+   property and an @property registration:
+
+   :root {'{'}&br;
+     --czap-gap-md: 1rem;
+   {'}'}
+*/
+
+/* Your CSS then references the compiled properties directly: */
 .card {'{'}&br;
-  padding: var(--gap-md);     /* 1rem in default density    */
-  gap: var(--gap-sm);         /* 0.5rem in default density  */
-  margin-bottom: var(--gap-lg); /* 2rem in default density  */
-{'}'}
-
-/* The @token CSS block (processed by @czap/vite) declares which
-   tokens a component uses. This enables tree-shaking and
-   ahead-of-time resolution: */
-
-@token {'{'}&br;
-  --gap-sm: spacing;
-  --gap-md: spacing;
-  --gap-lg: spacing;
+  padding: var(--czap-gap-md);       /* 1rem in default density   */
+  gap: var(--czap-gap-sm);           /* 0.5rem in default density */
+  margin-bottom: var(--czap-gap-lg); /* 2rem in default density   */
 {'}'}</code></pre>
 
   <div class="note">
-    <strong>Why @token blocks?</strong> They serve as explicit declarations
-    of token dependencies. The Vite plugin uses them to: (1) resolve tokens
-    at build time, (2) tree-shake unused tokens, and (3) generate
-    optimized CSS with only the tokens a component actually uses.
+    <strong>Why @token blocks?</strong> They are explicit declarations of
+    token dependencies. The Vite plugin resolves each named block against
+    your token definitions at build time and emits the resolved custom
+    property (with an <code>@property</code> registration when the value
+    is typed), so the stylesheet always reflects the canonical definition.
   </div>
 
   <!-- ============================================================
@@ -159,15 +163,15 @@ export const gapLg = Token.make({'{'}&br;
        inject them automatically from your token definitions.
 
        Try inspecting the elements in DevTools -- you'll see the
-       --gap-sm, --gap-md, --gap-lg custom properties.
+       --czap-gap-sm, --czap-gap-md, --czap-gap-lg custom properties.
   -->
 
   <h2>Live Demo</h2>
 
   <p>
     The cards below use the spacing tokens as CSS custom properties.
-    Inspect them in DevTools to see <code>--gap-sm</code>,
-    <code>--gap-md</code>, and <code>--gap-lg</code> in action.
+    Inspect them in DevTools to see <code>--czap-gap-sm</code>,
+    <code>--czap-gap-md</code>, and <code>--czap-gap-lg</code> in action.
   </p>
 
   <!-- We set the token values as inline custom properties here for
@@ -175,28 +179,28 @@ export const gapLg = Token.make({'{'}&br;
        them from your token definitions at build time. -->
   <div
     class="token-demo"
-    style={`--gap-sm: ${gapSm.fallback}; --gap-md: ${gapMd.fallback}; --gap-lg: ${gapLg.fallback};`}
+    style={`--czap-gap-sm: ${gapSm.fallback}; --czap-gap-md: ${gapMd.fallback}; --czap-gap-lg: ${gapLg.fallback};`}
   >
     <div class="token-card">
-      <h3>--gap-sm</h3>
-      <p>Padding uses <code>var(--gap-sm)</code></p>
-      <div class="swatch" style="padding: var(--gap-sm); background: #eef2ff;">
+      <h3>--czap-gap-sm</h3>
+      <p>Padding uses <code>var(--czap-gap-sm)</code></p>
+      <div class="swatch" style="padding: var(--czap-gap-sm); background: #eef2ff;">
         {String(gapSm.fallback)} (default density)
       </div>
     </div>
 
     <div class="token-card">
-      <h3>--gap-md</h3>
-      <p>Padding uses <code>var(--gap-md)</code></p>
-      <div class="swatch" style="padding: var(--gap-md); background: #eef2ff;">
+      <h3>--czap-gap-md</h3>
+      <p>Padding uses <code>var(--czap-gap-md)</code></p>
+      <div class="swatch" style="padding: var(--czap-gap-md); background: #eef2ff;">
         {String(gapMd.fallback)} (default density)
       </div>
     </div>
 
     <div class="token-card">
-      <h3>--gap-lg</h3>
-      <p>Padding uses <code>var(--gap-lg)</code></p>
-      <div class="swatch" style="padding: var(--gap-lg); background: #eef2ff;">
+      <h3>--czap-gap-lg</h3>
+      <p>Padding uses <code>var(--czap-gap-lg)</code></p>
+      <div class="swatch" style="padding: var(--czap-gap-lg); background: #eef2ff;">
         {String(gapLg.fallback)} (default density)
       </div>
     </div>
@@ -287,7 +291,7 @@ const textColor = Token.make({'{'}&br;
 <style>
   .token-demo {
     display: flex;
-    gap: var(--gap-md, 1rem);
+    gap: var(--czap-gap-md, 1rem);
     flex-wrap: wrap;
     margin-bottom: 2rem;
   }

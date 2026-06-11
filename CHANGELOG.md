@@ -20,6 +20,28 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/vite` + `@czap/compiler` — `@quantize` states accept **nested
+  selector rules** (`<selector> { ... }`) alongside bare declarations:
+  each nested selector compiles to its own rule inside the state's
+  `@container` block (`CSSCompiler.compile` takes per-state
+  `{ bareProps, rules }` bodies; flat property maps still work).
+  `QuantizeBlock.states` is now `Record<string, QuantizeStateBody>`
+  (**breaking** for direct `parseQuantizeBlocks` consumers). For
+  `viewport.*` boundaries the compiled output also declares `:root` as
+  the named query container (`container-type: inline-size;
+  container-name: <input>`) so the queries actually match; non-viewport
+  inputs get a `container-not-declared` diagnostic naming the exact
+  declaration to add.
+- `@czap/vite` — single-line `@token name {}` blocks parse (the natural
+  dependency-declaration form used by the examples).
+- `@czap/vite` — **parse-miss diagnostics**: a CSS file containing
+  `@token`/`@quantize` where zero blocks parse warns with the file:line
+  and the supported grammar (anonymous/inline dialects no longer die
+  silently); a parsed `@quantize` block whose states are all empty warns
+  the same way. Markers that only appear inside comments stay silent.
+- `@czap/vite` — `transformHTML` accepts the plugin's `dirs.boundary`
+  override, so `data-czap="name"` resolution honors the same convention
+  directories as the CSS phases.
 - `@czap/scene` — the authoring sugar is now WIRED (Spec 1 §5.1/§5.3/§5.4;
   it shipped as orphaned exports): track `from`/`to` accept `Beat(n)` marks
   (`FrameMark = number | BeatHandle | FrameMarkSum`), resolved to frame
@@ -136,6 +158,15 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- examples (default / showcase / tutorial) — the `@token` blocks now use
+  the documented named-block grammar (the previous anonymous-manifest,
+  inline-declaration, and dependency-map dialects parsed to zero
+  declarations); the tutorial's fabricated "tree-shaking" claim is gone.
+  The `@quantize` blocks use the now-working nested-selector form, each
+  example's `astro.config.ts` points `dirs` at its convention
+  directories so every referenced primitive resolves, and
+  `examples/default` drives both the satellite runtime and the compiled
+  `@container` CSS from the same shared `layout` boundary export.
 - `@czap/scene` — `compileScene` now evaluates `SceneContract.invariants`
   and throws `CzapValidationError` on violation, as the `SceneInvariant`
   docblock always documented. Every declared check runs against the

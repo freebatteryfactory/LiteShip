@@ -43,16 +43,43 @@ export declare function plugin(config?: PluginConfig): import('vite').Plugin;
 // § 3. @quantize CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export interface QuantizeNestedRule {
+  readonly selector: string;
+  readonly props: Record<string, string>;
+}
+
+export interface QuantizeStateBody {
+  readonly bareProps: Record<string, string>;
+  readonly rules: readonly QuantizeNestedRule[];
+}
+
 export interface QuantizeBlock {
   readonly boundaryName: string;
-  readonly states: Record<string, Record<string, string>>;
+  readonly states: Record<string, QuantizeStateBody>;
   readonly sourceFile: string;
   readonly line: number;
 }
 
 export declare function parseQuantizeBlocks(css: string, sourceFile: string): readonly QuantizeBlock[];
 
-export declare function compileQuantizeBlock(block: QuantizeBlock, boundary: Boundary.Shape): string;
+/**
+ * Sheet-level aggregation context for viewport containment: thread ONE
+ * instance through every `compileQuantizeBlock` call of a stylesheet and
+ * emit a single `:root` rule via {@link viewportContainmentRule}
+ * (`container-name` is a replaced property -- per-block rules would
+ * overwrite each other).
+ */
+export interface QuantizeSheetContext {
+  readonly viewportContainerNames: Set<string>;
+}
+
+export declare function compileQuantizeBlock(
+  block: QuantizeBlock,
+  boundary: Boundary.Shape,
+  sheet?: QuantizeSheetContext,
+): string;
+
+export declare function viewportContainmentRule(names: Iterable<string>): string | null;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 4. @token CSS TRANSFORM
