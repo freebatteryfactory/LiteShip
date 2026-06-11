@@ -14,6 +14,7 @@
  *
  * @module
  */
+import { Diagnostics } from '@czap/core';
 import type { HtmlPolicy } from '../types.js';
 
 /**
@@ -141,6 +142,14 @@ function escapeHtml(raw: string): string {
 function effectiveHtmlPolicy(options?: HtmlTrustOptions): HtmlPolicy {
   const requested = options?.policy ?? 'sanitized-html';
   if (requested === 'trusted-html' && options?.allowTrustedHtml !== true) {
+    // The downgrade keeps the trust boundary narrow by design; it just must
+    // not be silent. warnOnce dedupes per session.
+    Diagnostics.warnOnce({
+      source: 'czap/web.htmlTrust',
+      code: 'trusted-html-downgraded',
+      message:
+        'policy "trusted-html" was downgraded to "sanitized-html" because allowTrustedHtml is not true. If this HTML is genuinely trusted, pass { policy: "trusted-html", allowTrustedHtml: true }.',
+    });
     return 'sanitized-html';
   }
 

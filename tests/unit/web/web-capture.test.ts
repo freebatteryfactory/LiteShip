@@ -296,7 +296,8 @@ describe('web capture runtime', () => {
         height: 480,
         fps: 30,
       } as never),
-    ).rejects.toThrow('requires even dimensions');
+      // Teaching contract: codec family, the offending size, and both ways out.
+    ).rejects.toThrow(/\(H\.264\/HEVC\) requires even width and height\. Got 641x480 — round to 640x480, or use a VP9\/AV1 codec string/);
 
     const capture = WebCodecsCapture.make({
       codec: 'vp09.00.10.08',
