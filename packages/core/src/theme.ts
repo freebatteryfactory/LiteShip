@@ -59,7 +59,7 @@ function deterministicId<V extends readonly string[]>(
  * ```ts
  * const theme = Theme.make({
  *   name: 'brand',
- *   variants: ['light', 'dark'] as const,
+ *   variants: ['light', 'dark'],
  *   tokens: { bg: { light: '#fff', dark: '#111' }, fg: { light: '#000', dark: '#eee' } },
  * });
  * const darkTokens = Theme.tap(theme, 'dark');
@@ -86,7 +86,7 @@ function _tap<V extends readonly string[]>(theme: ThemeDef<V>, variant: V[number
  *
  * const theme = Theme.make({
  *   name: 'brand',
- *   variants: ['light', 'dark'] as const,
+ *   variants: ['light', 'dark'],
  *   tokens: {
  *     bg: { light: '#fff', dark: '#111' },
  *     fg: { light: '#000', dark: '#eee' },
@@ -109,7 +109,7 @@ export const Theme: ThemeFactory & {
    * ```ts
    * const theme = Theme.make({
    *   name: 'ocean',
-   *   variants: ['light', 'dark'] as const,
+   *   variants: ['light', 'dark'],
    *   tokens: { primary: { light: '#0066cc', dark: '#3399ff' } },
    *   meta: { light: { label: 'Light', mode: 'light' }, dark: { label: 'Dark', mode: 'dark' } },
    * });

@@ -135,7 +135,8 @@ export const buildUrl = _buildUrl;
  */
 export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope.Scope> =>
   Effect.gen(function* () {
-    const reconnectConfig = config.reconnect ?? defaultReconnectConfig;
+    // Partial override: omitted reconnect knobs fall back to the default policy.
+    const reconnectConfig = { ...defaultReconnectConfig, ...config.reconnect };
     const heartbeatInterval = config.heartbeatInterval ?? SSE_HEARTBEAT_MS;
     const maxBufferSize = SSE_BUFFER_SIZE;
 
