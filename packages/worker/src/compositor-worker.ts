@@ -582,12 +582,14 @@ function _createCompositorWorker(
  * compositor.addQuantizer('brightness', {
  *   id: 'boundary:brightness',
  *   states: ['dim', 'bright'],
- *   thresholds: [0.5],
+ *   // One threshold per state: thresholds[i] is the lower bound of
+ *   // states[i] — 'dim' from 0, 'bright' from 0.5.
+ *   thresholds: [0, 0.5],
  * });
  * const unsub = compositor.onState((state) => {
  *   // state.discrete.brightness === 'bright' | 'dim'
  * });
- * compositor.evaluate('brightness', 0.7);
+ * compositor.evaluate('brightness', 0.7); // 0.7 >= 0.5 -> 'bright'
  * compositor.requestCompute();
  * // ...later:
  * unsub();
