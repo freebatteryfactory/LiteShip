@@ -32,6 +32,7 @@ import {
   type WorkspacePackage,
 } from '@czap/command';
 import {
+  findWorkspaceSpecLeaks,
   lockfileAddress,
   normalizedDryRunAddress,
   tarballManifestAddress,
@@ -296,6 +297,33 @@ export async function ship(args: readonly string[]): Promise<number> {
       return 1;
     }
     const tarballBytes = new Uint8Array(readFileSync(tarballPath));
+
+    // Refuse to publish a tarball whose package.json still carries
+    // workspace: specs — npm consumers cannot install them (the
+    // @czap/core@0.1.4 defect), and a ShipCapsule minted over one would
+    // be evidence of a broken artifact. package:smoke gates this in CI;
+    // this closes the manual/local ship path.
+    let workspaceLeaks: readonly string[];
+    try {
+      workspaceLeaks = findWorkspaceSpecLeaks(tarballBytes);
+    } catch (e) {
+      emitError(
+        'ship',
+        `could not read package/package.json from ${tarballPath}: ${e instanceof Error ? e.message : String(e)} — ` +
+          `the tarball is malformed; re-pack with \`pnpm pack\` from the workspace root.`,
+      );
+      return 1;
+    }
+    if (workspaceLeaks.length > 0) {
+      emitError(
+        'ship',
+        `${name} packed with unresolved workspace: specs (${workspaceLeaks.join('; ')}) — npm consumers cannot ` +
+          `install these. This usually means the tarball was packed outside pnpm's workspace context. ` +
+          `Fix: re-pack via \`pnpm pack\` (or publish through \`czap ship\` from the workspace root) so pnpm ` +
+          `rewrites workspace: to concrete versions, then ship again.`,
+      );
+      return 1;
+    }
 
     const tmAddrResult = await runEffect(tarballManifestAddress(tarballBytes));
     if (!tmAddrResult.ok) {
