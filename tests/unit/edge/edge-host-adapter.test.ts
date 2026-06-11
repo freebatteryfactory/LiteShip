@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Boundary, Diagnostics } from '@czap/core';
+import { Boundary } from '@czap/core';
 import { createEdgeHostAdapter, enumerateTierKeys } from '@czap/edge';
 import * as ThemeCompiler from '../../../packages/edge/src/theme-compiler.js';
+import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -247,27 +248,23 @@ describe('createEdgeHostAdapter', () => {
         [768, 'wide'],
       ],
     });
-    Diagnostics.reset();
-    const warnings: string[] = [];
-    Diagnostics.setSink({
-      emit(event) {
-        warnings.push(event.code);
-      },
-    });
-    const adapter = createEdgeHostAdapter({
-      cache: {
-        kv,
-        boundaryId: boundary.id,
-        precompiled: {},
-      },
-    });
+    // The helper resets the global Diagnostics sink in a finally, so a
+    // failing assertion cannot leak the capture sink into later tests.
+    await captureDiagnosticsAsync(async ({ events }) => {
+      const adapter = createEdgeHostAdapter({
+        cache: {
+          kv,
+          boundaryId: boundary.id,
+          precompiled: {},
+        },
+      });
 
-    const result = await adapter.resolve(makeHeaders());
+      const result = await adapter.resolve(makeHeaders());
 
-    expect(result.compiledOutputs).toBeUndefined();
-    expect(result.cacheStatus).toBe('miss');
-    expect(warnings).toContain('manifest-tier-gap');
-    Diagnostics.reset();
+      expect(result.compiledOutputs).toBeUndefined();
+      expect(result.cacheStatus).toBe('miss');
+      expect(events.map((event) => event.code)).toContain('manifest-tier-gap');
+    });
   });
 
   test('cache config with neither precompiled nor compile fails fast with a teaching error', () => {
