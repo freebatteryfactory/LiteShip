@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync, utimesSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
@@ -72,4 +72,42 @@ describe('capsule-verify', () => {
     expect(receipt.benches.placeholder).not.toContain('intro-bed');
     expect(receipt.benches.real).toBeGreaterThanOrEqual(1);
   }, scaledTimeout(90_000));
+
+  it('a source newer by mtime whose regeneration is byte-identical is NOT stale', async () => {
+    // git does not preserve mtimes: pulling a commit that edits a capsule's
+    // source without changing its generated output leaves "source newer"
+    // forever. Raw mtime comparison false-flagged every incremental
+    // checkout (broke `pnpm test` for anyone pulling main); staleness must
+    // mean "capsule:compile would change the committed file".
+    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
+      capsules: { name: string; source: string }[];
+    };
+    const intro = manifest.capsules.find((cap) => cap.name === 'examples.intro');
+    expect(intro).toBeDefined();
+    const sourcePath = resolve(intro!.source);
+    const original = statSync(sourcePath);
+    // Future-date the source so the mtime fast-path flags it as a suspect.
+    utimesSync(sourcePath, original.atime, new Date(Date.now() + 5_000));
+    try {
+      const lines: string[] = [];
+      await withSpawned(
+        'pnpm',
+        ['run', 'capsule:verify'],
+        async (handle) => {
+          for await (const line of handle.readline()) {
+            lines.push(line);
+          }
+        },
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+      const receiptLine = lines
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('{') && line.endsWith('}'))
+        .pop();
+      const receipt = JSON.parse(receiptLine!);
+      expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
+    } finally {
+      utimesSync(sourcePath, original.atime, original.mtime);
+    }
+  }, scaledTimeout(180_000));
 });
