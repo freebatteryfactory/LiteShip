@@ -6,7 +6,7 @@
 
 # Interface: BoundaryManifestFile
 
-Defined in: [edge/src/manifest.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L114)
+Defined in: [edge/src/manifest.ts:179](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L179)
 
 Versioned envelope written to `czap-boundary-manifest.json` by the
 `@czap/astro` integration at `astro:build:done` -- for hosts that read
@@ -18,15 +18,17 @@ the manifest from disk instead of importing `virtual:czap/boundaries`.
 
 > `readonly` **\_tag**: `"CzapBoundaryManifest"`
 
-Defined in: [edge/src/manifest.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L115)
+Defined in: [edge/src/manifest.ts:180](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L180)
 
 ***
 
 ### \_version
 
-> `readonly` **\_version**: `1`
+> `readonly` **\_version**: `2`
 
-Defined in: [edge/src/manifest.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L116)
+Defined in: [edge/src/manifest.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L182)
+
+v2: entries carry a deduplicated `outputs` pool; `outputsByTier` cells are pool indices.
 
 ***
 
@@ -34,4 +36,4 @@ Defined in: [edge/src/manifest.ts:116](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **boundaries**: [`BoundaryManifest`](../type-aliases/BoundaryManifest.md)
 
-Defined in: [edge/src/manifest.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L117)
+Defined in: [edge/src/manifest.ts:183](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L183)

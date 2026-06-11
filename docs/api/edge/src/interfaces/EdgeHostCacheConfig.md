@@ -65,9 +65,9 @@ KV namespace backing the boundary cache.
 Defined in: [edge/src/host-adapter.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L70)
 
 Build-derived outputs keyed by [TierKey](../type-aliases/TierKey.md)
-(`"<motionTier>:<designTier>"`) -- the `outputsByTier` field of a
-boundary manifest entry. Checked before KV; a covered tier never
-touches the network.
+(`"<motionTier>:<designTier>"`) -- a manifest entry inflated via
+`resolveOutputsByTier(manifestEntry)`. Checked before KV; a covered
+tier never touches the network.
 
 ***
 

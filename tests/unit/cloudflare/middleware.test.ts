@@ -31,7 +31,9 @@ function makeManifest(name = 'viewport'): { boundary: ReturnType<typeof makeBoun
   const manifest: BoundaryManifest = {
     [name]: {
       id: boundary.id,
-      outputsByTier: Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs])),
+      // v2 deduped shape: one pooled output, every grid cell indexes it.
+      outputs: [outputs],
+      outputsByTier: Object.fromEntries(enumerateTierKeys().map((key) => [key, 0])),
     },
   };
   return { boundary, manifest };
@@ -179,7 +181,7 @@ describe('cloudflareMiddleware', () => {
   test('accepts the emitted czap-boundary-manifest.json envelope', async () => {
     const { kv } = makeKVStore();
     const { manifest } = makeManifest();
-    const file: BoundaryManifestFile = { _tag: 'CzapBoundaryManifest', _version: 1, boundaries: manifest };
+    const file: BoundaryManifestFile = { _tag: 'CzapBoundaryManifest', _version: 2, boundaries: manifest };
     const middleware = cloudflareMiddleware({
       binding: 'KV',
       manifest: file,

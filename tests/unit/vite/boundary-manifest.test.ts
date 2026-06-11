@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
-import { enumerateTierKeys, tierKey } from '@czap/edge';
+import { enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
 import { collectBoundaryManifest } from '../../../packages/vite/src/boundary-manifest.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js';
@@ -91,7 +91,16 @@ describe('collectBoundaryManifest', () => {
     // Outputs cover the full finite tier grid.
     expect(Object.keys(entry.outputsByTier).sort()).toEqual([...enumerateTierKeys()].sort());
 
-    const standard = entry.outputsByTier[tierKey({ motionTier: 'transitions', designTier: 'standard' })]!;
+    // Tier-invariant CSS is pooled, not stored per cell: two distinct
+    // outputs (motion `none` vs the rest), so the serialized entry is
+    // strictly smaller than the pre-dedupe per-cell format.
+    expect(entry.outputs).toHaveLength(2);
+    const resolved = resolveOutputsByTier(entry);
+    expect(JSON.stringify(entry).length).toBeLessThan(
+      JSON.stringify({ id: entry.id, outputsByTier: resolved }).length,
+    );
+
+    const standard = resolved[tierKey({ motionTier: 'transitions', designTier: 'standard' })]!;
     expect(standard.containerQueries).toContain('@container');
     expect(standard.containerQueries).toContain('width >= 768px');
     // Manifest-served CSS reaches the page WITHOUT the vite transform's
@@ -105,7 +114,7 @@ describe('collectBoundaryManifest', () => {
 
     // Reduced motion (`none`) omits @property registrations -- they exist
     // solely to enable GPU-interpolated transitions.
-    const reduced = entry.outputsByTier[tierKey({ motionTier: 'none', designTier: 'standard' })]!;
+    const reduced = resolved[tierKey({ motionTier: 'none', designTier: 'standard' })]!;
     expect(reduced.propertyRegistrations).toBe('');
     expect(reduced.containerQueries).toBe(standard.containerQueries);
     expect(reduced.css).not.toContain('@property');
@@ -118,6 +127,7 @@ describe('collectBoundaryManifest', () => {
     const manifest = await collectBoundaryManifest(root);
 
     expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
+    expect(manifest['viewport']!.outputs).toEqual([]);
     expect(manifest['viewport']!.outputsByTier).toEqual({});
   });
 
@@ -256,7 +266,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     );
 
     const manifest = await collectBoundaryManifest(root);
-    const outputs = Object.values(manifest['viewport']!.outputsByTier)[0]!;
+    const outputs = manifest['viewport']!.outputs[0]!;
     expect(outputs.containerQueries).toContain('gap: 4px');
     expect(outputs.containerQueries).toContain('@container');
   });
@@ -275,7 +285,7 @@ describe('plugin virtual:czap/boundaries wiring', () => {
       events: [...captured],
     }));
 
-    const outputs = Object.values(manifest['viewport']!.outputsByTier)[0]!;
+    const outputs = manifest['viewport']!.outputs[0]!;
     expect(outputs.containerQueries).toContain('color: blue');
     expect(outputs.containerQueries).toContain('gap: 4px');
     expect(events).toEqual(
