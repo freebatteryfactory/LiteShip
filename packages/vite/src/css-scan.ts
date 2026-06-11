@@ -13,13 +13,85 @@
  */
 
 /**
- * Blank out block comments while preserving every newline AND every
- * character offset (non-newline comment characters become spaces).
- * Lets callers find at-rule markers without matching commented-out
- * blocks, while keeping offsets valid against the original source.
+ * Blank out block comments, quoted-string contents, and unquoted
+ * `url(...)` contents while preserving every newline AND every
+ * character offset (blanked characters become spaces).
+ *
+ * This produces the marker-locating copy of a stylesheet: at-rule
+ * markers (`@token`, `@theme`, `@quantize`) are searched on the blanked
+ * copy so neither commented-out blocks nor marker text embedded in
+ * string values (`content: "@token accent {"`) nor data URLs
+ * (`url(data:...@quantize...)`) ever match as real blocks. Because
+ * offsets are preserved, every match index maps 1:1 back onto the
+ * original source, which the body parsers then read directly — real
+ * string values inside block bodies are never altered.
+ *
+ * A single character-level pass handles the interleavings a sequential
+ * regex approach gets wrong: quote characters inside comments do not
+ * open strings, and comment markers inside strings do not open comments.
  */
-export function blankCssComments(css: string): string {
-  return css.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '));
+export function blankCssCommentsAndStrings(css: string): string {
+  const out = css.split('');
+  let pos = 0;
+
+  /** Blank `out[i]` unless it is a newline (offsets + line numbers stay valid). */
+  const blank = (i: number): void => {
+    if (css[i] !== '\n') out[i] = ' ';
+  };
+
+  while (pos < css.length) {
+    const ch = css[pos]!;
+
+    // Block comment: blank the whole comment including its delimiters.
+    if (ch === '/' && css[pos + 1] === '*') {
+      const start = pos;
+      pos += 2;
+      while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) pos++;
+      pos = Math.min(pos + 2, css.length);
+      for (let i = start; i < pos; i++) blank(i);
+      continue;
+    }
+
+    // Quoted string: keep the quote characters, blank the contents
+    // (including backslash escapes, so an escaped quote never terminates).
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      pos++;
+      while (pos < css.length && css[pos] !== quote) {
+        if (css[pos] === '\\' && pos + 1 < css.length) {
+          blank(pos);
+          pos++;
+        }
+        blank(pos);
+        pos++;
+      }
+      pos++; // past the closing quote (kept)
+      continue;
+    }
+
+    // Unquoted url(...) token: data URIs may embed at-rule text without
+    // quotes. Quoted url("...") values are handled by the string branch.
+    if (
+      (ch === 'u' || ch === 'U') &&
+      css.slice(pos, pos + 4).toLowerCase() === 'url(' &&
+      !/[a-zA-Z0-9_-]/.test(css[pos - 1] ?? '')
+    ) {
+      pos += 4;
+      let probe = pos;
+      while (probe < css.length && /\s/.test(css[probe]!)) probe++;
+      if (css[probe] === '"' || css[probe] === "'") continue; // quoted form
+      // Unquoted url tokens cannot contain unescaped parens: blank to ')'.
+      while (pos < css.length && css[pos] !== ')') {
+        blank(pos);
+        pos++;
+      }
+      continue;
+    }
+
+    pos++;
+  }
+
+  return out.join('');
 }
 
 /** 1-based line number of a character offset. */

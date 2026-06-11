@@ -11,7 +11,7 @@
 import type { Token } from '@czap/core';
 import { TokenCSSCompiler } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssComments, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
+import { blankCssCommentsAndStrings, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,13 +47,15 @@ export interface TokenBlock {
  * }
  * ```
  *
- * At-rule markers are located on a comment-blanked copy of the source
- * (same offsets) so commented-out blocks never match; declarations are
- * parsed character-by-character from the original source.
+ * At-rule markers are located on a comment- and string-blanked copy of
+ * the source (same offsets) so neither commented-out blocks nor marker
+ * text inside string values or data URLs ever match; declarations are
+ * parsed character-by-character from the original source, so real
+ * string values are preserved.
  */
 export function parseTokenBlocks(css: string, sourceFile: string): readonly TokenBlock[] {
   const normalized = normalizeCssLineEndings(css);
-  const blanked = blankCssComments(normalized);
+  const blanked = blankCssCommentsAndStrings(normalized);
   const blocks: TokenBlock[] = [];
 
   const atRule = /@token\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;
