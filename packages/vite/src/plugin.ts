@@ -551,10 +551,12 @@ export function plugin(config?: PluginConfig): Plugin {
         const affectedModules: EnvironmentModuleNode[] = mod ? [mod] : [];
 
         // @quantize states contribute to the boundary manifest, so a CSS
-        // edit must re-load `virtual:czap/boundaries` too (same as the
-        // definition-file path above) -- otherwise importers keep the
-        // stale module even though the cached manifest was dropped.
-        if (file.endsWith('.css')) {
+        // or .astro-style edit must re-load `virtual:czap/boundaries` too
+        // (same as the definition-file path above) -- otherwise importers
+        // keep the stale module even though the cached manifest was
+        // dropped. (.astro components carry @quantize in <style> blocks
+        // and feed the manifest scan since the .astro-scan fix.)
+        if (file.endsWith('.css') || file.endsWith('.astro')) {
           boundaryManifestPromise = null;
           const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
           if (manifestModule) {
