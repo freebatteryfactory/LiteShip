@@ -8,7 +8,7 @@
 
 > **resolveAssetDecoder**(`assetId`): [`AssetDecoder`](../type-aliases/AssetDecoder.md)
 
-Defined in: [assets/src/contract.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L156)
+Defined in: [assets/src/contract.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L201)
 
 Resolve the decode function for an asset id: the registered capsule's
 `derive` handler (which carries the asset's own decoder, custom or

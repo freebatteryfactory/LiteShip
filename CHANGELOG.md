@@ -20,6 +20,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/assets` — `AssetDecl.site` explicit override: an asset can now
+  declare the sites it runs on instead of inheriting the derived default
+  (custom decoder → `['node', 'browser']`, builtin → `builtinDecoderSiteFor`),
+  e.g. a node-only custom video decoder or an audio asset that must never
+  ship to browsers. Impossible claims fail at decl time with teaching
+  errors: a site the builtin decoder cannot honor (builtin video is
+  node-only — ffprobe needs node:child_process) and the empty array (a
+  capsule must run somewhere).
 - `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
   boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
   `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the

@@ -171,6 +171,65 @@ describe('Asset capsule', () => {
     expect(v.site).toEqual(['node', 'browser']);
   });
 
+  it('an explicit site override wins over derivation: custom video decoder narrowed to node', () => {
+    // The premise of the override: a custom decoder that itself needs node
+    // (e.g. shells out to ffmpeg) must be able to say so instead of
+    // inheriting the permissive custom-decoder default.
+    const decoded: DecodedVideo = { container: 'mp4' };
+    const v = defineAsset({
+      id: 'custom-video-node-only',
+      source: 'clip.mp4',
+      kind: 'video',
+      decoder: async () => decoded,
+      site: ['node'],
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    expect(v.site).toEqual(['node']);
+  });
+
+  it('an explicit site override narrows a builtin-decoded asset within the builtin site set', () => {
+    const a = defineAsset({
+      id: 'node-only-audio',
+      source: 'bed.wav',
+      kind: 'audio',
+      site: ['node'],
+      budgets: { decodeP95Ms: 50 },
+      invariants: [],
+    });
+    expect(a.site).toEqual(['node']);
+  });
+
+  it('declaring browser while relying on the builtin video decoder fails with a teaching error', () => {
+    // builtinDecoderSiteFor('video') is ['node'] (ffprobe needs
+    // node:child_process) — a browser claim on top of it is impossible.
+    expect(() =>
+      defineAsset({
+        id: 'browser-claim-builtin-video',
+        source: 'clip.mp4',
+        kind: 'video',
+        site: ['node', 'browser'],
+        budgets: { decodeP95Ms: 100 },
+        invariants: [],
+      }),
+    ).toThrow(
+      /browser-claim-builtin-video.*built-in video decoder.*Provide a custom `decoder` that runs on browser, or drop browser/s,
+    );
+  });
+
+  it('an empty site override fails with a teaching error — a capsule must run somewhere', () => {
+    expect(() =>
+      defineAsset({
+        id: 'empty-site-asset',
+        source: 'bed.wav',
+        kind: 'audio',
+        site: [],
+        budgets: { decodeP95Ms: 50 },
+        invariants: [],
+      }),
+    ).toThrow(/empty-site-asset.*at least one site.*drop the override/s);
+  });
+
   it('video decoder module keeps node-only imports lazy (no top-level node: import)', () => {
     // Browser bundles reach decoders/video.ts through the package index; a
     // top-level `import ... from 'node:*'` would break them even when no
