@@ -15,6 +15,7 @@ export interface WorkerConfig {
 
 interface InitMessage {
   readonly type: 'init';
+  readonly config?: WorkerConfig;
 }
 
 interface AddQuantizerMessage {
@@ -270,7 +271,7 @@ export interface RenderWorkerShape {
 }
 
 export declare const RenderWorker: {
-  create(): RenderWorkerShape;
+  create(config?: WorkerConfig): RenderWorkerShape;
 };
 
 export declare namespace RenderWorker {

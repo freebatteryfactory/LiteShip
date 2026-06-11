@@ -18,7 +18,9 @@ off the main thread. Transfer control via
 ```ts
 import { RenderWorker } from '@czap/worker';
 
-const renderer = RenderWorker.create();
+// Pace frame emission at 30fps wall-clock (live preview); omit
+// targetFps to free-run at maximum speed (offline encode).
+const renderer = RenderWorker.create({ targetFps: 30 });
 const offscreen = canvas.transferControlToOffscreen();
 renderer.transferCanvas(offscreen);
 renderer.onFrame((frame) => {
