@@ -79,6 +79,12 @@ function astroDirectiveSourcePath(astroPackage: PackageManifestInfo, directive: 
 export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
   const root = profile.repoRoot;
   const { surfacePolicy } = profile;
+  // Absent surface-policy fields mean "this profile never declared that
+  // surface" — the check is skipped, identical to declaring it empty.
+  const astroClientDirectives = surfacePolicy.astroClientDirectives ?? [];
+  const astroRuntimeFiles = surfacePolicy.astroRuntimeFiles ?? [];
+  const viteVirtualModules = surfacePolicy.viteVirtualModules ?? [];
+  const knownCapabilityNotes = surfacePolicy.knownCapabilityNotes ?? [];
   const packageInfos = listProfilePackageManifests(profile);
   const rawFindings: AuditFinding[] = [];
   let packageExportCount = 0;
@@ -157,7 +163,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       },
     });
   } else if (astroPackage) {
-    for (const directive of surfacePolicy.astroClientDirectives) {
+    for (const directive of astroClientDirectives) {
       const exportKey = `./client-directives/${directive}`;
       if (!(exportKey in astroPackage.exports)) {
         rawFindings.push({
@@ -190,7 +196,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       }
     }
 
-    for (const runtimeFile of surfacePolicy.astroRuntimeFiles) {
+    for (const runtimeFile of astroRuntimeFiles) {
       const runtimePath = resolveAstroPackageFile(root, astroPackage.dir, runtimeFile);
       if (!existsSync(runtimePath)) {
         const displayPath = relativeToRoot(runtimePath, root);
@@ -209,7 +215,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     }
   }
 
-  if (surfacePolicy.viteVirtualModules.length > 0) {
+  if (viteVirtualModules.length > 0) {
     // Resolve the inventory file through the profile's vitePackage when
     // declared; fall back to the legacy repo-root-relative location so
     // pre-consumer-mode profiles keep working.
@@ -235,7 +241,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
         },
       });
     } else {
-      for (const virtualId of surfacePolicy.viteVirtualModules) {
+      for (const virtualId of viteVirtualModules) {
         if (!virtualModulesSource.includes(virtualId)) {
           rawFindings.push({
             id: `surface/vite-virtual/${virtualId}`,
@@ -253,7 +259,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     }
   }
 
-  const capabilityNotes = surfacePolicy.knownCapabilityNotes
+  const capabilityNotes = knownCapabilityNotes
     .filter((note) => existsSync(resolve(root, note.file)))
     .map((note) => note.summary);
 
@@ -263,9 +269,9 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     summary: {
       packageCount: packageInfos.length,
       packageExportCount,
-      astroDirectiveCount: surfacePolicy.astroClientDirectives.length,
-      astroRuntimeAdapterCount: surfacePolicy.astroRuntimeFiles.length,
-      viteVirtualModuleCount: surfacePolicy.viteVirtualModules.length,
+      astroDirectiveCount: astroClientDirectives.length,
+      astroRuntimeAdapterCount: astroRuntimeFiles.length,
+      viteVirtualModuleCount: viteVirtualModules.length,
       capabilityNotes,
     },
     findings: partitioned.findings,
