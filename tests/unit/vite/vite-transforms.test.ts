@@ -1125,6 +1125,38 @@ describe('viewport containment aggregation', () => {
       ]),
     );
   });
+
+  test('the non-viewport diagnostic suggests containment that can evaluate the compiled axis', () => {
+    // Drift pin between the compiler's queryAxisOf inference and the
+    // diagnostic's suggested fix: a height-axis boundary compiles to
+    // (height ...) queries, which inline-size containment cannot evaluate
+    // — the suggested container-type must be `size` (Codex/CodeRabbit, PR #29).
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    const heightBoundary = makeBoundary('card.height', [
+      [0, 'narrow'],
+      [400, 'wide'],
+    ]);
+    const height = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, heightBoundary),
+      events: [...captured],
+    }));
+    expect(height.compiled).toContain('(height');
+    const heightWarn = height.events.find((e) => e.code === 'container-not-declared');
+    expect(heightWarn?.message).toContain('container-type: size;');
+
+    const widthBoundary = makeBoundary('card.width', [
+      [0, 'narrow'],
+      [400, 'wide'],
+    ]);
+    const width = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, widthBoundary),
+      events: [...captured],
+    }));
+    expect(width.compiled).toContain('(width');
+    const widthWarn = width.events.find((e) => e.code === 'container-not-declared');
+    expect(widthWarn?.message).toContain('container-type: inline-size;');
+  });
 });
 
 // ---------------------------------------------------------------------------
