@@ -119,11 +119,13 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     while (pos < css.length) {
       const sc = css[pos]!;
 
-      // Skip block comments inside the segment
+      // A block comment inside the segment is WHITESPACE per CSS —
+      // dropping it outright would fuse adjacent value tokens.
       if (sc === '/' && css[pos + 1] === '*') {
         pos += 2;
         while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) pos++;
         pos += 2;
+        buf += ' ';
         continue;
       }
 

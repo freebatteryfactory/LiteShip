@@ -264,11 +264,14 @@ export function parseFlatDeclarations(
     while (pos < css.length) {
       const dc = css[pos]!;
 
-      // Skip block comments inside declaration
+      // A block comment inside a declaration is WHITESPACE per CSS —
+      // dropping it outright would fuse adjacent tokens (`1fr/*c*/2fr`
+      // must read `1fr 2fr`, not `1fr2fr`).
       if (dc === '/' && css[pos + 1] === '*') {
         pos += 2;
         while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) pos++;
         pos += 2;
+        declBuf += ' ';
         continue;
       }
 

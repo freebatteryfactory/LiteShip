@@ -65,6 +65,17 @@ describe('parseTokenBlocks', () => {
     expect(blocks[0]!.sourceFile).toBe(FILE);
   });
 
+  test('comments inside values read as whitespace, not as token fusion', () => {
+    // CSS treats a comment as whitespace: 1fr/*c*/2fr means "1fr 2fr".
+    const css = `
+@token gridish {
+  grid-template-columns: 1fr/*gutter*/2fr;
+}`;
+
+    const blocks = parseTokenBlocks(css, FILE);
+    expect(blocks[0]!.declarations['grid-template-columns']).toBe('1fr 2fr');
+  });
+
   test('balanced block tokens inside custom-property values do not split the declaration', () => {
     // Custom properties may legally hold block tokens; the semicolon INSIDE
     // the braces must not end the declaration (Codex P2, PR #20).
