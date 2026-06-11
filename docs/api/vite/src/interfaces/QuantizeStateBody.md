@@ -6,7 +6,7 @@
 
 # Interface: QuantizeStateBody
 
-Defined in: [vite/src/css-quantize.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L42)
+Defined in: [vite/src/css-quantize.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L43)
 
 The parsed body of one `@quantize` state: bare declarations that apply
 to the boundary element selector (the documented flat form) plus
@@ -18,7 +18,7 @@ nested per-selector rules (the adaptive per-element form).
 
 > `readonly` **bareProps**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L44)
+Defined in: [vite/src/css-quantize.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L45)
 
 Declarations written directly inside the state (flat form).
 
@@ -28,6 +28,6 @@ Declarations written directly inside the state (flat form).
 
 > `readonly` **rules**: readonly [`QuantizeNestedRule`](QuantizeNestedRule.md)[]
 
-Defined in: [vite/src/css-quantize.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L46)
+Defined in: [vite/src/css-quantize.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L47)
 
 Nested `<selector> { ... }` rules written inside the state.
