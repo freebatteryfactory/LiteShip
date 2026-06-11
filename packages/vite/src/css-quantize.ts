@@ -165,10 +165,37 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
         // (`--theme: { color: red; };`) — only `--*` properties may hold
         // block values in CSS, while selectors (which can contain `:` via
         // pseudo-classes) never start with `--`. Consume the balanced
-        // block into the declaration instead of opening a nested rule.
+        // block into the declaration instead of opening a nested rule,
+        // skipping braces inside comments and quoted strings (a literal
+        // `content: "}"` must not close the block early).
         let blockDepth = 0;
         while (pos < css.length) {
           const bc = css[pos]!;
+          if (bc === '/' && css[pos + 1] === '*') {
+            while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) {
+              buf += css[pos]!;
+              pos++;
+            }
+            buf += css[pos] ?? '';
+            buf += css[pos + 1] ?? '';
+            pos += 2;
+            continue;
+          }
+          if (bc === '"' || bc === "'") {
+            buf += bc;
+            pos++;
+            while (pos < css.length && css[pos] !== bc) {
+              if (css[pos] === '\\') {
+                buf += css[pos]!;
+                pos++;
+              }
+              buf += css[pos] ?? '';
+              pos++;
+            }
+            buf += css[pos] ?? '';
+            pos++;
+            continue;
+          }
           buf += bc;
           if (bc === '{') blockDepth++;
           if (bc === '}') {
