@@ -1,14 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   defineAsset,
   AssetRef,
   getAssetRegistry,
   builtinDecoderFor,
+  builtinDecoderSiteFor,
   resolveAssetDecoder,
   audioDecoder,
   videoDecoder,
   imageDecoder,
   type DecodedAudio,
+  type DecodedVideo,
 } from '@czap/assets';
 import { resetAssetRegistry } from '@czap/assets/testing';
 
@@ -117,6 +121,66 @@ describe('Asset capsule', () => {
       invariants: [],
     });
     expect(a.derive).toBeUndefined();
+  });
+
+  it('declared site matches the built-in decoder runtime: builtin video is node-only', () => {
+    // The video built-in shells out to ffprobe via node:child_process — a
+    // capsule advertising 'browser' for it would lie to bundlers/routers.
+    const v = defineAsset({
+      id: 'builtin-video-asset',
+      source: 'clip.mp4',
+      kind: 'video',
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    expect(v.site).toEqual(['node']);
+    expect(builtinDecoderSiteFor('video')).toEqual(['node']);
+  });
+
+  it('builtin audio/image decoders are byte-level, so their capsules keep browser in site', () => {
+    const a = defineAsset({
+      id: 'builtin-audio-site',
+      source: 'bed.wav',
+      kind: 'audio',
+      budgets: { decodeP95Ms: 50 },
+      invariants: [],
+    });
+    const i = defineAsset({
+      id: 'builtin-image-site',
+      source: 'cover.png',
+      kind: 'image',
+      budgets: { decodeP95Ms: 20 },
+      invariants: [],
+    });
+    expect(a.site).toEqual(['node', 'browser']);
+    expect(i.site).toEqual(['node', 'browser']);
+    expect(builtinDecoderSiteFor('audio')).toEqual(['node', 'browser']);
+    expect(builtinDecoderSiteFor('image')).toEqual(['node', 'browser']);
+  });
+
+  it('a custom video decoder keeps the permissive site — the declarer owns its runtime safety', () => {
+    const decoded: DecodedVideo = { container: 'mp4' };
+    const v = defineAsset({
+      id: 'custom-video-site',
+      source: 'clip.mp4',
+      kind: 'video',
+      decoder: async () => decoded,
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    expect(v.site).toEqual(['node', 'browser']);
+  });
+
+  it('video decoder module keeps node-only imports lazy (no top-level node: import)', () => {
+    // Browser bundles reach decoders/video.ts through the package index; a
+    // top-level `import ... from 'node:*'` would break them even when no
+    // video asset is ever decoded. The node deps must load inside
+    // videoDecoder() only.
+    const src = readFileSync(
+      resolve('packages/assets/src/decoders/video.ts'),
+      'utf8',
+    );
+    expect(src).not.toMatch(/^import\s[^;]*['"]node:/m);
   });
 
   it('resolveAssetDecoder returns the registered capsule decoder and falls back to the audio built-in', async () => {
