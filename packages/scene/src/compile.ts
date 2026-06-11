@@ -186,6 +186,10 @@ function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: numb
         ...(track.ease !== undefined ? { Ease: track.ease } : {}),
       };
     case 'effect':
+      // An effect may declare BOTH syncTo and envelope. Both components
+      // are emitted; the runtime composes them (SyncSystem multiplies
+      // its beat-decay base by the envelope factor — see
+      // `systems/sync.ts`) so neither contribution clobbers the other.
       return {
         EffectKind: track.effectKind,
         TargetEntity: track.target,
