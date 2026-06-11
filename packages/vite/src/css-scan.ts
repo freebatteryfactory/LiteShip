@@ -1,6 +1,6 @@
 /**
  * Shared character-level CSS scanning helpers for the at-rule block
- * parsers (`@token`, `@theme`, `@quantize`).
+ * parsers (`@token`, `@theme`, `@style`, `@quantize`).
  *
  * Real-world CSS reaching the transform pipeline is often re-serialized
  * by upstream compilers (the Astro compiler emits a whole `<style>` as a
@@ -18,7 +18,7 @@
  * character offset (blanked characters become spaces).
  *
  * This produces the marker-locating copy of a stylesheet: at-rule
- * markers (`@token`, `@theme`, `@quantize`) are searched on the blanked
+ * markers (`@token`, `@theme`, `@style`, `@quantize`) are searched on the blanked
  * copy so neither commented-out blocks nor marker text embedded in
  * string values (`content: "@token accent {"`) nor data URLs
  * (`url(data:...@quantize...)`) ever match as real blocks. Because
