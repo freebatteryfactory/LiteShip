@@ -547,8 +547,12 @@ export function plugin(config?: PluginConfig): Plugin {
 
       if (file.endsWith('.css') || file.endsWith('.astro') || file.endsWith('.html')) {
         const moduleGraph = this.environment.moduleGraph;
-        const mod = moduleGraph.getModuleById(file);
-        const affectedModules: EnvironmentModuleNode[] = mod ? [mod] : [];
+        // Returning an array from hotUpdate REPLACES Vite's own affected
+        // list — start from options.modules (Vite's computed set, which
+        // covers query-bearing ids like `Page.astro?astro&type=style`
+        // that an exact getModuleById(file) lookup would miss) so the
+        // edited file's own HMR is never suppressed.
+        const affectedModules: EnvironmentModuleNode[] = [...options.modules];
 
         // @quantize states contribute to the boundary manifest, so a CSS
         // or .astro-style edit must re-load `virtual:czap/boundaries` too
