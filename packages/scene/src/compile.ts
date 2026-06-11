@@ -16,6 +16,7 @@
  * @module
  */
 
+import { CzapValidationError } from '@czap/core';
 import type { SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
 
@@ -59,14 +60,48 @@ export interface CompiledScene {
  * Compile a {@link SceneContract} into a pure {@link CompiledScene}
  * descriptor. No world is constructed here — see {@link SceneRuntime}.
  *
+ * Every declared {@link SceneInvariant} is evaluated against the
+ * contract before any compilation work happens. A check that returns
+ * `false` — or throws — counts as a violation. ALL violations are
+ * collected, then reported together in a single
+ * {@link CzapValidationError} (module `'compileScene'`) listing each
+ * violated invariant's name and message, so one compile run surfaces
+ * every problem instead of stopping at the first.
+ *
  * If the scene declares a `beats?` field, those beat markers are
  * propagated unchanged onto the compiled descriptor. The runtime
  * spawns one Beat-tagged entity per marker before registering systems
  * (see SceneRuntime.build) so SyncSystem can query them on the first
  * tick. Asset-derived beats (BeatMarkerProjection) are wired by feeding
  * the projection's output into `scene.beats` ahead of compile.
+ *
+ * @throws CzapValidationError when one or more scene invariants fail.
  */
 export function compileScene(scene: SceneContract): CompiledScene {
+  const violations: string[] = [];
+  for (const invariant of scene.invariants) {
+    let holds = false;
+    let thrown: string | undefined;
+    try {
+      holds = invariant.check(scene);
+    } catch (error) {
+      thrown = error instanceof Error ? error.message : String(error);
+    }
+    if (!holds) {
+      violations.push(
+        thrown === undefined
+          ? `"${invariant.name}" — ${invariant.message}`
+          : `"${invariant.name}" — ${invariant.message} (check threw: ${thrown})`,
+      );
+    }
+  }
+  if (violations.length > 0) {
+    throw new CzapValidationError(
+      'compileScene',
+      `scene "${scene.name}" violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}. Fix the contract (or the failing check) so every declared invariant returns true, then compile again.`,
+    );
+  }
+
   const trackSpawns: TrackSpawn[] = scene.tracks.map((track) => ({
     trackId: track.id,
     components: componentsFromTrack(track),

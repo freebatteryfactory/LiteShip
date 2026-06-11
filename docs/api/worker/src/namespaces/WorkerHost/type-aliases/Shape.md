@@ -8,6 +8,6 @@
 
 > **Shape** = [`WorkerHostShape`](../../../interfaces/WorkerHostShape.md)
 
-Defined in: [worker/src/host.ts:196](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L196)
+Defined in: [worker/src/host.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L198)
 
 Public host surface returned by [WorkerHost.create](../../../variables/WorkerHost.md#create).

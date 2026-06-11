@@ -8,7 +8,7 @@
 
 > `const` **WorkerHost**: `object`
 
-Defined in: [worker/src/host.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L185)
+Defined in: [worker/src/host.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L187)
 
 `WorkerHost` -- main-thread lifecycle wrapper that owns a
 [CompositorWorker.Shape](../namespaces/CompositorWorker/type-aliases/Shape.md) and (optionally) a

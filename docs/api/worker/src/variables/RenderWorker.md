@@ -8,7 +8,7 @@
 
 > `const` **RenderWorker**: `object`
 
-Defined in: [worker/src/render-worker.ts:441](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L441)
+Defined in: [worker/src/render-worker.ts:480](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L480)
 
 Factory namespace for the render worker.
 
@@ -21,12 +21,23 @@ off the main thread. Transfer control via
 
 ### create
 
-> `readonly` **create**: () => [`RenderWorkerShape`](../interfaces/RenderWorkerShape.md) = `_createRenderWorker`
+> `readonly` **create**: (`config?`) => [`RenderWorkerShape`](../interfaces/RenderWorkerShape.md) = `_createRenderWorker`
 
 Spin up a render worker. The worker starts idle; transfer an
 `OffscreenCanvas` via
 [RenderWorkerShape.transferCanvas](../interfaces/RenderWorkerShape.md#transfercanvas) before calling
 `startRender`.
+
+Construction-time knobs ([WorkerConfig](../interfaces/WorkerConfig.md)) are sent to the
+worker in the init message: `targetFps` enables wall-clock frame
+pacing of the render loop; omitted fields fall back to worker-local
+defaults (unpaced free-run).
+
+#### Parameters
+
+##### config?
+
+[`WorkerConfig`](../interfaces/WorkerConfig.md)
 
 #### Returns
 
@@ -37,7 +48,9 @@ Spin up a render worker. The worker starts idle; transfer an
 ```ts
 import { RenderWorker } from '@czap/worker';
 
-const renderer = RenderWorker.create();
+// Pace frame emission at 30fps wall-clock (live preview); omit
+// targetFps to free-run at maximum speed (offline encode).
+const renderer = RenderWorker.create({ targetFps: 30 });
 const offscreen = canvas.transferControlToOffscreen();
 renderer.transferCanvas(offscreen);
 renderer.onFrame((frame) => {

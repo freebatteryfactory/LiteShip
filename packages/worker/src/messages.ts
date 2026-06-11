@@ -23,7 +23,17 @@ import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, Sta
 export interface WorkerConfig {
   /** Maximum number of pooled `CompositeState` slots the worker may hold. */
   readonly poolCapacity?: number;
-  /** Target frames-per-second for the render loop (affects frame pacing). */
+  /**
+   * Target frames-per-second for the render loop (affects frame pacing).
+   *
+   * Wall-clock production throttle: the render worker waits out the
+   * remainder of each `1000 / targetFps` budget before drawing the next
+   * frame, so frames are never *emitted* faster than this rate (useful
+   * for live preview). This is a different axis from `VideoConfig.fps`,
+   * which controls content timing -- frame count and per-frame
+   * timestamps -- and is unaffected by pacing. Omitted: the loop
+   * free-runs at maximum speed (offline-encode behavior).
+   */
   readonly targetFps?: number;
 }
 
@@ -33,6 +43,8 @@ export interface WorkerConfig {
 
 interface InitMessage {
   readonly type: 'init';
+  /** Construction-time knobs; omitted fields fall back to worker-local defaults. */
+  readonly config?: WorkerConfig;
 }
 
 interface AddQuantizerMessage {
