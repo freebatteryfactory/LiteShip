@@ -65,6 +65,24 @@ describe('parseTokenBlocks', () => {
     expect(blocks[0]!.sourceFile).toBe(FILE);
   });
 
+  test('balanced block tokens inside custom-property values do not split the declaration', () => {
+    // Custom properties may legally hold block tokens; the semicolon INSIDE
+    // the braces must not end the declaration (Codex P2, PR #20).
+    const css = `
+@token themed {
+  --theme: { color: red; };
+  color: blue;
+}`;
+
+    const blocks = parseTokenBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.declarations).toEqual({
+      '--theme': '{ color: red; }',
+      color: 'blue',
+    });
+  });
+
   test('parses single-line token blocks, with and without inline declarations', () => {
     const css = `
 @token fontSizeSm {}

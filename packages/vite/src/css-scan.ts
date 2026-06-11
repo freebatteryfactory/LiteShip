@@ -252,10 +252,14 @@ export function parseFlatDeclarations(
       continue;
     }
 
-    // Accumulate a full declaration: collect until `;` at paren-depth 0,
-    // or until `}` that closes this block, whichever comes first.
+    // Accumulate a full declaration: collect until `;` at paren-depth 0
+    // AND brace-depth 0, or until `}` that closes this block, whichever
+    // comes first. Custom-property values may legally contain balanced
+    // block tokens (`--theme: { color: red; };`) whose inner semicolons
+    // must not end the declaration.
     let declBuf = '';
     let parenDepth = 0;
+    let declBraceDepth = 0;
 
     while (pos < css.length) {
       const dc = css[pos]!;
@@ -301,8 +305,23 @@ export function parseFlatDeclarations(
         continue;
       }
 
-      // Semicolon at paren-depth 0 ends the declaration
-      if (dc === ';' && parenDepth === 0) {
+      // Balanced block token inside a value (custom properties permit
+      // `{ ... }` values) — consume it as part of the declaration.
+      if (dc === '{') {
+        declBraceDepth++;
+        declBuf += dc;
+        pos++;
+        continue;
+      }
+      if (dc === '}' && declBraceDepth > 0) {
+        declBraceDepth--;
+        declBuf += dc;
+        pos++;
+        continue;
+      }
+
+      // Semicolon at paren-depth 0 and brace-depth 0 ends the declaration
+      if (dc === ';' && parenDepth === 0 && declBraceDepth === 0) {
         pos++;
         break;
       }
