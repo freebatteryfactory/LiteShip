@@ -58,6 +58,44 @@ export const KIND_META: Record<PrimitiveKind, { file: string; suffix: string; ta
 };
 
 /**
+ * Build the ordered list of directories {@link resolvePrimitive} walks:
+ * the user override (if any), the referencing file's directory (when it
+ * differs from the project root), then the project root.
+ */
+function buildSearchDirs(fromFile: string, projectRoot: string, userDir?: string): string[] {
+  const sourceDir = path.dirname(fromFile);
+  const searchDirs: string[] = [];
+  if (userDir) searchDirs.push(userDir);
+  if (sourceDir !== projectRoot) searchDirs.push(sourceDir);
+  searchDirs.push(projectRoot);
+  return searchDirs;
+}
+
+/**
+ * The candidate module patterns {@link resolvePrimitive} searches for a
+ * given lookup, in search order (e.g. `src/tokens.ts`, `src/*.tokens.ts`,
+ * `tokens.ts`, `*.tokens.ts`). Used to make "could not resolve"
+ * diagnostics name the exact places that were searched.
+ *
+ * @param kind - Primitive kind being resolved.
+ * @param fromFile - Path of the file that triggered the lookup.
+ * @param projectRoot - Vite project root (search fallback).
+ * @param userDir - Optional override directory (searched first).
+ */
+export function primitiveSearchPatterns(
+  kind: PrimitiveKind,
+  fromFile: string,
+  projectRoot: string,
+  userDir?: string,
+): readonly string[] {
+  const { file, suffix } = KIND_META[kind];
+  return buildSearchDirs(fromFile, projectRoot, userDir).flatMap((dir) => [
+    path.join(dir, file),
+    path.join(dir, `*${suffix}`),
+  ]);
+}
+
+/**
  * Resolve a named primitive (boundary / token / theme / style) by
  * walking the convention-based search order. Returns `null` when no
  * module exports a matching named value.
@@ -77,12 +115,8 @@ export async function resolvePrimitive<K extends PrimitiveKind>(
 ): Promise<PrimitiveResolution<K> | null> {
   const { file, suffix, tag } = KIND_META[kind];
   const diagnosticSource = `czap/vite.${kind}-resolve`;
-  const sourceDir = path.dirname(fromFile);
 
-  const searchDirs: string[] = [];
-  if (userDir) searchDirs.push(userDir);
-  if (sourceDir !== projectRoot) searchDirs.push(sourceDir);
-  searchDirs.push(projectRoot);
+  const searchDirs = buildSearchDirs(fromFile, projectRoot, userDir);
 
   for (const dir of searchDirs) {
     // Try direct convention file: boundaries.ts / tokens.ts / etc.
