@@ -61,7 +61,7 @@ const viewport = Boundary.make({
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
-  ] as const,
+  ],
   hysteresis: 20,
 });
 
@@ -74,7 +74,7 @@ console.log(Boundary.evaluate(viewport, 1440)); // 'desktop'
 const primary = Token.make({
   name: 'primary',
   category: 'color',
-  axes: ['theme'] as const,
+  axes: ['theme'],
   values: { dark: '#00e5ff', light: 'hsl(175 70% 50%)' },
   fallback: '#00e5ff',
 });
@@ -150,11 +150,29 @@ export default defineConfig({
 });
 ```
 
-Then in any `.astro` page:
+Move the boundary out of `try-czap.ts` into a module the page can import — the compile step (step 5) and the page must share one definition, because the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching:
+
+```ts
+// src/boundaries.ts
+import { Boundary } from '@czap/core';
+
+export const viewport = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1280, 'desktop'],
+  ],
+  hysteresis: 20,
+});
+```
+
+Then in any `.astro` page, import that boundary in the frontmatter and give step 5's `result.raw` a home — paste it into a `<style is:global>` block (Astro scopes plain `<style>` blocks, which would rename the `.card` selector out from under the compiled rules), or write it to a CSS file your build imports:
 
 ```astro
 ---
 import Satellite from '@czap/astro/Satellite';
+import { viewport } from '../boundaries.js';
 ---
 
 <Satellite boundary={viewport}>
@@ -162,6 +180,12 @@ import Satellite from '@czap/astro/Satellite';
     Resize the window to see the boundary state change.
   </div>
 </Satellite>
+
+<style is:global>
+  /* Step 5's `result.raw` goes here: the rules keyed on `.card`.
+     Re-run the compile after editing the boundary so the CSS and the
+     serialized boundary stay in agreement. */
+</style>
 ```
 
 `Satellite` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole React tree), and the compiled CSS handles the visual response without round-tripping through JavaScript. Plain elements work too: spread `satelliteAttrs({ boundary })` onto any element, or write the `data-czap-boundary` / `data-czap-directive` attributes yourself.
