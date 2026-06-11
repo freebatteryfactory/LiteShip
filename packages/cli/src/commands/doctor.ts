@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
 import type { WallClockTimestamp } from '../receipts.js';
 import { spawnArgvCapture, spawnArgvVisible } from '../lib/spawn.js';
+import { isLiteShipWorkspace } from '../lib/workspace.js';
 import { probeFfmpegRender } from '@czap/command/host';
 import { emit } from '../receipts.js';
 
@@ -806,8 +807,24 @@ async function runCloudflareProbes(cwd: string): Promise<readonly DoctorCheck[]>
   ];
 }
 
+/**
+ * Generic consumer probe profile — auto-selected when `cwd` is not the
+ * LiteShip workspace (root package.json name !== 'czap'). A consumer who
+ * installed @czap/cli in their own app gets the environment checks that
+ * apply to them (node, pnpm, install state, ffmpeg) instead of the
+ * maintainer probes (packages/<pkg>/dist, scripts/link-pre-commit.ts,
+ * crates/ WASM toolchain), which are all wrong outside this repo.
+ * `--target` stays the explicit override for host-focused profiles.
+ */
+async function runConsumerProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+  const minima = loadEngineMinima(cwd);
+  const pnpm = await probePnpm(minima);
+  return [probeNode(minima), pnpm, probeConsumerInstalled(cwd), probeFfmpegRenderCheck()];
+}
+
 async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
   if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
+  if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them
   // concurrently so the wall time is the slowest single probe, not the serial
@@ -872,34 +889,6 @@ function prettySummary(checks: readonly DoctorCheck[], verdict: DoctorVerdict, f
   lines.push('');
   lines.push(color(VERDICT_COLOR[verdict], VERDICT_SENTENCE[verdict], on));
   return lines.join('\n') + '\n';
-}
-
-/**
- * Verify that `cwd` looks like the LiteShip workspace before applyFixes
- * is allowed to run the build remediation. Without this guard, a user
- * running `czap doctor --fix` from an unrelated project would:
- *   1. `findWorkspaceRoot` falls back to that project's cwd (no
- *      pnpm-workspace.yaml above means start === fallback).
- *   2. core.built/cli.built warn because packages/core|cli/dist don't
- *      exist in that project.
- *   3. applyFixes runs `pnpm run build` against THAT project's package
- *      — executing arbitrary code the user didn't intend.
- *
- * Codex P1 (PR #3 discussion r3254680246). Fix: refuse to --fix unless
- * root package.json declares the @czap/* family (a name that's hard
- * to fake unintentionally).
- */
-function isLiteShipWorkspace(cwd: string): boolean {
-  const rootPkgPath = resolve(cwd, 'package.json');
-  if (!existsSync(rootPkgPath)) return false;
-  try {
-    const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf8')) as { name?: string };
-    // Repo root's package.json names itself "czap"; the workspace itself
-    // is the surface that owns the @czap/* package family.
-    return pkg.name === 'czap';
-  } catch {
-    return false;
-  }
 }
 
 /** Attempt the cheap, local fixes for whatever checks are fixable. */

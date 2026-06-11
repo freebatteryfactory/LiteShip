@@ -118,14 +118,23 @@ export const sceneCompileCommand: HandledCommand = {
   },
 };
 
-/** `scene render <scene.ts> -o <out.mp4>` — compile + render to mp4 (idempotent). */
+/** Derive the default render output: `<sceneBasename>.mp4` next to the scene file. */
+function deriveOutputPath(scenePath: string): string {
+  const slash = Math.max(scenePath.lastIndexOf('/'), scenePath.lastIndexOf('\\'));
+  const base = scenePath.slice(slash + 1);
+  const dot = base.lastIndexOf('.');
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  return `${scenePath.slice(0, slash + 1)}${stem}.mp4`;
+}
+
+/** `scene render <scene.ts> [-o <out.mp4>]` — compile + render to mp4 (idempotent). */
 export const sceneRenderCommand: HandledCommand = {
   descriptor: {
     name: 'scene.render',
-    summary: 'Render a scene to mp4.',
+    summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
     inputSchema: {
       type: 'object',
-      required: ['scene', 'output'],
+      required: ['scene'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
     },
     outputSchema: {
@@ -136,6 +145,8 @@ export const sceneRenderCommand: HandledCommand = {
         output: { type: 'string' },
         frameCount: { type: 'number' },
         elapsedMs: { type: 'number' },
+        // Optional, not required: receipts replayed from a pre-fps cache lack it.
+        fps: { type: 'number' },
         cached: { type: 'boolean' },
       },
     },
@@ -143,14 +154,16 @@ export const sceneRenderCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = String(invocation.args.scene ?? '');
-    const output = String(invocation.args.output ?? '');
-    if (!output) return failed('scene.render', 'missing --output / -o path', 1);
+    // Omitted output derives <sceneBasename>.mp4 beside the scene file here
+    // (not at the adapter) so the cache key and the receipt both carry the
+    // resolved path. -o/--output stays the override.
+    const output = String(invocation.args.output ?? '') || deriveOutputPath(scenePath);
     if (!context.fileExists?.(scenePath)) return failed('scene.render', `scene not found: ${scenePath}`, 1);
 
     const force = invocation.args.force === true;
     const key = { command: 'scene.render', inputs: { scenePath, output }, force };
     const cached = context.cache?.read(key) as
-      | { sceneId: string; output: string; frameCount: number; elapsedMs: number }
+      | { sceneId: string; output: string; frameCount: number; elapsedMs: number; fps?: number }
       | null
       | undefined;
     // A cache hit only counts if the rendered output is still on disk.
@@ -177,7 +190,7 @@ export const sceneRenderCommand: HandledCommand = {
         durationMs: contract.duration,
         output,
       });
-      const payload = { sceneId: cap.id, output, frameCount, elapsedMs };
+      const payload = { sceneId: cap.id, output, frameCount, elapsedMs, fps: contract.fps };
       context.cache?.write(key, payload);
       return {
         status: 'ok',

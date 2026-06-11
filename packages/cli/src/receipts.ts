@@ -38,6 +38,11 @@ export interface SceneRenderReceipt extends BaseReceipt {
   readonly output: string;
   readonly frameCount: number;
   readonly elapsedMs: number;
+  /** Render resolution — echoes the engine default (1280x720) so it is observable. */
+  readonly width: number;
+  readonly height: number;
+  /** Render fps from the scene contract. Absent on receipts replayed from a pre-fps cache. */
+  readonly fps?: number;
 }
 
 /** Receipt emitted by `asset analyze`. */

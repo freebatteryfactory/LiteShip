@@ -57,6 +57,8 @@ describe('doctor command', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-nocrates-'));
     try {
       mkdirSync(resolve(tmp, 'packages/core'), { recursive: true });
+      // name 'czap' keeps the maintainer profile (consumer profile has no wasm probe at all).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
@@ -70,6 +72,8 @@ describe('doctor command', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-nogit-'));
     try {
       mkdirSync(resolve(tmp, 'packages/core'), { recursive: true });
+      // name 'czap' keeps the maintainer profile (the consumer profile has no git.config probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
       const gitCfg = receipt.checks.find((c: { id: string }) => c.id === 'git.config');
@@ -85,6 +89,8 @@ describe('doctor command', () => {
     // pure-warn workspace (caution verdict). Without --ci this exits 0.
     const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-caution-'));
     try {
+      // name 'czap' keeps the maintainer profile (this fixture simulates the workspace).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
       mkdirSync(resolve(tmp, 'packages/core/dist'), { recursive: true });
       mkdirSync(resolve(tmp, 'packages/cli/dist'), { recursive: true });
       mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
@@ -310,17 +316,18 @@ describe('doctor command', () => {
     expect(stderr).toMatch(/ready|caution|blocked/);
   });
 
-  it('applyFixes refuses to run `pnpm run build` outside the LiteShip workspace (Codex P1 — safety guard)', async () => {
+  it('doctor --fix outside the LiteShip workspace never spawns a build (Codex P1 — safety guard)', async () => {
     // Regression for PR #3 r3254680246: previously `czap doctor --fix` run
-    // from an unrelated project would (1) findWorkspaceRoot fall back to
-    // that project's cwd, (2) core.built/cli.built warn (no packages/<x>/dist
-    // in that project), (3) applyFixes spawn `pnpm run build` against THAT
+    // from an unrelated project would spawn `pnpm run build` against THAT
     // project's build script — high-impact arbitrary code execution for a
     // diagnostics command.
     //
-    // The guard: isLiteShipWorkspace() checks root package.json.name === 'czap'.
-    // If false, applyFixes records a skipped/failed build entry without
-    // spawning anything.
+    // Defense is now two layers deep: (1) a non-czap cwd auto-selects the
+    // consumer probe profile, which has no fixable *.built checks, so there
+    // is nothing for applyFixes to attempt; (2) applyFixes itself still
+    // carries the isLiteShipWorkspace guard. The observable invariant this
+    // test pins: NO subprocess runs, NO build fix is attempted.
+    const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-imposter-'));
     try {
       // Tmpdir poses as an unrelated project: has a package.json (so
@@ -337,13 +344,14 @@ describe('doctor command', () => {
         doctor({ pretty: false, fix: true, cwd: tmp }),
       );
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-      // The build fix attempt is recorded as failed/skipped.
-      expect(Array.isArray(receipt.fixed)).toBe(true);
-      const buildFix = receipt.fixed.find((f: { id: string }) => f.id === 'build');
-      expect(buildFix).toBeDefined();
-      expect(buildFix.status).toBe('failed');
-      expect(buildFix.action).toMatch(/not the LiteShip workspace/);
+      expect(spy).not.toHaveBeenCalled();
+      const buildFix = (receipt.fixed ?? []).find((f: { id: string }) => f.id === 'build');
+      expect(buildFix).toBeUndefined();
+      // Consumer profile selected: no maintainer-only *.built probes.
+      const ids = receipt.checks.map((c: { id: string }) => c.id);
+      expect(ids.some((id: string) => id.endsWith('.built'))).toBe(false);
     } finally {
+      spy.mockRestore();
       rmSync(tmp, { recursive: true, force: true });
     }
   });
@@ -378,21 +386,19 @@ describe('doctor command', () => {
     }
   });
 
-  it('applyFixes refuses to run the git.hooks fix outside the LiteShip workspace (Codex P1 follow-up)', async () => {
+  it('doctor --fix outside the LiteShip workspace never links git hooks (Codex P1 follow-up)', async () => {
     // Regression for PR #3 discussion on commit 3212fa4: previously the
     // git.hooks fix branch ran `pnpm exec tsx scripts/link-pre-commit.ts`
-    // unconditionally on warn, even outside LiteShip. tsx would either
-    // execute an unrelated project's same-named script (rare but real)
-    // or fail in project-specific ways — same unintended-side-effect
-    // class as the build guard prevents.
+    // unconditionally on warn, even outside LiteShip.
     //
-    // The guard mirrors the build branch: isLiteShipWorkspace check,
-    // skip the spawn if not in the LiteShip workspace, record a failed
-    // fix entry with the workspace-mismatch action message.
+    // With the consumer auto-profile, a non-czap cwd never probes git.hooks
+    // in the first place, so the fix branch has nothing to act on; the
+    // isLiteShipWorkspace guard inside applyFixes stays as the second layer.
+    // The pinned invariant: NO subprocess runs, NO git.hooks fix is attempted.
+    const spy = vi.spyOn(spawnLib, 'spawnArgvVisible').mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
     const tmp = mkdtempSync(join(tmpdir(), 'czap-fix-hooks-guard-'));
     try {
-      // Imposter project: has .git/hooks/ (so probeGitHooks warns) but
-      // package.json name is NOT 'czap'.
+      // Imposter project: has .git/hooks/ but package.json name is NOT 'czap'.
       mkdirSync(resolve(tmp, '.git', 'hooks'), { recursive: true });
       writeFileSync(
         resolve(tmp, 'package.json'),
@@ -406,11 +412,31 @@ describe('doctor command', () => {
         doctor({ pretty: false, fix: true, cwd: tmp }),
       );
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
-      expect(Array.isArray(receipt.fixed)).toBe(true);
-      const hookFix = receipt.fixed.find((f: { id: string }) => f.id === 'git.hooks');
-      expect(hookFix).toBeDefined();
-      expect(hookFix.status).toBe('failed');
-      expect(hookFix.action).toMatch(/not the LiteShip workspace/);
+      expect(spy).not.toHaveBeenCalled();
+      const hookFix = (receipt.fixed ?? []).find((f: { id: string }) => f.id === 'git.hooks');
+      expect(hookFix).toBeUndefined();
+      const ids = receipt.checks.map((c: { id: string }) => c.id);
+      expect(ids).not.toContain('git.hooks');
+    } finally {
+      spy.mockRestore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('auto-selects the consumer probe profile when cwd is not the LiteShip workspace', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-consumer-'));
+    try {
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'some-consumer-app', version: '1.0.0' }));
+      mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
+      writeFileSync(resolve(tmp, 'node_modules/.modules.yaml'), 'lockfile: stub\n');
+      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const ids = receipt.checks.map((c: { id: string }) => c.id);
+      // Consumer-appropriate checks only — no LiteShip-maintainer probes
+      // (packages/*/dist builds, git hooks/config, playwright, crates/ WASM).
+      expect(ids).toEqual(['node.version', 'pnpm.version', 'workspace.installed', 'ffmpeg.libx264']);
+      const installed = receipt.checks.find((c: { id: string }) => c.id === 'workspace.installed');
+      expect(installed.status).toBe('ok');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -422,6 +448,8 @@ describe('doctor command', () => {
     try {
       // Corrupt worktree pointer: git.hooks warns, but linking the pre-commit
       // hook is not the remediation — the fix branch must not fire.
+      // name 'czap' keeps the maintainer profile (consumer profile has no git.hooks probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
       writeFileSync(resolve(tmp, '.git'), 'garbage with no pointer\n');
       const { stdout } = await captureCli(() => doctor({ pretty: false, fix: true, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
@@ -440,6 +468,8 @@ describe('doctor command', () => {
     try {
       // Worktree-style `.git` FILE without a gitdir: line — previously this
       // fell into the catch-all and misreported as "no .git (not a worktree)".
+      // name 'czap' keeps the maintainer profile (consumer profile has no git.hooks probe).
+      writeFileSync(resolve(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
       writeFileSync(resolve(tmp, '.git'), 'garbage with no pointer\n');
       const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
       const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
