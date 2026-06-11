@@ -45,7 +45,8 @@
       "Millis": "#",
       "CapLevel": "#",
       "CapSet": "#",
-      "Quantizer": "#"
+      "Quantizer": "#",
+      "CzapValidationError": "#"
     },
     "@czap/detect": {
       "ExtendedDeviceCapabilities": "#"

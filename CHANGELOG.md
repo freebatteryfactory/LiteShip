@@ -82,6 +82,13 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- `@czap/scene` — `compileScene` now evaluates `SceneContract.invariants`
+  and throws `CzapValidationError` on violation, as the `SceneInvariant`
+  docblock always documented. Every declared check runs against the
+  contract before compilation; a check that returns `false` or throws is
+  a violation, and ALL violations are reported in one error carrying each
+  invariant's name and message. Previously the required `invariants`
+  field was declaration-only — never read.
 - `@czap/audit` — allowlist entries are **package-relative**
   (`{ package: '@czap/astro', filePrefix: 'src/...' }`) and resolve through
   the profile's discovered package roots. A clean consumer install
