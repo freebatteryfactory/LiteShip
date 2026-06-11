@@ -8,7 +8,7 @@
 
 > **parseThemeBlocks**(`css`, `sourceFile`): readonly [`ThemeBlock`](../interfaces/ThemeBlock.md)[]
 
-Defined in: [vite/src/theme-transform.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L56)
+Defined in: [vite/src/theme-transform.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/theme-transform.ts#L58)
 
 Parse every `@theme` block from CSS source text.
 
@@ -21,10 +21,12 @@ mid-line, e.g. inside compiler-re-serialized CSS):
 }
 ```
 
-At-rule markers are located on a comment-blanked copy of the source
-(same offsets) so commented-out blocks never match; declarations are
-parsed character-by-character from the original source. Token names
-additionally accept underscores (e.g. `accent_color`).
+At-rule markers are located on a comment- and string-blanked copy of
+the source (same offsets) so neither commented-out blocks nor marker
+text inside string values or data URLs ever match; declarations are
+parsed character-by-character from the original source, so real
+string values are preserved. Token names additionally accept
+underscores (e.g. `accent_color`).
 
 ## Parameters
 

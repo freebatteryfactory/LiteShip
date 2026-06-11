@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
-import { parseQuantizeBlocks, compileQuantizeBlock } from './css-quantize.js';
+import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
@@ -411,6 +411,13 @@ export function plugin(config?: PluginConfig): Plugin {
           }
         }
 
+        // Sheet-level containment aggregation: every viewport-based block
+        // contributes its container name here, and ONE `:root` rule is
+        // emitted for the whole file below. Per-block `:root` rules would
+        // overwrite each other (`container-name` is a replaced property),
+        // leaving all but the last boundary's @container queries dead.
+        const viewportContainerNames = new Set<string>();
+
         for (const block of quantizeBlocks) {
           const cacheKey = `${block.boundaryName}:${id}`;
           let boundary: Boundary.Shape | null | undefined = boundaryCache.get(cacheKey);
@@ -441,12 +448,17 @@ export function plugin(config?: PluginConfig): Plugin {
             continue;
           }
 
-          const compiled = compileQuantizeBlock(block, boundary);
+          const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
           const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
           if (blockSpan) {
             transformed = transformed.substring(0, blockSpan.start) + compiled + transformed.substring(blockSpan.end);
           }
+        }
+
+        const containment = viewportContainmentRule(viewportContainerNames);
+        if (containment) {
+          transformed = `${containment}\n\n${transformed}`;
         }
       }
 
