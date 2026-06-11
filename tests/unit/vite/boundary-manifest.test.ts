@@ -10,6 +10,7 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
+import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
 import { enumerateTierKeys, tierKey } from '@czap/edge';
@@ -240,6 +241,33 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     );
     expect(second).toContain('sidebar');
     expect(second).toContain('viewport');
+  });
+
+  test('duplicate declarations across CSS files merge deterministically and warn on conflicts', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    // Sorted path order: a.css before b.css — b's conflicting value wins
+    // deterministically, and the conflict surfaces as a teaching warning.
+    writeModule(srcDir, 'a.css', '@quantize viewport { compact { gap: 4px; color: red; } }');
+    writeModule(srcDir, 'b.css', '@quantize viewport { compact { color: blue; } }');
+
+    const { manifest, events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectBoundaryManifest(root),
+      events: [...captured],
+    }));
+
+    const outputs = Object.values(manifest['viewport']!.outputsByTier)[0]!;
+    expect(outputs.containerQueries).toContain('color: blue');
+    expect(outputs.containerQueries).toContain('gap: 4px');
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'duplicate-declaration-conflict',
+          message: expect.stringContaining('"color"'),
+        }),
+      ]),
+    );
   });
 
   test('editing an EXISTING boundaries module busts the ESM import cache on reload', async () => {

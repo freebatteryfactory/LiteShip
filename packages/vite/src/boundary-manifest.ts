@@ -109,6 +109,11 @@ function scanProject(projectRoot: string): ProjectScan {
     }
   }
 
+  // Deterministic order: the walk's readdir sequence is platform- and
+  // filesystem-dependent, and merge order decides duplicate-declaration
+  // winners below — sort so the winner is stable everywhere.
+  boundaryFiles.sort();
+  cssFiles.sort();
   return { boundaryFiles, cssFiles };
 }
 
@@ -297,6 +302,25 @@ export async function collectBoundaryManifest(
       const merged = statesByBoundary.get(block.boundaryName) ?? {};
       for (const [stateName, body] of Object.entries(block.states)) {
         const prior = merged[stateName];
+        // True cascade order across separate CSS files is unknowable at
+        // build time (it depends on HTML link order), so duplicate
+        // property values can only be resolved by the deterministic
+        // file-sort order — surface a teaching conflict warning so the
+        // author resolves the ambiguity explicitly.
+        for (const [prop, value] of Object.entries(body.bareProps)) {
+          const priorValue = prior?.bareProps[prop];
+          if (priorValue !== undefined && priorValue !== value) {
+            Diagnostics.warnOnce({
+              source: DIAGNOSTIC_SOURCE,
+              code: 'duplicate-declaration-conflict',
+              message:
+                `@quantize ${block.boundaryName} state "${stateName}" sets "${prop}" in more than one CSS file ` +
+                `with different values ("${priorValue}" vs "${value}" from ${cssFile}:${block.line}). ` +
+                `Manifest merging cannot know your stylesheet link order — the later file in sorted path order wins. ` +
+                `Fix: declare "${prop}" for this state in ONE file.`,
+            });
+          }
+        }
         merged[stateName] = {
           bareProps: { ...prior?.bareProps, ...body.bareProps },
           rules: [...(prior?.rules ?? []), ...body.rules],
