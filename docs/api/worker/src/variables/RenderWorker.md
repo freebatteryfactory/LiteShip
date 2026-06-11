@@ -8,7 +8,7 @@
 
 > `const` **RenderWorker**: `object`
 
-Defined in: [worker/src/render-worker.ts:486](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L486)
+Defined in: [worker/src/render-worker.ts:480](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L480)
 
 Factory namespace for the render worker.
 

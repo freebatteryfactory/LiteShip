@@ -202,12 +202,15 @@ function drawState(state, frame, progress) {
 /**
  * Run the fixed-step render loop.
  *
- * When targetFps is set (via the init message), frames are paced
- * against the wall clock: after each frame the loop waits out the
- * remainder of its 1000/targetFps budget before rendering the next one.
- * If a frame already overran its budget, the loop continues immediately
- * (no catch-up bursts). When targetFps is 0 (omitted at construction),
- * the loop free-runs at maximum speed -- frame timing is then up to the
+ * When targetFps is set (via the init message), frames are paced by
+ * EMISSION time: after each posted frame the loop waits one full
+ * 1000/targetFps budget before drawing the next, so consecutive
+ * emissions are never closer than the budget — regardless of how draw
+ * cost varies frame to frame. The effective rate may therefore sit
+ * slightly below targetFps (budget + draw cost per cycle); targetFps is
+ * a "never faster than" production throttle, not an exact-rate
+ * scheduler. When targetFps is 0 (omitted at construction), the loop
+ * free-runs at maximum speed -- frame timing is then up to the
  * consumer (e.g. an encoding pipeline).
  *
  * @param {{ fps: number; width: number; height: number; durationMs: number }} config
@@ -219,7 +222,6 @@ async function runRender(config) {
 
   const totalFrames = Math.ceil((config.durationMs / 1000) * config.fps);
   const minFrameIntervalMs = targetFps > 0 ? 1000 / targetFps : 0;
-  let nextFrameAt = Date.now() + minFrameIntervalMs;
 
   try {
     for (let i = 0; i < totalFrames; i++) {
@@ -238,26 +240,18 @@ async function runRender(config) {
       self.postMessage({ type: "frame", output: output });
 
       if (minFrameIntervalMs > 0 && i < totalFrames - 1) {
-        // Wall-clock pacing: wait until frame i+1's budget slot opens.
-        // The await also yields the event loop, so stop messages are
-        // processed during the pacing wait and honored by the
+        // Emission-anchored pacing: wait one full budget from THIS frame's
+        // emission before drawing the next. The next frame's draw cost
+        // lands on top of the wait, so consecutive emissions are never
+        // closer than the budget even when draw cost varies (a scheduled-
+        // slot deadline would let a cheap frame after an expensive one
+        // emit compressed). Inherently burst-proof: there is no schedule
+        // to bank debt against. The await also yields the event loop, so
+        // stop messages are processed during the wait and honored by the
         // stopRequested check at the top of the next iteration. The final
-        // frame skips the wait entirely — there is no next frame to
-        // throttle, and render-complete must not lag a dead budget.
-        const waitMs = nextFrameAt - Date.now();
-        if (waitMs > 0) {
-          await new Promise(function (r) { setTimeout(r, waitMs); });
-        } else if (i % 10 === 9) {
-          // Behind budget: keep the periodic zero-timeout yield so a
-          // saturated loop still processes stop messages.
-          await new Promise(function (r) { setTimeout(r, 0); });
-        }
-        // Rolling re-anchor: advance one budget from the LATER of the
-        // scheduled slot and now. Pacing is a minimum-spacing contract,
-        // not a fixed timeline — a frame that overran its budget forgives
-        // the debt instead of banking past deadlines that would emit the
-        // next frames back-to-back (catch-up burst).
-        nextFrameAt = Math.max(nextFrameAt, Date.now()) + minFrameIntervalMs;
+        // frame skips the wait — there is no next frame to throttle, and
+        // render-complete must not lag a dead budget.
+        await new Promise(function (r) { setTimeout(r, minFrameIntervalMs); });
       } else if (i % 10 === 9) {
         // Unpaced default: yield periodically to allow stop messages
         // to be processed; frame rate is the consumer's concern.
