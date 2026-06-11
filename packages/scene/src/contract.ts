@@ -67,7 +67,12 @@ export interface EffectTrack {
 /** Track union — closed set of four helper-produced shapes. */
 export type Track = VideoTrack | AudioTrack | TransitionTrack | EffectTrack;
 
-/** Scene invariant — evaluated against the contract at compile time. */
+/**
+ * Scene invariant — evaluated against the contract at compile time.
+ * `compileScene` runs every declared check; a check returning `false`
+ * (or throwing) is a violation, and all violations are reported in one
+ * `CzapValidationError` carrying each invariant's name and message.
+ */
 export interface SceneInvariant {
   readonly name: string;
   readonly check: (scene: SceneContract) => boolean;

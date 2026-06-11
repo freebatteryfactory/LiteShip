@@ -6,7 +6,7 @@
 
 # Interface: SceneContract
 
-Defined in: [scene/src/contract.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L86)
+Defined in: [scene/src/contract.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L91)
 
 Top-level scene contract — typed declaration shape for an entire composition.
 
@@ -16,7 +16,7 @@ Top-level scene contract — typed declaration shape for an entire composition.
 
 > `readonly` `optional` **beats?**: readonly `BeatComponent`[]
 
-Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L102)
+Defined in: [scene/src/contract.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L107)
 
 Optional pre-resolved beat markers. When present, the scene
 compiler propagates them onto the [CompiledScene](CompiledScene.md) and the
@@ -30,7 +30,7 @@ each tick to compute beat-decay intensity.
 
 > `readonly` **bpm**: `number`
 
-Defined in: [scene/src/contract.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L90)
+Defined in: [scene/src/contract.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L95)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [scene/src/contract.ts:90](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **budgets**: `object`
 
-Defined in: [scene/src/contract.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L93)
+Defined in: [scene/src/contract.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L98)
 
 #### memoryMb?
 
@@ -54,7 +54,7 @@ Defined in: [scene/src/contract.ts:93](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **duration**: `number`
 
-Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L88)
+Defined in: [scene/src/contract.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L93)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **fps**: `number`
 
-Defined in: [scene/src/contract.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L89)
+Defined in: [scene/src/contract.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L94)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [scene/src/contract.ts:89](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **invariants**: readonly [`SceneInvariant`](SceneInvariant.md)[]
 
-Defined in: [scene/src/contract.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L92)
+Defined in: [scene/src/contract.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L97)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [scene/src/contract.ts:92](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **name**: `string`
 
-Defined in: [scene/src/contract.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L87)
+Defined in: [scene/src/contract.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L92)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [scene/src/contract.ts:87](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **site**: readonly `Site`[]
 
-Defined in: [scene/src/contract.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L94)
+Defined in: [scene/src/contract.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L99)
 
 ***
 
@@ -94,4 +94,4 @@ Defined in: [scene/src/contract.ts:94](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **tracks**: readonly `Track`[]
 
-Defined in: [scene/src/contract.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L91)
+Defined in: [scene/src/contract.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L96)
