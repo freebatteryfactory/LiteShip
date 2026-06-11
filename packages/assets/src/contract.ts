@@ -4,6 +4,11 @@
  * emits decode benches + loader property tests from it. Scenes
  * reference assets by id via AssetRef().
  *
+ * `defineAsset` resolves the asset's decode function — the declared
+ * `decoder` override, or the built-in for the media kind — and threads
+ * it onto the capsule as its `derive` handler, so the harness and the
+ * host commands consume the asset's OWN decoder.
+ *
  * @module
  */
 
@@ -11,16 +16,40 @@ import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { AttributionDecl, Invariant, CapsuleDef } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
+import { audioDecoder, type DecodedAudio } from './decoders/audio.js';
+import { videoDecoder, type DecodedVideo } from './decoders/video.js';
+import { imageDecoder, type DecodedImage } from './decoders/image.js';
 
 /** Supported asset kinds. */
 export type AssetKind = 'audio' | 'video' | 'image' | 'beat-markers' | 'onsets' | 'waveform';
+
+/**
+ * Decoded output for each media {@link AssetKind}. Analysis kinds
+ * (beat-markers / onsets / waveform) have no built-in decoder — their
+ * projections come from the dedicated factories (BeatMarkerProjection,
+ * OnsetProjection, WaveformProjection) — so they map to `unknown`.
+ */
+export type DecodedAsset<K extends AssetKind> = K extends 'audio'
+  ? DecodedAudio
+  : K extends 'video'
+    ? DecodedVideo
+    : K extends 'image'
+      ? DecodedImage
+      : unknown;
 
 /** Asset declaration shape consumed by `defineAsset`. */
 export interface AssetDecl<K extends AssetKind> {
   readonly id: string;
   readonly source: string;
   readonly kind: K;
-  readonly decoder?: (bytes: ArrayBuffer) => Promise<unknown>;
+  /**
+   * Optional per-asset decode override. When omitted, media kinds fall
+   * back to the built-in decoder for `kind` (audio → audioDecoder,
+   * video → videoDecoder, image → imageDecoder). Must produce the
+   * kind's decoded shape so downstream projections (beat/onset/waveform
+   * over {@link DecodedAudio}) keep working.
+   */
+  readonly decoder?: (bytes: ArrayBuffer) => Promise<DecodedAsset<K>>;
   readonly budgets: { readonly decodeP95Ms: number; readonly memoryMb?: number };
   readonly invariants: readonly Invariant<unknown, unknown>[];
   readonly attribution?: AttributionDecl;
@@ -28,20 +57,55 @@ export interface AssetDecl<K extends AssetKind> {
 
 type AnyAssetCapsule = CapsuleDef<'cachedProjection', unknown, unknown, unknown>;
 
+/** Decode function shape shared by AssetDecl.decoder and the built-ins. */
+export type AssetDecoder = (bytes: ArrayBuffer) => Promise<unknown>;
+
 const registry = new Map<string, AnyAssetCapsule>();
 
-/** Declare an asset as a cachedProjection capsule + register in the module-level asset registry. */
+/**
+ * Built-in decoder for a media kind. Analysis kinds (beat-markers /
+ * onsets / waveform) have their own projection factories and no byte
+ * decoder, so they resolve to undefined.
+ */
+export function builtinDecoderFor(kind: AssetKind): AssetDecoder | undefined {
+  switch (kind) {
+    case 'audio':
+      return audioDecoder;
+    case 'video':
+      return videoDecoder;
+    case 'image':
+      return imageDecoder;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Raw asset byte source. A Declaration-tagged schema (instanceOf), so the
+ * harness honestly reports "not arbitrary-derivable" instead of feeding
+ * `fc.anything()` garbage into real decoders that only accept ArrayBuffer.
+ */
+const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<unknown>;
+
+/**
+ * Declare an asset as a cachedProjection capsule + register in the
+ * module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+ * and wires it as the capsule's `derive` handler (the harness decode
+ * bench + determinism probes and the host commands run through it).
+ */
 export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCapsule {
+  const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
   const cap = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
-    input: Schema.Unknown,
+    input: decode !== undefined ? AssetBytes : Schema.Unknown,
     output: Schema.Unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
     invariants: decl.invariants,
     budgets: { p95Ms: decl.budgets.decodeP95Ms, memoryMb: decl.budgets.memoryMb },
     site: ['node', 'browser'],
     attribution: decl.attribution,
+    ...(decode !== undefined ? { derive: (source: unknown) => decode(source as ArrayBuffer) } : {}),
   });
   registry.set(decl.id, cap);
   return cap;
@@ -58,6 +122,23 @@ export function AssetRef(id: string): AssetRefId {
 /** Read-only snapshot of the asset registry. */
 export function getAssetRegistry(): ReadonlyMap<string, AnyAssetCapsule> {
   return registry;
+}
+
+/**
+ * Resolve the decode function for an asset id: the registered capsule's
+ * `derive` handler (which carries the asset's own decoder, custom or
+ * built-in) when the asset was registered in this process, else the
+ * audio built-in — host processes that never import the scene's asset
+ * module (e.g. the CLI reading only the compiled manifest) keep today's
+ * audio-decode behavior. The audio fallback matches the only consumers
+ * (beat/onset/waveform are audio projections).
+ */
+export function resolveAssetDecoder(assetId: string): AssetDecoder {
+  const derive = registry.get(assetId)?.derive;
+  if (derive !== undefined) {
+    return async (bytes: ArrayBuffer) => derive(bytes);
+  }
+  return audioDecoder;
 }
 
 /** Clear the registry. Intended for tests only. */

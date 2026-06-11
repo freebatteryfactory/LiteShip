@@ -72,6 +72,19 @@ export interface DetectedCall {
    * capsule binding into generated test files.
    */
   readonly binding?: string;
+  /**
+   * True when the binding's enclosing variable statement carries the
+   * `export` modifier (i.e. `export const X = ...`). Only exported
+   * bindings are importable by generated tests — factory-wrapped capsules
+   * (defineAsset) are wired into the harness only when this holds.
+   */
+  readonly exported?: boolean;
+  /**
+   * String-literal `source` property captured from a factory call's
+   * object-literal argument (the defineAsset decl). The compile driver
+   * threads it to the harness as the canonical decode fixture.
+   */
+  readonly declSource?: string;
 }
 
 /** Internal record before name resolution. */
@@ -82,6 +95,7 @@ interface RawHit {
   readonly node: ts.CallExpression;
   readonly callee: ts.Expression;
   readonly binding?: string;
+  readonly exported?: boolean;
 }
 
 /** Type names whose `<K, ...>` first argument is the capsule kind. */
@@ -269,10 +283,19 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
           // direct `VariableDeclaration` parents — call sites buried deeper
           // (e.g. inside an array literal) won't have a stable binding name.
           let binding: string | undefined;
+          let exported: boolean | undefined;
           let p: ts.Node | undefined = node.parent;
           while (p !== undefined) {
             if (ts.isVariableDeclaration(p) && ts.isIdentifier(p.name)) {
               binding = p.name.text;
+              // `export const X = ...` — the variable statement two levels up
+              // (VariableDeclaration -> VariableDeclarationList -> VariableStatement)
+              // carries the export modifier when the binding is importable.
+              const stmt = p.parent?.parent;
+              if (stmt !== undefined && ts.isVariableStatement(stmt)) {
+                exported =
+                  stmt.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true;
+              }
               break;
             }
             // Stop walking once we've left the variable-decl initializer
@@ -297,6 +320,7 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
             node,
             callee: node.expression,
             ...(binding !== undefined ? { binding } : {}),
+            ...(exported !== undefined ? { exported } : {}),
           });
         }
       }
@@ -321,6 +345,7 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
     let name: string | undefined;
     let factory: string | undefined;
     let args: unknown[] | undefined;
+    let declSource: string | undefined;
 
     if (isDirectDefineCapsule) {
       const [arg] = hit.node.arguments;
@@ -346,6 +371,9 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
         const [firstArg] = hit.node.arguments;
         if (firstArg && ts.isObjectLiteralExpression(firstArg)) {
           name = readStringPropertyFromObjectLiteral(firstArg, ['name', 'id']);
+          // Asset decls carry their canonical byte source — the harness's
+          // decode fixture (defineAsset({ id, source, ... })).
+          declSource = readStringPropertyFromObjectLiteral(firstArg, ['source']);
         }
       }
     }
@@ -354,11 +382,13 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
 
     seen.add(key);
     const bindingProp = hit.binding !== undefined ? { binding: hit.binding } : {};
+    const exportedProp = hit.exported !== undefined ? { exported: hit.exported } : {};
+    const declSourceProp = declSource !== undefined ? { declSource } : {};
     const detected: DetectedCall = factory === undefined
-      ? { file: hit.file, line: hit.line, kind: hit.kind, name, ...bindingProp }
+      ? { file: hit.file, line: hit.line, kind: hit.kind, name, ...bindingProp, ...exportedProp }
       : args !== undefined && args.length > 0
-        ? { file: hit.file, line: hit.line, kind: hit.kind, name, factory, args, ...bindingProp }
-        : { file: hit.file, line: hit.line, kind: hit.kind, name, factory, ...bindingProp };
+        ? { file: hit.file, line: hit.line, kind: hit.kind, name, factory, args, ...bindingProp, ...exportedProp, ...declSourceProp }
+        : { file: hit.file, line: hit.line, kind: hit.kind, name, factory, ...bindingProp, ...exportedProp, ...declSourceProp };
     out.push(detected);
   }
 

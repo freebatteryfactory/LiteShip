@@ -54,6 +54,17 @@ describe(
       expect(beat?.name).toBe('intro-bed');
     });
 
+    it('captures the exported binding and decl source for defineAsset call sites', () => {
+      const calls = allCalls.filter((c) => c.file === ASSETS_SCENE);
+      const introBed = calls.find((c) => c.factory === 'defineAsset' && c.name === 'intro-bed');
+      expect(introBed?.binding).toBe('introBed');
+      // `export const introBed = defineAsset({...})` — importable by the
+      // generated harness test, so capsule-compile wires a HarnessContext.
+      expect(introBed?.exported).toBe(true);
+      // The decl's `source` is the canonical decode fixture for the harness.
+      expect(introBed?.declSource).toBe('examples/scenes/intro-bed.wav');
+    });
+
     it('records line numbers and absolute file paths', () => {
       const calls = allCalls.filter((c) => c.file === CANONICAL_CBOR);
       const match = calls.find((c) => c.name === 'core.canonical-cbor');

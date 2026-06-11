@@ -8,9 +8,12 @@
 
 > **defineAsset**\<`K`\>(`decl`): `AnyAssetCapsule`
 
-Defined in: [assets/src/contract.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L34)
+Defined in: [assets/src/contract.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L96)
 
-Declare an asset as a cachedProjection capsule + register in the module-level asset registry.
+Declare an asset as a cachedProjection capsule + register in the
+module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+and wires it as the capsule's `derive` handler (the harness decode
+bench + determinism probes and the host commands run through it).
 
 ## Type Parameters
 
