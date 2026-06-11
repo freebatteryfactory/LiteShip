@@ -34,6 +34,17 @@ describe('tokenBufferCapsule', () => {
     expect(inv!.check(undefined, { tokens: [], totalBytes: 0 })).toBe(true);
   });
 
+  it('totalBytes counts UTF-8 bytes, not UTF-16 code units', () => {
+    // 'é' is 1 UTF-16 code unit but 2 UTF-8 bytes; '🚀' is 2 units, 4 bytes.
+    const inv = tokenBufferCapsule.invariants.find((i) => i.name === 'totalBytes-tracks-tokens');
+    expect(inv!.check(undefined, { tokens: ['é', '🚀'], totalBytes: 6 })).toBe(true);
+    expect(inv!.check(undefined, { tokens: ['é', '🚀'], totalBytes: 3 })).toBe(false);
+
+    const step = tokenBufferCapsule.step!;
+    const state = step(tokenBufferCapsule.initialState!, { _tag: 'push', token: 'é🚀' });
+    expect(state.totalBytes).toBe(6);
+  });
+
   it('declares the harness channel: initialState + step', () => {
     expect(tokenBufferCapsule.initialState).toEqual({ phase: 'idle', tokens: [], totalBytes: 0 });
     expect(typeof tokenBufferCapsule.step).toBe('function');
