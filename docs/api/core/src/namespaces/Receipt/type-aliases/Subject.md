@@ -8,6 +8,6 @@
 
 > **Subject** = [`ReceiptSubject`](../../../interfaces/ReceiptSubject.md)
 
-Defined in: [core/src/receipt.ts:446](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L446)
+Defined in: [core/src/receipt.ts:452](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L452)
 
 Alias for [ReceiptSubject](../../../interfaces/ReceiptSubject.md).
