@@ -1,5 +1,5 @@
 /**
- * Structured validation error for factory/constructor failures.
+ * Structured validation error for factory/constructor and precondition failures.
  *
  * Thrown (not Effect.fail'd) because all factory functions are synchronous.
  * Callers can catch and `instanceof CzapValidationError` to distinguish
@@ -9,7 +9,8 @@
  */
 
 /**
- * Structured validation error thrown by czap factory/constructor functions.
+ * Structured validation error thrown by czap factory/constructor functions
+ * and runtime precondition checks (e.g. capacity or call-order violations).
  *
  * Carries a `module` identifier (e.g. `'Boundary.make'`) and a human-readable
  * `detail` message. Synchronous factories throw this directly so callers can

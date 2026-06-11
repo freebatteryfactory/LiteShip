@@ -27,6 +27,7 @@ export type {
   AIConstraint,
   AIToolDefinition,
   AIManifestCompileResult,
+  AIValidationIssue,
 } from './ai-manifest.js';
 
 // CUT D6: pure MCP-app manifest projection over the real MCP/MCP-Apps surfaces.

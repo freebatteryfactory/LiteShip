@@ -87,10 +87,13 @@ export type MorphResult =
   | { readonly type: 'rejected'; readonly rejection: MorphRejection };
 
 export interface MorphRejection {
-  readonly type: string;
+  /** Closed union of the rejection kinds the runtime emits. */
+  readonly type: 'preserve_violation';
   readonly missingIds?: readonly string[];
   readonly slot?: SlotPath;
   readonly reason: string;
+  /** Literal next step for the consumer rendering the rejection. */
+  readonly hint?: string;
 }
 
 export declare const Morph: {

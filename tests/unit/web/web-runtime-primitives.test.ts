@@ -233,6 +233,7 @@ describe('web runtime primitives', () => {
       type: 'preserve_violation',
       missingIds: ['missing-id'],
       reason: 'Required elements missing after morph: missing-id',
+      hint: expect.stringMatching(/data-czap-id elements \[missing-id\]/) as string,
     });
 
     const remappedState = applyRemap(

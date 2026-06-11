@@ -159,31 +159,35 @@ export const buildChain = (
  * @see validateChainDetailed for typed `ChainValidationError` handling.
  */
 export const validateChain = (chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<boolean, Error> =>
-  Effect.gen(function* () {
-    if (chain.length === 0) return true;
-    const first = chain[0]!;
-    const firstPrev = first.previous;
-    if (firstPrev !== GENESIS && !(Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(GENESIS))) {
-      return yield* Effect.fail(new Error('First envelope must have previous=genesis'));
+  validateChainDetailed(chain).pipe(Effect.mapError((error) => new Error(formatChainError(error, chain))));
+
+/**
+ * Render a {@link ChainValidationError} as the human-readable message
+ * {@link validateChain} promises: what broke, on which envelope, with the
+ * offending values and the literal next step.
+ */
+const formatChainError = (error: ChainValidationError, chain: ReadonlyArray<ReceiptEnvelope>): string => {
+  switch (error.type) {
+    case 'not_genesis': {
+      const got = chain[0]?.previous;
+      const gotText = Array.isArray(got) ? `[${got.join(', ')}]` : String(got);
+      return (
+        `Envelope 0: previous="${gotText}" but a chain must start at previous="${GENESIS}". ` +
+        'If you sliced a longer chain, validate from index 0 of the original, or build the chain from Receipt.GENESIS.'
+      );
     }
-    for (let i = 0; i < chain.length; i++) {
-      const envelope = chain[i]!;
-      const computedHash = yield* hashEnvelope(envelope);
-      if (computedHash !== envelope.hash) {
-        return yield* Effect.fail(
-          new Error(`Envelope ${i}: hash mismatch (expected "${envelope.hash}", computed "${computedHash}")`),
-        );
-      }
-      const isMerge = Array.isArray(envelope.previous);
-      if (!isMerge && i > 0 && envelope.previous !== chain[i - 1]!.hash) {
-        return yield* Effect.fail(new Error(`Envelope ${i}: chain break`));
-      }
-      if (!isMerge && i > 0 && HLCOps.compare(chain[i - 1]!.timestamp, envelope.timestamp) >= 0) {
-        return yield* Effect.fail(new Error(`Envelope ${i}: HLC not monotonically increasing`));
-      }
-    }
-    return true;
-  });
+    case 'hash_mismatch':
+      return `Envelope ${error.index}: hash mismatch (expected "${error.stored}", computed "${error.computed}")`;
+    case 'chain_break':
+      return (
+        `Envelope ${error.index}: chain break — its previous="${error.actual}" does not equal ` +
+        `envelope ${error.index - 1}'s hash "${error.expected}". The chain was reordered, truncated, ` +
+        `or an envelope was tampered with; re-fetch the chain from its source or inspect envelope ${error.index}'s previous link.`
+      );
+    case 'hlc_not_increasing':
+      return `Envelope ${error.index}: HLC not monotonically increasing — its timestamp does not advance past envelope ${error.index - 1}'s. Re-issue the envelope with a fresh HLC.increment of the predecessor's timestamp.`;
+  }
+};
 
 /**
  * Validate a receipt chain with detailed, structured error reporting.

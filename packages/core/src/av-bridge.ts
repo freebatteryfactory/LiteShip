@@ -13,6 +13,8 @@
  * @module
  */
 
+import { CzapValidationError } from './validation-error.js';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -72,10 +74,10 @@ interface AVBridgeConfig {
 function _make(config: AVBridgeConfig): AVBridgeShape {
   const { sampleRate, fps } = config;
   if (sampleRate <= 0 || !Number.isFinite(sampleRate)) {
-    throw new RangeError(`AVBridge.make: sampleRate must be a positive finite number, got ${sampleRate}`);
+    throw new CzapValidationError('AVBridge.make', `sampleRate must be a positive finite number, got ${sampleRate}`);
   }
   if (fps <= 0 || !Number.isFinite(fps)) {
-    throw new RangeError(`AVBridge.make: fps must be a positive finite number, got ${fps}`);
+    throw new CzapValidationError('AVBridge.make', `fps must be a positive finite number, got ${fps}`);
   }
   const buffer = config.buffer ?? new SharedArrayBuffer(BUFFER_BYTE_LENGTH);
   const i32 = new Int32Array(buffer);
