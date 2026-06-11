@@ -7,7 +7,7 @@
 
 import { Effect } from 'effect';
 import { Millis } from '@czap/core';
-import type { ResumptionConfig, ResumptionState, ResumeResponse } from '../types.js';
+import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
 import { resolveRuntimeUrl } from '../security/runtime-url.js';
 
@@ -78,18 +78,18 @@ const storageKey = (artifactId: string): string => `czap:resumption:${artifactId
  *   artifactId: 'article-123',
  *   lastEventId: 'evt-42',
  *   lastSequence: 42,
- *   timestamp: Date.now(),
  * }));
  * ```
  *
- * @param state - The resumption state to persist
+ * @param state - The resumption state to persist; `timestamp` defaults to `Date.now()`
  * @returns An Effect that saves the state
  */
-export const saveState = (state: ResumptionState): Effect.Effect<void> =>
+export const saveState = (state: ResumptionStateInput): Effect.Effect<void> =>
   Effect.sync(() => {
     const key = storageKey(validateArtifactId(state.artifactId));
-    const value = JSON.stringify(state);
-    sessionStorage.setItem(key, value);
+    // Stored shape keeps timestamp required; isResumptionState validates it on load.
+    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? Date.now() };
+    sessionStorage.setItem(key, JSON.stringify(stored));
   });
 
 /**
@@ -332,10 +332,9 @@ const requestReplay = (
  * import { Resumption } from '@czap/web';
  * import { Effect } from 'effect';
  *
- * // Save state on each SSE message
+ * // Save state on each SSE message (timestamp defaults to Date.now())
  * Effect.runSync(Resumption.saveState({
  *   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
- *   timestamp: Date.now(),
  * }));
  *
  * // On reconnect, resume from where we left off
