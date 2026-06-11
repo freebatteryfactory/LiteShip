@@ -236,6 +236,41 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(second).toContain('sidebar');
     expect(second).toContain('viewport');
   });
+
+  test('hotUpdate on @quantize CSS invalidates the virtual module so importers see recompiled outputs', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
+
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(first).toContain('24px');
+    expect(first).not.toContain('64px');
+
+    // The CSS edit changes the compiled outputs; hotUpdate must invalidate
+    // the virtual module (not just the cached manifest promise), otherwise
+    // dev-server importers keep serving the stale outputsByTier.
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS.replace('--gap: 24px', '--gap: 64px'));
+    const { invalidated, moduleGraph } = makeModuleGraphMock();
+    const affected = (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+      { environment: { moduleGraph } },
+      { file: join(srcDir, 'styles.css') },
+    );
+    expect(invalidated).toContain('\0virtual:czap/boundaries');
+    expect(affected).toContainEqual(expect.objectContaining({ id: '\0virtual:czap/boundaries' }));
+
+    const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(second).toContain('64px');
+  });
 });
 
 describe('loadVirtualModule boundaries data', () => {
