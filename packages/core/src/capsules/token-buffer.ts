@@ -27,6 +27,13 @@ const BufferStateSchema = Schema.Struct({
 type TokenEvent = Schema.Schema.Type<typeof TokenEventSchema>;
 type BufferState = Schema.Schema.Type<typeof BufferStateSchema>;
 
+const utf8 = new TextEncoder();
+
+/** Real UTF-8 byte length — `string.length` counts UTF-16 code units. */
+function byteLength(token: string): number {
+  return utf8.encode(token).length;
+}
+
 /**
  * Fold one event into a state snapshot by driving the PRODUCTION
  * TokenBuffer: rebuild the ring buffer from the snapshot, apply the event
@@ -60,7 +67,7 @@ function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
     phase:
       event._tag === 'reset' ? 'idle' : event._tag === 'flush' ? 'draining' : tokens.length > 0 ? 'buffering' : 'idle',
     tokens,
-    totalBytes: tokens.reduce((sum, token) => sum + token.length, 0),
+    totalBytes: tokens.reduce((sum, token) => sum + byteLength(token), 0),
   };
 }
 
@@ -87,10 +94,10 @@ export const tokenBufferCapsule = defineCapsule({
       name: 'totalBytes-tracks-tokens',
       check: (_i, o) => {
         const out = o as { tokens: readonly string[]; totalBytes: number };
-        const expected = out.tokens.reduce((s, t) => s + t.length, 0);
+        const expected = out.tokens.reduce((s, t) => s + byteLength(t), 0);
         return out.totalBytes === expected;
       },
-      message: 'totalBytes must equal sum of token byte lengths',
+      message: 'totalBytes must equal sum of token UTF-8 byte lengths',
     },
   ],
   budgets: { p95Ms: 0.5, allocClass: 'bounded' },
