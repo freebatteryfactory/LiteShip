@@ -202,7 +202,7 @@ export const heroLayout = Boundary.make({
     [0, 'stacked'],
     [760, 'split'],
     [1180, 'cinematic'],
-  ] as const,
+  ],
   hysteresis: 40,
 });
 ```
@@ -215,7 +215,7 @@ import { Token } from '@czap/core';
 export const accent = Token.make({
   name: 'accent',
   category: 'color',
-  axes: ['theme'] as const,
+  axes: ['theme'],
   values: {
     light: '#0b6bcb',
     dark: '#7dd3fc',
@@ -231,7 +231,7 @@ import { Theme } from '@czap/core';
 
 export const brandTheme = Theme.make({
   name: 'brand',
-  variants: ['light', 'dark'] as const,
+  variants: ['light', 'dark'],
   tokens: {
     accent: {
       light: '#0b6bcb',
@@ -409,7 +409,7 @@ export const heroMotion = Boundary.make({
     [0, 'still'], // motionTier === 'none'
     [1, 'subtle'],
     [2, 'full'],
-  ] as const,
+  ],
 });
 ```
 

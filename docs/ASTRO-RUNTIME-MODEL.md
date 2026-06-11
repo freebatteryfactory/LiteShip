@@ -150,7 +150,7 @@ export const heroLayout = Boundary.make({
     [0, 'stacked'],
     [760, 'split'],
     [1180, 'cinematic'],
-  ] as const,
+  ],
   hysteresis: 40,
 });
 ```
