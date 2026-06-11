@@ -63,9 +63,9 @@ export interface EdgeHostCacheConfig {
   readonly boundaryId: ContentAddress;
   /**
    * Build-derived outputs keyed by {@link TierKey}
-   * (`"<motionTier>:<designTier>"`) -- the `outputsByTier` field of a
-   * boundary manifest entry. Checked before KV; a covered tier never
-   * touches the network.
+   * (`"<motionTier>:<designTier>"`) -- a manifest entry inflated via
+   * `resolveOutputsByTier(manifestEntry)`. Checked before KV; a covered
+   * tier never touches the network.
    */
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
@@ -162,7 +162,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
     if (!config.cache.precompiled && !config.cache.compile) {
       throw new Error(
         'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
-          'Fix: pass `precompiled: manifestEntry.outputsByTier` (from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+          'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
           'or supply a `compile` callback to build outputs on KV cache miss.',
       );
     }

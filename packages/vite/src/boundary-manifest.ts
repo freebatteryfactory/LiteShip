@@ -21,7 +21,7 @@ import { pathToFileURL } from 'node:url';
 import { Diagnostics } from '@czap/core';
 import type { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
-import { DESIGN_TIERS, MOTION_TIERS, tierKey } from '@czap/edge';
+import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
 import { parseQuantizeBlocks, viewportContainmentRule, type QuantizeStateBody } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
@@ -158,19 +158,22 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
 }
 
 /**
- * Compile one boundary's `@quantize` states into per-tier
- * `CompiledOutputs`, covering the full finite (motion x design)
- * tier grid so any tier a request resolves to has a precompiled entry.
+ * Compile one boundary's `@quantize` states into the deduplicated
+ * `outputs` pool + per-tier index map, covering the full finite
+ * (motion x design) tier grid so any tier a request resolves to has a
+ * precompiled entry.
  *
  * The container queries are tier-invariant (the CSS itself adapts via
  * `@container`); `propertyRegistrations` exist solely to enable
  * GPU-interpolated transitions, so the `none` motion tier (reduced
- * motion) omits them.
+ * motion) omits them. That makes at most TWO distinct outputs across the
+ * ~20-cell grid -- `dedupeOutputsByTier` stores each once instead of
+ * serializing the same CSS bytes per cell.
  */
 function compileOutputsByTier(
   boundary: Boundary.Shape,
   states: Record<string, QuantizeStateBody>,
-): Readonly<Partial<Record<TierKey, CompiledOutputs>>> {
+): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {
   // Bridge the parser's rule shape (props) to the compiler's (properties),
   // exactly as compileQuantizeBlock does.
   const cssStates = Object.fromEntries(
@@ -212,7 +215,7 @@ function compileOutputsByTier(
       outputsByTier[tierKey({ motionTier, designTier })] = outputs;
     }
   }
-  return outputsByTier;
+  return dedupeOutputsByTier(outputsByTier);
 }
 
 /**
@@ -221,17 +224,20 @@ function compileOutputsByTier(
  * Walks `projectRoot` (skipping `node_modules`, build output, and VCS
  * directories) for boundary definition modules and `@quantize` CSS
  * blocks, then emits one entry per exported boundary: its minted
- * `ContentAddress` and precompiled per-tier outputs. Boundaries with no
- * `@quantize` block get an entry with empty `outputsByTier` -- the id is
- * still the sanctioned way for hosts to derive cache configuration.
+ * `ContentAddress` and precompiled per-tier outputs (deduplicated --
+ * `outputs` pools the distinct compiled strings, `outputsByTier` holds
+ * pool indices). Boundaries with no `@quantize` block get an entry with
+ * empty `outputs`/`outputsByTier` -- the id is still the sanctioned way
+ * for hosts to derive cache configuration.
  *
  * @example
  * ```ts
  * import { collectBoundaryManifest } from '@czap/vite';
+ * import { resolveOutputsByTier } from '@czap/edge';
  *
  * const manifest = await collectBoundaryManifest('/path/to/app');
  * // manifest.viewport.id === 'fnv1a:…' (Boundary.make's address)
- * // manifest.viewport.outputsByTier['transitions:standard'].css
+ * // resolveOutputsByTier(manifest.viewport)['transitions:standard'].css
  * ```
  *
  * @param projectRoot - Absolute path of the project to scan.
@@ -358,7 +364,7 @@ export async function collectBoundaryManifest(
     const states = statesByBoundary.get(name);
     manifest[name] = {
       id: boundary.id,
-      outputsByTier: states ? compileOutputsByTier(boundary, states) : {},
+      ...(states ? compileOutputsByTier(boundary, states) : { outputs: [], outputsByTier: {} }),
     };
   }
   return manifest;

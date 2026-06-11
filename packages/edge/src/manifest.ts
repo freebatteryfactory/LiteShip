@@ -85,17 +85,82 @@ export function enumerateTierKeys(): readonly TierKey[] {
 /**
  * One boundary's manifest entry: its minted `ContentAddress` (always
  * `Boundary.make`'s id -- never hand-typed) plus precompiled
- * {@link CompiledOutputs} keyed by {@link TierKey}.
+ * {@link CompiledOutputs} for the tier grid, deduplicated.
  *
- * `outputsByTier` is empty when the boundary has no `@quantize` CSS block
+ * Most of a boundary's compiled CSS is tier-invariant (the container
+ * queries adapt via `@container`, not per tier), so storing the strings
+ * once per grid cell would ship ~20 copies of the same bytes to the edge
+ * host. Instead `outputs` is a pool of the DISTINCT compiled outputs and
+ * `outputsByTier` maps each {@link TierKey} to a pool index. Hosts call
+ * {@link resolveOutputsByTier} to inflate the per-tier map back to the
+ * exact same bytes the build compiled.
+ *
+ * Both fields are empty when the boundary has no `@quantize` CSS block
  * (nothing to compile) -- the entry still carries the id so hosts can
  * derive cache configuration from it.
  */
 export interface BoundaryManifestEntry {
   /** Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`). */
   readonly id: ContentAddress;
-  /** Precompiled outputs per {@link TierKey}; missing keys mean that tier was never compiled. */
-  readonly outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  /** Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into it. */
+  readonly outputs: readonly CompiledOutputs[];
+  /** Pool index per {@link TierKey}; missing keys mean that tier was never compiled. */
+  readonly outputsByTier: Readonly<Partial<Record<TierKey, number>>>;
+}
+
+/**
+ * Deduplicate a fully-materialized per-tier outputs map into the pooled
+ * {@link BoundaryManifestEntry} shape (`outputs` + index refs).
+ *
+ * Identity is the full `(css, propertyRegistrations, containerQueries)`
+ * triple, and cells are visited in {@link enumerateTierKeys} order so the
+ * pool order -- and the serialized manifest bytes -- are stable regardless
+ * of the producer's insertion order.
+ */
+export function dedupeOutputsByTier(
+  outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>,
+): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {
+  const pool: CompiledOutputs[] = [];
+  const indexByContent = new Map<string, number>();
+  const refs: Partial<Record<TierKey, number>> = {};
+  for (const key of enumerateTierKeys()) {
+    const outputs = outputsByTier[key];
+    if (!outputs) continue;
+    const content = JSON.stringify([outputs.css, outputs.propertyRegistrations, outputs.containerQueries]);
+    let index = indexByContent.get(content);
+    if (index === undefined) {
+      index = pool.length;
+      pool.push(outputs);
+      indexByContent.set(content, index);
+    }
+    refs[key] = index;
+  }
+  return { outputs: pool, outputsByTier: refs };
+}
+
+/**
+ * Inflate a pooled {@link BoundaryManifestEntry} back into the per-tier
+ * {@link CompiledOutputs} map that `EdgeHostCacheConfig.precompiled`
+ * consumes. Resolved cells share pool object references, so per-tier
+ * lookups return byte-identical strings to what the build compiled.
+ */
+export function resolveOutputsByTier(
+  entry: Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'>,
+): Readonly<Partial<Record<TierKey, CompiledOutputs>>> {
+  const resolved: Partial<Record<TierKey, CompiledOutputs>> = {};
+  for (const [key, index] of Object.entries(entry.outputsByTier) as readonly (readonly [TierKey, number])[]) {
+    const outputs = typeof index === 'number' ? entry.outputs[index] : undefined;
+    if (!outputs) {
+      throw new Error(
+        `Boundary manifest cell "${key}" references outputs[${String(index)}], but the entry's outputs pool has ` +
+          `${entry.outputs.length} item(s), so the tier cannot be resolved. ` +
+          'Why: the manifest predates the deduplicated v2 format (cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
+          'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+      );
+    }
+    resolved[key] = outputs;
+  }
+  return resolved;
 }
 
 /**
@@ -113,6 +178,7 @@ export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
  */
 export interface BoundaryManifestFile {
   readonly _tag: 'CzapBoundaryManifest';
-  readonly _version: 1;
+  /** v2: entries carry a deduplicated `outputs` pool; `outputsByTier` cells are pool indices. */
+  readonly _version: 2;
   readonly boundaries: BoundaryManifest;
 }
