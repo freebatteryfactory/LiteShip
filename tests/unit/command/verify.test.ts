@@ -17,6 +17,44 @@ describe('@czap/command verify', () => {
     expect(r.status).toBe('failed');
   });
 
+  it('inputSchema requires only the tarball — capsule defaults from the ship sibling convention', () => {
+    expect(verifyCommand.descriptor.inputSchema.required).toEqual(['tarball']);
+  });
+
+  it('no --capsule but the .shipcapsule.cbor sibling exists → derived capsule verifies', async () => {
+    const read: string[] = [];
+    const r = await verifyCommand.handler(
+      { name: 'verify', args: { tarball: 'pkg/czap-command-0.1.4.tgz' } },
+      {
+        fileExists: () => true,
+        readFileBytes: (path) => {
+          read.push(path);
+          return new Uint8Array([1]);
+        },
+        decodeShipCapsule: async () => okDecode,
+        recomputeTarballAddress: async () => ({ ok: true, display_id: 'd1', integrity_digest: 'i1' }),
+      },
+    );
+    expect(read).toContain('pkg/czap-command-0.1.4.shipcapsule.cbor');
+    expect(r.verdict).toBe('Verified');
+    expect(r.exitCode).toBe(0);
+  });
+
+  it('no --capsule and the sibling is absent → Unknown verdict, exit 4', async () => {
+    const r = await verifyCommand.handler(
+      { name: 'verify', args: { tarball: 'pkg/czap-command-0.1.4.tgz' } },
+      { fileExists: (path) => path === 'pkg/czap-command-0.1.4.tgz' },
+    );
+    expect(r.verdict).toBe('Unknown');
+    expect(r.exitCode).toBe(4);
+  });
+
+  it('no args at all → Unknown verdict, exit 4 (ADR-0011: honest cannot-tell)', async () => {
+    const r = await verifyCommand.handler({ name: 'verify', args: {} }, {});
+    expect(r.verdict).toBe('Unknown');
+    expect(r.exitCode).toBe(4);
+  });
+
   it('capsule given but no tarball → plain error, exit 1, no verdict', async () => {
     const r = await verifyCommand.handler({ name: 'verify', args: { capsule: 'c.cbor' } }, {});
     expect(r.verdict).toBeUndefined();

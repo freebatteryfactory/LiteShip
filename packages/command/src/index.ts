@@ -16,10 +16,11 @@ export type {
   CommandJsonSchema,
 } from '@czap/core';
 
-export { CommandRegistry } from './registry.js';
+export { CommandRegistry, capabilityUnavailable } from './registry.js';
 export type {
   AuditEngineSummary,
   CapsuleCommandHandler,
+  CommandCapability,
   CommandContext,
   HandledCommand,
   RegisteredCommand,

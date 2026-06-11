@@ -78,6 +78,17 @@ export interface CapsuleCommandDescriptor {
   /** Execution shape — `handler` (structured) vs `cli-orchestration` (CLI-owned). */
   readonly executionKind?: CommandExecutionKind;
   /**
+   * Names of injected `CommandContext` capabilities the handler cannot run
+   * without — declared as DATA so a consumer wiring a custom context can read
+   * what each command needs instead of discovering it by trial. The dispatcher
+   * enforces presence BEFORE invoking the handler and fails structurally with
+   * `{ error: 'capability_unavailable', missing }` and exit code 2. Capabilities
+   * a handler only needs conditionally (e.g. `runVitest` when a manifest entry
+   * carries generated tests) are NOT listed here; the handler guards those
+   * itself with the same structured failure.
+   */
+  readonly requires?: readonly string[];
+  /**
    * Optional MCP Apps UI link (CUT D5): the `ui://` resource that renders this
    * tool's result as a live widget. The MCP skin projects this to a tool's
    * `_meta.ui.resourceUri`; CSP lives on the RESOURCE, never here. Registry-
