@@ -6,7 +6,7 @@
 
 # Function: tierFromCapabilities()
 
-> **tierFromCapabilities**(`caps`): [`CapLevel`](#)
+> **tierFromCapabilities**(`caps`): [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
 Defined in: [detect/src/tiers.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L24)
 
@@ -21,4 +21,4 @@ its detected hardware and preference characteristics.
 
 ## Returns
 
-[`CapLevel`](#)
+[`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)

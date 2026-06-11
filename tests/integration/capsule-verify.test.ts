@@ -38,5 +38,17 @@ describe('capsule-verify', () => {
     expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
     const receipt = JSON.parse(receiptLine!);
     expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
+
+    // Bench honesty: the receipt classifies every generated bench instead of
+    // existence-only checking. Comment-only closures (the current harness
+    // templates — real invocations land with the harness-handlers epic) must
+    // surface as 'placeholder' so a green verdict cannot be mistaken for
+    // benchmark coverage.
+    expect(receipt.benches, `receipt: ${JSON.stringify(receipt)}`).toBeDefined();
+    expect(receipt.benches.total).toBe(receipt.capsuleCount);
+    expect(receipt.benches.real + receipt.benches.placeholder.length).toBe(receipt.benches.total);
+    // Today every generated bench body is a placeholder; when the
+    // harness-handlers epic emits real invocations this pins the honest count.
+    expect(receipt.benches.placeholder.length).toBe(receipt.benches.total);
   }, scaledTimeout(90_000));
 });

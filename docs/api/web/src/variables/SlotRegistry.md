@@ -106,7 +106,7 @@ const path = SlotRegistry.getPath(el);
 
 ### observe
 
-> **observe**: (`registry`, `root`) => `Effect`\<`void`, `never`, [`Scope`](#)\>
+> **observe**: (`registry`, `root`) => `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 Create a `MutationObserver` that automatically registers/unregisters slots
 as DOM elements with `data-czap-slot` are added or removed. The observer
@@ -128,7 +128,7 @@ The DOM root to observe
 
 #### Returns
 
-`Effect`\<`void`, `never`, [`Scope`](#)\>
+`Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 An Effect (scoped) that starts observation
 

@@ -13,7 +13,7 @@ Provides React hooks and composition helpers to consume
 `CompositeState` from `@czap/core`'s `VideoRenderer` in Remotion projects.
 
 Typical flow:
-1. Build a [VideoRenderer.Shape](#) on the server (via `@czap/core`).
+1. Build a [VideoRenderer.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md) on the server (via `@czap/core`).
 2. Call [precomputeFrames](functions/precomputeFrames.md) once before Remotion renders.
 3. Inside a composition, read the current frame's state with
    [useCompositeState](functions/useCompositeState.md) (or [useCzapState](functions/useCzapState.md) if you wrap your

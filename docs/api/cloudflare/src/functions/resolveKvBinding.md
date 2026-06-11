@@ -6,7 +6,7 @@
 
 # Function: resolveKvBinding()
 
-> **resolveKvBinding**(`env`, `binding`): [`KVNamespace`](#) \| `null`
+> **resolveKvBinding**(`env`, `binding`): [`KVNamespace`](https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md) \| `null`
 
 Defined in: [cloudflare/src/edge-cache.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L20)
 
@@ -24,4 +24,4 @@ Resolve a KV namespace from a Workers env bag by binding name.
 
 ## Returns
 
-[`KVNamespace`](#) \| `null`
+[`KVNamespace`](https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md) \| `null`
