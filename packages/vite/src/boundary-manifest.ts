@@ -22,7 +22,7 @@ import { Diagnostics } from '@czap/core';
 import type { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, tierKey } from '@czap/edge';
-import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs } from '@czap/edge';
+import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
 import { parseQuantizeBlocks, type QuantizeStateBody } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
 
@@ -126,7 +126,7 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
 function compileOutputsByTier(
   boundary: Boundary.Shape,
   states: Record<string, QuantizeStateBody>,
-): Readonly<Record<string, CompiledOutputs>> {
+): Readonly<Partial<Record<TierKey, CompiledOutputs>>> {
   // Bridge the parser's rule shape (props) to the compiler's (properties),
   // exactly as compileQuantizeBlock does.
   const cssStates = Object.fromEntries(
@@ -149,7 +149,7 @@ function compileOutputsByTier(
   ) as Record<string, Record<string, string>>;
   const propertyRegistrations = CSSCompiler.generatePropertyRegistrations(flatStates);
 
-  const outputsByTier: Record<string, CompiledOutputs> = {};
+  const outputsByTier: Partial<Record<TierKey, CompiledOutputs>> = {};
   for (const motionTier of MOTION_TIERS) {
     const registrations = motionTier === 'none' ? '' : propertyRegistrations;
     const css = [registrations, containerQueries].filter((part) => part.length > 0).join('\n\n');

@@ -94,8 +94,8 @@ export function enumerateTierKeys(): readonly TierKey[] {
 export interface BoundaryManifestEntry {
   /** Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`). */
   readonly id: ContentAddress;
-  /** Precompiled outputs per tier key (string-keyed to stay JSON-portable). */
-  readonly outputsByTier: Readonly<Record<string, CompiledOutputs>>;
+  /** Precompiled outputs per {@link TierKey}; missing keys mean that tier was never compiled. */
+  readonly outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
 }
 
 /**

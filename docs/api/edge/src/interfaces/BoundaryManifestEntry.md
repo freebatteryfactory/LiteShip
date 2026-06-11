@@ -30,8 +30,8 @@ Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
 ### outputsByTier
 
-> `readonly` **outputsByTier**: `Readonly`\<`Record`\<`string`, [`CompiledOutputs`](CompiledOutputs.md)\>\>
+> `readonly` **outputsByTier**: `Readonly`\<`Partial`\<`Record`\<[`TierKey`](../type-aliases/TierKey.md), [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
 
 Defined in: [edge/src/manifest.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L98)
 
-Precompiled outputs per tier key (string-keyed to stay JSON-portable).
+Precompiled outputs per [TierKey](../type-aliases/TierKey.md); missing keys mean that tier was never compiled.

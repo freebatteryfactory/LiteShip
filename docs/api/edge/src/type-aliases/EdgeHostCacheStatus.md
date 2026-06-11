@@ -8,7 +8,7 @@
 
 > **EdgeHostCacheStatus** = `"disabled"` \| `"precompiled"` \| `"hit"` \| `"miss"`
 
-Defined in: [edge/src/host-adapter.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L102)
+Defined in: [edge/src/host-adapter.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L104)
 
 Cache lookup outcome reported in [EdgeHostResolution](../interfaces/EdgeHostResolution.md).
 `'precompiled'` means the outputs came from the build-derived manifest
