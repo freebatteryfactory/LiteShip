@@ -8,7 +8,7 @@
 
 > `const` **CompositorWorker**: `object`
 
-Defined in: [worker/src/compositor-worker.ts:597](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L597)
+Defined in: [worker/src/compositor-worker.ts:599](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L599)
 
 Factory namespace for the compositor worker.
 
@@ -51,12 +51,14 @@ const compositor = CompositorWorker.create({ poolCapacity: 64 });
 compositor.addQuantizer('brightness', {
   id: 'boundary:brightness',
   states: ['dim', 'bright'],
-  thresholds: [0.5],
+  // One threshold per state: thresholds[i] is the lower bound of
+  // states[i] — 'dim' from 0, 'bright' from 0.5.
+  thresholds: [0, 0.5],
 });
 const unsub = compositor.onState((state) => {
   // state.discrete.brightness === 'bright' | 'dim'
 });
-compositor.evaluate('brightness', 0.7);
+compositor.evaluate('brightness', 0.7); // 0.7 >= 0.5 -> 'bright'
 compositor.requestCompute();
 // ...later:
 unsub();

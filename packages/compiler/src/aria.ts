@@ -74,8 +74,8 @@ function validateAttributes(attrs: Record<string, string>): Record<string, strin
  * import { ARIACompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['collapsed', 'expanded'] as const,
- *   thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'collapsed'], [768, 'expanded']],
  * });
  * const result = ARIACompiler.compile(boundary, {
  *   collapsed: { 'aria-expanded': 'false', 'aria-label': 'Show more' },
@@ -126,8 +126,8 @@ function compile<B extends Boundary.Shape>(
  * import { ARIACompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const result = ARIACompiler.compile(boundary, {
  *   sm: { 'aria-hidden': 'true' },

@@ -8,7 +8,7 @@
 
 > `const` **Q**: `object`
 
-Defined in: [quantizer/src/quantizer.ts:530](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L530)
+Defined in: [quantizer/src/quantizer.ts:548](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L548)
 
 Quantizer builder namespace.
 
@@ -64,8 +64,8 @@ import { Q } from '@czap/quantizer';
 import { Effect } from 'effect';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'md', 'lg'] as const,
-  thresholds: [0, 640, 1024],
+  input: 'width',
+  at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
 });
 const config = Q.from(boundary).outputs({
   css: { sm: { fontSize: '14px' }, md: { fontSize: '16px' }, lg: { fontSize: '18px' } },
@@ -87,8 +87,8 @@ import { Q } from '@czap/quantizer';
 import { Effect } from 'effect';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'lg'] as const,
-  thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const config = Q.from(boundary).outputs({
   css: { sm: { display: 'block' }, lg: { display: 'grid' } },

@@ -75,8 +75,17 @@ export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex
  * frame. Internally calls Remotion's `useCurrentFrame` and defers to
  * {@link stateAtFrame} for lookup.
  *
+ * This is the explicit prop-threading half of a deliberate pair: pass the
+ * `frames` array directly — pure, no provider required. Its sibling,
+ * `Provider` + `useCzapState()` in `composition.js`, resolves the same
+ * state via implicit context lookup for deep component trees. Both clamp
+ * to the valid frame range and fall back to a structurally-empty
+ * `CompositeState`.
+ *
  * @param frames - Precomputed frames (see {@link precomputeFrames}).
  * @returns State for the current Remotion frame.
+ *
+ * @see useCzapState for the context-lookup form (no prop threading).
  *
  * @example
  * ```tsx

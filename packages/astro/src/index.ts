@@ -13,7 +13,7 @@
  * import { integration as czap } from '@czap/astro';
  *
  * const config = defineConfig({
- *   integrations: [czap({ themes: ['./themes/default.ts'] })],
+ *   integrations: [czap({ detect: true, workers: { enabled: true } })],
  * });
  * ```
  *

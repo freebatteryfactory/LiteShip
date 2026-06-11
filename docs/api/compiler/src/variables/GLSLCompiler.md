@@ -59,8 +59,8 @@ import { Boundary } from '@czap/core';
 import { GLSLCompiler } from '@czap/compiler';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['mobile', 'desktop'] as const,
-  thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'mobile'], [768, 'desktop']],
 });
 const result = GLSLCompiler.compile(boundary, {
   mobile: { blur: 0.5, brightness: 1.0 },
@@ -113,8 +113,8 @@ import { Boundary } from '@czap/core';
 import { GLSLCompiler } from '@czap/compiler';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'lg'] as const,
-  thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const result = GLSLCompiler.compile(boundary, {
   sm: { intensity: 0.5 }, lg: { intensity: 1.0 },
