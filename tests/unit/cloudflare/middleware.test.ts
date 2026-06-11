@@ -39,15 +39,21 @@ function makeManifest(name = 'viewport'): { boundary: ReturnType<typeof makeBoun
 
 function makeKVStore() {
   const cacheStore = new Map<string, string>();
+  // Reads and writes are counted separately so "no KV traffic" tests can
+  // prove zero get() calls, not just an empty store (which only proves
+  // zero writes).
+  const calls = { get: 0, put: 0 };
   const kv = {
     async get(key: string) {
+      calls.get++;
       return cacheStore.get(key) ?? null;
     },
     async put(key: string, value: string) {
+      calls.put++;
       cacheStore.set(key, value);
     },
   };
-  return { cacheStore, kv };
+  return { cacheStore, kv, calls };
 }
 
 describe('cloudflareMiddleware', () => {
@@ -126,7 +132,7 @@ describe('cloudflareMiddleware', () => {
   });
 
   test('manifest path derives boundaryId and serves precompiled outputs without KV traffic', async () => {
-    const { cacheStore, kv } = makeKVStore();
+    const { cacheStore, kv, calls } = makeKVStore();
     const { manifest } = makeManifest();
     const middleware = cloudflareMiddleware({
       binding: 'KV',
@@ -146,6 +152,9 @@ describe('cloudflareMiddleware', () => {
     const edge = (context.locals.czap as { edge?: { cacheStatus?: string; compiledOutputs?: { css?: string } } }).edge;
     expect(edge?.cacheStatus).toBe('precompiled');
     expect(edge?.compiledOutputs?.css).toContain('@container');
+    // "No KV traffic" means zero reads AND zero writes, not just an empty store.
+    expect(calls.get).toBe(0);
+    expect(calls.put).toBe(0);
     expect(cacheStore.size).toBe(0);
   });
 
