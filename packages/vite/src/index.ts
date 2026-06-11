@@ -16,6 +16,11 @@
  *   shader uniforms, and boundary definitions update without a full
  *   page reload.
  *
+ * Definitions are discovered by convention (`tokens.ts` / `*.tokens.ts`,
+ * `themes.ts` / `*.themes.ts`, ... next to the referencing file, then at
+ * the project root) — no listing required. Override the search directory
+ * per primitive kind via {@link PluginConfig.dirs}.
+ *
  * @example
  * ```ts
  * // vite.config.ts
@@ -23,7 +28,7 @@
  * import { plugin as czap } from '@czap/vite';
  *
  * const config = defineConfig({
- *   plugins: [czap({ themes: ['./themes/default.ts'] })],
+ *   plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
  * });
  * ```
  *
