@@ -84,6 +84,60 @@ function unresolvedPrimitiveWarning(
   );
 }
 
+/** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
+const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
+  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a Token.make() export',
+  '@quantize':
+    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a Boundary.make() export and each <stateName> is one of its states',
+};
+
+/**
+ * Blank out block comments while preserving every newline, so marker
+ * detection ignores commented-out at-rules without shifting line numbers.
+ */
+function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '));
+}
+
+/**
+ * 1-based line of the first occurrence of `marker` in `css`, or `null`
+ * when the marker does not appear (e.g. it only lived inside a comment).
+ */
+function markerLine(css: string, marker: string): number | null {
+  const idx = css.indexOf(marker);
+  if (idx === -1) return null;
+  return css.slice(0, idx).split('\n').length;
+}
+
+/**
+ * Doctor-style warning for a parse miss: the file contains an at-rule
+ * marker, but the parser matched zero blocks — the at-rule is left
+ * untransformed and the browser will silently discard it. Names the
+ * file:line, the probable cause, and the exact supported grammar.
+ */
+function parseMissWarning(marker: '@token' | '@quantize', id: string, line: number): string {
+  return (
+    `Found ${marker} in ${id}:${line} but no ${marker} block parsed, so it was left untransformed ` +
+    `(browsers discard unknown at-rules, so it contributes no CSS). ` +
+    `Probable cause: an unsupported dialect such as an anonymous block (\`${marker} { ... }\`) ` +
+    `or an inline declaration (\`${marker} name: value;\`). ` +
+    `Fix: rewrite it to the supported grammar ${SUPPORTED_GRAMMAR[marker]}.`
+  );
+}
+
+/**
+ * Doctor-style warning for a `@quantize` block whose states all parsed
+ * to zero declarations: the block matched, but its body produced no CSS.
+ */
+function emptyQuantizeWarning(boundaryName: string, id: string, line: number): string {
+  return (
+    `@quantize ${boundaryName} in ${id}:${line} parsed to zero declarations — every state body is empty, ` +
+    `so the block compiles to no @container rules. ` +
+    `Probable cause: the state bodies use a syntax the parser does not support. ` +
+    `Fix: write each state per the supported grammar ${SUPPORTED_GRAMMAR['@quantize']}.`
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
@@ -212,7 +266,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
     async transform(code: string, id: string) {
       if (id.endsWith('.html') || id.endsWith('.astro')) {
-        const transformed = await transformHTML(code, id, projectRoot);
+        const transformed = await transformHTML(code, id, projectRoot, config?.dirs?.boundary);
         if (transformed === code) {
           return null;
         }
@@ -235,10 +289,20 @@ export function plugin(config?: PluginConfig): Plugin {
       if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
 
       let transformed = normalizeCssLineEndings(code);
+      // Comment-blanked copy of the original source for parse-miss
+      // diagnostics: marker positions stay stable across phases.
+      const commentStripped = stripCssComments(transformed);
 
       // ---- Phase 1: @token -> CSS custom properties + @property ----
       if (hasToken) {
         const tokenBlocks = parseTokenBlocks(transformed, id);
+
+        if (tokenBlocks.length === 0) {
+          const line = markerLine(commentStripped, '@token');
+          if (line !== null) {
+            this.warn(parseMissWarning('@token', id, line));
+          }
+        }
 
         for (const block of tokenBlocks) {
           const cacheKey = `${block.tokenName}:${id}`;
@@ -329,6 +393,27 @@ export function plugin(config?: PluginConfig): Plugin {
       // ---- Phase 4: @quantize -> @container queries (existing) ----
       if (hasQuantize) {
         const quantizeBlocks = parseQuantizeBlocks(transformed, id);
+
+        if (quantizeBlocks.length === 0) {
+          const line = markerLine(commentStripped, '@quantize');
+          if (line !== null) {
+            this.warn(parseMissWarning('@quantize', id, line));
+          }
+        }
+
+        for (const block of quantizeBlocks) {
+          const stateBodies = Object.values(block.states);
+          const allStatesEmpty =
+            stateBodies.length > 0 &&
+            stateBodies.every(
+              (body) =>
+                Object.keys(body.bareProps).length === 0 &&
+                body.rules.every((rule) => Object.keys(rule.props).length === 0),
+            );
+          if (allStatesEmpty) {
+            this.warn(emptyQuantizeWarning(block.boundaryName, id, block.line));
+          }
+        }
 
         for (const block of quantizeBlocks) {
           const cacheKey = `${block.boundaryName}:${id}`;

@@ -63,6 +63,34 @@ describe('transformHTML', () => {
     expect(result).not.toContain('data-czap="hero"');
   });
 
+  test('passes the boundary dirs override through to primitive resolution', async () => {
+    const resolveSpy = vi.fn(async () => ({
+      primitive: {
+        id: 'hero',
+        input: 'viewport.width',
+        thresholds: [0, 768],
+        states: ['mobile', 'desktop'],
+        hysteresis: 32,
+      },
+      source: '/test/defs/boundaries.ts',
+    }));
+    vi.doMock('../../../packages/vite/src/primitive-resolve.js', () => ({
+      resolvePrimitive: resolveSpy,
+      KIND_META: {
+        boundary: { file: 'boundaries.ts', suffix: '.boundaries.ts', tag: 'BoundaryDef' },
+        token:    { file: 'tokens.ts',     suffix: '.tokens.ts',     tag: 'TokenDef'    },
+        theme:    { file: 'themes.ts',     suffix: '.themes.ts',     tag: 'ThemeDef'    },
+        style:    { file: 'styles.ts',     suffix: '.styles.ts',     tag: 'StyleDef'    },
+      },
+    }));
+
+    const { transformHTML } = await import('@czap/vite/html-transform');
+    const source = '<section data-czap="hero"></section>';
+    await transformHTML(source, '/test/page.astro', '/test', '/test/defs');
+
+    expect(resolveSpy).toHaveBeenCalledWith('boundary', 'hero', '/test/page.astro', '/test', '/test/defs');
+  });
+
   test('warns and leaves source unchanged when a boundary cannot be resolved', async () => {
     vi.doMock('../../../packages/vite/src/primitive-resolve.js', () => ({
       resolvePrimitive: vi.fn(async () => null),
@@ -112,8 +140,8 @@ describe('transformHTML', () => {
     const htmlResult = await vitePlugin.transform?.call({ warn: vi.fn() } as never, '<main />', '/repo/src/index.html');
     const jsResult = await vitePlugin.transform?.call({ warn: vi.fn() } as never, 'export {}', '/repo/src/entry.ts');
 
-    expect(transformHTMLSpy).toHaveBeenNthCalledWith(1, '<section />', '/repo/src/page.astro', '/repo');
-    expect(transformHTMLSpy).toHaveBeenNthCalledWith(2, '<main />', '/repo/src/index.html', '/repo');
+    expect(transformHTMLSpy).toHaveBeenNthCalledWith(1, '<section />', '/repo/src/page.astro', '/repo', undefined);
+    expect(transformHTMLSpy).toHaveBeenNthCalledWith(2, '<main />', '/repo/src/index.html', '/repo', undefined);
     expect(astroResult).toEqual({
       code: '<section /><!-- transformed:/repo/src/page.astro -->',
       map: null,
