@@ -76,6 +76,12 @@ export async function sceneRender(
     output: payload.output,
     frameCount: payload.frameCount,
     elapsedMs: payload.elapsedMs,
+    // Resolution is an adapter fact (the WIDTH/HEIGHT constants above); fps
+    // comes from the scene contract via the command payload. Echoed so the
+    // defaults are observable in the receipt, not just in the video bytes.
+    width: WIDTH,
+    height: HEIGHT,
+    ...(payload.fps !== undefined ? { fps: payload.fps } : {}),
     cached: payload.cached,
   });
   return 0;

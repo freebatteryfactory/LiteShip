@@ -50,10 +50,44 @@ describe('@czap/command scene.compile', () => {
 });
 
 describe('@czap/command scene.render', () => {
-  it('missing --output → failed exit 1', async () => {
-    const r = await sceneRenderCommand.handler({ name: 'scene.render', args: { scene: 's.ts', output: '' } }, {});
-    expect(r.status).toBe('failed');
-    expect(r.exitCode).toBe(1);
+  it('omitted output derives <sceneBasename>.mp4 beside the scene file', async () => {
+    let renderedTo = '';
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 'examples/scenes/intro.ts' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: () => {} },
+        loadSceneModule: async () => RENDER_MOD,
+        renderScene: async (params) => {
+          renderedTo = params.output;
+          return { frameCount: 30, elapsedMs: 5 };
+        },
+      },
+    );
+    expect(r.status).toBe('ok');
+    const p = r.payload as { output: string; fps: number };
+    expect(renderedTo).toBe('examples/scenes/intro.mp4');
+    // Receipt records the resolved (derived) path + the contract fps.
+    expect(p.output).toBe('examples/scenes/intro.mp4');
+    expect(p.fps).toBe(30);
+  });
+
+  it('explicit output stays the override (no derivation)', async () => {
+    let renderedTo = '';
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 'examples/scenes/intro.ts', output: 'custom.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: () => {} },
+        loadSceneModule: async () => RENDER_MOD,
+        renderScene: async (params) => {
+          renderedTo = params.output;
+          return { frameCount: 30, elapsedMs: 5 };
+        },
+      },
+    );
+    expect((r.payload as { output: string }).output).toBe('custom.mp4');
+    expect(renderedTo).toBe('custom.mp4');
   });
 
   it('missing scene file → failed exit 1', async () => {

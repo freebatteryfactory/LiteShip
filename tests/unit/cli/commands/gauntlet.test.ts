@@ -6,6 +6,9 @@
  * signal death — are still proven.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const { spawnSyncMock } = vi.hoisted(() => ({ spawnSyncMock: vi.fn() }));
 vi.mock('node:child_process', async (importOriginal) => ({
@@ -92,11 +95,30 @@ describe('gauntlet command (unit)', () => {
     expect(receipt.argv[0]).toBe('#');
   });
 
+  it('refuses the live run outside the LiteShip workspace without spawning anything', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-gauntlet-guard-'));
+    try {
+      writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'stranger-project', version: '0.0.0' }));
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(1);
+      expect(spawnSyncMock).not.toHaveBeenCalled();
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.status).toBe('failed');
+      expect(receipt.error).toMatch(/LiteShip-workspace verb/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('live run (spawn mocked, exit 0) emits an ok receipt with elapsedMs', async () => {
     spawnSyncMock.mockReturnValue({ status: 0 });
     const { result, stdout } = await captureStdout(() => gauntlet([]));
     expect(result).toBe(0);
-    expect(spawnSyncMock).toHaveBeenCalledWith('pnpm', ['run', 'gauntlet:full'], { stdio: 'inherit', shell: true });
+    expect(spawnSyncMock).toHaveBeenCalledWith('pnpm', ['run', 'gauntlet:full'], {
+      stdio: 'inherit',
+      shell: true,
+      cwd: process.cwd(),
+    });
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('ok');
     expect(receipt.dryRun).toBe(false);

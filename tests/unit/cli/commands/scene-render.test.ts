@@ -41,12 +41,15 @@ describe('scene render command — non-ffmpeg portions', () => {
     return JSON.parse(lines[lines.length - 1]!) as { command?: string; error: string };
   };
 
-  it('returns 1 with emitError when the --output path is empty', async () => {
+  it('empty --output derives <scene>.mp4 instead of erroring (still 1 here: scene absent)', async () => {
+    // Output derivation happens before the file-exists guard, so an empty
+    // output no longer fails with "missing --output" — the missing scene
+    // file is now the (correct) subject of the error.
     const { exit, stderr } = await captureCli(() => sceneRender('any.ts', '', false, { cwd: workDir }));
     expect(exit).toBe(1);
     const err = parseStderrReceipt(stderr);
     expect(err.command).toBe('scene.render');
-    expect(err.error).toMatch(/missing --output/);
+    expect(err.error).toMatch(/scene not found: any\.ts/);
   });
 
   it('returns 1 with emitError when the scene file does not exist', async () => {
@@ -100,6 +103,9 @@ describe('scene render command — non-ffmpeg portions', () => {
     expect(receipt.cached).toBe(true);
     expect(receipt.output).toBe(outPath);
     expect(receipt.frameCount).toBe(60);
+    // The 1280x720 engine default is observable in the receipt.
+    expect(receipt.width).toBe(1280);
+    expect(receipt.height).toBe(720);
   });
 
   it('cache stale: primed cache but output file deleted falls through to the render path (covers line 65 false-branch)', async () => {
