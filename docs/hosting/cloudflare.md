@@ -111,4 +111,4 @@ If you enable `client:worker` in `@czap/astro`, emit COOP/COEP on HTML responses
 
 ## KV trust boundary
 
-Treat KV as a host-controlled cache — not a secrets store. Boundary compile outputs are content-addressed; TTL and prefix are configurable on `cloudflareMiddleware`.
+Treat KV as a host-controlled cache — not a secrets store. Boundary compile outputs are content-addressed; TTL and prefix are configurable on `cloudflareMiddleware`. Deploys that change boundary content create new content addresses and the old keys are never re-read — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them.
