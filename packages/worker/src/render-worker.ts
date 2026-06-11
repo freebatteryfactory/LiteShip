@@ -219,7 +219,7 @@ async function runRender(config) {
 
   const totalFrames = Math.ceil((config.durationMs / 1000) * config.fps);
   const minFrameIntervalMs = targetFps > 0 ? 1000 / targetFps : 0;
-  const renderStart = Date.now();
+  let nextFrameAt = Date.now() + minFrameIntervalMs;
 
   try {
     for (let i = 0; i < totalFrames; i++) {
@@ -242,7 +242,6 @@ async function runRender(config) {
         // The await also yields the event loop, so stop messages are
         // processed during the pacing wait and honored by the
         // stopRequested check at the top of the next iteration.
-        const nextFrameAt = renderStart + (i + 1) * minFrameIntervalMs;
         const waitMs = nextFrameAt - Date.now();
         if (waitMs > 0) {
           await new Promise(function (r) { setTimeout(r, waitMs); });
@@ -251,6 +250,12 @@ async function runRender(config) {
           // saturated loop still processes stop messages.
           await new Promise(function (r) { setTimeout(r, 0); });
         }
+        // Rolling re-anchor: advance one budget from the LATER of the
+        // scheduled slot and now. Pacing is a minimum-spacing contract,
+        // not a fixed timeline — a frame that overran its budget forgives
+        // the debt instead of banking past deadlines that would emit the
+        // next frames back-to-back (catch-up burst).
+        nextFrameAt = Math.max(nextFrameAt, Date.now()) + minFrameIntervalMs;
       } else if (i % 10 === 9) {
         // Unpaced default: yield periodically to allow stop messages
         // to be processed; frame rate is the consumer's concern.

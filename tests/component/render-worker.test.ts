@@ -358,6 +358,31 @@ describe('render worker script frame pacing (targetFps)', () => {
     expect(workerSelf.completions()).toEqual([5]);
   });
 
+  test('an overrun frame forgives its debt instead of bursting catch-up frames', async () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    // 50fps pacing budget = 20ms per frame; 10 content frames available.
+    workerSelf.dispatch({ type: 'init', config: { targetFps: 50 } });
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 10, durationMs: 1000, width: 16, height: 16 } });
+    expect(workerSelf.frames()).toEqual([0]);
+
+    // Simulate a stall worth five budgets while frame 1's pacing timer is
+    // pending (Date jumps; the timer has not fired).
+    vi.setSystemTime(Date.now() + 100);
+    await vi.advanceTimersByTimeAsync(20);
+
+    // Fixed-timeline anchoring would now see deadlines 40/60/80/100 in the
+    // past and emit frames 2..5 back-to-back. The rolling re-anchor emits
+    // only frame 1 and re-schedules from the late emission time.
+    expect(workerSelf.frames()).toEqual([0, 1]);
+
+    // The next frame still owes a FULL budget from the late emission —
+    // pacing is a minimum-spacing contract, not a fixed schedule.
+    await vi.advanceTimersByTimeAsync(19);
+    expect(workerSelf.frames()).toEqual([0, 1]);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(workerSelf.frames()).toEqual([0, 1, 2]);
+  });
+
   test('stop-render interrupts a paced render during the pacing wait', async () => {
     const workerSelf = bootRenderWorkerScript(script);
     workerSelf.dispatch({ type: 'init', config: { targetFps: 50 } });
