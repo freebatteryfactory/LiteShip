@@ -64,8 +64,8 @@ import { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'lg'] as const,
-  thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const result = CSSCompiler.compile(boundary, {
   sm: { 'font-size': '14px' },
@@ -151,8 +151,8 @@ import { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'lg'] as const,
-  thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const result = CSSCompiler.compile(boundary, {
   sm: { '--gap': '8px' }, lg: { '--gap': '24px' },

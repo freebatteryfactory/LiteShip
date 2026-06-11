@@ -123,8 +123,8 @@ function toStructName(input: string): string {
  * import { WGSLCompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'viewport', states: ['mobile', 'desktop'] as const,
- *   thresholds: [0, 768],
+ *   input: 'viewport',
+ *   at: [[0, 'mobile'], [768, 'desktop']],
  * });
  * const result = WGSLCompiler.compile(boundary, {
  *   mobile: { blur_radius: 2.0, scale: 0.5 },
@@ -240,8 +240,8 @@ function serialize(result: WGSLCompileResult): string {
  * import { WGSLCompiler } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'viewport', states: ['sm', 'lg'] as const,
- *   thresholds: [0, 768],
+ *   input: 'viewport',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const result = WGSLCompiler.compile(boundary, {
  *   sm: { radius: 4 }, lg: { radius: 12 },
