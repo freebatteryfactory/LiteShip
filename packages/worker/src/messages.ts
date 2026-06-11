@@ -56,7 +56,12 @@ export interface BootstrapQuantizerRegistration {
   readonly boundaryId: ContentAddress;
   /** Ordered discrete state labels. */
   readonly states: readonly StateName[];
-  /** Threshold boundaries (length = states.length - 1). */
+  /**
+   * Lower-bound thresholds, one per state: `thresholds[i]` is the lower
+   * bound of `states[i]`, so `thresholds.length === states.length`
+   * (canonical contract — see `packages/quantizer/src/evaluate.ts`).
+   * A value below every threshold falls back to `states[0]`.
+   */
   readonly thresholds: Float64Array | readonly number[];
   /** Optional initial discrete state (defaults to the first state). */
   readonly initialState?: StateName;
