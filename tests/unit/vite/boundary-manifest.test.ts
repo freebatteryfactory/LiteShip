@@ -243,6 +243,24 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(second).toContain('viewport');
   });
 
+  test('@quantize inside .astro <style> blocks contributes to the manifest', async () => {
+    // The repo examples author @quantize in component styles — a project
+    // doing ONLY that must not get empty outputsByTier.
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'Page.astro',
+      '---\nconst x = 1;\n---\n<div class="grid" />\n<style>\n@quantize viewport {\n  compact { .grid { gap: 4px; } }\n}\n</style>\n',
+    );
+
+    const manifest = await collectBoundaryManifest(root);
+    const outputs = Object.values(manifest['viewport']!.outputsByTier)[0]!;
+    expect(outputs.containerQueries).toContain('gap: 4px');
+    expect(outputs.containerQueries).toContain('@container');
+  });
+
   test('duplicate declarations across CSS files merge deterministically and warn on conflicts', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

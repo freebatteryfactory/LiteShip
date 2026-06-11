@@ -103,7 +103,10 @@ function scanProject(projectRoot: string): ProjectScan {
       if (!isFile) continue;
       if (isBoundaryModuleFile(entry.name)) {
         boundaryFiles.push(entryPath);
-      } else if (entry.name.endsWith('.css')) {
+      } else if (entry.name.endsWith('.css') || entry.name.endsWith('.astro')) {
+        // .astro components carry @quantize inside <style> blocks (the
+        // repo examples author them this way) — the manifest scan must
+        // read them or those projects get empty outputsByTier.
         cssFiles.push(entryPath);
       }
     }
@@ -276,7 +279,12 @@ export async function collectBoundaryManifest(
   for (const cssFile of scan.cssFiles) {
     let css: string;
     try {
-      css = fs.readFileSync(cssFile, 'utf8');
+      const raw = fs.readFileSync(cssFile, 'utf8');
+      // For .astro components, the stylesheet text lives inside <style>
+      // blocks — extract and concatenate them; everything else is markup.
+      css = cssFile.endsWith('.astro')
+        ? Array.from(raw.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g), (m) => m[1] ?? '').join('\n')
+        : raw;
     } catch (error) {
       Diagnostics.warnOnce({
         source: DIAGNOSTIC_SOURCE,
