@@ -843,6 +843,154 @@ describe('@czap/vite plugin', () => {
     expect(output).toContain('@container viewport-height (width < 600px)');
   });
 
+  test('inserts the :root containment rule after a leading @charset/@import prologue', async () => {
+    // Regression (Codex P2): the sheet-level `:root` containment rule was
+    // prepended ahead of leading at-rules. Per the CSS spec `@charset`
+    // must be the very first thing in a sheet and `@import` must precede
+    // all style rules — a leading `:root` rule invalidates them (browsers
+    // ignore misplaced imports).
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'narrow'],
+        [768, 'wide'],
+      ] as const,
+    });
+    writeModule(cssDir, 'boundaries.ts', 'layout', boundary);
+
+    const css = `@charset "UTF-8";
+@import url("./reset.css");
+
+@quantize layout {
+  narrow {
+    display: block;
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const transformed = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      },
+      css,
+      join(cssDir, 'app.css'),
+    );
+
+    expect(warnings).toEqual([]);
+    const output = transformed!.code;
+
+    // The prologue stays first, in order, with the containment rule after it.
+    expect(output.startsWith('@charset "UTF-8";')).toBe(true);
+    const importIdx = output.indexOf('@import url("./reset.css");');
+    const rootIdx = output.indexOf(':root {');
+    expect(importIdx).toBeGreaterThan(-1);
+    expect(rootIdx).toBeGreaterThan(importIdx);
+    expect(output).toContain('container-name: viewport-width');
+    expect(output).toContain('@container viewport-width (width < 768px)');
+  });
+
+  test('keeps the :root containment rule first when the sheet has no at-rule prologue', async () => {
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'narrow'],
+        [768, 'wide'],
+      ] as const,
+    });
+    writeModule(cssDir, 'boundaries.ts', 'layout', boundary);
+
+    const css = `.card { color: red; }
+
+@quantize layout {
+  narrow {
+    display: block;
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const transformed = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      },
+      css,
+      join(cssDir, 'app.css'),
+    );
+
+    expect(warnings).toEqual([]);
+    expect(transformed!.code.startsWith(':root {')).toBe(true);
+  });
+
+  test('decoy @import markers inside comments and strings do not displace the containment rule', async () => {
+    // A naive prologue scan over the RAW source would treat the `@import`
+    // text inside the comment/string as prologue rules and splice the
+    // `:root` rule into the middle of them. The scan must run on the
+    // comment/string-blanked copy.
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'narrow'],
+        [768, 'wide'],
+      ] as const,
+    });
+    writeModule(cssDir, 'boundaries.ts', 'layout', boundary);
+
+    const css = `/* @import "fake.css"; */
+.decoy::before { content: '@import "also-fake.css";'; }
+
+@quantize layout {
+  narrow {
+    display: block;
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const transformed = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      },
+      css,
+      join(cssDir, 'app.css'),
+    );
+
+    expect(warnings).toEqual([]);
+    const output = transformed!.code;
+
+    // No real prologue -> containment first, decoys untouched after it.
+    expect(output.startsWith(':root {')).toBe(true);
+    expect(output).toContain('/* @import "fake.css"; */');
+    expect(output).toContain(`content: '@import "also-fake.css";'`);
+  });
+
   test('leaves string-value at-rule decoys untouched while transforming the real blocks after them', async () => {
     // Regression (Codex P2): a `content: "@token accent {"` declaration
     // must neither parse as a block nor be spliced out as the

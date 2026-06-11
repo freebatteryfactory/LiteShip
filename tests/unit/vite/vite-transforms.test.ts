@@ -19,6 +19,7 @@ import {
   viewportContainmentRule,
 } from '@czap/vite';
 import { Boundary } from '@czap/core';
+import { blankCssCommentsAndStrings, cssPrologueEnd } from '../../../packages/vite/src/css-scan.js';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
 import { captureDiagnostics } from '../../helpers/diagnostics.js';
@@ -1024,6 +1025,60 @@ describe('viewport containment aggregation', () => {
         expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
       ]),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Leading at-rule prologue detection (Codex P2 regression)
+//
+// The sheet-level `:root` containment rule must be inserted AFTER any
+// leading `@charset` / `@import` / `@namespace` / statement-form `@layer`
+// rules: `@charset` must be the very first thing in a sheet and `@import`
+// must precede all style rules, so a prepended `:root` rule would make
+// browsers ignore them. `cssPrologueEnd` locates the insertion offset on
+// the comment/string-blanked copy of the sheet.
+// ---------------------------------------------------------------------------
+
+describe('cssPrologueEnd', () => {
+  const prologueEnd = (css: string): number => cssPrologueEnd(blankCssCommentsAndStrings(css));
+
+  test('returns the offset after a leading @charset/@import/@layer-statement run', () => {
+    const prologue = `@charset "UTF-8";\n@import url("./reset.css");\n@layer base, components;\n@import "./theme.css" layer(base);`;
+    const css = `${prologue}\n\n.card { color: red; }\n`;
+
+    expect(prologueEnd(css)).toBe(prologue.length);
+  });
+
+  test('returns 0 for a sheet with no prologue', () => {
+    expect(prologueEnd('.card { color: red; }\n')).toBe(0);
+    expect(prologueEnd('')).toBe(0);
+  });
+
+  test('block-form @layer ends the prologue instead of being consumed', () => {
+    const prologue = `@import "./reset.css";`;
+    const css = `${prologue}\n@layer base {\n  .card { color: red; }\n}\n`;
+
+    expect(prologueEnd(css)).toBe(prologue.length);
+  });
+
+  test('decoy @import markers inside comments and strings do not count as prologue', () => {
+    const commentDecoy = `/* @import "fake.css"; */\n.card { color: red; }\n`;
+    expect(prologueEnd(commentDecoy)).toBe(0);
+
+    const stringDecoy = `.decoy::before { content: '@import "fake.css";'; }\n`;
+    expect(prologueEnd(stringDecoy)).toBe(0);
+  });
+
+  test('comments between prologue rules are skipped, and a decoy after the prologue is not consumed', () => {
+    const prologue = `@charset "UTF-8";\n/* reset first */\n@import url("./reset.css");`;
+    const css = `${prologue}\n/* @import "later-decoy.css"; */\n.card { color: red; }\n`;
+
+    expect(prologueEnd(css)).toBe(prologue.length);
+  });
+
+  test('an unterminated trailing at-rule marker is not part of the prologue', () => {
+    const prologue = `@import "./reset.css";`;
+    expect(prologueEnd(`${prologue}\n@import "./broken.css"`)).toBe(prologue.length);
   });
 });
 

@@ -122,6 +122,67 @@ export function skipWsAndComments(css: string, pos: number): number {
   return pos;
 }
 
+/**
+ * Leading at-rules that must stay at the top of a stylesheet: `@charset`
+ * (must be the very first thing), `@import` / `@namespace` (must precede
+ * all style rules), and statement-form `@layer` (allowed between
+ * imports). The trailing guard rejects longer identifiers such as
+ * `@import-fake`.
+ */
+const PROLOGUE_AT_RULE = /@(?:charset|import|namespace|layer)(?![a-zA-Z0-9_-])/iy;
+
+/**
+ * Offset immediately after a stylesheet's leading at-rule prologue: the
+ * run of `@charset`, `@import`, `@namespace`, and statement-form
+ * `@layer` rules that the CSS spec requires to precede all style rules.
+ * Block-form `@layer name { ... }` ends the prologue (a `{` before the
+ * terminating `;`), as does any other rule or declaration.
+ *
+ * Pass the comment/string-blanked copy of the sheet (see
+ * {@link blankCssCommentsAndStrings}) so `@import` text inside comments
+ * or string values never counts as a prologue rule. Returned offsets map
+ * 1:1 onto the original source.
+ *
+ * Used to insert generated sheet-level rules (e.g. the `:root` viewport
+ * containment rule) AFTER the prologue — a style rule placed ahead of
+ * `@charset` / `@import` invalidates them (browsers ignore misplaced
+ * imports).
+ */
+export function cssPrologueEnd(blanked: string): number {
+  let end = 0;
+  let pos = 0;
+
+  for (;;) {
+    pos = skipWsAndComments(blanked, pos);
+    PROLOGUE_AT_RULE.lastIndex = pos;
+    if (PROLOGUE_AT_RULE.exec(blanked) === null) return end;
+
+    // Scan to the rule's terminating `;` at paren depth 0. Hitting `{`
+    // or `}` first means a block rule (e.g. `@layer base { ... }`) or
+    // malformed input — either way the prologue is over.
+    let scan = PROLOGUE_AT_RULE.lastIndex;
+    let parenDepth = 0;
+    let semi = -1;
+    while (scan < blanked.length) {
+      const ch = blanked[scan]!;
+      if (ch === '(') parenDepth++;
+      else if (ch === ')') parenDepth--;
+      else if (parenDepth === 0) {
+        if (ch === ';') {
+          semi = scan;
+          break;
+        }
+        if (ch === '{' || ch === '}') break;
+      }
+      scan++;
+    }
+    if (semi === -1) return end;
+
+    pos = semi + 1;
+    end = pos;
+  }
+}
+
 /** Default `property-name` pattern: standard and custom CSS properties. */
 const DEFAULT_PROP_PATTERN = /^[a-zA-Z-][a-zA-Z0-9-]*$/;
 

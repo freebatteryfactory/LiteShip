@@ -15,7 +15,7 @@ import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
-import { blankCssCommentsAndStrings } from './css-scan.js';
+import { blankCssCommentsAndStrings, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
@@ -458,7 +458,17 @@ export function plugin(config?: PluginConfig): Plugin {
 
         const containment = viewportContainmentRule(viewportContainerNames);
         if (containment) {
-          transformed = `${containment}\n\n${transformed}`;
+          // CSS requires `@charset` to be the very first thing in a sheet
+          // and `@import` / `@namespace` to precede all style rules —
+          // prepending the `:root` containment rule ahead of them would
+          // make browsers ignore the imports. Insert it AFTER the leading
+          // at-rule prologue instead (located on a comment/string-blanked
+          // copy, so decoy markers inside comments or strings never count).
+          const insertAt = cssPrologueEnd(blankCssCommentsAndStrings(transformed));
+          transformed =
+            insertAt === 0
+              ? `${containment}\n\n${transformed}`
+              : `${transformed.slice(0, insertAt)}\n\n${containment}\n${transformed.slice(insertAt)}`;
         }
       }
 
