@@ -8,7 +8,7 @@
  */
 
 import { afterEach, describe, expect, test } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
@@ -135,6 +135,44 @@ describe('collectBoundaryManifest', () => {
 
     expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
     expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
+  });
+
+  test('scan terminates on circular directory symlinks and still derives the right entries', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
+    try {
+      // Circular link: src/loop -> root, so a walk without a visited set
+      // would recurse root -> src -> loop -> src -> ... forever.
+      symlinkSync(root, join(srcDir, 'loop'), 'dir');
+    } catch {
+      // Windows without symlink privilege -- the plain walks above cover the scan.
+      return;
+    }
+
+    const manifest = await collectBoundaryManifest(root);
+
+    expect(Object.keys(manifest)).toEqual(['viewport']);
+    expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
+    expect(Object.keys(manifest['viewport']!.outputsByTier)).toHaveLength(enumerateTierKeys().length);
+  });
+
+  test('follows symlinked directories to boundary definitions outside the project tree', async () => {
+    const root = makeTempDir();
+    const external = makeTempDir();
+    writeModule(external, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(join(root, 'src'), 'styles.css', QUANTIZE_CSS);
+    try {
+      symlinkSync(external, join(root, 'src', 'defs'), 'dir');
+    } catch {
+      // Windows without symlink privilege -- the boundaryDir override test covers external defs.
+      return;
+    }
+
+    const manifest = await collectBoundaryManifest(root);
+
+    expect(manifest['viewport']!.id).toBe(referenceBoundary.id);
   });
 
   test('@quantize block referencing an unknown boundary is skipped with a diagnostic, not crashed on', async () => {
