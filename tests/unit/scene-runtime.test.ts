@@ -9,8 +9,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { Effect } from 'effect';
-import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule } from '@czap/scene';
-import type { SceneContract, MixReceipt } from '@czap/scene';
+import { Track, compileScene, SceneRuntime, sceneRuntimeCapsule, Beat, pulse, syncTo } from '@czap/scene';
+import type { SceneContract, MixReceipt, TrackId } from '@czap/scene';
 
 function buildScene(): SceneContract {
   const hero = Track.videoId('hero');
@@ -188,6 +188,55 @@ describe('SceneRuntime', () => {
         // Sync overwrites — final intensity is Sync's, not Effect's 10/30.
         expect(intensity).not.toBeCloseTo(10 / 30, 5);
       }
+    } finally {
+      await handle.release();
+    }
+  });
+
+  it('preserves the envelope contribution when an effect declares BOTH syncTo and envelope (Codex P2)', async () => {
+    // bpm 120 @ 60fps → Beat(1) = 30 frames, so pulse.every(Beat(1))
+    // peaks (factor 1 + amplitude = 1.5) at frames 0, 30, 60, …
+    // A scene beat at 500 ms lands exactly on frame 30 → sync decay = 1.
+    //
+    // At frame 30 the three candidate semantics produce DISTINCT values:
+    //   - sync clobbers envelope (the bug):     1.0
+    //   - envelope only (EffectSystem's ramp):  (30/60) × 1.5 = 0.75
+    //   - composed (fix — decay × envelope):    1.0 × 1.5    = 1.5
+    // Asserting 1.5 proves both contributions survive the tick.
+    const heroId = Track.videoId('hero');
+    const bedId = Track.audioId('bed');
+    const scene: SceneContract = {
+      name: 'sync-envelope-compose',
+      duration: 2000,
+      fps: 60,
+      bpm: 120,
+      tracks: [
+        Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer' } }),
+        Track.audio('bed', { from: 0, to: 120, source: 'bed', mix: { volume: -3 } }),
+        Track.effect('beat-pulse', {
+          from: 0,
+          to: 60,
+          kind: 'pulse',
+          target: heroId,
+          syncTo: syncTo.beat(bedId),
+          envelope: pulse.every(Beat(1), { amplitude: 0.5 }),
+        }),
+      ],
+      invariants: [],
+      budgets: { p95FrameMs: 16 },
+      site: ['node'],
+      beats: [{ kind: 'beat', timeMs: 500, strength: 1 }],
+    };
+    const compiled = compileScene(scene);
+    const handle = await SceneRuntime.build(compiled);
+    try {
+      await handle.tick(500); // frame 30
+      expect(handle.currentFrame()).toBe(30);
+      const synced = await Effect.runPromise(handle.world.query('SyncAnchor'));
+      expect(synced.length).toBe(1);
+      const intensity = synced[0]?.components.get('_intensity');
+      expect(typeof intensity).toBe('number');
+      expect(intensity as number).toBeCloseTo(1.5, 5);
     } finally {
       await handle.release();
     }

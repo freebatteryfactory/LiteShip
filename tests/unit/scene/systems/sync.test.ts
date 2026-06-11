@@ -72,6 +72,73 @@ describe('SyncSystem (world-query path)', () => {
     await Effect.runPromise(Effect.scoped(program));
   });
 
+  // Codex P2 regression: an effect declaring BOTH syncTo and envelope
+  // compiles to an entity carrying SyncAnchor + Envelope + FrameRange.
+  // SyncSystem must COMPOSE (decay × envelopeFactor) instead of
+  // clobbering the envelope with the bare decay — sync sets the base,
+  // the envelope multiplies it (Spec 1 §5.4).
+  it('multiplies beat decay by a pulse envelope when the SyncAnchor entity also carries Envelope + FrameRange', async () => {
+    const program = Effect.gen(function* () {
+      const world = yield* World.make();
+      yield* world.spawn({
+        SyncAnchor: { anchor: 'bed', mode: 'beat' },
+        // periodFrames 30 → at frame 30 the pulse is at its peak (local
+        // phase 0) → factor = 1 + amplitude = 1.5.
+        Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
+        FrameRange: { from: 0, to: 60 },
+      });
+      // Beat exactly at frame 30 (500 ms @ 60fps) → decay = exp(0) = 1.
+      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.addSystem(SyncSystem(30, 60));
+      yield* world.tick();
+      const fx = yield* world.query('SyncAnchor');
+      const intensity = fx[0]?.components.get('_intensity');
+      // decay(1) × pulse factor(1.5) = 1.5 — impossible from decay alone
+      // (decay ≤ 1), so this asserts the envelope contribution survived.
+      expect(intensity as number).toBeCloseTo(1.5, 5);
+    });
+    await Effect.runPromise(Effect.scoped(program));
+  });
+
+  it('gates beat decay through a fade envelope (decay < 1 composes too)', async () => {
+    const program = Effect.gen(function* () {
+      const world = yield* World.make();
+      yield* world.spawn({
+        SyncAnchor: { anchor: 'bed', mode: 'beat' },
+        // linear-in over 60 frames → at frame 30 the factor is 0.5.
+        Envelope: { curve: 'linear-in', spanFrames: 60 },
+        FrameRange: { from: 0, to: 60 },
+      });
+      // Beats at 0 and 1000 ms; frame 30 (500 ms) → decay = exp(-2).
+      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 0, strength: 1 } });
+      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 1000, strength: 1 } });
+      yield* world.addSystem(SyncSystem(30, 60));
+      yield* world.tick();
+      const fx = yield* world.query('SyncAnchor');
+      const intensity = fx[0]?.components.get('_intensity');
+      expect(intensity as number).toBeCloseTo(Math.exp(-2) * 0.5, 5);
+    });
+    await Effect.runPromise(Effect.scoped(program));
+  });
+
+  it('falls back to plain decay when an Envelope is present but FrameRange is missing', async () => {
+    const program = Effect.gen(function* () {
+      const world = yield* World.make();
+      yield* world.spawn({
+        SyncAnchor: { anchor: 'bed', mode: 'beat' },
+        Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
+        // no FrameRange — nothing to evaluate the envelope against.
+      });
+      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.addSystem(SyncSystem(30, 60));
+      yield* world.tick();
+      const fx = yield* world.query('SyncAnchor');
+      const intensity = fx[0]?.components.get('_intensity');
+      expect(intensity as number).toBeCloseTo(1, 5);
+    });
+    await Effect.runPromise(Effect.scoped(program));
+  });
+
   it('skips Beat entities whose Beat component is missing or has a non-numeric timeMs', async () => {
     // Forces the L48-49 / L51 guard branches: a Beat-tagged entity with
     // an unrelated component shape, plus another with a non-numeric
