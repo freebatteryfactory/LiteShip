@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ease } from '@czap/scene';
+import { ease, easeFnFor } from '@czap/scene';
 
 describe('ease', () => {
   it('cubic: 0 -> 0, 1 -> 1, monotonic increasing', () => {
@@ -24,5 +24,22 @@ describe('ease', () => {
     expect(step(1)).toBe(1);
     const distinct = new Set([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1].map(step)).size;
     expect(distinct).toBeLessThanOrEqual(9);
+  });
+});
+
+describe('easeFnFor', () => {
+  it('maps each named tag to its catalog function', () => {
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(easeFnFor('cubic')(t)).toBe(ease.cubic(t));
+      expect(easeFnFor('spring')(t)).toBe(ease.spring(t));
+      expect(easeFnFor('bounce')(t)).toBe(ease.bounce(t));
+    }
+  });
+
+  it('builds the step quantizer from a { stepped } tag', () => {
+    const fn = easeFnFor({ stepped: 4 });
+    expect(fn(0.4)).toBe(0.25);
+    expect(fn(0.9)).toBe(0.75);
+    expect(fn(1)).toBe(1);
   });
 });

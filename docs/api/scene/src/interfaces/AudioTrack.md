@@ -4,19 +4,35 @@
 
 [LiteShip](../../../modules.md) / [scene/src](../README.md) / AudioTrack
 
-# Interface: AudioTrack
+# Interface: AudioTrack\<M\>
 
-Defined in: [scene/src/contract.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L33)
+Defined in: [scene/src/contract.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L54)
 
 Audio track — plays an asset with optional mix metadata.
 
+## Type Parameters
+
+### M
+
+`M` *extends* [`FrameMark`](../type-aliases/FrameMark.md) = [`FrameMark`](../type-aliases/FrameMark.md)
+
 ## Properties
+
+### envelope?
+
+> `readonly` `optional` **envelope?**: `TrackEnvelope`
+
+Defined in: [scene/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L66)
+
+Optional gain automation — e.g. `fade.out(Beat(2))`. Compiled to an `Envelope` component AudioSystem reads each tick (written as `_gain`).
+
+***
 
 ### from
 
-> `readonly` **from**: `number`
+> `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L36)
+Defined in: [scene/src/contract.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L57)
 
 ***
 
@@ -24,7 +40,7 @@ Defined in: [scene/src/contract.ts:36](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
 
-Defined in: [scene/src/contract.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L35)
+Defined in: [scene/src/contract.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L56)
 
 ***
 
@@ -32,7 +48,7 @@ Defined in: [scene/src/contract.ts:35](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **kind**: `"audio"`
 
-Defined in: [scene/src/contract.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L34)
+Defined in: [scene/src/contract.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L55)
 
 ***
 
@@ -40,7 +56,7 @@ Defined in: [scene/src/contract.ts:34](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **mix?**: `object`
 
-Defined in: [scene/src/contract.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L39)
+Defined in: [scene/src/contract.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L60)
 
 #### pan?
 
@@ -64,12 +80,12 @@ Defined in: [scene/src/contract.ts:39](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **source**: `string`
 
-Defined in: [scene/src/contract.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L38)
+Defined in: [scene/src/contract.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L59)
 
 ***
 
 ### to
 
-> `readonly` **to**: `number`
+> `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L37)
+Defined in: [scene/src/contract.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L58)

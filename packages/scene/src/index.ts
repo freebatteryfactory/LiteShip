@@ -7,6 +7,7 @@
 
 export type {
   SceneContract,
+  ResolvedSceneContract,
   SceneBeat,
   VideoTrack,
   AudioTrack,
@@ -14,6 +15,7 @@ export type {
   EffectTrack,
   TrackId,
   TrackKind,
+  FrameMark,
   SceneInvariant,
 } from './contract.js';
 
@@ -44,13 +46,13 @@ export { SyncSystem } from './systems/sync.js';
 export { PassThroughMixer } from './systems/pass-through-mixer.js';
 export type { MixReceipt } from './systems/pass-through-mixer.js';
 
-export { Beat, resolveBeat } from './sugar/beat.js';
-export type { BeatHandle } from './sugar/beat.js';
+export { Beat, resolveBeat, resolveFrameMark, addFrameMarks } from './sugar/beat.js';
+export type { BeatHandle, FrameMarkSum } from './sugar/beat.js';
 export { syncTo } from './sugar/sync-to.js';
-export { fade, pulse } from './sugar/envelope.js';
-export type { FadeEnvelope, PulseEnvelope } from './sugar/envelope.js';
-export { ease } from './sugar/ease.js';
-export type { EaseFn } from './sugar/ease.js';
+export { fade, pulse, resolveEnvelope, envelopeFactor } from './sugar/envelope.js';
+export type { FadeEnvelope, PulseEnvelope, TrackEnvelope, ResolvedEnvelope } from './sugar/envelope.js';
+export { ease, easeFnFor } from './sugar/ease.js';
+export type { EaseFn, EaseName, EaseTag } from './sugar/ease.js';
 export { Layout } from './sugar/layout.js';
 export { Scene } from './include.js';
 export type { SceneSubscenePartial } from './include.js';
