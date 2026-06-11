@@ -130,6 +130,10 @@ export interface SceneContract<M extends FrameMark = FrameMark> {
   readonly duration: number;
   readonly fps: number;
   readonly bpm: number;
+  /** Optional render width in pixels. Render hosts fall back to 1280 when absent. */
+  readonly width?: number;
+  /** Optional render height in pixels. Render hosts fall back to 720 when absent. */
+  readonly height?: number;
   readonly tracks: readonly Track<M>[];
   readonly invariants: readonly SceneInvariant[];
   readonly budgets: { readonly p95FrameMs: number; readonly memoryMb?: number };

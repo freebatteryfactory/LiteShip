@@ -7,7 +7,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { HandledCommand } from '../registry.js';
+import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
@@ -77,6 +77,7 @@ export const capsuleVerifyCommand: HandledCommand = {
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
+    requires: ['runVitest'] satisfies readonly CommandCapability[],
     outputSchema: { type: 'object', required: ['capsuleId'], properties: { capsuleId: { type: 'string' } } },
     annotations: { mcpExposed: true, group: 'manifest' },
   },
@@ -87,7 +88,8 @@ export const capsuleVerifyCommand: HandledCommand = {
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.verify', `capsule not found: ${id}`, 1);
     if (!entry.generated) return failed('capsule.verify', `capsule has no generated tests: ${id}`, 2);
-    if (!context.runVitest) return failed('capsule.verify', 'vitest runner unavailable', 2);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.runVitest) return capabilityUnavailable('capsule.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile]);
     if (exitCode !== 0) {
       return failed('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);

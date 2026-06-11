@@ -139,4 +139,28 @@ describe('@czap/command scene.render', () => {
     );
     expect(r.exitCode).toBe(1);
   });
+
+  it('contract width/height thread through to renderScene; absent dims stay absent (host default)', async () => {
+    const seen: Array<Record<string, unknown>> = [];
+    const renderContext = (mod: Record<string, unknown>) => ({
+      fileExists: () => true,
+      cache: { read: () => null, write: () => {} },
+      loadSceneModule: async () => mod,
+      renderScene: async (params: Record<string, unknown>) => {
+        seen.push(params);
+        return { frameCount: 1, elapsedMs: 1 };
+      },
+    });
+    await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      renderContext({ cap: RENDER_MOD.cap, contract: { ...RENDER_MOD.contract, width: 640, height: 360 } }),
+    );
+    expect(seen[0]).toMatchObject({ width: 640, height: 360 });
+    await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      renderContext(RENDER_MOD),
+    );
+    expect('width' in seen[1]!).toBe(false);
+    expect('height' in seen[1]!).toBe(false);
+  });
 });

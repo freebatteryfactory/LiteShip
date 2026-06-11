@@ -65,10 +65,26 @@ describe('@czap/command asset.analyze', () => {
   it('asset source not found → failed exit 1', async () => {
     const r = await assetAnalyzeCommand.handler(
       { name: 'asset.analyze', args: { asset: 'intro-bed', projection: 'beat' } },
-      { manifestSource: () => MANIFEST, loadAssetBytes: () => null, cache: { read: () => null, write: () => {} } },
+      {
+        manifestSource: () => MANIFEST,
+        loadAssetBytes: () => null,
+        runAudioProjection: async () => 0,
+        cache: { read: () => null, write: () => {} },
+      },
     );
     expect(r.status).toBe('failed');
     expect(r.exitCode).toBe(1);
+  });
+
+  it('missing loadAssetBytes/runAudioProjection capabilities → capability_unavailable exit 2', async () => {
+    const r = await assetAnalyzeCommand.handler(
+      { name: 'asset.analyze', args: { asset: 'intro-bed', projection: 'beat' } },
+      { manifestSource: () => MANIFEST, cache: { read: () => null, write: () => {} } },
+    );
+    expect(r.exitCode).toBe(2);
+    const payload = r.payload as { error: string; missing: string[] };
+    expect(payload.error).toBe('capability_unavailable');
+    expect(payload.missing).toEqual(['loadAssetBytes', 'runAudioProjection']);
   });
 });
 

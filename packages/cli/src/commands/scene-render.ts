@@ -21,8 +21,9 @@ import { emit, emitError } from '../receipts.js';
 import type { SceneRenderReceipt } from '../receipts.js';
 import { tryReadCache, writeCache } from '../idempotency.js';
 
-const WIDTH = 1280;
-const HEIGHT = 720;
+/** Render-dimension fallbacks when the scene contract carries no width/height. */
+const DEFAULT_WIDTH = 1280;
+const DEFAULT_HEIGHT = 720;
 
 function renderContext(opts: { readonly cwd?: string }): CommandContext {
   return {
@@ -34,18 +35,13 @@ function renderContext(opts: { readonly cwd?: string }): CommandContext {
     },
     loadSceneModule: async (scenePath) =>
       (await import(/* @vite-ignore */ pathToFileURL(resolve(scenePath)).href)) as Record<string, unknown>,
-    renderScene: ({ fps, durationMs, output }) =>
+    renderScene: ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) =>
       Effect.runPromise(
         Effect.scoped(
           Effect.gen(function* () {
             const compositor = yield* Compositor.create();
-            const renderer = VideoRenderer.make(
-              { fps, width: WIDTH, height: HEIGHT, durationMs: durationMs as Millis },
-              compositor,
-            );
-            return yield* Effect.promise(() =>
-              renderWithFfmpeg(renderer.frames(), { output, width: WIDTH, height: HEIGHT, fps }),
-            );
+            const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
+            return yield* Effect.promise(() => renderWithFfmpeg(renderer.frames(), { output, width, height, fps }));
           }),
         ),
       ),

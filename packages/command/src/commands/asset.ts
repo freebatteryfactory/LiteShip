@@ -8,7 +8,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { HandledCommand } from '../registry.js';
+import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest } from './manifest.js';
 
 type Projection = 'beat' | 'onset' | 'waveform';
@@ -30,6 +30,7 @@ export const assetAnalyzeCommand: HandledCommand = {
   descriptor: {
     name: 'asset.analyze',
     summary: 'Run a cachedProjection (beat / onset / waveform) over an asset.',
+    requires: ['loadAssetBytes', 'runAudioProjection'] satisfies readonly CommandCapability[],
     inputSchema: {
       type: 'object',
       required: ['asset', 'projection'],
@@ -67,9 +68,15 @@ export const assetAnalyzeCommand: HandledCommand = {
       };
     }
 
-    const bytes = context.loadAssetBytes?.(assetId, entry.source);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.loadAssetBytes || !context.runAudioProjection) {
+      return capabilityUnavailable(
+        'asset.analyze',
+        (['loadAssetBytes', 'runAudioProjection'] as const).filter((capability) => !context[capability]),
+      );
+    }
+    const bytes = context.loadAssetBytes(assetId, entry.source);
     if (!bytes) return failed('asset.analyze', `asset source file not found for: ${assetId}`, 1);
-    if (!context.runAudioProjection) return failed('asset.analyze', 'audio projection unavailable', 1);
     // Pass the asset id so the adapter can resolve the asset's own decoder
     // (AssetDecl.decoder override) instead of assuming the audio built-in.
     const markerCount = await context.runAudioProjection(bytes, projection, assetId);
@@ -115,7 +122,9 @@ export const assetVerifyCommand: HandledCommand = {
       };
     }
 
-    if (!context.runVitest) return failed('asset.verify', 'vitest runner unavailable', 2);
+    // runVitest is only needed when generated tests exist, so it is NOT in
+    // `requires` — the conditional guard reuses the same structured failure.
+    if (!context.runVitest) return capabilityUnavailable('asset.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([testFile]);
     if (exitCode !== 0) {
       return failed('asset.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);

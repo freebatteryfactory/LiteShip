@@ -8,7 +8,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { HandledCommand } from '../registry.js';
+import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
@@ -43,6 +43,7 @@ export const sceneVerifyCommand: HandledCommand = {
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
     inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    requires: ['fileExists', 'loadSceneModule', 'runVitest'] satisfies readonly CommandCapability[],
     outputSchema: {
       type: 'object',
       required: ['sceneId', 'generatedTests'],
@@ -63,7 +64,8 @@ export const sceneVerifyCommand: HandledCommand = {
     const entry = manifest.capsules.find((c) => c.name === cap.name);
     if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 
-    if (!context.runVitest) return failed('scene.verify', 'vitest runner unavailable', 2);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.runVitest) return capabilityUnavailable('scene.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile, entry.generated.benchFile]);
     if (exitCode !== 0) {
       return failed('scene.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);
@@ -83,6 +85,7 @@ export const sceneCompileCommand: HandledCommand = {
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
     inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    requires: ['fileExists', 'loadSceneModule'] satisfies readonly CommandCapability[],
     outputSchema: {
       type: 'object',
       required: ['sceneId', 'trackCount', 'durationMs'],
@@ -128,6 +131,7 @@ export const sceneRenderCommand: HandledCommand = {
       required: ['scene', 'output'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
     },
+    requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
     outputSchema: {
       type: 'object',
       required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
@@ -169,13 +173,21 @@ export const sceneRenderCommand: HandledCommand = {
     if (!cap || !contract || typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
       return failed('scene.render', 'no sceneComposition capsule or contract exported', 1);
     }
-    if (!context.renderScene) return failed('scene.render', 'render backend unavailable', 5);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.renderScene) return capabilityUnavailable('scene.render', ['renderScene']);
+
+    // Optional contract render dimensions thread through to the host backend
+    // (which owns the 1280x720 fallback) — derivation over decision.
+    const width = typeof contract.width === 'number' ? contract.width : undefined;
+    const height = typeof contract.height === 'number' ? contract.height : undefined;
 
     try {
       const { frameCount, elapsedMs } = await context.renderScene({
         fps: contract.fps,
         durationMs: contract.duration,
         output,
+        ...(width !== undefined ? { width } : {}),
+        ...(height !== undefined ? { height } : {}),
       });
       const payload = { sceneId: cap.id, output, frameCount, elapsedMs };
       context.cache?.write(key, payload);

@@ -7,7 +7,7 @@
  * @module
  */
 import type { CapsuleCommandInvocation, CapsuleCommandResult } from '@czap/core';
-import type { CommandContext, CommandRegistry } from './registry.js';
+import { capabilityUnavailable, type CommandCapability, type CommandContext, type CommandRegistry } from './registry.js';
 
 interface CommandDispatcherShape {
   readonly dispatch: (invocation: CapsuleCommandInvocation, context: CommandContext) => Promise<CapsuleCommandResult>;
@@ -37,6 +37,15 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
           exitCode: 1,
           payload: { error: 'no_registry_handler', name: invocation.name },
         };
+      }
+      // Declared capability requirements (descriptor `requires`) are enforced
+      // here, once, so every command fails the same way: structured payload
+      // naming the missing capabilities, exit 2 (see capabilityUnavailable).
+      const missing = (command.descriptor.requires ?? []).filter(
+        (capability) => (context as Record<string, unknown>)[capability] === undefined,
+      ) as readonly CommandCapability[];
+      if (missing.length > 0) {
+        return capabilityUnavailable(invocation.name, missing);
       }
       return command.handler(invocation, context);
     },
