@@ -46,7 +46,7 @@
       "CapLevel": "#",
       "CapSet": "#",
       "Quantizer": "#",
-      "CzapValidationError": "#"
+      "CzapValidationError": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md"
     },
     "@czap/detect": {
       "ExtendedDeviceCapabilities": "#"
