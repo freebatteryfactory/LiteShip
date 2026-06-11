@@ -11,6 +11,7 @@
 import type { Theme } from '@czap/core';
 import { ThemeCSSCompiler } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
+import { blankCssComments, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,50 +39,37 @@ export interface ThemeBlock {
 /**
  * Parse every `@theme` block from CSS source text.
  *
- * Grammar:
+ * Grammar (the block may collapse onto a single line and may sit
+ * mid-line, e.g. inside compiler-re-serialized CSS):
  *
  * ```css
  * @theme name {
  *   tokenName: value;
  * }
  * ```
+ *
+ * At-rule markers are located on a comment-blanked copy of the source
+ * (same offsets) so commented-out blocks never match; declarations are
+ * parsed character-by-character from the original source. Token names
+ * additionally accept underscores (e.g. `accent_color`).
  */
 export function parseThemeBlocks(css: string, sourceFile: string): readonly ThemeBlock[] {
+  const normalized = normalizeCssLineEndings(css);
+  const blanked = blankCssComments(normalized);
   const blocks: ThemeBlock[] = [];
-  const lines = normalizeCssLineEndings(css).split('\n');
-  let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i]!;
-    const atMatch = line.match(/^\s*@theme\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/);
+  const atRule = /@theme\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;
+  const themePropPattern = /^[a-zA-Z-][a-zA-Z0-9_-]*$/;
 
-    if (atMatch) {
-      const themeName = atMatch[1]!;
-      const blockStartLine = i + 1; // 1-indexed
-      const declarations: Record<string, string> = {};
+  let match: RegExpExecArray | null;
+  while ((match = atRule.exec(blanked)) !== null) {
+    const themeName = match[1]!;
+    const blockStartLine = lineOfOffset(normalized, match.index);
 
-      i++; // advance past @theme line
+    const { props, end } = parseFlatDeclarations(normalized, match.index + match[0].length, themePropPattern);
 
-      while (i < lines.length) {
-        const currentLine = lines[i]!.trim();
-
-        // Closing brace for @theme block
-        if (currentLine === '}') {
-          i++;
-          break;
-        }
-
-        const propMatch = currentLine.match(/^([a-zA-Z-][a-zA-Z0-9_-]*)\s*:\s*(.+?)\s*;?\s*$/);
-        if (propMatch) {
-          declarations[propMatch[1]!] = propMatch[2]!.replace(/;$/, '').trim();
-        }
-        i++;
-      }
-
-      blocks.push({ themeName, declarations, sourceFile, line: blockStartLine });
-    } else {
-      i++;
-    }
+    blocks.push({ themeName, declarations: props, sourceFile, line: blockStartLine });
+    atRule.lastIndex = end;
   }
 
   return blocks;

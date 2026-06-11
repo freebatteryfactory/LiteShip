@@ -20,6 +20,7 @@ import {
 import { Boundary } from '@czap/core';
 import { TokenCSSCompiler } from '../../../packages/compiler/src/token-css.js';
 import { StyleCSSCompiler } from '../../../packages/compiler/src/style-css.js';
+import { captureDiagnostics } from '../../helpers/diagnostics.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,6 +61,26 @@ describe('parseTokenBlocks', () => {
     expect(blocks[0]!.tokenName).toBe('accent');
     expect(blocks[0]!.declarations).toEqual({ color: '#ff0000' });
     expect(blocks[0]!.sourceFile).toBe(FILE);
+  });
+
+  test('parses single-line token blocks, with and without inline declarations', () => {
+    const css = `
+@token fontSizeSm {}
+@token accent { color: #ff0000; padding: 8px; }
+.unrelated { margin: 0; }
+@token after {
+  gap: 4px;
+}`;
+
+    const blocks = parseTokenBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(3);
+    expect(blocks[0]!.tokenName).toBe('fontSizeSm');
+    expect(blocks[0]!.declarations).toEqual({});
+    expect(blocks[1]!.tokenName).toBe('accent');
+    expect(blocks[1]!.declarations).toEqual({ color: '#ff0000', padding: '8px' });
+    expect(blocks[2]!.tokenName).toBe('after');
+    expect(blocks[2]!.declarations).toEqual({ gap: '4px' });
   });
 
   test('parses token blocks when CSS uses CRLF line endings', () => {
@@ -372,12 +393,18 @@ describe('parseQuantizeBlocks', () => {
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.boundaryName).toBe('viewport');
     expect(blocks[0]!.states['mobile']).toEqual({
-      'font-size': '14px',
-      padding: '8px',
+      bareProps: {
+        'font-size': '14px',
+        padding: '8px',
+      },
+      rules: [],
     });
     expect(blocks[0]!.states['desktop']).toEqual({
-      'font-size': '18px',
-      padding: '24px',
+      bareProps: {
+        'font-size': '18px',
+        padding: '24px',
+      },
+      rules: [],
     });
   });
 
@@ -392,7 +419,7 @@ describe('parseQuantizeBlocks', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    const bg = blocks[0]!.states['compact']?.['background'];
+    const bg = blocks[0]!.states['compact']?.bareProps['background'];
     expect(bg).toBeDefined();
     expect(bg).toContain('linear-gradient');
     expect(bg).toContain('red');
@@ -419,7 +446,7 @@ describe('parseQuantizeBlocks', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    const bg = blocks[0]!.states['compact']?.['background'];
+    const bg = blocks[0]!.states['compact']?.bareProps['background'];
     expect(bg).toBeDefined();
     expect(bg).toContain('linear-gradient');
   });
@@ -442,9 +469,9 @@ describe('parseQuantizeBlocks', () => {
 
     expect(blocks).toHaveLength(1);
     expect(Object.keys(blocks[0]!.states)).toHaveLength(3);
-    expect(blocks[0]!.states['low']).toEqual({ animation: 'none' });
-    expect(blocks[0]!.states['mid']).toEqual({ animation: 'fade 0.3s' });
-    expect(blocks[0]!.states['high']?.['animation']).toContain('cubic-bezier');
+    expect(blocks[0]!.states['low']).toEqual({ bareProps: { animation: 'none' }, rules: [] });
+    expect(blocks[0]!.states['mid']).toEqual({ bareProps: { animation: 'fade 0.3s' }, rules: [] });
+    expect(blocks[0]!.states['high']?.bareProps['animation']).toContain('cubic-bezier');
   });
 
   test('handles empty quantize block', () => {
@@ -469,7 +496,7 @@ describe('parseQuantizeBlocks', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.states['state1']?.['content']).toBe('"open { and } close"');
+    expect(blocks[0]!.states['state1']?.bareProps['content']).toBe('"open { and } close"');
   });
 
   test('handles CSS comments inside state declarations', () => {
@@ -484,7 +511,351 @@ describe('parseQuantizeBlocks', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.states['state1']?.['color']).toBe('red');
+    expect(blocks[0]!.states['state1']?.bareProps['color']).toBe('red');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// @quantize nested selector rules
+// ---------------------------------------------------------------------------
+
+describe('parseQuantizeBlocks nested selectors', () => {
+  test('parses a nested selector rule inside a state', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['mobile']).toEqual({
+      bareProps: {},
+      rules: [
+        {
+          selector: '.grid',
+          props: { display: 'grid', 'grid-template-columns': '1fr' },
+        },
+      ],
+    });
+  });
+
+  test('parses multiple nested selectors per state across multiple states', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .hero__title { font-size: 1.75rem; }
+    .hero { padding: 2rem 1rem; }
+  }
+  desktop {
+    .hero__title { font-size: 3.5rem; }
+    .hero { padding: 5rem 2rem; }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['mobile']?.rules).toEqual([
+      { selector: '.hero__title', props: { 'font-size': '1.75rem' } },
+      { selector: '.hero', props: { padding: '2rem 1rem' } },
+    ]);
+    expect(blocks[0]!.states['desktop']?.rules).toEqual([
+      { selector: '.hero__title', props: { 'font-size': '3.5rem' } },
+      { selector: '.hero', props: { padding: '5rem 2rem' } },
+    ]);
+  });
+
+  test('mixes bare declarations and nested rules in one state', () => {
+    const css = `
+@quantize layout {
+  tablet {
+    gap: 1rem;
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    opacity: 0.9;
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks[0]!.states['tablet']).toEqual({
+      bareProps: { gap: '1rem', opacity: '0.9' },
+      rules: [{ selector: '.grid', props: { 'grid-template-columns': 'repeat(2, 1fr)' } }],
+    });
+  });
+
+  test('skips comments between and inside nested rules', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    /* before the rule { brace noise } */
+    .grid {
+      /* inside the rule */
+      display: grid;
+    }
+    /* after the rule */
+    gap: 0.5rem;
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks[0]!.states['mobile']).toEqual({
+      bareProps: { gap: '0.5rem' },
+      rules: [{ selector: '.grid', props: { display: 'grid' } }],
+    });
+  });
+
+  test('collects multi-line functional values inside nested rules', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .panel {
+      background: linear-gradient(
+        to bottom,
+        red,
+        blue
+      );
+    }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    const rule = blocks[0]!.states['mobile']?.rules[0];
+    expect(rule?.selector).toBe('.panel');
+    expect(rule?.props['background']).toContain('linear-gradient');
+    expect(rule?.props['background']).toContain('blue');
+  });
+
+  test('handles quoted braces inside nested rule values and keeps later states intact', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .badge {
+      content: "open { and } close";
+    }
+  }
+  desktop {
+    .badge { content: "plain"; }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks[0]!.states['mobile']?.rules).toEqual([
+      { selector: '.badge', props: { content: '"open { and } close"' } },
+    ]);
+    expect(blocks[0]!.states['desktop']?.rules).toEqual([{ selector: '.badge', props: { content: '"plain"' } }]);
+  });
+
+  test('keeps pseudo-class and attribute selectors verbatim, including parens and quoted brackets', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .card:hover { opacity: 0.8; }
+    li:nth-child(2n + 1) { background: gray; }
+    [data-state="open"] .icon { transform: rotate(45deg); }
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks[0]!.states['mobile']?.rules.map((rule) => rule.selector)).toEqual([
+      '.card:hover',
+      'li:nth-child(2n + 1)',
+      '[data-state="open"] .icon',
+    ]);
+  });
+
+  test('drops a brace-noise rule with no selector while keeping its sibling declarations', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    {}
+    .grid { display: grid; }
+    gap: 1rem;
+  }
+}`;
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks[0]!.states['mobile']).toEqual({
+      bareProps: { gap: '1rem' },
+      rules: [{ selector: '.grid', props: { display: 'grid' } }],
+    });
+  });
+});
+
+describe('compiler-re-serialized single-line CSS', () => {
+  // The Astro compiler re-serializes a whole <style> block onto one
+  // line, with at-rules mid-line and `name{` without spaces. The
+  // parsers must not assume any line structure.
+
+  test('parses @token blocks jammed together mid-line on a single line', () => {
+    const css = '.a{color:red}@token fontSizeSm{}@token fontSizeMd{}@token accent{color: blue;}.b{margin:0}';
+
+    const blocks = parseTokenBlocks(css, FILE);
+
+    expect(blocks.map((block) => block.tokenName)).toEqual(['fontSizeSm', 'fontSizeMd', 'accent']);
+    expect(blocks[0]!.declarations).toEqual({});
+    expect(blocks[2]!.declarations).toEqual({ color: 'blue' });
+    expect(blocks.every((block) => block.line === 1)).toBe(true);
+  });
+
+  test('parses a mid-line single-line @quantize block with nested rules', () => {
+    const css =
+      '.header:where(.astro-x){padding:0}@quantize layout{mobile {.grid {display: grid; gap: var(--czap-spacing-sm);}} desktop {.grid {grid-template-columns: repeat(3,1fr);}}}.after{color:red}';
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.boundaryName).toBe('layout');
+    expect(blocks[0]!.states['mobile']).toEqual({
+      bareProps: {},
+      rules: [{ selector: '.grid', props: { display: 'grid', gap: 'var(--czap-spacing-sm)' } }],
+    });
+    expect(blocks[0]!.states['desktop']).toEqual({
+      bareProps: {},
+      rules: [{ selector: '.grid', props: { 'grid-template-columns': 'repeat(3,1fr)' } }],
+    });
+  });
+
+  test('parses a mid-line single-line @theme block', () => {
+    const css = 'html{line-height:1.6}@theme dark{--czap-primary: #818cf8;--czap-surface: #0f172a}body{margin:0}';
+
+    const blocks = parseThemeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.themeName).toBe('dark');
+    expect(blocks[0]!.declarations).toEqual({
+      '--czap-primary': '#818cf8',
+      '--czap-surface': '#0f172a',
+    });
+  });
+
+  test('ignores at-rule markers inside comments', () => {
+    const css = `
+/* not real:
+@token ghost { color: red; }
+@quantize layout { mobile { gap: 1rem; } }
+@theme dark { --x: 1; }
+*/
+.real { color: blue; }`;
+
+    expect(parseTokenBlocks(css, FILE)).toEqual([]);
+    expect(parseQuantizeBlocks(css, FILE)).toEqual([]);
+    expect(parseThemeBlocks(css, FILE)).toEqual([]);
+  });
+});
+
+describe('compileQuantizeBlock nested selectors', () => {
+  test('emits one rule per nested selector inside each state @container block plus :root containment', () => {
+    const css = `
+@quantize layout {
+  mobile {
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+  }
+  desktop {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, FILE);
+    const boundary = makeBoundary('viewport.width', [
+      [0, 'mobile'],
+      [768, 'tablet'],
+      [1280, 'desktop'],
+    ]);
+
+    const compiled = compileQuantizeBlock(block!, boundary);
+
+    expect(compiled).toContain(':root {\n  container-type: inline-size;\n  container-name: viewport-width;\n}');
+    expect(compiled).toContain(
+      '@container viewport-width (width < 768px) {\n.grid {\n  display: grid;\n  grid-template-columns: 1fr;\n}\n}',
+    );
+    expect(compiled).toContain(
+      '@container viewport-width (width >= 1280px) {\n.grid {\n  grid-template-columns: repeat(3, 1fr);\n}\n}',
+    );
+  });
+
+  test('keeps bare declarations on the boundary selector while nested rules carry their own selectors', () => {
+    const css = `
+@quantize layout {
+  compact {
+    gap: 1rem;
+    .grid { grid-template-columns: 1fr; }
+    .hero { padding: 2rem; }
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, FILE);
+    const boundary = makeBoundary('viewport.width', [
+      [0, 'compact'],
+      [768, 'wide'],
+    ]);
+
+    const compiled = compileQuantizeBlock(block!, boundary);
+
+    expect(compiled).toContain(
+      '@container viewport-width (width < 768px) {\n.czap-boundary {\n  gap: 1rem;\n}\n.grid {\n  grid-template-columns: 1fr;\n}\n.hero {\n  padding: 2rem;\n}\n}',
+    );
+  });
+
+  test('warns through Diagnostics and emits no containment rule for non-viewport boundary inputs', () => {
+    const css = `
+@quantize layout {
+  shallow {
+    .grid { opacity: 0.5; }
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, FILE);
+    const boundary = makeBoundary('scroll.y', [
+      [0, 'shallow'],
+      [400, 'deep'],
+    ]);
+
+    const { compiled, events } = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(block!, boundary),
+      events: [...captured],
+    }));
+
+    expect(compiled).not.toContain(':root {');
+    expect(compiled).toContain('@container scroll-y (width < 400px)');
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
+      ]),
+    );
+  });
+
+  test('emits no containment rule when every state compiles to nothing', () => {
+    const css = `
+@quantize layout {
+  compact {
+  }
+}`;
+
+    const [block] = parseQuantizeBlocks(css, FILE);
+    const boundary = makeBoundary('viewport.width', [
+      [0, 'compact'],
+      [768, 'wide'],
+    ]);
+
+    expect(compileQuantizeBlock(block!, boundary)).toBe('');
   });
 });
 
@@ -527,8 +898,8 @@ describe('CSS brace counting edge cases', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.states['stateA']?.['content']).toBe("'{ not a block }'");
-    expect(blocks[0]!.states['stateA']?.['color']).toBe('red');
+    expect(blocks[0]!.states['stateA']?.bareProps['content']).toBe("'{ not a block }'");
+    expect(blocks[0]!.states['stateA']?.bareProps['color']).toBe('red');
   });
 
   test('quantize parser handles braces inside CSS comments', () => {
@@ -543,7 +914,7 @@ describe('CSS brace counting edge cases', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.states['stateA']?.['margin']).toBe('0');
+    expect(blocks[0]!.states['stateA']?.bareProps['margin']).toBe('0');
   });
 
   test('quantize parser handles url() with data URIs', () => {
@@ -558,8 +929,8 @@ describe('CSS brace counting edge cases', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]!.states['stateA']?.['color']).toBe('green');
-    expect(blocks[0]!.states['stateA']?.['background']).toContain('url(');
+    expect(blocks[0]!.states['stateA']?.bareProps['color']).toBe('green');
+    expect(blocks[0]!.states['stateA']?.bareProps['background']).toContain('url(');
   });
 
   test('single-line quoted values without braces parse correctly', () => {
@@ -578,8 +949,8 @@ describe('CSS brace counting edge cases', () => {
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.states['stateA']).toBeDefined();
     expect(blocks[0]!.states['stateB']).toBeDefined();
-    expect(blocks[0]!.states['stateA']?.['content']).toBe('"hello world"');
-    expect(blocks[0]!.states['stateB']?.['content']).toBe('"goodbye world"');
+    expect(blocks[0]!.states['stateA']?.bareProps['content']).toBe('"hello world"');
+    expect(blocks[0]!.states['stateB']?.bareProps['content']).toBe('"goodbye world"');
   });
 
   test('character-level parser handles closing braces in quotes inside state', () => {
@@ -608,11 +979,11 @@ describe('CSS brace counting edge cases', () => {
     const [block] = parseQuantizeBlocks(malformed, FILE);
     expect(block).toBeDefined();
     expect(block!.boundaryName).toBe('firstLine');
-    expect(block!.states.stateA).toEqual({});
+    expect(block!.states.stateA).toEqual({ bareProps: {}, rules: [] });
 
     const whitespaceOnly = `@quantize tail {\n  stateA {\n    color: red;\n    \n`;
     const [tailBlock] = parseQuantizeBlocks(whitespaceOnly, FILE);
-    expect(tailBlock?.states.stateA).toEqual({ color: 'red' });
+    expect(tailBlock?.states.stateA).toEqual({ bareProps: { color: 'red' }, rules: [] });
   });
 });
 
@@ -832,7 +1203,10 @@ describe('CSS override flow-through', () => {
     const [block] = parseQuantizeBlocks(css, FILE);
 
     expect(block?.states.compact).toEqual({
-      color: 'red',
+      bareProps: {
+        color: 'red',
+      },
+      rules: [],
     });
   });
 });

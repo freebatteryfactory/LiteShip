@@ -352,6 +352,29 @@ Example:
 }
 ```
 
+`@quantize` states accept two declaration forms, freely mixed:
+
+- **bare declarations** (`gap: 1rem;`) compile onto the boundary element selector (`.czap-boundary` by default), and
+- **nested selector rules** (`<selector> { ... }`) compile to one rule per selector inside the state's `@container` block — the form for adapting several elements per state:
+
+```css
+@quantize heroLayout {
+  stacked {
+    gap: 1rem;
+    .hero__title {
+      font-size: 1.75rem;
+    }
+  }
+  cinematic {
+    .hero__title {
+      font-size: 3.5rem;
+    }
+  }
+}
+```
+
+For `viewport.*` boundaries the compiled output also declares `:root` as the named query container (`container-type: inline-size; container-name: <input>`), so the `@container` queries match without extra wiring. For non-viewport inputs you must declare `container-type` / `container-name` on the measured ancestor yourself; the compiler emits a diagnostic naming the exact declaration to add.
+
 The value of this model is that authored semantics remain centralized in the definition files, while CSS remains the expression layer.
 
 ---

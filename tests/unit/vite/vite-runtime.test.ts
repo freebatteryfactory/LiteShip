@@ -175,9 +175,12 @@ describe('@czap/vite quantize parser', () => {
     const [block] = parseQuantizeBlocks(css, 'app.css');
     expect(block).toBeDefined();
     expect(block?.states.mobile).toEqual({
-      background: 'linear-gradient(\n      to bottom,\n      red,\n      blue\n    )',
+      bareProps: {
+        background: 'linear-gradient(\n      to bottom,\n      red,\n      blue\n    )',
+      },
+      rules: [],
     });
-    expect(block?.states.desktop).toEqual({ content: '"ok"' });
+    expect(block?.states.desktop).toEqual({ bareProps: { content: '"ok"' }, rules: [] });
 
     const compiled = compileQuantizeBlock(block!, boundary);
     expect(compiled).toContain('@container');
@@ -211,17 +214,23 @@ describe('@czap/vite quantize parser', () => {
       boundaryName: 'layout',
       states: {
         mobile: {
-          content: '"say \\"hi\\""',
-          color: 'red',
+          bareProps: {
+            content: '"say \\"hi\\""',
+            color: 'red',
+          },
+          rules: [],
         },
-        empty: {},
+        empty: { bareProps: {}, rules: [] },
       },
     });
     expect(blocks[1]).toMatchObject({
       boundaryName: 'secondary',
       states: {
         compact: {
-          opacity: '0.5',
+          bareProps: {
+            opacity: '0.5',
+          },
+          rules: [],
         },
       },
     });
@@ -246,7 +255,10 @@ describe('@czap/vite quantize parser', () => {
       boundaryName: 'layout',
       states: {
         mobile: {
-          opacity: '0.25',
+          bareProps: {
+            opacity: '0.25',
+          },
+          rules: [],
         },
       },
     });
@@ -263,7 +275,7 @@ describe('@czap/vite quantize parser', () => {
 `;
 
     const [block] = parseQuantizeBlocks(css, 'invalid-prop.css');
-    expect(block?.states.mobile).toEqual({ color: 'blue' });
+    expect(block?.states.mobile).toEqual({ bareProps: { color: 'blue' }, rules: [] });
   });
 
   test('skips nested non-state wrappers inside a quantize block and still parses later states', () => {
@@ -283,7 +295,10 @@ describe('@czap/vite quantize parser', () => {
       boundaryName: 'layout',
       states: {
         mobile: {
-          display: 'grid',
+          bareProps: {
+            display: 'grid',
+          },
+          rules: [],
         },
       },
     });
@@ -497,7 +512,19 @@ describe('@czap/vite plugin', () => {
 
     const malformed = '@token accent ';
 
-    await expect(vitePlugin.transform?.(malformed, join(root, 'src', 'broken.css'))).resolves.toBeNull();
+    const warnings: string[] = [];
+    await expect(
+      vitePlugin.transform?.call(
+        {
+          warn(message: string) {
+            warnings.push(message);
+          },
+        } as never,
+        malformed,
+        join(root, 'src', 'broken.css'),
+      ),
+    ).resolves.toBeNull();
+    expect(warnings.some((message) => message.includes('no @token block parsed'))).toBe(true);
   });
 
   test('returns null when a parsed quantize block cannot find an opening brace in the source', async () => {
@@ -515,7 +542,7 @@ describe('@czap/vite plugin', () => {
         boundaryName: 'layout',
         line: 1,
         states: {
-          compact: { color: 'red' },
+          compact: { bareProps: { color: 'red' }, rules: [] },
         },
       },
     ]);
@@ -527,6 +554,109 @@ describe('@czap/vite plugin', () => {
     vitePlugin.configResolved?.({ root, command: 'serve' } as never);
 
     await expect(vitePlugin.transform?.call({ warn() {} } as never, '@quantize layout ', cssFile)).resolves.toBeNull();
+  });
+
+  test('warns with file:line and the supported grammar when @token/@quantize dialects parse to zero blocks', async () => {
+    const root = makeTempDir();
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    const css = `:root {
+  @token primary: var(--czap-primary);
+}
+
+@quantize {
+  mobile {
+    gap: 1rem;
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const result = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      } as never,
+      css,
+      join(root, 'src', 'dialects.css'),
+    );
+
+    expect(result).toBeNull();
+    expect(
+      warnings.some((message) => message.includes('no @token block parsed') && message.includes('dialects.css:2')),
+    ).toBe(true);
+    expect(
+      warnings.some(
+        (message) => message.includes('no @quantize block parsed') && message.includes('dialects.css:5'),
+      ),
+    ).toBe(true);
+    expect(warnings.every((message) => message.includes('Fix: rewrite it to the supported grammar'))).toBe(true);
+  });
+
+  test('does not emit parse-miss warnings when at-rule markers only appear inside comments', async () => {
+    const root = makeTempDir();
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    const css = '/* mentions @token and @quantize in prose */\n.card { color: red; }\n';
+
+    const warnings: string[] = [];
+    const result = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      } as never,
+      css,
+      join(root, 'src', 'commented.css'),
+    );
+
+    expect(result).toBeNull();
+    expect(warnings).toEqual([]);
+  });
+
+  test('warns when a parsed quantize block has states but zero declarations in all of them', async () => {
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'mobile'],
+        [768, 'desktop'],
+      ] as const,
+    });
+    writeModule(cssDir, 'boundaries.ts', 'layout', boundary);
+
+    const css = `@quantize layout {
+  mobile {
+    not a declaration
+  }
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      } as never,
+      css,
+      join(cssDir, 'empty-states.css'),
+    );
+
+    expect(
+      warnings.some(
+        (message) => message.includes('parsed to zero declarations') && message.includes('empty-states.css:1'),
+      ),
+    ).toBe(true);
   });
 
   test('skips non-css ids and css files without czap at-rules', async () => {
@@ -842,7 +972,7 @@ describe('@czap/vite plugin', () => {
         boundaryName: 'layout',
         line: 1,
         states: {
-          compact: { color: 'red' },
+          compact: { bareProps: { color: 'red' }, rules: [] },
         },
       },
     ]);
@@ -1109,7 +1239,10 @@ describe('@czap/vite plugin', () => {
 
     const [block] = parseQuantizeBlocks(css, 'escaped.css');
     expect(block?.states.mobile).toEqual({
-      content: '"say \\"hi\\""',
+      bareProps: {
+        content: '"say \\"hi\\""',
+      },
+      rules: [],
     });
   });
 

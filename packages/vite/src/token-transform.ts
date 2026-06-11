@@ -11,6 +11,7 @@
 import type { Token } from '@czap/core';
 import { TokenCSSCompiler } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
+import { blankCssComments, lineOfOffset, parseFlatDeclarations } from './css-scan.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,50 +38,35 @@ export interface TokenBlock {
 /**
  * Parse every `@token` block from CSS source text.
  *
- * Grammar:
+ * Grammar (the block may collapse onto a single line and may sit
+ * mid-line, e.g. inside compiler-re-serialized CSS):
  *
  * ```css
  * @token name {
  *   property: value;
  * }
  * ```
+ *
+ * At-rule markers are located on a comment-blanked copy of the source
+ * (same offsets) so commented-out blocks never match; declarations are
+ * parsed character-by-character from the original source.
  */
 export function parseTokenBlocks(css: string, sourceFile: string): readonly TokenBlock[] {
+  const normalized = normalizeCssLineEndings(css);
+  const blanked = blankCssComments(normalized);
   const blocks: TokenBlock[] = [];
-  const lines = normalizeCssLineEndings(css).split('\n');
-  let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i]!;
-    const atMatch = line.match(/^\s*@token\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/);
+  const atRule = /@token\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;
 
-    if (atMatch) {
-      const tokenName = atMatch[1]!;
-      const blockStartLine = i + 1; // 1-indexed
-      const declarations: Record<string, string> = {};
+  let match: RegExpExecArray | null;
+  while ((match = atRule.exec(blanked)) !== null) {
+    const tokenName = match[1]!;
+    const blockStartLine = lineOfOffset(normalized, match.index);
 
-      i++; // advance past @token line
+    const { props, end } = parseFlatDeclarations(normalized, match.index + match[0].length);
 
-      while (i < lines.length) {
-        const currentLine = lines[i]!.trim();
-
-        // Closing brace for @token block
-        if (currentLine === '}') {
-          i++;
-          break;
-        }
-
-        const propMatch = currentLine.match(/^([a-zA-Z-][a-zA-Z0-9-]*)\s*:\s*(.+?)\s*;?\s*$/);
-        if (propMatch) {
-          declarations[propMatch[1]!] = propMatch[2]!.replace(/;$/, '').trim();
-        }
-        i++;
-      }
-
-      blocks.push({ tokenName, declarations, sourceFile, line: blockStartLine });
-    } else {
-      i++;
-    }
+    blocks.push({ tokenName, declarations: props, sourceFile, line: blockStartLine });
+    atRule.lastIndex = end;
   }
 
   return blocks;

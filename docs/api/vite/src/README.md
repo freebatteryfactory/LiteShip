@@ -46,6 +46,8 @@ const config = defineConfig({
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
 - [QuantizeBlock](interfaces/QuantizeBlock.md)
+- [QuantizeNestedRule](interfaces/QuantizeNestedRule.md)
+- [QuantizeStateBody](interfaces/QuantizeStateBody.md)
 - [StyleBlock](interfaces/StyleBlock.md)
 - [ThemeBlock](interfaces/ThemeBlock.md)
 - [TokenBlock](interfaces/TokenBlock.md)

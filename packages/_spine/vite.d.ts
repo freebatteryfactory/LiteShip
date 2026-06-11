@@ -43,9 +43,19 @@ export declare function plugin(config?: PluginConfig): import('vite').Plugin;
 // § 3. @quantize CSS TRANSFORM
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export interface QuantizeNestedRule {
+  readonly selector: string;
+  readonly props: Record<string, string>;
+}
+
+export interface QuantizeStateBody {
+  readonly bareProps: Record<string, string>;
+  readonly rules: readonly QuantizeNestedRule[];
+}
+
 export interface QuantizeBlock {
   readonly boundaryName: string;
-  readonly states: Record<string, Record<string, string>>;
+  readonly states: Record<string, QuantizeStateBody>;
   readonly sourceFile: string;
   readonly line: number;
 }
