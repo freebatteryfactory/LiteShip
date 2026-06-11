@@ -15,10 +15,10 @@ This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI. Nami
 ## Quick start
 
 ```bash
-pnpm add @czap/core effect
+pnpm add @czap/core effect@beta
 ```
 
-`effect` is `@czap/core`'s one peer dependency (currently the Effect 4 beta — see the [support matrix](#support-matrix) for the pin and the stabilization plan). That's the whole install for the snippet below; further packages arrive when you first import them.
+`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. See the [support matrix](#support-matrix) for the pin and the stabilization plan. That's the whole install for the snippet below; further packages arrive when you first import them.
 
 ```ts
 import { Boundary, Token, Style } from '@czap/core';
