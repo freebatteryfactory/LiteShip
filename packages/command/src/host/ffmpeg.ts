@@ -67,8 +67,14 @@ export async function renderWithFfmpeg(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (/EPIPE|stdin/i.test(message)) {
+      // Re-probe on the failure path: the probe owns the per-platform
+      // diagnosis (missing binary vs missing libx264) and its install hint.
+      const probe = probeFfmpegRender();
+      const diagnosis = probe.ok
+        ? 'the encode probe passes, so inspect the ffmpeg stderr tail below'
+        : `${probe.detail}${probe.hint ? ` — ${probe.hint}` : ''}`;
       throw new Error(
-        `ffmpeg stdin closed before render finished (is libx264 available?): ${stderrBuf.slice(-500) || message}`,
+        `ffmpeg stdin closed before render finished: ${diagnosis}. ffmpeg stderr tail: ${stderrBuf.slice(-500) || message}`,
         { cause: err },
       );
     }

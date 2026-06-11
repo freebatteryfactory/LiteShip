@@ -64,7 +64,7 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(parseStderrReceipt(stderr).error).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(parseStderrReceipt(stderr).error).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
   });
 
   it('cache hit: primed cache + existing output file returns cached receipt without re-rendering', async () => {
@@ -133,7 +133,7 @@ describe('scene render command — non-ffmpeg portions', () => {
     if (out.startsWith('{')) {
       expect(JSON.parse(out).cached).not.toBe(true);
     }
-    expect(stderr).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(stderr).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
   });
 
   it('force=true bypasses an otherwise-valid cache (covers force-arm in tryReadCache through sceneRender)', async () => {
@@ -174,6 +174,6 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(stderr).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(stderr).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
   });
 });

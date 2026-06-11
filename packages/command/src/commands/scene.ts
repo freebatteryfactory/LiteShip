@@ -9,7 +9,7 @@
  */
 import type { CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
-import { loadManifest } from './manifest.js';
+import { loadManifest, manifestUnavailable } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
@@ -57,11 +57,17 @@ export const sceneVerifyCommand: HandledCommand = {
 
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
-    if (!cap) return failed('scene.verify', 'no sceneComposition capsule exported', 1);
+    if (!cap) {
+      return failed(
+        'scene.verify',
+        `no sceneComposition capsule exported from ${scenePath} — export the capsule returned by your scene definition (czap glossary capsule)`,
+        1,
+      );
+    }
 
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('scene.verify', 'capsule manifest missing; run capsule:compile first', 1);
-    const entry = manifest.capsules.find((c) => c.name === cap.name);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('scene.verify', loaded);
+    const entry = loaded.manifest.capsules.find((c) => c.name === cap.name);
     if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 
     // Direct-invocation guard; the dispatcher already enforces `requires`.
@@ -100,7 +106,13 @@ export const sceneCompileCommand: HandledCommand = {
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract) return failed('scene.compile', 'no sceneComposition capsule or scene contract exported', 1);
+    if (!cap || !contract) {
+      return failed(
+        'scene.compile',
+        `no sceneComposition capsule or scene contract exported from ${scenePath} — export the capsule and contract returned by your scene definition (czap glossary capsule)`,
+        1,
+      );
+    }
 
     const start = Date.now();
     try {
@@ -148,7 +160,7 @@ export const sceneRenderCommand: HandledCommand = {
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = String(invocation.args.scene ?? '');
     const output = String(invocation.args.output ?? '');
-    if (!output) return failed('scene.render', 'missing --output / -o path', 1);
+    if (!output) return failed('scene.render', 'missing --output / -o path — e.g. czap scene render <scene.ts> -o out.mp4', 1);
     if (!context.fileExists?.(scenePath)) return failed('scene.render', `scene not found: ${scenePath}`, 1);
 
     const force = invocation.args.force === true;
@@ -171,7 +183,11 @@ export const sceneRenderCommand: HandledCommand = {
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
     if (!cap || !contract || typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
-      return failed('scene.render', 'no sceneComposition capsule or contract exported', 1);
+      return failed(
+        'scene.render',
+        `no sceneComposition capsule or contract (with numeric fps + duration) exported from ${scenePath} — export the capsule and contract returned by your scene definition (czap glossary capsule)`,
+        1,
+      );
     }
     // Direct-invocation guard; the dispatcher already enforces `requires`.
     if (!context.renderScene) return capabilityUnavailable('scene.render', ['renderScene']);
