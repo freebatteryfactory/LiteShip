@@ -457,6 +457,12 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
     return null;
   }
 
+  // Mirrors the compiler's queryAxisOf inference (compiler/src/css.ts): the
+  // suggested containment must be able to evaluate the axis the compiled
+  // queries actually use — inline-size containment cannot evaluate the
+  // (height ...) conditions a height-axis boundary compiles to.
+  const heightAxis = boundary.input === 'height' || boundary.input.endsWith('.height');
+  const containment = heightAxis ? 'size' : 'inline-size';
   Diagnostics.warn({
     source: 'czap/vite.css-quantize',
     code: 'container-not-declared',
@@ -464,8 +470,8 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
       `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) compiles to ` +
       `\`@container ${containerName} (...)\` queries, but boundary input "${boundary.input}" is not viewport-based, ` +
       `so no element was auto-declared as the query container and the compiled rules will match nothing. ` +
-      `Fix: declare \`container-type: inline-size; container-name: ${containerName};\` on the ancestor element ` +
-      `whose size the boundary measures.`,
+      `Fix: declare \`container-type: ${containment}; container-name: ${containerName};\` on the ancestor element ` +
+      `whose size the boundary measures${heightAxis ? ' (size, not inline-size: the compiled (height ...) queries need block-axis containment)' : ''}.`,
     detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
   });
   return null;
