@@ -10,7 +10,6 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
 import { enumerateTierKeys, tierKey } from '@czap/edge';
@@ -243,24 +242,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(second).toContain('viewport');
   });
 
-  test('editing an EXISTING boundaries module busts the ESM import cache on reload', async (ctx) => {
+  test('editing an EXISTING boundaries module busts the ESM import cache on reload', async () => {
     // Native ESM caches dynamic imports by URL; re-collecting after an
     // edit to the SAME file must not serve the stale exports (Codex P2).
-    // The bust mechanism is a ?mtime query on the file URL — honored by
-    // native Node ESM (the production host for this code path), but some
-    // test runtimes (vitest on Windows) strip file-URL queries. Probe the
-    // capability and skip honestly where the runtime can't express it.
-    const probeDir = makeTempDir();
-    const probeFile = join(probeDir, 'probe.ts');
-    writeFileSync(probeFile, 'export const v = 1;\n');
-    await import(/* @vite-ignore */ `${pathToFileURL(probeFile).href}?q=1`);
-    writeFileSync(probeFile, 'export const v = 2;\n');
-    const probe = (await import(/* @vite-ignore */ `${pathToFileURL(probeFile).href}?q=2`)) as { v: number };
-    if (probe.v !== 2) {
-      ctx.skip();
-      return;
-    }
-
     const root = makeTempDir();
     const srcDir = join(root, 'src');
     writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
@@ -280,9 +264,11 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE.replace(referenceBoundary.id, 'fnv1a:00009999'));
     utimesSync(join(srcDir, 'boundaries.ts'), new Date(), new Date(Date.now() + 5_000));
     const { moduleGraph } = makeModuleGraphMock();
+    // Vite's hook contract delivers NORMALIZED (forward-slash) paths —
+    // a raw platform join() broke the suffix match on Windows.
     (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'boundaries.ts') },
+      { file: join(srcDir, 'boundaries.ts').replace(/\\/g, '/') },
     );
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
