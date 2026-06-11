@@ -784,8 +784,8 @@ describe('@czap/vite plugin', () => {
         [768, 'wide'],
       ] as const,
     });
-    const heightBoundary = Boundary.make({
-      input: 'viewport.height',
+    const bareBoundary = Boundary.make({
+      input: 'viewport',
       at: [
         [0, 'short'],
         [600, 'tall'],
@@ -795,7 +795,7 @@ describe('@czap/vite plugin', () => {
     writeFileSync(
       join(cssDir, 'boundaries.ts'),
       `export const layoutW = ${JSON.stringify(widthBoundary, null, 2)};\n` +
-        `export const layoutH = ${JSON.stringify(heightBoundary, null, 2)};\n`,
+        `export const layoutH = ${JSON.stringify(bareBoundary, null, 2)};\n`,
     );
 
     const css = `
@@ -836,11 +836,11 @@ describe('@czap/vite plugin', () => {
     const rootRules = output.match(/:root \{[^}]*\}/g) ?? [];
     expect(rootRules).toHaveLength(1);
     expect(rootRules[0]).toContain('container-type: inline-size');
-    expect(rootRules[0]).toContain('container-name: viewport-width viewport-height');
+    expect(rootRules[0]).toContain('container-name: viewport-width viewport');
 
     // Each boundary's queries reference a name the :root rule declares.
     expect(output).toContain('@container viewport-width (width < 768px)');
-    expect(output).toContain('@container viewport-height (width < 600px)');
+    expect(output).toContain('@container viewport (width < 600px)');
   });
 
   test('inserts the :root containment rule after a leading @charset/@import prologue', async () => {

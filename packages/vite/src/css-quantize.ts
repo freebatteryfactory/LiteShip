@@ -316,9 +316,16 @@ function containerNameOf(boundary: Boundary.Shape): string {
   return boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
 }
 
-/** Whether the boundary measures the viewport (root element is the natural container). */
-function isViewportInput(input: string): boolean {
-  return input === 'viewport' || input.startsWith('viewport.');
+/**
+ * Whether the boundary measures the viewport WIDTH — the only signal the
+ * auto-emitted `:root` containment can honestly serve: containment is
+ * `container-type: inline-size` (inline size = width) and the compiler
+ * serializes thresholds as `(width ...)` queries. `viewport.height` must
+ * NOT match: width-based containment plus width queries would make height
+ * breakpoints silently track the wrong dimension.
+ */
+function isWidthViewportInput(input: string): boolean {
+  return input === 'viewport' || input === 'viewport.width';
 }
 
 /**
@@ -353,12 +360,31 @@ export function viewportContainmentRule(names: Iterable<string>): string | null 
 function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?: QuantizeSheetContext): string | null {
   const containerName = containerNameOf(boundary);
 
-  if (isViewportInput(boundary.input)) {
+  if (isWidthViewportInput(boundary.input)) {
     if (sheet) {
       sheet.viewportContainerNames.add(containerName);
       return null; // caller emits the aggregated rule once per sheet
     }
     return viewportContainmentRule([containerName]);
+  }
+
+  if (boundary.input.startsWith('viewport.')) {
+    // viewport.height (or any non-width viewport axis): the compiled
+    // queries are width-based and `container-type: inline-size` measures
+    // width, so auto-containment would silently track the wrong dimension.
+    Diagnostics.warn({
+      source: 'czap/vite.css-quantize',
+      code: 'container-not-declared',
+      message:
+        `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) measures "${boundary.input}", ` +
+        `but compiled \`@container\` queries are width-based today — auto-declaring a container would make ` +
+        `these breakpoints track the viewport WIDTH, not the height. ` +
+        `Fix: use the runtime satellite path for height-driven styling ` +
+        `(satelliteAttrs({ boundary }) + [data-czap-state="..."] selectors), ` +
+        `or re-author the boundary on viewport.width.`,
+      detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
+    });
+    return null;
   }
 
   Diagnostics.warn({
