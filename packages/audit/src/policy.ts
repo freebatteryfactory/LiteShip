@@ -10,6 +10,7 @@
  * @module
  */
 import type { AuditFinding } from './types.js';
+import type { SurfacePolicyShape } from './devops-profile.js';
 
 export interface AuditAllowlistEntry {
   readonly rule: string;
@@ -203,9 +204,9 @@ export const dynamicImportExemptions: ReadonlySet<string> = new Set([
   '@czap/cli -> @czap/mcp-server',
 ]);
 
-export const surfacePolicy = {
+export const surfacePolicy: SurfacePolicyShape = {
   astroPackage: '@czap/astro',
-  astroClientDirectives: ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'] as const,
+  astroClientDirectives: ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'],
   // Astro-package-relative (consumer-mode seam): resolved against wherever
   // @czap/astro actually lives — `packages/astro` in the monorepo, a
   // node_modules install downstream. Legacy `packages/`-prefixed entries in
@@ -220,7 +221,7 @@ export const surfacePolicy = {
     'src/runtime/boundary.ts',
     'src/runtime/slots.ts',
     'src/runtime/directive-boot.ts',
-  ] as const,
+  ],
   viteVirtualModules: [
     'virtual:czap/tokens',
     'virtual:czap/tokens.css',
@@ -228,7 +229,7 @@ export const surfacePolicy = {
     'virtual:czap/themes',
     'virtual:czap/hmr-client',
     'virtual:czap/wasm-url',
-  ] as const,
+  ],
   vitePackage: '@czap/vite',
   viteVirtualModulesFile: 'src/virtual-modules.ts',
   knownCapabilityNotes: [
@@ -242,7 +243,7 @@ export const surfacePolicy = {
       summary:
         'Virtual modules intentionally ship placeholder stubs that are populated by the Vite transform pipeline.',
     },
-  ] as const,
+  ],
 };
 
 export const auditAllowlist: readonly AuditAllowlistEntry[] = [

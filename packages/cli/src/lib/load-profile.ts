@@ -30,10 +30,12 @@ function profileFromJson(raw: unknown, jsonPath: string, cwd: string): DevopsPro
   if (!isRecord(raw)) throw new Error(`profile JSON must be an object: ${jsonPath}`);
   const prefix = raw['internalPackagePrefix'];
   const topology = raw['packageTopology'];
-  const surface = raw['surfacePolicy'];
+  // Optional: every SurfacePolicyShape field defaults to "surface not
+  // declared", so a profile with no Astro/Vite host simply omits it.
+  const surface = raw['surfacePolicy'] ?? {};
   if (typeof prefix !== 'string') throw new Error(`profile JSON missing string "internalPackagePrefix": ${jsonPath}`);
   if (!isRecord(topology)) throw new Error(`profile JSON missing object "packageTopology": ${jsonPath}`);
-  if (!isRecord(surface)) throw new Error(`profile JSON missing object "surfacePolicy": ${jsonPath}`);
+  if (!isRecord(surface)) throw new Error(`profile JSON "surfacePolicy" must be an object when present: ${jsonPath}`);
   const exemptions = raw['dynamicImportExemptions'];
   if (exemptions !== undefined && !Array.isArray(exemptions)) {
     throw new Error(`profile JSON "dynamicImportExemptions" must be an array of strings: ${jsonPath}`);

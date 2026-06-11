@@ -279,10 +279,10 @@ export function runStructureAudit(
     : null;
   const knownSurfaceFiles = new Set<string>([
     ...(astroPackageInfo
-      ? profile.surfacePolicy.astroRuntimeFiles.map((file) =>
+      ? (profile.surfacePolicy.astroRuntimeFiles ?? []).map((file) =>
           relativeToRoot(resolveAstroPackageFile(root, astroPackageInfo.dir, file), root),
         )
-      : profile.surfacePolicy.astroRuntimeFiles),
+      : (profile.surfacePolicy.astroRuntimeFiles ?? [])),
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
         .map((value) => {

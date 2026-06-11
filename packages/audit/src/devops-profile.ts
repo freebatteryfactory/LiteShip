@@ -9,23 +9,27 @@
  */
 import { packageTopology, surfacePolicy, dynamicImportExemptions, normalizeRepoPath } from './policy.js';
 import type { PackagePolicy } from './policy.js';
+import { listProfilePackageManifests } from './shared.js';
 
 /**
- * Structural shape of the surface policy the audit reads (wide — `string[]`, not
- * the `as const` literal tuples of the LiteShip default — so an alternate project
- * profile can supply its own). The LiteShip `surfacePolicy` const assigns into this.
+ * Structural shape of the surface policy the audit reads. Every field is
+ * OPTIONAL: an absent surface is a surface the profile never declared, so its
+ * check does not run — a downstream project with no Astro/Vite host supplies
+ * `{}` and carries no host assumptions. The LiteShip `surfacePolicy` const is
+ * the fully-populated reference.
  */
 export interface SurfacePolicyShape {
-  readonly astroPackage: string;
-  readonly astroClientDirectives: readonly string[];
+  /** Astro host package name. Absent/empty — no Astro host, no astro checks. */
+  readonly astroPackage?: string;
+  readonly astroClientDirectives?: readonly string[];
   /**
    * Shared runtime adapter files, relative to the astro PACKAGE root (e.g.
    * `'src/runtime/boundary.ts'`). Entries starting with `packages/` are
    * treated as repo-root-relative for back-compat with pre-consumer-mode
    * profiles.
    */
-  readonly astroRuntimeFiles: readonly string[];
-  readonly viteVirtualModules: readonly string[];
+  readonly astroRuntimeFiles?: readonly string[];
+  readonly viteVirtualModules?: readonly string[];
   /**
    * Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
    * When absent, the legacy repo-root-relative `packages/vite/...` location
@@ -34,7 +38,7 @@ export interface SurfacePolicyShape {
   readonly vitePackage?: string;
   /** Virtual-module inventory file, relative to `vitePackage`'s root. */
   readonly viteVirtualModulesFile?: string;
-  readonly knownCapabilityNotes: readonly { readonly file: string; readonly summary: string }[];
+  readonly knownCapabilityNotes?: readonly { readonly file: string; readonly summary: string }[];
 }
 
 /**
@@ -85,4 +89,54 @@ export const liteshipDevopsProfile: DevopsProfile = {
  */
 export function withRepoRoot(profile: DevopsProfile, repoRoot: string): DevopsProfile {
   return { ...profile, repoRoot: normalizeRepoPath(repoRoot) };
+}
+
+/**
+ * The single common npm scope of the discovered package manifests, as a
+ * prefix (`'@acme/'`). Derivation never guesses: zero scoped manifests or
+ * more than one scope is a thrown teaching error naming what was found.
+ */
+function deriveInternalPackagePrefix(profile: DevopsProfile): string {
+  const names = listProfilePackageManifests(profile).map((pkg) => pkg.name);
+  const scopes = [
+    ...new Set(names.filter((name) => name.startsWith('@')).map((name) => `${name.split('/')[0]}/`)),
+  ].sort((a, b) => a.localeCompare(b));
+  if (scopes.length === 1) return scopes[0]!;
+  const observed =
+    scopes.length === 0
+      ? `no scoped (@scope/name) package manifests were discovered under ${profile.repoRoot}`
+      : `the discovered manifests span multiple scopes [${scopes.join(', ')}]`;
+  throw new Error(
+    `resolveDevopsProfile: internalPackagePrefix was omitted and cannot be derived — ${observed}. ` +
+      `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }).`,
+  );
+}
+
+/**
+ * Resolve a PARTIAL profile into a full {@link DevopsProfile} with documented
+ * defaults, so `runAuditPasses({ repoRoot })` just works:
+ *
+ *   • `repoRoot`                 → the current working directory
+ *   • `packageTopology`          → `{}` (coverage classifies as policy-absent)
+ *   • `dynamicImportExemptions`  → empty set (no sanctioned dynamic edges)
+ *   • `surfacePolicy`            → `{}` (no host-surface assumptions)
+ *   • `internalPackagePrefix`    → derived from the single common npm scope of
+ *     the discovered package manifests; ambiguous or unscoped trees throw a
+ *     teaching error instead of guessing.
+ *
+ * ADR-0012 pins WHICH fields a profile has, not that callers must hand-build
+ * them; a fully-specified profile passes through unchanged (modulo repo-path
+ * normalization).
+ */
+export function resolveDevopsProfile(partial: Partial<DevopsProfile>): DevopsProfile {
+  const candidate: DevopsProfile = {
+    repoRoot: normalizeRepoPath(partial.repoRoot ?? process.cwd()),
+    internalPackagePrefix: partial.internalPackagePrefix ?? '',
+    packageTopology: partial.packageTopology ?? {},
+    dynamicImportExemptions: partial.dynamicImportExemptions ?? new Set<string>(),
+    surfacePolicy: partial.surfacePolicy ?? {},
+    ...(partial.packageRoots !== undefined ? { packageRoots: partial.packageRoots } : {}),
+  };
+  if (partial.internalPackagePrefix !== undefined) return candidate;
+  return { ...candidate, internalPackagePrefix: deriveInternalPackagePrefix(candidate) };
 }
