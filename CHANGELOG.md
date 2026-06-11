@@ -82,6 +82,24 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- docs(compiler/quantizer) — all 16 `Boundary.make` docblock examples
+  (CSS/GLSL/WGSL/ARIA compilers, `dispatch`, `evaluate`, `Q.from`,
+  `AnimatedQuantizer`) used the dead pre-rename
+  `states: [...] as const, thresholds: [...]` form; rewritten to the real
+  `at: [[0, 'sm'], [768, 'lg']]` API. Every example now typechecks as
+  pasted. No runtime behavior changed.
+- docs(quantizer) — `AnimatedQuantizer` examples used a `'*->*'` transition
+  key that never matched (the supported any-to-any wildcard is `'*'`) and
+  bare-number durations that fail the `Millis` brand; anyone who copied the
+  example silently got duration-0 (instant) transitions. The tier → targets
+  table now lives on `QuantizerFromOptions.tier` instead of three pointers
+  to `TIER_TARGETS` in `@czap/quantizer/testing`. No runtime behavior
+  changed.
+- docs(detect) — `detect()` `@example` taught a pre-rename tier vocabulary
+  (`'low'/'mid'/'high'`, `'basic'`); actual unions are `CapLevel`
+  (`'static' | 'styled' | 'reactive' | 'animated' | 'gpu'`) and `DesignTier`
+  (`'minimal' | 'standard' | 'enhanced' | 'rich'`). No runtime or type
+  changes.
 - `@czap/audit` — allowlist entries are **package-relative**
   (`{ package: '@czap/astro', filePrefix: 'src/...' }`) and resolve through
   the profile's discovered package roots. A clean consumer install
