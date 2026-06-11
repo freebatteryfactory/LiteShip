@@ -82,12 +82,21 @@ describe('capsule-verify', () => {
     const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
       capsules: { name: string; source: string }[];
     };
-    const intro = manifest.capsules.find((cap) => cap.name === 'examples.intro');
-    expect(intro).toBeDefined();
-    const sourcePath = resolve(intro!.source);
-    const original = statSync(sourcePath);
-    // Future-date the source so the mtime fast-path flags it as a suspect.
-    utimesSync(sourcePath, original.atime, new Date(Date.now() + 5_000));
+    // Two suspect shapes: a placeholder capsule (examples.intro) AND a
+    // binding-carrying capsule (core.token-buffer) whose generated test
+    // embeds relative imports — regeneration must reproduce those imports
+    // byte-identically (the temp dir sits at tests/<dir>, the same depth
+    // as tests/generated, exactly for this).
+    const suspects = ['examples.intro', 'core.token-buffer'].map((name) => {
+      const cap = manifest.capsules.find((c) => c.name === name);
+      expect(cap, name).toBeDefined();
+      const sourcePath = resolve(cap!.source);
+      return { sourcePath, original: statSync(sourcePath) };
+    });
+    // Future-date the sources so the mtime fast-path flags them as suspects.
+    for (const s of suspects) {
+      utimesSync(s.sourcePath, s.original.atime, new Date(Date.now() + 5_000));
+    }
     try {
       const lines: string[] = [];
       await withSpawned(
@@ -107,7 +116,9 @@ describe('capsule-verify', () => {
       const receipt = JSON.parse(receiptLine!);
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
     } finally {
-      utimesSync(sourcePath, original.atime, original.mtime);
+      for (const s of suspects) {
+        utimesSync(s.sourcePath, s.original.atime, s.original.mtime);
+      }
     }
   }, scaledTimeout(180_000));
 });
