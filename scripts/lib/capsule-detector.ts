@@ -73,10 +73,13 @@ export interface DetectedCall {
    */
   readonly binding?: string;
   /**
-   * True when the binding's enclosing variable statement carries the
-   * `export` modifier (i.e. `export const X = ...`). Only exported
-   * bindings are importable by generated tests — factory-wrapped capsules
-   * (defineAsset) are wired into the harness only when this holds.
+   * True when the binding is importable from the module: either its
+   * variable statement carries the `export` modifier (`export const X = ...`)
+   * or a same-file export list names it (`const X = ...; export { X };`,
+   * including `export { X as Y }` — `binding` then holds the EXPORTED
+   * name `Y`). Only exported bindings are importable by generated tests —
+   * factory-wrapped capsules (defineAsset) are wired into the harness
+   * only when this holds.
    */
   readonly exported?: boolean;
   /**
@@ -270,6 +273,30 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
     const normalized = normalizeRepoPath(resolve(sourceFile.fileName));
     if (!rootSet.has(normalized)) continue;
 
+    // Export-list bindings — `const asset = defineAsset(...); export { asset };`
+    // (incl. `export { asset as renamed }`) are just as importable as
+    // `export const`. Map each LOCAL name to its EXPORTED name so binding
+    // resolution below can (a) mark the capsule exported and (b) report the
+    // name a generated test must actually import. Re-exports with a module
+    // specifier (`export { x } from './y'`) and type-only exports are
+    // skipped: neither makes THIS file's local value binding importable.
+    const exportListNames = new Map<string, string>();
+    for (const stmt of sourceFile.statements) {
+      if (
+        ts.isExportDeclaration(stmt) &&
+        !stmt.isTypeOnly &&
+        stmt.moduleSpecifier === undefined &&
+        stmt.exportClause !== undefined &&
+        ts.isNamedExports(stmt.exportClause)
+      ) {
+        for (const el of stmt.exportClause.elements) {
+          if (el.isTypeOnly) continue;
+          const local = el.propertyName?.text ?? el.name.text;
+          exportListNames.set(local, el.name.text);
+        }
+      }
+    }
+
     visit(sourceFile);
 
     function visit(node: ts.Node): void {
@@ -312,6 +339,16 @@ export function detectCapsuleCalls(files: readonly string[]): readonly DetectedC
               break;
             }
             p = p.parent;
+          }
+          // No export modifier on the variable statement — the binding can
+          // still be exported through a later export list. Use the EXPORTED
+          // name as the binding: that is the importable identifier.
+          if (binding !== undefined && exported !== true) {
+            const exportedAs = exportListNames.get(binding);
+            if (exportedAs !== undefined) {
+              binding = exportedAs;
+              exported = true;
+            }
           }
           hits.push({
             file: resolve(sourceFile.fileName),
