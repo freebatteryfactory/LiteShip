@@ -142,6 +142,16 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Changed
 
+- `@czap/vite` — `parseStyleBlocks` (the `@style` transform) now runs on
+  the shared character-level `css-scan` scanner (same as `@token` /
+  `@theme` / `@quantize`) instead of its own line-based parser. Fixes the
+  re-serialized single-line `<style>` case (the Astro compiler collapses
+  whole sheets onto one line — the old parser found the block but lost
+  every state), braces/semicolons inside comments and quoted strings
+  prematurely terminating states, `@style` markers inside comments
+  parsing as phantom blocks, and multi-line functional values truncating
+  at the first line. Comments inside values now read as whitespace per
+  CSS (`1fr/*c*/2fr` → `1fr 2fr`). Public signature unchanged.
 - Release workflow — **OIDC trusted publishing**: no publish tokens
   anywhere. `id-token: write` + pnpm's native OIDC exchange replace the
   `NPM_TOKEN` secret and `~/.npmrc` step; `czap ship` runs with
