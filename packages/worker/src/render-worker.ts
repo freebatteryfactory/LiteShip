@@ -237,11 +237,13 @@ async function runRender(config) {
 
       self.postMessage({ type: "frame", output: output });
 
-      if (minFrameIntervalMs > 0) {
+      if (minFrameIntervalMs > 0 && i < totalFrames - 1) {
         // Wall-clock pacing: wait until frame i+1's budget slot opens.
         // The await also yields the event loop, so stop messages are
         // processed during the pacing wait and honored by the
-        // stopRequested check at the top of the next iteration.
+        // stopRequested check at the top of the next iteration. The final
+        // frame skips the wait entirely — there is no next frame to
+        // throttle, and render-complete must not lag a dead budget.
         const waitMs = nextFrameAt - Date.now();
         if (waitMs > 0) {
           await new Promise(function (r) { setTimeout(r, waitMs); });

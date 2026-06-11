@@ -383,6 +383,20 @@ describe('render worker script frame pacing (targetFps)', () => {
     expect(workerSelf.frames()).toEqual([0, 1, 2]);
   });
 
+  test('render-complete is not delayed by a dead pacing budget after the final frame', async () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    // Pathological case from review: a one-frame render at targetFps: 1
+    // used to wait out a full 1000ms budget before render-complete even
+    // though there was no next frame to throttle.
+    workerSelf.dispatch({ type: 'init', config: { targetFps: 1 } });
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 1, durationMs: 1000, width: 16, height: 16 } });
+
+    // The lone frame AND completion arrive with zero timer advancement.
+    await vi.advanceTimersByTimeAsync(0);
+    expect(workerSelf.frames()).toEqual([0]);
+    expect(workerSelf.completions()).toEqual([1]);
+  });
+
   test('stop-render interrupts a paced render during the pacing wait', async () => {
     const workerSelf = bootRenderWorkerScript(script);
     workerSelf.dispatch({ type: 'init', config: { targetFps: 50 } });
