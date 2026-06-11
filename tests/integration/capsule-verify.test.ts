@@ -93,11 +93,12 @@ describe('capsule-verify', () => {
       const sourcePath = resolve(cap!.source);
       return { sourcePath, original: statSync(sourcePath) };
     });
-    // Future-date the sources so the mtime fast-path flags them as suspects.
-    for (const s of suspects) {
-      utimesSync(s.sourcePath, s.original.atime, new Date(Date.now() + 5_000));
-    }
     try {
+      // Future-date the sources so the mtime fast-path flags them as
+      // suspects (inside the try so any failure still restores mtimes).
+      for (const s of suspects) {
+        utimesSync(s.sourcePath, s.original.atime, new Date(Date.now() + 5_000));
+      }
       const lines: string[] = [];
       await withSpawned(
         'pnpm',
@@ -113,6 +114,7 @@ describe('capsule-verify', () => {
         .map((line) => line.trim())
         .filter((line) => line.startsWith('{') && line.endsWith('}'))
         .pop();
+      expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
       const receipt = JSON.parse(receiptLine!);
       expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
     } finally {
