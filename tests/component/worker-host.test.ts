@@ -79,6 +79,19 @@ describe('WorkerHost', () => {
     expect(host.renderer).not.toBeNull();
   });
 
+  test('attachCanvas forwards the host construction config to the render worker init', () => {
+    const host = WorkerHost.create({ targetFps: 30, poolCapacity: 16 });
+
+    host.attachCanvas(mockCanvas() as any);
+
+    // instances[0] is the compositor worker; instances[1] is the renderer.
+    const rendererWorker = MockWorker.instances[1]!;
+    expect(rendererWorker.postedMessages[0]?.data).toEqual({
+      type: 'init',
+      config: { targetFps: 30, poolCapacity: 16 },
+    });
+  });
+
   test('attachCanvas calls transferControlToOffscreen', () => {
     const host = WorkerHost.create();
     const canvas = mockCanvas();

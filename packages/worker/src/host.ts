@@ -100,7 +100,9 @@ function _createWorkerHost(
 
     attachCanvas(canvas: TransferableCanvas): void {
       if (renderer === null) {
-        renderer = RenderWorker.create();
+        // The host's construction-time config rides through to the lazily
+        // minted render worker (e.g. targetFps frame pacing).
+        renderer = RenderWorker.create(config);
       }
 
       // Transfer control to an OffscreenCanvas and send it to the worker.

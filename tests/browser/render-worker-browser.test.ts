@@ -193,6 +193,63 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     worker.dispose();
   });
 
+  // Coarse wall-clock smoke for targetFps pacing: 10 frames at targetFps=40
+  // budget at least 25ms apiece, so the paced render cannot complete in
+  // under ~250ms. The unpaced default finishes the same workload in single-
+  // digit milliseconds, so a generous 200ms floor is flake-safe while still
+  // proving pacing engaged. Exact budget math lives in the component suite
+  // under fake timers (tests/component/render-worker.test.ts).
+  test('targetFps paces wall-clock frame emission', async () => {
+    if (typeof OffscreenCanvas === 'undefined') {
+      return;
+    }
+
+    const worker = RenderWorker.create({ targetFps: 40 });
+
+    await new Promise<void>((resolve) => {
+      const handler = (e: MessageEvent) => {
+        if (e.data?.type === 'ready') resolve();
+      };
+      worker.worker.addEventListener('message', handler);
+      setTimeout(resolve, 1000);
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    const offscreen = canvas.transferControlToOffscreen();
+    worker.transferCanvas(offscreen);
+
+    const frames: number[] = [];
+    worker.onFrame((output) => {
+      frames.push((output as { frame: number }).frame);
+    });
+
+    const done = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timed out waiting for paced render-complete')), 5000);
+      worker.onComplete(() => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
+
+    const startedAt = performance.now();
+    worker.startRender({
+      fps: 10,
+      width: 16,
+      height: 16,
+      durationMs: 1000 as never,
+    });
+
+    await done;
+    const elapsedMs = performance.now() - startedAt;
+
+    expect(frames.length).toBe(10);
+    expect(elapsedMs).toBeGreaterThanOrEqual(200);
+
+    worker.dispose();
+  });
+
   test('onFrame returns an unsubscribe function that stops callbacks', async () => {
     const worker = RenderWorker.create();
 

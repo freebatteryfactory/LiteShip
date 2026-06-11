@@ -8,6 +8,6 @@
 
 > **ToWorker** = [`ToWorkerMessage`](../../../type-aliases/ToWorkerMessage.md)
 
-Defined in: [worker/src/messages.ts:335](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L335)
+Defined in: [worker/src/messages.ts:347](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L347)
 
 Every message the main thread may send to a worker.

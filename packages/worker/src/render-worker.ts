@@ -15,7 +15,7 @@
  */
 
 import { Diagnostics, type VideoConfig, type VideoFrameOutput } from '@czap/core';
-import type { ToWorkerMessage, FromWorkerMessage, WorkerLike } from './messages.js';
+import type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } from './messages.js';
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 
 // ---------------------------------------------------------------------------
@@ -77,6 +77,14 @@ let rendering = false;
 
 /** @type {boolean} */
 let stopRequested = false;
+
+/**
+ * Wall-clock frame pacing target (frames per second) received in the
+ * init message. 0 means unpaced: the render loop free-runs at maximum
+ * speed (the worker-local default).
+ * @type {number}
+ */
+let targetFps = 0;
 
 // ---------------------------------------------------------------------------
 // Simplified inline compositor (mirrors compositor-worker / Boundary.evaluate)
@@ -193,6 +201,18 @@ function drawState(state, frame, progress) {
 
 /**
  * Run the fixed-step render loop.
+ *
+ * When targetFps is set (via the init message), frames are paced by
+ * EMISSION time: after each posted frame the loop waits one full
+ * 1000/targetFps budget before drawing the next, so consecutive
+ * emissions are never closer than the budget — regardless of how draw
+ * cost varies frame to frame. The effective rate may therefore sit
+ * slightly below targetFps (budget + draw cost per cycle); targetFps is
+ * a "never faster than" production throttle, not an exact-rate
+ * scheduler. When targetFps is 0 (omitted at construction), the loop
+ * free-runs at maximum speed -- frame timing is then up to the
+ * consumer (e.g. an encoding pipeline).
+ *
  * @param {{ fps: number; width: number; height: number; durationMs: number }} config
  */
 async function runRender(config) {
@@ -201,6 +221,7 @@ async function runRender(config) {
   stopRequested = false;
 
   const totalFrames = Math.ceil((config.durationMs / 1000) * config.fps);
+  const minFrameIntervalMs = targetFps > 0 ? 1000 / targetFps : 0;
 
   try {
     for (let i = 0; i < totalFrames; i++) {
@@ -218,10 +239,22 @@ async function runRender(config) {
 
       self.postMessage({ type: "frame", output: output });
 
-      // Yield to allow stop messages to be processed.
-      // In a real scenario, the frame rate would be controlled by
-      // the encoding pipeline; here we use a minimal yield.
-      if (i % 10 === 9) {
+      if (minFrameIntervalMs > 0 && i < totalFrames - 1) {
+        // Emission-anchored pacing: wait one full budget from THIS frame's
+        // emission before drawing the next. The next frame's draw cost
+        // lands on top of the wait, so consecutive emissions are never
+        // closer than the budget even when draw cost varies (a scheduled-
+        // slot deadline would let a cheap frame after an expensive one
+        // emit compressed). Inherently burst-proof: there is no schedule
+        // to bank debt against. The await also yields the event loop, so
+        // stop messages are processed during the wait and honored by the
+        // stopRequested check at the top of the next iteration. The final
+        // frame skips the wait — there is no next frame to throttle, and
+        // render-complete must not lag a dead budget.
+        await new Promise(function (r) { setTimeout(r, minFrameIntervalMs); });
+      } else if (i % 10 === 9) {
+        // Unpaced default: yield periodically to allow stop messages
+        // to be processed; frame rate is the consumer's concern.
         await new Promise(function (r) { setTimeout(r, 0); });
       }
     }
@@ -249,6 +282,8 @@ self.addEventListener("message", function (e) {
     case "init": {
       quantizers.clear();
       blendOverrides.clear();
+      const fps = msg.config && typeof msg.config.targetFps === "number" ? msg.config.targetFps : 0;
+      targetFps = Number.isFinite(fps) && fps > 0 ? fps : 0;
       self.postMessage({ type: "ready" });
       break;
     }
@@ -328,7 +363,7 @@ function _send(worker: WorkerLike, msg: ToWorkerMessage, transfer?: Transferable
 // Factory
 // ---------------------------------------------------------------------------
 
-function _createRenderWorker(): RenderWorkerShape {
+function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
   const blob = new Blob([RENDER_WORKER_SCRIPT], { type: 'application/javascript' });
   const url = URL.createObjectURL(blob);
   const worker = new Worker(url, { type: 'classic', name: 'czap-renderer' });
@@ -369,8 +404,10 @@ function _createRenderWorker(): RenderWorkerShape {
     });
   });
 
-  // Initialize
-  _send(worker, { type: 'init' });
+  // Initialize. Construction-time knobs ride along on the init message;
+  // when none are given the worker falls back to its local defaults
+  // (free-running, unpaced render loop).
+  _send(worker, config === undefined ? { type: 'init' } : { type: 'init', config });
 
   return {
     get worker(): Worker {
@@ -429,7 +466,9 @@ function _createRenderWorker(): RenderWorkerShape {
  * ```ts
  * import { RenderWorker } from '@czap/worker';
  *
- * const renderer = RenderWorker.create();
+ * // Pace frame emission at 30fps wall-clock (live preview); omit
+ * // targetFps to free-run at maximum speed (offline encode).
+ * const renderer = RenderWorker.create({ targetFps: 30 });
  * const offscreen = canvas.transferControlToOffscreen();
  * renderer.transferCanvas(offscreen);
  * renderer.onFrame((frame) => {
@@ -444,6 +483,11 @@ export const RenderWorker = {
    * `OffscreenCanvas` via
    * {@link RenderWorkerShape.transferCanvas} before calling
    * `startRender`.
+   *
+   * Construction-time knobs ({@link WorkerConfig}) are sent to the
+   * worker in the init message: `targetFps` enables wall-clock frame
+   * pacing of the render loop; omitted fields fall back to worker-local
+   * defaults (unpaced free-run).
    */
   create: _createRenderWorker,
 } as const;

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { WASMDispatch, Diagnostics, HLC, Receipt, TypedRef } from '@czap/core';
 import { Effect } from 'effect';
 import { Resumption } from '@czap/web';
-import { configureRuntimePolicy } from '../../../packages/astro/src/runtime/policy.js';
+import { configureRuntimePolicy, _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
 function makeEl(tag: string, attrs: Record<string, string> = {}): HTMLElement {
@@ -129,6 +129,7 @@ describe('stream directive', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '';
+    _resetRuntimePolicyForTests();
     cleanupES = MockEventSource.install();
   });
 
@@ -139,6 +140,10 @@ describe('stream directive', () => {
     vi.unstubAllGlobals();
     cleanupES();
     document.body.innerHTML = '';
+    // Tests in this block configureRuntimePolicy() with custom endpoint
+    // allowlists; without a reset the module-private policy store leaks the
+    // last-configured policy into every later test in this file.
+    _resetRuntimePolicyForTests();
   });
 
   test('opens EventSource to configured URL', async () => {
