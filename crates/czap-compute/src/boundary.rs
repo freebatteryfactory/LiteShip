@@ -56,9 +56,16 @@ mod tests {
     use super::*;
 
     extern crate std;
+    use std::sync::Mutex;
     use std::vec::Vec;
 
+    // BOUNDARY_BUF's "single-threaded WASM" safety contract does not hold in
+    // cargo test's multithreaded harness — concurrent tests race the static
+    // buffer. Serialize access.
+    static BUF_LOCK: Mutex<()> = Mutex::new(());
+
     fn eval(thresholds: &[f32], values: &[f32]) -> Vec<u32> {
+        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = batch_boundary_eval(
             thresholds.as_ptr(),
             thresholds.len() as u32,

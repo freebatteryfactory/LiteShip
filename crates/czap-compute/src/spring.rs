@@ -65,9 +65,16 @@ mod tests {
     use super::*;
 
     extern crate std;
+    use std::sync::Mutex;
     use std::vec::Vec;
 
+    // SPRING_BUF's "single-threaded WASM" safety contract does not hold in
+    // cargo test's multithreaded harness — concurrent tests race the static
+    // buffer (caught in CI as stale-garbage samples). Serialize access.
+    static BUF_LOCK: Mutex<()> = Mutex::new(());
+
     fn curve(stiffness: f32, damping: f32, mass: f32, samples: u32) -> Vec<f32> {
+        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(stiffness, damping, mass, samples);
         unsafe { core::slice::from_raw_parts(ptr, samples as usize + 1) }.to_vec()
     }
@@ -107,6 +114,7 @@ mod tests {
     #[test]
     fn samples_clamp_to_buffer_capacity() {
         // 4096 requested → clamped to 255 inner samples; index 255 readable.
+        let _guard = BUF_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         let ptr = spring_curve(170.0, 26.0, 1.0, 4096);
         let out = unsafe { core::slice::from_raw_parts(ptr, 256) };
         assert_eq!(out[255], 1.0);
