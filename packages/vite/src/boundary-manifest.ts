@@ -315,18 +315,33 @@ export async function collectBoundaryManifest(
         // property values can only be resolved by the deterministic
         // file-sort order — surface a teaching conflict warning so the
         // author resolves the ambiguity explicitly.
+        const warnConflict = (where: string, prop: string, priorValue: string, value: string): void => {
+          Diagnostics.warnOnce({
+            source: DIAGNOSTIC_SOURCE,
+            code: 'duplicate-declaration-conflict',
+            message:
+              `@quantize ${block.boundaryName} state "${stateName}" sets ${where} "${prop}" in more than one CSS file ` +
+              `with different values ("${priorValue}" vs "${value}" from ${cssFile}:${block.line}). ` +
+              `Manifest merging cannot know your stylesheet link order — the later file in sorted path order wins. ` +
+              `Fix: declare "${prop}" for this state in ONE file.`,
+          });
+        };
         for (const [prop, value] of Object.entries(body.bareProps)) {
           const priorValue = prior?.bareProps[prop];
           if (priorValue !== undefined && priorValue !== value) {
-            Diagnostics.warnOnce({
-              source: DIAGNOSTIC_SOURCE,
-              code: 'duplicate-declaration-conflict',
-              message:
-                `@quantize ${block.boundaryName} state "${stateName}" sets "${prop}" in more than one CSS file ` +
-                `with different values ("${priorValue}" vs "${value}" from ${cssFile}:${block.line}). ` +
-                `Manifest merging cannot know your stylesheet link order — the later file in sorted path order wins. ` +
-                `Fix: declare "${prop}" for this state in ONE file.`,
-            });
+            warnConflict('', prop, priorValue, value);
+          }
+        }
+        // Nested-selector rules conflict the same way: the same selector's
+        // same property set differently across files.
+        for (const rule of body.rules) {
+          const priorRule = prior?.rules.find((r) => r.selector === rule.selector);
+          if (!priorRule) continue;
+          for (const [prop, value] of Object.entries(rule.props)) {
+            const priorValue = priorRule.props[prop];
+            if (priorValue !== undefined && priorValue !== value) {
+              warnConflict(`"${rule.selector}"`, prop, priorValue, value);
+            }
           }
         }
         merged[stateName] = {
