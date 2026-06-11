@@ -28,12 +28,14 @@ interface TokenDef<N extends string = string, Axes extends readonly string[] = r
 }
 
 interface TokenFactory {
-  make<N extends string, const A extends readonly [string, ...string[]]>(config: {
+  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
     readonly name: N;
     readonly category: TokenCategory;
-    readonly axes: A;
+    /** Default: ['default'] — single-value tokens need no axis declaration. */
+    readonly axes?: A;
     readonly values: Record<string, unknown>;
-    readonly fallback: unknown;
+    /** Default: derived from values.default when omitted; omitting both is a validation error. */
+    readonly fallback?: unknown;
   }): TokenDef<N, A>;
 }
 
@@ -143,37 +145,69 @@ export const Token: TokenFactory & {
    * The token is content-addressed via FNV-1a hash of its name, category,
    * axes, and values. The resulting object is frozen.
    *
+   * `axes` defaults to `['default']` and `fallback` derives from
+   * `values.default` when omitted, so a single-value token is just
+   * `Token.make({ name, category, values: { default: '#ccc' } })`.
+   *
+   * Multi-axis value keys join one value per axis with ':' in alphabetical
+   * axis-name order — for `axes: ['theme', 'contrast']` the key order is
+   * `<contrast>:<theme>` (contrast sorts first).
+   *
    * @example
    * ```ts
    * const token = Token.make({
    *   name: 'bg', category: 'color',
    *   axes: ['theme', 'contrast'],
-   *   values: { 'light:normal': '#fff', 'dark:normal': '#111' },
+   *   values: { 'normal:light': '#fff', 'normal:dark': '#111' },
    *   fallback: '#ccc',
    * });
    * // token._tag === 'TokenDef'
    * // token.cssProperty === '--czap-bg'
    * ```
    */
-  make<N extends string, const A extends readonly [string, ...string[]]>(config: {
+  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
     readonly name: N;
     readonly category: TokenCategory;
-    readonly axes: A;
+    readonly axes?: A;
     readonly values: Record<string, unknown>;
-    readonly fallback: unknown;
+    readonly fallback?: unknown;
   }): TokenDef<N, A> {
     if (config.name === '') {
       throw new CzapValidationError('Token.make', 'Token name must not be empty.');
     }
+    const axes = (config.axes ?? ['default']) as A;
     const seen = new Set<string>();
-    for (const axis of config.axes) {
+    for (const axis of axes) {
       if (seen.has(axis)) {
         throw new CzapValidationError('Token.make', `duplicate axis "${axis}". Each axis must have a unique name.`);
       }
       seen.add(axis);
     }
 
-    const id = deterministicId(config.name, config.category, config.axes, config.values, config.fallback);
+    const sortedAxes = [...axes].sort();
+    for (const key of Object.keys(config.values)) {
+      const segments = key.split(':').length;
+      if (segments !== axes.length) {
+        throw new CzapValidationError(
+          'Token.make',
+          `values key "${key}" has ${segments} segment(s) but the token declares ${axes.length} axes [${axes.join(', ')}]. ` +
+            `Keys join one value per axis with ':' in alphabetical axis-name order — e.g. "${sortedAxes.map((axis) => `<${axis}>`).join(':')}".`,
+        );
+      }
+    }
+
+    let fallback = config.fallback;
+    if (!('fallback' in config)) {
+      if (!('default' in config.values)) {
+        throw new CzapValidationError(
+          'Token.make',
+          'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
+        );
+      }
+      fallback = config.values['default'];
+    }
+
+    const id = deterministicId(config.name, config.category, axes, config.values, fallback);
 
     return Object.freeze({
       _tag: 'TokenDef' as const,
@@ -181,9 +215,9 @@ export const Token: TokenFactory & {
       id,
       name: config.name,
       category: config.category,
-      axes: config.axes,
+      axes,
       values: config.values,
-      fallback: config.fallback,
+      fallback,
       cssProperty: `--czap-${config.name}` as const,
     });
   },

@@ -7,13 +7,16 @@
  * @module
  */
 
-import { EASING_SPRING_STEPS } from './defaults.js';
+import { EASING_SPRING_STEPS, SPRING_DEFAULT_STIFFNESS, SPRING_DEFAULT_DAMPING } from './defaults.js';
 
 type EasingFnShape = (t: number) => number;
 
 interface SpringConfigShape {
-  readonly stiffness: number;
-  readonly damping: number;
+  /** Default: 170. */
+  readonly stiffness?: number;
+  /** Default: 26. */
+  readonly damping?: number;
+  /** Default: 1. */
   readonly mass?: number;
 }
 
@@ -219,21 +222,24 @@ function springRaw(t: number, omega: number, zeta: number): number {
  * // duration is ~0.4 (seconds in spring time domain)
  * ```
  */
-function _validateSpringConfig(config: SpringConfigShape): void {
-  if (config.stiffness <= 0 || !Number.isFinite(config.stiffness)) {
-    throw new RangeError(`Easing.spring: stiffness must be a positive finite number, got ${config.stiffness}`);
+function _resolveSpringConfig(config: SpringConfigShape): { stiffness: number; damping: number; mass: number } {
+  const stiffness = config.stiffness ?? SPRING_DEFAULT_STIFFNESS;
+  const damping = config.damping ?? SPRING_DEFAULT_DAMPING;
+  const mass = config.mass ?? 1;
+  if (stiffness <= 0 || !Number.isFinite(stiffness)) {
+    throw new RangeError(`Easing.spring: stiffness must be a positive finite number, got ${stiffness}`);
   }
-  if (config.damping < 0 || !Number.isFinite(config.damping)) {
-    throw new RangeError(`Easing.spring: damping must be a non-negative finite number, got ${config.damping}`);
+  if (damping < 0 || !Number.isFinite(damping)) {
+    throw new RangeError(`Easing.spring: damping must be a non-negative finite number, got ${damping}`);
   }
-  if (config.mass !== undefined && (config.mass <= 0 || !Number.isFinite(config.mass))) {
-    throw new RangeError(`Easing.spring: mass must be a positive finite number, got ${config.mass}`);
+  if (mass <= 0 || !Number.isFinite(mass)) {
+    throw new RangeError(`Easing.spring: mass must be a positive finite number, got ${mass}`);
   }
+  return { stiffness, damping, mass };
 }
 
 function springNaturalDuration(config: SpringConfigShape, epsilon = 0.001): number {
-  _validateSpringConfig(config);
-  const { stiffness, damping, mass = 1 } = config;
+  const { stiffness, damping, mass } = _resolveSpringConfig(config);
   const omega = Math.sqrt(stiffness / mass);
   const zeta = damping / (2 * Math.sqrt(stiffness * mass));
   // Scan steps (at 1ms resolution) to find spring settling point
@@ -250,6 +256,9 @@ function springNaturalDuration(config: SpringConfigShape, epsilon = 0.001): numb
  * Creates a physics-based spring easing function.
  * Maps t in [0,1] through a damped spring simulation.
  *
+ * Omitted config fields fall back to engine defaults
+ * (stiffness 170, damping 26, mass 1) — `Easing.spring({})` just works.
+ *
  * @example
  * ```ts
  * const bounce = Easing.spring({ stiffness: 200, damping: 10 });
@@ -259,8 +268,7 @@ function springNaturalDuration(config: SpringConfigShape, epsilon = 0.001): numb
  * ```
  */
 function spring(config: SpringConfigShape): EasingFnShape {
-  _validateSpringConfig(config);
-  const { stiffness, damping, mass = 1 } = config;
+  const { stiffness, damping, mass } = _resolveSpringConfig(config);
   const omega = Math.sqrt(stiffness / mass);
   const zeta = damping / (2 * Math.sqrt(stiffness * mass));
   const naturalDuration = springNaturalDuration(config);
