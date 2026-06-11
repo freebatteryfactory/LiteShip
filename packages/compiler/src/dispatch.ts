@@ -119,7 +119,8 @@ export type CompileResult =
  * import { dispatch } from '@czap/compiler';
  *
  * const boundary = Boundary.make({
- *   input: 'width', states: ['sm', 'lg'] as const, thresholds: [0, 768],
+ *   input: 'width',
+ *   at: [[0, 'sm'], [768, 'lg']],
  * });
  * const result = dispatch({
  *   _tag: 'CSSCompiler',

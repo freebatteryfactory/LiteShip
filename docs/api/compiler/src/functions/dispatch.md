@@ -8,7 +8,7 @@
 
 > **dispatch**(`def`): [`CompileResult`](../type-aliases/CompileResult.md)
 
-Defined in: [compiler/src/dispatch.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L137)
+Defined in: [compiler/src/dispatch.ts:138](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L138)
 
 Dispatch a [CompilerDef](../type-aliases/CompilerDef.md) to the matching compiler and return a
 tagged [CompileResult](../type-aliases/CompileResult.md).
@@ -38,7 +38,8 @@ import { Boundary } from '@czap/core';
 import { dispatch } from '@czap/compiler';
 
 const boundary = Boundary.make({
-  input: 'width', states: ['sm', 'lg'] as const, thresholds: [0, 768],
+  input: 'width',
+  at: [[0, 'sm'], [768, 'lg']],
 });
 const result = dispatch({
   _tag: 'CSSCompiler',
