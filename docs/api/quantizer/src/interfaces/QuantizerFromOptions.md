@@ -6,11 +6,12 @@
 
 # Interface: QuantizerFromOptions
 
-Defined in: [quantizer/src/quantizer.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L133)
+Defined in: [quantizer/src/quantizer.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L134)
 
 Options accepted by [Q.from](../variables/Q.md#from).
 
-`tier` gates which output targets get produced (see `TIER_TARGETS` (in `@czap/quantizer/testing`)).
+`tier` gates which output targets get produced (see the table on
+[QuantizerFromOptions.tier](#tier)).
 `spring` enables automatic CSS `--czap-easing` injection on CSS outputs.
 
 ## Properties
@@ -19,7 +20,7 @@ Options accepted by [Q.from](../variables/Q.md#from).
 
 > `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
 
-Defined in: [quantizer/src/quantizer.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L137)
+Defined in: [quantizer/src/quantizer.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L154)
 
 Spring config that drives CSS easing generation for CSS outputs.
 
@@ -29,6 +30,20 @@ Spring config that drives CSS easing generation for CSS outputs.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L135)
+Defined in: [quantizer/src/quantizer.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L152)
 
 MotionTier for output gating; omit to allow all targets.
+
+Each tier permits a fixed set of output targets (higher tiers include
+lower-tier targets):
+
+| tier          | allowed targets                     |
+| ------------- | ----------------------------------- |
+| `none`        | `aria`                              |
+| `transitions` | `css`, `aria`                       |
+| `animations`  | `css`, `aria`                       |
+| `physics`     | `css`, `glsl`, `aria`               |
+| `compute`     | `css`, `glsl`, `wgsl`, `aria`, `ai` |
+
+Outputs defined for a gated-off target are silently dropped;
+`.force(...targets)` overrides the gating per target.
