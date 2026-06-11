@@ -6,7 +6,7 @@
 
 # Function: capSetFromCapabilities()
 
-> **capSetFromCapabilities**(`caps`): [`CapSet`](#)
+> **capSetFromCapabilities**(`caps`): [`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
 Defined in: [detect/src/tiers.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L57)
 
@@ -21,4 +21,4 @@ A device at level X automatically has all levels below it.
 
 ## Returns
 
-[`CapSet`](#)
+[`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)

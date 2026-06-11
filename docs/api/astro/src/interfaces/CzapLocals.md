@@ -16,7 +16,7 @@ adaptive rendering decisions.
 
 ### capabilities
 
-> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](#)
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
 Defined in: [astro/src/middleware.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L33)
 

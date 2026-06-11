@@ -11,7 +11,7 @@
 Defined in: [vite/src/css-quantize.ts:291](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L291)
 
 Compile a parsed [QuantizeBlock](../interfaces/QuantizeBlock.md) plus its resolved
-[Boundary.Shape](#) into CSS `@container` query rules. Delegates
+[Boundary.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md) into CSS `@container` query rules. Delegates
 to the canonical `CSSCompiler` to avoid duplicating threshold-to-query
 logic.
 
@@ -23,7 +23,7 @@ logic.
 
 ### boundary
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Returns
 

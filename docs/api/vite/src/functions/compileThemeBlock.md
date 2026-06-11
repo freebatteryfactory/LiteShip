@@ -23,7 +23,7 @@ theme-to-CSS logic.
 
 ### theme
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md)
 
 ## Returns
 

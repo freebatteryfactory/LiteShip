@@ -116,4 +116,20 @@ describe('Transition.for', () => {
     const t = Transition.for(stubQuantizer, config);
     expect(t.config).toBe(config);
   });
+
+  test("'*->*' pair keys are a compile error and never match at runtime", () => {
+    // TransitionMap's pair keys are a template over the boundary's state
+    // union, so the historical '*->*' docblock mistake (which silently
+    // resolved to instant duration-0 transitions) no longer type-checks.
+    // The any-to-any wildcard is '*'.
+    const t = Transition.for(stubQuantizer, {
+      // @ts-expect-error -- '*' is not a state of the boundary; use the '*' wildcard key instead
+      '*->*': { duration: Millis(300) },
+    });
+
+    // Runtime behavior for anyone who suppressed the type error: the key
+    // never matches, so the lookup falls through to the instant default.
+    const result = t.getTransition('mobile', 'tablet');
+    expect(result.duration).toBe(Millis(0));
+  });
 });

@@ -98,6 +98,20 @@ pivot (epic #4) — these notes ship as 0.2.0.
   ffmpeg-probe 15%→100%, browser host context 15%→100%, scene-dev server
   20%→100%, gauntlet command 30%→100%, video decoder 47%→100%, audit CLI
   adapter 52%→100% branches, plus the three 1/2-branch harness files.
+- **BREAKING** `@czap/quantizer` — `TransitionMap`'s pair keys are now a
+  template over the state union (`` `${S}->${S}` ``, mirrored in
+  `packages/_spine/quantizer.d.ts`): with a concrete boundary, non-state
+  keys like the historical `'*->*'` docblock mistake are compile errors
+  instead of silently-never-matching duration-0 transitions. The
+  any-to-any wildcard remains `'*'`. `TransitionMap` is now a type alias
+  (mapped pair keys cannot live on an interface); loosely-typed
+  `TransitionMap<string>` call sites are unaffected.
+- `capsule:verify` — the JSON receipt classifies every generated bench
+  (`benches: { total, real, placeholder }`) instead of existence-only
+  checking. The harness templates still emit comment-only bench closures,
+  so all 15 currently report as `placeholder` — a green verdict can no
+  longer be mistaken for benchmark coverage. Real bench bodies land with
+  the harness-handlers epic's later waves.
 
 ### Fixed
 
@@ -160,7 +174,18 @@ pivot (epic #4) — these notes ship as 0.2.0.
   gap recovery is host-wired via the `Resumption` namespace; `SSE.create`
   carries a composed example mirroring the Astro reference wiring. The two
   `Resumption.saveState` docblock examples omitted the required
-  `timestamp` field and did not typecheck — fixed.
+  `timestamp` field and did not typecheck — fixed. The composed recipe is
+  now guarded by a component test
+  (`tests/component/sse-resumption-composition.test.ts`) that runs all
+  three steps — seed from `loadState`, persist per message, `resume` after
+  reconnect — against mock EventSource/sessionStorage/fetch.
+- docs(api) — the typedoc `externalSymbolLinkMappings` placeholders are
+  real URLs: re-exported `@czap/*` symbols (`Millis`, `CapLevel`, `CapSet`,
+  `Quantizer`, the `*.Shape` namespaces, `ExtendedDeviceCapabilities`,
+  `KVNamespace`, …) link to their GitHub docs/api pages, module-internal
+  constants link to their source files, and `effect` symbols link to the
+  Effect docs. `docs/api` previously contained 160 dead `[X](#)` links;
+  now zero.
 
 ## [0.1.5] — 2026-06-10
 

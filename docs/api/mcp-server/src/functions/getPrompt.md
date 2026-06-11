@@ -10,7 +10,7 @@
 
 Defined in: [mcp-server/src/prompts.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L67)
 
-Resolve a prompt by name. Unknown prompt / missing / invalid argument → [InvalidParamsError](#) (-32602).
+Resolve a prompt by name. Unknown prompt / missing / invalid argument → [InvalidParamsError](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts) (-32602).
 
 ## Parameters
 
