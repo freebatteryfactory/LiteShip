@@ -15,7 +15,7 @@ typically destructure these and pass them to [satelliteAttrs](../functions/satel
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
+> `readonly` `optional` **boundary?**: [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 Defined in: [astro/src/Satellite.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L25)
 
@@ -35,7 +35,7 @@ Extra CSS class names to merge with `czap-satellite`.
 
 ### component?
 
-> `readonly` `optional` **component?**: [`Shape`](#)\<[`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>, readonly `string`[]\>
+> `readonly` `optional` **component?**: [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)\<[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>, readonly `string`[]\>
 
 Defined in: [astro/src/Satellite.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L27)
 

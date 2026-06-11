@@ -6,7 +6,7 @@
 
 # Function: watchCapabilities()
 
-> **watchCapabilities**(`onChange`): `Effect`\<`void`, `never`, [`Scope`](#)\>
+> **watchCapabilities**(`onChange`): `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 Defined in: [detect/src/detect.ts:621](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L621)
 
@@ -26,7 +26,7 @@ Callback invoked with fresh detection results on change
 
 ## Returns
 
-`Effect`\<`void`, `never`, [`Scope`](#)\>
+`Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 An Effect (scoped) that sets up listeners
 

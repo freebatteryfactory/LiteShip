@@ -19,7 +19,7 @@ fresh [LiveQuantizer](LiveQuantizer.md) within an Effect scope.
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ### O
 
@@ -79,7 +79,7 @@ Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFrom
 
 ### create()
 
-> **create**(): `Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](#)\>
+> **create**(): `Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 Defined in: [quantizer/src/quantizer.ts:181](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L181)
 
@@ -87,4 +87,4 @@ Instantiate a reactive [LiveQuantizer](LiveQuantizer.md) scoped to an Effect fib
 
 #### Returns
 
-`Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](#)\>
+`Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>

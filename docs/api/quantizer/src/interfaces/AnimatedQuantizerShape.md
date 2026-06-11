@@ -16,13 +16,13 @@ output record. Non-numeric values snap at the 50% mark.
 
 ## Extends
 
-- [`Quantizer`](#)\<`B`\>
+- [`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Properties
 

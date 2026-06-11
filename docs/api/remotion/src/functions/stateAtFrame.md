@@ -22,7 +22,7 @@ undefined output.
 
 ### frames
 
-readonly [`VideoFrameOutput`](#)[]
+readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
 
 Output of [precomputeFrames](precomputeFrames.md).
 
