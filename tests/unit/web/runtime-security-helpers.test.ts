@@ -8,15 +8,21 @@ import {
   createHtmlFragment,
   resolveHtmlString,
   sanitizeHTML,
+  _resetTrustedTypesPolicyCacheForTests,
 } from '../../../packages/web/src/security/html-trust.js';
 
 describe('runtime security helpers', () => {
   beforeEach(() => {
     Diagnostics.reset();
+    // The Trusted Types policy lookup is cached on first read for the
+    // lifetime of the runtime; reset so each test resolves it against the
+    // current globals instead of whatever the first test happened to see.
+    _resetTrustedTypesPolicyCacheForTests();
   });
 
   afterEach(() => {
     Diagnostics.reset();
+    _resetTrustedTypesPolicyCacheForTests();
   });
 
   test('runtime endpoint url helpers cover allowed, missing, malformed, allowlist, and kind-restricted paths', () => {

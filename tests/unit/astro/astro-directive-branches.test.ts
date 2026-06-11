@@ -9,7 +9,7 @@ import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import gpuDirective from '../../../packages/astro/src/client-directives/gpu.js';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import workerDirective from '../../../packages/astro/src/client-directives/worker.js';
-import { configureRuntimePolicy } from '../../../packages/astro/src/runtime/policy.js';
+import { configureRuntimePolicy, _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
 import { isSameOriginRuntimeUrl } from '../../../packages/astro/src/runtime/url-policy.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { MockWorker } from '../../helpers/mock-worker.js';
@@ -33,6 +33,7 @@ describe('astro directive branch coverage', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     document.documentElement.setAttribute('data-czap-tier', 'reactive');
+    _resetRuntimePolicyForTests();
     configureRuntimePolicy();
   });
 
@@ -51,7 +52,10 @@ describe('astro directive branch coverage', () => {
     vi.unstubAllGlobals();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('data-czap-tier');
-    configureRuntimePolicy();
+    // True isolation: clear the module-private policy store rather than
+    // re-configuring a default (which would leave a stale policy live for
+    // any suite that expects unconfigured state).
+    _resetRuntimePolicyForTests();
   });
 
   test('satellite ignores invalid boundaries, unsupported inputs, and invalid reinit payloads gracefully', () => {

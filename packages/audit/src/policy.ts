@@ -339,16 +339,29 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       'Fail-closed workspace guard for doctor --fix: unreadable root manifest must refuse fixes (Codex P1); the skip is surfaced in the fixes receipt, so no context is laundered.',
   },
   {
-    // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumer is
-    // the runtime-policy test suite, which the audit does not scan, so symbol-level
-    // evidence cannot see it. Allowlisted so it classifies as suppressed-with-reason
-    // (test-only) rather than appearing as a dead-symbol candidate.
+    // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumers
+    // are the astro directive test suites (tests/unit/astro/astro-directives.test.ts,
+    // astro-directive-branches.test.ts), which the audit does not scan, so
+    // symbol-level evidence cannot see them. Allowlisted so it classifies as
+    // suppressed-with-reason (test-only) rather than appearing as a dead-symbol
+    // candidate.
     rule: 'symbol-orphan-candidate',
     package: '@czap/astro',
     filePrefix: 'src/runtime/policy.ts',
     summaryIncludes: '_resetRuntimePolicyForTests',
     reason:
-      'Test-only reset hook consumed by the runtime-policy test suite (tests/ are not scanned by the symbol-level audit).',
+      'Test-only reset hook consumed by the astro directive test suites — beforeEach/afterEach in tests/unit/astro/astro-directives.test.ts and astro-directive-branches.test.ts (tests/ are not scanned by the symbol-level audit).',
+  },
+  {
+    // Sibling test-only reset hook for the Trusted Types policy cache. Consumed
+    // by tests/unit/web/runtime-security-helpers.test.ts beforeEach/afterEach,
+    // which the symbol-level audit does not scan.
+    rule: 'symbol-orphan-candidate',
+    package: '@czap/web',
+    filePrefix: 'src/security/html-trust.ts',
+    summaryIncludes: '_resetTrustedTypesPolicyCacheForTests',
+    reason:
+      'Test-only Trusted Types cache reset consumed by tests/unit/web/runtime-security-helpers.test.ts beforeEach/afterEach (tests/ are not scanned by the symbol-level audit).',
   },
 ];
 
