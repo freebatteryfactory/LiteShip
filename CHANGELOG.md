@@ -182,6 +182,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- examples/tutorial — `05-llm.astro` failed `astro build` outright: its
+  code samples were littered with mangled brace escapes (`{'{'}&br;` —
+  `&br;` is not an HTML entity) and one unescaped `{` opened a bogus
+  Astro expression mid-sample. The code blocks now use `is:raw` so
+  braces render literally. A new integration gate
+  (`tests/integration/examples-build.test.ts`) builds every example
+  that declares a `build` script — nothing in CI had ever built the
+  examples, which is how a tutorial page that could not build shipped.
 - Cloudflare boundary-cache truth repairs: the middleware docblock and
   docs taught `boundaryId: 'sha256:…'` — the wrong identity family
   (ADR-0003 mints `fnv1a:xxxxxxxx`) with no sanctioned way to obtain a
