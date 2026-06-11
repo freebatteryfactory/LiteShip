@@ -1280,8 +1280,13 @@ describe('@czap/vite plugin', () => {
     } as never);
     expect(defUpdate).toEqual([cssModule]);
 
+    // hotUpdate extends Vite's own affected set (options.modules) rather
+    // than rebuilding it from getModuleById — returning an array replaces
+    // Vite's list, so dropping options.modules would suppress the edited
+    // file's own HMR for query-bearing module ids.
     const cssUpdate = vitePlugin.hotUpdate?.call(context as never, {
       file: 'src/app.css',
+      modules: [cssModule],
     } as never);
     expect(cssUpdate).toEqual([cssModule]);
   });
@@ -1296,7 +1301,9 @@ describe('@czap/vite plugin', () => {
 
     const vitePlugin = plugin();
     const context = { environment: { moduleGraph } };
-    expect(vitePlugin.hotUpdate?.call(context as never, { file: 'src/missing.css' } as never)).toBeUndefined();
+    expect(
+      vitePlugin.hotUpdate?.call(context as never, { file: 'src/missing.css', modules: [] } as never),
+    ).toBeUndefined();
 
     const noHmrPlugin = plugin({ hmr: false });
     expect(noHmrPlugin.hotUpdate?.call(context as never, { file: 'src/app.css' } as never)).toBeUndefined();
@@ -1691,11 +1698,13 @@ describe('@czap/vite plugin', () => {
 
     const astroUpdate = vitePlugin.hotUpdate?.call(context as never, {
       file: 'src/page.astro',
+      modules: [astroModule],
     } as never);
     expect(astroUpdate).toEqual([astroModule]);
 
     const htmlUpdate = vitePlugin.hotUpdate?.call(context as never, {
       file: 'src/index.html',
+      modules: [htmlModule],
     } as never);
     expect(htmlUpdate).toEqual([htmlModule]);
   });

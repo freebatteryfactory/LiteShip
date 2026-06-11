@@ -229,9 +229,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     // manifest and invalidate the virtual module so importers reload.
     writeModule(srcDir, 'extra.boundaries.ts', BOUNDARY_MODULE.replace('viewport', 'sidebar'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
-    (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+    (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'extra.boundaries.ts') },
+      { file: join(srcDir, 'extra.boundaries.ts'), modules: [] },
     );
     expect(invalidated).toContain('\0virtual:czap/boundaries');
 
@@ -334,9 +334,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     const { moduleGraph } = makeModuleGraphMock();
     // Vite's hook contract delivers NORMALIZED (forward-slash) paths —
     // a raw platform join() broke the suffix match on Windows.
-    (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+    (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'boundaries.ts').replace(/\\/g, '/') },
+      { file: join(srcDir, 'boundaries.ts').replace(/\\/g, '/'), modules: [] },
     );
 
     const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
@@ -367,9 +367,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
 
     writeModule(srcDir, 'Page.astro', page.replace('4px', '9px'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
-    (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+    (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'Page.astro').replace(/\\/g, '/') },
+      { file: join(srcDir, 'Page.astro').replace(/\\/g, '/'), modules: [] },
     );
     expect(invalidated).toContain('\0virtual:czap/boundaries');
 
@@ -401,9 +401,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     // dev-server importers keep serving the stale outputsByTier.
     writeModule(srcDir, 'styles.css', QUANTIZE_CSS.replace('--gap: 24px', '--gap: 64px'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
-    const affected = (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+    const affected = (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'styles.css') },
+      { file: join(srcDir, 'styles.css'), modules: [] },
     );
     expect(invalidated).toContain('\0virtual:czap/boundaries');
     expect(affected).toContainEqual(expect.objectContaining({ id: '\0virtual:czap/boundaries' }));
