@@ -31,7 +31,7 @@ Delay before the animation begins, in milliseconds.
 
 Defined in: [quantizer/src/transition.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L19)
 
-Animation duration in milliseconds (branded via [Millis](#)).
+Animation duration in milliseconds (branded via [Millis](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
 
 ***
 

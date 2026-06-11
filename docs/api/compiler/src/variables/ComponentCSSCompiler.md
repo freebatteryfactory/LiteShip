@@ -26,14 +26,14 @@ satellite-mounted instances participate in container queries.
 
 Compile a component definition into scoped CSS with slot + satellite markers.
 
-Compile a [Component.Shape](#) into scoped CSS with slot and satellite
+Compile a [Component.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md) into scoped CSS with slot and satellite
 markers appended inside the component's `@layer` block.
 
 #### Parameters
 
 ##### component
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)
 
 #### Returns
 

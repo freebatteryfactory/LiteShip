@@ -19,7 +19,7 @@ signals at the `none` tier for testing).
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Methods
 

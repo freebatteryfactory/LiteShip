@@ -6,7 +6,7 @@
 
 # Interface: Transition\<B\>
 
-Defined in: [quantizer/src/transition.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L45)
+Defined in: [quantizer/src/transition.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L52)
 
 Resolver that maps a boundary crossing to its [TransitionConfig](TransitionConfig.md).
 
@@ -17,15 +17,15 @@ during animation loop setup.
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Properties
 
 ### config
 
-> `readonly` **config**: [`TransitionMap`](TransitionMap.md)\<`StateUnion`\<`B`\>\>
+> `readonly` **config**: [`TransitionMap`](../type-aliases/TransitionMap.md)\<`StateUnion`\<`B`\>\>
 
-Defined in: [quantizer/src/transition.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L47)
+Defined in: [quantizer/src/transition.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L54)
 
 The raw transition map used to create this resolver.
 
@@ -35,7 +35,7 @@ The raw transition map used to create this resolver.
 
 > **getTransition**(`from`, `to`): [`TransitionConfig`](TransitionConfig.md)
 
-Defined in: [quantizer/src/transition.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L49)
+Defined in: [quantizer/src/transition.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L56)
 
 Resolve the transition config for a specific `from -> to` state pair.
 

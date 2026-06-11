@@ -28,13 +28,20 @@ export interface TransitionConfig {
  *
  * Lookup resolves exact keys first, then the wildcard, then falls back to
  * an instantaneous transition (duration: 0).
+ *
+ * The key template is generic over the state union `S`, so with a concrete
+ * boundary (`TransitionMap<'mobile' | 'tablet'>`) only real `from->to`
+ * pairs type-check — keys like `'*->*'` (which never match at runtime;
+ * the any-to-any wildcard is `'*'`) are compile errors, not silent
+ * duration-0 transitions.
  */
-export interface TransitionMap<_S extends string = string> {
+export type TransitionMap<S extends string = string> = {
   /** Wildcard fallback applied when no exact `from->to` key matches. */
   readonly '*'?: TransitionConfig;
-  /** Exact `"from->to"` transition key. */
-  readonly [key: `${string}->${string}`]: TransitionConfig;
-}
+} & {
+  /** Exact `"from->to"` transition keys derived from the state union `S`. */
+  readonly [K in `${S}->${S}`]?: TransitionConfig;
+};
 
 /**
  * Resolver that maps a boundary crossing to its {@link TransitionConfig}.
@@ -68,10 +75,12 @@ function createTransition<B extends Boundary.Shape>(
   return {
     config: transitionConfig,
     getTransition(from: StateUnion<B>, to: StateUnion<B>): TransitionConfig {
-      // Exact match first. The key is typed as the template-literal pattern
-      // declared on TransitionMap, so we can index directly.
-      const exactKey = `${from as string}->${to as string}` as const;
-      const exact = transitionConfig[exactKey];
+      // Exact match first. TransitionMap's pair keys are a generic template
+      // over the state union; the union is erased at runtime, so this seam
+      // reads the map as a plain string-keyed record.
+      const exactKey = `${from as string}->${to as string}`;
+      const lookup: Readonly<Record<string, TransitionConfig | undefined>> = transitionConfig;
+      const exact = lookup[exactKey];
       if (exact !== undefined) return exact;
 
       // Wildcard fallback
