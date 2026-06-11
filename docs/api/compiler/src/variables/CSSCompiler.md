@@ -8,7 +8,7 @@
 
 > `const` **CSSCompiler**: `object`
 
-Defined in: [compiler/src/css.ts:307](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L307)
+Defined in: [compiler/src/css.ts:367](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L367)
 
 CSS compiler namespace.
 
@@ -22,8 +22,13 @@ custom properties that enable GPU-interpolated transitions.
 
 > **compile**: \<`B`\>(`boundary`, `states`, `selector?`) => [`CSSCompileResult`](../interfaces/CSSCompileResult.md)
 
-Compile a boundary definition and per-state CSS property maps into
+Compile a boundary definition and per-state CSS inputs into
 `@container` query rules.
+
+Each state accepts either a flat property map (applied to `selector`)
+or a [CSSStateBody](../interfaces/CSSStateBody.md) whose nested rules each become one
+[CSSRule](../interfaces/CSSRule.md) with their own selector inside the state's
+`@container` block.
 
 #### Type Parameters
 
@@ -41,15 +46,15 @@ The boundary definition with states and thresholds
 
 ##### states
 
-`{ readonly [S in string]?: Record<string, string> }`
+`{ readonly [S in string]?: CSSStateInput }`
 
-Per-state CSS property maps
+Per-state CSS inputs (flat property maps or structured bodies)
 
 ##### selector?
 
 `string`
 
-Optional CSS selector (defaults to `.czap-boundary`)
+Optional CSS selector for bare properties (defaults to `.czap-boundary`)
 
 #### Returns
 
@@ -69,11 +74,14 @@ const boundary = Boundary.make({
 });
 const result = CSSCompiler.compile(boundary, {
   sm: { 'font-size': '14px' },
-  lg: { 'font-size': '18px' },
+  lg: {
+    bareProps: { 'font-size': '18px' },
+    rules: [{ selector: '.grid', properties: { gap: '2rem' } }],
+  },
 }, '.card');
 console.log(result.raw);
 // @container width (width < 768px) { .card { font-size: 14px; } }
-// @container width (width >= 768px) { .card { font-size: 18px; } }
+// @container width (width >= 768px) { .card { font-size: 18px; } .grid { gap: 2rem; } }
 ```
 
 ### generatePropertyRegistrations
