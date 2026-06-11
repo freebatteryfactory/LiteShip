@@ -44,6 +44,45 @@ pivot (epic #4) — these notes ship as 0.2.0.
   path end-to-end (real boundary module, `@quantize` CSS, manifest-fed
   middleware) instead of compiling a placeholder constant.
 
+- `@czap/vite` + `@czap/compiler` — `@quantize` states accept **nested
+  selector rules** (`<selector> { ... }`) alongside bare declarations:
+  each nested selector compiles to its own rule inside the state's
+  `@container` block (`CSSCompiler.compile` takes per-state
+  `{ bareProps, rules }` bodies; flat property maps still work).
+  `QuantizeBlock.states` is now `Record<string, QuantizeStateBody>`
+  (**breaking** for direct `parseQuantizeBlocks` consumers). For
+  `viewport.*` boundaries the compiled output also declares `:root` as
+  the named query container (`container-type: inline-size;
+  container-name: <input>`) so the queries actually match; non-viewport
+  inputs get a `container-not-declared` diagnostic naming the exact
+  declaration to add.
+- `@czap/vite` — single-line `@token name {}` blocks parse (the natural
+  dependency-declaration form used by the examples).
+- `@czap/vite` — **parse-miss diagnostics**: a CSS file containing
+  `@token`/`@quantize` where zero blocks parse warns with the file:line
+  and the supported grammar (anonymous/inline dialects no longer die
+  silently); a parsed `@quantize` block whose states are all empty warns
+  the same way. Markers that only appear inside comments stay silent.
+- `@czap/vite` — `transformHTML` accepts the plugin's `dirs.boundary`
+  override, so `data-czap="name"` resolution honors the same convention
+  directories as the CSS phases.
+- `@czap/scene` — the authoring sugar is now WIRED (Spec 1 §5.1/§5.3/§5.4;
+  it shipped as orphaned exports): track `from`/`to` accept `Beat(n)` marks
+  (`FrameMark = number | BeatHandle | FrameMarkSum`), resolved to frame
+  indices by `compileScene` via scene BPM/fps BEFORE invariants run —
+  invariant checks now receive a `ResolvedSceneContract` with numeric
+  ranges; `Scene.include` accepts a `Beat()` offset (deferred via
+  `addFrameMarks`, resolved against the parent's BPM/fps); video/audio/
+  effect tracks accept `envelope: fade.in/fade.out/pulse.every(...)`,
+  compiled to pre-resolved `Envelope` components that VideoSystem
+  (`_opacity`), AudioSystem (new `_gain` write), and EffectSystem
+  (`_intensity`) read each tick; transitions accept `ease: 'cubic' |
+  'spring' | 'bounce' | { stepped: n }`, compiled to an `Ease` component
+  TransitionSystem maps through the closed catalog (`easeFnFor`). New
+  public helpers: `resolveFrameMark`, `addFrameMarks`, `resolveEnvelope`,
+  `envelopeFactor`, `easeFnFor`; canonical types land in
+  `@czap/_spine/scene.d.ts` per ADR-0010. `examples/scenes/intro.ts` is
+  now authored in musical time end-to-end.
 - `@czap/audit` — consumer mode verifies **dist truth**: every concrete
   exports-map condition of every installed package must resolve to a real
   file (`export-target-missing`, error). Catches broken installs and
@@ -65,6 +104,25 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `core.token-buffer` runs live by wrapping the production `TokenBuffer`;
   capsules without handlers or with non-derivable schemas self-report as
   honest skips.
+- `@czap/assets` — harness handlers wave 2: `AssetDecl.decoder` is real.
+  `defineAsset` resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+  (audio → audioDecoder, video → videoDecoder, image → imageDecoder;
+  analysis kinds keep their projection factories) and wires it as the
+  capsule's `derive` handler. New exports: `builtinDecoderFor`,
+  `resolveAssetDecoder`, and the `DecodedAsset<K>` kind→decoded-shape
+  mapping (`decoder` is now typed against it, so an audio asset's custom
+  decoder must produce `DecodedAudio`). The `asset analyze` hosts (CLI +
+  shared Node command context) decode through the asset's own decoder via
+  the registry instead of a hardwired `audioDecoder` (audio built-in
+  remains the fallback for processes that never import the asset module);
+  `CommandContext.runAudioProjection` gains an optional `assetId`
+  parameter to carry the routing. `CapsuleContract.derive` may now be
+  async (`Out | Promise<Out>`) and every harness probe awaits it.
+  capsule-compile is factory-aware for exported `defineAsset` bindings:
+  the generated `intro-bed` test imports the real capsule and decodes the
+  canonical `examples/scenes/intro-bed.wav` fixture (determinism +
+  invariants), and the decode-throughput bench is a REAL bench against
+  the declared p95 budget instead of a comment-only stub.
 - Rust/WASM parity harness: `crates/czap-compute` joins the proof system —
   crate unit tests, a CI job (`rust-wasm-parity`) that builds the wasm32
   artifact from source, and a property suite loading it through the real
@@ -103,6 +161,24 @@ pivot (epic #4) — these notes ship as 0.2.0.
   ffmpeg-probe 15%→100%, browser host context 15%→100%, scene-dev server
   20%→100%, gauntlet command 30%→100%, video decoder 47%→100%, audit CLI
   adapter 52%→100% branches, plus the three 1/2-branch harness files.
+- **BREAKING** `@czap/quantizer` — `TransitionMap`'s pair keys are now a
+  template over the state union (`` `${S}->${S}` ``, mirrored in
+  `packages/_spine/quantizer.d.ts`): with a concrete boundary, non-state
+  keys like the historical `'*->*'` docblock mistake are compile errors
+  instead of silently-never-matching duration-0 transitions. The
+  any-to-any wildcard remains `'*'`. `TransitionMap` is now a type alias
+  (mapped pair keys cannot live on an interface); loosely-typed
+  `TransitionMap<string>` call sites are unaffected.
+- `capsule:verify` — the JSON receipt classifies every generated bench
+  (`benches: { total, real, placeholder }`) instead of existence-only
+  checking. Most harness templates still emit comment-only bench closures
+  and report as `placeholder` — a green verdict can no longer be mistaken
+  for benchmark coverage; the `intro-bed` decode-throughput bench (asset
+  decoder channel, above) is already real and counts in `real`. Remaining
+  real bench bodies land with the harness-handlers epic's later waves. The
+  integration test derives its expected classification from the manifest
+  via the shared `scripts/lib/bench-classify.ts` classifier instead of
+  hardcoded counts.
 
 ### Fixed
 
@@ -112,6 +188,15 @@ pivot (epic #4) — these notes ship as 0.2.0.
   real id. Docs/README/example now derive ids from the build manifest,
   and the integration test mints a real address instead of casting a
   fabricated one (`as never`).
+- examples (default / showcase / tutorial) — the `@token` blocks now use
+  the documented named-block grammar (the previous anonymous-manifest,
+  inline-declaration, and dependency-map dialects parsed to zero
+  declarations); the tutorial's fabricated "tree-shaking" claim is gone.
+  The `@quantize` blocks use the now-working nested-selector form, each
+  example's `astro.config.ts` points `dirs` at its convention
+  directories so every referenced primitive resolves, and
+  `examples/default` drives both the satellite runtime and the compiled
+  `@container` CSS from the same shared `layout` boundary export.
 - `@czap/scene` — `compileScene` now evaluates `SceneContract.invariants`
   and throws `CzapValidationError` on violation, as the `SceneInvariant`
   docblock always documented. Every declared check runs against the
@@ -171,7 +256,18 @@ pivot (epic #4) — these notes ship as 0.2.0.
   gap recovery is host-wired via the `Resumption` namespace; `SSE.create`
   carries a composed example mirroring the Astro reference wiring. The two
   `Resumption.saveState` docblock examples omitted the required
-  `timestamp` field and did not typecheck — fixed.
+  `timestamp` field and did not typecheck — fixed. The composed recipe is
+  now guarded by a component test
+  (`tests/component/sse-resumption-composition.test.ts`) that runs all
+  three steps — seed from `loadState`, persist per message, `resume` after
+  reconnect — against mock EventSource/sessionStorage/fetch.
+- docs(api) — the typedoc `externalSymbolLinkMappings` placeholders are
+  real URLs: re-exported `@czap/*` symbols (`Millis`, `CapLevel`, `CapSet`,
+  `Quantizer`, the `*.Shape` namespaces, `ExtendedDeviceCapabilities`,
+  `KVNamespace`, …) link to their GitHub docs/api pages, module-internal
+  constants link to their source files, and `effect` symbols link to the
+  Effect docs. `docs/api` previously contained 160 dead `[X](#)` links;
+  now zero.
 
 ## [0.1.5] — 2026-06-10
 

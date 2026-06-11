@@ -23,7 +23,7 @@ style-to-CSS logic.
 
 ### style
 
-[`Shape`](#)
+[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
 
 ## Returns
 

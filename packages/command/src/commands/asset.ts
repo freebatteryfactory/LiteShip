@@ -70,7 +70,9 @@ export const assetAnalyzeCommand: HandledCommand = {
     const bytes = context.loadAssetBytes?.(assetId, entry.source);
     if (!bytes) return failed('asset.analyze', `asset source file not found for: ${assetId}`, 1);
     if (!context.runAudioProjection) return failed('asset.analyze', 'audio projection unavailable', 1);
-    const markerCount = await context.runAudioProjection(bytes, projection);
+    // Pass the asset id so the adapter can resolve the asset's own decoder
+    // (AssetDecl.decoder override) instead of assuming the audio built-in.
+    const markerCount = await context.runAudioProjection(bytes, projection, assetId);
 
     const computed: Omit<AssetAnalyzePayload, 'cached'> = { assetId, projection, markerCount };
     context.cache?.write(key, computed);

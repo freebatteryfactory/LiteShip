@@ -13,7 +13,7 @@ Defined in: [edge/src/client-hints.ts:326](https://github.com/heyoub/LiteShip/bl
 Client Hints namespace.
 
 Parses HTTP Client Hints headers into the same
-[ExtendedDeviceCapabilities](#) structure used by `@czap/detect`,
+[ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure used by `@czap/detect`,
 enabling server-side / edge-side tier mapping without browser APIs.
 Also generates the `Accept-CH` and `Critical-CH` response headers needed
 to request hints from the browser.
@@ -75,11 +75,11 @@ const response = new Response('OK', {
 
 ### parseClientHints
 
-> **parseClientHints**: (`headers`) => [`ExtendedDeviceCapabilities`](#)
+> **parseClientHints**: (`headers`) => [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Parse Client Hints headers into [ExtendedDeviceCapabilities](#).
+Parse Client Hints headers into [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md).
 
-Parse Client Hints headers into an [ExtendedDeviceCapabilities](#) structure.
+Parse Client Hints headers into an [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure.
 
 For properties that cannot be determined from headers (GPU tier, WebGPU
 support, CPU cores), conservative defaults are used.
@@ -94,9 +94,9 @@ Client Hints headers (plain object or Web API Headers)
 
 #### Returns
 
-[`ExtendedDeviceCapabilities`](#)
+[`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-An [ExtendedDeviceCapabilities](#) structure
+An [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) structure
 
 #### Example
 

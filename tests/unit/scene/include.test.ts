@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Scene, Track } from '@czap/scene';
+import { Scene, Track, Beat } from '@czap/scene';
 import type { SceneContract } from '@czap/scene';
 
 describe('Scene.include', () => {
@@ -13,6 +13,26 @@ describe('Scene.include', () => {
     const included = Scene.include(sub, { offset: 60 });
     expect(included[0]?.from).toBe(60);
     expect(included[0]?.to).toBe(90);
+  });
+
+  it('accepts a Beat() offset, deferring resolution to compileScene (Spec 1 §5.3)', () => {
+    const included = Scene.include(sub, { offset: Beat(8) });
+    // Sub-scene authored in raw frames + beat offset = deferred marks;
+    // compileScene resolves them against the PARENT scene's bpm/fps.
+    // frame 0 + Beat(8) renormalizes to a pure beat handle; frame 30 +
+    // Beat(8) is genuinely mixed and stays a mark-sum.
+    expect(included[0]?.from).toEqual(Beat(8));
+    expect(included[0]?.to).toEqual({ _t: 'mark-sum', frames: 30, beats: 8 });
+  });
+
+  it('a Beat() offset over a beat-authored sub-scene stays in pure beat space', () => {
+    const beatSub: SceneContract = {
+      ...sub,
+      tracks: [Track.video('a', { from: Beat(0), to: Beat(2), source: {} })],
+    };
+    const included = Scene.include(beatSub, { offset: Beat(8) });
+    expect(included[0]?.from).toEqual(Beat(8));
+    expect(included[0]?.to).toEqual(Beat(10));
   });
 
   it('prefixes included track ids with the sub-scene name', () => {

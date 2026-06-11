@@ -84,14 +84,16 @@ Defined in: [core/src/capsule.ts:69](https://github.com/heyoub/LiteShip/blob/mai
 
 ### derive?
 
-> `readonly` `optional` **derive?**: (`source`) => `Out`
+> `readonly` `optional` **derive?**: (`source`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L99)
+Defined in: [core/src/capsule.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L101)
 
 Optional projection handler for `cachedProjection` arms: derives the
 decoded output from a decoded source. The harness checks determinism
 (same source → deep-equal output) and every declared [Invariant](Invariant.md)
-under random sources.
+under random sources. May be async — asset decoders
+(`AssetDecl.decoder` and the `@czap/assets` built-ins) all return
+Promises, so the harness awaits every probe.
 
 #### Parameters
 
@@ -101,7 +103,7 @@ under random sources.
 
 #### Returns
 
-`Out`
+`Out` \| `Promise`\<`Out`\>
 
 #### Inherited from
 

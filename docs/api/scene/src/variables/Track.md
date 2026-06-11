@@ -8,7 +8,7 @@
 
 > `const` **Track**: `object`
 
-Defined in: [scene/src/track.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L88)
+Defined in: [scene/src/track.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L123)
 
 Track namespace — typed constructors for the four track kinds plus
 per-kind id minters (Track.videoId, Track.audioId, Track.transitionId,
@@ -20,7 +20,7 @@ Track.effectId) for use in cross-track references.
 
 > **audio**: (`id`, `opts`) => [`AudioTrack`](../interfaces/AudioTrack.md)
 
-Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 0 }.
+Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 0 } and optional gain envelope.
 
 #### Parameters
 
@@ -30,9 +30,13 @@ Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 
 
 ##### opts
 
+###### envelope?
+
+`TrackEnvelope`
+
 ###### from
 
-`number`
+`FrameMark`
 
 ###### mix?
 
@@ -60,7 +64,7 @@ Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 
 
 ###### to
 
-`number`
+`FrameMark`
 
 #### Returns
 
@@ -96,9 +100,13 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ##### opts
 
+###### envelope?
+
+`TrackEnvelope`
+
 ###### from
 
-`number`
+`FrameMark`
 
 ###### kind
 
@@ -122,7 +130,7 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ###### to
 
-`number`
+`FrameMark`
 
 #### Returns
 
@@ -148,7 +156,7 @@ Mint an effect TrackId — the one sanctioned cast site for the 'effect' brand.
 
 > **transition**: (`id`, `opts`) => [`TransitionTrack`](../interfaces/TransitionTrack.md)
 
-Build a TransitionTrack blending two target tracks over a frame window.
+Build a TransitionTrack blending two target tracks over a frame window, with optional named easing.
 
 #### Parameters
 
@@ -162,9 +170,13 @@ Build a TransitionTrack blending two target tracks over a frame window.
 
 readonly \[[`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>, [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>\]
 
+###### ease?
+
+`EaseTag`
+
 ###### from
 
-`number`
+`FrameMark`
 
 ###### kind
 
@@ -172,7 +184,7 @@ readonly \[[`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>, [`TrackId`](../
 
 ###### to
 
-`number`
+`FrameMark`
 
 #### Returns
 
@@ -198,7 +210,7 @@ Mint a transition TrackId — the one sanctioned cast site for the 'transition' 
 
 > **video**: (`id`, `opts`) => [`VideoTrack`](../interfaces/VideoTrack.md)
 
-Build a VideoTrack referencing a quantizer source, with optional layer.
+Build a VideoTrack referencing a quantizer source, with optional layer and opacity envelope.
 
 #### Parameters
 
@@ -208,9 +220,13 @@ Build a VideoTrack referencing a quantizer source, with optional layer.
 
 ##### opts
 
+###### envelope?
+
+`TrackEnvelope`
+
 ###### from
 
-`number`
+`FrameMark`
 
 ###### layer?
 
@@ -222,7 +238,7 @@ Build a VideoTrack referencing a quantizer source, with optional layer.
 
 ###### to
 
-`number`
+`FrameMark`
 
 #### Returns
 

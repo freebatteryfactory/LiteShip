@@ -16,7 +16,8 @@ import type { Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
 import { collectBoundaryManifest } from './boundary-manifest.js';
-import { parseQuantizeBlocks, compileQuantizeBlock } from './css-quantize.js';
+import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
+import { blankCssCommentsAndStrings, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
@@ -83,6 +84,53 @@ function unresolvedPrimitiveWarning(
     `Searched for an export named "${name}" in: ${searched} (none matched). ` +
     `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
     `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
+  );
+}
+
+/** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
+const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
+  '@token': '`@token <name> { /* optional overrides: prop: value; */ }` where <name> matches a Token.make() export',
+  '@quantize':
+    '`@quantize <boundaryName> { <stateName> { prop: value; <selector> { prop: value; } } }` where <boundaryName> matches a Boundary.make() export and each <stateName> is one of its states',
+};
+
+/**
+ * 1-based line of the first occurrence of `marker` in `css`, or `null`
+ * when the marker does not appear (e.g. it only lived inside a comment
+ * or a string value — callers pass a comment- and string-blanked copy).
+ */
+function markerLine(css: string, marker: string): number | null {
+  const idx = css.indexOf(marker);
+  if (idx === -1) return null;
+  return css.slice(0, idx).split('\n').length;
+}
+
+/**
+ * Doctor-style warning for a parse miss: the file contains an at-rule
+ * marker, but the parser matched zero blocks — the at-rule is left
+ * untransformed and the browser will silently discard it. Names the
+ * file:line, the probable cause, and the exact supported grammar.
+ */
+function parseMissWarning(marker: '@token' | '@quantize', id: string, line: number): string {
+  return (
+    `Found ${marker} in ${id}:${line} but no ${marker} block parsed, so it was left untransformed ` +
+    `(browsers discard unknown at-rules, so it contributes no CSS). ` +
+    `Probable cause: an unsupported dialect such as an anonymous block (\`${marker} { ... }\`) ` +
+    `or an inline declaration (\`${marker} name: value;\`). ` +
+    `Fix: rewrite it to the supported grammar ${SUPPORTED_GRAMMAR[marker]}.`
+  );
+}
+
+/**
+ * Doctor-style warning for a `@quantize` block whose states all parsed
+ * to zero declarations: the block matched, but its body produced no CSS.
+ */
+function emptyQuantizeWarning(boundaryName: string, id: string, line: number): string {
+  return (
+    `@quantize ${boundaryName} in ${id}:${line} parsed to zero declarations — every state body is empty, ` +
+    `so the block compiles to no @container rules. ` +
+    `Probable cause: the state bodies use a syntax the parser does not support. ` +
+    `Fix: write each state per the supported grammar ${SUPPORTED_GRAMMAR['@quantize']}.`
   );
 }
 
@@ -227,7 +275,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
     async transform(code: string, id: string) {
       if (id.endsWith('.html') || id.endsWith('.astro')) {
-        const transformed = await transformHTML(code, id, projectRoot);
+        const transformed = await transformHTML(code, id, projectRoot, config?.dirs?.boundary);
         if (transformed === code) {
           return null;
         }
@@ -250,10 +298,22 @@ export function plugin(config?: PluginConfig): Plugin {
       if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
 
       let transformed = normalizeCssLineEndings(code);
+      // Comment- and string-blanked copy of the original source for
+      // parse-miss diagnostics: marker positions stay stable across
+      // phases, and markers inside comments, string values, or data
+      // URLs never trigger warnings.
+      const scanBlanked = blankCssCommentsAndStrings(transformed);
 
       // ---- Phase 1: @token -> CSS custom properties + @property ----
       if (hasToken) {
         const tokenBlocks = parseTokenBlocks(transformed, id);
+
+        if (tokenBlocks.length === 0) {
+          const line = markerLine(scanBlanked, '@token');
+          if (line !== null) {
+            this.warn(parseMissWarning('@token', id, line));
+          }
+        }
 
         for (const block of tokenBlocks) {
           const cacheKey = `${block.tokenName}:${id}`;
@@ -345,6 +405,34 @@ export function plugin(config?: PluginConfig): Plugin {
       if (hasQuantize) {
         const quantizeBlocks = parseQuantizeBlocks(transformed, id);
 
+        if (quantizeBlocks.length === 0) {
+          const line = markerLine(scanBlanked, '@quantize');
+          if (line !== null) {
+            this.warn(parseMissWarning('@quantize', id, line));
+          }
+        }
+
+        for (const block of quantizeBlocks) {
+          const stateBodies = Object.values(block.states);
+          const allStatesEmpty =
+            stateBodies.length > 0 &&
+            stateBodies.every(
+              (body) =>
+                Object.keys(body.bareProps).length === 0 &&
+                body.rules.every((rule) => Object.keys(rule.props).length === 0),
+            );
+          if (allStatesEmpty) {
+            this.warn(emptyQuantizeWarning(block.boundaryName, id, block.line));
+          }
+        }
+
+        // Sheet-level containment aggregation: every viewport-based block
+        // contributes its container name here, and ONE `:root` rule is
+        // emitted for the whole file below. Per-block `:root` rules would
+        // overwrite each other (`container-name` is a replaced property),
+        // leaving all but the last boundary's @container queries dead.
+        const viewportContainerNames = new Set<string>();
+
         for (const block of quantizeBlocks) {
           const cacheKey = `${block.boundaryName}:${id}`;
           let boundary: Boundary.Shape | null | undefined = boundaryCache.get(cacheKey);
@@ -375,12 +463,27 @@ export function plugin(config?: PluginConfig): Plugin {
             continue;
           }
 
-          const compiled = compileQuantizeBlock(block, boundary);
+          const compiled = compileQuantizeBlock(block, boundary, { viewportContainerNames });
           const blockSpan = findAtRuleBlock(transformed, '@quantize', block.boundaryName);
 
           if (blockSpan) {
             transformed = transformed.substring(0, blockSpan.start) + compiled + transformed.substring(blockSpan.end);
           }
+        }
+
+        const containment = viewportContainmentRule(viewportContainerNames);
+        if (containment) {
+          // CSS requires `@charset` to be the very first thing in a sheet
+          // and `@import` / `@namespace` to precede all style rules —
+          // prepending the `:root` containment rule ahead of them would
+          // make browsers ignore the imports. Insert it AFTER the leading
+          // at-rule prologue instead (located on a comment/string-blanked
+          // copy, so decoy markers inside comments or strings never count).
+          const insertAt = cssPrologueEnd(blankCssCommentsAndStrings(transformed));
+          transformed =
+            insertAt === 0
+              ? `${containment}\n\n${transformed}`
+              : `${transformed.slice(0, insertAt)}\n\n${containment}\n${transformed.slice(insertAt)}`;
         }
       }
 
@@ -479,19 +582,25 @@ export function plugin(config?: PluginConfig): Plugin {
  * Returns the start/end character offsets, or null if not found.
  *
  * Works for any at-rule pattern: `@token`, `@theme`, `@style`,
- * `@quantize`. Uses a state machine to correctly skip block comments,
- * quoted strings, and `url(...)` tokens (which may contain braces in
- * data URIs) before counting brace depth.
+ * `@quantize`. Searches and brace-counts on a comment- and
+ * string-blanked copy of the source (same offsets, via
+ * {@link blankCssCommentsAndStrings}), so marker text inside comments,
+ * string values (`content: "@token x {"`), or unquoted data URLs never
+ * matches, and braces inside those constructs never skew the depth
+ * count. The returned offsets splice the ORIGINAL source.
  */
 function findAtRuleBlock(css: string, marker: string, name: string): { start: number; end: number } | null {
+  // Offset-preserving blank of comments / strings / url() contents:
+  // every index into `scan` is a valid index into `css`.
+  const scan = blankCssCommentsAndStrings(css);
   let searchFrom = 0;
 
-  while (searchFrom < css.length) {
-    const idx = css.indexOf(marker, searchFrom);
+  while (searchFrom < scan.length) {
+    const idx = scan.indexOf(marker, searchFrom);
     if (idx === -1) return null;
 
     // Verify this at-rule is followed by the target name
-    const afterMarker = css.substring(idx + marker.length).trimStart();
+    const afterMarker = scan.substring(idx + marker.length).trimStart();
     if (!afterMarker.startsWith(name)) {
       searchFrom = idx + marker.length;
       continue;
@@ -505,66 +614,20 @@ function findAtRuleBlock(css: string, marker: string, name: string): { start: nu
     }
 
     // Find the opening brace
-    const braceStart = css.indexOf('{', idx);
+    const braceStart = scan.indexOf('{', idx);
     /* v8 ignore next — unreachable under real call sites: `findAtRuleBlock` runs only
        after `parseTokenBlocks`/etc. matched a `@marker name { ... }` block with braces,
        so the `{` is always still present in the transformed source. Defensive against
        future multi-phase edits that strip braces between parse and lookup. */
     if (braceStart === -1) return null;
 
-    // Walk forward tracking depth with full comment/string/url awareness
+    // Walk forward counting depth. Comments, strings, and url() contents
+    // are already blanked, so every remaining brace is structural.
     let depth = 1;
     let pos = braceStart + 1;
 
-    while (pos < css.length && depth > 0) {
-      const ch = css[pos]!;
-
-      // Skip block comments: /* ... */
-      if (ch === '/' && css[pos + 1] === '*') {
-        pos += 2;
-        while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) {
-          pos++;
-        }
-        pos += 2;
-        continue;
-      }
-
-      // Skip quoted strings: "..." and '...' (with backslash escapes)
-      if (ch === '"' || ch === "'") {
-        const quote = ch;
-        pos++;
-        while (pos < css.length && css[pos] !== quote) {
-          if (css[pos] === '\\') pos++;
-          pos++;
-        }
-        pos++;
-        continue;
-      }
-
-      // Skip url(...) tokens: may contain unquoted data URIs with braces
-      if (ch === 'u' && css.slice(pos, pos + 4).toLowerCase() === 'url(') {
-        pos += 4;
-        // url() may use a quoted or unquoted value
-        if (css[pos] === '"' || css[pos] === "'") {
-          const quote = css[pos]!;
-          pos++;
-          while (pos < css.length && css[pos] !== quote) {
-            if (css[pos] === '\\') pos++;
-            pos++;
-          }
-          pos++; // closing quote
-        } else {
-          // unquoted -- scan until the matching ')'
-          let parenDepth = 1;
-          while (pos < css.length && parenDepth > 0) {
-            if (css[pos] === '(') parenDepth++;
-            else if (css[pos] === ')') parenDepth--;
-            pos++;
-          }
-        }
-        continue;
-      }
-
+    while (pos < scan.length && depth > 0) {
+      const ch = scan[pos]!;
       if (ch === '{') depth++;
       else if (ch === '}') depth--;
       pos++;

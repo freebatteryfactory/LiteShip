@@ -6,7 +6,7 @@
  */
 
 export { CSSCompiler, generatePropertyRegistrations } from './css.js';
-export type { CSSRule, CSSContainerRule, CSSCompileResult } from './css.js';
+export type { CSSRule, CSSContainerRule, CSSCompileResult, CSSStateBody, CSSStateInput } from './css.js';
 
 export { GLSLCompiler } from './glsl.js';
 export type { GLSLType, GLSLUniform, GLSLDefine, GLSLCompileResult } from './glsl.js';

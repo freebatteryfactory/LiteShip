@@ -20,6 +20,13 @@ export interface CSSRule {
   readonly properties: Record<string, string>;
 }
 
+export interface CSSStateBody {
+  readonly bareProps?: Record<string, string>;
+  readonly rules?: readonly CSSRule[];
+}
+
+export type CSSStateInput = Record<string, string> | CSSStateBody;
+
 export interface CSSCompileResult {
   readonly containerRules: readonly CSSContainerRule[];
   readonly raw: string;
@@ -28,7 +35,7 @@ export interface CSSCompileResult {
 export declare const CSSCompiler: {
   compile<B extends Boundary.Shape>(
     boundary: B,
-    states: { [S in StateUnion<B> & string]: Record<string, string> },
+    states: { [S in StateUnion<B> & string]: CSSStateInput },
     selector?: string,
   ): CSSCompileResult;
 

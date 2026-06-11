@@ -33,7 +33,7 @@ Binary search finds the largest index `i` where `thresholds[i] <= value`.
 
 ##### B
 
-`B` *extends* [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

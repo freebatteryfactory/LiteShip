@@ -4,6 +4,15 @@
  * seeds, plus name/duration/fps/bpm carried across so the runtime can
  * derive frame indices.
  *
+ * Beat-mark resolution happens HERE (Spec 1 §5.4: "scene BPM converts
+ * Beat(n) → Millis at compile time"): every track `from` / `to` written
+ * as a {@link FrameMark} is normalized to a numeric frame index via the
+ * scene's BPM + fps BEFORE invariants are evaluated, so checks doing
+ * arithmetic on track ranges always see plain numbers. Envelope spans
+ * and ease tags are likewise resolved into pure-data `Envelope` /
+ * `Ease` components so the per-tick systems stay arithmetic-only
+ * (ADR-0002) and the descriptor stays content-addressable (ADR-0003).
+ *
  * World construction is intentionally deferred to {@link SceneRuntime}
  * (see `./runtime.ts`). Previously this function wrapped a
  * `World.make()` in `Effect.scoped(...)` and returned the world AFTER
@@ -17,8 +26,10 @@
  */
 
 import { CzapValidationError } from '@czap/core';
-import type { SceneContract, Track, TrackId, TrackKind } from './contract.js';
+import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
+import { resolveFrameMark } from './sugar/beat.js';
+import { resolveEnvelope } from './sugar/envelope.js';
 
 /**
  * One compiled track — the components the runtime should spawn for it.
@@ -60,10 +71,17 @@ export interface CompiledScene {
  * Compile a {@link SceneContract} into a pure {@link CompiledScene}
  * descriptor. No world is constructed here — see {@link SceneRuntime}.
  *
+ * The contract is normalized FIRST: every `Beat()` / frame-mark on a
+ * track's `from` / `to` resolves to a numeric frame index using the
+ * scene's `bpm` + `fps` (see `sugar/beat.ts`). Invariants run against
+ * that {@link ResolvedSceneContract}, so checks like
+ * `t.to <= (duration / 1000) * fps` always operate on numbers — never
+ * on unresolved beat handles.
+ *
  * Every declared {@link SceneInvariant} is evaluated against the
- * contract before any compilation work happens. A check that returns
- * `false` — or throws — counts as a violation. ALL violations are
- * collected, then reported together in a single
+ * normalized contract before any compilation work happens. A check that
+ * returns `false` — or throws — counts as a violation. ALL violations
+ * are collected, then reported together in a single
  * {@link CzapValidationError} (module `'compileScene'`) listing each
  * violated invariant's name and message, so one compile run surfaces
  * every problem instead of stopping at the first.
@@ -78,12 +96,18 @@ export interface CompiledScene {
  * @throws CzapValidationError when one or more scene invariants fail.
  */
 export function compileScene(scene: SceneContract): CompiledScene {
+  const ctx = { bpm: scene.bpm, fps: scene.fps };
+  const resolved: ResolvedSceneContract = {
+    ...scene,
+    tracks: scene.tracks.map((track) => resolveTrackMarks(track, ctx)),
+  };
+
   const violations: string[] = [];
-  for (const invariant of scene.invariants) {
+  for (const invariant of resolved.invariants) {
     let holds = false;
     let thrown: string | undefined;
     try {
-      holds = invariant.check(scene);
+      holds = invariant.check(resolved);
     } catch (error) {
       thrown = error instanceof Error ? error.message : String(error);
     }
@@ -98,36 +122,52 @@ export function compileScene(scene: SceneContract): CompiledScene {
   if (violations.length > 0) {
     throw new CzapValidationError(
       'compileScene',
-      `scene "${scene.name}" violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}. Fix the contract (or the failing check) so every declared invariant returns true, then compile again.`,
+      `scene "${resolved.name}" violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}. Fix the contract (or the failing check) so every declared invariant returns true, then compile again.`,
     );
   }
 
-  const trackSpawns: TrackSpawn[] = scene.tracks.map((track) => ({
+  const trackSpawns: TrackSpawn[] = resolved.tracks.map((track) => ({
     trackId: track.id,
-    components: componentsFromTrack(track),
+    components: componentsFromTrack(track, ctx),
   }));
 
   // Defensive copy: callers may freeze, mutate, or reuse the input
   // beats array; the compiled descriptor owns its own sequence.
-  const beats: readonly BeatBinding.Component[] = scene.beats !== undefined ? scene.beats.map((b) => ({ ...b })) : [];
+  const beats: readonly BeatBinding.Component[] =
+    resolved.beats !== undefined ? resolved.beats.map((b) => ({ ...b })) : [];
 
   return {
-    name: scene.name,
-    duration: scene.duration,
-    fps: scene.fps,
-    bpm: scene.bpm,
+    name: resolved.name,
+    duration: resolved.duration,
+    fps: resolved.fps,
+    bpm: resolved.bpm,
     trackSpawns,
     beats,
   };
 }
 
-function componentsFromTrack(track: Track): Record<string, unknown> {
+/**
+ * Resolve a track's `from` / `to` marks to numeric frame indices using
+ * the scene's BPM + fps. Pure — returns a new track; every other field
+ * (including declared envelopes, which resolve later into components)
+ * is carried through untouched.
+ */
+function resolveTrackMarks(track: Track, ctx: { bpm: number; fps: number }): Track<number> {
+  return {
+    ...track,
+    from: resolveFrameMark(track.from, ctx),
+    to: resolveFrameMark(track.to, ctx),
+  };
+}
+
+function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: number }): Record<string, unknown> {
   switch (track.kind) {
     case 'video':
       return {
         VideoSource: track.source,
         FrameRange: { from: track.from, to: track.to },
         TrackLayer: track.layer ?? 0,
+        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
       };
     case 'audio':
       return {
@@ -136,19 +176,26 @@ function componentsFromTrack(track: Track): Record<string, unknown> {
         Volume: track.mix?.volume ?? 0,
         Pan: track.mix?.pan ?? 0,
         ...(track.mix?.sync?.bpm !== undefined ? { SyncBeatMarker: { bpm: track.mix.sync.bpm } } : {}),
+        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
       };
     case 'transition':
       return {
         TransitionKind: track.transitionKind,
         FrameRange: { from: track.from, to: track.to },
         Between: track.between,
+        ...(track.ease !== undefined ? { Ease: track.ease } : {}),
       };
     case 'effect':
+      // An effect may declare BOTH syncTo and envelope. Both components
+      // are emitted; the runtime composes them (SyncSystem multiplies
+      // its beat-decay base by the envelope factor — see
+      // `systems/sync.ts`) so neither contribution clobbers the other.
       return {
         EffectKind: track.effectKind,
         TargetEntity: track.target,
         FrameRange: { from: track.from, to: track.to },
         ...(track.syncTo !== undefined ? { SyncAnchor: track.syncTo } : {}),
+        ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
       };
   }
 }

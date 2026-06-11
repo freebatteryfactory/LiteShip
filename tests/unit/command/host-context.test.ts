@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Effect } from 'effect';
 import { createNodeCommandContext, startSpawnHandle } from '@czap/command/host';
+import { defineAsset, type DecodedAudio } from '@czap/assets';
+import { resetAssetRegistry } from '@czap/assets/testing';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 
 /** Minimal mono 16-bit PCM WAV for @czap/assets decoders. */
@@ -129,6 +131,36 @@ describe('createNodeCommandContext', () => {
     expect(typeof beat).toBe('number');
     expect(typeof onset).toBe('number');
     expect(waveform).toBe(512);
+  });
+
+  it('runAudioProjection honors a registered asset\'s OWN decoder when assetId is supplied', async () => {
+    const synthetic: DecodedAudio = {
+      sampleRate: 8000,
+      channels: 1,
+      bitsPerSample: 16,
+      sampleCount: 64,
+      samples: new Int16Array(64),
+      durationMs: 8,
+    };
+    defineAsset({
+      id: 'host-ctx-custom-decoder',
+      source: 'unused.wav',
+      kind: 'audio',
+      decoder: async () => synthetic,
+      budgets: { decodeP95Ms: 50 },
+      invariants: [],
+    });
+    try {
+      const ctx = createNodeCommandContext({ cwd: workDir });
+      // Empty bytes would make the audio built-in throw (no RIFF header) —
+      // a successful waveform run proves the asset's custom decoder decoded.
+      const waveform = await ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'host-ctx-custom-decoder');
+      expect(waveform).toBe(512);
+      // Unregistered asset ids keep the audio built-in: same empty bytes reject.
+      await expect(ctx.runAudioProjection?.(new ArrayBuffer(0), 'waveform', 'never-registered-id')).rejects.toThrow();
+    } finally {
+      resetAssetRegistry();
+    }
   });
 
   it('loadSceneModule and runSceneCompile handle plain and Effect exports', async () => {

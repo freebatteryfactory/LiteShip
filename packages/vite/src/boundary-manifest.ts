@@ -23,7 +23,7 @@ import type { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs } from '@czap/edge';
-import { parseQuantizeBlocks } from './css-quantize.js';
+import { parseQuantizeBlocks, type QuantizeStateBody } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
 
 const DIAGNOSTIC_SOURCE = 'czap/vite.boundary-manifest';
@@ -125,10 +125,29 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
  */
 function compileOutputsByTier(
   boundary: Boundary.Shape,
-  states: Record<string, Record<string, string>>,
+  states: Record<string, QuantizeStateBody>,
 ): Readonly<Record<string, CompiledOutputs>> {
-  const containerQueries = CSSCompiler.compile(boundary, states).raw;
-  const propertyRegistrations = CSSCompiler.generatePropertyRegistrations(states);
+  // Bridge the parser's rule shape (props) to the compiler's (properties),
+  // exactly as compileQuantizeBlock does.
+  const cssStates = Object.fromEntries(
+    Object.entries(states).map(([stateName, body]) => [
+      stateName,
+      {
+        bareProps: body.bareProps,
+        rules: body.rules.map((rule) => ({ selector: rule.selector, properties: rule.props })),
+      },
+    ]),
+  );
+  const containerQueries = CSSCompiler.compile(boundary, cssStates).raw;
+  // Property registrations scan custom-property names/syntax only, so the
+  // nested-rule props flatten into the same per-state map as bareProps.
+  const flatStates = Object.fromEntries(
+    Object.entries(states).map(([stateName, body]) => [
+      stateName,
+      { ...body.bareProps, ...Object.assign({}, ...body.rules.map((rule) => rule.props)) },
+    ]),
+  ) as Record<string, Record<string, string>>;
+  const propertyRegistrations = CSSCompiler.generatePropertyRegistrations(flatStates);
 
   const outputsByTier: Record<string, CompiledOutputs> = {};
   for (const motionTier of MOTION_TIERS) {
@@ -202,7 +221,7 @@ export async function collectBoundaryManifest(
   }
 
   // Merge @quantize states per boundary across all CSS files.
-  const statesByBoundary = new Map<string, Record<string, Record<string, string>>>();
+  const statesByBoundary = new Map<string, Record<string, QuantizeStateBody>>();
   for (const cssFile of scan.cssFiles) {
     let css: string;
     try {
@@ -230,8 +249,12 @@ export async function collectBoundaryManifest(
         continue;
       }
       const merged = statesByBoundary.get(block.boundaryName) ?? {};
-      for (const [stateName, props] of Object.entries(block.states)) {
-        merged[stateName] = { ...merged[stateName], ...props };
+      for (const [stateName, body] of Object.entries(block.states)) {
+        const prior = merged[stateName];
+        merged[stateName] = {
+          bareProps: { ...prior?.bareProps, ...body.bareProps },
+          rules: [...(prior?.rules ?? []), ...body.rules],
+        };
       }
       statesByBoundary.set(block.boundaryName, merged);
     }

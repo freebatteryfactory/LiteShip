@@ -8,7 +8,7 @@
 
 > **tierKey**(`tier`): `"none:standard"` \| `"none:minimal"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:standard"` \| `"transitions:minimal"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:standard"` \| `"animations:minimal"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:standard"` \| `"physics:minimal"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:standard"` \| `"compute:minimal"` \| `"compute:enhanced"` \| `"compute:rich"`
 
-Defined in: edge/src/manifest.ts:62
+Defined in: [edge/src/manifest.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L62)
 
 Encode a tier result (or any motion/design pair) as a [TierKey](../type-aliases/TierKey.md).
 

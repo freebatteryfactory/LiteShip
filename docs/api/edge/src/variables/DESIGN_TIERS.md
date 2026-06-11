@@ -8,7 +8,7 @@
 
 > `const` **DESIGN\_TIERS**: readonly \[`"minimal"`, `"standard"`, `"enhanced"`, `"rich"`\]
 
-Defined in: edge/src/manifest.ts:40
+Defined in: [edge/src/manifest.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L40)
 
 Every `DesignTier`, in escalation order. Kept in lockstep with the
 `DesignTier` union in `@czap/detect` -- the `satisfies` clause plus the

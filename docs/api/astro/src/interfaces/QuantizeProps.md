@@ -15,7 +15,7 @@ Props accepted by the `Quantize` Astro component and by
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](#) = [`Boundary.Shape`](#)
+`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md) = [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Properties
 
@@ -61,7 +61,7 @@ Explicit initial state (skips resolution).
 
 ### quantizer?
 
-> `readonly` `optional` **quantizer?**: [`Quantizer`](#)\<`B`\>
+> `readonly` `optional` **quantizer?**: [`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 Defined in: [astro/src/quantize.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L39)
 

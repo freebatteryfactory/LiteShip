@@ -6,9 +6,9 @@
 
 # Function: transformHTML()
 
-> **transformHTML**(`source`, `fromFile`, `projectRoot`): `Promise`\<`string`\>
+> **transformHTML**(`source`, `fromFile`, `projectRoot`, `boundaryDir?`): `Promise`\<`string`\>
 
-Defined in: [vite/src/html-transform.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/html-transform.ts#L25)
+Defined in: [vite/src/html-transform.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/html-transform.ts#L26)
 
 Transform HTML source, replacing `data-czap="name"` with resolved boundary JSON.
 
@@ -31,6 +31,12 @@ The file path of the source (for resolution context)
 `string`
 
 The project root directory
+
+### boundaryDir?
+
+`string`
+
+Optional boundary definition directory (the plugin's `dirs.boundary` override)
 
 ## Returns
 
