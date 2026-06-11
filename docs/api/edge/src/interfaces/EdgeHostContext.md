@@ -10,7 +10,7 @@ Defined in: [edge/src/host-adapter.ts:28](https://github.com/heyoub/LiteShip/blo
 
 Detected device context available to host callbacks before compile.
 
-Pairs the parsed [ExtendedDeviceCapabilities](#) with the resolved
+Pairs the parsed [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) with the resolved
 [EdgeTierResult](EdgeTierResult.md) so a host can derive a theme config or compile
 decision without re-parsing headers.
 
@@ -23,7 +23,7 @@ decision without re-parsing headers.
 
 ### capabilities
 
-> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](#)
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
 Defined in: [edge/src/host-adapter.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L30)
 

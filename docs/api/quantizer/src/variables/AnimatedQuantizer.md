@@ -22,13 +22,13 @@ the current interpolated output record.
 
 ### make
 
-> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`) => `Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](#)\> = `makeAnimatedQuantizer`
+> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`) => `Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `makeAnimatedQuantizer`
 
 Wrap a quantizer with transition-aware output interpolation.
 
 Create an animated quantizer that interpolates outputs during transitions.
 
-Wraps an existing [Quantizer](#) and applies easing/duration-based
+Wraps an existing [Quantizer](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
 occurs. Produces an `interpolated` stream of frames with progress and
 lerped numeric outputs at ~60fps.
@@ -37,19 +37,19 @@ lerped numeric outputs at ~60fps.
 
 ##### B
 
-`B` *extends* [`Shape`](#)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 
 ##### quantizer
 
-[`Quantizer`](#)\<`B`\>
+[`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 The base quantizer to wrap
 
 ##### transitions
 
-[`TransitionMap`](../interfaces/TransitionMap.md)\<`StateUnion`\<`B`\>\>
+[`TransitionMap`](../type-aliases/TransitionMap.md)\<`StateUnion`\<`B`\>\>
 
 Map of state transition configs keyed by `from->to` pattern
 
@@ -61,7 +61,7 @@ Per-state numeric output maps for interpolation
 
 #### Returns
 
-`Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](#)\>
+`Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
 An Effect yielding an [AnimatedQuantizerShape](../interfaces/AnimatedQuantizerShape.md) (scoped)
 
