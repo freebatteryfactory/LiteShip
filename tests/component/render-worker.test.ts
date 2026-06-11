@@ -371,7 +371,7 @@ describe('render worker script frame pacing (targetFps)', () => {
     await vi.advanceTimersByTimeAsync(20);
 
     // Fixed-timeline anchoring would now see deadlines 40/60/80/100 in the
-    // past and emit frames 2..5 back-to-back. The rolling re-anchor emits
+    // past and emit frames 2..5 back-to-back. Emission-anchored pacing emits
     // only frame 1 and re-schedules from the late emission time.
     expect(workerSelf.frames()).toEqual([0, 1]);
 
