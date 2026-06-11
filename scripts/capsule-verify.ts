@@ -27,7 +27,7 @@
  */
 
 import { readFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { classifyBenchSource } from './lib/bench-classify.js';
@@ -64,10 +64,19 @@ const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
  * byte-compare each suspect's regenerated test+bench against the
  * committed files. Returns the names whose regeneration actually
  * differs — the only honest meaning of "stale".
+ *
+ * The temp dir lives INSIDE the repo at `tests/<dot-dir>` — the SAME
+ * depth as `tests/generated` — because binding-carrying harnesses embed
+ * relative imports computed from `dirname(testPath)`: an out-of-repo
+ * temp dir would regenerate different import specifiers and false-flag
+ * every binding capsule. Same depth → byte-identical output. The
+ * dot-prefix keeps vitest's globs (which skip dot-dirs by default) from
+ * ever collecting it; the temp manifest lives in the system tmpdir so
+ * no manifest artifact can leak into the repo.
  */
 function confirmStaleByRegeneration(suspects: readonly ManifestEntry[]): string[] {
-  const tmp = mkdtempSync(join(tmpdir(), 'czap-verify-fresh-'));
-  const tmpManifest = join(tmp, 'capsule-manifest.json');
+  const tmp = mkdtempSync(join(process.cwd(), 'tests', '.czap-verify-fresh-'));
+  const tmpManifest = join(mkdtempSync(join(tmpdir(), 'czap-verify-manifest-')), 'capsule-manifest.json');
   try {
     execSync('pnpm run capsule:compile', {
       stdio: ['ignore', process.stderr, process.stderr],
@@ -106,6 +115,7 @@ function confirmStaleByRegeneration(suspects: readonly ManifestEntry[]): string[
     return confirmed;
   } finally {
     rmSync(tmp, { recursive: true, force: true });
+    rmSync(dirname(tmpManifest), { recursive: true, force: true });
   }
 }
 
