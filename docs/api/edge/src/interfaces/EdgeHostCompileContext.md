@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostCompileContext
 
-Defined in: [edge/src/host-adapter.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L44)
+Defined in: [edge/src/host-adapter.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L45)
 
 Compile-time context passed to [EdgeHostCacheConfig.compile](EdgeHostCacheConfig.md#compile).
 
@@ -24,7 +24,7 @@ compiled per-state outputs without recomputation.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [edge/src/host-adapter.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L32)
+Defined in: [edge/src/host-adapter.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L33)
 
 Capabilities parsed from Client Hints.
 
@@ -38,7 +38,7 @@ Capabilities parsed from Client Hints.
 
 > `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
 
-Defined in: [edge/src/host-adapter.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L46)
+Defined in: [edge/src/host-adapter.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L47)
 
 Pre-compiled theme output, if the adapter resolved one for this request.
 
@@ -48,7 +48,7 @@ Pre-compiled theme output, if the adapter resolved one for this request.
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [edge/src/host-adapter.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
+Defined in: [edge/src/host-adapter.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L35)
 
 Derived tier triple (cap, motion, design).
 

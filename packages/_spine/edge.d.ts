@@ -99,7 +99,7 @@ export declare function enumerateTierKeys(): readonly TierKey[];
 
 export interface BoundaryManifestEntry {
   readonly id: ContentAddress;
-  readonly outputsByTier: Readonly<Record<string, CompiledOutputs>>;
+  readonly outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
 }
 
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
@@ -142,7 +142,7 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
 export interface EdgeHostCacheConfig {
   readonly kv: KVNamespace;
   readonly boundaryId: ContentAddress;
-  readonly precompiled?: Readonly<Record<string, CompiledOutputs>>;
+  readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   readonly ttl?: number;
   readonly prefix?: string;

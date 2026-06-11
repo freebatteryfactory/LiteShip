@@ -17,6 +17,7 @@ import type { EdgeTierResult } from './edge-tier.js';
 import { createBoundaryCache } from './kv-cache.js';
 import type { CompiledOutputs, KVNamespace } from './kv-cache.js';
 import { tierKey } from './manifest.js';
+import type { TierKey } from './manifest.js';
 import { compileTheme } from './theme-compiler.js';
 import type { ThemeCompileConfig, ThemeCompileResult } from './theme-compiler.js';
 
@@ -61,11 +62,12 @@ export interface EdgeHostCacheConfig {
   /** Content address of the boundary being compiled (`Boundary.make`'s `id`). */
   readonly boundaryId: ContentAddress;
   /**
-   * Build-derived outputs keyed by tier key (`"<motionTier>:<designTier>"`)
-   * -- the `outputsByTier` field of a boundary manifest entry. Checked
-   * before KV; a covered tier never touches the network.
+   * Build-derived outputs keyed by {@link TierKey}
+   * (`"<motionTier>:<designTier>"`) -- the `outputsByTier` field of a
+   * boundary manifest entry. Checked before KV; a covered tier never
+   * touches the network.
    */
-  readonly precompiled?: Readonly<Record<string, CompiledOutputs>>;
+  readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   /**
