@@ -15,6 +15,7 @@ import {
   type DecodedVideo,
 } from '@czap/assets';
 import { resetAssetRegistry } from '@czap/assets/testing';
+import type { Site } from '@czap/core';
 
 /** Minimal mono PCM16 WAV (2 silent samples at 48 kHz) for decoder routing checks. */
 function minimalWav(): ArrayBuffer {
@@ -185,6 +186,25 @@ describe('Asset capsule', () => {
       budgets: { decodeP95Ms: 100 },
       invariants: [],
     });
+    expect(v.site).toEqual(['node']);
+  });
+
+  it('mutating the caller-owned site array after defineAsset cannot desync cap.site from cap.id', () => {
+    // cap.site participates in the content address, hashed exactly once —
+    // an aliased caller array could change the advertised sites without
+    // changing the identity.
+    const decoded: DecodedVideo = { container: 'mp4' };
+    const callerSite: Site[] = ['node'];
+    const v = defineAsset({
+      id: 'aliased-site-array',
+      source: 'clip.mp4',
+      kind: 'video',
+      decoder: async () => decoded,
+      site: callerSite,
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    callerSite.push('browser');
     expect(v.site).toEqual(['node']);
   });
 

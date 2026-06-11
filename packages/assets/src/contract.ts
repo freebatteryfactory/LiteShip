@@ -140,7 +140,10 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
       );
     }
   }
-  return decl.site;
+  // Defensive copy: the capsule stores this array and hashes it into the
+  // content address exactly once — returning the caller's reference would
+  // let a later mutation change cap.site without changing cap.id.
+  return Object.freeze([...decl.site]);
 }
 
 /**
