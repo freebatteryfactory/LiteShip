@@ -7,6 +7,7 @@
  * @module
  */
 
+import { Diagnostics } from '@czap/core';
 import type { ContentAddress } from '@czap/core';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { ClientHints } from './client-hints.js';
@@ -15,6 +16,7 @@ import { EdgeTier } from './edge-tier.js';
 import type { EdgeTierResult } from './edge-tier.js';
 import { createBoundaryCache } from './kv-cache.js';
 import type { CompiledOutputs, KVNamespace } from './kv-cache.js';
+import { tierKey } from './manifest.js';
 import { compileTheme } from './theme-compiler.js';
 import type { ThemeCompileConfig, ThemeCompileResult } from './theme-compiler.js';
 
@@ -47,18 +49,25 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
 /**
  * Cache configuration for the edge host adapter.
  *
- * When set, per-boundary compiled outputs are memoized in the supplied KV
- * namespace keyed by `(boundaryId, tier)`. `compile` is the user-provided
- * function that produces the outputs on a cache miss; its result is
- * written back to KV with the configured `ttl`.
+ * Outputs are resolved in order: `precompiled` (build-derived manifest
+ * entry, no KV round-trip), then the KV cache keyed by
+ * `(boundaryId, tier)`, then `compile` on a miss (result written back to
+ * KV with the configured `ttl`). At least one of `precompiled` or
+ * `compile` must be provided.
  */
 export interface EdgeHostCacheConfig {
   /** KV namespace backing the boundary cache. */
   readonly kv: KVNamespace;
-  /** Content address of the boundary being compiled. */
+  /** Content address of the boundary being compiled (`Boundary.make`'s `id`). */
   readonly boundaryId: ContentAddress;
-  /** Compile function invoked on cache miss. */
-  readonly compile: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  /**
+   * Build-derived outputs keyed by tier key (`"<motionTier>:<designTier>"`)
+   * -- the `outputsByTier` field of a boundary manifest entry. Checked
+   * before KV; a covered tier never touches the network.
+   */
+  readonly precompiled?: Readonly<Record<string, CompiledOutputs>>;
+  /** Compile function invoked when neither `precompiled` nor KV has the tier. */
+  readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   /**
    * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
    * knob. Entries are content-addressed and never go stale; deploys that
@@ -85,8 +94,12 @@ export interface EdgeHostAdapterConfig {
   readonly cache?: EdgeHostCacheConfig;
 }
 
-/** Cache lookup outcome reported in {@link EdgeHostResolution}. */
-export type EdgeHostCacheStatus = 'disabled' | 'hit' | 'miss';
+/**
+ * Cache lookup outcome reported in {@link EdgeHostResolution}.
+ * `'precompiled'` means the outputs came from the build-derived manifest
+ * without touching KV.
+ */
+export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 
 /**
  * Full per-request resolution output from {@link EdgeHostAdapter.resolve}.
@@ -144,6 +157,13 @@ function resolveThemeConfig(
 export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeHostAdapter {
   let boundaryCache: ReturnType<typeof createBoundaryCache> | null = null;
   if (config.cache) {
+    if (!config.cache.precompiled && !config.cache.compile) {
+      throw new Error(
+        'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
+          'Fix: pass `precompiled: manifestEntry.outputsByTier` (from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+          'or supply a `compile` callback to build outputs on KV cache miss.',
+      );
+    }
     boundaryCache = createBoundaryCache(config.cache.kv, {
       ttl: config.cache.ttl,
       prefix: config.cache.prefix,
@@ -174,13 +194,29 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
       let cacheStatus: EdgeHostCacheStatus = boundaryCache ? 'miss' : 'disabled';
 
       if (boundaryCache && config.cache) {
-        const cached = await boundaryCache.getCompiledOutputs(config.cache.boundaryId, tier);
-        if (cached) {
-          compiledOutputs = cached;
-          cacheStatus = 'hit';
+        const precompiled = config.cache.precompiled?.[tierKey(tier)];
+        if (precompiled) {
+          compiledOutputs = precompiled;
+          cacheStatus = 'precompiled';
         } else {
-          compiledOutputs = await config.cache.compile({ capabilities, tier, theme });
-          await boundaryCache.putCompiledOutputs(config.cache.boundaryId, tier, compiledOutputs);
+          const cached = await boundaryCache.getCompiledOutputs(config.cache.boundaryId, tier);
+          if (cached) {
+            compiledOutputs = cached;
+            cacheStatus = 'hit';
+          } else if (config.cache.compile) {
+            compiledOutputs = await config.cache.compile({ capabilities, tier, theme });
+            await boundaryCache.putCompiledOutputs(config.cache.boundaryId, tier, compiledOutputs);
+          } else {
+            Diagnostics.warnOnce({
+              source: 'czap/edge.host-adapter',
+              code: 'manifest-tier-gap',
+              message:
+                `Precompiled manifest for boundary "${config.cache.boundaryId}" has no entry for tier "${tierKey(tier)}" ` +
+                'and no `compile` fallback is configured, so this request gets no compiled outputs. ' +
+                'Fix: rebuild so the manifest covers the full tier grid (collectBoundaryManifest enumerates it), ' +
+                'or add a `compile` callback as a fallback.',
+            });
+          }
         }
       }
 

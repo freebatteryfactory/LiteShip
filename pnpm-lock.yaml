@@ -177,6 +177,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../../packages/edge
+      '@czap/vite':
+        specifier: workspace:*
+        version: link:../../packages/vite
       astro:
         specifier: ^6.3.0
         version: 6.4.4(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -536,6 +539,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/edge':
+        specifier: workspace:*
+        version: link:../edge
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

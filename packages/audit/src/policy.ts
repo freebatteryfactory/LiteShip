@@ -97,7 +97,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
   '@czap/vite': {
     // CUT A3: vite imports core + compiler; quantizer was permitted but never imported.
-    allowedInternalImports: ['@czap/core', '@czap/compiler'],
+    // edge added for the boundary-manifest contract (ADR-0003 build-to-edge
+    // handoff): the build derives BoundaryManifest entries (tier grid +
+    // CompiledOutputs types live in @czap/edge) that edge hosts consume.
+    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/edge'],
     kind: 'host-adjacent',
   },
   '@czap/astro': {

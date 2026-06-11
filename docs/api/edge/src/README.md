@@ -23,6 +23,8 @@ compilation.
 ## Interfaces
 
 - [BoundaryCache](interfaces/BoundaryCache.md)
+- [BoundaryManifestEntry](interfaces/BoundaryManifestEntry.md)
+- [BoundaryManifestFile](interfaces/BoundaryManifestFile.md)
 - [ClientHintsHeaders](interfaces/ClientHintsHeaders.md)
 - [CompiledOutputs](interfaces/CompiledOutputs.md)
 - [EdgeHostAdapter](interfaces/EdgeHostAdapter.md)
@@ -38,17 +40,23 @@ compilation.
 
 ## Type Aliases
 
+- [BoundaryManifest](type-aliases/BoundaryManifest.md)
 - [EdgeHostCacheStatus](type-aliases/EdgeHostCacheStatus.md)
+- [TierKey](type-aliases/TierKey.md)
 
 ## Variables
 
 - [ClientHints](variables/ClientHints.md)
+- [DESIGN\_TIERS](variables/DESIGN_TIERS.md)
 - [EdgeHostAdapter](variables/EdgeHostAdapter.md)
 - [EdgeTier](variables/EdgeTier.md)
 - [KVCache](variables/KVCache.md)
+- [MOTION\_TIERS](variables/MOTION_TIERS.md)
 
 ## Functions
 
 - [compileTheme](functions/compileTheme.md)
 - [createBoundaryCache](functions/createBoundaryCache.md)
 - [createEdgeHostAdapter](functions/createEdgeHostAdapter.md)
+- [enumerateTierKeys](functions/enumerateTierKeys.md)
+- [tierKey](functions/tierKey.md)

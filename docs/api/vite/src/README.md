@@ -42,6 +42,7 @@ const config = defineConfig({
 
 ## Interfaces
 
+- [CollectBoundaryManifestOptions](interfaces/CollectBoundaryManifestOptions.md)
 - [HMRPayload](interfaces/HMRPayload.md)
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
@@ -49,6 +50,7 @@ const config = defineConfig({
 - [StyleBlock](interfaces/StyleBlock.md)
 - [ThemeBlock](interfaces/ThemeBlock.md)
 - [TokenBlock](interfaces/TokenBlock.md)
+- [VirtualModuleData](interfaces/VirtualModuleData.md)
 - [WASMResolution](interfaces/WASMResolution.md)
 
 ## Type Aliases
@@ -59,6 +61,7 @@ const config = defineConfig({
 
 ## Functions
 
+- [collectBoundaryManifest](functions/collectBoundaryManifest.md)
 - [compileQuantizeBlock](functions/compileQuantizeBlock.md)
 - [compileStyleBlock](functions/compileStyleBlock.md)
 - [compileThemeBlock](functions/compileThemeBlock.md)

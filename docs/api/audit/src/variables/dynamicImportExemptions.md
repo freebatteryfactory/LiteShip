@@ -8,7 +8,7 @@
 
 > `const` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/policy.ts:195](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L195)
+Defined in: [audit/src/policy.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L198)
 
 Dynamic package imports — `import('@czap/...')` — that are deliberately
 allowed despite the importer not declaring the target in its package.json.

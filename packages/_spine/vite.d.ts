@@ -4,6 +4,7 @@
 
 import type { Boundary } from './core.d.ts';
 import type { Token, Theme, Style } from './design.d.ts';
+import type { BoundaryManifest } from './edge.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. PRIMITIVE KIND
@@ -135,9 +136,26 @@ export type VirtualModuleId =
   | 'virtual:czap/themes'
   | 'virtual:czap/config';
 
+export interface VirtualModuleData {
+  readonly boundaries?: BoundaryManifest;
+}
+
 export declare function resolveVirtualId(id: string): string | undefined;
 export declare function isVirtualId(id: string): boolean;
-export declare function loadVirtualModule(id: string): string | undefined;
+export declare function loadVirtualModule(id: string, data?: VirtualModuleData): string | undefined;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 11b. BOUNDARY MANIFEST COLLECTION (build-to-edge handoff)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface CollectBoundaryManifestOptions {
+  readonly boundaryDir?: string;
+}
+
+export declare function collectBoundaryManifest(
+  projectRoot: string,
+  options?: CollectBoundaryManifestOptions,
+): Promise<BoundaryManifest>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 12. HMR

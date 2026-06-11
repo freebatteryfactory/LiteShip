@@ -18,7 +18,7 @@ describe('cloudflareAdapterCapsule', () => {
   it('cache-status-valid invariant accepts known statuses', () => {
     const inv = cloudflareAdapterCapsule.invariants.find((i) => i.name === 'cache-status-valid');
     expect(inv).toBeDefined();
-    for (const status of ['disabled', 'hit', 'miss'] as const) {
+    for (const status of ['disabled', 'precompiled', 'hit', 'miss'] as const) {
       expect(inv!.check(undefined, { cacheStatus: status, htmlAttributes: '' })).toBe(true);
     }
     expect(inv!.check(undefined, { cacheStatus: 'bogus', htmlAttributes: '' })).toBe(false);

@@ -33,12 +33,16 @@
       "types": "./dist/html-transform.d.ts",
       "import": "./dist/html-transform.js",
       "development": "./src/html-transform.ts"
+    },
+    "./virtual": {
+      "types": "./virtual.d.ts"
     }
   },
   "files": [
     "dist",
     "src",
-    "LICENSE"
+    "LICENSE",
+    "virtual.d.ts"
   ],
   "scripts": {
     "build": "tsc",
@@ -46,7 +50,8 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
-    "@czap/compiler": "workspace:*"
+    "@czap/compiler": "workspace:*",
+    "@czap/edge": "workspace:*"
   },
   "peerDependencies": {
     "vite": ">=8.0.0"

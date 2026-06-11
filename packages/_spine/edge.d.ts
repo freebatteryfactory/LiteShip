@@ -86,6 +86,31 @@ export declare const KVCache: {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// § 3b. BOUNDARY MANIFEST (build-to-edge handoff)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export declare const MOTION_TIERS: readonly MotionTier[];
+export declare const DESIGN_TIERS: readonly DesignTier[];
+
+export type TierKey = `${MotionTier}:${DesignTier}`;
+
+export declare function tierKey(tier: Pick<EdgeTierResult, 'motionTier' | 'designTier'>): TierKey;
+export declare function enumerateTierKeys(): readonly TierKey[];
+
+export interface BoundaryManifestEntry {
+  readonly id: ContentAddress;
+  readonly outputsByTier: Readonly<Record<string, CompiledOutputs>>;
+}
+
+export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
+
+export interface BoundaryManifestFile {
+  readonly _tag: 'CzapBoundaryManifest';
+  readonly _version: 1;
+  readonly boundaries: BoundaryManifest;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // § 4. THEME COMPILER
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -117,12 +142,13 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
 export interface EdgeHostCacheConfig {
   readonly kv: KVNamespace;
   readonly boundaryId: ContentAddress;
-  readonly compile: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  readonly precompiled?: Readonly<Record<string, CompiledOutputs>>;
+  readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   readonly ttl?: number;
   readonly prefix?: string;
 }
 
-export type EdgeHostCacheStatus = 'disabled' | 'hit' | 'miss';
+export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 
 export interface EdgeHostAdapterConfig {
   readonly theme?:
