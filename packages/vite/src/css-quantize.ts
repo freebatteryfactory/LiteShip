@@ -11,7 +11,13 @@
 import { Diagnostics, type Boundary } from '@czap/core';
 import { CSSCompiler, type CSSRule, type CSSStateInput } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
-import { blankCssComments, lineOfOffset, parseFlatDeclarations, skipSegment, skipWsAndComments } from './css-scan.js';
+import {
+  blankCssCommentsAndStrings,
+  lineOfOffset,
+  parseFlatDeclarations,
+  skipSegment,
+  skipWsAndComments,
+} from './css-scan.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -218,15 +224,16 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
  * Parsing is fully character-level: upstream compilers (e.g. the Astro
  * compiler re-serializing a `<style>` block) emit at-rules mid-line and
  * collapse whole sheets onto a single line, so no line structure is
- * assumed. At-rule markers are located on a comment-blanked copy of the
- * source (same offsets) so commented-out blocks never match; bodies are
+ * assumed. At-rule markers are located on a comment- and string-blanked
+ * copy of the source (same offsets) so neither commented-out blocks nor
+ * marker text inside string values or data URLs ever match; bodies are
  * parsed from the original source with comment / string / functional-
  * notation awareness, including multi-line values and nested
  * `<selector> { ... }` rules.
  */
 export function parseQuantizeBlocks(css: string, sourceFile: string): readonly QuantizeBlock[] {
   const normalized = normalizeCssLineEndings(css);
-  const blanked = blankCssComments(normalized);
+  const blanked = blankCssCommentsAndStrings(normalized);
   const blocks: QuantizeBlock[] = [];
 
   const atRule = /@quantize\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;

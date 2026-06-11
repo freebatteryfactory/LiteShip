@@ -768,6 +768,54 @@ describe('@czap/vite plugin', () => {
     expect(transformed?.code).toContain('@container');
   });
 
+  test('leaves string-value at-rule decoys untouched while transforming the real blocks after them', async () => {
+    // Regression (Codex P2): a `content: "@token accent {"` declaration
+    // must neither parse as a block nor be spliced out as the
+    // replacement span of the real block that follows it.
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const token = Token.make({
+      name: 'accent',
+      category: 'color',
+      axes: ['theme'] as const,
+      values: { light: '#ffffff' },
+      fallback: '#ffffff',
+    });
+    writeModule(cssDir, 'tokens.ts', 'accent', token);
+
+    const css = `.decoy::before { content: "@token accent {"; }
+
+@token accent {
+  margin: 0;
+}
+`;
+
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const transformed = await vitePlugin.transform?.call(
+      {
+        warn(message: string) {
+          warnings.push(message);
+        },
+      },
+      css,
+      join(cssDir, 'decoy.css'),
+    );
+
+    expect(warnings).toEqual([]);
+    expect(transformed).not.toBeNull();
+
+    const output = transformed!.code;
+    // The decoy declaration survives verbatim; the real block compiled.
+    expect(output).toContain('.decoy::before { content: "@token accent {"; }');
+    expect(output).toContain('--czap-accent');
+    expect(output).not.toContain('\n@token accent {');
+  });
+
   test('warns and leaves css unchanged when definitions cannot be resolved', async () => {
     const root = makeTempDir();
     const cssFile = join(root, 'src', 'broken.css');

@@ -15,6 +15,7 @@ import * as path from 'node:path';
 import type { Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import { parseQuantizeBlocks, compileQuantizeBlock } from './css-quantize.js';
+import { blankCssCommentsAndStrings } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
@@ -92,16 +93,9 @@ const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
 };
 
 /**
- * Blank out block comments while preserving every newline, so marker
- * detection ignores commented-out at-rules without shifting line numbers.
- */
-function stripCssComments(css: string): string {
-  return css.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '));
-}
-
-/**
  * 1-based line of the first occurrence of `marker` in `css`, or `null`
- * when the marker does not appear (e.g. it only lived inside a comment).
+ * when the marker does not appear (e.g. it only lived inside a comment
+ * or a string value — callers pass a comment- and string-blanked copy).
  */
 function markerLine(css: string, marker: string): number | null {
   const idx = css.indexOf(marker);
@@ -289,16 +283,18 @@ export function plugin(config?: PluginConfig): Plugin {
       if (!hasToken && !hasTheme && !hasStyle && !hasQuantize) return null;
 
       let transformed = normalizeCssLineEndings(code);
-      // Comment-blanked copy of the original source for parse-miss
-      // diagnostics: marker positions stay stable across phases.
-      const commentStripped = stripCssComments(transformed);
+      // Comment- and string-blanked copy of the original source for
+      // parse-miss diagnostics: marker positions stay stable across
+      // phases, and markers inside comments, string values, or data
+      // URLs never trigger warnings.
+      const scanBlanked = blankCssCommentsAndStrings(transformed);
 
       // ---- Phase 1: @token -> CSS custom properties + @property ----
       if (hasToken) {
         const tokenBlocks = parseTokenBlocks(transformed, id);
 
         if (tokenBlocks.length === 0) {
-          const line = markerLine(commentStripped, '@token');
+          const line = markerLine(scanBlanked, '@token');
           if (line !== null) {
             this.warn(parseMissWarning('@token', id, line));
           }
@@ -395,7 +391,7 @@ export function plugin(config?: PluginConfig): Plugin {
         const quantizeBlocks = parseQuantizeBlocks(transformed, id);
 
         if (quantizeBlocks.length === 0) {
-          const line = markerLine(commentStripped, '@quantize');
+          const line = markerLine(scanBlanked, '@quantize');
           if (line !== null) {
             this.warn(parseMissWarning('@quantize', id, line));
           }
@@ -536,19 +532,25 @@ export function plugin(config?: PluginConfig): Plugin {
  * Returns the start/end character offsets, or null if not found.
  *
  * Works for any at-rule pattern: `@token`, `@theme`, `@style`,
- * `@quantize`. Uses a state machine to correctly skip block comments,
- * quoted strings, and `url(...)` tokens (which may contain braces in
- * data URIs) before counting brace depth.
+ * `@quantize`. Searches and brace-counts on a comment- and
+ * string-blanked copy of the source (same offsets, via
+ * {@link blankCssCommentsAndStrings}), so marker text inside comments,
+ * string values (`content: "@token x {"`), or unquoted data URLs never
+ * matches, and braces inside those constructs never skew the depth
+ * count. The returned offsets splice the ORIGINAL source.
  */
 function findAtRuleBlock(css: string, marker: string, name: string): { start: number; end: number } | null {
+  // Offset-preserving blank of comments / strings / url() contents:
+  // every index into `scan` is a valid index into `css`.
+  const scan = blankCssCommentsAndStrings(css);
   let searchFrom = 0;
 
-  while (searchFrom < css.length) {
-    const idx = css.indexOf(marker, searchFrom);
+  while (searchFrom < scan.length) {
+    const idx = scan.indexOf(marker, searchFrom);
     if (idx === -1) return null;
 
     // Verify this at-rule is followed by the target name
-    const afterMarker = css.substring(idx + marker.length).trimStart();
+    const afterMarker = scan.substring(idx + marker.length).trimStart();
     if (!afterMarker.startsWith(name)) {
       searchFrom = idx + marker.length;
       continue;
@@ -562,66 +564,20 @@ function findAtRuleBlock(css: string, marker: string, name: string): { start: nu
     }
 
     // Find the opening brace
-    const braceStart = css.indexOf('{', idx);
+    const braceStart = scan.indexOf('{', idx);
     /* v8 ignore next — unreachable under real call sites: `findAtRuleBlock` runs only
        after `parseTokenBlocks`/etc. matched a `@marker name { ... }` block with braces,
        so the `{` is always still present in the transformed source. Defensive against
        future multi-phase edits that strip braces between parse and lookup. */
     if (braceStart === -1) return null;
 
-    // Walk forward tracking depth with full comment/string/url awareness
+    // Walk forward counting depth. Comments, strings, and url() contents
+    // are already blanked, so every remaining brace is structural.
     let depth = 1;
     let pos = braceStart + 1;
 
-    while (pos < css.length && depth > 0) {
-      const ch = css[pos]!;
-
-      // Skip block comments: /* ... */
-      if (ch === '/' && css[pos + 1] === '*') {
-        pos += 2;
-        while (pos < css.length - 1 && !(css[pos] === '*' && css[pos + 1] === '/')) {
-          pos++;
-        }
-        pos += 2;
-        continue;
-      }
-
-      // Skip quoted strings: "..." and '...' (with backslash escapes)
-      if (ch === '"' || ch === "'") {
-        const quote = ch;
-        pos++;
-        while (pos < css.length && css[pos] !== quote) {
-          if (css[pos] === '\\') pos++;
-          pos++;
-        }
-        pos++;
-        continue;
-      }
-
-      // Skip url(...) tokens: may contain unquoted data URIs with braces
-      if (ch === 'u' && css.slice(pos, pos + 4).toLowerCase() === 'url(') {
-        pos += 4;
-        // url() may use a quoted or unquoted value
-        if (css[pos] === '"' || css[pos] === "'") {
-          const quote = css[pos]!;
-          pos++;
-          while (pos < css.length && css[pos] !== quote) {
-            if (css[pos] === '\\') pos++;
-            pos++;
-          }
-          pos++; // closing quote
-        } else {
-          // unquoted -- scan until the matching ')'
-          let parenDepth = 1;
-          while (pos < css.length && parenDepth > 0) {
-            if (css[pos] === '(') parenDepth++;
-            else if (css[pos] === ')') parenDepth--;
-            pos++;
-          }
-        }
-        continue;
-      }
-
+    while (pos < scan.length && depth > 0) {
+      const ch = scan[pos]!;
       if (ch === '{') depth++;
       else if (ch === '}') depth--;
       pos++;

@@ -754,6 +754,74 @@ describe('compiler-re-serialized single-line CSS', () => {
     expect(parseQuantizeBlocks(css, FILE)).toEqual([]);
     expect(parseThemeBlocks(css, FILE)).toEqual([]);
   });
+
+  // Regression (Codex P2): at-rule markers embedded in quoted string
+  // values or data URLs are content, not blocks — the marker search must
+  // run on a string-blanked copy or a `content: "@token accent {"`
+  // declaration parses as a real token block.
+  test('ignores at-rule markers inside quoted string values', () => {
+    const css = `
+.decoy::before { content: "@token accent {"; }
+.decoy::after { content: '@theme dark {'; }
+.note { content: "@quantize layout { mobile { gap: 1rem; } }"; }`;
+
+    expect(parseTokenBlocks(css, FILE)).toEqual([]);
+    expect(parseThemeBlocks(css, FILE)).toEqual([]);
+    expect(parseQuantizeBlocks(css, FILE)).toEqual([]);
+  });
+
+  test('ignores at-rule markers inside unquoted data URLs', () => {
+    const css = `
+.bg {
+  background: url(data:image/svg+xml,%3Csvg%3E@quantize layout { mobile } %3C/svg%3E);
+  mask: url(data:text/plain,@token accent { color: red; });
+}`;
+
+    expect(parseQuantizeBlocks(css, FILE)).toEqual([]);
+    expect(parseTokenBlocks(css, FILE)).toEqual([]);
+  });
+
+  test('parses real blocks that follow string and data-URL decoys', () => {
+    const css = `
+.decoy::before { content: "@token accent {"; }
+.bg { background: url(data:text/plain,@quantize layout { mobile }); }
+
+@token accent {
+  color: #ff0000;
+}
+
+@quantize layout {
+  mobile {
+    gap: 1rem;
+  }
+}`;
+
+    const tokenBlocks = parseTokenBlocks(css, FILE);
+    expect(tokenBlocks).toHaveLength(1);
+    expect(tokenBlocks[0]!.tokenName).toBe('accent');
+    expect(tokenBlocks[0]!.declarations).toEqual({ color: '#ff0000' });
+
+    const quantizeBlocks = parseQuantizeBlocks(css, FILE);
+    expect(quantizeBlocks).toHaveLength(1);
+    expect(quantizeBlocks[0]!.boundaryName).toBe('layout');
+    expect(quantizeBlocks[0]!.states['mobile']?.bareProps).toEqual({ gap: '1rem' });
+  });
+
+  test('body parser still reads real string values while the marker copy is blanked', () => {
+    // The blanking applies only to the marker-locating copy: a real
+    // declaration whose VALUE contains at-rule text must survive intact,
+    // and must not spawn a phantom second block.
+    const css = `
+@token accent {
+  content: "@token nested { color: blue; }";
+}`;
+
+    const blocks = parseTokenBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.tokenName).toBe('accent');
+    expect(blocks[0]!.declarations).toEqual({ content: '"@token nested { color: blue; }"' });
+  });
 });
 
 describe('compileQuantizeBlock nested selectors', () => {
