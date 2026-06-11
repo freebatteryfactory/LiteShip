@@ -54,7 +54,7 @@ Compile function invoked on KV cache miss.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [cloudflare/src/middleware.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L26)
+Defined in: [cloudflare/src/middleware.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L33)
 
 Whether to parse Client Hints (default `true`).
 
@@ -64,7 +64,7 @@ Whether to parse Client Hints (default `true`).
 
 > `readonly` `optional` **env?**: [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md) \| (() => [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md))
 
-Defined in: [cloudflare/src/middleware.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L33)
+Defined in: [cloudflare/src/middleware.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L40)
 
 Override the Workers env source. Default reads `env` from `cloudflare:workers`.
 Pass a getter in tests or when env is injected by the host framework.
@@ -75,7 +75,7 @@ Pass a getter in tests or when env is injected by the host framework.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L24)
+Defined in: [cloudflare/src/middleware.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L31)
 
 Optional KV key prefix.
 
@@ -95,9 +95,14 @@ Optional theme config or per-request resolver.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [cloudflare/src/middleware.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L22)
+Defined in: [cloudflare/src/middleware.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L29)
 
-Cache entry TTL in seconds.
+Cache entry TTL in seconds — an eviction/cost knob, not a freshness
+knob. Compiled outputs are content-addressed and never go stale; each
+deploy that changes boundary content mints a new `ContentAddress`,
+orphaning the old `boundaryId` x tier keys. Workers KV has no eviction
+and bills storage, so set a TTL (e.g. `2592000` = 30 days) to reclaim
+keys for superseded builds. Omit to cache indefinitely.
 
 ***
 
@@ -105,7 +110,7 @@ Cache entry TTL in seconds.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [cloudflare/src/middleware.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L28)
+Defined in: [cloudflare/src/middleware.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L35)
 
 Whether to emit COOP/COEP for `client:worker`.
 

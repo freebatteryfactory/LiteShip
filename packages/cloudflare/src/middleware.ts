@@ -18,7 +18,14 @@ export interface CloudflareMiddlewareConfig {
   readonly compile: EdgeHostCacheConfig['compile'];
   /** Optional theme config or per-request resolver. */
   readonly theme?: EdgeHostAdapterConfig['theme'];
-  /** Cache entry TTL in seconds. */
+  /**
+   * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
+   * knob. Compiled outputs are content-addressed and never go stale; each
+   * deploy that changes boundary content mints a new `ContentAddress`,
+   * orphaning the old `boundaryId` x tier keys. Workers KV has no eviction
+   * and bills storage, so set a TTL (e.g. `2592000` = 30 days) to reclaim
+   * keys for superseded builds. Omit to cache indefinitely.
+   */
   readonly ttl?: number;
   /** Optional KV key prefix. */
   readonly prefix?: string;

@@ -59,7 +59,13 @@ export interface EdgeHostCacheConfig {
   readonly boundaryId: ContentAddress;
   /** Compile function invoked on cache miss. */
   readonly compile: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
-  /** Cache entry TTL in seconds. */
+  /**
+   * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
+   * knob. Entries are content-addressed and never go stale; deploys that
+   * change boundary content mint a new `ContentAddress` and orphan the old
+   * `boundaryId` x tier keys, which KV stores (and bills) forever unless a
+   * TTL reclaims them. Omit to cache indefinitely.
+   */
   readonly ttl?: number;
   /** Optional KV key prefix. */
   readonly prefix?: string;
