@@ -20,6 +20,7 @@ import { tmpdir } from 'node:os';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import { Effect } from 'effect';
 import {
+  findWorkspaceSpecLeaks,
   tarballManifestAddress,
   lockfileAddress,
   workspaceManifestAddress,
@@ -355,5 +356,56 @@ describe('parseTar USTAR prefix split', () => {
     const c = await run(tarballManifestAddress(tgzNameOnly));
     expect(a.integrity_digest).toBe(b.integrity_digest);
     expect(a.integrity_digest).not.toBe(c.integrity_digest);
+  });
+});
+
+describe('findWorkspaceSpecLeaks (ship workspace-protocol guard)', () => {
+  const tgzWithManifest = (manifest: Record<string, unknown>): Uint8Array =>
+    tgzWithPlainEntry('package/package.json', JSON.stringify(manifest));
+
+  it('lists every dependency section entry still carrying the workspace: protocol', () => {
+    const leaks = findWorkspaceSpecLeaks(
+      tgzWithManifest({
+        name: '@czap/core',
+        version: '0.1.4',
+        dependencies: { '@czap/_spine': 'workspace:*', cborg: '^4.2.0' },
+        peerDependencies: { effect: 'workspace:^' },
+        optionalDependencies: { '@czap/detect': 'workspace:~' },
+      }),
+    );
+    expect([...leaks].sort()).toEqual([
+      'dependencies.@czap/_spine: workspace:*',
+      'optionalDependencies.@czap/detect: workspace:~',
+      'peerDependencies.effect: workspace:^',
+    ]);
+  });
+
+  it('returns empty for concrete specs (the published 0.1.5 shape)', () => {
+    const leaks = findWorkspaceSpecLeaks(
+      tgzWithManifest({
+        name: '@czap/core',
+        version: '0.1.5',
+        dependencies: { '@czap/_spine': '0.1.5', cborg: '^4.2.0' },
+      }),
+    );
+    expect(leaks).toEqual([]);
+  });
+
+  it('throws when the tarball has no package/package.json', () => {
+    expect(() => findWorkspaceSpecLeaks(tgzWithPlainEntry('package/README.md', 'hi'))).toThrow(
+      /no package\/package\.json/,
+    );
+  });
+
+  it('devDependencies do not count — npm ignores them on install', () => {
+    const leaks = findWorkspaceSpecLeaks(
+      tgzWithManifest({
+        name: '@czap/core',
+        version: '0.1.5',
+        dependencies: { cborg: '^4.2.0' },
+        devDependencies: { '@czap/audit': 'workspace:*' },
+      }),
+    );
+    expect(leaks).toEqual([]);
   });
 });
