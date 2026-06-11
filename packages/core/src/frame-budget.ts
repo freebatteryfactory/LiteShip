@@ -14,6 +14,7 @@
 import type { Scope } from 'effect';
 import { Effect } from 'effect';
 import { DEFAULT_TARGET_FPS, MS_PER_SEC } from './defaults.js';
+import { CzapValidationError } from './validation-error.js';
 
 /**
  * Frame-budget priority lane in descending urgency. `critical` always runs;
@@ -59,7 +60,7 @@ interface FrameBudgetShape {
 function _make(config?: { targetFps?: number }): Effect.Effect<FrameBudgetShape, never, Scope.Scope> {
   const targetFps = config?.targetFps ?? DEFAULT_TARGET_FPS;
   if (targetFps <= 0 || !Number.isFinite(targetFps)) {
-    throw new RangeError(`FrameBudget.make: targetFps must be a positive finite number, got ${targetFps}`);
+    throw new CzapValidationError('FrameBudget.make', `targetFps must be a positive finite number, got ${targetFps}`);
   }
   const frameBudgetMs = MS_PER_SEC / targetFps;
 

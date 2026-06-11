@@ -12,6 +12,7 @@ import { Millis } from './brands.js';
 import type { Boundary } from './boundary.js';
 import type { StateUnion } from './type-utils.js';
 import { CanonicalCbor } from './cbor.js';
+import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
 import { CzapValidationError } from './validation-error.js';
 
@@ -141,6 +142,21 @@ function _mergeLayers(base: StyleLayer, override: StyleLayer): StyleLayer {
  */
 function _tap(style: StyleDef, state?: string): Record<string, string> {
   let layer = style.base;
+
+  if (state !== undefined && style.boundary) {
+    // A state with no override is fine (base applies); a state outside the
+    // boundary's full state set is a typo — warn so it doesn't render wrong
+    // with zero signal. Boundary-less styles are skipped: without the full
+    // set, a valid non-overridden state is indistinguishable from a typo.
+    const knownStates = style.boundary.states as readonly string[];
+    if (!knownStates.includes(state)) {
+      Diagnostics.warnOnce({
+        source: 'czap/core.Style',
+        code: 'style-unknown-state',
+        message: `Style.tap: state "${state}" is not a state of the style's boundary [${knownStates.join(', ')}]; returning base styles.`,
+      });
+    }
+  }
 
   if (state && style.states) {
     const stateLayer = style.states[state];

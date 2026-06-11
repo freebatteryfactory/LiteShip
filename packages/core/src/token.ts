@@ -9,6 +9,7 @@
 
 import type { ContentAddress } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
+import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
 import { CzapValidationError } from './validation-error.js';
 
@@ -89,6 +90,14 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
     .sort()
     .map((axis) => axisValues[axis] ?? '')
     .join(':');
+  if (!(key in token.values)) {
+    // Falling back is the designed behavior; the warn makes a typo'd axis value observable.
+    Diagnostics.warnOnce({
+      source: 'czap/core.Token',
+      code: 'token-tap-miss',
+      message: `Token "${token.name}": no value for key "${key}" — known keys: [${Object.keys(token.values).join(', ')}]; returning fallback.`,
+    });
+  }
   return (token.values[key] ?? token.fallback) as T;
 }
 

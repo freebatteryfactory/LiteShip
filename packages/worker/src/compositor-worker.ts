@@ -310,7 +310,7 @@ function _createCompositorWorker(
           source: 'czap/worker.compositor-worker',
           code: 'worker-message-error',
           message: 'Compositor worker reported an error.',
-          detail: msg.message,
+          detail: { code: msg.code, message: msg.message, hint: msg.hint },
         });
         break;
     }

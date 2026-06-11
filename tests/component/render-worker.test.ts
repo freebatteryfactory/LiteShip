@@ -157,7 +157,7 @@ describe('RenderWorker', () => {
           source: 'czap/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
-          detail: 'render failed',
+          detail: { message: 'render failed' },
         }),
         expect.objectContaining({
           level: 'error',
