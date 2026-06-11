@@ -12,7 +12,7 @@
 
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import type { Plugin } from 'vite';
+import type { EnvironmentModuleNode, Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
 import { collectBoundaryManifest } from './boundary-manifest.js';
@@ -546,14 +546,25 @@ export function plugin(config?: PluginConfig): Plugin {
       }
 
       if (file.endsWith('.css') || file.endsWith('.astro') || file.endsWith('.html')) {
-        // @quantize states contribute to the boundary manifest.
-        if (file.endsWith('.css')) {
-          boundaryManifestPromise = null;
-        }
         const moduleGraph = this.environment.moduleGraph;
         const mod = moduleGraph.getModuleById(file);
-        if (mod) {
-          return [mod];
+        const affectedModules: EnvironmentModuleNode[] = mod ? [mod] : [];
+
+        // @quantize states contribute to the boundary manifest, so a CSS
+        // edit must re-load `virtual:czap/boundaries` too (same as the
+        // definition-file path above) -- otherwise importers keep the
+        // stale module even though the cached manifest was dropped.
+        if (file.endsWith('.css')) {
+          boundaryManifestPromise = null;
+          const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
+          if (manifestModule) {
+            moduleGraph.invalidateModule(manifestModule);
+            affectedModules.push(manifestModule);
+          }
+        }
+
+        if (affectedModules.length > 0) {
+          return affectedModules;
         }
       }
 
