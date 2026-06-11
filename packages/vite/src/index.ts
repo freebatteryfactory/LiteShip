@@ -61,8 +61,12 @@ export { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
 export { transformHTML } from './html-transform.js';
 
 // Virtual modules
-export type { VirtualModuleId } from './virtual-modules.js';
+export type { VirtualModuleId, VirtualModuleData } from './virtual-modules.js';
 export { resolveVirtualId, isVirtualId, loadVirtualModule } from './virtual-modules.js';
+
+// Boundary manifest (build-to-edge handoff, ADR-0003)
+export type { CollectBoundaryManifestOptions } from './boundary-manifest.js';
+export { collectBoundaryManifest } from './boundary-manifest.js';
 
 // HMR
 export type { HMRPayload } from './hmr.js';

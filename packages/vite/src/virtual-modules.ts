@@ -3,15 +3,18 @@
  *
  * Handles Vite's `resolveId` and `load` for virtual module specifiers
  * that provide runtime access to token, boundary, and theme
- * definitions. The modules export placeholder content that the
- * transform pipeline later replaces inline.
+ * definitions.
  *
  * Virtual IDs:
  *
- * - `virtual:czap/tokens` -- JS exports of token definitions.
- * - `virtual:czap/tokens.css` -- CSS custom properties from tokens.
- * - `virtual:czap/boundaries` -- JS exports of boundary definitions.
- * - `virtual:czap/themes` -- JS exports of theme definitions.
+ * - `virtual:czap/tokens` -- JS exports of token definitions (stub).
+ * - `virtual:czap/tokens.css` -- CSS custom properties from tokens (stub).
+ * - `virtual:czap/boundaries` -- the build-derived boundary manifest
+ *   (`{ [name]: { id, outputsByTier } }`); the plugin supplies the
+ *   manifest collected by `collectBoundaryManifest`, and the module
+ *   degrades to an empty-object stub only when loaded outside the
+ *   plugin (e.g. by a bare type-checker pass).
+ * - `virtual:czap/themes` -- JS exports of theme definitions (stub).
  * - `virtual:czap/hmr-client` -- Client-side HMR handler for
  *   `czap:update` events.
  * - `virtual:czap/wasm-url` -- Resolved WASM runtime URL (or `null`).
@@ -20,6 +23,8 @@
  *
  * @module
  */
+
+import type { BoundaryManifest } from '@czap/edge';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -70,21 +75,31 @@ export function isVirtualId(id: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
+ * Optional dynamic data threaded from the plugin into
+ * {@link loadVirtualModule} for virtual modules whose content is derived
+ * at build time rather than stubbed.
+ */
+export interface VirtualModuleData {
+  /** Boundary manifest for `virtual:czap/boundaries` (from `collectBoundaryManifest`). */
+  readonly boundaries?: BoundaryManifest;
+}
+
+/**
  * Return the source for a resolved virtual module ID.
  *
- * Data modules (tokens, boundaries, themes) return empty-object stubs
- * that provide valid JS/CSS so downstream tooling (type-checkers,
- * bundlers) can operate without the full transform pipeline running.
- * Their real content flows through the CSS transform hooks in the
- * plugin -- at build time the transform replaces token, theme, and
- * quantize blocks inline, so these stubs are only hit when a consumer
- * explicitly imports the virtual module (e.g. for runtime JS access
- * to definitions).
+ * `virtual:czap/boundaries` exports the build-derived boundary manifest
+ * when the plugin passes one via `data.boundaries`; without data it
+ * degrades to an empty-object stub (valid JS for type-checkers and
+ * bundlers running outside the plugin).
+ *
+ * The remaining data modules (tokens, themes) return empty-object stubs
+ * -- their real content flows through the CSS transform hooks in the
+ * plugin, which replaces token, theme, and quantize blocks inline.
  *
  * The `hmr-client` module is the client-side HMR handler that the
  * plugin injects into the page via `transformIndexHtml`.
  */
-export function loadVirtualModule(id: string): string | undefined {
+export function loadVirtualModule(id: string, data?: VirtualModuleData): string | undefined {
   if (!id.startsWith(VIRTUAL_PREFIX)) return undefined;
 
   const name = id.slice(VIRTUAL_PREFIX.length);
@@ -97,7 +112,7 @@ export function loadVirtualModule(id: string): string | undefined {
       return ':root {}';
 
     case 'boundaries':
-      return 'export const boundaries = {};';
+      return `export const boundaries = ${JSON.stringify(data?.boundaries ?? {})};`;
 
     case 'themes':
       return 'export const themes = {};';

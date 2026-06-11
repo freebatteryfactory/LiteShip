@@ -8,7 +8,7 @@
  */
 
 import { ClientHints, createEdgeHostAdapter, EdgeTier } from '@czap/edge';
-import type { CompiledOutputs, EdgeHostAdapterConfig, ThemeCompileResult } from '@czap/edge';
+import type { CompiledOutputs, EdgeHostAdapterConfig, EdgeHostCacheStatus, ThemeCompileResult } from '@czap/edge';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
@@ -36,7 +36,7 @@ export interface CzapLocals {
     readonly theme?: ThemeCompileResult;
     readonly compiledOutputs?: CompiledOutputs;
     readonly htmlAttributes: string;
-    readonly cacheStatus: 'disabled' | 'hit' | 'miss';
+    readonly cacheStatus: EdgeHostCacheStatus;
   };
 }
 

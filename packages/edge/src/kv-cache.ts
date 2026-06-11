@@ -11,6 +11,7 @@
 
 import { Diagnostics, type ContentAddress } from '@czap/core';
 import type { EdgeTierResult } from './edge-tier.js';
+import { tierKey } from './manifest.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,7 +64,9 @@ interface CacheOptions {
 }
 
 function buildCacheKey(prefix: string, boundaryId: ContentAddress, tierResult: EdgeTierResult): string {
-  return `${prefix}:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+  // Tier portion shares `tierKey` with manifest lookups so the KV keyspace
+  // and the precompiled-manifest keyspace can never disagree.
+  return `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`;
 }
 
 // ---------------------------------------------------------------------------

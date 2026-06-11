@@ -12,8 +12,10 @@
 
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
-import type { Plugin } from 'vite';
+import type { EnvironmentModuleNode, Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
+import type { BoundaryManifest } from '@czap/edge';
+import { collectBoundaryManifest } from './boundary-manifest.js';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
@@ -170,6 +172,10 @@ export function plugin(config?: PluginConfig): Plugin {
   const themeCache = new Map<string, Theme.Shape | null>();
   const styleCache = new Map<string, Style.Shape | null>();
 
+  // Lazily-collected boundary manifest backing `virtual:czap/boundaries`.
+  // Reset whenever a definition or CSS file changes so dev imports stay fresh.
+  let boundaryManifestPromise: Promise<BoundaryManifest> | null = null;
+
   return {
     name: '@czap/vite',
     enforce: 'pre' as const,
@@ -230,6 +236,15 @@ export function plugin(config?: PluginConfig): Plugin {
     },
 
     load(id: string) {
+      if (id === '\0virtual:czap/boundaries') {
+        // Async only on this branch: the manifest scan imports definition
+        // modules. Other virtual modules stay synchronous.
+        if (!boundaryManifestPromise) {
+          boundaryManifestPromise = collectBoundaryManifest(projectRoot, { boundaryDir: config?.dirs?.boundary });
+        }
+        return boundaryManifestPromise.then((boundaries) => loadVirtualModule(id, { boundaries }));
+      }
+
       if (id === '\0virtual:czap/wasm-url') {
         if (!wasmEnabled) {
           return 'export const wasmUrl = null;';
@@ -506,6 +521,7 @@ export function plugin(config?: PluginConfig): Plugin {
         tokenCache.clear();
         themeCache.clear();
         styleCache.clear();
+        boundaryManifestPromise = null;
 
         const moduleGraph = this.environment.moduleGraph;
         const transformModules = Array.from(moduleGraph.idToModuleMap.values()).filter((mod) => {
@@ -516,6 +532,14 @@ export function plugin(config?: PluginConfig): Plugin {
           );
         });
 
+        // Definitions feed the boundary manifest; re-load the virtual module
+        // so `import { boundaries } from 'virtual:czap/boundaries'` stays fresh.
+        const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
+        if (manifestModule) {
+          moduleGraph.invalidateModule(manifestModule);
+          transformModules.push(manifestModule);
+        }
+
         if (transformModules.length > 0) {
           return transformModules;
         }
@@ -523,9 +547,30 @@ export function plugin(config?: PluginConfig): Plugin {
 
       if (file.endsWith('.css') || file.endsWith('.astro') || file.endsWith('.html')) {
         const moduleGraph = this.environment.moduleGraph;
-        const mod = moduleGraph.getModuleById(file);
-        if (mod) {
-          return [mod];
+        // Returning an array from hotUpdate REPLACES Vite's own affected
+        // list — start from options.modules (Vite's computed set, which
+        // covers query-bearing ids like `Page.astro?astro&type=style`
+        // that an exact getModuleById(file) lookup would miss) so the
+        // edited file's own HMR is never suppressed.
+        const affectedModules: EnvironmentModuleNode[] = [...options.modules];
+
+        // @quantize states contribute to the boundary manifest, so a CSS
+        // or .astro-style edit must re-load `virtual:czap/boundaries` too
+        // (same as the definition-file path above) -- otherwise importers
+        // keep the stale module even though the cached manifest was
+        // dropped. (.astro components carry @quantize in <style> blocks
+        // and feed the manifest scan since the .astro-scan fix.)
+        if (file.endsWith('.css') || file.endsWith('.astro')) {
+          boundaryManifestPromise = null;
+          const manifestModule = moduleGraph.getModuleById('\0virtual:czap/boundaries');
+          if (manifestModule) {
+            moduleGraph.invalidateModule(manifestModule);
+            affectedModules.push(manifestModule);
+          }
+        }
+
+        if (affectedModules.length > 0) {
+          return affectedModules;
         }
       }
 

@@ -7,6 +7,10 @@
  */
 
 import { describe, test, expect } from 'vitest';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, integration } from '@czap/astro';
 import type { SatelliteProps } from '@czap/astro';
 import { Boundary } from '@czap/core';
@@ -626,28 +630,124 @@ describe('integration', () => {
     expect(headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
   });
 
-  test('config:done and build:done log the final integration status', () => {
+  test('config:done and build:done log the final integration status', async () => {
     const integ = integration();
     const logs: string[] = [];
-
-    integ.hooks['astro:config:done']({
-      config: { output: 'server' },
-      logger: {
-        info(message: string) {
-          logs.push(message);
+    const root = mkdtempSync(join(tmpdir(), 'czap-astro-int-'));
+    try {
+      integ.hooks['astro:config:done']({
+        config: { output: 'server', root: pathToFileURL(root) },
+        logger: {
+          info(message: string) {
+            logs.push(message);
+          },
         },
-      },
-    } as never);
+      } as never);
 
-    integ.hooks['astro:build:done']({
-      logger: {
-        info(message: string) {
-          logs.push(message);
+      await integ.hooks['astro:build:done']({
+        dir: pathToFileURL(join(root, 'dist')),
+        logger: {
+          info(message: string) {
+            logs.push(message);
+          },
         },
-      },
-    } as never);
+      } as never);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
 
     expect(logs).toContain('@czap configured for server output');
     expect(logs).toContain('@czap build integration complete');
+  });
+
+  test('build:done emits czap-boundary-manifest.json with derived ids when the project defines boundaries', async () => {
+    const integ = integration();
+    const root = mkdtempSync(join(tmpdir(), 'czap-astro-manifest-'));
+    const outDir = join(root, 'dist');
+    mkdirSync(join(root, 'src'), { recursive: true });
+    mkdirSync(outDir, { recursive: true });
+
+    const reference = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ],
+    });
+    writeFileSync(
+      join(root, 'src', 'boundaries.ts'),
+      `
+export const viewport = {
+  _tag: 'BoundaryDef',
+  _version: 1,
+  id: ${JSON.stringify(reference.id)},
+  input: 'viewport.width',
+  thresholds: [0, 768],
+  states: ['compact', 'wide'],
+};
+`,
+    );
+    writeFileSync(
+      join(root, 'src', 'styles.css'),
+      `
+@quantize viewport {
+  compact {
+    --gap: 8px;
+  }
+  wide {
+    --gap: 24px;
+  }
+}
+`,
+    );
+
+    try {
+      const silentLogger = { info() {} };
+      integ.hooks['astro:config:done']({
+        config: { output: 'server', root: pathToFileURL(root) },
+        logger: silentLogger,
+      } as never);
+      await integ.hooks['astro:build:done']({
+        dir: pathToFileURL(outDir),
+        logger: silentLogger,
+      } as never);
+
+      const manifestPath = join(outDir, 'czap-boundary-manifest.json');
+      const file = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+        _tag: string;
+        _version: number;
+        boundaries: Record<string, { id: string; outputsByTier: Record<string, { css: string }> }>;
+      };
+
+      expect(file._tag).toBe('CzapBoundaryManifest');
+      expect(file._version).toBe(1);
+      expect(file.boundaries['viewport']!.id).toBe(reference.id);
+      expect(file.boundaries['viewport']!.outputsByTier['transitions:standard']!.css).toContain('@container');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('build:done emits no manifest file for a project without boundaries', async () => {
+    const integ = integration();
+    const root = mkdtempSync(join(tmpdir(), 'czap-astro-empty-'));
+    const outDir = join(root, 'dist');
+    mkdirSync(outDir, { recursive: true });
+
+    try {
+      const silentLogger = { info() {} };
+      integ.hooks['astro:config:done']({
+        config: { output: 'server', root: pathToFileURL(root) },
+        logger: silentLogger,
+      } as never);
+      await integ.hooks['astro:build:done']({
+        dir: pathToFileURL(outDir),
+        logger: silentLogger,
+      } as never);
+
+      expect(existsSync(join(outDir, 'czap-boundary-manifest.json'))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

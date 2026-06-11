@@ -13,6 +13,7 @@
     "@czap/cloudflare": "workspace:*",
     "@czap/core": "workspace:*",
     "@czap/edge": "workspace:*",
+    "@czap/vite": "workspace:*",
     "astro": "^6.3.0"
   },
   "devDependencies": {
