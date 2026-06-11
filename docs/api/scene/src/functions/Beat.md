@@ -6,9 +6,9 @@
 
 # Function: Beat()
 
-> **Beat**(`count`): [`BeatHandle`](../interfaces/BeatHandle.md)
+> **Beat**(`count`): `BeatHandle`
 
-Defined in: [scene/src/sugar/beat.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L18)
+Defined in: [scene/src/sugar/beat.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L33)
 
 Build a beat handle with the given count (may be fractional).
 
@@ -20,4 +20,4 @@ Build a beat handle with the given count (may be fractional).
 
 ## Returns
 
-[`BeatHandle`](../interfaces/BeatHandle.md)
+`BeatHandle`

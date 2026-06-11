@@ -6,7 +6,7 @@
 
 # Interface: BoundaryManifestEntry
 
-Defined in: edge/src/manifest.ts:94
+Defined in: [edge/src/manifest.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L94)
 
 One boundary's manifest entry: its minted `ContentAddress` (always
 `Boundary.make`'s id -- never hand-typed) plus precompiled
@@ -22,7 +22,7 @@ derive cache configuration from it.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: edge/src/manifest.ts:96
+Defined in: [edge/src/manifest.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L96)
 
 Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
@@ -32,6 +32,6 @@ Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
 > `readonly` **outputsByTier**: `Readonly`\<`Record`\<`string`, [`CompiledOutputs`](CompiledOutputs.md)\>\>
 
-Defined in: edge/src/manifest.ts:98
+Defined in: [edge/src/manifest.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L98)
 
 Precompiled outputs per tier key (string-keyed to stay JSON-portable).

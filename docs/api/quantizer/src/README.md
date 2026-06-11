@@ -26,12 +26,12 @@ the working line.
 - [SpringConfig](interfaces/SpringConfig.md)
 - [Transition](interfaces/Transition.md)
 - [TransitionConfig](interfaces/TransitionConfig.md)
-- [TransitionMap](interfaces/TransitionMap.md)
 
 ## Type Aliases
 
 - [MotionTier](type-aliases/MotionTier.md)
 - [OutputTarget](type-aliases/OutputTarget.md)
+- [TransitionMap](type-aliases/TransitionMap.md)
 
 ## Variables
 

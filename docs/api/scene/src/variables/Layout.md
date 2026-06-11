@@ -16,7 +16,7 @@ Layout helpers for multi-track arrangement.
 
 ### grid
 
-> **grid**: (`cols`, `tracks`) => readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+> **grid**: (`cols`, `tracks`) => readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]
 
 Assign layer values based on column count — tracks in the same row share a layer.
 
@@ -28,15 +28,15 @@ Assign layer values based on column count — tracks in the same row share a lay
 
 ##### tracks
 
-readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]
 
 #### Returns
 
-readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]
 
 ### stack
 
-> **stack**: (`tracks`) => readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+> **stack**: (`tracks`) => readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]
 
 Assign ascending layer values — first track on layer 0, next on 1, etc.
 
@@ -44,8 +44,8 @@ Assign ascending layer values — first track on layer 0, next on 1, etc.
 
 ##### tracks
 
-readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]
 
 #### Returns
 
-readonly [`VideoTrack`](../interfaces/VideoTrack.md)[]
+readonly [`VideoTrack`](../interfaces/VideoTrack.md)\<`FrameMark`\>[]

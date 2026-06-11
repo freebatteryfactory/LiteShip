@@ -36,11 +36,11 @@ Extended capabilities (superset of `DeviceCapabilities`).
 
 ### capSet
 
-> `readonly` **capSet**: [`CapSet`](#)
+> `readonly` **capSet**: [`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
 Defined in: [detect/src/detect.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
 
-Monotone set of every [CapLevel](#) at or below `tier`.
+Monotone set of every [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) at or below `tier`.
 
 #### Inherited from
 
@@ -84,11 +84,11 @@ Motion complexity tier derived from GPU, cores, and reduced-motion.
 
 ### tier
 
-> `readonly` **tier**: [`CapLevel`](#)
+> `readonly` **tier**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
 Defined in: [detect/src/detect.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L110)
 
-Highest [CapLevel](#) the device qualifies for.
+Highest [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) the device qualifies for.
 
 #### Inherited from
 

@@ -10,7 +10,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { audioDecoder, detectBeats, detectOnsets, computeWaveform } from '@czap/assets';
+import { resolveAssetDecoder, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
 import { assetAnalyzeCommand, type AssetAnalyzePayload } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { emit, emitError, getCapsuleManifestPath } from '../receipts.js';
@@ -27,9 +27,16 @@ function loadAssetBytes(assetId: string, source?: string): ArrayBuffer | null {
   return readFileSync(candidates[0]!).buffer as ArrayBuffer;
 }
 
-/** Run the selected audio projection over decoded bytes and return the marker count. */
-async function runAudioProjection(bytes: ArrayBuffer, projection: Projection): Promise<number> {
-  const decoded = await audioDecoder(bytes);
+/**
+ * Run the selected audio projection over decoded bytes and return the marker
+ * count. Decodes through the asset's OWN decoder (AssetDecl.decoder override
+ * or the kind built-in, via the asset registry) — falls back to the audio
+ * built-in when the asset isn't registered in this process. The projections
+ * are audio analyses, so the decoded shape must be DecodedAudio (enforced on
+ * AssetDecl.decoder for kind 'audio').
+ */
+async function runAudioProjection(bytes: ArrayBuffer, projection: Projection, assetId?: string): Promise<number> {
+  const decoded = (await resolveAssetDecoder(assetId ?? '')(bytes)) as DecodedAudio;
   if (projection === 'beat') return detectBeats(decoded).beats.length;
   if (projection === 'onset') return detectOnsets(decoded).length;
   return computeWaveform(decoded, { bins: 512 }).length;

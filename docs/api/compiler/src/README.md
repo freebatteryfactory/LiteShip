@@ -26,6 +26,7 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [CSSCompileResult](interfaces/CSSCompileResult.md)
 - [CSSContainerRule](interfaces/CSSContainerRule.md)
 - [CSSRule](interfaces/CSSRule.md)
+- [CSSStateBody](interfaces/CSSStateBody.md)
 - [GLSLCompileResult](interfaces/GLSLCompileResult.md)
 - [GLSLDefine](interfaces/GLSLDefine.md)
 - [GLSLUniform](interfaces/GLSLUniform.md)
@@ -47,6 +48,7 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 
 - [CompilerDef](type-aliases/CompilerDef.md)
 - [CompileResult](type-aliases/CompileResult.md)
+- [CSSStateInput](type-aliases/CSSStateInput.md)
 - [CSSStates](type-aliases/CSSStates.md)
 - [GLSLStates](type-aliases/GLSLStates.md)
 - [GLSLType](type-aliases/GLSLType.md)

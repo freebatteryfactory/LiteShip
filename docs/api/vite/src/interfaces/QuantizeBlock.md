@@ -6,10 +6,10 @@
 
 # Interface: QuantizeBlock
 
-Defined in: [vite/src/css-quantize.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L24)
+Defined in: [vite/src/css-quantize.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L54)
 
 A single parsed `@quantize` block: the boundary being quantised, the
-per-state property bag, and provenance info so HMR can emit
+per-state bodies, and provenance info so HMR can emit
 source-mapped warnings.
 
 ## Properties
@@ -18,7 +18,7 @@ source-mapped warnings.
 
 > `readonly` **boundaryName**: `string`
 
-Defined in: [vite/src/css-quantize.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L26)
+Defined in: [vite/src/css-quantize.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L56)
 
 Boundary name referenced in the at-rule preamble.
 
@@ -28,7 +28,7 @@ Boundary name referenced in the at-rule preamble.
 
 > `readonly` **line**: `number`
 
-Defined in: [vite/src/css-quantize.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L32)
+Defined in: [vite/src/css-quantize.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L62)
 
 1-based source line where the block begins.
 
@@ -38,7 +38,7 @@ Defined in: [vite/src/css-quantize.ts:32](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **sourceFile**: `string`
 
-Defined in: [vite/src/css-quantize.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L30)
+Defined in: [vite/src/css-quantize.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L60)
 
 Absolute path of the CSS source file.
 
@@ -46,8 +46,8 @@ Absolute path of the CSS source file.
 
 ### states
 
-> `readonly` **states**: `Record`\<`string`, `Record`\<`string`, `string`\>\>
+> `readonly` **states**: `Record`\<`string`, [`QuantizeStateBody`](QuantizeStateBody.md)\>
 
-Defined in: [vite/src/css-quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L28)
+Defined in: [vite/src/css-quantize.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L58)
 
-`{ stateName: { cssProp: value } }` mapping.
+`{ stateName: { bareProps, rules } }` mapping.

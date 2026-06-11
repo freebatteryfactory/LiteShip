@@ -8,7 +8,7 @@
 
 > **TierKey** = `` `${MotionTier}:${DesignTier}` ``
 
-Defined in: edge/src/manifest.ts:57
+Defined in: [edge/src/manifest.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L57)
 
 Key of one cell in the (motion x design) tier grid --
 `"<motionTier>:<designTier>"`. The same encoding the KV boundary cache
