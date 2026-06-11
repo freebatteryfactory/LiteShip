@@ -8,7 +8,7 @@
 
 > **parseStyleBlocks**(`css`, `sourceFile`): readonly [`StyleBlock`](../interfaces/StyleBlock.md)[]
 
-Defined in: [vite/src/style-transform.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L70)
+Defined in: [vite/src/style-transform.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L71)
 
 Parse every `@style` block from CSS source text.
 

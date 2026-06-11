@@ -6,7 +6,7 @@
 
 # Interface: StyleBlock
 
-Defined in: [vite/src/style-transform.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L31)
+Defined in: [vite/src/style-transform.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L32)
 
 Single parsed `@style` block: the style name being referenced, its
 per-state CSS property overrides, and provenance.
@@ -17,7 +17,7 @@ per-state CSS property overrides, and provenance.
 
 > `readonly` **line**: `number`
 
-Defined in: [vite/src/style-transform.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L39)
+Defined in: [vite/src/style-transform.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L40)
 
 1-based line where the block begins.
 
@@ -27,7 +27,7 @@ Defined in: [vite/src/style-transform.ts:39](https://github.com/heyoub/LiteShip/
 
 > `readonly` **sourceFile**: `string`
 
-Defined in: [vite/src/style-transform.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L37)
+Defined in: [vite/src/style-transform.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L38)
 
 Absolute source file path.
 
@@ -37,7 +37,7 @@ Absolute source file path.
 
 > `readonly` **states**: `Record`\<`string`, `Record`\<`string`, `string`\>\>
 
-Defined in: [vite/src/style-transform.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L35)
+Defined in: [vite/src/style-transform.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L36)
 
 `{ stateName: { cssProp: value } }` mapping.
 
@@ -47,6 +47,6 @@ Defined in: [vite/src/style-transform.ts:35](https://github.com/heyoub/LiteShip/
 
 > `readonly` **styleName**: `string`
 
-Defined in: [vite/src/style-transform.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L33)
+Defined in: [vite/src/style-transform.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L34)
 
 Named style (resolved against exported `StyleDef` values).
