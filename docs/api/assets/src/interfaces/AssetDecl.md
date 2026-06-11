@@ -6,7 +6,7 @@
 
 # Interface: AssetDecl\<K\>
 
-Defined in: [assets/src/contract.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L19)
+Defined in: [assets/src/contract.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L41)
 
 Asset declaration shape consumed by `defineAsset`.
 
@@ -22,7 +22,7 @@ Asset declaration shape consumed by `defineAsset`.
 
 > `readonly` `optional` **attribution?**: `AttributionDecl`
 
-Defined in: [assets/src/contract.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L26)
+Defined in: [assets/src/contract.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L55)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [assets/src/contract.ts:26](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **budgets**: `object`
 
-Defined in: [assets/src/contract.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L24)
+Defined in: [assets/src/contract.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L53)
 
 #### decodeP95Ms
 
@@ -44,9 +44,15 @@ Defined in: [assets/src/contract.ts:24](https://github.com/heyoub/LiteShip/blob/
 
 ### decoder?
 
-> `readonly` `optional` **decoder?**: (`bytes`) => `Promise`\<`unknown`\>
+> `readonly` `optional` **decoder?**: (`bytes`) => `Promise`\<[`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>\>
 
-Defined in: [assets/src/contract.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L23)
+Defined in: [assets/src/contract.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L52)
+
+Optional per-asset decode override. When omitted, media kinds fall
+back to the built-in decoder for `kind` (audio → audioDecoder,
+video → videoDecoder, image → imageDecoder). Must produce the
+kind's decoded shape so downstream projections (beat/onset/waveform
+over [DecodedAudio](DecodedAudio.md)) keep working.
 
 #### Parameters
 
@@ -56,7 +62,7 @@ Defined in: [assets/src/contract.ts:23](https://github.com/heyoub/LiteShip/blob/
 
 #### Returns
 
-`Promise`\<`unknown`\>
+`Promise`\<[`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>\>
 
 ***
 
@@ -64,7 +70,7 @@ Defined in: [assets/src/contract.ts:23](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **id**: `string`
 
-Defined in: [assets/src/contract.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L20)
+Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L42)
 
 ***
 
@@ -72,7 +78,7 @@ Defined in: [assets/src/contract.ts:20](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **invariants**: readonly `Invariant`\<`unknown`, `unknown`\>[]
 
-Defined in: [assets/src/contract.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L25)
+Defined in: [assets/src/contract.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L54)
 
 ***
 
@@ -80,7 +86,7 @@ Defined in: [assets/src/contract.ts:25](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **kind**: `K`
 
-Defined in: [assets/src/contract.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L22)
+Defined in: [assets/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L44)
 
 ***
 
@@ -88,4 +94,4 @@ Defined in: [assets/src/contract.ts:22](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **source**: `string`
 
-Defined in: [assets/src/contract.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L21)
+Defined in: [assets/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L43)

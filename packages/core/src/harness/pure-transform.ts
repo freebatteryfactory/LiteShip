@@ -34,6 +34,15 @@ export interface HarnessContext {
   readonly bindingName?: string;
   /** Import specifier for `schemaToArbitrary`, default to source path. */
   readonly arbitraryImport?: string;
+  /**
+   * Repo-root-relative path to a canonical source fixture (e.g. an asset
+   * decl's `source`: `examples/scenes/intro-bed.wav`). When present,
+   * `cachedProjection` harnesses emit fixture-based determinism/invariant
+   * tests plus a REAL decode bench instead of a comment-only placeholder.
+   * Resolved against `process.cwd()` at test runtime (vitest runs from the
+   * repo root, matching the hosts' `loadAssetBytes` convention).
+   */
+  readonly fixturePath?: string;
 }
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
