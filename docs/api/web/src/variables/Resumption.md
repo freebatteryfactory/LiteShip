@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:344](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L344)
+Defined in: [web/src/stream/resumption.ts:346](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L346)
 
 SSE resumption protocol namespace.
 
@@ -213,6 +213,7 @@ Effect.runSync(Resumption.saveState({
   artifactId: 'article-123',
   lastEventId: 'evt-42',
   lastSequence: 42,
+  timestamp: Date.now(),
 }));
 ```
 
@@ -225,6 +226,7 @@ import { Effect } from 'effect';
 // Save state on each SSE message
 Effect.runSync(Resumption.saveState({
   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
+  timestamp: Date.now(),
 }));
 
 // On reconnect, resume from where we left off

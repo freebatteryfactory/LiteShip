@@ -6,7 +6,7 @@
 
 # Interface: WorkerLike
 
-Defined in: [worker/src/messages.ts:352](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L352)
+Defined in: [worker/src/messages.ts:357](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L357)
 
 The DOM Worker surface czap's hosts actually drive (postMessage with
 transfer, terminate, message listening). Named so the dependency is
@@ -20,7 +20,7 @@ the build.
 
 > **addEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:355](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L355)
+Defined in: [worker/src/messages.ts:360](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L360)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [worker/src/messages.ts:355](https://github.com/heyoub/LiteShip/blob
 
 > **postMessage**(`message`, `transfer?`): `void`
 
-Defined in: [worker/src/messages.ts:353](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L353)
+Defined in: [worker/src/messages.ts:358](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L358)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [worker/src/messages.ts:353](https://github.com/heyoub/LiteShip/blob
 
 > **removeEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:356](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L356)
+Defined in: [worker/src/messages.ts:361](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L361)
 
 #### Parameters
 
@@ -86,7 +86,7 @@ Defined in: [worker/src/messages.ts:356](https://github.com/heyoub/LiteShip/blob
 
 > **terminate**(): `void`
 
-Defined in: [worker/src/messages.ts:354](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L354)
+Defined in: [worker/src/messages.ts:359](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L359)
 
 #### Returns
 

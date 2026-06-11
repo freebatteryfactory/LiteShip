@@ -16,7 +16,10 @@ SSE client configuration.
 
 > `readonly` `optional` **artifactId?**: `string`
 
-Defined in: [web/src/types.ts:204](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L204)
+Defined in: [web/src/types.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L208)
+
+Appended to the stream URL as a path segment; also the key the
+`Resumption` namespace uses for its `sessionStorage` state.
 
 ***
 
@@ -24,7 +27,7 @@ Defined in: [web/src/types.ts:204](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **heartbeatInterval?**: `Millis`
 
-Defined in: [web/src/types.ts:207](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L207)
+Defined in: [web/src/types.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L216)
 
 ***
 
@@ -32,7 +35,11 @@ Defined in: [web/src/types.ts:207](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **lastEventId?**: `string`
 
-Defined in: [web/src/types.ts:205](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L205)
+Defined in: [web/src/types.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L214)
+
+Initial cursor re-sent to the server on (re)connect. Seed it from
+`Resumption.loadState` on cold start so the stream resumes where
+the previous session left off.
 
 ***
 
@@ -40,7 +47,7 @@ Defined in: [web/src/types.ts:205](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **reconnect?**: [`ReconnectConfig`](ReconnectConfig.md)
 
-Defined in: [web/src/types.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L206)
+Defined in: [web/src/types.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L215)
 
 ***
 
