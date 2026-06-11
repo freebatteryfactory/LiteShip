@@ -8,7 +8,7 @@
  */
 
 import { afterEach, describe, expect, test } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
@@ -235,6 +235,41 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     );
     expect(second).toContain('sidebar');
     expect(second).toContain('viewport');
+  });
+
+  test('editing an EXISTING boundaries module busts the ESM import cache on reload', async () => {
+    // Native ESM caches dynamic imports by URL; re-collecting after an
+    // edit to the SAME file must not serve the stale exports (Codex P2).
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root, command: 'serve' } as never);
+
+    const first = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(first).toContain(referenceBoundary.id);
+
+    // Rewrite the SAME module with a different id literal (the fixture
+    // pre-mints its id, so the id field IS the freshness signal),
+    // future-dating the mtime so the cache-bust query provably changes.
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE.replace(referenceBoundary.id, 'fnv1a:00009999'));
+    utimesSync(join(srcDir, 'boundaries.ts'), new Date(), new Date(Date.now() + 5_000));
+    const { moduleGraph } = makeModuleGraphMock();
+    (vitePlugin.hotUpdate as (this: unknown, options: { file: string }) => unknown).call(
+      { environment: { moduleGraph } },
+      { file: join(srcDir, 'boundaries.ts') },
+    );
+
+    const second = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      '\0virtual:czap/boundaries',
+    );
+    expect(second).toContain('fnv1a:00009999');
+    expect(second).not.toContain(referenceBoundary.id);
   });
 
   test('hotUpdate on @quantize CSS invalidates the virtual module so importers see recompiled outputs', async () => {

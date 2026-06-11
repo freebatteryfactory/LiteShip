@@ -121,7 +121,16 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
   const found = new Map<string, Boundary.Shape>();
   let imported: Record<string, unknown> | null = null;
   try {
-    imported = (await import(/* @vite-ignore */ pathToFileURL(modulePath).href)) as Record<string, unknown>;
+    // Native ESM caches dynamic imports by URL — after a dev-server edit
+    // to a boundaries module, re-importing the bare file URL would serve
+    // the STALE exports even though the manifest recollects. The mtime
+    // query busts the cache exactly when the file content changed (and
+    // keeps the URL stable — and the module cached — when it didn't).
+    const mtime = fs.statSync(modulePath).mtimeMs;
+    imported = (await import(/* @vite-ignore */ `${pathToFileURL(modulePath).href}?mtime=${mtime}`)) as Record<
+      string,
+      unknown
+    >;
   } catch (error) {
     Diagnostics.warn({
       source: DIAGNOSTIC_SOURCE,
