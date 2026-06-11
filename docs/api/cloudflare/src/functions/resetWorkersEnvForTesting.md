@@ -8,7 +8,7 @@
 
 > **resetWorkersEnvForTesting**(): `void`
 
-Defined in: [cloudflare/src/middleware.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L53)
+Defined in: [cloudflare/src/middleware.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L60)
 
 Reset cached env between tests.
 

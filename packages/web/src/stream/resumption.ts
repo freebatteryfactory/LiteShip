@@ -78,6 +78,7 @@ const storageKey = (artifactId: string): string => `czap:resumption:${artifactId
  *   artifactId: 'article-123',
  *   lastEventId: 'evt-42',
  *   lastSequence: 42,
+ *   timestamp: Date.now(),
  * }));
  * ```
  *
@@ -334,6 +335,7 @@ const requestReplay = (
  * // Save state on each SSE message
  * Effect.runSync(Resumption.saveState({
  *   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
+ *   timestamp: Date.now(),
  * }));
  *
  * // On reconnect, resume from where we left off

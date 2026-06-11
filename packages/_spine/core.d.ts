@@ -735,7 +735,18 @@ export declare const Receipt: {
   buildChain(
     entries: ReadonlyArray<{ kind: string; subject: ReceiptSubject; payload: TypedRef.Shape; timestamp: HLC }>,
   ): Effect.Effect<ReceiptEnvelope[]>;
+  /**
+   * Ergonomic everyday chain check: resolves only to `true`; every
+   * violation arrives on the `Error` channel as a human-readable message.
+   * @see validateChainDetailed for typed ChainValidationError handling.
+   */
   validateChain(chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<boolean, Error>;
+  /**
+   * Typed taxonomy for programmatic handling: fails with the
+   * `ChainValidationError` discriminated union
+   * (not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
+   * @see validateChain for the simple Error-channel form.
+   */
   validateChainDetailed(chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<true, ChainValidationError>;
   hashEnvelope(envelope: ReceiptEnvelope): Effect.Effect<string>;
   isGenesis(receipt: ReceiptEnvelope): boolean;

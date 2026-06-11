@@ -74,7 +74,7 @@ function deterministicId(
  * ```ts
  * const token = Token.make({
  *   name: 'primary', category: 'color',
- *   axes: ['theme'] as const,
+ *   axes: ['theme'],
  *   values: { 'light': '#000', 'dark': '#fff' },
  *   fallback: '#888',
  * });
@@ -99,7 +99,7 @@ function _tap<T = unknown>(token: TokenDef, axisValues: Record<string, string>):
  * ```ts
  * const token = Token.make({
  *   name: 'primary', category: 'color',
- *   axes: ['theme'] as const,
+ *   axes: ['theme'],
  *   values: { 'light': '#000' },
  *   fallback: '#888',
  * });
@@ -123,7 +123,7 @@ function _cssVar<N extends string>(token: TokenDef<N>): `var(--czap-${N})` {
  *
  * const spacing = Token.make({
  *   name: 'gap', category: 'spacing',
- *   axes: ['density'] as const,
+ *   axes: ['density'],
  *   values: { 'compact': '4px', 'comfortable': '8px' },
  *   fallback: '6px',
  * });
@@ -147,7 +147,7 @@ export const Token: TokenFactory & {
    * ```ts
    * const token = Token.make({
    *   name: 'bg', category: 'color',
-   *   axes: ['theme', 'contrast'] as const,
+   *   axes: ['theme', 'contrast'],
    *   values: { 'light:normal': '#fff', 'dark:normal': '#111' },
    *   fallback: '#ccc',
    * });

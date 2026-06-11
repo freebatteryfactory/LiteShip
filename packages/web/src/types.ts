@@ -201,7 +201,16 @@ export type SSEState = 'connecting' | 'connected' | 'reconnecting' | 'disconnect
  */
 export interface SSEConfig {
   readonly url: string;
+  /**
+   * Appended to the stream URL as a path segment; also the key the
+   * `Resumption` namespace uses for its `sessionStorage` state.
+   */
   readonly artifactId?: string;
+  /**
+   * Initial cursor re-sent to the server on (re)connect. Seed it from
+   * `Resumption.loadState` on cold start so the stream resumes where
+   * the previous session left off.
+   */
   readonly lastEventId?: string;
   readonly reconnect?: ReconnectConfig;
   readonly heartbeatInterval?: Millis;
