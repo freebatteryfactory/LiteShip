@@ -69,6 +69,16 @@ export const buildUrl = _buildUrl;
  * See the red-team regression suite (`tests/regression/`) for the injection
  * scenarios that motivated this constraint.
  *
+ * **Resumption is host-wired.** This client handles transport-level
+ * reconnection only: exponential backoff plus re-sending the
+ * `lastEventId` cursor on the stream URL (via {@link buildUrl}). It does
+ * NOT perform gap recovery — replaying missed patches or fetching a
+ * fresh snapshot is the host's job, composed from the sibling
+ * `Resumption` namespace (see `./resumption.js` and the Runtime Wiring
+ * Model in `docs/STATUS.md`, status `host-wired`). The reference wiring
+ * lives in `packages/astro/src/runtime/stream.ts`
+ * (`saveResumptionState` + `reconcileResumption`).
+ *
  * @example
  * ```ts
  * import { SSE } from '@czap/web';
@@ -82,6 +92,41 @@ export const buildUrl = _buildUrl;
  *   yield* Stream.runForEach(client.messages, (msg) =>
  *     Effect.sync(() => console.log(msg)),
  *   );
+ * }));
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Composing with Resumption (the host's job — mirrors
+ * // packages/astro/src/runtime/stream.ts):
+ * import { SSE, Resumption } from '@czap/web';
+ * import { Effect, Stream } from 'effect';
+ *
+ * const program = Effect.scoped(Effect.gen(function* () {
+ *   // 1. Seed the cursor from any state a previous session persisted.
+ *   const saved = yield* Resumption.loadState('doc-1');
+ *   const client = yield* SSE.create({
+ *     url: '/api/stream',
+ *     artifactId: 'doc-1',
+ *     lastEventId: saved?.lastEventId,
+ *   });
+ *   // 2. Persist the cursor as messages arrive.
+ *   yield* Stream.runForEach(client.messages, () =>
+ *     Effect.gen(function* () {
+ *       const cursor = yield* client.lastEventId;
+ *       if (cursor !== null) {
+ *         yield* Resumption.saveState({
+ *           artifactId: 'doc-1',
+ *           lastEventId: cursor,
+ *           lastSequence: Resumption.parseEventId(cursor).sequence,
+ *           timestamp: Date.now(),
+ *         });
+ *       }
+ *     }),
+ *   );
+ *   // 3. After 'reconnecting' -> 'connected', close the gap:
+ *   //    Resumption.resume('doc-1', currentEventId) yields either
+ *   //    replayed patches or a full snapshot to morph in.
  * }));
  * ```
  *
@@ -266,6 +311,12 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
  * exponential-backoff reconnection, heartbeat timeout detection,
  * backpressure-aware message buffering via bounded Effect queues,
  * and URL construction helpers.
+ *
+ * **Resumption is host-wired.** `SSE` is the transport; the sibling
+ * `Resumption` namespace (`./resumption.js`) is the recovery protocol
+ * (replay / snapshot after a gap). Hosts compose the two — see the
+ * composed example on {@link create} and the reference wiring in
+ * `packages/astro/src/runtime/stream.ts`.
  *
  * @example
  * ```ts
