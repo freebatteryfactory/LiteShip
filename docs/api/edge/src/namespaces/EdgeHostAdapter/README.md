@@ -14,6 +14,8 @@ in a single per-request pass.
 
 ## Type Aliases
 
+- [BoundaryConfig](type-aliases/BoundaryConfig.md)
+- [BoundaryResolution](type-aliases/BoundaryResolution.md)
 - [CacheStatus](type-aliases/CacheStatus.md)
 - [CompileContext](type-aliases/CompileContext.md)
 - [Config](type-aliases/Config.md)

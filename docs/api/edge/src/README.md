@@ -29,6 +29,8 @@ compilation.
 - [CompiledOutputs](interfaces/CompiledOutputs.md)
 - [EdgeHostAdapter](interfaces/EdgeHostAdapter.md)
 - [EdgeHostAdapterConfig](interfaces/EdgeHostAdapterConfig.md)
+- [EdgeHostBoundaryConfig](interfaces/EdgeHostBoundaryConfig.md)
+- [EdgeHostBoundaryResolution](interfaces/EdgeHostBoundaryResolution.md)
 - [EdgeHostCacheConfig](interfaces/EdgeHostCacheConfig.md)
 - [EdgeHostCompileContext](interfaces/EdgeHostCompileContext.md)
 - [EdgeHostContext](interfaces/EdgeHostContext.md)
