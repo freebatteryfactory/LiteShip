@@ -1,10 +1,17 @@
 /** `@czap/assets` — **LiteShip** asset capsules and cached analysis projections (waveform, beats, onsets). */
 
-export { defineAsset, AssetRef, getAssetRegistry } from './contract.js';
+export {
+  defineAsset,
+  AssetRef,
+  getAssetRegistry,
+  builtinDecoderFor,
+  builtinDecoderSiteFor,
+  resolveAssetDecoder,
+} from './contract.js';
 export type { AssetRefId } from './brands.js';
 // `resetAssetRegistry` is intentionally NOT re-exported here — it mutates
 // global registry state and ships from `@czap/assets/testing` only.
-export type { AssetDecl, AssetKind } from './contract.js';
+export type { AssetDecl, AssetKind, DecodedAsset, AssetDecoder } from './contract.js';
 
 export { audioDecoder } from './decoders/audio.js';
 export type { DecodedAudio } from './decoders/audio.js';

@@ -4,11 +4,12 @@
  * capsule's generated files exist and are fresh (source mtime vs test
  * mtime), runs the generated test suite, emits a JSON verdict to stdout.
  *
- * Bench honesty: the harness generators currently emit comment-only bench
- * closures (real handler invocations land with the harness-handlers epic).
- * A comment-only closure would "pass" a vitest bench run while timing
- * nothing, so the verdict classifies each generated bench as 'real' or
- * 'placeholder' instead of existence-only checking — a green receipt with
+ * Bench honesty: most harness generators still emit comment-only bench
+ * closures (real handler invocations land with the harness-handlers epic);
+ * asset capsules with a known fixture (e.g. intro-bed) already get a REAL
+ * decode bench. A comment-only closure would "pass" a vitest bench run while
+ * timing nothing, so the verdict classifies each generated bench as 'real'
+ * or 'placeholder' instead of existence-only checking — a green receipt with
  * `benches.placeholder` entries means those operations are NOT measured yet.
  *
  * Exit codes: 0 ok, 1 stale/missing, 2 generated tests failed.
@@ -19,6 +20,7 @@
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
+import { classifyBenchSource } from './lib/bench-classify.js';
 import { execSync } from 'node:child_process';
 
 interface BenchClassification {
@@ -44,22 +46,6 @@ interface ManifestEntry {
 }
 
 const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
-
-/**
- * Classify a generated bench file: 'real' if at least one `bench(...)`
- * closure contains executable code, 'placeholder' if every closure body is
- * empty or comment-only (or no bench call exists at all).
- *
- * The lazy body capture stops at the first `}`, so a real body with nested
- * braces is truncated — but the truncated prefix is still non-empty, which
- * is all the classification needs.
- */
-function classifyBenchSource(source: string): 'real' | 'placeholder' {
-  const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-  const closures = [...stripped.matchAll(/\bbench\s*\([\s\S]*?=>\s*\{([\s\S]*?)\}/g)];
-  if (closures.length === 0) return 'placeholder';
-  return closures.some((m) => m[1]!.trim().length > 0) ? 'real' : 'placeholder';
-}
 
 function main(): Verdict {
   const errors: string[] = [];

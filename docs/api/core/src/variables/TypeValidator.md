@@ -8,7 +8,7 @@
 
 > `const` **TypeValidator**: `object`
 
-Defined in: [core/src/capsule.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L106)
+Defined in: [core/src/capsule.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L108)
 
 Runtime validator that verifies values against _spine-derived schemas.
 Used by capsule dispatchers to check inputs before invoking handlers.

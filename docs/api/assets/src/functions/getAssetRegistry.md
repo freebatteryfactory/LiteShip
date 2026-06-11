@@ -8,7 +8,7 @@
 
 > **getAssetRegistry**(): `ReadonlyMap`\<`string`, `AnyAssetCapsule`\>
 
-Defined in: [assets/src/contract.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L59)
+Defined in: [assets/src/contract.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L143)
 
 Read-only snapshot of the asset registry.
 

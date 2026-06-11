@@ -58,6 +58,25 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `core.token-buffer` runs live by wrapping the production `TokenBuffer`;
   capsules without handlers or with non-derivable schemas self-report as
   honest skips.
+- `@czap/assets` — harness handlers wave 2: `AssetDecl.decoder` is real.
+  `defineAsset` resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+  (audio → audioDecoder, video → videoDecoder, image → imageDecoder;
+  analysis kinds keep their projection factories) and wires it as the
+  capsule's `derive` handler. New exports: `builtinDecoderFor`,
+  `resolveAssetDecoder`, and the `DecodedAsset<K>` kind→decoded-shape
+  mapping (`decoder` is now typed against it, so an audio asset's custom
+  decoder must produce `DecodedAudio`). The `asset analyze` hosts (CLI +
+  shared Node command context) decode through the asset's own decoder via
+  the registry instead of a hardwired `audioDecoder` (audio built-in
+  remains the fallback for processes that never import the asset module);
+  `CommandContext.runAudioProjection` gains an optional `assetId`
+  parameter to carry the routing. `CapsuleContract.derive` may now be
+  async (`Out | Promise<Out>`) and every harness probe awaits it.
+  capsule-compile is factory-aware for exported `defineAsset` bindings:
+  the generated `intro-bed` test imports the real capsule and decodes the
+  canonical `examples/scenes/intro-bed.wav` fixture (determinism +
+  invariants), and the decode-throughput bench is a REAL bench against
+  the declared p95 budget instead of a comment-only stub.
 - Rust/WASM parity harness: `crates/czap-compute` joins the proof system —
   crate unit tests, a CI job (`rust-wasm-parity`) that builds the wasm32
   artifact from source, and a property suite loading it through the real
@@ -106,10 +125,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `TransitionMap<string>` call sites are unaffected.
 - `capsule:verify` — the JSON receipt classifies every generated bench
   (`benches: { total, real, placeholder }`) instead of existence-only
-  checking. The harness templates still emit comment-only bench closures,
-  so all 15 currently report as `placeholder` — a green verdict can no
-  longer be mistaken for benchmark coverage. Real bench bodies land with
-  the harness-handlers epic's later waves.
+  checking. Most harness templates still emit comment-only bench closures
+  and report as `placeholder` — a green verdict can no longer be mistaken
+  for benchmark coverage; the `intro-bed` decode-throughput bench (asset
+  decoder channel, above) is already real and counts in `real`. Remaining
+  real bench bodies land with the harness-handlers epic's later waves. The
+  integration test derives its expected classification from the manifest
+  via the shared `scripts/lib/bench-classify.ts` classifier instead of
+  hardcoded counts.
 
 ### Fixed
 
