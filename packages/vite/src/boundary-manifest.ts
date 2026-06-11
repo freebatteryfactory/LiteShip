@@ -23,7 +23,7 @@ import type { Boundary } from '@czap/core';
 import { CSSCompiler } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
-import { parseQuantizeBlocks, type QuantizeStateBody } from './css-quantize.js';
+import { parseQuantizeBlocks, viewportContainmentRule, type QuantizeStateBody } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
 
 const DIAGNOSTIC_SOURCE = 'czap/vite.boundary-manifest';
@@ -174,7 +174,17 @@ function compileOutputsByTier(
       },
     ]),
   );
-  const containerQueries = CSSCompiler.compile(boundary, cssStates).raw;
+  // Manifest-served CSS reaches the page WITHOUT the vite transform that
+  // normally emits sheet-level containment — without a `:root` container
+  // declaration the @container queries match nothing (the exact lie the
+  // transform layer fixed). Width-measuring viewport boundaries carry
+  // their containment inline; other inputs follow the transform layer's
+  // policy (the consumer declares the container).
+  const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
+  const isWidthViewport = boundary.input === 'viewport' || boundary.input === 'viewport.width';
+  const containment = isWidthViewport ? viewportContainmentRule([containerName]) : null;
+  const compiled = CSSCompiler.compile(boundary, cssStates).raw;
+  const containerQueries = containment ? `${containment}\n\n${compiled}` : compiled;
   // Property registrations scan custom-property names/syntax only, so the
   // nested-rule props flatten into the same per-state map as bareProps.
   const flatStates = Object.fromEntries(

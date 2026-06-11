@@ -10,6 +10,7 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
 import { enumerateTierKeys, tierKey } from '@czap/edge';
@@ -93,6 +94,11 @@ describe('collectBoundaryManifest', () => {
     const standard = entry.outputsByTier[tierKey({ motionTier: 'transitions', designTier: 'standard' })]!;
     expect(standard.containerQueries).toContain('@container');
     expect(standard.containerQueries).toContain('width >= 768px');
+    // Manifest-served CSS reaches the page WITHOUT the vite transform's
+    // sheet-level containment — the outputs must carry their own :root
+    // container declaration or the @container queries match nothing.
+    expect(standard.containerQueries).toContain(':root');
+    expect(standard.containerQueries).toContain('container-type: inline-size');
     expect(standard.propertyRegistrations).toContain('@property --gap');
     expect(standard.css).toContain(standard.propertyRegistrations);
     expect(standard.css).toContain(standard.containerQueries);
@@ -237,9 +243,24 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(second).toContain('viewport');
   });
 
-  test('editing an EXISTING boundaries module busts the ESM import cache on reload', async () => {
+  test('editing an EXISTING boundaries module busts the ESM import cache on reload', async (ctx) => {
     // Native ESM caches dynamic imports by URL; re-collecting after an
     // edit to the SAME file must not serve the stale exports (Codex P2).
+    // The bust mechanism is a ?mtime query on the file URL — honored by
+    // native Node ESM (the production host for this code path), but some
+    // test runtimes (vitest on Windows) strip file-URL queries. Probe the
+    // capability and skip honestly where the runtime can't express it.
+    const probeDir = makeTempDir();
+    const probeFile = join(probeDir, 'probe.ts');
+    writeFileSync(probeFile, 'export const v = 1;\n');
+    await import(/* @vite-ignore */ `${pathToFileURL(probeFile).href}?q=1`);
+    writeFileSync(probeFile, 'export const v = 2;\n');
+    const probe = (await import(/* @vite-ignore */ `${pathToFileURL(probeFile).href}?q=2`)) as { v: number };
+    if (probe.v !== 2) {
+      ctx.skip();
+      return;
+    }
+
     const root = makeTempDir();
     const srcDir = join(root, 'src');
     writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
