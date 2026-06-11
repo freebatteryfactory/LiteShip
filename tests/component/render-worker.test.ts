@@ -60,6 +60,16 @@ describe('RenderWorker', () => {
     expect(worker.postedMessages[0]?.data).toEqual({ type: 'init' });
   });
 
+  test('sends construction-time WorkerConfig in the init message', () => {
+    RenderWorker.create({ targetFps: 24, poolCapacity: 8 });
+    const worker = MockWorker.instances[0]!;
+
+    expect(worker.postedMessages[0]?.data).toEqual({
+      type: 'init',
+      config: { targetFps: 24, poolCapacity: 8 },
+    });
+  });
+
   test('transfers canvases through postMessage transfer lists', () => {
     const renderWorker = RenderWorker.create();
     const worker = MockWorker.instances[0]!;
@@ -221,5 +231,146 @@ describe('evaluateThresholds (render-worker inline logic)', () => {
   test('returns last state when value exceeds all thresholds', () => {
     const result = evaluateThresholds([0, 100], ['a', 'b'], 999);
     expect(result).toBe('b');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Inline worker script behavior: wall-clock frame pacing (targetFps).
+//
+// The real RENDER_WORKER_SCRIPT is recovered from the Blob handed to
+// URL.createObjectURL and executed against a fake worker `self`, so these
+// tests exercise the actual render loop. Vitest fake timers stand in for
+// the wall clock (setTimeout + Date), so no assertion depends on real
+// elapsed time.
+// ---------------------------------------------------------------------------
+
+/** Minimal worker-global double the inline script drives. */
+class FakeWorkerSelf {
+  readonly posted: Array<{ type: string } & Record<string, unknown>> = [];
+  closed = false;
+  private readonly handlers: Array<(event: { data: unknown }) => void> = [];
+
+  postMessage = (data: unknown): void => {
+    this.posted.push(data as { type: string } & Record<string, unknown>);
+  };
+
+  addEventListener = (type: string, handler: (event: { data: unknown }) => void): void => {
+    if (type === 'message') this.handlers.push(handler);
+  };
+
+  close = (): void => {
+    this.closed = true;
+  };
+
+  /** Deliver a main-thread message to the script's handler. */
+  dispatch(data: unknown): void {
+    for (const handler of [...this.handlers]) handler({ data });
+  }
+
+  frames(): number[] {
+    return this.posted.filter((m) => m.type === 'frame').map((m) => (m.output as { frame: number }).frame);
+  }
+
+  timestamps(): number[] {
+    return this.posted.filter((m) => m.type === 'frame').map((m) => (m.output as { timestamp: number }).timestamp);
+  }
+
+  completions(): number[] {
+    return this.posted.filter((m) => m.type === 'render-complete').map((m) => m.totalFrames as number);
+  }
+}
+
+/** Boot the real inline render-worker script against a fake `self`. */
+function bootRenderWorkerScript(script: string): FakeWorkerSelf {
+  const workerSelf = new FakeWorkerSelf();
+  // Classic worker scripts resolve setTimeout/Date from the global scope,
+  // which is exactly where vitest fake timers install themselves.
+  new Function('self', script)(workerSelf);
+  return workerSelf;
+}
+
+describe('render worker script frame pacing (targetFps)', () => {
+  let script: string;
+
+  beforeEach(async () => {
+    // RenderWorker.create hands the inline script to new Blob(...) and the
+    // Blob to URL.createObjectURL (spied in the outer beforeEach).
+    RenderWorker.create();
+    const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)?.[0] as Blob;
+    script = await blob.text();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('paces frame emission against the wall clock without touching content timing', async () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    // 50fps pacing budget = 20ms per frame.
+    workerSelf.dispatch({ type: 'init', config: { targetFps: 50 } });
+    // Content timing: 10fps over 500ms = 5 frames, 100ms timestamps.
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 10, durationMs: 500, width: 16, height: 16 } });
+
+    // Frame 0 renders immediately; the loop is now inside its pacing wait.
+    expect(workerSelf.frames()).toEqual([0]);
+
+    // One tick before the 20ms budget opens: still no second frame.
+    await vi.advanceTimersByTimeAsync(19);
+    expect(workerSelf.frames()).toEqual([0]);
+
+    // Budget boundary reached: exactly one more frame.
+    await vi.advanceTimersByTimeAsync(1);
+    expect(workerSelf.frames()).toEqual([0, 1]);
+
+    // Let the wall clock run out: all frames emit, then render-complete.
+    await vi.advanceTimersByTimeAsync(100);
+    expect(workerSelf.frames()).toEqual([0, 1, 2, 3, 4]);
+    expect(workerSelf.completions()).toEqual([5]);
+
+    // Pacing is a wall-clock production throttle only: per-frame content
+    // timestamps still follow VideoConfig.fps (10fps = 100ms steps).
+    expect(workerSelf.timestamps()).toEqual([0, 100, 200, 300, 400]);
+  });
+
+  test('omitted targetFps preserves the unpaced burst default (yield every 10 frames)', async () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    workerSelf.dispatch({ type: 'init' });
+    // 12 frames: 0-9 burst synchronously, then a zero-timeout yield.
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 10, durationMs: 1200, width: 16, height: 16 } });
+
+    expect(workerSelf.frames()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(workerSelf.completions()).toEqual([]);
+
+    // The only wait is the stop-message yield -- zero wall-clock time.
+    await vi.advanceTimersByTimeAsync(0);
+    expect(workerSelf.frames()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(workerSelf.completions()).toEqual([12]);
+  });
+
+  test('non-positive targetFps falls back to the unpaced default', () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    workerSelf.dispatch({ type: 'init', config: { targetFps: 0 } });
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 10, durationMs: 500, width: 16, height: 16 } });
+
+    // All 5 frames burst synchronously -- no pacing timers were scheduled.
+    expect(workerSelf.frames()).toEqual([0, 1, 2, 3, 4]);
+    expect(workerSelf.completions()).toEqual([5]);
+  });
+
+  test('stop-render interrupts a paced render during the pacing wait', async () => {
+    const workerSelf = bootRenderWorkerScript(script);
+    workerSelf.dispatch({ type: 'init', config: { targetFps: 50 } });
+    // 100 frames requested; only frame 0 should ever render.
+    workerSelf.dispatch({ type: 'start-render', config: { fps: 10, durationMs: 10000, width: 16, height: 16 } });
+    expect(workerSelf.frames()).toEqual([0]);
+
+    // The loop is parked in its pacing wait; the stop message is processed
+    // there and honored at the next iteration's stopRequested check.
+    workerSelf.dispatch({ type: 'stop-render' });
+    await vi.advanceTimersByTimeAsync(10000);
+
+    expect(workerSelf.frames()).toEqual([0]);
+    expect(workerSelf.completions()).toEqual([100]);
   });
 });
