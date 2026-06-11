@@ -147,13 +147,25 @@ export function dedupeOutputsByTier(
 export function resolveOutputsByTier(
   entry: Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'>,
 ): Readonly<Partial<Record<TierKey, CompiledOutputs>>> {
+  // A v1 entry (cells hold CompiledOutputs objects, no pool) reaches this
+  // function through JS/JSON callers the Pick type can't stop — guard the
+  // pool FIRST or the error template below dereferences undefined and the
+  // caller gets a bare TypeError instead of the rebuild guidance.
+  const pool = entry.outputs;
+  if (!Array.isArray(pool)) {
+    throw new Error(
+      'Boundary manifest entry has no `outputs` pool — the manifest predates the deduplicated v2 format ' +
+        '(cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
+        'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+    );
+  }
   const resolved: Partial<Record<TierKey, CompiledOutputs>> = {};
   for (const [key, index] of Object.entries(entry.outputsByTier) as readonly (readonly [TierKey, number])[]) {
-    const outputs = typeof index === 'number' ? entry.outputs[index] : undefined;
+    const outputs = typeof index === 'number' ? pool[index] : undefined;
     if (!outputs) {
       throw new Error(
         `Boundary manifest cell "${key}" references outputs[${String(index)}], but the entry's outputs pool has ` +
-          `${entry.outputs.length} item(s), so the tier cannot be resolved. ` +
+          `${pool.length} item(s), so the tier cannot be resolved. ` +
           'Why: the manifest predates the deduplicated v2 format (cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
           'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
       );
