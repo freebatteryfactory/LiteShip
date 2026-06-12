@@ -50,6 +50,19 @@ export interface AssetDecl<K extends AssetKind> {
    * over {@link DecodedAudio}) keep working.
    */
   readonly decoder?: (bytes: ArrayBuffer) => Promise<DecodedAsset<K>>;
+  /**
+   * Optional explicit site override. When omitted, the capsule's site is
+   * derived from decoder presence: a custom `decoder` keeps the permissive
+   * `['node', 'browser']` (the declarer owns its runtime safety), while a
+   * builtin decoder uses {@link builtinDecoderSiteFor} (video → `['node']`,
+   * because ffprobe needs node:child_process). Override when the derivation
+   * is wrong for THIS asset — e.g. a custom video decoder that itself
+   * shells out to node tooling should declare `['node']`, or an audio
+   * asset that must never ship to browsers can narrow to `['node']`.
+   * Claims the builtin decoder cannot honor (e.g. `'browser'` for builtin
+   * video) are rejected at decl time; an empty array is always rejected.
+   */
+  readonly site?: readonly Site[];
   readonly budgets: { readonly decodeP95Ms: number; readonly memoryMb?: number };
   readonly invariants: readonly Invariant<unknown, unknown>[];
   readonly attribution?: AttributionDecl;
@@ -101,6 +114,39 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
 const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<unknown>;
 
 /**
+ * Effective site for a declaration: the explicit `decl.site` override when
+ * present, else derived from decoder presence. An override that relies on
+ * a builtin decoder must stay within that decoder's honest site set — the
+ * builtin's runtime needs don't change because a decl claims otherwise.
+ */
+function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site[] {
+  if (decl.site === undefined) {
+    return decl.decoder !== undefined ? ['node', 'browser'] : builtinDecoderSiteFor(decl.kind);
+  }
+  if (decl.site.length === 0) {
+    throw new Error(
+      `defineAsset('${decl.id}') declares \`site: []\` — a capsule must run on at least one site. ` +
+        `List the sites this asset decodes on (e.g. site: ['node']) or drop the override to keep the derived default.`,
+    );
+  }
+  if (decl.decoder === undefined && builtinDecoderFor(decl.kind) !== undefined) {
+    const honest = builtinDecoderSiteFor(decl.kind);
+    const impossible = decl.site.filter((s) => !honest.includes(s));
+    if (impossible.length > 0) {
+      throw new Error(
+        `defineAsset('${decl.id}') declares site [${decl.site.join(', ')}] but relies on the built-in ${decl.kind} decoder, ` +
+          `which only runs on [${honest.join(', ')}] — advertising ${impossible.join('/')} would lie to bundlers and site routers. ` +
+          `Provide a custom \`decoder\` that runs on ${impossible.join('/')}, or drop ${impossible.join('/')} from \`site\`.`,
+      );
+    }
+  }
+  // Defensive copy: the capsule stores this array and hashes it into the
+  // content address exactly once — returning the caller's reference would
+  // let a later mutation change cap.site without changing cap.id.
+  return Object.freeze([...decl.site]);
+}
+
+/**
  * Declare an asset as a cachedProjection capsule + register in the
  * module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
  * and wires it as the capsule's `derive` handler (the harness decode
@@ -111,10 +157,12 @@ const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<un
  * ffprobe needs node:child_process), while a declared custom `decoder`
  * keeps `['node', 'browser']` — the declarer owns its runtime safety
  * (e.g. a WebCodecs-based video decoder is legitimately browser-capable).
+ * An explicit `decl.site` wins over both derivations after validation
+ * (see {@link AssetDecl.site}).
  */
 export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCapsule {
   const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
-  const site: readonly Site[] = decl.decoder !== undefined ? ['node', 'browser'] : builtinDecoderSiteFor(decl.kind);
+  const site: readonly Site[] = resolveDeclSite(decl);
   const cap = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,

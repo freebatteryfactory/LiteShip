@@ -22,7 +22,7 @@ Asset declaration shape consumed by `defineAsset`.
 
 > `readonly` `optional` **attribution?**: `AttributionDecl`
 
-Defined in: [assets/src/contract.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L55)
+Defined in: [assets/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L68)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [assets/src/contract.ts:55](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **budgets**: `object`
 
-Defined in: [assets/src/contract.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L53)
+Defined in: [assets/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L66)
 
 #### decodeP95Ms
 
@@ -78,7 +78,7 @@ Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **invariants**: readonly `Invariant`\<`unknown`, `unknown`\>[]
 
-Defined in: [assets/src/contract.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L54)
+Defined in: [assets/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L67)
 
 ***
 
@@ -87,6 +87,25 @@ Defined in: [assets/src/contract.ts:54](https://github.com/heyoub/LiteShip/blob/
 > `readonly` **kind**: `K`
 
 Defined in: [assets/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L44)
+
+***
+
+### site?
+
+> `readonly` `optional` **site?**: readonly `Site`[]
+
+Defined in: [assets/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L65)
+
+Optional explicit site override. When omitted, the capsule's site is
+derived from decoder presence: a custom `decoder` keeps the permissive
+`['node', 'browser']` (the declarer owns its runtime safety), while a
+builtin decoder uses [builtinDecoderSiteFor](../functions/builtinDecoderSiteFor.md) (video → `['node']`,
+because ffprobe needs node:child_process). Override when the derivation
+is wrong for THIS asset — e.g. a custom video decoder that itself
+shells out to node tooling should declare `['node']`, or an audio
+asset that must never ship to browsers can narrow to `['node']`.
+Claims the builtin decoder cannot honor (e.g. `'browser'` for builtin
+video) are rejected at decl time; an empty array is always rejected.
 
 ***
 

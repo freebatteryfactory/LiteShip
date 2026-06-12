@@ -32,6 +32,16 @@ const TEST_SOURCES = fg.sync('tests/**/*.test.ts', { cwd: REPO, absolute: false 
 /** Raw numeric trailing-arg timeout: a line that closes a test callback and passes a >=1000ms literal. */
 const TRAILING_ARG_TIMEOUT = /^\s*\},\s*([0-9][0-9_]*)\s*\)\s*;/;
 
+/**
+ * The multiline trailing-arg form puts the callback's `},` and the budget on
+ * separate lines (`it(name,\n  fn,\n  90_000,\n);`) — invisible to the
+ * single-line pattern above, which is exactly how a raw 90_000 shipped in
+ * the regression lane while this guard stayed green. A standalone numeric
+ * line only counts when sandwiched between a callback-closing line and a
+ * call-closing line, so numeric array fixtures don't trip it.
+ */
+const STANDALONE_NUMERIC_ARG = /^\s*([0-9][0-9_]*)\s*,?\s*$/;
+
 /** Raw numeric vitest option-object budget (timeoutMs etc. don't match — vitest keys only). */
 const OPTION_TIMEOUT = /\b(timeout|hookTimeout|testTimeout)\s*:\s*([0-9][0-9_]*)/;
 
@@ -42,9 +52,19 @@ describe('timeout policy — explicit test timeouts use scaledTimeout', () => {
     const offenders: string[] = [];
     for (const file of TEST_SOURCES) {
       const lines = readFileSync(resolve(REPO, file), 'utf8').split('\n');
+      const trimmed = lines.map((line) => line.trim());
       lines.forEach((line, i) => {
         const m = TRAILING_ARG_TIMEOUT.exec(line);
         if (m && asNumber(m[1]!) >= 1000) offenders.push(`${file}:${i + 1} — ${line.trim()}`);
+
+        const standalone = STANDALONE_NUMERIC_ARG.exec(line);
+        if (standalone && asNumber(standalone[1]!) >= 1000) {
+          const prev = trimmed.slice(0, i).filter(Boolean).at(-1);
+          const next = trimmed.slice(i + 1).find(Boolean);
+          if (prev?.endsWith('},') && next?.startsWith(')')) {
+            offenders.push(`${file}:${i + 1} — ${line.trim()}`);
+          }
+        }
       });
     }
     expect(offenders, 'wrap the literal in scaledTimeout(...) from vitest.shared.ts').toEqual([]);
