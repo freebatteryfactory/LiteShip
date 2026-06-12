@@ -82,6 +82,14 @@ let tarballBytes: Uint8Array;
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'litesip-verify-'));
   cpSync(join(REPO_ROOT, 'packages/_spine'), workDir, { recursive: true });
+  // The live package dir can hold untracked artifacts from local ship runs
+  // (a stale .tgz + its minted .shipcapsule.cbor sibling) — cpSync drags
+  // them in, the .find() below grabs the WRONG tarball, and the verify
+  // sibling-derivation then finds a real capsule, flipping the no-capsule
+  // test to Verified. Pack into a clean fixture.
+  for (const f of readdirSync(workDir)) {
+    if (f.endsWith('.tgz') || f.endsWith('.shipcapsule.cbor')) rmSync(join(workDir, f));
+  }
   await spawnArgv('pnpm', ['pack'], { cwd: workDir });
   const tgz = readdirSync(workDir).find((f) => f.endsWith('.tgz'));
   if (!tgz) throw new Error('pnpm pack produced no .tgz');

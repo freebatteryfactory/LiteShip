@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { Effect, Schema } from 'effect';
-import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
+import { Boundary, Composable, ComposableWorld, CzapValidationError, Part, Style, Token, World } from '@czap/core';
 
 const boundary = Boundary.make({
   input: 'viewport.width',
@@ -235,7 +235,7 @@ describe('ECS Composable Infrastructure', () => {
     expect(Array.from(store.view())).toEqual([10, 25, 30]);
     expect(store.entities()).toEqual([idA, idB, idC]);
 
-    expect(() => store.set(idD, 40)).toThrow(RangeError);
+    expect(() => store.set(idD, 40)).toThrow(CzapValidationError);
     expect(store.delete(idB)).toBe(true);
     expect(store.count).toBe(2);
     expect(store.get(idB)).toBeUndefined();
@@ -273,7 +273,7 @@ describe('ECS Composable Infrastructure', () => {
     expect(composed.components.boundary).toBe(boundary);
     expect(composed.components.token).toBe(token);
     expect(composed.components.style).toBe(style);
-    expect(() => Composable.merge()).toThrow('Cannot merge zero entities');
+    expect(() => Composable.merge()).toThrow('Composable.merge: called with no entities');
   });
 
   test('ComposableWorld spawn, query, and evaluate integrate Boundary, Token, and Style', () => {
@@ -354,6 +354,6 @@ describe('ECS Composable Infrastructure', () => {
           }),
         ),
       ),
-    ).toThrow('No dense store created. Call create() first.');
+    ).toThrow('ComposableWorld.store: no dense store exists — call world.create(name, capacity) before world.store(entity, value).');
   });
 });
