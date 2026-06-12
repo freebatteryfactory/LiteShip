@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { Effect, Stream } from 'effect';
 import { Boundary, Millis } from '@czap/core';
 import type { BoundaryCrossing, Quantizer } from '@czap/core';
-import { AnimatedQuantizer } from '@czap/quantizer';
+import { AnimatedQuantizer, Q } from '@czap/quantizer';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 function makeBoundary() {
@@ -436,6 +436,57 @@ describe('AnimatedQuantizer.make', () => {
         yield* Effect.forkScoped(Stream.runDrain(Stream.take(animated.interpolated, 1)));
       }),
     );
+  });
+
+  test('derives interpolation outputs from a LiveQuantizer config.outputs.css when outputs are omitted', async () => {
+    const boundary = makeBoundary();
+    const frames = await runScoped(
+      Effect.gen(function* () {
+        const config = Q.from(boundary).outputs({
+          css: {
+            compact: { opacity: '0', width: '10px' },
+            expanded: { opacity: '1', width: '20px' },
+          },
+        });
+        const live = yield* config.create();
+        const animated = yield* AnimatedQuantizer.make(live, { '*': { duration: 0 } });
+        live.evaluate(900); // compact -> expanded crossing
+        return Array.from(yield* Stream.runCollect(Stream.take(animated.interpolated, 1)));
+      }),
+    );
+
+    expect(frames).toHaveLength(1);
+    // '1' is finite-numeric and coerces so it lerps; '20px' passes through as a string
+    expect(frames[0]).toEqual({
+      state: 'expanded',
+      progress: 1,
+      outputs: { opacity: 1, width: '20px' },
+    });
+  });
+
+  test('explicit outputs still override derivation for a LiveQuantizer', async () => {
+    const boundary = makeBoundary();
+    const frames = await runScoped(
+      Effect.gen(function* () {
+        const config = Q.from(boundary).outputs({
+          css: {
+            compact: { opacity: '0.25' },
+            expanded: { opacity: '0.75' },
+          },
+        });
+        const live = yield* config.create();
+        const animated = yield* AnimatedQuantizer.make(
+          live,
+          { '*': { duration: 0 } },
+          { compact: { scale: 1 }, expanded: { scale: 2 } },
+        );
+        live.evaluate(900);
+        return Array.from(yield* Stream.runCollect(Stream.take(animated.interpolated, 1)));
+      }),
+    );
+
+    expect(frames).toHaveLength(1);
+    expect(frames[0]!.outputs).toEqual({ scale: 2 });
   });
 
   test('snaps non-numeric outputs to the target value at eased halfway progress', async () => {

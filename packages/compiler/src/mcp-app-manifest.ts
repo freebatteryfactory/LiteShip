@@ -64,17 +64,25 @@ export interface ManifestToolView {
   readonly _meta?: { readonly ui: { readonly resourceUri: string } };
 }
 
-/** Inputs to {@link compileMcpAppManifest} — all supplied as plain data by the caller (server/tests). */
+/**
+ * Inputs to {@link compileMcpAppManifest} — all supplied as plain data by the
+ * caller (server/tests). The four collection surfaces are optional; a server
+ * with no resources/UI/prompts omits them and the manifest carries `[]`.
+ */
 export interface CompileMcpAppManifestInput {
   readonly serverInfo: { readonly name: string; readonly version: string };
   readonly protocolVersion: string;
   readonly capabilities: Readonly<Record<string, unknown>>;
   /** The MCP-exposed command descriptors (e.g. `mcpExposedDescriptors()`). */
   readonly toolDescriptors: readonly CapsuleCommandDescriptor[];
-  readonly resources: readonly ManifestResourceView[];
-  readonly uiResources: readonly ManifestUiResourceView[];
-  readonly appResources: readonly ManifestUiResourceView[];
-  readonly prompts: readonly ManifestPromptView[];
+  /** D3 JSON resources; defaults to `[]`. */
+  readonly resources?: readonly ManifestResourceView[];
+  /** D4 static UI resources; defaults to `[]`. */
+  readonly uiResources?: readonly ManifestUiResourceView[];
+  /** D5 live app resources; defaults to `[]`. */
+  readonly appResources?: readonly ManifestUiResourceView[];
+  /** D3 prompts; defaults to `[]`. */
+  readonly prompts?: readonly ManifestPromptView[];
 }
 
 /** The MCP-app manifest: a projection over all real MCP / MCP-Apps surfaces. */
@@ -125,10 +133,10 @@ export function compileMcpAppManifest(input: CompileMcpAppManifestInput): McpApp
     protocolVersion: input.protocolVersion,
     capabilities: input.capabilities,
     tools: input.toolDescriptors.map(projectTool),
-    resources: input.resources,
-    uiResources: input.uiResources,
-    appResources: input.appResources,
-    prompts: input.prompts,
+    resources: input.resources ?? [],
+    uiResources: input.uiResources ?? [],
+    appResources: input.appResources ?? [],
+    prompts: input.prompts ?? [],
     resultEnvelope: { receiptMetaKey: 'liteship/result', structuredContentIsPayload: true },
     namespacePolicy: { resourcePrefix: 'liteship://', uiPrefix: 'ui://liteship/', appPrefix: 'ui://liteship/app/' },
   };

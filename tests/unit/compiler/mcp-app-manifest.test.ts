@@ -135,3 +135,19 @@ describe('D6 compiler — topology + orphan removal', () => {
     expect('AIManifestCompiler' in compiler).toBe(true);
   });
 });
+
+describe('D6 compiler — optional collection surfaces default to empty', () => {
+  it('omitted resources/uiResources/appResources/prompts project as []', () => {
+    const m = compileMcpAppManifest({
+      serverInfo: { name: 'LiteShip', version: '9.9.9' },
+      protocolVersion: '2025-11-25',
+      capabilities: {},
+      toolDescriptors: [plainDescriptor],
+    });
+    expect(m.resources).toEqual([]);
+    expect(m.uiResources).toEqual([]);
+    expect(m.appResources).toEqual([]);
+    expect(m.prompts).toEqual([]);
+    expect(m.tools).toHaveLength(1);
+  });
+});
