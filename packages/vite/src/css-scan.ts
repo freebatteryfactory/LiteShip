@@ -1,6 +1,6 @@
 /**
  * Shared character-level CSS scanning helpers for the at-rule block
- * parsers (`@token`, `@theme`, `@quantize`).
+ * parsers (`@token`, `@theme`, `@style`, `@quantize`).
  *
  * Real-world CSS reaching the transform pipeline is often re-serialized
  * by upstream compilers (the Astro compiler emits a whole `<style>` as a
@@ -18,7 +18,7 @@
  * character offset (blanked characters become spaces).
  *
  * This produces the marker-locating copy of a stylesheet: at-rule
- * markers (`@token`, `@theme`, `@quantize`) are searched on the blanked
+ * markers (`@token`, `@theme`, `@style`, `@quantize`) are searched on the blanked
  * copy so neither commented-out blocks nor marker text embedded in
  * string values (`content: "@token accent {"`) nor data URLs
  * (`url(data:...@quantize...)`) ever match as real blocks. Because
@@ -441,4 +441,23 @@ export function skipSegment(css: string, pos: number): number {
   }
 
   return pos;
+}
+
+/**
+ * Running brace depth over a blanked source range. At-rule scans use this
+ * to accept `@token`/`@quantize`/`@style` markers only at the sheet's top
+ * level (depth 0): a marker inside a declaration value — e.g. a custom
+ * property holding a snippet, `--x: @style card { ... };` — is value text,
+ * not an at-rule, and splicing it would corrupt the declaration. Callers
+ * advance incrementally (`depth = braceDepthDelta(blanked, from, to, depth)`)
+ * so a multi-match scan stays linear. Operates on BLANKED source: braces
+ * inside comments and strings are already spaces there.
+ */
+export function braceDepthDelta(blanked: string, from: number, to: number, depth: number): number {
+  for (let i = from; i < to; i++) {
+    const ch = blanked[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+  }
+  return depth;
 }
