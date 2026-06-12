@@ -5,6 +5,7 @@ import {
   Detect,
   detect,
   detectGPUTier,
+  resetDetectionCaches,
   watchCapabilities,
 } from '../../../packages/detect/src/detect.js';
 import {
@@ -102,6 +103,7 @@ function mockRenderer(renderer: string | null, useDebugRenderer = false): void {
 describe('device detection runtime', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
+    resetDetectionCaches();
     installMatchMedia({});
     setNavigatorProperty('hardwareConcurrency', 8);
     setNavigatorProperty('deviceMemory', 8);
@@ -127,9 +129,11 @@ describe('device detection runtime', () => {
     mockRenderer('ANGLE (NVIDIA GeForce RTX 4090)');
     expect(Effect.runSync(detectGPUTier())).toBe(3);
 
+    resetDetectionCaches();
     mockRenderer('Google SwiftShader', true);
     expect(Effect.runSync(detectGPUTier())).toBe(0);
 
+    resetDetectionCaches();
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
       throw new Error('no-webgl');
     });
@@ -186,6 +190,7 @@ describe('device detection runtime', () => {
     expect(result.confidence).toBeCloseTo(1, 10);
 
     setNavigatorProperty('connection', undefined);
+    resetDetectionCaches();
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: () => {
@@ -719,13 +724,112 @@ describe('device detection runtime', () => {
           window.dispatchEvent(new Event('resize'));
           queries.get('(prefers-color-scheme: dark)')!.matches = true;
           queries.get('(prefers-color-scheme: dark)')!.dispatchChange();
-          yield* Effect.promise(() => Promise.resolve());
+          // Re-detection is debounced to one sweep per frame; wait it out.
+          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
         }),
       ),
     );
 
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls[0]?.[0].tier).toBeDefined();
+  });
+
+  test('watchCapabilities coalesces event bursts into one re-detection per frame', async () => {
+    installMatchMedia({});
+    mockRenderer('Intel Iris Xe');
+
+    const onChange = vi.fn();
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* watchCapabilities(onChange);
+
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new Event('resize'));
+          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
+        }),
+      ),
+    );
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  test('watchCapabilities never re-acquires a WebGL context on resize updates', async () => {
+    installMatchMedia({});
+
+    const gl = {
+      RENDERER: 'RENDERER',
+      getParameter(key: unknown) {
+        return key === 'RENDERER' ? 'Intel Iris Xe' : '';
+      },
+      getExtension() {
+        return null;
+      },
+    };
+    const getContext = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockImplementation((kind: string) => {
+        if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+        return null;
+      });
+
+    const onChange = vi.fn();
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          yield* watchCapabilities(onChange);
+          const callsAfterSetup = getContext.mock.calls.length;
+
+          window.dispatchEvent(new Event('resize'));
+          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 80)));
+
+          expect(onChange).toHaveBeenCalledTimes(1);
+          expect(getContext.mock.calls.length).toBe(callsAfterSetup);
+        }),
+      ),
+    );
+  });
+
+  test('memoizes the renderer probe across detect() calls and releases the throwaway context', () => {
+    installMatchMedia({});
+
+    const loseContext = vi.fn();
+    const gl = {
+      RENDERER: 'RENDERER',
+      getParameter(key: unknown) {
+        return key === 'RENDERER' ? 'ANGLE (NVIDIA GeForce RTX 4090)' : '';
+      },
+      getExtension(name: string) {
+        return name === 'WEBGL_lose_context' ? { loseContext } : null;
+      },
+    };
+    const getContext = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockImplementation((kind: string) => {
+        if (kind === 'webgl' || kind === 'experimental-webgl') return gl as never;
+        return null;
+      });
+
+    expect(Effect.runSync(detect()).capabilities.gpu).toBe(3);
+    expect(Effect.runSync(detect()).capabilities.gpu).toBe(3);
+
+    expect(getContext).toHaveBeenCalledTimes(1);
+    expect(loseContext).toHaveBeenCalledTimes(1);
+  });
+
+  test('resetDetectionCaches() clears the memoized renderer probe', () => {
+    mockRenderer('ANGLE (NVIDIA GeForce RTX 4090)');
+    expect(Effect.runSync(detectGPUTier())).toBe(3);
+
+    // Memoized: a new renderer is invisible until the cache is cleared.
+    mockRenderer('Google SwiftShader');
+    expect(Effect.runSync(detectGPUTier())).toBe(3);
+
+    resetDetectionCaches();
+    expect(Effect.runSync(detectGPUTier())).toBe(0);
   });
 
   test('watchCapabilities short-circuits cleanly when window is unavailable', async () => {
