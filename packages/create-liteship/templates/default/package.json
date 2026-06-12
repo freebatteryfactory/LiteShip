@@ -1,0 +1,16 @@
+{
+  "name": "liteship-app",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@czap/astro": "^0.1.5",
+    "@czap/core": "^0.1.5",
+    "astro": "^6.0.0",
+    "typescript": "^5.7.0"
+  }
+}

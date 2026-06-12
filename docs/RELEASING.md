@@ -142,6 +142,10 @@ repo settings.
 ### Cutting a release
 
 1. Bump versions in every `packages/*/package.json` to the new minor (e.g. `0.1.1`).
+   Also bump the `@czap/*` dependency ranges in
+   `packages/create-liteship/templates/default/package.json` — the template is
+   scaffolder *data* (plain `^x.y.z` strings, not workspace specs), so the
+   workspace bump does not touch it automatically.
 2. Update `CHANGELOG.md` with the new release block.
 3. Commit, open a PR, merge to `main`.
 4. Locally on `main`:
