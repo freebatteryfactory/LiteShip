@@ -217,7 +217,9 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     receipts: collected,
     tick: async (dtMs: number) => {
       if (released) {
-        throw new Error('SceneRuntime: tick() called after release()');
+        throw new Error(
+          "SceneRuntime: tick() was called after release(). release() closes the world's scope, so entities and systems are gone — call SceneRuntime.build(compiledScene) again to get a fresh handle.",
+        );
       }
       ctx.timeMs += dtMs;
       ctx.frameIndex = Math.floor((ctx.timeMs / 1000) * compiled.fps);

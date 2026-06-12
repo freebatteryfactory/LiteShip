@@ -15,7 +15,18 @@
  * @module
  */
 
-import type { VideoTrack, AudioTrack, TransitionTrack, EffectTrack, TrackId, FrameMark } from './contract.js';
+import type { VideoTrack, AudioTrack, TransitionTrack, EffectTrack, TrackId, TrackKind, FrameMark } from './contract.js';
+
+/**
+ * Cross-track reference: a phantom-kinded id, or the track object
+ * itself — the id brand on the object's `id` field carries the same
+ * kind, so cross-kind references still fail at compile time.
+ */
+export type TrackRef<K extends TrackKind> = TrackId<K> | { readonly id: TrackId<K> };
+
+/** Normalize a {@link TrackRef} to its id, preserving the phantom brand. */
+export const trackRefId = <K extends TrackKind>(ref: TrackRef<K>): TrackId<K> =>
+  typeof ref === 'string' ? ref : ref.id;
 
 /** Mint a video TrackId — the one sanctioned cast site for the 'video' brand. */
 const videoId = (id: string): TrackId<'video'> => id as TrackId<'video'>;
@@ -46,7 +57,7 @@ const video = (
   ...(opts.envelope !== undefined ? { envelope: opts.envelope } : {}),
 });
 
-/** Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 0 } and optional gain envelope. */
+/** Build an AudioTrack referencing an asset id, with default mix { volume: 1, pan: 0 } (unity linear gain, centered) and optional gain envelope. */
 const audio = (
   id: string,
   opts: {
@@ -58,7 +69,8 @@ const audio = (
   },
 ): AudioTrack => {
   const mix: AudioTrack['mix'] = {
-    volume: opts.mix?.volume ?? 0,
+    // volume is linear gain — 1 is unity, so an undeclared mix is audible.
+    volume: opts.mix?.volume ?? 1,
     pan: opts.mix?.pan ?? 0,
     ...(opts.mix?.sync !== undefined ? { sync: opts.mix.sync } : {}),
   };
@@ -73,14 +85,14 @@ const audio = (
   };
 };
 
-/** Build a TransitionTrack blending two target tracks over a frame window, with optional named easing. */
+/** Build a TransitionTrack blending two target tracks over a frame window, with optional named easing. `between` accepts track objects or ids. */
 const transition = (
   id: string,
   opts: {
     from: FrameMark;
     to: FrameMark;
     kind: TransitionTrack['transitionKind'];
-    between: readonly [TrackId<'video'>, TrackId<'video'>];
+    between: readonly [TrackRef<'video'>, TrackRef<'video'>];
     ease?: TransitionTrack['ease'];
   },
 ): TransitionTrack => ({
@@ -89,19 +101,19 @@ const transition = (
   from: opts.from,
   to: opts.to,
   transitionKind: opts.kind,
-  between: opts.between,
+  between: [trackRefId(opts.between[0]), trackRefId(opts.between[1])],
   ...(opts.ease !== undefined ? { ease: opts.ease } : {}),
 });
 
-/** Build an EffectTrack applying an intensity curve to a target video, optionally synced to audio. */
+/** Build an EffectTrack applying an intensity curve to a target video, optionally synced to audio. `target` / `syncTo.anchor` accept track objects or ids. */
 const effect = (
   id: string,
   opts: {
     from: FrameMark;
     to: FrameMark;
     kind: EffectTrack['effectKind'];
-    target: TrackId<'video'>;
-    syncTo?: EffectTrack['syncTo'];
+    target: TrackRef<'video'>;
+    syncTo?: { readonly anchor: TrackRef<'audio'>; readonly mode: 'beat' | 'onset' | 'peak' };
     envelope?: EffectTrack['envelope'];
   },
 ): EffectTrack => ({
@@ -110,8 +122,8 @@ const effect = (
   from: opts.from,
   to: opts.to,
   effectKind: opts.kind,
-  target: opts.target,
-  syncTo: opts.syncTo,
+  target: trackRefId(opts.target),
+  syncTo: opts.syncTo !== undefined ? { anchor: trackRefId(opts.syncTo.anchor), mode: opts.syncTo.mode } : undefined,
   ...(opts.envelope !== undefined ? { envelope: opts.envelope } : {}),
 });
 

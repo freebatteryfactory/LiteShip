@@ -22,7 +22,8 @@ export type {
 // `Track` is re-exported as a value (with companion namespace types) from
 // ./track.js. The union of concrete track shapes is available there as
 // `Track.Any` to avoid a duplicate-identifier conflict at the module boundary.
-export { Track } from './track.js';
+export { Track, trackRefId } from './track.js';
+export type { TrackRef } from './track.js';
 
 export { compileScene } from './compile.js';
 export type { CompiledScene, TrackSpawn } from './compile.js';

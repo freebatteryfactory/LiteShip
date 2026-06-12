@@ -9,6 +9,7 @@ import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, Sta
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface WorkerConfig {
+  /** @defaultValue 64 */
   readonly poolCapacity?: number;
   readonly targetFps?: number;
 }
@@ -165,6 +166,8 @@ interface ErrorMessage {
   readonly subjectId?: ContentAddress;
   /** Literal next step the main-thread consumer can render. */
   readonly hint?: string;
+  /** Inbound message `type` the worker was handling when it threw (e.g. 'compute'). */
+  readonly context?: string;
 }
 
 interface MetricsMessage {
@@ -213,8 +216,10 @@ export declare const SPSCRing: {
     producer: SPSCRingBufferShape;
     consumer: SPSCRingBufferShape;
   };
-  attachProducer(sab: SharedArrayBuffer, slotCount: number, slotSize: number): SPSCRingBufferShape;
-  attachConsumer(sab: SharedArrayBuffer, slotCount: number, slotSize: number): SPSCRingBufferShape;
+  /** Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws). */
+  attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
+  /** Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws). */
+  attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
 };
 
 export declare namespace SPSCRing {
@@ -234,10 +239,25 @@ export interface CompositorWorkerStartupTelemetry {
   recordStage(stage: CompositorWorkerStartupStage, durationNs: number): void;
 }
 
+/**
+ * The boundary surface addQuantizer derives a registration from —
+ * structurally satisfied by a `Boundary.make` result from @czap/core.
+ */
+export interface QuantizerBoundarySource {
+  readonly id: ContentAddress;
+  /** Signal input name — used as the quantizer name when none is given. */
+  readonly input: string;
+  /** Plain strings — BoundaryDef.states is unbranded. */
+  readonly states: readonly string[];
+  readonly thresholds: readonly number[];
+}
+
 export interface CompositorWorkerShape {
   readonly worker: Worker;
   /** Runtime coordination surface (internal shape, see @czap/core RuntimeCoordinator). */
   readonly runtime: unknown;
+  /** Register a quantizer from a Boundary.make result; name defaults to boundary.input. */
+  addQuantizer(boundary: QuantizerBoundarySource): void;
   addQuantizer(
     name: string,
     boundary: {
@@ -291,11 +311,29 @@ export declare namespace RenderWorker {
 // § 5. WORKER HOST
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** The canvas surface attachCanvas needs — HTMLCanvasElement satisfies it structurally. */
+export interface TransferableCanvas {
+  readonly width: number;
+  readonly height: number;
+  transferControlToOffscreen(): OffscreenCanvas;
+}
+
+/** Render configuration for WorkerHost.startRender — only durationMs is required. */
+export interface WorkerHostRenderConfig {
+  readonly durationMs: number;
+  /** @defaultValue 60 */
+  readonly fps?: number;
+  /** @defaultValue the attached canvas's width at attachCanvas() time */
+  readonly width?: number;
+  /** @defaultValue the attached canvas's height at attachCanvas() time */
+  readonly height?: number;
+}
+
 export interface WorkerHostShape {
   readonly compositor: CompositorWorkerShape;
   readonly renderer: RenderWorkerShape | null;
-  attachCanvas(canvas: HTMLCanvasElement): void;
-  startRender(config: VideoConfig): void;
+  attachCanvas(canvas: TransferableCanvas): void;
+  startRender(config: WorkerHostRenderConfig): void;
   stopRender(): void;
   onState(callback: (state: CompositeState) => void): () => void;
   dispose(): void;

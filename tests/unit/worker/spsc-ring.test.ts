@@ -89,24 +89,53 @@ describe('SPSCRing', () => {
     expect(out[0]).toBe(42);
   });
 
-  test('consumer cannot push', () => {
+  test('consumer cannot push — error names the side and the attach call to make', () => {
     const { consumer } = SPSCRing.createPair(4, 1);
-    expect(() => consumer.push(new Float64Array([1]))).toThrow('only the producer may push');
+    expect(() => consumer.push(new Float64Array([1]))).toThrow(
+      'SPSCRing: this handle is the consumer side — push() is producer-only. Inside the worker, call SPSCRing.attachProducer(buffer) and push on that handle.',
+    );
   });
 
-  test('producer cannot pop', () => {
+  test('producer cannot pop — error names the side and the attach call to make', () => {
     const { producer } = SPSCRing.createPair(4, 1);
-    expect(() => producer.pop(new Float64Array(1))).toThrow('only the consumer may pop');
+    expect(() => producer.pop(new Float64Array(1))).toThrow(
+      'SPSCRing: this handle is the producer side — pop() is consumer-only. On the consuming thread, call SPSCRing.attachConsumer(buffer) and pop on that handle.',
+    );
   });
 
-  test('wrong slot size throws on push', () => {
+  test('wrong slot size throws on push, teaching scratch-array reuse', () => {
     const { producer } = SPSCRing.createPair(4, 3);
-    expect(() => producer.push(new Float64Array(2))).toThrow('expected slot size 3');
+    expect(() => producer.push(new Float64Array(2))).toThrow(
+      'SPSCRing: this ring was created with slotSize 3 but you pushed a Float64Array of length 2. Allocate your scratch array once with new Float64Array(3) and reuse it.',
+    );
   });
 
-  test('wrong slot size throws on pop', () => {
+  test('wrong slot size throws on pop, teaching scratch-array reuse', () => {
     const { consumer } = SPSCRing.createPair(4, 3);
-    expect(() => consumer.pop(new Float64Array(2))).toThrow('expected slot size 3');
+    expect(() => consumer.pop(new Float64Array(2))).toThrow(
+      'SPSCRing: this ring was created with slotSize 3 but you popped into a Float64Array of length 2. Allocate your scratch array once with new Float64Array(3) and reuse it.',
+    );
+  });
+
+  test('createPair preflights cross-origin isolation with the COOP/COEP remedy', () => {
+    const had = Object.getOwnPropertyDescriptor(globalThis, 'crossOriginIsolated');
+    Object.defineProperty(globalThis, 'crossOriginIsolated', { value: false, configurable: true });
+    try {
+      expect(() => SPSCRing.createPair(4, 2)).toThrow(
+        'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+      );
+    } finally {
+      if (had) {
+        Object.defineProperty(globalThis, 'crossOriginIsolated', had);
+      } else {
+        delete (globalThis as { crossOriginIsolated?: unknown }).crossOriginIsolated;
+      }
+    }
+  });
+
+  test('createPair succeeds where crossOriginIsolated is absent (Node)', () => {
+    expect(typeof (globalThis as { crossOriginIsolated?: unknown }).crossOriginIsolated).toBe('undefined');
+    expect(() => SPSCRing.createPair(4, 2)).not.toThrow();
   });
 
   test('invalid slotCount throws', () => {
@@ -150,5 +179,49 @@ describe('SPSCRing', () => {
     expect(() => SPSCRing.attachConsumer(sab, 4, 0)).toThrow(RangeError);
     expect(() => SPSCRing.attachConsumer(sab, 4, -1)).toThrow(RangeError);
     expect(() => SPSCRing.attachConsumer(sab, 4, 1.5)).toThrow(RangeError);
+  });
+});
+
+describe('SPSCRing header-derived geometry', () => {
+  test('attachProducer/attachConsumer need only the buffer — geometry rides in the header', () => {
+    const { buffer } = SPSCRing.createPair(8, 3);
+
+    const producer = SPSCRing.attachProducer(buffer);
+    const consumer = SPSCRing.attachConsumer(buffer);
+
+    expect(producer.capacity).toBe(8);
+    expect(consumer.capacity).toBe(8);
+
+    expect(producer.push(new Float64Array([1, 2, 3]))).toBe(true);
+    const out = new Float64Array(3);
+    expect(consumer.pop(out)).toBe(true);
+    expect(Array.from(out)).toEqual([1, 2, 3]);
+  });
+
+  test('buffer byte length accounts for the 16-byte control header plus data slots', () => {
+    const { buffer } = SPSCRing.createPair(16, 8);
+    expect(buffer.byteLength).toBe(16 + 16 * 8 * 8);
+  });
+
+  test('explicit args matching the header are accepted (back-compat form)', () => {
+    const { buffer } = SPSCRing.createPair(4, 2);
+    const producer = SPSCRing.attachProducer(buffer, 4, 2);
+    expect(producer.push(new Float64Array([1, 2]))).toBe(true);
+  });
+
+  test('explicit args mismatching the header throw instead of silently corrupting', () => {
+    const { buffer } = SPSCRing.createPair(4, 2);
+    expect(() => SPSCRing.attachProducer(buffer, 8, 2)).toThrow(/created with slotCount 4 \/ slotSize 2/);
+    expect(() => SPSCRing.attachConsumer(buffer, 4, 3)).toThrow(/created with slotCount 4 \/ slotSize 2/);
+  });
+
+  test('a buffer without ring geometry names createPair as the fix', () => {
+    const raw = new SharedArrayBuffer(64);
+    expect(() => SPSCRing.attachProducer(raw)).toThrow(/SPSCRing\.createPair/);
+  });
+
+  test('a buffer smaller than the control header is rejected with its size', () => {
+    const tiny = new SharedArrayBuffer(8);
+    expect(() => SPSCRing.attachConsumer(tiny)).toThrow(/only 8 bytes/);
   });
 });

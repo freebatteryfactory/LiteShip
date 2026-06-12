@@ -42,6 +42,23 @@ export interface ResolvedStateAckPayload {
 }
 
 /**
+ * The boundary surface {@link CompositorWorkerShape.addQuantizer} derives
+ * a registration from — structurally satisfied by a `Boundary.make`
+ * result from `@czap/core`, whose content-addressed `id` and `input`
+ * name make hand-assembled registrations unnecessary.
+ */
+export interface QuantizerBoundarySource {
+  /** Content address computed by `Boundary.make` (ADR-0003). */
+  readonly id: ContentAddress;
+  /** Signal input name — used as the quantizer name when none is given. */
+  readonly input: string;
+  /** Ordered discrete state labels (plain strings — `BoundaryDef.states` is unbranded). */
+  readonly states: readonly string[];
+  /** Lower-bound thresholds, one per state. */
+  readonly thresholds: readonly number[];
+}
+
+/**
  * Host-facing surface of a compositor worker. Returned by
  * {@link CompositorWorker} as the public control/observation API. Owns
  * the underlying `Worker` -- call {@link CompositorWorkerShape.dispose}
@@ -53,7 +70,12 @@ export interface CompositorWorkerShape {
   /** Shared runtime coordination surface reflecting host-side worker state. */
   readonly runtime: RuntimeCoordinator.Shape;
 
-  /** Register a quantizer in the worker. */
+  /**
+   * Register a quantizer from a `Boundary.make` result — id, states, and
+   * thresholds are derived; the quantizer name defaults to `boundary.input`.
+   */
+  addQuantizer(boundary: QuantizerBoundarySource): void;
+  /** Register a quantizer in the worker under an explicit name. */
   addQuantizer(
     name: string,
     boundary: {

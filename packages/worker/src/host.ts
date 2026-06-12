@@ -10,7 +10,8 @@
  * @module
  */
 
-import type { CompositeState, VideoConfig } from '@czap/core';
+import type { CompositeState, VideoConfig, Millis } from '@czap/core';
+import { Millis as mkMillis } from '@czap/core';
 import type { WorkerConfig } from './messages.js';
 import { CompositorWorker, type CompositorWorkerStartupTelemetry } from './compositor-worker.js';
 import { RenderWorker } from './render-worker.js';
@@ -30,7 +31,36 @@ type WorkerHostState = CompositeState & {
  * to THIS type, and non-DOM canvas implementations work unchanged.
  */
 export interface TransferableCanvas {
+  /** Pixel width, captured at transfer time as the default render width. */
+  readonly width: number;
+  /** Pixel height, captured at transfer time as the default render height. */
+  readonly height: number;
   transferControlToOffscreen(): OffscreenCanvas;
+}
+
+/**
+ * Render configuration accepted by {@link WorkerHostShape.startRender}.
+ * Only `durationMs` is genuinely the caller's decision; the rest default
+ * from context the host already has.
+ */
+export interface WorkerHostRenderConfig {
+  /** Total render duration in milliseconds — a plain number is branded internally. */
+  readonly durationMs: number | Millis;
+  /**
+   * Content frame rate (frame count and per-frame timestamps).
+   * @defaultValue 60
+   */
+  readonly fps?: number;
+  /**
+   * Output width in pixels.
+   * @defaultValue the attached canvas's width at attachCanvas() time
+   */
+  readonly width?: number;
+  /**
+   * Output height in pixels.
+   * @defaultValue the attached canvas's height at attachCanvas() time
+   */
+  readonly height?: number;
 }
 
 /**
@@ -57,8 +87,12 @@ export interface WorkerHostShape {
    */
   attachCanvas(canvas: TransferableCanvas): void;
 
-  /** Start off-thread video rendering with the given configuration. */
-  startRender(config: VideoConfig): void;
+  /**
+   * Start off-thread video rendering. Width/height default to the
+   * attached canvas's dimensions and fps to 60 — only `durationMs`
+   * is required (see {@link WorkerHostRenderConfig}).
+   */
+  startRender(config: WorkerHostRenderConfig): void;
 
   /** Stop an in-progress off-thread render. */
   stopRender(): void;
@@ -83,6 +117,10 @@ function _createWorkerHost(
 ): WorkerHostShape {
   const compositor = CompositorWorker.create(config, startupTelemetry);
   let renderer: RenderWorker.Shape | null = null;
+  // Dimensions of the most recently attached canvas, captured BEFORE
+  // transferControlToOffscreen (the detached element zeroes out) so
+  // startRender can default width/height.
+  let attachedCanvasSize: { readonly width: number; readonly height: number } | null = null;
 
   // Forward compositor state to the render worker's quantizer registry.
   // This keeps the render worker's internal state in sync when the
@@ -105,16 +143,28 @@ function _createWorkerHost(
         renderer = RenderWorker.create(config);
       }
 
+      // Capture dimensions before the transfer — the canvas just told
+      // us the render target size, so startRender need not re-ask.
+      attachedCanvasSize = { width: canvas.width, height: canvas.height };
+
       // Transfer control to an OffscreenCanvas and send it to the worker.
       // `transferControlToOffscreen()` can only be called once per element.
       const offscreen = canvas.transferControlToOffscreen();
       renderer.transferCanvas(offscreen);
     },
 
-    startRender(videoConfig: VideoConfig): void {
-      if (renderer === null) {
+    startRender(renderConfig: WorkerHostRenderConfig): void {
+      if (renderer === null || attachedCanvasSize === null) {
         throw new Error('WorkerHost: cannot start render -- no canvas attached. Call attachCanvas() first.');
       }
+      const videoConfig: VideoConfig = {
+        // Brand internally — the host accepts plain numbers (mkMillis is
+        // the sanctioned cast site, same pattern as Boundary's thresholds).
+        durationMs: mkMillis(renderConfig.durationMs),
+        fps: renderConfig.fps ?? 60,
+        width: renderConfig.width ?? attachedCanvasSize.width,
+        height: renderConfig.height ?? attachedCanvasSize.height,
+      };
       renderer.startRender(videoConfig);
     },
 
@@ -177,7 +227,8 @@ function _createWorkerHost(
  *
  * const host = WorkerHost.create({ poolCapacity: 64 });
  * host.attachCanvas(canvas);
- * host.startRender({ durationMs: 5000, fps: 60, width: 1280, height: 720 });
+ * // width/height default to the attached canvas's dimensions, fps to 60.
+ * host.startRender({ durationMs: 5000 });
  * const unsub = host.onState((state) => console.log(state.discrete));
  * // ...
  * unsub();

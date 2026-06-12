@@ -38,7 +38,7 @@ export type { SPSCRingBufferShape } from './spsc-ring.js';
 
 // Compositor Worker
 export { CompositorWorker } from './compositor-worker.js';
-export type { CompositorWorkerShape, CompositorWorkerState } from './compositor-types.js';
+export type { CompositorWorkerShape, CompositorWorkerState, QuantizerBoundarySource } from './compositor-types.js';
 
 // Render Worker
 export { RenderWorker } from './render-worker.js';
@@ -46,4 +46,4 @@ export type { RenderWorkerShape } from './render-worker.js';
 
 // Host
 export { WorkerHost } from './host.js';
-export type { WorkerHostShape, TransferableCanvas } from './host.js';
+export type { WorkerHostShape, TransferableCanvas, WorkerHostRenderConfig } from './host.js';
