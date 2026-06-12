@@ -8,7 +8,7 @@
 
 > `const` **Track**: `object`
 
-Defined in: [scene/src/track.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L135)
+Defined in: [scene/src/track.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L143)
 
 Track namespace — typed constructors for the four track kinds plus
 per-kind id minters (Track.videoId, Track.audioId, Track.transitionId,

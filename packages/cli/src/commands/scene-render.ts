@@ -63,7 +63,10 @@ export async function sceneRender(
     emitError('scene.render', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
-  const payload = result.payload as Omit<SceneRenderReceipt, 'status' | 'command' | 'timestamp' | 'width' | 'height'> & {
+  const payload = result.payload as Omit<
+    SceneRenderReceipt,
+    'status' | 'command' | 'timestamp' | 'width' | 'height'
+  > & {
     cached: boolean;
     width?: number;
     height?: number;

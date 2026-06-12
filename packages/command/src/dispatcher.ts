@@ -7,7 +7,12 @@
  * @module
  */
 import type { CapsuleCommandInvocation, CapsuleCommandResult } from '@czap/core';
-import { capabilityUnavailable, type CommandCapability, type CommandContext, type CommandRegistry } from './registry.js';
+import {
+  capabilityUnavailable,
+  type CommandCapability,
+  type CommandContext,
+  type CommandRegistry,
+} from './registry.js';
 
 interface CommandDispatcherShape {
   readonly dispatch: (invocation: CapsuleCommandInvocation, context: CommandContext) => Promise<CapsuleCommandResult>;

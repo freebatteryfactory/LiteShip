@@ -90,8 +90,8 @@ function deriveInterpolationOutputs<B extends Boundary.Shape>(
   quantizer: Quantizer<B>,
 ): Record<string, Record<string, number | string>> | undefined {
   if (!('config' in quantizer)) return undefined;
-  const css = (quantizer as { config: { outputs: { css?: Record<string, Record<string, string | number>> } } })
-    .config.outputs.css;
+  const css = (quantizer as { config: { outputs: { css?: Record<string, Record<string, string | number>> } } }).config
+    .outputs.css;
   if (css === undefined) return undefined;
 
   const derived: Record<string, Record<string, number | string>> = {};

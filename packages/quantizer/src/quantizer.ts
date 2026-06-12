@@ -22,7 +22,14 @@ import type {
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import { StateName as mkStateName, CanonicalCbor, CzapValidationError, Diagnostics, Easing, fnv1aBytes } from '@czap/core';
+import {
+  StateName as mkStateName,
+  CanonicalCbor,
+  CzapValidationError,
+  Diagnostics,
+  Easing,
+  fnv1aBytes,
+} from '@czap/core';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';

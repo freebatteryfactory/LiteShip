@@ -8,7 +8,7 @@
 
 > **trackRefId**\<`K`\>(`ref`): [`TrackId`](../type-aliases/TrackId.md)\<`K`\>
 
-Defined in: [scene/src/track.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L28)
+Defined in: [scene/src/track.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L36)
 
 Normalize a [TrackRef](../type-aliases/TrackRef.md) to its id, preserving the phantom brand.
 
