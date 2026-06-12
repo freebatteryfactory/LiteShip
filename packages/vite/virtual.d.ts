@@ -20,13 +20,19 @@ declare module 'virtual:czap/boundaries' {
 }
 
 declare module 'virtual:czap/tokens' {
-  /** Token definitions stub (real content flows through the CSS transform). */
-  export const tokens: Readonly<Record<string, unknown>>;
+  /** Build-collected token definitions (see `collectTokenManifest` in `@czap/vite`). */
+  export const tokens: import('@czap/vite').TokenManifest;
+}
+
+declare module 'virtual:czap/tokens.css' {
+  /** Compiled `:root` custom properties for all collected tokens. */
+  const css: string;
+  export default css;
 }
 
 declare module 'virtual:czap/themes' {
-  /** Theme definitions stub (real content flows through the CSS transform). */
-  export const themes: Readonly<Record<string, unknown>>;
+  /** Build-collected theme definitions (see `collectThemeManifest` in `@czap/vite`). */
+  export const themes: import('@czap/vite').ThemeManifest;
 }
 
 declare module 'virtual:czap/wasm-url' {

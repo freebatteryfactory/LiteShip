@@ -356,14 +356,18 @@ describe('@czap/vite plugin', () => {
     expect(Object.keys(result.environments)).toEqual(['browser', 'server']);
   });
 
-  test('resolves and loads virtual modules through the plugin hooks', () => {
+  test('resolves and loads virtual modules through the plugin hooks', async () => {
     const vitePlugin = plugin();
     const resolved = vitePlugin.resolveId?.('virtual:czap/tokens');
     const wasmResolved = vitePlugin.resolveId?.('virtual:czap/wasm-url');
 
     expect(resolved).toBe('\0virtual:czap/tokens');
     expect(wasmResolved).toBe('\0virtual:czap/wasm-url');
-    expect(vitePlugin.load?.(resolved!)).toContain('export const tokens');
+    const tokensLoad = await (vitePlugin.load as (id: string) => Promise<string | undefined>).call(
+      undefined as never,
+      resolved!,
+    );
+    expect(tokensLoad).toContain('export const tokens');
     expect(vitePlugin.load?.(wasmResolved!)).toContain('export const wasmUrl = null');
     expect(vitePlugin.resolveId?.('src/app.css')).toBeUndefined();
   });
