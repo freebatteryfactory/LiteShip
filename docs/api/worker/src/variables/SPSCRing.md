@@ -8,7 +8,7 @@
 
 > `const` **SPSCRing**: `object`
 
-Defined in: [worker/src/spsc-ring.ts:372](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L372)
+Defined in: [worker/src/spsc-ring.ts:375](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L375)
 
 SPSC ring buffer namespace.
 

@@ -129,7 +129,10 @@ function _readGeometry(
       `SPSCRing.${fn}: buffer header carries no ring geometry (slotCount ${headerSlotCount}, slotSize ${headerSlotSize}) — the buffer was not created by SPSCRing.createPair, or predates the 16-byte header layout. Recreate it with SPSCRing.createPair(slotCount, slotSize).`,
     );
   }
-  if ((slotCount !== undefined && slotCount !== headerSlotCount) || (slotSize !== undefined && slotSize !== headerSlotSize)) {
+  if (
+    (slotCount !== undefined && slotCount !== headerSlotCount) ||
+    (slotSize !== undefined && slotSize !== headerSlotSize)
+  ) {
     throw new RangeError(
       `SPSCRing.${fn}: this buffer was created with slotCount ${headerSlotCount} / slotSize ${headerSlotSize}, but you passed slotCount ${slotCount ?? headerSlotCount} / slotSize ${slotSize ?? headerSlotSize}. Drop the extra arguments — the buffer header carries the geometry — or pass the exact values given to createPair.`,
     );

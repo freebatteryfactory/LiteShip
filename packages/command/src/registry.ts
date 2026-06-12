@@ -201,10 +201,7 @@ export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
  * per-handler absence checks this replaces (capsule.verify / scene.verify /
  * asset.verify all used 2; scene.render's 5 and asset.analyze's 1 were outliers).
  */
-export function capabilityUnavailable(
-  command: string,
-  missing: readonly CommandCapability[],
-): CapsuleCommandResult {
+export function capabilityUnavailable(command: string, missing: readonly CommandCapability[]): CapsuleCommandResult {
   return {
     status: 'failed',
     command,

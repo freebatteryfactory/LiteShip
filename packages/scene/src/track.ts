@@ -15,7 +15,15 @@
  * @module
  */
 
-import type { VideoTrack, AudioTrack, TransitionTrack, EffectTrack, TrackId, TrackKind, FrameMark } from './contract.js';
+import type {
+  VideoTrack,
+  AudioTrack,
+  TransitionTrack,
+  EffectTrack,
+  TrackId,
+  TrackKind,
+  FrameMark,
+} from './contract.js';
 
 /**
  * Cross-track reference: a phantom-kinded id, or the track object

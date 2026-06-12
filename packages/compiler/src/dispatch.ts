@@ -154,7 +154,11 @@ export function dispatch(def: CompilerDef): CompileResult {
       return {
         target: 'aria',
         // Boundary.make guarantees a non-empty states tuple, so states[0] is the canonical initial state.
-        result: ARIACompiler.compile(def.boundary, def.states.states, def.states.currentState ?? def.boundary.states[0]),
+        result: ARIACompiler.compile(
+          def.boundary,
+          def.states.states,
+          def.states.currentState ?? def.boundary.states[0],
+        ),
       };
     case 'AICompiler':
       return { target: 'ai', result: AIManifestCompiler.compile(def.manifest) };

@@ -78,7 +78,10 @@ export async function run(argv: readonly string[]): Promise<number> {
         // A missing positional must not flow downstream as '' (it surfaces
         // there as a blank-subject error like "scene not found: ").
         if (scene === undefined) {
-          emitError(`scene.${sub}`, `usage: czap scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`);
+          emitError(
+            `scene.${sub}`,
+            `usage: czap scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`,
+          );
           return 1;
         }
       }

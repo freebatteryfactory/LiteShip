@@ -216,7 +216,7 @@ export function runIntegrityAudit(
           title: 'Raw console call in runtime source',
           summary:
             "Raw console.* call in package source. Route it through your project's diagnostics " +
-            "channel, or suppress this file with a console-call allowlist entry " +
+            'channel, or suppress this file with a console-call allowlist entry ' +
             "(rule: 'console-call', package, filePrefix, reason) in the profile.",
           location: {
             file: record.relativePath,
