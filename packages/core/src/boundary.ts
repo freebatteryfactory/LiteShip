@@ -276,7 +276,7 @@ export const Boundary: BoundaryFactory & {
       if (pairs[i]![0] <= pairs[i - 1]![0]) {
         throw new CzapValidationError(
           'Boundary.make',
-          `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}.`,
+          `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Sort your \`at\` pairs lowest-first, e.g. at: [[0, 'mobile'], [768, 'tablet']].`,
         );
       }
     }
@@ -286,7 +286,7 @@ export const Boundary: BoundaryFactory & {
       if (seen.has(name)) {
         throw new CzapValidationError(
           'Boundary.make',
-          `duplicate state name "${name}". Each state must have a unique name.`,
+          `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
         );
       }
       seen.add(name);
