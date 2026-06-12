@@ -25,8 +25,13 @@ export function rewriteBoundaryThreshold(
   let parsed: Partial<SerializedBoundary>;
   try {
     parsed = JSON.parse(boundaryJson) as Partial<SerializedBoundary>;
-  } catch {
-    return null;
+  } catch (error) {
+    // Malformed attribute JSON is the designed no-rewrite case; anything
+    // else is a programming error that must surface.
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
   }
 
   if (
@@ -78,30 +83,28 @@ export function containerNameFromInput(input: string): string {
 
 /** Whether any stylesheet declares the given container name. */
 export function hasContainerNameDeclared(containerName: string, root: Document = document): boolean {
-  try {
-    for (const sheet of Array.from(root.styleSheets)) {
-      let rules: CSSRuleList;
-      try {
-        rules = sheet.cssRules;
-      } catch {
+  for (const sheet of Array.from(root.styleSheets)) {
+    let rules: CSSRuleList;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      // Cross-origin stylesheets deny cssRules access; they cannot carry
+      // the project's @quantize container declarations, so skip them.
+      continue;
+    }
+    for (let index = 0; index < rules.length; index++) {
+      const rule = rules[index];
+      if (!(rule instanceof CSSStyleRule)) {
         continue;
       }
-      for (let index = 0; index < rules.length; index++) {
-        const rule = rules[index];
-        if (!(rule instanceof CSSStyleRule)) {
-          continue;
-        }
-        const declared = rule.style.getPropertyValue('container-name');
-        if (declared.split(/\s+/).includes(containerName)) {
-          return true;
-        }
-        if (rule.cssText.includes('container-name') && rule.cssText.includes(containerName)) {
-          return true;
-        }
+      const declared = rule.style.getPropertyValue('container-name');
+      if (declared.split(/\s+/).includes(containerName)) {
+        return true;
+      }
+      if (rule.cssText.includes('container-name') && rule.cssText.includes(containerName)) {
+        return true;
       }
     }
-  } catch {
-    return false;
   }
   return false;
 }
@@ -265,8 +268,13 @@ function readStoredPosition(): { x: number; y: number } | null {
     if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
       return { x: parsed.x, y: parsed.y };
     }
-  } catch {
-    return null;
+  } catch (error) {
+    // Corrupt stored JSON (SyntaxError) and storage denied in sandboxed
+    // embeds (DOMException) both mean "no saved position" by design.
+    if (error instanceof SyntaxError || error instanceof DOMException) {
+      return null;
+    }
+    throw error;
   }
   return null;
 }

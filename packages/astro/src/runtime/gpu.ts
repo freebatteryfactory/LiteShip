@@ -15,7 +15,9 @@ void main() {
 const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
 function elementGpuLabel(element: HTMLElement): string {
-  return element.id || element.getAttribute('data-czap-id') || element.getAttribute('data-czap-satellite') || 'gpu-element';
+  return (
+    element.id || element.getAttribute('data-czap-id') || element.getAttribute('data-czap-satellite') || 'gpu-element'
+  );
 }
 
 function compileShader(
