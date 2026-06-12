@@ -1560,7 +1560,8 @@ describe('CompositorWorker', () => {
           level: 'error',
           source: 'czap/worker.compositor-worker',
           code: 'worker-unhandled-error',
-          message: 'Compositor worker raised an unhandled error.',
+          message:
+            'Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: boom',
           detail: 'boom',
         }),
       ]),
