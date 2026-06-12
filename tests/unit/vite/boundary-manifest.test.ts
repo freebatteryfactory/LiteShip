@@ -148,7 +148,8 @@ export const drawer = {
     writeModule(srcDir, 'styles.css', '@quantize drawer {\n  short { --rows: 1; }\n  tall { --rows: 3; }\n}');
 
     const manifest = await collectBoundaryManifest(root);
-    const outputs = Object.values(manifest['drawer']!.outputsByTier)[0]!;
+    // v2 manifest: cells are pool indices — resolve before reading.
+    const outputs = Object.values(resolveOutputsByTier(manifest['drawer']!))[0]!;
 
     expect(outputs.containerQueries).toContain('@container viewport-height (height >= 600px)');
     // Height queries are block-axis: inline-size containment cannot
