@@ -1,0 +1,54 @@
+{
+  "name": "create-liteship",
+  "version": "0.1.5",
+  "description": "Scaffold a minimal Astro + @czap project — `npm create liteship` and you're rendering boundaries in five minutes",
+  "license": "MIT",
+  "author": "Eassa Ayoub <eassa@heyoub.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heyoub/LiteShip",
+    "directory": "packages/create-liteship"
+  },
+  "bugs": "https://github.com/heyoub/LiteShip/issues",
+  "homepage": "https://github.com/heyoub/LiteShip#readme",
+  "keywords": [
+    "create-liteship",
+    "liteship",
+    "czap",
+    "scaffold",
+    "astro",
+    "adaptive-rendering",
+    "typescript"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "create-liteship": "./bin/create-liteship.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "development": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "bin",
+    "templates",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "pnpm run build"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -60,5 +60,7 @@ compilation.
 - [compileTheme](functions/compileTheme.md)
 - [createBoundaryCache](functions/createBoundaryCache.md)
 - [createEdgeHostAdapter](functions/createEdgeHostAdapter.md)
+- [dedupeOutputsByTier](functions/dedupeOutputsByTier.md)
 - [enumerateTierKeys](functions/enumerateTierKeys.md)
+- [resolveOutputsByTier](functions/resolveOutputsByTier.md)
 - [tierKey](functions/tierKey.md)

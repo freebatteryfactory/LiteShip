@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { Boundary } from '@czap/core';
-import { enumerateTierKeys } from '@czap/edge';
+import { dedupeOutputsByTier, enumerateTierKeys } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestFile } from '@czap/edge';
 import {
   cloudflareMiddleware,
@@ -31,7 +31,9 @@ function makeManifest(name = 'viewport'): { boundary: ReturnType<typeof makeBoun
   const manifest: BoundaryManifest = {
     [name]: {
       id: boundary.id,
-      outputsByTier: Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs])),
+      // v2 deduped shape: one pooled output, every grid cell indexes it.
+      outputs: [outputs],
+      outputsByTier: Object.fromEntries(enumerateTierKeys().map((key) => [key, 0])),
     },
   };
   return { boundary, manifest };
@@ -179,7 +181,7 @@ describe('cloudflareMiddleware', () => {
   test('accepts the emitted czap-boundary-manifest.json envelope', async () => {
     const { kv } = makeKVStore();
     const { manifest } = makeManifest();
-    const file: BoundaryManifestFile = { _tag: 'CzapBoundaryManifest', _version: 1, boundaries: manifest };
+    const file: BoundaryManifestFile = { _tag: 'CzapBoundaryManifest', _version: 2, boundaries: manifest };
     const middleware = cloudflareMiddleware({
       binding: 'KV',
       manifest: file,
@@ -214,13 +216,16 @@ describe('cloudflareMiddleware', () => {
         [1024, 'expanded'],
       ],
     });
+    // v2 deduped entries, like the build derives (pool + index cells).
     const grid = (css: string) =>
-      Object.fromEntries(
-        enumerateTierKeys().map((key) => [key, { css, propertyRegistrations: '', containerQueries: '' }]),
+      dedupeOutputsByTier(
+        Object.fromEntries(
+          enumerateTierKeys().map((key) => [key, { css, propertyRegistrations: '', containerQueries: '' }]),
+        ),
       );
     return {
-      viewport: { id: viewport.id, outputsByTier: grid('.viewport{--gap:24px;}') },
-      sidebar: { id: sidebar.id, outputsByTier: grid('.sidebar{--gap:8px;}') },
+      viewport: { id: viewport.id, ...grid('.viewport{--gap:24px;}') },
+      sidebar: { id: sidebar.id, ...grid('.sidebar{--gap:8px;}') },
     };
   }
 
