@@ -40,6 +40,15 @@ pivot (epic #4) — these notes ship as 0.2.0.
   errors: a site the builtin decoder cannot honor (builtin video is
   node-only — ffprobe needs node:child_process) and the empty array (a
   capsule must run somewhere).
+- `create-liteship` — `npm create liteship` / `pnpm create liteship`
+  scaffolds a minimal working Astro + `@czap` project (the "first five
+  minutes" path): one boundary, one `satelliteAttrs()` element, and one
+  `@quantize` block sharing the same boundary export, mirroring
+  `examples/default`'s repaired idioms. Zero runtime dependencies
+  (`node:fs` template copy + `node:readline` prompt); refuses non-empty
+  targets with a teaching error and prints the cd/install/dev next
+  steps. Post-publish smoke: scaffold + `pnpm install` + `astro build`
+  against the published `@czap/*` tarballs.
 - `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
   boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
   `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the

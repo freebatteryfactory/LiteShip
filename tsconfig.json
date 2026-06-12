@@ -35,6 +35,7 @@
     { "path": "./packages/audit" },
     { "path": "./packages/command" },
     { "path": "./packages/cli" },
-    { "path": "./packages/mcp-server" }
+    { "path": "./packages/mcp-server" },
+    { "path": "./packages/create-liteship" }
   ]
 }
