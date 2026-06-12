@@ -85,7 +85,10 @@ export async function run(argv: readonly string[]): Promise<number> {
       if (sub === 'compile') return sceneCompile(scene ?? '');
       if (sub === 'dev') return sceneDev(scene ?? '');
       if (sub === 'render') {
-        const outputIdx = subRest.indexOf('-o');
+        // Both space forms (-o X, --output X) must parse — with output now
+        // DERIVED when empty, a missed flag form would silently discard the
+        // user's explicit path instead of erroring like it used to.
+        const outputIdx = subRest.findIndex((a) => a === '-o' || a === '--output');
         const outputNext = outputIdx >= 0 ? subRest[outputIdx + 1] : undefined;
         if (outputIdx >= 0 && (outputNext === undefined || outputNext.startsWith('-'))) {
           emitError('scene.render', 'usage: czap scene render <path-to-scene.ts> -o <output.mp4>');

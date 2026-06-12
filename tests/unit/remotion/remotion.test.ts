@@ -158,6 +158,20 @@ describe('@czap/remotion rendererFromRemotionConfig', () => {
     expect(frames[89]?.frame).toBe(89);
   });
 
+  test('frame counts round-trip exactly at non-representable rates (Codex P2, PR #34)', () => {
+    // (frames / fps) * 1000 is not exactly representable for these pairs —
+    // an unguarded ceil round trip adds a phantom frame (1000 @ 30 -> 1001).
+    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    for (const [durationInFrames, fps] of [
+      [1000, 30],
+      [900, 29.97],
+      [600, 59.94],
+    ] as const) {
+      const renderer = rendererFromRemotionConfig({ fps, width: 16, height: 16, durationInFrames }, compositor);
+      expect(renderer.totalFrames).toBe(durationInFrames);
+    }
+  });
+
   test('accepts the full useVideoConfig shape (extra fields ignored)', () => {
     const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
     const remotionConfig = { fps: 24, width: 1920, height: 1080, durationInFrames: 48, id: 'main' };

@@ -96,6 +96,16 @@ describe('dispatch — missing positionals emit a usage line (no blank-path forw
     expect(err.error).toMatch(new RegExp(`usage: czap scene ${sub} <path-to-scene\\.ts>`));
   });
 
+  it('scene render with --output but no value emits usage like the -o form (Codex P2, PR #34)', async () => {
+    // With empty output now meaning "derive <scene>.mp4", an unrecognized
+    // --output space form would silently discard the user's path. The usage
+    // error here only fires when '--output' is RECOGNIZED as a value-taking
+    // flag — the same findIndex that feeds the value through.
+    const r = await capture(() => run(['scene', 'render', 'intro.ts', '--output', '--force']));
+    expect(r.exit).toBe(1);
+    expect(lastStderrReceipt(r.stderr).error).toBe('usage: czap scene render <path-to-scene.ts> -o <output.mp4>');
+  });
+
   it('scene render with -o but no value emits usage instead of swallowing the next flag', async () => {
     const r = await capture(() => run(['scene', 'render', 'intro.ts', '-o', '--force']));
     expect(r.exit).toBe(1);
