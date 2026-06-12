@@ -362,7 +362,9 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         if (resolved.length === 1) {
           compiledOutputs = resolved[0]![1].compiledOutputs;
         }
-        const named = resolved.filter((entry): entry is readonly [string, EdgeHostBoundaryResolution] => entry[0] !== null);
+        const named = resolved.filter(
+          (entry): entry is readonly [string, EdgeHostBoundaryResolution] => entry[0] !== null,
+        );
         if (named.length > 0) {
           boundaries = Object.fromEntries(named);
         }
