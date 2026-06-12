@@ -8,7 +8,7 @@
 
 > **useCzapState**(): `CompositeState`
 
-Defined in: [remotion/src/composition.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L135)
+Defined in: [remotion/src/composition.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L143)
 
 Hook that reads the `CompositeState` for the current Remotion frame
 from the nearest [Provider](Provider.md). Returns a structurally-empty state
