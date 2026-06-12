@@ -15,6 +15,7 @@ import {
   type DecodedVideo,
 } from '@czap/assets';
 import { resetAssetRegistry } from '@czap/assets/testing';
+import type { Site } from '@czap/core';
 
 /** Minimal mono PCM16 WAV (2 silent samples at 48 kHz) for decoder routing checks. */
 function minimalWav(): ArrayBuffer {
@@ -169,6 +170,84 @@ describe('Asset capsule', () => {
       invariants: [],
     });
     expect(v.site).toEqual(['node', 'browser']);
+  });
+
+  it('an explicit site override wins over derivation: custom video decoder narrowed to node', () => {
+    // The premise of the override: a custom decoder that itself needs node
+    // (e.g. shells out to ffmpeg) must be able to say so instead of
+    // inheriting the permissive custom-decoder default.
+    const decoded: DecodedVideo = { container: 'mp4' };
+    const v = defineAsset({
+      id: 'custom-video-node-only',
+      source: 'clip.mp4',
+      kind: 'video',
+      decoder: async () => decoded,
+      site: ['node'],
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    expect(v.site).toEqual(['node']);
+  });
+
+  it('mutating the caller-owned site array after defineAsset cannot desync cap.site from cap.id', () => {
+    // cap.site participates in the content address, hashed exactly once —
+    // an aliased caller array could change the advertised sites without
+    // changing the identity.
+    const decoded: DecodedVideo = { container: 'mp4' };
+    const callerSite: Site[] = ['node'];
+    const v = defineAsset({
+      id: 'aliased-site-array',
+      source: 'clip.mp4',
+      kind: 'video',
+      decoder: async () => decoded,
+      site: callerSite,
+      budgets: { decodeP95Ms: 100 },
+      invariants: [],
+    });
+    callerSite.push('browser');
+    expect(v.site).toEqual(['node']);
+  });
+
+  it('an explicit site override narrows a builtin-decoded asset within the builtin site set', () => {
+    const a = defineAsset({
+      id: 'node-only-audio',
+      source: 'bed.wav',
+      kind: 'audio',
+      site: ['node'],
+      budgets: { decodeP95Ms: 50 },
+      invariants: [],
+    });
+    expect(a.site).toEqual(['node']);
+  });
+
+  it('declaring browser while relying on the builtin video decoder fails with a teaching error', () => {
+    // builtinDecoderSiteFor('video') is ['node'] (ffprobe needs
+    // node:child_process) — a browser claim on top of it is impossible.
+    expect(() =>
+      defineAsset({
+        id: 'browser-claim-builtin-video',
+        source: 'clip.mp4',
+        kind: 'video',
+        site: ['node', 'browser'],
+        budgets: { decodeP95Ms: 100 },
+        invariants: [],
+      }),
+    ).toThrow(
+      /browser-claim-builtin-video.*built-in video decoder.*Provide a custom `decoder` that runs on browser, or drop browser/s,
+    );
+  });
+
+  it('an empty site override fails with a teaching error — a capsule must run somewhere', () => {
+    expect(() =>
+      defineAsset({
+        id: 'empty-site-asset',
+        source: 'bed.wav',
+        kind: 'audio',
+        site: [],
+        budgets: { decodeP95Ms: 50 },
+        invariants: [],
+      }),
+    ).toThrow(/empty-site-asset.*at least one site.*drop the override/s);
   });
 
   it('video decoder module keeps node-only imports lazy (no top-level node: import)', () => {

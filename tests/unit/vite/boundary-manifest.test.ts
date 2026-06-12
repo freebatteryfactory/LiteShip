@@ -111,6 +111,45 @@ describe('collectBoundaryManifest', () => {
     expect(reduced.css).not.toContain('@property');
   });
 
+  test('viewport.height boundaries carry their own :root size containment and (height ...) queries', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    const heightBoundary = Boundary.make({
+      input: 'viewport.height',
+      at: [
+        [0, 'short'],
+        [600, 'tall'],
+      ],
+    });
+    writeModule(
+      srcDir,
+      'boundaries.ts',
+      `
+const states = ['short', 'tall'];
+export const drawer = {
+  _tag: 'BoundaryDef',
+  _version: 1,
+  id: ${JSON.stringify(heightBoundary.id)},
+  input: 'viewport.height',
+  thresholds: [0, 600],
+  states,
+};
+`,
+    );
+    writeModule(srcDir, 'styles.css', '@quantize drawer {\n  short { --rows: 1; }\n  tall { --rows: 3; }\n}');
+
+    const manifest = await collectBoundaryManifest(root);
+    const outputs = Object.values(manifest['drawer']!.outputsByTier)[0]!;
+
+    expect(outputs.containerQueries).toContain('@container viewport-height (height >= 600px)');
+    // Height queries are block-axis: inline-size containment cannot
+    // evaluate them, so the inline :root rule must declare size
+    // containment with a pinned viewport block size.
+    expect(outputs.containerQueries).toContain(
+      ':root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
+    );
+  });
+
   test('boundary without a @quantize block still gets an id entry (empty outputs)', async () => {
     const root = makeTempDir();
     writeModule(join(root, 'src'), 'boundaries.ts', BOUNDARY_MODULE);
