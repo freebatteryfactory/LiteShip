@@ -68,14 +68,22 @@ export interface CompiledOutputs {
 }
 
 export interface BoundaryCache {
+  /**
+   * `qualifier` joins the key when two NAMES share one boundary
+   * `ContentAddress` but carry different compiled CSS (the same
+   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * without it, the first name's compile result would serve every name.
+   */
   getCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
+    qualifier?: string,
   ): Promise<CompiledOutputs | null>;
   putCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
     outputs: CompiledOutputs,
+    qualifier?: string,
   ): Promise<void>;
 }
 

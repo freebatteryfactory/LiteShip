@@ -365,6 +365,39 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
     expect(second.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
   });
 
+  test('two names sharing one ContentAddress cache separately -- same definition, different CSS (Codex P1)', async () => {
+    // The id comes from Boundary.make's content address; two NAMES can
+    // reference the same definition while their @quantize CSS differs.
+    // id+tier-only keys would let hero's compile result serve sidebar.
+    const { kv, store } = makeKV();
+    const compile = ({ boundaryName }: { boundaryName?: string }) => ({
+      css: `.${boundaryName}{}`,
+      propertyRegistrations: '',
+      containerQueries: '',
+    });
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: { boundaryId: heroBoundary.id, compile },
+          sidebar: { boundaryId: heroBoundary.id, compile },
+        },
+      },
+    });
+
+    const first = await adapter.resolve(makeHeaders());
+    const second = await adapter.resolve(makeHeaders());
+
+    expect(first.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(first.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+    // One KV key per NAME even though the content address is shared.
+    expect(store.size).toBe(2);
+    expect(second.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(second.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+    expect(second.boundaries?.hero?.cacheStatus).toBe('hit');
+    expect(second.boundaries?.sidebar?.cacheStatus).toBe('hit');
+  });
+
   test('compile context carries the boundary identity', async () => {
     const { kv } = makeKV();
     const compile = vi.fn(() => ({ css: '', propertyRegistrations: '', containerQueries: '' }));

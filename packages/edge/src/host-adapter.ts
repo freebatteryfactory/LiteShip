@@ -277,7 +277,11 @@ async function resolveBoundaryOutputs(
   if (precompiled) {
     return { boundaryId: source.boundaryId, compiledOutputs: precompiled, cacheStatus: 'precompiled' };
   }
-  const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier);
+  // The boundary NAME qualifies the KV key: two names can share one
+  // ContentAddress (same Boundary.make definition) while their @quantize
+  // CSS differs — id+tier alone would let the first compile serve both.
+  const qualifier = name ?? undefined;
+  const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier, qualifier);
   if (cached) {
     return { boundaryId: source.boundaryId, compiledOutputs: cached, cacheStatus: 'hit' };
   }
@@ -287,7 +291,7 @@ async function resolveBoundaryOutputs(
       boundaryId: source.boundaryId,
       ...(name === null ? {} : { boundaryName: name }),
     });
-    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs);
+    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier);
     return { boundaryId: source.boundaryId, compiledOutputs, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
