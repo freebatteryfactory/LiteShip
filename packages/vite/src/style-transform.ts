@@ -12,6 +12,14 @@
 import type { Style } from '@czap/core';
 import { StyleCSSCompiler } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
+import {
+  blankCssCommentsAndStrings,
+  braceDepthDelta,
+  lineOfOffset,
+  parseFlatDeclarations,
+  skipSegment,
+  skipWsAndComments,
+} from './css-scan.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,82 +57,77 @@ export interface StyleBlock {
  * }
  * ```
  *
- * Follows the same nested-brace pattern as `@quantize` blocks.
+ * Parsing is fully character-level via the shared `css-scan` helpers
+ * (same scanner as `@token` / `@theme` / `@quantize`): upstream
+ * compilers (e.g. the Astro compiler re-serializing a `<style>` block)
+ * emit at-rules mid-line and collapse whole sheets onto a single line,
+ * so no line structure is assumed. At-rule markers are located on a
+ * comment- and string-blanked copy of the source (same offsets) so
+ * neither commented-out blocks nor marker text inside string values or
+ * data URLs ever match; state bodies are parsed from the original
+ * source with comment / string / functional-notation awareness,
+ * including multi-line values.
  */
 export function parseStyleBlocks(css: string, sourceFile: string): readonly StyleBlock[] {
+  const normalized = normalizeCssLineEndings(css);
+  const blanked = blankCssCommentsAndStrings(normalized);
   const blocks: StyleBlock[] = [];
-  const lines = normalizeCssLineEndings(css).split('\n');
-  let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i]!;
-    const atMatch = line.match(/^\s*@style\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/);
+  const atRule = /@style\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/g;
+  const statePattern = /([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/y;
 
-    if (atMatch) {
-      const styleName = atMatch[1]!;
-      const blockStartLine = i + 1; // 1-indexed
-      const states: Record<string, Record<string, string>> = {};
+  // Running depth from the last accepted scan position — markers are only
+  // at-rules at the sheet's top level; `@style name {` text inside a
+  // declaration value (e.g. a custom property holding a snippet) is value
+  // text, and splicing it would corrupt the surrounding declaration.
+  let depthFrom = 0;
+  let depth = 0;
 
-      i++; // advance past @style line
-      let braceDepth = 1;
+  let match: RegExpExecArray | null;
+  while ((match = atRule.exec(blanked)) !== null) {
+    depth = braceDepthDelta(blanked, depthFrom, match.index, depth);
+    depthFrom = match.index;
+    if (depth > 0) continue;
+    const styleName = match[1]!;
+    const blockStartLine = lineOfOffset(normalized, match.index);
+    const states: Record<string, Record<string, string>> = {};
 
-      while (i < lines.length && braceDepth > 0) {
-        const currentLine = lines[i]!;
-        const trimmed = currentLine.trim();
+    let pos = match.index + match[0].length;
 
-        if (braceDepth === 1) {
-          // Look for state name opening
-          const stateMatch = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_-]*)\s*\{/);
-          if (stateMatch) {
-            const stateName = stateMatch[1]!;
-            const props: Record<string, string> = {};
-            i++; // advance past state name line
+    while (pos < normalized.length) {
+      pos = skipWsAndComments(normalized, pos);
+      if (pos >= normalized.length) break;
 
-            let stateDepth = 0;
-            while (i < lines.length) {
-              const propLine = lines[i]!.trim();
-
-              for (const ch of propLine) {
-                if (ch === '{') stateDepth++;
-                else if (ch === '}') stateDepth--;
-              }
-
-              if (stateDepth < 0) {
-                i++;
-                break;
-              }
-
-              const propMatch = propLine.match(/^([a-zA-Z-][a-zA-Z0-9-]*)\s*:\s*(.+?)\s*;?\s*$/);
-              if (propMatch) {
-                props[propMatch[1]!] = propMatch[2]!.replace(/;$/, '').trim();
-              }
-              i++;
-            }
-
-            states[stateName] = props;
-            continue;
-          }
-
-          // Closing brace for @style block
-          if (trimmed === '}') {
-            braceDepth--;
-            i++;
-            continue;
-          }
-        }
-
-        // Track nested braces for robustness
-        for (const ch of trimmed) {
-          if (ch === '{') braceDepth++;
-          if (ch === '}') braceDepth--;
-        }
-        i++;
+      // Closing brace of the @style block
+      if (normalized[pos] === '}') {
+        pos++;
+        break;
       }
 
-      blocks.push({ styleName, states, sourceFile, line: blockStartLine });
-    } else {
-      i++;
+      // State block opening: `stateName {` — bodies are flat declarations
+      statePattern.lastIndex = pos;
+      const stateMatch = statePattern.exec(normalized);
+      if (stateMatch) {
+        const stateName = stateMatch[1]!;
+        const { props, end } = parseFlatDeclarations(normalized, statePattern.lastIndex);
+        states[stateName] = props;
+        pos = end;
+        continue;
+      }
+
+      // Anything else (nested non-state wrappers, stray declarations):
+      // skip one balanced segment and keep scanning for states.
+      pos = skipSegment(normalized, pos);
     }
+
+    blocks.push({ styleName, states, sourceFile, line: blockStartLine });
+
+    // Resume marker search after this block so state bodies are never
+    // re-matched as new at-rules. The block just consumed is balanced, so
+    // the depth at `pos` is the depth where it began (top level).
+    atRule.lastIndex = pos;
+    depthFrom = pos;
+    depth = 0;
   }
 
   return blocks;

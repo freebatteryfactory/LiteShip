@@ -402,6 +402,146 @@ describe('parseStyleBlocks', () => {
 });
 
 // ---------------------------------------------------------------------------
+// @style scanner regressions (css-scan port)
+// ---------------------------------------------------------------------------
+
+describe('parseStyleBlocks scanner regressions (css-scan port)', () => {
+  // Characterized BEFORE porting onto css-scan.ts: the original parser
+  // was line-based (one construct per line, naive brace counting), so
+  // re-serialized single-line sheets, braces inside comments / strings,
+  // and multi-line values all corrupted the parse. These pin the
+  // character-level behavior shared with @token / @theme / @quantize.
+
+  test('parses a mid-line single-line @style block (Astro re-serialization)', () => {
+    const css = '.a{color:red}@style card{hover{opacity: 0.8;}idle{opacity: 1;}}.b{margin:0}';
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.styleName).toBe('card');
+    expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.8' });
+    expect(blocks[0]!.states['idle']).toEqual({ opacity: '1' });
+    expect(blocks[0]!.line).toBe(1);
+  });
+
+  test('comments inside state values read as whitespace, not as token fusion', () => {
+    // CSS treats a comment as whitespace: 1fr/*c*/2fr means "1fr 2fr".
+    const css = `
+@style grid {
+  wide {
+    grid-template-columns: 1fr/*gutter*/2fr;
+  }
+}`;
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks[0]!.states['wide']).toEqual({ 'grid-template-columns': '1fr 2fr' });
+  });
+
+  test('braces inside comments do not terminate the state or the block', () => {
+    const css = `
+@style card {
+  hover {
+    /* keep } this */
+    opacity: 0.9;
+  }
+  active {
+    opacity: 1;
+  }
+}`;
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.9' });
+    expect(blocks[0]!.states['active']).toEqual({ opacity: '1' });
+  });
+
+  test('braces and semicolons inside quoted string values do not terminate declarations', () => {
+    const css = `
+@style chip {
+  hover {
+    content: "; } end";
+    color: red;
+  }
+}`;
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks[0]!.states['hover']).toEqual({ content: '"; } end"', color: 'red' });
+  });
+
+  test('semicolons inside unquoted url() data URIs do not split the value', () => {
+    const css = `
+@style logo {
+  idle {
+    background: url(data:image/svg+xml;base64,AAA) no-repeat;
+  }
+}`;
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks[0]!.states['idle']).toEqual({
+      background: 'url(data:image/svg+xml;base64,AAA) no-repeat',
+    });
+  });
+
+  test('ignores @style markers inside comments, string values, and data URLs', () => {
+    const css = `
+/* disabled:
+@style ghost { hover { opacity: 0; } }
+*/
+.decoy::before { content: "@style fake { hover { opacity: 0; } }"; }
+.bg { background: url(data:text/plain,@style fake { hover }); }`;
+
+    expect(parseStyleBlocks(css, FILE)).toEqual([]);
+  });
+
+  test('collects multi-line functional values as one declaration', () => {
+    const css = `
+@style hero {
+  idle {
+    background: linear-gradient(
+      to bottom,
+      red,
+      blue
+    );
+    color: white;
+  }
+}`;
+
+    const blocks = parseStyleBlocks(css, FILE);
+    const background = blocks[0]!.states['idle']?.['background'];
+
+    expect(background).toContain('linear-gradient(');
+    expect(background).toContain('to bottom');
+    expect(background).toContain('blue');
+    expect(blocks[0]!.states['idle']?.['color']).toBe('white');
+  });
+
+  test('parses style blocks when CSS uses CRLF line endings', () => {
+    const css = '@style card {\r\n  hover {\r\n    opacity: 0.8;\r\n  }\r\n}\r\n';
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.8' });
+  });
+
+  test('@style text inside a declaration value is value text, not a block (Codex P2, PR #30)', () => {
+    // An unquoted custom-property payload can contain a full at-rule token
+    // sequence — only the TOP-LEVEL marker is a real block; splicing the
+    // in-value range would corrupt the .x rule.
+    const css = '.x{--snippet:@style card{hover{opacity:0}};} @style card { hover { opacity: 0.5; } }';
+
+    const blocks = parseStyleBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['hover']).toEqual({ opacity: '0.5' });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // @quantize block parsing
 // ---------------------------------------------------------------------------
 
@@ -543,6 +683,15 @@ describe('parseQuantizeBlocks', () => {
 
     expect(blocks).toHaveLength(1);
     expect(blocks[0]!.states['state1']?.bareProps['color']).toBe('red');
+  });
+
+  test('@quantize text inside a declaration value is value text, not a block (same guard as @style)', () => {
+    const css = '.x{--snippet:@quantize layout{mobile{gap:0}};} @quantize layout { mobile { gap: 1rem; } }';
+
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.states['mobile']?.bareProps['gap']).toBe('1rem');
   });
 });
 
