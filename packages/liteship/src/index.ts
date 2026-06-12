@@ -13,7 +13,11 @@
  * @module
  */
 
-/** Every `@czap/*` package this umbrella installs, in dependency order. */
+/**
+ * Every `@czap/*` package this umbrella installs, in dependency order.
+ * Consumed by audit/doctor/release tooling that needs the canonical fleet
+ * list; app authors never need to import it for layers 1–3.
+ */
 export const LITESHIP_PACKAGES = [
   '@czap/_spine',
   '@czap/core',

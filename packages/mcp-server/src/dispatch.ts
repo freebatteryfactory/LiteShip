@@ -46,10 +46,10 @@ const RECEIPT_META_KEY: CapsuleResultMetaKey = 'liteship/result';
 /** The single dispatcher over the canonical registry — same instance the CLI uses. */
 const dispatcher = CommandDispatcher.make(commandRegistry);
 
-/** Shape of an MCP tools/call parameter object. */
+/** Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`. */
 export interface McpToolCall {
   readonly name: string;
-  readonly arguments: Record<string, unknown>;
+  readonly arguments?: Record<string, unknown>;
 }
 
 /**
@@ -136,13 +136,14 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     case 'tools/list':
       return ok({ tools: listTools() });
     case 'tools/call': {
-      const params = msg.params as { name: string; arguments: Record<string, unknown> } | undefined;
+      const params = msg.params as { name: string; arguments?: Record<string, unknown> } | undefined;
       if (!params || typeof params.name !== 'string') {
         // Per §5.1, malformed params → -32602. InvalidParamsError sentinel
         // is mapped to InvalidParams in dispatch's catch block.
-        throw new InvalidParamsError('tools/call requires { name: string, arguments: object }', { received: params });
+        throw new InvalidParamsError('tools/call requires { name: string, arguments?: object }', { received: params });
       }
-      const result = await dispatchToolCall(params);
+      // MCP marks `arguments` optional — default to {} like prompts/get and ui/call-tool.
+      const result = await dispatchToolCall({ name: params.name, arguments: params.arguments ?? {} });
       return ok(result);
     }
     case 'resources/list':
@@ -248,7 +249,7 @@ function computeResultId(result: CapsuleCommandResult): ContentAddress {
  *   - `isError` reflects a tool-execution failure (NOT a JSON-RPC protocol error).
  */
 export async function dispatchToolCall(call: McpToolCall): Promise<McpToolResult> {
-  const result = await dispatcher.dispatch({ name: call.name, args: call.arguments }, createNodeCommandContext());
+  const result = await dispatcher.dispatch({ name: call.name, args: call.arguments ?? {} }, createNodeCommandContext());
   const payload = result.payload ?? null;
   const receipt: CapsuleResultReceipt = {
     command: result.command,
