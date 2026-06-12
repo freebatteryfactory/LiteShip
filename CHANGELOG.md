@@ -216,6 +216,21 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `@czap/remotion`: `rendererFromRemotionConfig(config, compositor, signal?)` builds a `VideoRenderer` directly from Remotion's `useVideoConfig()`/`calculateMetadata` shape, deriving `durationMs = durationInFrames / fps * 1000` so fps/duration are declared exactly once — in Remotion — and can no longer drift into a video that freezes on the last frame. New `RemotionVideoConfig` type exported; both mirrored in `@czap/_spine`.
 ### Changed
 
+- `@czap/vite` — `PluginConfig.environments` now defaults to `['browser']`
+  when omitted (derive-with-override); pass `environments: []` to opt out.
+- `@czap/vite` — `PluginConfig.wasm` accepts `true` as shorthand for
+  `{ enabled: true }`.
+- `@czap/vite` — exports `czap` as an alias for `plugin`; docblock examples
+  updated.
+- **BREAKING** `@czap/vite` — the `data-czap="name"` HTML macro now emits
+  `data-czap-directive="satellite"` alongside `data-czap-boundary`, so macro
+  elements activate the runtime scanner (previously inert).
+- `@czap/vite` — `transformHTML` blanks HTML comments and `<pre>`/`<code>`
+  contents before matching `data-czap` macros, so teaching prose and code
+  samples are not corrupted into boundary JSON blobs.
+- `@czap/vite` — boundary-not-found, import-failed, export-tag-mismatch, and
+  WASM buildStart warnings upgraded to doctor-style messages naming searched
+  paths and literal fixes.
 - **BREAKING** `@czap/edge` + `@czap/vite` — the boundary manifest
   deduplicates tier-invariant CSS (the format shipped above in this
   release, so no released format breaks): `BoundaryManifestEntry` pools

@@ -12,11 +12,13 @@ import type { BoundaryManifest } from './edge.d.ts';
 
 export type PrimitiveKind = 'boundary' | 'token' | 'theme' | 'style';
 
-export type PrimitiveShape<K extends PrimitiveKind> =
-  K extends 'boundary' ? Boundary.Shape :
-  K extends 'token' ? Token.Shape :
-  K extends 'theme' ? Theme.Shape :
-  Style.Shape;
+export type PrimitiveShape<K extends PrimitiveKind> = K extends 'boundary'
+  ? Boundary.Shape
+  : K extends 'token'
+    ? Token.Shape
+    : K extends 'theme'
+      ? Theme.Shape
+      : Style.Shape;
 
 export interface PrimitiveResolution<K extends PrimitiveKind> {
   readonly primitive: PrimitiveShape<K>;
@@ -31,7 +33,7 @@ export interface PluginConfig {
   readonly dirs?: Partial<Record<PrimitiveKind, string>>;
   readonly hmr?: boolean;
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-  readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
+  readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

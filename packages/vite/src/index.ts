@@ -25,7 +25,7 @@
  * ```ts
  * // vite.config.ts
  * import { defineConfig } from 'vite';
- * import { plugin as czap } from '@czap/vite';
+ * import { czap } from '@czap/vite';
  *
  * const config = defineConfig({
  *   plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
@@ -38,6 +38,7 @@
 // Plugin
 export type { PluginConfig } from './plugin.js';
 export { plugin } from './plugin.js';
+export { plugin as czap } from './plugin.js';
 export { resolveWASM } from './wasm-resolve.js';
 export type { WASMResolution } from './wasm-resolve.js';
 

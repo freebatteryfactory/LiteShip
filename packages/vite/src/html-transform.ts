@@ -9,7 +9,8 @@
  */
 
 import { Diagnostics } from '@czap/core';
-import { resolvePrimitive } from './primitive-resolve.js';
+import { blankHtmlCommentsAndCodeBlocks, lineOfOffset } from './html-scan.js';
+import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
 
 // Match data-czap="boundaryName" (not data-czap-* which are other attrs)
 const DATA_CZAP_PATTERN = /data-czap="([^"]+)"/g;
@@ -29,7 +30,8 @@ export async function transformHTML(
   projectRoot: string,
   boundaryDir?: string,
 ): Promise<string> {
-  const matches = [...source.matchAll(DATA_CZAP_PATTERN)];
+  const scan = blankHtmlCommentsAndCodeBlocks(source);
+  const matches = [...scan.matchAll(DATA_CZAP_PATTERN)];
   if (matches.length === 0) return source;
 
   let result = source;
@@ -37,14 +39,15 @@ export async function transformHTML(
   for (const match of matches) {
     const fullMatch = match[0]!;
     const boundaryName = match[1]!;
+    const line = lineOfOffset(source, match.index ?? 0);
 
     const resolution = await resolvePrimitive('boundary', boundaryName, fromFile, projectRoot, boundaryDir);
     if (!resolution) {
       Diagnostics.warn({
         source: 'czap/vite.html-transform',
         code: 'boundary-not-found',
-        message: `Boundary "${boundaryName}" could not be resolved for HTML transform.`,
-        detail: { fromFile },
+        message: unresolvedPrimitiveWarning('boundary', boundaryName, fromFile, line, projectRoot, boundaryDir),
+        detail: { fromFile, line, boundaryName },
       });
       continue;
     }
@@ -58,9 +61,10 @@ export async function transformHTML(
       hysteresis: boundary.hysteresis,
     });
 
-    // Replace data-czap="name" with data-czap-boundary='...'
-    const replacement = `data-czap-boundary='${serialized.replace(/'/g, '&#39;')}'`;
-    result = result.replace(fullMatch, replacement);
+    // Replace data-czap="name" with data-czap-boundary='...' and activate the satellite directive.
+    const replacement = `data-czap-boundary='${serialized.replace(/'/g, '&#39;')}' data-czap-directive="satellite"`;
+    const index = match.index ?? 0;
+    result = result.slice(0, index) + replacement + result.slice(index + fullMatch.length);
   }
 
   return result;

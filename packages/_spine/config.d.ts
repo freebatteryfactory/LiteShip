@@ -16,7 +16,7 @@ export declare namespace Config {
       readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
       readonly hmr?: boolean;
       readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-      readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
+      readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
     };
     readonly astro?: {
       readonly satellite?: boolean;

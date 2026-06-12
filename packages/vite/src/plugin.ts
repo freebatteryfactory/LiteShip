@@ -11,21 +11,21 @@
  */
 
 import { readFileSync } from 'node:fs';
-import * as path from 'node:path';
 import type { EnvironmentModuleNode, Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
 import { collectBoundaryManifest } from './boundary-manifest.js';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
-import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
+import { resolvePrimitive } from './primitive-resolve.js';
+import { unresolvedPrimitiveWarning } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
 import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
 import { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
 import { resolveVirtualId, loadVirtualModule } from './virtual-modules.js';
 import { buildEnvironments, type CzapEnvironmentName } from './environments.js';
-import { resolveWASM } from './wasm-resolve.js';
+import { resolveWASM, formatWasmSearchPaths } from './wasm-resolve.js';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 
 // ---------------------------------------------------------------------------
@@ -41,51 +41,31 @@ export interface PluginConfig {
   readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
   /** Toggle surgical HMR emission (default `true`). */
   readonly hmr?: boolean;
-  /** Named Vite environments to configure (browser / server / shader). */
+  /** Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted. */
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-  /** Opt-in WASM runtime configuration. */
-  readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
+  /** Opt-in WASM runtime configuration (`true` or `{ enabled: true }`). */
+  readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
+}
+
+/** Default Vite environments when {@link PluginConfig.environments} is omitted. */
+const DEFAULT_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser'];
+
+function resolveEnvironmentNames(configured?: readonly CzapEnvironmentName[]): readonly CzapEnvironmentName[] {
+  return configured ?? DEFAULT_ENVIRONMENTS;
+}
+
+function normalizeWasmConfig(wasm?: boolean | { readonly enabled?: boolean; readonly path?: string }): {
+  readonly enabled: boolean;
+  readonly path?: string;
+} {
+  if (wasm === true) return { enabled: true };
+  if (wasm === false || wasm === undefined) return { enabled: false };
+  return { enabled: wasm.enabled === true, path: wasm.path };
 }
 
 // ---------------------------------------------------------------------------
 // Diagnostics
 // ---------------------------------------------------------------------------
-
-/** Factory namespace users type to produce each primitive kind. */
-const KIND_FACTORY: Record<PrimitiveKind, string> = {
-  boundary: 'Boundary',
-  token: 'Token',
-  theme: 'Theme',
-  style: 'Style',
-};
-
-/**
- * Doctor-style warning for an unresolved primitive: what happened (the
- * name and the file that referenced it), why probably (none of the
- * searched convention modules exported it), and the literal next thing
- * to type (the factory export, or the `dirs` override).
- */
-function unresolvedPrimitiveWarning(
-  kind: PrimitiveKind,
-  name: string,
-  id: string,
-  line: number,
-  projectRoot: string,
-  userDir: string | undefined,
-): string {
-  const searched = primitiveSearchPatterns(kind, id, projectRoot, userDir)
-    .map((pattern) => {
-      const rel = path.relative(projectRoot, pattern);
-      return rel.startsWith('..') ? pattern : rel;
-    })
-    .join(', ');
-  return (
-    `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
-    `Searched for an export named "${name}" in: ${searched} (none matched). ` +
-    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
-    `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
-  );
-}
 
 /** Supported authoring grammar per at-rule, quoted verbatim in parse-miss warnings. */
 const SUPPORTED_GRAMMAR: Record<'@token' | '@quantize', string> = {
@@ -151,18 +131,19 @@ function emptyQuantizeWarning(boundaryName: string, id: string, line: number): s
  * @example
  * ```ts
  * // vite.config.ts
- * import { plugin as czap } from '@czap/vite';
+ * import { czap } from '@czap/vite';
  * const config = { plugins: [czap()] };
  * ```
  */
 export function plugin(config?: PluginConfig): Plugin {
   const hmrEnabled = config?.hmr !== false;
-  const wasmEnabled = config?.wasm?.enabled === true;
+  const wasmConfig = normalizeWasmConfig(config?.wasm);
+  const wasmEnabled = wasmConfig.enabled;
   let projectRoot = process.cwd();
   let isBuild = false;
   let resolvedWasm: ReturnType<typeof resolveWASM> = null;
   if (wasmEnabled) {
-    resolvedWasm = resolveWASM(projectRoot, config?.wasm?.path);
+    resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
   }
   let emittedWasmRefId: string | null = null;
 
@@ -185,7 +166,7 @@ export function plugin(config?: PluginConfig): Plugin {
       isBuild = resolvedConfig.command === 'build';
       resolvedWasm = null;
       if (wasmEnabled) {
-        resolvedWasm = resolveWASM(projectRoot, config?.wasm?.path);
+        resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
       }
     },
 
@@ -194,10 +175,13 @@ export function plugin(config?: PluginConfig): Plugin {
         return;
       }
 
-      resolvedWasm = resolveWASM(projectRoot, config?.wasm?.path);
+      resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
       if (!resolvedWasm) {
+        const searched = formatWasmSearchPaths(projectRoot, wasmConfig.path);
         this.warn(
-          'WASM support was enabled, but no czap-compute binary could be resolved. Runtime will fall back to TypeScript kernels.',
+          `WASM support was enabled, but no czap-compute binary could be resolved. Searched: ${searched}. ` +
+            'Fix: build the crate (`cargo build --target wasm32-unknown-unknown --release` in crates/czap-compute) ' +
+            'or copy the binary to public/czap-compute.wasm. Runtime will fall back to TypeScript kernels.',
         );
         return;
       }
@@ -578,9 +562,9 @@ export function plugin(config?: PluginConfig): Plugin {
     },
 
     config() {
-      if (!config?.environments || config.environments.length === 0) return {};
+      const envNames = resolveEnvironmentNames(config?.environments);
+      if (envNames.length === 0) return {};
 
-      const envNames = config.environments as readonly CzapEnvironmentName[];
       const envs = buildEnvironments(envNames);
 
       return {

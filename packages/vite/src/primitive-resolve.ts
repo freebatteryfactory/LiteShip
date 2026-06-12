@@ -95,6 +95,42 @@ export function primitiveSearchPatterns(
   ]);
 }
 
+/** Factory namespace users type to produce each primitive kind. */
+const KIND_FACTORY: Record<PrimitiveKind, string> = {
+  boundary: 'Boundary',
+  token: 'Token',
+  theme: 'Theme',
+  style: 'Style',
+};
+
+/**
+ * Doctor-style warning for an unresolved primitive: what happened (the
+ * name and the file that referenced it), why probably (none of the
+ * searched convention modules exported it), and the literal next thing
+ * to type (the factory export, or the `dirs` override).
+ */
+export function unresolvedPrimitiveWarning(
+  kind: PrimitiveKind,
+  name: string,
+  id: string,
+  line: number,
+  projectRoot: string,
+  userDir: string | undefined,
+): string {
+  const searched = primitiveSearchPatterns(kind, id, projectRoot, userDir)
+    .map((pattern) => {
+      const rel = path.relative(projectRoot, pattern);
+      return rel.startsWith('..') ? pattern : rel;
+    })
+    .join(', ');
+  return (
+    `Could not resolve ${kind} "${name}" referenced in ${id}:${line}. ` +
+    `Searched for an export named "${name}" in: ${searched} (none matched). ` +
+    `Fix: add \`export const ${name} = ${KIND_FACTORY[kind]}.make({ ... })\` to one of those files, ` +
+    `or point the plugin at your ${kind} definitions: czap({ dirs: { ${kind}: './path/to/dir' } }).`
+  );
+}
+
 /**
  * Resolve a named primitive (boundary / token / theme / style) by
  * walking the convention-based search order. Returns `null` when no

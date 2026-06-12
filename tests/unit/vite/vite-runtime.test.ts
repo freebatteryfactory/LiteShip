@@ -343,9 +343,13 @@ describe('@czap/vite plugin', () => {
     expect(vitePlugin.transformIndexHtml?.()).toEqual([]);
   });
 
-  test('returns configured environments only when requested', () => {
-    const noEnvPlugin = plugin();
-    expect(noEnvPlugin.config?.()).toEqual({});
+  test('derives browser environment by default and honors explicit overrides', () => {
+    const defaultPlugin = plugin();
+    const defaultResult = defaultPlugin.config?.() as { environments: Record<string, unknown> };
+    expect(Object.keys(defaultResult.environments)).toEqual(['browser']);
+
+    const emptyPlugin = plugin({ environments: [] });
+    expect(emptyPlugin.config?.()).toEqual({});
 
     const envPlugin = plugin({ environments: ['browser', 'server'] });
     const result = envPlugin.config?.() as { environments: Record<string, unknown> };
@@ -384,8 +388,10 @@ describe('@czap/vite plugin', () => {
     missingPlugin.configResolved?.({ root: missingRoot, command: 'serve' } as never);
     missingPlugin.buildStart?.call({ warn, emitFile: vi.fn() } as never);
     expect(warn).toHaveBeenCalledWith(
-      'WASM support was enabled, but no czap-compute binary could be resolved. Runtime will fall back to TypeScript kernels.',
+      expect.stringContaining('WASM support was enabled, but no czap-compute binary could be resolved.'),
     );
+    expect(warn.mock.calls[0]?.[0]).toContain('Searched:');
+    expect(warn.mock.calls[0]?.[0]).toContain('public/czap-compute.wasm');
     expect(missingPlugin.load?.('\0virtual:czap/wasm-url')).toContain('export const wasmUrl = null');
 
     const buildRoot = makeTempDir();
@@ -588,9 +594,7 @@ describe('@czap/vite plugin', () => {
       warnings.some((message) => message.includes('no @token block parsed') && message.includes('dialects.css:2')),
     ).toBe(true);
     expect(
-      warnings.some(
-        (message) => message.includes('no @quantize block parsed') && message.includes('dialects.css:5'),
-      ),
+      warnings.some((message) => message.includes('no @quantize block parsed') && message.includes('dialects.css:5')),
     ).toBe(true);
     expect(warnings.every((message) => message.includes('Fix: rewrite it to the supported grammar'))).toBe(true);
   });
@@ -669,7 +673,9 @@ describe('@czap/vite plugin', () => {
   test('returns null for html files when no html transform changes are needed', async () => {
     const vitePlugin = plugin();
 
-    expect(await vitePlugin.transform?.call({ warn() {} } as never, '<main>plain html</main>', 'src/app.html')).toBeNull();
+    expect(
+      await vitePlugin.transform?.call({ warn() {} } as never, '<main>plain html</main>', 'src/app.html'),
+    ).toBeNull();
   });
 
   test('transforms css blocks using same-directory definitions', async () => {
@@ -1095,9 +1101,7 @@ describe('@czap/vite plugin', () => {
     vi.spyOn(ThemeTransformModule, 'parseThemeBlocks').mockReturnValue([
       { themeName: 'brand', line: 2, declarations: {} },
     ]);
-    vi.spyOn(StyleTransformModule, 'parseStyleBlocks').mockReturnValue([
-      { styleName: 'card', line: 3, states: {} },
-    ]);
+    vi.spyOn(StyleTransformModule, 'parseStyleBlocks').mockReturnValue([{ styleName: 'card', line: 3, states: {} }]);
     vi.spyOn(TokenTransformModule, 'compileTokenBlock').mockReturnValue(':root { --czap-accent: #ffffff; }');
     vi.spyOn(ThemeTransformModule, 'compileThemeBlock').mockReturnValue('html[data-theme="light"] {}');
     vi.spyOn(StyleTransformModule, 'compileStyleBlock').mockReturnValue('.card[data-state="compact"] {}');
@@ -1155,11 +1159,7 @@ describe('@czap/vite plugin', () => {
     writeModule(cssDir, 'tokens.ts', 'accent', token);
     writeModule(cssDir, 'extra.tokens.ts', 'accentx', tokenExtra);
     writeModule(cssDir, 'styles.ts', 'card', style);
-    writeModule(
-      cssDir,
-      'styles.extra.ts',
-      `export const cardExtra = ${JSON.stringify(style, null, 2)};\n`,
-    );
+    writeModule(cssDir, 'styles.extra.ts', `export const cardExtra = ${JSON.stringify(style, null, 2)};\n`);
 
     const cssFile = join(cssDir, 'collisions.css');
     const css = `
@@ -1301,19 +1301,25 @@ describe('@czap/vite plugin', () => {
     const vitePlugin = plugin();
     const context = { environment: { moduleGraph } };
 
-    const defUpdate = vitePlugin.hotUpdate?.call(context as never, {
-      file: 'src/panel.tokens.ts',
-    } as never);
+    const defUpdate = vitePlugin.hotUpdate?.call(
+      context as never,
+      {
+        file: 'src/panel.tokens.ts',
+      } as never,
+    );
     expect(defUpdate).toEqual([cssModule]);
 
     // hotUpdate extends Vite's own affected set (options.modules) rather
     // than rebuilding it from getModuleById — returning an array replaces
     // Vite's list, so dropping options.modules would suppress the edited
     // file's own HMR for query-bearing module ids.
-    const cssUpdate = vitePlugin.hotUpdate?.call(context as never, {
-      file: 'src/app.css',
-      modules: [cssModule],
-    } as never);
+    const cssUpdate = vitePlugin.hotUpdate?.call(
+      context as never,
+      {
+        file: 'src/app.css',
+        modules: [cssModule],
+      } as never,
+    );
     expect(cssUpdate).toEqual([cssModule]);
   });
 
@@ -1717,21 +1723,30 @@ describe('@czap/vite plugin', () => {
     const vitePlugin = plugin();
     const context = { environment: { moduleGraph } };
 
-    const defUpdate = vitePlugin.hotUpdate?.call(context as never, {
-      file: 'src/panel.styles.ts',
-    } as never);
+    const defUpdate = vitePlugin.hotUpdate?.call(
+      context as never,
+      {
+        file: 'src/panel.styles.ts',
+      } as never,
+    );
     expect(defUpdate).toEqual([astroModule, htmlModule]);
 
-    const astroUpdate = vitePlugin.hotUpdate?.call(context as never, {
-      file: 'src/page.astro',
-      modules: [astroModule],
-    } as never);
+    const astroUpdate = vitePlugin.hotUpdate?.call(
+      context as never,
+      {
+        file: 'src/page.astro',
+        modules: [astroModule],
+      } as never,
+    );
     expect(astroUpdate).toEqual([astroModule]);
 
-    const htmlUpdate = vitePlugin.hotUpdate?.call(context as never, {
-      file: 'src/index.html',
-      modules: [htmlModule],
-    } as never);
+    const htmlUpdate = vitePlugin.hotUpdate?.call(
+      context as never,
+      {
+        file: 'src/index.html',
+        modules: [htmlModule],
+      } as never,
+    );
     expect(htmlUpdate).toEqual([htmlModule]);
   });
 });
