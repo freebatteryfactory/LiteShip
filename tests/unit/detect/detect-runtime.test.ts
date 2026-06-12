@@ -14,6 +14,7 @@ import {
   motionTierFromCapabilities,
   tierFromCapabilities,
 } from '../../../packages/detect/src/tiers.js';
+import { Diagnostics } from '@czap/core';
 
 type MockMediaQueryList = MediaQueryList & {
   dispatchChange(): void;
@@ -104,6 +105,7 @@ describe('device detection runtime', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     resetDetectionCaches();
+    Diagnostics.reset();
     installMatchMedia({});
     setNavigatorProperty('hardwareConcurrency', 8);
     setNavigatorProperty('deviceMemory', 8);
@@ -122,6 +124,7 @@ describe('device detection runtime', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    Diagnostics.reset();
     document.body.innerHTML = '';
   });
 
@@ -818,6 +821,75 @@ describe('device detection runtime', () => {
 
     expect(getContext).toHaveBeenCalledTimes(1);
     expect(loseContext).toHaveBeenCalledTimes(1);
+  });
+
+  test('warns once for unrecognized GPU renderer strings, naming the renderer and the default', () => {
+    const buffer = Diagnostics.createBufferSink();
+    Diagnostics.setSink(buffer.sink);
+
+    mockRenderer('Acme XG-9');
+    expect(Effect.runSync(detectGPUTier())).toBe(1);
+
+    const events = buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.source).toBe('czap/detect');
+    expect(events[0]?.message).toContain('"Acme XG-9"');
+    expect(events[0]?.message).toContain('tier 1');
+    expect(events[0]?.message).toContain('github.com/heyoub/LiteShip/issues');
+
+    // warn-once: re-classifying the same renderer stays silent.
+    resetDetectionCaches();
+    Effect.runSync(detectGPUTier());
+    expect(buffer.events.filter((e) => e.code === 'unrecognized-gpu-renderer')).toHaveLength(1);
+  });
+
+  test('emits one grouped diagnostic naming each defaulted probe and whether it threw or was unavailable', () => {
+    const buffer = Diagnostics.createBufferSink();
+    Diagnostics.setSink(buffer.sink);
+
+    installMatchMedia({});
+    setNavigatorProperty('connection', undefined);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
+      throw new Error('SecurityError: fingerprinting protection');
+    });
+
+    Effect.runSync(detect());
+
+    const events = buffer.events.filter((e) => e.code === 'probes-defaulted');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.source).toBe('czap/detect');
+    expect(events[0]?.message).toContain('renderer (threw: Error: SecurityError: fingerprinting protection)');
+    expect(events[0]?.message).toContain('connection (API unavailable)');
+    expect(events[0]?.message).toContain('confidence');
+
+    // warn-once: a second identical sweep adds nothing.
+    Effect.runSync(detect());
+    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(1);
+  });
+
+  test('stays silent when every probe succeeds', () => {
+    const buffer = Diagnostics.createBufferSink();
+    Diagnostics.setSink(buffer.sink);
+
+    installMatchMedia({});
+    mockRenderer('Apple M3');
+
+    Effect.runSync(detect());
+
+    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
+  });
+
+  test('emits no degraded-probe diagnostics in non-browser environments (isomorphic contract)', () => {
+    const buffer = Diagnostics.createBufferSink();
+    Diagnostics.setSink(buffer.sink);
+
+    vi.stubGlobal('window', undefined);
+    vi.stubGlobal('document', undefined);
+    vi.stubGlobal('navigator', undefined);
+
+    Effect.runSync(detect());
+
+    expect(buffer.events.filter((e) => e.code === 'probes-defaulted')).toHaveLength(0);
   });
 
   test('resetDetectionCaches() clears the memoized renderer probe', () => {
