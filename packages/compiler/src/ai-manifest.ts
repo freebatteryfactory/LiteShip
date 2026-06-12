@@ -73,8 +73,8 @@ export interface AIParamSchema {
   readonly min?: number;
   /** Numeric maximum (inclusive). */
   readonly max?: number;
-  /** Whether the parameter must be present. */
-  readonly required: boolean;
+  /** Whether the parameter must be present; defaults to `false` (JSON Schema convention). */
+  readonly required?: boolean;
   /** Human-readable description. */
   readonly description: string;
 }
@@ -112,6 +112,48 @@ export interface AIManifest {
   readonly actions: Record<string, AIAction>;
   /** Cross-cutting invariants. */
   readonly constraints: readonly AIConstraint[];
+}
+
+/**
+ * Authoring-time manifest input accepted by every {@link AIManifestCompiler}
+ * entry point. All fields are optional; omitted fields default to
+ * `version: '1.0'`, empty records for `dimensions`/`slots`/`actions`, and
+ * `[]` for `constraints`. The normalized {@link AIManifest} (total fields)
+ * is what compile results carry.
+ */
+export interface AIManifestInput {
+  /** Manifest schema version; defaults to `'1.0'`. */
+  readonly version?: string;
+  /** State-space dimensions; defaults to `{}`. */
+  readonly dimensions?: Record<string, AIDimension>;
+  /** Content slots; defaults to `{}`. */
+  readonly slots?: Record<string, AISlot>;
+  /** Invocable actions; defaults to `{}`. */
+  readonly actions?: Record<string, AIAction>;
+  /** Cross-cutting invariants; defaults to `[]`. */
+  readonly constraints?: readonly AIConstraint[];
+}
+
+/** Normalize an {@link AIManifestInput} into a total {@link AIManifest} with documented defaults. */
+function normalizeManifest(input: AIManifestInput): AIManifest {
+  // Identity-preserving for already-total manifests so compile results keep
+  // referencing the caller's object (and re-normalization is free).
+  if (
+    input.version !== undefined &&
+    input.dimensions !== undefined &&
+    input.slots !== undefined &&
+    input.actions !== undefined &&
+    input.constraints !== undefined
+  ) {
+    return input as AIManifest;
+  }
+  return {
+    version: input.version ?? '1.0',
+    dimensions: input.dimensions ?? {},
+    slots: input.slots ?? {},
+    actions: input.actions ?? {},
+    constraints: input.constraints ?? [],
+  };
 }
 
 /**
@@ -187,10 +229,11 @@ function paramToJsonSchema(param: AIParamSchema): Record<string, unknown> {
  * // tools[0] => { name: 'setTheme', description: '...', parameters: {...}, returns: {...} }
  * ```
  *
- * @param manifest - The AI manifest containing action definitions
+ * @param input - The AI manifest containing action definitions (omitted fields take documented defaults)
  * @returns An array of {@link AIToolDefinition} objects
  */
-function generateToolDefinitions(manifest: AIManifest): readonly AIToolDefinition[] {
+function generateToolDefinitions(input: AIManifestInput): readonly AIToolDefinition[] {
+  const manifest = normalizeManifest(input);
   const tools: AIToolDefinition[] = [];
 
   for (const [actionName, action] of Object.entries(manifest.actions)) {
@@ -314,10 +357,11 @@ function generateJsonSchema(manifest: AIManifest): Record<string, unknown> {
  * // Use as the system prompt for an LLM conversation
  * ```
  *
- * @param manifest - The AI manifest to describe
+ * @param input - The AI manifest to describe (omitted fields take documented defaults)
  * @returns A markdown-formatted system prompt string
  */
-function generateSystemPrompt(manifest: AIManifest): string {
+function generateSystemPrompt(input: AIManifestInput): string {
+  const manifest = normalizeManifest(input);
   const sections: string[] = [];
 
   sections.push(`You are operating within a constraint-based adaptive rendering system (v${manifest.version}).`);
@@ -415,7 +459,7 @@ function asPlainRecord(value: unknown): Record<string, unknown> {
  * ```ts
  * import { AIManifestCompiler } from '@czap/compiler';
  *
- * const manifest = { version: '1.0', dimensions: {}, slots: {}, constraints: [],
+ * const manifest = {
  *   actions: { setLayout: { params: { cols: { type: 'number', required: true, min: 1, max: 12, description: 'Column count' } }, effects: [], description: 'Set grid layout' } },
  * };
  * const check = AIManifestCompiler.validateAIOutput(
@@ -426,10 +470,11 @@ function asPlainRecord(value: unknown): Record<string, unknown> {
  * ```
  *
  * @param output   - The AI-generated output object to validate
- * @param manifest - The manifest defining valid actions, dimensions, and slots
+ * @param input - The manifest defining valid actions, dimensions, and slots (omitted fields take documented defaults)
  * @returns An object with `valid` boolean and `errors` array
  */
-function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boolean; errors: readonly string[] } {
+function validateAIOutput(output: unknown, input: AIManifestInput): { valid: boolean; errors: readonly string[] } {
+  const manifest = normalizeManifest(input);
   const errors: string[] = [];
 
   if (output === null || output === undefined) {
@@ -537,12 +582,15 @@ function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boole
 /**
  * Compile an AI manifest into tool definitions, JSON Schema, and a system prompt.
  *
+ * Omitted manifest fields are normalized to documented defaults
+ * (`version: '1.0'`, empty `dimensions`/`slots`/`actions`, no `constraints`),
+ * so a manifest can declare only the surfaces it actually has.
+ *
  * @example
  * ```ts
  * import { AIManifestCompiler } from '@czap/compiler';
  *
  * const manifest = {
- *   version: '1.0', dimensions: {}, slots: {}, constraints: [],
  *   actions: {
  *     setTheme: {
  *       params: { theme: { type: 'string', enum: ['light', 'dark'], required: true, description: 'Theme' } },
@@ -555,10 +603,11 @@ function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boole
  * console.log(result.systemPrompt); // system prompt describing available actions
  * ```
  *
- * @param manifest - The AI manifest to compile
+ * @param input - The AI manifest to compile (omitted fields take documented defaults)
  * @returns An {@link AIManifestCompileResult} with tools, schema, and prompt
  */
-function compile(manifest: AIManifest): AIManifestCompileResult {
+function compile(input: AIManifestInput): AIManifestCompileResult {
+  const manifest = normalizeManifest(input);
   return {
     manifest,
     toolDefinitions: generateToolDefinitions(manifest),
@@ -580,11 +629,9 @@ function compile(manifest: AIManifest): AIManifestCompileResult {
  * import { AIManifestCompiler } from '@czap/compiler';
  *
  * const manifest = {
- *   version: '1.0',
  *   dimensions: { theme: { states: ['light', 'dark'], current: 'light', exclusive: true, description: 'Color theme' } },
  *   slots: { hero: { accepts: ['image', 'video'], description: 'Hero section' } },
  *   actions: { setTheme: { params: { theme: { type: 'string', enum: ['light', 'dark'], required: true, description: 'Theme' } }, effects: ['repaint'], description: 'Switch theme' } },
- *   constraints: [],
  * };
  * const compiled = AIManifestCompiler.compile(manifest);
  * const valid = AIManifestCompiler.validateAIOutput(

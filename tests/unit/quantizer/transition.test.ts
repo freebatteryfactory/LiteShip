@@ -31,6 +31,29 @@ const stubQuantizer = {
 };
 
 // ---------------------------------------------------------------------------
+// Defaults: bare-boundary overload + plain-number durations
+// ---------------------------------------------------------------------------
+
+describe('Transition.for defaults', () => {
+  test('accepts a bare boundary in place of a quantizer', () => {
+    const t = Transition.for(boundary, {
+      'mobile->tablet': { duration: Millis(250) },
+    });
+    expect(t.getTransition('mobile', 'tablet').duration).toBe(250);
+    expect(t.getTransition('tablet', 'desktop').duration).toBe(0);
+  });
+
+  test('accepts plain-number duration and delay without the Millis brand', () => {
+    const t = Transition.for(boundary, {
+      '*': { duration: 300, delay: 50 },
+    });
+    const resolved = t.getTransition('tablet', 'desktop');
+    expect(resolved.duration).toBe(300);
+    expect(resolved.delay).toBe(50);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Resolution order
 // ---------------------------------------------------------------------------
 

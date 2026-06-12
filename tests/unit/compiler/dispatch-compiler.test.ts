@@ -95,3 +95,46 @@ describe('dispatch()', () => {
     expect((result as { target: string; result: { json: string } }).result.json).toContain('ConfigDef');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Dispatch arm defaults
+// ---------------------------------------------------------------------------
+
+describe('dispatch() arm defaults', () => {
+  test('ARIACompiler def defaults currentState to the boundary first state', () => {
+    const result = dispatch({ _tag: 'ARIACompiler', boundary, states: { states: ariaInput.states } });
+    expect(result.target).toBe('aria');
+    if (result.target === 'aria') {
+      expect(result.result.currentAttributes).toEqual({ 'aria-label': 'Compact' });
+    }
+  });
+
+  test('CSSCompiler def without selector uses the documented .czap-boundary default', () => {
+    const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates });
+    if (result.target === 'css') {
+      expect(result.result.raw).toContain('.czap-boundary {');
+    }
+  });
+
+  test('CSSCompiler def passes selector through to the CSS compiler', () => {
+    const result = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates, selector: '.card' });
+    if (result.target === 'css') {
+      expect(result.result.raw).toContain('.card {');
+      expect(result.result.raw).not.toContain('.czap-boundary');
+    }
+  });
+
+  test('AICompiler def accepts a partial manifest input and normalizes defaults', () => {
+    const result = dispatch({ _tag: 'AICompiler', manifest: { actions: {} } });
+    expect(result.target).toBe('ai');
+    if (result.target === 'ai') {
+      expect(result.result.manifest).toEqual({
+        version: '1.0',
+        dimensions: {},
+        slots: {},
+        actions: {},
+        constraints: [],
+      });
+    }
+  });
+});
