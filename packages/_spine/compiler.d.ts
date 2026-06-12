@@ -168,6 +168,15 @@ export interface AIManifest {
   readonly constraints: readonly AIConstraint[];
 }
 
+/** Authoring-time manifest input; omitted fields default (version '1.0', empty records, no constraints). */
+export interface AIManifestInput {
+  readonly version?: string;
+  readonly dimensions?: Record<string, AIDimension>;
+  readonly slots?: Record<string, AISlot>;
+  readonly actions?: Record<string, AIAction>;
+  readonly constraints?: readonly AIConstraint[];
+}
+
 export interface AIDimension {
   readonly states: readonly string[];
   readonly current: string;
@@ -191,7 +200,8 @@ export interface AIParamSchema {
   readonly enum?: readonly string[];
   readonly min?: number;
   readonly max?: number;
-  readonly required: boolean;
+  /** Defaults to `false` (JSON Schema convention). */
+  readonly required?: boolean;
   readonly description: string;
 }
 
@@ -234,13 +244,13 @@ export interface AIValidationIssue {
 }
 
 export declare const AIManifestCompiler: {
-  compile(manifest: AIManifest): AIManifestCompileResult;
+  compile(input: AIManifestInput): AIManifestCompileResult;
   validateAIOutput(
     output: unknown,
-    manifest: AIManifest,
+    input: AIManifestInput,
   ): { valid: boolean; errors: readonly string[]; issues: readonly AIValidationIssue[] };
-  generateSystemPrompt(manifest: AIManifest): string;
-  generateToolDefinitions(manifest: AIManifest): readonly AIToolDefinition[];
+  generateSystemPrompt(input: AIManifestInput): string;
+  generateToolDefinitions(input: AIManifestInput): readonly AIToolDefinition[];
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -254,7 +264,8 @@ export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>
 export type WGSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
 export interface ARIAStates {
   readonly states: Record<string, Record<string, string>>;
-  readonly currentState: string;
+  /** Defaults to the boundary's first state. */
+  readonly currentState?: string;
 }
 
 export interface ConfigTemplateResult {
@@ -262,11 +273,11 @@ export interface ConfigTemplateResult {
 }
 
 export type CompilerDef =
-  | { readonly _tag: 'CSSCompiler';    readonly boundary: Boundary.Shape; readonly states: CSSStates }
+  | { readonly _tag: 'CSSCompiler';    readonly boundary: Boundary.Shape; readonly states: CSSStates; readonly selector?: string }
   | { readonly _tag: 'GLSLCompiler';   readonly boundary: Boundary.Shape; readonly states: GLSLStates }
   | { readonly _tag: 'WGSLCompiler';   readonly boundary: Boundary.Shape; readonly states: WGSLStates }
   | { readonly _tag: 'ARIACompiler';   readonly boundary: Boundary.Shape; readonly states: ARIAStates }
-  | { readonly _tag: 'AICompiler';     readonly manifest: AIManifest }
+  | { readonly _tag: 'AICompiler';     readonly manifest: AIManifestInput }
   | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape };
 
 export type CompileResult =

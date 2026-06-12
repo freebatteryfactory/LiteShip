@@ -20,6 +20,7 @@ export type { ARIACompileResult } from './aria.js';
 export { AIManifestCompiler } from './ai-manifest.js';
 export type {
   AIManifest,
+  AIManifestInput,
   AIDimension,
   AISlot,
   AIAction,

@@ -22,7 +22,7 @@ import type {
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import { StateName as mkStateName, CanonicalCbor, Easing, fnv1aBytes } from '@czap/core';
+import { StateName as mkStateName, CanonicalCbor, CzapValidationError, Diagnostics, Easing, fnv1aBytes } from '@czap/core';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -419,13 +419,33 @@ function getSpringCSS(spring: SpringConfig): string {
  */
 function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: QuantizerFromOptions): QuantizerBuilder<B> {
   const tier = options?.tier;
+  // Failing open on an invalid tier would disable gating entirely and allow
+  // every target (including ai/wgsl) — the inverse of what gating is for.
+  if (tier !== undefined && !(tier in TIER_TARGETS)) {
+    throw new CzapValidationError(
+      'Q.from',
+      `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
+    );
+  }
   const spring = options?.spring;
-  const allowedTargets = tier ? (TIER_TARGETS[tier] ?? null) : null;
+  const allowedTargets = tier ? TIER_TARGETS[tier] : null;
   let forcedTargets: Set<OutputTarget> | null = null;
 
   const builder: QuantizerBuilder<B> = {
     outputs<O extends QuantizerOutputs<B>>(outputs: O): QuantizerConfig<B, O> {
       const frozenForced = forcedTargets;
+      if (allowedTargets !== null && tier !== undefined) {
+        // Outputs for a tier-gated target silently never fire; say so once at
+        // build time with the literal escape hatches.
+        for (const target of Object.keys(outputs) as readonly OutputTarget[]) {
+          if (outputs[target] === undefined || allowedTargets.has(target) || frozenForced?.has(target)) continue;
+          Diagnostics.warnOnce({
+            source: 'czap/quantizer',
+            code: 'tier-gated-output-dropped',
+            message: `you defined \`${target}\` outputs but tier '${tier}' only emits ${[...allowedTargets].join('+')}, so they will never fire. Pass a tier that includes ${target} to Q.from(boundary, { tier }), or chain .force('${target}').`,
+          });
+        }
+      }
       const id = contentAddress(boundary, outputs, tier, spring, frozenForced);
 
       // Check config cache

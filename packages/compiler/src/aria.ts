@@ -38,9 +38,9 @@ export interface ARIACompileResult<S extends string = string> {
  * Filter and validate ARIA attributes, keeping only valid ones — the allowed
  * keys are governed by the shared {@link BoundaryAttribute.isAllowedKey} policy
  * in `@czap/core` (any `aria-*` attribute or the exact `role`). Warns via
- * Diagnostics when invalid keys are dropped.
+ * Diagnostics when invalid keys are dropped, naming the state they came from.
  */
-function validateAttributes(attrs: Record<string, string>): Record<string, string> {
+function validateAttributes(attrs: Record<string, string>, stateName: string): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(attrs)) {
     if (BoundaryAttribute.isAllowedKey(key)) {
@@ -49,7 +49,7 @@ function validateAttributes(attrs: Record<string, string>): Record<string, strin
       Diagnostics.warn({
         source: 'czap/compiler.aria',
         code: 'invalid-aria-key',
-        message: `Attribute "${key}" is not a valid ARIA key (expected aria-* or role) and was dropped.`,
+        message: `Attribute "${key}" in state "${stateName}" is not a valid ARIA key and was dropped. Use an aria-* attribute or "role" — e.g. 'aria-expanded': 'false'.`,
       });
     }
   }
@@ -103,11 +103,20 @@ function compile<B extends Boundary.Shape>(
   const stateAttributes: Record<StateUnion<B> & string, Record<string, string>> = Object.create(null);
   for (const stateName of stateNames) {
     const raw = states[stateName];
-    stateAttributes[stateName] = raw ? validateAttributes(raw) : {};
+    stateAttributes[stateName] = raw ? validateAttributes(raw, stateName) : {};
   }
 
   // StateUnion<B> already extends string via Boundary.Shape's non-empty-tuple S constraint.
-  const currentAttributes = stateAttributes[currentState] ?? {};
+  // Via dispatch, currentState is plain string — a typo would silently emit no ARIA at all.
+  const current = stateAttributes[currentState];
+  if (current === undefined) {
+    Diagnostics.warn({
+      source: 'czap/compiler.aria',
+      code: 'unknown-current-state',
+      message: `currentState "${String(currentState)}" is not one of [${stateNames.join(', ')}]; emitting no attributes. Pass one of the boundary's state names.`,
+    });
+  }
+  const currentAttributes = current ?? {};
 
   return { stateAttributes, currentAttributes };
 }
