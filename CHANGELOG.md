@@ -24,6 +24,10 @@ pivot (epic #4) — these notes ship as 0.2.0.
   tokens (derives `axes: []`, `values: {}`, `fallback: value`).
 - `examples/tutorial` — `/api/feed` SSE stub for the stream demo; example READMEs
   with published-version notes.
+- `@czap/vite` — `virtual:czap/tokens`, `virtual:czap/tokens.css`, and
+  `virtual:czap/themes` are real: convention modules (`tokens.ts` /
+  `*.tokens.ts`, `themes.ts` / `*.themes.ts`) are collected at build time
+  and hotUpdate-invalidated like `virtual:czap/boundaries`.
 - `@czap/vite` + `@czap/compiler` — `viewport.height` is a first-class
   compiled axis: the CSS compiler derives the container-query axis from
   the boundary input (height-measuring inputs serialize `(height ...)`

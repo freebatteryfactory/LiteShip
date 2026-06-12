@@ -69,6 +69,17 @@ export { resolveVirtualId, isVirtualId, loadVirtualModule } from './virtual-modu
 export type { CollectBoundaryManifestOptions } from './boundary-manifest.js';
 export { collectBoundaryManifest } from './boundary-manifest.js';
 
+// Token/theme manifests (virtual:czap/tokens, tokens.css, themes)
+export type {
+  CollectTokenManifestOptions,
+  CollectThemeManifestOptions,
+  TokenManifest,
+  TokenManifestEntry,
+  ThemeManifest,
+  ThemeManifestEntry,
+} from './token-manifest.js';
+export { collectTokenManifest, collectThemeManifest, compileCollectedTokensCss } from './token-manifest.js';
+
 // HMR
 export type { HMRPayload } from './hmr.js';
 export { handleHMR } from './hmr.js';

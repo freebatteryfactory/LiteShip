@@ -7,14 +7,20 @@
  *
  * Virtual IDs:
  *
- * - `virtual:czap/tokens` -- JS exports of token definitions (stub).
- * - `virtual:czap/tokens.css` -- CSS custom properties from tokens (stub).
+ * - `virtual:czap/tokens` -- JS exports of token definitions (from
+ *   `collectTokenManifest`); degrades to an empty-object stub outside the
+ *   plugin.
+ * - `virtual:czap/tokens.css` -- CSS custom properties compiled from all
+ *   collected tokens (`compileCollectedTokensCss`); degrades to `:root {}`
+ *   outside the plugin.
  * - `virtual:czap/boundaries` -- the build-derived boundary manifest
  *   (`{ [name]: { id, outputs, outputsByTier } }`); the plugin supplies the
  *   manifest collected by `collectBoundaryManifest`, and the module
  *   degrades to an empty-object stub only when loaded outside the
  *   plugin (e.g. by a bare type-checker pass).
- * - `virtual:czap/themes` -- JS exports of theme definitions (stub).
+ * - `virtual:czap/themes` -- JS exports of theme definitions (from
+ *   `collectThemeManifest`); degrades to an empty-object stub outside the
+ *   plugin.
  * - `virtual:czap/hmr-client` -- Client-side HMR handler for
  *   `czap:update` events.
  * - `virtual:czap/wasm-url` -- Resolved WASM runtime URL (or `null`).
@@ -25,6 +31,7 @@
  */
 
 import type { BoundaryManifest } from '@czap/edge';
+import { compileCollectedTokensCss, type ThemeManifest, type TokenManifest } from './token-manifest.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -82,6 +89,10 @@ export function isVirtualId(id: string): boolean {
 export interface VirtualModuleData {
   /** Boundary manifest for `virtual:czap/boundaries` (from `collectBoundaryManifest`). */
   readonly boundaries?: BoundaryManifest;
+  /** Token manifest for `virtual:czap/tokens` and `virtual:czap/tokens.css`. */
+  readonly tokens?: TokenManifest;
+  /** Theme manifest for `virtual:czap/themes`. */
+  readonly themes?: ThemeManifest;
 }
 
 /**
@@ -92,9 +103,9 @@ export interface VirtualModuleData {
  * degrades to an empty-object stub (valid JS for type-checkers and
  * bundlers running outside the plugin).
  *
- * The remaining data modules (tokens, themes) return empty-object stubs
- * -- their real content flows through the CSS transform hooks in the
- * plugin, which replaces token, theme, and quantize blocks inline.
+ * Token and theme virtual modules export build-collected definitions when
+ * the plugin passes manifest data; without data they degrade to empty stubs
+ * (valid for type-checkers and bundlers running outside the plugin).
  *
  * The `hmr-client` module is the client-side HMR handler that the
  * plugin injects into the page via `transformIndexHtml`.
@@ -106,16 +117,16 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
 
   switch (name) {
     case 'tokens':
-      return 'export const tokens = {};';
+      return `export const tokens = ${JSON.stringify(data?.tokens ?? {})};`;
 
     case 'tokens.css':
-      return ':root {}';
+      return compileCollectedTokensCss(data?.tokens ?? {});
 
     case 'boundaries':
       return `export const boundaries = ${JSON.stringify(data?.boundaries ?? {})};`;
 
     case 'themes':
-      return 'export const themes = {};';
+      return `export const themes = ${JSON.stringify(data?.themes ?? {})};`;
 
     case 'hmr-client':
       return HMR_CLIENT_SOURCE;

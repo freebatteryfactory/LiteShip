@@ -46,10 +46,15 @@ export async function tryImportNamed<T>(
   expectedTag: string,
   diagnosticSource: string,
   diagnosticNoun: string,
+  options?: { readonly cacheBustMtime?: number },
 ): Promise<T | undefined> {
   let imported: Record<string, unknown> | null = null;
   try {
-    imported = (await import(/* @vite-ignore */ pathToFileURL(modulePath).href)) as Record<string, unknown>;
+    const href =
+      options?.cacheBustMtime !== undefined
+        ? `${pathToFileURL(modulePath).href}?mtime=${options.cacheBustMtime}`
+        : pathToFileURL(modulePath).href;
+    imported = (await import(/* @vite-ignore */ href)) as Record<string, unknown>;
   } catch (err) {
     const causeMessage = err instanceof Error ? err.message : String(err);
     Diagnostics.warn({

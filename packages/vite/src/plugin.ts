@@ -11,10 +11,11 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { EnvironmentModuleNode, Plugin } from 'vite';
+import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
 import { collectBoundaryManifest } from './boundary-manifest.js';
+import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive } from './primitive-resolve.js';
@@ -156,6 +157,23 @@ export function plugin(config?: PluginConfig): Plugin {
   // Lazily-collected boundary manifest backing `virtual:czap/boundaries`.
   // Reset whenever a definition or CSS file changes so dev imports stay fresh.
   let boundaryManifestPromise: Promise<BoundaryManifest> | null = null;
+  let tokenThemeManifestPromise: Promise<{
+    tokens: Awaited<ReturnType<typeof collectTokenManifest>>;
+    themes: Awaited<ReturnType<typeof collectThemeManifest>>;
+  }> | null = null;
+
+  function invalidateDesignVirtualModules(
+    moduleGraph: EnvironmentModuleGraph,
+    affected: EnvironmentModuleNode[],
+  ): void {
+    for (const virtualId of ['\0virtual:czap/tokens', '\0virtual:czap/tokens.css', '\0virtual:czap/themes'] as const) {
+      const mod = moduleGraph.getModuleById(virtualId);
+      if (mod) {
+        moduleGraph.invalidateModule(mod);
+        affected.push(mod);
+      }
+    }
+  }
 
   return {
     name: '@czap/vite',
@@ -227,6 +245,16 @@ export function plugin(config?: PluginConfig): Plugin {
           boundaryManifestPromise = collectBoundaryManifest(projectRoot, { boundaryDir: config?.dirs?.boundary });
         }
         return boundaryManifestPromise.then((boundaries) => loadVirtualModule(id, { boundaries }));
+      }
+
+      if (id === '\0virtual:czap/tokens' || id === '\0virtual:czap/tokens.css' || id === '\0virtual:czap/themes') {
+        if (!tokenThemeManifestPromise) {
+          tokenThemeManifestPromise = Promise.all([
+            collectTokenManifest(projectRoot, { tokenDir: config?.dirs?.token }),
+            collectThemeManifest(projectRoot, { themeDir: config?.dirs?.theme }),
+          ]).then(([tokens, themes]) => ({ tokens, themes }));
+        }
+        return tokenThemeManifestPromise.then(({ tokens, themes }) => loadVirtualModule(id, { tokens, themes }));
       }
 
       if (id === '\0virtual:czap/wasm-url') {
@@ -506,6 +534,7 @@ export function plugin(config?: PluginConfig): Plugin {
         themeCache.clear();
         styleCache.clear();
         boundaryManifestPromise = null;
+        tokenThemeManifestPromise = null;
 
         const moduleGraph = this.environment.moduleGraph;
         const transformModules = Array.from(moduleGraph.idToModuleMap.values()).filter((mod) => {
@@ -523,6 +552,8 @@ export function plugin(config?: PluginConfig): Plugin {
           moduleGraph.invalidateModule(manifestModule);
           transformModules.push(manifestModule);
         }
+
+        invalidateDesignVirtualModules(moduleGraph, transformModules);
 
         if (transformModules.length > 0) {
           return transformModules;
