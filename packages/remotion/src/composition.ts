@@ -76,12 +76,20 @@ export function rendererFromRemotionConfig(
   compositor: Compositor.Shape,
   signal?: Signal.Controllable<number>,
 ): VideoRenderer.Shape {
+  // frames -> ms -> frames must round-trip EXACTLY: the renderer derives its
+  // frame count as ceil(durationMs / 1000 * fps), and a float remainder one
+  // ULP above the true product adds a phantom frame (1000 @ 30fps -> 1001).
+  // When the round trip overshoots, shave one ULP off the duration.
+  let durationMs = (config.durationInFrames * 1000) / config.fps;
+  if (Math.ceil((durationMs / 1000) * config.fps) > config.durationInFrames) {
+    durationMs = durationMs * (1 - Number.EPSILON);
+  }
   return VideoRenderer.make(
     {
       fps: config.fps,
       width: config.width,
       height: config.height,
-      durationMs: Millis((config.durationInFrames / config.fps) * 1000),
+      durationMs: Millis(durationMs),
     },
     compositor,
     signal,
