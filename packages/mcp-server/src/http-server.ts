@@ -16,11 +16,36 @@
 import { createServer } from 'node:http';
 import { handleRequest } from './http.js';
 
-/** Run the MCP HTTP server bound to `bind` (e.g. ":3838" or "127.0.0.1:8080"). */
-export async function runHttp(bind: string): Promise<void> {
+function invalidBind(bind: number | string): Error {
+  return new Error(
+    `invalid --http bind "${bind}": expected ":PORT", "PORT", or "HOST:PORT" with PORT in 0-65535 (e.g. --http :3838)`,
+  );
+}
+
+function checkedPort(port: number, bind: number | string): number {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw invalidBind(bind);
+  return port;
+}
+
+/**
+ * Resolve an `--http` bind into host + port. Accepts a port number, `":PORT"`,
+ * `"PORT"`, or `"HOST:PORT"`; host defaults to 127.0.0.1. Anything else throws
+ * a teaching error BEFORE the server binds — otherwise e.g. "localhost" becomes
+ * `Number(bind)` = NaN and surfaces as Node's raw ERR_SOCKET_BAD_PORT. Exported
+ * so the shapes stay unit-testable without spinning up a server (this module's
+ * bootstrap path is coverage-excluded).
+ */
+export function parseHttpBind(bind: number | string): { readonly host: string; readonly port: number } {
+  if (typeof bind === 'number') return { host: '127.0.0.1', port: checkedPort(bind, bind) };
   const m = bind.match(/^(?:([^:]+))?:(\d+)$/);
-  const host = m?.[1] ?? '127.0.0.1';
-  const port = Number(m?.[2] ?? bind);
+  if (m) return { host: m[1] ?? '127.0.0.1', port: checkedPort(Number(m[2]), bind) };
+  if (/^\d+$/.test(bind)) return { host: '127.0.0.1', port: checkedPort(Number(bind), bind) };
+  throw invalidBind(bind);
+}
+
+/** Run the MCP HTTP server bound to `bind` (e.g. 3838, ":3838", or "127.0.0.1:8080"). */
+export async function runHttp(bind: number | string): Promise<void> {
+  const { host, port } = parseHttpBind(bind);
 
   const server = createServer(async (req, res) => {
     if (req.method !== 'POST') {

@@ -1,116 +1,101 @@
 # Getting started with LiteShip
 
-From a fresh clone to a runnable boundary cast to CSS and hydrating through Astro, in about ten minutes on a fast machine. Drag a window edge and the boundary state changes; the CSS re-paints; the ARIA attribute updates.
+From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `Boundary.make` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
-LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [hosting/cloudflare.md](./hosting/cloudflare.md) and [examples/cloudflare-astro/](../examples/cloudflare-astro/).
+LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [hosting/cloudflare.md](./hosting/cloudflare.md) and [examples/cloudflare-astro/](../examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Prerequisites
 
 - Node.js 22+
 - pnpm 10+
-- A POSIX shell (bash, zsh) or PowerShell on Windows
+- An Astro 6 project (`pnpm create astro@latest` if you don't have one)
 
-## 1. Clone and install
+## 1. Install
 
-```bash
-git clone https://github.com/heyoub/LiteShip.git
-cd LiteShip
-pnpm install
-```
-
-LiteShip is the product name, CZAP the engine, `@czap/*` the packages ([GLOSSARY.md](./GLOSSARY.md)).
-
-The first install pulls workspace dependencies and Playwright browsers. A minute or two; subsequent installs are seconds. When the install finishes you'll see a short banner with the next-step verbs.
-
-If something looks off — wrong Node, missing dist, unlinked git hook — run the rig-check before you keep going:
+In your Astro project:
 
 ```bash
-pnpm run doctor   # quantizes env signals into ok/warn/fail bearings
+pnpm add @czap/core @czap/astro effect@beta
 ```
 
-Or skip ahead to the one-command shake-down (`pnpm shakedown`) below.
+`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](../README.md#support-matrix) covers the pin and the stabilization plan.
 
-## 2. Build everything
+## 2. Your first boundary
 
-```bash
-pnpm run build
-```
-
-This runs `tsc --build` across the compiled packages (everything under `packages/*` except type-only `@czap/_spine`). `@czap/_spine` is validated via `pnpm run typecheck:spine`. Together they cover every publishable `@czap/*` scope on npm (the authoritative set is the `tsc --build` list in the root `package.json`, plus `@czap/_spine`). Composite project references mean `tsc` figures out the order; you don't have to.
-
-## 3. Run the fast test loop
-
-```bash
-pnpm test
-```
-
-Vitest prints the current file and test counts in the summary line; totals shift as suites land. If anything fails, that's a real signal. Open an issue with the failure tail.
-
-## 4. Your first boundary
-
-Create `try-czap.ts` at the repo root:
+A boundary is a continuous-to-discrete signal mapping: here, viewport width → `{mobile, tablet, desktop}`. Put it in a module the rest of your project can import:
 
 ```ts
-import { Boundary, Token, Style } from '@czap/core';
+// src/boundaries.ts
+import { Boundary } from '@czap/core';
 
-// A boundary is a continuous-to-discrete signal mapping.
-// Here: viewport width -> {mobile, tablet, desktop}
-const viewport = Boundary.make({
+export const viewport = Boundary.make({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
   ],
-  hysteresis: 20,
+  hysteresis: 20, // optional — default 0 (no dead-zone); see Troubleshooting
 });
-
-// Evaluate the boundary against a sample value
-console.log(Boundary.evaluate(viewport, 320)); // 'mobile'
-console.log(Boundary.evaluate(viewport, 1024)); // 'tablet'
-console.log(Boundary.evaluate(viewport, 1440)); // 'desktop'
-
-// A token can have axis variants (theme, density, motion-tier...)
-const primary = Token.make({
-  name: 'primary',
-  category: 'color',
-  axes: ['theme'],
-  values: { dark: '#00e5ff', light: 'hsl(175 70% 50%)' },
-  fallback: '#00e5ff',
-});
-
-console.log(Token.cssVar(primary)); // 'var(--czap-primary)'
-console.log(Token.tap(primary, { theme: 'dark' })); // '#00e5ff'
-
-// A style that responds to the boundary
-const card = Style.make({
-  boundary: viewport,
-  base: { properties: { padding: '1rem' } },
-  states: {
-    mobile: { properties: { padding: '0.5rem' } },
-    desktop: { properties: { padding: '2rem' } },
-  },
-});
-
-console.log(card.boundary === viewport); // true
 ```
 
-Run it (the repo's devDependencies already include `tsx` for executing TypeScript directly; you don't need to install anything):
+Thresholds are inclusive lower bounds sorted lowest-first, each with a unique state name. The returned definition is content-addressed: change the definition and its `id` changes with it.
+
+## 3. Put it on the page and resize
+
+Register the integration (it injects the client boot scanner that activates boundaries):
+
+```js
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import czap from '@czap/astro';
+
+export default defineConfig({
+  integrations: [czap()],
+});
+```
+
+Then spread `satelliteAttrs` onto any element in a `.astro` page:
+
+```astro
+---
+import { satelliteAttrs } from '@czap/astro';
+import { viewport } from '../boundaries.js';
+---
+
+<div {...satelliteAttrs({ boundary: viewport })} class="card">
+  Resize the window to see the boundary state change.
+</div>
+```
+
+Run `pnpm dev`, open the page, and drag the window edge: the element's `data-czap-state` attribute flips `mobile` → `tablet` → `desktop`. Your CSS can key off it directly:
+
+```css
+.card[data-czap-state='mobile'] {
+  padding: 0.5rem;
+}
+.card[data-czap-state='desktop'] {
+  padding: 2rem;
+}
+```
+
+`satelliteAttrs` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@czap/astro/Satellite'`) wraps the same attributes around a div for you, and you can also write the `data-czap-boundary` / `data-czap-directive` attributes yourself.
+
+That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
+
+## 4. Cast to CSS (the compiler path)
+
+Hand-written `[data-czap-state]` selectors work, but the same boundary can also emit its CSS. Add the compiler:
 
 ```bash
-pnpm exec tsx try-czap.ts
+pnpm add @czap/compiler
 ```
 
-You should see the three boundary evaluations print, then the token's CSS variable name and dark-theme value, then `true`. If `tsx` is not on PATH for some reason, `pnpm install` at the repo root pulls it in.
-
-By the way, `Boundary.evaluate` unrolls the lookup for thresholds with four or fewer states and falls back to binary search above that. Small detail, but it means the read is O(1) on the common case and O(log n) past it.
-
-## 5. Cast to CSS
-
-The boundary above doesn't _do_ anything until something casts it. Add the CSS compiler. `compile()` takes the boundary, a per-state property map, and an optional selector:
+`compile()` takes the boundary, a per-state property map, and an optional selector:
 
 ```ts
 import { CSSCompiler } from '@czap/compiler';
+import { viewport } from './boundaries.js';
 
 const result = CSSCompiler.compile(
   viewport,
@@ -134,93 +119,41 @@ console.log(result.raw);
 // individual rules first.
 ```
 
-You'll get a CSS block keyed by the boundary states, ready to paste into a stylesheet, or rig through Astro / Vite for hot reload.
-
-## 6. Rig it into Astro (optional, full pipeline)
-
-If you want the runtime hydration story:
-
-```ts
-// astro.config.mjs
-import { defineConfig } from 'astro/config';
-import czap from '@czap/astro';
-
-export default defineConfig({
-  integrations: [czap()],
-});
-```
-
-Move the boundary out of `try-czap.ts` into a module the page can import — the compile step (step 5) and the page must share one definition, because the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching:
-
-```ts
-// src/boundaries.ts
-import { Boundary } from '@czap/core';
-
-export const viewport = Boundary.make({
-  input: 'viewport.width',
-  at: [
-    [0, 'mobile'],
-    [768, 'tablet'],
-    [1280, 'desktop'],
-  ],
-  hysteresis: 20,
-});
-```
-
-Then in any `.astro` page, import that boundary in the frontmatter and give step 5's `result.raw` a home — paste it into a `<style is:global>` block (Astro scopes plain `<style>` blocks, which would rename the `.card` selector out from under the compiled rules), or write it to a CSS file your build imports:
+Give `result.raw` a home in the page — paste it into a `<style is:global>` block (Astro scopes plain `<style>` blocks, which would rename the `.card` selector out from under the compiled rules), or write it to a CSS file your build imports:
 
 ```astro
----
-import Satellite from '@czap/astro/Satellite';
-import { viewport } from '../boundaries.js';
----
-
-<Satellite boundary={viewport}>
-  <div class="card">
-    Resize the window to see the boundary state change.
-  </div>
-</Satellite>
-
 <style is:global>
-  /* Step 5's `result.raw` goes here: the rules keyed on `.card`.
+  /* `result.raw` goes here: the rules keyed on `.card`.
      Re-run the compile after editing the boundary so the CSS and the
      serialized boundary stay in agreement. */
 </style>
 ```
 
-`Satellite` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole React tree), and the compiled CSS handles the visual response without round-tripping through JavaScript. Plain elements work too: spread `satelliteAttrs({ boundary })` onto any element, or write the `data-czap-boundary` / `data-czap-directive` attributes yourself.
+The compile step and the page must share one definition (that's why step 2 put the boundary in `src/boundaries.ts`): the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching.
 
-## 7. Where to go from here
+## 5. Where to go from here
 
-- [docs/ARCHITECTURE.md](./ARCHITECTURE.md): full system architecture and the dependency graph between packages
-- [docs/adr/](./adr): architecture decision records explaining why each major choice was made
-- [docs/api/](./api): generated API reference for every package
-- [docs/DOCS.md](./DOCS.md): full documentation map
-- [CONTRIBUTING.md](../CONTRIBUTING.md): how to develop in the repo, the gauntlet, PR conventions
+- [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): tokens, styles, and themes — the layer above boundaries (axis-varying values, per-state property sets, multi-variant theming), opening with a one-paragraph "what it feels like to author"
+- [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md): signals → boundaries → named states → outputs, the theory-first frame
+- [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path
+- [HOSTING.md](./HOSTING.md): host-application first-hour checklist (CSP, Trusted Types, common failure modes)
+- [docs/api/](./api): generated API reference for every package (e.g. `Boundary.evaluate` for evaluating a boundary against sample values outside the DOM)
+- [DOCS.md](./DOCS.md): full documentation map
 
-## Shortcut menu
+## Working on LiteShip itself
 
-For dev-loop ergonomics:
+The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](../CONTRIBUTING.md). The short version:
 
 ```bash
-pnpm shakedown        # first-run aggregate (doctor + build + test)
-pnpm run doctor       # preflight rig-check on demand
-pnpm dev              # vitest watch mode
-pnpm run clean        # wipe build/test artifacts (dry-dock)
-pnpm scripts          # categorized index of all dev scripts
-pnpm run glossary     # CLI lookup into docs/GLOSSARY.md
+git clone https://github.com/heyoub/LiteShip.git
+cd LiteShip
+pnpm install
+pnpm shakedown   # first-run aggregate: doctor → build → test
 ```
 
-After `pnpm run build`, the same lookup is available as `czap glossary <term>`,
-`czap doctor`, `czap help`, `czap version`.
+`pnpm scripts` prints the categorized index of all dev scripts; `pnpm run doctor` is the on-demand preflight rig-check.
 
 ## Troubleshooting
-
-### Setup and tooling
-
-**PowerShell shows `Γåô` / `Γ£ô` mojibake in logs.** Your terminal is decoding the repo tooling's UTF-8 output as cp437. Use `Out-File -Encoding utf8` or run `chcp 65001` first.
-
-**Tests hang in browser mode.** Make sure Playwright browsers are installed: `pnpm exec playwright install`.
 
 ### First-boundary authoring
 
@@ -228,8 +161,14 @@ After `pnpm run build`, the same lookup is available as `czap glossary <term>`,
 
 **The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-czap-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 
-**The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
+**The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The field is optional and the default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
 
 **`Boundary.evaluate` returns the wrong state for a value at exactly a threshold.** That's by design: thresholds are inclusive lower bounds. A boundary with `[[0, 'mobile'], [768, 'tablet']]` returns `'tablet'` for `768`, not `'mobile'`. If you need exclusive bounds, offset the threshold by 1.
+
+### Repo development
+
+**PowerShell shows `Γåô` / `Γ£ô` mojibake in logs.** Your terminal is decoding the repo tooling's UTF-8 output as cp437. Use `Out-File -Encoding utf8` or run `chcp 65001` first.
+
+**Tests hang in browser mode.** Make sure Playwright browsers are installed: `pnpm exec playwright install`.
 
 Found a different issue? Open one at [github.com/heyoub/LiteShip/issues](https://github.com/heyoub/LiteShip/issues).

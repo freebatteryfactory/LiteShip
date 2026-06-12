@@ -40,12 +40,14 @@ export declare namespace Token {
     readonly cssProperty: CSSCustomProp;
   }
 
-  export function make<N extends string, const A extends readonly [string, ...string[]]>(config: {
+  export function make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
     readonly name: N;
     readonly category: Shape['category'];
-    readonly axes: A;
+    /** Default: ['default'] — single-value tokens need no axis declaration. */
+    readonly axes?: A;
     readonly values: Record<string, unknown>;
-    readonly fallback: unknown;
+    /** Default: derived from values.default when omitted; omitting both is a validation error. */
+    readonly fallback?: unknown;
   }): Shape<N, A>;
 
   export function tap<N extends string, Axes extends readonly string[]>(
@@ -130,7 +132,8 @@ export declare namespace Theme {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface SlotConfig {
-  readonly required: boolean;
+  /** Default: false. */
+  readonly required?: boolean;
   readonly description?: string;
 }
 
@@ -148,11 +151,12 @@ export declare namespace Component {
     readonly defaultSlot?: SlotNames[number];
   }
 
-  export function make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]]>(config: {
+  export function make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
     readonly name: string;
     readonly boundary?: B;
     readonly styles: Style.Shape<B>;
-    readonly slots: { readonly [K in SN[number]]: SlotConfig };
+    /** Default: an implied single 'children' slot with defaultSlot 'children'. */
+    readonly slots?: { readonly [K in SN[number]]: SlotConfig };
     readonly defaultSlot?: SN[number];
   }): Shape<B, SN>;
 }

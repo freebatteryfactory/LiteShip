@@ -58,7 +58,11 @@ export function createBrowserCommandContext(
             'scene.render',
             params as unknown as Record<string, unknown>,
           );
-          if (remote.failed) throw new Error('scene.render delegation failed');
+          if (remote.failed) {
+            throw new Error(
+              `scene.render delegation to ${opts.mcpServerUrl} failed: ${JSON.stringify(remote.payload)} — is the MCP HTTP server running (\`czap mcp --http=PORT\`)?`,
+            );
+          }
           const payload = remote.payload as { frameCount?: number; elapsedMs?: number } | null;
           return { frameCount: payload?.frameCount ?? 0, elapsedMs: payload?.elapsedMs ?? 0 };
         }

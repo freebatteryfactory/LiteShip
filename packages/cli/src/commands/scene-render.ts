@@ -21,8 +21,9 @@ import { emit, emitError } from '../receipts.js';
 import type { SceneRenderReceipt } from '../receipts.js';
 import { tryReadCache, writeCache } from '../idempotency.js';
 
-const WIDTH = 1280;
-const HEIGHT = 720;
+/** Render-dimension fallbacks when the scene contract carries no width/height. */
+const DEFAULT_WIDTH = 1280;
+const DEFAULT_HEIGHT = 720;
 
 function renderContext(opts: { readonly cwd?: string }): CommandContext {
   return {
@@ -34,18 +35,13 @@ function renderContext(opts: { readonly cwd?: string }): CommandContext {
     },
     loadSceneModule: async (scenePath) =>
       (await import(/* @vite-ignore */ pathToFileURL(resolve(scenePath)).href)) as Record<string, unknown>,
-    renderScene: ({ fps, durationMs, output }) =>
+    renderScene: ({ fps, durationMs, output, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT }) =>
       Effect.runPromise(
         Effect.scoped(
           Effect.gen(function* () {
             const compositor = yield* Compositor.create();
-            const renderer = VideoRenderer.make(
-              { fps, width: WIDTH, height: HEIGHT, durationMs: durationMs as Millis },
-              compositor,
-            );
-            return yield* Effect.promise(() =>
-              renderWithFfmpeg(renderer.frames(), { output, width: WIDTH, height: HEIGHT, fps }),
-            );
+            const renderer = VideoRenderer.make({ fps, width, height, durationMs: durationMs as Millis }, compositor);
+            return yield* Effect.promise(() => renderWithFfmpeg(renderer.frames(), { output, width, height, fps }));
           }),
         ),
       ),
@@ -67,7 +63,14 @@ export async function sceneRender(
     emitError('scene.render', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
-  const payload = result.payload as Omit<SceneRenderReceipt, 'status' | 'command' | 'timestamp'> & { cached: boolean };
+  const payload = result.payload as Omit<
+    SceneRenderReceipt,
+    'status' | 'command' | 'timestamp' | 'width' | 'height'
+  > & {
+    cached: boolean;
+    width?: number;
+    height?: number;
+  };
   emit({
     status: 'ok',
     command: 'scene.render',
@@ -76,6 +79,12 @@ export async function sceneRender(
     output: payload.output,
     frameCount: payload.frameCount,
     elapsedMs: payload.elapsedMs,
+    // Contract-declared dimensions ride the payload; absent ones resolve to
+    // the adapter defaults the render actually used. Echoed so the values
+    // are observable in the receipt, not just in the video bytes.
+    width: payload.width ?? DEFAULT_WIDTH,
+    height: payload.height ?? DEFAULT_HEIGHT,
+    ...(payload.fps !== undefined ? { fps: payload.fps } : {}),
     cached: payload.cached,
   });
   return 0;

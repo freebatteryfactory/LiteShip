@@ -23,15 +23,30 @@
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts"
+      "types": "./index.d.ts",
+      "default": "./stub.js"
     }
   },
   "files": [
     "*.d.ts",
+    "stub.js",
     "tsconfig.json",
     "LICENSE",
     "README.md"
   ],
+  "peerDependencies": {
+    "astro": ">=6.0.0",
+    "effect": ">=4.0.0-beta.0",
+    "vite": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=22.0.0"
   },

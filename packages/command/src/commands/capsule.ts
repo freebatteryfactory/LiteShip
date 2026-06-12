@@ -7,8 +7,8 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { HandledCommand } from '../registry.js';
-import { loadManifest } from './manifest.js';
+import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
+import { loadManifest, manifestUnavailable } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
@@ -30,8 +30,9 @@ export const capsuleInspectCommand: HandledCommand = {
     ui: { resourceUri: 'ui://liteship/app/capsule-inspect' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.inspect', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded, context);
+    const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.inspect', `capsule not found: ${id}`, 1);
@@ -58,8 +59,9 @@ export const capsuleListCommand: HandledCommand = {
     annotations: { readOnly: true, mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.list', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.list', loaded, context);
+    const { manifest } = loaded;
     const kind = typeof invocation.args.kind === 'string' ? invocation.args.kind : undefined;
     const capsules = kind ? manifest.capsules.filter((c) => c.kind === kind) : manifest.capsules;
     return {
@@ -77,17 +79,20 @@ export const capsuleVerifyCommand: HandledCommand = {
     name: 'capsule.verify',
     summary: 'Verify a capsule’s generated tests.',
     inputSchema: INSPECT_SCHEMA,
+    requires: ['runVitest'] satisfies readonly CommandCapability[],
     outputSchema: { type: 'object', required: ['capsuleId'], properties: { capsuleId: { type: 'string' } } },
     annotations: { mcpExposed: true, group: 'manifest' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
-    const manifest = loadManifest(context);
-    if (!manifest) return failed('capsule.verify', 'manifest missing', 1);
+    const loaded = loadManifest(context);
+    if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded, context);
+    const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
     if (!entry) return failed('capsule.verify', `capsule not found: ${id}`, 1);
     if (!entry.generated) return failed('capsule.verify', `capsule has no generated tests: ${id}`, 2);
-    if (!context.runVitest) return failed('capsule.verify', 'vitest runner unavailable', 2);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.runVitest) return capabilityUnavailable('capsule.verify', ['runVitest']);
     const { exitCode, stderrTail } = await context.runVitest([entry.generated.testFile]);
     if (exitCode !== 0) {
       return failed('capsule.verify', `generated tests failed${stderrTail ? `: ${stderrTail.trim()}` : ''}`, 2);

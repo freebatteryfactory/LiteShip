@@ -284,7 +284,10 @@ self.addEventListener("message", function (e) {
       } catch (err) {
         self.postMessage({
           type: "error",
+          code: "startup-compute-failed",
           message: err instanceof Error ? err.message : String(err),
+          hint: "compute() threw while applying the startup packet — check the registrations and updates in the startup-compute message.",
+          context: msg.type,
         });
       }
       break;
@@ -358,7 +361,10 @@ self.addEventListener("message", function (e) {
       } catch (err) {
         self.postMessage({
           type: "error",
+          code: "compute-failed",
           message: err instanceof Error ? err.message : String(err),
+          hint: "compute() threw — check the quantizer registrations and the updates sent since the last compute.",
+          context: msg.type,
         });
       }
       break;

@@ -8,7 +8,7 @@
 
 > `const` **CompositorWorker**: `object`
 
-Defined in: [worker/src/compositor-worker.ts:599](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L599)
+Defined in: [worker/src/compositor-worker.ts:626](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L626)
 
 Factory namespace for the compositor worker.
 
@@ -45,16 +45,18 @@ to capture per-stage timings.
 ## Example
 
 ```ts
+import { Boundary } from '@czap/core';
 import { CompositorWorker } from '@czap/worker';
 
 const compositor = CompositorWorker.create({ poolCapacity: 64 });
-compositor.addQuantizer('brightness', {
-  id: 'boundary:brightness',
-  states: ['dim', 'bright'],
-  // One threshold per state: thresholds[i] is the lower bound of
-  // states[i] — 'dim' from 0, 'bright' from 0.5.
-  thresholds: [0, 0.5],
+// Boundary.make computes the content-addressed id; the quantizer
+// name defaults to the boundary's input name ('brightness').
+const brightness = Boundary.make({
+  input: 'brightness',
+  // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
+  at: [[0, 'dim'], [0.5, 'bright']],
 });
+compositor.addQuantizer(brightness);
 const unsub = compositor.onState((state) => {
   // state.discrete.brightness === 'bright' | 'dim'
 });

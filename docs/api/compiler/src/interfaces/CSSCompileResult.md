@@ -6,7 +6,7 @@
 
 # Interface: CSSCompileResult
 
-Defined in: [compiler/src/css.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L72)
+Defined in: [compiler/src/css.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L73)
 
 Output of [CSSCompiler.compile](../variables/CSSCompiler.md#compile).
 
@@ -20,7 +20,7 @@ separate serialize call.
 
 > `readonly` **containerRules**: readonly [`CSSContainerRule`](CSSContainerRule.md)[]
 
-Defined in: [compiler/src/css.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L74)
+Defined in: [compiler/src/css.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L75)
 
 Structured container rules, one per non-empty state.
 
@@ -30,6 +30,6 @@ Structured container rules, one per non-empty state.
 
 > `readonly` **raw**: `string`
 
-Defined in: [compiler/src/css.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L76)
+Defined in: [compiler/src/css.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L77)
 
 Pre-serialized CSS text ready for injection.

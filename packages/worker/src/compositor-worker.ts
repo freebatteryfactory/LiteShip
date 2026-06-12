@@ -14,8 +14,8 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import type { RuntimeCoordinator } from '@czap/core';
+import { Diagnostics, StateName as mkStateName } from '@czap/core';
+import type { RuntimeCoordinator, ContentAddress, StateName } from '@czap/core';
 import type {
   FromWorkerMessage,
   WorkerConfig,
@@ -34,6 +34,7 @@ import type {
   ResolvedStateAckPayload,
   CompositorWorkerShape,
   CompositorWorkerStartupTelemetry,
+  QuantizerBoundarySource,
 } from './compositor-types.js';
 
 // Import startup/lifecycle helpers
@@ -309,8 +310,14 @@ function _createCompositorWorker(
         Diagnostics.error({
           source: 'czap/worker.compositor-worker',
           code: 'worker-message-error',
-          message: 'Compositor worker reported an error.',
-          detail: msg.message,
+          // Both worker-side catch sites wrap compute(), where the
+          // dominant failure is a registration whose thresholds do not
+          // line up with its states — hedged because other causes exist.
+          message:
+            msg.context !== undefined
+              ? `Compositor worker failed while handling "${msg.context}". Most often a registration whose thresholds do not line up with its states (thresholds[i] is the lower bound of states[i]).`
+              : 'Compositor worker reported an error.',
+          detail: { code: msg.code, message: msg.message, hint: msg.hint, context: msg.context },
         });
         break;
     }
@@ -320,7 +327,9 @@ function _createCompositorWorker(
     Diagnostics.error({
       source: 'czap/worker.compositor-worker',
       code: 'worker-unhandled-error',
-      message: 'Compositor worker raised an unhandled error.',
+      // The worker is minted from a Blob URL, so a strict CSP blocking
+      // worker-src blob: is the dominant real-world cause of this event.
+      message: `Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: ${e.message}`,
       detail: e.message,
     });
   };
@@ -346,7 +355,23 @@ function _createCompositorWorker(
       return runtime;
     },
 
-    addQuantizer(name, boundary) {
+    addQuantizer(
+      nameOrBoundary: string | QuantizerBoundarySource,
+      explicitBoundary?: {
+        readonly id: ContentAddress;
+        readonly states: readonly StateName[];
+        readonly thresholds: readonly number[];
+      },
+    ) {
+      // Boundary-first form: the quantizer name defaults to the
+      // boundary's input name; id/states/thresholds are derived.
+      // BoundaryDef.states carries plain strings, so the labels are
+      // branded here — the registration protocol speaks StateName.
+      const name = typeof nameOrBoundary === 'string' ? nameOrBoundary : nameOrBoundary.input;
+      const boundary =
+        typeof nameOrBoundary === 'string'
+          ? explicitBoundary!
+          : { ...nameOrBoundary, states: nameOrBoundary.states.map((s) => mkStateName(s)) };
       const registration = {
         name,
         boundaryId: boundary.id,
@@ -576,16 +601,18 @@ function _createCompositorWorker(
  *
  * @example
  * ```ts
+ * import { Boundary } from '@czap/core';
  * import { CompositorWorker } from '@czap/worker';
  *
  * const compositor = CompositorWorker.create({ poolCapacity: 64 });
- * compositor.addQuantizer('brightness', {
- *   id: 'boundary:brightness',
- *   states: ['dim', 'bright'],
- *   // One threshold per state: thresholds[i] is the lower bound of
- *   // states[i] — 'dim' from 0, 'bright' from 0.5.
- *   thresholds: [0, 0.5],
+ * // Boundary.make computes the content-addressed id; the quantizer
+ * // name defaults to the boundary's input name ('brightness').
+ * const brightness = Boundary.make({
+ *   input: 'brightness',
+ *   // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
+ *   at: [[0, 'dim'], [0.5, 'bright']],
  * });
+ * compositor.addQuantizer(brightness);
  * const unsub = compositor.onState((state) => {
  *   // state.discrete.brightness === 'bright' | 'dim'
  * });

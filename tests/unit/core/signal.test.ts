@@ -587,22 +587,11 @@ describe('Signal.audio', () => {
     expect(value).toBeCloseTo(0.5);
   });
 
-  test('falls back to the raw sample count when normalization is missing or invalid', async () => {
+  test('normalized mode without a positive totalDurationSec throws instead of degrading', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
-    bridge.advanceSamples(1_200);
 
-    const values = await runScoped(
-      Effect.gen(function* () {
-        const withoutDuration = yield* Signal.audio(bridge, 'normalized');
-        const zeroDuration = yield* Signal.audio(bridge, 'normalized', 0);
-
-        return {
-          withoutDuration: yield* withoutDuration.poll(),
-          zeroDuration: yield* zeroDuration.poll(),
-        };
-      }),
-    );
-
-    expect(values).toEqual({ withoutDuration: 1_200, zeroDuration: 1_200 });
+    expect(() => Signal.audio(bridge, 'normalized')).toThrow(/totalDurationSec/);
+    expect(() => Signal.audio(bridge, 'normalized', 0)).toThrow(/totalDurationSec/);
+    expect(() => Signal.audio(bridge, 'normalized', Number.NaN)).toThrow(/totalDurationSec/);
   });
 });

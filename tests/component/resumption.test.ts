@@ -151,7 +151,10 @@ describe('Resumption.resume', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({}, 500)));
 
     const result = Effect.runPromise(Resumption.resume('art-1', '50'));
-    await expect(result).rejects.toThrow(/Snapshot request failed.*500/);
+    // Teaching contract: the fetched URL, the status, and the way out.
+    await expect(result).rejects.toThrow(
+      /Snapshot request to .*\/czap\/snapshot\/art-1 failed: 500.*ResumptionConfig\.snapshotUrl/,
+    );
   });
 
   test('snapshot network failure surfaces the fetch error context', async () => {
@@ -166,7 +169,9 @@ describe('Resumption.resume', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse({}, 500)));
 
     const result = Effect.runPromise(Resumption.resume('art-1', '15'));
-    await expect(result).rejects.toThrow(/Replay request failed.*500/);
+    await expect(result).rejects.toThrow(
+      /Replay request to .*\/czap\/replay\/art-1.* failed: 500.*ResumptionConfig\.replayUrl/,
+    );
   });
 
   test('replay network failure surfaces the fetch error context', async () => {
@@ -185,7 +190,11 @@ describe('Resumption.resume', () => {
           snapshotUrl: 'https://cdn.example.com/fx/snapshot',
         }),
       ),
-    ).rejects.toThrow(/Snapshot URL rejected/);
+      // Cross-origin rejection must name both origins and the literal
+      // endpointPolicy allowlist fix.
+    ).rejects.toThrow(
+      /Snapshot URL "https:\/\/cdn\.example\.com\/fx\/snapshot" was rejected.*https:\/\/cdn\.example\.com.*http:\/\/localhost:3000.*allowOrigins: \['https:\/\/cdn\.example\.com'\]/,
+    );
 
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -200,7 +209,7 @@ describe('Resumption.resume', () => {
           replayUrl: 'https://cdn.example.com/fx/replay',
         }),
       ),
-    ).rejects.toThrow(/Replay URL rejected/);
+    ).rejects.toThrow(/Replay URL "https:\/\/cdn\.example\.com\/fx\/replay" was rejected.*endpointPolicy/);
 
     expect(fetch).not.toHaveBeenCalled();
   });

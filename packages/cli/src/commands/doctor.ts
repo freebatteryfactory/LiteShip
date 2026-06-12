@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { arrow, bearingGlyph, color, colorEnabled, header } from '../lib/ansi.js';
 import type { WallClockTimestamp } from '../receipts.js';
 import { spawnArgvCapture, spawnArgvVisible } from '../lib/spawn.js';
+import { isLiteShipWorkspace } from '../lib/workspace.js';
 import { probeFfmpegRender } from '@czap/command/host';
 import { emit } from '../receipts.js';
 
@@ -489,6 +490,38 @@ interface RunProbesOptions {
   readonly target?: DoctorTarget;
 }
 
+/**
+ * Consumer-context probe — the `liteship` umbrella under pnpm's strict
+ * `node_modules` does not hoist the transitive `@czap/*` packages it installs,
+ * so `import '@czap/core'` dies with Node's raw ERR_MODULE_NOT_FOUND before
+ * LiteShip can say anything. Returns null (probe skipped) when the host
+ * package.json does not declare `liteship`, or when the layout is not
+ * pnpm-strict (npm/yarn hoisted layouts expose the transitives).
+ */
+function probeLiteshipPnpm(cwd: string): DoctorCheck | null {
+  const manifest = readCwdPackageJson(cwd);
+  if (manifest.kind !== 'ok') return null;
+  const deps = manifest.value['dependencies'] as Record<string, string> | undefined;
+  const devDeps = manifest.value['devDependencies'] as Record<string, string> | undefined;
+  if (!(deps?.['liteship'] ?? devDeps?.['liteship'])) return null;
+  if (!existsSync(resolve(cwd, 'node_modules/.pnpm'))) return null;
+  if (existsSync(resolve(cwd, 'node_modules/@czap'))) {
+    return {
+      id: 'liteship.pnpm',
+      label: 'liteship (pnpm)',
+      status: 'ok',
+      detail: '@czap/* packages resolvable beside liteship',
+    };
+  }
+  return {
+    id: 'liteship.pnpm',
+    label: 'liteship (pnpm)',
+    status: 'warn',
+    detail: 'liteship is installed under pnpm, which does not expose its transitive @czap/* packages to imports',
+    hint: 'Declare what you import: pnpm add @czap/core @czap/astro (or hoist the scope with public-hoist-pattern[]=@czap/* in .npmrc)',
+  };
+}
+
 function readCwdPackageJson(cwd: string): Readout<Record<string, unknown>> {
   const pkgPath = resolve(cwd, 'package.json');
   if (!existsSync(pkgPath)) return { kind: 'absent' };
@@ -806,8 +839,34 @@ async function runCloudflareProbes(cwd: string): Promise<readonly DoctorCheck[]>
   ];
 }
 
+/**
+ * Generic consumer probe profile — auto-selected when `cwd` is not the
+ * LiteShip workspace (root package.json name !== 'czap'). A consumer who
+ * installed @czap/cli in their own app gets the environment checks that
+ * apply to them (node, pnpm, install state, ffmpeg) instead of the
+ * maintainer probes (packages/<pkg>/dist, scripts/link-pre-commit.ts,
+ * crates/ WASM toolchain), which are all wrong outside this repo.
+ * `--target` stays the explicit override for host-focused profiles.
+ */
+async function runConsumerProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+  const minima = loadEngineMinima(cwd);
+  const pnpm = await probePnpm(minima);
+  // liteship.pnpm is a consumer-context probe by definition (it reads the
+  // host package.json for a liteship dependency) — it lives on this profile,
+  // not the maintainer one, and skips itself (null) when inapplicable.
+  const liteshipPnpm = probeLiteshipPnpm(cwd);
+  return [
+    probeNode(minima),
+    pnpm,
+    probeConsumerInstalled(cwd),
+    ...(liteshipPnpm ? [liteshipPnpm] : []),
+    probeFfmpegRenderCheck(),
+  ];
+}
+
 async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
   if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
+  if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them
   // concurrently so the wall time is the slowest single probe, not the serial
@@ -872,34 +931,6 @@ function prettySummary(checks: readonly DoctorCheck[], verdict: DoctorVerdict, f
   lines.push('');
   lines.push(color(VERDICT_COLOR[verdict], VERDICT_SENTENCE[verdict], on));
   return lines.join('\n') + '\n';
-}
-
-/**
- * Verify that `cwd` looks like the LiteShip workspace before applyFixes
- * is allowed to run the build remediation. Without this guard, a user
- * running `czap doctor --fix` from an unrelated project would:
- *   1. `findWorkspaceRoot` falls back to that project's cwd (no
- *      pnpm-workspace.yaml above means start === fallback).
- *   2. core.built/cli.built warn because packages/core|cli/dist don't
- *      exist in that project.
- *   3. applyFixes runs `pnpm run build` against THAT project's package
- *      — executing arbitrary code the user didn't intend.
- *
- * Codex P1 (PR #3 discussion r3254680246). Fix: refuse to --fix unless
- * root package.json declares the @czap/* family (a name that's hard
- * to fake unintentionally).
- */
-function isLiteShipWorkspace(cwd: string): boolean {
-  const rootPkgPath = resolve(cwd, 'package.json');
-  if (!existsSync(rootPkgPath)) return false;
-  try {
-    const pkg = JSON.parse(readFileSync(rootPkgPath, 'utf8')) as { name?: string };
-    // Repo root's package.json names itself "czap"; the workspace itself
-    // is the surface that owns the @czap/* package family.
-    return pkg.name === 'czap';
-  } catch {
-    return false;
-  }
 }
 
 /** Attempt the cheap, local fixes for whatever checks are fixable. */

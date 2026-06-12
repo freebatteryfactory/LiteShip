@@ -20,6 +20,7 @@ export type { ARIACompileResult } from './aria.js';
 export { AIManifestCompiler } from './ai-manifest.js';
 export type {
   AIManifest,
+  AIManifestInput,
   AIDimension,
   AISlot,
   AIAction,
@@ -27,6 +28,7 @@ export type {
   AIConstraint,
   AIToolDefinition,
   AIManifestCompileResult,
+  AIValidationIssue,
 } from './ai-manifest.js';
 
 // CUT D6: pure MCP-app manifest projection over the real MCP/MCP-Apps surfaces.

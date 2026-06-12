@@ -155,7 +155,11 @@ describe('D9b-2 — the handler is engine-agnostic (context.runAudit injection)'
     const result = await auditCommand.handler({ name: 'audit', args: {} }, {});
     expect(result.status).toBe('failed');
     expect(result.exitCode).toBe(2);
-    expect((result.payload as { error?: string }).error).toMatch(/runAudit/);
+    // Unified capability contract (sanctioned break): a stable error code,
+    // with the missing capability NAMED in the structured `missing` array.
+    const payload = result.payload as { error?: string; missing?: readonly string[] };
+    expect(payload.error).toBe('capability_unavailable');
+    expect(payload.missing).toContain('runAudit');
   });
 
   it('reports a nonzero exit when the engine finds errors', async () => {
@@ -278,11 +282,13 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     const { result, stdout } = await captureStdout(() => audit({ consumer: true, cwd: root, pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.profileSource).toBe('consumer');
-    // Nothing from the czap topology is installed in the fixture: zero
-    // packages, and the unshipped host surface is pruned, not error-spammed.
-    expect(receipt.errorCount).toBe(0);
-    expect(receipt.status).toBe('ok');
-    expect(result).toBe(0);
+    // Nothing from the czap topology is installed in the fixture: the unshipped
+    // host surface is pruned (no error spam), but ZERO audited packages must
+    // read as the single no-packages-discovered error — clean must never be
+    // confused with unchecked (CUT A0).
+    expect(receipt.errorCount).toBe(1);
+    expect(receipt.status).toBe('failed');
+    expect(result).toBe(1);
   });
 
   it('--findings with --pretty writes per-finding stderr lines with locations', async () => {

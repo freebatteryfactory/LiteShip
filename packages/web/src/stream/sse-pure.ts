@@ -96,7 +96,9 @@ export const calculateDelay = (attempt: number, config: ReconnectConfig): number
  */
 export const validateArtifactId = (artifactId: string): string => {
   if (!ARTIFACT_ID_PATTERN.test(artifactId)) {
-    throw new Error(`Invalid artifactId "${artifactId}". Artifact IDs must be path-safe single segments.`);
+    throw new Error(
+      `Invalid artifactId "${artifactId}". Allowed characters: letters, digits, ':', '_', '-' (it becomes a URL path segment), e.g. 'doc-123' or 'page:home'.`,
+    );
   }
 
   return artifactId;

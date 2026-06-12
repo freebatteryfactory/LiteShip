@@ -15,13 +15,13 @@ avoid flooding the DOM with unused `aria-*` values.
 
 ## Properties
 
-### currentState
+### currentState?
 
-> `readonly` **currentState**: `string`
+> `readonly` `optional` **currentState?**: `string`
 
 Defined in: [compiler/src/dispatch.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L40)
 
-Name of the state whose ARIA attributes should be emitted.
+Name of the state whose ARIA attributes should be emitted; defaults to the boundary's first state.
 
 ***
 

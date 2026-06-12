@@ -8,10 +8,14 @@
 
 > **tierFromCapabilities**(`caps`): [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
-Defined in: [detect/src/tiers.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L24)
+Defined in: [detect/src/tiers.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L28)
 
 Determine the highest capability level the device can support based on
 its detected hardware and preference characteristics.
+
+Advanced — `detect()` already returns this as `result.tier`; call this
+directly only when you hold a [DeviceCapabilities](../interfaces/DeviceCapabilities.md) that did not come
+from a `detect()` sweep (capsule/edge consumers).
 
 ## Parameters
 

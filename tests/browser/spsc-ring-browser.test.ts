@@ -134,8 +134,8 @@ describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and At
     const { producer, consumer } = SPSCRing.createPair(4, 2);
     const data = new Float64Array(2);
 
-    expect(() => consumer.push(data)).toThrow('only the producer may push');
-    expect(() => producer.pop(data)).toThrow('only the consumer may pop');
+    expect(() => consumer.push(data)).toThrow('push() is producer-only');
+    expect(() => producer.pop(data)).toThrow('pop() is consumer-only');
   });
 
   test('push and pop throw RangeError when slot size does not match', () => {
@@ -215,9 +215,9 @@ describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and At
     const slotSize = 8;
     const { buffer } = SPSCRing.createPair(slotCount, slotSize);
 
-    // Control region: 8 bytes (2 x Int32)
+    // Control region: 16 bytes (4 x Int32 — cursors + ring geometry)
     // Data region: slotCount * slotSize * 8 bytes (Float64)
-    const expectedBytes = 8 + slotCount * slotSize * 8;
+    const expectedBytes = 16 + slotCount * slotSize * 8;
     expect(buffer.byteLength).toBe(expectedBytes);
   });
 });

@@ -8,7 +8,7 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Effect } from 'effect';
-import { detect, detectGPUTier, watchCapabilities } from '@czap/detect';
+import { detect, detectGPUTier, watchCapabilities, resetDetectionCaches } from '@czap/detect';
 import {
   mockNavigator,
   mockMatchMedia,
@@ -27,6 +27,13 @@ let restoreNav: (() => void) | undefined;
 let restoreMM: (() => void) | undefined;
 let restoreGL: (() => void) | undefined;
 let restoreVP: (() => void) | undefined;
+
+beforeEach(() => {
+  // The renderer probe memoizes its first successful read for the session
+  // (the GPU cannot change while a page lives) — each test here mocks a
+  // DIFFERENT renderer, so the cache must reset between tests.
+  resetDetectionCaches();
+});
 
 afterEach(() => {
   restoreNav?.();
@@ -463,6 +470,11 @@ describe('watchCapabilities', () => {
 
           // Simulate resize
           window.dispatchEvent(new Event('resize'));
+
+          // Re-detection is debounced to one sweep per frame (rAF, or a 16ms
+          // timeout outside browsers) — wait it out INSIDE the scope, since
+          // closing the watcher drops pending updates by design.
+          yield* Effect.promise(() => new Promise((resolve) => setTimeout(resolve, 40)));
         }),
       ),
     );

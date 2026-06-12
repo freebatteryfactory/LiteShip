@@ -8,7 +8,7 @@
 
 > `const` **Part**: `object` & `Record`\<`string`, `never`\>
 
-Defined in: [core/src/ecs.ts:358](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L358)
+Defined in: [core/src/ecs.ts:363](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L363)
 
 Part namespace — factories for ECS component stores.
 

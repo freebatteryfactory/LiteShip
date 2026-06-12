@@ -44,6 +44,16 @@ export interface VideoTrack<M extends FrameMark = FrameMark> {
   readonly id: TrackId<'video'>;
   readonly from: M;
   readonly to: M;
+  /**
+   * Opaque source reference, carried verbatim onto the `VideoSource`
+   * ECS component — the scene engine never interprets it (VideoSystem
+   * only checks presence). Hand it whatever YOUR renderer reads:
+   * typically a quantizer-driven source descriptor, an asset id, or a
+   * canvas/element reference.
+   *
+   * @example
+   * Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-boundary' } })
+   */
   readonly source: unknown;
   readonly layer?: number;
   /** Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick. */
@@ -58,7 +68,14 @@ export interface AudioTrack<M extends FrameMark = FrameMark> {
   readonly to: M;
   readonly source: string;
   readonly mix?: {
+    /**
+     * Linear gain multiplier — 1 is unity (asset plays at its authored
+     * level), 0 is silence. Mixers multiply this by the envelope-driven
+     * `_gain` factor each tick (see `systems/audio.ts`).
+     * @default 1
+     */
     readonly volume?: number;
+    /** Stereo position, -1 (left) .. 1 (right). @default 0 */
     readonly pan?: number;
     readonly sync?: { readonly bpm?: number };
   };
@@ -124,16 +141,32 @@ export interface SceneInvariant {
  */
 export type SceneBeat = BeatBinding.Component;
 
-/** Top-level scene contract — typed declaration shape for an entire composition. */
+/**
+ * Top-level scene contract — typed declaration shape for an entire
+ * composition. Only `name`, `fps`, `bpm`, and `tracks` are required;
+ * `compileScene` fills the documented defaults for the rest, so a
+ * hello-world scene never declares layer-4 audit/ship concepts.
+ */
 export interface SceneContract<M extends FrameMark = FrameMark> {
   readonly name: string;
-  readonly duration: number;
+  /**
+   * Scene duration in milliseconds.
+   * @default derived from the tracks — max resolved `to` / fps * 1000
+   */
+  readonly duration?: number;
   readonly fps: number;
   readonly bpm: number;
+  /** Optional render width in pixels. Render hosts fall back to 1280 when absent. */
+  readonly width?: number;
+  /** Optional render height in pixels. Render hosts fall back to 720 when absent. */
+  readonly height?: number;
   readonly tracks: readonly Track<M>[];
-  readonly invariants: readonly SceneInvariant[];
-  readonly budgets: { readonly p95FrameMs: number; readonly memoryMb?: number };
-  readonly site: readonly Site[];
+  /** Compile-time checks. @default [] (no declared checks) */
+  readonly invariants?: readonly SceneInvariant[];
+  /** Performance budgets. @default { p95FrameMs: 1000 / fps } (one frame budget) */
+  readonly budgets?: { readonly p95FrameMs: number; readonly memoryMb?: number };
+  /** Deployment sites the scene targets. @default ['node', 'browser'] */
+  readonly site?: readonly Site[];
   /**
    * Optional pre-resolved beat markers. When present, the scene
    * compiler propagates them onto the {@link CompiledScene} and the
@@ -148,6 +181,14 @@ export interface SceneContract<M extends FrameMark = FrameMark> {
  * A scene contract whose timeline marks have all been resolved to
  * numeric frame indices — what `compileScene` hands to every declared
  * {@link SceneInvariant} (and what `componentsFromTrack` reads when
- * emitting `FrameRange` components).
+ * emitting `FrameRange` components). The optional authoring fields are
+ * required here: `compileScene` fills their documented defaults before
+ * invariants run, so checks like `t.to <= (s.duration / 1000) * s.fps`
+ * never see `undefined`.
  */
-export type ResolvedSceneContract = SceneContract<number>;
+export type ResolvedSceneContract = SceneContract<number> & {
+  readonly duration: number;
+  readonly invariants: readonly SceneInvariant[];
+  readonly budgets: { readonly p95FrameMs: number; readonly memoryMb?: number };
+  readonly site: readonly Site[];
+};

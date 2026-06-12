@@ -6,7 +6,7 @@
 
 # Interface: AIManifestCompileResult
 
-Defined in: [compiler/src/ai-manifest.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L142)
+Defined in: [compiler/src/ai-manifest.ts:184](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L184)
 
 Output of [AIManifestCompiler.compile](../variables/AIManifestCompiler.md#compile).
 
@@ -20,7 +20,7 @@ session in a single step.
 
 > `readonly` **jsonSchema**: `Record`\<`string`, `unknown`\>
 
-Defined in: [compiler/src/ai-manifest.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L148)
+Defined in: [compiler/src/ai-manifest.ts:190](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L190)
 
 JSON Schema for validating LLM output.
 
@@ -30,7 +30,7 @@ JSON Schema for validating LLM output.
 
 > `readonly` **manifest**: [`AIManifest`](AIManifest.md)
 
-Defined in: [compiler/src/ai-manifest.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L144)
+Defined in: [compiler/src/ai-manifest.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L186)
 
 The source manifest.
 
@@ -40,7 +40,7 @@ The source manifest.
 
 > `readonly` **systemPrompt**: `string`
 
-Defined in: [compiler/src/ai-manifest.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L150)
+Defined in: [compiler/src/ai-manifest.ts:192](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L192)
 
 System prompt describing dimensions, slots, actions, and constraints.
 
@@ -50,6 +50,6 @@ System prompt describing dimensions, slots, actions, and constraints.
 
 > `readonly` **toolDefinitions**: readonly [`AIToolDefinition`](AIToolDefinition.md)[]
 
-Defined in: [compiler/src/ai-manifest.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L146)
+Defined in: [compiler/src/ai-manifest.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L188)
 
 Tool definitions for function calling.

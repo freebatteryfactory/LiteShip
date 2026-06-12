@@ -19,9 +19,15 @@ Omitted fields fall back to worker-local defaults chosen by
 
 > `readonly` `optional` **poolCapacity?**: `number`
 
-Defined in: [worker/src/messages.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L25)
+Defined in: [worker/src/messages.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L28)
 
 Maximum number of pooled `CompositeState` slots the worker may hold.
+
+#### Default Value
+
+```ts
+64
+```
 
 ***
 
@@ -29,7 +35,7 @@ Maximum number of pooled `CompositeState` slots the worker may hold.
 
 > `readonly` `optional` **targetFps?**: `number`
 
-Defined in: [worker/src/messages.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L37)
+Defined in: [worker/src/messages.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L40)
 
 Target frames-per-second for the render loop (affects frame pacing).
 

@@ -631,3 +631,62 @@ describe('compiler branch coverage', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// CSS unknown-state-key diagnostics (error contract)
+// ---------------------------------------------------------------------------
+
+describe('CSSCompiler unknown state keys', () => {
+  test('a supplied key matching no boundary state warns with a did-you-mean', () => {
+    const boundary = Boundary.make({
+      input: 'width',
+      at: [
+        [0, 'sm'],
+        [768, 'lg'],
+      ] as const,
+    });
+
+    captureDiagnostics(({ events }) => {
+      const result = CSSCompiler.compile(boundary, {
+        Sm: { 'font-size': '14px' },
+        lg: { 'font-size': '18px' },
+      } as Record<string, Record<string, string>>);
+
+      // The typo'd key emitted no CSS...
+      expect(result.raw).not.toContain('14px');
+      // ...and said so, with the case-insensitive suggestion.
+      expect(events).toEqual([
+        expect.objectContaining({
+          source: 'czap/compiler.css',
+          code: 'unknown-state-key',
+          message:
+            'State "Sm" is not one of boundary "width" states [sm, lg]; its CSS was skipped. Did you mean "sm"?',
+        }),
+      ]);
+    });
+  });
+
+  test('an unmatched key without a close match warns without a suggestion', () => {
+    const boundary = Boundary.make({
+      input: 'width',
+      at: [
+        [0, 'sm'],
+        [768, 'lg'],
+      ] as const,
+    });
+
+    captureDiagnostics(({ events }) => {
+      CSSCompiler.compile(boundary, {
+        sm: { color: 'red' },
+        huge: { color: 'blue' },
+      } as Record<string, Record<string, string>>);
+
+      expect(events).toEqual([
+        expect.objectContaining({
+          code: 'unknown-state-key',
+          message: 'State "huge" is not one of boundary "width" states [sm, lg]; its CSS was skipped.',
+        }),
+      ]);
+    });
+  });
+});

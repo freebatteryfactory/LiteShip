@@ -8,6 +8,6 @@
 
 > **Audio** = [`AudioTrack`](../../../interfaces/AudioTrack.md)
 
-Defined in: [scene/src/track.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L139)
+Defined in: [scene/src/track.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L159)
 
 Audio helper return.

@@ -8,7 +8,7 @@
 
 > **PackagePathResolver** = (`file`) => [`PackagePathResolution`](../interfaces/PackagePathResolution.md) \| `null`
 
-Defined in: [audit/src/policy.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L37)
+Defined in: [audit/src/policy.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L38)
 
 ## Parameters
 

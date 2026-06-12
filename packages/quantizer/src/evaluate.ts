@@ -4,6 +4,7 @@
  */
 
 import type { Boundary, StateUnion } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 
 /**
  * Result of quantizing a single numeric value against a boundary.
@@ -98,6 +99,13 @@ export function evaluate<B extends Boundary.Shape>(
   // Find previous state index
   const prevIndex = (states as readonly string[]).indexOf(previousState as string);
   if (prevIndex === -1) {
+    // A foreign previousState is almost always a stale or typo'd value from
+    // another boundary; warnOnce keeps this hot path cheap after first emit.
+    Diagnostics.warnOnce({
+      source: 'czap/quantizer',
+      code: 'unknown-previous-state',
+      message: `evaluate(): previousState "${String(previousState)}" is not a state of boundary "${boundary.input}" (states: ${(states as readonly string[]).join(', ')}); treating as a crossing. Check that the state came from this boundary.`,
+    });
     return { state, index: rawIndex, value, crossed: true };
   }
 

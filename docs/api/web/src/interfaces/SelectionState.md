@@ -6,7 +6,7 @@
 
 # Interface: SelectionState
 
-Defined in: [web/src/types.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L84)
+Defined in: [web/src/types.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L96)
 
 Text selection state.
 
@@ -16,7 +16,7 @@ Text selection state.
 
 > `readonly` **direction**: `string`
 
-Defined in: [web/src/types.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L88)
+Defined in: [web/src/types.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L100)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:88](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **elementPath**: `string`
 
-Defined in: [web/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L85)
+Defined in: [web/src/types.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L97)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **end**: `number`
 
-Defined in: [web/src/types.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L87)
+Defined in: [web/src/types.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L99)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:87](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **start**: `number`
 
-Defined in: [web/src/types.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L86)
+Defined in: [web/src/types.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L98)

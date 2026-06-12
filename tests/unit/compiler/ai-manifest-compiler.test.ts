@@ -71,6 +71,58 @@ const fullManifest: AIManifest = {
 };
 
 // ---------------------------------------------------------------------------
+// AIManifestInput defaults
+// ---------------------------------------------------------------------------
+
+describe('AIManifestInput defaults', () => {
+  test('compile normalizes omitted fields to documented defaults', () => {
+    const result = AIManifestCompiler.compile({});
+    expect(result.manifest).toEqual({
+      version: '1.0',
+      dimensions: {},
+      slots: {},
+      actions: {},
+      constraints: [],
+    });
+    expect(result.systemPrompt).toContain('v1.0');
+  });
+
+  test('a manifest can declare only its actions', () => {
+    const result = AIManifestCompiler.compile({
+      actions: {
+        ping: { params: {}, effects: [], description: 'Ping the surface' },
+      },
+    });
+    expect(result.toolDefinitions).toHaveLength(1);
+    expect(result.toolDefinitions[0]!.name).toBe('ping');
+    expect(result.manifest.version).toBe('1.0');
+  });
+
+  test('omitted param `required` defaults to optional (JSON Schema convention)', () => {
+    const partial = {
+      actions: {
+        tag: {
+          params: { label: { type: 'string', description: 'Label' } },
+          effects: [],
+          description: 'Tag something',
+        },
+      },
+    };
+    const result = AIManifestCompiler.compile(partial);
+    expect((result.toolDefinitions[0]!.parameters as any).required).toEqual([]);
+
+    const check = AIManifestCompiler.validateAIOutput({ action: 'tag', params: {} }, partial);
+    expect(check.valid).toBe(true);
+  });
+
+  test('validateAIOutput accepts a partial manifest input', () => {
+    const check = AIManifestCompiler.validateAIOutput({ action: 'nope' }, {});
+    expect(check.valid).toBe(false);
+    expect(check.errors[0]).toContain("Unknown action 'nope'");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // compile()
 // ---------------------------------------------------------------------------
 

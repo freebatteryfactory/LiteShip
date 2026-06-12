@@ -5,6 +5,7 @@
  */
 
 import type { CompositeState, VideoFrameOutput } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import { useCurrentFrame } from 'remotion';
 
 // ---------------------------------------------------------------------------
@@ -46,7 +47,8 @@ export function cssVarsFromState(state: CompositeState): Record<string, string> 
  * Clamps to valid range: negative indices return the first frame; indices
  * past the end return the last frame. An empty `frames` array yields a
  * structurally-empty `CompositeState` so callers never have to guard for
- * undefined output.
+ * undefined output. Both degraded paths emit a warn-once diagnostic
+ * (overflow usually means fps/durationMs drifted from `durationInFrames`).
  *
  * @param frames - Output of {@link precomputeFrames}.
  * @param frameIndex - Zero-based frame index (typically from Remotion's
@@ -60,7 +62,23 @@ export function cssVarsFromState(state: CompositeState): Record<string, string> 
  */
 export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex: number): CompositeState {
   if (frames.length === 0) {
+    Diagnostics.warnOnce({
+      source: 'czap/remotion',
+      code: 'no-frames',
+      message:
+        'stateAtFrame received 0 frames — did precomputeFrames run? Await it before render (e.g. in calculateMetadata) and pass its result through unmodified.',
+    });
     return { discrete: {}, blend: {}, outputs: { css: {}, glsl: {}, aria: {} } };
+  }
+  if (frameIndex > frames.length - 1) {
+    // Dedup key stays frame-independent — this fires on every frame past the
+    // end during a render; the offending index travels in `detail`.
+    Diagnostics.warnOnce({
+      source: 'czap/remotion',
+      code: 'frame-overflow',
+      message: `stateAtFrame: Remotion asked for a frame past the ${frames.length} precomputed frames — the video will freeze on the last state. Probable cause: VideoConfig fps/durationMs does not match this composition's durationInFrames. Fix: durationMs = Millis(durationInFrames / fps * 1000), or build the renderer with rendererFromRemotionConfig().`,
+      detail: { frameIndex, frameCount: frames.length },
+    });
   }
   const clamped = Math.max(0, Math.min(frameIndex, frames.length - 1));
   return frames[clamped]!.state;

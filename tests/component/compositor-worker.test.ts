@@ -1554,13 +1554,14 @@ describe('CompositorWorker', () => {
           source: 'czap/worker.compositor-worker',
           code: 'worker-message-error',
           message: 'Compositor worker reported an error.',
-          detail: 'compositor failed',
+          detail: { message: 'compositor failed' },
         }),
         expect.objectContaining({
           level: 'error',
           source: 'czap/worker.compositor-worker',
           code: 'worker-unhandled-error',
-          message: 'Compositor worker raised an unhandled error.',
+          message:
+            'Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: boom',
           detail: 'boom',
         }),
       ]),
@@ -1706,7 +1707,7 @@ describe('CompositorWorker', () => {
         expect.arrayContaining([
           expect.objectContaining({
             code: 'worker-message-error',
-            detail: 'side-channel only',
+            detail: { message: 'side-channel only' },
           }),
         ]),
       );

@@ -8,12 +8,13 @@
 
 > **useCzapState**(): `CompositeState`
 
-Defined in: [remotion/src/composition.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L83)
+Defined in: [remotion/src/composition.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L143)
 
 Hook that reads the `CompositeState` for the current Remotion frame
 from the nearest [Provider](Provider.md). Returns a structurally-empty state
 when no provider is mounted (or it holds no frames) so callers never
-crash at the boundary.
+crash at the boundary; a warn-once diagnostic names the missing
+`<Provider frames={...}>` so the unstyled render is not silent.
 
 This is the implicit context-lookup half of a deliberate pair: mount a
 [Provider](Provider.md) once and call `useCzapState()` anywhere in the subtree

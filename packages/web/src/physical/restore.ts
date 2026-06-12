@@ -82,6 +82,17 @@ function remapPath(path: string, remap: Record<string, string>): string {
   return remappedPath;
 }
 
+/**
+ * Identify the element a restore warning is about: its semantic id, DOM id,
+ * or tag name — whichever the host can act on first.
+ */
+function describeRestoreTarget(element: Element): string {
+  const semanticId = element.getAttribute(ATTR);
+  if (semanticId) return `[${ATTR}="${semanticId}"]`;
+  if (element.id) return `#${element.id}`;
+  return `<${element.tagName.toLowerCase()}>`;
+}
+
 function isSelectionRangeError(error: unknown): error is DOMException {
   return (
     error instanceof DOMException &&
@@ -164,7 +175,7 @@ export const restoreFocusState = (focusState: FocusState, root?: Element): Effec
           Diagnostics.warn({
             source: 'czap/web.physical.restore',
             code: 'restore-focus-selection-failed',
-            message: 'Failed to restore focus selection range for a supported input element.',
+            message: `Failed to restore the focus selection range on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
             cause: error,
           });
           throw error;
@@ -261,7 +272,7 @@ export const restoreSelection = (selection: SelectionState | null): Effect.Effec
         Diagnostics.warn({
           source: 'czap/web.physical.restore',
           code: 'restore-selection-range-failed',
-          message: 'Failed to restore text selection for a supported input element.',
+          message: `Failed to restore the text selection on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
           cause: error,
         });
         throw error;
@@ -369,7 +380,7 @@ export const restoreIME = (ime: IMEState | null): Effect.Effect<void> => {
         Diagnostics.warn({
           source: 'czap/web.physical.restore',
           code: 'restore-ime-selection-failed',
-          message: 'Failed to restore IME selection range for a supported input element.',
+          message: `Failed to restore the IME selection range on ${describeRestoreTarget(element)} — the element type likely changed across the morph (selection APIs only apply to text-like inputs).`,
           cause: error,
         });
         throw error;

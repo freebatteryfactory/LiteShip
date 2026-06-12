@@ -15,7 +15,8 @@ import { fnv1aBytes } from './fnv.js';
 
 /** Per-slot configuration on a component — whether the slot must be provided, plus optional description. */
 export interface SlotConfig {
-  readonly required: boolean;
+  /** Default: false. */
+  readonly required?: boolean;
   readonly description?: string;
 }
 
@@ -34,11 +35,12 @@ interface ComponentDef<
 }
 
 interface ComponentFactory {
-  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]]>(config: {
+  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
     readonly name: string;
     readonly boundary?: B;
     readonly styles: Style.Shape<B>;
-    readonly slots: { readonly [K in SN[number]]: SlotConfig };
+    /** Default: an implied single 'children' slot with defaultSlot 'children'. */
+    readonly slots?: { readonly [K in SN[number]]: SlotConfig };
     readonly defaultSlot?: SN[number];
   }): ComponentDef<B, SN>;
 }
@@ -70,20 +72,27 @@ function deterministicId<SlotNames extends readonly string[]>(
  * the consumer-facing API.
  */
 export const Component: ComponentFactory = {
-  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]]>(config: {
+  make<B extends Boundary.Shape, const SN extends readonly [string, ...string[]] = readonly ['children']>(config: {
     readonly name: string;
     readonly boundary?: B;
     readonly styles: Style.Shape<B>;
-    readonly slots: { readonly [K in SN[number]]: SlotConfig };
+    readonly slots?: { readonly [K in SN[number]]: SlotConfig };
     readonly defaultSlot?: SN[number];
   }): ComponentDef<B, SN> {
-    const id = deterministicId<SN>(
-      config.name,
-      config.boundary?.id,
-      config.styles.id,
-      config.slots,
-      config.defaultSlot,
-    );
+    // Normalize so an omitted `required` hashes identically to an explicit `false`.
+    const slotsInput = (config.slots ?? { children: {} }) as Record<string, SlotConfig>;
+    const slots = Object.fromEntries(
+      Object.entries(slotsInput).map(([slotName, slot]) => [
+        slotName,
+        {
+          required: slot.required ?? false,
+          ...(slot.description !== undefined ? { description: slot.description } : {}),
+        },
+      ]),
+    ) as { readonly [K in SN[number]]: SlotConfig };
+    const defaultSlot = config.defaultSlot ?? (config.slots === undefined ? ('children' as SN[number]) : undefined);
+
+    const id = deterministicId<SN>(config.name, config.boundary?.id, config.styles.id, slots, defaultSlot);
 
     const def: ComponentDef<B, SN> = {
       _tag: 'ComponentDef',
@@ -92,8 +101,8 @@ export const Component: ComponentFactory = {
       name: config.name,
       ...(config.boundary !== undefined ? { boundary: config.boundary } : {}),
       styles: config.styles,
-      slots: config.slots,
-      ...(config.defaultSlot !== undefined ? { defaultSlot: config.defaultSlot } : {}),
+      slots,
+      ...(defaultSlot !== undefined ? { defaultSlot } : {}),
     };
     return Object.freeze(def);
   },

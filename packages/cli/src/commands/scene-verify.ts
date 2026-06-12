@@ -27,6 +27,7 @@ function verifyContext(): CommandContext {
       const path = getCapsuleManifestPath();
       return existsSync(path) ? readFileSync(path, 'utf8') : null;
     },
+    manifestPath: () => getCapsuleManifestPath(),
     runVitest: (testFiles) => VitestRunner.run({ testFiles: [...testFiles] }),
   };
 }

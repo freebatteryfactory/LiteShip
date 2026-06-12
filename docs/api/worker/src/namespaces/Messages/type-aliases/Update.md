@@ -8,6 +8,6 @@
 
 > **Update** = `WorkerUpdate`
 
-Defined in: [worker/src/messages.ts:353](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L353)
+Defined in: [worker/src/messages.ts:367](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L367)
 
 Incremental update applied post-bootstrap.

@@ -9,6 +9,7 @@ import type {
   BoundaryCrossing,
   ContentAddress,
   Easing,
+  Millis,
   Quantizer,
   OutputsFor,
   MotionTier,
@@ -92,9 +93,9 @@ export declare function evaluate<B extends Boundary.Shape>(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface TransitionConfig {
-  readonly duration: number;
+  readonly duration: number | Millis;
   readonly easing?: Easing.Fn;
-  readonly delay?: number;
+  readonly delay?: number | Millis;
 }
 
 export type TransitionMap<S extends string = string> = {
@@ -110,6 +111,7 @@ export interface Transition<B extends Boundary.Shape> {
 
 export declare const Transition: {
   for<B extends Boundary.Shape>(quantizer: Quantizer<B>, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
+  for<B extends Boundary.Shape>(boundary: B, config: TransitionMap<StateUnion<B> & string>): Transition<B>;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -130,5 +132,7 @@ export declare namespace AnimatedQuantizer {
   export function make<B extends Boundary.Shape>(
     quantizer: Quantizer<B>,
     transitions: TransitionMap<StateUnion<B> & string>,
+    /** Omitted: derived from a LiveQuantizer's `config.outputs.css` tables. */
+    outputs?: Record<string, Record<string, number | string>>,
   ): Effect.Effect<AnimatedQuantizer<B>, never, Scope.Scope>;
 }

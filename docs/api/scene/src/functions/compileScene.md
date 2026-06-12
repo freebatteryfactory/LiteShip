@@ -8,7 +8,7 @@
 
 > **compileScene**(`scene`): [`CompiledScene`](../interfaces/CompiledScene.md)
 
-Defined in: [scene/src/compile.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L98)
+Defined in: [scene/src/compile.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L107)
 
 Compile a [SceneContract](../interfaces/SceneContract.md) into a pure [CompiledScene](../interfaces/CompiledScene.md)
 descriptor. No world is constructed here — see [SceneRuntime](../namespaces/SceneRuntime/README.md).
@@ -35,6 +35,14 @@ spawns one Beat-tagged entity per marker before registering systems
 tick. Asset-derived beats (BeatMarkerProjection) are wired by feeding
 the projection's output into `scene.beats` ahead of compile.
 
+Built-in structural checks run alongside the declared invariants:
+fps must be positive and finite, every resolved range must run
+forward (`from <= to`), and transition `between` refs must name
+declared video tracks (unknown ids get a did-you-mean suggestion).
+A track extending past an explicitly declared `duration` is reported
+as a `track-past-duration` Diagnostics warning — truncation is legal
+when intended — rather than failing the compile.
+
 ## Parameters
 
 ### scene
@@ -47,4 +55,5 @@ the projection's output into `scene.beats` ahead of compile.
 
 ## Throws
 
-CzapValidationError when one or more scene invariants fail.
+CzapValidationError when structural checks or declared scene
+invariants fail — all problems are collected into one error.

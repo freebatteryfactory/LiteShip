@@ -21,7 +21,10 @@ import type { CompositeState, VideoConfig, VideoFrameOutput, ContentAddress, Sta
  * {@link CompositorWorker} / {@link RenderWorker}.
  */
 export interface WorkerConfig {
-  /** Maximum number of pooled `CompositeState` slots the worker may hold. */
+  /**
+   * Maximum number of pooled `CompositeState` slots the worker may hold.
+   * @defaultValue 64
+   */
   readonly poolCapacity?: number;
   /**
    * Target frames-per-second for the render loop (affects frame pacing).
@@ -264,9 +267,20 @@ interface RenderCompleteMessage {
   readonly totalFrames: number;
 }
 
+/** Failure site codes the built-in workers emit. */
+type WorkerErrorCode = 'render-failed' | 'startup-compute-failed' | 'compute-failed';
+
 interface ErrorMessage {
   readonly type: 'error';
+  /** Which failure site produced the error; optional so custom protocol implementations keep compiling. */
+  readonly code?: WorkerErrorCode;
   readonly message: string;
+  /** Content address of the entity being processed when the failure occurred, when known. */
+  readonly subjectId?: ContentAddress;
+  /** Literal next step the main-thread consumer can render. */
+  readonly hint?: string;
+  /** Inbound message `type` the worker was handling when it threw (e.g. 'compute'). */
+  readonly context?: string;
 }
 
 interface MetricsMessage {

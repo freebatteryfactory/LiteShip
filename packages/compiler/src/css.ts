@@ -9,6 +9,7 @@
  */
 
 import type { Boundary, StateUnion } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import { inferSyntax } from './css-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -249,6 +250,20 @@ function compile<B extends Boundary.Shape>(
       name: containerName,
       query,
       rules,
+    });
+  }
+
+  // Compilation iterates boundary.states, so a supplied key that matches no
+  // state is never read — via dispatch the states record is untyped, so a
+  // case typo silently emits nothing. Warn for every unmatched key.
+  const knownStates = new Set<string>(stateNames);
+  for (const supplied of Object.keys(states)) {
+    if (knownStates.has(supplied)) continue;
+    const match = stateNames.find((s) => s.toLowerCase() === supplied.toLowerCase());
+    Diagnostics.warn({
+      source: 'czap/compiler.css',
+      code: 'unknown-state-key',
+      message: `State "${supplied}" is not one of boundary "${boundary.input}" states [${stateNames.join(', ')}]; its CSS was skipped.${match ? ` Did you mean "${match}"?` : ''}`,
     });
   }
 

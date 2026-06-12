@@ -8,6 +8,6 @@
 
 > **StartupStage** = `CompositorWorkerStartupStage`
 
-Defined in: [worker/src/compositor-worker.ts:612](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L612)
+Defined in: [worker/src/compositor-worker.ts:639](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L639)
 
 Named startup stage reported to telemetry sinks.

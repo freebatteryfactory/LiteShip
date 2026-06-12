@@ -8,13 +8,18 @@
 
 > **watchCapabilities**(`onChange`): `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
-Defined in: [detect/src/detect.ts:621](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L621)
+Defined in: [detect/src/detect.ts:728](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L728)
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or
 reduced motion preferences change.
 
 The stream is scoped -- listeners are cleaned up when the scope finalizes.
+
+Event bursts are coalesced: re-detection is debounced to one sweep per
+animation frame, and hardware-identity probes (GPU renderer, WebGPU, cores,
+memory) are run once and reused — only viewport/DPR/media-query probes
+re-run on change.
 
 ## Parameters
 
