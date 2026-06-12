@@ -9,7 +9,7 @@
  */
 import type { CapsuleCommandResult } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
-import { loadManifest } from './manifest.js';
+import { loadManifest, manifestMissing } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
@@ -37,6 +37,21 @@ function findContract(mod: Record<string, unknown>): Record<string, unknown> | u
   );
 }
 
+/**
+ * Missing-export teaching error: names which export is absent (capsule and
+ * contract are discovered separately) and points at a working example plus
+ * the glossary verb.
+ */
+function missingSceneExports(scenePath: string, cap: unknown, contract: unknown): string {
+  const missing = [
+    cap ? null : 'a sceneComposition capsule',
+    contract ? null : 'a scene contract (an export carrying a tracks array)',
+  ]
+    .filter((m): m is string => m !== null)
+    .join(' or ');
+  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition`;
+}
+
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
 export const sceneVerifyCommand: HandledCommand = {
   descriptor: {
@@ -59,7 +74,7 @@ export const sceneVerifyCommand: HandledCommand = {
     if (!cap) return failed('scene.verify', 'no sceneComposition capsule exported', 1);
 
     const manifest = loadManifest(context);
-    if (!manifest) return failed('scene.verify', 'capsule manifest missing; run capsule:compile first', 1);
+    if (!manifest) return failed('scene.verify', manifestMissing(context), 1);
     const entry = manifest.capsules.find((c) => c.name === cap.name);
     if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 
@@ -97,7 +112,7 @@ export const sceneCompileCommand: HandledCommand = {
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract) return failed('scene.compile', 'no sceneComposition capsule or scene contract exported', 1);
+    if (!cap || !contract) return failed('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
 
     const start = Date.now();
     try {
@@ -179,8 +194,13 @@ export const sceneRenderCommand: HandledCommand = {
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract || typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
-      return failed('scene.render', 'no sceneComposition capsule or contract exported', 1);
+    if (!cap || !contract) return failed('scene.render', missingSceneExports(scenePath, cap, contract), 1);
+    if (typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
+      return failed(
+        'scene.render',
+        `the scene contract exported by ${scenePath} must carry numeric fps and duration (got fps: ${String(contract.fps)}, duration: ${String(contract.duration)}). Compare a working example: examples/scenes/intro.ts`,
+        1,
+      );
     }
     if (!context.renderScene) return failed('scene.render', 'render backend unavailable', 5);
 

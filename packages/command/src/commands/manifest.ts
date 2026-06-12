@@ -28,3 +28,13 @@ export function loadManifest(context: CommandContext): CapsuleManifest | null {
   if (!source) return null;
   return JSON.parse(source) as CapsuleManifest;
 }
+
+/**
+ * Manifest-absent teaching error: names the path that was looked at (when
+ * the adapter exposes it) and gives both ways out — the repo-internal pnpm
+ * script is not typeable by an npm consumer, so the env override is named too.
+ */
+export function manifestMissing(context: CommandContext): string {
+  const looked = context.manifestPath?.();
+  return `capsule manifest missing${looked ? ` (looked at ${looked})` : ''}. In the LiteShip repo, generate it: pnpm run capsule:compile. In your own project, set CZAP_CAPSULE_MANIFEST to your manifest path.`;
+}
