@@ -1201,6 +1201,32 @@ describe('@czap/vite plugin', () => {
     expect(transformed?.code).not.toContain('@style card {');
   });
 
+  test('an in-value @style token sequence earlier in the sheet is not spliced by the replacement (Codex P2, PR #30)', async () => {
+    const root = makeTempDir();
+    const cssDir = join(root, 'src');
+    mkdirSync(cssDir, { recursive: true });
+
+    const style = Style.make({
+      base: { properties: { color: 'black' } },
+      states: { compact: { properties: { background: 'black' } } },
+    });
+    writeModule(cssDir, 'styles.ts', 'card', style);
+
+    // The custom property legally holds a full at-rule token sequence. The
+    // parser's top-level guard skips it — the REPLACEMENT search must skip
+    // it too, or the .x rule is spliced in place of the real block below.
+    const cssFile = join(cssDir, 'invalue.css');
+    const css = '.x{--snippet:@style card{compact{opacity:0}};}\n@style card { compact { content: "real"; } }\n';
+
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+    const transformed = await vitePlugin.transform?.call({ warn() {} } as never, css, cssFile);
+
+    expect(transformed?.code).toContain('.x{--snippet:@style card{compact{opacity:0}};}');
+    expect(transformed?.code).toContain('.card[data-state="compact"]');
+    expect(transformed?.code).not.toContain('@style card { compact { content: "real"; } }');
+  });
+
   test('handles escaped quotes inside quoted url() payloads and leaves unterminated quantize blocks unchanged', async () => {
     const root = makeTempDir();
     const cssDir = join(root, 'src');

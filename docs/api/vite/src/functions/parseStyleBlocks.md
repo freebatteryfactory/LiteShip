@@ -8,7 +8,7 @@
 
 > **parseStyleBlocks**(`css`, `sourceFile`): readonly [`StyleBlock`](../interfaces/StyleBlock.md)[]
 
-Defined in: [vite/src/style-transform.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L54)
+Defined in: [vite/src/style-transform.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L71)
 
 Parse every `@style` block from CSS source text.
 
@@ -22,7 +22,16 @@ Grammar:
 }
 ```
 
-Follows the same nested-brace pattern as `@quantize` blocks.
+Parsing is fully character-level via the shared `css-scan` helpers
+(same scanner as `@token` / `@theme` / `@quantize`): upstream
+compilers (e.g. the Astro compiler re-serializing a `<style>` block)
+emit at-rules mid-line and collapse whole sheets onto a single line,
+so no line structure is assumed. At-rule markers are located on a
+comment- and string-blanked copy of the source (same offsets) so
+neither commented-out blocks nor marker text inside string values or
+data URLs ever match; state bodies are parsed from the original
+source with comment / string / functional-notation awareness,
+including multi-line values.
 
 ## Parameters
 

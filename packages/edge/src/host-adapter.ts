@@ -40,27 +40,60 @@ export interface EdgeHostContext {
  *
  * Extends {@link EdgeHostContext} with the already-resolved theme result
  * (if any) so host compile callbacks can inject theme tokens into the
- * compiled per-state outputs without recomputation.
+ * compiled per-state outputs without recomputation. Carries the identity
+ * of the boundary being compiled so a callback shared across multiple
+ * boundaries can branch -- without it, one compile result would be cached
+ * under every boundary's content address.
  */
 export interface EdgeHostCompileContext extends EdgeHostContext {
   /** Pre-compiled theme output, if the adapter resolved one for this request. */
   readonly theme?: ThemeCompileResult;
+  /** Content address of the boundary this compile call is for. */
+  readonly boundaryId: ContentAddress;
+  /** Boundary name, when configured via {@link EdgeHostCacheConfig.boundaries}. */
+  readonly boundaryName?: string;
+}
+
+/**
+ * Outputs source for one boundary -- the per-boundary slice of
+ * {@link EdgeHostCacheConfig}. Resolution order per boundary is
+ * `precompiled`, then KV keyed by `(boundaryId, tier)`, then `compile`
+ * (written back to KV). At least one of `precompiled` or `compile` is
+ * required.
+ */
+export interface EdgeHostBoundaryConfig {
+  /** Content address of the boundary being compiled (`Boundary.make`'s `id`). */
+  readonly boundaryId: ContentAddress;
+  /**
+   * Build-derived outputs keyed by {@link TierKey} -- the `outputsByTier`
+   * field of a boundary manifest entry. Checked before KV.
+   */
+  readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  /** Compile function invoked when neither `precompiled` nor KV has the tier. */
+  readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
 }
 
 /**
  * Cache configuration for the edge host adapter.
  *
- * Outputs are resolved in order: `precompiled` (build-derived manifest
- * entry, no KV round-trip), then the KV cache keyed by
- * `(boundaryId, tier)`, then `compile` on a miss (result written back to
- * KV with the configured `ttl`). At least one of `precompiled` or
- * `compile` must be provided.
+ * Two forms, mutually exclusive. Single boundary: `boundaryId` plus
+ * `precompiled`/`compile` at the top level. Multiple boundaries (real
+ * pages render several): `boundaries`, a name-keyed record of
+ * {@link EdgeHostBoundaryConfig}. Either way, outputs per boundary are
+ * resolved in order: `precompiled` (build-derived manifest entry, no KV
+ * round-trip), then the KV cache keyed by `(boundaryId, tier)` -- the key
+ * carries the boundary's content address, so boundaries can never read
+ * each other's cached CSS -- then `compile` on a miss (result written
+ * back to KV with the configured `ttl`).
  */
 export interface EdgeHostCacheConfig {
   /** KV namespace backing the boundary cache. */
   readonly kv: KVNamespace;
-  /** Content address of the boundary being compiled (`Boundary.make`'s `id`). */
-  readonly boundaryId: ContentAddress;
+  /**
+   * Content address of the boundary being compiled (`Boundary.make`'s
+   * `id`). Single-boundary form; exclusive with `boundaries`.
+   */
+  readonly boundaryId?: ContentAddress;
   /**
    * Build-derived outputs keyed by {@link TierKey}
    * (`"<motionTier>:<designTier>"`) -- a manifest entry inflated via
@@ -70,6 +103,12 @@ export interface EdgeHostCacheConfig {
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  /**
+   * Multi-boundary form: outputs sources keyed by boundary name (the
+   * manifest export name). Exclusive with the top-level
+   * `boundaryId`/`precompiled`/`compile` fields.
+   */
+  readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryConfig>>;
   /**
    * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
    * knob. Entries are content-addressed and never go stale; deploys that
@@ -104,6 +143,20 @@ export interface EdgeHostAdapterConfig {
 export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 
 /**
+ * Per-boundary resolution outcome, reported in
+ * {@link EdgeHostResolution.boundaries} when the cache is configured with
+ * the multi-boundary form.
+ */
+export interface EdgeHostBoundaryResolution {
+  /** Content address the outputs were resolved (and cached) under. */
+  readonly boundaryId: ContentAddress;
+  /** Compiled per-state outputs; absent on an uncovered tier with no `compile`. */
+  readonly compiledOutputs?: CompiledOutputs;
+  /** Where this boundary's outputs came from (`'disabled'` cannot occur per boundary). */
+  readonly cacheStatus: Exclude<EdgeHostCacheStatus, 'disabled'>;
+}
+
+/**
  * Full per-request resolution output from {@link EdgeHostAdapter.resolve}.
  *
  * Carries the device context, optional theme and compiled outputs, the
@@ -113,8 +166,14 @@ export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 export interface EdgeHostResolution extends EdgeHostContext {
   /** Compiled theme result, if a theme config was resolved for this request. */
   readonly theme?: ThemeCompileResult;
-  /** Compiled per-state outputs for the configured boundary, if caching is enabled. */
+  /**
+   * Compiled per-state outputs when exactly one boundary is configured
+   * (either form). Undefined with multiple boundaries -- read
+   * {@link boundaries} instead.
+   */
   readonly compiledOutputs?: CompiledOutputs;
+  /** Per-boundary outcomes, keyed by name; present with the `boundaries` cache form. */
+  readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   /** `data-czap-cap`/`data-czap-motion`/`data-czap-design` string for `<html>`. */
   readonly htmlAttributes: string;
   /** Response headers to send back so the browser will supply hints next time. */
@@ -124,7 +183,12 @@ export interface EdgeHostResolution extends EdgeHostContext {
     /** `Critical-CH` header value. */
     readonly criticalCH: string;
   };
-  /** Whether the boundary outputs came from cache, were computed and stored, or caching is off. */
+  /**
+   * Whether boundary outputs came from cache, were computed and stored,
+   * or caching is off. With multiple boundaries this is the worst case
+   * across them (worst-to-best: `miss`, `hit`, `precompiled`);
+   * per-boundary statuses live in {@link boundaries}.
+   */
   readonly cacheStatus: EdgeHostCacheStatus;
 }
 
@@ -150,6 +214,99 @@ function resolveThemeConfig(
 }
 
 /**
+ * Normalized boundary list: `name` is null for the legacy single-field
+ * form (which reports through the top-level resolution fields only).
+ */
+type NormalizedBoundary = readonly [name: string | null, source: EdgeHostBoundaryConfig];
+
+function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBoundary[] {
+  const hasSingleFields =
+    cache.boundaryId !== undefined || cache.precompiled !== undefined || cache.compile !== undefined;
+  if (cache.boundaries) {
+    if (hasSingleFields) {
+      throw new Error(
+        'EdgeHostCacheConfig mixes the multi-boundary `boundaries` record with the single-boundary ' +
+          '`boundaryId`/`precompiled`/`compile` fields, so the adapter cannot tell which form is intended. ' +
+          'Fix: move the top-level boundary fields into their own `boundaries` entry, or drop `boundaries`.',
+      );
+    }
+    const entries = Object.entries(cache.boundaries);
+    if (entries.length === 0) {
+      throw new Error(
+        'EdgeHostCacheConfig got an empty `boundaries` record, so there is nothing to cache. ' +
+          'Fix: add one entry per boundary (`{ [name]: { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry) } }`), ' +
+          'or use the single-boundary `boundaryId` form.',
+      );
+    }
+    for (const [name, source] of entries) {
+      if (!source.precompiled && !source.compile) {
+        throw new Error(
+          `EdgeHostCacheConfig boundary "${name}" has neither \`precompiled\` nor \`compile\`, so its outputs can never resolve. ` +
+            'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+            'or supply a `compile` callback to build outputs on KV cache miss.',
+        );
+      }
+    }
+    return entries;
+  }
+  if (cache.boundaryId === undefined) {
+    throw new Error(
+      'EdgeHostCacheConfig identifies no boundary: neither `boundaryId` (single form) nor `boundaries` (multi form) was provided. ' +
+        'Fix: pass `boundaryId: Boundary.make(...).id` with `precompiled`/`compile`, or a `boundaries` record keyed by name.',
+    );
+  }
+  if (!cache.precompiled && !cache.compile) {
+    throw new Error(
+      'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
+        'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
+        'or supply a `compile` callback to build outputs on KV cache miss.',
+    );
+  }
+  return [[null, { boundaryId: cache.boundaryId, precompiled: cache.precompiled, compile: cache.compile }]];
+}
+
+/** Badness order for the top-level aggregate: a miss anywhere wins. */
+const CACHE_STATUS_RANK = { miss: 0, hit: 1, precompiled: 2 } as const;
+
+async function resolveBoundaryOutputs(
+  cache: ReturnType<typeof createBoundaryCache>,
+  [name, source]: NormalizedBoundary,
+  context: Omit<EdgeHostCompileContext, 'boundaryId' | 'boundaryName'>,
+): Promise<EdgeHostBoundaryResolution> {
+  const precompiled = source.precompiled?.[tierKey(context.tier)];
+  if (precompiled) {
+    return { boundaryId: source.boundaryId, compiledOutputs: precompiled, cacheStatus: 'precompiled' };
+  }
+  // The boundary NAME qualifies the KV key: two names can share one
+  // ContentAddress (same Boundary.make definition) while their @quantize
+  // CSS differs — id+tier alone would let the first compile serve both.
+  const qualifier = name ?? undefined;
+  const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier, qualifier);
+  if (cached) {
+    return { boundaryId: source.boundaryId, compiledOutputs: cached, cacheStatus: 'hit' };
+  }
+  if (source.compile) {
+    const compiledOutputs = await source.compile({
+      ...context,
+      boundaryId: source.boundaryId,
+      ...(name === null ? {} : { boundaryName: name }),
+    });
+    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier);
+    return { boundaryId: source.boundaryId, compiledOutputs, cacheStatus: 'miss' };
+  }
+  Diagnostics.warnOnce({
+    source: 'czap/edge.host-adapter',
+    code: 'manifest-tier-gap',
+    message:
+      `Precompiled manifest for boundary "${source.boundaryId}" has no entry for tier "${tierKey(context.tier)}" ` +
+      'and no `compile` fallback is configured, so this request gets no compiled outputs. ' +
+      'Fix: rebuild so the manifest covers the full tier grid (collectBoundaryManifest enumerates it), ' +
+      'or add a `compile` callback as a fallback.',
+  });
+  return { boundaryId: source.boundaryId, cacheStatus: 'miss' };
+}
+
+/**
  * Create an {@link EdgeHostAdapter} with optional theme and boundary cache.
  *
  * The returned adapter is designed to be instantiated once per worker and
@@ -158,14 +315,9 @@ function resolveThemeConfig(
  */
 export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeHostAdapter {
   let boundaryCache: ReturnType<typeof createBoundaryCache> | null = null;
+  let boundarySources: readonly NormalizedBoundary[] = [];
   if (config.cache) {
-    if (!config.cache.precompiled && !config.cache.compile) {
-      throw new Error(
-        'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
-          'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
-          'or supply a `compile` callback to build outputs on KV cache miss.',
-      );
-    }
+    boundarySources = normalizeBoundaries(config.cache);
     boundaryCache = createBoundaryCache(config.cache.kv, {
       ttl: config.cache.ttl,
       prefix: config.cache.prefix,
@@ -193,32 +345,32 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
       }
 
       let compiledOutputs: CompiledOutputs | undefined;
+      let boundaries: Record<string, EdgeHostBoundaryResolution> | undefined;
       let cacheStatus: EdgeHostCacheStatus = boundaryCache ? 'miss' : 'disabled';
 
-      if (boundaryCache && config.cache) {
-        const precompiled = config.cache.precompiled?.[tierKey(tier)];
-        if (precompiled) {
-          compiledOutputs = precompiled;
-          cacheStatus = 'precompiled';
-        } else {
-          const cached = await boundaryCache.getCompiledOutputs(config.cache.boundaryId, tier);
-          if (cached) {
-            compiledOutputs = cached;
-            cacheStatus = 'hit';
-          } else if (config.cache.compile) {
-            compiledOutputs = await config.cache.compile({ capabilities, tier, theme });
-            await boundaryCache.putCompiledOutputs(config.cache.boundaryId, tier, compiledOutputs);
-          } else {
-            Diagnostics.warnOnce({
-              source: 'czap/edge.host-adapter',
-              code: 'manifest-tier-gap',
-              message:
-                `Precompiled manifest for boundary "${config.cache.boundaryId}" has no entry for tier "${tierKey(tier)}" ` +
-                'and no `compile` fallback is configured, so this request gets no compiled outputs. ' +
-                'Fix: rebuild so the manifest covers the full tier grid (collectBoundaryManifest enumerates it), ' +
-                'or add a `compile` callback as a fallback.',
-            });
-          }
+      if (boundaryCache) {
+        const cache = boundaryCache;
+        const compileContext = { capabilities, tier, theme };
+        // Boundaries are independent (distinct content addresses, distinct
+        // KV keys), so their lookups run concurrently.
+        const resolved = await Promise.all(
+          boundarySources.map(
+            async (entry) => [entry[0], await resolveBoundaryOutputs(cache, entry, compileContext)] as const,
+          ),
+        );
+        cacheStatus = resolved.reduce<Exclude<EdgeHostCacheStatus, 'disabled'>>(
+          (worst, [, outcome]) =>
+            CACHE_STATUS_RANK[outcome.cacheStatus] < CACHE_STATUS_RANK[worst] ? outcome.cacheStatus : worst,
+          'precompiled',
+        );
+        if (resolved.length === 1) {
+          compiledOutputs = resolved[0]![1].compiledOutputs;
+        }
+        const named = resolved.filter(
+          (entry): entry is readonly [string, EdgeHostBoundaryResolution] => entry[0] !== null,
+        );
+        if (named.length > 0) {
+          boundaries = Object.fromEntries(named);
         }
       }
 
@@ -227,6 +379,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         tier,
         theme,
         compiledOutputs,
+        boundaries,
         htmlAttributes: EdgeTier.tierDataAttributes(tier),
         responseHeaders,
         cacheStatus,
@@ -258,4 +411,8 @@ export declare namespace EdgeHostAdapter {
   export type Context = EdgeHostContext;
   /** Alias for {@link EdgeHostCompileContext}. */
   export type CompileContext = EdgeHostCompileContext;
+  /** Alias for {@link EdgeHostBoundaryConfig}. */
+  export type BoundaryConfig = EdgeHostBoundaryConfig;
+  /** Alias for {@link EdgeHostBoundaryResolution}. */
+  export type BoundaryResolution = EdgeHostBoundaryResolution;
 }

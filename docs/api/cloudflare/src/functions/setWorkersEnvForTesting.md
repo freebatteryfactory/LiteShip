@@ -8,7 +8,7 @@
 
 > **setWorkersEnvForTesting**(`env`): `void`
 
-Defined in: [cloudflare/src/middleware.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L74)
+Defined in: [cloudflare/src/middleware.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L84)
 
 Seed the default Workers env (for unit tests or custom hosts).
 

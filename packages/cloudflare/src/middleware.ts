@@ -5,7 +5,13 @@
  */
 
 import type { ContentAddress } from '@czap/core';
-import type { BoundaryManifest, BoundaryManifestFile, EdgeHostAdapterConfig, EdgeHostCacheConfig } from '@czap/edge';
+import type {
+  BoundaryManifest,
+  BoundaryManifestFile,
+  EdgeHostAdapterConfig,
+  EdgeHostBoundaryConfig,
+  EdgeHostCacheConfig,
+} from '@czap/edge';
 import { resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
@@ -21,10 +27,12 @@ export interface CloudflareMiddlewareConfig {
    */
   readonly manifest?: BoundaryManifest | BoundaryManifestFile;
   /**
-   * Which manifest boundary to serve. Optional when the manifest has
-   * exactly one entry.
+   * Which manifest boundaries to serve: a single name, a list of names,
+   * or omitted to serve every boundary in the manifest. Each served
+   * boundary keeps its own cache identity (content address), so
+   * boundaries on the same page cannot poison each other's cached CSS.
    */
-  readonly boundary?: string;
+  readonly boundary?: string | readonly string[];
   /**
    * Escape hatch for custom hosts without a manifest: the boundary's
    * content address. Must be a real minted id (`Boundary.make(...).id`,
@@ -34,7 +42,9 @@ export interface CloudflareMiddlewareConfig {
   readonly boundaryId?: ContentAddress;
   /**
    * Escape hatch / fallback: compile function invoked when neither the
-   * manifest nor KV covers the request's tier.
+   * manifest nor KV covers the request's tier. With multiple boundaries
+   * the callback is shared -- branch on `context.boundaryName` /
+   * `context.boundaryId` to return the right boundary's outputs.
    */
   readonly compile?: EdgeHostCacheConfig['compile'];
   /** Optional theme config or per-request resolver. */
@@ -113,15 +123,17 @@ function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): B
 
 /**
  * Resolve the cache identity + outputs source from the middleware config:
- * manifest-derived (preferred) or the hand-built escape hatch.
+ * manifest-derived (preferred, name-keyed multi-boundary form) or the
+ * hand-built single-boundary escape hatch.
  */
-function resolveCacheSource(config: CloudflareMiddlewareConfig): {
-  readonly boundaryId: ContentAddress;
-  readonly precompiled?: EdgeHostCacheConfig['precompiled'];
-} {
+function resolveCacheSource(
+  config: CloudflareMiddlewareConfig,
+):
+  | { readonly boundaries: Readonly<Record<string, EdgeHostBoundaryConfig>> }
+  | { readonly boundaryId: ContentAddress; readonly compile: EdgeHostCacheConfig['compile'] } {
   if (config.manifest) {
-    const boundaries = normalizeManifest(config.manifest);
-    const names = Object.keys(boundaries);
+    const manifest = normalizeManifest(config.manifest);
+    const names = Object.keys(manifest);
     if (names.length === 0) {
       throw new Error(
         'cloudflareMiddleware received an empty boundary manifest, so there is no boundary to cache. ' +
@@ -130,28 +142,33 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig): {
           'for precompiled outputs), or fall back to the `boundaryId` + `compile` escape hatch.',
       );
     }
-    const name = config.boundary ?? (names.length === 1 ? names[0]! : undefined);
-    if (name === undefined) {
+    const selected =
+      config.boundary === undefined ? names : typeof config.boundary === 'string' ? [config.boundary] : config.boundary;
+    if (selected.length === 0) {
       throw new Error(
-        `cloudflareMiddleware got a manifest with ${names.length} boundaries (${names.join(', ')}) but no \`boundary\` selector, ` +
-          'so it cannot tell which one to cache. Fix: pass `boundary: <one of those names>`.',
+        'cloudflareMiddleware got an empty `boundary` list, so there is no boundary to serve. ' +
+          `Fix: list some of the manifest's boundaries (${names.join(', ')}), or omit \`boundary\` to serve all of them.`,
       );
     }
-    const entry = boundaries[name];
-    if (!entry) {
-      throw new Error(
-        `cloudflareMiddleware was told to serve boundary "${name}", but the manifest only has: ${names.join(', ')}. ` +
-          'Why: the name must match the boundary module export. Fix: pass one of the listed names, or export ' +
-          `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
-      );
+    const boundaries: Record<string, EdgeHostBoundaryConfig> = {};
+    for (const name of selected) {
+      const entry = manifest[name];
+      if (!entry) {
+        throw new Error(
+          `cloudflareMiddleware was told to serve boundary "${name}", but the manifest only has: ${names.join(', ')}. ` +
+            'Why: the name must match the boundary module export. Fix: pass one of the listed names, or export ' +
+            `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
+        );
+      }
+      // Inflate the deduplicated v2 entry (outputs pool + index cells) once
+      // at construction; per-request lookups stay a plain map access.
+      boundaries[name] = { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry), compile: config.compile };
     }
-    // Inflate the deduplicated v2 entry (outputs pool + index cells) once
-    // at construction; per-request lookups stay a plain map access.
-    return { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry) };
+    return { boundaries };
   }
 
   if (config.boundaryId && config.compile) {
-    return { boundaryId: config.boundaryId };
+    return { boundaryId: config.boundaryId, compile: config.compile };
   }
 
   throw new Error(
@@ -164,10 +181,11 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig): {
 /**
  * Astro middleware factory wired for Cloudflare Workers KV boundary caching.
  *
- * The boundary identity and precompiled outputs come from the
+ * Boundary identities and precompiled outputs come from the
  * build-derived manifest (`virtual:czap/boundaries`), so no id is ever
- * hand-typed; `boundaryId` + `compile` remain as an escape hatch for
- * custom hosts.
+ * hand-typed. Every manifest boundary is served by default (each under
+ * its own content-addressed cache key); pass `boundary` to narrow.
+ * `boundaryId` + `compile` remain as an escape hatch for custom hosts.
  *
  * @example
  * ```ts
@@ -177,22 +195,19 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig): {
  *
  * export const onRequest = cloudflareMiddleware({
  *   binding: 'CZAP_BOUNDARY_CACHE',
- *   manifest: boundaries,
- *   boundary: 'viewport',
+ *   manifest: boundaries, // serves every boundary; `boundary: 'viewport'` narrows
  * });
  * ```
  */
 export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): ReturnType<typeof czapMiddleware> {
   const envSource = resolveEnvSource(config);
   const kv = createCloudflareEdgeCache(envSource, { binding: config.binding });
-  const { boundaryId, precompiled } = resolveCacheSource(config);
+  const source = resolveCacheSource(config);
   const inner = czapMiddleware({
     edge: {
       cache: {
         kv,
-        boundaryId,
-        precompiled,
-        compile: config.compile,
+        ...source,
         ttl: config.ttl,
         prefix: config.prefix,
       },
