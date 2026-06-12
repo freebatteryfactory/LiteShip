@@ -5,9 +5,10 @@
  */
 
 import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@czap/core';
-import { Millis, VideoRenderer } from '@czap/core';
+import { Diagnostics, Millis, VideoRenderer } from '@czap/core';
 import { createContext, useContext, createElement } from 'react';
 import { useCurrentFrame } from 'remotion';
+import { stateAtFrame } from './hooks.js';
 
 // ---------------------------------------------------------------------------
 // Frame precomputation
@@ -119,7 +120,8 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
  * Hook that reads the `CompositeState` for the current Remotion frame
  * from the nearest {@link Provider}. Returns a structurally-empty state
  * when no provider is mounted (or it holds no frames) so callers never
- * crash at the boundary.
+ * crash at the boundary; a warn-once diagnostic names the missing
+ * `<Provider frames={...}>` so the unstyled render is not silent.
  *
  * This is the implicit context-lookup half of a deliberate pair: mount a
  * {@link Provider} once and call `useCzapState()` anywhere in the subtree
@@ -133,7 +135,14 @@ export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; child
 export function useCzapState(): CompositeState {
   const frames = useContext(CzapContext);
   const frame = useCurrentFrame();
-  if (frames.length === 0) return emptyState;
-  const clamped = Math.max(0, Math.min(frame, frames.length - 1));
-  return frames[clamped]!.state;
+  if (frames.length === 0) {
+    Diagnostics.warnOnce({
+      source: 'czap/remotion',
+      code: 'no-provider-frames',
+      message:
+        'useCzapState(): no <Provider frames={...}> found above this component (or it received an empty array) — returning empty state, so your CSS vars will all be missing. Wrap your composition: <Provider frames={frames}><MyComposition /></Provider>, where frames = await precomputeFrames(renderer).',
+    });
+    return emptyState;
+  }
+  return stateAtFrame(frames, frame);
 }

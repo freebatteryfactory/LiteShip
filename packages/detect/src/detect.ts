@@ -10,6 +10,7 @@
 import type { Scope } from 'effect';
 import { Effect } from 'effect';
 import type { CapLevel, CapSet } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Navigator augmentation -- non-standard but widely-shipped APIs
@@ -253,6 +254,14 @@ function classifyGPURenderer(renderer: string): GPUTier {
   for (const pattern of GPU_TIER_1_PATTERNS) {
     if (pattern.test(renderer)) return 1;
   }
+  // Unmatched renderers (e.g. next year's GPU) classify conservatively, but
+  // silently: confidence still gets the renderer bonus, so make it audible.
+  Diagnostics.warnOnce({
+    source: 'czap/detect',
+    code: 'unrecognized-gpu-renderer',
+    message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/heyoub/LiteShip/issues so a pattern can be added.`,
+    detail: { renderer },
+  });
   return 1;
 }
 
@@ -582,6 +591,35 @@ export function detectGPUTier(): Effect.Effect<GPUTier> {
   });
 }
 
+function describeProbeFailure(result: ProbeResult<unknown>): string | null {
+  if (result.status === 'unavailable') return 'API unavailable';
+  if (result.status === 'error') return `threw: ${String(result.error)}`;
+  return null;
+}
+
+/**
+ * Probes never throw (the right contract), but an errored probe was
+ * previously indistinguishable from an unavailable one — the caught error was
+ * stored and discarded, leaving only an opaque lower confidence number. One
+ * grouped warn-once names each defaulted probe and why. SSR is exempt: every
+ * probe defaulting there is the documented isomorphic contract, not a signal.
+ */
+function reportDegradedProbes(probes: DetectionProbes, confidence: number): void {
+  if (typeof window === 'undefined') return;
+  const degraded: string[] = [];
+  for (const [name, result] of Object.entries(probes)) {
+    const why = describeProbeFailure(result as ProbeResult<unknown>);
+    if (why !== null) degraded.push(`${name} (${why})`);
+  }
+  if (degraded.length === 0) return;
+  Diagnostics.warnOnce({
+    source: 'czap/detect',
+    code: 'probes-defaulted',
+    message: `${degraded.length} probe(s) defaulted: ${degraded.join(', ')} — conservative fallback values were used; confidence ${confidence}.`,
+    detail: { degraded, confidence },
+  });
+}
+
 function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
   const capabilities = buildCapabilitiesFromProbes(probes);
 
@@ -590,6 +628,8 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
   const designTier = designTierFromCapabilities(capabilities);
   const motionTier = motionTierFromCapabilities(capabilities);
   const confidence = computeConfidenceFromProbes(probes);
+
+  reportDegradedProbes(probes, confidence);
 
   return { capabilities, tier, capSet, confidence, designTier, motionTier };
 }
