@@ -80,6 +80,20 @@ describe('Boundary.make', () => {
       }),
     ).toThrow(/duplicate state name/);
   });
+
+  test('duplicate state error names the state, the rename fix, and the hoist hint', () => {
+    expect(() =>
+      Boundary.make({
+        input: 'viewport.width',
+        at: [
+          [0, 'small'],
+          [768, 'small'],
+        ] as const,
+      }),
+    ).toThrow(
+      'Boundary.make: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
+    );
+  });
 });
 
 describe('Boundary.evaluate', () => {

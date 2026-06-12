@@ -289,7 +289,7 @@ export const Boundary: BoundaryFactory & {
       if (seen.has(name)) {
         throw new CzapValidationError(
           'Boundary.make',
-          `duplicate state name "${name}". Each state must have a unique name.`,
+          `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
         );
       }
       seen.add(name);
