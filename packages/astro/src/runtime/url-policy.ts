@@ -38,6 +38,9 @@ export function allowSameOriginRuntimeUrl(rawUrl: string | null, source: string,
   });
 }
 
+const ENDPOINT_POLICY_FIX =
+  "Fix: czap({ security: { endpointPolicy: { mode: 'allowlist', allowOrigins: ['https://your-origin.example'] } } }).";
+
 function defaultDiagnosticCodes(kind: RuntimeEndpointKind): RuntimeEndpointDiagnosticCodes {
   return {
     malformedUrl: `${kind}-malformed-url-rejected`,
@@ -79,21 +82,21 @@ export function allowRuntimeEndpointUrl(
       Diagnostics.warn({
         source,
         code: finalCodes.crossOriginRejected,
-        message: `Cross-origin runtime URL "${rawUrl}" was rejected. Runtime endpoints must be same-origin by default.`,
+        message: `Cross-origin runtime URL "${rawUrl}" was rejected. Runtime endpoints must be same-origin by default. ${ENDPOINT_POLICY_FIX}`,
       });
       return null;
     case 'origin-not-allowed':
       Diagnostics.warn({
         source,
         code: finalCodes.originNotAllowed,
-        message: `Runtime URL "${rawUrl}" was rejected because origin "${resolved.resolved.origin}" is not allowlisted.`,
+        message: `Runtime URL "${rawUrl}" was rejected because origin "${resolved.resolved.origin}" is not allowlisted. ${ENDPOINT_POLICY_FIX}`,
       });
       return null;
     case 'kind-not-allowed':
       Diagnostics.warn({
         source,
         code: finalCodes.endpointKindNotPermitted,
-        message: `Runtime URL "${rawUrl}" was rejected because endpoint kind "${kind}" is not permitted for cross-origin access.`,
+        message: `Runtime URL "${rawUrl}" was rejected because endpoint kind "${kind}" is not permitted for cross-origin access. ${ENDPOINT_POLICY_FIX}`,
       });
       return null;
     case 'private-ip-rejected':

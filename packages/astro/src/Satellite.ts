@@ -70,9 +70,8 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
     if (props.directive !== false) {
       attrs['data-czap-directive'] = props.directive ?? 'satellite';
     }
-  }
-
-  if (props.initialState) {
+    attrs['data-czap-state'] = props.initialState ?? resolveInitialStateFallback(props.boundary);
+  } else if (props.initialState) {
     attrs['data-czap-state'] = props.initialState;
   }
 

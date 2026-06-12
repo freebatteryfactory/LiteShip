@@ -14,7 +14,16 @@ void main() {
 
 const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
-function compileShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader | null {
+function elementGpuLabel(element: HTMLElement): string {
+  return element.id || element.getAttribute('data-czap-id') || element.getAttribute('data-czap-satellite') || 'gpu-element';
+}
+
+function compileShader(
+  gl: WebGL2RenderingContext,
+  type: number,
+  source: string,
+  elementLabel: string,
+): WebGLShader | null {
   const shader = gl.createShader(type);
   if (!shader) return null;
   gl.shaderSource(shader, source);
@@ -23,7 +32,7 @@ function compileShader(gl: WebGL2RenderingContext, type: number, source: string)
     Diagnostics.warn({
       source: 'czap/astro.gpu',
       code: 'shader-compile-failed',
-      message: 'Shader compilation failed.',
+      message: `Shader compilation failed for element "${elementLabel}".`,
       detail: gl.getShaderInfoLog(shader),
     });
     gl.deleteShader(shader);
@@ -32,9 +41,14 @@ function compileShader(gl: WebGL2RenderingContext, type: number, source: string)
   return shader;
 }
 
-function createProgram(gl: WebGL2RenderingContext, vertSrc: string, fragSrc: string): WebGLProgram | null {
-  const vert = compileShader(gl, gl.VERTEX_SHADER, vertSrc);
-  const frag = compileShader(gl, gl.FRAGMENT_SHADER, fragSrc);
+function createProgram(
+  gl: WebGL2RenderingContext,
+  vertSrc: string,
+  fragSrc: string,
+  elementLabel: string,
+): WebGLProgram | null {
+  const vert = compileShader(gl, gl.VERTEX_SHADER, vertSrc, elementLabel);
+  const frag = compileShader(gl, gl.FRAGMENT_SHADER, fragSrc, elementLabel);
   if (!vert || !frag) return null;
 
   const program = gl.createProgram();
@@ -71,6 +85,7 @@ function createProgram(gl: WebGL2RenderingContext, vertSrc: string, fragSrc: str
  * @param el - Satellite element carrying the shader attributes.
  */
 export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement): void {
+  const elementLabel = elementGpuLabel(el);
   const shaderType = el.getAttribute('data-czap-shader-type') ?? 'glsl';
   const shaderSrc = allowRuntimeEndpointUrl(
     el.getAttribute('data-czap-shader-src'),
@@ -192,7 +207,7 @@ void main() {
 }`;
     }
 
-    const program = createProgram(webgl, DEFAULT_VERTEX_SHADER, fragSource);
+    const program = createProgram(webgl, DEFAULT_VERTEX_SHADER, fragSource, elementLabel);
     if (!program) return;
 
     webgl.useProgram(program);
@@ -265,7 +280,9 @@ void main() {
           Diagnostics.warnOnce({
             source: 'czap/astro.gpu',
             code: 'uniform-update-parse-failed',
-            message: 'Failed to parse boundary JSON during uniform update.',
+            message:
+              `Failed to parse boundary JSON during uniform update (${boundaryJson.slice(0, 120)}). ` +
+              `Fix: re-serialize the boundary with satelliteAttrs({ boundary }) from @czap/astro.`,
           });
         }
       }

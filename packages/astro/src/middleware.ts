@@ -18,6 +18,7 @@ import type {
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
+import { consumeIntegrationToggles } from './integration-toggles.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,9 +101,10 @@ export function czapMiddleware(
   if (edgeConfig) {
     edgeAdapter = createEdgeHostAdapter(edgeConfig);
   }
-  const detectEnabled = config?.detect !== false;
-  const workersEnabled = config?.workers?.enabled === true;
-  const coep = config?.workers?.coep;
+  const toggles = consumeIntegrationToggles(config);
+  const detectEnabled = toggles.detectEnabled;
+  const workersEnabled = toggles.workersEnabled;
+  const coep = toggles.coep;
 
   return async (context: MiddlewareContext, next: () => Promise<Response>): Promise<Response> => {
     const edgeResolution = edgeAdapter ? await edgeAdapter.resolve(context.request.headers) : null;

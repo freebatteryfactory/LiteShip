@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { Boundary, BoundaryAttribute } from '@czap/core';
+import { Boundary, BoundaryAttribute, Diagnostics } from '@czap/core';
 
 /**
  * JSON shape produced on the server by `satelliteAttrs()` and read back
@@ -97,6 +97,14 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
 
   const parsed = parseBoundaryPayload(boundaryJson);
   if (!parsed) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.boundary',
+      code: 'boundary-json-invalid',
+      message:
+        `data-czap-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
+        `Fix: spread satelliteAttrs({ boundary }) from @czap/astro or re-serialize with JSON.stringify.`,
+      detail: { snippet: boundaryJson.slice(0, 120) },
+    });
     return null;
   }
 
@@ -109,6 +117,14 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
     !parsed.thresholds.every((value) => typeof value === 'number') ||
     !parsed.states.every((value) => typeof value === 'string')
   ) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.boundary',
+      code: 'boundary-json-shape-invalid',
+      message:
+        `data-czap-boundary JSON is missing required fields (input, thresholds, states) — ` +
+        `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`,
+      detail: { snippet: boundaryJson.slice(0, 120) },
+    });
     return null;
   }
 

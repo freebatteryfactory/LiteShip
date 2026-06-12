@@ -69,7 +69,9 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
     Diagnostics.warn({
       source: 'czap/astro.wasm',
       code: 'wasm-load-failed',
-      message: 'WASM runtime failed to load.',
+      message:
+        `WASM runtime failed to load from "${wasmUrl}". ` +
+        `Fix: set czap({ wasm: { enabled: true, path: './public/czap-compute.wasm' } }) and verify Content-Type: application/wasm.`,
       detail: error instanceof Error ? error.message : 'load-failed',
       cause: error,
     });

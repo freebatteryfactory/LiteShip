@@ -20,12 +20,12 @@ import { VIEWPORT } from '@czap/core';
  * and the tier detected by the edge middleware.
  */
 export interface ServerIslandContext {
-  /** Raw `User-Agent` header. */
-  readonly userAgent: string;
-  /** Flat Client Hints header map. */
-  readonly clientHints: Record<string, string>;
-  /** Tier detected by `@czap/edge`. */
-  readonly detectedTier: CapLevel;
+  /** Raw `User-Agent` header (default `''`). */
+  readonly userAgent?: string;
+  /** Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`. */
+  readonly clientHints?: Record<string, string>;
+  /** Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px). */
+  readonly detectedTier?: CapLevel;
 }
 
 /**
@@ -130,9 +130,12 @@ function syntheticValueFromTier(tier: CapLevel): number {
  *
  * Evaluates the boundary thresholds to find the matching state.
  */
-export function resolveInitialState<B extends Boundary.Shape>(boundary: B, context: ServerIslandContext): string {
+export function resolveInitialState<B extends Boundary.Shape>(boundary: B, context: ServerIslandContext = {}): string {
   const stateNames = boundary.states as readonly string[];
   const thresholds = boundary.thresholds as readonly number[];
+  const userAgent = context.userAgent ?? '';
+  const clientHints = context.clientHints ?? {};
+  const detectedTier = context.detectedTier ?? 'reactive';
 
   if (stateNames.length === 0) return '';
   if (stateNames.length === 1) return stateNames[0]!;
@@ -141,20 +144,20 @@ export function resolveInitialState<B extends Boundary.Shape>(boundary: B, conte
   let value: number;
 
   // Check client hints first (most accurate)
-  const hintWidth = parseViewportWidth(context.clientHints);
-  const reducedMotion = parsePrefersReducedMotion(context.clientHints);
+  const hintWidth = parseViewportWidth(clientHints);
+  const reducedMotion = parsePrefersReducedMotion(clientHints);
 
   if (hintWidth !== undefined) {
     value = hintWidth;
-  } else if (context.userAgent) {
-    value = estimateViewportFromUA(context.userAgent);
+  } else if (userAgent) {
+    value = estimateViewportFromUA(userAgent);
   } else {
-    value = syntheticValueFromTier(context.detectedTier);
+    value = syntheticValueFromTier(detectedTier);
   }
 
   // If reduced motion is detected and the tier suggests limited capability,
   // bias toward the lowest state
-  if (reducedMotion === true && TIER_ORDINALS[context.detectedTier] <= 1) {
+  if (reducedMotion === true && TIER_ORDINALS[detectedTier] <= 1) {
     return stateNames[0]!;
   }
 

@@ -10,7 +10,7 @@
  * ```ts
  * // astro.config.mjs
  * import { defineConfig } from 'astro/config';
- * import { integration as czap } from '@czap/astro';
+ * import { czap } from '@czap/astro';
  *
  * const config = defineConfig({
  *   integrations: [czap({ detect: true, workers: { enabled: true } })],
@@ -22,6 +22,7 @@
 
 export type { IntegrationConfig } from './integration.js';
 export { integration } from './integration.js';
+export { integration as czap } from './integration.js';
 export type { ServerIslandContext, QuantizeProps } from './quantize.js';
 export { resolveInitialState } from './quantize.js';
 export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';

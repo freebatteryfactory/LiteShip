@@ -23,6 +23,10 @@ import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
 import type { DirectiveName } from './runtime/directive-boot.js';
 import {
+  publishIntegrationToggles,
+  resolveIntegrationToggles,
+} from './integration-toggles.js';
+import {
   normalizeRuntimeSecurityPolicy,
   type RuntimeHtmlPolicy,
   type RuntimeSecurityPolicy,
@@ -184,10 +188,12 @@ function withExperimentalFlag(flag: string, value: boolean): { experimental: Rec
  * ```
  */
 export function integration(config?: IntegrationConfig): AstroIntegration {
-  const detectEnabled = config?.detect !== false;
+  const runtimeToggles = resolveIntegrationToggles(config);
+  publishIntegrationToggles(runtimeToggles);
+  const detectEnabled = runtimeToggles.detectEnabled;
   const serverIslandsEnabled = config?.serverIslands === true;
-  const workersEnabled = config?.workers?.enabled === true;
-  const coep = config?.workers?.coep;
+  const workersEnabled = runtimeToggles.workersEnabled;
+  const coep = runtimeToggles.coep;
   const gpuEnabled = config?.gpu?.enabled !== false;
   const streamEnabled = config?.stream?.enabled !== false;
   const llmEnabled = config?.llm?.enabled !== false;

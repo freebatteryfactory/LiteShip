@@ -632,7 +632,7 @@ describe('astro directive branch coverage', () => {
         level: 'warn',
         source: 'czap/astro.gpu',
         code: 'shader-compile-failed',
-        message: 'Shader compilation failed.',
+        message: expect.stringContaining('Shader compilation failed for element'),
       }),
     );
 
