@@ -9,16 +9,18 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
+import { assertRegisteredAudioAssetId } from '../contract.js';
 
 /** Compute a normalized RMS-per-bin waveform. */
 export function computeWaveform(
   audio: { sampleRate: number; samples: Float32Array | Int16Array },
-  opts: { bins: number },
+  opts: { bins?: number } = {},
 ): readonly number[] {
-  const out: number[] = new Array(opts.bins).fill(0);
-  const stride = Math.max(1, Math.floor(audio.samples.length / opts.bins));
+  const bins = opts.bins ?? 512;
+  const out: number[] = new Array(bins).fill(0);
+  const stride = Math.max(1, Math.floor(audio.samples.length / bins));
   let maxRms = 0;
-  for (let b = 0; b < opts.bins; b++) {
+  for (let b = 0; b < bins; b++) {
     let sum = 0;
     let count = 0;
     const start = b * stride;
@@ -32,26 +34,28 @@ export function computeWaveform(
     out[b] = rms;
     if (rms > maxRms) maxRms = rms;
   }
-  if (maxRms > 0) for (let b = 0; b < opts.bins; b++) out[b] = out[b]! / maxRms;
+  if (maxRms > 0) for (let b = 0; b < bins; b++) out[b] = out[b]! / maxRms;
   return out;
 }
 
 /** Build a WaveformProjection cachedProjection capsule for a named audio asset. */
 export function WaveformProjection(
   audioAssetId: string,
-  opts: { bins: number },
+  opts: { bins?: number } = {},
 ): CapsuleDef<'cachedProjection', unknown, readonly number[], unknown> {
+  assertRegisteredAudioAssetId(audioAssetId, 'WaveformProjection');
+  const bins = opts.bins ?? 512;
   return defineCapsule({
     _kind: 'cachedProjection',
-    name: `${audioAssetId}:waveform:${opts.bins}`,
+    name: `${audioAssetId}:waveform:${bins}`,
     input: Schema.Unknown,
     output: Schema.Array(Schema.Number),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {
         name: 'bin-count-matches',
-        check: (_i, o) => (o as readonly number[]).length === opts.bins,
-        message: `waveform must emit exactly ${opts.bins} bins`,
+        check: (_i, o) => (o as readonly number[]).length === bins,
+        message: `waveform must emit exactly ${bins} bins`,
       },
       {
         name: 'values-normalized',

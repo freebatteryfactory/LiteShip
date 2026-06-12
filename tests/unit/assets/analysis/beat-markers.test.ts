@@ -1,13 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { detectBeats, BeatMarkerProjection } from '@czap/assets';
+import { defineAsset } from '@czap/assets';
+import { resetAssetRegistry } from '@czap/assets/testing';
+
+function registerIntroBed(): void {
+  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+}
 
 describe('BeatMarkerProjection', () => {
+  beforeEach(() => {
+    resetAssetRegistry();
+    registerIntroBed();
+  });
   it('detectBeats returns ordered beats for a synthetic 120bpm pulse', () => {
     const sampleRate = 48000;
     const duration = 4;
     const samples = new Float32Array(sampleRate * duration);
     for (let i = 0; i < samples.length; i++) {
-      samples[i] = (i % 24000 < 2000) ? 0.9 : 0.01;
+      samples[i] = i % 24000 < 2000 ? 0.9 : 0.01;
     }
     const markers = detectBeats({ sampleRate, samples });
     expect(markers.bpm).toBeGreaterThan(100);
@@ -29,7 +39,7 @@ describe('BeatMarkerProjection', () => {
     const sampleRate = 48000;
     const samples = new Int16Array(sampleRate * 2);
     for (let i = 0; i < samples.length; i++) {
-      samples[i] = (i % 16000 < 1500) ? 20000 : 100;
+      samples[i] = i % 16000 < 1500 ? 20000 : 100;
     }
     const markers = detectBeats({ sampleRate, samples });
     expect(markers.beats.length).toBeGreaterThan(0);

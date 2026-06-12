@@ -31,12 +31,20 @@ export interface DecodedAudio {
 export async function audioDecoder(bytes: ArrayBuffer): Promise<DecodedAudio> {
   let fmt: DataView | undefined;
   let data: DataView | undefined;
+  const chunkIds: string[] = [];
   for (const chunk of walkRiff(bytes)) {
+    if (chunk.id === 'RIFF') continue;
+    chunkIds.push(chunk.id);
     if (chunk.id === 'fmt ' && 'data' in chunk) fmt = chunk.data;
     else if (chunk.id === 'data' && 'data' in chunk) data = chunk.data;
   }
   if (!fmt) throw new Error('audioDecoder: missing fmt chunk');
-  if (!data) throw new Error('audioDecoder: missing data chunk');
+  if (!data) {
+    throw new Error(
+      `audioDecoder: no data chunk — found chunk ids [${chunkIds.join(', ') || '(none)'}]. ` +
+        `Re-export as PCM WAV: ffmpeg -i input -c:a pcm_s16le output.wav`,
+    );
+  }
 
   const audioFormat = fmt.getUint16(0, true);
   const channels = fmt.getUint16(2, true);
@@ -100,5 +108,22 @@ function decodeSamples(data: DataView, format: number, bitsPerSample: number): I
     }
     return out;
   }
-  throw new Error(`audioDecoder: unsupported audioFormat=${format} bitsPerSample=${bitsPerSample}`);
+  throw new Error(
+    `audioDecoder: unsupported-format — found audioFormat=${formatAudioFormatName(format)} ` +
+      `bitsPerSample=${bitsPerSample}. Supported: PCM (format 1) at 8/16/24/32 bits, ` +
+      `IEEE float (format 3) at 32 bits. Re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,
+  );
+}
+
+function formatAudioFormatName(format: number): string {
+  switch (format) {
+    case 1:
+      return '1 (PCM)';
+    case 3:
+      return '3 (IEEE float)';
+    case 65534:
+      return '65534 (WAVE_FORMAT_EXTENSIBLE)';
+    default:
+      return String(format);
+  }
 }

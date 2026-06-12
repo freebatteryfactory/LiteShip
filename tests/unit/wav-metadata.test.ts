@@ -4,11 +4,9 @@
  * tag parsing; an empty-LIST WAV exercises the "no metadata" fallback.
  */
 
-import { describe, it, expect } from 'vitest';
-import {
-  extractWavMetadata,
-  WavMetadataProjection,
-} from '@czap/assets';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { extractWavMetadata, WavMetadataProjection, defineAsset } from '@czap/assets';
+import { resetAssetRegistry } from '@czap/assets/testing';
 
 function writeFourCC(dst: Uint8Array, off: number, cc: string): void {
   if (cc.length !== 4) throw new Error(`fourCC must be 4 chars: ${cc}`);
@@ -45,13 +43,14 @@ function makeWav(tags: ReadonlyArray<[string, string]>): ArrayBuffer {
     const subChunks: Uint8Array[] = [];
     for (const [id, value] of tags) {
       const textBytes = new TextEncoder().encode(value + '\0');
-      const padded = textBytes.byteLength % 2 === 0
-        ? textBytes
-        : (() => {
-            const p = new Uint8Array(textBytes.byteLength + 1);
-            p.set(textBytes);
-            return p;
-          })();
+      const padded =
+        textBytes.byteLength % 2 === 0
+          ? textBytes
+          : (() => {
+              const p = new Uint8Array(textBytes.byteLength + 1);
+              p.set(textBytes);
+              return p;
+            })();
       const sub = new Uint8Array(8 + padded.byteLength);
       writeFourCC(sub, 0, id);
       new DataView(sub.buffer).setUint32(4, textBytes.byteLength, true);
@@ -137,6 +136,12 @@ describe('extractWavMetadata', () => {
 });
 
 describe('WavMetadataProjection', () => {
+  beforeEach(() => {
+    resetAssetRegistry();
+    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    defineAsset({ id: 'test-asset', source: 'test.wav', kind: 'audio' });
+  });
+
   it('emits a cachedProjection capsule named <id>:wav-metadata', () => {
     const cap = WavMetadataProjection('intro-bed');
     expect(cap._kind).toBe('cachedProjection');

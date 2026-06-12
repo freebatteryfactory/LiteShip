@@ -34,12 +34,12 @@ function makeMinimalWav(): ArrayBuffer {
   writeFourCC(fmt, 0, 'fmt ');
   new DataView(fmt.buffer).setUint32(4, 16, true);
   const fmtBody = new DataView(fmt.buffer, 8, 16);
-  fmtBody.setUint16(0, 1, true);     // PCM
-  fmtBody.setUint16(2, 1, true);     // mono
+  fmtBody.setUint16(0, 1, true); // PCM
+  fmtBody.setUint16(2, 1, true); // mono
   fmtBody.setUint32(4, 48000, true); // sample rate
   fmtBody.setUint32(8, 96000, true); // byte rate
-  fmtBody.setUint16(12, 2, true);    // block align
-  fmtBody.setUint16(14, 16, true);   // bits per sample
+  fmtBody.setUint16(12, 2, true); // block align
+  fmtBody.setUint16(14, 16, true); // bits per sample
 
   const dataPayload = new Uint8Array(4); // 4 bytes = 2 PCM16 samples (zeros)
   const dataChunk = new Uint8Array(8 + dataPayload.byteLength);
@@ -77,13 +77,14 @@ function makeWavWithListInfo(tags: ReadonlyArray<[string, string]>): ArrayBuffer
   for (const [id, value] of tags) {
     // Null-terminate and pad to even length per RIFF convention.
     const textBytes = new TextEncoder().encode(value + '\0');
-    const padded = textBytes.byteLength % 2 === 0
-      ? textBytes
-      : (() => {
-          const p = new Uint8Array(textBytes.byteLength + 1);
-          p.set(textBytes);
-          return p;
-        })();
+    const padded =
+      textBytes.byteLength % 2 === 0
+        ? textBytes
+        : (() => {
+            const p = new Uint8Array(textBytes.byteLength + 1);
+            p.set(textBytes);
+            return p;
+          })();
     const sub = new Uint8Array(8 + padded.byteLength);
     writeFourCC(sub, 0, id);
     new DataView(sub.buffer).setUint32(4, textBytes.byteLength, true);
@@ -160,7 +161,7 @@ describe('walkRiff', () => {
     writeFourCC(buf, 8, 'WAVE');
     writeFourCC(buf, 12, 'fmt ');
     new DataView(buf.buffer).setUint32(16, 0xffffff, true);
-    expect(() => [...walkRiff(buf.buffer)]).toThrow(/RIFF chunk fmt /);
+    expect(() => [...walkRiff(buf.buffer)]).toThrow(/truncated-chunk/);
   });
 
   it('decodes the shipped intro-bed.wav fixture cleanly', () => {

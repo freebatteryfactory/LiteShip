@@ -36,6 +36,17 @@ export type WavChunk =
       readonly data: DataView;
     };
 
+/** Sniff common non-WAV containers for teaching errors on bad RIFF magic. */
+function sniffContainerHint(buffer: ArrayBuffer): string {
+  if (buffer.byteLength < 4) return '';
+  const head = new Uint8Array(buffer, 0, Math.min(12, buffer.byteLength));
+  const ascii = String.fromCharCode(...head);
+  if (ascii.startsWith('ID3')) return ' — this looks like MP3; re-export as WAV';
+  if (ascii.startsWith('OggS')) return ' — this looks like Ogg; re-export as WAV';
+  if (ascii.startsWith('fLaC')) return ' — this looks like FLAC; re-export as WAV';
+  return '';
+}
+
 /**
  * Iterate over every chunk in a RIFF buffer. The first yielded value is
  * always the RIFF header; subsequent yields are top-level chunks in the
@@ -46,11 +57,21 @@ export type WavChunk =
  * buffer; throws Error for non-RIFF magic.
  */
 export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
-  if (buffer.byteLength < 12) throw new RangeError('RIFF buffer too small');
+  if (buffer.byteLength < 12) {
+    throw new RangeError(
+      `RIFF buffer too small (${buffer.byteLength} bytes) — WAV requires at least 12 bytes for the header. ` +
+        `The file may be truncated; re-fetch or re-export the asset.`,
+    );
+  }
   const view = new DataView(buffer);
   const dec = new TextDecoder('ascii');
   const riffMagic = dec.decode(new Uint8Array(buffer, 0, 4));
-  if (riffMagic !== 'RIFF') throw new Error(`Not a RIFF file: magic ${riffMagic}`);
+  if (riffMagic !== 'RIFF') {
+    throw new Error(
+      `Not a RIFF file: expected magic 'RIFF', found '${riffMagic}'${sniffContainerHint(buffer)}. ` +
+        `Provide a WAV (RIFF/WAVE) file or re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,
+    );
+  }
   const riffSize = view.getUint32(4, true);
   const formType = dec.decode(new Uint8Array(buffer, 8, 4));
   yield { id: 'RIFF', size: riffSize, formType, offset: 0 };
@@ -62,7 +83,8 @@ export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
     const dataOffset = pos + 8;
     if (dataOffset + size > buffer.byteLength) {
       throw new RangeError(
-        `RIFF chunk ${id} claims ${size} bytes but buffer only has ${buffer.byteLength - dataOffset}`,
+        `RIFF chunk ${id} claims ${size} bytes but buffer only has ${buffer.byteLength - dataOffset} remaining ` +
+          `(truncated-chunk) — re-fetch the asset source or re-export the file.`,
       );
     }
     const data = new DataView(buffer, dataOffset, size);
