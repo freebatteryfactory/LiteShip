@@ -7,6 +7,7 @@
 import type { Scope } from 'effect';
 import { Effect, Stream, SubscriptionRef, Queue, Fiber, Ref, Duration } from 'effect';
 import type { Boundary, StateUnion, BoundaryCrossing, Quantizer, Easing } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -162,6 +163,20 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
     const boundary = quantizer.boundary;
     const transitionResolver = TransitionFactory.for(quantizer, transitions);
     const effectiveOutputs = outputs ?? deriveInterpolationOutputs(quantizer);
+
+    if (effectiveOutputs !== undefined) {
+      // A state with no outputs entry lerps to an empty record — properties
+      // just vanish at the 50% snap. Diff once at make() time, not per frame.
+      const stateNames = boundary.states as readonly string[];
+      const uncovered = stateNames.filter((s) => effectiveOutputs[s] === undefined);
+      if (uncovered.length > 0) {
+        Diagnostics.warn({
+          source: 'czap/quantizer',
+          code: 'uncovered-animation-states',
+          message: `AnimatedQuantizer outputs cover [${Object.keys(effectiveOutputs).join(', ')}] but boundary "${boundary.input}" has states [${stateNames.join(', ')}]; transitions into ${uncovered.map((s) => `'${s}'`).join(', ')} will animate to empty outputs.`,
+        });
+      }
+    }
 
     const initialState: StateUnion<B> = yield* quantizer.state;
     const stateRef = yield* SubscriptionRef.make<StateUnion<B>>(initialState);

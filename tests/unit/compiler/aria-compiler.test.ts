@@ -46,6 +46,10 @@ describe('ARIACompiler.compile', () => {
         expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
         expect.objectContaining({ code: 'invalid-aria-key', source: 'czap/compiler.aria' }),
       ]);
+      // The diagnostic names the state and the literal next thing to type.
+      expect(events[0]!.message).toBe(
+        `Attribute "data-test" in state "collapsed" is not a valid ARIA key and was dropped. Use an aria-* attribute or "role" — e.g. 'aria-expanded': 'false'.`,
+      );
     });
   });
 
@@ -127,19 +131,30 @@ describe('ARIACompiler.compile', () => {
     expect(result.currentAttributes).toEqual({});
   });
 
-  test('unknown current state falls back to an empty current attribute map', () => {
-    const result = ARIACompiler.compile(
-      navBoundary,
-      {
-        collapsed: { 'aria-hidden': 'true' },
-        expanded: { 'aria-hidden': 'false' },
-      },
-      'missing-state' as unknown as 'collapsed',
-    );
+  test('unknown current state falls back to an empty current attribute map and warns', () => {
+    captureDiagnostics(({ events }) => {
+      const result = ARIACompiler.compile(
+        navBoundary,
+        {
+          collapsed: { 'aria-hidden': 'true' },
+          expanded: { 'aria-hidden': 'false' },
+        },
+        'missing-state' as unknown as 'collapsed',
+      );
 
-    expect(result.currentAttributes).toEqual({});
-    expect(result.stateAttributes['collapsed']).toEqual({ 'aria-hidden': 'true' });
-    expect(result.stateAttributes['expanded']).toEqual({ 'aria-hidden': 'false' });
+      expect(result.currentAttributes).toEqual({});
+      expect(result.stateAttributes['collapsed']).toEqual({ 'aria-hidden': 'true' });
+      expect(result.stateAttributes['expanded']).toEqual({ 'aria-hidden': 'false' });
+      expect(events).toEqual([
+        expect.objectContaining({
+          code: 'unknown-current-state',
+          source: 'czap/compiler.aria',
+          message:
+            'currentState "missing-state" is not one of [collapsed, expanded]; emitting no attributes. ' +
+            "Pass one of the boundary's state names.",
+        }),
+      ]);
+    });
   });
 
   test('all-invalid keys produce empty attributes', () => {

@@ -55,6 +55,20 @@ describe('Boundary.make', () => {
     ).toThrow(/strictly ascending/);
   });
 
+  test('non-ascending threshold error includes a copy-pasteable reorder of the user pairs', () => {
+    expect(() =>
+      Boundary.make({
+        input: 'viewport.width',
+        at: [
+          [768, 'lg'],
+          [0, 'sm'],
+        ] as const,
+      }),
+    ).toThrow(
+      "Got 768 before 0 at index 1. Reorder your `at:` pairs so thresholds increase: at: [[0, 'sm'], [768, 'lg']].",
+    );
+  });
+
   test('rejects duplicate state names', () => {
     expect(() =>
       Boundary.make({
