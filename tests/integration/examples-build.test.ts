@@ -1,8 +1,42 @@
 import { describe, it, expect } from 'vitest';
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
+
+const INSPECTOR_DIST_MARKERS = ['czap-inspector', 'inspector-loader', 'runtime/inspector.ts'] as const;
+
+function collectFiles(dir: string): string[] {
+  const entries = readdirSync(dir);
+  const files: string[] = [];
+  for (const entry of entries) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      files.push(...collectFiles(full));
+    } else {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
+function distContainsInspectorChunk(distDir: string): string | null {
+  if (!existsSync(distDir)) {
+    return `missing dist directory: ${distDir}`;
+  }
+  for (const file of collectFiles(distDir)) {
+    if (!/\.(js|mjs|css|html|map)$/.test(file)) {
+      continue;
+    }
+    const content = readFileSync(file, 'utf8');
+    for (const marker of INSPECTOR_DIST_MARKERS) {
+      if (content.includes(marker)) {
+        return `${marker} in ${file}`;
+      }
+    }
+  }
+  return null;
+}
 
 /**
  * Every example with a `build` script must actually build. Examples are
@@ -43,16 +77,27 @@ describe.sequential('examples build', () => {
   });
 
   for (const name of buildable) {
-    it(`examples/${name} builds`, async () => {
-      const result = await spawnArgvCapture('pnpm', ['run', 'build'], {
-        cwd: join(examplesRoot, name),
-      });
-      if (result.exitCode !== 0) {
-        // Surface the tail of the build log — the assertion alone says
-        // nothing about WHICH page or import broke.
-        const tail = (result.stderr || result.stdout).split('\n').slice(-30).join('\n');
-        expect.fail(`examples/${name} build exited ${result.exitCode}:\n${tail}`);
-      }
-    }, scaledTimeout(180_000));
+    it(
+      `examples/${name} builds`,
+      async () => {
+        const result = await spawnArgvCapture('pnpm', ['run', 'build'], {
+          cwd: join(examplesRoot, name),
+        });
+        if (result.exitCode !== 0) {
+          // Surface the tail of the build log — the assertion alone says
+          // nothing about WHICH page or import broke.
+          const tail = (result.stderr || result.stdout).split('\n').slice(-30).join('\n');
+          expect.fail(`examples/${name} build exited ${result.exitCode}:\n${tail}`);
+        }
+      },
+      scaledTimeout(180_000),
+    );
+  }
+
+  for (const name of ['default', 'tutorial'] as const) {
+    it(`examples/${name} production dist excludes dev inspector chunks`, () => {
+      const hit = distContainsInspectorChunk(join(examplesRoot, name, 'dist'));
+      expect(hit, `dev inspector must not ship in production build`).toBeNull();
+    });
   }
 });
