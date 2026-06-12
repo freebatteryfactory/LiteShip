@@ -55,6 +55,20 @@ describe('Boundary.make', () => {
     ).toThrow(/strictly ascending/);
   });
 
+  test('non-ascending threshold error names the offending pair and the literal fix', () => {
+    expect(() =>
+      Boundary.make({
+        input: 'viewport.width',
+        at: [
+          [768, 'tablet'],
+          [0, 'mobile'],
+        ] as const,
+      }),
+    ).toThrow(
+      "Boundary.make: thresholds must be strictly ascending. Got 768 before 0 at index 1. Sort your `at` pairs lowest-first, e.g. at: [[0, 'mobile'], [768, 'tablet']].",
+    );
+  });
+
   test('rejects duplicate state names', () => {
     expect(() =>
       Boundary.make({
@@ -65,6 +79,20 @@ describe('Boundary.make', () => {
         ] as const,
       }),
     ).toThrow(/duplicate state name/);
+  });
+
+  test('duplicate state error names the state, the rename fix, and the hoist hint', () => {
+    expect(() =>
+      Boundary.make({
+        input: 'viewport.width',
+        at: [
+          [0, 'small'],
+          [768, 'small'],
+        ] as const,
+      }),
+    ).toThrow(
+      'Boundary.make: duplicate state name "small" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, \'small\'], [768, \'medium\']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.',
+    );
   });
 });
 
