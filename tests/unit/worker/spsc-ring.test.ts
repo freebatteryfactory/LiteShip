@@ -152,3 +152,47 @@ describe('SPSCRing', () => {
     expect(() => SPSCRing.attachConsumer(sab, 4, 1.5)).toThrow(RangeError);
   });
 });
+
+describe('SPSCRing header-derived geometry', () => {
+  test('attachProducer/attachConsumer need only the buffer — geometry rides in the header', () => {
+    const { buffer } = SPSCRing.createPair(8, 3);
+
+    const producer = SPSCRing.attachProducer(buffer);
+    const consumer = SPSCRing.attachConsumer(buffer);
+
+    expect(producer.capacity).toBe(8);
+    expect(consumer.capacity).toBe(8);
+
+    expect(producer.push(new Float64Array([1, 2, 3]))).toBe(true);
+    const out = new Float64Array(3);
+    expect(consumer.pop(out)).toBe(true);
+    expect(Array.from(out)).toEqual([1, 2, 3]);
+  });
+
+  test('buffer byte length accounts for the 16-byte control header plus data slots', () => {
+    const { buffer } = SPSCRing.createPair(16, 8);
+    expect(buffer.byteLength).toBe(16 + 16 * 8 * 8);
+  });
+
+  test('explicit args matching the header are accepted (back-compat form)', () => {
+    const { buffer } = SPSCRing.createPair(4, 2);
+    const producer = SPSCRing.attachProducer(buffer, 4, 2);
+    expect(producer.push(new Float64Array([1, 2]))).toBe(true);
+  });
+
+  test('explicit args mismatching the header throw instead of silently corrupting', () => {
+    const { buffer } = SPSCRing.createPair(4, 2);
+    expect(() => SPSCRing.attachProducer(buffer, 8, 2)).toThrow(/created with slotCount 4 \/ slotSize 2/);
+    expect(() => SPSCRing.attachConsumer(buffer, 4, 3)).toThrow(/created with slotCount 4 \/ slotSize 2/);
+  });
+
+  test('a buffer without ring geometry names createPair as the fix', () => {
+    const raw = new SharedArrayBuffer(64);
+    expect(() => SPSCRing.attachProducer(raw)).toThrow(/SPSCRing\.createPair/);
+  });
+
+  test('a buffer smaller than the control header is rejected with its size', () => {
+    const tiny = new SharedArrayBuffer(8);
+    expect(() => SPSCRing.attachConsumer(tiny)).toThrow(/only 8 bytes/);
+  });
+});

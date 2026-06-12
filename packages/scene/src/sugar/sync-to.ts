@@ -10,17 +10,19 @@
  * @module
  */
 
-import type { EffectTrack, TrackId } from '../contract.js';
+import type { EffectTrack } from '../contract.js';
+import type { TrackRef } from '../track.js';
+import { trackRefId } from '../track.js';
 
 /** SyncAnchor shape extracted from EffectTrack. */
 type SyncAnchor = NonNullable<EffectTrack['syncTo']>;
 
-/** Typed SyncAnchor constructors for the three supported modes. */
+/** Typed SyncAnchor constructors for the three supported modes. Each accepts the audio track object or its id. */
 export const syncTo = {
   /** Sync to downbeats (BeatMarkerProjection). */
-  beat: (anchor: TrackId<'audio'>): SyncAnchor => ({ anchor, mode: 'beat' }),
+  beat: (anchor: TrackRef<'audio'>): SyncAnchor => ({ anchor: trackRefId(anchor), mode: 'beat' }),
   /** Sync to note attacks (OnsetProjection). */
-  onset: (anchor: TrackId<'audio'>): SyncAnchor => ({ anchor, mode: 'onset' }),
+  onset: (anchor: TrackRef<'audio'>): SyncAnchor => ({ anchor: trackRefId(anchor), mode: 'onset' }),
   /** Sync to loudness peaks (WaveformProjection + peak-pick). */
-  peak: (anchor: TrackId<'audio'>): SyncAnchor => ({ anchor, mode: 'peak' }),
+  peak: (anchor: TrackRef<'audio'>): SyncAnchor => ({ anchor: trackRefId(anchor), mode: 'peak' }),
 } as const;

@@ -14,8 +14,8 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
-import type { RuntimeCoordinator } from '@czap/core';
+import { Diagnostics, StateName as mkStateName } from '@czap/core';
+import type { RuntimeCoordinator, ContentAddress, StateName } from '@czap/core';
 import type {
   FromWorkerMessage,
   WorkerConfig,
@@ -34,6 +34,7 @@ import type {
   ResolvedStateAckPayload,
   CompositorWorkerShape,
   CompositorWorkerStartupTelemetry,
+  QuantizerBoundarySource,
 } from './compositor-types.js';
 
 // Import startup/lifecycle helpers
@@ -346,7 +347,23 @@ function _createCompositorWorker(
       return runtime;
     },
 
-    addQuantizer(name, boundary) {
+    addQuantizer(
+      nameOrBoundary: string | QuantizerBoundarySource,
+      explicitBoundary?: {
+        readonly id: ContentAddress;
+        readonly states: readonly StateName[];
+        readonly thresholds: readonly number[];
+      },
+    ) {
+      // Boundary-first form: the quantizer name defaults to the
+      // boundary's input name; id/states/thresholds are derived.
+      // BoundaryDef.states carries plain strings, so the labels are
+      // branded here — the registration protocol speaks StateName.
+      const name = typeof nameOrBoundary === 'string' ? nameOrBoundary : nameOrBoundary.input;
+      const boundary =
+        typeof nameOrBoundary === 'string'
+          ? explicitBoundary!
+          : { ...nameOrBoundary, states: nameOrBoundary.states.map((s) => mkStateName(s)) };
       const registration = {
         name,
         boundaryId: boundary.id,
@@ -576,16 +593,18 @@ function _createCompositorWorker(
  *
  * @example
  * ```ts
+ * import { Boundary } from '@czap/core';
  * import { CompositorWorker } from '@czap/worker';
  *
  * const compositor = CompositorWorker.create({ poolCapacity: 64 });
- * compositor.addQuantizer('brightness', {
- *   id: 'boundary:brightness',
- *   states: ['dim', 'bright'],
- *   // One threshold per state: thresholds[i] is the lower bound of
- *   // states[i] — 'dim' from 0, 'bright' from 0.5.
- *   thresholds: [0, 0.5],
+ * // Boundary.make computes the content-addressed id; the quantizer
+ * // name defaults to the boundary's input name ('brightness').
+ * const brightness = Boundary.make({
+ *   input: 'brightness',
+ *   // at[i] is [lower bound, state]: 'dim' from 0, 'bright' from 0.5.
+ *   at: [[0, 'dim'], [0.5, 'bright']],
  * });
+ * compositor.addQuantizer(brightness);
  * const unsub = compositor.onState((state) => {
  *   // state.discrete.brightness === 'bright' | 'dim'
  * });
