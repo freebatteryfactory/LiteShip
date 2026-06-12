@@ -6,7 +6,7 @@
 
 # Interface: CloudflareMiddlewareConfig
 
-Defined in: [cloudflare/src/middleware.ts:13](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L13)
+Defined in: [cloudflare/src/middleware.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L19)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [cloudflare/src/middleware.ts:13](https://github.com/heyoub/LiteShip
 
 > `readonly` **binding**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L15)
+Defined in: [cloudflare/src/middleware.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L21)
 
 KV namespace binding name in wrangler.jsonc.
 
@@ -22,12 +22,14 @@ KV namespace binding name in wrangler.jsonc.
 
 ### boundary?
 
-> `readonly` `optional` **boundary?**: `string`
+> `readonly` `optional` **boundary?**: `string` \| readonly `string`[]
 
-Defined in: [cloudflare/src/middleware.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L27)
+Defined in: [cloudflare/src/middleware.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L35)
 
-Which manifest boundary to serve. Optional when the manifest has
-exactly one entry.
+Which manifest boundaries to serve: a single name, a list of names,
+or omitted to serve every boundary in the manifest. Each served
+boundary keeps its own cache identity (content address), so
+boundaries on the same page cannot poison each other's cached CSS.
 
 ***
 
@@ -35,7 +37,7 @@ exactly one entry.
 
 > `readonly` `optional` **boundaryId?**: `ContentAddress`
 
-Defined in: [cloudflare/src/middleware.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L34)
+Defined in: [cloudflare/src/middleware.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L42)
 
 Escape hatch for custom hosts without a manifest: the boundary's
 content address. Must be a real minted id (`Boundary.make(...).id`,
@@ -48,10 +50,12 @@ fabricated id breaks the never-stale invariant.
 
 > `readonly` `optional` **compile?**: (`context`) => `CompiledOutputs` \| `Promise`\<`CompiledOutputs`\>
 
-Defined in: [cloudflare/src/middleware.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L39)
+Defined in: [cloudflare/src/middleware.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L49)
 
 Escape hatch / fallback: compile function invoked when neither the
-manifest nor KV covers the request's tier.
+manifest nor KV covers the request's tier. With multiple boundaries
+the callback is shared -- branch on `context.boundaryName` /
+`context.boundaryId` to return the right boundary's outputs.
 
 #### Parameters
 
@@ -69,7 +73,7 @@ manifest nor KV covers the request's tier.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [cloudflare/src/middleware.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L54)
+Defined in: [cloudflare/src/middleware.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L64)
 
 Whether to parse Client Hints (default `true`).
 
@@ -79,7 +83,7 @@ Whether to parse Client Hints (default `true`).
 
 > `readonly` `optional` **env?**: [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md) \| (() => [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md))
 
-Defined in: [cloudflare/src/middleware.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L61)
+Defined in: [cloudflare/src/middleware.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L71)
 
 Override the Workers env source. Default reads `env` from `cloudflare:workers`.
 Pass a getter in tests or when env is injected by the host framework.
@@ -90,7 +94,7 @@ Pass a getter in tests or when env is injected by the host framework.
 
 > `readonly` `optional` **manifest?**: `Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\> \| `BoundaryManifestFile`
 
-Defined in: [cloudflare/src/middleware.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L22)
+Defined in: [cloudflare/src/middleware.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L28)
 
 Build-derived boundary manifest -- import it from
 `virtual:czap/boundaries` or read the emitted
@@ -103,7 +107,7 @@ and per-tier precompiled outputs from it, so nothing is hand-typed.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L52)
+Defined in: [cloudflare/src/middleware.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L62)
 
 Optional KV key prefix.
 
@@ -113,7 +117,7 @@ Optional KV key prefix.
 
 > `readonly` `optional` **theme?**: `ThemeCompileConfig` \| ((`context`) => `ThemeCompileConfig` \| `null` \| `undefined`)
 
-Defined in: [cloudflare/src/middleware.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L41)
+Defined in: [cloudflare/src/middleware.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L51)
 
 Optional theme config or per-request resolver.
 
@@ -123,7 +127,7 @@ Optional theme config or per-request resolver.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [cloudflare/src/middleware.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L50)
+Defined in: [cloudflare/src/middleware.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L60)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
 knob. Compiled outputs are content-addressed and never go stale; each
@@ -138,7 +142,7 @@ keys for superseded builds. Omit to cache indefinitely.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [cloudflare/src/middleware.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L56)
+Defined in: [cloudflare/src/middleware.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L66)
 
 Whether to emit COOP/COEP for `client:worker`.
 

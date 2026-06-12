@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { Boundary } from '@czap/core';
-import { enumerateTierKeys } from '@czap/edge';
+import { dedupeOutputsByTier, enumerateTierKeys } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestFile } from '@czap/edge';
 import {
   cloudflareMiddleware,
@@ -197,17 +197,117 @@ describe('cloudflareMiddleware', () => {
     expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBe('precompiled');
   });
 
-  test('multi-boundary manifest without a selector throws a teaching error naming the candidates', () => {
+  /**
+   * Two-boundary manifest with distinct content (distinct content
+   * addresses) and distinct CSS -- the cross-poisoning fixture.
+   */
+  function makeMultiManifest(): BoundaryManifest {
+    const viewport = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ],
+    });
+    const sidebar = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'collapsed'],
+        [1024, 'expanded'],
+      ],
+    });
+    // v2 deduped entries, like the build derives (pool + index cells).
+    const grid = (css: string) =>
+      dedupeOutputsByTier(
+        Object.fromEntries(
+          enumerateTierKeys().map((key) => [key, { css, propertyRegistrations: '', containerQueries: '' }]),
+        ),
+      );
+    return {
+      viewport: { id: viewport.id, ...grid('.viewport{--gap:24px;}') },
+      sidebar: { id: sidebar.id, ...grid('.sidebar{--gap:8px;}') },
+    };
+  }
+
+  test('multi-boundary manifest without a selector serves every boundary with its own CSS', async () => {
     const { kv } = makeKVStore();
-    const { manifest } = makeManifest();
-    const second = makeManifest('sidebar');
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      manifest: makeMultiManifest(),
+      env: { KV: kv },
+    });
+
+    const context = {
+      request: new Request('http://localhost/', {
+        headers: new Headers({ 'sec-ch-viewport-width': '1280', 'sec-ch-device-memory': '8' }),
+      }),
+      locals: {} as Record<string, unknown>,
+    };
+    await middleware(context, async () => new Response('ok'));
+
+    const edge = (
+      context.locals.czap as {
+        edge?: {
+          compiledOutputs?: unknown;
+          boundaries?: Record<string, { compiledOutputs?: { css?: string }; cacheStatus?: string }>;
+        };
+      }
+    ).edge;
+    // The regression this guards: two boundaries at the same tier must not
+    // bleed into each other's cached CSS.
+    expect(edge?.boundaries?.viewport?.compiledOutputs?.css).toBe('.viewport{--gap:24px;}');
+    expect(edge?.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{--gap:8px;}');
+    expect(edge?.boundaries?.viewport?.cacheStatus).toBe('precompiled');
+    expect(edge?.boundaries?.sidebar?.cacheStatus).toBe('precompiled');
+    expect(edge?.compiledOutputs).toBeUndefined();
+  });
+
+  test('boundary list narrows a multi-boundary manifest', async () => {
+    const { kv } = makeKVStore();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      manifest: makeMultiManifest(),
+      boundary: ['sidebar'],
+      env: { KV: kv },
+    });
+
+    const context = {
+      request: new Request('http://localhost/'),
+      locals: {} as Record<string, unknown>,
+    };
+    await middleware(context, async () => new Response('ok'));
+
+    const edge = (
+      context.locals.czap as {
+        edge?: { boundaries?: Record<string, { compiledOutputs?: { css?: string } }> };
+      }
+    ).edge;
+    expect(edge?.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{--gap:8px;}');
+    expect(edge?.boundaries?.viewport).toBeUndefined();
+  });
+
+  test('empty boundary list throws a teaching error naming the manifest boundaries', () => {
+    const { kv } = makeKVStore();
     expect(() =>
       cloudflareMiddleware({
         binding: 'KV',
-        manifest: { ...manifest, ...second.manifest },
+        manifest: makeMultiManifest(),
+        boundary: [],
         env: { KV: kv },
       }),
     ).toThrowError(/viewport.*sidebar|sidebar.*viewport/s);
+  });
+
+  test('unknown name in a boundary list throws the teaching error listing what the manifest has', () => {
+    const { kv } = makeKVStore();
+    expect(() =>
+      cloudflareMiddleware({
+        binding: 'KV',
+        manifest: makeMultiManifest(),
+        boundary: ['viewport', 'ghost'],
+        env: { KV: kv },
+      }),
+    ).toThrowError(/"ghost"[\s\S]*viewport/);
   });
 
   test('unknown boundary name throws a teaching error listing what the manifest has', () => {

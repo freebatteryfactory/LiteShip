@@ -68,14 +68,22 @@ export interface CompiledOutputs {
 }
 
 export interface BoundaryCache {
+  /**
+   * `qualifier` joins the key when two NAMES share one boundary
+   * `ContentAddress` but carry different compiled CSS (the same
+   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * without it, the first name's compile result would serve every name.
+   */
   getCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
+    qualifier?: string,
   ): Promise<CompiledOutputs | null>;
   putCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
     outputs: CompiledOutputs,
+    qualifier?: string,
   ): Promise<void>;
 }
 
@@ -146,18 +154,33 @@ export interface EdgeHostContext {
 
 export interface EdgeHostCompileContext extends EdgeHostContext {
   readonly theme?: ThemeCompileResult;
+  readonly boundaryId: ContentAddress;
+  readonly boundaryName?: string;
+}
+
+export interface EdgeHostBoundaryConfig {
+  readonly boundaryId: ContentAddress;
+  readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
 }
 
 export interface EdgeHostCacheConfig {
   readonly kv: KVNamespace;
-  readonly boundaryId: ContentAddress;
+  readonly boundaryId?: ContentAddress;
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryConfig>>;
   readonly ttl?: number;
   readonly prefix?: string;
 }
 
 export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
+
+export interface EdgeHostBoundaryResolution {
+  readonly boundaryId: ContentAddress;
+  readonly compiledOutputs?: CompiledOutputs;
+  readonly cacheStatus: Exclude<EdgeHostCacheStatus, 'disabled'>;
+}
 
 export interface EdgeHostAdapterConfig {
   readonly theme?:
@@ -169,6 +192,7 @@ export interface EdgeHostAdapterConfig {
 export interface EdgeHostResolution extends EdgeHostContext {
   readonly theme?: ThemeCompileResult;
   readonly compiledOutputs?: CompiledOutputs;
+  readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   readonly htmlAttributes: string;
   readonly responseHeaders: {
     readonly acceptCH: string;
@@ -193,4 +217,6 @@ export declare namespace EdgeHostAdapter {
   export type CacheStatus = EdgeHostCacheStatus;
   export type Context = EdgeHostContext;
   export type CompileContext = EdgeHostCompileContext;
+  export type BoundaryConfig = EdgeHostBoundaryConfig;
+  export type BoundaryResolution = EdgeHostBoundaryResolution;
 }

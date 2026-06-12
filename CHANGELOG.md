@@ -72,6 +72,23 @@ pivot (epic #4) — these notes ship as 0.2.0.
   as an escape hatch. `examples/cloudflare-astro` now runs the derived
   path end-to-end (real boundary module, `@quantize` CSS, manifest-fed
   middleware) instead of compiling a placeholder constant.
+- `@czap/edge` — the host cache serves **multiple boundaries per page**:
+  `EdgeHostCacheConfig.boundaries` takes a name-keyed record of
+  `EdgeHostBoundaryConfig` (`boundaryId` + `precompiled`/`compile`), and
+  `EdgeHostResolution.boundaries` reports each boundary's own outputs and
+  cache status (top-level `cacheStatus` aggregates worst-case; top-level
+  `compiledOutputs` stays populated when exactly one boundary is
+  configured). Each boundary keeps its own content-addressed KV key, so
+  two boundaries at the same tier cannot poison each other's cached CSS.
+  The single-boundary `boundaryId` form is unchanged.
+  `EdgeHostCompileContext` now carries `boundaryId` (+ `boundaryName` in
+  the multi form) so a shared `compile` fallback can branch per boundary
+  (**breaking** only for code constructing the compile context itself;
+  callbacks just see the new fields). `CzapLocals.edge` (`@czap/astro`)
+  exposes the per-boundary record as `boundaries`.
+- `@czap/cloudflare` — `cloudflareMiddleware` serves **every manifest
+  boundary by default** (previously a multi-boundary manifest without a
+  `boundary` selector threw); `boundary` narrows to one name or a list.
 
 - `@czap/vite` + `@czap/compiler` — `@quantize` states accept **nested
   selector rules** (`<selector> { ... }`) alongside bare declarations:
