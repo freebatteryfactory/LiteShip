@@ -1,6 +1,8 @@
-# `@czap/cli`
+# @czap/cli
 
-The `czap` CLI ships with **LiteShip** — JSON-first machine interface for the **CZAP** engine, human-friendly TTY mode. Naming: [../../docs/GLOSSARY.md](../../docs/GLOSSARY.md).
+The `czap` command-line tool: every verb emits one JSON receipt (a structured result line) on stdout and keeps human-readable summaries on stderr, so output pipes cleanly into `jq`, CI, or an AI agent.
+
+> Install this directly when you want the `czap` verbs in a project or CI. If you're starting a new project, start with [liteship](https://www.npmjs.com/package/liteship) instead — it installs this package along with the rest of the stack.
 
 ## Install
 
@@ -8,55 +10,53 @@ The `czap` CLI ships with **LiteShip** — JSON-first machine interface for the 
 pnpm add -D @czap/cli
 ```
 
+## 30 seconds
+
+```bash
+npx czap doctor
+```
+
+```json
+{"status":"ok","command":"doctor","verdict":"ready","checks":[
+  {"id":"node.version","label":"Node.js","status":"ok","detail":"22.22.3"},
+  {"id":"pnpm.version","label":"pnpm","status":"ok","detail":"10.32.1"}
+]}
+```
+
+You should see one JSON line like the above on stdout (shown wrapped here) and, on a terminal, a colored per-check summary on stderr. Exit code is 0 for an `ok` receipt, 1 for `failed`; `--ci` escalates warnings to 1.
+
 ## Verbs
 
-Every command emits a JSON receipt to stdout. Pretty TTY summaries (when stderr is a terminal) go to stderr only — receipts on stdout stay machine-clean so they pipe cleanly into `jq`, MCP, or CI annotators. Exception: `czap completion <shell>` writes a raw shell-completion script to stdout (no JSON wrapper) so `eval "$(czap completion bash)"` and friends work directly.
-
-### Cast off (dev experience)
-
 | Verb | What it does |
 | --- | --- |
-| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare]` | Preflight rig check. Default profile probes Node, pnpm, workspace install, built dist/, git hooks, git config, Playwright, WASM toolchain (if `crates/` present). `--target cloudflare` runs a focused Cloudflare Workers profile (Astro 6, `@astrojs/cloudflare` v13+, Wrangler, wrangler config). `--fix` auto-remediates cheap cases; `--ci` escalates warnings to exit 1; `--preflight` excludes `*.built` from the verdict. |
-| `czap help` | The chart — every verb grouped by phase. |
-| `czap glossary [term]` | Ontology lookup. Mirrors `docs/GLOSSARY.md` so AI agents can resolve register without leaving the shell. |
-| `czap completion <bash\|zsh\|fish>` | Emit a tab-completion script. `eval "$(czap completion bash)"` to load. |
-| `czap version` | Print the @czap/cli version. |
-| `czap audit [--profile <path>]` | Profile-driven structure / integrity / surface audit (CUT D9b). JSON receipt on stdout; `--profile` points at a devops profile. |
+| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare]` | Environment preflight: Node, pnpm, install, build artifacts, git hooks. `--fix` applies cheap remediations. |
+| `czap help` · `czap version` · `czap glossary [term]` | Help chart, version receipt, vocabulary lookup. |
+| `czap completion <bash\|zsh\|fish>` | Tab-completion script — the one verb that writes a raw script, not JSON, to stdout. |
+| `czap describe [--format json\|mcp]` | Machine-readable description of every verb and schema. |
+| `czap mcp [--http :3838]` | Start the MCP server (requires `@czap/mcp-server` installed). |
+| `czap scene compile\|dev\|render\|verify <path>` | Compile, watch, render, or check a scene definition. |
+| `czap asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
+| `czap capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |
+| `czap audit [--consumer\|--profile <p>] [--findings]` | Run the `@czap/audit` engine; receipt carries the counts. |
+| `czap gauntlet` · `czap ship <pkg>` · `czap verify` | Release gate, npm publish, post-publish verification. |
 
-### Describe + MCP (machine interface)
+Renders and analyses are cached by a hash of their inputs; pass `--force` to re-run. Unknown verbs exit 1 with a trailing `{"error":"unknown_command"}` line on stderr.
 
-| Verb | What it does |
-| --- | --- |
-| `czap describe [--format=json\|mcp]` | Self-describe the CLI surface (verbs, capsule factories, schema). |
-| `czap mcp` | Start the MCP server (dynamically imports `@czap/mcp-server`). |
+## Where it sits
 
-### Compose + render (scene + asset)
+`@czap/cli` is a terminal adapter over `@czap/command`, the shared command catalog and dispatcher — the MCP server projects the same catalog, and neither imports the other (`czap mcp` only dynamically loads `@czap/mcp-server`). Scene and asset verbs execute through `@czap/scene` and `@czap/assets`, `czap audit` wires the `@czap/audit` engine, and shared types come from `@czap/core`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
 
-| Verb | What it does |
-| --- | --- |
-| `czap scene compile <path>` | Compile a scene definition. |
-| `czap scene dev <path>` | Watch + recompile. |
-| `czap scene render <path> [-o out]` | Render scene to disk. |
-| `czap scene verify <path>` | Verify a scene definition. |
-| `czap asset analyze <path>` | Analyze an asset capsule. |
-| `czap asset verify <path>` | Verify an asset capsule. |
+## If it does nothing
 
-### Manifest (capsule)
+`capsule` verbs read a capsule manifest, by default `reports/capsule-manifest.json` under the current directory; outside a repo that has one they fail with a manifest-missing receipt. Set `CZAP_CAPSULE_MANIFEST` to point at yours.
 
-| Verb | What it does |
-| --- | --- |
-| `czap capsule list` | List capsule factories. |
-| `czap capsule inspect <id>` | Inspect a capsule's schema + dispatch. |
-| `czap capsule verify <path>` | Verify a capsule definition. |
+## Docs
 
-### Ship out (quay-side, release)
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
+- [Architecture](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/cli/src/) — generated from source
 
-| Verb | What it does |
-| --- | --- |
-| `czap gauntlet` | Run the release-grade gate (the full phase sequence in `@czap/cli`'s `gauntlet-phases.ts`; `czap gauntlet --dry-run` projects it). |
-| `czap ship <pkg>` | Publish a package to npm (idempotent). `czap ship` ties packages up at the quay; `czap verify` checks the receipt before they sail. |
-| `czap verify` | Post-ship verification (ADR-0011 four-verdict local verifier). |
+---
 
-The `mcp` subcommand dynamically imports `@czap/mcp-server`. Install `@czap/mcp-server` alongside `@czap/cli` when you need MCP mode, and keep both on the same semver line.
-
-See [docs/GETTING-STARTED.md](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md).
+Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

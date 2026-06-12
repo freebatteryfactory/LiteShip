@@ -5,13 +5,8 @@
  */
 
 import type { ContentAddress } from '@czap/core';
-import type {
-  BoundaryManifest,
-  BoundaryManifestEntry,
-  BoundaryManifestFile,
-  EdgeHostAdapterConfig,
-  EdgeHostCacheConfig,
-} from '@czap/edge';
+import type { BoundaryManifest, BoundaryManifestFile, EdgeHostAdapterConfig, EdgeHostCacheConfig } from '@czap/edge';
+import { resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 
@@ -122,7 +117,7 @@ function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): B
  */
 function resolveCacheSource(config: CloudflareMiddlewareConfig): {
   readonly boundaryId: ContentAddress;
-  readonly precompiled?: BoundaryManifestEntry['outputsByTier'];
+  readonly precompiled?: EdgeHostCacheConfig['precompiled'];
 } {
   if (config.manifest) {
     const boundaries = normalizeManifest(config.manifest);
@@ -150,7 +145,9 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig): {
           `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
       );
     }
-    return { boundaryId: entry.id, precompiled: entry.outputsByTier };
+    // Inflate the deduplicated v2 entry (outputs pool + index cells) once
+    // at construction; per-request lookups stay a plain map access.
+    return { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry) };
   }
 
   if (config.boundaryId && config.compile) {
