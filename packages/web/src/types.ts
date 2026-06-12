@@ -44,6 +44,18 @@ export interface SlotEntry {
   readonly mounted: boolean;
 }
 
+/**
+ * Input accepted by `SlotRegistryShape.register`. Registered entries are
+ * normalized to a full {@link SlotEntry}: `mode` defaults to `'partial'`
+ * and `mounted` defaults to `true`.
+ */
+export interface SlotEntryInput {
+  readonly path: SlotPath;
+  readonly element: Element;
+  readonly mode?: IslandMode;
+  readonly mounted?: boolean;
+}
+
 // =============================================================================
 // Physical State Types
 // =============================================================================
@@ -216,15 +228,17 @@ export interface SSEConfig {
    */
   readonly lastEventId?: string;
   /**
-   * Partial override of the reconnect policy — omitted fields fall back to
-   * `defaultReconnectConfig` (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
+   * Partial overrides are merged over `defaultReconnectConfig`
+   * (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
    */
   readonly reconnect?: Partial<ReconnectConfig>;
   readonly heartbeatInterval?: Millis;
 }
 
 /**
- * Reconnection configuration.
+ * Reconnection configuration. Engine defaults live in
+ * `defaultReconnectConfig` (`./stream/sse-pure.js`); `SSEConfig.reconnect`
+ * accepts a partial and merges over those defaults.
  */
 export interface ReconnectConfig {
   readonly maxAttempts: number;
@@ -284,6 +298,15 @@ export interface ResumptionState {
   readonly artifactId: string;
   readonly timestamp: number;
 }
+
+/**
+ * Input accepted by `Resumption.saveState`. The stored shape keeps
+ * `timestamp` required; on input it defaults to `Date.now()` — only the
+ * engine reads it.
+ */
+export type ResumptionStateInput = Omit<ResumptionState, 'timestamp'> & {
+  readonly timestamp?: number;
+};
 
 /**
  * Resume response from the server.

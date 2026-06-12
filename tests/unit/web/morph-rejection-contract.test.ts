@@ -28,7 +28,9 @@ describe('rejectIfMissing rejection contract', () => {
     expect(rejection).not.toBeNull();
     expect(rejection!.type).toBe('preserve_violation');
     expect(rejection!.missingIds).toEqual(['cart']);
-    expect(rejection!.reason).toBe('Required elements missing after morph: cart');
+    expect(rejection!.reason).toBe(
+      'Morph rejected: elements [cart] were required by a preserve hint but are missing from the new HTML.',
+    );
     expect(rejection!.hint).toMatch(/data-czap-id elements \[cart\]/);
     expect(rejection!.hint).toMatch(/server HTML/);
     expect(rejection!.hint).toMatch(/drop them from the preserve hint/);

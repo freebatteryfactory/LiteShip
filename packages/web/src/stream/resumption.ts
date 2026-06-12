@@ -7,9 +7,10 @@
 
 import { Effect } from 'effect';
 import { Millis } from '@czap/core';
-import type { ResumptionConfig, ResumptionState, ResumeResponse } from '../types.js';
+import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
 import { resolveRuntimeUrl } from '../security/runtime-url.js';
+import type { RuntimeUrlResolution } from '../security/runtime-url.js';
 
 // Import pure functions and re-export (Effect-free)
 import { parseEventId as _parseEventId, canResume as _canResume } from './resumption-pure.js';
@@ -78,18 +79,18 @@ const storageKey = (artifactId: string): string => `czap:resumption:${artifactId
  *   artifactId: 'article-123',
  *   lastEventId: 'evt-42',
  *   lastSequence: 42,
- *   timestamp: Date.now(),
  * }));
  * ```
  *
- * @param state - The resumption state to persist
+ * @param state - The resumption state to persist; `timestamp` defaults to `Date.now()`
  * @returns An Effect that saves the state
  */
-export const saveState = (state: ResumptionState): Effect.Effect<void> =>
+export const saveState = (state: ResumptionStateInput): Effect.Effect<void> =>
   Effect.sync(() => {
     const key = storageKey(validateArtifactId(state.artifactId));
-    const value = JSON.stringify(state);
-    sessionStorage.setItem(key, value);
+    // Stored shape keeps timestamp required; isResumptionState validates it on load.
+    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? Date.now() };
+    sessionStorage.setItem(key, JSON.stringify(stored));
   });
 
 /**
@@ -228,6 +229,38 @@ export const resume = (
   });
 
 /**
+ * Format a teaching error for a rejected endpoint URL: which URL, why it
+ * was rejected (with the resolved/page origins the resolution carries),
+ * and the literal ResumptionConfig change that unblocks it.
+ */
+const describeEndpointRejection = (
+  kind: 'snapshot' | 'replay',
+  rawUrl: string,
+  resolved: Exclude<RuntimeUrlResolution, { type: 'allowed' }>,
+): string => {
+  const label = kind === 'snapshot' ? 'Snapshot' : 'Replay';
+  const configField = `ResumptionConfig.${kind}Url`;
+  const pageOrigin = globalThis.location?.origin ?? '(no page origin)';
+
+  switch (resolved.type) {
+    case 'missing':
+      return `${label} URL is missing — set ${configField} to your endpoint.`;
+    case 'malformed':
+      return `${label} URL "${resolved.rawUrl}" could not be parsed against base origin ${resolved.baseOrigin}${
+        resolved.detail ? ` (${resolved.detail})` : ''
+      } — fix ${configField}.`;
+    case 'cross-origin-rejected':
+      return `${label} URL "${rawUrl}" was rejected: it resolves to origin ${resolved.resolved.origin} but the page origin is ${pageOrigin}, and the runtime only fetches same-origin by default. To allow this origin, pass endpointPolicy: { mode: 'allowlist', allowOrigins: ['${resolved.resolved.origin}'] } in ResumptionConfig.`;
+    case 'origin-not-allowed':
+      return `${label} URL "${rawUrl}" was rejected: origin ${resolved.resolved.origin} is not in the endpoint allowlist. Add '${resolved.resolved.origin}' to endpointPolicy.allowOrigins (or endpointPolicy.byKind.${kind}) in ResumptionConfig.`;
+    case 'kind-not-allowed':
+      return `${label} URL "${rawUrl}" was rejected: the endpoint policy defines per-kind allowlists but none for '${kind}'. Add '${resolved.resolved.origin}' to endpointPolicy.byKind.${kind} in ResumptionConfig.`;
+    case 'private-ip-rejected':
+      return `${label} URL "${rawUrl}" was rejected: it resolves to a private or reserved address (${resolved.resolved.hostname}), which the runtime blocks to prevent SSRF. Use a public hostname or a relative same-origin path.`;
+  }
+};
+
+/**
  * Request a snapshot when resumption is not possible.
  */
 const requestSnapshot = (
@@ -241,7 +274,7 @@ const requestSnapshot = (
       policy: endpointPolicy,
     });
     if (resolved.type !== 'allowed') {
-      return yield* Effect.fail(new Error(`Snapshot URL rejected: ${resolved.type}`));
+      return yield* Effect.fail(new Error(describeEndpointRejection('snapshot', snapshotUrl, resolved)));
     }
 
     const url = new URL(resolved.resolved.toString());
@@ -253,7 +286,11 @@ const requestSnapshot = (
     });
 
     if (!response.ok) {
-      return yield* Effect.fail(new Error(`Snapshot request failed: ${response.status} ${response.statusText}`));
+      return yield* Effect.fail(
+        new Error(
+          `Snapshot request to ${url.toString()} failed: ${response.status} ${response.statusText}. The default snapshot endpoint is '${defaultResumptionConfig.snapshotUrl}/<artifactId>' — your server must implement it, or set ResumptionConfig.snapshotUrl to your endpoint.`,
+        ),
+      );
     }
 
     const data: unknown = yield* Effect.tryPromise({
@@ -289,7 +326,7 @@ const requestReplay = (
       policy: endpointPolicy,
     });
     if (resolved.type !== 'allowed') {
-      return yield* Effect.fail(new Error(`Replay URL rejected: ${resolved.type}`));
+      return yield* Effect.fail(new Error(describeEndpointRejection('replay', replayUrl, resolved)));
     }
 
     const url = new URL(resolved.resolved.toString());
@@ -303,7 +340,11 @@ const requestReplay = (
     });
 
     if (!response.ok) {
-      return yield* Effect.fail(new Error(`Replay request failed: ${response.status} ${response.statusText}`));
+      return yield* Effect.fail(
+        new Error(
+          `Replay request to ${url.toString()} failed: ${response.status} ${response.statusText}. The default replay endpoint is '${defaultResumptionConfig.replayUrl}/<artifactId>?from=<eventId>&to=<eventId>' — your server must implement it, or set ResumptionConfig.replayUrl to your endpoint.`,
+        ),
+      );
     }
 
     const data: unknown = yield* Effect.tryPromise({
@@ -332,10 +373,9 @@ const requestReplay = (
  * import { Resumption } from '@czap/web';
  * import { Effect } from 'effect';
  *
- * // Save state on each SSE message
+ * // Save state on each SSE message (timestamp defaults to Date.now())
  * Effect.runSync(Resumption.saveState({
  *   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
- *   timestamp: Date.now(),
  * }));
  *
  * // On reconnect, resume from where we left off
