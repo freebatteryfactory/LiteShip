@@ -40,9 +40,20 @@ export interface CompiledOutputs {
  * tier combination.
  */
 export interface BoundaryCache {
-  getCompiledOutputs(boundaryId: ContentAddress, tierResult: EdgeTierResult): Promise<CompiledOutputs | null>;
+  /**
+   * `qualifier` joins the key when two NAMES share one boundary
+   * `ContentAddress` but carry different compiled CSS (the same
+   * `Boundary.make` definition referenced by two `@quantize` blocks) —
+   * without it, the first name's compile result would serve every name.
+   */
+  getCompiledOutputs(boundaryId: ContentAddress, tierResult: EdgeTierResult, qualifier?: string): Promise<CompiledOutputs | null>;
 
-  putCompiledOutputs(boundaryId: ContentAddress, tierResult: EdgeTierResult, outputs: CompiledOutputs): Promise<void>;
+  putCompiledOutputs(
+    boundaryId: ContentAddress,
+    tierResult: EdgeTierResult,
+    outputs: CompiledOutputs,
+    qualifier?: string,
+  ): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,10 +74,19 @@ interface CacheOptions {
   readonly prefix?: string;
 }
 
-function buildCacheKey(prefix: string, boundaryId: ContentAddress, tierResult: EdgeTierResult): string {
+function buildCacheKey(
+  prefix: string,
+  boundaryId: ContentAddress,
+  tierResult: EdgeTierResult,
+  qualifier?: string,
+): string {
   // Tier portion shares `tierKey` with manifest lookups so the KV keyspace
-  // and the precompiled-manifest keyspace can never disagree.
-  return `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`;
+  // and the precompiled-manifest keyspace can never disagree. The qualifier
+  // (boundary NAME in multi-boundary configs) segregates same-id boundaries
+  // whose CSS differs; unqualified single-boundary keys are unchanged.
+  return qualifier === undefined
+    ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
+    : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,8 +134,12 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
   const ttl = options?.ttl;
 
   return {
-    async getCompiledOutputs(boundaryId: ContentAddress, tierResult: EdgeTierResult): Promise<CompiledOutputs | null> {
-      const key = buildCacheKey(prefix, boundaryId, tierResult);
+    async getCompiledOutputs(
+      boundaryId: ContentAddress,
+      tierResult: EdgeTierResult,
+      qualifier?: string,
+    ): Promise<CompiledOutputs | null> {
+      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier);
       const raw = await kv.get(key);
       if (raw === null) return null;
 
@@ -162,8 +186,9 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       boundaryId: ContentAddress,
       tierResult: EdgeTierResult,
       outputs: CompiledOutputs,
+      qualifier?: string,
     ): Promise<void> {
-      const key = buildCacheKey(prefix, boundaryId, tierResult);
+      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier);
       const value = JSON.stringify({
         css: outputs.css,
         propertyRegistrations: outputs.propertyRegistrations,
