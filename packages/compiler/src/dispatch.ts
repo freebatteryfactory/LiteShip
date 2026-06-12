@@ -9,7 +9,7 @@ import type { CSSCompileResult } from './css.js';
 import type { GLSLCompileResult } from './glsl.js';
 import type { WGSLCompileResult } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
-import type { AIManifestCompileResult, AIManifest } from './ai-manifest.js';
+import type { AIManifestCompileResult, AIManifestInput } from './ai-manifest.js';
 import { CSSCompiler } from './css.js';
 import { GLSLCompiler } from './glsl.js';
 import { WGSLCompiler } from './wgsl.js';
@@ -36,8 +36,8 @@ export type WGSLStates = Readonly<Record<string, Readonly<Record<string, number>
 export interface ARIAStates {
   /** Per-state ARIA attribute maps keyed by state name. */
   readonly states: Record<string, Record<string, string>>;
-  /** Name of the state whose ARIA attributes should be emitted. */
-  readonly currentState: string;
+  /** Name of the state whose ARIA attributes should be emitted; defaults to the boundary's first state. */
+  readonly currentState?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,18 +69,25 @@ const ConfigTemplateCompiler = {
  *
  * Arms:
  * - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
+ *                      Bare properties target `selector` (default `.czap-boundary`).
  * - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
  * - `WGSLCompiler`   — boundary + per-state numeric uniforms → WGSL bindings.
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
- * - `AICompiler`     — a prebuilt {@link AIManifest} → tool-call-ready manifest JSON.
+ * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
  * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
  */
 export type CompilerDef =
-  | { readonly _tag: 'CSSCompiler'; readonly boundary: Boundary.Shape; readonly states: CSSStates }
+  | {
+      readonly _tag: 'CSSCompiler';
+      readonly boundary: Boundary.Shape;
+      readonly states: CSSStates;
+      /** CSS selector for bare properties; defaults to `.czap-boundary`. */
+      readonly selector?: string;
+    }
   | { readonly _tag: 'GLSLCompiler'; readonly boundary: Boundary.Shape; readonly states: GLSLStates }
   | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
   | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
-  | { readonly _tag: 'AICompiler'; readonly manifest: AIManifest }
+  | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
   | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,13 +145,17 @@ export type CompileResult =
 export function dispatch(def: CompilerDef): CompileResult {
   switch (def._tag) {
     case 'CSSCompiler':
-      return { target: 'css', result: CSSCompiler.compile(def.boundary, def.states) };
+      return { target: 'css', result: CSSCompiler.compile(def.boundary, def.states, def.selector) };
     case 'GLSLCompiler':
       return { target: 'glsl', result: GLSLCompiler.compile(def.boundary, def.states) };
     case 'WGSLCompiler':
       return { target: 'wgsl', result: WGSLCompiler.compile(def.boundary, def.states) };
     case 'ARIACompiler':
-      return { target: 'aria', result: ARIACompiler.compile(def.boundary, def.states.states, def.states.currentState) };
+      return {
+        target: 'aria',
+        // Boundary.make guarantees a non-empty states tuple, so states[0] is the canonical initial state.
+        result: ARIACompiler.compile(def.boundary, def.states.states, def.states.currentState ?? def.boundary.states[0]),
+      };
     case 'AICompiler':
       return { target: 'ai', result: AIManifestCompiler.compile(def.manifest) };
     case 'ConfigCompiler':

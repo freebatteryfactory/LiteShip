@@ -13,14 +13,18 @@ import { Millis as mkMillis } from '@czap/core';
  *
  * Used by {@link AnimatedQuantizer} to drive interpolation between two
  * state output records. `duration` of `0` produces an instantaneous snap.
+ *
+ * Plain `number` literals are accepted alongside branded {@link Millis};
+ * the resolver brands internally (the one sanctioned cast site lives in
+ * `@czap/core` brands), so `{ duration: 300 }` needs no import.
  */
 export interface TransitionConfig {
-  /** Animation duration in milliseconds (branded via {@link Millis}). */
-  readonly duration: Millis;
+  /** Animation duration in milliseconds (plain `number` or branded {@link Millis}). */
+  readonly duration: number | Millis;
   /** Easing function applied to progress; defaults to linear. */
   readonly easing?: Easing.Fn;
-  /** Delay before the animation begins, in milliseconds. */
-  readonly delay?: Millis;
+  /** Delay before the animation begins, in milliseconds (plain `number` or branded {@link Millis}). */
+  readonly delay?: number | Millis;
 }
 
 /**
@@ -61,7 +65,8 @@ const DEFAULT_TRANSITION: TransitionConfig = {
 };
 
 /**
- * Build a Transition resolver for a given quantizer and transition map.
+ * Build a Transition resolver for a given quantizer (or bare boundary) and
+ * transition map.
  *
  * Resolution order:
  *   1. Exact match: `"stateA->stateB"`
@@ -69,7 +74,17 @@ const DEFAULT_TRANSITION: TransitionConfig = {
  *   3. Fallback: instant transition (duration: 0)
  */
 function createTransition<B extends Boundary.Shape>(
-  _quantizer: Quantizer<B>,
+  quantizer: Quantizer<B>,
+  transitionConfig: TransitionMap<StateUnion<B> & string>,
+): Transition<B>;
+function createTransition<B extends Boundary.Shape>(
+  boundary: B,
+  transitionConfig: TransitionMap<StateUnion<B> & string>,
+): Transition<B>;
+function createTransition<B extends Boundary.Shape>(
+  // The first argument only anchors the type parameter B; the resolver never
+  // reads it, so a bare boundary works as well as a live quantizer.
+  _source: Quantizer<B> | B,
   transitionConfig: TransitionMap<StateUnion<B> & string>,
 ): Transition<B> {
   return {
@@ -96,11 +111,12 @@ function createTransition<B extends Boundary.Shape>(
 /**
  * Transition resolver namespace.
  *
- * `Transition.for(quantizer, map)` produces a {@link Transition} that looks
- * up animation parameters by `from->to` state pairs. Consumed by
- * {@link AnimatedQuantizer} for interpolation setup.
+ * `Transition.for(quantizer, map)` (or `Transition.for(boundary, map)`)
+ * produces a {@link Transition} that looks up animation parameters by
+ * `from->to` state pairs. Consumed by {@link AnimatedQuantizer} for
+ * interpolation setup.
  */
 export const Transition = {
-  /** Build a {@link Transition} resolver for the given quantizer and transition map. */
+  /** Build a {@link Transition} resolver for the given quantizer or boundary and transition map. */
   for: createTransition,
 } as const;

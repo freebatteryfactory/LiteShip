@@ -581,32 +581,12 @@ describe('LiveQuantizer', () => {
     expect(compactOutputs).toBe(initialOutputs);
   });
 
-  test('falls back to ungated outputs when a tier lookup is missing at runtime', async () => {
+  test('rejects an unknown tier at builder time instead of failing open to all targets', () => {
+    // Failing open would disable gating entirely (including ai/wgsl) for an
+    // invalid tier from an untyped source — see quantizer-diagnostics.test.ts
+    // for the full error-contract coverage.
     const b = viewport();
-    const config = Q.from(b, { tier: 'ghost' as MotionTier }).outputs({
-      css: {
-        compact: { '--gap': '4px' },
-        medium: { '--gap': '8px' },
-        expanded: { '--gap': '12px' },
-      },
-      glsl: {
-        compact: { u_gap: 4 },
-        medium: { u_gap: 8 },
-        expanded: { u_gap: 12 },
-      },
-      aria: {
-        compact: { 'aria-label': 'compact' },
-        medium: { 'aria-label': 'medium' },
-        expanded: { 'aria-label': 'expanded' },
-      },
-    });
-
-    const lq = await Effect.runPromise(Effect.scoped(config.create()));
-    expect(await Effect.runPromise(lq.currentOutputs)).toEqual({
-      css: { '--gap': '4px' },
-      glsl: { u_gap: 4 },
-      aria: { 'aria-label': 'compact' },
-    });
+    expect(() => Q.from(b, { tier: 'ghost' as MotionTier })).toThrow(/unknown MotionTier 'ghost'/);
   });
 
   test('changes subscriptions clean up cleanly when the scope closes after a crossing', async () => {
