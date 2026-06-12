@@ -7,10 +7,14 @@ Compiles boundary definitions — named states over numeric thresholds — and p
 ## Install
 
 ```bash
+# inside a build integration (the usual path):
 pnpm add @czap/vite # brings @czap/compiler with it
+
+# to run the example below directly (pnpm does not hoist transitives):
+pnpm add @czap/compiler @czap/core effect@beta
 ```
 
-If you do install it directly, `effect` must be the Effect 4 beta: `pnpm add @czap/compiler effect@beta`.
+`effect` must be the Effect 4 beta — a bare `pnpm add effect` installs 3.x and fails the peer check.
 
 ## 30 seconds
 
