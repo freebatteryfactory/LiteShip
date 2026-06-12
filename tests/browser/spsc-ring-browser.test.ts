@@ -215,9 +215,9 @@ describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and At
     const slotSize = 8;
     const { buffer } = SPSCRing.createPair(slotCount, slotSize);
 
-    // Control region: 8 bytes (2 x Int32)
+    // Control region: 16 bytes (4 x Int32 — cursors + ring geometry)
     // Data region: slotCount * slotSize * 8 bytes (Float64)
-    const expectedBytes = 8 + slotCount * slotSize * 8;
+    const expectedBytes = 16 + slotCount * slotSize * 8;
     expect(buffer.byteLength).toBe(expectedBytes);
   });
 });

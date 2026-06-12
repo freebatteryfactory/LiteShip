@@ -21,11 +21,17 @@
  * Int32Array view (control region):
  *   [0]: write cursor  (atomically incremented by producer)
  *   [1]: read cursor   (atomically incremented by consumer)
+ *   [2]: slotCount     (written once by createPair)
+ *   [3]: slotSize      (written once by createPair)
  *
  * Float64Array view (data region):
- *   Offset = 8 bytes (aligned after two Int32 control slots)
+ *   Offset = 16 bytes (aligned after four Int32 control slots)
  *   [0 .. slotCount * slotSize - 1]: ring buffer data slots
  * ```
+ *
+ * The ring geometry lives in the buffer header, so `attachProducer` /
+ * `attachConsumer` need only the SharedArrayBuffer — a slotCount/slotSize
+ * mismatch between threads is structurally impossible.
  *
  * The producer writes at `writeCursor % slotCount`, the consumer reads
  * at `readCursor % slotCount`. The buffer is full when
@@ -41,15 +47,18 @@
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Byte offset where the Int32 control slots live. */
+/** Int32 indices of the control slots. */
 const WRITE_CURSOR_INDEX = 0;
 const READ_CURSOR_INDEX = 1;
+const SLOT_COUNT_INDEX = 2;
+const SLOT_SIZE_INDEX = 3;
 
 /**
- * Byte size of the control region: two Int32 values (8 bytes),
- * padded to 8-byte alignment for the Float64 data region.
+ * Byte size of the control region: four Int32 values (16 bytes) —
+ * two cursors plus the ring geometry — 8-byte aligned for the
+ * Float64 data region.
  */
-const CONTROL_BYTES = 8;
+const CONTROL_BYTES = 16;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -86,7 +95,46 @@ export interface SPSCRingBufferShape {
 
 function _createBuffer(slotCount: number, slotSize: number): SharedArrayBuffer {
   const dataBytes = slotCount * slotSize * Float64Array.BYTES_PER_ELEMENT;
-  return new SharedArrayBuffer(CONTROL_BYTES + dataBytes);
+  const sab = new SharedArrayBuffer(CONTROL_BYTES + dataBytes);
+  // Ring geometry lives in the buffer header so attach sites never
+  // re-supply (or mismatch) it.
+  const control = new Int32Array(sab, 0, 4);
+  control[SLOT_COUNT_INDEX] = slotCount;
+  control[SLOT_SIZE_INDEX] = slotSize;
+  return sab;
+}
+
+/**
+ * Read the ring geometry from the buffer header, validating any
+ * explicitly re-supplied values against it. Explicit args are accepted
+ * for back-compat with the pre-header protocol; a mismatch is a thrown
+ * error instead of silent data corruption.
+ */
+function _readGeometry(
+  sab: SharedArrayBuffer,
+  fn: 'attachProducer' | 'attachConsumer',
+  slotCount?: number,
+  slotSize?: number,
+): { slotCount: number; slotSize: number } {
+  if (sab.byteLength < CONTROL_BYTES) {
+    throw new RangeError(
+      `SPSCRing.${fn}: buffer is only ${sab.byteLength} bytes — too small to carry the ${CONTROL_BYTES}-byte control header. Create it with SPSCRing.createPair(slotCount, slotSize).`,
+    );
+  }
+  const header = new Int32Array(sab, 0, 4);
+  const headerSlotCount = header[SLOT_COUNT_INDEX]!;
+  const headerSlotSize = header[SLOT_SIZE_INDEX]!;
+  if (headerSlotCount <= 0 || headerSlotSize <= 0) {
+    throw new RangeError(
+      `SPSCRing.${fn}: buffer header carries no ring geometry (slotCount ${headerSlotCount}, slotSize ${headerSlotSize}) — the buffer was not created by SPSCRing.createPair, or predates the 16-byte header layout. Recreate it with SPSCRing.createPair(slotCount, slotSize).`,
+    );
+  }
+  if ((slotCount !== undefined && slotCount !== headerSlotCount) || (slotSize !== undefined && slotSize !== headerSlotSize)) {
+    throw new RangeError(
+      `SPSCRing.${fn}: this buffer was created with slotCount ${headerSlotCount} / slotSize ${headerSlotSize}, but you passed slotCount ${slotCount ?? headerSlotCount} / slotSize ${slotSize ?? headerSlotSize}. Drop the extra arguments — the buffer header carries the geometry — or pass the exact values given to createPair.`,
+    );
+  }
+  return { slotCount: headerSlotCount, slotSize: headerSlotSize };
 }
 
 function _makeRing(
@@ -180,7 +228,9 @@ function _makeRing(
  *
  * Typically called on the main thread; the `buffer` (SharedArrayBuffer) is
  * then transferred to the Worker via `postMessage`, and the Worker calls
- * `SPSCRing.attachProducer` to get its side of the ring.
+ * `SPSCRing.attachProducer(buffer)` to get its side of the ring — the
+ * ring geometry rides in the buffer header, so nothing else needs to be
+ * shuttled through the message protocol.
  *
  * @example
  * ```ts
@@ -190,7 +240,7 @@ function _makeRing(
  * // producer.push(new Float64Array([1, 2, 3, 4])); // true
  * // consumer.pop(new Float64Array(4));              // true
  * // Transfer buffer to a Worker via postMessage
- * worker.postMessage({ buffer, slotCount: 64, slotSize: 4 });
+ * worker.postMessage({ buffer });
  * ```
  *
  * @param slotCount - Number of slots in the ring (power of 2 recommended)
@@ -223,20 +273,20 @@ function _createPair(
  *
  * // Inside a Worker's message handler:
  * self.onmessage = (e) => {
- *   const { buffer, slotCount, slotSize } = e.data;
- *   const producer = SPSCRing.attachProducer(buffer, slotCount, slotSize);
+ *   const producer = SPSCRing.attachProducer(e.data.buffer);
  *   const data = new Float64Array([1.0, 2.0, 3.0, 4.0]);
  *   producer.push(data); // true if buffer not full
  * };
  * ```
  *
  * @param sab       - The SharedArrayBuffer from the main thread
- * @param slotCount - Number of slots (must match createPair)
- * @param slotSize  - Float64 values per slot (must match createPair)
+ * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
+ * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
  * @returns A producer-side {@link SPSCRingBufferShape}
  */
-function _attachProducer(sab: SharedArrayBuffer, slotCount: number, slotSize: number): SPSCRingBufferShape {
-  return _makeRing(sab, slotCount, slotSize, 'producer');
+function _attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+  const geometry = _readGeometry(sab, 'attachProducer', slotCount, slotSize);
+  return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'producer');
 }
 
 /**
@@ -248,7 +298,7 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount: number, slotSize: nu
  * import { SPSCRing } from '@czap/worker';
  *
  * // On the main thread after receiving buffer from Worker:
- * const consumer = SPSCRing.attachConsumer(sharedBuffer, 64, 4);
+ * const consumer = SPSCRing.attachConsumer(sharedBuffer);
  * const out = new Float64Array(4);
  * if (consumer.pop(out)) {
  *   console.log('Received:', out); // Float64Array [1.0, 2.0, 3.0, 4.0]
@@ -256,12 +306,13 @@ function _attachProducer(sab: SharedArrayBuffer, slotCount: number, slotSize: nu
  * ```
  *
  * @param sab       - The SharedArrayBuffer shared with the producer
- * @param slotCount - Number of slots (must match createPair)
- * @param slotSize  - Float64 values per slot (must match createPair)
+ * @param slotCount - Optional; validated against the buffer header (a mismatch throws)
+ * @param slotSize  - Optional; validated against the buffer header (a mismatch throws)
  * @returns A consumer-side {@link SPSCRingBufferShape}
  */
-function _attachConsumer(sab: SharedArrayBuffer, slotCount: number, slotSize: number): SPSCRingBufferShape {
-  return _makeRing(sab, slotCount, slotSize, 'consumer');
+function _attachConsumer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape {
+  const geometry = _readGeometry(sab, 'attachConsumer', slotCount, slotSize);
+  return _makeRing(sab, geometry.slotCount, geometry.slotSize, 'consumer');
 }
 
 // ---------------------------------------------------------------------------
@@ -283,10 +334,10 @@ function _attachConsumer(sab: SharedArrayBuffer, slotCount: number, slotSize: nu
  *
  * // Main thread: create pair and send buffer to Worker
  * const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);
- * worker.postMessage({ buffer, slotCount: 128, slotSize: 8 });
+ * worker.postMessage({ buffer });
  *
- * // In Worker: attach as producer
- * // const producer = SPSCRing.attachProducer(buffer, 128, 8);
+ * // In Worker: attach as producer (geometry rides in the buffer header)
+ * // const producer = SPSCRing.attachProducer(buffer);
  * // producer.push(new Float64Array(8));
  *
  * // Main thread: consume in animation loop

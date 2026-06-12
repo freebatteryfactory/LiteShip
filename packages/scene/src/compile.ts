@@ -97,9 +97,17 @@ export interface CompiledScene {
  */
 export function compileScene(scene: SceneContract): CompiledScene {
   const ctx = { bpm: scene.bpm, fps: scene.fps };
+  const tracks = scene.tracks.map((track) => resolveTrackMarks(track, ctx));
+  // Documented defaults (see SceneContract): duration derives from the
+  // resolved track extents — which is why marks resolve FIRST — and the
+  // frame budget from one frame at the scene's fps.
   const resolved: ResolvedSceneContract = {
     ...scene,
-    tracks: scene.tracks.map((track) => resolveTrackMarks(track, ctx)),
+    tracks,
+    duration: scene.duration ?? (tracks.reduce((max, t) => Math.max(max, t.to), 0) / scene.fps) * 1000,
+    invariants: scene.invariants ?? [],
+    budgets: scene.budgets ?? { p95FrameMs: 1000 / scene.fps },
+    site: scene.site ?? ['node', 'browser'],
   };
 
   const violations: string[] = [];
@@ -173,7 +181,8 @@ function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: numb
       return {
         AudioSource: track.source,
         FrameRange: { from: track.from, to: track.to },
-        Volume: track.mix?.volume ?? 0,
+        // Volume is linear gain; unity (1) keeps an undeclared mix audible.
+        Volume: track.mix?.volume ?? 1,
         Pan: track.mix?.pan ?? 0,
         ...(track.mix?.sync?.bpm !== undefined ? { SyncBeatMarker: { bpm: track.mix.sync.bpm } } : {}),
         ...(track.envelope !== undefined ? { Envelope: resolveEnvelope(track.envelope, ctx) } : {}),
