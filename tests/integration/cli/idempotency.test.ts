@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { run } from '@czap/cli';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { rmSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { captureCli } from './capture.js';
@@ -28,7 +29,7 @@ describe('content-addressed idempotency', () => {
       expect(r2.cached).toBe(true);
       expect(r2.sceneId).toBe(r1.sceneId);
     },
-    240_000,
+    scaledTimeout(240_000),
   );
 
   renderIt(
@@ -40,6 +41,6 @@ describe('content-addressed idempotency', () => {
       const receipt = JSON.parse(second.stdout.trim().split('\n').pop()!);
       expect(receipt.cached).toBeFalsy();
     },
-    240_000,
+    scaledTimeout(240_000),
   );
 });
