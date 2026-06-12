@@ -13,6 +13,8 @@ export interface IntegrationConfig {
   readonly vite?: PluginConfig;
   readonly detect?: boolean;
   readonly serverIslands?: boolean;
+  /** Dev-only boundary inspector overlay (default enabled in `astro dev`). */
+  readonly inspector?: boolean;
 }
 
 export declare function integration(config?: IntegrationConfig): import('astro').AstroIntegration;

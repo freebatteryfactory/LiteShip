@@ -467,6 +467,52 @@ describe('integration', () => {
     expect(logs).toContain('Injected GPU probe upgrade');
   });
 
+  test('config:setup injects inspector loader only in dev command', () => {
+    const integ = integration();
+    const devScripts: string[] = [];
+    const buildScripts: string[] = [];
+
+    integ.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: (_stage: string, content: string) => {
+        devScripts.push(content);
+      },
+      logger: { info() {} },
+      command: 'dev',
+    } as never);
+
+    integ.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: (_stage: string, content: string) => {
+        buildScripts.push(content);
+      },
+      logger: { info() {} },
+      command: 'build',
+    } as never);
+
+    expect(devScripts.some((script) => script.includes('installInspectorLoader'))).toBe(true);
+    expect(buildScripts.some((script) => script.includes('installInspectorLoader'))).toBe(false);
+  });
+
+  test('config:setup skips inspector loader when inspector: false', () => {
+    const integ = integration({ inspector: false });
+    const scripts: string[] = [];
+
+    integ.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: (_stage: string, content: string) => {
+        scripts.push(content);
+      },
+      logger: { info() {} },
+      command: 'dev',
+    } as never);
+
+    expect(scripts.some((script) => script.includes('installInspectorLoader'))).toBe(false);
+  });
+
   test('config:setup honors worker, wasm, serverIslands, and disabled directives', () => {
     const integ = integration({
       detect: false,

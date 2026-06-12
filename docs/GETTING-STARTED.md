@@ -83,6 +83,12 @@ Run `pnpm dev`, open the page, and drag the window edge: the element's `data-cza
 
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
+## Dev inspector (astro dev only)
+
+While running `pnpm dev`, press **Alt+Shift+C** to open the czap boundary inspector — a floating panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `czap({ inspector: false })` in `astro.config.mjs`.
+
+<!-- gif: inspector overlay tuning thresholds and copying snippet -->
+
 ## 4. Cast to CSS (the compiler path)
 
 Hand-written `[data-czap-state]` selectors work, but the same boundary can also emit its CSS. Add the compiler:

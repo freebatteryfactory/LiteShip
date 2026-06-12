@@ -22,10 +22,7 @@ import { getCzapHeaderEntries } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
 import type { DirectiveName } from './runtime/directive-boot.js';
-import {
-  publishIntegrationToggles,
-  resolveIntegrationToggles,
-} from './integration-toggles.js';
+import { publishIntegrationToggles, resolveIntegrationToggles } from './integration-toggles.js';
 import {
   normalizeRuntimeSecurityPolicy,
   type RuntimeHtmlPolicy,
@@ -64,6 +61,11 @@ export interface IntegrationConfig {
   readonly stream?: { readonly enabled?: boolean };
   /** LLM streaming runtime configuration. */
   readonly llm?: { readonly enabled?: boolean };
+  /**
+   * Dev-only boundary inspector overlay (default enabled in `astro dev`).
+   * Pass `false` to opt out of the Alt+Shift+C overlay.
+   */
+  readonly inspector?: boolean;
   /** Security policies applied to runtime fetch/HTML boundaries. */
   readonly security?: {
     readonly endpointPolicy?: RuntimeEndpointPolicy;
@@ -153,6 +155,12 @@ import { configureWasmRuntime } from '@czap/astro/runtime';
 configureWasmRuntime(wasmUrl);
 `.trim();
 
+const INSPECTOR_LOADER_SCRIPT = `
+import { installInspectorLoader } from '@czap/astro/runtime/inspector-loader';
+
+installInspectorLoader();
+`.trim();
+
 /**
  * Build an `updateConfig` payload that toggles a single experimental flag
  * not yet present in Astro's declared `experimental` shape.
@@ -198,6 +206,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const streamEnabled = config?.stream?.enabled !== false;
   const llmEnabled = config?.llm?.enabled !== false;
   const wasmEnabled = config?.wasm?.enabled === true;
+  const inspectorEnabled = config?.inspector !== false;
   const runtimePolicy = normalizeRuntimeSecurityPolicy({
     endpointPolicy: config?.security?.endpointPolicy,
     htmlPolicy: config?.security?.htmlPolicy,
@@ -219,7 +228,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     name: '@czap/astro',
 
     hooks: {
-      'astro:config:setup': ({ updateConfig, addClientDirective, injectScript, logger }) => {
+      'astro:config:setup': ({ updateConfig, addClientDirective, injectScript, logger, command }) => {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
         logger.info('Setting up @czap integration');
 
@@ -303,6 +312,11 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         if (wasmEnabled) {
           injectScript('page', WASM_RUNTIME_SCRIPT);
           logger.info('Injected wasm runtime bootstrap');
+        }
+
+        if (command === 'dev' && inspectorEnabled) {
+          injectScript('page', INSPECTOR_LOADER_SCRIPT);
+          logger.info('Injected dev boundary inspector loader');
         }
 
         // Configure server islands if enabled.

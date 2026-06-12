@@ -67,6 +67,38 @@ function isAllowedBoundaryCssProperty(property: string): boolean {
   return property.startsWith('--czap-');
 }
 
+/** User-facing parse failure text shared by the runtime and dev inspector. */
+export function boundaryParseFailureMessage(boundaryJson: string | null): string | null {
+  if (!boundaryJson) {
+    return null;
+  }
+
+  const parsed = parseBoundaryPayload(boundaryJson);
+  if (!parsed) {
+    return (
+      `data-czap-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
+      `Fix: spread satelliteAttrs({ boundary }) from @czap/astro or re-serialize with JSON.stringify.`
+    );
+  }
+
+  if (
+    typeof parsed.input !== 'string' ||
+    !Array.isArray(parsed.thresholds) ||
+    parsed.thresholds.length === 0 ||
+    !Array.isArray(parsed.states) ||
+    parsed.states.length === 0 ||
+    !parsed.thresholds.every((value) => typeof value === 'number') ||
+    !parsed.states.every((value) => typeof value === 'string')
+  ) {
+    return (
+      `data-czap-boundary JSON is missing required fields (input, thresholds, states) — ` +
+      `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`
+    );
+  }
+
+  return null;
+}
+
 function parseBoundaryPayload(boundaryJson: string): Partial<SerializedBoundary> | null {
   let parsed: Partial<SerializedBoundary> | null = null;
   let malformed = false;
@@ -95,42 +127,24 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
     return null;
   }
 
-  const parsed = parseBoundaryPayload(boundaryJson);
-  if (!parsed) {
+  const failureMessage = boundaryParseFailureMessage(boundaryJson);
+  if (failureMessage) {
+    const code = failureMessage.includes('not valid JSON') ? 'boundary-json-invalid' : 'boundary-json-shape-invalid';
     Diagnostics.warnOnce({
       source: 'czap/astro.boundary',
-      code: 'boundary-json-invalid',
-      message:
-        `data-czap-boundary on this element is not valid JSON — the satellite runtime will stay inert. ` +
-        `Fix: spread satelliteAttrs({ boundary }) from @czap/astro or re-serialize with JSON.stringify.`,
+      code,
+      message: failureMessage,
       detail: { snippet: boundaryJson.slice(0, 120) },
     });
     return null;
   }
 
-  if (
-    typeof parsed.input !== 'string' ||
-    !Array.isArray(parsed.thresholds) ||
-    parsed.thresholds.length === 0 ||
-    !Array.isArray(parsed.states) ||
-    parsed.states.length === 0 ||
-    !parsed.thresholds.every((value) => typeof value === 'number') ||
-    !parsed.states.every((value) => typeof value === 'string')
-  ) {
-    Diagnostics.warnOnce({
-      source: 'czap/astro.boundary',
-      code: 'boundary-json-shape-invalid',
-      message:
-        `data-czap-boundary JSON is missing required fields (input, thresholds, states) — ` +
-        `the satellite runtime will stay inert. Fix: export a Boundary.make({ input, at }) value via satelliteAttrs().`,
-      detail: { snippet: boundaryJson.slice(0, 120) },
-    });
-    return null;
-  }
+  const parsed = parseBoundaryPayload(boundaryJson)! as SerializedBoundary;
 
   const states = parsed.states as readonly [string, ...string[]];
-  const first = [parsed.thresholds[0]!, states[0]] as const;
-  const rest = parsed.thresholds.slice(1).map((threshold, index) => [threshold, states[index + 1]!] as const);
+  const thresholds = parsed.thresholds;
+  const first = [thresholds[0]!, states[0]] as const;
+  const rest = thresholds.slice(1).map((threshold, index) => [threshold, states[index + 1]!] as const);
   const at = [first, ...rest] as const;
 
   return {

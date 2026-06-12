@@ -20,6 +20,10 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/astro` — dev-mode boundary inspector overlay (Alt+Shift+C in `astro dev`):
+  live signal readout, draggable threshold track with in-DOM `data-czap-boundary` rewrite +
+  `czap:reinit`, Copy `Boundary.make` snippet, INERT/@quantize honesty badges.
+  `IntegrationConfig.inspector?: boolean` opts out; production builds exclude the chunk.
 - `@czap/core` — `Token.make({ name, category, value })` shorthand for single-value
   tokens (derives `axes: []`, `values: {}`, `fallback: value`).
 - `examples/tutorial` — `/api/feed` SSE stub for the stream demo; example READMEs
