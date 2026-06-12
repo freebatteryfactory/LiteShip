@@ -41,12 +41,15 @@ describe('scene render command — non-ffmpeg portions', () => {
     return JSON.parse(lines[lines.length - 1]!) as { command?: string; error: string };
   };
 
-  it('returns 1 with emitError when the --output path is empty', async () => {
+  it('empty --output derives <scene>.mp4 instead of erroring (still 1 here: scene absent)', async () => {
+    // Output derivation happens before the file-exists guard, so an empty
+    // output no longer fails with "missing --output" — the missing scene
+    // file is now the (correct) subject of the error.
     const { exit, stderr } = await captureCli(() => sceneRender('any.ts', '', false, { cwd: workDir }));
     expect(exit).toBe(1);
     const err = parseStderrReceipt(stderr);
     expect(err.command).toBe('scene.render');
-    expect(err.error).toMatch(/missing --output/);
+    expect(err.error).toMatch(/scene not found: any\.ts/);
   });
 
   it('returns 1 with emitError when the scene file does not exist', async () => {
@@ -64,7 +67,7 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(parseStderrReceipt(stderr).error).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
+    expect(parseStderrReceipt(stderr).error).toMatch(/does not export a sceneComposition capsule or a scene contract/);
   });
 
   it('cache hit: primed cache + existing output file returns cached receipt without re-rendering', async () => {
@@ -100,6 +103,9 @@ describe('scene render command — non-ffmpeg portions', () => {
     expect(receipt.cached).toBe(true);
     expect(receipt.output).toBe(outPath);
     expect(receipt.frameCount).toBe(60);
+    // The 1280x720 engine default is observable in the receipt.
+    expect(receipt.width).toBe(1280);
+    expect(receipt.height).toBe(720);
   });
 
   it('cache stale: primed cache but output file deleted falls through to the render path (covers line 65 false-branch)', async () => {
@@ -133,7 +139,7 @@ describe('scene render command — non-ffmpeg portions', () => {
     if (out.startsWith('{')) {
       expect(JSON.parse(out).cached).not.toBe(true);
     }
-    expect(stderr).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
+    expect(stderr).toMatch(/does not export a sceneComposition capsule/);
   });
 
   it('force=true bypasses an otherwise-valid cache (covers force-arm in tryReadCache through sceneRender)', async () => {
@@ -174,6 +180,8 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(stderr).toMatch(/no sceneComposition capsule or contract \(with numeric fps \+ duration\) exported/);
+    // The error names ONLY the missing half — the capsule was found.
+    expect(stderr).toMatch(/does not export a scene contract \(an export carrying a tracks array\)/);
+    expect(stderr).not.toMatch(/does not export a sceneComposition capsule/);
   });
 });

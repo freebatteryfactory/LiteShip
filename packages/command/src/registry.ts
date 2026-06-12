@@ -41,6 +41,13 @@ export interface CommandContext {
    */
   readonly manifestSource?: () => string | null;
   /**
+   * The resolved capsule-manifest path the adapter looked at (the path behind
+   * {@link manifestSource}). Used by manifest-missing teaching errors to name
+   * their subject; absent in pure/test contexts, where the errors degrade to
+   * path-less wording.
+   */
+  readonly manifestPath?: () => string;
+  /**
    * Run a capsule's generated test files and report the outcome. Adapters back
    * this with their vitest runner; handlers stay free of spawn.
    */

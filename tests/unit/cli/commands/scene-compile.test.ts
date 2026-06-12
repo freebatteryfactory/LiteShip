@@ -37,7 +37,9 @@ describe('scene compile (unit)', () => {
   it('exits 1 when the module exports neither a sceneComposition capsule nor a SceneContract', async () => {
     const r = await capture(() => sceneCompile('tests/fixtures/scene/empty-module.ts'));
     expect(r.exit).toBe(1);
-    expect(r.stderr).toMatch(/no sceneComposition capsule or scene contract exported/);
+    // Teaching error: names the module, the missing exports, and the next step.
+    expect(r.stderr).toMatch(/does not export a sceneComposition capsule or a scene contract/);
+    expect(r.stderr).toMatch(/examples\/scenes\/intro\.ts/);
   });
 
   it('exits 1 when the compile function throws', async () => {

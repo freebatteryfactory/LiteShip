@@ -155,7 +155,11 @@ describe('D9b-2 — the handler is engine-agnostic (context.runAudit injection)'
     const result = await auditCommand.handler({ name: 'audit', args: {} }, {});
     expect(result.status).toBe('failed');
     expect(result.exitCode).toBe(2);
-    expect((result.payload as { error?: string }).error).toMatch(/runAudit/);
+    // Unified capability contract (sanctioned break): a stable error code,
+    // with the missing capability NAMED in the structured `missing` array.
+    const payload = result.payload as { error?: string; missing?: readonly string[] };
+    expect(payload.error).toBe('capability_unavailable');
+    expect(payload.missing).toContain('runAudit');
   });
 
   it('reports a nonzero exit when the engine finds errors', async () => {

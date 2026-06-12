@@ -48,6 +48,7 @@ function analyzeContext(): CommandContext {
       const path = getCapsuleManifestPath();
       return existsSync(path) ? readFileSync(path, 'utf8') : null;
     },
+    manifestPath: () => getCapsuleManifestPath(),
     loadAssetBytes,
     runAudioProjection,
     cache: {

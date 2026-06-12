@@ -40,7 +40,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
-    expect(pin).toBe('fnv1a:b2c98cb5');
+    // 0.2.0 defaults: scene.render output became optional (derived <scene>.mp4)
+    // and its summary documents the default, re-pinning the commands UI body.
+    expect(pin).toBe('fnv1a:e5b96295');
   });
 });
 
