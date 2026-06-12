@@ -8,7 +8,7 @@
 
 > **Provider**(`props`): `unknown`
 
-Defined in: [remotion/src/composition.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L115)
+Defined in: [remotion/src/composition.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L123)
 
 React context provider that makes precomputed frames available to
 [useCzapState](useCzapState.md) anywhere in the subtree. Use this when you prefer
