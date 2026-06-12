@@ -7,9 +7,9 @@
     "render": "tsx render.ts"
   },
   "dependencies": {
-    "@czap/core": "file:../../packages/core",
-    "@czap/quantizer": "file:../../packages/quantizer",
-    "@czap/remotion": "file:../../packages/remotion",
+    "@czap/core": "workspace:*",
+    "@czap/quantizer": "workspace:*",
+    "@czap/remotion": "workspace:*",
     "effect": "4.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

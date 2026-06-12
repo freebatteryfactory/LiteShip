@@ -20,6 +20,10 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/core` — `Token.make({ name, category, value })` shorthand for single-value
+  tokens (derives `axes: []`, `values: {}`, `fallback: value`).
+- `examples/tutorial` — `/api/feed` SSE stub for the stream demo; example READMEs
+  with published-version notes.
 - `@czap/vite` + `@czap/compiler` — `viewport.height` is a first-class
   compiled axis: the CSS compiler derives the container-query axis from
   the boundary input (height-measuring inputs serialize `(height ...)`
@@ -231,6 +235,9 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `@czap/vite` — boundary-not-found, import-failed, export-tag-mismatch, and
   WASM buildStart warnings upgraded to doctor-style messages naming searched
   paths and literal fixes.
+- `examples/*` — astro configs drop restated integration defaults; tutorial 01
+  teaches `satelliteAttrs`; tutorial 04 stream demo adds `client:stream` and a
+  live `/api/feed` endpoint; `remotion-demo` uses `workspace:*` deps.
 - **BREAKING** `@czap/edge` + `@czap/vite` — the boundary manifest
   deduplicates tier-invariant CSS (the format shipped above in this
   release, so no released format breaks): `BoundaryManifestEntry` pools

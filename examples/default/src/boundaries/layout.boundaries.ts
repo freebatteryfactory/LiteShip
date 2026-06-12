@@ -6,5 +6,5 @@ export const layout = Boundary.make({
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
-  ] as const,
+  ],
 });

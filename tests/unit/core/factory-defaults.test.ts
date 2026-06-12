@@ -83,6 +83,14 @@ describe('Token.make value-key validation', () => {
 
     expect(Token.tap(token, { theme: 'dark', contrast: 'normal' })).toBe('#111');
   });
+
+  test('value shorthand derives empty axes and uses value as fallback', () => {
+    const token = Token.make({ name: 'gap', category: 'spacing', value: '8px' });
+    expect(token.axes).toEqual([]);
+    expect(token.values).toEqual({});
+    expect(token.fallback).toBe('8px');
+    expect(Token.tap(token, {})).toBe('8px');
+  });
 });
 
 // ---------------------------------------------------------------------------
