@@ -36,7 +36,8 @@ export const remotionAdapterCapsule = defineCapsule({
         if (!Array.isArray(frames)) return false;
         return frames.every((f, idx) => f.frame === idx);
       },
-      message: 'frames must arrive in order with contiguous indices',
+      message:
+        'Frame stream out of order: expected frames[i].frame === i for every index. Frames were likely filtered, re-sorted, or concatenated after precomputeFrames — pass the precomputeFrames array through unmodified.',
     },
   ],
   budgets: { p95Ms: 8 },
