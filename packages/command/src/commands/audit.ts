@@ -8,7 +8,13 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
-import type { AuditEngineFinding, CommandContext, HandledCommand } from '../registry.js';
+import {
+  capabilityUnavailable,
+  type AuditEngineFinding,
+  type CommandCapability,
+  type CommandContext,
+  type HandledCommand,
+} from '../registry.js';
 
 /** Structured payload returned by `audit`. */
 export interface AuditPayload {
@@ -28,21 +34,12 @@ export interface AuditPayload {
   readonly findings?: readonly AuditEngineFinding[];
 }
 
-function failed(message: string, exitCode: number): CapsuleCommandResult {
-  return {
-    status: 'failed',
-    command: 'audit',
-    timestamp: new Date().toISOString(),
-    exitCode,
-    payload: { error: message },
-  };
-}
-
 /** `audit [--profile <path>] [--consumer] [--findings]` — run the engine, emit a structured summary. */
 export const auditCommand: HandledCommand = {
   descriptor: {
     name: 'audit',
     summary: 'Run the profile-driven structure/integrity/surface audit; report a structured summary.',
+    requires: ['runAudit'] satisfies readonly CommandCapability[],
     inputSchema: {
       type: 'object',
       properties: { profile: { type: 'string' }, consumer: { type: 'boolean' }, findings: { type: 'boolean' } },
@@ -74,7 +71,8 @@ export const auditCommand: HandledCommand = {
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
   handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
-    if (!context.runAudit) return failed('audit engine unavailable (no runAudit capability in this context)', 2);
+    // Direct-invocation guard; the dispatcher already enforces `requires`.
+    if (!context.runAudit) return capabilityUnavailable('audit', ['runAudit']);
 
     const profile = invocation.args.profile;
     const profilePath = typeof profile === 'string' && profile.length > 0 ? profile : undefined;
