@@ -4,7 +4,8 @@
  * @module
  */
 
-import type { VideoRenderer, VideoFrameOutput, CompositeState } from '@czap/core';
+import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@czap/core';
+import { Millis, VideoRenderer } from '@czap/core';
 import { createContext, useContext, createElement } from 'react';
 import { useCurrentFrame } from 'remotion';
 
@@ -35,6 +36,55 @@ export async function precomputeFrames(renderer: VideoRenderer.Shape): Promise<R
     frames.push(frame);
   }
   return frames;
+}
+
+/**
+ * The timing/resolution shape Remotion already holds — exactly what
+ * `useVideoConfig()` and `calculateMetadata` return (extra fields ignored).
+ */
+export interface RemotionVideoConfig {
+  readonly fps: number;
+  readonly width: number;
+  readonly height: number;
+  readonly durationInFrames: number;
+}
+
+/**
+ * Build a `VideoRenderer` directly from Remotion's video config so timing is
+ * declared exactly once — in Remotion.
+ *
+ * Hand-building `VideoConfig` duplicates fps/duration that Remotion already
+ * knows; when the two copies drift, the rendered video silently freezes on
+ * the last precomputed frame. This helper derives
+ * `durationMs = durationInFrames / fps * 1000`, so drift is impossible.
+ *
+ * @param config - Remotion's video config (`useVideoConfig()` /
+ *   `calculateMetadata` output).
+ * @param compositor - The `Compositor` driving the czap state pipeline.
+ * @param signal - Optional controllable time signal, seeked per frame.
+ * @returns A `VideoRenderer.Shape` ready for {@link precomputeFrames}.
+ *
+ * @example
+ * ```ts
+ * const renderer = rendererFromRemotionConfig(videoConfig, compositor);
+ * const frames = await precomputeFrames(renderer);
+ * ```
+ */
+export function rendererFromRemotionConfig(
+  config: RemotionVideoConfig,
+  compositor: Compositor.Shape,
+  signal?: Signal.Controllable<number>,
+): VideoRenderer.Shape {
+  return VideoRenderer.make(
+    {
+      fps: config.fps,
+      width: config.width,
+      height: config.height,
+      durationMs: Millis((config.durationInFrames / config.fps) * 1000),
+    },
+    compositor,
+    signal,
+  );
 }
 
 // ---------------------------------------------------------------------------

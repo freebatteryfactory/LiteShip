@@ -19,6 +19,10 @@ const CAP_LEVEL_ORDER: readonly CapLevel[] = ['static', 'styled', 'reactive', 'a
 /**
  * Determine the highest capability level the device can support based on
  * its detected hardware and preference characteristics.
+ *
+ * Advanced — `detect()` already returns this as `result.tier`; call this
+ * directly only when you hold a {@link DeviceCapabilities} that did not come
+ * from a `detect()` sweep (capsule/edge consumers).
  */
 // GPU tier mapping: 0=no GPU/software, 1=integrated (Intel UHD), 2=mid-range, 3=discrete high-end
 export function tierFromCapabilities(caps: DeviceCapabilities): CapLevel {
@@ -53,6 +57,10 @@ export function tierFromCapabilities(caps: DeviceCapabilities): CapLevel {
 /**
  * Build a CapSet containing all levels the device qualifies for.
  * A device at level X automatically has all levels below it.
+ *
+ * Advanced — `detect()` already returns this as `result.capSet`; call this
+ * directly only when you hold a {@link DeviceCapabilities} that did not come
+ * from a `detect()` sweep (capsule/edge consumers).
  */
 export function capSetFromCapabilities(caps: DeviceCapabilities): CapSet {
   const tier = tierFromCapabilities(caps);
@@ -83,6 +91,10 @@ export type { MotionTier } from '@czap/core';
  * Map extended device capabilities to a design fidelity tier.
  * Forced colors / no-update screens get minimal; wide-gamut / HDR screens
  * get rich; standard otherwise with an enhanced middle ground.
+ *
+ * Advanced — `detect()` already returns this as `result.designTier`; call
+ * this directly only when you hold an {@link ExtendedDeviceCapabilities}
+ * that did not come from a `detect()` sweep (capsule/edge consumers).
  */
 export function designTierFromCapabilities(caps: ExtendedDeviceCapabilities): DesignTier {
   if (caps.forcedColors || caps.updateRate === 'none') return 'minimal';
@@ -96,6 +108,10 @@ export function designTierFromCapabilities(caps: ExtendedDeviceCapabilities): De
  * Map extended device capabilities to a motion complexity tier.
  * Reduced-motion &rarr; `none`; GPU tier and core count gate the upper levels;
  * WebGPU availability unlocks the `compute` tier.
+ *
+ * Advanced — `detect()` already returns this as `result.motionTier`; call
+ * this directly only when you hold an {@link ExtendedDeviceCapabilities}
+ * that did not come from a `detect()` sweep (capsule/edge consumers).
  */
 export function motionTierFromCapabilities(caps: ExtendedDeviceCapabilities): MotionTier {
   if (caps.prefersReducedMotion) return 'none';

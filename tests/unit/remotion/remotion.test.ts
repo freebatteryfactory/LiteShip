@@ -10,6 +10,7 @@ import {
   Provider,
   cssVarsFromState,
   precomputeFrames,
+  rendererFromRemotionConfig,
   stateAtFrame,
   useCompositeState,
   useCzapState,
@@ -137,5 +138,31 @@ describe('@czap/remotion precomputeFrames', () => {
     const renderer = VideoRenderer.make({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
+  });
+});
+
+describe('@czap/remotion rendererFromRemotionConfig', () => {
+  test('derives VideoConfig from Remotion timing so frame counts cannot drift', async () => {
+    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const renderer = rendererFromRemotionConfig(
+      { fps: 30, width: 640, height: 480, durationInFrames: 90 },
+      compositor,
+    );
+
+    expect(renderer.config).toMatchObject({ fps: 30, width: 640, height: 480, durationMs: 3000 });
+    expect(renderer.totalFrames).toBe(90);
+
+    const frames = await precomputeFrames(renderer);
+    expect(frames).toHaveLength(90);
+    expect(frames[89]?.frame).toBe(89);
+  });
+
+  test('accepts the full useVideoConfig shape (extra fields ignored)', () => {
+    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const remotionConfig = { fps: 24, width: 1920, height: 1080, durationInFrames: 48, id: 'main' };
+    const renderer = rendererFromRemotionConfig(remotionConfig, compositor);
+
+    expect(renderer.totalFrames).toBe(48);
+    expect(renderer.config.durationMs).toBe(2000);
   });
 });

@@ -278,21 +278,50 @@ function getWebGLContext(canvas: HTMLCanvasElement): WebGLRenderingContext | nul
   return experimental as WebGLRenderingContext;
 }
 
+// The GPU cannot change while the page lives, so a successful renderer probe
+// is memoized for the session — browsers cap live WebGL contexts (~16), and
+// every probe allocates one.
+let rendererProbeCache: ProbeResult<string> | null = null;
+
 function probeWebGLRenderer(): ProbeResult<string> {
+  if (rendererProbeCache !== null) return rendererProbeCache;
+  const result = probeWebGLRendererUncached();
+  if (result.status === 'ok') {
+    rendererProbeCache = result;
+  }
+  return result;
+}
+
+function probeWebGLRendererUncached(): ProbeResult<string> {
   try {
     if (typeof document === 'undefined') return probeUnavailable();
     const canvas = document.createElement('canvas');
     const gl = getWebGLContext(canvas);
     if (!gl) return probeUnavailable();
-    const direct = gl.getParameter(gl.RENDERER) as string | null;
-    if (direct && direct.length > 0) return probeOk(direct);
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    if (!ext) return probeUnavailable();
-    const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
-    return renderer && renderer.length > 0 ? probeOk(renderer) : probeUnavailable();
+    try {
+      const direct = gl.getParameter(gl.RENDERER) as string | null;
+      if (direct && direct.length > 0) return probeOk(direct);
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (!ext) return probeUnavailable();
+      const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string | null;
+      return renderer && renderer.length > 0 ? probeOk(renderer) : probeUnavailable();
+    } finally {
+      // Release the throwaway context so repeated probes never exhaust the
+      // browser's live-context budget.
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    }
   } catch (error) {
     return probeError(error);
   }
+}
+
+/**
+ * Clear memoized session-stable probe results (currently the GPU renderer
+ * string). The GPU cannot change while a page lives, so production code never
+ * needs this — it exists for test isolation, mirroring `Diagnostics.reset`.
+ */
+export function resetDetectionCaches(): void {
+  rendererProbeCache = null;
 }
 
 function probeWebGPU(): ProbeResult<boolean> {
@@ -452,12 +481,30 @@ function probeUpdateRate(): ProbeResult<'fast' | 'slow' | 'none'> {
   }
 }
 
-function collectDetectionProbes(): DetectionProbes {
+/**
+ * Probes whose values cannot change while the page lives (hardware identity).
+ * `watchCapabilities` runs these once and reuses the results on every
+ * re-detection; only the dynamic probes (viewport/DPR/media queries) re-run.
+ */
+interface StaticDetectionProbes {
+  readonly renderer: ProbeResult<string>;
+  readonly webgpu: ProbeResult<boolean>;
+  readonly cores: ProbeResult<number>;
+  readonly memory: ProbeResult<number>;
+}
+
+function collectStaticProbes(): StaticDetectionProbes {
   return {
     renderer: probeWebGLRenderer(),
     webgpu: probeWebGPU(),
     cores: probeCores(),
     memory: probeMemory(),
+  };
+}
+
+function collectDetectionProbes(staticProbes: StaticDetectionProbes = collectStaticProbes()): DetectionProbes {
+  return {
+    ...staticProbes,
     touch: probeTouch(),
     reducedMotion: probeReducedMotion(),
     colorScheme: probeColorScheme(),
@@ -514,7 +561,10 @@ function computeConfidenceFromProbes(probes: DetectionProbes): number {
  * Detect GPU tier from WebGL renderer string heuristics.
  * Falls back to tier 1 (integrated) when WebGL is unavailable.
  *
- * @example
+ * You usually never call this yourself: the `@czap/astro` boundary runs the
+ * same classification automatically and publishes it for the runtime to read.
+ *
+ * Advanced — direct invocation (all probes are synchronous):
  * ```ts
  * import { Detect } from '@czap/detect';
  * import { Effect } from 'effect';
@@ -532,12 +582,30 @@ export function detectGPUTier(): Effect.Effect<GPUTier> {
   });
 }
 
+function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
+  const capabilities = buildCapabilitiesFromProbes(probes);
+
+  const tier = tierFromCapabilities(capabilities);
+  const capSet = capSetFromCapabilities(capabilities);
+  const designTier = designTierFromCapabilities(capabilities);
+  const motionTier = motionTierFromCapabilities(capabilities);
+  const confidence = computeConfidenceFromProbes(probes);
+
+  return { capabilities, tier, capSet, confidence, designTier, motionTier };
+}
+
 /**
  * Run a full device capability detection sweep.
  * All probes are synchronous with internal error handling -- gracefully
  * falls back to conservative defaults when APIs are unavailable.
  *
- * @example
+ * You usually never call this yourself: in an Astro project the `@czap/astro`
+ * boundary runs detection after DOMContentLoaded and publishes the result as
+ * `window.__CZAP_DETECT__`, so satellites and the directive runtime read it
+ * for free.
+ *
+ * Advanced — direct invocation (there is no async work, so `runSync` is the
+ * right executor):
  * ```ts
  * import { Detect } from '@czap/detect';
  * import { Effect } from 'effect';
@@ -553,18 +621,7 @@ export function detectGPUTier(): Effect.Effect<GPUTier> {
  * @returns An Effect yielding an {@link ExtendedDetectionResult}
  */
 export function detect(): Effect.Effect<ExtendedDetectionResult> {
-  return Effect.sync(() => {
-    const probes = collectDetectionProbes();
-    const capabilities = buildCapabilitiesFromProbes(probes);
-
-    const tier = tierFromCapabilities(capabilities);
-    const capSet = capSetFromCapabilities(capabilities);
-    const designTier = designTierFromCapabilities(capabilities);
-    const motionTier = motionTierFromCapabilities(capabilities);
-    const confidence = computeConfidenceFromProbes(probes);
-
-    return { capabilities, tier, capSet, confidence, designTier, motionTier };
-  });
+  return Effect.sync(() => runDetection(collectDetectionProbes()));
 }
 
 /**
@@ -575,7 +632,11 @@ export function detect(): Effect.Effect<ExtendedDetectionResult> {
  * {@link CapLevel}, {@link CapSet}, {@link DesignTier}, and {@link MotionTier}.
  * Supports live watching for preference and viewport changes.
  *
- * @example
+ * You usually never call these yourself — the `@czap/astro` boundary runs
+ * detection automatically and publishes `window.__CZAP_DETECT__` for the
+ * runtime to read.
+ *
+ * Advanced — direct invocation:
  * ```ts
  * import { Detect } from '@czap/detect';
  * import { Effect } from 'effect';
@@ -594,6 +655,7 @@ export const Detect = {
   detect,
   detectGPUTier,
   watchCapabilities,
+  resetDetectionCaches,
 } as const;
 
 /**
@@ -602,6 +664,11 @@ export const Detect = {
  * reduced motion preferences change.
  *
  * The stream is scoped -- listeners are cleaned up when the scope finalizes.
+ *
+ * Event bursts are coalesced: re-detection is debounced to one sweep per
+ * animation frame, and hardware-identity probes (GPU renderer, WebGPU, cores,
+ * memory) are run once and reused — only viewport/DPR/media-query probes
+ * re-run on change.
  *
  * @example
  * ```ts
@@ -624,9 +691,26 @@ export function watchCapabilities(
   return Effect.gen(function* () {
     if (typeof window === 'undefined') return;
 
+    // Hardware identity cannot change while the page lives — probe once so a
+    // resize storm never allocates fresh WebGL contexts.
+    const staticProbes = collectStaticProbes();
+
+    let closed = false;
+    let updateScheduled = false;
+    const runUpdate = () => {
+      updateScheduled = false;
+      if (closed) return;
+      onChange(runDetection(collectDetectionProbes(staticProbes)));
+    };
+    // Resize can fire per pixel; coalesce bursts to one sweep per frame.
     const triggerUpdate = () => {
-      const result = Effect.runSync(detect());
-      onChange(result);
+      if (updateScheduled) return;
+      updateScheduled = true;
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(runUpdate);
+      } else {
+        setTimeout(runUpdate, 16);
+      }
     };
 
     const resizeHandler = () => triggerUpdate();
@@ -647,6 +731,7 @@ export function watchCapabilities(
 
     yield* Effect.addFinalizer(() =>
       Effect.sync(() => {
+        closed = true;
         window.removeEventListener('resize', resizeHandler);
         reducedMotionMql.removeEventListener('change', mqlHandler);
         colorSchemeMql.removeEventListener('change', mqlHandler);
