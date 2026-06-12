@@ -8,7 +8,11 @@
 
 > `const` **CSSCompiler**: `object`
 
+<<<<<<< HEAD
 Defined in: [compiler/src/css.ts:382](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L382)
+=======
+Defined in: [compiler/src/css.ts:384](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L384)
+>>>>>>> main
 
 CSS compiler namespace.
 
