@@ -489,6 +489,38 @@ interface RunProbesOptions {
   readonly target?: DoctorTarget;
 }
 
+/**
+ * Consumer-context probe — the `liteship` umbrella under pnpm's strict
+ * `node_modules` does not hoist the transitive `@czap/*` packages it installs,
+ * so `import '@czap/core'` dies with Node's raw ERR_MODULE_NOT_FOUND before
+ * LiteShip can say anything. Returns null (probe skipped) when the host
+ * package.json does not declare `liteship`, or when the layout is not
+ * pnpm-strict (npm/yarn hoisted layouts expose the transitives).
+ */
+function probeLiteshipPnpm(cwd: string): DoctorCheck | null {
+  const manifest = readCwdPackageJson(cwd);
+  if (manifest.kind !== 'ok') return null;
+  const deps = manifest.value['dependencies'] as Record<string, string> | undefined;
+  const devDeps = manifest.value['devDependencies'] as Record<string, string> | undefined;
+  if (!(deps?.['liteship'] ?? devDeps?.['liteship'])) return null;
+  if (!existsSync(resolve(cwd, 'node_modules/.pnpm'))) return null;
+  if (existsSync(resolve(cwd, 'node_modules/@czap'))) {
+    return {
+      id: 'liteship.pnpm',
+      label: 'liteship (pnpm)',
+      status: 'ok',
+      detail: '@czap/* packages resolvable beside liteship',
+    };
+  }
+  return {
+    id: 'liteship.pnpm',
+    label: 'liteship (pnpm)',
+    status: 'warn',
+    detail: 'liteship is installed under pnpm, which does not expose its transitive @czap/* packages to imports',
+    hint: 'Declare what you import: pnpm add @czap/core @czap/astro (or hoist the scope with public-hoist-pattern[]=@czap/* in .npmrc)',
+  };
+}
+
 function readCwdPackageJson(cwd: string): Readout<Record<string, unknown>> {
   const pkgPath = resolve(cwd, 'package.json');
   if (!existsSync(pkgPath)) return { kind: 'absent' };
@@ -814,6 +846,7 @@ async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<r
   // sum of cargo + pnpm + git (CUT test-flake). Sync probes stay sync. Receipt
   // order below is preserved regardless of completion order.
   const [wasm, pnpm, gitConfig] = await Promise.all([probeWasmToolchain(cwd), probePnpm(minima), probeGitConfig(cwd)]);
+  const liteshipPnpm = probeLiteshipPnpm(cwd);
   return [
     probeNode(minima),
     pnpm,
@@ -825,6 +858,7 @@ async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<r
     probePlaywright(cwd),
     probeFfmpegRenderCheck(),
     ...(wasm ? [wasm] : []),
+    ...(liteshipPnpm ? [liteshipPnpm] : []),
   ];
 }
 

@@ -451,3 +451,60 @@ describe('doctor command', () => {
     }
   });
 });
+
+describe('doctor liteship.pnpm consumer probe', () => {
+  it('warns with the literal pnpm add remedy when liteship sits under pnpm strict layout without hoisted @czap/*', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-pnpm-'));
+    try {
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({ name: 'consumer-app', dependencies: { liteship: '0.1.5' } }),
+      );
+      mkdirSync(resolve(tmp, 'node_modules/.pnpm'), { recursive: true });
+      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const check = receipt.checks.find((c: { id: string }) => c.id === 'liteship.pnpm');
+      expect(check).toBeDefined();
+      expect(check.status).toBe('warn');
+      expect(check.hint).toContain('pnpm add @czap/core @czap/astro');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('reports ok when the @czap scope is resolvable beside liteship', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-hoisted-'));
+    try {
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({ name: 'consumer-app', dependencies: { liteship: '0.1.5' } }),
+      );
+      mkdirSync(resolve(tmp, 'node_modules/.pnpm'), { recursive: true });
+      mkdirSync(resolve(tmp, 'node_modules/@czap/core'), { recursive: true });
+      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const check = receipt.checks.find((c: { id: string }) => c.id === 'liteship.pnpm');
+      expect(check.status).toBe('ok');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('skips the probe when liteship is not declared, or under hoisted (npm/yarn) layouts', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-doctor-liteship-skip-'));
+    try {
+      // npm/yarn layout: liteship declared but no node_modules/.pnpm.
+      writeFileSync(
+        resolve(tmp, 'package.json'),
+        JSON.stringify({ name: 'consumer-app', dependencies: { liteship: '0.1.5' } }),
+      );
+      mkdirSync(resolve(tmp, 'node_modules'), { recursive: true });
+      const { stdout } = await captureCli(() => doctor({ pretty: false, cwd: tmp }));
+      const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+      const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
+      expect(ids.has('liteship.pnpm')).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});

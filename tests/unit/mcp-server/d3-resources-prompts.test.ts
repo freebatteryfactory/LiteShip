@@ -242,3 +242,36 @@ describe('D3 namespace law — protocol surfaces stay product-owned', () => {
     }
   });
 });
+
+describe('error contract — failures name the subject and the literal next step', () => {
+  it('unknown prompt enumerates the available prompts and points at prompts/list', () => {
+    expect(() => getPrompt('__no_such_prompt__', {})).toThrow(
+      /unknown prompt: __no_such_prompt__\. Available prompts: liteship\.command\.inspect, liteship\.tool\.use \(see prompts\/list\)\./,
+    );
+  });
+
+  it('command.inspect on an unknown command points at the liteship://registry/commands catalog', () => {
+    expect(() => getPrompt('liteship.command.inspect', { command: '__nope__' })).toThrow(
+      /unknown command: __nope__\. The full catalog is the resource liteship:\/\/registry\/commands\./,
+    );
+  });
+
+  it('tool.use on a CLI-owned command says to run it as `czap <name>`', () => {
+    // gauntlet is in the catalog but not MCP-exposed.
+    expect(() => getPrompt('liteship.tool.use', { tool: 'gauntlet' })).toThrow(/run it as `czap gauntlet`/i);
+  });
+
+  it('tool.use on a name outside the catalog says so (no bogus czap remedy)', () => {
+    expect(() => getPrompt('liteship.tool.use', { tool: '__nope__' })).toThrow(
+      /not in the command catalog.*tools\/list/,
+    );
+  });
+
+  it('resources/read unknown uri carries a data.hint pointing at resources/list', async () => {
+    const r = await dispatch(req('resources/read', { uri: 'liteship://__nope__' }));
+    const err = (r as { error: { code: number; data: { uri: string; hint: string } } }).error;
+    expect(err.code).toBe(-32002);
+    expect(err.data.uri).toBe('liteship://__nope__');
+    expect(err.data.hint).toContain('resources/list');
+  });
+});
