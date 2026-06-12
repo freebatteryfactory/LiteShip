@@ -23,3 +23,23 @@ describe('parseHttpBind — accepted bind shapes', () => {
     expect(parseHttpBind('0.0.0.0:8080')).toEqual({ host: '0.0.0.0', port: 8080 });
   });
 });
+
+describe('parseHttpBind — invalid binds throw a teaching error before the server binds', () => {
+  const SHAPES = /expected ":PORT", "PORT", or "HOST:PORT"/;
+
+  it('rejects a bare hostname (the old path fed Number("localhost") = NaN to Node)', () => {
+    expect(() => parseHttpBind('localhost')).toThrow(SHAPES);
+    expect(() => parseHttpBind('localhost')).toThrow(/invalid --http bind "localhost"/);
+  });
+
+  it('rejects a non-numeric port segment', () => {
+    expect(() => parseHttpBind('host:abc')).toThrow(SHAPES);
+  });
+
+  it('rejects out-of-range ports in every shape', () => {
+    expect(() => parseHttpBind(':99999')).toThrow(SHAPES);
+    expect(() => parseHttpBind('99999')).toThrow(SHAPES);
+    expect(() => parseHttpBind(-1)).toThrow(SHAPES);
+    expect(() => parseHttpBind(1.5)).toThrow(SHAPES);
+  });
+});

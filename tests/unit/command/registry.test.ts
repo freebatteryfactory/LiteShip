@@ -46,3 +46,39 @@ describe('@czap/command registry + dispatcher', () => {
     expect(result.exitCode ?? 0).toBeGreaterThan(0);
   });
 });
+
+describe('dispatcher error contract — failed payloads teach the next step', () => {
+  it('unknown command payload carries a hint naming tools/list and the registry resource', async () => {
+    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const result = await dispatcher.dispatch({ name: 'zzz.unrelated', args: {} }, {});
+    const payload = result.payload as { error: string; name: string; hint: string; didYouMean?: string };
+    expect(payload.error).toBe('unknown_command');
+    expect(payload.name).toBe('zzz.unrelated');
+    expect(payload.hint).toContain('tools/list');
+    expect(payload.hint).toContain('liteship://registry/commands');
+  });
+
+  it('a near-miss name gets a didYouMean suggestion; a far miss does not', async () => {
+    const dispatcher = CommandDispatcher.make(CommandRegistry.make([fakeCommand('scene.compile')]));
+    const near = await dispatcher.dispatch({ name: 'scene.compil', args: {} }, {});
+    expect((near.payload as { didYouMean?: string }).didYouMean).toBe('scene.compile');
+    const far = await dispatcher.dispatch({ name: 'zzz.unrelated', args: {} }, {});
+    expect((far.payload as { didYouMean?: string }).didYouMean).toBeUndefined();
+  });
+
+  it('a catalog command without a handler fails as cli_only_command with the `czap <name>` remedy', async () => {
+    const cliOwned: RegisteredCommand = {
+      descriptor: {
+        name: 'gauntlet',
+        summary: 'CLI-owned',
+        inputSchema: { type: 'object', properties: {}, required: [] },
+      },
+    };
+    const dispatcher = CommandDispatcher.make(CommandRegistry.make([cliOwned]));
+    const result = await dispatcher.dispatch({ name: 'gauntlet', args: {} }, {});
+    expect(result.status).toBe('failed');
+    const payload = result.payload as { error: string; hint: string };
+    expect(payload.error).toBe('cli_only_command');
+    expect(payload.hint).toContain('czap gauntlet');
+  });
+});

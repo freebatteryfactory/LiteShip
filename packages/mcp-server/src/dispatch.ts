@@ -96,7 +96,10 @@ export async function dispatch(msg: JsonRpcRequest | JsonRpcNotification): Promi
     if (err instanceof ResourceNotFoundError) {
       // MCP resource-not-found is -32002 (resource-specific), NOT -32601 (which means
       // the resources/read METHOD is missing — it is not).
-      return errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', { uri: err.uri });
+      return errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', {
+        uri: err.uri,
+        hint: 'resources/list enumerates every readable URI (liteship://… JSON, ui://liteship/… UI).',
+      });
     }
     return errorResponse(id, InternalError, 'Internal error', { detail: String(err) });
   }
