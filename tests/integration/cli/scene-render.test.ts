@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { run } from '@czap/cli';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { existsSync, unlinkSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
@@ -46,7 +47,7 @@ describe('czap scene render', () => {
       expect(receipt.frameCount).toBeGreaterThan(0);
       expect(existsSync(out)).toBe(true);
     },
-    240_000,
+    scaledTimeout(240_000),
   );
 
   it('returns exit code 1 for a missing scene file', async () => {

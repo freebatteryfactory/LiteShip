@@ -369,22 +369,34 @@ function containerNameOf(boundary: Boundary.Shape): string {
 }
 
 /**
- * Whether the boundary measures the viewport WIDTH — the only signal the
- * auto-emitted `:root` containment can honestly serve: containment is
- * `container-type: inline-size` (inline size = width) and the compiler
- * serializes thresholds as `(width ...)` queries. `viewport.height` must
- * NOT match: width-based containment plus width queries would make height
- * breakpoints silently track the wrong dimension.
+ * The container-query axis a viewport input compiles to, or `null` when
+ * the input is not a dimension the auto-emitted `:root` containment can
+ * honestly serve: `viewport` / `viewport.width` compile to `(width ...)`
+ * queries and `viewport.height` to `(height ...)` queries (the compiler
+ * derives the same axis from the input). Any other `viewport.*` path and
+ * every non-viewport input return `null` — there is no dimension query
+ * that measures them.
  */
-function isWidthViewportInput(input: string): boolean {
-  return input === 'viewport' || input === 'viewport.width';
+export function viewportQueryAxis(input: string): 'width' | 'height' | null {
+  if (input === 'viewport' || input === 'viewport.width') return 'width';
+  if (input === 'viewport.height') return 'height';
+  return null;
 }
 
 /**
  * Build the single `:root` containment rule for a sheet's viewport-based
- * boundaries: `container-type: inline-size` plus every collected
+ * boundaries: a `container-type` declaration plus every collected
  * container name in CSS's space-separated multi-name form, so each
  * compiled `@container <name> (...)` query finds its container.
+ *
+ * Width-only sheets keep `container-type: inline-size`. The
+ * `viewport-height` name — the only height-axis name the containment
+ * path can collect (sanitized from `viewport.height`) — upgrades the
+ * rule to `container-type: size`, because `inline-size` containment
+ * leaves `(height ...)` queries unevaluable. Size containment computes
+ * `:root`'s block size as if it had no content, so the rule pins it to
+ * `100dvh` — the same dynamic-viewport measure the runtime's
+ * `readSignalValue('viewport.height')` reads.
  *
  * Returns `null` when no viewport container names were collected
  * (non-viewport boundaries declare their own containers; see the
@@ -393,7 +405,10 @@ function isWidthViewportInput(input: string): boolean {
 export function viewportContainmentRule(names: Iterable<string>): string | null {
   const unique = [...new Set(names)];
   if (unique.length === 0) return null;
-  return `:root {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
+  if (!unique.includes('viewport-height')) {
+    return `:root {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
+  }
+  return `:root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: ${unique.join(' ')};\n}`;
 }
 
 /**
@@ -402,17 +417,20 @@ export function viewportContainmentRule(names: Iterable<string>): string | null 
  * declares `container-type` and a matching `container-name` — nothing
  * in the runtime emits one.
  *
- * For `viewport.*` boundaries the root element is the natural container
- * (its inline size IS the viewport width), so the container name is
- * recorded on the sheet context (aggregated emission) or returned as a
- * standalone `:root` rule (no context). For other inputs there is no
- * element the compiler can safely claim as the container, so a
- * {@link Diagnostics.warn} teaches the literal declaration to add.
+ * For dimension-measuring viewport boundaries (width or height axis,
+ * see {@link viewportQueryAxis}) the root element is the natural
+ * container (its inline size IS the viewport width; its block size is
+ * pinned to the viewport height by {@link viewportContainmentRule}), so
+ * the container name is recorded on the sheet context (aggregated
+ * emission) or returned as a standalone `:root` rule (no context). For
+ * other inputs there is no element the compiler can safely claim as the
+ * container, so a {@link Diagnostics.warn} teaches the literal
+ * declaration to add.
  */
 function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?: QuantizeSheetContext): string | null {
   const containerName = containerNameOf(boundary);
 
-  if (isWidthViewportInput(boundary.input)) {
+  if (viewportQueryAxis(boundary.input) !== null) {
     if (sheet) {
       sheet.viewportContainerNames.add(containerName);
       return null; // caller emits the aggregated rule once per sheet
@@ -421,24 +439,30 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
   }
 
   if (boundary.input.startsWith('viewport.')) {
-    // viewport.height (or any non-width viewport axis): the compiled
-    // queries are width-based and `container-type: inline-size` measures
-    // width, so auto-containment would silently track the wrong dimension.
+    // An unrecognized viewport axis (e.g. viewport.aspect): container
+    // queries only measure width and height, so auto-containment would
+    // claim a dimension this signal does not have.
     Diagnostics.warn({
       source: 'czap/vite.css-quantize',
       code: 'container-not-declared',
       message:
         `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) measures "${boundary.input}", ` +
-        `but compiled \`@container\` queries are width-based today — auto-declaring a container would make ` +
-        `these breakpoints track the viewport WIDTH, not the height. ` +
-        `Fix: use the runtime satellite path for height-driven styling ` +
-        `(satelliteAttrs({ boundary }) + [data-czap-state="..."] selectors), ` +
-        `or re-author the boundary on viewport.width.`,
+        `which is not a dimension \`@container\` queries can evaluate — only viewport.width and ` +
+        `viewport.height compile to (width ...) / (height ...) conditions, so no container was ` +
+        `auto-declared and the compiled rules will match nothing. ` +
+        `Fix: re-author the boundary on viewport.width or viewport.height, or use the runtime ` +
+        `satellite path (satelliteAttrs({ boundary }) + [data-czap-state="..."] selectors).`,
       detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
     });
     return null;
   }
 
+  // Mirrors the compiler's queryAxisOf inference (compiler/src/css.ts): the
+  // suggested containment must be able to evaluate the axis the compiled
+  // queries actually use — inline-size containment cannot evaluate the
+  // (height ...) conditions a height-axis boundary compiles to.
+  const heightAxis = boundary.input === 'height' || boundary.input.endsWith('.height');
+  const containment = heightAxis ? 'size' : 'inline-size';
   Diagnostics.warn({
     source: 'czap/vite.css-quantize',
     code: 'container-not-declared',
@@ -446,8 +470,8 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
       `@quantize ${block.boundaryName} (${block.sourceFile}:${block.line}) compiles to ` +
       `\`@container ${containerName} (...)\` queries, but boundary input "${boundary.input}" is not viewport-based, ` +
       `so no element was auto-declared as the query container and the compiled rules will match nothing. ` +
-      `Fix: declare \`container-type: inline-size; container-name: ${containerName};\` on the ancestor element ` +
-      `whose size the boundary measures.`,
+      `Fix: declare \`container-type: ${containment}; container-name: ${containerName};\` on the ancestor element ` +
+      `whose size the boundary measures${heightAxis ? ' (size, not inline-size: the compiled (height ...) queries need block-axis containment)' : ''}.`,
     detail: { sourceFile: block.sourceFile, line: block.line, input: boundary.input },
   });
   return null;
