@@ -18,6 +18,7 @@ export const EntityId = (value: string): EntityId => value as EntityId;
 
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
+import { CzapValidationError } from './validation-error.js';
 
 interface EntityShape {
   readonly id: EntityId;
@@ -87,7 +88,11 @@ function _makeDenseStore(name: string, capacity: number): DenseStoreShape {
         return;
       }
       if (store.count >= capacity) {
-        throw new RangeError(`Dense store "${name}" at capacity (${capacity}). Cannot add entity ${entityId}.`);
+        throw new CzapValidationError(
+          'Part.dense',
+          `store "${name}" at capacity (${capacity}). Cannot add entity ${entityId}. ` +
+            'Create the store with a larger capacity (Part.dense(name, n)) or remove entities before adding.',
+        );
       }
       idx = store.count;
       entityToIndex.set(entityId, idx);

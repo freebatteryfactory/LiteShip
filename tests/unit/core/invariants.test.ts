@@ -15,6 +15,7 @@ import fc from 'fast-check';
 import {
   Boundary,
   ContentAddress,
+  CzapValidationError,
   Easing,
   Animation,
   DirtyFlags,
@@ -430,7 +431,7 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
 
   test('throws on > 31 keys', () => {
     const keys = Array.from({ length: 32 }, (_, i) => `k${i}`);
-    expect(() => DirtyFlags.make(keys)).toThrow(RangeError);
+    expect(() => DirtyFlags.make(keys)).toThrow(CzapValidationError);
   });
 });
 

@@ -153,9 +153,18 @@ interface RenderCompleteMessage {
   readonly totalFrames: number;
 }
 
+/** Failure site codes the built-in workers emit. */
+type WorkerErrorCode = 'render-failed' | 'startup-compute-failed' | 'compute-failed';
+
 interface ErrorMessage {
   readonly type: 'error';
+  /** Which failure site produced the error; optional so custom protocol implementations keep compiling. */
+  readonly code?: WorkerErrorCode;
   readonly message: string;
+  /** Content address of the entity being processed when the failure occurred, when known. */
+  readonly subjectId?: ContentAddress;
+  /** Literal next step the main-thread consumer can render. */
+  readonly hint?: string;
 }
 
 interface MetricsMessage {

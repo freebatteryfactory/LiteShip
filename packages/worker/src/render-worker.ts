@@ -263,7 +263,9 @@ async function runRender(config) {
   } catch (err) {
     self.postMessage({
       type: "error",
+      code: "render-failed",
       message: err instanceof Error ? err.message : String(err),
+      hint: "The render loop threw while drawing a frame — check the add-quantizer registrations and the transferred canvas, then re-send start-render.",
     });
   } finally {
     rendering = false;
@@ -389,7 +391,7 @@ function _createRenderWorker(config?: WorkerConfig): RenderWorkerShape {
           source: 'czap/worker.render-worker',
           code: 'worker-message-error',
           message: 'Render worker reported an error.',
-          detail: msg.message,
+          detail: { code: msg.code, message: msg.message, hint: msg.hint },
         });
         break;
     }

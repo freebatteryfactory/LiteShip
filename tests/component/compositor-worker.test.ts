@@ -1554,7 +1554,7 @@ describe('CompositorWorker', () => {
           source: 'czap/worker.compositor-worker',
           code: 'worker-message-error',
           message: 'Compositor worker reported an error.',
-          detail: 'compositor failed',
+          detail: { message: 'compositor failed' },
         }),
         expect.objectContaining({
           level: 'error',
@@ -1706,7 +1706,7 @@ describe('CompositorWorker', () => {
         expect.arrayContaining([
           expect.objectContaining({
             code: 'worker-message-error',
-            detail: 'side-channel only',
+            detail: { message: 'side-channel only' },
           }),
         ]),
       );

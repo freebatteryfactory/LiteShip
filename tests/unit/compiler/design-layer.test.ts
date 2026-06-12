@@ -919,8 +919,10 @@ describe('Property-based: Token determinism', () => {
         fc.constantFrom('color', 'spacing', 'typography' as const),
         fc.constantFrom('theme', 'density'),
         fc.constantFrom('breakpoint', 'contrast'),
-        fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s)),
-        fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s)),
+        // ':' is the reserved compound-key separator — Token.make rejects
+        // values keys whose segment count diverges from the axis count.
+        fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
+        fc.string({ minLength: 1, maxLength: 5 }).filter((s) => /^[a-z]/.test(s) && !s.includes(':')),
         (category, axis1, axis2, val1, val2) => {
           const axes = [axis1, axis2] as const;
           const sorted = [...axes].sort();

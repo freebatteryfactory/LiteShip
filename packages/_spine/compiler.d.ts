@@ -215,9 +215,30 @@ export interface AIManifestCompileResult {
   readonly systemPrompt: string;
 }
 
+/**
+ * Structured validation failure for AI-generated output — the teach-by-data
+ * shape consumed by LLM re-prompting loops. `message` is the prose form
+ * surfaced through the parallel `errors` array.
+ */
+export interface AIValidationIssue {
+  /** Dot path into the output, e.g. 'params.cols' or 'dimensions.layout'. */
+  readonly path: string;
+  /** What the manifest expects at that path. */
+  readonly expected: string;
+  /** What the output actually carried. */
+  readonly received: string;
+  /** Literal next step to repair the output. */
+  readonly hint: string;
+  /** Prose form — identical to the corresponding `errors` entry. */
+  readonly message: string;
+}
+
 export declare const AIManifestCompiler: {
   compile(manifest: AIManifest): AIManifestCompileResult;
-  validateAIOutput(output: unknown, manifest: AIManifest): { valid: boolean; errors: readonly string[] };
+  validateAIOutput(
+    output: unknown,
+    manifest: AIManifest,
+  ): { valid: boolean; errors: readonly string[]; issues: readonly AIValidationIssue[] };
   generateSystemPrompt(manifest: AIManifest): string;
   generateToolDefinitions(manifest: AIManifest): readonly AIToolDefinition[];
 };

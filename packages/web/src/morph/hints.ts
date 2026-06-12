@@ -206,6 +206,9 @@ export const rejectIfMissing = (hints: MorphHints, element: Element): MorphRejec
       type: 'preserve_violation',
       missingIds,
       reason: `Required elements missing after morph: ${missingIds.join(', ')}`,
+      hint:
+        `Keep the data-czap-id elements [${missingIds.join(', ')}] in the server HTML, ` +
+        'or drop them from the preserve hint (Hints.preserveIds / data-morph-preserve).',
     };
   }
 

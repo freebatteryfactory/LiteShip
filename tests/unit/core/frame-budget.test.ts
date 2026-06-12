@@ -7,7 +7,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { Effect } from 'effect';
-import { FrameBudget } from '@czap/core';
+import { CzapValidationError, FrameBudget } from '@czap/core';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
@@ -102,14 +102,14 @@ describe('FrameBudget priority thresholds', () => {
   });
 
   test('rejects targetFps of zero', () => {
-    expect(() => FrameBudget.make({ targetFps: 0 })).toThrow(RangeError);
+    expect(() => FrameBudget.make({ targetFps: 0 })).toThrow(CzapValidationError);
   });
 
   test('rejects negative targetFps', () => {
-    expect(() => FrameBudget.make({ targetFps: -1 })).toThrow(RangeError);
+    expect(() => FrameBudget.make({ targetFps: -1 })).toThrow(CzapValidationError);
   });
 
   test('rejects Infinity targetFps', () => {
-    expect(() => FrameBudget.make({ targetFps: Infinity })).toThrow(RangeError);
+    expect(() => FrameBudget.make({ targetFps: Infinity })).toThrow(CzapValidationError);
   });
 });
