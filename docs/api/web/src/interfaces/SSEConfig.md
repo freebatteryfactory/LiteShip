@@ -6,7 +6,7 @@
 
 # Interface: SSEConfig
 
-Defined in: [web/src/types.ts:202](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L202)
+Defined in: [web/src/types.ts:217](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L217)
 
 SSE client configuration.
 
@@ -16,7 +16,7 @@ SSE client configuration.
 
 > `readonly` `optional` **artifactId?**: `string`
 
-Defined in: [web/src/types.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L208)
+Defined in: [web/src/types.ts:223](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L223)
 
 Appended to the stream URL as a path segment; also the key the
 `Resumption` namespace uses for its `sessionStorage` state.
@@ -27,7 +27,7 @@ Appended to the stream URL as a path segment; also the key the
 
 > `readonly` `optional` **heartbeatInterval?**: `Millis`
 
-Defined in: [web/src/types.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L216)
+Defined in: [web/src/types.ts:235](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L235)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [web/src/types.ts:216](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **lastEventId?**: `string`
 
-Defined in: [web/src/types.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L214)
+Defined in: [web/src/types.ts:229](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L229)
 
 Initial cursor re-sent to the server on (re)connect. Seed it from
 `Resumption.loadState` on cold start so the stream resumes where
@@ -45,9 +45,12 @@ the previous session left off.
 
 ### reconnect?
 
-> `readonly` `optional` **reconnect?**: [`ReconnectConfig`](ReconnectConfig.md)
+> `readonly` `optional` **reconnect?**: `Partial`\<[`ReconnectConfig`](ReconnectConfig.md)\>
 
-Defined in: [web/src/types.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L215)
+Defined in: [web/src/types.ts:234](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L234)
+
+Partial overrides are merged over `defaultReconnectConfig`
+(maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
 
 ***
 
@@ -55,4 +58,4 @@ Defined in: [web/src/types.ts:215](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **url**: `string`
 
-Defined in: [web/src/types.ts:203](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L203)
+Defined in: [web/src/types.ts:218](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L218)

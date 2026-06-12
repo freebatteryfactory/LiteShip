@@ -8,6 +8,6 @@
 
 > **Shape** = `WorldShape`
 
-Defined in: [core/src/ecs.ts:378](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L378)
+Defined in: [core/src/ecs.ts:383](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L383)
 
 Structural shape of an ECS world: spawn/despawn, components, queries, systems, tick.

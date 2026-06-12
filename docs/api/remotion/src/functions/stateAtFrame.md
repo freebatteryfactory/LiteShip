@@ -8,7 +8,7 @@
 
 > **stateAtFrame**(`frames`, `frameIndex`): `CompositeState`
 
-Defined in: [remotion/src/hooks.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L61)
+Defined in: [remotion/src/hooks.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L63)
 
 Look up the `CompositeState` for a given frame index from precomputed
 frames.
@@ -16,7 +16,8 @@ frames.
 Clamps to valid range: negative indices return the first frame; indices
 past the end return the last frame. An empty `frames` array yields a
 structurally-empty `CompositeState` so callers never have to guard for
-undefined output.
+undefined output. Both degraded paths emit a warn-once diagnostic
+(overflow usually means fps/durationMs drifted from `durationInFrames`).
 
 ## Parameters
 

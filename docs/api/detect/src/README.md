@@ -38,6 +38,7 @@ network connection quality. Maps detected capabilities to the
 - [detect](functions/detect.md)
 - [detectGPUTier](functions/detectGPUTier.md)
 - [motionTierFromCapabilities](functions/motionTierFromCapabilities.md)
+- [resetDetectionCaches](functions/resetDetectionCaches.md)
 - [tierFromCapabilities](functions/tierFromCapabilities.md)
 - [watchCapabilities](functions/watchCapabilities.md)
 

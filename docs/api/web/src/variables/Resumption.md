@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:346](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L346)
+Defined in: [web/src/stream/resumption.ts:386](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L386)
 
 SSE resumption protocol namespace.
 
@@ -193,9 +193,9 @@ Save resumption state to sessionStorage.
 
 ##### state
 
-[`ResumptionState`](../interfaces/ResumptionState.md)
+[`ResumptionStateInput`](../type-aliases/ResumptionStateInput.md)
 
-The resumption state to persist
+The resumption state to persist; `timestamp` defaults to `Date.now()`
 
 #### Returns
 
@@ -213,7 +213,6 @@ Effect.runSync(Resumption.saveState({
   artifactId: 'article-123',
   lastEventId: 'evt-42',
   lastSequence: 42,
-  timestamp: Date.now(),
 }));
 ```
 
@@ -223,10 +222,9 @@ Effect.runSync(Resumption.saveState({
 import { Resumption } from '@czap/web';
 import { Effect } from 'effect';
 
-// Save state on each SSE message
+// Save state on each SSE message (timestamp defaults to Date.now())
 Effect.runSync(Resumption.saveState({
   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
-  timestamp: Date.now(),
 }));
 
 // On reconnect, resume from where we left off

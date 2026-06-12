@@ -8,6 +8,6 @@
 
 > **Effect** = [`EffectTrack`](../../../interfaces/EffectTrack.md)
 
-Defined in: [scene/src/track.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L143)
+Defined in: [scene/src/track.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L155)
 
 Effect helper return.

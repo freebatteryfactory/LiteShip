@@ -76,6 +76,7 @@ package — it stays repo-local and composes these passes.
 - [readSourceFileRecords](functions/readSourceFileRecords.md)
 - [relativeToRoot](functions/relativeToRoot.md)
 - [resolveAstroPackageFile](functions/resolveAstroPackageFile.md)
+- [resolveDevopsProfile](functions/resolveDevopsProfile.md)
 - [runAuditPasses](functions/runAuditPasses.md)
 - [runIntegrityAudit](functions/runIntegrityAudit.md)
 - [runStructureAudit](functions/runStructureAudit.md)

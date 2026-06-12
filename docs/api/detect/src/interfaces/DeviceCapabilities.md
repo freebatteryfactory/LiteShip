@@ -6,7 +6,7 @@
 
 # Interface: DeviceCapabilities
 
-Defined in: [detect/src/detect.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L67)
+Defined in: [detect/src/detect.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L68)
 
 Baseline detected device capabilities.
 
@@ -25,7 +25,7 @@ accessibility-related media-query results.
 
 > `readonly` `optional` **connection?**: `object`
 
-Defined in: [detect/src/detect.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L89)
+Defined in: [detect/src/detect.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L90)
 
 Network Information API snapshot; undefined when unsupported.
 
@@ -53,7 +53,7 @@ Whether the user has opted into data-saving mode.
 
 > `readonly` **cores**: `number`
 
-Defined in: [detect/src/detect.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L71)
+Defined in: [detect/src/detect.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L72)
 
 Logical CPU cores reported by `navigator.hardwareConcurrency`.
 
@@ -63,7 +63,7 @@ Logical CPU cores reported by `navigator.hardwareConcurrency`.
 
 > `readonly` **devicePixelRatio**: `number`
 
-Defined in: [detect/src/detect.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L87)
+Defined in: [detect/src/detect.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L88)
 
 `window.devicePixelRatio` at detection time.
 
@@ -73,7 +73,7 @@ Defined in: [detect/src/detect.ts:87](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **gpu**: [`GPUTier`](../type-aliases/GPUTier.md)
 
-Defined in: [detect/src/detect.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L69)
+Defined in: [detect/src/detect.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L70)
 
 GPU fidelity bucket; see [GPUTier](../type-aliases/GPUTier.md).
 
@@ -83,7 +83,7 @@ GPU fidelity bucket; see [GPUTier](../type-aliases/GPUTier.md).
 
 > `readonly` **memory**: `number`
 
-Defined in: [detect/src/detect.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L73)
+Defined in: [detect/src/detect.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L74)
 
 Device memory in GiB (rounded by the Device Memory API).
 
@@ -93,7 +93,7 @@ Device memory in GiB (rounded by the Device Memory API).
 
 > `readonly` **prefersColorScheme**: `"light"` \| `"dark"`
 
-Defined in: [detect/src/detect.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L81)
+Defined in: [detect/src/detect.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L82)
 
 Effective color scheme (`prefers-color-scheme`).
 
@@ -103,7 +103,7 @@ Effective color scheme (`prefers-color-scheme`).
 
 > `readonly` **prefersReducedMotion**: `boolean`
 
-Defined in: [detect/src/detect.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L79)
+Defined in: [detect/src/detect.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L80)
 
 `prefers-reduced-motion: reduce` match.
 
@@ -113,7 +113,7 @@ Defined in: [detect/src/detect.ts:79](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **touchPrimary**: `boolean`
 
-Defined in: [detect/src/detect.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L77)
+Defined in: [detect/src/detect.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L78)
 
 Whether touch is a primary input modality (maxTouchPoints or ontouchstart).
 
@@ -123,7 +123,7 @@ Whether touch is a primary input modality (maxTouchPoints or ontouchstart).
 
 > `readonly` **viewportHeight**: `number`
 
-Defined in: [detect/src/detect.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L85)
+Defined in: [detect/src/detect.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L86)
 
 `window.innerHeight` at detection time.
 
@@ -133,7 +133,7 @@ Defined in: [detect/src/detect.ts:85](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **viewportWidth**: `number`
 
-Defined in: [detect/src/detect.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L83)
+Defined in: [detect/src/detect.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L84)
 
 `window.innerWidth` at detection time.
 
@@ -143,6 +143,6 @@ Defined in: [detect/src/detect.ts:83](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **webgpu**: `boolean`
 
-Defined in: [detect/src/detect.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L75)
+Defined in: [detect/src/detect.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L76)
 
 Whether `navigator.gpu` is present (WebGPU available).

@@ -8,7 +8,7 @@
 
 > **withRepoRoot**(`profile`, `repoRoot`): [`DevopsProfile`](../interfaces/DevopsProfile.md)
 
-Defined in: [audit/src/devops-profile.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L86)
+Defined in: [audit/src/devops-profile.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L90)
 
 Derive a profile pointed at a different repo root (CUT D9a). `repoRoot` is the
 single source of the audit target — the engines read `profile.repoRoot`, never

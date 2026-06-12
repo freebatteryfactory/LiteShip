@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:432](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L432)
+Defined in: [core/src/receipt.ts:436](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L436)
 
 Receipt namespace -- chain validation and envelope construction.
 

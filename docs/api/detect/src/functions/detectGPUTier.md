@@ -8,19 +8,15 @@
 
 > **detectGPUTier**(): `Effect`\<[`GPUTier`](../type-aliases/GPUTier.md)\>
 
-Defined in: [detect/src/detect.ts:528](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L528)
+Defined in: [detect/src/detect.ts:587](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L587)
 
 Detect GPU tier from WebGL renderer string heuristics.
 Falls back to tier 1 (integrated) when WebGL is unavailable.
 
-## Returns
+You usually never call this yourself: the `@czap/astro` boundary runs the
+same classification automatically and publishes it for the runtime to read.
 
-`Effect`\<[`GPUTier`](../type-aliases/GPUTier.md)\>
-
-An Effect yielding a [GPUTier](../type-aliases/GPUTier.md) (0-3)
-
-## Example
-
+Advanced — direct invocation (all probes are synchronous):
 ```ts
 import { Detect } from '@czap/detect';
 import { Effect } from 'effect';
@@ -28,3 +24,9 @@ import { Effect } from 'effect';
 const tier = Effect.runSync(Detect.detectGPUTier());
 // tier => 0 (software) | 1 (integrated) | 2 (mid) | 3 (high-end)
 ```
+
+## Returns
+
+`Effect`\<[`GPUTier`](../type-aliases/GPUTier.md)\>
+
+An Effect yielding a [GPUTier](../type-aliases/GPUTier.md) (0-3)

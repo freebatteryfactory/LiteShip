@@ -6,7 +6,7 @@
 
 # Interface: EffectTrack\<M\>
 
-Defined in: [scene/src/contract.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L82)
+Defined in: [scene/src/contract.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L99)
 
 Effect track — applies an intensity curve to a target video track, optionally synced to audio.
 
@@ -22,7 +22,7 @@ Effect track — applies an intensity curve to a target video track, optionally 
 
 > `readonly` **effectKind**: `"pulse"` \| `"glow"` \| `"shake"` \| `"zoom"` \| `"desaturate"`
 
-Defined in: [scene/src/contract.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L87)
+Defined in: [scene/src/contract.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L104)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [scene/src/contract.ts:87](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
 
-Defined in: [scene/src/contract.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L91)
+Defined in: [scene/src/contract.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L108)
 
 Optional intensity automation — e.g. `pulse.every(Beat(0.5), { amplitude: 0.3 })`. Compiled to an `Envelope` component EffectSystem reads each tick.
 
@@ -40,7 +40,7 @@ Optional intensity automation — e.g. `pulse.every(Beat(0.5), { amplitude: 0.3 
 
 > `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L85)
+Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L102)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [scene/src/contract.ts:85](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"effect"`\>
 
-Defined in: [scene/src/contract.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L84)
+Defined in: [scene/src/contract.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L101)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [scene/src/contract.ts:84](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **kind**: `"effect"`
 
-Defined in: [scene/src/contract.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L83)
+Defined in: [scene/src/contract.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L100)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [scene/src/contract.ts:83](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **syncTo?**: `object`
 
-Defined in: [scene/src/contract.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L89)
+Defined in: [scene/src/contract.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L106)
 
 #### anchor
 
@@ -80,7 +80,7 @@ Defined in: [scene/src/contract.ts:89](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **target**: [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
 
-Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L88)
+Defined in: [scene/src/contract.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L105)
 
 ***
 
@@ -88,4 +88,4 @@ Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L86)
+Defined in: [scene/src/contract.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L103)

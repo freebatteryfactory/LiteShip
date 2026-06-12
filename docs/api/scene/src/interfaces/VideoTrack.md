@@ -22,7 +22,7 @@ Video track — renders a quantizer-driven source for its frame range.
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
 
-Defined in: [scene/src/contract.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L50)
+Defined in: [scene/src/contract.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L60)
 
 Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick.
 
@@ -56,7 +56,7 @@ Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **layer?**: `number`
 
-Defined in: [scene/src/contract.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L48)
+Defined in: [scene/src/contract.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L58)
 
 ***
 
@@ -64,7 +64,19 @@ Defined in: [scene/src/contract.ts:48](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **source**: `unknown`
 
-Defined in: [scene/src/contract.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L47)
+Defined in: [scene/src/contract.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L57)
+
+Opaque source reference, carried verbatim onto the `VideoSource`
+ECS component — the scene engine never interprets it (VideoSystem
+only checks presence). Hand it whatever YOUR renderer reads:
+typically a quantizer-driven source descriptor, an asset id, or a
+canvas/element reference.
+
+#### Example
+
+```ts
+Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-boundary' } })
+```
 
 ***
 

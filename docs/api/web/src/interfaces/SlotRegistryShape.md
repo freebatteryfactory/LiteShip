@@ -88,7 +88,7 @@ Defined in: [web/src/slot/registry.ts:36](https://github.com/heyoub/LiteShip/blo
 
 ##### entry
 
-[`SlotEntry`](SlotEntry.md)
+[`SlotEntryInput`](SlotEntryInput.md)
 
 #### Returns
 

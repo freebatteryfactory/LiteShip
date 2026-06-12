@@ -43,10 +43,12 @@ separate worker entry files or bundler configuration.
 ## Interfaces
 
 - [CompositorWorkerShape](interfaces/CompositorWorkerShape.md)
+- [QuantizerBoundarySource](interfaces/QuantizerBoundarySource.md)
 - [RenderWorkerShape](interfaces/RenderWorkerShape.md)
 - [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
 - [TransferableCanvas](interfaces/TransferableCanvas.md)
 - [WorkerConfig](interfaces/WorkerConfig.md)
+- [WorkerHostRenderConfig](interfaces/WorkerHostRenderConfig.md)
 - [WorkerHostShape](interfaces/WorkerHostShape.md)
 - [WorkerLike](interfaces/WorkerLike.md)
 

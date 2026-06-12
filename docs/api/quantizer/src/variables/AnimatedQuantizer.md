@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:264](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L264)
+Defined in: [quantizer/src/animated-quantizer.ts:319](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L319)
 
 Animated quantizer namespace.
 
@@ -57,7 +57,10 @@ Map of state transition configs keyed by `from->to` pattern
 
 `Record`\<`string`, `Record`\<`string`, `string` \| `number`\>\>
 
-Per-state numeric output maps for interpolation
+Per-state numeric output maps for interpolation; omitted,
+                     they are derived from the wrapped LiveQuantizer's
+                     `config.outputs.css` tables (finite-numeric strings are
+                     coerced to numbers so they lerp)
 
 #### Returns
 
@@ -81,10 +84,10 @@ const config = Q.from(boundary).outputs({
 });
 const program = Effect.scoped(Effect.gen(function* () {
   const live = yield* config.create();
+  // outputs omitted: derived from the LiveQuantizer's css output tables
   const animated = yield* AnimatedQuantizer.make(
     live,
     { '*': { duration: Millis(300) } },
-    { top: { opacity: 1 }, bottom: { opacity: 0.5 } },
   );
   live.evaluate(600); // triggers interpolation
   return animated;

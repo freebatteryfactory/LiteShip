@@ -8,7 +8,7 @@
 
 > `const` **Track**: `object`
 
-Defined in: [scene/src/track.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L123)
+Defined in: [scene/src/track.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L135)
 
 Track namespace — typed constructors for the four track kinds plus
 per-kind id minters (Track.videoId, Track.audioId, Track.transitionId,
@@ -20,7 +20,7 @@ Track.effectId) for use in cross-track references.
 
 > **audio**: (`id`, `opts`) => [`AudioTrack`](../interfaces/AudioTrack.md)
 
-Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 0 } and optional gain envelope.
+Build an AudioTrack referencing an asset id, with default mix { volume: 1, pan: 0 } (unity linear gain, centered) and optional gain envelope.
 
 #### Parameters
 
@@ -46,6 +46,14 @@ Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 
 
 `number`
 
+Stereo position, -1 (left) .. 1 (right).
+
+**Default**
+
+```ts
+0
+```
+
 ###### mix.sync?
 
 \{ `bpm?`: `number`; \}
@@ -57,6 +65,16 @@ Build an AudioTrack referencing an asset id, with default mix { volume: 0, pan: 
 ###### mix.volume?
 
 `number`
+
+Linear gain multiplier — 1 is unity (asset plays at its authored
+level), 0 is silence. Mixers multiply this by the envelope-driven
+`_gain` factor each tick (see `systems/audio.ts`).
+
+**Default**
+
+```ts
+1
+```
 
 ###### source
 
@@ -90,7 +108,7 @@ Mint an audio TrackId — the one sanctioned cast site for the 'audio' brand.
 
 > **effect**: (`id`, `opts`) => [`EffectTrack`](../interfaces/EffectTrack.md)
 
-Build an EffectTrack applying an intensity curve to a target video, optionally synced to audio.
+Build an EffectTrack applying an intensity curve to a target video, optionally synced to audio. `target` / `syncTo.anchor` accept track objects or ids.
 
 #### Parameters
 
@@ -114,11 +132,11 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ###### syncTo?
 
-\{ `anchor`: [`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>; `mode`: `"beat"` \| `"onset"` \| `"peak"`; \}
+\{ `anchor`: [`TrackRef`](../type-aliases/TrackRef.md)\<`"audio"`\>; `mode`: `"beat"` \| `"onset"` \| `"peak"`; \}
 
 ###### syncTo.anchor
 
-[`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
+[`TrackRef`](../type-aliases/TrackRef.md)\<`"audio"`\>
 
 ###### syncTo.mode
 
@@ -126,7 +144,7 @@ Build an EffectTrack applying an intensity curve to a target video, optionally s
 
 ###### target
 
-[`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
+[`TrackRef`](../type-aliases/TrackRef.md)\<`"video"`\>
 
 ###### to
 
@@ -156,7 +174,7 @@ Mint an effect TrackId — the one sanctioned cast site for the 'effect' brand.
 
 > **transition**: (`id`, `opts`) => [`TransitionTrack`](../interfaces/TransitionTrack.md)
 
-Build a TransitionTrack blending two target tracks over a frame window, with optional named easing.
+Build a TransitionTrack blending two target tracks over a frame window, with optional named easing. `between` accepts track objects or ids.
 
 #### Parameters
 
@@ -168,7 +186,7 @@ Build a TransitionTrack blending two target tracks over a frame window, with opt
 
 ###### between
 
-readonly \[[`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>, [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>\]
+readonly \[[`TrackRef`](../type-aliases/TrackRef.md)\<`"video"`\>, [`TrackRef`](../type-aliases/TrackRef.md)\<`"video"`\>\]
 
 ###### ease?
 

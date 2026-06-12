@@ -8,6 +8,6 @@
 
 > **Transition** = [`TransitionTrack`](../../../interfaces/TransitionTrack.md)
 
-Defined in: [scene/src/track.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L141)
+Defined in: [scene/src/track.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/track.ts#L153)
 
 Transition helper return.

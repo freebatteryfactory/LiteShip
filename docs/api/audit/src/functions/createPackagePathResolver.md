@@ -8,7 +8,7 @@
 
 > **createPackagePathResolver**(`profile`): [`PackagePathResolver`](../type-aliases/PackagePathResolver.md)
 
-Defined in: [audit/src/shared.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L222)
+Defined in: [audit/src/shared.ts:229](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L229)
 
 Map repo-relative finding paths to their owning package via the profile's
 discovered manifests. Monorepo: `packages/astro/src/x.ts` → `@czap/astro` +

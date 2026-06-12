@@ -8,6 +8,6 @@
 
 > **ResumeResponse** = \{ `patches`: readonly `unknown`[]; `type`: `"replay"`; \} \| \{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}
 
-Defined in: [web/src/types.ts:278](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L278)
+Defined in: [web/src/types.ts:314](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L314)
 
 Resume response from the server.

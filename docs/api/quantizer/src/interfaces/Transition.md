@@ -6,7 +6,7 @@
 
 # Interface: Transition\<B\>
 
-Defined in: [quantizer/src/transition.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L52)
+Defined in: [quantizer/src/transition.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L56)
 
 Resolver that maps a boundary crossing to its [TransitionConfig](TransitionConfig.md).
 
@@ -25,7 +25,7 @@ during animation loop setup.
 
 > `readonly` **config**: [`TransitionMap`](../type-aliases/TransitionMap.md)\<`StateUnion`\<`B`\>\>
 
-Defined in: [quantizer/src/transition.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L54)
+Defined in: [quantizer/src/transition.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L58)
 
 The raw transition map used to create this resolver.
 
@@ -35,7 +35,7 @@ The raw transition map used to create this resolver.
 
 > **getTransition**(`from`, `to`): [`TransitionConfig`](TransitionConfig.md)
 
-Defined in: [quantizer/src/transition.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L56)
+Defined in: [quantizer/src/transition.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L60)
 
 Resolve the transition config for a specific `from -> to` state pair.
 
