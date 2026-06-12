@@ -68,7 +68,7 @@ describe('createNodeCommandContext', () => {
     expect(ctx.manifestSource?.()).toBe('{"capsules":[]}');
   });
 
-  it('fileExists and readFileBytes resolve paths from process.cwd()', () => {
+  it('fileExists and readFileBytes resolve absolute paths', () => {
     const notePath = join(workDir, 'note.txt');
     writeFileSync(notePath, 'payload');
     const ctx = createNodeCommandContext({ cwd: workDir });
@@ -76,6 +76,13 @@ describe('createNodeCommandContext', () => {
     expect(ctx.fileExists?.(join(workDir, 'missing.txt'))).toBe(false);
     expect(ctx.readFileBytes?.(notePath)).toEqual(new Uint8Array([...Buffer.from('payload')]));
     expect(ctx.readFileBytes?.(join(workDir, 'missing.txt'))).toBeNull();
+  });
+
+  it('fileExists and readFileBytes resolve relative paths against opts.cwd, not process.cwd()', () => {
+    writeFileSync(join(workDir, 'note.txt'), 'payload');
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    expect(ctx.fileExists?.('note.txt')).toBe(true);
+    expect(ctx.readFileBytes?.('note.txt')).toEqual(new Uint8Array([...Buffer.from('payload')]));
   });
 
   it('spawnCapture returns stdout on success and degrades on spawn failure', async () => {
@@ -109,17 +116,23 @@ describe('createNodeCommandContext', () => {
     expect(bytes!.byteLength).toBeGreaterThan(44);
   });
 
-  it('loadAssetBytes reads examples/scenes/<id>.wav from the repo convention path', () => {
-    const scenesDir = join(process.cwd(), 'examples/scenes');
+  it('loadAssetBytes reads examples/scenes/<id>.wav resolved against opts.cwd', () => {
+    const scenesDir = join(workDir, 'examples/scenes');
     mkdirSync(scenesDir, { recursive: true });
-    const wavPath = join(scenesDir, 'ctx-host-demo.wav');
-    writeFileSync(wavPath, Buffer.from(minimalWav(32)));
-    try {
-      const ctx = createNodeCommandContext({ cwd: workDir });
-      expect(ctx.loadAssetBytes?.('ctx-host-demo')).not.toBeNull();
-    } finally {
-      rmSync(wavPath, { force: true });
-    }
+    writeFileSync(join(scenesDir, 'ctx-host-demo.wav'), Buffer.from(minimalWav(32)));
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    expect(ctx.loadAssetBytes?.('ctx-host-demo')).not.toBeNull();
+  });
+
+  it('loadAssetBytes prefers the manifest-declared source over the examples/scenes convention', () => {
+    const scenesDir = join(workDir, 'examples/scenes');
+    mkdirSync(scenesDir, { recursive: true });
+    writeFileSync(join(scenesDir, 'ctx-host-demo.wav'), Buffer.from(minimalWav(32)));
+    writeFileSync(join(workDir, 'declared.wav'), Buffer.from(minimalWav(64)));
+    const ctx = createNodeCommandContext({ cwd: workDir });
+    // Source is cwd-relative; the declared 64-sample clip wins over the 32-sample convention file.
+    const bytes = ctx.loadAssetBytes?.('ctx-host-demo', 'declared.wav');
+    expect(bytes?.byteLength).toBe(minimalWav(64).byteLength);
   });
 
   it('runAudioProjection covers beat, onset, and waveform arms', async () => {
@@ -206,7 +219,8 @@ describe('createNodeCommandContext', () => {
   it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {
     const ctx = createNodeCommandContext({ cwd: workDir });
     const output = join(workDir, 'out.mp4');
-    const result = await ctx.renderScene?.({ fps: 10, durationMs: 200, output });
+    // Contract-supplied dimensions override the 1280x720 host default.
+    const result = await ctx.renderScene?.({ fps: 10, durationMs: 200, output, width: 64, height: 64 });
     expect(result?.frameCount).toBeGreaterThan(0);
     expect(result?.elapsedMs).toBeGreaterThanOrEqual(0);
   });
