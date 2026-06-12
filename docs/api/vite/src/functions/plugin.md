@@ -8,7 +8,7 @@
 
 > **plugin**(`config?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L158)
+Defined in: [vite/src/plugin.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L139)
 
 Create the czap Vite plugin.
 
@@ -33,6 +33,6 @@ uniform updates.
 
 ```ts
 // vite.config.ts
-import { plugin as czap } from '@czap/vite';
+import { czap } from '@czap/vite';
 const config = { plugins: [czap()] };
 ```

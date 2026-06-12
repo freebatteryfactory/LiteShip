@@ -6,9 +6,9 @@
 
 # Function: computeWaveform()
 
-> **computeWaveform**(`audio`, `opts`): readonly `number`[]
+> **computeWaveform**(`audio`, `opts?`): readonly `number`[]
 
-Defined in: [assets/src/analysis/waveform.ts:14](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L14)
+Defined in: [assets/src/analysis/waveform.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L15)
 
 Compute a normalized RMS-per-bin waveform.
 
@@ -24,9 +24,9 @@ Compute a normalized RMS-per-bin waveform.
 
 `Int16Array`\<`ArrayBufferLike`\> \| `Float32Array`\<`ArrayBufferLike`\>
 
-### opts
+### opts?
 
-#### bins
+#### bins?
 
 `number`
 

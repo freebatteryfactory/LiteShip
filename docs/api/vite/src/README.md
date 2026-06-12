@@ -33,7 +33,7 @@ per primitive kind via [PluginConfig.dirs](interfaces/PluginConfig.md#dirs).
 ```ts
 // vite.config.ts
 import { defineConfig } from 'vite';
-import { plugin as czap } from '@czap/vite';
+import { czap } from '@czap/vite';
 
 const config = defineConfig({
   plugins: [czap({ dirs: { theme: 'src/themes' }, hmr: true })],
@@ -43,6 +43,8 @@ const config = defineConfig({
 ## Interfaces
 
 - [CollectBoundaryManifestOptions](interfaces/CollectBoundaryManifestOptions.md)
+- [CollectThemeManifestOptions](interfaces/CollectThemeManifestOptions.md)
+- [CollectTokenManifestOptions](interfaces/CollectTokenManifestOptions.md)
 - [HMRPayload](interfaces/HMRPayload.md)
 - [PluginConfig](interfaces/PluginConfig.md)
 - [PrimitiveResolution](interfaces/PrimitiveResolution.md)
@@ -60,11 +62,18 @@ const config = defineConfig({
 
 - [PrimitiveKind](type-aliases/PrimitiveKind.md)
 - [PrimitiveShape](type-aliases/PrimitiveShape.md)
+- [ThemeManifest](type-aliases/ThemeManifest.md)
+- [ThemeManifestEntry](type-aliases/ThemeManifestEntry.md)
+- [TokenManifest](type-aliases/TokenManifest.md)
+- [TokenManifestEntry](type-aliases/TokenManifestEntry.md)
 - [VirtualModuleId](type-aliases/VirtualModuleId.md)
 
 ## Functions
 
 - [collectBoundaryManifest](functions/collectBoundaryManifest.md)
+- [collectThemeManifest](functions/collectThemeManifest.md)
+- [collectTokenManifest](functions/collectTokenManifest.md)
+- [compileCollectedTokensCss](functions/compileCollectedTokensCss.md)
 - [compileQuantizeBlock](functions/compileQuantizeBlock.md)
 - [compileStyleBlock](functions/compileStyleBlock.md)
 - [compileThemeBlock](functions/compileThemeBlock.md)
@@ -83,3 +92,9 @@ const config = defineConfig({
 - [resolveWASM](functions/resolveWASM.md)
 - [transformHTML](functions/transformHTML.md)
 - [viewportContainmentRule](functions/viewportContainmentRule.md)
+
+## References
+
+### czap
+
+Renames and re-exports [plugin](functions/plugin.md)

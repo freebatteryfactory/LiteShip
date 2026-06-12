@@ -8,7 +8,7 @@
 
 > **BeatMarkerProjection**(`audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, `BeatMarkerSet`, `unknown`\>
 
-Defined in: [assets/src/analysis/beat-markers.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L80)
+Defined in: [assets/src/analysis/beat-markers.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L81)
 
 Build a BeatMarkerProjection cachedProjection capsule for a named audio asset.
 

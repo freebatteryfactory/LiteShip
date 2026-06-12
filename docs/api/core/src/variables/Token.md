@@ -8,7 +8,7 @@
 
 > `const` **Token**: `TokenFactory` & `object`
 
-Defined in: [core/src/token.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token.ts#L147)
+Defined in: [core/src/token.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token.ts#L153)
 
 Token namespace -- design token primitive for adaptive rendering.
 
