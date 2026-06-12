@@ -278,11 +278,13 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     const { result, stdout } = await captureStdout(() => audit({ consumer: true, cwd: root, pretty: false }));
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.profileSource).toBe('consumer');
-    // Nothing from the czap topology is installed in the fixture: zero
-    // packages, and the unshipped host surface is pruned, not error-spammed.
-    expect(receipt.errorCount).toBe(0);
-    expect(receipt.status).toBe('ok');
-    expect(result).toBe(0);
+    // Nothing from the czap topology is installed in the fixture: the unshipped
+    // host surface is pruned (no error spam), but ZERO audited packages must
+    // read as the single no-packages-discovered error — clean must never be
+    // confused with unchecked (CUT A0).
+    expect(receipt.errorCount).toBe(1);
+    expect(receipt.status).toBe('failed');
+    expect(result).toBe(1);
   });
 
   it('--findings with --pretty writes per-finding stderr lines with locations', async () => {

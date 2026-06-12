@@ -279,10 +279,10 @@ export function runStructureAudit(
     : null;
   const knownSurfaceFiles = new Set<string>([
     ...(astroPackageInfo
-      ? profile.surfacePolicy.astroRuntimeFiles.map((file) =>
+      ? (profile.surfacePolicy.astroRuntimeFiles ?? []).map((file) =>
           relativeToRoot(resolveAstroPackageFile(root, astroPackageInfo.dir, file), root),
         )
-      : profile.surfacePolicy.astroRuntimeFiles),
+      : (profile.surfacePolicy.astroRuntimeFiles ?? [])),
     ...packageInfos.flatMap((pkg) =>
       Object.values(pkg.exports)
         .map((value) => {
@@ -383,7 +383,12 @@ export function runStructureAudit(
             rule: 'unresolved-internal-import',
             severity: 'error',
             title: 'Unresolved relative import',
-            summary: `Could not resolve relative import "${specifier}".`,
+            // The candidate set mirrors candidatePaths + the .js→.ts source mapping above.
+            summary:
+              `Could not resolve relative import "${specifier}" — tried it verbatim, with ` +
+              `.ts/.tsx/.js/.jsx extensions, as index.ts/index.tsx, and via the .js→.ts (.jsx→.tsx) ` +
+              `source mapping. The file is missing or the specifier is misspelled; a .js specifier ` +
+              `needs a matching .ts source next to the importer.`,
             location: {
               file: record.relativePath,
               line,
@@ -448,7 +453,11 @@ export function runStructureAudit(
                 rule: 'package-topology',
                 severity: 'error',
                 title: 'Package import violates audit topology',
-                summary: `Package ${packageInfo.name} is not expected to import ${resolved.targetPackage} in the repo-native topology.`,
+                summary:
+                  `Package ${packageInfo.name} imports ${resolved.targetPackage}, but ` +
+                  `packageTopology['${packageInfo.name}'].allowedInternalImports in the audit profile ` +
+                  `does not include it. Add '${resolved.targetPackage}' to that list to bless the edge, ` +
+                  `or remove the import.`,
                 location: {
                   file: record.relativePath,
                   line,
