@@ -1,6 +1,6 @@
 # @czap/command
 
-The shared command catalog and dispatcher behind the `czap` CLI and the MCP server — one definition of every command's name, input schema, and handler, so both surfaces stay in sync by construction.
+The shared command catalog and dispatcher behind the `czap` CLI and the MCP server — one definition of every command's name and input schema (plus the handler, for commands that execute here; terminal-owned verbs are descriptor-only), so both surfaces stay in sync by construction.
 
 > You usually don't install this directly — it arrives as a dependency of `@czap/cli` and `@czap/mcp-server`. Install one of those instead unless you're building your own adapter (a new protocol skin) over the same commands.
 
