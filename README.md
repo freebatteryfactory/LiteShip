@@ -4,59 +4,66 @@
 [![npm](https://img.shields.io/npm/v/@czap/core.svg)](https://www.npmjs.com/package/@czap/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip rigs those continuous signals into a small set of named bearings and casts each bearing to whatever surface the host runs. The rig is in between.
+Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/full-motion. But the world feeds it continuous signals — viewport width slides as the user drags, network latency wobbles, the dark-mode toggle fires at 11pm whether the user clicks it or the OS does it for them. LiteShip turns those continuous signals into a small set of named states, and projects each state to whatever surface the host runs.
 
 From one definition, the system can emit a CSS variable, a GLSL preamble, an ARIA attribute on the body, an AI manifest, and a TypeScript union. Same boundary, five surfaces, no silent drift between projection layers. Every output is computed from a content address of the definition, so if it renders right once, it renders right everywhere — the engine can prove it ([ADR-0003](./docs/adr/0003-content-addressing.md)).
 
-*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.*
+*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [docs/GLOSSARY.md](./docs/GLOSSARY.md) — you don't need it for the quick start.
 
-This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI. Naming vocabulary across every doc lives in [docs/GLOSSARY.md](./docs/GLOSSARY.md).
+This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
 
 ## Quick start
 
+Two concepts get you to a working page: `Boundary.make` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
+
 ```bash
-pnpm add @czap/core effect@beta
+pnpm add @czap/core @czap/astro effect@beta
 ```
 
-`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. See the [support matrix](#support-matrix) for the pin and the stabilization plan. That's the whole install for the snippet below; further packages arrive when you first import them.
+`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. See the [support matrix](#support-matrix) for the pin and the stabilization plan. That's the whole install for the snippets below; further packages arrive when you first import them.
+
+Define a boundary — a mapping from a continuous signal to named states:
 
 ```ts
-import { Boundary, Token, Style } from '@czap/core';
+// src/boundaries.ts
+import { Boundary } from '@czap/core';
 
-const viewport = Boundary.make({
+export const viewport = Boundary.make({
   input: 'viewport.width',
   at: [
     [0, 'mobile'],
     [768, 'tablet'],
     [1280, 'desktop'],
   ],
-  hysteresis: 20,
+  hysteresis: 20, // optional — default 0 (no dead-zone)
 });
-
-const primary = Token.make({
-  name: 'primary',
-  category: 'color',
-  axes: ['theme'],
-  values: { dark: '#00e5ff', light: 'hsl(175 70% 50%)' },
-  fallback: '#00e5ff',
-});
-
-const card = Style.make({
-  boundary: viewport,
-  base: { properties: { padding: '1rem' } },
-  states: {
-    mobile: { properties: { padding: '0.5rem' } },
-    desktop: { properties: { padding: '2rem' } },
-  },
-});
-
-const value = Token.tap(primary, { theme: 'dark' });
-const cssVar = Token.cssVar(primary);
 ```
 
-The `hysteresis: 20` in there is a half-width dead-zone, by the way. Cross a threshold and you stay across until the signal moves past the next half-tick. No flicker at 768.0001px when the user is dragging the window edge.
+Register the integration and spread the boundary onto any element:
 
-A full walkthrough (clone, install, rig a hello-world boundary, cast to CSS, hydrate through Astro) lives at [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md). For the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it), [docs/AUTHORING-MODEL.md](./docs/AUTHORING-MODEL.md) opens with a one-paragraph "what it feels like to author" before the reference.
+```js
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import czap from '@czap/astro';
+
+export default defineConfig({ integrations: [czap()] });
+```
+
+```astro
+---
+import { satelliteAttrs } from '@czap/astro';
+import { viewport } from '../boundaries.js';
+---
+
+<div {...satelliteAttrs({ boundary: viewport })}>
+  Resize the window: this element's data-czap-state flips
+  mobile → tablet → desktop, and your CSS keys off it.
+</div>
+```
+
+Resize the window and watch `data-czap-state` change in devtools. `hysteresis` is optional (default `0`, no dead-zone): a value of `20` is a half-width dead-zone — cross a threshold and you stay across until the signal moves past the next half-tick, so no flicker at 768.0001px when the user is dragging the window edge.
+
+That's layer 1. Tokens, styles, themes, and casting a boundary to compiled CSS / GLSL / ARIA live one layer up: the full walkthrough (install, first boundary, cast to CSS, hydrate through Astro) is [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md), and the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it) is [docs/AUTHORING-MODEL.md](./docs/AUTHORING-MODEL.md), which opens with a one-paragraph "what it feels like to author" before the reference.
 
 ## What you can stop hand-rolling
 
@@ -153,7 +160,7 @@ Both milestones are signal-gated, not promise-gated. Contributors are welcome to
 
 ## Documentation
 
-- [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md): clone, install, first boundary, end-to-end
+- [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md): install in your project, first boundary, end-to-end
 - [docs/HOSTING.md](./docs/HOSTING.md): host-application first-hour checklist (versions, CSP, Trusted Types, five common failure modes)
 - [docs/ASTRO-STATIC-MENTAL-MODEL.md](./docs/ASTRO-STATIC-MENTAL-MODEL.md): signals to boundaries to named states to outputs, the theory-first authoring frame
 - [docs/AUTHORING-MODEL.md](./docs/AUTHORING-MODEL.md): definition shapes, naming, and composition rules
