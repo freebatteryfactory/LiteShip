@@ -8,7 +8,7 @@
 
 > **defineAsset**\<`K`\>(`decl`): `AnyAssetCapsule`
 
-Defined in: [assets/src/contract.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L115)
+Defined in: [assets/src/contract.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L163)
 
 Declare an asset as a cachedProjection capsule + register in the
 module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
@@ -20,6 +20,8 @@ decoders use [builtinDecoderSiteFor](builtinDecoderSiteFor.md) (video → `['nod
 ffprobe needs node:child_process), while a declared custom `decoder`
 keeps `['node', 'browser']` — the declarer owns its runtime safety
 (e.g. a WebCodecs-based video decoder is legitimately browser-capable).
+An explicit `decl.site` wins over both derivations after validation
+(see [AssetDecl.site](../interfaces/AssetDecl.md#site)).
 
 ## Type Parameters
 
