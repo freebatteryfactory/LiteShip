@@ -39,6 +39,12 @@ export async function run(argv: readonly string[]): Promise<number> {
       const targetEq = parseFlag(rest, '--target');
       const targetIdx = rest.indexOf('--target');
       const targetRaw = targetEq ?? (targetIdx >= 0 ? rest[targetIdx + 1] : undefined);
+      // A typo'd target must not silently fall back to the default profile —
+      // that runs the wrong checks with no warning.
+      if ((targetEq !== undefined || targetIdx >= 0) && targetRaw !== 'cloudflare') {
+        emitError('doctor', `expected target: cloudflare (got: ${targetRaw ?? '<missing>'})`);
+        return 1;
+      }
       const target = targetRaw === 'cloudflare' ? ('cloudflare' as const) : undefined;
       return doctor({
         fix: rest.includes('--fix'),
@@ -55,46 +61,88 @@ export async function run(argv: readonly string[]): Promise<number> {
       return completion(rest[0]);
     }
     case 'describe': {
-      const format = parseFlag(rest, '--format') as 'json' | 'mcp' | undefined;
+      const formatRaw = parseFlag(rest, '--format');
+      const format = formatRaw === 'json' || formatRaw === 'mcp' ? formatRaw : undefined;
+      // An unknown format must not silently fall through to JSON mode.
+      if (formatRaw !== undefined && format === undefined) {
+        emitError('describe', `expected format: json | mcp (got: ${formatRaw})`);
+        return 1;
+      }
       process.stdout.write(JSON.stringify(describeCmd({ format })) + '\n');
       return 0;
     }
     case 'scene': {
       const [sub, ...subRest] = rest;
-      if (sub === 'compile') return sceneCompile(subRest[0] ?? '');
-      if (sub === 'dev') return sceneDev(subRest[0] ?? '');
+      const scene = positional(subRest);
+      if (sub === 'compile' || sub === 'dev' || sub === 'verify' || sub === 'render') {
+        // A missing positional must not flow downstream as '' (it surfaces
+        // there as a blank-subject error like "scene not found: ").
+        if (scene === undefined) {
+          emitError(`scene.${sub}`, `usage: czap scene ${sub} <path-to-scene.ts>${sub === 'render' ? ' [-o <output.mp4>]' : ''}`);
+          return 1;
+        }
+      }
+      if (sub === 'compile') return sceneCompile(scene ?? '');
+      if (sub === 'dev') return sceneDev(scene ?? '');
       if (sub === 'render') {
-        const scene = subRest[0] ?? '';
         const outputIdx = subRest.indexOf('-o');
-        const outputDirect = outputIdx >= 0 ? (subRest[outputIdx + 1] ?? '') : undefined;
+        const outputNext = outputIdx >= 0 ? subRest[outputIdx + 1] : undefined;
+        if (outputIdx >= 0 && (outputNext === undefined || outputNext.startsWith('-'))) {
+          emitError('scene.render', 'usage: czap scene render <path-to-scene.ts> -o <output.mp4>');
+          return 1;
+        }
         const outputFlag = parseFlag(subRest, '--output');
         const force = subRest.includes('--force');
-        return sceneRender(scene, outputDirect ?? outputFlag ?? '', force);
+        // Empty output is the "derive <scene>.mp4" default, resolved in @czap/command.
+        return sceneRender(scene ?? '', outputNext ?? outputFlag ?? '', force);
       }
-      if (sub === 'verify') return sceneVerify(subRest[0] ?? '');
+      if (sub === 'verify') return sceneVerify(scene ?? '');
       emitError('scene', `unknown subcommand: ${sub ?? '<missing>'}`);
       return 1;
     }
     case 'asset': {
       const [sub, ...subRest] = rest;
+      const id = positional(subRest);
       if (sub === 'analyze') {
-        const id = subRest[0] ?? '';
-        const projection = parseFlag(subRest, '--projection') as 'beat' | 'onset' | 'waveform' | undefined;
-        if (!projection) {
-          emitError('asset.analyze', 'missing --projection');
+        if (id === undefined) {
+          emitError('asset.analyze', 'usage: czap asset analyze <asset-id> --projection=<beat|onset|waveform>');
+          return 1;
+        }
+        const projectionRaw = parseFlag(subRest, '--projection');
+        if (projectionRaw === undefined) {
+          emitError(
+            'asset.analyze',
+            'missing --projection. Choose one: --projection=beat | onset | waveform. Example: czap asset analyze kick-loop --projection=beat',
+          );
+          return 1;
+        }
+        if (projectionRaw !== 'beat' && projectionRaw !== 'onset' && projectionRaw !== 'waveform') {
+          emitError('asset.analyze', `expected projection: beat | onset | waveform (got: ${projectionRaw})`);
           return 1;
         }
         const force = subRest.includes('--force');
-        return assetAnalyze(id, projection, force);
+        return assetAnalyze(id, projectionRaw, force);
       }
-      if (sub === 'verify') return assetVerify(subRest[0] ?? '');
+      if (sub === 'verify') {
+        if (id === undefined) {
+          emitError('asset.verify', 'usage: czap asset verify <asset-id>');
+          return 1;
+        }
+        return assetVerify(id);
+      }
       emitError('asset', `unknown subcommand: ${sub ?? '<missing>'}`);
       return 1;
     }
     case 'capsule': {
       const [sub, ...subRest] = rest;
-      if (sub === 'inspect') return capsuleInspect(subRest[0] ?? '');
-      if (sub === 'verify') return capsuleVerify(subRest[0] ?? '');
+      const name = positional(subRest);
+      if (sub === 'inspect' || sub === 'verify') {
+        if (name === undefined) {
+          emitError(`capsule.${sub}`, `usage: czap capsule ${sub} <capsule-name>`);
+          return 1;
+        }
+        return sub === 'inspect' ? capsuleInspect(name) : capsuleVerify(name);
+      }
       if (sub === 'list') return capsuleList(parseFlag(subRest, '--kind'));
       emitError('capsule', `unknown subcommand: ${sub ?? '<missing>'}`);
       return 1;
@@ -121,9 +169,26 @@ export async function run(argv: readonly string[]): Promise<number> {
       return verify(rest);
     }
     case 'mcp': {
-      const { start } = await import('@czap/mcp-server');
+      // @czap/mcp-server is an optional sibling install, not a dependency of
+      // @czap/cli — an unguarded import would break the one-JSON-line-on-stderr
+      // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
+      let mcpServer: { start: (opts: { readonly http?: string }) => Promise<void> };
+      try {
+        mcpServer = await import('@czap/mcp-server');
+      } catch (err) {
+        // Node puts ERR_MODULE_NOT_FOUND on err.code; wrapping loaders
+        // (custom ESM hooks, test harnesses) carry the original on cause.
+        const code = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code;
+        if (code !== 'ERR_MODULE_NOT_FOUND') throw err;
+        emitError(
+          'mcp',
+          '@czap/mcp-server is not installed',
+          'Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@0.1.x',
+        );
+        return 1;
+      }
       const httpFlag = parseFlag(rest, '--http');
-      await start(httpFlag !== undefined ? { http: httpFlag } : {});
+      await mcpServer.start(httpFlag !== undefined ? { http: httpFlag } : {});
       return 0;
     }
     default: {
@@ -158,4 +223,10 @@ function parseFlag(argv: readonly string[], flag: string): string | undefined {
     if (a.startsWith(`${flag}=`)) return a.slice(flag.length + 1);
   }
   return undefined;
+}
+
+/** First positional argument: argv[0] only when present and not a flag. */
+function positional(argv: readonly string[]): string | undefined {
+  const first = argv[0];
+  return first !== undefined && !first.startsWith('-') ? first : undefined;
 }

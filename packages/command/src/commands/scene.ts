@@ -37,6 +37,21 @@ function findContract(mod: Record<string, unknown>): Record<string, unknown> | u
   );
 }
 
+/**
+ * Missing-export teaching error: names which export is absent (capsule and
+ * contract are discovered separately) and points at a working example plus
+ * the glossary verb.
+ */
+function missingSceneExports(scenePath: string, cap: unknown, contract: unknown): string {
+  const missing = [
+    cap ? null : 'a sceneComposition capsule',
+    contract ? null : 'a scene contract (an export carrying a tracks array)',
+  ]
+    .filter((m): m is string => m !== null)
+    .join(' or ');
+  return `the scene module at ${scenePath} does not export ${missing}. Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition`;
+}
+
 /** `scene verify <scene.ts>` — run the scene capsule's generated tests. */
 export const sceneVerifyCommand: HandledCommand = {
   descriptor: {
@@ -106,13 +121,7 @@ export const sceneCompileCommand: HandledCommand = {
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract) {
-      return failed(
-        'scene.compile',
-        `no sceneComposition capsule or scene contract exported from ${scenePath} — export the capsule and contract returned by your scene definition (czap glossary capsule)`,
-        1,
-      );
-    }
+    if (!cap || !contract) return failed('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
 
     const start = Date.now();
     try {
@@ -133,14 +142,23 @@ export const sceneCompileCommand: HandledCommand = {
   },
 };
 
-/** `scene render <scene.ts> -o <out.mp4>` — compile + render to mp4 (idempotent). */
+/** Derive the default render output: `<sceneBasename>.mp4` next to the scene file. */
+function deriveOutputPath(scenePath: string): string {
+  const slash = Math.max(scenePath.lastIndexOf('/'), scenePath.lastIndexOf('\\'));
+  const base = scenePath.slice(slash + 1);
+  const dot = base.lastIndexOf('.');
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  return `${scenePath.slice(0, slash + 1)}${stem}.mp4`;
+}
+
+/** `scene render <scene.ts> [-o <out.mp4>]` — compile + render to mp4 (idempotent). */
 export const sceneRenderCommand: HandledCommand = {
   descriptor: {
     name: 'scene.render',
-    summary: 'Render a scene to mp4.',
+    summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
     inputSchema: {
       type: 'object',
-      required: ['scene', 'output'],
+      required: ['scene'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
     },
     requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
@@ -152,6 +170,8 @@ export const sceneRenderCommand: HandledCommand = {
         output: { type: 'string' },
         frameCount: { type: 'number' },
         elapsedMs: { type: 'number' },
+        // Optional, not required: receipts replayed from a pre-fps cache lack it.
+        fps: { type: 'number' },
         cached: { type: 'boolean' },
       },
     },
@@ -159,14 +179,16 @@ export const sceneRenderCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const scenePath = String(invocation.args.scene ?? '');
-    const output = String(invocation.args.output ?? '');
-    if (!output) return failed('scene.render', 'missing --output / -o path — e.g. czap scene render <scene.ts> -o out.mp4', 1);
+    // Omitted output derives <sceneBasename>.mp4 beside the scene file here
+    // (not at the adapter) so the cache key and the receipt both carry the
+    // resolved path. -o/--output stays the override.
+    const output = String(invocation.args.output ?? '') || deriveOutputPath(scenePath);
     if (!context.fileExists?.(scenePath)) return failed('scene.render', `scene not found: ${scenePath}`, 1);
 
     const force = invocation.args.force === true;
     const key = { command: 'scene.render', inputs: { scenePath, output }, force };
     const cached = context.cache?.read(key) as
-      | { sceneId: string; output: string; frameCount: number; elapsedMs: number }
+      | { sceneId: string; output: string; frameCount: number; elapsedMs: number; fps?: number }
       | null
       | undefined;
     // A cache hit only counts if the rendered output is still on disk.
@@ -182,10 +204,11 @@ export const sceneRenderCommand: HandledCommand = {
     const mod = await context.loadSceneModule?.(scenePath);
     const cap = mod ? findSceneCapsule(mod) : undefined;
     const contract = mod ? findContract(mod) : undefined;
-    if (!cap || !contract || typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
+    if (!cap || !contract) return failed('scene.render', missingSceneExports(scenePath, cap, contract), 1);
+    if (typeof contract.fps !== 'number' || typeof contract.duration !== 'number') {
       return failed(
         'scene.render',
-        `no sceneComposition capsule or contract (with numeric fps + duration) exported from ${scenePath} — export the capsule and contract returned by your scene definition (czap glossary capsule)`,
+        `the scene contract exported by ${scenePath} must carry numeric fps and duration (got fps: ${String(contract.fps)}, duration: ${String(contract.duration)}). Compare a working example: examples/scenes/intro.ts`,
         1,
       );
     }
@@ -205,7 +228,17 @@ export const sceneRenderCommand: HandledCommand = {
         ...(width !== undefined ? { width } : {}),
         ...(height !== undefined ? { height } : {}),
       });
-      const payload = { sceneId: cap.id, output, frameCount, elapsedMs };
+      // width/height ride the payload only when the contract declared them —
+      // the adapter owns the fallback and echoes the resolved values.
+      const payload = {
+        sceneId: cap.id,
+        output,
+        frameCount,
+        elapsedMs,
+        fps: contract.fps,
+        ...(width !== undefined ? { width } : {}),
+        ...(height !== undefined ? { height } : {}),
+      };
       context.cache?.write(key, payload);
       return {
         status: 'ok',

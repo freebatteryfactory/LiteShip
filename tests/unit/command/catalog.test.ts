@@ -108,9 +108,11 @@ describe('@czap/command canonical catalog', () => {
 
   it('preserves the legacy MCP inputSchemas byte-for-byte (listTools compatibility)', () => {
     const byName = new Map(commandRegistry.list().map((d) => [d.name, d.inputSchema]));
+    // 0.2.0 widening: `output` is no longer required — when omitted, the
+    // handler derives `<sceneBasename>.mp4` beside the scene file.
     expect(byName.get('scene.render')).toEqual({
       type: 'object',
-      required: ['scene', 'output'],
+      required: ['scene'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
     });
     expect(byName.get('asset.analyze')).toEqual({

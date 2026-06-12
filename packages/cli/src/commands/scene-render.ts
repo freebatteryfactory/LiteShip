@@ -63,7 +63,11 @@ export async function sceneRender(
     emitError('scene.render', (result.payload as { error: string }).error);
     return result.exitCode ?? 1;
   }
-  const payload = result.payload as Omit<SceneRenderReceipt, 'status' | 'command' | 'timestamp'> & { cached: boolean };
+  const payload = result.payload as Omit<SceneRenderReceipt, 'status' | 'command' | 'timestamp' | 'width' | 'height'> & {
+    cached: boolean;
+    width?: number;
+    height?: number;
+  };
   emit({
     status: 'ok',
     command: 'scene.render',
@@ -72,6 +76,12 @@ export async function sceneRender(
     output: payload.output,
     frameCount: payload.frameCount,
     elapsedMs: payload.elapsedMs,
+    // Contract-declared dimensions ride the payload; absent ones resolve to
+    // the adapter defaults the render actually used. Echoed so the values
+    // are observable in the receipt, not just in the video bytes.
+    width: payload.width ?? DEFAULT_WIDTH,
+    height: payload.height ?? DEFAULT_HEIGHT,
+    ...(payload.fps !== undefined ? { fps: payload.fps } : {}),
     cached: payload.cached,
   });
   return 0;
