@@ -157,6 +157,8 @@ interface RenderCompleteMessage {
 interface ErrorMessage {
   readonly type: 'error';
   readonly message: string;
+  /** Inbound message `type` the worker was handling when it threw (e.g. 'compute'). */
+  readonly context?: string;
 }
 
 interface MetricsMessage {

@@ -310,7 +310,13 @@ function _createCompositorWorker(
         Diagnostics.error({
           source: 'czap/worker.compositor-worker',
           code: 'worker-message-error',
-          message: 'Compositor worker reported an error.',
+          // Both worker-side catch sites wrap compute(), where the
+          // dominant failure is a registration whose thresholds do not
+          // line up with its states — hedged because other causes exist.
+          message:
+            msg.context !== undefined
+              ? `Compositor worker failed while handling "${msg.context}". Most often a registration whose thresholds do not line up with its states (thresholds[i] is the lower bound of states[i]).`
+              : 'Compositor worker reported an error.',
           detail: msg.message,
         });
         break;
@@ -321,7 +327,9 @@ function _createCompositorWorker(
     Diagnostics.error({
       source: 'czap/worker.compositor-worker',
       code: 'worker-unhandled-error',
-      message: 'Compositor worker raised an unhandled error.',
+      // The worker is minted from a Blob URL, so a strict CSP blocking
+      // worker-src blob: is the dominant real-world cause of this event.
+      message: `Compositor worker raised an unhandled error (often the Blob-URL worker being blocked by a strict CSP — allow worker-src blob:). Detail: ${e.message}`,
       detail: e.message,
     });
   };
