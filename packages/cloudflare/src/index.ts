@@ -11,12 +11,15 @@ export {
   type CloudflareWorkersEnv,
 } from './edge-cache.js';
 
+export { cloudflareMiddleware, type CloudflareMiddlewareConfig } from './middleware.js';
+
+export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';
+
+// --- testing ---
+
+/** @group Testing */
 export {
-  cloudflareMiddleware,
   getDefaultWorkersEnv,
   resetWorkersEnvForTesting,
   setWorkersEnvForTesting,
-  type CloudflareMiddlewareConfig,
 } from './middleware.js';
-
-export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';

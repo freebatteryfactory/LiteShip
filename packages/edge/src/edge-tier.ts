@@ -7,7 +7,7 @@
 
 import type { CapLevel } from '@czap/core';
 import { tierFromCapabilities, motionTierFromCapabilities, designTierFromCapabilities } from '@czap/detect';
-import type { DesignTier, MotionTier } from '@czap/detect';
+import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@czap/detect';
 import { ClientHints } from './client-hints.js';
 import type { ClientHintsHeaders } from './client-hints.js';
 
@@ -36,15 +36,22 @@ export interface EdgeTierResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Detect capability tiers from HTTP headers using Client Hints parsing
- * and the same pure tier mapping functions used on the client.
+ * Map already-parsed {@link ExtendedDeviceCapabilities} to the tier triple
+ * using the same pure functions as the client runtime.
  */
-function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
-  const caps = ClientHints.parseClientHints(headers);
+function tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult {
   const capLevel = tierFromCapabilities(caps);
   const motionTier = motionTierFromCapabilities(caps);
   const designTier = designTierFromCapabilities(caps);
   return { capLevel, motionTier, designTier };
+}
+
+/**
+ * Detect capability tiers from HTTP headers using Client Hints parsing
+ * and the same pure tier mapping functions used on the client.
+ */
+function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
+  return tierFromParsed(ClientHints.parseClientHints(headers));
 }
 
 /**
@@ -83,6 +90,8 @@ function tierDataAttributes(result: EdgeTierResult): string {
 export const EdgeTier = {
   /** Detect {@link EdgeTierResult} from a `Headers`-like bag. */
   detectTier,
+  /** Map parsed Client Hints capabilities to an {@link EdgeTierResult}. */
+  tierFromParsed,
   /** Render an `EdgeTierResult` into `data-czap-*` attributes for the root HTML element. */
   tierDataAttributes,
 } as const;

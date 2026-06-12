@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Boundary } from '@czap/core';
-import { createEdgeHostAdapter, enumerateTierKeys } from '@czap/edge';
+import { createEdgeHostAdapter, ClientHints, enumerateTierKeys } from '@czap/edge';
 import * as ThemeCompiler from '../../../packages/edge/src/theme-compiler.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 
@@ -41,6 +41,13 @@ function makeKV() {
 }
 
 describe('createEdgeHostAdapter', () => {
+  test('resolve parses Client Hints once per request', async () => {
+    const parseSpy = vi.spyOn(ClientHints, 'parseClientHints');
+    const adapter = createEdgeHostAdapter();
+    await adapter.resolve(makeHeaders());
+    expect(parseSpy).toHaveBeenCalledTimes(1);
+  });
+
   test('resolves client hints and response headers without optional features', async () => {
     const adapter = createEdgeHostAdapter();
     const result = await adapter.resolve(makeHeaders());

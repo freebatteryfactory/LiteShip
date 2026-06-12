@@ -105,28 +105,30 @@ function buildCacheKey(
  *
  * @example
  * ```ts
- * import { KVCache } from '@czap/edge';
- * import { ContentAddress } from '@czap/core';
+ * import { KVCache, EdgeTier } from '@czap/edge';
+ * import { Boundary } from '@czap/core';
  *
  * const kv = { get: async (k: string) => null, put: async (k: string, v: string) => {} };
  * const cache = KVCache.createBoundaryCache(kv, { ttl: 3600, prefix: 'myapp' });
  *
- * const boundaryId = ContentAddress('fnv1a:abcd1234');
- * const tierResult = {
- *   capLevel: 'reactive',
- *   motionTier: 'transitions',
- *   designTier: 'standard',
- * } as const;
+ * const myBoundary = Boundary.make({
+ *   input: 'viewport.width',
+ *   at: [[0, 'compact'], [768, 'wide']],
+ * });
+ * const request = new Request('https://example.com', {
+ *   headers: { 'device-memory': '8', 'sec-ch-viewport-width': '1280' },
+ * });
+ * const tierResult = EdgeTier.detectTier(request.headers);
  *
  * // Store compiled outputs
- * await cache.putCompiledOutputs(boundaryId, tierResult, {
+ * await cache.putCompiledOutputs(myBoundary.id, tierResult, {
  *   css: '...',
  *   propertyRegistrations: '...',
  *   containerQueries: '...',
  * });
  *
  * // Retrieve cached outputs
- * const cached = await cache.getCompiledOutputs(boundaryId, tierResult);
+ * const cached = await cache.getCompiledOutputs(myBoundary.id, tierResult);
  * ```
  *
  * @param kv      - A generic KV namespace implementing get/put
@@ -157,7 +159,10 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
           Diagnostics.warnOnce({
             source: 'czap/edge.kv-cache',
             code: 'invalid-cache-entry',
-            message: `Boundary cache entry "${key}" could not be parsed and will be treated as a cache miss.`,
+            message:
+              `Boundary cache entry "${key}" could not be parsed and will be treated as a cache miss. ` +
+              'Probable cause: a foreign writer or truncated value wrote this key. ' +
+              'If a compile callback is configured, the host adapter will recompile and overwrite automatically — no action needed.',
             cause: error,
           });
         } else {
@@ -182,6 +187,15 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
           containerQueries: String(parsed.containerQueries),
         };
       }
+
+      Diagnostics.warnOnce({
+        source: 'czap/edge.kv-cache',
+        code: 'cache-entry-shape-mismatch',
+        message:
+          `Boundary cache entry "${key}" parsed as JSON but is missing css, propertyRegistrations, or containerQueries and will be treated as a cache miss. ` +
+          'Probable cause: a foreign writer or an older cache schema wrote this key. ' +
+          'If a compile callback is configured, the host adapter will recompile and overwrite automatically — no action needed.',
+      });
 
       return null;
     },

@@ -45,6 +45,7 @@ export interface EdgeTierResult {
 
 export declare const EdgeTier: {
   detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult;
+  tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult;
   tierDataAttributes(result: EdgeTierResult): string;
 };
 

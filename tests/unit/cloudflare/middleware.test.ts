@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
+import { Diagnostics } from '@czap/core';
 import { Boundary } from '@czap/core';
 import { dedupeOutputsByTier, enumerateTierKeys } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestFile } from '@czap/edge';
@@ -58,7 +59,54 @@ function makeKVStore() {
   return { cacheStore, kv, calls };
 }
 
+afterEach(() => {
+  Diagnostics.reset();
+});
+
 describe('cloudflareMiddleware', () => {
+  test('defaults binding to CZAP_BOUNDARY_CACHE when omitted', async () => {
+    const { kv } = makeKVStore();
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      boundaryId: boundary.id,
+      compile: async () => ({ css: 'x', propertyRegistrations: '', containerQueries: '' }),
+      env: { CZAP_BOUNDARY_CACHE: kv },
+    });
+
+    const context = {
+      request: new Request('http://localhost/'),
+      locals: {} as Record<string, unknown>,
+    };
+    await middleware(context, async () => new Response('ok'));
+    expect((context.locals.czap as { edge?: { cacheStatus?: string } }).edge?.cacheStatus).toBeDefined();
+  });
+
+  test('loadWorkersEnvFromRuntime warns when cloudflare:workers is unavailable', async () => {
+    resetWorkersEnvForTesting();
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      compile: async () => ({ css: '', propertyRegistrations: '', containerQueries: '' }),
+    });
+
+    const context = {
+      request: new Request('http://localhost/'),
+      locals: {} as Record<string, unknown>,
+    };
+    await middleware(context, async () => new Response('ok'));
+
+    expect(events.some((e) => e.code === 'workers-env-unavailable')).toBe(true);
+    expect(events.find((e) => e.code === 'workers-env-unavailable')).toMatchObject({
+      level: 'warn',
+      source: 'czap/cloudflare.middleware',
+    });
+    resetWorkersEnvForTesting();
+  });
+
   test('uses explicit env object without runtime priming', async () => {
     const { kv } = makeKVStore();
     const boundary = makeBoundary();
@@ -108,7 +156,14 @@ describe('cloudflareMiddleware', () => {
 
   test('primes workerd env on first request when env is omitted', async () => {
     resetWorkersEnvForTesting();
-    setWorkersEnvForTesting({ CZAP_BOUNDARY_CACHE: { async get() { return null; }, async put() {} } });
+    setWorkersEnvForTesting({
+      CZAP_BOUNDARY_CACHE: {
+        async get() {
+          return null;
+        },
+        async put() {},
+      },
+    });
 
     const boundary = makeBoundary();
     const middleware = cloudflareMiddleware({

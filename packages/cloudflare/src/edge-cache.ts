@@ -5,6 +5,7 @@
  */
 
 import type { KVNamespace } from '@czap/edge';
+import { Diagnostics } from '@czap/core';
 
 /** Cloudflare Workers execution environment (bindings bag). */
 export type CloudflareWorkersEnv = Record<string, unknown>;
@@ -33,6 +34,18 @@ export function resolveKvBinding(env: CloudflareWorkersEnv, binding: string): KV
   return null;
 }
 
+function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: string): void {
+  const available = Object.keys(envSource());
+  Diagnostics.warnOnce({
+    source: 'czap/cloudflare.edge-cache',
+    code: 'kv-binding-missing',
+    message:
+      `KV binding "${binding}" is not present in the Workers env` +
+      (available.length > 0 ? ` (available: ${available.join(', ')})` : ' (no bindings found)') +
+      `. Fix: add a kv_namespaces entry with binding "${binding}" in wrangler.jsonc.`,
+  });
+}
+
 /**
  * Create a lazy {@link KVNamespace} adapter backed by a Workers env binding.
  *
@@ -46,12 +59,18 @@ export function createCloudflareEdgeCache(
   return {
     async get(key: string): Promise<string | null> {
       const kv = resolveKvBinding(envSource(), options.binding);
-      if (!kv) return null;
+      if (!kv) {
+        warnMissingBinding(envSource, options.binding);
+        return null;
+      }
       return kv.get(key);
     },
     async put(key: string, value: string, putOptions?: { expirationTtl?: number }): Promise<void> {
       const kv = resolveKvBinding(envSource(), options.binding);
-      if (!kv) return;
+      if (!kv) {
+        warnMissingBinding(envSource, options.binding);
+        return;
+      }
       await kv.put(key, value, putOptions);
     },
   };
