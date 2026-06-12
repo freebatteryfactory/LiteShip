@@ -284,3 +284,207 @@ describe('createEdgeHostAdapter', () => {
     ).toThrowError(/precompiled.*compile|compile.*precompiled/s);
   });
 });
+
+describe('createEdgeHostAdapter (multi-boundary)', () => {
+  /** Distinct content -> distinct content addresses (ADR-0003). */
+  const heroBoundary = Boundary.make({
+    input: 'viewport.width',
+    at: [
+      [0, 'compact'],
+      [768, 'wide'],
+    ],
+  });
+  const sidebarBoundary = Boundary.make({
+    input: 'viewport.width',
+    at: [
+      [0, 'collapsed'],
+      [1024, 'expanded'],
+    ],
+  });
+
+  function fullGrid(css: string) {
+    const outputs = { css, propertyRegistrations: '', containerQueries: '' };
+    return Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
+  }
+
+  test('each boundary resolves its own CSS at the same tier -- no cross-boundary bleed', async () => {
+    const { kv } = makeKV();
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{--gap:24px;}') },
+          sidebar: { boundaryId: sidebarBoundary.id, precompiled: fullGrid('.sidebar{--gap:8px;}') },
+        },
+      },
+    });
+
+    const result = await adapter.resolve(makeHeaders());
+
+    expect(result.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{--gap:24px;}');
+    expect(result.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{--gap:8px;}');
+    expect(result.boundaries?.hero?.boundaryId).toBe(heroBoundary.id);
+    expect(result.boundaries?.sidebar?.boundaryId).toBe(sidebarBoundary.id);
+    expect(result.boundaries?.hero?.cacheStatus).toBe('precompiled');
+    expect(result.boundaries?.sidebar?.cacheStatus).toBe('precompiled');
+    expect(result.cacheStatus).toBe('precompiled');
+    // With multiple boundaries there is no "the" output; consumers read `boundaries`.
+    expect(result.compiledOutputs).toBeUndefined();
+  });
+
+  test('compile fallback caches under each boundary identity -- distinct KV keys', async () => {
+    const { kv, store } = makeKV();
+    const compile = ({ boundaryName }: { boundaryName?: string }) => ({
+      css: `.${boundaryName}{}`,
+      propertyRegistrations: '',
+      containerQueries: '',
+    });
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: { boundaryId: heroBoundary.id, compile },
+          sidebar: { boundaryId: sidebarBoundary.id, compile },
+        },
+      },
+    });
+
+    const first = await adapter.resolve(makeHeaders());
+    const second = await adapter.resolve(makeHeaders());
+
+    expect(first.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(first.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+    // One key per boundary, each carrying that boundary's content address.
+    expect(store.size).toBe(2);
+    const keys = [...store.keys()];
+    expect(keys.some((key) => key.includes(heroBoundary.id))).toBe(true);
+    expect(keys.some((key) => key.includes(sidebarBoundary.id))).toBe(true);
+    expect(second.boundaries?.hero?.cacheStatus).toBe('hit');
+    expect(second.boundaries?.sidebar?.cacheStatus).toBe('hit');
+    expect(second.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(second.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+  });
+
+  test('two names sharing one ContentAddress cache separately -- same definition, different CSS (Codex P1)', async () => {
+    // The id comes from Boundary.make's content address; two NAMES can
+    // reference the same definition while their @quantize CSS differs.
+    // id+tier-only keys would let hero's compile result serve sidebar.
+    const { kv, store } = makeKV();
+    const compile = ({ boundaryName }: { boundaryName?: string }) => ({
+      css: `.${boundaryName}{}`,
+      propertyRegistrations: '',
+      containerQueries: '',
+    });
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: { boundaryId: heroBoundary.id, compile },
+          sidebar: { boundaryId: heroBoundary.id, compile },
+        },
+      },
+    });
+
+    const first = await adapter.resolve(makeHeaders());
+    const second = await adapter.resolve(makeHeaders());
+
+    expect(first.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(first.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+    // One KV key per NAME even though the content address is shared.
+    expect(store.size).toBe(2);
+    expect(second.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(second.boundaries?.sidebar?.compiledOutputs?.css).toBe('.sidebar{}');
+    expect(second.boundaries?.hero?.cacheStatus).toBe('hit');
+    expect(second.boundaries?.sidebar?.cacheStatus).toBe('hit');
+  });
+
+  test('compile context carries the boundary identity', async () => {
+    const { kv } = makeKV();
+    const compile = vi.fn(() => ({ css: '', propertyRegistrations: '', containerQueries: '' }));
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: { hero: { boundaryId: heroBoundary.id, compile } },
+      },
+    });
+
+    await adapter.resolve(makeHeaders());
+
+    expect(compile).toHaveBeenCalledWith(
+      expect.objectContaining({ boundaryId: heroBoundary.id, boundaryName: 'hero' }),
+    );
+  });
+
+  test('a sole boundaries entry still populates the top-level compiledOutputs', async () => {
+    const { kv } = makeKV();
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: { hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{}') } },
+      },
+    });
+
+    const result = await adapter.resolve(makeHeaders());
+
+    expect(result.compiledOutputs?.css).toBe('.hero{}');
+    expect(result.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+  });
+
+  test('top-level cacheStatus aggregates worst case across boundaries', async () => {
+    const { kv } = makeKV();
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{}') },
+          sidebar: {
+            boundaryId: sidebarBoundary.id,
+            compile: () => ({ css: '.sidebar{}', propertyRegistrations: '', containerQueries: '' }),
+          },
+        },
+      },
+    });
+
+    const result = await adapter.resolve(makeHeaders());
+
+    expect(result.boundaries?.hero?.cacheStatus).toBe('precompiled');
+    expect(result.boundaries?.sidebar?.cacheStatus).toBe('miss');
+    expect(result.cacheStatus).toBe('miss');
+  });
+
+  test('empty boundaries record fails fast with a teaching error', () => {
+    const { kv } = makeKV();
+    expect(() => createEdgeHostAdapter({ cache: { kv, boundaries: {} } })).toThrowError(/empty `boundaries`/);
+  });
+
+  test('boundaries entry with no outputs source fails fast naming the entry', () => {
+    const { kv } = makeKV();
+    expect(() =>
+      createEdgeHostAdapter({
+        cache: { kv, boundaries: { hero: { boundaryId: heroBoundary.id } } },
+      }),
+    ).toThrowError(/"hero".*precompiled.*compile/s);
+  });
+
+  test('mixing boundaries with the single-boundary fields fails fast', () => {
+    const { kv } = makeKV();
+    expect(() =>
+      createEdgeHostAdapter({
+        cache: {
+          kv,
+          boundaryId: heroBoundary.id,
+          boundaries: { hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{}') } },
+        },
+      }),
+    ).toThrowError(/mixes/);
+  });
+
+  test('cache config identifying no boundary at all fails fast', () => {
+    const { kv } = makeKV();
+    expect(() =>
+      createEdgeHostAdapter({
+        cache: { kv, compile: () => ({ css: '', propertyRegistrations: '', containerQueries: '' }) },
+      }),
+    ).toThrowError(/boundaryId.*boundaries|boundaries.*boundaryId/s);
+  });
+});

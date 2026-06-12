@@ -17,7 +17,7 @@ import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
 import { collectBoundaryManifest } from './boundary-manifest.js';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
-import { blankCssCommentsAndStrings, cssPrologueEnd } from './css-scan.js';
+import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, primitiveSearchPatterns, type PrimitiveKind } from './primitive-resolve.js';
 import { transformHTML } from './html-transform.js';
 import { parseTokenBlocks, compileTokenBlock } from './token-transform.js';
@@ -611,10 +611,24 @@ function findAtRuleBlock(css: string, marker: string, name: string): { start: nu
   // every index into `scan` is a valid index into `css`.
   const scan = blankCssCommentsAndStrings(css);
   let searchFrom = 0;
+  // Running depth from the last scan position — the parsers accept at-rule
+  // markers only at the sheet's top level (braceDepthDelta guard), so the
+  // REPLACEMENT search must apply the same rule, or a marker inside a
+  // declaration value (`--x: @style card {...};`) earlier in the sheet
+  // gets spliced in place of the real block the parser accepted.
+  let depthFrom = 0;
+  let depthAtFrom = 0;
 
   while (searchFrom < scan.length) {
     const idx = scan.indexOf(marker, searchFrom);
     if (idx === -1) return null;
+
+    depthAtFrom = braceDepthDelta(scan, depthFrom, idx, depthAtFrom);
+    depthFrom = idx;
+    if (depthAtFrom > 0) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
 
     // Verify this at-rule is followed by the target name
     const afterMarker = scan.substring(idx + marker.length).trimStart();

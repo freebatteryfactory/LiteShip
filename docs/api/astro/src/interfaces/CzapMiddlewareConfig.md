@@ -6,7 +6,7 @@
 
 # Interface: CzapMiddlewareConfig
 
-Defined in: [astro/src/middleware.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L49)
+Defined in: [astro/src/middleware.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L58)
 
 Options accepted by [czapMiddleware](../functions/czapMiddleware.md).
 
@@ -19,7 +19,7 @@ have an `@czap/edge` host adapter (KV cache, theme compilation).
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/middleware.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L53)
+Defined in: [astro/src/middleware.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L62)
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -29,7 +29,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: [astro/src/middleware.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L51)
+Defined in: [astro/src/middleware.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L60)
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -39,7 +39,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/middleware.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L60)
+Defined in: [astro/src/middleware.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L69)
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

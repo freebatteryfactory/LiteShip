@@ -8,7 +8,13 @@
  */
 
 import { ClientHints, createEdgeHostAdapter, EdgeTier } from '@czap/edge';
-import type { CompiledOutputs, EdgeHostAdapterConfig, EdgeHostCacheStatus, ThemeCompileResult } from '@czap/edge';
+import type {
+  CompiledOutputs,
+  EdgeHostAdapterConfig,
+  EdgeHostBoundaryResolution,
+  EdgeHostCacheStatus,
+  ThemeCompileResult,
+} from '@czap/edge';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
@@ -34,7 +40,10 @@ export interface CzapLocals {
   /** Edge-host resolution result, present when an edge adapter is configured. */
   readonly edge?: {
     readonly theme?: ThemeCompileResult;
+    /** Sole boundary's outputs; undefined when multiple boundaries are configured. */
     readonly compiledOutputs?: CompiledOutputs;
+    /** Per-boundary outcomes, keyed by name (multi-boundary cache form). */
+    readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
     readonly htmlAttributes: string;
     readonly cacheStatus: EdgeHostCacheStatus;
   };
@@ -113,6 +122,7 @@ export function czapMiddleware(
             edge: {
               theme: edgeResolution.theme,
               compiledOutputs: edgeResolution.compiledOutputs,
+              boundaries: edgeResolution.boundaries,
               htmlAttributes: edgeResolution.htmlAttributes,
               cacheStatus: edgeResolution.cacheStatus,
             },

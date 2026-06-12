@@ -15,9 +15,14 @@ tier combination.
 
 ### getCompiledOutputs()
 
-> **getCompiledOutputs**(`boundaryId`, `tierResult`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
+> **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L43)
+Defined in: [edge/src/kv-cache.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L49)
+
+`qualifier` joins the key when two NAMES share one boundary
+`ContentAddress` but carry different compiled CSS (the same
+`Boundary.make` definition referenced by two `@quantize` blocks) —
+without it, the first name's compile result would serve every name.
 
 #### Parameters
 
@@ -29,6 +34,10 @@ Defined in: [edge/src/kv-cache.ts:43](https://github.com/heyoub/LiteShip/blob/ma
 
 [`EdgeTierResult`](EdgeTierResult.md)
 
+##### qualifier?
+
+`string`
+
 #### Returns
 
 `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
@@ -37,9 +46,9 @@ Defined in: [edge/src/kv-cache.ts:43](https://github.com/heyoub/LiteShip/blob/ma
 
 ### putCompiledOutputs()
 
-> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`): `Promise`\<`void`\>
+> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L45)
+Defined in: [edge/src/kv-cache.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L55)
 
 #### Parameters
 
@@ -54,6 +63,10 @@ Defined in: [edge/src/kv-cache.ts:45](https://github.com/heyoub/LiteShip/blob/ma
 ##### outputs
 
 [`CompiledOutputs`](CompiledOutputs.md)
+
+##### qualifier?
+
+`string`
 
 #### Returns
 
