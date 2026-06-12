@@ -14,12 +14,13 @@
  *
  * In this tutorial you will:
  *   1. Import a boundary definition (viewport.boundaries.ts)
- *   2. Serialize it onto a DOM element via data-czap-boundary
- *   3. Use client:satellite to hydrate it (evaluate on resize)
+ *   2. Label the element with data-czap="viewport" for the Vite macro
+ *   3. Spread satelliteAttrs() to wire boundary JSON + the satellite directive
  *   4. Write CSS that targets data-czap-state="compact|wide"
  */
 
 import Base from '../layouts/Base.astro';
+import { satelliteAttrs } from '@czap/astro';
 import { viewport } from '../boundaries/viewport.boundaries.js';
 ---
 
@@ -82,45 +83,32 @@ export const viewport = Boundary.make({'{'}&br;
   </p>
 
   <!-- ============================================================
-       STEP 3: Wiring It Up in HTML
+       STEP 3: Wiring It Up
 
-       The key attributes on the container div:
+       Spread {@link satelliteAttrs} from @czap/astro — it serializes the
+       boundary, sets data-czap-directive="satellite", and optional
+       data-czap-state for SSR. Pair it with data-czap="viewport" so the
+       Vite plugin resolves the named export at build time.
 
-       data-czap="viewport"
-         Human-readable label. Not used by the runtime, but useful for
-         debugging ("which boundary is this element tracking?").
-
-       data-czap-boundary='{ ... }'
-         JSON-serialized boundary. The satellite directive parses this
-         to know which signal to watch and what states to evaluate.
-
-       data-czap-state="compact"
-         Initial state. Set server-side as a sensible default. The
-         satellite directive will update this on the client once it
-         reads the actual viewport width.
-
-       client:satellite
-         Astro client directive registered by @czap/astro. It tells
-         Astro to load the satellite hydration script, which:
-           1. Parses data-czap-boundary
-           2. Reads the signal (window.innerWidth)
-           3. Evaluates the boundary (binary search)
-           4. Sets data-czap-state to the matching state
-           5. Watches for resize via ResizeObserver
+       Under the hood, satelliteAttrs emits the same attributes you could
+       hand-roll: data-czap-boundary='{...}', data-czap-directive, and
+       data-czap-state. Manual wiring is fine for debugging; prefer the
+       helper in app code.
   -->
 
   <h2>Wiring It Up</h2>
 
   <p>
-    To make a boundary live, attach three data attributes to a container
-    and add the <code>client:satellite</code> directive:
+    Import the boundary and spread <code>satelliteAttrs</code> onto your
+    container (plus <code>data-czap="viewport"</code> for macro resolution):
   </p>
 
-  <pre><code>&lt;div
+  <pre><code>import {'{'} satelliteAttrs {'}'} from '@czap/astro';
+import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
+
+&lt;div
   data-czap="viewport"
-  data-czap-boundary='{'{'}...boundary JSON...'{'}'}'
-  data-czap-state="compact"
-  client:satellite
+  {'{'}...satelliteAttrs({'{'} boundary: viewport, initialState: 'compact' {'}'}){'}'}
 &gt;
   ...content that adapts...
 &lt;/div&gt;</code></pre>
@@ -147,10 +135,8 @@ export const viewport = Boundary.make({'{'}&br;
   </p>
 
   <div
-    class="boundary-demo"
     data-czap="viewport"
-    data-czap-directive="satellite"
-    data-czap-state="compact"
+    {...satelliteAttrs({ boundary: viewport, initialState: 'compact', class: 'boundary-demo' })}
   >
     <!-- --------------------------------------------------------
          These cards are the content that adapts. In compact state

@@ -177,9 +177,8 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
   <h2>Live Demo</h2>
 
   <p>
-    The element below is wired to <code>/api/feed</code>. In a real app,
-    it would receive live patches. Here it shows the initial fallback
-    content (since no SSE server is running).
+    The element below is wired to <code>/api/feed</code> with
+    <code>client:stream</code>. On connect the endpoint sends an initial patch.
   </p>
 
   <!-- --------------------------------------------------------
@@ -199,10 +198,10 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
     class="stream-target"
     id="stream-demo"
     data-czap-stream-url="/api/feed"
+    client:stream
   >
-    <!-- This initial content is what users see before the stream
-         connects (or if the connection fails). Always provide
-         meaningful fallback content. -->
+    <!-- Fallback content before the SSE client connects. The /api/feed
+         endpoint sends an initial patch once the EventSource opens. -->
     <p class="stream-status">Waiting for server stream...</p>
     <p>Connect a real SSE endpoint at <code>/api/feed</code> to see live updates.</p>
   </div>

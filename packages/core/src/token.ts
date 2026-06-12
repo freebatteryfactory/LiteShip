@@ -29,6 +29,12 @@ interface TokenDef<N extends string = string, Axes extends readonly string[] = r
 }
 
 interface TokenFactory {
+  make<N extends string>(config: {
+    readonly name: N;
+    readonly category: TokenCategory;
+    /** Single-value shorthand — derives `axes: []`, `values: {}`, `fallback: value`. */
+    readonly value: unknown;
+  }): TokenDef<N, readonly []>;
   make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
     readonly name: N;
     readonly category: TokenCategory;
@@ -174,17 +180,54 @@ export const Token: TokenFactory & {
    * // token.cssProperty === '--czap-bg'
    * ```
    */
-  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
-    readonly name: N;
-    readonly category: TokenCategory;
-    readonly axes?: A;
-    readonly values: Record<string, unknown>;
-    readonly fallback?: unknown;
-  }): TokenDef<N, A> {
-    if (config.name === '') {
+  make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(
+    config:
+      | {
+          readonly name: N;
+          readonly category: TokenCategory;
+          readonly value: unknown;
+        }
+      | {
+          readonly name: N;
+          readonly category: TokenCategory;
+          readonly axes?: A;
+          readonly values: Record<string, unknown>;
+          readonly fallback?: unknown;
+        },
+  ): TokenDef<N, A> {
+    if ('value' in config && !('values' in config)) {
+      const simple = config as { name: N; category: TokenCategory; value: unknown };
+      if (simple.name === '') {
+        throw new CzapValidationError('Token.make', 'Token name must not be empty.');
+      }
+      const axes = [] as unknown as A;
+      const values = {};
+      const fallback = simple.value;
+      const id = deterministicId(simple.name, simple.category, axes, values, fallback);
+      return Object.freeze({
+        _tag: 'TokenDef' as const,
+        _version: 1 as const,
+        id,
+        name: simple.name,
+        category: simple.category,
+        axes,
+        values,
+        fallback,
+        cssProperty: `--czap-${simple.name}` as const,
+      });
+    }
+
+    const full = config as {
+      readonly name: N;
+      readonly category: TokenCategory;
+      readonly axes?: A;
+      readonly values: Record<string, unknown>;
+      readonly fallback?: unknown;
+    };
+    if (full.name === '') {
       throw new CzapValidationError('Token.make', 'Token name must not be empty.');
     }
-    const axes = (config.axes ?? ['default']) as A;
+    const axes = (full.axes ?? ['default']) as A;
     const seen = new Set<string>();
     for (const axis of axes) {
       if (seen.has(axis)) {
@@ -194,7 +237,7 @@ export const Token: TokenFactory & {
     }
 
     const sortedAxes = [...axes].sort();
-    for (const key of Object.keys(config.values)) {
+    for (const key of Object.keys(full.values)) {
       const segments = key.split(':').length;
       if (segments !== axes.length) {
         throw new CzapValidationError(
@@ -205,29 +248,29 @@ export const Token: TokenFactory & {
       }
     }
 
-    let fallback = config.fallback;
-    if (!('fallback' in config)) {
-      if (!('default' in config.values)) {
+    let fallback = full.fallback;
+    if (!('fallback' in full)) {
+      if (!('default' in full.values)) {
         throw new CzapValidationError(
           'Token.make',
           'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
         );
       }
-      fallback = config.values['default'];
+      fallback = full.values['default'];
     }
 
-    const id = deterministicId(config.name, config.category, axes, config.values, fallback);
+    const id = deterministicId(full.name, full.category, axes, full.values, fallback);
 
     return Object.freeze({
       _tag: 'TokenDef' as const,
       _version: 1 as const,
       id,
-      name: config.name,
-      category: config.category,
+      name: full.name,
+      category: full.category,
       axes,
-      values: config.values,
+      values: full.values,
       fallback,
-      cssProperty: `--czap-${config.name}` as const,
+      cssProperty: `--czap-${full.name}` as const,
     });
   },
   tap: _tap,

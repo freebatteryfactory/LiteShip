@@ -40,6 +40,13 @@ export declare namespace Token {
     readonly cssProperty: CSSCustomProp;
   }
 
+  export function make<N extends string>(config: {
+    readonly name: N;
+    readonly category: Shape['category'];
+    /** Single-value shorthand — derives `axes: []`, `values: {}`, `fallback: value`. */
+    readonly value: unknown;
+  }): Shape<N, readonly []>;
+
   export function make<N extends string, const A extends readonly [string, ...string[]] = readonly ['default']>(config: {
     readonly name: N;
     readonly category: Shape['category'];

@@ -3,49 +3,37 @@ import { Token } from '@czap/core';
 export const fontSizeSm = Token.make({
   name: 'font-size-sm',
   category: 'typography',
-  axes: ['theme'] as const,
-  values: { light: '0.875rem', dark: '0.875rem' },
-  fallback: '0.875rem',
+  value: '0.875rem',
 });
 
 export const fontSizeMd = Token.make({
   name: 'font-size-md',
   category: 'typography',
-  axes: ['theme'] as const,
-  values: { light: '1rem', dark: '1rem' },
-  fallback: '1rem',
+  value: '1rem',
 });
 
 export const fontSizeLg = Token.make({
   name: 'font-size-lg',
   category: 'typography',
-  axes: ['theme'] as const,
-  values: { light: '1.25rem', dark: '1.25rem' },
-  fallback: '1.25rem',
+  value: '1.25rem',
 });
 
 export const spacingSm = Token.make({
   name: 'spacing-sm',
   category: 'spacing',
-  axes: ['theme'] as const,
-  values: { light: '0.5rem', dark: '0.5rem' },
-  fallback: '0.5rem',
+  value: '0.5rem',
 });
 
 export const spacingMd = Token.make({
   name: 'spacing-md',
   category: 'spacing',
-  axes: ['theme'] as const,
-  values: { light: '1rem', dark: '1rem' },
-  fallback: '1rem',
+  value: '1rem',
 });
 
 export const spacingLg = Token.make({
   name: 'spacing-lg',
   category: 'spacing',
-  axes: ['theme'] as const,
-  values: { light: '2rem', dark: '2rem' },
-  fallback: '2rem',
+  value: '2rem',
 });
 
 export const colorText = Token.make({
