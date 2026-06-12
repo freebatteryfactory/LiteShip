@@ -20,6 +20,18 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/vite` + `@czap/compiler` — `viewport.height` is a first-class
+  compiled axis: the CSS compiler derives the container-query axis from
+  the boundary input (height-measuring inputs serialize `(height ...)`
+  conditions; everything else keeps `(width ...)` byte-for-byte), and
+  height boundaries join the auto-containment path. When a sheet (or a
+  manifest entry) collects the `viewport-height` container name, the
+  `:root` rule upgrades to `container-type: size` with `block-size:
+  100dvh` pinned (size containment computes the root's height as if
+  empty); width-only sheets keep the `inline-size` rule unchanged. The
+  `container-not-declared` diagnostic no longer fires for
+  `viewport.height` — it remains for unrecognized `viewport.*` axes and
+  non-viewport inputs.
 - `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
   boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
   `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the
@@ -199,6 +211,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Fixed
 
+- examples/tutorial — `05-llm.astro` failed `astro build` outright: its
+  code samples were littered with mangled brace escapes (`{'{'}&br;` —
+  `&br;` is not an HTML entity) and one unescaped `{` opened a bogus
+  Astro expression mid-sample. The code blocks now use `is:raw` so
+  braces render literally. A new integration gate
+  (`tests/integration/examples-build.test.ts`) builds every example
+  that declares a `build` script — nothing in CI had ever built the
+  examples, which is how a tutorial page that could not build shipped.
 - Cloudflare boundary-cache truth repairs: the middleware docblock and
   docs taught `boundaryId: 'sha256:…'` — the wrong identity family
   (ADR-0003 mints `fnv1a:xxxxxxxx`) with no sanctioned way to obtain a

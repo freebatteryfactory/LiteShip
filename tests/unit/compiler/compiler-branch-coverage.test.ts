@@ -185,6 +185,41 @@ describe('compiler branch coverage', () => {
     ).toContain('.empty {}');
   });
 
+  test('CSSCompiler compiles height-measuring boundary inputs to (height ...) queries', () => {
+    const threeStateBoundary = Boundary.make({
+      input: 'viewport.height',
+      at: [
+        [0, 'short'],
+        [480, 'regular'],
+        [900, 'tall'],
+      ] as const,
+    });
+
+    const compiled = CSSCompiler.compile(
+      threeStateBoundary,
+      {
+        short: { '--rows': '1' },
+        regular: { '--rows': '2' },
+        tall: { '--rows': '3' },
+      },
+      '.panel',
+    );
+
+    expect(compiled.raw).toContain('@container viewport-height (height < 480px)');
+    expect(compiled.raw).toContain('@container viewport-height (height >= 480px) and (height < 900px)');
+    expect(compiled.raw).toContain('@container viewport-height (height >= 900px)');
+    expect(compiled.raw).not.toContain('(width');
+
+    const singletonBoundary = Boundary.make({
+      input: 'viewport.height',
+      at: [[0, 'only']] as const,
+    });
+
+    const singleton = CSSCompiler.compile(singletonBoundary, { only: { color: 'red' } }, '.singleton');
+
+    expect(singleton.raw).toContain('@container viewport-height (height >= 0px)');
+  });
+
   test('CSSCompiler emits one rule per nested selector from structured state bodies', () => {
     const boundary = Boundary.make({
       input: 'viewport.width',
