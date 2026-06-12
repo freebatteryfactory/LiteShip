@@ -1,40 +1,49 @@
-# `@czap/mcp-server`
+# @czap/mcp-server
 
-Model Context Protocol (MCP) server that dispatches tool calls through `@czap/command`, the shared command dispatcher — a sibling skin to the `czap` CLI. Vocabulary: [docs/GLOSSARY.md](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md).
+An MCP (Model Context Protocol) server that exposes the czap command catalog as tools, resources, and prompts over stdio or HTTP, so AI agents can run the same commands the `czap` CLI does.
 
-## Usage
+> You usually don't install this directly — it arrives as a dependency of `liteship`, and the `czap mcp` verb launches it. Install `liteship` (or this package alongside `@czap/cli`) instead, unless you're embedding the server in your own process via `start()`.
 
-There are two ways to run the server; there is deliberately no standalone `bin`.
-
-### Launcher mode — `czap mcp`
+## Install
 
 ```bash
-pnpm add @czap/cli @czap/mcp-server
-czap mcp
+pnpm add @czap/cli @czap/mcp-server   # `czap mcp` dynamically loads this package
 ```
 
-The `czap` CLI dynamically imports this package for its `mcp` subcommand. Keep both packages on the same semver line.
+`effect` (>= 4.0.0-beta.32) is a required peer dependency: `pnpm add effect@beta`. `@czap/cli` is not a peer — this package never imports the CLI.
 
-For Claude Desktop-style MCP hosts, point the host at the launcher:
-
-```json
-{
-  "mcpServers": {
-    "czap": {
-      "command": "czap",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-### Library mode — `start()`
+## 30 seconds
 
 ```ts
 import { start } from '@czap/mcp-server';
 
 await start(); // stdio transport (default)
-await start({ http: ':3838' }); // HTTP transport
+// await start({ http: ':3838' }); // HTTP transport instead
 ```
 
-See [docs/RELEASING.md](https://github.com/heyoub/LiteShip/blob/main/docs/RELEASING.md).
+The process stays alive serving MCP JSON-RPC on stdin/stdout. For Claude Desktop-style MCP hosts, skip the code and point the host at the launcher:
+
+```json
+{ "mcpServers": { "czap": { "command": "czap", "args": ["mcp"] } } }
+```
+
+After the host connects, its `tools/list` call returns the czap command catalog.
+
+## Where it sits
+
+This is a protocol adapter over `@czap/command` — the shared command registry the CLI also projects, so a tool call and a terminal verb run the identical handler. `@czap/core` supplies the command and receipt types, and `@czap/compiler` backs the MCP-app manifest resource. It deliberately has no `bin` and never imports `@czap/cli`; the two are sibling skins, connected only by the CLI's dynamic import in `czap mcp`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+
+## If it does nothing
+
+A stdio MCP server prints nothing at startup — silence is normal, not a hang. It answers JSON-RPC requests on stdin; if your MCP host shows no tools, check that both `@czap/cli` and `@czap/mcp-server` are installed in the same project and on the same version, since `czap mcp` resolves this package from where the CLI runs.
+
+## Docs
+
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
+- [Capsule factory](https://github.com/heyoub/LiteShip/blob/main/docs/capsule-factory.md) — the dispatch model behind the tools
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/mcp-server/src/) — generated from source
+
+---
+
+Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
