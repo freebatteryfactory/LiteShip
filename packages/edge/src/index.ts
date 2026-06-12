@@ -40,4 +40,6 @@ export type {
   EdgeHostCacheStatus,
   EdgeHostContext,
   EdgeHostCompileContext,
+  EdgeHostBoundaryConfig,
+  EdgeHostBoundaryResolution,
 } from './host-adapter.js';

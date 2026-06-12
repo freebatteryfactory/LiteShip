@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostAdapter
 
-Defined in: [edge/src/host-adapter.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L137)
+Defined in: [edge/src/host-adapter.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L201)
 
 Opaque host-facing adapter returned by [createEdgeHostAdapter](../functions/createEdgeHostAdapter.md).
 
@@ -19,7 +19,7 @@ theme compilation, and boundary caching in a single pass.
 
 > **resolve**(`headers`): `Promise`\<[`EdgeHostResolution`](EdgeHostResolution.md)\>
 
-Defined in: [edge/src/host-adapter.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L139)
+Defined in: [edge/src/host-adapter.ts:203](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L203)
 
 Resolve a request's device context, theme, and compiled outputs.
 
