@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { computeWaveform, WaveformProjection } from '@czap/assets';
+import { defineAsset } from '@czap/assets';
+import { resetAssetRegistry } from '@czap/assets/testing';
+
+function registerIntroBed(): void {
+  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+}
 
 describe('WaveformProjection', () => {
+  beforeEach(() => {
+    resetAssetRegistry();
+    registerIntroBed();
+  });
   it('computeWaveform returns a normalized downsampled array', () => {
     const sampleRate = 48000;
     const samples = new Float32Array(sampleRate);
@@ -32,9 +42,22 @@ describe('WaveformProjection', () => {
 
   it('clamps stride to 1 when bins exceed sample count', () => {
     const samples = new Float32Array(8);
-    samples[0] = 1; samples[1] = -1;
+    samples[0] = 1;
+    samples[1] = -1;
     const wave = computeWaveform({ sampleRate: 48000, samples }, { bins: 64 });
     expect(wave.length).toBe(64);
+  });
+
+  it('WaveformProjection defaults to 512 bins when opts omitted', () => {
+    const cap = WaveformProjection('intro-bed');
+    expect(cap.name).toBe('intro-bed:waveform:512');
+  });
+
+  it('computeWaveform defaults to 512 bins', () => {
+    const samples = new Float32Array(1024);
+    samples[0] = 1;
+    const wave = computeWaveform({ sampleRate: 48000, samples });
+    expect(wave.length).toBe(512);
   });
 
   it('WaveformProjection is a cachedProjection capsule with bin suffix in name', () => {

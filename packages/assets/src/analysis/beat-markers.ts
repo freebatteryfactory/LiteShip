@@ -11,6 +11,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
+import { assertRegisteredAudioAssetId } from '../contract.js';
 import type { BeatMarkerSet as _BeatMarkerSet } from '@czap/_spine';
 
 /**
@@ -80,6 +81,7 @@ const BeatMarkerSetSchema = Schema.Struct({
 export function BeatMarkerProjection(
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', unknown, BeatMarkerSet, unknown> {
+  assertRegisteredAudioAssetId(audioAssetId, 'BeatMarkerProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:beats`,

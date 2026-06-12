@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { detectOnsets, OnsetProjection } from '@czap/assets';
+import { defineAsset } from '@czap/assets';
+import { resetAssetRegistry } from '@czap/assets/testing';
+
+function registerIntroBed(): void {
+  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+}
 
 describe('OnsetProjection', () => {
+  beforeEach(() => {
+    resetAssetRegistry();
+    registerIntroBed();
+  });
   it('detectOnsets returns sample indices where energy rises sharply', () => {
     const sampleRate = 48000;
     const samples = new Float32Array(sampleRate);

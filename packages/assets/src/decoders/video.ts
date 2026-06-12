@@ -25,8 +25,11 @@ export interface DecodedVideo {
 }
 
 /** Probe a video buffer for container/codec metadata. */
-export async function videoDecoder(bytes: ArrayBuffer): Promise<DecodedVideo> {
-  if (bytes.byteLength === 0) throw new Error('videoDecoder: empty buffer');
+export async function videoDecoder(bytes: ArrayBuffer, sourcePath?: string): Promise<DecodedVideo> {
+  if (bytes.byteLength === 0) {
+    const at = sourcePath ? ` (source: ${sourcePath})` : '';
+    throw new Error(`videoDecoder: empty buffer${at} — verify the asset source file is readable and non-empty.`);
+  }
   const [{ spawnSync }, { writeFileSync, mkdtempSync, rmSync }, { tmpdir }, { join }] = await Promise.all([
     import('node:child_process'),
     import('node:fs'),
@@ -36,7 +39,13 @@ export async function videoDecoder(bytes: ArrayBuffer): Promise<DecodedVideo> {
   const dir = mkdtempSync(join(tmpdir(), 'czap-video-'));
   const file = join(dir, 'input.bin');
   try {
-    writeFileSync(file, new Uint8Array(bytes));
+    try {
+      writeFileSync(file, new Uint8Array(bytes));
+    } catch (err) {
+      const at = sourcePath ? ` for asset source '${sourcePath}'` : '';
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new Error(`videoDecoder: failed to write probe file${at}: ${detail}`);
+    }
     const r = spawnSync('ffprobe', ['-v', 'error', '-show_format', '-show_streams', '-of', 'json', file], {
       encoding: 'utf8',
     });

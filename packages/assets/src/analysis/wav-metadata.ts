@@ -19,6 +19,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
+import { assertRegisteredAudioAssetId } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
 
 /** Tag fields read from a WAV file's LIST/INFO chunks. */
@@ -75,6 +76,7 @@ const WavMetadataSchema = Schema.Struct({
 export function WavMetadataProjection(
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', unknown, WavMetadata, unknown> {
+  assertRegisteredAudioAssetId(audioAssetId, 'WavMetadataProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:wav-metadata`,

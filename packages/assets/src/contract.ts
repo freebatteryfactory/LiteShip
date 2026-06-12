@@ -63,8 +63,8 @@ export interface AssetDecl<K extends AssetKind> {
    * video) are rejected at decl time; an empty array is always rejected.
    */
   readonly site?: readonly Site[];
-  readonly budgets: { readonly decodeP95Ms: number; readonly memoryMb?: number };
-  readonly invariants: readonly Invariant<unknown, unknown>[];
+  readonly budgets?: { readonly decodeP95Ms?: number; readonly memoryMb?: number };
+  readonly invariants?: readonly Invariant<unknown, unknown>[];
   readonly attribution?: AttributionDecl;
 }
 
@@ -74,6 +74,48 @@ type AnyAssetCapsule = CapsuleDef<'cachedProjection', unknown, unknown, unknown>
 export type AssetDecoder = (bytes: ArrayBuffer) => Promise<unknown>;
 
 const registry = new Map<string, AnyAssetCapsule>();
+
+/** Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides. */
+export function defaultDecodeP95MsFor(kind: AssetKind): number {
+  switch (kind) {
+    case 'beat-markers':
+    case 'onsets':
+      return 200;
+    case 'waveform':
+      return 100;
+    case 'video':
+      return 100;
+    case 'image':
+      return 20;
+    case 'audio':
+    default:
+      return 50;
+  }
+}
+
+function sortedRegisteredAssetIds(): readonly string[] {
+  return [...registry.keys()].sort();
+}
+
+function registryMissError(subject: string, id: string): Error {
+  const ids = sortedRegisteredAssetIds();
+  const listed = ids.length > 0 ? ids.join(', ') : '(none)';
+  return new Error(
+    `${subject}: registry-miss — '${id}' is not registered. ` +
+      `Registered ids: ${listed}. ` +
+      `Import the module that calls defineAsset('${id}', ...) before referencing it (registration runs at module load).`,
+  );
+}
+
+/**
+ * Validate that an audio asset id is registered before constructing a
+ * projection factory. Throws a registry-miss teaching error when missing.
+ */
+export function assertRegisteredAudioAssetId(audioAssetId: string, factory: string): void {
+  if (!registry.has(audioAssetId)) {
+    throw registryMissError(`${factory}('${audioAssetId}')`, audioAssetId);
+  }
+}
 
 /**
  * Built-in decoder for a media kind. Analysis kinds (beat-markers /
@@ -160,29 +202,39 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
  * An explicit `decl.site` wins over both derivations after validation
  * (see {@link AssetDecl.site}).
  */
-export function defineAsset<K extends AssetKind>(decl: AssetDecl<K>): AnyAssetCapsule {
+export function defineAsset<K extends AssetKind>(
+  decl: AssetDecl<K>,
+): CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown> {
   const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
   const site: readonly Site[] = resolveDeclSite(decl);
+  const decodeP95Ms = decl.budgets?.decodeP95Ms ?? defaultDecodeP95MsFor(decl.kind);
   const cap = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
     input: decode !== undefined ? AssetBytes : Schema.Unknown,
     output: Schema.Unknown,
     capabilities: { reads: ['fs.read'], writes: [] },
-    invariants: decl.invariants,
-    budgets: { p95Ms: decl.budgets.decodeP95Ms, memoryMb: decl.budgets.memoryMb },
+    invariants: decl.invariants ?? [],
+    budgets: { p95Ms: decodeP95Ms, memoryMb: decl.budgets?.memoryMb },
     site,
     attribution: decl.attribution,
-    ...(decode !== undefined ? { derive: (source: unknown) => decode(source as ArrayBuffer) } : {}),
+    ...(decode !== undefined
+      ? {
+          derive: (source: unknown) =>
+            decl.kind === 'video' && decl.decoder === undefined
+              ? videoDecoder(source as ArrayBuffer, decl.source)
+              : decode(source as ArrayBuffer),
+        }
+      : {}),
   });
-  registry.set(decl.id, cap);
-  return cap;
+  registry.set(decl.id, cap as AnyAssetCapsule);
+  return cap as CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown>;
 }
 
 /** Resolve an asset id to a branded {@link AssetRefId} after confirming it's registered. Throws on unknown ids. */
 export function AssetRef(id: string): AssetRefId {
   if (!registry.has(id)) {
-    throw new Error(`AssetRef('${id}') not registered — did you call defineAsset?`);
+    throw registryMissError(`AssetRef('${id}')`, id);
   }
   return mkAssetRefId(id);
 }

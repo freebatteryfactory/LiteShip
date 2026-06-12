@@ -7,6 +7,8 @@ export {
   builtinDecoderFor,
   builtinDecoderSiteFor,
   resolveAssetDecoder,
+  defaultDecodeP95MsFor,
+  assertRegisteredAudioAssetId,
 } from './contract.js';
 export type { AssetRefId } from './brands.js';
 // `resetAssetRegistry` is intentionally NOT re-exported here — it mutates

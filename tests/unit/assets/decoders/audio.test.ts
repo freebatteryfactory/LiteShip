@@ -52,7 +52,10 @@ function buildWav(opts: {
     const total = parts.reduce((sum, p) => sum + p.byteLength, 0);
     const out = new Uint8Array(total);
     let off = 0;
-    for (const p of parts) { out.set(p, off); off += p.byteLength; }
+    for (const p of parts) {
+      out.set(p, off);
+      off += p.byteLength;
+    }
     return out;
   }
 }
@@ -60,18 +63,54 @@ function buildWav(opts: {
 describe('audioDecoder', () => {
   it('decodes a minimal WAV header and returns sample metadata', async () => {
     const bytes = new Uint8Array([
-      0x52, 0x49, 0x46, 0x46, // "RIFF"
-      0x28, 0x00, 0x00, 0x00, // chunk size
-      0x57, 0x41, 0x56, 0x45, // "WAVE"
-      0x66, 0x6d, 0x74, 0x20, // "fmt "
-      0x10, 0x00, 0x00, 0x00, // subchunk1 size
-      0x01, 0x00, 0x01, 0x00, // PCM, mono
-      0x80, 0xbb, 0x00, 0x00, // 48000 Hz
-      0x00, 0x77, 0x01, 0x00, // byte rate
-      0x02, 0x00, 0x10, 0x00, // block align, bits per sample
-      0x64, 0x61, 0x74, 0x61, // "data"
-      0x04, 0x00, 0x00, 0x00, // data size
-      0x00, 0x00, 0x00, 0x00, // 2 silent samples
+      0x52,
+      0x49,
+      0x46,
+      0x46, // "RIFF"
+      0x28,
+      0x00,
+      0x00,
+      0x00, // chunk size
+      0x57,
+      0x41,
+      0x56,
+      0x45, // "WAVE"
+      0x66,
+      0x6d,
+      0x74,
+      0x20, // "fmt "
+      0x10,
+      0x00,
+      0x00,
+      0x00, // subchunk1 size
+      0x01,
+      0x00,
+      0x01,
+      0x00, // PCM, mono
+      0x80,
+      0xbb,
+      0x00,
+      0x00, // 48000 Hz
+      0x00,
+      0x77,
+      0x01,
+      0x00, // byte rate
+      0x02,
+      0x00,
+      0x10,
+      0x00, // block align, bits per sample
+      0x64,
+      0x61,
+      0x74,
+      0x61, // "data"
+      0x04,
+      0x00,
+      0x00,
+      0x00, // data size
+      0x00,
+      0x00,
+      0x00,
+      0x00, // 2 silent samples
     ]);
     const decoded = await audioDecoder(bytes.buffer);
     expect(decoded.sampleRate).toBe(48000);
@@ -89,8 +128,12 @@ describe('audioDecoder', () => {
 
   it('decodes 8-bit PCM into a Float32Array (unsigned, midpoint 128)', async () => {
     const bytes = buildWav({
-      audioFormat: 1, channels: 1, sampleRate: 44100, bitsPerSample: 8,
-      byteRate: 44100, blockAlign: 1,
+      audioFormat: 1,
+      channels: 1,
+      sampleRate: 44100,
+      bitsPerSample: 8,
+      byteRate: 44100,
+      blockAlign: 1,
       data: new Uint8Array([0, 64, 128, 192, 255]),
     });
     const decoded = await audioDecoder(bytes.buffer);
@@ -108,8 +151,12 @@ describe('audioDecoder', () => {
     // One sample per row: 0x000000 (zero) and 0x7FFFFF (peak +)
     const data = new Uint8Array([0, 0, 0, 0xff, 0xff, 0x7f]);
     const bytes = buildWav({
-      audioFormat: 1, channels: 1, sampleRate: 48000, bitsPerSample: 24,
-      byteRate: 48000 * 3, blockAlign: 3,
+      audioFormat: 1,
+      channels: 1,
+      sampleRate: 48000,
+      bitsPerSample: 24,
+      byteRate: 48000 * 3,
+      blockAlign: 3,
       data,
     });
     const decoded = await audioDecoder(bytes.buffer);
@@ -121,13 +168,14 @@ describe('audioDecoder', () => {
 
   it('decodes 32-bit PCM into a normalized Float32Array', async () => {
     // 4-byte little-endian: 0, 0x7fffffff (max positive int32)
-    const data = new Uint8Array([
-      0, 0, 0, 0,
-      0xff, 0xff, 0xff, 0x7f,
-    ]);
+    const data = new Uint8Array([0, 0, 0, 0, 0xff, 0xff, 0xff, 0x7f]);
     const bytes = buildWav({
-      audioFormat: 1, channels: 1, sampleRate: 48000, bitsPerSample: 32,
-      byteRate: 48000 * 4, blockAlign: 4,
+      audioFormat: 1,
+      channels: 1,
+      sampleRate: 48000,
+      bitsPerSample: 32,
+      byteRate: 48000 * 4,
+      blockAlign: 4,
       data,
     });
     const decoded = await audioDecoder(bytes.buffer);
@@ -143,8 +191,12 @@ describe('audioDecoder', () => {
     new DataView(data.buffer).setFloat32(0, 0, true);
     new DataView(data.buffer).setFloat32(4, 0.5, true);
     const bytes = buildWav({
-      audioFormat: 3, channels: 1, sampleRate: 48000, bitsPerSample: 32,
-      byteRate: 48000 * 4, blockAlign: 4,
+      audioFormat: 3,
+      channels: 1,
+      sampleRate: 48000,
+      bitsPerSample: 32,
+      byteRate: 48000 * 4,
+      blockAlign: 4,
       data,
     });
     const decoded = await audioDecoder(bytes.buffer);
@@ -162,8 +214,12 @@ describe('audioDecoder', () => {
     new DataView(data.buffer).setFloat32(0, 1, true);
     new DataView(data.buffer).setFloat32(4, -1, true);
     const bytes = buildWav({
-      audioFormat: 3, channels: 1, sampleRate: 48000, bitsPerSample: 32,
-      byteRate: 48000 * 4, blockAlign: 4,
+      audioFormat: 3,
+      channels: 1,
+      sampleRate: 48000,
+      bitsPerSample: 32,
+      byteRate: 48000 * 4,
+      blockAlign: 4,
       data,
       preDataPadBytes: 2,
     });
@@ -182,12 +238,15 @@ describe('audioDecoder', () => {
       new DataView(size.buffer).setUint32(0, 4, true);
       const payload = new Uint8Array(4);
       const out = new Uint8Array(8 + 4);
-      out.set(id, 0); out.set(size, 4); out.set(payload, 8);
+      out.set(id, 0);
+      out.set(size, 4);
+      out.set(payload, 8);
       return out;
     })();
     const wave = enc.encode('WAVE');
     const body = new Uint8Array(wave.length + dataChunk.length);
-    body.set(wave, 0); body.set(dataChunk, wave.length);
+    body.set(wave, 0);
+    body.set(dataChunk, wave.length);
     const riff = new Uint8Array(8 + body.length);
     riff.set(enc.encode('RIFF'), 0);
     new DataView(riff.buffer).setUint32(4, body.length, true);
@@ -199,9 +258,12 @@ describe('audioDecoder', () => {
     // RIFF/WAVE with only an fmt chunk.
     const fmtData = new Uint8Array(16);
     const dv = new DataView(fmtData.buffer);
-    dv.setUint16(0, 1, true); dv.setUint16(2, 1, true);
-    dv.setUint32(4, 48000, true); dv.setUint32(8, 96000, true);
-    dv.setUint16(12, 2, true); dv.setUint16(14, 16, true);
+    dv.setUint16(0, 1, true);
+    dv.setUint16(2, 1, true);
+    dv.setUint32(4, 48000, true);
+    dv.setUint32(8, 96000, true);
+    dv.setUint16(12, 2, true);
+    dv.setUint16(14, 16, true);
     const enc = new TextEncoder();
     const fmtChunk = (() => {
       const out = new Uint8Array(8 + fmtData.length);
@@ -212,21 +274,26 @@ describe('audioDecoder', () => {
     })();
     const wave = enc.encode('WAVE');
     const body = new Uint8Array(wave.length + fmtChunk.length);
-    body.set(wave, 0); body.set(fmtChunk, wave.length);
+    body.set(wave, 0);
+    body.set(fmtChunk, wave.length);
     const riff = new Uint8Array(8 + body.length);
     riff.set(enc.encode('RIFF'), 0);
     new DataView(riff.buffer).setUint32(4, body.length, true);
     riff.set(body, 8);
-    await expect(audioDecoder(riff.buffer)).rejects.toThrow(/data/);
+    await expect(audioDecoder(riff.buffer)).rejects.toThrow(/no data chunk.*pcm_s16le/);
   });
 
   it('throws on unsupported format/bitDepth combination', async () => {
     // PCM at 12 bits is not supported.
     const bytes = buildWav({
-      audioFormat: 1, channels: 1, sampleRate: 48000, bitsPerSample: 12,
-      byteRate: 72000, blockAlign: 2,
+      audioFormat: 1,
+      channels: 1,
+      sampleRate: 48000,
+      bitsPerSample: 12,
+      byteRate: 72000,
+      blockAlign: 2,
       data: new Uint8Array(4),
     });
-    await expect(audioDecoder(bytes.buffer)).rejects.toThrow(/unsupported/);
+    await expect(audioDecoder(bytes.buffer)).rejects.toThrow(/unsupported-format/);
   });
 });
