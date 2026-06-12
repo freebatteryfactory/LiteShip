@@ -1165,10 +1165,7 @@ describe('viewport containment aggregation', () => {
     expect(containment).toBe(':root {\n  container-type: inline-size;\n  container-name: viewport-width viewport;\n}');
   });
 
-  test('viewport.height is NOT auto-contained: width-based containment would track the wrong dimension', () => {
-    // container-type: inline-size measures WIDTH and the compiler
-    // serializes (width ...) queries — auto-containment for a height
-    // boundary would silently make height breakpoints follow the width.
+  test('viewport.height joins the auto-containment path with (height ...) queries and no diagnostic', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
     const heightBoundary = makeBoundary('viewport.height', [
       [0, 'short'],
@@ -1181,6 +1178,50 @@ describe('viewport containment aggregation', () => {
       events: [...captured],
     }));
 
+    expect([...sheet.viewportContainerNames]).toEqual(['viewport-height']);
+    expect(compiled).toContain('@container viewport-height (height < 600px)');
+    expect(compiled).not.toContain('(width');
+    expect(events).toEqual([]);
+  });
+
+  test('a height container name upgrades the :root rule to size containment with a pinned block size', () => {
+    // `inline-size` containment leaves (height ...) queries unevaluable,
+    // and size containment computes :root's height as if it were empty —
+    // the rule must pin block-size to the dynamic viewport height.
+    const containment = viewportContainmentRule(['viewport-width', 'viewport-height']);
+    expect(containment).toBe(
+      ':root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-width viewport-height;\n}',
+    );
+  });
+
+  test('without a sheet context a single viewport.height block inlines its size :root rule', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const heightBoundary = makeBoundary('viewport.height', [
+      [0, 'short'],
+      [600, 'tall'],
+    ]);
+
+    const compiled = compileQuantizeBlock(blocks[1]!, heightBoundary);
+
+    expect(compiled).toContain(
+      ':root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
+    );
+    expect(compiled).toContain('@container viewport-height (height < 600px)');
+  });
+
+  test('an unrecognized viewport axis still warns instead of claiming a dimension it cannot measure', () => {
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const aspectBoundary = makeBoundary('viewport.aspect', [
+      [0, 'narrow'],
+      [2, 'wide'],
+    ]);
+    const sheet = { viewportContainerNames: new Set<string>() };
+
+    const { compiled, events } = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, aspectBoundary, sheet),
+      events: [...captured],
+    }));
+
     expect(sheet.viewportContainerNames.size).toBe(0);
     expect(compiled).not.toContain(':root');
     expect(events).toEqual(
@@ -1188,7 +1229,7 @@ describe('viewport containment aggregation', () => {
         expect.objectContaining({
           source: 'czap/vite.css-quantize',
           code: 'container-not-declared',
-          message: expect.stringContaining('width-based'),
+          message: expect.stringContaining('viewport.height'),
         }),
       ]),
     );
@@ -1232,6 +1273,38 @@ describe('viewport containment aggregation', () => {
         expect.objectContaining({ source: 'czap/vite.css-quantize', code: 'container-not-declared' }),
       ]),
     );
+  });
+
+  test('the non-viewport diagnostic suggests containment that can evaluate the compiled axis', () => {
+    // Drift pin between the compiler's queryAxisOf inference and the
+    // diagnostic's suggested fix: a height-axis boundary compiles to
+    // (height ...) queries, which inline-size containment cannot evaluate
+    // — the suggested container-type must be `size` (Codex/CodeRabbit, PR #29).
+    const blocks = parseQuantizeBlocks(css, FILE);
+
+    const heightBoundary = makeBoundary('card.height', [
+      [0, 'narrow'],
+      [400, 'wide'],
+    ]);
+    const height = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, heightBoundary),
+      events: [...captured],
+    }));
+    expect(height.compiled).toContain('(height');
+    const heightWarn = height.events.find((e) => e.code === 'container-not-declared');
+    expect(heightWarn?.message).toContain('container-type: size;');
+
+    const widthBoundary = makeBoundary('card.width', [
+      [0, 'narrow'],
+      [400, 'wide'],
+    ]);
+    const width = captureDiagnostics(({ events: captured }) => ({
+      compiled: compileQuantizeBlock(blocks[0]!, widthBoundary),
+      events: [...captured],
+    }));
+    expect(width.compiled).toContain('(width');
+    const widthWarn = width.events.find((e) => e.code === 'container-not-declared');
+    expect(widthWarn?.message).toContain('container-type: inline-size;');
   });
 });
 
