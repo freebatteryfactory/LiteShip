@@ -79,6 +79,12 @@ function astroDirectiveSourcePath(astroPackage: PackageManifestInfo, directive: 
 export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile): AuditSectionResult<SurfaceSummary> {
   const root = profile.repoRoot;
   const { surfacePolicy } = profile;
+  // Absent surface-policy fields mean "this profile never declared that
+  // surface" — the check is skipped, identical to declaring it empty.
+  const astroClientDirectives = surfacePolicy.astroClientDirectives ?? [];
+  const astroRuntimeFiles = surfacePolicy.astroRuntimeFiles ?? [];
+  const viteVirtualModules = surfacePolicy.viteVirtualModules ?? [];
+  const knownCapabilityNotes = surfacePolicy.knownCapabilityNotes ?? [];
   const packageInfos = listProfilePackageManifests(profile);
   const rawFindings: AuditFinding[] = [];
   let packageExportCount = 0;
@@ -108,7 +114,10 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
             rule: 'export-target-missing',
             severity: 'error',
             title: 'Installed package exports target is missing',
-            summary: `Export "${subpath}" (${condition}) for ${pkg.name} points at ${target}, which does not exist in the installed package — broken install or a tarball that shipped without it.`,
+            summary:
+              `Export "${subpath}" (${condition}) for ${pkg.name} points at ${target}, which does not exist ` +
+              `in the installed package — broken install or a tarball that shipped without it. Reinstall the ` +
+              `package; if it persists, the publisher's files[] omitted dist.`,
             location: {
               file: pkg.packageJsonPath,
             },
@@ -151,13 +160,16 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       rule: 'host-surface',
       severity: 'error',
       title: 'Astro package manifest missing',
-      summary: `${surfacePolicy.astroPackage} package.json is required for the host-wired surface inventory.`,
+      summary:
+        `${surfacePolicy.astroPackage} is named in surfacePolicy.astroPackage but no such package was ` +
+        `discovered. If this project has no Astro host, omit astroPackage (or set it to '') in your ` +
+        `profile — or run \`czap audit --consumer\`, which prunes host surfaces you don't ship.`,
       location: {
         file: surfacePolicy.astroPackage,
       },
     });
   } else if (astroPackage) {
-    for (const directive of surfacePolicy.astroClientDirectives) {
+    for (const directive of astroClientDirectives) {
       const exportKey = `./client-directives/${directive}`;
       if (!(exportKey in astroPackage.exports)) {
         rawFindings.push({
@@ -190,7 +202,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
       }
     }
 
-    for (const runtimeFile of surfacePolicy.astroRuntimeFiles) {
+    for (const runtimeFile of astroRuntimeFiles) {
       const runtimePath = resolveAstroPackageFile(root, astroPackage.dir, runtimeFile);
       if (!existsSync(runtimePath)) {
         const displayPath = relativeToRoot(runtimePath, root);
@@ -209,7 +221,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     }
   }
 
-  if (surfacePolicy.viteVirtualModules.length > 0) {
+  if (viteVirtualModules.length > 0) {
     // Resolve the inventory file through the profile's vitePackage when
     // declared; fall back to the legacy repo-root-relative location so
     // pre-consumer-mode profiles keep working.
@@ -235,7 +247,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
         },
       });
     } else {
-      for (const virtualId of surfacePolicy.viteVirtualModules) {
+      for (const virtualId of viteVirtualModules) {
         if (!virtualModulesSource.includes(virtualId)) {
           rawFindings.push({
             id: `surface/vite-virtual/${virtualId}`,
@@ -243,7 +255,10 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
             rule: 'virtual-module-surface',
             severity: 'error',
             title: 'Virtual module is missing from the Vite surface',
-            summary: `${virtualId} is expected by the repo-native Vite policy but was not found in virtual-modules.ts.`,
+            summary:
+              `${virtualId} is listed in surfacePolicy.viteVirtualModules but does not appear in ` +
+              `${virtualModulesDisplayPath}. Add the module id to that file, or remove it from the ` +
+              `profile's list if you no longer ship it.`,
             location: {
               file: virtualModulesDisplayPath,
             },
@@ -253,7 +268,7 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     }
   }
 
-  const capabilityNotes = surfacePolicy.knownCapabilityNotes
+  const capabilityNotes = knownCapabilityNotes
     .filter((note) => existsSync(resolve(root, note.file)))
     .map((note) => note.summary);
 
@@ -263,9 +278,9 @@ export function runSurfaceAudit(profile: DevopsProfile = liteshipDevopsProfile):
     summary: {
       packageCount: packageInfos.length,
       packageExportCount,
-      astroDirectiveCount: surfacePolicy.astroClientDirectives.length,
-      astroRuntimeAdapterCount: surfacePolicy.astroRuntimeFiles.length,
-      viteVirtualModuleCount: surfacePolicy.viteVirtualModules.length,
+      astroDirectiveCount: astroClientDirectives.length,
+      astroRuntimeAdapterCount: astroRuntimeFiles.length,
+      viteVirtualModuleCount: viteVirtualModules.length,
       capabilityNotes,
     },
     findings: partitioned.findings,
