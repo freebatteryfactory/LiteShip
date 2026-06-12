@@ -50,7 +50,7 @@ export const assetAnalyzeCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('asset.analyze', loaded);
+    if (!loaded.ok) return manifestUnavailable('asset.analyze', loaded, context);
     const { manifest } = loaded;
     const assetId = String(invocation.args.asset ?? '');
     const projection = invocation.args.projection as Projection;
@@ -108,7 +108,7 @@ export const assetVerifyCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('asset.verify', loaded);
+    if (!loaded.ok) return manifestUnavailable('asset.verify', loaded, context);
     const { manifest } = loaded;
     const assetId = String(invocation.args.asset ?? '');
     const entry = manifest.capsules.find((c) => c.name === assetId);

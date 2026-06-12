@@ -7,12 +7,16 @@ continuous signal crosses boundaries into named states, and named states
 project into outputs (CSS, ARIA, shaders).
 
 ```bash
-npm install liteship        # or yarn add liteship
+npm install liteship effect@beta        # or yarn add liteship effect@beta
 ```
 
 One dependency installs every publishable `@czap/*` package. Each release
 ships in lockstep: `liteship` 0.1.5 pins every `@czap/*` package at exactly
 0.1.5, so the fleet is always version-consistent.
+
+`effect` is the one peer dependency, and it must be the Effect **4 beta**
+(`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare
+`npm install effect` resolves the 3.x `latest` tag and fails the peer check.
 
 > **pnpm users:** pnpm's strict `node_modules` does not hoist transitive
 > dependencies, and since `liteship` re-exports nothing, importing
@@ -20,7 +24,7 @@ ships in lockstep: `liteship` 0.1.5 pins every `@czap/*` package at exactly
 > import as explicit dependencies (recommended):
 >
 > ```bash
-> pnpm add @czap/core @czap/astro
+> pnpm add @czap/core @czap/astro effect@beta
 > ```
 >
 > or hoist the scope in `.npmrc` with `public-hoist-pattern[]=@czap/*`. The

@@ -81,7 +81,7 @@ export const sceneVerifyCommand: HandledCommand = {
     }
 
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('scene.verify', loaded);
+    if (!loaded.ok) return manifestUnavailable('scene.verify', loaded, context);
     const entry = loaded.manifest.capsules.find((c) => c.name === cap.name);
     if (!entry?.generated) return failed('scene.verify', `capsule ${cap.name} not in manifest`, 1);
 

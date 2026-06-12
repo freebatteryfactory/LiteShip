@@ -31,7 +31,7 @@ export const capsuleInspectCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded);
+    if (!loaded.ok) return manifestUnavailable('capsule.inspect', loaded, context);
     const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
@@ -60,7 +60,7 @@ export const capsuleListCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('capsule.list', loaded);
+    if (!loaded.ok) return manifestUnavailable('capsule.list', loaded, context);
     const { manifest } = loaded;
     const kind = typeof invocation.args.kind === 'string' ? invocation.args.kind : undefined;
     const capsules = kind ? manifest.capsules.filter((c) => c.kind === kind) : manifest.capsules;
@@ -85,7 +85,7 @@ export const capsuleVerifyCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const loaded = loadManifest(context);
-    if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded);
+    if (!loaded.ok) return manifestUnavailable('capsule.verify', loaded, context);
     const { manifest } = loaded;
     const id = String(invocation.args.id ?? '');
     const entry = manifest.capsules.find((c) => c.name === id);
