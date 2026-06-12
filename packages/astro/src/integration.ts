@@ -342,7 +342,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (Object.keys(boundaries).length > 0) {
             const manifestFile: BoundaryManifestFile = {
               _tag: 'CzapBoundaryManifest',
-              _version: 1,
+              _version: 2,
               boundaries,
             };
             const outPath = path.join(fileURLToPath(dir), 'czap-boundary-manifest.json');
