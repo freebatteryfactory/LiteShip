@@ -12,9 +12,9 @@
 declare module 'virtual:czap/boundaries' {
   /**
    * Build-derived boundary manifest: boundary export name to
-   * `{ id, outputsByTier }` (see `collectBoundaryManifest` in `@czap/vite`
-   * and `BoundaryManifest` in `@czap/edge`). Empty when the project
-   * defines no boundaries.
+   * `{ id, outputs, outputsByTier }` (see `collectBoundaryManifest` in
+   * `@czap/vite` and `BoundaryManifest` in `@czap/edge`). Empty when the
+   * project defines no boundaries.
    */
   export const boundaries: import('@czap/edge').BoundaryManifest;
 }

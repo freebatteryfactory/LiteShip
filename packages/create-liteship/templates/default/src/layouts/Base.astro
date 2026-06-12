@@ -1,0 +1,51 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'czap starter' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      /* Each named @token block resolves against an export in
+         src/tokens/base.tokens.ts and compiles to a :root custom
+         property (--czap-<token-name>) plus an @property registration. */
+      @token fontSizeSm {}
+      @token fontSizeMd {}
+      @token fontSizeLg {}
+      @token spacingSm {}
+      @token spacingMd {}
+      @token spacingLg {}
+      @token colorText {}
+      @token colorSurface {}
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html {
+        font-family: system-ui, -apple-system, sans-serif;
+        color: var(--czap-color-text);
+        background: var(--czap-color-surface);
+        line-height: 1.6;
+      }
+
+      body {
+        min-height: 100dvh;
+        padding: var(--czap-spacing-md);
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
