@@ -38,7 +38,7 @@ export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutio
 
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
     throw new RangeError(
-      `resolveBeatProjectionToSceneBeats: sampleRate must be a positive, finite number — got ${String(sampleRate)}`,
+      `resolveBeatProjectionToSceneBeats: sampleRate must be a positive, finite number — got ${String(sampleRate)}. Pass the sample rate of the decoded audio asset that produced this BeatMarkerSet (typically 44100 or 48000), e.g. resolveBeatProjectionToSceneBeats({ projection, sampleRate: asset.sampleRate }).`,
     );
   }
 

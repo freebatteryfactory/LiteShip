@@ -155,10 +155,14 @@ function _makeRing(
   return {
     push(input: Float64Array): boolean {
       if (role !== 'producer') {
-        throw new Error('SPSCRingBuffer: only the producer may push');
+        throw new Error(
+          'SPSCRing: this handle is the consumer side — push() is producer-only. Inside the worker, call SPSCRing.attachProducer(buffer) and push on that handle.',
+        );
       }
       if (input.length !== slotSize) {
-        throw new RangeError(`SPSCRingBuffer: expected slot size ${slotSize}, got ${input.length}`);
+        throw new RangeError(
+          `SPSCRing: this ring was created with slotSize ${slotSize} but you pushed a Float64Array of length ${input.length}. Allocate your scratch array once with new Float64Array(${slotSize}) and reuse it.`,
+        );
       }
 
       const write = Atomics.load(control, WRITE_CURSOR_INDEX);
@@ -184,10 +188,14 @@ function _makeRing(
 
     pop(out: Float64Array): boolean {
       if (role !== 'consumer') {
-        throw new Error('SPSCRingBuffer: only the consumer may pop');
+        throw new Error(
+          'SPSCRing: this handle is the producer side — pop() is consumer-only. On the consuming thread, call SPSCRing.attachConsumer(buffer) and pop on that handle.',
+        );
       }
       if (out.length !== slotSize) {
-        throw new RangeError(`SPSCRingBuffer: expected slot size ${slotSize}, got ${out.length}`);
+        throw new RangeError(
+          `SPSCRing: this ring was created with slotSize ${slotSize} but you popped into a Float64Array of length ${out.length}. Allocate your scratch array once with new Float64Array(${slotSize}) and reuse it.`,
+        );
       }
 
       const write = Atomics.load(control, WRITE_CURSOR_INDEX);
@@ -255,6 +263,19 @@ function _createPair(
   producer: SPSCRingBufferShape;
   consumer: SPSCRingBufferShape;
 } {
+  // Preflight the environment so the failure teaches the COOP/COEP
+  // requirement instead of surfacing the browser's bare ReferenceError /
+  // constructor TypeError. The crossOriginIsolated probe only applies
+  // where that global exists (browsers) — Node and test runners expose
+  // SharedArrayBuffer without isolation.
+  if (
+    typeof SharedArrayBuffer === 'undefined' ||
+    (typeof crossOriginIsolated !== 'undefined' && !crossOriginIsolated)
+  ) {
+    throw new Error(
+      'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
+    );
+  }
   const buffer = _createBuffer(slotCount, slotSize);
   return {
     buffer,

@@ -285,6 +285,7 @@ self.addEventListener("message", function (e) {
         self.postMessage({
           type: "error",
           message: err instanceof Error ? err.message : String(err),
+          context: msg.type,
         });
       }
       break;
@@ -359,6 +360,7 @@ self.addEventListener("message", function (e) {
         self.postMessage({
           type: "error",
           message: err instanceof Error ? err.message : String(err),
+          context: msg.type,
         });
       }
       break;

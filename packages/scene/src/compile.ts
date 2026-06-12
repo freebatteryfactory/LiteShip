@@ -25,7 +25,7 @@
  * @module
  */
 
-import { CzapValidationError } from '@czap/core';
+import { CzapValidationError, Diagnostics } from '@czap/core';
 import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
 import { resolveFrameMark } from './sugar/beat.js';
@@ -93,7 +93,16 @@ export interface CompiledScene {
  * tick. Asset-derived beats (BeatMarkerProjection) are wired by feeding
  * the projection's output into `scene.beats` ahead of compile.
  *
- * @throws CzapValidationError when one or more scene invariants fail.
+ * Built-in structural checks run alongside the declared invariants:
+ * fps must be positive and finite, every resolved range must run
+ * forward (`from <= to`), and transition `between` refs must name
+ * declared video tracks (unknown ids get a did-you-mean suggestion).
+ * A track extending past an explicitly declared `duration` is reported
+ * as a `track-past-duration` Diagnostics warning — truncation is legal
+ * when intended — rather than failing the compile.
+ *
+ * @throws CzapValidationError when structural checks or declared scene
+ * invariants fail — all problems are collected into one error.
  */
 export function compileScene(scene: SceneContract): CompiledScene {
   const ctx = { bpm: scene.bpm, fps: scene.fps };
@@ -109,6 +118,50 @@ export function compileScene(scene: SceneContract): CompiledScene {
     budgets: scene.budgets ?? { p95FrameMs: 1000 / scene.fps },
     site: scene.site ?? ['node', 'browser'],
   };
+
+  // Built-in structural checks — run after mark resolution so ranges and
+  // refs are plain numbers/ids, collected alongside declared-invariant
+  // violations so one compile run surfaces every problem.
+  const structural: string[] = [];
+  if (!Number.isFinite(resolved.fps) || resolved.fps <= 0) {
+    structural.push(
+      `scene fps must be a positive, finite number — got ${resolved.fps}; set fps to the intended output frame rate (e.g. 30 or 60)`,
+    );
+  }
+  const videoIds = resolved.tracks.filter((t) => t.kind === 'video').map((t) => t.id as string);
+  for (const track of resolved.tracks) {
+    if (track.from > track.to) {
+      structural.push(
+        `track "${track.id}" resolves to from ${track.from} > to ${track.to} — swap the marks or fix the Beat() arithmetic so the range runs forward`,
+      );
+    }
+    if (track.kind === 'transition') {
+      for (const ref of track.between) {
+        if (!videoIds.includes(ref)) {
+          structural.push(
+            `transition "${track.id}" blends between "${track.between[0]}" and "${track.between[1]}", but no video track with id "${ref}" exists${didYouMean(ref, videoIds)} — declare the video track first, or fix the id passed to Track.transition's between`,
+          );
+        }
+      }
+    }
+  }
+
+  // A track extending past an EXPLICITLY declared duration is truncation —
+  // legitimate when intended, so it warns instead of failing the compile
+  // (duration longer than the last track is trailing time, never flagged;
+  // a derived duration cannot be overrun by construction).
+  if (scene.duration !== undefined && Number.isFinite(resolved.fps) && resolved.fps > 0) {
+    const durationFrames = (resolved.duration / 1000) * resolved.fps;
+    for (const track of resolved.tracks) {
+      if (track.to > durationFrames) {
+        Diagnostics.warnOnce({
+          source: 'czap/scene.compile',
+          code: 'track-past-duration',
+          message: `scene "${resolved.name}": track "${track.id}" extends to frame ${track.to} but the declared duration ${resolved.duration}ms ends at frame ${durationFrames} — the track will be truncated. Extend duration, shorten the track, or omit duration to derive it from the tracks.`,
+        });
+      }
+    }
+  }
 
   const violations: string[] = [];
   for (const invariant of resolved.invariants) {
@@ -127,10 +180,21 @@ export function compileScene(scene: SceneContract): CompiledScene {
       );
     }
   }
-  if (violations.length > 0) {
+  if (structural.length > 0 || violations.length > 0) {
+    const parts: string[] = [];
+    if (structural.length > 0) {
+      parts.push(
+        `has ${structural.length} structural problem${structural.length === 1 ? '' : 's'}: ${structural.join('; ')}`,
+      );
+    }
+    if (violations.length > 0) {
+      parts.push(
+        `violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}`,
+      );
+    }
     throw new CzapValidationError(
       'compileScene',
-      `scene "${resolved.name}" violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}. Fix the contract (or the failing check) so every declared invariant returns true, then compile again.`,
+      `scene "${resolved.name}" ${parts.join('; and ')}. Fix each listed problem (or the failing check), then compile again.`,
     );
   }
 
@@ -152,6 +216,40 @@ export function compileScene(scene: SceneContract): CompiledScene {
     trackSpawns,
     beats,
   };
+}
+
+/**
+ * Build a `(did you mean "x"?)` suffix for an unknown track ref by
+ * Levenshtein distance over the known ids — suggestions only for near
+ * misses (distance <= 2), the typo case worth teaching.
+ */
+function didYouMean(ref: string, knownIds: readonly string[]): string {
+  let best: string | undefined;
+  let bestDistance = 3;
+  for (const id of knownIds) {
+    const d = editDistance(ref, id);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = id;
+    }
+  }
+  return best === undefined ? '' : ` (did you mean "${best}"?)`;
+}
+
+/** Plain dynamic-programming Levenshtein distance — id lists are tiny. */
+function editDistance(a: string, b: string): number {
+  const previous = new Array<number>(b.length + 1);
+  const current = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j++) previous[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    current[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const substitution = previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1);
+      current[j] = Math.min(previous[j]! + 1, current[j - 1]! + 1, substitution);
+    }
+    for (let j = 0; j <= b.length; j++) previous[j] = current[j]!;
+  }
+  return previous[b.length]!;
 }
 
 /**
