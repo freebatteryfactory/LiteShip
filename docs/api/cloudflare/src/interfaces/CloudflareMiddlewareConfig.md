@@ -10,13 +10,13 @@ Defined in: [cloudflare/src/middleware.ts:19](https://github.com/heyoub/LiteShip
 
 ## Properties
 
-### binding
+### binding?
 
-> `readonly` **binding**: `string`
+> `readonly` `optional` **binding?**: `string`
 
 Defined in: [cloudflare/src/middleware.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L21)
 
-KV namespace binding name in wrangler.jsonc.
+KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`.
 
 ***
 

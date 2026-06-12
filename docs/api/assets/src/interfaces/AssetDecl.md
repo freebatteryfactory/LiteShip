@@ -26,15 +26,15 @@ Defined in: [assets/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/
 
 ***
 
-### budgets
+### budgets?
 
-> `readonly` **budgets**: `object`
+> `readonly` `optional` **budgets?**: `object`
 
 Defined in: [assets/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L66)
 
-#### decodeP95Ms
+#### decodeP95Ms?
 
-> `readonly` **decodeP95Ms**: `number`
+> `readonly` `optional` **decodeP95Ms?**: `number`
 
 #### memoryMb?
 
@@ -74,9 +74,9 @@ Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/
 
 ***
 
-### invariants
+### invariants?
 
-> `readonly` **invariants**: readonly `Invariant`\<`unknown`, `unknown`\>[]
+> `readonly` `optional` **invariants?**: readonly `Invariant`\<`unknown`, `unknown`\>[]
 
 Defined in: [assets/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L67)
 

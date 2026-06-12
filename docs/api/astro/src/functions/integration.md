@@ -8,7 +8,7 @@
 
 > **integration**(`config?`): `AstroIntegration`
 
-Defined in: [astro/src/integration.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L186)
+Defined in: [astro/src/integration.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L198)
 
 Build the czap `AstroIntegration`.
 

@@ -6,7 +6,7 @@
 
 # Function: resolveInitialState()
 
-> **resolveInitialState**\<`B`\>(`boundary`, `context`): `string`
+> **resolveInitialState**\<`B`\>(`boundary`, `context?`): `string`
 
 Defined in: [astro/src/quantize.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L133)
 
@@ -31,9 +31,9 @@ Evaluates the boundary thresholds to find the matching state.
 
 `B`
 
-### context
+### context?
 
-[`ServerIslandContext`](../interfaces/ServerIslandContext.md)
+[`ServerIslandContext`](../interfaces/ServerIslandContext.md) = `{}`
 
 ## Returns
 

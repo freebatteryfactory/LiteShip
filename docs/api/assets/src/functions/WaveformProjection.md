@@ -6,9 +6,9 @@
 
 # Function: WaveformProjection()
 
-> **WaveformProjection**(`audioAssetId`, `opts`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
+> **WaveformProjection**(`audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/waveform.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L40)
+Defined in: [assets/src/analysis/waveform.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L42)
 
 Build a WaveformProjection cachedProjection capsule for a named audio asset.
 
@@ -18,9 +18,9 @@ Build a WaveformProjection cachedProjection capsule for a named audio asset.
 
 `string`
 
-### opts
+### opts?
 
-#### bins
+#### bins?
 
 `number`
 

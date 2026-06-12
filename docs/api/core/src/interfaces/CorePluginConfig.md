@@ -39,14 +39,6 @@ Defined in: [core/src/config.ts:29](https://github.com/heyoub/LiteShip/blob/main
 
 ### wasm?
 
-> `readonly` `optional` **wasm?**: `object`
+> `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
 Defined in: [core/src/config.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L31)
-
-#### enabled?
-
-> `readonly` `optional` **enabled?**: `boolean`
-
-#### path?
-
-> `readonly` `optional` **path?**: `string`

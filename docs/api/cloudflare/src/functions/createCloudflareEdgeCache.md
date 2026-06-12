@@ -8,7 +8,7 @@
 
 > **createCloudflareEdgeCache**(`envSource`, `options`): [`KVNamespace`](https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md)
 
-Defined in: [cloudflare/src/edge-cache.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L42)
+Defined in: [cloudflare/src/edge-cache.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L55)
 
 Create a lazy [KVNamespace](https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md) adapter backed by a Workers env binding.
 

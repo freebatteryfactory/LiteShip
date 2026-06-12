@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L83)
+Defined in: [edge/src/edge-tier.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L90)
 
 Edge tier detection namespace.
 
@@ -61,6 +61,25 @@ Generate HTML data attribute string for injection into the `<html>` element.
 tierDataAttributes(result)
 // => 'data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
 ```
+
+### tierFromParsed
+
+> **tierFromParsed**: (`caps`) => [`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+
+Map parsed Client Hints capabilities to an [EdgeTierResult](../interfaces/EdgeTierResult.md).
+
+Map already-parsed [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) to the tier triple
+using the same pure functions as the client runtime.
+
+#### Parameters
+
+##### caps
+
+[`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+
+#### Returns
+
+[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
 
 ## Example
 

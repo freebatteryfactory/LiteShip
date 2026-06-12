@@ -6,7 +6,7 @@
 
 # Function: videoDecoder()
 
-> **videoDecoder**(`bytes`): `Promise`\<[`DecodedVideo`](../interfaces/DecodedVideo.md)\>
+> **videoDecoder**(`bytes`, `sourcePath?`): `Promise`\<[`DecodedVideo`](../interfaces/DecodedVideo.md)\>
 
 Defined in: [assets/src/decoders/video.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L28)
 
@@ -17,6 +17,10 @@ Probe a video buffer for container/codec metadata.
 ### bytes
 
 `ArrayBuffer`
+
+### sourcePath?
+
+`string`
 
 ## Returns
 

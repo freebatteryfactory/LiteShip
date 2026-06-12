@@ -14,30 +14,30 @@ and the tier detected by the edge middleware.
 
 ## Properties
 
-### clientHints
+### clientHints?
 
-> `readonly` **clientHints**: `Record`\<`string`, `string`\>
+> `readonly` `optional` **clientHints?**: `Record`\<`string`, `string`\>
 
 Defined in: [astro/src/quantize.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L26)
 
-Flat Client Hints header map.
+Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
 ***
 
-### detectedTier
+### detectedTier?
 
-> `readonly` **detectedTier**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
+> `readonly` `optional` **detectedTier?**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
 Defined in: [astro/src/quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 
-Tier detected by `@czap/edge`.
+Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px).
 
 ***
 
-### userAgent
+### userAgent?
 
-> `readonly` **userAgent**: `string`
+> `readonly` `optional` **userAgent?**: `string`
 
 Defined in: [astro/src/quantize.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L24)
 
-Raw `User-Agent` header.
+Raw `User-Agent` header (default `''`).

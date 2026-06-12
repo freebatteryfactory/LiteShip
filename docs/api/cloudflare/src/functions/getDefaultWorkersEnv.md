@@ -10,7 +10,7 @@
 
 Defined in: [cloudflare/src/middleware.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L77)
 
-Read the workerd execution env (lazy, once per isolate).
+Read the workerd execution env captured by loadWorkersEnvFromRuntime or seeded for tests. Returns `{}` until one of those has run.
 
 ## Returns
 

@@ -26,12 +26,14 @@
 
 ## Functions
 
+- [assertRegisteredAudioAssetId](functions/assertRegisteredAudioAssetId.md)
 - [AssetRef](functions/AssetRef.md)
 - [audioDecoder](functions/audioDecoder.md)
 - [BeatMarkerProjection](functions/BeatMarkerProjection.md)
 - [builtinDecoderFor](functions/builtinDecoderFor.md)
 - [builtinDecoderSiteFor](functions/builtinDecoderSiteFor.md)
 - [computeWaveform](functions/computeWaveform.md)
+- [defaultDecodeP95MsFor](functions/defaultDecodeP95MsFor.md)
 - [defineAsset](functions/defineAsset.md)
 - [detectBeats](functions/detectBeats.md)
 - [detectOnsets](functions/detectOnsets.md)

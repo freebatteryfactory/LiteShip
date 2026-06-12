@@ -18,7 +18,7 @@ and exposes `Satellite` for shells with server-resolved bearings.
 ```ts
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import { integration as czap } from '@czap/astro';
+import { czap } from '@czap/astro';
 
 const config = defineConfig({
   integrations: [czap({ detect: true, workers: { enabled: true } })],
@@ -45,3 +45,9 @@ const config = defineConfig({
 - [resolveInitialState](functions/resolveInitialState.md)
 - [resolveInitialStateFallback](functions/resolveInitialStateFallback.md)
 - [satelliteAttrs](functions/satelliteAttrs.md)
+
+## References
+
+### czap
+
+Renames and re-exports [integration](functions/integration.md)

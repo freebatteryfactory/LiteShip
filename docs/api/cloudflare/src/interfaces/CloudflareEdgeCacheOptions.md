@@ -6,7 +6,7 @@
 
 # Interface: CloudflareEdgeCacheOptions
 
-Defined in: [cloudflare/src/edge-cache.ts:12](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L12)
+Defined in: [cloudflare/src/edge-cache.ts:13](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L13)
 
 ## Properties
 
@@ -14,6 +14,6 @@ Defined in: [cloudflare/src/edge-cache.ts:12](https://github.com/heyoub/LiteShip
 
 > `readonly` **binding**: `string`
 
-Defined in: [cloudflare/src/edge-cache.ts:14](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L14)
+Defined in: [cloudflare/src/edge-cache.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L15)
 
 KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`).
