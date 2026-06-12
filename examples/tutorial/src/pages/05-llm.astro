@@ -148,25 +148,25 @@ import Base from '../layouts/Base.astro';
     understands these message types:
   </p>
 
-  <pre><code>// Server-side: stream LLM tokens (Node.js example)
-res.writeHead(200, {'{'}&br;
+  <pre is:raw><code>// Server-side: stream LLM tokens (Node.js example)
+res.writeHead(200, {
   'Content-Type': 'text/event-stream',
   'Cache-Control': 'no-cache',
   'Connection': 'keep-alive',
-{'}'});
+});
 
 // Stream text tokens as they arrive from the model
-for await (const token of llmStream) {'{'}&br;
-  res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
+for await (const token of llmStream) {
+  res.write(`data: ${JSON.stringify({
     type: 'text',
     content: token
-  {'}'}){'}'}\\n\\n`);
-{'}'}
+  })}\n\n`);
+}
 
 // Signal completion
-res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
+res.write(`data: ${JSON.stringify({
   type: 'done'
-{'}'}){'}'}\\n\\n`);
+})}\n\n`);
 res.end();</code></pre>
 
   <h3>Tool Calls</h3>
@@ -176,16 +176,16 @@ res.end();</code></pre>
     buffers the arguments and fires lifecycle events:
   </p>
 
-  <pre><code>// Server sends tool call lifecycle messages:
-data: {'{'}"type":"tool-call-start","toolName":"searchDocs"{'}'}
+  <pre is:raw><code>// Server sends tool call lifecycle messages:
+data: {"type":"tool-call-start","toolName":"searchDocs"}
 
 // Arguments stream in chunks (partial JSON):
-data: {'{'}"type":"tool-call-delta","toolArgs":"{\"query\": \"czap bound"{'}'}
-data: {'{'}"type":"tool-call-delta","toolArgs":"aries\"}"{'}'}
+data: {"type":"tool-call-delta","toolArgs":"{\"query\": \"czap bound"}
+data: {"type":"tool-call-delta","toolArgs":"aries\"}"}
 
 // Tool call complete -- directive parses accumulated JSON
 // and fires czap:llm-tool-end with { name, args }:
-data: {'{'}"type":"tool-call-end"{'}'}</code></pre>
+data: {"type":"tool-call-end"}</code></pre>
 
   <!-- ============================================================
        STEP 4: ABR Quality Tiers
@@ -250,26 +250,26 @@ data: {'{'}"type":"tool-call-end"{'}'}</code></pre>
     </div>
   </div>
 
-  <pre><code>/* Tier-aware CSS for LLM output containers: */
-[data-czap-tier="static"] .llm-output {'{'}&br;
+  <pre is:raw><code>/* Tier-aware CSS for LLM output containers: */
+[data-czap-tier="static"] .llm-output {
   /* Don't show streaming content on static-tier devices */
   display: none;
-{'}'}
+}
 
-[data-czap-tier="styled"] .llm-output {'{'}&br;
+[data-czap-tier="styled"] .llm-output {
   /* Simple text, no animations */
   animation: none;
-{'}'}
+}
 
-[data-czap-tier="reactive"] .llm-output {'{'}&br;
+[data-czap-tier="reactive"] .llm-output {
   /* Smooth fade-in for each token batch */
   animation: czap-fade 0.15s ease-out;
-{'}'}
+}
 
-[data-czap-tier="interactive"] .llm-output {'{'}&br;
+[data-czap-tier="interactive"] .llm-output {
   /* Rich rendering with typing cursor animation */
   animation: czap-type 0.05s steps(1);
-{'}'}</code></pre>
+}</code></pre>
 
   <div class="note">
     <strong>Adaptive Bitrate Rendering:</strong> Just as video streaming
@@ -353,34 +353,34 @@ data: {'{'}"type":"tool-call-end"{'}'}</code></pre>
 
   <h2>Lifecycle Events</h2>
 
-  <pre><code>const el = document.querySelector('[data-czap-llm-url]');
+  <pre is:raw><code>const el = document.querySelector('[data-czap-llm-url]');
 
-el.addEventListener('czap:llm-start', () =&gt; {'{'}&br;
+el.addEventListener('czap:llm-start', () => {
   console.log('LLM generation started');
-{'}'});
+});
 
-el.addEventListener('czap:llm-token', (e) =&gt; {'{'}&br;
+el.addEventListener('czap:llm-token', (e) => {
   // e.detail.text -- the new token(s) in this chunk
   // e.detail.accumulated -- all tokens received so far
   console.log('Token:', e.detail.text);
-{'}'});
+});
 
-el.addEventListener('czap:llm-tool-start', (e) =&gt; {'{'}&br;
+el.addEventListener('czap:llm-tool-start', (e) => {
   console.log('Tool call started:', e.detail.name);
-{'}'});
+});
 
-el.addEventListener('czap:llm-tool-end', (e) =&gt; {'{'}&br;
+el.addEventListener('czap:llm-tool-end', (e) => {
   // e.detail.args is the parsed JSON from accumulated deltas
   console.log('Tool result:', e.detail.name, e.detail.args);
-{'}'});
+});
 
-el.addEventListener('czap:llm-done', (e) =&gt; {'{'}&br;
+el.addEventListener('czap:llm-done', (e) => {
   console.log('Complete. Full text:', e.detail.accumulated);
-{'}'});
+});
 
-el.addEventListener('czap:llm-error', (e) =&gt; {'{'}&br;
+el.addEventListener('czap:llm-error', (e) => {
   console.log('Error:', e.detail.message ?? e.detail.reason);
-{'}'});</code></pre>
+});</code></pre>
 
   <!-- ============================================================
        Demo script: listens for lifecycle events and updates
