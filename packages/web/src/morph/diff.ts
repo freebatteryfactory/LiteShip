@@ -26,6 +26,12 @@ export { defaultConfig, parseHTML, isSameNode, syncAttributes, syncChildren, fin
 /**
  * Morph an existing DOM element to match new HTML using idiomorph-inspired
  * diffing that minimizes DOM mutations and preserves element identity.
+ *
+ * Prefer {@link morphWithState}: it is the default entry point. It layers
+ * focus/scroll/selection capture+restore and preserve-constraint validation
+ * on top of this bare morph, and degrades to exactly this behavior when no
+ * config flags or preserve hints apply. Use bare `morph` only when you have
+ * proven you need to skip physical state handling.
  */
 export const morph = (
   oldNode: Element,
@@ -68,7 +74,12 @@ export const morph = (
   });
 
 /**
- * Morph with physical state capture and restore.
+ * Morph with physical state capture and restore — the default entry point.
+ *
+ * Captures focus/scroll/selection before the morph (gated on config flags),
+ * validates preserve hints afterwards (dispatching `czap:morph-rejected` and
+ * `czap:request-snapshot` on violation), and restores physical state. When no
+ * flags or hints apply it degrades to a plain {@link morph}.
  */
 export const morphWithState = (
   oldNode: Element,
@@ -92,7 +103,7 @@ export const morphWithState = (
           Diagnostics.warn({
             source: 'czap/web.morph',
             code: 'preserve-id-missing',
-            message: `Preserve ID "${id}" was not found in the old DOM tree.`,
+            message: `Preserve ID "${id}" was not found in the old DOM tree before morphing. Preserve IDs are matched against data-czap-id attributes — check for a typo, or add data-czap-id="${id}" to the element you want preserved.`,
           });
         }
       }
@@ -104,7 +115,12 @@ export const morphWithState = (
     if (rejection) {
       oldNode.dispatchEvent(
         new CustomEvent('czap:morph-rejected', {
-          detail: rejection,
+          // `recovery` is additive and only true on this path — bare
+          // rejectIfMissing callers get no snapshot dispatch.
+          detail: {
+            ...rejection,
+            recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+          },
           bubbles: true,
         }),
       );
@@ -134,6 +150,11 @@ export const morphWithState = (
 
 /**
  * DOM morph namespace.
+ *
+ * {@link morphWithState} is the default entry point — it preserves focus,
+ * scroll, and selection across the morph and validates preserve hints.
+ * Bare {@link morph} skips all of that and is only for callers that have
+ * proven they need to.
  */
 export const Morph = {
   morph,

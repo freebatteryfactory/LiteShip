@@ -19,6 +19,18 @@ export interface SlotEntry {
   readonly mounted: boolean;
 }
 
+/**
+ * Input accepted by `SlotRegistryShape.register`. Registered entries are
+ * normalized to a full {@link SlotEntry}: `mode` defaults to `'partial'`
+ * and `mounted` defaults to `true`.
+ */
+export interface SlotEntryInput {
+  readonly path: SlotPath;
+  readonly element: Element;
+  readonly mode?: IslandMode;
+  readonly mounted?: boolean;
+}
+
 export interface PhysicalState {
   readonly activeElementPath: string | null;
   readonly focusState: FocusState | null;
@@ -153,7 +165,7 @@ export declare const Hints: {
 
 export interface SlotRegistryShape {
   get(path: SlotPath): SlotEntry | undefined;
-  register(entry: SlotEntry): void;
+  register(entry: SlotEntryInput): void;
   unregister(path: SlotPath): void;
   has(path: SlotPath): boolean;
   entries(): ReadonlyMap<SlotPath, SlotEntry>;
@@ -194,8 +206,8 @@ export interface SSEConfig {
   readonly artifactId?: string;
   readonly lastEventId?: string;
   /**
-   * Partial override of the reconnect policy — omitted fields fall back to
-   * `defaultReconnectConfig` (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
+   * Partial overrides are merged over `defaultReconnectConfig`
+   * (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
    */
   readonly reconnect?: Partial<ReconnectConfig>;
   readonly heartbeatInterval?: number;
@@ -263,12 +275,21 @@ export interface ResumptionState {
   readonly timestamp: number;
 }
 
+/**
+ * Input accepted by `Resumption.saveState`. The stored shape keeps
+ * `timestamp` required; on input it defaults to `Date.now()` — only the
+ * engine reads it.
+ */
+export type ResumptionStateInput = Omit<ResumptionState, 'timestamp'> & {
+  readonly timestamp?: number;
+};
+
 export type ResumeResponse =
   | { readonly type: 'replay'; readonly patches: readonly unknown[] }
   | { readonly type: 'snapshot'; readonly html: string; readonly signals: unknown; readonly lastEventId: string };
 
 export declare const Resumption: {
-  saveState(state: ResumptionState): Effect.Effect<void>;
+  saveState(state: ResumptionStateInput): Effect.Effect<void>;
   loadState(artifactId: string): Effect.Effect<ResumptionState | null>;
   clearState(artifactId: string): Effect.Effect<void>;
   canResume(lastEventId: string, serverOldestId: string): boolean;
