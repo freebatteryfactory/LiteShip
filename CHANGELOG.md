@@ -20,6 +20,18 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/vite` + `@czap/compiler` — `viewport.height` is a first-class
+  compiled axis: the CSS compiler derives the container-query axis from
+  the boundary input (height-measuring inputs serialize `(height ...)`
+  conditions; everything else keeps `(width ...)` byte-for-byte), and
+  height boundaries join the auto-containment path. When a sheet (or a
+  manifest entry) collects the `viewport-height` container name, the
+  `:root` rule upgrades to `container-type: size` with `block-size:
+  100dvh` pinned (size containment computes the root's height as if
+  empty); width-only sheets keep the `inline-size` rule unchanged. The
+  `container-not-declared` diagnostic no longer fires for
+  `viewport.height` — it remains for unrecognized `viewport.*` axes and
+  non-viewport inputs.
 - `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
   boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
   `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the
