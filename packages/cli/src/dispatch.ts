@@ -169,9 +169,26 @@ export async function run(argv: readonly string[]): Promise<number> {
       return verify(rest);
     }
     case 'mcp': {
-      const { start } = await import('@czap/mcp-server');
+      // @czap/mcp-server is an optional sibling install, not a dependency of
+      // @czap/cli — an unguarded import would break the one-JSON-line-on-stderr
+      // contract with a raw ERR_MODULE_NOT_FOUND stack trace.
+      let mcpServer: { start: (opts: { readonly http?: string }) => Promise<void> };
+      try {
+        mcpServer = await import('@czap/mcp-server');
+      } catch (err) {
+        // Node puts ERR_MODULE_NOT_FOUND on err.code; wrapping loaders
+        // (custom ESM hooks, test harnesses) carry the original on cause.
+        const code = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code;
+        if (code !== 'ERR_MODULE_NOT_FOUND') throw err;
+        emitError(
+          'mcp',
+          '@czap/mcp-server is not installed',
+          'Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@0.1.x',
+        );
+        return 1;
+      }
       const httpFlag = parseFlag(rest, '--http');
-      await start(httpFlag !== undefined ? { http: httpFlag } : {});
+      await mcpServer.start(httpFlag !== undefined ? { http: httpFlag } : {});
       return 0;
     }
     default: {

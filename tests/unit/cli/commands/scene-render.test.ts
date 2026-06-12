@@ -67,7 +67,7 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(parseStderrReceipt(stderr).error).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(parseStderrReceipt(stderr).error).toMatch(/does not export a sceneComposition capsule or a scene contract/);
   });
 
   it('cache hit: primed cache + existing output file returns cached receipt without re-rendering', async () => {
@@ -139,7 +139,7 @@ describe('scene render command — non-ffmpeg portions', () => {
     if (out.startsWith('{')) {
       expect(JSON.parse(out).cached).not.toBe(true);
     }
-    expect(stderr).toMatch(/no sceneComposition capsule or contract exported/);
+    expect(stderr).toMatch(/does not export a sceneComposition capsule/);
   });
 
   it('force=true bypasses an otherwise-valid cache (covers force-arm in tryReadCache through sceneRender)', async () => {
@@ -180,6 +180,8 @@ describe('scene render command — non-ffmpeg portions', () => {
       sceneRender(scenePath, join(workDir, 'out.mp4'), false, { cwd: workDir }),
     );
     expect(exit).toBe(1);
-    expect(stderr).toMatch(/no sceneComposition capsule or contract exported/);
+    // The error names ONLY the missing half — the capsule was found.
+    expect(stderr).toMatch(/does not export a scene contract \(an export carrying a tracks array\)/);
+    expect(stderr).not.toMatch(/does not export a sceneComposition capsule/);
   });
 });

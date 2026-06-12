@@ -31,12 +31,27 @@ describe('@czap/command scene.compile', () => {
     expect(r.exitCode).toBe(1);
   });
 
-  it('no capsule/contract export → failed exit 1', async () => {
+  it('no capsule/contract export → failed exit 1 naming both missing exports + the next step', async () => {
     const r = await sceneCompileCommand.handler(
       { name: 'scene.compile', args: { scene: 's.ts' } },
       { fileExists: () => true, loadSceneModule: async () => ({ nothing: 1 }) },
     );
     expect(r.exitCode).toBe(1);
+    const error = (r.payload as { error: string }).error;
+    expect(error).toBe(
+      'the scene module at s.ts does not export a sceneComposition capsule or a scene contract (an export carrying a tracks array). Compare a working example: examples/scenes/intro.ts, or run: czap glossary sceneComposition',
+    );
+  });
+
+  it('capsule present but no contract → error names only the missing contract', async () => {
+    const r = await sceneCompileCommand.handler(
+      { name: 'scene.compile', args: { scene: 's.ts' } },
+      { fileExists: () => true, loadSceneModule: async () => ({ cap: COMPILE_MOD.cap }) },
+    );
+    expect(r.exitCode).toBe(1);
+    const error = (r.payload as { error: string }).error;
+    expect(error).toMatch(/does not export a scene contract \(an export carrying a tracks array\)/);
+    expect(error).not.toMatch(/does not export a sceneComposition capsule/);
   });
 
   it('compile fn throwing → failed exit 1', async () => {
@@ -166,11 +181,29 @@ describe('@czap/command scene.render', () => {
     expect(r.exitCode).toBe(5);
   });
 
-  it('no capsule/contract export → failed exit 1', async () => {
+  it('no capsule/contract export → failed exit 1 naming the missing exports', async () => {
     const r = await sceneRenderCommand.handler(
       { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
       { fileExists: () => true, cache: { read: () => null, write: () => {} }, loadSceneModule: async () => ({ x: 1 }) },
     );
     expect(r.exitCode).toBe(1);
+    expect((r.payload as { error: string }).error).toMatch(
+      /the scene module at s\.ts does not export a sceneComposition capsule or a scene contract/,
+    );
+  });
+
+  it('contract without numeric fps/duration → error names the got-values', async () => {
+    const r = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: 'o.mp4' } },
+      {
+        fileExists: () => true,
+        cache: { read: () => null, write: () => {} },
+        loadSceneModule: async () => ({ cap: RENDER_MOD.cap, contract: { tracks: [1] } }),
+      },
+    );
+    expect(r.exitCode).toBe(1);
+    expect((r.payload as { error: string }).error).toMatch(
+      /must carry numeric fps and duration \(got fps: undefined, duration: undefined\)/,
+    );
   });
 });

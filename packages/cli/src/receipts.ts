@@ -101,13 +101,18 @@ export function emit(receipt: unknown): void {
   process.stdout.write(JSON.stringify(receipt) + '\n');
 }
 
-/** Emit a structured error event to stderr as a single JSON line. */
-export function emitError(command: string, message: string): void {
+/**
+ * Emit a structured error event to stderr as a single JSON line. `hint`
+ * carries the literal next thing to type (the doctor-check convention,
+ * generalized) — present in the envelope only when supplied.
+ */
+export function emitError(command: string, message: string, hint?: string): void {
   process.stderr.write(
     JSON.stringify({
       status: 'failed',
       command,
       error: message,
+      ...(hint !== undefined ? { hint } : {}),
       timestamp: new Date().toISOString(),
     }) + '\n',
   );

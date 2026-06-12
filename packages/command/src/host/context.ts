@@ -51,6 +51,7 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
       const path = getCapsuleManifestPath(opts.cwd);
       return existsSync(path) ? readFileSync(path, 'utf8') : null;
     },
+    manifestPath: () => getCapsuleManifestPath(opts.cwd),
     fileExists: (path) => existsSync(resolve(path)),
     readFileBytes: (path) => {
       const abs = resolve(path);

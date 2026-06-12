@@ -9,7 +9,7 @@
  */
 import type { CapsuleCommandResult } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
-import { loadManifest } from './manifest.js';
+import { loadManifest, manifestMissing } from './manifest.js';
 
 type Projection = 'beat' | 'onset' | 'waveform';
 
@@ -49,7 +49,7 @@ export const assetAnalyzeCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const manifest = loadManifest(context);
-    if (!manifest) return failed('asset.analyze', 'capsule manifest missing — run capsule:compile first', 1);
+    if (!manifest) return failed('asset.analyze', manifestMissing(context), 1);
     const assetId = String(invocation.args.asset ?? '');
     const projection = invocation.args.projection as Projection;
     const entry = manifest.capsules.find((c) => c.name === assetId);
@@ -100,7 +100,7 @@ export const assetVerifyCommand: HandledCommand = {
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
     const manifest = loadManifest(context);
-    if (!manifest) return failed('asset.verify', 'manifest missing; run capsule:compile first', 1);
+    if (!manifest) return failed('asset.verify', manifestMissing(context), 1);
     const assetId = String(invocation.args.asset ?? '');
     const entry = manifest.capsules.find((c) => c.name === assetId);
     if (!entry) return failed('asset.verify', `asset not registered: ${assetId}`, 1);
