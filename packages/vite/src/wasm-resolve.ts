@@ -24,6 +24,27 @@ export interface WASMResolution {
 }
 
 /**
+ * Render the three conventional WASM search locations for diagnostics.
+ */
+export function formatWasmSearchPaths(projectRoot: string, configPath?: string): string {
+  const paths: string[] = [];
+  if (configPath) {
+    const resolved = path.isAbsolute(configPath) ? configPath : path.join(projectRoot, configPath);
+    paths.push(resolved);
+  }
+  paths.push(
+    path.join(projectRoot, 'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm'),
+    path.join(projectRoot, 'public/czap-compute.wasm'),
+  );
+  return paths
+    .map((candidate) => {
+      const rel = path.relative(projectRoot, candidate);
+      return rel.startsWith('..') ? candidate : rel;
+    })
+    .join(', ');
+}
+
+/**
  * Resolve the czap-compute WASM binary path.
  */
 export function resolveWASM(projectRoot: string, configPath?: string): WASMResolution | null {

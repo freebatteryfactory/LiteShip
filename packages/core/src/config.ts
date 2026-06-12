@@ -28,7 +28,7 @@ export interface PluginConfig {
   readonly dirs?: Partial<Record<PrimitiveKind, string>>;
   readonly hmr?: boolean;
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-  readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
+  readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
 /** Astro-integration slice of a czap {@link Config.Shape}. */

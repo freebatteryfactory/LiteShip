@@ -34,25 +34,55 @@ describe('transformHTML', () => {
     expect(result).toBe(source);
   });
 
+  test('ignores data-czap macros inside HTML comments and code samples', async () => {
+    vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
+      const actual = await importOriginal();
+      return {
+        ...actual,
+        resolvePrimitive: vi.fn(async () => ({
+          primitive: {
+            id: 'viewport',
+            input: 'viewport.width',
+            thresholds: [0, 768],
+            states: ['compact', 'wide'],
+            hysteresis: 32,
+          },
+          source: '/test/boundaries.ts',
+        })),
+      };
+    });
+
+    const { transformHTML } = await import('@czap/vite/html-transform');
+    const commentLine = '<!-- teaching: data-czap="viewport" is the macro label -->';
+    const codeSample = '<pre><code>&lt;div data-czap="viewport"&gt;</code></pre>';
+    const live = '<div data-czap="viewport"></div>';
+    const source = [commentLine, codeSample, live].join('\n');
+    const result = await transformHTML(source, '/test/page.astro', '/test');
+
+    expect(result).toContain(commentLine);
+    expect(result).toContain(codeSample);
+    expect(result).toContain('data-czap-boundary=');
+    expect(result).toContain('data-czap-directive="satellite"');
+    expect(result.match(/data-czap-boundary=/g)).toHaveLength(1);
+  });
+
   test('replaces data-czap names with serialized boundary payloads when resolution succeeds', async () => {
-    vi.doMock('../../../packages/vite/src/primitive-resolve.js', () => ({
-      resolvePrimitive: vi.fn(async () => ({
-        primitive: {
-          id: 'hero',
-          input: 'viewport.width',
-          thresholds: [0, 768],
-          states: ['mobile', 'desktop'],
-          hysteresis: 32,
-        },
-        source: '/test/boundaries.ts',
-      })),
-      KIND_META: {
-        boundary: { file: 'boundaries.ts', suffix: '.boundaries.ts', tag: 'BoundaryDef' },
-        token:    { file: 'tokens.ts',     suffix: '.tokens.ts',     tag: 'TokenDef'    },
-        theme:    { file: 'themes.ts',     suffix: '.themes.ts',     tag: 'ThemeDef'    },
-        style:    { file: 'styles.ts',     suffix: '.styles.ts',     tag: 'StyleDef'    },
-      },
-    }));
+    vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
+      const actual = await importOriginal();
+      return {
+        ...actual,
+        resolvePrimitive: vi.fn(async () => ({
+          primitive: {
+            id: 'hero',
+            input: 'viewport.width',
+            thresholds: [0, 768],
+            states: ['mobile', 'desktop'],
+            hysteresis: 32,
+          },
+          source: '/test/boundaries.ts',
+        })),
+      };
+    });
 
     const { transformHTML } = await import('@czap/vite/html-transform');
     const source = '<section data-czap="hero"><slot /></section>';
@@ -60,6 +90,7 @@ describe('transformHTML', () => {
 
     expect(result).toContain("data-czap-boundary='");
     expect(result).toContain('"id":"hero"');
+    expect(result).toContain('data-czap-directive="satellite"');
     expect(result).not.toContain('data-czap="hero"');
   });
 
@@ -74,15 +105,13 @@ describe('transformHTML', () => {
       },
       source: '/test/defs/boundaries.ts',
     }));
-    vi.doMock('../../../packages/vite/src/primitive-resolve.js', () => ({
-      resolvePrimitive: resolveSpy,
-      KIND_META: {
-        boundary: { file: 'boundaries.ts', suffix: '.boundaries.ts', tag: 'BoundaryDef' },
-        token:    { file: 'tokens.ts',     suffix: '.tokens.ts',     tag: 'TokenDef'    },
-        theme:    { file: 'themes.ts',     suffix: '.themes.ts',     tag: 'ThemeDef'    },
-        style:    { file: 'styles.ts',     suffix: '.styles.ts',     tag: 'StyleDef'    },
-      },
-    }));
+    vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
+      const actual = await importOriginal();
+      return {
+        ...actual,
+        resolvePrimitive: resolveSpy,
+      };
+    });
 
     const { transformHTML } = await import('@czap/vite/html-transform');
     const source = '<section data-czap="hero"></section>';
@@ -91,43 +120,35 @@ describe('transformHTML', () => {
     expect(resolveSpy).toHaveBeenCalledWith('boundary', 'hero', '/test/page.astro', '/test', '/test/defs');
   });
 
-  test('warns and leaves source unchanged when a boundary cannot be resolved', async () => {
-    vi.doMock('../../../packages/vite/src/primitive-resolve.js', () => ({
-      resolvePrimitive: vi.fn(async () => null),
-      KIND_META: {
-        boundary: { file: 'boundaries.ts', suffix: '.boundaries.ts', tag: 'BoundaryDef' },
-        token:    { file: 'tokens.ts',     suffix: '.tokens.ts',     tag: 'TokenDef'    },
-        theme:    { file: 'themes.ts',     suffix: '.themes.ts',     tag: 'ThemeDef'    },
-        style:    { file: 'styles.ts',     suffix: '.styles.ts',     tag: 'StyleDef'    },
-      },
-    }));
+  test('warns with doctor-style message when a boundary cannot be resolved', async () => {
+    vi.doMock('../../../packages/vite/src/primitive-resolve.js', async (importOriginal) => {
+      const actual = await importOriginal();
+      return {
+        ...actual,
+        resolvePrimitive: vi.fn(async () => null),
+      };
+    });
 
     await captureDiagnosticsAsync(async ({ events }) => {
       const { transformHTML } = await import('@czap/vite/html-transform');
-      const source = '<div data-czap="hero"></div><div data-czap="footer"></div>';
+      const source = '<div data-czap="hero"></div>';
       const result = await transformHTML(source, '/test/page.astro', '/test');
       const boundaryWarnings = events.filter((event) => event.code === 'boundary-not-found');
 
       expect(result).toBe(source);
-      expect(boundaryWarnings).toEqual([
-        expect.objectContaining({
-          level: 'warn',
-          source: 'czap/vite.html-transform',
-          code: 'boundary-not-found',
-          detail: { fromFile: '/test/page.astro' },
-        }),
-        expect.objectContaining({
-          level: 'warn',
-          source: 'czap/vite.html-transform',
-          code: 'boundary-not-found',
-          detail: { fromFile: '/test/page.astro' },
-        }),
-      ]);
+      expect(boundaryWarnings).toHaveLength(1);
+      expect(boundaryWarnings[0]?.message).toContain('Could not resolve boundary "hero"');
+      expect(boundaryWarnings[0]?.message).toContain('Boundary.make');
+      expect(boundaryWarnings[0]?.detail).toEqual(
+        expect.objectContaining({ fromFile: '/test/page.astro', line: 1, boundaryName: 'hero' }),
+      );
     });
   });
 
   test('plugin routes astro and html files through transformHTML before runtime injection', async () => {
-    const transformHTMLSpy = vi.fn(async (source: string, fromFile: string) => `${source}<!-- transformed:${fromFile} -->`);
+    const transformHTMLSpy = vi.fn(
+      async (source: string, fromFile: string) => `${source}<!-- transformed:${fromFile} -->`,
+    );
     vi.doMock('../../../packages/vite/src/html-transform.js', () => ({
       transformHTML: transformHTMLSpy,
     }));
@@ -136,7 +157,11 @@ describe('transformHTML', () => {
     const vitePlugin = plugin();
     vitePlugin.configResolved?.({ root: '/repo', command: 'serve' } as never);
 
-    const astroResult = await vitePlugin.transform?.call({ warn: vi.fn() } as never, '<section />', '/repo/src/page.astro');
+    const astroResult = await vitePlugin.transform?.call(
+      { warn: vi.fn() } as never,
+      '<section />',
+      '/repo/src/page.astro',
+    );
     const htmlResult = await vitePlugin.transform?.call({ warn: vi.fn() } as never, '<main />', '/repo/src/index.html');
     const jsResult = await vitePlugin.transform?.call({ warn: vi.fn() } as never, 'export {}', '/repo/src/entry.ts');
 

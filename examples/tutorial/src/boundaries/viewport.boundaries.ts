@@ -17,7 +17,7 @@
 
 import { Boundary } from '@czap/core';
 
-export const viewportBoundary = Boundary.make({
+export const viewport = Boundary.make({
   // The signal this boundary listens to. "viewport.width" is a built-in
   // signal that the satellite directive reads from window.innerWidth.
   input: 'viewport.width',

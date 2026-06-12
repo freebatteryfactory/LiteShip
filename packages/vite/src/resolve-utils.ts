@@ -5,6 +5,22 @@
 import { Diagnostics } from '@czap/core';
 import { pathToFileURL } from 'node:url';
 
+/** Map diagnostic nouns to factory namespaces for teaching errors. */
+const NOUN_TO_FACTORY: Record<string, string> = {
+  boundary: 'Boundary',
+  token: 'Token',
+  theme: 'Theme',
+  style: 'Style',
+};
+
+/** Map `_tag` values to factory namespaces for teaching errors. */
+const TAG_TO_FACTORY: Record<string, string> = {
+  BoundaryDef: 'Boundary',
+  TokenDef: 'Token',
+  ThemeDef: 'Theme',
+  StyleDef: 'Style',
+};
+
 // ---------------------------------------------------------------------------
 // Generic dynamic import helper
 // ---------------------------------------------------------------------------
@@ -35,15 +51,32 @@ export async function tryImportNamed<T>(
   try {
     imported = (await import(/* @vite-ignore */ pathToFileURL(modulePath).href)) as Record<string, unknown>;
   } catch (err) {
+    const causeMessage = err instanceof Error ? err.message : String(err);
     Diagnostics.warn({
       source: diagnosticSource,
       code: 'import-failed',
-      message: `Failed to import "${modulePath}" for ${diagnosticNoun} "${exportName}".`,
+      message:
+        `Failed to import "${modulePath}" for ${diagnosticNoun} "${exportName}". ` +
+        `Probable cause: ${causeMessage}. ` +
+        `Fix: ensure the module exists, is valid ESM, and exports \`${exportName}\` with _tag "${expectedTag}".`,
       cause: err,
     });
   }
 
   const exported = imported?.[exportName];
+  if (exported && typeof exported === 'object' && '_tag' in exported && exported._tag !== expectedTag) {
+    Diagnostics.warn({
+      source: diagnosticSource,
+      code: 'export-tag-mismatch',
+      message:
+        `Export "${exportName}" in "${modulePath}" has _tag "${String(exported._tag)}" but expected "${expectedTag}". ` +
+        `Fix: wrap the value with ${TAG_TO_FACTORY[expectedTag] ?? NOUN_TO_FACTORY[diagnosticNoun] ?? 'the correct factory'}.make({ ... }) ` +
+        `so the export carries _tag "${expectedTag}".`,
+      detail: { exportName, modulePath, expectedTag, foundTag: exported._tag },
+    });
+    return undefined;
+  }
+
   if (exported && typeof exported === 'object' && '_tag' in exported && exported._tag === expectedTag) {
     // Runtime `_tag` guard validates the caller-specified shape; T is the caller's
     // type for the tag. This is the single containment cast at the import boundary.

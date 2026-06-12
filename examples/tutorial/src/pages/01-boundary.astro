@@ -20,16 +20,7 @@
  */
 
 import Base from '../layouts/Base.astro';
-import { viewportBoundary } from '../boundaries/viewport.boundaries.js';
-
-// Serialize the boundary so the satellite directive can parse it on the
-// client. The directive reads this JSON, extracts thresholds + states,
-// and uses a ResizeObserver to keep data-czap-state up to date.
-const boundaryJson = JSON.stringify({
-  input: viewportBoundary.input,
-  thresholds: viewportBoundary.thresholds,
-  states: viewportBoundary.states,
-});
+import { viewport } from '../boundaries/viewport.boundaries.js';
 ---
 
 <Base title="Your First Boundary">
@@ -75,7 +66,7 @@ const boundaryJson = JSON.stringify({
 
   <pre><code>import {'{'} Boundary {'}'} from '@czap/core';
 
-export const viewportBoundary = Boundary.make({'{'}&br;
+export const viewport = Boundary.make({'{'}&br;
   input: 'viewport.width',
   at: [
     [0, 'compact'],   // 0px and up = compact
@@ -158,7 +149,6 @@ export const viewportBoundary = Boundary.make({'{'}&br;
   <div
     class="boundary-demo"
     data-czap="viewport"
-    data-czap-boundary={boundaryJson}
     data-czap-directive="satellite"
     data-czap-state="compact"
   >
