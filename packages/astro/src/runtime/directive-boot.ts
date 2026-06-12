@@ -28,6 +28,23 @@ import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 /** Directive names the integration can register, in escalation order. */
 export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm';
 
+const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
+  stream: 'stream',
+  llm: 'llm',
+  worker: 'workers',
+  gpu: 'gpu',
+  wasm: 'wasm',
+};
+
+function directiveEnableFix(name: DirectiveName): string {
+  const configKey = DIRECTIVE_CONFIG_KEYS[name];
+  if (!configKey) {
+    return 'Fix: ensure the directive is registered in czap({ ... }).';
+  }
+  const coepNote = name === 'worker' ? ' COOP/COEP response headers are emitted automatically.' : '';
+  return `Fix: czap({ ${configKey}: { enabled: true } }).${coepNote}`;
+}
+
 const DIRECTIVE_NAMES: readonly DirectiveName[] = ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'];
 
 /** Tracks which directives already initialized an element across re-scans. */
@@ -119,7 +136,7 @@ export async function scanAndBootDirectives(
       Diagnostics.warnOnce({
         source: 'czap/astro.directive-boot',
         code: `directive-not-enabled:${name}`,
-        message: `Found ${name} directive markers but the ${name} directive is not enabled in the czap integration config.`,
+        message: `Found ${name} directive markers but the ${name} directive is not enabled in the czap integration config. ${directiveEnableFix(name)}`,
       });
       continue;
     }

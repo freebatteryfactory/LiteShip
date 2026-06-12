@@ -36,6 +36,16 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `container-not-declared` diagnostic no longer fires for
   `viewport.height` — it remains for unrecognized `viewport.*` axes and
   non-viewport inputs.
+- `@czap/assets` — `AssetDecl.invariants` and `budgets.decodeP95Ms` are optional
+  (defaults: `[]` and per-kind decode budgets — beat-markers/onsets 200 ms,
+  waveform 100 ms, video 100 ms, image 20 ms, audio 50 ms). `WaveformProjection`
+  defaults `bins` to 512 when omitted. `defineAsset` now returns a typed
+  `CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown>`.
+- `@czap/assets` — decoder and registry teaching errors: `registry-miss` lists
+  sorted registered ids plus an import-order hint; WAV/RIFF failures name chunk
+  ids, format codes, byte lengths, container sniff hints, and re-export steps;
+  `videoDecoder` accepts an optional source path and names it on empty-buffer
+  and probe-write failures.
 - `@czap/assets` — `AssetDecl.site` explicit override: an asset can now
   declare the sites it runs on instead of inheriting the derived default
   (custom decoder → `['node', 'browser']`, builtin → `builtinDecoderSiteFor`),
@@ -44,6 +54,14 @@ pivot (epic #4) — these notes ship as 0.2.0.
   errors: a site the builtin decoder cannot honor (builtin video is
   node-only — ffprobe needs node:child_process) and the empty array (a
   capsule must run somewhere).
+
+### Changed
+
+- **BREAKING** `@czap/assets` — `BeatMarkerProjection`, `OnsetProjection`,
+  `WaveformProjection`, and `WavMetadataProjection` validate `audioAssetId` via
+  `getAssetRegistry()` at construction (same semantics as `AssetRef`). Call
+  `defineAsset` before constructing projections, or import the module that
+  registers the audio asset.
 - `create-liteship` — `npm create liteship` / `pnpm create liteship`
   scaffolds a minimal working Astro + `@czap` project (the "first five
   minutes" path): one boundary, one `satelliteAttrs()` element, and one
@@ -93,6 +111,23 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `@czap/cloudflare` — `cloudflareMiddleware` serves **every manifest
   boundary by default** (previously a multi-boundary manifest without a
   `boundary` selector threw); `boundary` narrows to one name or a list.
+
+### Fixed
+
+- `@czap/edge` — `EdgeTier.tierFromParsed(caps)` maps already-parsed Client
+  Hints to the tier triple; `EdgeHostAdapter.resolve()` parses headers once.
+- `@czap/edge` — KV cache docs use `Boundary.make(...).id` and
+  `EdgeTier.detectTier(request.headers)` instead of hand-typed ids/tiers;
+  corrupt or mis-shaped cache entries warn with probable cause and self-heal
+  guidance (`invalid-cache-entry`, `cache-entry-shape-mismatch`).
+- `@czap/edge` — theme compiler teaching errors name the offending token or
+  prefix, suggest a sanitized prefix, and explain why prefixes become
+  `--<prefix>-*` custom properties.
+- `@czap/cloudflare` — `cloudflareMiddleware` defaults `binding` to
+  `CZAP_BOUNDARY_CACHE`; missing KV bindings and unavailable
+  `cloudflare:workers` emit `warnOnce` diagnostics listing available env keys;
+  test env helpers moved under a `// --- testing ---` export group;
+  `getDefaultWorkersEnv` docblock matches behavior.
 
 - `@czap/vite` + `@czap/compiler` — `@quantize` states accept **nested
   selector rules** (`<selector> { ... }`) alongside bare declarations:
@@ -238,6 +273,12 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `examples/*` — astro configs drop restated integration defaults; tutorial 01
   teaches `satelliteAttrs`; tutorial 04 stream demo adds `client:stream` and a
   live `/api/feed` endpoint; `remotion-demo` uses `workspace:*` deps.
+- `@czap/astro` — exports `czap` as an alias for `integration`; `satelliteAttrs`
+  defaults `data-czap-state` from the boundary; middleware consumes
+  integration-published detect/workers/coep toggles; runtime diagnostics upgraded
+  for boundary parse failures, directive-not-enabled, worker/WASM/GPU paths, and
+  endpoint policy rejections. **BREAKING**: SSR output bytes change when
+  `initialState` is omitted (first boundary state is now emitted).
 - **BREAKING** `@czap/edge` + `@czap/vite` — the boundary manifest
   deduplicates tier-invariant CSS (the format shipped above in this
   release, so no released format breaks): `BoundaryManifestEntry` pools

@@ -16,6 +16,7 @@ export interface IntegrationConfig {
 }
 
 export declare function integration(config?: IntegrationConfig): import('astro').AstroIntegration;
+export declare function czap(config?: IntegrationConfig): import('astro').AstroIntegration;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 2. QUANTIZE COMPONENT PROPS
@@ -34,12 +35,12 @@ export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface ServerIslandContext {
-  readonly userAgent: string;
-  readonly clientHints: Record<string, string>;
-  readonly detectedTier: CapLevel;
+  readonly userAgent?: string;
+  readonly clientHints?: Record<string, string>;
+  readonly detectedTier?: CapLevel;
 }
 
 export declare function resolveInitialState<B extends Boundary.Shape>(
   boundary: B,
-  context: ServerIslandContext,
+  context?: ServerIslandContext,
 ): string;

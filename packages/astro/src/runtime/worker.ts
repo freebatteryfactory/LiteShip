@@ -269,18 +269,29 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
   };
 
   const init = (): void => {
-    if (canUseWorkerRuntime()) {
-      try {
-        initWorkerHost();
-        return;
-      } catch (error) {
-        Diagnostics.warn({
-          source: 'czap/astro.worker',
-          code: 'worker-host-fallback',
-          message: 'WorkerHost could not initialize, falling back to main-thread evaluation.',
-          detail: error instanceof Error ? error.message : String(error),
-        });
-      }
+    if (!canUseWorkerRuntime()) {
+      Diagnostics.warnOnce({
+        source: 'czap/astro.worker',
+        code: 'worker-runtime-unavailable',
+        message:
+          `Worker runtime unavailable (crossOriginIsolated=${String(globalThis.crossOriginIsolated)}, ` +
+          `SharedArrayBuffer=${typeof SharedArrayBuffer !== 'undefined'}). ` +
+          `Fix: czap({ workers: { enabled: true } }) — COOP/COEP response headers are emitted automatically.`,
+      });
+      initFallback();
+      return;
+    }
+
+    try {
+      initWorkerHost();
+      return;
+    } catch (error) {
+      Diagnostics.warn({
+        source: 'czap/astro.worker',
+        code: 'worker-host-fallback',
+        message: 'WorkerHost could not initialize, falling back to main-thread evaluation.',
+        detail: error instanceof Error ? error.message : String(error),
+      });
     }
 
     initFallback();
