@@ -46,7 +46,11 @@ export interface BoundaryCache {
    * `Boundary.make` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
    */
-  getCompiledOutputs(boundaryId: ContentAddress, tierResult: EdgeTierResult, qualifier?: string): Promise<CompiledOutputs | null>;
+  getCompiledOutputs(
+    boundaryId: ContentAddress,
+    tierResult: EdgeTierResult,
+    qualifier?: string,
+  ): Promise<CompiledOutputs | null>;
 
   putCompiledOutputs(
     boundaryId: ContentAddress,

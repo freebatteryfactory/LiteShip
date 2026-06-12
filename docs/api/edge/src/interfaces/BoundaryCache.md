@@ -48,7 +48,7 @@ without it, the first name's compile result would serve every name.
 
 > **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L51)
+Defined in: [edge/src/kv-cache.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L55)
 
 #### Parameters
 

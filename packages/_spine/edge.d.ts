@@ -107,14 +107,23 @@ export declare function enumerateTierKeys(): readonly TierKey[];
 
 export interface BoundaryManifestEntry {
   readonly id: ContentAddress;
-  readonly outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  readonly outputs: readonly CompiledOutputs[];
+  readonly outputsByTier: Readonly<Partial<Record<TierKey, number>>>;
 }
+
+export declare function dedupeOutputsByTier(
+  outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>,
+): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'>;
+
+export declare function resolveOutputsByTier(
+  entry: Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'>,
+): Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
 
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
 export interface BoundaryManifestFile {
   readonly _tag: 'CzapBoundaryManifest';
-  readonly _version: 1;
+  readonly _version: 2;
   readonly boundaries: BoundaryManifest;
 }
 

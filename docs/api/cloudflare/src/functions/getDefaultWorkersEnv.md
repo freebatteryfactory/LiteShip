@@ -8,7 +8,7 @@
 
 > **getDefaultWorkersEnv**(): [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md)
 
-Defined in: [cloudflare/src/middleware.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L76)
+Defined in: [cloudflare/src/middleware.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L77)
 
 Read the workerd execution env (lazy, once per isolate).
 

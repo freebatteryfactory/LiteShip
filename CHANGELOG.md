@@ -32,6 +32,23 @@ pivot (epic #4) — these notes ship as 0.2.0.
   `container-not-declared` diagnostic no longer fires for
   `viewport.height` — it remains for unrecognized `viewport.*` axes and
   non-viewport inputs.
+- `@czap/assets` — `AssetDecl.site` explicit override: an asset can now
+  declare the sites it runs on instead of inheriting the derived default
+  (custom decoder → `['node', 'browser']`, builtin → `builtinDecoderSiteFor`),
+  e.g. a node-only custom video decoder or an audio asset that must never
+  ship to browsers. Impossible claims fail at decl time with teaching
+  errors: a site the builtin decoder cannot honor (builtin video is
+  node-only — ffprobe needs node:child_process) and the empty array (a
+  capsule must run somewhere).
+- `create-liteship` — `npm create liteship` / `pnpm create liteship`
+  scaffolds a minimal working Astro + `@czap` project (the "first five
+  minutes" path): one boundary, one `satelliteAttrs()` element, and one
+  `@quantize` block sharing the same boundary export, mirroring
+  `examples/default`'s repaired idioms. Zero runtime dependencies
+  (`node:fs` template copy + `node:readline` prompt); refuses non-empty
+  targets with a teaching error and prints the cd/install/dev next
+  steps. Post-publish smoke: scaffold + `pnpm install` + `astro build`
+  against the published `@czap/*` tarballs.
 - `@czap/vite` — `virtual:czap/boundaries` is real: the plugin derives a
   boundary manifest (`collectBoundaryManifest`) from `boundaries.ts` /
   `*.boundaries.ts` modules and `@quantize` CSS blocks — each entry is the
@@ -171,6 +188,21 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Changed
 
+- **BREAKING** `@czap/edge` + `@czap/vite` — the boundary manifest
+  deduplicates tier-invariant CSS (the format shipped above in this
+  release, so no released format breaks): `BoundaryManifestEntry` pools
+  the DISTINCT `CompiledOutputs` in a new `outputs` array and
+  `outputsByTier` cells are now pool indices instead of repeating the
+  same compiled strings per (motion x design) grid cell (~20 copies →
+  at most 2). New `dedupeOutputsByTier` (producer) and
+  `resolveOutputsByTier` (host inflation — byte-identical per-tier
+  lookups) ship from `@czap/edge`; `cloudflareMiddleware` inflates
+  manifest entries itself, so middleware consumers are unaffected.
+  Hosts hand-wiring `EdgeHostCacheConfig.precompiled` pass
+  `resolveOutputsByTier(manifestEntry)` instead of
+  `manifestEntry.outputsByTier`. `czap-boundary-manifest.json` is now
+  `_version: 2`; resolving a pre-v2 entry throws a teaching error
+  naming the rebuild fix.
 - Release workflow — **OIDC trusted publishing**: no publish tokens
   anywhere. `id-token: write` + pnpm's native OIDC exchange replace the
   `NPM_TOKEN` secret and `~/.npmrc` step; `czap ship` runs with

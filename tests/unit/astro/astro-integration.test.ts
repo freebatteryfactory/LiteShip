@@ -713,16 +713,18 @@ export const viewport = {
       } as never);
 
       const manifestPath = join(outDir, 'czap-boundary-manifest.json');
+      // v2 envelope: entries pool distinct outputs; cells hold pool indices.
       const file = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
         _tag: string;
         _version: number;
-        boundaries: Record<string, { id: string; outputsByTier: Record<string, { css: string }> }>;
+        boundaries: Record<string, { id: string; outputs: { css: string }[]; outputsByTier: Record<string, number> }>;
       };
 
       expect(file._tag).toBe('CzapBoundaryManifest');
-      expect(file._version).toBe(1);
+      expect(file._version).toBe(2);
       expect(file.boundaries['viewport']!.id).toBe(reference.id);
-      expect(file.boundaries['viewport']!.outputsByTier['transitions:standard']!.css).toContain('@container');
+      const entry = file.boundaries['viewport']!;
+      expect(entry.outputs[entry.outputsByTier['transitions:standard']!]!.css).toContain('@container');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

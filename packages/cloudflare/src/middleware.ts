@@ -12,6 +12,7 @@ import type {
   EdgeHostBoundaryConfig,
   EdgeHostCacheConfig,
 } from '@czap/edge';
+import { resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 
@@ -159,7 +160,9 @@ function resolveCacheSource(
             `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
         );
       }
-      boundaries[name] = { boundaryId: entry.id, precompiled: entry.outputsByTier, compile: config.compile };
+      // Inflate the deduplicated v2 entry (outputs pool + index cells) once
+      // at construction; per-request lookups stay a plain map access.
+      boundaries[name] = { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry), compile: config.compile };
     }
     return { boundaries };
   }
