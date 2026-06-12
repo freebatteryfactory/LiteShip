@@ -8,7 +8,11 @@
 
 > **generatePropertyRegistrations**(`states`): `string`
 
+<<<<<<< HEAD
 Defined in: [compiler/src/css.ts:335](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L335)
+=======
+Defined in: [compiler/src/css.ts:337](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L337)
+>>>>>>> main
 
 Scan all CSS values across all states and emit `@property` declarations
 for properties whose values parse as numbers or colors. This enables

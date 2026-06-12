@@ -14,6 +14,7 @@
  * production path. That is what lets the parallel tests each use a temp manifest.
  */
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgv } from '../../scripts/lib/spawn.js';
 import { mkdtempSync, mkdirSync, rmSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -62,6 +63,6 @@ describe('capsule manifest isolation (CUT T1)', () => {
         rmSync(tmpDir, { recursive: true, force: true });
       }
     },
-    90_000,
+    scaledTimeout(90_000),
   );
 });
