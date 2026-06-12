@@ -18,8 +18,4 @@ export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';
 // --- testing ---
 
 /** @group Testing */
-export {
-  getDefaultWorkersEnv,
-  resetWorkersEnvForTesting,
-  setWorkersEnvForTesting,
-} from './middleware.js';
+export { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from './middleware.js';

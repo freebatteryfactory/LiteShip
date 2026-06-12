@@ -43,6 +43,10 @@ describe('astro dev inspector', () => {
     window.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'C', code: 'KeyC', altKey: true, shiftKey: true, bubbles: true }),
     );
-    expect(isInspectorOverlayVisible()).toBe(false);
+    // The loader toggles after its dynamic import settles (a microtask even
+    // when the module is cached), so the hide lands asynchronously too.
+    await vi.waitFor(() => {
+      expect(isInspectorOverlayVisible()).toBe(false);
+    });
   });
 });
