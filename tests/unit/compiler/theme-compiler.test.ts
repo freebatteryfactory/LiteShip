@@ -93,7 +93,19 @@ describe('compileTheme', () => {
         tokens: { safe: '1' },
         prefix: 'brand;drop',
       }),
-    ).toThrow(/Invalid theme prefix/);
+    ).toThrow(/Invalid theme prefix "brand;drop"/);
+    expect(() =>
+      compileTheme({
+        tokens: { safe: '1' },
+        prefix: 'brand;drop',
+      }),
+    ).toThrow(/Fix: use "brand-drop" instead/);
+    expect(() =>
+      compileTheme({
+        tokens: { safe: '1' },
+        prefix: 'brand;drop',
+      }),
+    ).toThrow(/--<prefix>-\* CSS custom property names/);
   });
 
   test('rejects unsafe CSS token values', () => {
@@ -101,7 +113,12 @@ describe('compileTheme', () => {
       compileTheme({
         tokens: { exploit: 'red;display:block' },
       }),
-    ).toThrow(/Unsafe theme token value/);
+    ).toThrow(/Unsafe theme token "exploit"/);
+    expect(() =>
+      compileTheme({
+        tokens: { exploit: 'red;display:block' },
+      }),
+    ).toThrow(/forbidden characters \(;, \{, \}, <, >\)/);
   });
 
   test('rejects malformed serializer-context values', () => {
@@ -109,13 +126,13 @@ describe('compileTheme', () => {
       compileTheme({
         tokens: { exploit: 'url(https://attacker.example/x);' },
       }),
-    ).toThrow(/Unsafe theme token value/);
+    ).toThrow(/Unsafe theme token "exploit"/);
 
     expect(() =>
       compileTheme({
         prefix: 'brand"bad',
         tokens: { safe: '#fff' },
       }),
-    ).toThrow(/Invalid theme prefix/);
+    ).toThrow(/Fix: use "brand-bad" instead/);
   });
 });

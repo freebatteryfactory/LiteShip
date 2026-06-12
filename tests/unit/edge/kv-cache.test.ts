@@ -125,19 +125,31 @@ describe('createBoundaryCache', () => {
         level: 'warn',
         source: 'czap/edge.kv-cache',
         code: 'invalid-cache-entry',
+        message: expect.stringContaining('Probable cause: a foreign writer or truncated value'),
       }),
     ]);
+    expect(events[0]?.message).toContain('recompile and overwrite automatically');
   });
 
   test('getCompiledOutputs handles incomplete object gracefully', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
 
     const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
     kv.store.set(key, JSON.stringify({ css: 'only css, missing others' }));
 
     const result = await cache.getCompiledOutputs(boundaryId, tierResult);
     expect(result).toBeNull();
+    expect(events).toEqual([
+      expect.objectContaining({
+        level: 'warn',
+        source: 'czap/edge.kv-cache',
+        code: 'cache-entry-shape-mismatch',
+      }),
+    ]);
+    expect(events[0]?.message).toContain('missing css, propertyRegistrations, or containerQueries');
   });
 
   test('putCompiledOutputs forwards ttl when configured', async () => {

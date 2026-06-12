@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { ContentAddress } from '@czap/core';
+import { Diagnostics, type ContentAddress } from '@czap/core';
 import type {
   BoundaryManifest,
   BoundaryManifestFile,
@@ -17,8 +17,8 @@ import { czapMiddleware } from '@czap/astro';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 
 export interface CloudflareMiddlewareConfig {
-  /** KV namespace binding name in wrangler.jsonc. */
-  readonly binding: string;
+  /** KV namespace binding name in wrangler.jsonc. Defaults to `CZAP_BOUNDARY_CACHE`. */
+  readonly binding?: string;
   /**
    * Build-derived boundary manifest -- import it from
    * `virtual:czap/boundaries` or read the emitted
@@ -73,7 +73,7 @@ export interface CloudflareMiddlewareConfig {
 
 let cachedWorkersEnv: CloudflareWorkersEnv | undefined;
 
-/** Read the workerd execution env (lazy, once per isolate). */
+/** Read the workerd execution env captured by {@link loadWorkersEnvFromRuntime} or seeded for tests. Returns `{}` until one of those has run. */
 export function getDefaultWorkersEnv(): CloudflareWorkersEnv {
   return cachedWorkersEnv ?? {};
 }
@@ -100,6 +100,13 @@ export async function loadWorkersEnvFromRuntime(): Promise<CloudflareWorkersEnv>
     cachedWorkersEnv = mod.env as CloudflareWorkersEnv;
     return cachedWorkersEnv;
   } catch {
+    Diagnostics.warnOnce({
+      source: 'czap/cloudflare.middleware',
+      code: 'workers-env-unavailable',
+      message:
+        'cloudflare:workers is unavailable (not running on workerd), so Workers env bindings cannot be read from the runtime module. ' +
+        'Fix: pass the env option to cloudflareMiddleware in tests or custom hosts.',
+    });
     return getDefaultWorkersEnv();
   }
 }
@@ -201,7 +208,8 @@ function resolveCacheSource(
  */
 export function cloudflareMiddleware(config: CloudflareMiddlewareConfig): ReturnType<typeof czapMiddleware> {
   const envSource = resolveEnvSource(config);
-  const kv = createCloudflareEdgeCache(envSource, { binding: config.binding });
+  const binding = config.binding ?? 'CZAP_BOUNDARY_CACHE';
+  const kv = createCloudflareEdgeCache(envSource, { binding });
   const source = resolveCacheSource(config);
   const inner = czapMiddleware({
     edge: {

@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { EdgeTier } from '@czap/edge';
+import { EdgeTier, ClientHints } from '@czap/edge';
 
 describe('EdgeTier', () => {
   test('detectTier returns all three tier axes', () => {
@@ -46,5 +46,15 @@ describe('EdgeTier', () => {
     };
     const attrs = EdgeTier.tierDataAttributes(result);
     expect(attrs).toBe('data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced"');
+  });
+
+  test('tierFromParsed matches detectTier for the same headers', () => {
+    const headers = {
+      'sec-ch-prefers-reduced-motion': 'reduce',
+      'sec-ch-device-memory': '8',
+      'sec-ch-viewport-width': '1280',
+    };
+    const caps = ClientHints.parseClientHints(headers);
+    expect(EdgeTier.tierFromParsed(caps)).toEqual(EdgeTier.detectTier(headers));
   });
 });

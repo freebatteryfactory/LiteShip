@@ -336,7 +336,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
   return {
     async resolve(headers: Headers | ClientHintsHeaders): Promise<EdgeHostResolution> {
       const capabilities = ClientHints.parseClientHints(headers);
-      const tier = EdgeTier.detectTier(headers);
+      const tier = EdgeTier.tierFromParsed(capabilities);
       const context: EdgeHostContext = { capabilities, tier };
       const themeConfig = compiledStaticTheme ? undefined : resolveThemeConfig(config.theme, context);
       let theme = compiledStaticTheme;

@@ -74,8 +74,9 @@ function tokenToProperty(prefix: string, name: string): string {
 function normalizePrefix(prefix: string): string {
   const normalized = prefix.toLowerCase();
   if (!SAFE_PREFIX_PATTERN.test(normalized)) {
+    const suggestion = prefix.toLowerCase().replace(/[^a-z0-9-]/g, '-');
     throw new Error(
-      `Invalid theme prefix "${prefix}". Prefixes must contain only lowercase letters, digits, and hyphens.`,
+      `Invalid theme prefix "${prefix}". Why: prefixes become --<prefix>-* CSS custom property names and must contain only lowercase letters, digits, and hyphens. Fix: use "${suggestion}" instead.`,
     );
   }
 
@@ -86,10 +87,12 @@ function normalizePrefix(prefix: string): string {
  * Format a token value for CSS output.
  * Numbers are emitted bare (no unit) so consumers can apply their own units.
  */
-function formatValue(value: string | number): string {
+function formatValue(value: string | number, tokenName: string): string {
   const formatted = typeof value === 'number' ? String(value) : value;
   if (UNSAFE_CSS_VALUE_PATTERN.test(formatted)) {
-    throw new Error(`Unsafe theme token value "${formatted}" cannot be serialized into CSS safely.`);
+    throw new Error(
+      `Unsafe theme token "${tokenName}" value "${formatted}" contains forbidden characters (;, {, }, <, >) and cannot be serialized into CSS safely. Fix: remove those characters from the token value.`,
+    );
   }
 
   return formatted;
@@ -134,7 +137,7 @@ export function compileTheme(config: ThemeCompileConfig): ThemeCompileResult {
 
   for (const [name, value] of entries) {
     const prop = tokenToProperty(prefix, name);
-    const formatted = formatValue(value);
+    const formatted = formatValue(value, name);
     declarations.push({ property: prop, value: formatted });
     cssDeclarations.push(`  ${prop}: ${formatted};`);
     inlineParts.push(`${prop}:${formatted}`);

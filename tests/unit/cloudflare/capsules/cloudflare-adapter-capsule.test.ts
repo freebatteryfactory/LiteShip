@@ -15,6 +15,12 @@ describe('cloudflareAdapterCapsule', () => {
     expect(cloudflareAdapterCapsule.attribution?.license).toBe('MIT');
   });
 
+  it('cache-status-valid invariant uses house-style message', () => {
+    const inv = cloudflareAdapterCapsule.invariants.find((i) => i.name === 'cache-status-valid');
+    expect(inv?.message).toContain('cloudflare.workers-kv-boundary');
+    expect(inv?.message).toContain('disabled, precompiled, hit, or miss');
+  });
+
   it('cache-status-valid invariant accepts known statuses', () => {
     const inv = cloudflareAdapterCapsule.invariants.find((i) => i.name === 'cache-status-valid');
     expect(inv).toBeDefined();
