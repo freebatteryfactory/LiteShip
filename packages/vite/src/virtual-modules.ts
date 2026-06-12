@@ -10,7 +10,7 @@
  * - `virtual:czap/tokens` -- JS exports of token definitions (stub).
  * - `virtual:czap/tokens.css` -- CSS custom properties from tokens (stub).
  * - `virtual:czap/boundaries` -- the build-derived boundary manifest
- *   (`{ [name]: { id, outputsByTier } }`); the plugin supplies the
+ *   (`{ [name]: { id, outputs, outputsByTier } }`); the plugin supplies the
  *   manifest collected by `collectBoundaryManifest`, and the module
  *   degrades to an empty-object stub only when loaded outside the
  *   plugin (e.g. by a bare type-checker pass).

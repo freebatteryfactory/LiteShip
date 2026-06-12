@@ -162,6 +162,21 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Changed
 
+- **BREAKING** `@czap/edge` + `@czap/vite` — the boundary manifest
+  deduplicates tier-invariant CSS (the format shipped above in this
+  release, so no released format breaks): `BoundaryManifestEntry` pools
+  the DISTINCT `CompiledOutputs` in a new `outputs` array and
+  `outputsByTier` cells are now pool indices instead of repeating the
+  same compiled strings per (motion x design) grid cell (~20 copies →
+  at most 2). New `dedupeOutputsByTier` (producer) and
+  `resolveOutputsByTier` (host inflation — byte-identical per-tier
+  lookups) ship from `@czap/edge`; `cloudflareMiddleware` inflates
+  manifest entries itself, so middleware consumers are unaffected.
+  Hosts hand-wiring `EdgeHostCacheConfig.precompiled` pass
+  `resolveOutputsByTier(manifestEntry)` instead of
+  `manifestEntry.outputsByTier`. `czap-boundary-manifest.json` is now
+  `_version: 2`; resolving a pre-v2 entry throws a teaching error
+  naming the rebuild fix.
 - Release workflow — **OIDC trusted publishing**: no publish tokens
   anywhere. `id-token: write` + pnpm's native OIDC exchange replace the
   `NPM_TOKEN` secret and `~/.npmrc` step; `czap ship` runs with
