@@ -215,7 +215,9 @@ export function runIntegrityAudit(
           severity: 'warning',
           title: 'Raw console call in runtime source',
           summary:
-            'Runtime package source should route boundary logging through Diagnostics rather than raw console.* calls.',
+            "Raw console.* call in package source. Route it through your project's diagnostics " +
+            'channel, or suppress this file with a console-call allowlist entry ' +
+            "(rule: 'console-call', package, filePrefix, reason) in the profile.",
           location: {
             file: record.relativePath,
             line,
@@ -279,7 +281,13 @@ export function runIntegrityAudit(
             rule: 'fallback-laundering',
             severity: 'warning',
             title: 'Catch block returns a simple default',
-            summary: `Catch path returns ${nodeText(returned.expression!, record.sourceFile)} instead of surfacing richer failure context.`,
+            // The `returns ${...}` phrase is load-bearing: shipped and downstream
+            // allowlist entries match on summaryIncludes 'returns null'/'returns false'.
+            summary:
+              `Catch block ignores its error and returns ${nodeText(returned.expression!, record.sourceFile)}. ` +
+              `Consume the binding before returning (wrap it, attach it to the result, or rethrow) — or, ` +
+              `if the silent default is the designed contract, add a fallback-laundering allowlist entry ` +
+              `with a reason so it classifies as suppressed-with-reason.`,
             location: {
               file: record.relativePath,
               line,

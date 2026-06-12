@@ -8,7 +8,7 @@
 
 > `const` **ComposableWorld**: `object`
 
-Defined in: [core/src/composable.ts:318](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L318)
+Defined in: [core/src/composable.ts:329](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L329)
 
 Bridge between a raw ECS [World](World.md) and typed [ComposableEntity](../interfaces/ComposableEntity.md)
 operations (`spawn`, `query`, `evaluate`) plus a thin dense-store integration.

@@ -61,7 +61,18 @@ function findPackageFromSeed(seedDir: string, packageName: string): string | nul
 export function discoverInstalledPackageRoots(cwd: string, packageNames: readonly string[]): ConsumerDiscovery {
   const wanted = [...packageNames].sort((a, b) => a.localeCompare(b));
   const packageRoots: Record<string, string> = {};
-  const seeds: string[] = [normalizeRepoPath(realpathSync(cwd))];
+  let cwdRealpath: string;
+  try {
+    cwdRealpath = realpathSync(cwd);
+  } catch (cause) {
+    throw new Error(
+      `Consumer-mode package discovery cannot start from ${cwd} — the directory does not exist or is ` +
+        `unreadable (${cause instanceof Error ? cause.message : String(cause)}). Pass the repo directory ` +
+        `that contains node_modules.`,
+      { cause },
+    );
+  }
+  const seeds: string[] = [normalizeRepoPath(cwdRealpath)];
   const seenSeeds = new Set(seeds);
 
   let progressed = true;

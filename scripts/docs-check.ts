@@ -9,12 +9,12 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const COMMITTED_DIR = 'docs/api';
-const DOCS_NODE_OPTIONS = ['--max-old-space-size=4096', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
+const DOCS_NODE_OPTIONS = ['--max-old-space-size=8192', process.env.NODE_OPTIONS ?? ''].join(' ').trim();
 
 if (!existsSync(COMMITTED_DIR)) {
   console.error(`docs:check — ${COMMITTED_DIR} does not exist. Run 'pnpm run docs:build' first.`);
@@ -34,6 +34,23 @@ try {
   });
   if (build.status !== 0) {
     console.error('docs:check — typedoc build failed');
+    process.exit(1);
+  }
+
+  // A typedoc OOM can be laundered to exit 0 through the pnpm exec chain,
+  // leaving PARTIAL output that diffs as phantom mass-deletion drift. File
+  // count is the honest signal: a fresh build that produced far fewer pages
+  // than the committed tree did not finish — fail with the real cause.
+  const countMd = (dir: string): number =>
+    readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((entry) => entry.endsWith('.md')).length;
+  const committedCount = countMd(COMMITTED_DIR);
+  const freshCount = countMd(tempDir);
+  if (freshCount < committedCount * 0.9) {
+    console.error(
+      `docs:check — the fresh typedoc build produced ${freshCount} pages vs ${committedCount} committed: ` +
+        'the build did not finish (typically an out-of-memory abort laundered to exit 0). ' +
+        'Raise --max-old-space-size in docs:build / docs-check.ts rather than committing the partial output.',
+    );
     process.exit(1);
   }
 

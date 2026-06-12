@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:337](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L337)
+Defined in: [web/src/stream/sse.ts:339](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L339)
 
 SSE client namespace.
 

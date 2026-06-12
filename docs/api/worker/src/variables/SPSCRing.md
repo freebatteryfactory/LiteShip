@@ -8,7 +8,7 @@
 
 > `const` **SPSCRing**: `object`
 
-Defined in: [worker/src/spsc-ring.ts:300](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L300)
+Defined in: [worker/src/spsc-ring.ts:375](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L375)
 
 SPSC ring buffer namespace.
 
@@ -22,7 +22,7 @@ fully non-blocking.
 
 ### attachConsumer
 
-> `readonly` **attachConsumer**: (`sab`, `slotCount`, `slotSize`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachConsumer`
+> `readonly` **attachConsumer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachConsumer`
 
 Attach as consumer to an existing SharedArrayBuffer.
 Call this on the main thread that consumes data.
@@ -35,17 +35,17 @@ Call this on the main thread that consumes data.
 
 The SharedArrayBuffer shared with the producer
 
-##### slotCount
+##### slotCount?
 
 `number`
 
-Number of slots (must match createPair)
+Optional; validated against the buffer header (a mismatch throws)
 
-##### slotSize
+##### slotSize?
 
 `number`
 
-Float64 values per slot (must match createPair)
+Optional; validated against the buffer header (a mismatch throws)
 
 #### Returns
 
@@ -59,7 +59,7 @@ A consumer-side [SPSCRingBufferShape](../interfaces/SPSCRingBufferShape.md)
 import { SPSCRing } from '@czap/worker';
 
 // On the main thread after receiving buffer from Worker:
-const consumer = SPSCRing.attachConsumer(sharedBuffer, 64, 4);
+const consumer = SPSCRing.attachConsumer(sharedBuffer);
 const out = new Float64Array(4);
 if (consumer.pop(out)) {
   console.log('Received:', out); // Float64Array [1.0, 2.0, 3.0, 4.0]
@@ -68,7 +68,7 @@ if (consumer.pop(out)) {
 
 ### attachProducer
 
-> `readonly` **attachProducer**: (`sab`, `slotCount`, `slotSize`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachProducer`
+> `readonly` **attachProducer**: (`sab`, `slotCount?`, `slotSize?`) => [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md) = `_attachProducer`
 
 Attach as producer to an existing SharedArrayBuffer.
 Call this inside the Worker that produces data.
@@ -81,17 +81,17 @@ Call this inside the Worker that produces data.
 
 The SharedArrayBuffer from the main thread
 
-##### slotCount
+##### slotCount?
 
 `number`
 
-Number of slots (must match createPair)
+Optional; validated against the buffer header (a mismatch throws)
 
-##### slotSize
+##### slotSize?
 
 `number`
 
-Float64 values per slot (must match createPair)
+Optional; validated against the buffer header (a mismatch throws)
 
 #### Returns
 
@@ -106,8 +106,7 @@ import { SPSCRing } from '@czap/worker';
 
 // Inside a Worker's message handler:
 self.onmessage = (e) => {
-  const { buffer, slotCount, slotSize } = e.data;
-  const producer = SPSCRing.attachProducer(buffer, slotCount, slotSize);
+  const producer = SPSCRing.attachProducer(e.data.buffer);
   const data = new Float64Array([1.0, 2.0, 3.0, 4.0]);
   producer.push(data); // true if buffer not full
 };
@@ -121,7 +120,9 @@ Create a matched producer/consumer pair sharing the same SharedArrayBuffer.
 
 Typically called on the main thread; the `buffer` (SharedArrayBuffer) is
 then transferred to the Worker via `postMessage`, and the Worker calls
-`SPSCRing.attachProducer` to get its side of the ring.
+`SPSCRing.attachProducer(buffer)` to get its side of the ring — the
+ring geometry rides in the buffer header, so nothing else needs to be
+shuttled through the message protocol.
 
 #### Parameters
 
@@ -164,7 +165,7 @@ const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
 // producer.push(new Float64Array([1, 2, 3, 4])); // true
 // consumer.pop(new Float64Array(4));              // true
 // Transfer buffer to a Worker via postMessage
-worker.postMessage({ buffer, slotCount: 64, slotSize: 4 });
+worker.postMessage({ buffer });
 ```
 
 ## Example
@@ -174,10 +175,10 @@ import { SPSCRing } from '@czap/worker';
 
 // Main thread: create pair and send buffer to Worker
 const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);
-worker.postMessage({ buffer, slotCount: 128, slotSize: 8 });
+worker.postMessage({ buffer });
 
-// In Worker: attach as producer
-// const producer = SPSCRing.attachProducer(buffer, 128, 8);
+// In Worker: attach as producer (geometry rides in the buffer header)
+// const producer = SPSCRing.attachProducer(buffer);
 // producer.push(new Float64Array(8));
 
 // Main thread: consume in animation loop

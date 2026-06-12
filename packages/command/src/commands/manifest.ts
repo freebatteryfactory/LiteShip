@@ -7,6 +7,7 @@
  *
  * @module
  */
+import type { CapsuleCommandResult } from '@czap/core';
 import type { CommandContext } from '../registry.js';
 
 /** One capsule-manifest entry (fields vary by capsule kind). */
@@ -22,9 +23,52 @@ export interface CapsuleManifest {
   readonly capsules: readonly CapsuleManifestEntry[];
 }
 
-/** Parse the injected manifest source. Null when the manifest is absent. */
-export function loadManifest(context: CommandContext): CapsuleManifest | null {
+/** Why the capsule manifest could not be loaded. */
+export type ManifestLoadFailure =
+  | { readonly ok: false; readonly reason: 'missing' }
+  | { readonly ok: false; readonly reason: 'invalid'; readonly detail: string };
+
+/** Tagged outcome of {@link loadManifest} — corrupt JSON is a structured failure, never a throw. */
+export type ManifestLoadResult = { readonly ok: true; readonly manifest: CapsuleManifest } | ManifestLoadFailure;
+
+/**
+ * Parse the injected manifest source. An absent manifest and corrupt JSON both
+ * return tagged failures so handlers fail structurally across the dispatcher
+ * seam (which promises never to throw).
+ */
+export function loadManifest(context: CommandContext): ManifestLoadResult {
   const source = context.manifestSource?.();
-  if (!source) return null;
-  return JSON.parse(source) as CapsuleManifest;
+  if (!source) return { ok: false, reason: 'missing' };
+  try {
+    return { ok: true, manifest: JSON.parse(source) as CapsuleManifest };
+  } catch (err) {
+    return { ok: false, reason: 'invalid', detail: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * The ONE structured failure for an unusable capsule manifest — capsule/asset/
+ * scene commands previously said it three different ways. Names the default
+ * path, the override, and the literal next step.
+ */
+export function manifestUnavailable(
+  command: string,
+  failure: ManifestLoadFailure,
+  context: CommandContext,
+): CapsuleCommandResult {
+  const error =
+    failure.reason === 'missing'
+      ? manifestMissing(context)
+      : `capsule manifest is not valid JSON (${failure.detail}) — regenerate it with \`pnpm run capsule:compile\``;
+  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode: 1, payload: { error } };
+}
+
+/**
+ * Manifest-absent teaching error: names the path that was looked at (when
+ * the adapter exposes it) and gives both ways out — the repo-internal pnpm
+ * script is not typeable by an npm consumer, so the env override is named too.
+ */
+export function manifestMissing(context: CommandContext): string {
+  const looked = context.manifestPath?.();
+  return `capsule manifest missing${looked ? ` (looked at ${looked})` : ''}. In the LiteShip repo, generate it: pnpm run capsule:compile. In your own project, set CZAP_CAPSULE_MANIFEST to your manifest path.`;
 }

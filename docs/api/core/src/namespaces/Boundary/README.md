@@ -20,7 +20,7 @@ import { Boundary } from '@czap/core';
 
 const viewport = Boundary.make({
   input: 'viewport.width',
-  at: [[0, 'mobile'], [640, 'tablet'], [1024, 'desktop']] as const,
+  at: [[0, 'mobile'], [640, 'tablet'], [1024, 'desktop']],
   hysteresis: 16,
 });
 Boundary.evaluate(viewport, 800); // 'tablet'

@@ -8,7 +8,7 @@
 
 > **Shape**\<`T`\> = `SignalShape`\<`T`\>
 
-Defined in: [core/src/signal.ts:340](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L340)
+Defined in: [core/src/signal.ts:374](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L374)
 
 Structural shape of a passive [Signal](../../../variables/Signal.md): `source` + `current` + `changes`.
 

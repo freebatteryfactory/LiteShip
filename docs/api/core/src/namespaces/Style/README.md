@@ -21,7 +21,7 @@ const style = Style.make({
   boundary: bp,
   base: { properties: { 'font-size': '14px' } },
   states: { lg: { properties: { 'font-size': '18px' } } },
-  transition: { duration: Millis(200) },
+  transition: { duration: 200 },
 });
 const resolved = Style.tap(style, 'lg');
 // resolved === { 'font-size': '18px' }

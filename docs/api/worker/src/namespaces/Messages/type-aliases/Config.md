@@ -8,6 +8,6 @@
 
 > **Config** = [`WorkerConfig`](../../../interfaces/WorkerConfig.md)
 
-Defined in: [worker/src/messages.ts:351](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L351)
+Defined in: [worker/src/messages.ts:365](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L365)
 
 Tunable worker construction knobs.

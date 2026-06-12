@@ -6,7 +6,7 @@
 
 # Interface: BoundarySpec
 
-Defined in: [core/src/boundary.ts:325](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L325)
+Defined in: [core/src/boundary.ts:328](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L328)
 
 BoundarySpec: optional filter that gates whether a boundary is active.
 Enables A/B testing, time-bounded experiments, and device targeting
@@ -23,7 +23,7 @@ state transitions). JSON-serializable fields
 
 > `readonly` `optional` **deviceFilter?**: (`capabilities`) => `boolean`
 
-Defined in: [core/src/boundary.ts:327](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L327)
+Defined in: [core/src/boundary.ts:330](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L330)
 
 Only evaluate this boundary when the device filter returns true.
 
@@ -43,7 +43,7 @@ Only evaluate this boundary when the device filter returns true.
 
 > `readonly` `optional` **experimentId?**: `string`
 
-Defined in: [core/src/boundary.ts:331](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L331)
+Defined in: [core/src/boundary.ts:334](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L334)
 
 Only evaluate this boundary for participants in this experiment.
 
@@ -53,7 +53,7 @@ Only evaluate this boundary for participants in this experiment.
 
 > `readonly` `optional` **timeRange?**: `object`
 
-Defined in: [core/src/boundary.ts:329](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L329)
+Defined in: [core/src/boundary.ts:332](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L332)
 
 Only evaluate this boundary within this time range (epoch ms).
 

@@ -106,8 +106,10 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
       }
 
       if (requiresEvenDimensions(codec) && (captureConfig.width % 2 !== 0 || captureConfig.height % 2 !== 0)) {
+        const evenWidth = captureConfig.width - (captureConfig.width % 2);
+        const evenHeight = captureConfig.height - (captureConfig.height % 2);
         throw new Error(
-          `Codec "${codec}" requires even dimensions. Got ${captureConfig.width}x${captureConfig.height}`,
+          `Codec "${codec}" (H.264/HEVC) requires even width and height. Got ${captureConfig.width}x${captureConfig.height} — round to ${evenWidth}x${evenHeight}, or use a VP9/AV1 codec string.`,
         );
       }
 

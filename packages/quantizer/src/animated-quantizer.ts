@@ -7,6 +7,7 @@
 import type { Scope } from 'effect';
 import { Effect, Stream, SubscriptionRef, Queue, Fiber, Ref, Duration } from 'effect';
 import type { Boundary, StateUnion, BoundaryCrossing, Quantizer, Easing } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -75,6 +76,40 @@ function nowMs(): number {
 }
 
 // ---------------------------------------------------------------------------
+// Derive interpolation outputs from a LiveQuantizer's CSS output tables
+// ---------------------------------------------------------------------------
+
+/**
+ * When the wrapped quantizer is a {@link LiveQuantizer} (carries `.config`),
+ * its `outputs.css` tables already hold the per-state values the user wants
+ * animated — derive the interpolation record from them instead of demanding
+ * a restated copy. Finite-numeric strings (`'1'`, `'0.5'`) are coerced via
+ * `Number()` so they lerp; other strings pass through and snap at 50%.
+ */
+function deriveInterpolationOutputs<B extends Boundary.Shape>(
+  quantizer: Quantizer<B>,
+): Record<string, Record<string, number | string>> | undefined {
+  if (!('config' in quantizer)) return undefined;
+  const css = (quantizer as { config: { outputs: { css?: Record<string, Record<string, string | number>> } } }).config
+    .outputs.css;
+  if (css === undefined) return undefined;
+
+  const derived: Record<string, Record<string, number | string>> = {};
+  for (const [state, props] of Object.entries(css)) {
+    const mapped: Record<string, number | string> = {};
+    for (const [key, value] of Object.entries(props)) {
+      if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+        mapped[key] = Number(value);
+      } else {
+        mapped[key] = value;
+      }
+    }
+    derived[state] = mapped;
+  }
+  return derived;
+}
+
+// ---------------------------------------------------------------------------
 // Factory (internal impl)
 // ---------------------------------------------------------------------------
 
@@ -101,10 +136,10 @@ function nowMs(): number {
  * });
  * const program = Effect.scoped(Effect.gen(function* () {
  *   const live = yield* config.create();
+ *   // outputs omitted: derived from the LiveQuantizer's css output tables
  *   const animated = yield* AnimatedQuantizer.make(
  *     live,
  *     { '*': { duration: Millis(300) } },
- *     { top: { opacity: 1 }, bottom: { opacity: 0.5 } },
  *   );
  *   live.evaluate(600); // triggers interpolation
  *   return animated;
@@ -113,7 +148,10 @@ function nowMs(): number {
  *
  * @param quantizer   - The base quantizer to wrap
  * @param transitions - Map of state transition configs keyed by `from->to` pattern
- * @param outputs     - Per-state numeric output maps for interpolation
+ * @param outputs     - Per-state numeric output maps for interpolation; omitted,
+ *                      they are derived from the wrapped LiveQuantizer's
+ *                      `config.outputs.css` tables (finite-numeric strings are
+ *                      coerced to numbers so they lerp)
  * @returns An Effect yielding an {@link AnimatedQuantizerShape} (scoped)
  */
 function makeAnimatedQuantizer<B extends Boundary.Shape>(
@@ -124,6 +162,21 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
   return Effect.gen(function* () {
     const boundary = quantizer.boundary;
     const transitionResolver = TransitionFactory.for(quantizer, transitions);
+    const effectiveOutputs = outputs ?? deriveInterpolationOutputs(quantizer);
+
+    if (effectiveOutputs !== undefined) {
+      // A state with no outputs entry lerps to an empty record — properties
+      // just vanish at the 50% snap. Diff once at make() time, not per frame.
+      const stateNames = boundary.states as readonly string[];
+      const uncovered = stateNames.filter((s) => effectiveOutputs[s] === undefined);
+      if (uncovered.length > 0) {
+        Diagnostics.warn({
+          source: 'czap/quantizer',
+          code: 'uncovered-animation-states',
+          message: `AnimatedQuantizer outputs cover [${Object.keys(effectiveOutputs).join(', ')}] but boundary "${boundary.input}" has states [${stateNames.join(', ')}]; transitions into ${uncovered.map((s) => `'${s}'`).join(', ')} will animate to empty outputs.`,
+        });
+      }
+    }
 
     const initialState: StateUnion<B> = yield* quantizer.state;
     const stateRef = yield* SubscriptionRef.make<StateUnion<B>>(initialState);
@@ -134,7 +187,9 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
       readonly outputs: Record<string, number | string>;
     };
 
-    const currentOutputsRef = yield* Ref.make<Record<string, number | string>>(outputs?.[initialState as string] ?? {});
+    const currentOutputsRef = yield* Ref.make<Record<string, number | string>>(
+      effectiveOutputs?.[initialState as string] ?? {},
+    );
     const currentFiberRef = yield* Ref.make<Fiber.Fiber<void> | null>(null);
 
     const interpolatedStream: Stream.Stream<InterpolatedFrame> = Stream.callback<InterpolatedFrame>((queue) =>
@@ -164,7 +219,7 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
             const delay = config.delay ?? 0;
 
             const fromOutputs = { ...(yield* Ref.get(currentOutputsRef)) };
-            const toOutputs: Record<string, number | string> = outputs?.[crossing.to as string] ?? {};
+            const toOutputs: Record<string, number | string> = effectiveOutputs?.[crossing.to as string] ?? {};
 
             const animationLoop = Effect.gen(function* () {
               if (delay > 0) {

@@ -55,8 +55,26 @@ describe('czap scene render', () => {
     expect(exit).toBe(1);
   });
 
-  it('returns exit code 1 when --output is missing', async () => {
-    const { exit } = await capture(() => run(['scene', 'render', 'examples/scenes/intro.ts']));
-    expect(exit).toBe(1);
-  });
+  renderIt(
+    'omitted --output derives <sceneBasename>.mp4 beside the scene (sanctioned default, wave 2)',
+    async () => {
+      // The missing-output error path is gone by design — this is the
+      // end-to-end proof of what replaced it.
+      const derived = resolve('examples/scenes/intro.mp4');
+      if (existsSync(derived)) unlinkSync(derived);
+      try {
+        const { exit, stdout } = await capture(() => run(['scene', 'render', 'examples/scenes/intro.ts', '--force']));
+        expect(exit).toBe(0);
+        const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+        expect(receipt.status).toBe('ok');
+        // The receipt echoes the path as derived — relative to how the
+        // scene was given; the existsSync below pins where it landed.
+        expect(receipt.output).toBe('examples/scenes/intro.mp4');
+        expect(existsSync(derived)).toBe(true);
+      } finally {
+        if (existsSync(derived)) unlinkSync(derived);
+      }
+    },
+    scaledTimeout(240_000),
+  );
 });

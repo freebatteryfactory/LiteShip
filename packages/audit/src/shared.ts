@@ -43,7 +43,14 @@ export function defaultRoot(): string {
 }
 
 export function readJsonFile<T>(filePath: string): T {
-  return JSON.parse(readFileSync(filePath, 'utf8')) as T;
+  // Node's bare SyntaxError/ENOENT names no file; the audit reads dozens.
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8')) as T;
+  } catch (cause) {
+    throw new Error(`Could not read ${filePath} as JSON: ${cause instanceof Error ? cause.message : String(cause)}`, {
+      cause,
+    });
+  }
 }
 
 export function walkAuditSourceFiles(root = defaultRoot()): readonly string[] {

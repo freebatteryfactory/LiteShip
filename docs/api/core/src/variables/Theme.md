@@ -28,7 +28,7 @@ import { Theme } from '@czap/core';
 
 const theme = Theme.make({
   name: 'brand',
-  variants: ['light', 'dark'] as const,
+  variants: ['light', 'dark'],
   tokens: {
     bg: { light: '#fff', dark: '#111' },
     fg: { light: '#000', dark: '#eee' },

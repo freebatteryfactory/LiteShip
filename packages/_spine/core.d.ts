@@ -147,11 +147,17 @@ export declare namespace Boundary {
 
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom';
 
+/**
+ * Discriminant payloads default to the common case when omitted:
+ * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
+ * scroll `axis: 'y'`. `Signal.make` normalizes the source, so the returned
+ * signal's `source` always carries explicit values.
+ */
 export type SignalSource =
-  | { readonly type: 'viewport'; readonly axis: 'width' | 'height' }
-  | { readonly type: 'time'; readonly mode: 'elapsed' | 'absolute' | 'scheduled' }
-  | { readonly type: 'pointer'; readonly axis: 'x' | 'y' | 'pressure' }
-  | { readonly type: 'scroll'; readonly axis: 'x' | 'y' | 'progress' }
+  | { readonly type: 'viewport'; readonly axis?: 'width' | 'height' }
+  | { readonly type: 'time'; readonly mode?: 'elapsed' | 'absolute' | 'scheduled' }
+  | { readonly type: 'pointer'; readonly axis?: 'x' | 'y' | 'pressure' }
+  | { readonly type: 'scroll'; readonly axis?: 'x' | 'y' | 'progress' }
   | { readonly type: 'media'; readonly query: string }
   | { readonly type: 'custom'; readonly id: string };
 
@@ -181,8 +187,11 @@ export declare namespace Easing {
   export type Fn = (t: number) => number;
 
   export interface Config {
-    stiffness: number;
-    damping: number;
+    /** Default: 170. */
+    stiffness?: number;
+    /** Default: 26. */
+    damping?: number;
+    /** Default: 1. */
     mass?: number;
   }
 

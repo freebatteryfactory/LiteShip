@@ -28,7 +28,8 @@ import { WorkerHost } from '@czap/worker';
 
 const host = WorkerHost.create({ poolCapacity: 64 });
 host.attachCanvas(canvas);
-host.startRender({ durationMs: 5000, fps: 60, width: 1280, height: 720 });
+// width/height default to the attached canvas's dimensions, fps to 60.
+host.startRender({ durationMs: 5000 });
 const unsub = host.onState((state) => console.log(state.discrete));
 // ...
 unsub();

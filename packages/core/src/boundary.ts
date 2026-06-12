@@ -236,7 +236,7 @@ function _isActive<B extends BoundaryDef>(
  *
  * const viewport = Boundary.make({
  *   input: 'viewport.width',
- *   at: [[0, 'mobile'], [640, 'tablet'], [1024, 'desktop']] as const,
+ *   at: [[0, 'mobile'], [640, 'tablet'], [1024, 'desktop']],
  *   hysteresis: 16,
  * });
  * Boundary.evaluate(viewport, 800); // 'tablet'
@@ -274,9 +274,12 @@ export const Boundary: BoundaryFactory & {
     const pairs = config.at;
     for (let i = 1; i < pairs.length; i++) {
       if (pairs[i]![0] <= pairs[i - 1]![0]) {
+        // Build the copy-pasteable fix from the user's own pairs, sorted.
+        const sorted = [...(pairs as readonly (readonly [number, string])[])].sort((a, b) => a[0] - b[0]);
+        const suggestion = sorted.map(([t, s]) => `[${t}, '${s}']`).join(', ');
         throw new CzapValidationError(
           'Boundary.make',
-          `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}.`,
+          `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Reorder your \`at:\` pairs so thresholds increase: at: [${suggestion}].`,
         );
       }
     }
@@ -286,7 +289,7 @@ export const Boundary: BoundaryFactory & {
       if (seen.has(name)) {
         throw new CzapValidationError(
           'Boundary.make',
-          `duplicate state name "${name}". Each state must have a unique name.`,
+          `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
         );
       }
       seen.add(name);

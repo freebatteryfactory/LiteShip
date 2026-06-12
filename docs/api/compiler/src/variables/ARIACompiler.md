@@ -8,7 +8,7 @@
 
 > `const` **ARIACompiler**: `object`
 
-Defined in: [compiler/src/aria.ts:140](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/aria.ts#L140)
+Defined in: [compiler/src/aria.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/aria.ts#L149)
 
 ARIA compiler namespace.
 

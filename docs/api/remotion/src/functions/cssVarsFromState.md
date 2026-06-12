@@ -8,7 +8,7 @@
 
 > **cssVarsFromState**(`state`): `Record`\<`string`, `string`\>
 
-Defined in: [remotion/src/hooks.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L30)
+Defined in: [remotion/src/hooks.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L31)
 
 Convert `CompositeState.outputs.css` into a flat CSS custom property map.
 

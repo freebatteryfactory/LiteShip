@@ -71,7 +71,10 @@ export function getPrompt(name: string, args: Readonly<Record<string, unknown>>)
     case 'liteship.tool.use':
       return useTool(args);
     default:
-      throw new InvalidParamsError(`unknown prompt: ${name}`, { name });
+      throw new InvalidParamsError(
+        `unknown prompt: ${name}. Available prompts: ${PROMPTS.map((p) => p.name).join(', ')} (see prompts/list).`,
+        { name },
+      );
   }
 }
 
@@ -85,7 +88,12 @@ function inspectCommand(args: Readonly<Record<string, unknown>>): GetPromptResul
     throw new InvalidParamsError('liteship.command.inspect requires { command: string }', { received: args });
   }
   const descriptor = COMMAND_CATALOG.find((d) => d.name === command);
-  if (!descriptor) throw new InvalidParamsError(`unknown command: ${command}`, { command });
+  if (!descriptor) {
+    throw new InvalidParamsError(
+      `unknown command: ${command}. The full catalog is the resource liteship://registry/commands.`,
+      { command },
+    );
+  }
   return {
     description: `Inspect the LiteShip command ${command}.`,
     messages: [userMessage(renderCommand(descriptor))],
@@ -98,9 +106,18 @@ function useTool(args: Readonly<Record<string, unknown>>): GetPromptResult {
     throw new InvalidParamsError('liteship.tool.use requires { tool: string }', { received: args });
   }
   // Only MCP-exposed tools are callable over MCP — an unknown name OR a CLI-owned
-  // (non-exposed) command both fail here as invalid params.
+  // (non-exposed) command both fail here as invalid params, with the remedy split
+  // by which of the two actually happened (the catalog distinguishes them).
   const descriptor = mcpExposedDescriptors().find((d) => d.name === tool);
-  if (!descriptor) throw new InvalidParamsError(`not an MCP-exposed tool: ${tool}`, { tool });
+  if (!descriptor) {
+    const cliOwned = COMMAND_CATALOG.some((d) => d.name === tool);
+    throw new InvalidParamsError(
+      cliOwned
+        ? `"${tool}" is not callable over MCP — it is CLI-owned. Run it as \`czap ${tool}\`; MCP-callable tools are listed by tools/list.`
+        : `"${tool}" is not callable over MCP and is not in the command catalog. MCP-callable tools are listed by tools/list.`,
+      { tool },
+    );
+  }
   return { description: `How to call the MCP tool ${tool}.`, messages: [userMessage(renderTool(descriptor))] };
 }
 

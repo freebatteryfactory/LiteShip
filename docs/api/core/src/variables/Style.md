@@ -8,7 +8,7 @@
 
 > `const` **Style**: `StyleFactory` & `object`
 
-Defined in: [core/src/style.ts:191](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/style.ts#L191)
+Defined in: [core/src/style.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/style.ts#L215)
 
 Style namespace -- adaptive style primitive for constraint-based rendering.
 
@@ -35,7 +35,7 @@ const style = Style.make({
   boundary: bp,
   base: { properties: { 'font-size': '14px' } },
   states: { lg: { properties: { 'font-size': '18px' } } },
-  transition: { duration: Millis(200) },
+  transition: { duration: 200 },
 });
 const resolved = Style.tap(style, 'lg');
 // resolved === { 'font-size': '18px' }

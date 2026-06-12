@@ -9,6 +9,7 @@
 import type { Stream, Scope } from 'effect';
 import { Effect, SubscriptionRef, Ref } from 'effect';
 import type { AVBridge } from './av-bridge.js';
+import { CzapValidationError } from './validation-error.js';
 
 /** Tag of a {@link SignalSource} — the family of live data feed a signal binds to. */
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
@@ -17,15 +18,39 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
  * Configuration describing what a {@link Signal} reads from: viewport axis,
  * time mode, pointer axis, scroll axis, media query, custom push source,
  * or audio sample/normalized mode.
+ *
+ * Discriminant payloads default to the common case when omitted:
+ * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
+ * scroll `axis: 'y'`, audio `mode: 'sample'`. {@link Signal.make} normalizes
+ * the source, so the returned signal's `source` always carries explicit values.
  */
 export type SignalSource =
-  | { readonly type: 'viewport'; readonly axis: 'width' | 'height' }
-  | { readonly type: 'time'; readonly mode: 'elapsed' | 'absolute' | 'scheduled' }
-  | { readonly type: 'pointer'; readonly axis: 'x' | 'y' | 'pressure' }
-  | { readonly type: 'scroll'; readonly axis: 'x' | 'y' | 'progress' }
+  | { readonly type: 'viewport'; readonly axis?: 'width' | 'height' }
+  | { readonly type: 'time'; readonly mode?: 'elapsed' | 'absolute' | 'scheduled' }
+  | { readonly type: 'pointer'; readonly axis?: 'x' | 'y' | 'pressure' }
+  | { readonly type: 'scroll'; readonly axis?: 'x' | 'y' | 'progress' }
   | { readonly type: 'media'; readonly query: string }
   | { readonly type: 'custom'; readonly id: string }
-  | { readonly type: 'audio'; readonly mode: 'sample' | 'normalized' };
+  | { readonly type: 'audio'; readonly mode?: 'sample' | 'normalized' };
+
+/** Fill omitted discriminant payloads with their documented defaults. */
+function normalizeSource(source: SignalSource): SignalSource {
+  switch (source.type) {
+    case 'viewport':
+      return { type: 'viewport', axis: source.axis ?? 'width' };
+    case 'time':
+      return { type: 'time', mode: source.mode ?? 'elapsed' };
+    case 'pointer':
+      return { type: 'pointer', axis: source.axis ?? 'x' };
+    case 'scroll':
+      return { type: 'scroll', axis: source.axis ?? 'y' };
+    case 'audio':
+      return { type: 'audio', mode: source.mode ?? 'sample' };
+    case 'media':
+    case 'custom':
+      return source;
+  }
+}
 
 interface SignalShape<T> {
   readonly source: SignalSource;
@@ -87,7 +112,8 @@ function initialValueForSource(source: SignalSource): number {
  * }));
  * ```
  */
-function _make(source: SignalSource): Effect.Effect<SignalShape<number>, never, Scope.Scope> {
+function _make(rawSource: SignalSource): Effect.Effect<SignalShape<number>, never, Scope.Scope> {
+  const source = normalizeSource(rawSource);
   return Effect.gen(function* () {
     const initial = initialValueForSource(source);
     const ref = yield* SubscriptionRef.make(initial);
@@ -267,8 +293,10 @@ interface AudioSignalShape extends SignalShape<number> {
  * Create an audio signal backed by an AVBridge.
  *
  * In 'sample' mode, returns the raw sample index. In 'normalized' mode,
- * returns a 0..1 progress value based on totalDurationSec. Call `.poll()`
- * to read the latest sample from the bridge and update the signal.
+ * returns a 0..1 progress value based on totalDurationSec — omitting
+ * `totalDurationSec` (or passing a non-positive value) in 'normalized'
+ * mode throws a `CzapValidationError`. Call `.poll()` to read the latest
+ * sample from the bridge and update the signal.
  *
  * @example
  * ```ts
@@ -287,6 +315,12 @@ function _audio(
   mode: 'sample' | 'normalized' = 'sample',
   totalDurationSec?: number,
 ): Effect.Effect<AudioSignalShape, never, Scope.Scope> {
+  if (mode === 'normalized' && !(totalDurationSec !== undefined && totalDurationSec > 0)) {
+    throw new CzapValidationError(
+      'Signal.audio',
+      `normalized mode requires totalDurationSec > 0, got ${totalDurationSec} — pass Signal.audio(bridge, "normalized", durationSec)`,
+    );
+  }
   return Effect.gen(function* () {
     const ref = yield* SubscriptionRef.make(0);
 

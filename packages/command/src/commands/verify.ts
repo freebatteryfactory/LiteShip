@@ -49,14 +49,14 @@ function plainError(error: string): CapsuleCommandResult {
   return { status: 'failed', command: 'verify', timestamp: new Date().toISOString(), exitCode: 1, payload: { error } };
 }
 
-/** `verify <tarball> --capsule <file>` — emit one of four verdicts. */
+/** `verify <tarball> [--capsule <file>]` — emit one of four verdicts. */
 export const verifyCommand: HandledCommand = {
   descriptor: {
     name: 'verify',
     summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
     inputSchema: {
       type: 'object',
-      required: ['tarball', 'capsule'],
+      required: ['tarball'],
       properties: { tarball: { type: 'string' }, capsule: { type: 'string' } },
     },
     outputSchema: {
@@ -73,9 +73,16 @@ export const verifyCommand: HandledCommand = {
   },
   handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     const tarball = typeof invocation.args.tarball === 'string' ? invocation.args.tarball : undefined;
-    const capsule = typeof invocation.args.capsule === 'string' ? invocation.args.capsule : undefined;
+    let capsule = typeof invocation.args.capsule === 'string' ? invocation.args.capsule : undefined;
 
-    // Unknown — no capsule supplied. Honest: we cannot tell.
+    // No --capsule: ship mints the capsule as a tarball sibling
+    // (`<slug>-<version>.shipcapsule.cbor`, see cli ship). Probe that
+    // convention before falling back to Unknown — the verdict for the
+    // genuinely-no-capsule case (ADR-0011: Unknown is first-class).
+    if (capsule === undefined && tarball !== undefined) {
+      const sibling = tarball.replace(/\.tgz$/, '.shipcapsule.cbor');
+      if (sibling !== tarball && context.fileExists?.(sibling)) capsule = sibling;
+    }
     if (capsule === undefined) {
       return verdictResult('Unknown', 4, {
         tarball: tarball ?? '',

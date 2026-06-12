@@ -18,6 +18,7 @@ import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
 import { fnv1aBytes } from './fnv.js';
 import { CanonicalCbor } from './cbor.js';
+import { CzapValidationError } from './validation-error.js';
 import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
@@ -112,11 +113,18 @@ function _compose<T extends EntityComponents>(
 
 function _merge<T extends EntityComponents>(...entities: ComposableEntity<T>[]): ComposableEntity<T> {
   if (entities.length === 0) {
-    throw new Error('Cannot merge zero entities');
+    throw new CzapValidationError(
+      'Composable.merge',
+      'called with no entities — pass at least one ComposableEntity, e.g. Composable.merge(a, b).',
+    );
   }
   const first = entities[0];
   if (!first) {
-    throw new Error('First entity is undefined');
+    throw new CzapValidationError(
+      'Composable.merge',
+      'entities[0] is undefined — you likely passed a sparse or filtered array. ' +
+        'Filter out undefined before merging: Composable.merge(...entities.filter(Boolean)).',
+    );
   }
   return entities.slice(1).reduce((acc, entity) => _compose(acc, entity), first);
 }
@@ -263,7 +271,10 @@ function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
     store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): Effect.Effect<void> {
       return Effect.gen(function* () {
         if (!denseStore) {
-          throw new Error('No dense store created. Call create() first.');
+          throw new CzapValidationError(
+            'ComposableWorld.store',
+            'no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
+          );
         }
         // Ensure we have an ECS EntityId for this composable entity
         let ecsId = addressToEntityId.get(entity.id);

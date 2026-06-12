@@ -33,4 +33,11 @@ describe('MCP start dispatch', () => {
     expect(runHttpMock).toHaveBeenCalledWith(':3838');
     expect(runStdioMock).not.toHaveBeenCalled();
   });
+
+  it('accepts a plain port number for http and forwards it to runHttp', async () => {
+    await start({ http: 3838 });
+    expect(runHttpMock).toHaveBeenCalledTimes(1);
+    expect(runHttpMock).toHaveBeenCalledWith(3838);
+    expect(runStdioMock).not.toHaveBeenCalled();
+  });
 });

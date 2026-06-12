@@ -6,7 +6,7 @@
 
 # Interface: SceneInvariant
 
-Defined in: [scene/src/contract.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L113)
+Defined in: [scene/src/contract.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L130)
 
 Scene invariant — evaluated against the contract at compile time.
 `compileScene` runs every declared check; a check returning `false`
@@ -25,7 +25,7 @@ raw authoring contract inside a check.
 
 > `readonly` **check**: (`scene`) => `boolean`
 
-Defined in: [scene/src/contract.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L115)
+Defined in: [scene/src/contract.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L132)
 
 #### Parameters
 
@@ -43,7 +43,7 @@ Defined in: [scene/src/contract.ts:115](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **message**: `string`
 
-Defined in: [scene/src/contract.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L116)
+Defined in: [scene/src/contract.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L133)
 
 ***
 
@@ -51,4 +51,4 @@ Defined in: [scene/src/contract.ts:116](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **name**: `string`
 
-Defined in: [scene/src/contract.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L114)
+Defined in: [scene/src/contract.ts:131](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L131)

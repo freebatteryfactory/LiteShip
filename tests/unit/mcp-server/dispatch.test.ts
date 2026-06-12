@@ -46,6 +46,13 @@ describe('dispatch — JSON-RPC method routing', () => {
   it('returns null for notifications (§4.1)', async () => {
     expect(await dispatch(makeNotification('tools/list', {}))).toBeNull();
   });
+
+  it('defaults omitted tools/call arguments to {} (MCP marks arguments optional) — like prompts/get and ui/call-tool', async () => {
+    const r = await dispatch(makeRequest('tools/call', { name: 'glossary' }));
+    expect('result' in r!).toBe(true);
+    const result = (r as { result: { isError: boolean } }).result;
+    expect(result.isError).toBe(false);
+  });
 });
 
 describe('dispatchToolCall — structuredContent (no stdout capture, no buildArgv)', () => {
@@ -75,6 +82,11 @@ describe('dispatchToolCall — structuredContent (no stdout capture, no buildArg
     // The old buildArgv path would have produced `--meta=[object Object]`; the
     // structured path forwards the object untouched, so it never appears.
     expect(result.content[0]!.text).not.toContain('[object Object]');
+    expect(result.isError).toBe(false);
+  });
+
+  it('treats an omitted arguments field as {}', async () => {
+    const result = await dispatchToolCall({ name: 'glossary' });
     expect(result.isError).toBe(false);
   });
 

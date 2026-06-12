@@ -6,12 +6,32 @@
 
 # Interface: TransferableCanvas
 
-Defined in: [worker/src/host.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L32)
+Defined in: [worker/src/host.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L33)
 
 The canvas surface [WorkerHostShape.attachCanvas](WorkerHostShape.md#attachcanvas) actually needs:
 one transferable handoff. Structural rather than `HTMLCanvasElement` so
 the dependency is named — test doubles (tests/helpers/mock-dom.ts) conform
 to THIS type, and non-DOM canvas implementations work unchanged.
+
+## Properties
+
+### height
+
+> `readonly` **height**: `number`
+
+Defined in: [worker/src/host.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L37)
+
+Pixel height, captured at transfer time as the default render height.
+
+***
+
+### width
+
+> `readonly` **width**: `number`
+
+Defined in: [worker/src/host.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L35)
+
+Pixel width, captured at transfer time as the default render width.
 
 ## Methods
 
@@ -19,7 +39,7 @@ to THIS type, and non-DOM canvas implementations work unchanged.
 
 > **transferControlToOffscreen**(): `OffscreenCanvas`
 
-Defined in: [worker/src/host.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L33)
+Defined in: [worker/src/host.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L38)
 
 #### Returns
 

@@ -41,6 +41,13 @@ export interface CommandContext {
    */
   readonly manifestSource?: () => string | null;
   /**
+   * The resolved capsule-manifest path the adapter looked at (the path behind
+   * {@link manifestSource}). Used by manifest-missing teaching errors to name
+   * their subject; absent in pure/test contexts, where the errors degrade to
+   * path-less wording.
+   */
+  readonly manifestPath?: () => string;
+  /**
    * Run a capsule's generated test files and report the outcome. Adapters back
    * this with their vitest runner; handlers stay free of spawn.
    */
@@ -105,6 +112,10 @@ export interface CommandContext {
     readonly fps: number;
     readonly durationMs: number;
     readonly output: string;
+    /** Render width in pixels; the host defaults to 1280 when absent. */
+    readonly width?: number;
+    /** Render height in pixels; the host defaults to 720 when absent. */
+    readonly height?: number;
   }) => Promise<{ readonly frameCount: number; readonly elapsedMs: number }>;
   /** Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable. */
   readonly readFileBytes?: (path: string) => Uint8Array | null;
@@ -180,6 +191,30 @@ export interface CommandCache {
   readonly write: (key: CommandCacheKey, receipt: unknown) => void;
 }
 
+/** Name of an injectable {@link CommandContext} capability (everything but `cwd`). */
+export type CommandCapability = Exclude<keyof CommandContext, 'cwd'>;
+
+/**
+ * The ONE structured failure for a missing injected capability. The dispatcher
+ * emits it for unmet descriptor `requires`; handlers reuse it for capabilities
+ * they only need conditionally. Exit code 2 — the dominant convention among the
+ * per-handler absence checks this replaces (capsule.verify / scene.verify /
+ * asset.verify all used 2; scene.render's 5 and asset.analyze's 1 were outliers).
+ */
+export function capabilityUnavailable(command: string, missing: readonly CommandCapability[]): CapsuleCommandResult {
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date().toISOString(),
+    exitCode: 2,
+    payload: {
+      error: 'capability_unavailable',
+      missing,
+      hint: 'build the context with createNodeCommandContext() from @czap/command/host, or inject the missing capabilities into your CommandContext',
+    },
+  };
+}
+
 /** A command handler: structured invocation in, structured result out. No stdout, no argv. */
 export interface CapsuleCommandHandler {
   (invocation: CapsuleCommandInvocation, context: CommandContext): Promise<CapsuleCommandResult>;
@@ -215,7 +250,9 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
   for (const command of commands) {
     const { name } = command.descriptor;
     if (byName.has(name)) {
-      throw new Error(`@czap/command: duplicate command name "${name}"`);
+      throw new Error(
+        `@czap/command: duplicate command name "${name}" — two RegisteredCommand entries share descriptor.name; check HANDLER_COMMANDS / CLI_OWNED_DESCRIPTORS in catalog.ts`,
+      );
     }
     byName.set(name, command);
   }

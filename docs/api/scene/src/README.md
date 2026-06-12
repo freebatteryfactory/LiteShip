@@ -49,6 +49,7 @@ ECS substrate in `@czap/core`.
 - [TrackEnvelope](type-aliases/TrackEnvelope.md)
 - [TrackId](type-aliases/TrackId.md)
 - [TrackKind](type-aliases/TrackKind.md)
+- [TrackRef](type-aliases/TrackRef.md)
 
 ## Variables
 
@@ -81,5 +82,6 @@ ECS substrate in `@czap/core`.
 - [resolveEnvelope](functions/resolveEnvelope.md)
 - [resolveFrameMark](functions/resolveFrameMark.md)
 - [SyncSystem](functions/SyncSystem.md)
+- [trackRefId](functions/trackRefId.md)
 - [TransitionSystem](functions/TransitionSystem.md)
 - [VideoSystem](functions/VideoSystem.md)

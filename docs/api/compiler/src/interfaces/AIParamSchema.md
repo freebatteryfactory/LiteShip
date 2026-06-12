@@ -55,13 +55,13 @@ Numeric minimum (inclusive).
 
 ***
 
-### required
+### required?
 
-> `readonly` **required**: `boolean`
+> `readonly` `optional` **required?**: `boolean`
 
 Defined in: [compiler/src/ai-manifest.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L77)
 
-Whether the parameter must be present.
+Whether the parameter must be present; defaults to `false` (JSON Schema convention).
 
 ***
 

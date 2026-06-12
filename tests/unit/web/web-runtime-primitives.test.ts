@@ -232,7 +232,8 @@ describe('web runtime primitives', () => {
     expect(rejection).toEqual({
       type: 'preserve_violation',
       missingIds: ['missing-id'],
-      reason: 'Required elements missing after morph: missing-id',
+      reason: 'Morph rejected: elements [missing-id] were required by a preserve hint but are missing from the new HTML.',
+      hint: expect.stringMatching(/data-czap-id elements \[missing-id\]/) as string,
     });
 
     const remappedState = applyRemap(
@@ -1490,7 +1491,10 @@ describe('web runtime primitives', () => {
         ),
       );
 
-      expect(events.filter((event) => event.code === 'invalid-slot-path')).toHaveLength(1);
+      // scanDOM warns once; each of the two observe() calls now scans the
+      // pre-existing DOM first (wave-2 item 57) and re-warns the
+      // still-present invalid slot path.
+      expect(events.filter((event) => event.code === 'invalid-slot-path')).toHaveLength(3);
       document.documentElement.removeAttribute('data-czap-slot');
     });
   });

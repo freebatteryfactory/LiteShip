@@ -16,12 +16,14 @@ Per-slot configuration on a component — whether the slot must be provided, plu
 
 > `readonly` `optional` **description?**: `string`
 
-Defined in: [core/src/component.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/component.ts#L19)
+Defined in: [core/src/component.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/component.ts#L20)
 
 ***
 
-### required
+### required?
 
-> `readonly` **required**: `boolean`
+> `readonly` `optional` **required?**: `boolean`
 
-Defined in: [core/src/component.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/component.ts#L18)
+Defined in: [core/src/component.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/component.ts#L19)
+
+Default: false.

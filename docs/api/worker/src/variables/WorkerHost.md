@@ -8,7 +8,7 @@
 
 > `const` **WorkerHost**: `object`
 
-Defined in: [worker/src/host.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L187)
+Defined in: [worker/src/host.ts:238](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L238)
 
 `WorkerHost` -- main-thread lifecycle wrapper that owns a
 [CompositorWorker.Shape](../namespaces/CompositorWorker/type-aliases/Shape.md) and (optionally) a
@@ -56,7 +56,8 @@ import { WorkerHost } from '@czap/worker';
 
 const host = WorkerHost.create({ poolCapacity: 64 });
 host.attachCanvas(canvas);
-host.startRender({ durationMs: 5000, fps: 60, width: 1280, height: 720 });
+// width/height default to the attached canvas's dimensions, fps to 60.
+host.startRender({ durationMs: 5000 });
 const unsub = host.onState((state) => console.log(state.discrete));
 // ...
 unsub();

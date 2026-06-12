@@ -5,7 +5,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { Effect, Scope, Schema } from 'effect';
-import { Part, World } from '@czap/core';
+import { CzapValidationError, Part, World } from '@czap/core';
 import type { EntityId, DenseStore } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -107,13 +107,13 @@ describe('Part.dense -- DenseStore', () => {
     expect(ents).toEqual(['e-a', 'e-b', 'e-c']);
   });
 
-  test('throws RangeError when capacity exceeded', () => {
+  test('throws CzapValidationError when capacity exceeded', () => {
     const store = Part.dense('tiny', 2);
 
     store.set('e-0' as EntityId, 1);
     store.set('e-1' as EntityId, 2);
 
-    expect(() => store.set('e-2' as EntityId, 3)).toThrow(RangeError);
+    expect(() => store.set('e-2' as EntityId, 3)).toThrow(CzapValidationError);
   });
 
   test('view updates after delete (swap-remove reflected)', () => {

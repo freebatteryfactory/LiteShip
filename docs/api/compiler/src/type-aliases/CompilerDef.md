@@ -6,9 +6,9 @@
 
 # Type Alias: CompilerDef
 
-> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifest`](../interfaces/AIManifest.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: `Config.Shape`; \}
+> **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: `Config.Shape`; \}
 
-Defined in: [compiler/src/dispatch.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L78)
+Defined in: [compiler/src/dispatch.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L79)
 
 Tagged discriminated union describing a single compilation request.
 
@@ -18,8 +18,63 @@ exhaustiveness and no runtime `unknown`/`as` casts are required.
 
 Arms:
 - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
+                     Bare properties target `selector` (default `.czap-boundary`).
 - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
 - `WGSLCompiler`   — boundary + per-state numeric uniforms → WGSL bindings.
 - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
-- `AICompiler`     — a prebuilt [AIManifest](../interfaces/AIManifest.md) → tool-call-ready manifest JSON.
+- `AICompiler`     — an [AIManifestInput](../interfaces/AIManifestInput.md) → tool-call-ready manifest JSON.
 - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
+
+## Union Members
+
+### Type Literal
+
+\{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \}
+
+#### \_tag
+
+> `readonly` **\_tag**: `"CSSCompiler"`
+
+#### boundary
+
+> `readonly` **boundary**: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+
+#### selector?
+
+> `readonly` `optional` **selector?**: `string`
+
+CSS selector for bare properties; defaults to `.czap-boundary`.
+
+#### states
+
+> `readonly` **states**: [`CSSStates`](CSSStates.md)
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`GLSLStates`](GLSLStates.md); \}
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`WGSLStates`](WGSLStates.md); \}
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \}
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \}
+
+***
+
+### Type Literal
+
+\{ `_tag`: `"ConfigCompiler"`; `config`: `Config.Shape`; \}

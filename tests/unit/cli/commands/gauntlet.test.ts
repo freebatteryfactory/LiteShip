@@ -6,6 +6,9 @@
  * signal death — are still proven.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const { spawnSyncMock } = vi.hoisted(() => ({ spawnSyncMock: vi.fn() }));
 vi.mock('node:child_process', async (importOriginal) => ({
@@ -92,31 +95,107 @@ describe('gauntlet command (unit)', () => {
     expect(receipt.argv[0]).toBe('#');
   });
 
+  it('refuses the live run outside the LiteShip workspace without spawning anything', async () => {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-gauntlet-guard-'));
+    try {
+      writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'stranger-project', version: '0.0.0' }));
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(1);
+      expect(spawnSyncMock).not.toHaveBeenCalled();
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.status).toBe('failed');
+      expect(receipt.error).toMatch(/LiteShip-workspace verb/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('live run (spawn mocked, exit 0) emits an ok receipt with elapsedMs', async () => {
     spawnSyncMock.mockReturnValue({ status: 0 });
     const { result, stdout } = await captureStdout(() => gauntlet([]));
     expect(result).toBe(0);
-    expect(spawnSyncMock).toHaveBeenCalledWith('pnpm', ['run', 'gauntlet:full'], { stdio: 'inherit', shell: true });
+    expect(spawnSyncMock).toHaveBeenCalledWith('pnpm', ['run', 'gauntlet:full'], {
+      stdio: 'inherit',
+      shell: true,
+      cwd: process.cwd(),
+    });
     const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
     expect(receipt.status).toBe('ok');
     expect(receipt.dryRun).toBe(false);
     expect(typeof receipt.elapsedMs).toBe('number');
   });
 
-  it('live run failure propagates the gauntlet exit status', async () => {
+  // Czap-named tmp workspace: passes the isLiteShipWorkspace guard while
+  // keeping the phase-timings artifact state under test control (the repo
+  // root may carry a real benchmarks/ artifact from an earlier run).
+  function makeCzapTmp(): string {
+    const tmp = mkdtempSync(join(tmpdir(), 'czap-gauntlet-ws-'));
+    writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'czap', version: '0.0.0' }));
+    return tmp;
+  }
+
+  it('live run failure propagates the gauntlet exit status (no artifact: bare status)', async () => {
     spawnSyncMock.mockReturnValue({ status: 7 });
-    const { result, stderr } = await captureStderr(() => gauntlet([]));
-    expect(result).toBe(7);
-    const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
-    expect(receipt.status).toBe('failed');
-    expect(receipt.error).toBe('gauntlet exited with status 7');
+    const tmp = makeCzapTmp();
+    try {
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(7);
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.status).toBe('failed');
+      expect(receipt.error).toBe('gauntlet exited with status 7');
+      expect(receipt.hint).toBe('List phases: czap gauntlet --dry-run');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('live run failure names the failing phase from the executor artifact', async () => {
+    spawnSyncMock.mockReturnValue({ status: 1 });
+    const tmp = makeCzapTmp();
+    try {
+      mkdirSync(join(tmp, 'benchmarks'), { recursive: true });
+      writeFileSync(
+        join(tmp, 'benchmarks/gauntlet-phase-timings.json'),
+        JSON.stringify({ _tag: 'GauntletPhaseTimings', status: 'failed', failedPhase: 'flex:verify' }),
+      );
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(1);
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.error).toBe('gauntlet failed in phase flex:verify (exit 1)');
+      expect(receipt.hint).toBe('List phases: czap gauntlet --dry-run');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a stale PASSING artifact does not pollute the failure message', async () => {
+    spawnSyncMock.mockReturnValue({ status: 2 });
+    const tmp = makeCzapTmp();
+    try {
+      mkdirSync(join(tmp, 'benchmarks'), { recursive: true });
+      writeFileSync(
+        join(tmp, 'benchmarks/gauntlet-phase-timings.json'),
+        JSON.stringify({ _tag: 'GauntletPhaseTimings', status: 'passed', failedPhase: null }),
+      );
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(2);
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.error).toBe('gauntlet exited with status 2');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('live run killed by a signal (status null) reports signal and exits 1', async () => {
     spawnSyncMock.mockReturnValue({ status: null });
-    const { result, stderr } = await captureStderr(() => gauntlet([]));
-    expect(result).toBe(1);
-    const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
-    expect(receipt.error).toBe('gauntlet exited with status signal');
+    const tmp = makeCzapTmp();
+    try {
+      const { result, stderr } = await captureStderr(() => gauntlet([], { cwd: tmp }));
+      expect(result).toBe(1);
+      const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+      expect(receipt.error).toBe('gauntlet exited with status signal');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

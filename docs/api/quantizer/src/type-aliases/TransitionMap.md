@@ -8,7 +8,7 @@
 
 > **TransitionMap**\<`S`\> = `object` & `` { readonly [K in `${S}->${S}`]?: TransitionConfig } ``
 
-Defined in: [quantizer/src/transition.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L38)
+Defined in: [quantizer/src/transition.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L42)
 
 State-transition map keyed by `"from->to"` literal or `"*"` wildcard.
 
