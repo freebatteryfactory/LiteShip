@@ -8,5 +8,5 @@
 // so `tsc --build` stays acyclic; this minimal subset keeps cli cold-compilable.
 // At runtime the real module resolves through the pnpm workspace symlink.
 declare module '@czap/mcp-server' {
-  export function start(opts?: { http?: string }): Promise<void>;
+  export function start(opts?: { http?: number | string }): Promise<void>;
 }

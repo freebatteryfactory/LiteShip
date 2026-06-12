@@ -16,11 +16,21 @@
 import { createServer } from 'node:http';
 import { handleRequest } from './http.js';
 
-/** Run the MCP HTTP server bound to `bind` (e.g. ":3838" or "127.0.0.1:8080"). */
-export async function runHttp(bind: string): Promise<void> {
+/**
+ * Resolve an `--http` bind into host + port. Accepts a port number, `":PORT"`,
+ * `"PORT"`, or `"HOST:PORT"`; host defaults to 127.0.0.1. Exported so the
+ * shapes stay unit-testable without spinning up a server (this module's
+ * bootstrap path is coverage-excluded).
+ */
+export function parseHttpBind(bind: number | string): { readonly host: string; readonly port: number } {
+  if (typeof bind === 'number') return { host: '127.0.0.1', port: bind };
   const m = bind.match(/^(?:([^:]+))?:(\d+)$/);
-  const host = m?.[1] ?? '127.0.0.1';
-  const port = Number(m?.[2] ?? bind);
+  return { host: m?.[1] ?? '127.0.0.1', port: Number(m?.[2] ?? bind) };
+}
+
+/** Run the MCP HTTP server bound to `bind` (e.g. 3838, ":3838", or "127.0.0.1:8080"). */
+export async function runHttp(bind: number | string): Promise<void> {
+  const { host, port } = parseHttpBind(bind);
 
   const server = createServer(async (req, res) => {
     if (req.method !== 'POST') {
