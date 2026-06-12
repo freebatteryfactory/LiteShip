@@ -58,6 +58,12 @@ export declare function watchCapabilities(
   onChange: (result: DetectionResult) => void,
 ): Effect.Effect<void, never, import('effect').Scope.Scope>;
 
+/**
+ * Clear memoized session-stable probe results (currently the GPU renderer
+ * string). Production code never needs this — it exists for test isolation.
+ */
+export declare function resetDetectionCaches(): void;
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 3. 2-AXIS TIERS (design × motion)
 // ═══════════════════════════════════════════════════════════════════════════════

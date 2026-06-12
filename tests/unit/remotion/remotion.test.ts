@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { Effect } from 'effect';
-import { Compositor, VideoRenderer } from '@czap/core';
+import { Compositor, Diagnostics, VideoRenderer } from '@czap/core';
 import type { CompositeState, VideoFrameOutput } from '@czap/core';
 import { Internals } from 'remotion';
 import {
   Provider,
   cssVarsFromState,
   precomputeFrames,
+  remotionAdapterCapsule,
+  rendererFromRemotionConfig,
   stateAtFrame,
   useCompositeState,
   useCzapState,
@@ -137,5 +139,108 @@ describe('@czap/remotion precomputeFrames', () => {
     const renderer = VideoRenderer.make({ fps: 30, width: 640, height: 480, durationMs: 0 }, compositor);
 
     await expect(precomputeFrames(renderer)).resolves.toEqual([]);
+  });
+});
+
+describe('@czap/remotion rendererFromRemotionConfig', () => {
+  test('derives VideoConfig from Remotion timing so frame counts cannot drift', async () => {
+    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const renderer = rendererFromRemotionConfig(
+      { fps: 30, width: 640, height: 480, durationInFrames: 90 },
+      compositor,
+    );
+
+    expect(renderer.config).toMatchObject({ fps: 30, width: 640, height: 480, durationMs: 3000 });
+    expect(renderer.totalFrames).toBe(90);
+
+    const frames = await precomputeFrames(renderer);
+    expect(frames).toHaveLength(90);
+    expect(frames[89]?.frame).toBe(89);
+  });
+
+  test('accepts the full useVideoConfig shape (extra fields ignored)', () => {
+    const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
+    const remotionConfig = { fps: 24, width: 1920, height: 1080, durationInFrames: 48, id: 'main' };
+    const renderer = rendererFromRemotionConfig(remotionConfig, compositor);
+
+    expect(renderer.totalFrames).toBe(48);
+    expect(renderer.config.durationMs).toBe(2000);
+  });
+});
+
+describe('@czap/remotion degraded-path diagnostics', () => {
+  let buffer: ReturnType<typeof Diagnostics.createBufferSink>;
+
+  beforeEach(() => {
+    Diagnostics.reset();
+    buffer = Diagnostics.createBufferSink();
+    Diagnostics.setSink(buffer.sink);
+  });
+
+  afterEach(() => {
+    Diagnostics.reset();
+  });
+
+  test('stateAtFrame warns once when no frames were precomputed', () => {
+    stateAtFrame([], 5);
+    stateAtFrame([], 6);
+
+    const events = buffer.events.filter((e) => e.code === 'no-frames');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.source).toBe('czap/remotion');
+    expect(events[0]?.message).toContain('precomputeFrames');
+    expect(events[0]?.message).toContain('calculateMetadata');
+  });
+
+  test('stateAtFrame warns once on overflow, diagnosing fps/durationMs drift', () => {
+    const frames = makeFrames(3);
+
+    expect(stateAtFrame(frames, 240).discrete['index']).toBe('2');
+    stateAtFrame(frames, 241);
+
+    const events = buffer.events.filter((e) => e.code === 'frame-overflow');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.message).toContain('3 precomputed frames');
+    expect(events[0]?.message).toContain('durationInFrames');
+    expect(events[0]?.message).toContain('rendererFromRemotionConfig');
+    expect(events[0]?.detail).toMatchObject({ frameIndex: 240, frameCount: 3 });
+  });
+
+  test('stateAtFrame clamps negative indices silently (designed total-function path)', () => {
+    const frames = makeFrames(3);
+
+    expect(stateAtFrame(frames, -1).discrete['index']).toBe('0');
+
+    expect(buffer.events).toHaveLength(0);
+  });
+
+  test('useCzapState warns once naming the missing Provider', () => {
+    let observed: CompositeState | null = null;
+
+    function Probe(): React.JSX.Element {
+      observed = useCzapState();
+      return React.createElement('div');
+    }
+
+    renderToStaticMarkup(withRemotionFrame(0, React.createElement(Probe)));
+
+    expect(observed).toEqual({
+      discrete: {},
+      blend: {},
+      outputs: { css: {}, glsl: {}, aria: {} },
+    });
+    const events = buffer.events.filter((e) => e.code === 'no-provider-frames');
+    expect(events).toHaveLength(1);
+    expect(events[0]?.source).toBe('czap/remotion');
+    expect(events[0]?.message).toContain('<Provider frames={frames}>');
+    expect(events[0]?.message).toContain('precomputeFrames');
+  });
+
+  test('remotionAdapterCapsule invariant message names the contract, the likely cause, and the fix', () => {
+    const inv = remotionAdapterCapsule.invariants.find((i) => i.name === 'frame-count-matches-totalFrames');
+
+    expect(inv?.message).toBe(
+      'Frame stream out of order: expected frames[i].frame === i for every index. Frames were likely filtered, re-sorted, or concatenated after precomputeFrames — pass the precomputeFrames array through unmodified.',
+    );
   });
 });

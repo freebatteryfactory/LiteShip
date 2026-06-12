@@ -18,7 +18,7 @@ export type {
   ExtendedDetectionResult,
   NavigatorConnectionInfo,
 } from './detect.js';
-export { detect, detectGPUTier, watchCapabilities, Detect } from './detect.js';
+export { detect, detectGPUTier, watchCapabilities, resetDetectionCaches, Detect } from './detect.js';
 export type { DesignTier, MotionTier } from './tiers.js';
 export {
   tierFromCapabilities,
