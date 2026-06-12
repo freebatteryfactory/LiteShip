@@ -71,7 +71,7 @@
     "verify": "node packages/cli/bin/czap.mjs verify",
     "gauntlet:full": "tsx scripts/gauntlet.ts",
     "demo:remotion": "pnpm run --filter remotion-demo render",
-    "docs:build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" pnpm exec typedoc",
+    "docs:build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" pnpm exec typedoc",
     "docs:check": "pnpm exec tsx scripts/docs-check.ts",
     "lint": "eslint --max-warnings 0 \"packages/*/src/**/*.ts\" \"tests/**/*.ts\" \"scripts/**/*.ts\"",
     "format": "prettier --write \"packages/*/src/**/*.ts\"",
