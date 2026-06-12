@@ -56,7 +56,9 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
             error: 'unknown_command',
             name: invocation.name,
             ...(didYouMean !== undefined ? { didYouMean } : {}),
-            hint: 'run `czap help` for the verb chart',
+            // One dispatcher serves both hosts: name the catalog entry point
+            // for each (CLI verb chart, MCP tool list).
+            hint: 'run `czap help` for the verb chart; over MCP, tools/list (or liteship://registry/commands) shows the catalog',
           },
         };
       }

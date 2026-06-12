@@ -61,7 +61,10 @@ describe('dispatcher no_registry_handler names the CLI as the way to run it', ()
 });
 
 describe('ONE capsule-manifest wording across capsule/asset/scene', () => {
-  const MISSING_CONTEXT = { manifestSource: () => null };
+  // manifestPath is the adapter capability that lets the wording name the
+  // exact looked-at path (path-less degradation is covered by
+  // manifest-missing-message.test.ts).
+  const MISSING_CONTEXT = { manifestSource: () => null, manifestPath: () => '/repo/reports/capsule-manifest.json' };
 
   it('missing manifest: identical teaching error from every manifest-tier command', async () => {
     const inspect = await capsuleInspectCommand.handler({ name: 'capsule.inspect', args: { id: 'x' } }, MISSING_CONTEXT);
@@ -82,7 +85,7 @@ describe('ONE capsule-manifest wording across capsule/asset/scene', () => {
     );
     const messages = [inspect, list, verify, analyze, assetVerify, sceneVerify].map((r) => errorOf(r.payload));
     expect(new Set(messages).size).toBe(1);
-    expect(messages[0]).toContain('reports/capsule-manifest.json');
+    expect(messages[0]).toContain('looked at /repo/reports/capsule-manifest.json');
     expect(messages[0]).toContain('CZAP_CAPSULE_MANIFEST');
     expect(messages[0]).toContain('pnpm run capsule:compile');
     for (const r of [inspect, list, verify, analyze, assetVerify, sceneVerify]) expect(r.exitCode).toBe(1);
@@ -110,9 +113,16 @@ describe('scene failure messages carry the subject + the literal next step', () 
     expect(message).toContain('czap glossary capsule');
   });
 
-  it('scene.render without --output shows the full invocation example', async () => {
-    const result = await sceneRenderCommand.handler({ name: 'scene.render', args: { scene: 's.ts', output: '' } }, {});
-    expect(errorOf(result.payload)).toContain('czap scene render <scene.ts> -o out.mp4');
+  it('scene.render without --output derives the path instead of demanding the flag', async () => {
+    // The missing-output error path is gone by design: an omitted output
+    // derives <sceneBasename>.mp4 beside the scene, so the next gate
+    // (scene-file existence) is what fires here.
+    const result = await sceneRenderCommand.handler(
+      { name: 'scene.render', args: { scene: 's.ts', output: '' } },
+      { fileExists: () => false },
+    );
+    expect(errorOf(result.payload)).not.toContain('missing --output');
+    expect(errorOf(result.payload)).toContain('scene not found');
   });
 });
 

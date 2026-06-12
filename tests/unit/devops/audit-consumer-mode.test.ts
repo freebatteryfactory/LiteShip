@@ -346,12 +346,14 @@ describe('consumer mode — allowlist entries follow the package, not the monore
     expect(result.suppressed.filter((s) => s.rule === 'placeholder-content')).toHaveLength(1);
   });
 
-  it('suppresses the doctor fail-closed fallback in an installed @czap/cli (report finding 3)', () => {
+  it('suppresses the workspace-guard fail-closed fallback in an installed @czap/cli (report finding 3)', () => {
+    // The guard moved from commands/doctor.ts to lib/workspace.ts when
+    // gauntlet started sharing it — the allowlist entry follows the code.
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/@czap/cli/package.json': PKG('@czap/cli'),
       'node_modules/@czap/cli/src/index.ts': 'export const cliReady = true;\n',
-      'node_modules/@czap/cli/src/commands/doctor.ts':
+      'node_modules/@czap/cli/src/lib/workspace.ts':
         'export function isWorkspace(read: () => string): boolean {\n' +
         '  try {\n' +
         "    return read() === 'czap';\n" +

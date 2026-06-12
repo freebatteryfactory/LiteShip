@@ -51,10 +51,14 @@ export function loadManifest(context: CommandContext): ManifestLoadResult {
  * scene commands previously said it three different ways. Names the default
  * path, the override, and the literal next step.
  */
-export function manifestUnavailable(command: string, failure: ManifestLoadFailure): CapsuleCommandResult {
+export function manifestUnavailable(
+  command: string,
+  failure: ManifestLoadFailure,
+  context: CommandContext,
+): CapsuleCommandResult {
   const error =
     failure.reason === 'missing'
-      ? 'capsule manifest missing — not found at reports/capsule-manifest.json (override with CZAP_CAPSULE_MANIFEST); run `pnpm run capsule:compile` first'
+      ? manifestMissing(context)
       : `capsule manifest is not valid JSON (${failure.detail}) — regenerate it with \`pnpm run capsule:compile\``;
   return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode: 1, payload: { error } };
 }
