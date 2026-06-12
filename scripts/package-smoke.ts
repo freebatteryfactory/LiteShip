@@ -78,6 +78,9 @@ const PACKAGES: readonly PackageSpec[] = [
   { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
   { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
   { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
+  // The unscoped scaffolder — consumed via `npm create liteship` (bin), but
+  // its main entry exports the scaffold function; smoke verifies it resolves.
+  { dir: 'packages/create-liteship', name: 'create-liteship', imports: ['create-liteship'] },
   // The unscoped umbrella — manifest-level deps on every @czap/* scope,
   // zero source imports; smoke verifies its own entrypoint resolves.
   { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
