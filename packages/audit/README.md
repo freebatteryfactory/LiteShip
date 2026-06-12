@@ -1,81 +1,51 @@
 # @czap/audit
 
-Profile-driven structure / integrity / surface audit engine for czap —
-packageable and downstream-installable.
+Runs structure, integrity, and surface checks over `@czap/*` packages and reports findings as structured data — against the LiteShip monorepo or against the packages installed in your own app.
 
-## Modes
+> Install this directly when you want to run the audit passes programmatically. Most projects run it through `czap audit` from `@czap/cli` instead, which wraps the same engine in a JSON receipt.
 
-### Monorepo (default)
-
-`runAuditPasses()` with the default `liteshipDevopsProfile` audits the
-workspace rooted at `process.cwd()`, discovering packages by globbing
-`packages/*`. This is what `pnpm run audit` and `czap audit` do inside the
-LiteShip repo.
-
-### Consumer mode
-
-A downstream repo has no `packages/` directory — the `@czap/*` packages live
-in `node_modules`. Consumer mode audits the packages that are actually
-INSTALLED, which makes it a publish-integrity gate: it verifies the artifacts
-that shipped to npm (every czap package publishes `src/` alongside `dist/`,
-so the source-level passes run unmodified).
+## Install
 
 ```bash
-czap audit --consumer            # explicit; mutually exclusive with --profile
+pnpm add -D @czap/audit
 ```
+
+No peer dependencies and no other `@czap/*` dependencies — it works on its own.
+
+## 30 seconds
 
 ```ts
 import { consumerDevopsProfile, runAuditPasses } from '@czap/audit';
 
 const result = runAuditPasses(consumerDevopsProfile(process.cwd()));
+
+console.log(result.counts); // { error, warning, info }
+for (const f of result.findings) {
+  console.log(f.severity, f.rule, f.title);
+}
 ```
 
-`consumerDevopsProfile(cwd)` discovers installed package roots with a
-directory walk (`discoverInstalledPackageRoots`), not module resolution:
-no `@czap/*` package exports `./package.json`, and `@czap/_spine` carries a
-types-only export map, so `require.resolve` / `import.meta.resolve` throw
-`ERR_PACKAGE_PATH_NOT_EXPORTED` before ever finding a package root. The walk
-seeds from `cwd` and re-seeds from every found package's realpath, which
-resolves pnpm's hidden virtual-store layout
-(`node_modules/.pnpm/<pkg>@<v>/node_modules/...`) the same way Node's own
-upward `node_modules` lookup would. Topology packages that aren't installed
-are reported as `missing` — informational, not an error: a consumer audits
-what it ships.
+In a repo with `@czap/*` packages installed, this logs the merged counts and one line per finding. `consumerDevopsProfile(cwd)` audits what is actually installed in `node_modules` (every czap package publishes `src/` alongside `dist/`, so source-level checks run on shipped artifacts); inside the LiteShip monorepo itself, call `runAuditPasses()` with no argument to glob `packages/*` instead.
 
-The previous workaround — symlinking installed packages into a synthetic
-`packages/` directory and re-rooting the default profile — is obsolete.
+## Rule ids
 
-Consumer mode also verifies **dist truth**: every concrete exports-map
-condition (`types`, `import`, `default`, …) of every discovered package must
-resolve to a real file in the install (`export-target-missing`, error). The
-monorepo profile skips this — `dist/` legitimately doesn't exist on a fresh
-clone, and `package:smoke` proves the tarball side at release. Wildcard
-subpaths are skipped (not enumerable without resolution intent); the
-`development` condition stays the `package-export-surface` rule's domain.
+Every finding carries a `rule` id — the key you use in a profile's allowlists: `console-call`, `default-export`, `export-target-missing`, `fallback-laundering`, `host-surface`, `missing-manifest-dependency`, `missing-manifest-dependency-dynamic`, `missing-runtime-capability`, `orphan-export-candidate`, `package-export-surface`, `package-topology`, `placeholder-content`, `stub-marker`, `suspicious-reimplementation`, `symbol-orphan-candidate`, `unknown-internal-package`, `unresolved-internal-import`, `virtual-module-surface`.
 
-## Profile semantics
+## Where it sits
 
-- `DevopsProfile.packageRoots` (optional): explicit package name → absolute
-  package dir map. When present, the passes enumerate these roots instead of
-  globbing `repoRoot/packages/*`. Absent → legacy monorepo behavior,
-  byte-identical.
-- `surfacePolicy.astroRuntimeFiles` entries are **astro-package-relative**
-  (e.g. `'src/runtime/boundary.ts'`), resolved against wherever the astro
-  package actually lives. Entries starting with `packages/` are treated as
-  repo-root-relative for back-compat with pre-consumer-mode profiles.
-- `surfacePolicy.vitePackage` + `surfacePolicy.viteVirtualModulesFile`
-  (optional): the package owning the virtual-module inventory and the
-  package-relative inventory file. When absent, the legacy
-  `packages/vite/src/virtual-modules.ts` repo-root-relative location is used.
+Standalone — this package depends on no other `@czap/*` package, only `fast-glob` and the TypeScript compiler API, so you can install it without the rest of the stack. The `czap audit` verb in `@czap/cli` is the only adapter that wires the engine; `@czap/command` and `@czap/mcp-server` see a structured summary of the result, never the engine itself. LiteShip's repo-local scoring and report rendering are not in this package — they compose it from the monorepo's scripts. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
 
-## CLI
+## If it does nothing
 
-```bash
-czap audit                       # default profile rooted at cwd (monorepo)
-czap audit --profile ./p.json    # explicit profile file (.json/.js/.mjs)
-czap audit --consumer            # installed-package discovery from cwd
-czap audit --findings            # include the findings array in the receipt
-```
+Consumer discovery walks `node_modules`; if no `@czap/*` packages are installed where you ran it, the audit finds zero packages and reports zero findings — a clean result that verified nothing. Before trusting a silent pass, check `Object.keys(consumerDevopsProfile(cwd).packageRoots).length` is what you expect.
 
-The receipt is a single JSON line on stdout; `--pretty` adds a human summary
-(and per-finding lines with `--findings`) on stderr.
+## Docs
+
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
+- [Audit guide](https://github.com/heyoub/LiteShip/blob/main/docs/AUDIT.md) — profiles, passes, and the receipt contract
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/audit/src/) — generated from source
+
+---
+
+Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
