@@ -40,6 +40,12 @@ export const CAPTURE_KEYFRAME_INTERVAL = 30;
 /** Number of sub-steps for spring animation resolution. Used by: easing.ts */
 export const EASING_SPRING_STEPS = 2000;
 
+/** Default spring stiffness when Easing.spring config omits it (react-spring convention). Used by: easing.ts */
+export const SPRING_DEFAULT_STIFFNESS = 170;
+
+/** Default spring damping when Easing.spring config omits it (react-spring convention). Used by: easing.ts */
+export const SPRING_DEFAULT_DAMPING = 26;
+
 /** Default theme transition duration in ms. Used by: compiler/theme-css.ts */
 export const THEME_TRANSITION_DURATION_MS = 200;
 

@@ -146,10 +146,13 @@ export type MorphResult =
  * Morph rejection when preserve constraints are violated.
  */
 export interface MorphRejection {
-  readonly type: string;
+  /** Closed union of the rejection kinds the runtime emits. */
+  readonly type: 'preserve_violation';
   readonly missingIds?: readonly string[];
   readonly slot?: SlotPath;
   readonly reason: string;
+  /** Literal next step for the consumer rendering the rejection. */
+  readonly hint?: string;
 }
 
 // =============================================================================
@@ -212,7 +215,11 @@ export interface SSEConfig {
    * the previous session left off.
    */
   readonly lastEventId?: string;
-  readonly reconnect?: ReconnectConfig;
+  /**
+   * Partial override of the reconnect policy — omitted fields fall back to
+   * `defaultReconnectConfig` (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
+   */
+  readonly reconnect?: Partial<ReconnectConfig>;
   readonly heartbeatInterval?: Millis;
 }
 
@@ -255,6 +262,12 @@ export type SSEMessage =
  * Resumption configuration for gap detection and recovery.
  */
 export interface ResumptionConfig {
+  /**
+   * Maximum number of missed events recoverable via patch replay before
+   * falling back to a full snapshot.
+   *
+   * Default: 50 — see `defaultResumptionConfig`; `Resumption.resume` accepts a `Partial`.
+   */
   readonly maxGapSize: number;
   readonly snapshotUrl?: string;
   readonly replayUrl?: string;

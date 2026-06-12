@@ -7,10 +7,12 @@
  * @module
  */
 
-import type { ContentAddress, Millis } from './brands.js';
+import type { ContentAddress } from './brands.js';
+import { Millis } from './brands.js';
 import type { Boundary } from './boundary.js';
 import type { StateUnion } from './type-utils.js';
 import { CanonicalCbor } from './cbor.js';
+import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
 import { CzapValidationError } from './validation-error.js';
 
@@ -48,12 +50,19 @@ interface StyleDef<B extends Boundary.Shape = Boundary.Shape> {
   };
 }
 
+/** `Style.make` transition input — plain `number` durations are branded with {@link Millis} internally. */
+interface TransitionConfig {
+  readonly duration: number;
+  readonly easing?: string;
+  readonly properties?: readonly string[];
+}
+
 interface StyleFactory {
   make<B extends Boundary.Shape>(config: {
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-    readonly transition?: StyleDef['transition'];
+    readonly transition?: TransitionConfig;
   }): StyleDef<B>;
 }
 
@@ -134,6 +143,21 @@ function _mergeLayers(base: StyleLayer, override: StyleLayer): StyleLayer {
 function _tap(style: StyleDef, state?: string): Record<string, string> {
   let layer = style.base;
 
+  if (state !== undefined && style.boundary) {
+    // A state with no override is fine (base applies); a state outside the
+    // boundary's full state set is a typo — warn so it doesn't render wrong
+    // with zero signal. Boundary-less styles are skipped: without the full
+    // set, a valid non-overridden state is indistinguishable from a typo.
+    const knownStates = style.boundary.states as readonly string[];
+    if (!knownStates.includes(state)) {
+      Diagnostics.warnOnce({
+        source: 'czap/core.Style',
+        code: 'style-unknown-state',
+        message: `Style.tap: state "${state}" is not a state of the style's boundary [${knownStates.join(', ')}]; returning base styles.`,
+      });
+    }
+  }
+
   if (state && style.states) {
     const stateLayer = style.states[state];
     if (stateLayer) {
@@ -182,7 +206,7 @@ function _tap(style: StyleDef, state?: string): Record<string, string> {
  *   boundary: bp,
  *   base: { properties: { 'font-size': '14px' } },
  *   states: { lg: { properties: { 'font-size': '18px' } } },
- *   transition: { duration: Millis(200) },
+ *   transition: { duration: 200 },
  * });
  * const resolved = Style.tap(style, 'lg');
  * // resolved === { 'font-size': '18px' }
@@ -211,7 +235,7 @@ export const Style: StyleFactory & {
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-    readonly transition?: StyleDef['transition'];
+    readonly transition?: TransitionConfig;
   }): StyleDef<B> {
     if (config.boundary && config.states) {
       const boundaryStates = config.boundary.states as readonly string[];
@@ -226,7 +250,13 @@ export const Style: StyleFactory & {
       }
     }
 
-    const id = deterministicId<B>(config.boundary, config.base, config.states, config.transition);
+    // Brand the duration internally (Millis is a type-level brand; the hash input is unchanged).
+    const transition: StyleDef['transition'] =
+      config.transition === undefined
+        ? undefined
+        : { ...config.transition, duration: Millis(config.transition.duration) };
+
+    const id = deterministicId<B>(config.boundary, config.base, config.states, transition);
 
     const def: StyleDef<B> = {
       _tag: 'StyleDef',
@@ -235,7 +265,7 @@ export const Style: StyleFactory & {
       ...(config.boundary !== undefined ? { boundary: config.boundary } : {}),
       base: config.base,
       ...(config.states !== undefined ? { states: config.states } : {}),
-      ...(config.transition !== undefined ? { transition: config.transition } : {}),
+      ...(transition !== undefined ? { transition } : {}),
     };
     return Object.freeze(def);
   },

@@ -392,6 +392,24 @@ function generateSystemPrompt(manifest: AIManifest): string {
 // ---------------------------------------------------------------------------
 
 /**
+ * Structured validation failure for AI-generated output — the teach-by-data
+ * shape consumed by LLM re-prompting loops. `message` is the prose form
+ * surfaced through the parallel `errors` array.
+ */
+export interface AIValidationIssue {
+  /** Dot path into the output, e.g. 'params.cols' or 'dimensions.layout'. */
+  readonly path: string;
+  /** What the manifest expects at that path. */
+  readonly expected: string;
+  /** What the output actually carried. */
+  readonly received: string;
+  /** Literal next step to repair the output. */
+  readonly hint: string;
+  /** Prose form — identical to the corresponding `errors` entry. */
+  readonly message: string;
+}
+
+/**
  * Runtime check for a plain, non-null, non-array object whose enumerable keys
  * can be iterated via `Object.entries` as `[string, unknown]`.
  */
@@ -409,7 +427,8 @@ function asPlainRecord(value: unknown): Record<string, unknown> {
 
 /**
  * Validate AI-generated output against a manifest's constraints and schema.
- * Returns `{ valid: true, errors: [] }` or `{ valid: false, errors: [...] }`.
+ * Returns `valid` plus parallel `errors` (prose) and `issues` (structured
+ * `{ path, expected, received, hint, message }`) arrays.
  *
  * @example
  * ```ts
@@ -427,17 +446,42 @@ function asPlainRecord(value: unknown): Record<string, unknown> {
  *
  * @param output   - The AI-generated output object to validate
  * @param manifest - The manifest defining valid actions, dimensions, and slots
- * @returns An object with `valid` boolean and `errors` array
+ * @returns An object with `valid` boolean, `errors` array, and structured `issues` array
  */
-function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boolean; errors: readonly string[] } {
-  const errors: string[] = [];
+function validateAIOutput(
+  output: unknown,
+  manifest: AIManifest,
+): { valid: boolean; errors: readonly string[]; issues: readonly AIValidationIssue[] } {
+  const issues: AIValidationIssue[] = [];
+  const report = (path: string, expected: string, received: string, hint: string, message: string): void => {
+    issues.push({ path, expected, received, hint, message });
+  };
+  const finish = (): { valid: boolean; errors: readonly string[]; issues: readonly AIValidationIssue[] } => ({
+    valid: issues.length === 0,
+    errors: issues.map((issue) => issue.message),
+    issues,
+  });
 
   if (output === null || output === undefined) {
-    return { valid: false, errors: ['Output is null or undefined'] };
+    report(
+      'output',
+      'object',
+      String(output),
+      'Return a JSON object, e.g. { "action": "...", "params": { ... } }.',
+      'Output is null or undefined',
+    );
+    return finish();
   }
 
   if (typeof output !== 'object') {
-    return { valid: false, errors: [`Output must be an object, got ${typeof output}`] };
+    report(
+      'output',
+      'object',
+      typeof output,
+      'Return a JSON object, e.g. { "action": "...", "params": { ... } }.',
+      `Output must be an object, got ${typeof output}`,
+    );
+    return finish();
   }
 
   // If output specifies an action, validate its parameters
@@ -445,54 +489,119 @@ function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boole
     const actionName = output.action;
     const action = manifest.actions[actionName];
     if (!action) {
-      errors.push(`Unknown action '${actionName}'. Available: ${Object.keys(manifest.actions).join(', ')}`);
+      const available = Object.keys(manifest.actions).join(', ');
+      report(
+        'action',
+        `one of [${available}]`,
+        actionName,
+        `Use one of the actions declared in the manifest: ${available}.`,
+        `Unknown action '${actionName}'. Available: ${available}`,
+      );
     } else {
       // Validate parameters
       const params = asPlainRecord('params' in output ? output.params : undefined);
       for (const [paramName, paramSchema] of Object.entries(action.params)) {
+        const path = `params.${paramName}`;
         const value = params[paramName];
         if (paramSchema.required && (value === undefined || value === null)) {
-          errors.push(`Missing required parameter '${paramName}' for action '${actionName}'`);
+          report(
+            path,
+            paramSchema.type,
+            String(value),
+            `Add "${paramName}" to params for action '${actionName}'.`,
+            `Missing required parameter '${paramName}' for action '${actionName}'`,
+          );
           continue;
         }
         if (value === undefined || value === null) continue;
 
         // Type validation
         if (paramSchema.type === 'number' && typeof value !== 'number') {
-          errors.push(`Parameter '${paramName}' must be a number, got ${typeof value}`);
+          report(
+            path,
+            'number',
+            typeof value,
+            `Pass a number for "${paramName}".`,
+            `Parameter '${paramName}' must be a number, got ${typeof value}`,
+          );
         } else if (paramSchema.type === 'string' && typeof value !== 'string') {
-          errors.push(`Parameter '${paramName}' must be a string, got ${typeof value}`);
+          report(
+            path,
+            'string',
+            typeof value,
+            `Pass a string for "${paramName}".`,
+            `Parameter '${paramName}' must be a string, got ${typeof value}`,
+          );
         } else if (paramSchema.type === 'boolean' && typeof value !== 'boolean') {
-          errors.push(`Parameter '${paramName}' must be a boolean, got ${typeof value}`);
+          report(
+            path,
+            'boolean',
+            typeof value,
+            `Pass a boolean for "${paramName}".`,
+            `Parameter '${paramName}' must be a boolean, got ${typeof value}`,
+          );
         } else if (paramSchema.type === 'integer' && (typeof value !== 'number' || !Number.isInteger(value))) {
-          errors.push(
-            `Parameter '${paramName}' must be an integer, got ${typeof value === 'number' ? value : typeof value}`,
+          const received = typeof value === 'number' ? String(value) : typeof value;
+          report(
+            path,
+            'integer',
+            received,
+            `Pass a whole number for "${paramName}".`,
+            `Parameter '${paramName}' must be an integer, got ${received}`,
           );
         } else if (paramSchema.type === 'array' && !Array.isArray(value)) {
-          errors.push(`Parameter '${paramName}' must be an array, got ${typeof value}`);
+          report(
+            path,
+            'array',
+            typeof value,
+            `Pass an array for "${paramName}".`,
+            `Parameter '${paramName}' must be an array, got ${typeof value}`,
+          );
         } else if (
           paramSchema.type === 'object' &&
           (typeof value !== 'object' || value === null || Array.isArray(value))
         ) {
-          errors.push(
-            `Parameter '${paramName}' must be an object, got ${Array.isArray(value) ? 'array' : typeof value}`,
+          const received = Array.isArray(value) ? 'array' : typeof value;
+          report(
+            path,
+            'object',
+            received,
+            `Pass an object for "${paramName}".`,
+            `Parameter '${paramName}' must be an object, got ${received}`,
           );
         }
 
         // Enum validation
         if (paramSchema.enum && !paramSchema.enum.includes(value as string)) {
-          errors.push(
-            `Parameter '${paramName}' must be one of [${paramSchema.enum.join(', ')}], got '${String(value)}'`,
+          const allowed = paramSchema.enum.join(', ');
+          report(
+            path,
+            `one of [${allowed}]`,
+            String(value),
+            `Use one of the allowed values: ${allowed}.`,
+            `Parameter '${paramName}' must be one of [${allowed}], got '${String(value)}'`,
           );
         }
 
         // Range validation
         if (typeof value === 'number') {
           if (paramSchema.min !== undefined && value < paramSchema.min) {
-            errors.push(`Parameter '${paramName}' must be >= ${paramSchema.min}, got ${value}`);
+            report(
+              path,
+              `>= ${paramSchema.min}`,
+              String(value),
+              `Use a value >= ${paramSchema.min}.`,
+              `Parameter '${paramName}' must be >= ${paramSchema.min}, got ${value}`,
+            );
           }
           if (paramSchema.max !== undefined && value > paramSchema.max) {
-            errors.push(`Parameter '${paramName}' must be <= ${paramSchema.max}, got ${value}`);
+            report(
+              path,
+              `<= ${paramSchema.max}`,
+              String(value),
+              `Use a value <= ${paramSchema.max}.`,
+              `Parameter '${paramName}' must be <= ${paramSchema.max}, got ${value}`,
+            );
           }
         }
       }
@@ -502,13 +611,28 @@ function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boole
   // If output specifies dimensions, validate they match manifest dimensions
   if ('dimensions' in output && isPlainRecord(output.dimensions)) {
     for (const [dimName, dimValue] of Object.entries(output.dimensions)) {
+      const path = `dimensions.${dimName}`;
       const dimension = manifest.dimensions[dimName];
       if (!dimension) {
-        errors.push(`Unknown dimension '${dimName}'. Available: ${Object.keys(manifest.dimensions).join(', ')}`);
+        const available = Object.keys(manifest.dimensions).join(', ');
+        report(
+          path,
+          `one of [${available}]`,
+          dimName,
+          `Use a dimension declared in the manifest: ${available}.`,
+          `Unknown dimension '${dimName}'. Available: ${available}`,
+        );
         continue;
       }
       if (typeof dimValue === 'string' && !dimension.states.includes(dimValue)) {
-        errors.push(`Invalid state '${dimValue}' for dimension '${dimName}'. Valid: ${dimension.states.join(', ')}`);
+        const valid = dimension.states.join(', ');
+        report(
+          path,
+          `one of [${valid}]`,
+          dimValue,
+          `Use a declared state for '${dimName}': ${valid}.`,
+          `Invalid state '${dimValue}' for dimension '${dimName}'. Valid: ${valid}`,
+        );
       }
     }
   }
@@ -516,18 +640,33 @@ function validateAIOutput(output: unknown, manifest: AIManifest): { valid: boole
   // If output specifies slot content, validate accepted types
   if ('slots' in output && isPlainRecord(output.slots)) {
     for (const [slotName, slotValue] of Object.entries(output.slots)) {
+      const path = `slots.${slotName}`;
       const slot = manifest.slots[slotName];
       if (!slot) {
-        errors.push(`Unknown slot '${slotName}'. Available: ${Object.keys(manifest.slots).join(', ')}`);
+        const available = Object.keys(manifest.slots).join(', ');
+        report(
+          path,
+          `one of [${available}]`,
+          slotName,
+          `Use a slot declared in the manifest: ${available}.`,
+          `Unknown slot '${slotName}'. Available: ${available}`,
+        );
         continue;
       }
       if (typeof slotValue === 'string' && !slot.accepts.includes(slotValue)) {
-        errors.push(`Slot '${slotName}' does not accept '${slotValue}'. Accepted: ${slot.accepts.join(', ')}`);
+        const accepted = slot.accepts.join(', ');
+        report(
+          path,
+          `one of [${accepted}]`,
+          slotValue,
+          `Use an accepted content type for '${slotName}': ${accepted}.`,
+          `Slot '${slotName}' does not accept '${slotValue}'. Accepted: ${accepted}`,
+        );
       }
     }
   }
 
-  return { valid: errors.length === 0, errors };
+  return finish();
 }
 
 // ---------------------------------------------------------------------------

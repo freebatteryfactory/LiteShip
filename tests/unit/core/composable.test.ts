@@ -235,11 +235,11 @@ describe('Composable.merge -- reduces correctly', () => {
   });
 
   test('merge of zero entities throws', () => {
-    expect(() => Composable.merge()).toThrow('Cannot merge zero entities');
+    expect(() => Composable.merge()).toThrow('Composable.merge: called with no entities');
   });
 
   test('merge rejects an undefined first entity', () => {
-    expect(() => Composable.merge(undefined as never)).toThrow('First entity is undefined');
+    expect(() => Composable.merge(undefined as never)).toThrow('entities[0] is undefined');
   });
 });
 
@@ -546,7 +546,7 @@ describe('ComposableWorld.dense -- store/retrieve', () => {
       yield* dense.store(entity, 1);
     });
 
-    expect(() => runScoped(effect)).toThrow('No dense store created. Call create() first.');
+    expect(() => runScoped(effect)).toThrow('no dense store exists — call world.create(name, capacity)');
   });
 
   test('store overwrites previous value', () => {
