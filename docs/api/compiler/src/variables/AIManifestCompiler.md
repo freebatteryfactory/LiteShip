@@ -8,7 +8,7 @@
 
 > `const` **AIManifestCompiler**: `object`
 
-Defined in: [compiler/src/ai-manifest.ts:596](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L596)
+Defined in: [compiler/src/ai-manifest.ts:782](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L782)
 
 AI manifest compiler namespace.
 
@@ -21,17 +21,21 @@ AI-generated output against the manifest schema.
 
 ### compile
 
-> **compile**: (`manifest`) => [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md)
+> **compile**: (`input`) => [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md)
 
 Compile an AI manifest into tool definitions, JSON Schema, and a system prompt.
 
+Omitted manifest fields are normalized to documented defaults
+(`version: '1.0'`, empty `dimensions`/`slots`/`actions`, no `constraints`),
+so a manifest can declare only the surfaces it actually has.
+
 #### Parameters
 
-##### manifest
+##### input
 
-[`AIManifest`](../interfaces/AIManifest.md)
+[`AIManifestInput`](../interfaces/AIManifestInput.md)
 
-The AI manifest to compile
+The AI manifest to compile (omitted fields take documented defaults)
 
 #### Returns
 
@@ -45,7 +49,6 @@ An [AIManifestCompileResult](../interfaces/AIManifestCompileResult.md) with tool
 import { AIManifestCompiler } from '@czap/compiler';
 
 const manifest = {
-  version: '1.0', dimensions: {}, slots: {}, constraints: [],
   actions: {
     setTheme: {
       params: { theme: { type: 'string', enum: ['light', 'dark'], required: true, description: 'Theme' } },
@@ -60,18 +63,18 @@ console.log(result.systemPrompt); // system prompt describing available actions
 
 ### generateSystemPrompt
 
-> **generateSystemPrompt**: (`manifest`) => `string`
+> **generateSystemPrompt**: (`input`) => `string`
 
 Generate a system prompt describing all available dimensions, slots,
 actions, and constraints from the manifest.
 
 #### Parameters
 
-##### manifest
+##### input
 
-[`AIManifest`](../interfaces/AIManifest.md)
+[`AIManifestInput`](../interfaces/AIManifestInput.md)
 
-The AI manifest to describe
+The AI manifest to describe (omitted fields take documented defaults)
 
 #### Returns
 
@@ -90,17 +93,17 @@ const prompt = AIManifestCompiler.generateSystemPrompt(manifest);
 
 ### generateToolDefinitions
 
-> **generateToolDefinitions**: (`manifest`) => readonly [`AIToolDefinition`](../interfaces/AIToolDefinition.md)[]
+> **generateToolDefinitions**: (`input`) => readonly [`AIToolDefinition`](../interfaces/AIToolDefinition.md)[]
 
 Generate tool definitions (function calling format) from an AIManifest's actions.
 
 #### Parameters
 
-##### manifest
+##### input
 
-[`AIManifest`](../interfaces/AIManifest.md)
+[`AIManifestInput`](../interfaces/AIManifestInput.md)
 
-The AI manifest containing action definitions
+The AI manifest containing action definitions (omitted fields take documented defaults)
 
 #### Returns
 
@@ -119,10 +122,11 @@ const tools = AIManifestCompiler.generateToolDefinitions(manifest);
 
 ### validateAIOutput
 
-> **validateAIOutput**: (`output`, `manifest`) => `object`
+> **validateAIOutput**: (`output`, `input`) => `object`
 
 Validate AI-generated output against a manifest's constraints and schema.
-Returns `{ valid: true, errors: [] }` or `{ valid: false, errors: [...] }`.
+Returns `valid` plus parallel `errors` (prose) and `issues` (structured
+`{ path, expected, received, hint, message }`) arrays.
 
 #### Parameters
 
@@ -132,21 +136,25 @@ Returns `{ valid: true, errors: [] }` or `{ valid: false, errors: [...] }`.
 
 The AI-generated output object to validate
 
-##### manifest
+##### input
 
-[`AIManifest`](../interfaces/AIManifest.md)
+[`AIManifestInput`](../interfaces/AIManifestInput.md)
 
-The manifest defining valid actions, dimensions, and slots
+The manifest defining valid actions, dimensions, and slots (omitted fields take documented defaults)
 
 #### Returns
 
 `object`
 
-An object with `valid` boolean and `errors` array
+An object with `valid` boolean, `errors` array, and structured `issues` array
 
 ##### errors
 
 > **errors**: readonly `string`[]
+
+##### issues
+
+> **issues**: readonly [`AIValidationIssue`](../interfaces/AIValidationIssue.md)[]
 
 ##### valid
 
@@ -157,7 +165,7 @@ An object with `valid` boolean and `errors` array
 ```ts
 import { AIManifestCompiler } from '@czap/compiler';
 
-const manifest = { version: '1.0', dimensions: {}, slots: {}, constraints: [],
+const manifest = {
   actions: { setLayout: { params: { cols: { type: 'number', required: true, min: 1, max: 12, description: 'Column count' } }, effects: [], description: 'Set grid layout' } },
 };
 const check = AIManifestCompiler.validateAIOutput(
@@ -173,11 +181,9 @@ console.log(check.valid); // true
 import { AIManifestCompiler } from '@czap/compiler';
 
 const manifest = {
-  version: '1.0',
   dimensions: { theme: { states: ['light', 'dark'], current: 'light', exclusive: true, description: 'Color theme' } },
   slots: { hero: { accepts: ['image', 'video'], description: 'Hero section' } },
   actions: { setTheme: { params: { theme: { type: 'string', enum: ['light', 'dark'], required: true, description: 'Theme' } }, effects: ['repaint'], description: 'Switch theme' } },
-  constraints: [],
 };
 const compiled = AIManifestCompiler.compile(manifest);
 const valid = AIManifestCompiler.validateAIOutput(

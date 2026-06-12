@@ -8,7 +8,7 @@
 
 > **compareSeverity**(`a`, `b`): `number`
 
-Defined in: [audit/src/shared.ts:193](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L193)
+Defined in: [audit/src/shared.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L200)
 
 ## Parameters
 

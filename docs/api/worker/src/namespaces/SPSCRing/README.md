@@ -21,10 +21,10 @@ import { SPSCRing } from '@czap/worker';
 
 // Main thread: create pair and send buffer to Worker
 const { buffer, producer, consumer } = SPSCRing.createPair(128, 8);
-worker.postMessage({ buffer, slotCount: 128, slotSize: 8 });
+worker.postMessage({ buffer });
 
-// In Worker: attach as producer
-// const producer = SPSCRing.attachProducer(buffer, 128, 8);
+// In Worker: attach as producer (geometry rides in the buffer header)
+// const producer = SPSCRing.attachProducer(buffer);
 // producer.push(new Float64Array(8));
 
 // Main thread: consume in animation loop

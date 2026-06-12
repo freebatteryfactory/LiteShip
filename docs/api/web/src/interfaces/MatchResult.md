@@ -6,7 +6,7 @@
 
 # Interface: MatchResult
 
-Defined in: [web/src/types.ts:294](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L294)
+Defined in: [web/src/types.ts:330](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L330)
 
 Result of matching two nodes.
 
@@ -16,7 +16,7 @@ Result of matching two nodes.
 
 > `readonly` `optional` **matchedId?**: `string`
 
-Defined in: [web/src/types.ts:297](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L297)
+Defined in: [web/src/types.ts:333](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L333)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:297](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **matches**: `boolean`
 
-Defined in: [web/src/types.ts:295](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L295)
+Defined in: [web/src/types.ts:331](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L331)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [web/src/types.ts:295](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **priority**: [`MatchPriority`](../type-aliases/MatchPriority.md)
 
-Defined in: [web/src/types.ts:296](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L296)
+Defined in: [web/src/types.ts:332](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L332)

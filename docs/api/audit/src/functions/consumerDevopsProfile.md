@@ -8,7 +8,7 @@
 
 > **consumerDevopsProfile**(`cwd?`, `base?`): [`DevopsProfile`](../interfaces/DevopsProfile.md)
 
-Defined in: [audit/src/consumer.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L100)
+Defined in: [audit/src/consumer.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L111)
 
 Build a consumer-mode profile: the base profile (LiteShip's by default)
 re-rooted at `cwd` with `packageRoots` resolved from the installed

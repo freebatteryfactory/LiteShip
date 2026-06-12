@@ -6,7 +6,7 @@
 
 # Interface: MorphHints
 
-Defined in: [web/src/types.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L108)
+Defined in: [web/src/types.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L120)
 
 Morph hints for fine-grained DOM diffing control.
 
@@ -16,7 +16,7 @@ Morph hints for fine-grained DOM diffing control.
 
 > `readonly` `optional` **idMap?**: `ReadonlyMap`\<`string`, `string`\>
 
-Defined in: [web/src/types.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L111)
+Defined in: [web/src/types.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L123)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:111](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **preserve?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L114)
+Defined in: [web/src/types.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L126)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:114](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **preserveFocus?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L112)
+Defined in: [web/src/types.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L124)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/types.ts:112](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **preserveIds?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L109)
+Defined in: [web/src/types.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L121)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [web/src/types.ts:109](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **preserveScroll?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L113)
+Defined in: [web/src/types.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L125)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [web/src/types.ts:113](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **remap?**: `Record`\<`string`, `string`\>
 
-Defined in: [web/src/types.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L115)
+Defined in: [web/src/types.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L127)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [web/src/types.ts:115](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **semanticIds?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L110)
+Defined in: [web/src/types.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L122)

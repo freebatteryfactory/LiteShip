@@ -8,7 +8,7 @@
 
 > `const` **liteshipDevopsProfile**: [`DevopsProfile`](../interfaces/DevopsProfile.md)
 
-Defined in: [audit/src/devops-profile.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L71)
+Defined in: [audit/src/devops-profile.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L75)
 
 LiteShip's own profile — the reference DEFAULT. It references this package's
 policy consts verbatim; `repoRoot` defaults to the current working directory

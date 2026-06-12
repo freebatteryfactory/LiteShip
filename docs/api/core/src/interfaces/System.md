@@ -6,7 +6,7 @@
 
 # Interface: System
 
-Defined in: [core/src/ecs.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L160)
+Defined in: [core/src/ecs.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L165)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [core/src/ecs.ts:160](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` `optional` **\_denseSystem?**: `undefined`
 
-Defined in: [core/src/ecs.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L163)
+Defined in: [core/src/ecs.ts:168](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L168)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [core/src/ecs.ts:163](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ecs.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L161)
+Defined in: [core/src/ecs.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L166)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/ecs.ts:161](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **query**: readonly `string`[]
 
-Defined in: [core/src/ecs.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L162)
+Defined in: [core/src/ecs.ts:167](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L167)
 
 ## Methods
 
@@ -38,7 +38,7 @@ Defined in: [core/src/ecs.ts:162](https://github.com/heyoub/LiteShip/blob/main/p
 
 > **execute**(`entities`, `world?`): `Effect`\<`void`\>
 
-Defined in: [core/src/ecs.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L165)
+Defined in: [core/src/ecs.ts:170](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ecs.ts#L170)
 
 Second argument is the world — use it to write computed output components back.
 

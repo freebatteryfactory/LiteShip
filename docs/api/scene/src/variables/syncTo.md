@@ -8,9 +8,9 @@
 
 > `const` **syncTo**: `object`
 
-Defined in: [scene/src/sugar/sync-to.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/sync-to.ts#L19)
+Defined in: [scene/src/sugar/sync-to.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/sync-to.ts#L21)
 
-Typed SyncAnchor constructors for the three supported modes.
+Typed SyncAnchor constructors for the three supported modes. Each accepts the audio track object or its id.
 
 ## Type Declaration
 
@@ -24,7 +24,7 @@ Sync to downbeats (BeatMarkerProjection).
 
 ##### anchor
 
-[`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
+[`TrackRef`](../type-aliases/TrackRef.md)\<`"audio"`\>
 
 #### Returns
 
@@ -48,7 +48,7 @@ Sync to note attacks (OnsetProjection).
 
 ##### anchor
 
-[`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
+[`TrackRef`](../type-aliases/TrackRef.md)\<`"audio"`\>
 
 #### Returns
 
@@ -72,7 +72,7 @@ Sync to loudness peaks (WaveformProjection + peak-pick).
 
 ##### anchor
 
-[`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
+[`TrackRef`](../type-aliases/TrackRef.md)\<`"audio"`\>
 
 #### Returns
 

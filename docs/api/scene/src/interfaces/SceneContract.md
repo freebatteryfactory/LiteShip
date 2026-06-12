@@ -6,9 +6,12 @@
 
 # Interface: SceneContract\<M\>
 
-Defined in: [scene/src/contract.ts:128](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L128)
+Defined in: [scene/src/contract.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L150)
 
-Top-level scene contract — typed declaration shape for an entire composition.
+Top-level scene contract — typed declaration shape for an entire
+composition. Only `name`, `fps`, `bpm`, and `tracks` are required;
+`compileScene` fills the documented defaults for the rest, so a
+hello-world scene never declares layer-4 audit/ship concepts.
 
 ## Type Parameters
 
@@ -22,7 +25,7 @@ Top-level scene contract — typed declaration shape for an entire composition.
 
 > `readonly` `optional` **beats?**: readonly `BeatComponent`[]
 
-Defined in: [scene/src/contract.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L144)
+Defined in: [scene/src/contract.ts:177](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L177)
 
 Optional pre-resolved beat markers. When present, the scene
 compiler propagates them onto the [CompiledScene](CompiledScene.md) and the
@@ -36,15 +39,17 @@ each tick to compute beat-decay intensity.
 
 > `readonly` **bpm**: `number`
 
-Defined in: [scene/src/contract.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L132)
+Defined in: [scene/src/contract.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L158)
 
 ***
 
-### budgets
+### budgets?
 
-> `readonly` **budgets**: `object`
+> `readonly` `optional` **budgets?**: `object`
 
-Defined in: [scene/src/contract.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L135)
+Defined in: [scene/src/contract.ts:167](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L167)
+
+Performance budgets.
 
 #### memoryMb?
 
@@ -54,13 +59,25 @@ Defined in: [scene/src/contract.ts:135](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **p95FrameMs**: `number`
 
+#### Default
+
+```ts
+{ p95FrameMs: 1000 / fps } (one frame budget)
+```
+
 ***
 
-### duration
+### duration?
 
-> `readonly` **duration**: `number`
+> `readonly` `optional` **duration?**: `number`
 
-Defined in: [scene/src/contract.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L130)
+Defined in: [scene/src/contract.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L156)
+
+Scene duration in milliseconds.
+
+#### Default
+
+derived from the tracks — max resolved `to` / fps * 1000
 
 ***
 
@@ -68,15 +85,33 @@ Defined in: [scene/src/contract.ts:130](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **fps**: `number`
 
-Defined in: [scene/src/contract.ts:131](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L131)
+Defined in: [scene/src/contract.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L157)
 
 ***
 
-### invariants
+### height?
 
-> `readonly` **invariants**: readonly [`SceneInvariant`](SceneInvariant.md)[]
+> `readonly` `optional` **height?**: `number`
 
-Defined in: [scene/src/contract.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L134)
+Defined in: [scene/src/contract.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L162)
+
+Optional render height in pixels. Render hosts fall back to 720 when absent.
+
+***
+
+### invariants?
+
+> `readonly` `optional` **invariants?**: readonly [`SceneInvariant`](SceneInvariant.md)[]
+
+Defined in: [scene/src/contract.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L165)
+
+Compile-time checks.
+
+#### Default
+
+```ts
+[] (no declared checks)
+```
 
 ***
 
@@ -84,15 +119,23 @@ Defined in: [scene/src/contract.ts:134](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **name**: `string`
 
-Defined in: [scene/src/contract.ts:129](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L129)
+Defined in: [scene/src/contract.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L151)
 
 ***
 
-### site
+### site?
 
-> `readonly` **site**: readonly `Site`[]
+> `readonly` `optional` **site?**: readonly `Site`[]
 
-Defined in: [scene/src/contract.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L136)
+Defined in: [scene/src/contract.ts:169](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L169)
+
+Deployment sites the scene targets.
+
+#### Default
+
+```ts
+['node', 'browser']
+```
 
 ***
 
@@ -100,4 +143,14 @@ Defined in: [scene/src/contract.ts:136](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **tracks**: readonly `Track`\<`M`\>[]
 
-Defined in: [scene/src/contract.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L133)
+Defined in: [scene/src/contract.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L163)
+
+***
+
+### width?
+
+> `readonly` `optional` **width?**: `number`
+
+Defined in: [scene/src/contract.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L160)
+
+Optional render width in pixels. Render hosts fall back to 1280 when absent.

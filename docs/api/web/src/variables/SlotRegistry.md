@@ -8,7 +8,7 @@
 
 > `const` **SlotRegistry**: `object`
 
-Defined in: [web/src/slot/registry.ts:343](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/slot/registry.ts#L343)
+Defined in: [web/src/slot/registry.ts:362](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/slot/registry.ts#L362)
 
 Slot registry namespace.
 
@@ -37,12 +37,9 @@ import { SlotRegistry, SlotAddressing } from '@czap/web';
 
 const heroPath = SlotAddressing.brand('/hero');
 const registry = SlotRegistry.create();
-registry.register({
-  path: heroPath, element: document.querySelector('#hero')!,
-  mode: 'partial', mounted: true,
-});
+registry.register({ path: heroPath, element: document.querySelector('#hero')! });
 const entry = registry.get(heroPath);
-console.log(entry?.element.id); // 'hero'
+console.log(entry?.mode); // 'partial' (default; mounted defaults to true)
 ```
 
 ### findElement
@@ -108,9 +105,13 @@ const path = SlotRegistry.getPath(el);
 
 > **observe**: (`registry`, `root`) => `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
-Create a `MutationObserver` that automatically registers/unregisters slots
-as DOM elements with `data-czap-slot` are added or removed. The observer
-is disconnected when the enclosing Effect scope closes.
+Scan `root` for pre-existing slots, then create a `MutationObserver` that
+automatically registers/unregisters slots as DOM elements with
+`data-czap-slot` are added or removed. The observer is disconnected when
+the enclosing Effect scope closes.
+
+A separate [scanDOM](#scandom) call before `observe` is no longer required
+(and stays harmless: `register` is idempotent per path+element+mode).
 
 #### Parameters
 
@@ -124,7 +125,7 @@ The slot registry to keep in sync
 
 `Element`
 
-The DOM root to observe
+The DOM root to scan and observe
 
 #### Returns
 
@@ -141,7 +142,7 @@ import { Effect } from 'effect';
 const program = Effect.scoped(Effect.gen(function* () {
   const registry = SlotRegistry.create();
   yield* SlotRegistry.observe(registry, document.body);
-  // Observer is now active; slots auto-register on DOM changes
+  // Pre-existing slots are registered; new slots auto-register on DOM changes
 }));
 ```
 

@@ -6,7 +6,7 @@
 
 # Interface: ResumptionConfig
 
-Defined in: [web/src/types.ts:257](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L257)
+Defined in: [web/src/types.ts:278](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L278)
 
 Resumption configuration for gap detection and recovery.
 
@@ -16,7 +16,7 @@ Resumption configuration for gap detection and recovery.
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: [web/src/types.ts:262](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L262)
+Defined in: [web/src/types.ts:289](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L289)
 
 ***
 
@@ -24,7 +24,12 @@ Defined in: [web/src/types.ts:262](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **maxGapSize**: `number`
 
-Defined in: [web/src/types.ts:258](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L258)
+Defined in: [web/src/types.ts:285](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L285)
+
+Maximum number of missed events recoverable via patch replay before
+falling back to a full snapshot.
+
+Default: 50 — see `defaultResumptionConfig`; `Resumption.resume` accepts a `Partial`.
 
 ***
 
@@ -32,7 +37,7 @@ Defined in: [web/src/types.ts:258](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **replayUrl?**: `string`
 
-Defined in: [web/src/types.ts:260](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L260)
+Defined in: [web/src/types.ts:287](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L287)
 
 ***
 
@@ -40,7 +45,7 @@ Defined in: [web/src/types.ts:260](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [web/src/types.ts:259](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L259)
+Defined in: [web/src/types.ts:286](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L286)
 
 ***
 
@@ -48,4 +53,4 @@ Defined in: [web/src/types.ts:259](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **timeout?**: `Millis`
 
-Defined in: [web/src/types.ts:261](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L261)
+Defined in: [web/src/types.ts:288](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L288)

@@ -8,7 +8,7 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/signal.ts:336](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L336)
+Defined in: [core/src/signal.ts:370](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L370)
 
 Signal namespace -- live data feeds from the browser environment.
 
@@ -25,8 +25,10 @@ backed by Effect's SubscriptionRef. Scoped for automatic listener cleanup.
 Create an audio signal backed by an AVBridge.
 
 In 'sample' mode, returns the raw sample index. In 'normalized' mode,
-returns a 0..1 progress value based on totalDurationSec. Call `.poll()`
-to read the latest sample from the bridge and update the signal.
+returns a 0..1 progress value based on totalDurationSec — omitting
+`totalDurationSec` (or passing a non-positive value) in 'normalized'
+mode throws a `CzapValidationError`. Call `.poll()` to read the latest
+sample from the bridge and update the signal.
 
 #### Parameters
 
@@ -90,7 +92,7 @@ const program = Effect.scoped(Effect.gen(function* () {
 
 ### make
 
-> **make**: (`source`) => `Effect`\<`SignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
+> **make**: (`rawSource`) => `Effect`\<`SignalShape`\<`number`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `_make`
 
 Create a reactive signal from a browser environment source.
 
@@ -100,7 +102,7 @@ exposes `.current` (latest value) and `.changes` (stream of updates).
 
 #### Parameters
 
-##### source
+##### rawSource
 
 [`SignalSource`](../type-aliases/SignalSource.md)
 

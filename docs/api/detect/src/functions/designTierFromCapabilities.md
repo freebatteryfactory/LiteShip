@@ -8,11 +8,15 @@
 
 > **designTierFromCapabilities**(`caps`): [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [detect/src/tiers.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L87)
+Defined in: [detect/src/tiers.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L99)
 
 Map extended device capabilities to a design fidelity tier.
 Forced colors / no-update screens get minimal; wide-gamut / HDR screens
 get rich; standard otherwise with an enhanced middle ground.
+
+Advanced — `detect()` already returns this as `result.designTier`; call
+this directly only when you hold an [ExtendedDeviceCapabilities](../interfaces/ExtendedDeviceCapabilities.md)
+that did not come from a `detect()` sweep (capsule/edge consumers).
 
 ## Parameters
 

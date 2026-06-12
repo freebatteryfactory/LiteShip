@@ -8,13 +8,13 @@
 
 Defined in: [mcp-server/src/dispatch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L50)
 
-Shape of an MCP tools/call parameter object.
+Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`.
 
 ## Properties
 
-### arguments
+### arguments?
 
-> `readonly` **arguments**: `Record`\<`string`, `unknown`\>
+> `readonly` `optional` **arguments?**: `Record`\<`string`, `unknown`\>
 
 Defined in: [mcp-server/src/dispatch.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L52)
 

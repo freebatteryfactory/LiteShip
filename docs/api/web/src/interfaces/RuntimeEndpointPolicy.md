@@ -6,7 +6,7 @@
 
 # Interface: RuntimeEndpointPolicy
 
-Defined in: [web/src/types.ts:181](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L181)
+Defined in: [web/src/types.ts:196](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L196)
 
 Host-provided policy that governs which origins the runtime may talk
 to. `same-origin` is the default; `allowlist` consults
@@ -18,7 +18,7 @@ to. `same-origin` is the default; `allowlist` consults
 
 > `readonly` `optional` **allowOrigins?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L185)
+Defined in: [web/src/types.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L200)
 
 Allowed origins when `mode` is `allowlist`.
 
@@ -28,7 +28,7 @@ Allowed origins when `mode` is `allowlist`.
 
 > `readonly` `optional` **byKind?**: `Partial`\<`Record`\<[`RuntimeEndpointKind`](../type-aliases/RuntimeEndpointKind.md), readonly `string`[]\>\>
 
-Defined in: [web/src/types.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L187)
+Defined in: [web/src/types.ts:202](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L202)
 
 Optional per-endpoint-kind override allowlists.
 
@@ -38,6 +38,6 @@ Optional per-endpoint-kind override allowlists.
 
 > `readonly` **mode**: `"same-origin"` \| `"allowlist"`
 
-Defined in: [web/src/types.ts:183](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L183)
+Defined in: [web/src/types.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L198)
 
 Enforcement mode.

@@ -6,7 +6,7 @@
 
 # Interface: IMEState
 
-Defined in: [web/src/types.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L94)
+Defined in: [web/src/types.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L106)
 
 IME (Input Method Editor) composition state.
 
@@ -16,7 +16,7 @@ IME (Input Method Editor) composition state.
 
 > `readonly` **elementPath**: `string`
 
-Defined in: [web/src/types.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L95)
+Defined in: [web/src/types.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L107)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:95](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **end**: `number`
 
-Defined in: [web/src/types.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L98)
+Defined in: [web/src/types.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L110)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:98](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **start**: `number`
 
-Defined in: [web/src/types.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L97)
+Defined in: [web/src/types.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L109)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:97](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **text**: `string`
 
-Defined in: [web/src/types.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L96)
+Defined in: [web/src/types.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L108)
