@@ -239,6 +239,32 @@ export { GraphPatch } from './graph-patch.js';
 export type { PatchOp, NodePatchOp, EdgePatchOp } from './graph-patch.js';
 // ── end GraphPatch (P5b) ────────────────────────────────────────────────────
 
+// ── AI cast — the framework PRIMITIVE: graph→context/schema→validated proposal ─
+// "LiteShip teaches graphs how to speak to models; products decide whether model
+// suggestions become action." `AICast.castContext` casts a DocumentGraph OUT to a
+// content-addressed, token-budgeted model-facing context (advertising the
+// GraphPatch schema as the model's output contract); the validators cast IN,
+// minting a `ValidatedProposal` (the security envelope) that the host-authorized
+// `applyValidatedPatch` is the ONLY consumer of. NO auto-apply, NO network.
+export { AICast } from './ai-cast.js';
+export type {
+  AIContext,
+  GraphSummary,
+  ProposalSchema,
+  CastContextOptions,
+  ProposalResult,
+  ProposalAcceptance,
+  ProposalRejection,
+  GeneratedUIValidator,
+} from './ai-cast.js';
+// The shared validated-model-output envelope (one discipline for GraphPatch AND
+// genui GeneratedUITree proposals). `ValidatedProposal`/`ApplyToken` are exported
+// as CONSUMER types only — `mintValidated` (the sole token mint site) is NOT
+// re-exported, so the envelope stays un-forgeable outside the validators.
+export type { ValidatedProposal, ApplyToken, ProposalTarget } from './validated-output.js';
+export { assertTokenBinds, proposalSubject } from './validated-output.js';
+// ── end AI cast ─────────────────────────────────────────────────────────────
+
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
 export type { RuntimePhase, RuntimeCoordinatorConfig } from './runtime-coordinator.js';

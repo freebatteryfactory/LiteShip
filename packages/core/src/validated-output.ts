@@ -1,0 +1,126 @@
+/**
+ * The validated-model-output envelope — the ONE discipline shared by every AI
+ * cast projection target (GraphPatch proposals AND genui GeneratedUITree
+ * proposals).
+ *
+ * THE LOAD-BEARING SECURITY PROPERTY (encoded in the type SHAPE, not just docs):
+ * a model's raw output is NEVER directly actionable. The only way to obtain a
+ * {@link ValidatedProposal} is through {@link mintValidated}, which this module
+ * keeps PRIVATE to validator call-sites: the envelope carries a branded
+ * {@link ApplyToken} that no caller can construct (the brand's witness is a
+ * unique symbol this module never exports). Therefore "unvalidated model output
+ * → mutation" is UNREPRESENTABLE — a host's `apply` step demands a
+ * `ValidatedProposal`, and a `ValidatedProposal` can only exist downstream of a
+ * passing validation.
+ *
+ * This is the framework PRIMITIVE half of "AI": LiteShip teaches graphs how to
+ * speak to models; products decide whether model suggestions become action. The
+ * envelope is the seam between the two — it is what a validator MINTS and what a
+ * host's admission layer INSPECTS, but the framework never auto-applies it.
+ *
+ * The envelope is a pure VALUE: it content-addresses (the same fnv1a∘CanonicalCbor
+ * kernel as every other cast) and carries a receipt subject id, so a validated
+ * proposal is replayable and citable without re-running the model.
+ *
+ * @module
+ */
+
+import type { ContentAddress } from './brands.js';
+import { contentAddressOf } from './content-address.js';
+
+/**
+ * The unforgeable witness for {@link ApplyToken}. A REAL, module-private symbol
+ * (never exported) keyed into the token — it is what makes the apply token
+ * un-constructable outside the validators in this module. Because the symbol
+ * itself never escapes the module, no code elsewhere can produce an object with
+ * this key, so no code elsewhere can fabricate a `ValidatedProposal`. (A real
+ * value, not a `declare const` phantom — the key has to exist at runtime to brand
+ * the token, while staying invisible to the rest of the program.)
+ */
+const ApplyTokenWitness: unique symbol = Symbol('czap.validated-output.apply-token-witness');
+
+/**
+ * A validation-minted, host-authorized apply token. Branded with a private
+ * witness so it is impossible to construct except inside {@link mintValidated}.
+ * Its value is the content address of the validated payload — so the token both
+ * (a) proves validation happened and (b) binds to the EXACT payload validated
+ * (a host cannot swap the payload after the token is minted without invalidating
+ * the address match; see {@link assertTokenBinds}).
+ */
+export interface ApplyToken {
+  readonly [ApplyTokenWitness]: true;
+  /** Content address of the validated payload — the token is bound to THIS payload. */
+  readonly subject: ContentAddress;
+  /** The projection target the proposal was validated against (diagnostic + routing). */
+  readonly target: ProposalTarget;
+}
+
+/** The closed set of projection targets a validated proposal can carry. */
+export type ProposalTarget = 'graph-patch' | 'generated-ui';
+
+/**
+ * A model proposal that has PASSED validation — the only artifact a host's
+ * admission layer is allowed to act on. The `token` is the load-bearing field:
+ * it cannot be forged (its witness type is private), and it binds to `payload`
+ * by content address. `subject` is the receipt subject id (== `token.subject`),
+ * surfaced for citation/caching without reaching into the branded token.
+ *
+ * There is NO public constructor for this type. The framework exposes
+ * `apply`-style host steps that CONSUME it, but never a path that produces one
+ * from raw model output bypassing validation.
+ */
+export interface ValidatedProposal<T> {
+  readonly _tag: 'ValidatedProposal';
+  readonly _version: 1;
+  readonly target: ProposalTarget;
+  /** The validated payload (a GraphPatch, a GeneratedUINode, …). */
+  readonly payload: T;
+  /** Content address of the payload — the proposal's stable identity / receipt subject. */
+  readonly subject: ContentAddress;
+  /** The unforgeable, validation-minted apply authorization. */
+  readonly token: ApplyToken;
+}
+
+/**
+ * Mint a {@link ValidatedProposal}. PRIVATE to validators (not re-exported from
+ * the package index): this is the single mint site for the apply token, exactly
+ * as `sealGraph`/`makeEntityId` are the single mint sites for their addresses.
+ * Validators call this ONLY after their check passes, so the existence of a
+ * `ValidatedProposal` is proof a passing validation ran.
+ */
+export function mintValidated<T>(target: ProposalTarget, payload: T): ValidatedProposal<T> {
+  const subject = contentAddressOf({ target, payload });
+  const token: ApplyToken = { [ApplyTokenWitness]: true, subject, target };
+  return { _tag: 'ValidatedProposal', _version: 1, target, payload, subject, token };
+}
+
+/**
+ * Host-side guard: re-derive the payload's content address and assert it matches
+ * the token's bound subject. A host's admission layer calls this immediately
+ * before applying — it catches any attempt to swap the payload after minting
+ * (the token binds to the bytes that were validated, not merely to "some
+ * validation happened"). Returns the payload narrowed when bound; throws on
+ * mismatch.
+ *
+ * This is defense-in-depth ON TOP of the unforgeable token: even a correctly
+ * minted token cannot be paired with a different payload at apply time.
+ */
+export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
+  const rederived = contentAddressOf({ target: proposal.target, payload: proposal.payload });
+  if (rederived !== proposal.subject || proposal.token.subject !== proposal.subject) {
+    throw new Error(
+      `ValidatedProposal token does not bind to its payload (target=${proposal.target}). ` +
+        'The proposal was altered after validation; refusing to surface it for apply.',
+    );
+  }
+  return proposal.payload;
+}
+
+/**
+ * The content address (== receipt subject id) of a validated proposal. Exposed
+ * so a host can cite/cache a proposal by identity without touching the branded
+ * token.
+ */
+export function proposalSubject<T>(proposal: ValidatedProposal<T>): ContentAddress {
+  return proposal.subject;
+}
