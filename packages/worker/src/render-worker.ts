@@ -108,6 +108,10 @@ function computeState() {
   const blend = {};
   const css = {};
   const glsl = {};
+  // WGSL channel — present so this worker's output shape matches the host
+  // CompositeState.outputs; the live per-quantizer WGSL emit is the WGSL
+  // agent's job, so it is left empty here (parity with the host emit).
+  const wgsl = {};
   const aria = {};
 
   for (const [name, q] of quantizers) {
@@ -139,7 +143,7 @@ function computeState() {
     aria[keys.ariaKey] = stateStr;
   }
 
-  return { discrete, blend, outputs: { css, glsl, aria } };
+  return { discrete, blend, outputs: { css, glsl, wgsl, aria } };
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +155,7 @@ function computeState() {
  * This is a diagnostic visualization; real applications would
  * implement domain-specific rendering.
  *
- * @param {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; aria: Record<string, string> } }} state
+ * @param {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; wgsl: Record<string, number>; aria: Record<string, string> } }} state
  * @param {number} frame
  * @param {number} progress
  */

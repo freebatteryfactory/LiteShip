@@ -152,7 +152,7 @@ ${EVALUATE_THRESHOLDS_SOURCE}
 
 /**
  * Build a CompositeState from the current quantizer state.
- * @returns {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; aria: Record<string, string> } }}
+ * @returns {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; wgsl: Record<string, number>; aria: Record<string, string> } }}
  */
 function compute() {
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -161,6 +161,11 @@ function compute() {
   const blend = {};
   const css = {};
   const glsl = {};
+  // WGSL channel: present in the output shape so the worker path stays in sync
+  // with the host CompositeState.outputs. D0 carries the channel; the live
+  // per-quantizer WGSL emit (keyed via a projection wgslKey) is the WGSL
+  // agent's job, so it is left empty here — exactly as the host emit leaves it.
+  const wgsl = {};
   const aria = {};
   const resolvedStateGenerations = {};
 
@@ -227,7 +232,7 @@ function compute() {
   }
   lastComputeTime = now;
 
-  return { discrete, blend, outputs: { css, glsl, aria }, resolvedStateGenerations };
+  return { discrete, blend, outputs: { css, glsl, wgsl, aria }, resolvedStateGenerations };
 }
 
 // ---------------------------------------------------------------------------

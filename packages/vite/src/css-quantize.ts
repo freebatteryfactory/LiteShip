@@ -36,6 +36,38 @@ export interface QuantizeNestedRule {
 }
 
 /**
+ * The non-CSS cast targets authored as nested `@<target> { … }` segments
+ * inside a `@quantize` state. Each is a sibling of the CSS body
+ * (`bareProps` / `rules`) and routes through its own compiler arm in the
+ * build cast loop:
+ *
+ * - `aria` — `aria-*` / `role` attributes → `ARIACompiler`.
+ * - `glsl` — numeric GLSL uniforms → `GLSLCompiler`.
+ * - `wgsl` — numeric WGSL uniforms → `WGSLCompiler`.
+ *
+ * The marker name (`@aria` / `@glsl` / `@wgsl`) names the target; the nested
+ * declarations are that target's per-state attribute/uniform map.
+ */
+export type CastTarget = 'aria' | 'glsl' | 'wgsl';
+
+/** Ordered cast targets parsed from `@<target> { … }` segments. */
+export const CAST_TARGETS: readonly CastTarget[] = ['aria', 'glsl', 'wgsl'];
+
+/**
+ * Accepted attribute/uniform key pattern inside a cast segment. Broader than
+ * the CSS property-name pattern: allows underscores (GLSL/WGSL uniform names
+ * are snake_case) alongside the hyphenated `aria-*` keys. The target's compiler
+ * arm validates/coerces the keys it actually accepts downstream.
+ */
+const CAST_PROP_PATTERN = /^[a-zA-Z_-][a-zA-Z0-9_-]*$/;
+
+/** True when `marker` (e.g. `@glsl`) names a cast target; narrows to it. */
+function castTargetOf(marker: string): CastTarget | null {
+  const name = marker.slice(1);
+  return (CAST_TARGETS as readonly string[]).includes(name) ? (name as CastTarget) : null;
+}
+
+/**
  * The parsed body of one `@quantize` state: bare declarations that apply
  * to the boundary element selector (the documented flat form) plus
  * nested per-selector rules (the adaptive per-element form).
@@ -46,10 +78,25 @@ export interface QuantizeStateBody {
   /** Nested `<selector> { ... }` rules written inside the state. */
   readonly rules: readonly QuantizeNestedRule[];
   /**
+   * Authored per-state non-CSS cast attributes, keyed by cast target. Each
+   * entry holds the raw `{ key: value }` declarations from a nested
+   * `@<target> { … }` segment (quotes stripped). Generalized from the
+   * original `@aria`-only form so adding a cast target is a registration in
+   * {@link CAST_TARGETS}, not a new field. Targets the state did not author
+   * are absent; the field itself is absent when no cast segment was authored.
+   *
+   * Downstream each target routes through its compiler arm via `dispatch`
+   * (ARIA → `ARIACompiler`, GLSL → `GLSLCompiler`, WGSL → `WGSLCompiler`).
+   */
+  readonly castAttrs?: Partial<Record<CastTarget, Record<string, string>>>;
+  /**
    * Authored per-state ARIA/data attributes from a nested `@aria { … }`
    * segment (e.g. `aria-expanded: false; role: button`). Quotes are stripped.
    * Validated downstream by `ARIACompiler` against `BoundaryAttribute.isAllowedKey`
    * (`aria-*` / `role`). Absent when the state declares no `@aria` block.
+   *
+   * Derived from `castAttrs.aria` and kept as a parallel field so existing
+   * ARIA consumers/tests read it unchanged.
    */
   readonly ariaAttrs?: Record<string, string>;
 }
@@ -97,12 +144,21 @@ export interface QuantizeBlock {
 function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; end: number } {
   const bareProps: Record<string, string> = {};
   const rules: QuantizeNestedRule[] = [];
-  const ariaAttrs: Record<string, string> = {};
+  // Per-target cast attribute maps, populated lazily as `@<target> { … }`
+  // segments are parsed. `aria` is mirrored onto the parallel `ariaAttrs`
+  // field below so existing ARIA consumers stay unchanged.
+  const castAttrs: Partial<Record<CastTarget, Record<string, string>>> = {};
 
-  // Assemble the body, omitting `ariaAttrs` entirely when no `@aria` segment
-  // was authored (keeps the common shape minimal and stable for snapshots).
-  const makeBody = (): QuantizeStateBody =>
-    Object.keys(ariaAttrs).length > 0 ? { bareProps, rules, ariaAttrs } : { bareProps, rules };
+  // Assemble the body, omitting `castAttrs` / `ariaAttrs` entirely when no
+  // cast segment was authored (keeps the common shape minimal and stable for
+  // snapshots). `ariaAttrs` is derived from `castAttrs.aria`.
+  const makeBody = (): QuantizeStateBody => {
+    const hasCasts = Object.keys(castAttrs).length > 0;
+    if (!hasCasts) return { bareProps, rules };
+    return castAttrs.aria
+      ? { bareProps, rules, castAttrs, ariaAttrs: castAttrs.aria }
+      : { bareProps, rules, castAttrs };
+  };
 
   while (pos < css.length) {
     // Skip whitespace between segments
@@ -239,13 +295,22 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     if (terminator === '{') {
       const selector = buf.trim();
       pos++; // consume '{'
-      const { props, end } = parseFlatDeclarations(css, pos);
+      const target = selector.startsWith('@') ? castTargetOf(selector) : null;
+      // Cast segments carry attribute/uniform keys, not CSS properties: GLSL
+      // and WGSL uniform names are snake_case (underscores), and `aria-*` keys
+      // are hyphenated. Accept that broader identifier shape so the default
+      // CSS property-name pattern (no underscores) does not silently drop
+      // `blur_radius`-style uniforms. CSS nested rules keep the default.
+      const { props, end } = parseFlatDeclarations(css, pos, target ? CAST_PROP_PATTERN : undefined);
       pos = end;
-      if (selector === '@aria') {
-        // Authored per-state ARIA/data attributes. Strip surrounding quotes so
-        // `role: "button"` and `aria-expanded: false` both yield clean values.
+      if (target) {
+        // Authored per-state cast attributes for one target. Strip surrounding
+        // quotes so `role: "button"` and `aria-expanded: false` (and numeric
+        // GLSL/WGSL uniform values) all yield clean values; the target's
+        // compiler arm coerces/validates downstream.
+        const bucket = (castAttrs[target] ??= {});
         for (const [k, v] of Object.entries(props)) {
-          ariaAttrs[k] = v.replace(/^["']|["']$/g, '');
+          bucket[k] = v.replace(/^["']|["']$/g, '');
         }
       } else if (selector.length > 0) {
         rules.push({ selector, props });

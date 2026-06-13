@@ -112,10 +112,13 @@ export interface BoundaryManifestEntry {
  * Deduplicate a fully-materialized per-tier outputs map into the pooled
  * {@link BoundaryManifestEntry} shape (`outputs` + index refs).
  *
- * Identity is the full `(css, propertyRegistrations, containerQueries)`
- * triple, and cells are visited in {@link enumerateTierKeys} order so the
- * pool order -- and the serialized manifest bytes -- are stable regardless
- * of the producer's insertion order.
+ * Identity is the full `css` / `propertyRegistrations` / `containerQueries` /
+ * `aria` / `glsl` / `wgsl` tuple, and cells are visited in
+ * {@link enumerateTierKeys} order so the pool order -- and the serialized
+ * manifest bytes -- are stable regardless of the producer's insertion order.
+ * Each non-CSS cast is part of identity so two boundaries that differ only in
+ * their `@glsl` / `@wgsl` cast get distinct content addresses (and distinct
+ * pool entries).
  */
 export function dedupeOutputsByTier(
   outputsByTier: Readonly<Partial<Record<TierKey, CompiledOutputs>>>,
@@ -131,6 +134,8 @@ export function dedupeOutputsByTier(
       outputs.propertyRegistrations,
       outputs.containerQueries,
       outputs.aria ?? null,
+      outputs.glsl ?? null,
+      outputs.wgsl ?? null,
     ]);
     let index = indexByContent.get(content);
     if (index === undefined) {

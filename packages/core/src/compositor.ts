@@ -34,7 +34,13 @@ import { SpeculativeEvaluator } from './speculative.js';
 /**
  * Snapshot of the compositor's output per tick: discrete state names for each
  * quantizer, their blend-weight vectors, and the compiled per-target output
- * maps (`css` / `glsl` / `aria`).
+ * maps (`css` / `glsl` / `wgsl` / `aria`).
+ *
+ * `wgsl` mirrors `glsl` (a per-quantizer numeric channel keyed by the
+ * quantizer's projection key). D0 carries the channel through the state shape,
+ * the pool, and the worker emit so the host and worker paths agree; populating
+ * it from a boundary's `@wgsl` cast in the live emit phase is the WGSL agent's
+ * job (the `emit-wgsl` runtime phase is deliberately not added here).
  */
 export interface CompositeState {
   readonly discrete: Record<string, string>;
@@ -42,6 +48,7 @@ export interface CompositeState {
   readonly outputs: {
     readonly css: Record<string, number | string>;
     readonly glsl: Record<string, number>;
+    readonly wgsl: Record<string, number>;
     readonly aria: Record<string, string>;
   };
 }
@@ -128,7 +135,7 @@ function emptyCompositeState(): CompositeState {
   return {
     discrete: {},
     blend: {},
-    outputs: { css: {}, glsl: {}, aria: {} },
+    outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
   };
 }
 
