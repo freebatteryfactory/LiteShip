@@ -14,12 +14,9 @@ export interface ComponentCatalogInput {
   readonly components: Readonly<Record<string, ComponentDef>>;
 }
 
-/**
- * Register a host-owned component catalog. Mints {@link ComponentCatalog.catalogHash}
- * over canonical catalog bytes (version + component defs).
- */
-export function defineComponentCatalog(input: ComponentCatalogInput): ComponentCatalog {
-  const catalogHash = ContentAddress(
+/** Canonical catalog bytes recipe shared by {@link defineComponentCatalog} and {@link catalogHash}. */
+export function hashCatalogInput(input: Pick<ComponentCatalogInput, 'version' | 'components'>): ContentAddress {
+  return ContentAddress(
     fnv1aBytes(
       CanonicalCbor.encode({
         version: input.version,
@@ -27,6 +24,14 @@ export function defineComponentCatalog(input: ComponentCatalogInput): ComponentC
       }),
     ),
   );
+}
+
+/**
+ * Register a host-owned component catalog. Mints {@link ComponentCatalog.catalogHash}
+ * over canonical catalog bytes (version + component defs).
+ */
+export function defineComponentCatalog(input: ComponentCatalogInput): ComponentCatalog {
+  const catalogHash = hashCatalogInput(input);
   return {
     version: input.version,
     catalogHash,

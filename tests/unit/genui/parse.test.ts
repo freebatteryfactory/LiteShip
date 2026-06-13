@@ -24,4 +24,16 @@ describe('tryParseGeneratedUIChunk', () => {
   it('returns null for malformed JSON without throwing', () => {
     expect(tryParseGeneratedUIChunk('{not json')).toBeNull();
   });
+
+  it('returns null when children is not an array', () => {
+    expect(
+      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: {}, children: 'nope' })),
+    ).toBeNull();
+  });
+
+  it('returns null when slots is not a plain object', () => {
+    expect(
+      tryParseGeneratedUIChunk(JSON.stringify({ _genui: true, name: 'Text', props: {}, slots: [] })),
+    ).toBeNull();
+  });
 });

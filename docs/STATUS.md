@@ -1,6 +1,6 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-06-08
+Last updated: 2026-06-12
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
 Current node lane: run `pnpm test` for the fresh pass/fail and file-count truth.
@@ -677,6 +677,18 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 | `mcp-apps-spec-completeness` | UI resources emit `_meta.ui.permissions` + `prefersBorder` |
 | `d10-interactive-widgets` | View bridge `callServerTool` + server `ui/call-tool` handler |
 | `webmcp-host-browser` | `@czap/command/host-browser` + `registerWebMcpTools()` |
+
+---
+
+## Framework primitives (v0.2 prep)
+
+- **`@czap/canonical`** — standalone bytes kernel (RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest`); sole runtime dependency is `@noble/hashes`; no spine/core/Effect graph in-package.
+- **`@czap/genui`** — closed catalog renderer (`defineComponentCatalog`, `validateGeneratedUITree`, `renderFromCatalog`); allowlisted DOM only — no model HTML; host owns interaction authority via `genui:interaction`.
+- **`GenFrame.receiptId`** — each frame mints a deterministic content address from stable fields (`frameCount`, `type`, `tokens`, `qualityTier`, `morphStrategy`, `bufferPosition`) via `CanonicalCbor.encode`; timestamp stays metadata.
+- **`@czap/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
+- **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
+- **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
+- **22 publishable `@czap/*` scopes** — `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
 
 ---
 

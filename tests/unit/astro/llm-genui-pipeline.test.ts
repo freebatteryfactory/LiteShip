@@ -4,7 +4,7 @@
 
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMRenderPipeline } from '../../../packages/astro/src/runtime/llm-render-pipeline.js';
 
@@ -45,5 +45,33 @@ describe('LLMRenderPipeline.tryRenderGeneratedUI', () => {
       emitFrame: () => {},
     };
     expect(pipeline.tryRenderGeneratedUI('hello world', host, DEMO_COMPONENT_CATALOG)).toBe(false);
+  });
+
+  it('returns false and skips emit when renderGeneratedUI fails', () => {
+    const pipeline = createLLMRenderPipeline({ mode: 'replace', getDeviceTier: () => 'animations' });
+    const emitGeneratedUI = vi.fn();
+    const host = {
+      renderText: () => true,
+      renderFrame: () => true,
+      emitToken: () => {},
+      emitFrame: () => {},
+      renderGeneratedUI: () => false,
+      emitGeneratedUI,
+    };
+    const payload = JSON.stringify({ _genui: true, name: 'Text', props: { text: 'nope' } });
+    expect(pipeline.tryRenderGeneratedUI(payload, host, DEMO_COMPONENT_CATALOG)).toBe(false);
+    expect(emitGeneratedUI).not.toHaveBeenCalled();
+  });
+
+  it('returns false when renderGeneratedUI hook is absent', () => {
+    const pipeline = createLLMRenderPipeline({ mode: 'replace', getDeviceTier: () => 'animations' });
+    const host = {
+      renderText: () => true,
+      renderFrame: () => true,
+      emitToken: () => {},
+      emitFrame: () => {},
+    };
+    const payload = JSON.stringify({ _genui: true, name: 'Text', props: { text: 'orphan' } });
+    expect(pipeline.tryRenderGeneratedUI(payload, host, DEMO_COMPONENT_CATALOG)).toBe(false);
   });
 });

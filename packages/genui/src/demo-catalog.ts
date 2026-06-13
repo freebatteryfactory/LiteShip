@@ -31,6 +31,7 @@ export const DEMO_COMPONENT_CATALOG = defineComponentCatalog({
       tag: 'button',
       props: {
         label: { type: 'string', required: true },
+        /** Opaque action id surfaced on `genui:interaction` as `actionId`. */
         onClick: { type: 'string' },
       },
       children: 'none',

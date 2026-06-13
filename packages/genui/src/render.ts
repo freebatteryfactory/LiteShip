@@ -1,7 +1,8 @@
 /**
  * Trusted catalog renderer — no model HTML, allowlisted attributes only.
  *
- * Interactions emit `genui:interaction` CustomEvents; the host decides what they mean.
+ * Interaction props (`onClick`, …) carry opaque action-id strings; the host
+ * interprets them via `genui:interaction` CustomEvents.
  *
  * @module
  */
@@ -41,11 +42,17 @@ const ALLOWED_ATTRS = new Set([
 const isAllowedAttr = (name: string): boolean =>
   ALLOWED_ATTRS.has(name) || name.startsWith('data-') || name.startsWith('aria-');
 
+const isInteractionProp = (key: string): boolean => key === 'onClick' || key.startsWith('on');
+
+/** Prior render interaction listeners keyed by mount target — aborted on re-render. */
+const renderInteractionScopes = new WeakMap<HTMLElement, AbortController>();
+
 const applyProps = (
   element: HTMLElement,
   node: GeneratedUINode,
   catalog: ComponentCatalog,
   eventRoot: HTMLElement,
+  signal: AbortSignal,
 ): void => {
   for (const [key, value] of Object.entries(node.props)) {
     const def = catalog.components[node.name];
@@ -54,15 +61,22 @@ const applyProps = (
       continue;
     }
 
-    if (key === 'onClick' || key.startsWith('on')) {
-      element.addEventListener('click', () => {
-        eventRoot.dispatchEvent(
-          new CustomEvent('genui:interaction', {
-            detail: { componentName: node.name, propKey: key, value },
-            bubbles: true,
-          }),
-        );
-      });
+    if (isInteractionProp(key)) {
+      if (typeof value !== 'string' || key !== 'onClick') {
+        continue;
+      }
+      element.addEventListener(
+        'click',
+        () => {
+          eventRoot.dispatchEvent(
+            new CustomEvent('genui:interaction', {
+              detail: { componentName: node.name, propKey: key, actionId: value, value },
+              bubbles: true,
+            }),
+          );
+        },
+        { signal },
+      );
       continue;
     }
 
@@ -77,15 +91,32 @@ const applyProps = (
   }
 };
 
-const renderNode = (node: GeneratedUINode, catalog: ComponentCatalog, eventRoot: HTMLElement): HTMLElement => {
+const renderNode = (
+  node: GeneratedUINode,
+  catalog: ComponentCatalog,
+  eventRoot: HTMLElement,
+  signal: AbortSignal,
+): HTMLElement => {
   const def = catalog.components[node.name]!;
   const tag = def.tag ?? 'div';
   const element = document.createElement(tag);
-  applyProps(element, node, catalog, eventRoot);
+  applyProps(element, node, catalog, eventRoot, signal);
 
   if (node.children) {
     for (const child of node.children) {
-      element.appendChild(renderNode(child, catalog, eventRoot));
+      element.appendChild(renderNode(child, catalog, eventRoot, signal));
+    }
+  }
+
+  if (node.slots) {
+    for (const [slotName, slotValue] of Object.entries(node.slots)) {
+      const slotHost = document.createElement('div');
+      slotHost.setAttribute('data-czap-genui-slot', slotName);
+      const slotNodes = Array.isArray(slotValue) ? slotValue : [slotValue];
+      for (const slotNode of slotNodes) {
+        slotHost.appendChild(renderNode(slotNode, catalog, eventRoot, signal));
+      }
+      element.appendChild(slotHost);
     }
   }
 
@@ -103,10 +134,13 @@ export function renderFromCatalog(node: GeneratedUINode, options: RenderFromCata
   }
 
   const eventRoot = options.eventRoot ?? options.target;
+  renderInteractionScopes.get(options.target)?.abort();
+  const interactionScope = new AbortController();
+  renderInteractionScopes.set(options.target, interactionScope);
   if (options.clear !== false) {
     options.target.replaceChildren();
   }
 
-  options.target.appendChild(renderNode(node, options.catalog, eventRoot));
+  options.target.appendChild(renderNode(node, options.catalog, eventRoot, interactionScope.signal));
   return true;
 }
