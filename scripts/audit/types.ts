@@ -30,6 +30,8 @@ import type { AuditCounts, AuditFinding, AuditSectionResult, AuditSuppression } 
 
 export type FullAuditSectionId =
   | '@czap/core'
+  | '@czap/canonical'
+  | '@czap/genui'
   | '@czap/quantizer'
   | '@czap/compiler'
   | '@czap/detect'

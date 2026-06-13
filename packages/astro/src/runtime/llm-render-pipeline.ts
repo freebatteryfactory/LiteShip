@@ -256,9 +256,11 @@ export function createLLMRenderPipeline(config: LLMRenderPipelineConfig): LLMRen
         return false;
       }
       const renderId = renderHash(tree, catalog);
-      if (host.renderGeneratedUI?.(tree, renderId)) {
-        host.emitGeneratedUI?.(tree, renderId);
+      const rendered = host.renderGeneratedUI?.(tree, renderId) ?? false;
+      if (!rendered) {
+        return false;
       }
+      host.emitGeneratedUI?.(tree, renderId);
       return true;
     },
 

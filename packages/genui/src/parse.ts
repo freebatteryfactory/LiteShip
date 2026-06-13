@@ -8,12 +8,36 @@
 
 import type { GeneratedUINode } from './types.js';
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const isGeneratedUINode = (value: unknown): value is GeneratedUINode => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isPlainObject(value)) {
     return false;
   }
-  const record = value as Record<string, unknown>;
-  return typeof record.name === 'string' && record.props !== null && typeof record.props === 'object';
+  if (typeof value.name !== 'string' || !isPlainObject(value.props)) {
+    return false;
+  }
+  if ('children' in value && value.children !== undefined) {
+    if (!Array.isArray(value.children) || !value.children.every(isGeneratedUINode)) {
+      return false;
+    }
+  }
+  if ('slots' in value && value.slots !== undefined) {
+    if (!isPlainObject(value.slots)) {
+      return false;
+    }
+    for (const slotValue of Object.values(value.slots)) {
+      if (Array.isArray(slotValue)) {
+        if (!slotValue.every(isGeneratedUINode)) {
+          return false;
+        }
+      } else if (!isGeneratedUINode(slotValue)) {
+        return false;
+      }
+    }
+  }
+  return true;
 };
 
 /**

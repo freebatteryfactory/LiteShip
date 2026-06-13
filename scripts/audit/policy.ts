@@ -27,6 +27,8 @@ export type { PackagePolicy, AuditAllowlistEntry } from '@czap/audit';
 
 export const hicpSectionOrder = [
   '@czap/core',
+  '@czap/canonical',
+  '@czap/genui',
   '@czap/quantizer',
   '@czap/compiler',
   '@czap/detect',
@@ -148,6 +150,8 @@ export const reportPaths = {
 
 export const hicpSectionTitles: Record<FullAuditSectionId, string> = {
   '@czap/core': '@czap/core',
+  '@czap/canonical': '@czap/canonical',
+  '@czap/genui': '@czap/genui',
   '@czap/quantizer': '@czap/quantizer',
   '@czap/compiler': '@czap/compiler',
   '@czap/detect': '@czap/detect',
@@ -184,6 +188,8 @@ export function matchesHicpInventory(relativePath: string): boolean {
 export function sectionForInventoryPath(relativePath: string): FullAuditSectionId {
   const matchers: readonly [RegExp, FullAuditSectionId][] = [
     [/^packages\/core\//, '@czap/core'],
+    [/^packages\/canonical\//, '@czap/canonical'],
+    [/^packages\/genui\//, '@czap/genui'],
     [/^packages\/quantizer\//, '@czap/quantizer'],
     [/^packages\/compiler\//, '@czap/compiler'],
     [/^packages\/detect\//, '@czap/detect'],
