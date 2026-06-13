@@ -48,6 +48,8 @@ export { PassThroughMixer } from './systems/pass-through-mixer.js';
 export type { MixReceipt } from './systems/pass-through-mixer.js';
 export { SVGSystem } from './systems/svg.js';
 export type { SvgAttrs } from './systems/svg.js';
+export { collectSvgAttrs, applySvgAttrs } from './systems/svg-egress.js';
+export type { SvgAttrsFrame, SvgElementResolver } from './systems/svg-egress.js';
 
 export { Beat, resolveBeat, resolveFrameMark, addFrameMarks } from './sugar/beat.js';
 export type { BeatHandle, FrameMarkSum } from './sugar/beat.js';
