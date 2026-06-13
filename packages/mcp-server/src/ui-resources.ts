@@ -97,7 +97,8 @@ const REGISTRY: readonly UiEntry[] = [
     resource: {
       uri: 'ui://liteship/registry/components',
       name: 'registry/components (UI)',
-      description: 'Static MCP Apps view of the LiteShip demo generated-UI catalog (HTML twin of liteship://registry/components).',
+      description:
+        'Static MCP Apps view of the LiteShip demo generated-UI catalog (HTML twin of liteship://registry/components).',
       mimeType: UI_MIME,
       _meta: SELF_CONTAINED_META,
     },

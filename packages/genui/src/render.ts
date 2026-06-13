@@ -41,7 +41,12 @@ const ALLOWED_ATTRS = new Set([
 const isAllowedAttr = (name: string): boolean =>
   ALLOWED_ATTRS.has(name) || name.startsWith('data-') || name.startsWith('aria-');
 
-const applyProps = (element: HTMLElement, node: GeneratedUINode, catalog: ComponentCatalog, eventRoot: HTMLElement): void => {
+const applyProps = (
+  element: HTMLElement,
+  node: GeneratedUINode,
+  catalog: ComponentCatalog,
+  eventRoot: HTMLElement,
+): void => {
   for (const [key, value] of Object.entries(node.props)) {
     const def = catalog.components[node.name];
     const propDef = def?.props[key];
@@ -72,11 +77,7 @@ const applyProps = (element: HTMLElement, node: GeneratedUINode, catalog: Compon
   }
 };
 
-const renderNode = (
-  node: GeneratedUINode,
-  catalog: ComponentCatalog,
-  eventRoot: HTMLElement,
-): HTMLElement => {
+const renderNode = (node: GeneratedUINode, catalog: ComponentCatalog, eventRoot: HTMLElement): HTMLElement => {
   const def = catalog.components[node.name]!;
   const tag = def.tag ?? 'div';
   const element = document.createElement(tag);
