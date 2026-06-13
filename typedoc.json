@@ -2,6 +2,8 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "LiteShip",
   "entryPoints": [
+    "packages/canonical/src/index.ts",
+    "packages/genui/src/index.ts",
     "packages/core/src/index.ts",
     "packages/quantizer/src/index.ts",
     "packages/compiler/src/index.ts",

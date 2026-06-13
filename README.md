@@ -86,6 +86,8 @@ The Quick Start installs the smallest useful set: `@czap/core` (the snippet's on
 | Package | Description |
 | --- | --- |
 | [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, Compositor, ECS, HLC, DAG, Plan, AVBridge |
+| [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package) |
+| [`@czap/genui`](./packages/genui) | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions) |
 | [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating |
 | [`@czap/compiler`](./packages/compiler) | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind v4 |
 

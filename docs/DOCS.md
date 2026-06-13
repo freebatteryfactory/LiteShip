@@ -153,8 +153,9 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is `Token` defined? | `packages/core/src/token.ts` |
 | Where is `Style` defined? | `packages/core/src/style.ts` |
 | Where is `Theme` defined? | `packages/core/src/theme.ts` |
-| Where does the canonical CBOR encoder live? | `packages/core/src/cbor.ts` (consumed by every primitive's `deterministicId`) |
-| Where is the FNV-1a hash? | `packages/core/src/fnv.ts` |
+| Where does the canonical CBOR encoder live? | `packages/canonical/src/cbor.ts` (`@czap/canonical`; re-exported from `packages/core/src/cbor.ts`) |
+| Where is the FNV-1a hash? | `packages/canonical/src/fnv.ts` (re-exported from `packages/core/src/fnv.ts`) |
+| Where is the generated UI catalog renderer? | `packages/genui/src/` (`defineComponentCatalog`, `renderFromCatalog`; ADR-0014) |
 | Where is the SPSC ring buffer? | `packages/worker/src/spsc-ring.ts` |
 | Where is the compositor pool? | `packages/core/src/compositor-pool.ts` |
 | Where is `DirtyFlags`? | `packages/core/src/dirty.ts` |

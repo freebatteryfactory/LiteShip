@@ -22,6 +22,8 @@ Prose vocabulary: [../GLOSSARY.md](../GLOSSARY.md).
 | [0010](./0010-spine-canonical-type-source.md) | Spine as canonical type source | Accepted |
 | [0011](./0011-ship-capsule.md) | Ship capsule (addressed digest + release input manifest) | Accepted |
 | [0012](./0012-devops-profile-boundary.md) | DevopsProfile boundary (reusable seam vs repo-local contracts) | Accepted |
+| [0013](./0013-canonical-package.md) | `@czap/canonical` self-contained bytes kernel | Accepted |
+| [0014](./0014-genui-catalog.md) | `@czap/genui` closed catalog renderer | Accepted |
 
 ## Template
 

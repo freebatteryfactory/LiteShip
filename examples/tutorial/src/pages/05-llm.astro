@@ -444,6 +444,38 @@ el.addEventListener('czap:llm-error', (e) => {
     content, rendered at the quality level the device can sustain smoothly.
   </p>
 
+  <h2>Structured UI via catalog (optional)</h2>
+
+  <p>
+    Beyond raw token streaming, <code>client:llm</code> can render
+    <strong>structured UI trees</strong> when you register a host-owned
+    component catalog. The model emits JSON chunks with the
+    <code>_genui</code> discriminator instead of HTML; LiteShip validates
+    props and renders through trusted <code>createElement</code> paths only.
+  </p>
+
+  <pre is:raw><code>&lt;div
+  data-czap-llm-url="/api/chat"
+  data-czap-genui
+  client:llm
+&gt;
+  &lt;div class="output"&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+// Server sends a catalog tree (not raw HTML):
+data: {"_genui":true,"name":"Text","props":{"text":"Hello from the catalog"}}</code></pre>
+
+  <p>
+    With a custom catalog, pass <code>genuiCatalog</code> to
+    <code>createLLMSession</code> (see
+    <a href="https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md#generated-ui-with-a-component-catalog">GETTING-STARTED</a>).
+    On success the render target carries
+    <code>data-czap-genui-render-hash</code>, and the directive root fires
+    <code>czap:llm-genui</code> with the stable render identity. User actions
+    surface as <code>genui:interaction</code> events — your app decides what
+    they mean; the renderer never executes model HTML.
+  </p>
+
   <h2>What You Learned</h2>
 
   <ul>
@@ -452,6 +484,7 @@ el.addEventListener('czap:llm-error', (e) => {
     <li>Append mode streams text as text nodes; morph mode accumulates HTML.</li>
     <li>Tool calls have a start/delta/end lifecycle with buffered argument parsing.</li>
     <li>ABR quality tiers adapt rendering -- <code>static</code> tier suppresses rendering entirely.</li>
+    <li>The optional catalog path renders <code>_genui</code> JSON trees through a host-owned component catalog (no model HTML).</li>
     <li>Lifecycle events (<code>czap:llm-*</code>) let you build UI around the streaming process.</li>
     <li>The LLM directive composes with boundaries, themes, and the compositor.</li>
   </ul>

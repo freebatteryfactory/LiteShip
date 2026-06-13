@@ -1,6 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { satelliteAttrs } from '@czap/astro';
+// Optional LLM catalog path: `pnpm add @czap/genui`, register a catalog with
+// defineComponentCatalog, wire `genuiCatalog` on client:llm / createLLMSession.
+// Structured chunks use `{ "_genui": true, "name": "...", "props": { ... } }`.
 // The shared layout boundary (mobile / tablet / desktop) drives both
 // halves of the adaptive story: satelliteAttrs() serializes it for the
 // client runtime (data-czap-state updates), and the @quantize block in

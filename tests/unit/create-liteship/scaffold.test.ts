@@ -22,6 +22,7 @@ import {
 
 const EXPECTED_TREE = [
   '.gitignore',
+  'README.md',
   'astro.config.ts',
   'package.json',
   'src/boundaries/layout.boundaries.ts',
@@ -88,6 +89,8 @@ describe('create-liteship scaffold', () => {
     expect(boundary).toContain("import { Boundary } from '@czap/core'");
     const config = readFileSync(join(result.projectDir, 'astro.config.ts'), 'utf8');
     expect(config).toContain("import { integration } from '@czap/astro'");
+    expect(index).toContain('@czap/genui');
+    expect(readFileSync(join(result.projectDir, 'README.md'), 'utf8')).toContain('@czap/genui');
   });
 
   it('accepts an existing but empty directory', () => {

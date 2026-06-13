@@ -795,6 +795,8 @@ export const ids = [
     expect(stableJsonView.aggregateScore).toBeCloseTo(85.78, 2);
     expect(stableJsonView.sectionScores.map((section) => section.id)).toEqual([
       '@czap/core',
+      '@czap/canonical',
+      '@czap/genui',
       '@czap/quantizer',
       '@czap/compiler',
       '@czap/detect',

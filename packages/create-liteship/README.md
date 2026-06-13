@@ -14,10 +14,11 @@ With no directory argument you are prompted (default: `my-liteship-app`). The ta
 
 ## What it scaffolds
 
-A complete adaptive loop in eight files:
+A complete adaptive loop in nine files:
 
 ```
 my-liteship-app/
+├── README.md                           # run instructions + optional @czap/genui path
 ├── astro.config.ts                     # @czap/astro integration, boundary/token dirs wired
 ├── package.json
 ├── tsconfig.json
@@ -40,6 +41,8 @@ pnpm dev       # or npm run dev
 ```
 
 Then edit `src/pages/index.astro` — add a state to the boundary in `src/boundaries/layout.boundaries.ts` and both the compiled CSS and the runtime pick it up.
+
+For structured LLM UI (optional), add `@czap/genui` and follow [GETTING-STARTED — Generated UI](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md#generated-ui-with-a-component-catalog). The scaffold's `README.md` repeats the install line.
 
 ## License
 

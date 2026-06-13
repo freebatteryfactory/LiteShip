@@ -470,6 +470,9 @@ importers:
       '@czap/audit':
         specifier: workspace:*
         version: link:../audit
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/cli':
         specifier: workspace:*
         version: link:../cli
@@ -491,6 +494,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../edge
+      '@czap/genui':
+        specifier: workspace:*
+        version: link:../genui
       '@czap/mcp-server':
         specifier: workspace:*
         version: link:../mcp-server

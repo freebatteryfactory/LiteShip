@@ -1,9 +1,9 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-06-12
+Last updated: 2026-06-13
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: run `pnpm test` for the fresh pass/fail and file-count truth.
+Current node lane: **4240 tests** across **364 files** (4208 passed, 31 skipped, 10 files skipped; baseline 2026-06-13).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 
 Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
@@ -64,7 +64,7 @@ Current browser-security posture:
 | `pnpm run typecheck:scripts` | green, standalone script lane for CI/runtime tooling    | any                |
 | `pnpm run typecheck:spine`  | green                                                   | any                |
 | `pnpm run check`            | green                                                   | any                |
-| `pnpm test`                 | green, see fresh local Vitest output for current counts | any                |
+| `pnpm test`                 | green, 4240 tests / 364 files (4208 passed, 31 skipped) | any                |
 | `pnpm run test:vite`        | green                                                   | PowerShell + bash  |
 | `pnpm run test:astro`       | green                                                   | PowerShell + bash  |
 | `pnpm run test:cloudflare`  | green, Astro 6 + Cloudflare adapter + KV middleware     | PowerShell + bash  |
@@ -688,7 +688,7 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 - **`@czap/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
 - **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
 - **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
-- **22 publishable `@czap/*` scopes** — `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
+- **22 publishable packages** — 20 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
 
 ---
 
