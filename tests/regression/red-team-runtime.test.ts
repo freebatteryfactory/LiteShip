@@ -46,7 +46,7 @@ describe('red-team runtime regressions', () => {
 
   test('rejects unsafe theme prefixes and CSS payloads', () => {
     expect(() => compileTheme({ prefix: 'brand bad', tokens: { primary: '#fff' } })).toThrow(/Invalid theme prefix/);
-    expect(() => compileTheme({ tokens: { primary: 'red;display:block' } })).toThrow(/Unsafe theme token value/);
+    expect(() => compileTheme({ tokens: { primary: 'red;display:block' } })).toThrow(/Unsafe theme token "primary" value/);
   });
 
   test('sanitized html strips privileged sinks while keeping safe markup', () => {

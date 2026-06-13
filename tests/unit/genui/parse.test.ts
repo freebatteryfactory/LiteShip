@@ -20,4 +20,8 @@ describe('tryParseGeneratedUIChunk', () => {
   it('returns null when discriminator is absent', () => {
     expect(tryParseGeneratedUIChunk(JSON.stringify({ name: 'Text', props: {} }))).toBeNull();
   });
+
+  it('returns null for malformed JSON without throwing', () => {
+    expect(tryParseGeneratedUIChunk('{not json')).toBeNull();
+  });
 });

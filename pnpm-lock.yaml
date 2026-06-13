@@ -449,6 +449,9 @@ importers:
 
   packages/genui:
     dependencies:
+      '@czap/_spine':
+        specifier: workspace:*
+        version: link:../_spine
       '@czap/canonical':
         specifier: workspace:*
         version: link:../canonical

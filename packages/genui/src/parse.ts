@@ -37,7 +37,11 @@ export function tryParseGeneratedUIChunk(content: string): GeneratedUINode | nul
       return null;
     }
     return rest;
-  } catch {
-    return null;
+  } catch (error) {
+    // Malformed JSON — fall through to legacy token/text/HTML paths.
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
   }
 }

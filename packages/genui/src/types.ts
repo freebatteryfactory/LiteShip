@@ -10,7 +10,7 @@ import type {
   ComponentPropDef as _ComponentPropDef,
   GeneratedUINode as _GeneratedUINode,
   GeneratedUIValidationError as _GeneratedUIValidationError,
-} from '@czap/_spine/genui';
+} from '@czap/_spine';
 
 export type GeneratedUINode = _GeneratedUINode;
 export type ComponentPropDef = _ComponentPropDef;
