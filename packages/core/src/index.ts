@@ -344,6 +344,11 @@ export { canonicalCborCapsule } from './capsules/canonical-cbor.js';
 // here so it registers in the live `getCapsuleCatalog()` alongside the encoder
 // (the reader the encoder's content-addressed bytes have lacked).
 export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js';
+// The GraphPatch round-trip identity capsule (F) — locks `apply(a, diff(a, b))`
+// deep-equals `b` as a standing pureTransform contract. Exported here so it
+// registers in the live `getCapsuleCatalog()` (the contract the future graph
+// editor builds against).
+export { graphPatchIdentityCapsule } from './capsules/graph-patch-identity.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and
