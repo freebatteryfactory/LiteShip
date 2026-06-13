@@ -52,7 +52,20 @@ export function probeFfmpegEncode(): FfmpegEncodeProbe {
 
   const encode = spawnSync(
     'ffmpeg',
-    ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=64x64:d=0.1', '-c:v', 'libx264', '-f', 'null', '-'],
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=64x64:d=0.1',
+      '-c:v',
+      'libx264',
+      '-f',
+      'null',
+      '-',
+    ],
     { encoding: 'utf8' },
   );
   if (encode.status === 0) {
@@ -185,7 +198,9 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
     const probe = probeFfmpegEncode();
     if (!probe.ok) {
       throw new Error(
-        probe.hint ? `ffmpeg headless encode unavailable: ${probe.detail}. ${probe.hint}` : `ffmpeg headless encode unavailable: ${probe.detail}`,
+        probe.hint
+          ? `ffmpeg headless encode unavailable: ${probe.detail}. ${probe.hint}`
+          : `ffmpeg headless encode unavailable: ${probe.detail}`,
       );
     }
     if (frames.length === 0) {

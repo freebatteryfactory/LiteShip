@@ -266,10 +266,7 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
  * the CSS cast stays inline above (it owns the tier grid + containment), while
  * every other target is one {@link NON_CSS_CASTS} descriptor.
  */
-function compileNonCssCasts(
-  boundary: Boundary.Shape,
-  states: Record<string, QuantizeStateBody>,
-): Partial<CastOutputs> {
+function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
   const casts: Partial<Record<CastTarget, CastOutputs[CastTarget]>> = {};
   for (const descriptor of NON_CSS_CASTS) {
     // Per-state authored attribute maps for this target, dropping states that

@@ -13,7 +13,13 @@
  */
 
 export { exportAstroPage, exportVideo, exportVideoEncoded, dualExport } from './dual-export.js';
-export type { DualExportResult, EncodedVideoExport, EncodedVideo, VideoEncodeConfig, FrameEncoder } from './dual-export.js';
+export type {
+  DualExportResult,
+  EncodedVideoExport,
+  EncodedVideo,
+  VideoEncodeConfig,
+  FrameEncoder,
+} from './dual-export.js';
 
 // The headless ffmpeg byte-encode backend lives on the node-only `./ffmpeg`
 // subpath (it imports `node:child_process`/`node:fs`); the main entry above

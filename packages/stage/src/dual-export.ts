@@ -90,10 +90,7 @@ export interface EncodedVideo {
  *
  * Both are real backends of this one shape; neither lives in `dual-export.ts`.
  */
-export type FrameEncoder = (
-  frames: readonly CompositeState[],
-  config: VideoEncodeConfig,
-) => Promise<EncodedVideo>;
+export type FrameEncoder = (frames: readonly CompositeState[], config: VideoEncodeConfig) => Promise<EncodedVideo>;
 
 // ---------------------------------------------------------------------------
 // Graph walk helpers
@@ -404,12 +401,15 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
 
-  const encoded = await encode(frames.map((frame) => frame.composite), {
-    fps: VIDEO_CONFIG.fps,
-    width: VIDEO_CONFIG.width,
-    height: VIDEO_CONFIG.height,
-    durationMs: 1000,
-  });
+  const encoded = await encode(
+    frames.map((frame) => frame.composite),
+    {
+      fps: VIDEO_CONFIG.fps,
+      width: VIDEO_CONFIG.width,
+      height: VIDEO_CONFIG.height,
+      durationMs: 1000,
+    },
+  );
 
   // Content-address the REAL encoded bytes, then pin that into the node digest.
   const bytesDigest = AddressedDigestNS.of(encoded.bytes);

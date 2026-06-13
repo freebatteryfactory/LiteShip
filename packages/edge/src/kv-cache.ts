@@ -290,7 +290,9 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         const glslStateUniforms = asNestedNumberRecord(
           (parsed as { glsl?: { stateUniforms?: unknown } }).glsl?.stateUniforms,
         );
-        const glsl = glslBase ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) } : null;
+        const glsl = glslBase
+          ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) }
+          : null;
         const wgsl = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
         return {
           css: String(parsed.css),

@@ -31,12 +31,7 @@ import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
 import { sealGraph, sealNode } from '../document-graph-address.js';
 import { GraphPatch } from '../graph-patch.js';
-import type {
-  DocumentGraph,
-  DocumentGraphEdge,
-  DocumentGraphNode,
-  SignalNode,
-} from '../document-graph.js';
+import type { DocumentGraph, DocumentGraphEdge, DocumentGraphNode, SignalNode } from '../document-graph.js';
 import type { CellMeta } from '../protocol.js';
 
 /**
