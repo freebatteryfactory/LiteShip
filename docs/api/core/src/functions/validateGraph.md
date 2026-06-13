@@ -8,7 +8,7 @@
 
 > **validateGraph**(`graph`): \{ `ok`: `true`; \} \| \{ `errors`: readonly `PlanValidationError`[]; `ok`: `false`; \}
 
-Defined in: [core/src/document-graph-address.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L83)
+Defined in: [core/src/document-graph-address.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L88)
 
 Validate structural integrity: no cycles, every edge endpoint references an existing node. Reuses `Plan.validate`.
 
