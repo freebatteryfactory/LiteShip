@@ -4,7 +4,6 @@
  * @module
  */
 
-import type { ContentAddress as _ContentAddress } from '@czap/_spine/core';
 import type {
   ComponentCatalog as _ComponentCatalog,
   ComponentDef as _ComponentDef,
@@ -12,8 +11,6 @@ import type {
   GeneratedUINode as _GeneratedUINode,
   GeneratedUIValidationError as _GeneratedUIValidationError,
 } from '@czap/_spine/genui';
-
-export type ContentAddress = _ContentAddress;
 
 export type GeneratedUINode = _GeneratedUINode;
 export type ComponentPropDef = _ComponentPropDef;

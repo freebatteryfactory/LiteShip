@@ -6,7 +6,8 @@
  * @module
  */
 import { GenFrame, TokenBuffer, UIQuality } from '@czap/core';
-import type { UIFrame } from '@czap/core';
+import type { ContentAddress, UIFrame } from '@czap/core';
+import { renderHash, tryParseGeneratedUIChunk, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
 
 type DeviceTier = 'none' | 'transitions' | 'animations' | 'physics' | 'compute';
 
@@ -33,6 +34,8 @@ export interface LLMRenderHost {
   renderFrame(frame: UIFrame, accumulated: string, mode: string): boolean;
   emitToken(text: string, accumulated: string): void;
   emitFrame(frame: UIFrame): void;
+  renderGeneratedUI?(node: GeneratedUINode, renderId: ContentAddress): boolean;
+  emitGeneratedUI?(node: GeneratedUINode, renderId: ContentAddress): void;
 }
 
 /**
@@ -81,6 +84,7 @@ export interface LLMRenderPipeline {
   setFastLanePrimed(value: boolean): void;
   resetPipelineState(): void;
   releaseRuntime(): void;
+  tryRenderGeneratedUI(text: string, host: LLMRenderHost, catalog: ComponentCatalog): boolean;
 }
 
 // -- Standby runtime pool (module-level singleton) --
@@ -244,6 +248,18 @@ export function createLLMRenderPipeline(config: LLMRenderPipelineConfig): LLMRen
     renderImmediateText(text: string, host: LLMRenderHost): boolean {
       _accumulated += text;
       return host.renderText(text, _accumulated, config.mode);
+    },
+
+    tryRenderGeneratedUI(text: string, host: LLMRenderHost, catalog: ComponentCatalog): boolean {
+      const tree = tryParseGeneratedUIChunk(text);
+      if (!tree) {
+        return false;
+      }
+      const renderId = renderHash(tree, catalog);
+      if (host.renderGeneratedUI?.(tree, renderId)) {
+        host.emitGeneratedUI?.(tree, renderId);
+      }
+      return true;
     },
 
     renderFrame(frame: UIFrame, host: LLMRenderHost): boolean {

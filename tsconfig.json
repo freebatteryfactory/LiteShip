@@ -38,6 +38,7 @@
     { "path": "./packages/command" },
     { "path": "./packages/cli" },
     { "path": "./packages/mcp-server" },
+    { "path": "./packages/liteship" },
     { "path": "./packages/create-liteship" }
   ]
 }

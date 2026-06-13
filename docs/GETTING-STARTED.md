@@ -83,6 +83,55 @@ Run `pnpm dev`, open the page, and drag the window edge: the element's `data-cza
 
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
+## Generated UI with a component catalog
+
+For `client:llm` streaming, LiteShip can render **structured UI trees** instead of model-emitted HTML. You define which components exist; the model references them by name. LiteShip validates props and renders through a trusted catalog — interactions surface as DOM events for your app to handle.
+
+```bash
+pnpm add @czap/genui
+```
+
+Register a catalog (component names, prop schemas, allowed children):
+
+```ts
+// src/genui-catalog.ts
+import { defineComponentCatalog } from '@czap/genui';
+
+export const appCatalog = defineComponentCatalog({
+  version: 'app-1',
+  components: {
+    Card: {
+      tag: 'section',
+      props: { title: { type: 'string', required: true } },
+      children: 'optional',
+      allowedChildNames: ['Text'],
+    },
+    Text: {
+      tag: 'p',
+      props: { text: { type: 'string', required: true } },
+      children: 'none',
+    },
+  },
+});
+```
+
+Wire the catalog into an LLM session (or add `data-czap-genui` on the directive root to use the built-in demo catalog). Stream chunks use the discriminator `{ "_genui": true, "name": "...", "props": { ... } }` — legacy token/text paths stay unchanged when the marker is absent.
+
+```ts
+import { createLLMSession } from '@czap/astro/runtime';
+import { appCatalog } from './genui-catalog.js';
+
+const session = createLLMSession({
+  element,
+  target,
+  mode: 'replace',
+  getDeviceTier: () => 'animations',
+  genuiCatalog: appCatalog,
+});
+```
+
+Rendered output carries `data-czap-genui-render-hash` for cache/replay; click handlers emit `genui:interaction` on the directive root — your app decides what they mean (navigation, tool call, or nothing). LiteShip owns render **safety**; it does not own render **authority**.
+
 ## Dev inspector (astro dev only)
 
 While running `pnpm dev`, press **Alt+Shift+C** to open the czap boundary inspector — a floating panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `czap({ inspector: false })` in `astro.config.mjs`.
