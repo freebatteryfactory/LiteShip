@@ -68,6 +68,14 @@ export interface GLSLCompileResult {
   readonly uniforms: readonly GLSLUniform[];
   /** Default uniform values keyed by uniform name (from the last state's values). */
   readonly uniformValues: Record<string, number>;
+  /**
+   * Per-state uniform values keyed by state name then `u_*` uniform name. Unlike
+   * the flat {@link uniformValues} default (last-state-wins), this preserves
+   * every state's authored values so the live runtime can resolve
+   * `stateUniforms[currentState]` and update uniforms on each boundary crossing
+   * — the GLSL analog of `ARIACompileResult.stateAttributes`.
+   */
+  readonly stateUniforms: Record<string, Record<string, number>>;
   /** Pre-serialized `#define` + `uniform` declarations block. */
   readonly declarations: string;
   /** Stringified `bindUniforms(gl, program, values)` helper. */
@@ -170,15 +178,23 @@ function compile<B extends Boundary.Shape>(
   // Collect all unique value keys across all states
   const allKeys = new Set<string>();
   const mergedValues: Record<string, number> = {};
+  // Per-state uniform values keyed by state name then `u_*` name. Preserved
+  // alongside the flat `mergedValues` default so the live runtime can resolve
+  // the authored values for whichever state a crossing lands on.
+  const stateUniforms: Record<string, Record<string, number>> = {};
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
+    const perState: Record<string, number> = {};
     for (const [key, val] of Object.entries(stateValues)) {
       allKeys.add(key);
+      const uniformName = toUniformName(key);
       // Use the last state's values as defaults for the uniform values map
-      mergedValues[toUniformName(key)] = val;
+      mergedValues[uniformName] = val;
+      perState[uniformName] = val;
     }
+    stateUniforms[stateName] = perState;
   }
 
   // Build uniform declarations
@@ -220,7 +236,7 @@ function compile<B extends Boundary.Shape>(
 
   const bindUniforms = ['function bindUniforms(gl, program, values) {', ...bindBody, '}'].join('\n');
 
-  return { defines, uniforms, uniformValues: mergedValues, declarations, bindUniforms };
+  return { defines, uniforms, uniformValues: mergedValues, stateUniforms, declarations, bindUniforms };
 }
 
 /**

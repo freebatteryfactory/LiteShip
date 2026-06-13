@@ -304,6 +304,18 @@ void main() {
           }
         }
       }
+
+      // Authored per-state GLSL uniforms (`@glsl` blocks). `applyBoundaryState`
+      // resolves `glslStateUniforms[currentState]` into `detail.glsl` so the
+      // uniform keys are already canonical `u_*` names — set them directly.
+      if (detail.glsl) {
+        for (const [uniformName, value] of Object.entries(detail.glsl)) {
+          const loc = uniforms.get(uniformName);
+          if (loc && typeof value === 'number' && !Number.isNaN(value)) {
+            webgl.uniform1f(loc, value);
+          }
+        }
+      }
     };
 
     const onDocumentUniformUpdate = (event: Event): void => {

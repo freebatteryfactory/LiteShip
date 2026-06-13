@@ -39,6 +39,13 @@ export interface SerializedBoundary {
    * so the field is optional and needs no `_version` bump for old payloads.
    */
   readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * Optional authored per-state GLSL uniform values (`@glsl` blocks), keyed by
+   * state then `u_*` uniform name. Joined onto the satellite from the build
+   * manifest by content address — the GLSL analog of {@link stateAttributes}.
+   * Absent for boundaries with no `@glsl`; optional so old payloads parse.
+   */
+  readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -58,6 +65,13 @@ export interface RuntimeBoundary {
    * `aria-*`/`role` update live on every state crossing (not SSR-frozen).
    */
   readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * Authored per-state GLSL uniforms resolved at parse time. `applyBoundaryState`
+   * resolves `glslStateUniforms[currentState]` into `detail.glsl` so the GPU
+   * runtime updates authored uniforms live on every crossing (not SSR-frozen) —
+   * the GLSL analog of {@link stateAttributes}.
+   */
+  readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -171,6 +185,9 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
     }),
     ...(parsed.stateAttributes && typeof parsed.stateAttributes === 'object'
       ? { stateAttributes: parsed.stateAttributes }
+      : {}),
+    ...(parsed.glslStateUniforms && typeof parsed.glslStateUniforms === 'object'
+      ? { glslStateUniforms: parsed.glslStateUniforms }
       : {}),
   };
 }
@@ -386,17 +403,26 @@ export function applyBoundaryState(
   // `stateAttributes` rides the satellite from the build manifest by content
   // address; absent for boundaries with no `@aria`, where this is a no-op.
   const authored = stateName ? boundary.stateAttributes?.[stateName] : undefined;
-  const detail: BoundaryStateDetail = authored
-    ? {
-        ...normalized,
-        aria: {
-          ...normalized.aria,
-          ...Object.fromEntries(
-            Object.entries(authored).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute)),
-          ),
-        },
-      }
-    : normalized;
+  // Authored per-state GLSL uniforms for the LIVE state — the GLSL analog of the
+  // authored-aria composition above. Composed over `normalized.glsl` (which holds
+  // the compositor's live `u_state` index) so a crossing carries both the index
+  // and the authored `u_*` values in `detail.glsl`.
+  const authoredGlsl = stateName ? boundary.glslStateUniforms?.[stateName] : undefined;
+  const detail: BoundaryStateDetail =
+    authored || authoredGlsl
+      ? {
+          ...normalized,
+          aria: authored
+            ? {
+                ...normalized.aria,
+                ...Object.fromEntries(
+                  Object.entries(authored).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute)),
+                ),
+              }
+            : normalized.aria,
+          glsl: authoredGlsl ? { ...normalized.glsl, ...authoredGlsl } : normalized.glsl,
+        }
+      : normalized;
 
   if (stateName && element.getAttribute('data-czap-state') !== stateName) {
     element.setAttribute('data-czap-state', stateName);

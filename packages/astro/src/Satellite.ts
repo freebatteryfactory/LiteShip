@@ -45,6 +45,15 @@ export interface SatelliteProps {
    * attributes are SSR'd onto the element; the client updates them live.
    */
   readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * Authored per-state GLSL uniform values (`@glsl` blocks) for this boundary,
+   * keyed by state then `u_*` uniform name. The `<Satellite>` component supplies
+   * this automatically via the same content-address join as `aria`; pass it
+   * explicitly when calling `satelliteAttrs` directly. Rides the boundary payload
+   * so the client resolves `glslStateUniforms[currentState]` and the GPU runtime
+   * updates uniforms live on every crossing — the GLSL analog of `aria`.
+   */
+  readonly glsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +86,9 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       // Authored ARIA rides the boundary payload so the client reader resolves
       // it live (the same content-addressed projection the manifest holds).
       ...(props.aria ? { stateAttributes: props.aria } : {}),
+      // Authored per-state GLSL uniforms ride alongside ARIA so the GPU runtime
+      // resolves `glslStateUniforms[currentState]` live on every crossing.
+      ...(props.glsl ? { glslStateUniforms: props.glsl } : {}),
     });
     if (props.directive !== false) {
       attrs['data-czap-directive'] = props.directive ?? 'satellite';

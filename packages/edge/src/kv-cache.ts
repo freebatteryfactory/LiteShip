@@ -71,6 +71,14 @@ export interface CompiledGLSLOutput {
   readonly declarations: string;
   /** Default uniform values keyed by GLSL uniform identifier (`u_*`). */
   readonly uniformValues: Readonly<Record<string, number>>;
+  /**
+   * Per-state authored uniform values keyed by state name then `u_*` identifier.
+   * Rides the satellite payload so the live runtime resolves
+   * `stateUniforms[currentState]` and updates uniforms on each boundary crossing
+   * — the GLSL analog of `CompiledOutputs.aria`. Absent when the boundary's
+   * `@glsl` blocks authored no per-state values.
+   */
+  readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -141,6 +149,21 @@ function buildCacheKey(
   return qualifier === undefined
     ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
     : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
+}
+
+/**
+ * Coerce an `unknown` JSON value into a per-state `Record<state, Record<u_*, number>>`
+ * (drops non-numeric leaves, non-object states). Returns `undefined` when nothing
+ * survives so the GLSL `stateUniforms` field stays absent. The live runtime
+ * resolves `stateUniforms[currentState]` to update authored uniforms on crossings.
+ */
+function asNestedNumberRecord(value: unknown): Readonly<Record<string, Readonly<Record<string, number>>>> | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const out: Record<string, Record<string, number>> = {};
+  for (const [state, inner] of Object.entries(value)) {
+    out[state] = asNumberRecord(inner);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 /** Coerce an `unknown` JSON value into a `Record<string, number>` (drops non-numeric). */
@@ -261,7 +284,13 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         'containerQueries' in parsed
       ) {
         const aria = (parsed as { aria?: unknown }).aria;
-        const glsl = parseShaderCast((parsed as { glsl?: unknown }).glsl, 'uniformValues');
+        const glslBase = parseShaderCast((parsed as { glsl?: unknown }).glsl, 'uniformValues');
+        // Per-state authored uniforms ride the GLSL cast so the live runtime can
+        // resolve `stateUniforms[currentState]` — the GLSL analog of `aria`.
+        const glslStateUniforms = asNestedNumberRecord(
+          (parsed as { glsl?: { stateUniforms?: unknown } }).glsl?.stateUniforms,
+        );
+        const glsl = glslBase ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) } : null;
         const wgsl = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
         return {
           css: String(parsed.css),

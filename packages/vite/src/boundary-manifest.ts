@@ -231,7 +231,14 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
       );
       const result = dispatch({ _tag: 'GLSLCompiler', boundary, states: numericStates });
       return result.target === 'glsl'
-        ? { declarations: result.result.declarations, uniformValues: result.result.uniformValues }
+        ? {
+            declarations: result.result.declarations,
+            uniformValues: result.result.uniformValues,
+            // Per-state authored uniforms ride to the runtime so a crossing
+            // resolves `stateUniforms[currentState]` (the GLSL analog of ARIA's
+            // per-state `stateAttributes`), not just the flat default.
+            stateUniforms: result.result.stateUniforms,
+          }
         : undefined;
     },
   },
