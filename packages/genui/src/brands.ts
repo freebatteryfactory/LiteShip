@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { ContentAddress as _ContentAddress } from '@czap/_spine/core';
+import type { ContentAddress as _ContentAddress } from '@czap/_spine';
 
 export type ContentAddress = _ContentAddress;
 

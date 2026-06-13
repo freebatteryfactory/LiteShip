@@ -57,13 +57,24 @@ export const auditIgnoreGlobs = [
 ] as const;
 
 export const packageTopology: Record<string, PackagePolicy> = {
+  '@czap/canonical': {
+    // Self-contained bytes kernel (ADR-0013): sole dep @noble/hashes; no internal @czap imports.
+    allowedInternalImports: [],
+    kind: 'standalone',
+  },
+  '@czap/genui': {
+    // Host catalog renderer (ADR-0014): canonical for stable hashes; spine for GenUI types.
+    allowedInternalImports: ['@czap/canonical', '@czap/_spine'],
+    kind: 'layered',
+  },
   '@czap/core': {
     // @czap/_spine is the canonical type-only spine that core re-anchors
     // its public types from (see packages/core/src/brands.ts and
     // capsule.ts). It compiles to .d.ts only and sits above core in the
     // dependency direction, so this is not a layering violation — it's the
     // intended source of truth for shared brand and content-address types.
-    allowedInternalImports: ['@czap/_spine'],
+    // @czap/canonical is the sync bytes implementation core re-exports (ADR-0013).
+    allowedInternalImports: ['@czap/_spine', '@czap/canonical'],
     kind: 'core',
   },
   '@czap/quantizer': {
@@ -81,7 +92,8 @@ export const packageTopology: Record<string, PackagePolicy> = {
   '@czap/web': {
     // CUT A3: web imports only @czap/core; quantizer/compiler were permitted but
     // never imported or declared (removed to make drift loud).
-    allowedInternalImports: ['@czap/core'],
+    // @czap/genui: re-exports tryParseGeneratedUIChunk for the LLM chunk seam.
+    allowedInternalImports: ['@czap/core', '@czap/genui'],
     kind: 'layered',
   },
   '@czap/detect': {
@@ -108,7 +120,7 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT A3: astro deliberately does NOT depend on @czap/compiler (see the
     // duplicated-predicate note in astro/src/runtime/boundary.ts; CUT A4 routes
     // the shared predicate through @czap/core instead). compiler removed.
-    allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker'],
+    allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker', '@czap/genui'],
     kind: 'host-adjacent',
   },
   '@czap/cloudflare': {
@@ -151,7 +163,7 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT D6: mcp-server → compiler is an allowed acyclic edge — the server feeds
     // its real registries to the pure compiler's compileMcpAppManifest projector
     // (compiler → mcp-server remains forbidden).
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/compiler'],
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/compiler', '@czap/genui'],
     kind: 'host-adjacent',
   },
   '@czap/_spine': {

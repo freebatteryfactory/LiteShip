@@ -38,6 +38,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@czap/_spine": "workspace:*",
     "@czap/canonical": "workspace:*"
   },
   "engines": {
