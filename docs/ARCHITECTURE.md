@@ -19,6 +19,8 @@ Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core`
 
 ```text
 @czap/_spine -> @czap/core
+@czap/canonical -> @czap/core (bytes implementation; re-exported at core boundary)
+@czap/canonical -> @czap/genui -> @czap/web / @czap/astro / @czap/mcp-server
 @czap/core -> quantizer / compiler / detect / web / worker / remotion / assets / scene
 compiler -> vite -> astro
 detect -> edge -> astro
@@ -39,7 +41,9 @@ Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.
 API docs per package live at [`docs/api/<name>/`](./api/); import guidance at [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md).
 
 - `@czap/_spine` — type spine
+- `@czap/canonical` — sync bytes kernel (CBOR, FNV-1a, addressed digests)
 - `@czap/core` — primitives + runtime coordination
+- `@czap/genui` — closed catalog renderer for structured LLM UI trees
 - `@czap/quantizer` — boundary evaluation + transitions
 - `@czap/compiler` — CSS / GLSL / WGSL / ARIA / AI / Tailwind output
 - `@czap/web` — DOM, SSE, morph, LLM, capture
@@ -63,7 +67,7 @@ Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`
 
 ## Architectural decisions
 
-Full index + accepted set (0001–0011): [`docs/adr/README.md`](./adr/README.md).
+Full index + accepted set (0001–0014): [`docs/adr/README.md`](./adr/README.md).
 
 Capsule factory + video stack: [capsule-factory.md](./capsule-factory.md).
 

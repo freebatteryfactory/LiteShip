@@ -20,7 +20,9 @@
  */
 export const LITESHIP_PACKAGES = [
   '@czap/_spine',
+  '@czap/canonical',
   '@czap/core',
+  '@czap/genui',
   '@czap/quantizer',
   '@czap/compiler',
   '@czap/web',

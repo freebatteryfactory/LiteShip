@@ -16,6 +16,55 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 
 ---
 
+---
+
+## `@czap/canonical`
+
+Source: [`packages/canonical/src/index.ts`](../packages/canonical/src/index.ts)
+
+The sync bytes kernel: canonical CBOR encoding, FNV-1a content labels, and addressed digests. Runtime status: `standalone leaf` (sole dep `@noble/hashes`; no Effect, no spine imports in-package).
+
+Reach for it when you need:
+
+- deterministic byte sequences for content addressing **without** importing `@czap/core`
+- sync `AddressedDigest.of` (sha256 / blake3 integrity digests)
+- upstream factory or WASM-side bytes that must not pull the full core graph
+
+Main surfaces:
+
+- `CanonicalCbor.encode`
+- `fnv1a` / `fnv1aBytes`
+- `AddressedDigest.of`
+
+`@czap/core` re-exports these at its public boundary for app authors who already depend on core; import `@czap/canonical` directly when core is too heavy (ADR-0013).
+
+---
+
+## `@czap/genui`
+
+Source: [`packages/genui/src/index.ts`](../packages/genui/src/index.ts)
+
+Host-owned generated UI catalog renderer. Runtime status: `host-wired` through `@czap/astro` (`client:llm` + `genuiCatalog`), `@czap/web` (chunk parsing), and `@czap/mcp-server` (registry discovery).
+
+Reach for it when you need:
+
+- closed-catalog rendering of structured LLM UI trees (no model HTML)
+- stable `renderHash` / `catalogHash` identities for cache and replay
+- `genui:interaction` events for action ids the host interprets
+
+Main surfaces:
+
+- `defineComponentCatalog`
+- `validateGeneratedUITree`
+- `renderFromCatalog`
+- `tryParseGeneratedUIChunk`
+- `catalogHash` / `renderHash`
+- `DEMO_COMPONENT_CATALOG`
+
+Wire protocol discriminator: `{ "_genui": true, "name": "...", "props": { ... } }`. Legacy token/text/HTML streaming is unchanged when the marker is absent (ADR-0014).
+
+---
+
 ## `@czap/core`
 
 Source: [`packages/core/src/index.ts`](../packages/core/src/index.ts)

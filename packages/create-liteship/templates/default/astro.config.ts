@@ -8,8 +8,9 @@ export default defineConfig({
   integrations: [
     integration({
       detect: true,
-      // Point primitive resolution at the convention directories so the
-      // @token / @quantize blocks inside .astro styles find their defs.
+      // Optional generated UI: `pnpm add @czap/genui`, define a catalog with
+      // `defineComponentCatalog`, pass `genuiCatalog` to createLLMSession (or
+      // set `data-czap-genui` on `client:llm`). See docs/GETTING-STARTED.md.
       vite: {
         dirs: {
           boundary: dir('./src/boundaries'),

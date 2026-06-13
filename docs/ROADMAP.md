@@ -76,7 +76,7 @@ fallback, and the deprecated `attachViewportObserver` alias is removed
 (superseded by `attachSignalObserver` in 0.1.5).
 
 **Remaining (maintainer, one-time, npm-side):** configure a trusted
-publisher for each of the 19 packages at
+publisher for each of the 22 publishable packages at
 `npmjs.com/package/<name>/access` — form values in RELEASING.md. Until
 then a v0.2.0 tag fails its publish step loudly with an auth error
 (re-runs are safe and idempotent). Afterwards, delete the dead
