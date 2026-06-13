@@ -40,10 +40,10 @@ describe('compileScene', () => {
     expect(ids).toContain('pulse');
   });
 
-  it('runtime registers the 6 canonical systems and spawns one entity per track', async () => {
+  it('runtime registers the 7 canonical systems and spawns one entity per track', async () => {
     const compiled = compileScene(scene);
     const handle = await SceneRuntime.build(compiled);
-    expect(handle.systemsRegistered).toBe(6);
+    expect(handle.systemsRegistered).toBe(7);
     expect(handle.entitySpawnCount).toBe(4);
     await handle.release();
   });

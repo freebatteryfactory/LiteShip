@@ -2,8 +2,8 @@
  * SceneRuntime — `stateMachine` arm capsule `scene.runtime`.
  *
  * Owns the ECS world lifetime via an explicit `Scope`, registers the
- * 6 canonical scene systems (Video → Audio → Transition → Effect →
- * Sync → PassThroughMixer) in topological order, and exposes
+ * 7 canonical scene systems (Video → Audio → Transition → Effect →
+ * Sync → PassThroughMixer → SVG) in topological order, and exposes
  * `tick(dtMs)` + `release()` for use by render pipelines (CLI,
  * browser player, smoke tests).
  *
@@ -13,7 +13,7 @@
  * metadata field via an `as unknown` cast). SceneRuntime turns
  * "compiled scene" into something that can actually tick.
  *
- * The 6 systems are factory functions parameterized by `frameIndex`
+ * The 7 systems are factory functions parameterized by `frameIndex`
  * (and additional knobs for AudioSystem/PassThroughMixer). They are
  * stateless, so the runtime wraps each as a thin `System` whose
  * `execute` reads the current frame index from a mutable ref. That
@@ -34,9 +34,10 @@ import { TransitionSystem } from './systems/transition.js';
 import { EffectSystem } from './systems/effect.js';
 import { SyncSystem } from './systems/sync.js';
 import { PassThroughMixer, type MixReceipt } from './systems/pass-through-mixer.js';
+import { SVGSystem } from './systems/svg.js';
 
 /** Number of canonical scene systems — pinned for invariants. */
-const CANONICAL_SYSTEM_COUNT = 6;
+const CANONICAL_SYSTEM_COUNT = 7;
 
 // ---------------------------------------------------------------------------
 // Capsule declaration
@@ -200,6 +201,9 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     wrapForFrame('EffectSystem', ['EffectKind', 'FrameRange'], () => EffectSystem(ctx.frameIndex)),
     wrapForFrame('SyncSystem', ['SyncAnchor'], () => SyncSystem(ctx.frameIndex, compiled.fps)),
     wrapForFrame('PassThroughMixer', ['AudioSource', 'Volume', 'Pan'], () => PassThroughMixer(ctx.frameIndex, mixSink)),
+    // MUST run last: SVGSystem reads `_opacity` (VideoSystem) and `_blend`
+    // (TransitionSystem) populated earlier this tick to compose `_svgAttrs`.
+    wrapForFrame('SVGSystem', ['VideoSource', 'FrameRange'], () => SVGSystem(ctx.frameIndex)),
   ];
 
   for (const sys of wrapped) {
