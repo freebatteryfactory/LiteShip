@@ -7,7 +7,8 @@
 
 import { blake3 } from '@noble/hashes/blake3';
 import { sha256 } from '@noble/hashes/sha256';
-import { ContentAddress, IntegrityDigest } from './brands.js';
+import type { ContentAddress } from './brands.js';
+import { IntegrityDigest } from './brands.js';
 import { fnv1aBytes } from './fnv.js';
 
 /** Pair of identity hash + cryptographic digest over the same canonical bytes. */
@@ -26,10 +27,7 @@ const bytesToHex = (bytes: Uint8Array): string => {
 };
 
 /** Derive an {@link AddressedDigest} from raw bytes. Supports `sha256` and `blake3`. */
-export function addressedDigestOf(
-  bytes: Uint8Array,
-  algo: 'sha256' | 'blake3' = 'sha256',
-): AddressedDigest {
+export function addressedDigestOf(bytes: Uint8Array, algo: 'sha256' | 'blake3' = 'sha256'): AddressedDigest {
   const display_id = fnv1aBytes(bytes);
   if (algo === 'blake3') {
     const hex = bytesToHex(blake3(bytes));

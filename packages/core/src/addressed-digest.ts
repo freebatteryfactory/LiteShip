@@ -10,13 +10,11 @@ import { addressedDigestOf } from '@czap/canonical';
 import type { AddressedDigest as _AddressedDigest } from './brands.js';
 import { ContentAddress, IntegrityDigest } from './brands.js';
 
+/** Re-exported {@link AddressedDigest} type anchored to spine brands. */
 export type AddressedDigest = _AddressedDigest;
 
 /** Derive an {@link AddressedDigest} from raw bytes (sync). */
-export function addressedDigestOfCore(
-  bytes: Uint8Array,
-  algo: 'sha256' | 'blake3' = 'sha256',
-): _AddressedDigest {
+export function addressedDigestOfCore(bytes: Uint8Array, algo: 'sha256' | 'blake3' = 'sha256'): _AddressedDigest {
   const digest = addressedDigestOf(bytes, algo);
   return {
     display_id: ContentAddress(digest.display_id),

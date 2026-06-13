@@ -24,11 +24,7 @@ const propMatches = (value: unknown, type: 'string' | 'number' | 'boolean'): boo
   }
 };
 
-const validateNode = (
-  node: GeneratedUINode,
-  catalog: ComponentCatalog,
-  path: string,
-): ValidateGeneratedUIResult => {
+const validateNode = (node: GeneratedUINode, catalog: ComponentCatalog, path: string): ValidateGeneratedUIResult => {
   const def = catalog.components[node.name];
   if (!def) {
     return {

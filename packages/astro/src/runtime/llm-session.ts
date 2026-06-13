@@ -238,7 +238,7 @@ export function createDOMLLMSessionHost(
       );
     },
 
-    renderGeneratedUI(node, renderId) {
+    renderGeneratedUI(node, _renderId) {
       if (!genuiCatalog) {
         return false;
       }
