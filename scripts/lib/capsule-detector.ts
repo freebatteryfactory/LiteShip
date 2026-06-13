@@ -23,6 +23,8 @@ import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normal
  * checker has no resolver for that bare specifier).
  */
 export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  '@czap/canonical': ['packages/canonical/src/index.ts'],
+  '@czap/genui': ['packages/genui/src/index.ts'],
   '@czap/core/testing': ['packages/core/src/testing.ts'],
   '@czap/core/harness': ['packages/core/src/harness/index.ts'],
   '@czap/core': ['packages/core/src/index.ts'],

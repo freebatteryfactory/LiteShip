@@ -120,4 +120,11 @@ describe('Config.toTestAliases()', () => {
     const aliases = Config.toTestAliases(cfg, '/repo');
     expect(aliases['@czap/_spine']).toContain('packages/_spine');
   });
+
+  test('includes @czap/canonical and @czap/genui aliases', () => {
+    const cfg = Config.make({});
+    const aliases = Config.toTestAliases(cfg, '/repo');
+    expect(aliases['@czap/canonical']).toContain('packages/canonical');
+    expect(aliases['@czap/genui']).toContain('packages/genui');
+  });
 });

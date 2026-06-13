@@ -1,8 +1,6 @@
 import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
 import {
   renderFromCatalog,
-  renderHash,
-  tryParseGeneratedUIChunk,
   type ComponentCatalog,
   type GeneratedUINode,
 } from '@czap/genui';
@@ -238,15 +236,19 @@ export function createDOMLLMSessionHost(
       );
     },
 
-    renderGeneratedUI(node, _renderId) {
+    renderGeneratedUI(node, renderId) {
       if (!genuiCatalog) {
         return false;
       }
-      return renderFromCatalog(node, {
+      const ok = renderFromCatalog(node, {
         catalog: genuiCatalog,
         target: currentTarget,
         eventRoot: element,
       });
+      if (ok) {
+        currentTarget.dataset.czapGenuiRenderHash = String(renderId);
+      }
+      return ok;
     },
 
     emitGeneratedUI(node, renderId) {
@@ -436,15 +438,8 @@ class LLMSessionController implements LLMSessionShape {
           return 'continue';
         }
 
-        if (this.config.genuiCatalog) {
-          const tree = tryParseGeneratedUIChunk(chunk.content);
-          if (tree) {
-            const hash = renderHash(tree, this.config.genuiCatalog);
-            if (this.host.renderGeneratedUI?.(tree, hash)) {
-              this.host.emitGeneratedUI?.(tree, hash);
-            }
-            return 'continue';
-          }
+        if (this.config.genuiCatalog && this.pipeline.tryRenderGeneratedUI(chunk.content, this.host, this.config.genuiCatalog)) {
+          return 'continue';
         }
 
         if (

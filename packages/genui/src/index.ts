@@ -11,6 +11,7 @@ export type {
   GeneratedUINode,
   GeneratedUIValidationError,
 } from './types.js';
+export { ContentAddress } from './brands.js';
 
 export { defineComponentCatalog } from './catalog.js';
 export type { ComponentCatalogInput } from './catalog.js';
