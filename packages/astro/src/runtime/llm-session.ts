@@ -1,9 +1,5 @@
 import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
-import {
-  renderFromCatalog,
-  type ComponentCatalog,
-  type GeneratedUINode,
-} from '@czap/genui';
+import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
 import {
   LLMChunkNormalization,
   createHtmlFragment,
@@ -438,7 +434,10 @@ class LLMSessionController implements LLMSessionShape {
           return 'continue';
         }
 
-        if (this.config.genuiCatalog && this.pipeline.tryRenderGeneratedUI(chunk.content, this.host, this.config.genuiCatalog)) {
+        if (
+          this.config.genuiCatalog &&
+          this.pipeline.tryRenderGeneratedUI(chunk.content, this.host, this.config.genuiCatalog)
+        ) {
           return 'continue';
         }
 

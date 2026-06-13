@@ -120,7 +120,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT A3: astro deliberately does NOT depend on @czap/compiler (see the
     // duplicated-predicate note in astro/src/runtime/boundary.ts; CUT A4 routes
     // the shared predicate through @czap/core instead). compiler removed.
-    allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker', '@czap/genui'],
+    allowedInternalImports: [
+      '@czap/core',
+      '@czap/vite',
+      '@czap/detect',
+      '@czap/edge',
+      '@czap/web',
+      '@czap/worker',
+      '@czap/genui',
+    ],
     kind: 'host-adjacent',
   },
   '@czap/cloudflare': {

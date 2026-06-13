@@ -49,7 +49,10 @@ export function addressDocumentGraph(graph: {
   readonly nodes: readonly DocumentGraphNode[];
   readonly edges: readonly DocumentGraphEdge[];
 }): { readonly id: ContentAddress; readonly digest: AddressedDigest } {
-  const nodeIds = graph.nodes.map((node) => node.id).slice().sort();
+  const nodeIds = graph.nodes
+    .map((node) => node.id)
+    .slice()
+    .sort();
   const edges = graph.edges
     .map((edge) => [edge.from, edge.to, edge.type] as const)
     .slice()
@@ -65,7 +68,10 @@ export function sealGraph(graph: Omit<DocGraph, 'id' | 'digest'>): DocGraph {
 }
 
 /** Lift a DocumentGraph to a synthetic `PlanIR` so `Plan.validate`/`topoSort` apply over node-id endpoints. */
-function toPlanIR(graph: { readonly nodes: readonly DocumentGraphNode[]; readonly edges: readonly DocumentGraphEdge[] }): PlanIR {
+function toPlanIR(graph: {
+  readonly nodes: readonly DocumentGraphNode[];
+  readonly edges: readonly DocumentGraphEdge[];
+}): PlanIR {
   return {
     name: 'document-graph',
     steps: graph.nodes.map((node) => ({ id: node.id, name: node.family, opType: { type: 'noop' } as const })),
@@ -96,4 +102,3 @@ export function linearizeGraph(graph: {
   const sorted = result.sorted.map((id) => id as ContentAddress);
   return result.cycle ? { sorted, cycle: result.cycle.map((id) => id as ContentAddress) } : { sorted };
 }
-

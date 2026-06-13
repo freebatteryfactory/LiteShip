@@ -127,20 +127,14 @@ function readArgument(r: Reader, ai: number, headOffset: number): number {
     return v;
   }
   if (ai === 27) {
-    const hi =
-      (r.u8() * 0x1000000 + (r.u8() << 16) + (r.u8() << 8) + r.u8()) >>> 0;
-    const lo =
-      (r.u8() * 0x1000000 + (r.u8() << 16) + (r.u8() << 8) + r.u8()) >>> 0;
+    const hi = (r.u8() * 0x1000000 + (r.u8() << 16) + (r.u8() << 8) + r.u8()) >>> 0;
+    const lo = (r.u8() * 0x1000000 + (r.u8() << 16) + (r.u8() << 8) + r.u8()) >>> 0;
     const v = hi * 0x100000000 + lo;
     if (hi === 0 && lo < 0x100000000) {
       throw new CborDecodeError('non_canonical', `8-byte argument ${v} should use a shorter head`, headOffset);
     }
     if (!Number.isSafeInteger(v)) {
-      throw new CborDecodeError(
-        'malformed',
-        `integer ${v} exceeds the encoder's safe-integer range`,
-        headOffset,
-      );
+      throw new CborDecodeError('malformed', `integer ${v} exceeds the encoder's safe-integer range`, headOffset);
     }
     return v;
   }
@@ -249,7 +243,11 @@ function decodeItem(r: Reader): unknown {
           throw new CborDecodeError('non_canonical', 'indefinite-length break is not canonical', headOffset);
         case 23:
           // `undefined` (simple 23) is never emitted — encoder coerces it to null.
-          throw new CborDecodeError('non_canonical', 'simple value `undefined` is not in the canonical subset', headOffset);
+          throw new CborDecodeError(
+            'non_canonical',
+            'simple value `undefined` is not in the canonical subset',
+            headOffset,
+          );
         default:
           throw new CborDecodeError('malformed', `unsupported simple/float value (ai=${ai})`, headOffset);
       }

@@ -64,16 +64,12 @@ import type { captureVideo } from '@czap/web';
 
 /** Narrow the graph's node multiset to the `css` projection nodes. */
 function cssProjections(graph: DocumentGraph): readonly ProjectionNode[] {
-  return graph.nodes.filter(
-    (node): node is ProjectionNode => node.family === 'projection' && node.target === 'css',
-  );
+  return graph.nodes.filter((node): node is ProjectionNode => node.family === 'projection' && node.target === 'css');
 }
 
 /** First component node, the source a css projection's `sourceRef` points at. */
 function componentFor(graph: DocumentGraph, ref: ContentAddress): ComponentNode | undefined {
-  return graph.nodes.find(
-    (node): node is ComponentNode => node.family === 'component' && node.id === ref,
-  );
+  return graph.nodes.find((node): node is ComponentNode => node.family === 'component' && node.id === ref);
 }
 
 /** All pose nodes — the static, design-time keyed variants the casts replay. */
