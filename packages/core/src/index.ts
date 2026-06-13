@@ -195,6 +195,32 @@ export { DAG } from './dag.js';
 export { Plan } from './plan.js';
 export type { OpType, EdgeType } from './plan.js';
 
+// DocumentGraph — the keystone IR (P2). Type (document-graph.ts) + namespace-object
+// value (document-graph-address.ts) merge into one `DocumentGraph` symbol, the
+// ADR-0001 pattern. The addressing kernel is the one mint site for node + graph ids.
+export type {
+  DocumentGraph,
+  DocumentGraphNode,
+  DocumentGraphEdge,
+  NodeFamily,
+  RuntimeSite,
+  SignalNode,
+  EntityNode,
+  ComponentNode,
+  PoseNode,
+  TransitionNode,
+  ProjectionNode,
+  PolicyNode,
+  ExportNode,
+} from './document-graph.js';
+// The DocumentGraph kernel — seal (mint ids), validate, and linearize (reused
+// from the Plan kernel). `addressNode`/`addressDocumentGraph` stay module-local
+// (sealNode/sealGraph wrap them; in-core consumers import them by relative path).
+export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-graph-address.js';
+// The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
+// shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
+export { contentAddressOf } from './content-address.js';
+
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
 export type { RuntimePhase, RuntimeCoordinatorConfig } from './runtime-coordinator.js';

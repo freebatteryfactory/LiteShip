@@ -200,6 +200,13 @@ const STANDALONE_FUNCTIONS = [
   // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
   'projectionKeys',
   'glslIdent',
+  // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
+  // node/graph seal/validate/linearize surface.
+  'contentAddressOf',
+  'sealNode',
+  'sealGraph',
+  'validateGraph',
+  'linearizeGraph',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
