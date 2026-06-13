@@ -131,6 +131,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: ['@czap/core'],
     kind: 'standalone',
   },
+  '@czap/stage': {
+    // The verb / orchestration layer (P4). Casts ONE DocumentGraph to many
+    // carriers by reusing the existing casters: core (graph kernel + Compositor
+    // + VideoRenderer), compiler (CSSCompiler), astro (satellite SSR helpers),
+    // and web (the captureVideo codec seam). It mints no identity kernel of its
+    // own — every address routes through @czap/core's CanonicalCbor/AddressedDigest.
+    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/astro', '@czap/web'],
+    kind: 'host-adjacent',
+  },
   // CUT A2 — topology coverage closure. These five were policy-absent (surfaced
   // by CUT A0's self-trust classification). Each entry reflects the package's
   // actual internal import law today; no product code changed in A2.
