@@ -41,11 +41,9 @@ const PACKAGES: readonly PackageSpec[] = [
   // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it
   // during `pnpm install`. No runtime `import()` smoke needed.
   { dir: 'packages/_spine', name: '@czap/_spine', imports: [] },
-  {
-    dir: 'packages/core',
-    name: '@czap/core',
-    imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'],
-  },
+  { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
+  { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
+  { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },
   { dir: 'packages/quantizer', name: '@czap/quantizer', imports: ['@czap/quantizer', '@czap/quantizer/testing'] },
   { dir: 'packages/compiler', name: '@czap/compiler', imports: ['@czap/compiler'] },
   { dir: 'packages/web', name: '@czap/web', imports: ['@czap/web', '@czap/web/lite'] },

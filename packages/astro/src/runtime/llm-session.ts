@@ -1,4 +1,11 @@
-import type { Receipt, UIFrame } from '@czap/core';
+import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
+import {
+  renderFromCatalog,
+  renderHash,
+  tryParseGeneratedUIChunk,
+  type ComponentCatalog,
+  type GeneratedUINode,
+} from '@czap/genui';
 import {
   LLMChunkNormalization,
   createHtmlFragment,
@@ -31,6 +38,8 @@ export interface LLMSessionConfig {
   readonly htmlPolicy?: HtmlPolicy;
   /** Opt-in to `trusted-html` (pairs with `htmlPolicy`). */
   readonly allowTrustedHtml?: boolean;
+  /** Host-owned generated UI catalog. When set, `{ "_genui": true, ... }` chunks render via catalog. */
+  readonly genuiCatalog?: ComponentCatalog;
 }
 
 /**
@@ -72,6 +81,8 @@ export interface LLMSessionHost {
   emitToolStart(name: string): void;
   emitToolEnd(name: string, args: unknown): void;
   emitDone(accumulated: string): void;
+  renderGeneratedUI?(node: GeneratedUINode, renderId: ContentAddress): boolean;
+  emitGeneratedUI?(node: GeneratedUINode, renderId: ContentAddress): void;
 }
 
 interface SupportLLMSessionHostHandlers {
@@ -129,11 +140,16 @@ function writeHtml(target: HTMLElement, html: string, htmlPolicy: HtmlPolicy, al
 export function createDOMLLMSessionHost(
   element: HTMLElement,
   initialTarget: HTMLElement,
-  options?: { readonly htmlPolicy?: HtmlPolicy; readonly allowTrustedHtml?: boolean },
+  options?: {
+    readonly htmlPolicy?: HtmlPolicy;
+    readonly allowTrustedHtml?: boolean;
+    readonly genuiCatalog?: ComponentCatalog;
+  },
 ): LLMSessionHost {
   let currentTarget = initialTarget;
   const htmlPolicy = options?.htmlPolicy ?? 'text';
   const allowTrustedHtml = options?.allowTrustedHtml ?? false;
+  const genuiCatalog = options?.genuiCatalog;
 
   return {
     setTarget(target) {
@@ -217,6 +233,26 @@ export function createDOMLLMSessionHost(
       element.dispatchEvent(
         new CustomEvent('czap:llm-done', {
           detail: { accumulated },
+          bubbles: true,
+        }),
+      );
+    },
+
+    renderGeneratedUI(node, renderId) {
+      if (!genuiCatalog) {
+        return false;
+      }
+      return renderFromCatalog(node, {
+        catalog: genuiCatalog,
+        target: currentTarget,
+        eventRoot: element,
+      });
+    },
+
+    emitGeneratedUI(node, renderId) {
+      element.dispatchEvent(
+        new CustomEvent('czap:llm-genui', {
+          detail: { node, renderHash: renderId },
           bubbles: true,
         }),
       );
@@ -361,7 +397,9 @@ class LLMSessionController implements LLMSessionShape {
   private readonly receiptTracker: LLMReceiptTracker;
 
   constructor(
-    private readonly config: Pick<LLMSessionConfig, 'mode' | 'getDeviceTier'> & { readonly target?: HTMLElement },
+    private readonly config: Pick<LLMSessionConfig, 'mode' | 'getDeviceTier' | 'genuiCatalog'> & {
+      readonly target?: HTMLElement;
+    },
     private readonly host: LLMSessionHost,
   ) {
     this.currentTarget = config.target;
@@ -396,6 +434,17 @@ class LLMSessionController implements LLMSessionShape {
       case 'text': {
         if (!chunk.content) {
           return 'continue';
+        }
+
+        if (this.config.genuiCatalog) {
+          const tree = tryParseGeneratedUIChunk(chunk.content);
+          if (tree) {
+            const hash = renderHash(tree, this.config.genuiCatalog);
+            if (this.host.renderGeneratedUI?.(tree, hash)) {
+              this.host.emitGeneratedUI?.(tree, hash);
+            }
+            return 'continue';
+          }
         }
 
         if (
@@ -521,7 +570,7 @@ class LLMSessionController implements LLMSessionShape {
  * without a DOM.
  */
 export function createLLMSessionWithHost(
-  config: Pick<LLMSessionConfig, 'mode' | 'getDeviceTier'> & { readonly target?: HTMLElement },
+  config: Pick<LLMSessionConfig, 'mode' | 'getDeviceTier' | 'genuiCatalog'> & { readonly target?: HTMLElement },
   host: LLMSessionHost,
 ): LLMSessionShape {
   return new LLMSessionController(config, host);
@@ -536,12 +585,14 @@ export function createLLMSession(config: LLMSessionConfig): LLMSessionShape {
   const domHost = createDOMLLMSessionHost(config.element, config.target, {
     htmlPolicy: config.htmlPolicy,
     allowTrustedHtml: config.allowTrustedHtml,
+    genuiCatalog: config.genuiCatalog,
   });
   return createLLMSessionWithHost(
     {
       mode: config.mode,
       getDeviceTier: config.getDeviceTier,
       target: config.target,
+      genuiCatalog: config.genuiCatalog,
     },
     domHost,
   );

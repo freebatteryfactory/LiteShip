@@ -133,7 +133,7 @@ export const tarballManifestAddress = (tarballBytes: Uint8Array): Effect.Effect<
     }
     manifest.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
     const canonical = CanonicalCbor.encode(manifest);
-    return yield* AddressedDigest.of(canonical);
+    return AddressedDigest.of(canonical);
   });
 
 /**
@@ -172,7 +172,7 @@ export function findWorkspaceSpecLeaks(tarballBytes: Uint8Array): readonly strin
 
 /** Address a pnpm-lock.yaml (or equivalent) by its raw file bytes. YAML is its own normalization. */
 export const lockfileAddress = (lockfileBytes: Uint8Array): Effect.Effect<AddressedDigestType, Error> =>
-  AddressedDigest.of(lockfileBytes);
+  Effect.succeed(AddressedDigest.of(lockfileBytes));
 
 /**
  * Address a workspace's set of package.json files. Hashes each file with
@@ -190,7 +190,7 @@ export const workspaceManifestAddress = (
     }
     rows.sort((a, b) => (a.relative_path < b.relative_path ? -1 : a.relative_path > b.relative_path ? 1 : 0));
     const canonical = CanonicalCbor.encode(rows);
-    return yield* AddressedDigest.of(canonical);
+    return AddressedDigest.of(canonical);
   });
 
 const ISO_TIMESTAMP_RE = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})/g;
@@ -222,5 +222,5 @@ export const normalizedDryRunAddress = (
 ): Effect.Effect<AddressedDigestType, Error> => {
   const normalized = normalizeDryRunOutput(rawStdout, normalizationContext);
   const bytes = new TextEncoder().encode(normalized);
-  return AddressedDigest.of(bytes);
+  return Effect.succeed(AddressedDigest.of(bytes));
 };

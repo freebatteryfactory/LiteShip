@@ -69,8 +69,9 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
     const uris = r.resources.map((x) => x.uri);
     // The D3 JSON surface is the prefix of the list (CUT D4 appends ui:// resources).
     const jsonResources = r.resources.filter((x) => x.uri.startsWith('liteship://'));
-    expect(jsonResources.slice(0, 3).map((x) => x.uri)).toEqual([
+    expect(jsonResources.slice(0, 4).map((x) => x.uri)).toEqual([
       'liteship://registry/commands',
+      'liteship://registry/components',
       'liteship://server/info',
       'liteship://glossary',
     ]);
@@ -84,7 +85,7 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
     const jsonResources = r.resources.filter(
       (x) => x.uri.startsWith('liteship://') && !x.uri.startsWith('liteship://mcp-app/'),
     );
-    expect(jsonResources.length).toBe(3 + GLOSSARY_ENTRIES.length);
+    expect(jsonResources.length).toBe(4 + GLOSSARY_ENTRIES.length);
   });
 
   it('resources/list begins with the JSON projection, then the static UI projection (downstream classes additive)', async () => {
@@ -100,6 +101,16 @@ describe('D3 resources/read — real projected JSON', () => {
     const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: 'liteship://registry/commands' });
     expect(r.contents[0]!.mimeType).toBe('application/json');
     expect(JSON.parse(r.contents[0]!.text)).toEqual(COMMAND_CATALOG);
+  });
+
+  it('liteship://registry/components projects the demo generated-UI catalog', async () => {
+    const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', {
+      uri: 'liteship://registry/components',
+    });
+    expect(r.contents[0]!.mimeType).toBe('application/json');
+    const body = JSON.parse(r.contents[0]!.text) as { version: string; components: Record<string, unknown> };
+    expect(body.version).toBe('demo-1');
+    expect(body.components.Card).toBeDefined();
   });
 
   it('liteship://server/info carries name, version, protocolVersion, capabilities', async () => {
@@ -209,8 +220,8 @@ describe('D3 method-not-found honesty — unimplemented sub-methods stay -32601'
 describe('D3 stability — projection drift tripwire', () => {
   it('the {resources, prompts} projection matches its pinned content address', () => {
     const address = fnv1a(JSON.stringify({ resources: listResources(), prompts: listPrompts() }));
-    // Re-pin intentionally (and only) when the resource/prompt surface changes on purpose.
-    expect(address).toBe('fnv1a:00d7066a');
+    // 0.2.0 framework primitives: added liteship://registry/components JSON resource.
+    expect(address).toBe('fnv1a:97d412ae');
   });
 });
 

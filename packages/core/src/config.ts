@@ -106,6 +106,8 @@ export const Config = {
     // resolver matches the first prefix in iteration order, so e.g.
     // `@czap/core/testing` would be intercepted by `@czap/core` if listed first.
     return {
+      '@czap/canonical': r('packages/canonical/src/index.ts'),
+      '@czap/genui': r('packages/genui/src/index.ts'),
       '@czap/core/testing': r('packages/core/src/testing.ts'),
       '@czap/core/harness': r('packages/core/src/harness/index.ts'),
       '@czap/core': r('packages/core/src/index.ts'),

@@ -16,9 +16,11 @@
     "composite": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"]
+      "@czap/_spine": ["../_spine/index.d.ts"],
+      "@czap/canonical": ["../canonical/src/index.ts"]
     }
   },
+  "references": [{ "path": "../canonical" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

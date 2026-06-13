@@ -32,17 +32,20 @@ async function errCode(method: string, params?: unknown): Promise<number> {
 }
 
 describe('D5 — D4 static surface stays frozen', () => {
-  it('the D4 static UI registry is unchanged (still exactly the two twins) and its pin holds', () => {
-    expect(listUiResources().map((r) => r.uri)).toEqual(['ui://liteship/registry/commands', 'ui://liteship/glossary']);
+  it('the D4 static UI registry adds the components twin (commands, components, glossary) and its pin holds', () => {
+    expect(listUiResources().map((r) => r.uri)).toEqual([
+      'ui://liteship/registry/commands',
+      'ui://liteship/registry/components',
+      'ui://liteship/glossary',
+    ]);
     const pin = fnv1a(
       JSON.stringify({ list: listUiResources(), bodies: listUiResources().map((r) => readUiResource(r.uri).contents[0]!.text) }),
     );
     // CUT D9b-2: `audit` joined COMMAND_CATALOG → the registry/commands UI body changed.
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
-    // 0.2.0 defaults: scene.render output became optional (derived <scene>.mp4)
-    // and its summary documents the default, re-pinning the commands UI body.
-    expect(pin).toBe('fnv1a:e5b96295');
+    // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
+    expect(pin).toBe('fnv1a:8be0662b');
   });
 });
 

@@ -92,6 +92,7 @@
     "@czap/vite": "workspace:*",
     "@czap/detect": "workspace:*",
     "@czap/edge": "workspace:*",
+    "@czap/genui": "workspace:*",
     "@czap/web": "workspace:*",
     "@czap/worker": "workspace:*"
   },

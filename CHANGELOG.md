@@ -20,6 +20,18 @@ pivot (epic #4) — these notes ship as 0.2.0.
 
 ### Added
 
+- `@czap/canonical` — self-contained canonical bytes kernel (`CanonicalCbor`, FNV-1a,
+  sync `AddressedDigest.of`); sole dependency `@noble/hashes`. `@czap/core` re-exports
+  and re-anchors types to `@czap/_spine` (ADR-0013).
+- `@czap/genui` — host-owned generated UI catalog (`defineComponentCatalog`,
+  `validateGeneratedUITree`, `renderFromCatalog`, `renderHash` / `catalogHash`); interactions
+  surface as `genui:interaction` host callbacks only (ADR-0014).
+- `@czap/core` — GenFrame `receiptId` minted from stable canonical bytes (excludes wall clock).
+- `@czap/astro` — `client:llm` catalog path for `{ "_genui": true, ... }` chunks when
+  `genuiCatalog` is configured (`data-czap-genui` enables the demo catalog); exports
+  `attachSignalObserver` from `@czap/astro/runtime`.
+- `@czap/mcp-server` — `liteship://registry/components` and `ui://liteship/registry/components`
+  project the demo catalog for discovery.
 - `@czap/astro` — dev-mode boundary inspector overlay (Alt+Shift+C in `astro dev`):
   live signal readout, draggable threshold track with in-DOM `data-czap-boundary` rewrite +
   `czap:reinit`, Copy `Boundary.make` snippet, INERT/@quantize honesty badges.

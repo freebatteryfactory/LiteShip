@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@czap/_spine": "workspace:*",
+    "@czap/canonical": "workspace:*",
     "@noble/hashes": "^1.8.0",
     "cborg": "^4.2.0"
   },

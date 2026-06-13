@@ -127,3 +127,5 @@ export const LLMChunkNormalization = {
   normalize,
   parseAccumulatedToolArgs,
 } as const;
+
+export { tryParseGeneratedUIChunk } from '@czap/genui';

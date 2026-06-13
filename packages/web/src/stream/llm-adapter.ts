@@ -15,6 +15,7 @@ import { Effect, Stream } from 'effect';
 import type { SSEMessage } from '../types.js';
 import { LLMChunkNormalization, type LLMChunk, type ToolCallAccumulator } from './llm-chunks.js';
 export type { LLMChunk, LLMChunkType } from './llm-chunks.js';
+export { tryParseGeneratedUIChunk } from '@czap/genui';
 
 // ---------------------------------------------------------------------------
 // Chunk parser (user-provided)
