@@ -221,6 +221,16 @@ export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-g
 // shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
 export { contentAddressOf } from './content-address.js';
 
+// ── GraphPatch — typed graph mutation + structural differ (P5b) ─────────────
+// Tagged-delta over DocumentGraph: propose/apply (re-address via sealGraph) /
+// preview / validate / diff (round-trips) / receipt / forkOf. The interface +
+// namespace-object value merge into one `GraphPatch` symbol (ADR-0001), exactly
+// like `Plan`. Kept in a small block so a 3-way merge with sibling phases editing
+// this region is trivial.
+export { GraphPatch } from './graph-patch.js';
+export type { PatchOp, NodePatchOp, EdgePatchOp } from './graph-patch.js';
+// ── end GraphPatch (P5b) ────────────────────────────────────────────────────
+
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
 export type { RuntimePhase, RuntimeCoordinatorConfig } from './runtime-coordinator.js';

@@ -141,8 +141,12 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   },
   Codec: { methods: ['make'] },
   Plan: { methods: ['make', 'validate', 'topoSort'] },
+  // GraphPatch — typed graph mutation + structural differ (P5b).
+  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'patchId', 'receipt', 'forkOf'] },
   RuntimeCoordinator: { methods: ['create'] },
-  Diagnostics: { methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'] },
+  Diagnostics: {
+    methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
+  },
   Config: { methods: ['make', 'toViteConfig', 'toAstroConfig', 'toTestAliases'] },
 
   // ── Generative UI / video ─────────────────────────────────────────
@@ -220,7 +224,13 @@ const STANDALONE_FUNCTIONS = [
 const ERROR_CLASSES = ['CzapValidationError'];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
-const STANDALONE_OBJECTS = ['fallbackKernels', 'VIEWPORT', 'boundaryEvaluateCapsule', 'tokenBufferCapsule', 'canonicalCborCapsule'];
+const STANDALONE_OBJECTS = [
+  'fallbackKernels',
+  'VIEWPORT',
+  'boundaryEvaluateCapsule',
+  'tokenBufferCapsule',
+  'canonicalCborCapsule',
+];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────
 const DEFAULT_CONSTANTS = [
@@ -356,8 +366,8 @@ describe('API health canary', () => {
       expect(
         undocumented,
         `Undocumented exports found: ${undocumented.join(', ')}.\n` +
-        'Add them to API_REGISTRY, STANDALONE_FUNCTIONS, or BRANDED_CONSTRUCTORS ' +
-        'in tests/unit/api-health.test.ts',
+          'Add them to API_REGISTRY, STANDALONE_FUNCTIONS, or BRANDED_CONSTRUCTORS ' +
+          'in tests/unit/api-health.test.ts',
       ).toEqual([]);
     });
   });
