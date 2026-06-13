@@ -83,6 +83,16 @@ export const coverageExclude = [
   // audio/processor-bootstrap.ts pattern (host-realm-dependent). Moved to
   // @czap/command/host in CUT A1 capstone-1 (the cli path is now a re-export).
   'packages/command/src/host/ffmpeg.ts',
+  // ffmpeg-encoder.ts is the STAGE-side twin of the above: the headless
+  // FrameEncoder backend that spawns the system `ffmpeg` binary to encode the
+  // video cast's frames to a real mp4. Its happy path IS exercised in-process
+  // by tests/unit/stage/ffmpeg-encoder.test.ts (which env-gates on a real
+  // ffmpeg+libx264), but its branch surface is dominated by host-realm error
+  // paths only reachable when ffmpeg is ABSENT or the encode FAILS — the exact
+  // opposite of the CI condition (where ffmpeg is installed and the encode
+  // succeeds), so they are structurally uncoverable on a working runner. Same
+  // host-dependent-backend rationale as command/host/ffmpeg.ts above.
+  'packages/stage/src/ffmpeg-encoder.ts',
   // spawn-helpers.ts is a re-export shim — its only body is `export {...}
   // from './lib/spawn.js'`. The actual implementation in cli/src/lib/spawn.ts
   // is measured normally; v8 reports 0% on the shim because there are no
