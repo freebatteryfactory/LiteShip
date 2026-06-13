@@ -19,6 +19,8 @@
   "files": [],
   "references": [
     { "path": "./packages/_spine" },
+    { "path": "./packages/canonical" },
+    { "path": "./packages/genui" },
     { "path": "./packages/core" },
     { "path": "./packages/quantizer" },
     { "path": "./packages/compiler" },

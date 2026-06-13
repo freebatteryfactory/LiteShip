@@ -14,8 +14,9 @@
  * @module
  */
 import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
+import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { ResourceNotFoundError } from './errors.js';
-import { renderCommandCatalog, renderGlossary } from './ui-render.js';
+import { renderCommandCatalog, renderComponentCatalog, renderGlossary } from './ui-render.js';
 
 /** The MCP Apps UI content type (exact literal per SEP-1865 2026-01-26). */
 const UI_MIME = 'text/html;profile=mcp-app' as const;
@@ -91,6 +92,16 @@ const REGISTRY: readonly UiEntry[] = [
       _meta: SELF_CONTAINED_META,
     },
     render: () => renderCommandCatalog(COMMAND_CATALOG),
+  },
+  {
+    resource: {
+      uri: 'ui://liteship/registry/components',
+      name: 'registry/components (UI)',
+      description: 'Static MCP Apps view of the LiteShip demo generated-UI catalog (HTML twin of liteship://registry/components).',
+      mimeType: UI_MIME,
+      _meta: SELF_CONTAINED_META,
+    },
+    render: () => renderComponentCatalog(DEMO_COMPONENT_CATALOG),
   },
   {
     resource: {

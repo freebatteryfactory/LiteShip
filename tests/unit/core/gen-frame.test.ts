@@ -150,6 +150,51 @@ describe('GenFrame', () => {
       const f2 = scheduler.tick();
       expect(f2!.bufferPosition).toBe(5);
     });
+
+    test('same inputs produce the same receiptId (timestamp is metadata only)', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(1000);
+      vi.stubGlobal('performance', { now: () => 2000 });
+
+      const run = (): string => {
+        const { scheduler, buf } = makeScheduler();
+        buf.push('hello');
+        const frame = scheduler.tick();
+        return frame!.receiptId as string;
+      };
+
+      expect(run()).toBe(run());
+    });
+
+    test('timestamp drift does not change receiptId for identical frame inputs', () => {
+      const mint = (): string => {
+        const { scheduler, buf } = makeScheduler();
+        buf.push('stable');
+        return scheduler.tick()!.receiptId as string;
+      };
+
+      vi.spyOn(Date, 'now').mockReturnValue(1);
+      vi.stubGlobal('performance', { now: () => 1 });
+      const early = mint();
+
+      vi.spyOn(Date, 'now').mockReturnValue(9999);
+      vi.stubGlobal('performance', { now: () => 8888 });
+      const late = mint();
+
+      expect(early).toBe(late);
+    });
+
+    test('different tokens produce different receiptIds', () => {
+      vi.spyOn(Date, 'now').mockReturnValue(0);
+      vi.stubGlobal('performance', { now: () => 0 });
+
+      const idFor = (token: string): string => {
+        const { scheduler, buf } = makeScheduler();
+        buf.push(token);
+        return scheduler.tick()!.receiptId as string;
+      };
+
+      expect(idFor('a')).not.toBe(idFor('b'));
+    });
   });
 
   describe('frameCount', () => {

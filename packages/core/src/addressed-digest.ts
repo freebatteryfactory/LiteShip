@@ -1,54 +1,29 @@
 /**
- * AddressedDigest construction — pair a {@link ContentAddress} (fnv1a) with an
- * {@link IntegrityDigest} (sha256) over the same canonical bytes (ADR-0011).
+ * Re-export sync {@link AddressedDigest} from `@czap/canonical`.
+ *
+ * Types re-anchored to `@czap/_spine` at the `@czap/core` export boundary.
  *
  * @module
  */
 
-import { blake3 } from '@noble/hashes/blake3';
-import { Effect } from 'effect';
+import { addressedDigestOf } from '@czap/canonical';
 import type { AddressedDigest as _AddressedDigest } from './brands.js';
-import { IntegrityDigest as mkIntegrityDigest } from './brands.js';
-import { fnv1aBytes } from './fnv.js';
+import { ContentAddress, IntegrityDigest } from './brands.js';
 
-/** Pair of an fnv1a {@link ContentAddress} and a strong digest over the same canonical bytes. */
 export type AddressedDigest = _AddressedDigest;
 
-const bytesToHex = (bytes: Uint8Array): string => {
-  let out = '';
-  for (let i = 0; i < bytes.length; i++) {
-    out += bytes[i]!.toString(16).padStart(2, '0');
-  }
-  return out;
-};
-
-const sha256Hex = (bytes: Uint8Array): Effect.Effect<string> =>
-  Effect.tryPromise({
-    try: async () => {
-      const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
-      return bytesToHex(new Uint8Array(buffer));
-    },
-    catch: (error) => new Error(`SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`),
-  }).pipe(Effect.orDie);
-
-const blake3Hex = (bytes: Uint8Array): string => bytesToHex(blake3(bytes));
-
-/** Derive an {@link AddressedDigest} from raw bytes. Supports `sha256` and `blake3`. */
-export const AddressedDigestOf = (
+/** Derive an {@link AddressedDigest} from raw bytes (sync). */
+export function addressedDigestOfCore(
   bytes: Uint8Array,
   algo: 'sha256' | 'blake3' = 'sha256',
-): Effect.Effect<_AddressedDigest, Error> =>
-  Effect.gen(function* () {
-    const display_id = fnv1aBytes(bytes);
-    if (algo === 'blake3') {
-      const hex = blake3Hex(bytes);
-      const integrity_digest = mkIntegrityDigest(`blake3:${hex}`);
-      return { display_id, integrity_digest, algo: 'blake3' as const };
-    }
-    const hex = yield* sha256Hex(bytes);
-    const integrity_digest = mkIntegrityDigest(`sha256:${hex}`);
-    return { display_id, integrity_digest, algo: 'sha256' as const };
-  });
+): _AddressedDigest {
+  const digest = addressedDigestOf(bytes, algo);
+  return {
+    display_id: ContentAddress(digest.display_id),
+    integrity_digest: IntegrityDigest(digest.integrity_digest),
+    algo: digest.algo,
+  };
+}
 
 /** Namespace surface: call {@link AddressedDigest.of} to mint a digest pair from raw bytes. */
-export const AddressedDigest = { of: AddressedDigestOf };
+export const AddressedDigest = { of: addressedDigestOfCore };

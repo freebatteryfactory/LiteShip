@@ -21,5 +21,5 @@
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../command" }, { "path": "../compiler" }]
+  "references": [{ "path": "../core" }, { "path": "../command" }, { "path": "../compiler" }, { "path": "../genui" }]
 }

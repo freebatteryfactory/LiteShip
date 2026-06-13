@@ -22,8 +22,10 @@ Identity is `fnv1a:XXXXXXXX`: a 32-bit FNV-1a hash of the CBOR-canonical seriali
 
 ## Evidence
 
-- `packages/core/src/fnv.ts`: FNV-1a implementation for strings and byte arrays.
-- `packages/core/src/typed-ref.ts`: SHA-256 content hashing for typed references.
+- `packages/canonical/src/cbor.ts`, `packages/canonical/src/fnv.ts`: FNV-1a and canonical CBOR (implementation kernel).
+- `packages/core/src/cbor.ts`, `packages/core/src/fnv.ts`: re-export shims re-anchored to spine brands.
+- `packages/canonical/src/addressed-digest.ts`: sync SHA-256 / BLAKE3 integrity digests (`@noble/hashes`).
+- `packages/core/src/typed-ref.ts`: SHA-256 content hashing for typed references (receipt law).
 - `packages/quantizer/src/memo-cache.ts`: hash-indexed cache consumer.
 - Used by Boundary, Token, Style, Theme, Receipt, GenFrame (see each module's `make` function).
 - `tests/property/content-address.prop.test.ts`: fast-check property test verifying hash stability across structurally-equivalent inputs.
@@ -55,11 +57,12 @@ Previously the implementation used `JSON.stringify` for the payload
 serialization, which was key-order dependent and platform-quirk
 sensitive. Stabilizing on canonical CBOR closes that drift.
 
-The encoder lives at `packages/core/src/cbor.ts` and is registered
-as the `core.canonical-cbor` `pureTransform` arm capsule
+The encoder lives at `packages/canonical/src/cbor.ts` (published as
+`@czap/canonical`) and is re-exported from `packages/core/src/cbor.ts`.
+It is registered as the `core.canonical-cbor` `pureTransform` arm capsule
 (`packages/core/src/capsules/canonical-cbor.ts`). It runs under
 property-based tests over RFC 8949 Appendix A vectors plus key-order
-stability and integer-form preference (`tests/unit/cbor.test.ts`,
+stability and integer-form preference (`tests/unit/canonical/cbor.test.ts`,
 `tests/generated/core-canonical-cbor.test.ts`).
 
 The capsule factory's own `computeId` (`packages/core/src/assembly.ts`

@@ -19,6 +19,7 @@
  */
 import type { CapsuleCommandDescriptor } from '@czap/core';
 import type { GlossaryEntry } from '@czap/command';
+import type { ComponentCatalog } from '@czap/genui';
 
 /** Escape the five HTML-significant characters. Local by design (no cross-module escaper dependency). */
 function escapeHtml(value: string): string {
@@ -74,4 +75,24 @@ export function renderGlossary(entries: readonly GlossaryEntry[]): string {
 ${items}
 </dl>`;
   return htmlDocument('LiteShip — Glossary', body);
+}
+
+/** Static HTML view of the demo generated-UI catalog — twin of `liteship://registry/components`. */
+export function renderComponentCatalog(catalog: ComponentCatalog): string {
+  const rows = Object.entries(catalog.components)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, def]) => {
+      const props = Object.keys(def.props).sort().join(', ') || '(none)';
+      return `<tr><td><code>${escapeHtml(name)}</code></td><td>${escapeHtml(def.tag ?? 'div')}</td><td>${escapeHtml(props)}</td></tr>`;
+    })
+    .join('\n');
+  const body = `<h1>LiteShip Generated UI Catalog</h1>
+<p>Version <code>${escapeHtml(catalog.version)}</code>, hash <code>${escapeHtml(String(catalog.catalogHash))}</code> &mdash; static MCP Apps view of <code>liteship://registry/components</code>.</p>
+<table>
+<thead><tr><th>Component</th><th>Tag</th><th>Props</th></tr></thead>
+<tbody>
+${rows}
+</tbody>
+</table>`;
+  return htmlDocument('LiteShip — Generated UI Catalog', body);
 }

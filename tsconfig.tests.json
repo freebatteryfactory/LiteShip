@@ -8,6 +8,8 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
+      "@czap/canonical": ["./packages/canonical/src/index.ts"],
+      "@czap/genui": ["./packages/genui/src/index.ts"],
       "@czap/core": ["./packages/core/src/index.ts"],
       "@czap/quantizer": ["./packages/quantizer/src/index.ts"],
       "@czap/compiler": ["./packages/compiler/src/index.ts"],

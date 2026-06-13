@@ -1,31 +1,18 @@
 /**
- * FNV-1a hash utility for content addressing.
- *
- * Shared implementation used by Boundary, Token, Style, Theme, Component,
- * and GenFrame modules. Produces `fnv1a:XXXXXXXX` ContentAddress values.
- *
+ * Re-export FNV-1a helpers from `@czap/canonical`, re-anchored to spine brands.
  * @module
  */
 
+import { fnv1a as canonicalFnv1a, fnv1aBytes as canonicalFnv1aBytes } from '@czap/canonical';
 import type { ContentAddress } from './brands.js';
 import { ContentAddress as mkContentAddress } from './brands.js';
 
-/** FNV-1a hash of a string, returned as a ContentAddress. */
+/** FNV-1a hash of a string, returned as a spine {@link ContentAddress}. */
 export function fnv1a(str: string): ContentAddress {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return mkContentAddress(`fnv1a:${(h >>> 0).toString(16).padStart(8, '0')}`);
+  return mkContentAddress(canonicalFnv1a(str));
 }
 
-/** FNV-1a hash of raw bytes, returned as a ContentAddress. */
+/** FNV-1a hash of raw bytes, returned as a spine {@link ContentAddress}. */
 export function fnv1aBytes(bytes: Uint8Array): ContentAddress {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < bytes.length; i++) {
-    h ^= bytes[i]!;
-    h = Math.imul(h, 0x01000193);
-  }
-  return mkContentAddress(`fnv1a:${(h >>> 0).toString(16).padStart(8, '0')}`);
+  return mkContentAddress(canonicalFnv1aBytes(bytes));
 }

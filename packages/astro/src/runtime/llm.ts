@@ -1,6 +1,7 @@
 import { Diagnostics } from '@czap/core';
 import type { Receipt } from '@czap/core';
 import type { LLMChunk } from '@czap/web';
+import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
@@ -236,6 +237,8 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     target.replaceChildren();
   };
 
+  const genuiCatalog = element.hasAttribute('data-czap-genui') ? DEMO_COMPONENT_CATALOG : undefined;
+
   let source: EventSource | null = null;
   const session = createLLMSession({
     element,
@@ -244,6 +247,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     getDeviceTier: mapDeviceTier,
     htmlPolicy: htmlPolicy.llmDefault,
     allowTrustedHtml: htmlPolicy.allowTrustedHtml,
+    genuiCatalog,
   });
 
   const cleanupSource = (): void => {

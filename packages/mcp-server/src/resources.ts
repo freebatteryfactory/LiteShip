@@ -19,6 +19,7 @@
  * @module
  */
 import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
+import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
 import { ResourceNotFoundError } from './errors.js';
@@ -73,6 +74,16 @@ const REGISTRY: readonly ResourceEntry[] = [
       mimeType: JSON_MIME,
     },
     read: () => json(COMMAND_CATALOG),
+  },
+  {
+    resource: {
+      uri: `${SCHEME}registry/components`,
+      name: 'registry/components',
+      description:
+        'JSON schema of the LiteShip demo generated-UI component catalog (host-registered discovery — not authority).',
+      mimeType: JSON_MIME,
+    },
+    read: () => json(DEMO_COMPONENT_CATALOG),
   },
   {
     resource: {

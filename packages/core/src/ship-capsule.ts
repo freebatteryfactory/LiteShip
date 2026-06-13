@@ -89,7 +89,7 @@ const encodeIdentityBearing = (capsule: ShipCapsuleInput): Uint8Array =>
   });
 
 const computeId = (capsuleWithoutIdentity: ShipCapsuleInput): Effect.Effect<AddressedDigest, Error> =>
-  AddressedDigestNs.of(encodeIdentityBearing(capsuleWithoutIdentity));
+  Effect.succeed(AddressedDigestNs.of(encodeIdentityBearing(capsuleWithoutIdentity)));
 
 const make = (input: ShipCapsuleInput): Effect.Effect<ShipCapsuleShape, Error> =>
   Effect.gen(function* () {

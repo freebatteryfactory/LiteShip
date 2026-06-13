@@ -17,3 +17,4 @@ export * from './config.d.ts';
 export * from './scene.d.ts';
 export * from './beats.d.ts';
 export * from './command.d.ts';
+export * from './genui.d.ts';

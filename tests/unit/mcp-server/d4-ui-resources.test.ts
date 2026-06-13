@@ -22,6 +22,7 @@ import type { JsonRpcRequest } from '../../../packages/mcp-server/src/jsonrpc.js
 const SRC = resolve(import.meta.dirname, '..', '..', '..', 'packages', 'mcp-server', 'src');
 const UI_MIME = 'text/html;profile=mcp-app';
 const CMD_URI = 'ui://liteship/registry/commands';
+const COMPONENTS_URI = 'ui://liteship/registry/components';
 const GLOSSARY_URI = 'ui://liteship/glossary';
 
 function req(method: string, params?: unknown, id: string | number = 1): JsonRpcRequest {
@@ -41,7 +42,7 @@ describe('D4 — UI resources in resources/list', () => {
     const r = await result<{ resources: Array<{ uri: string; mimeType: string }> }>('resources/list', {});
     // Static UI class = ui:// but NOT the D5 live app class (ui://liteship/app/…).
     const ui = r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'));
-    expect(ui.map((x) => x.uri)).toEqual([CMD_URI, GLOSSARY_URI]);
+    expect(ui.map((x) => x.uri)).toEqual([CMD_URI, COMPONENTS_URI, GLOSSARY_URI]);
     expect(ui.every((x) => x.mimeType === UI_MIME)).toBe(true);
   });
 
@@ -50,8 +51,8 @@ describe('D4 — UI resources in resources/list', () => {
     expect(r.resources.filter((x) => x.uri.startsWith('ui://') && !x.uri.startsWith('ui://liteship/app/'))).toEqual(listUiResources());
   });
 
-  it('cardinality is pinned: exactly two static UI resources', () => {
-    expect(listUiResources().length).toBe(2);
+  it('cardinality is pinned: exactly three static UI resources', () => {
+    expect(listUiResources().length).toBe(3);
   });
 });
 
@@ -158,8 +159,7 @@ describe('D4 — projection drift pin', () => {
     // CUT D9b-2: `audit` joined COMMAND_CATALOG, so the registry/commands UI body changed.
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
-    // 0.2.0 defaults: scene.render output became optional (derived <scene>.mp4)
-    // and its summary documents the default, re-pinning the commands UI body.
-    expect(address).toBe('fnv1a:e5b96295');
+    // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
+    expect(address).toBe('fnv1a:8be0662b');
   });
 });

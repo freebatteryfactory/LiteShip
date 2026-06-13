@@ -13,7 +13,8 @@
 
 import type { ContentAddress } from './brands.js';
 import type { TokenBuffer } from './token-buffer.js';
-import { fnv1a } from './fnv.js';
+import { CanonicalCbor } from './cbor.js';
+import { fnv1aBytes } from './fnv.js';
 import type { UIQualityTier } from './ui-quality.js';
 
 // ---------------------------------------------------------------------------
@@ -163,8 +164,17 @@ function _make(config: GenFrameConfig): GenFrameSchedulerShape {
       totalTokensDrained += tokens.length;
       const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
-      // Generate receipt ID from frame content
-      const receiptId = fnv1a(`${frameCount}:${now}:${tokens.join('')}`);
+      // Frame content address — stable inputs only; timestamp stays metadata (ADR-0013).
+      const receiptId = fnv1aBytes(
+        CanonicalCbor.encode({
+          frameCount,
+          type,
+          tokens,
+          qualityTier: tier,
+          morphStrategy,
+          bufferPosition: totalTokensDrained,
+        }),
+      );
 
       const frame: UIFrame = {
         type,
