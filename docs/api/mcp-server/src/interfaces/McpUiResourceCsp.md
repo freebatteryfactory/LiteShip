@@ -6,7 +6,7 @@
 
 # Interface: McpUiResourceCsp
 
-Defined in: [mcp-server/src/ui-resources.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L24)
+Defined in: [mcp-server/src/ui-resources.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L25)
 
 Content-Security-Policy for a UI resource (SEP-1865 `_meta.ui.csp`; camelCase domain allowlists).
 
@@ -16,7 +16,7 @@ Content-Security-Policy for a UI resource (SEP-1865 `_meta.ui.csp`; camelCase do
 
 > `readonly` **baseUriDomains**: readonly `string`[]
 
-Defined in: [mcp-server/src/ui-resources.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L28)
+Defined in: [mcp-server/src/ui-resources.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L29)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/ui-resources.ts:28](https://github.com/heyoub/LiteSh
 
 > `readonly` **connectDomains**: readonly `string`[]
 
-Defined in: [mcp-server/src/ui-resources.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L25)
+Defined in: [mcp-server/src/ui-resources.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L26)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [mcp-server/src/ui-resources.ts:25](https://github.com/heyoub/LiteSh
 
 > `readonly` **frameDomains**: readonly `string`[]
 
-Defined in: [mcp-server/src/ui-resources.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L27)
+Defined in: [mcp-server/src/ui-resources.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L28)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [mcp-server/src/ui-resources.ts:27](https://github.com/heyoub/LiteSh
 
 > `readonly` **resourceDomains**: readonly `string`[]
 
-Defined in: [mcp-server/src/ui-resources.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L26)
+Defined in: [mcp-server/src/ui-resources.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L27)
