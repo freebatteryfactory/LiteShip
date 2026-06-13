@@ -37,6 +37,14 @@ export interface SatelliteProps {
    * for a CSS-only shell that ships zero runtime.
    */
   readonly directive?: DirectiveName | false;
+  /**
+   * Authored per-state ARIA/data attributes (`@aria` blocks) for this boundary,
+   * keyed by state then attribute. The `<Satellite>` component supplies this
+   * automatically via a content-address join against the build manifest; pass
+   * it explicitly when calling `satelliteAttrs` directly. The initial state's
+   * attributes are SSR'd onto the element; the client updates them live.
+   */
+  readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,11 +74,23 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       thresholds: props.boundary.thresholds,
       states: props.boundary.states,
       hysteresis: props.boundary.hysteresis,
+      // Authored ARIA rides the boundary payload so the client reader resolves
+      // it live (the same content-addressed projection the manifest holds).
+      ...(props.aria ? { stateAttributes: props.aria } : {}),
     });
     if (props.directive !== false) {
       attrs['data-czap-directive'] = props.directive ?? 'satellite';
     }
-    attrs['data-czap-state'] = props.initialState ?? resolveInitialStateFallback(props.boundary);
+    const initial = props.initialState ?? resolveInitialStateFallback(props.boundary);
+    attrs['data-czap-state'] = initial;
+    // SSR the initial state's authored ARIA so first paint is accessible before
+    // hydration; `applyBoundaryState` updates these on every crossing.
+    const initialAria = props.aria?.[initial];
+    if (initialAria) {
+      for (const [attribute, value] of Object.entries(initialAria)) {
+        attrs[attribute] = value;
+      }
+    }
   } else if (props.initialState) {
     attrs['data-czap-state'] = props.initialState;
   }

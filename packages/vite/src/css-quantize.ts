@@ -45,6 +45,13 @@ export interface QuantizeStateBody {
   readonly bareProps: Record<string, string>;
   /** Nested `<selector> { ... }` rules written inside the state. */
   readonly rules: readonly QuantizeNestedRule[];
+  /**
+   * Authored per-state ARIA/data attributes from a nested `@aria { … }`
+   * segment (e.g. `aria-expanded: false; role: button`). Quotes are stripped.
+   * Validated downstream by `ARIACompiler` against `BoundaryAttribute.isAllowedKey`
+   * (`aria-*` / `role`). Absent when the state declares no `@aria` block.
+   */
+  readonly ariaAttrs?: Record<string, string>;
 }
 
 /**
@@ -90,6 +97,12 @@ export interface QuantizeBlock {
 function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; end: number } {
   const bareProps: Record<string, string> = {};
   const rules: QuantizeNestedRule[] = [];
+  const ariaAttrs: Record<string, string> = {};
+
+  // Assemble the body, omitting `ariaAttrs` entirely when no `@aria` segment
+  // was authored (keeps the common shape minimal and stable for snapshots).
+  const makeBody = (): QuantizeStateBody =>
+    Object.keys(ariaAttrs).length > 0 ? { bareProps, rules, ariaAttrs } : { bareProps, rules };
 
   while (pos < css.length) {
     // Skip whitespace between segments
@@ -109,7 +122,7 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     // Closing brace of the state block
     if (ch === '}') {
       pos++;
-      return { body: { bareProps, rules }, end: pos };
+      return { body: makeBody(), end: pos };
     }
 
     // Collect one segment until `{`, `;`, or `}` at paren depth 0.
@@ -228,7 +241,13 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
       pos++; // consume '{'
       const { props, end } = parseFlatDeclarations(css, pos);
       pos = end;
-      if (selector.length > 0) {
+      if (selector === '@aria') {
+        // Authored per-state ARIA/data attributes. Strip surrounding quotes so
+        // `role: "button"` and `aria-expanded: false` both yield clean values.
+        for (const [k, v] of Object.entries(props)) {
+          ariaAttrs[k] = v.replace(/^["']|["']$/g, '');
+        }
+      } else if (selector.length > 0) {
         rules.push({ selector, props });
       }
       continue;
@@ -250,7 +269,7 @@ function parseStateBody(css: string, pos: number): { body: QuantizeStateBody; en
     }
   }
 
-  return { body: { bareProps, rules }, end: pos };
+  return { body: makeBody(), end: pos };
 }
 
 // ---------------------------------------------------------------------------

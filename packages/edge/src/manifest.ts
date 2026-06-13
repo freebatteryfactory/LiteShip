@@ -126,7 +126,12 @@ export function dedupeOutputsByTier(
   for (const key of enumerateTierKeys()) {
     const outputs = outputsByTier[key];
     if (!outputs) continue;
-    const content = JSON.stringify([outputs.css, outputs.propertyRegistrations, outputs.containerQueries]);
+    const content = JSON.stringify([
+      outputs.css,
+      outputs.propertyRegistrations,
+      outputs.containerQueries,
+      outputs.aria ?? null,
+    ]);
     let index = indexByContent.get(content);
     if (index === undefined) {
       index = pool.length;

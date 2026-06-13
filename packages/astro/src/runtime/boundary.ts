@@ -32,6 +32,13 @@ export interface SerializedBoundary {
     readonly timeRange?: { readonly from?: number; readonly until?: number };
     readonly experimentId?: string;
   };
+  /**
+   * Optional authored per-state ARIA/data attributes (`@aria` blocks), keyed by
+   * state then attribute. Joined onto the satellite from the build manifest by
+   * content address. Absent for boundaries with no `@aria` — the common case,
+   * so the field is optional and needs no `_version` bump for old payloads.
+   */
+  readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**
@@ -45,6 +52,12 @@ export interface RuntimeBoundary {
   readonly input: string;
   /** Fully-constructed `Boundary.Shape` ready for evaluation. */
   readonly boundary: Boundary.Shape<string, readonly [string, ...string[]]>;
+  /**
+   * Authored per-state ARIA attributes resolved at parse time. `applyBoundaryState`
+   * composes `stateAttributes[currentState]` over the reflected aria so authored
+   * `aria-*`/`role` update live on every state crossing (not SSR-frozen).
+   */
+  readonly stateAttributes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**
@@ -156,6 +169,9 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
       ...(typeof parsed.hysteresis === 'number' ? { hysteresis: parsed.hysteresis } : {}),
       ...(parsed.spec ? { spec: parsed.spec } : {}),
     }),
+    ...(parsed.stateAttributes && typeof parsed.stateAttributes === 'object'
+      ? { stateAttributes: parsed.stateAttributes }
+      : {}),
   };
 }
 
@@ -362,8 +378,25 @@ export function applyBoundaryState(
   },
   eventName: string,
 ): void {
-  const detail = normalizeBoundaryState(state);
-  const stateName = detail.discrete[boundary.name];
+  const normalized = normalizeBoundaryState(state);
+  const stateName = normalized.discrete[boundary.name];
+
+  // Compose authored per-state ARIA (`@aria`) over the reflected aria so
+  // `aria-expanded`/`role` track the live state, not the SSR'd initial state.
+  // `stateAttributes` rides the satellite from the build manifest by content
+  // address; absent for boundaries with no `@aria`, where this is a no-op.
+  const authored = stateName ? boundary.stateAttributes?.[stateName] : undefined;
+  const detail: BoundaryStateDetail = authored
+    ? {
+        ...normalized,
+        aria: {
+          ...normalized.aria,
+          ...Object.fromEntries(
+            Object.entries(authored).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute)),
+          ),
+        },
+      }
+    : normalized;
 
   if (stateName && element.getAttribute('data-czap-state') !== stateName) {
     element.setAttribute('data-czap-state', stateName);
