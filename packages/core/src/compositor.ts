@@ -23,6 +23,7 @@ import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from './defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
 import { DirtyFlags } from './dirty.js';
 import type { FrameBudget } from './frame-budget.js';
+import { projectionKeys } from './projection.js';
 import type { Quantizer } from './quantizer-types.js';
 import { RuntimeCoordinator } from './runtime-coordinator.js';
 import { SpeculativeEvaluator } from './speculative.js';
@@ -281,9 +282,7 @@ export const Compositor: CompositorFactory = {
             // to Quantizer<Boundary.Shape> is sound; wrap in a named helper to document.
             qMap.set(name, widenQuantizer(quantizer));
             metaMap.set(name, {
-              cssKey: `--czap-${name}`,
-              glslKey: `u_${name}`,
-              ariaKey: `data-czap-${name}`,
+              ...projectionKeys(name),
               oneHotWeights: Object.fromEntries(
                 quantizer.boundary.states.map((activeState) => [
                   activeState as string,

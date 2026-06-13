@@ -8,6 +8,6 @@
 
 > **Shape** = [`RenderWorkerShape`](../../../interfaces/RenderWorkerShape.md)
 
-Defined in: [worker/src/render-worker.ts:499](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L499)
+Defined in: [worker/src/render-worker.ts:502](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/render-worker.ts#L502)
 
 Public host-side surface returned by [RenderWorker.create](../../../variables/RenderWorker.md#create).

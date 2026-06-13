@@ -8,14 +8,15 @@
 
 > **evaluate**\<`B`\>(`boundary`, `value`, `previousState?`): [`EvaluateResult`](../interfaces/EvaluateResult.md)\<`StateUnion`\<`B`\>\>
 
-Defined in: [quantizer/src/evaluate.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L57)
+Defined in: [quantizer/src/evaluate.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L42)
 
-Find which state a value maps to via binary search over sorted thresholds.
-With hysteresis: if previousState is provided and the value is within the
-hysteresis dead zone of a threshold, transition is suppressed.
+Find which state a value maps to via the canonical f32-canonical kernel, with
+optional hysteresis and crossing detection. Delegates to
+Boundary.evaluateResult in `@czap/core`.
 
-BoundaryDef contract: `thresholds[i]` = lower bound of `states[i]`.
-Binary search finds the largest index `i` where `thresholds[i] <= value`.
+The explicit signature (over the public `Boundary.Shape`/`StateUnion` types,
+not core's internal `BoundaryDef`) keeps the emitted `.d.ts` nameable across
+the package boundary while the implementation is a thin delegate.
 
 ## Type Parameters
 
@@ -29,40 +30,14 @@ Binary search finds the largest index `i` where `thresholds[i] <= value`.
 
 `B`
 
-The boundary definition with states and thresholds
-
 ### value
 
 `number`
-
-The numeric value to evaluate
 
 ### previousState?
 
 `StateUnion`\<`B`\>
 
-Optional previous state for hysteresis and crossing detection
-
 ## Returns
 
 [`EvaluateResult`](../interfaces/EvaluateResult.md)\<`StateUnion`\<`B`\>\>
-
-An [EvaluateResult](../interfaces/EvaluateResult.md) with the resolved state, index, and crossing flag
-
-## Example
-
-```ts
-import { Boundary } from '@czap/core';
-import { evaluate } from '@czap/quantizer';
-
-const boundary = Boundary.make({
-  input: 'width',
-  at: [[0, 'sm'], [640, 'md'], [1024, 'lg']],
-  hysteresis: 20,
-});
-const result = evaluate(boundary, 800);
-// result => { state: 'md', index: 1, value: 800, crossed: false }
-
-const cross = evaluate(boundary, 1100, 'md');
-// cross => { state: 'lg', index: 2, value: 1100, crossed: true }
-```

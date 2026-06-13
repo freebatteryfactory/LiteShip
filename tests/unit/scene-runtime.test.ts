@@ -2,7 +2,7 @@
  * SceneRuntime — bug-#3 regression suite.
  *
  * Asserts that compileScene + SceneRuntime.build produces a tickable
- * ECS world with all 6 canonical systems registered, that ticking
+ * ECS world with all 7 canonical systems registered, that ticking
  * advances the systems' computed component outputs, and that
  * `release()` cleanly disposes the world's scope.
  */
@@ -56,12 +56,12 @@ describe('SceneRuntime', () => {
     expect(sceneRuntimeCapsule.invariants.length).toBeGreaterThan(0);
   });
 
-  it('registers all 6 canonical systems in topological order', async () => {
+  it('registers all 7 canonical systems in topological order', async () => {
     const compiled = compileScene(buildScene());
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.systemsRegistered).toBe(SceneRuntime.systemCount);
-      expect(handle.systemsRegistered).toBe(6);
+      expect(handle.systemsRegistered).toBe(7);
     } finally {
       await handle.release();
     }
@@ -252,13 +252,13 @@ describe('SceneRuntime', () => {
     expect(allCanonical).toBeDefined();
     expect(nonNeg).toBeDefined();
 
-    expect(allCanonical!.check({}, { systemsRegistered: 6, entitySpawnCount: 4 })).toBe(true);
-    expect(allCanonical!.check({}, { systemsRegistered: 5, entitySpawnCount: 4 })).toBe(false);
+    expect(allCanonical!.check({}, { systemsRegistered: 7, entitySpawnCount: 4 })).toBe(true);
+    expect(allCanonical!.check({}, { systemsRegistered: 6, entitySpawnCount: 4 })).toBe(false);
     expect(allCanonical!.check({}, {})).toBe(false);
 
-    expect(nonNeg!.check({}, { systemsRegistered: 6, entitySpawnCount: 0 })).toBe(true);
-    expect(nonNeg!.check({}, { systemsRegistered: 6, entitySpawnCount: 4 })).toBe(true);
-    expect(nonNeg!.check({}, { systemsRegistered: 6, entitySpawnCount: -1 })).toBe(false);
-    expect(nonNeg!.check({}, { systemsRegistered: 6 })).toBe(false);
+    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: 0 })).toBe(true);
+    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: 4 })).toBe(true);
+    expect(nonNeg!.check({}, { systemsRegistered: 7, entitySpawnCount: -1 })).toBe(false);
+    expect(nonNeg!.check({}, { systemsRegistered: 7 })).toBe(false);
   });
 });

@@ -6,7 +6,7 @@
 
 # Interface: McpResource
 
-Defined in: [mcp-server/src/resources.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L30)
+Defined in: [mcp-server/src/resources.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L31)
 
 An MCP resource descriptor as emitted by `resources/list`.
 
@@ -16,7 +16,7 @@ An MCP resource descriptor as emitted by `resources/list`.
 
 > `readonly` **description**: `string`
 
-Defined in: [mcp-server/src/resources.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L33)
+Defined in: [mcp-server/src/resources.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L34)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/resources.ts:33](https://github.com/heyoub/LiteShip/
 
 > `readonly` **mimeType**: `string`
 
-Defined in: [mcp-server/src/resources.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L34)
+Defined in: [mcp-server/src/resources.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L35)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [mcp-server/src/resources.ts:34](https://github.com/heyoub/LiteShip/
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/resources.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L32)
+Defined in: [mcp-server/src/resources.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L33)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [mcp-server/src/resources.ts:32](https://github.com/heyoub/LiteShip/
 
 > `readonly` **uri**: `string`
 
-Defined in: [mcp-server/src/resources.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L31)
+Defined in: [mcp-server/src/resources.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L32)

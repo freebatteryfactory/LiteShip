@@ -57,6 +57,7 @@ describe('B1 — the divergence that made the two-encoder fork a substrate bug',
 describe('B1 — identity is minted only through CanonicalCbor (source guard, the cage)', () => {
   const IDENTITY_FILES = [
     'packages/quantizer/src/quantizer.ts',
+    'packages/core/src/content-address.ts', // P2 — the extracted shared mint kernel (contentAddressOf)
     'packages/core/src/composable.ts',
     'packages/core/src/ecs.ts',
     'packages/core/src/config.ts', // CUT B5a — Config.make folded into the cage
@@ -66,8 +67,9 @@ describe('B1 — identity is minted only through CanonicalCbor (source guard, th
   for (const rel of IDENTITY_FILES) {
     it(`${rel} mints fnv1a identity via CanonicalCbor, not cborg/TypedRef.canonicalize/JSON.stringify`, () => {
       const src = readFileSync(resolve(REPO, rel), 'utf8');
-      // The fnv1a identity call must pair with CanonicalCbor.encode.
-      expect(src).toMatch(/fnv1a(Bytes)?\(\s*CanonicalCbor\.encode/);
+      // The fnv1a identity is minted either DIRECTLY (fnv1aBytes(CanonicalCbor.encode(...)))
+      // or by ROUTING through the one shared kernel `contentAddressOf` (P2 extraction).
+      expect(src).toMatch(/fnv1a(Bytes)?\(\s*CanonicalCbor\.encode|contentAddressOf\(/);
       // None of the discredited identity paths may feed an fnv1a address.
       expect(src).not.toMatch(/fnv1a(Bytes)?\(\s*TypedRef\.canonicalize/);
       expect(src).not.toMatch(/fnv1a(Bytes)?\(\s*encode\(/); // raw cborg encode

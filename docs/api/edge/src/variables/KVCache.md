@@ -8,7 +8,7 @@
 
 > `const` **KVCache**: `object`
 
-Defined in: [edge/src/kv-cache.ts:242](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L242)
+Defined in: [edge/src/kv-cache.ts:254](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L254)
 
 KV cache namespace.
 

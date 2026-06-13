@@ -8,7 +8,7 @@
 
 > **defineConfig**(`input`): [`Shape`](../namespaces/Config/interfaces/Shape.md)
 
-Defined in: [core/src/config.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L163)
+Defined in: [core/src/config.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L166)
 
 Thin alias for [Config.make](../variables/Config.md#make) — matches the `defineConfig(...)` ergonomics other tools use.
 

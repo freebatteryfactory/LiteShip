@@ -8,7 +8,7 @@
 
 > `const` **SceneRuntime**: `object`
 
-Defined in: [scene/src/runtime.ts:264](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L264)
+Defined in: [scene/src/runtime.ts:268](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L268)
 
 SceneRuntime namespace — build a live, tickable handle from a
 compiled scene. The companion type namespace exposes
@@ -45,6 +45,6 @@ ECS-as-scene-substrate discipline.
 
 ### systemCount
 
-> `readonly` **systemCount**: `6` = `CANONICAL_SYSTEM_COUNT`
+> `readonly` **systemCount**: `7` = `CANONICAL_SYSTEM_COUNT`
 
 Number of canonical scene systems the runtime always registers.

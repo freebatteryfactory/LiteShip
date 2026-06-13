@@ -30,6 +30,7 @@
     { "path": "./packages/worker" },
     { "path": "./packages/vite" },
     { "path": "./packages/astro" },
+    { "path": "./packages/stage" },
     { "path": "./packages/cloudflare" },
     { "path": "./packages/remotion" },
     { "path": "./packages/scene" },

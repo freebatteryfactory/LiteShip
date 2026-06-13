@@ -8,7 +8,7 @@
 
 > **resolveOutputsByTier**(`entry`): `Readonly`\<`Partial`\<`Record`\<[`TierKey`](../type-aliases/TierKey.md), [`CompiledOutputs`](../interfaces/CompiledOutputs.md)\>\>\>
 
-Defined in: [edge/src/manifest.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L147)
+Defined in: [edge/src/manifest.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L152)
 
 Inflate a pooled [BoundaryManifestEntry](../interfaces/BoundaryManifestEntry.md) back into the per-tier
 [CompiledOutputs](../interfaces/CompiledOutputs.md) map that `EdgeHostCacheConfig.precompiled`

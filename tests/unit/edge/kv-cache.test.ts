@@ -69,6 +69,34 @@ describe('createBoundaryCache', () => {
     expect(result!.containerQueries).toBe(outputs.containerQueries);
   });
 
+  test('putCompiledOutputs round-trips the authored aria map', async () => {
+    const kv = createMockKV();
+    const cache = createBoundaryCache(kv);
+    const outputs = {
+      css: ':root {}',
+      propertyRegistrations: '',
+      containerQueries: '',
+      aria: {
+        collapsed: { 'aria-expanded': 'false' },
+        expanded: { 'aria-expanded': 'true' },
+      },
+    };
+
+    await cache.putCompiledOutputs(boundaryId, tierResult, outputs);
+    const result = await cache.getCompiledOutputs(boundaryId, tierResult);
+
+    expect(result!.aria).toEqual(outputs.aria);
+  });
+
+  test('an entry with no aria round-trips without the field (most boundaries)', async () => {
+    const kv = createMockKV();
+    const cache = createBoundaryCache(kv);
+    await cache.putCompiledOutputs(boundaryId, tierResult, { css: 'a', propertyRegistrations: '', containerQueries: '' });
+    const result = await cache.getCompiledOutputs(boundaryId, tierResult);
+    expect(result).not.toBeNull();
+    expect(result!.aria).toBeUndefined();
+  });
+
   test('different tier results produce different cache keys', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);

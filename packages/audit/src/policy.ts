@@ -120,7 +120,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // CUT A3: astro deliberately does NOT depend on @czap/compiler (see the
     // duplicated-predicate note in astro/src/runtime/boundary.ts; CUT A4 routes
     // the shared predicate through @czap/core instead). compiler removed.
-    allowedInternalImports: ['@czap/core', '@czap/vite', '@czap/detect', '@czap/edge', '@czap/web', '@czap/worker', '@czap/genui'],
+    allowedInternalImports: [
+      '@czap/core',
+      '@czap/vite',
+      '@czap/detect',
+      '@czap/edge',
+      '@czap/web',
+      '@czap/worker',
+      '@czap/genui',
+    ],
     kind: 'host-adjacent',
   },
   '@czap/cloudflare': {
@@ -130,6 +138,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
   '@czap/remotion': {
     allowedInternalImports: ['@czap/core'],
     kind: 'standalone',
+  },
+  '@czap/stage': {
+    // The verb / orchestration layer (P4). Casts ONE DocumentGraph to many
+    // carriers by reusing the existing casters: core (graph kernel + Compositor
+    // + VideoRenderer), compiler (CSSCompiler), astro (satellite SSR helpers),
+    // and web (the captureVideo codec seam). It mints no identity kernel of its
+    // own — every address routes through @czap/core's CanonicalCbor/AddressedDigest.
+    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/astro', '@czap/web'],
+    kind: 'host-adjacent',
   },
   // CUT A2 — topology coverage closure. These five were policy-absent (surfaced
   // by CUT A0's self-trust classification). Each entry reflects the package's

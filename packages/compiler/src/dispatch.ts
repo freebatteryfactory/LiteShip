@@ -5,7 +5,7 @@
  */
 
 import type { Boundary, Config } from '@czap/core';
-import type { CSSCompileResult } from './css.js';
+import type { CSSCompileResult, CSSStateInput } from './css.js';
 import type { GLSLCompileResult } from './glsl.js';
 import type { WGSLCompileResult } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
@@ -20,8 +20,13 @@ import { AIManifestCompiler } from './ai-manifest.js';
 // Compiler-specific state types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Per-state CSS property maps keyed by state name (values are CSS strings). */
-export type CSSStates = Readonly<Record<string, Readonly<Record<string, string>>>>;
+/**
+ * Per-state CSS inputs keyed by state name: each value is either a flat
+ * property map or a structured {@link CSSStateBody} carrying nested selector
+ * rules — exactly what {@link CSSCompiler.compile} accepts (so `dispatch` can
+ * faithfully replace a direct compile call, including the manifest's body form).
+ */
+export type CSSStates = Readonly<Record<string, CSSStateInput>>;
 /** Per-state GLSL uniform values keyed by state name (numeric only). */
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
 /** Per-state WGSL uniform values keyed by state name (numeric only). */

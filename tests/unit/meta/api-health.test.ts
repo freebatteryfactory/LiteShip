@@ -141,8 +141,12 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   },
   Codec: { methods: ['make'] },
   Plan: { methods: ['make', 'validate', 'topoSort'] },
+  // GraphPatch — typed graph mutation + structural differ (P5b).
+  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'patchId', 'receipt', 'forkOf'] },
   RuntimeCoordinator: { methods: ['create'] },
-  Diagnostics: { methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'] },
+  Diagnostics: {
+    methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
+  },
   Config: { methods: ['make', 'toViteConfig', 'toAstroConfig', 'toTestAliases'] },
 
   // ── Generative UI / video ─────────────────────────────────────────
@@ -193,6 +197,23 @@ const STANDALONE_FUNCTIONS = [
   'isValidationError',
   'defineConfig',
   'tupleMap',
+  // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
+  // consolidation). Public so @czap/worker's host startup path delegates to it.
+  'rawIndexF32',
+  // Projection vocabulary (Phase-1 Layer 1): per-quantizer output key naming +
+  // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
+  'projectionKeys',
+  'glslIdent',
+  // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
+  // node/graph seal/validate/linearize surface.
+  'contentAddressOf',
+  'sealNode',
+  'sealGraph',
+  'validateGraph',
+  'linearizeGraph',
+  // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
+  // CapLevel rung a policy admits on a runtime site.
+  'chooseRung',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
@@ -206,7 +227,14 @@ const STANDALONE_FUNCTIONS = [
 const ERROR_CLASSES = ['CzapValidationError'];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
-const STANDALONE_OBJECTS = ['fallbackKernels', 'VIEWPORT', 'boundaryEvaluateCapsule', 'tokenBufferCapsule', 'canonicalCborCapsule'];
+const STANDALONE_OBJECTS = [
+  'fallbackKernels',
+  'VIEWPORT',
+  'boundaryEvaluateCapsule',
+  'tokenBufferCapsule',
+  'canonicalCborCapsule',
+  'canonicalCborDecodeCapsule',
+];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────
 const DEFAULT_CONSTANTS = [
@@ -225,6 +253,10 @@ const DEFAULT_CONSTANTS = [
   'THEME_TRANSITION_EASING',
   'CANVAS_FALLBACK_WIDTH',
   'CANVAS_FALLBACK_HEIGHT',
+  // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).
+  'EVALUATE_THRESHOLDS_SOURCE',
+  // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
+  'PROJECTION_KEYS_SOURCE',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────
@@ -338,8 +370,8 @@ describe('API health canary', () => {
       expect(
         undocumented,
         `Undocumented exports found: ${undocumented.join(', ')}.\n` +
-        'Add them to API_REGISTRY, STANDALONE_FUNCTIONS, or BRANDED_CONSTRUCTORS ' +
-        'in tests/unit/api-health.test.ts',
+          'Add them to API_REGISTRY, STANDALONE_FUNCTIONS, or BRANDED_CONSTRUCTORS ' +
+          'in tests/unit/meta/api-health.test.ts',
       ).toEqual([]);
     });
   });

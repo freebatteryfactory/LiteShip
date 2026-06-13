@@ -5,7 +5,7 @@
  * @module
  */
 
-import { RuntimeCoordinator, StateName } from '@czap/core';
+import { RuntimeCoordinator, StateName, rawIndexF32 } from '@czap/core';
 import type {
   ToWorkerMessage,
   WorkerUpdate,
@@ -643,13 +643,11 @@ export function sameBootstrapRegistration(
  * value lies below every threshold.
  */
 export function evaluateRegistrationState(registration: BootstrapQuantizerRegistration, value: number): string {
-  for (let index = registration.thresholds.length - 1; index >= 0; index--) {
-    if (value >= registration.thresholds[index]!) {
-      return registration.states[index] ?? registration.states[0]!;
-    }
-  }
-
-  return registration.states[0]!;
+  // Delegate to the single f32-canonical kernel so the host startup path agrees
+  // with the worker inline (EVALUATE_THRESHOLDS_SOURCE) and the steady-state
+  // compositor at threshold edges — no raw-f64 divergence on this seam.
+  const index = rawIndexF32(registration.thresholds, value);
+  return registration.states[index] ?? registration.states[0]!;
 }
 
 /**

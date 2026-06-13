@@ -13,6 +13,20 @@ typically destructure these and pass them to [satelliteAttrs](../functions/satel
 
 ## Properties
 
+### aria?
+
+> `readonly` `optional` **aria?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `string`\>\>\>\>
+
+Defined in: [astro/src/Satellite.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L47)
+
+Authored per-state ARIA/data attributes (`@aria` blocks) for this boundary,
+keyed by state then attribute. The `<Satellite>` component supplies this
+automatically via a content-address join against the build manifest; pass
+it explicitly when calling `satelliteAttrs` directly. The initial state's
+attributes are SSR'd onto the element; the client updates them live.
+
+***
+
 ### boundary?
 
 > `readonly` `optional` **boundary?**: [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>

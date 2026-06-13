@@ -6,13 +6,14 @@
 
 # Interface: EvaluateResult\<S\>
 
-Defined in: [quantizer/src/evaluate.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L16)
+Defined in: core/dist/type-utils.d.ts:30
 
-Result of quantizing a single numeric value against a boundary.
+Result of evaluating a single numeric value against a boundary (the rich face
+of `Boundary.evaluateResult`).
 
-`crossed` is true only when `previousState` was supplied and differs
-from the resolved state; it is the signal consumers use to emit
-transition events and route side effects.
+`crossed` is true only when `previousState` was supplied and differs from the
+resolved state; consumers use it to emit transition events and route side
+effects. `index` is the position of `state` within the boundary's states tuple.
 
 ## Type Parameters
 
@@ -26,7 +27,7 @@ transition events and route side effects.
 
 > `readonly` **crossed**: `boolean`
 
-Defined in: [quantizer/src/evaluate.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L24)
+Defined in: core/dist/type-utils.d.ts:38
 
 Whether evaluation produced a change from `previousState`.
 
@@ -36,7 +37,7 @@ Whether evaluation produced a change from `previousState`.
 
 > `readonly` **index**: `number`
 
-Defined in: [quantizer/src/evaluate.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L20)
+Defined in: core/dist/type-utils.d.ts:34
 
 Index of `state` within the boundary's states tuple.
 
@@ -46,7 +47,7 @@ Index of `state` within the boundary's states tuple.
 
 > `readonly` **state**: `S`
 
-Defined in: [quantizer/src/evaluate.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L18)
+Defined in: core/dist/type-utils.d.ts:32
 
 The resolved state literal.
 
@@ -56,6 +57,6 @@ The resolved state literal.
 
 > `readonly` **value**: `number`
 
-Defined in: [quantizer/src/evaluate.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/evaluate.ts#L22)
+Defined in: core/dist/type-utils.d.ts:36
 
 The input value that was evaluated.

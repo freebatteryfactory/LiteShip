@@ -8,6 +8,6 @@
 
 > **Shape** = [`LLMAdapterShape`](../../../interfaces/LLMAdapterShape.md)
 
-Defined in: [web/src/stream/llm-adapter.ts:177](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L177)
+Defined in: [web/src/stream/llm-adapter.ts:178](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L178)
 
 Public adapter surface (`chunks` + `textTokens`).

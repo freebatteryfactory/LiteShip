@@ -14,7 +14,7 @@
  * @module
  */
 
-import { Diagnostics, type VideoConfig, type VideoFrameOutput } from '@czap/core';
+import { Diagnostics, PROJECTION_KEYS_SOURCE, type VideoConfig, type VideoFrameOutput } from '@czap/core';
 import type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } from './messages.js';
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
 
@@ -98,6 +98,8 @@ const blendOverrides = new Map();
 
 ${EVALUATE_THRESHOLDS_SOURCE}
 
+${PROJECTION_KEYS_SOURCE}
+
 /**
  * Compute a CompositeState from the current quantizer state.
  */
@@ -123,7 +125,8 @@ function computeState() {
       blend[name] = weights;
     }
 
-    css["--czap-" + name] = stateStr;
+    const keys = projectionKeys(name);
+    css[keys.cssKey] = stateStr;
 
     let stateIndex = 0;
     for (let i = 0; i < q.states.length; i++) {
@@ -132,8 +135,8 @@ function computeState() {
         break;
       }
     }
-    glsl["u_" + name] = stateIndex;
-    aria["data-czap-" + name] = stateStr;
+    glsl[keys.glslKey] = stateIndex;
+    aria[keys.ariaKey] = stateStr;
   }
 
   return { discrete, blend, outputs: { css, glsl, aria } };
