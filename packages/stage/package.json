@@ -20,6 +20,7 @@
     "typescript"
   ],
   "type": "module",
+  "private": true,
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
