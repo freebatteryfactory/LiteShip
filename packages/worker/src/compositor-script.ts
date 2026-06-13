@@ -8,6 +8,8 @@
  * @module
  */
 
+import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
+
 /**
  * JavaScript source of the inline compositor worker.
  *
@@ -142,24 +144,7 @@ function resetWorkerState() {
   dirtyNames.clear();
 }
 
-/**
- * Evaluate which discrete state a value falls into based on thresholds.
- * Thresholds are sorted ascending; the value maps to the state whose
- * threshold it first exceeds (or the first state if below all thresholds).
- *
- * @param {number[]} thresholds
- * @param {string[]} states
- * @param {number} value
- * @returns {string}
- */
-function evaluateThresholds(thresholds, states, value) {
-  for (let i = thresholds.length - 1; i >= 0; i--) {
-    if (value >= thresholds[i]) {
-      return states[i] || states[0] || "";
-    }
-  }
-  return states[0] || "";
-}
+${EVALUATE_THRESHOLDS_SOURCE}
 
 /**
  * Build a CompositeState from the current quantizer state.

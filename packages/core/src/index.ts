@@ -40,6 +40,7 @@ export type {
   StateUnion,
   OutputsFor,
   BoundaryCrossing,
+  EvaluateResult,
   EffectValue,
   EffectError,
   RequireAtLeastOne,
@@ -53,6 +54,11 @@ export { tupleMap } from './tuple.js';
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
+// The single f32-canonical state-index kernel and its worker-blob twin string.
+// `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
+// startup path (@czap/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`
+// is the inlinable mirror the worker/render blob scripts embed.
+export { rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from './boundary-f32.js';
 // Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
 // @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).
 export { BoundaryAttribute } from './boundary-attribute.js';

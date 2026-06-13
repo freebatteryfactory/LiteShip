@@ -22,6 +22,25 @@ export type OutputsFor<B extends Boundary.Shape, T> = {
   readonly [S in StateUnion<B>]: T;
 };
 
+/**
+ * Result of evaluating a single numeric value against a boundary (the rich face
+ * of `Boundary.evaluateResult`).
+ *
+ * `crossed` is true only when `previousState` was supplied and differs from the
+ * resolved state; consumers use it to emit transition events and route side
+ * effects. `index` is the position of `state` within the boundary's states tuple.
+ */
+export interface EvaluateResult<S extends string = string> {
+  /** The resolved state literal. */
+  readonly state: S;
+  /** Index of `state` within the boundary's states tuple. */
+  readonly index: number;
+  /** The input value that was evaluated. */
+  readonly value: number;
+  /** Whether evaluation produced a change from `previousState`. */
+  readonly crossed: boolean;
+}
+
 /** Discriminated union of boundary crossings */
 export type BoundaryCrossing<S extends string = string> = {
   readonly from: StateName<S>;

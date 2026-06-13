@@ -11,7 +11,9 @@ import type { SignalInput, ThresholdValue, ContentAddress } from './brands.js';
 import { SignalInput as mkSignalInput, ThresholdValue as mkThresholdValue } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
-import { toBoundaryF32 } from './boundary-f32.js';
+import { rawIndexF32 } from './boundary-f32.js';
+import { Diagnostics } from './diagnostics.js';
+import type { EvaluateResult } from './type-utils.js';
 import { CzapValidationError } from './validation-error.js';
 
 /** The core primitive. Source of truth for quantization boundaries. */
@@ -64,10 +66,12 @@ function deterministicId(
 }
 
 /**
- * Evaluate which state a value falls into given a boundary (binary search).
+ * Evaluate which state a value falls into given a boundary.
  *
- * Uses binary search to find the rightmost threshold `<= value`, returning
- * the corresponding state name.
+ * The cheap face of evaluation: returns just the resolved state name via the
+ * single f32-canonical {@link rawIndexF32} kernel (no hysteresis, no crossing
+ * detection). For the rich `{state, index, value, crossed}` result — and for
+ * hysteresis — use {@link _evaluateResult}.
  *
  * @example
  * ```ts
@@ -77,50 +81,87 @@ function deterministicId(
  * ```
  */
 function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states'][number] {
-  const { thresholds, states } = boundary;
-  const len = thresholds.length;
+  return boundary.states[rawIndexF32(boundary.thresholds, value)]!;
+}
 
-  // CUT B1.5: compare in f32 so scalar JS, the JS batch fallback, and the f32
-  // WASM batch kernel all select the SAME state index near a threshold.
-  const v = toBoundaryF32(value);
-  const t = (i: number): number => toBoundaryF32(thresholds[i] as number);
+/**
+ * Evaluate a value against a boundary into the rich {@link EvaluateResult}
+ * `{ state, index, value, crossed }`.
+ *
+ * This is the canonical home of `index` + `crossed` (consumed by the quantizer
+ * and, downstream, by Stage pose-lowering). It is also the single hysteresis
+ * implementation: `evaluateWithHysteresis` is its string projection.
+ *
+ * Raw state selection uses the f32-canonical {@link rawIndexF32} kernel; the
+ * half-width dead-zone refinement (when a `previousState` and `hysteresis` are
+ * supplied) compares in f64 against the un-rounded thresholds, matching the
+ * prior `evaluateWithHysteresis` and quantizer semantics exactly.
+ */
+function _evaluateResult<B extends BoundaryDef>(
+  boundary: B,
+  value: number,
+  previousState?: B['states'][number],
+): EvaluateResult<B['states'][number] & string> {
+  const { thresholds, states, hysteresis } = boundary;
+  const rawIndex = rawIndexF32(thresholds, value);
+  const state = states[rawIndex]! as B['states'][number] & string;
 
-  // Fast path: unrolled if-chain for small threshold arrays (≤4).
-  // Avoids loop overhead and branch prediction misses of binary search.
-  // Check from highest threshold downward; first match wins.
-  if (len <= 4) {
-    if (len === 1) {
-      return states[0]!;
-    }
-    if (len === 2) {
-      if (v >= t(1)) return states[1]!;
-      return states[0]!;
-    }
-    if (len === 3) {
-      if (v >= t(2)) return states[2]!;
-      if (v >= t(1)) return states[1]!;
-      return states[0]!;
-    }
-    // len === 4
-    if (v >= t(3)) return states[3]!;
-    if (v >= t(2)) return states[2]!;
-    if (v >= t(1)) return states[1]!;
-    return states[0]!;
+  // No hysteresis or no previous state → raw result.
+  if (!hysteresis || hysteresis <= 0 || previousState === undefined) {
+    const crossed = previousState !== undefined && previousState !== state;
+    return { state, index: rawIndex, value, crossed };
   }
 
-  // Binary search: find the rightmost threshold <= value
-  let lo = 0;
-  let hi = len;
-  while (lo < hi) {
-    const mid = (lo + hi) >>> 1;
-    if (t(mid) <= v) {
-      lo = mid + 1;
-    } else {
-      hi = mid;
+  const prevIndex = (states as readonly string[]).indexOf(previousState as string);
+  if (prevIndex === -1) {
+    // A foreign previousState is almost always a stale or typo'd value from
+    // another boundary; warnOnce keeps this hot path cheap after first emit.
+    Diagnostics.warnOnce({
+      source: 'czap/core',
+      code: 'unknown-previous-state',
+      message: `evaluateResult(): previousState "${String(previousState)}" is not a state of boundary "${boundary.input}" (states: ${(states as readonly string[]).join(', ')}); treating as a crossing. Check that the state came from this boundary.`,
+    });
+    return { state, index: rawIndex, value, crossed: true };
+  }
+
+  // No crossing needed.
+  if (rawIndex === prevIndex) {
+    return { state, index: rawIndex, value, crossed: false };
+  }
+
+  // Dead-zone suppression: require the value to clear a threshold by half the
+  // hysteresis width before committing. Prevents jitter when a signal
+  // oscillates near a boundary.
+  const half = hysteresis / 2;
+  if (rawIndex > prevIndex) {
+    for (let i = prevIndex + 1; i <= rawIndex; i++) {
+      const threshold = thresholds[i] as number | undefined;
+      if (threshold !== undefined && value < threshold + half) {
+        const settleIndex = i - 1;
+        return {
+          state: states[settleIndex]! as B['states'][number] & string,
+          index: settleIndex,
+          value,
+          crossed: settleIndex !== prevIndex,
+        };
+      }
+    }
+  } else {
+    for (let i = prevIndex; i > rawIndex; i--) {
+      const threshold = thresholds[i] as number | undefined;
+      if (threshold !== undefined && value > threshold - half) {
+        return {
+          state: states[i]! as B['states'][number] & string,
+          index: i,
+          value,
+          crossed: i !== prevIndex,
+        };
+      }
     }
   }
-  // lo is the first threshold > value, so lo-1 is the match (or 0 if none)
-  return states[lo > 0 ? lo - 1 : 0]!;
+
+  // Cleared all dead zones — full transition.
+  return { state, index: rawIndex, value, crossed: true };
 }
 
 /**
@@ -143,47 +184,7 @@ function _evaluateWithHysteresis<B extends BoundaryDef>(
   value: number,
   previousState: B['states'][number],
 ): B['states'][number] {
-  if (!boundary.hysteresis || boundary.hysteresis <= 0) return _evaluate(boundary, value);
-
-  const half = boundary.hysteresis / 2;
-  const { thresholds, states } = boundary;
-  const prevIdx = (states as readonly string[]).indexOf(previousState as string);
-
-  // Unknown previous state -- fall back to raw evaluation
-  if (prevIdx === -1) return _evaluate(boundary, value);
-
-  // Find raw state via linear scan (matching evaluate semantics, incl. CUT B1.5
-  // f32-canonical comparison — the dead-zone refinement below stays f64).
-  const vF32 = toBoundaryF32(value);
-  let rawIdx = 0;
-  for (let i = thresholds.length - 1; i >= 0; i--) {
-    if (vF32 >= toBoundaryF32(thresholds[i]!)) {
-      rawIdx = i;
-      break;
-    }
-  }
-
-  // No crossing needed
-  if (rawIdx === prevIdx) return states[rawIdx]!;
-
-  // Dead-zone suppression: when crossing a threshold, require the value to exceed the
-  // threshold by half the hysteresis width before committing. Prevents jitter when a
-  // signal oscillates near a boundary.
-  if (rawIdx > prevIdx) {
-    for (let i = prevIdx + 1; i <= rawIdx; i++) {
-      if (value < thresholds[i]! + half) {
-        return states[i - 1]!;
-      }
-    }
-  } else {
-    for (let i = prevIdx; i > rawIdx; i--) {
-      if (value > thresholds[i]! - half) {
-        return states[i]!;
-      }
-    }
-  }
-
-  return states[rawIdx]!;
+  return _evaluateResult(boundary, value, previousState).state;
 }
 
 /**
@@ -244,6 +245,7 @@ function _isActive<B extends BoundaryDef>(
  */
 export const Boundary: BoundaryFactory & {
   evaluate: typeof _evaluate;
+  evaluateResult: typeof _evaluateResult;
   evaluateWithHysteresis: typeof _evaluateWithHysteresis;
   isActive: typeof _isActive;
 } = {
@@ -311,6 +313,7 @@ export const Boundary: BoundaryFactory & {
     };
   },
   evaluate: _evaluate,
+  evaluateResult: _evaluateResult,
   evaluateWithHysteresis: _evaluateWithHysteresis,
   isActive: _isActive,
 };

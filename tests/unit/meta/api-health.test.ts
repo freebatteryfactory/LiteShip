@@ -193,6 +193,9 @@ const STANDALONE_FUNCTIONS = [
   'isValidationError',
   'defineConfig',
   'tupleMap',
+  // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
+  // consolidation). Public so @czap/worker's host startup path delegates to it.
+  'rawIndexF32',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
@@ -225,6 +228,8 @@ const DEFAULT_CONSTANTS = [
   'THEME_TRANSITION_EASING',
   'CANVAS_FALLBACK_WIDTH',
   'CANVAS_FALLBACK_HEIGHT',
+  // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).
+  'EVALUATE_THRESHOLDS_SOURCE',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────
