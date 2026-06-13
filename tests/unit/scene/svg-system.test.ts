@@ -155,6 +155,7 @@ describe('SVGSystem', () => {
     const docSpy = vi.fn();
     const g = globalThis as unknown as Record<string, unknown>;
     const hadDocument = 'document' in g;
+    const originalDocument = g.document;
     g.document = new Proxy(
       {},
       {
@@ -177,7 +178,8 @@ describe('SVGSystem', () => {
       await Effect.runPromise(Effect.scoped(program));
       expect(docSpy).not.toHaveBeenCalled();
     } finally {
-      if (!hadDocument) delete g.document;
+      if (hadDocument) g.document = originalDocument;
+      else delete g.document;
     }
   });
 });

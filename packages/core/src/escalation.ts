@@ -170,10 +170,13 @@ function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult
     // (an empty admissible set gates nothing, so it is not a real verdict).
     // `RUNG_TARGETS` is the locally-encoded CapLevel<->target map (no quantizer
     // import -- see module note).
-    const admittedTargets = RUNG_TARGETS[rung];
-    if (admittedTargets.size === 0) continue;
+    const rungTargets = RUNG_TARGETS[rung];
+    if (rungTargets.size === 0) continue;
 
     // (6) Minimal downgrade wins: first satisfying rung walking down from requires.
+    // Return a COPY, never the shared RUNG_TARGETS Set by reference — the result
+    // is memoized, so a caller mutating it would corrupt the const + the cache.
+    const admittedTargets: ReadonlySet<string> = new Set(rungTargets);
     return { rung, admittedTargets };
   }
 

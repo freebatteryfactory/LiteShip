@@ -371,7 +371,7 @@ describe('API health canary', () => {
         undocumented,
         `Undocumented exports found: ${undocumented.join(', ')}.\n` +
           'Add them to API_REGISTRY, STANDALONE_FUNCTIONS, or BRANDED_CONSTRUCTORS ' +
-          'in tests/unit/api-health.test.ts',
+          'in tests/unit/meta/api-health.test.ts',
       ).toEqual([]);
     });
   });

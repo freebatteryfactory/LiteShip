@@ -49,14 +49,19 @@ export function addressDocumentGraph(graph: {
   readonly nodes: readonly DocumentGraphNode[];
   readonly edges: readonly DocumentGraphEdge[];
 }): { readonly id: ContentAddress; readonly digest: AddressedDigest } {
+  // Deterministic UTF-16 code-unit order, NOT localeCompare — graph identity
+  // must be byte-identical across machines/locales (CUT B1). Default Array.sort
+  // on strings is already code-unit, but the comparators are explicit so the
+  // determinism is unmistakable.
+  const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
   const nodeIds = graph.nodes
     .map((node) => node.id)
     .slice()
-    .sort();
+    .sort(cmp);
   const edges = graph.edges
     .map((edge) => [edge.from, edge.to, edge.type] as const)
     .slice()
-    .sort((a, b) => `${a[0]}|${a[1]}|${a[2]}`.localeCompare(`${b[0]}|${b[1]}|${b[2]}`));
+    .sort((a, b) => cmp(`${a[0]}|${a[1]}|${a[2]}`, `${b[0]}|${b[1]}|${b[2]}`));
   const bytes = canonicalAddressBytes({ nodeIds, edges });
   return { id: fnv1aBytes(bytes), digest: AddressedDigestNS.of(bytes, 'sha256') };
 }

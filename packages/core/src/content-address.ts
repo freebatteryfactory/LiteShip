@@ -36,7 +36,9 @@ export function canonicalizeForAddress(value: unknown): unknown {
   if (typeof value === 'object') {
     const entries = Object.entries(value)
       .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right))
+      // Deterministic UTF-16 code-unit order, NOT localeCompare — content
+      // addresses must be byte-identical across machines/locales (CUT B1).
+      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
       .map(([key, entry]) => [key, canonicalizeForAddress(entry)]);
     return Object.fromEntries(entries);
   }
