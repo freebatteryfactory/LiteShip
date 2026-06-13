@@ -174,6 +174,13 @@ export { Op } from './op.js';
 export type { CapLevel, CapSet } from './caps.js';
 export { Cap } from './caps.js';
 
+// Escalation chooser (P5c) — the READER of PolicyNode (P2). Picks the minimal
+// CapLevel rung a policy admits on a runtime site, gated by site/budgets/grants
+// and the locally-encoded CapLevel↔target admissibility table (no quantizer
+// import — that would close a core→quantizer cycle).
+export { chooseRung } from './escalation.js';
+export type { RungChoice, EscalationResult } from './escalation.js';
+
 // HLC
 export { HLC } from './hlc.js';
 

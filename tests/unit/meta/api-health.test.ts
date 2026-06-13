@@ -211,6 +211,9 @@ const STANDALONE_FUNCTIONS = [
   'sealGraph',
   'validateGraph',
   'linearizeGraph',
+  // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
+  // CapLevel rung a policy admits on a runtime site.
+  'chooseRung',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
