@@ -20,7 +20,7 @@
  * `registeredSystems: string[]` metadata field via an `as unknown`
  * cast WITHOUT ever calling `world.addSystem`. That theatre is gone:
  * compileScene is now a pure descriptor producer, and the runtime
- * registers the 6 canonical systems.
+ * registers the 7 canonical systems.
  *
  * @module
  */

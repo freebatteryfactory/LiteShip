@@ -1,4 +1,4 @@
-import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
+import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent } from '@czap/core';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
@@ -291,7 +291,10 @@ void main() {
 
       if (detail.css) {
         for (const [key, value] of Object.entries(detail.css)) {
-          const uniformName = key.replace('--czap-', 'u_').replace(/-/g, '_');
+          if (!key.startsWith('--czap-')) continue;
+          // Canonical GLSL identifier (matches the compiler's uniform declarations
+          // via the shared @czap/core glslIdent — not a partial --czap-→u_ replace).
+          const uniformName = glslIdent(key.slice('--czap-'.length));
           const loc = uniforms.get(uniformName);
           if (loc && typeof value === 'string') {
             const num = parseFloat(value);

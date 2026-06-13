@@ -71,11 +71,20 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   assert(existsSync(DIST_DIR), 'dist/ directory exists after astro build');
-  const workerEntry = resolve(DIST_DIR, 'server', 'entry.mjs');
-  const legacyWorkerDir = resolve(DIST_DIR, '_worker.js');
+  // @astrojs/cloudflare emits the SSR worker entry under dist/server/ —
+  // `index.mjs` in v13+, `entry.mjs` in older versions, or a `_worker.js`
+  // bundle in even older layouts. `wrangler.json` is the deployment descriptor
+  // the adapter always writes for a Workers SSR build, so it is the most
+  // version-stable marker.
+  const ssrOutputs = [
+    resolve(DIST_DIR, 'server', 'index.mjs'),
+    resolve(DIST_DIR, 'server', 'entry.mjs'),
+    resolve(DIST_DIR, 'server', 'wrangler.json'),
+    resolve(DIST_DIR, '_worker.js'),
+  ];
   assert(
-    existsSync(workerEntry) || existsSync(legacyWorkerDir),
-    'dist/server/entry.mjs or dist/_worker.js exists (Workers SSR output)',
+    ssrOutputs.some((p) => existsSync(p)),
+    'dist/server/index.mjs (or entry.mjs / wrangler.json / _worker.js) exists (Workers SSR output)',
   );
   assert(
     anyFileContains(DIST_DIR, '.html', 'data-czap-boundary') ||

@@ -8,7 +8,7 @@
 
 > **isZap**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:259](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L259)
+Defined in: [core/src/index.ts:313](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L313)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Zap](../namespaces/Zap/README.md).
 

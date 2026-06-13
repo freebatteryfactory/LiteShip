@@ -1,0 +1,17 @@
+[**LiteShip**](../../../README.md)
+
+***
+
+[LiteShip](../../../modules.md) / [core/src](../README.md) / PROJECTION\_KEYS\_SOURCE
+
+# Variable: PROJECTION\_KEYS\_SOURCE
+
+> `const` **PROJECTION\_KEYS\_SOURCE**: "/\*\*\n \* Per-quantizer output keys, matching @czap/core projectionKeys / glslIdent.\n \* @param \{string\} name\n \* @returns \{\{ cssKey: string, glslKey: string, ariaKey: string \}\}\n \*/\nfunction projectionKeys(name) \{\n  const snake = name.replace(/-/g, \"\_\").replace(/(\[a-z0-9\])(\[A-Z\])/g, \"$1\_$2\").toLowerCase();\n  return \{ cssKey: \"--czap-\" + name, glslKey: \"u\_\" + snake, ariaKey: \"data-czap-\" + name \};\n\}"
+
+Defined in: [core/src/projection.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/projection.ts#L63)
+
+Worker-blob twin of [projectionKeys](../functions/projectionKeys.md) as an inlinable JavaScript source
+string (classic-worker scope, no ES imports). The worker/render blob scripts
+interpolate this so they cannot drift from the core convention. Must stay
+byte-equivalent to [projectionKeys](../functions/projectionKeys.md); the projection parity test executes
+it via `new Function(...)` and asserts agreement.

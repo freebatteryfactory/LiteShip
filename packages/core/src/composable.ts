@@ -16,8 +16,7 @@ import { Token as TokenNS } from './token.js';
 import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
-import { fnv1aBytes } from './fnv.js';
-import { CanonicalCbor } from './cbor.js';
+import { contentAddressOf } from './content-address.js';
 import { CzapValidationError } from './validation-error.js';
 import { Effect } from 'effect';
 
@@ -57,39 +56,10 @@ interface ComposableFactory {
 }
 
 function makeEntityId(components: EntityComponents): ContentAddress {
-  const canonical = canonicalizeForAddress(components);
-  // CUT B1: identity is minted through the one canonical encoder (CanonicalCbor,
-  // always-float64), never cborg (smallest-float) — the two diverge on
-  // float16-exact values, which silently forked QuantizerConfig/EntityId ids.
-  return fnv1aBytes(CanonicalCbor.encode(canonical));
-}
-
-function canonicalizeForAddress(value: unknown): unknown {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((entry) => {
-      const canonical = canonicalizeForAddress(entry);
-      return canonical === undefined ? null : canonical;
-    });
-  }
-
-  if (typeof value === 'object') {
-    const entries = Object.entries(value)
-      .filter(([, entry]) => entry !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, entry]) => [key, canonicalizeForAddress(entry)]);
-
-    return Object.fromEntries(entries);
-  }
-
-  return String(value);
+  // Identity routes through the one shared content-addressing kernel
+  // (canonicalize → CanonicalCbor → fnv1a, CUT B1) so EntityId, BoundaryDef.id,
+  // and DocumentGraph ids cannot diverge.
+  return contentAddressOf(components);
 }
 
 function _make<T extends EntityComponents>(components: T): ComposableEntity<T> {

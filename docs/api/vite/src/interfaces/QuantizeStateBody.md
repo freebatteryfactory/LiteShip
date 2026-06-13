@@ -14,6 +14,19 @@ nested per-selector rules (the adaptive per-element form).
 
 ## Properties
 
+### ariaAttrs?
+
+> `readonly` `optional` **ariaAttrs?**: `Record`\<`string`, `string`\>
+
+Defined in: [vite/src/css-quantize.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L54)
+
+Authored per-state ARIA/data attributes from a nested `@aria { … }`
+segment (e.g. `aria-expanded: false; role: button`). Quotes are stripped.
+Validated downstream by `ARIACompiler` against `BoundaryAttribute.isAllowedKey`
+(`aria-*` / `role`). Absent when the state declares no `@aria` block.
+
+***
+
 ### bareProps
 
 > `readonly` **bareProps**: `Record`\<`string`, `string`\>

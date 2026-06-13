@@ -10,6 +10,7 @@
  */
 
 import type { Boundary, StateUnion } from '@czap/core';
+import { glslIdent } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -79,14 +80,11 @@ export interface GLSLCompileResult {
 
 /**
  * Convert a JS camelCase or kebab-case name to a GLSL-friendly uniform name.
- * Prefixes with 'u_' and converts to snake_case.
+ * Delegates to the shared {@link glslIdent} in `@czap/core` so the build-time
+ * uniform declarations and the runtime projection vocabulary cannot diverge.
  */
 function toUniformName(key: string): string {
-  const snake = key
-    .replace(/-/g, '_')
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .toLowerCase();
-  return `u_${snake}`;
+  return glslIdent(key);
 }
 
 /**

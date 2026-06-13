@@ -18,12 +18,12 @@ describe('examples.intro scene capsule', () => {
     expect(compiled.trackSpawns.length).toBe(6);
   });
 
-  it('runtime spawns 6 entities and registers 6 systems', async () => {
+  it('runtime spawns 6 entities and registers 7 systems', async () => {
     const compiled = compileIntro();
     const handle = await SceneRuntime.build(compiled);
     try {
       expect(handle.entitySpawnCount).toBe(6);
-      expect(handle.systemsRegistered).toBe(6);
+      expect(handle.systemsRegistered).toBe(7);
       const entities = await Effect.runPromise(handle.world.query('trackId'));
       expect(entities.length).toBe(6);
     } finally {

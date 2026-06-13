@@ -132,12 +132,14 @@ describe('evaluate() unknown previousState', () => {
       const result = evaluate(boundary, 800, 'medium' as unknown as 'md');
 
       expect(result.crossed).toBe(true);
+      // Phase-0 consolidation: the canonical evaluator (and this diagnostic) now
+      // live in @czap/core; `evaluate` re-exports `Boundary.evaluateResult`.
       expect(events).toEqual([
         expect.objectContaining({
-          source: 'czap/quantizer',
+          source: 'czap/core',
           code: 'unknown-previous-state',
           message:
-            'evaluate(): previousState "medium" is not a state of boundary "width" (states: sm, md, lg); ' +
+            'evaluateResult(): previousState "medium" is not a state of boundary "width" (states: sm, md, lg); ' +
             'treating as a crossing. Check that the state came from this boundary.',
         }),
       ]);

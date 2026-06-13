@@ -33,7 +33,26 @@ import { satelliteAttrs, type SatelliteProps } from './Satellite.js';
 
 export interface Props extends SatelliteProps {}
 
-const attrs = satelliteAttrs(Astro.props);
+// Have-cake join: authored `@aria` lives in CSS and is compiled into the build
+// manifest keyed by the boundary's content address. The satellite shares that
+// address, so we resolve the boundary's authored ARIA here — zero extra
+// authoring. Guarded: outside the integration (no virtual module), or when the
+// caller already passed `aria`, this is a no-op and `satelliteAttrs` still works.
+let resolvedAria = Astro.props.aria;
+if (!resolvedAria && Astro.props.boundary) {
+  try {
+    const { boundaries } = (await import('virtual:czap/boundaries')) as {
+      boundaries: Record<string, { id: string; outputs: ReadonlyArray<{ aria?: Record<string, Record<string, string>> }> }>;
+    };
+    const entry = Object.values(boundaries).find((e) => e.id === Astro.props.boundary!.id);
+    resolvedAria = entry?.outputs.find((o) => o.aria)?.aria;
+  } catch {
+    // virtual:czap/boundaries unavailable (e.g. rendered outside the czap
+    // integration) — authored ARIA can still be supplied via the `aria` prop.
+  }
+}
+
+const attrs = satelliteAttrs({ ...Astro.props, ...(resolvedAria ? { aria: resolvedAria } : {}) });
 ---
 
 <div {...attrs}>

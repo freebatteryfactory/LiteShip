@@ -36,6 +36,9 @@ importers:
       '@czap/remotion':
         specifier: workspace:*
         version: link:packages/remotion
+      '@czap/stage':
+        specifier: workspace:*
+        version: link:packages/stage
       '@czap/vite':
         specifier: workspace:*
         version: link:packages/vite
@@ -569,6 +572,24 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      effect:
+        specifier: '>=4.0.0-beta.0'
+        version: 4.0.0-beta.32
+
+  packages/stage:
+    dependencies:
+      '@czap/astro':
+        specifier: workspace:*
+        version: link:../astro
+      '@czap/compiler':
+        specifier: workspace:*
+        version: link:../compiler
+      '@czap/core':
+        specifier: workspace:*
+        version: link:../core
+      '@czap/web':
+        specifier: workspace:*
+        version: link:../web
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32

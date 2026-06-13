@@ -40,6 +40,7 @@ export type {
   StateUnion,
   OutputsFor,
   BoundaryCrossing,
+  EvaluateResult,
   EffectValue,
   EffectError,
   RequireAtLeastOne,
@@ -53,6 +54,16 @@ export { tupleMap } from './tuple.js';
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
+// The single f32-canonical state-index kernel and its worker-blob twin string.
+// `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
+// startup path (@czap/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`
+// is the inlinable mirror the worker/render blob scripts embed.
+export { rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from './boundary-f32.js';
+// Projection vocabulary — the single home of per-quantizer output key naming
+// (CSS custom property / GLSL uniform / ARIA attribute). `glslIdent` is shared
+// with @czap/compiler's GLSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
+export { projectionKeys, glslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
+export type { ProjectionKeys } from './projection.js';
 // Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
 // @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).
 export { BoundaryAttribute } from './boundary-attribute.js';
@@ -163,6 +174,13 @@ export { Op } from './op.js';
 export type { CapLevel, CapSet } from './caps.js';
 export { Cap } from './caps.js';
 
+// Escalation chooser (P5c) — the READER of PolicyNode (P2). Picks the minimal
+// CapLevel rung a policy admits on a runtime site, gated by site/budgets/grants
+// and the locally-encoded CapLevel↔target admissibility table (no quantizer
+// import — that would close a core→quantizer cycle).
+export { chooseRung } from './escalation.js';
+export type { RungChoice, EscalationResult } from './escalation.js';
+
 // HLC
 export { HLC } from './hlc.js';
 
@@ -183,6 +201,42 @@ export { DAG } from './dag.js';
 // Plan
 export { Plan } from './plan.js';
 export type { OpType, EdgeType } from './plan.js';
+
+// DocumentGraph — the keystone IR (P2). Type (document-graph.ts) + namespace-object
+// value (document-graph-address.ts) merge into one `DocumentGraph` symbol, the
+// ADR-0001 pattern. The addressing kernel is the one mint site for node + graph ids.
+export type {
+  DocumentGraph,
+  DocumentGraphNode,
+  DocumentGraphEdge,
+  NodeFamily,
+  RuntimeSite,
+  SignalNode,
+  EntityNode,
+  ComponentNode,
+  PoseNode,
+  TransitionNode,
+  ProjectionNode,
+  PolicyNode,
+  ExportNode,
+} from './document-graph.js';
+// The DocumentGraph kernel — seal (mint ids), validate, and linearize (reused
+// from the Plan kernel). `addressNode`/`addressDocumentGraph` stay module-local
+// (sealNode/sealGraph wrap them; in-core consumers import them by relative path).
+export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-graph-address.js';
+// The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
+// shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
+export { contentAddressOf } from './content-address.js';
+
+// ── GraphPatch — typed graph mutation + structural differ (P5b) ─────────────
+// Tagged-delta over DocumentGraph: propose/apply (re-address via sealGraph) /
+// preview / validate / diff (round-trips) / receipt / forkOf. The interface +
+// namespace-object value merge into one `GraphPatch` symbol (ADR-0001), exactly
+// like `Plan`. Kept in a small block so a 3-way merge with sibling phases editing
+// this region is trivial.
+export { GraphPatch } from './graph-patch.js';
+export type { PatchOp, NodePatchOp, EdgePatchOp } from './graph-patch.js';
+// ── end GraphPatch (P5b) ────────────────────────────────────────────────────
 
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
@@ -286,6 +340,10 @@ export type { CapsuleDef } from './assembly.js';
 export { boundaryEvaluateCapsule } from './capsules/boundary-evaluate.js';
 export { tokenBufferCapsule } from './capsules/token-buffer.js';
 export { canonicalCborCapsule } from './capsules/canonical-cbor.js';
+// The strict decoder capsule (P5a) — the encoder's round-trip peer. Exported
+// here so it registers in the live `getCapsuleCatalog()` alongside the encoder
+// (the reader the encoder's content-addressed bytes have lacked).
+export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and

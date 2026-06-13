@@ -74,6 +74,38 @@ const QUANTIZE_CSS = `
 `;
 
 describe('collectBoundaryManifest', () => {
+  test('@aria blocks compile into CompiledOutputs.aria via the dispatch caster', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+  compact {
+    --gap: 8px;
+    @aria { aria-expanded: "false"; }
+  }
+  wide {
+    --gap: 24px;
+    @aria { aria-expanded: "true"; }
+  }
+}
+`,
+    );
+
+    const manifest = await collectBoundaryManifest(root);
+    const entry = manifest['viewport']!;
+    // ARIA is tier-invariant, so the authored stateAttributes ride every pooled
+    // output that carries them — fully keyed by ARIACompiler.
+    const withAria = entry.outputs.find((o) => o.aria);
+    expect(withAria?.aria).toEqual({
+      compact: { 'aria-expanded': 'false' },
+      wide: { 'aria-expanded': 'true' },
+    });
+  });
+
   test('derives entries with minted ids and full tier-grid outputs from boundary modules + @quantize CSS', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

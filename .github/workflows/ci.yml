@@ -125,6 +125,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Build the TS workspace so the vitest config can load: its alias setup
+      # imports `@czap/core` config → `cbor.ts` → `@czap/canonical`, whose
+      # config-load resolution needs the package's `dist` (the `development→src`
+      # export condition is not honored when the config bundle is built). The
+      # WASM kernel is still rebuilt from Rust above — nothing prebuilt is trusted.
+      - run: pnpm run build
       - name: Artifact must exist — otherwise the parity suite self-skips
         run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
       - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts

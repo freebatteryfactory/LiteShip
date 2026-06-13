@@ -27,12 +27,19 @@ export interface KVNamespace {
 }
 
 /**
- * Precompiled CSS outputs for a single boundary at a given tier.
+ * Precompiled outputs for a single boundary at a given tier.
  */
 export interface CompiledOutputs {
   readonly css: string;
   readonly propertyRegistrations: string;
   readonly containerQueries: string;
+  /**
+   * Authored per-state ARIA/data attributes (`@aria` blocks), keyed by state
+   * name then attribute (`ARIACompileResult.stateAttributes`). Tier-invariant.
+   * Absent when the boundary declares no `@aria` — most boundaries. The runtime
+   * resolves `aria[currentState]` so authored attributes update on crossings.
+   */
+  readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /**
@@ -181,10 +188,14 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         'propertyRegistrations' in parsed &&
         'containerQueries' in parsed
       ) {
+        const aria = (parsed as { aria?: unknown }).aria;
         return {
           css: String(parsed.css),
           propertyRegistrations: String(parsed.propertyRegistrations),
           containerQueries: String(parsed.containerQueries),
+          ...(typeof aria === 'object' && aria !== null
+            ? { aria: aria as Readonly<Record<string, Readonly<Record<string, string>>>> }
+            : {}),
         };
       }
 
@@ -211,6 +222,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         css: outputs.css,
         propertyRegistrations: outputs.propertyRegistrations,
         containerQueries: outputs.containerQueries,
+        ...(outputs.aria ? { aria: outputs.aria } : {}),
       });
 
       await kv.put(key, value, ttl !== undefined ? { expirationTtl: ttl } : undefined);

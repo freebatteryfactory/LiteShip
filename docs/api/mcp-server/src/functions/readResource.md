@@ -8,7 +8,7 @@
 
 > **readResource**(`uri`): [`McpResourceContents`](../interfaces/McpResourceContents.md)
 
-Defined in: [mcp-server/src/resources.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L114)
+Defined in: [mcp-server/src/resources.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L125)
 
 Read one resource by exact URI. Throws [ResourceNotFoundError](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts) (→ -32002) for an unknown URI.
 

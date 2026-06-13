@@ -8,7 +8,7 @@
 
 > **AddressedDigest**: `object`
 
-Defined in: [core/src/addressed-digest.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/addressed-digest.ts#L15)
+Defined in: [core/src/addressed-digest.ts:14](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/addressed-digest.ts#L14)
 
 Namespace surface: call [AddressedDigest.of](#of) to mint a digest pair from raw bytes.
 
@@ -16,9 +16,9 @@ Namespace surface: call [AddressedDigest.of](#of) to mint a digest pair from raw
 
 ### of
 
-> **of**: (`bytes`, `algo`) => `Effect`\<`AddressedDigest`, `Error`\> = `AddressedDigestOf`
+> **of**: (`bytes`, `algo`) => `AddressedDigest` = `addressedDigestOfCore`
 
-Derive an AddressedDigest from raw bytes. Supports `sha256` and `blake3`.
+Derive an AddressedDigest from raw bytes (sync).
 
 #### Parameters
 
@@ -32,4 +32,4 @@ Derive an AddressedDigest from raw bytes. Supports `sha256` and `blake3`.
 
 #### Returns
 
-`Effect`\<`AddressedDigest`, `Error`\>
+`AddressedDigest`

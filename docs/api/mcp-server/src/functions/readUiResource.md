@@ -8,7 +8,7 @@
 
 > **readUiResource**(`uri`): [`McpUiResourceContents`](../interfaces/McpUiResourceContents.md)
 
-Defined in: [mcp-server/src/ui-resources.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L115)
+Defined in: [mcp-server/src/ui-resources.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L127)
 
 Read one UI resource by exact `ui://` URI. Unknown URI → [ResourceNotFoundError](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts) (→ -32002), as for D3.
 

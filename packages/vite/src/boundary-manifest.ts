@@ -20,7 +20,7 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Diagnostics } from '@czap/core';
 import type { Boundary } from '@czap/core';
-import { CSSCompiler } from '@czap/compiler';
+import { CSSCompiler, dispatch } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
 import {
@@ -199,8 +199,31 @@ function compileOutputsByTier(
   // container).
   const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
   const containment = viewportQueryAxis(boundary.input) !== null ? viewportContainmentRule([containerName]) : null;
-  const compiled = CSSCompiler.compile(boundary, cssStates).raw;
+  // Route the CSS cast through the single build caster (`dispatch`) rather than
+  // a direct compile call — the same multiplexer the ARIA cast below uses.
+  const cssCast = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates });
+  const compiled = cssCast.target === 'css' ? cssCast.result.raw : '';
   const containerQueries = containment ? `${containment}\n\n${compiled}` : compiled;
+
+  // ARIA cast (tier-invariant): collect authored per-state `@aria` attributes
+  // and run the same caster. `stateAttributes` is fully keyed by ARIACompiler
+  // (states without `@aria` get `{}`), so the runtime can resolve any state.
+  const ariaStates = Object.fromEntries(
+    Object.entries(states)
+      .filter(([, body]) => body.ariaAttrs && Object.keys(body.ariaAttrs).length > 0)
+      .map(([stateName, body]) => [stateName, body.ariaAttrs as Record<string, string>]),
+  );
+  let aria: Readonly<Record<string, Readonly<Record<string, string>>>> | undefined;
+  if (Object.keys(ariaStates).length > 0) {
+    const ariaCast = dispatch({
+      _tag: 'ARIACompiler',
+      boundary,
+      states: { states: ariaStates, currentState: boundary.states[0] },
+    });
+    if (ariaCast.target === 'aria') {
+      aria = ariaCast.result.stateAttributes;
+    }
+  }
   // Property registrations scan custom-property names/syntax only, so the
   // nested-rule props flatten into the same per-state map as bareProps.
   const flatStates = Object.fromEntries(
@@ -215,7 +238,12 @@ function compileOutputsByTier(
   for (const motionTier of MOTION_TIERS) {
     const registrations = motionTier === 'none' ? '' : propertyRegistrations;
     const css = [registrations, containerQueries].filter((part) => part.length > 0).join('\n\n');
-    const outputs: CompiledOutputs = { css, propertyRegistrations: registrations, containerQueries };
+    const outputs: CompiledOutputs = {
+      css,
+      propertyRegistrations: registrations,
+      containerQueries,
+      ...(aria ? { aria } : {}),
+    };
     for (const designTier of DESIGN_TIERS) {
       outputsByTier[tierKey({ motionTier, designTier })] = outputs;
     }
@@ -355,9 +383,18 @@ export async function collectBoundaryManifest(
             }
           }
         }
+        // Authored `@aria` attributes conflict the same way across files.
+        for (const [prop, value] of Object.entries(body.ariaAttrs ?? {})) {
+          const priorValue = prior?.ariaAttrs?.[prop];
+          if (priorValue !== undefined && priorValue !== value) {
+            warnConflict('@aria', prop, priorValue, value);
+          }
+        }
+        const mergedAria = { ...prior?.ariaAttrs, ...body.ariaAttrs };
         merged[stateName] = {
           bareProps: { ...prior?.bareProps, ...body.bareProps },
           rules: [...(prior?.rules ?? []), ...body.rules],
+          ...(Object.keys(mergedAria).length > 0 ? { ariaAttrs: mergedAria } : {}),
         };
       }
       statesByBoundary.set(block.boundaryName, merged);
