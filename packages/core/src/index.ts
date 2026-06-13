@@ -340,6 +340,10 @@ export type { CapsuleDef } from './assembly.js';
 export { boundaryEvaluateCapsule } from './capsules/boundary-evaluate.js';
 export { tokenBufferCapsule } from './capsules/token-buffer.js';
 export { canonicalCborCapsule } from './capsules/canonical-cbor.js';
+// The strict decoder capsule (P5a) — the encoder's round-trip peer. Exported
+// here so it registers in the live `getCapsuleCatalog()` alongside the encoder
+// (the reader the encoder's content-addressed bytes have lacked).
+export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and

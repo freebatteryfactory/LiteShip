@@ -233,6 +233,7 @@ const STANDALONE_OBJECTS = [
   'boundaryEvaluateCapsule',
   'tokenBufferCapsule',
   'canonicalCborCapsule',
+  'canonicalCborDecodeCapsule',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────
