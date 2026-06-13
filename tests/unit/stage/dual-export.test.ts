@@ -101,6 +101,39 @@ function buildGraph(): DocumentGraph {
 }
 
 describe('dualExport — one graph, two casts, one source (P4)', () => {
+  test('a css projection over a stateless component fails with a clear message (boundaryOf guard)', () => {
+    const emptyComponent = sealNode<ComponentNode>({
+      _tag: 'DocGraphComponentNode',
+      _version: 1,
+      family: 'component',
+      id: '' as ContentAddress,
+      meta,
+      name: 'empty',
+      thresholds: [],
+      states: [],
+    });
+    const projection = sealNode<ProjectionNode>({
+      _tag: 'DocGraphProjectionNode',
+      _version: 1,
+      family: 'projection',
+      id: '' as ContentAddress,
+      meta,
+      target: 'css',
+      sourceRef: emptyComponent.id,
+      keys: projectionKeys('empty'),
+      resultDigest: AddressedDigest.of(CanonicalCbor.encode({ target: 'css', name: 'empty' })),
+    });
+    const graph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [emptyComponent, projection],
+      edges: [],
+    });
+    expect(() => exportAstroPage(graph)).toThrow(/no states\/thresholds/);
+  });
+
+
   test('both casts reference the same source projection', async () => {
     const graph = buildGraph();
     const projectionId = graph.nodes.find((n) => n.family === 'projection')!.id;
