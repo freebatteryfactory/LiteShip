@@ -54,9 +54,46 @@ import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // `VideoRenderer.frames()` it consumes; the artifact digest below content-
 // addresses the real per-frame `CompositeState` snapshots that pipeline would
 // encode, so the digest is a true content address of the produced frames —
-// only the byte-encode of the codec is the deferred seam (it does not change
-// what the frames ARE).
+// the byte-encode of the codec is the INJECTED seam (browser: WebCodecs via
+// `captureVideo`; node: the ffmpeg `FrameEncoder` adapter in `./ffmpeg-encoder`).
 import type { captureVideo } from '@czap/web';
+
+// ---------------------------------------------------------------------------
+// FrameEncoder — the injectable byte-encode seam (two real backends, one shape)
+// ---------------------------------------------------------------------------
+
+/** The deterministic spec a {@link FrameEncoder} encodes the frames at. */
+export interface VideoEncodeConfig {
+  readonly fps: number;
+  readonly width: number;
+  readonly height: number;
+  readonly durationMs: number;
+}
+
+/** The real encoded video bytes a {@link FrameEncoder} produces. */
+export interface EncodedVideo {
+  /** The encoded container bytes (e.g. a real ISO-BMFF/MP4 byte stream). */
+  readonly bytes: Uint8Array;
+  /** Codec id of the encode (e.g. `'h264'`, `'avc1.42001E'`). */
+  readonly codec: string;
+  /** Container/MIME of the bytes (e.g. `'video/mp4'`). */
+  readonly container: string;
+}
+
+/**
+ * The byte-encode seam: turn the produced per-frame {@link CompositeState}
+ * snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
+ * is INJECTED at the call site so the pure graph-walk never imports a codec:
+ *
+ *  - browser/worker: WebCodecs over an OffscreenCanvas (`@czap/web` capture);
+ *  - node/headless: the ffmpeg child-process adapter in `./ffmpeg-encoder`.
+ *
+ * Both are real backends of this one shape; neither lives in `dual-export.ts`.
+ */
+export type FrameEncoder = (
+  frames: readonly CompositeState[],
+  config: VideoEncodeConfig,
+) => Promise<EncodedVideo>;
 
 // ---------------------------------------------------------------------------
 // Graph walk helpers
@@ -199,45 +236,24 @@ function poseQuantizer(boundary: Boundary.Shape, initialState: string): Quantize
   };
 }
 
+/** The fixed deterministic spec the video cast renders at. */
+const VIDEO_CONFIG = { fps: 4, width: 16, height: 16, durationMs: 1000 as Millis } as const;
+
 /**
- * Cast the graph's Pose/Projection-derived state to a deterministic video.
+ * Produce the REAL per-frame {@link CompositeState} snapshots for the graph's
+ * video cast. Builds the REAL Compositor (one pose-parked quantizer per pose)
+ * and the REAL VideoRenderer over it; the renderer owns the fixed-step
+ * schedule/total-frame count. We drive its compositor + clock directly (its
+ * `frames()` async generator computes synchronously) so this stays sync and
+ * headless: each frame is the genuine compositor output VideoRenderer yields.
  *
- * Builds a {@link Compositor} from the graph's css component boundary (one
- * quantizer per pose, parked on that pose's state), drives the REAL
- * `VideoRenderer.make(...).frames()` over it at a fixed step, and collects each
- * frame's `CompositeState`. The artifact digest content-addresses the real
- * `VideoConfig` spec + the produced per-frame states through the core kernel.
- *
- * The byte-level codec encode (`captureVideo`, WebCodecs) is the single deferred
- * seam — it cannot run headless — but it would encode EXACTLY these frames, so
- * the digest is an honest content address of what the video IS.
+ * This is the SAME frame stream both byte-encoders consume — the browser
+ * WebCodecs `captureVideo` and the node ffmpeg {@link FrameEncoder}. They
+ * change the BYTES, never WHAT the frames are.
  */
-export function exportVideo(
-  graph: DocumentGraph,
-  // The codec byte-encode seam: in a browser/worker this is the real
-  // `captureVideo` (WebCodecs over an OffscreenCanvas). Left undefined here
-  // because OffscreenCanvas/WebCodecs are absent in a headless test env; the
-  // artifact digest content-addresses the produced frames regardless, so the
-  // proof does not depend on the codec running. Typed against the real
-  // `captureVideo` so a caller can wire it without a shape mismatch.
-  encode?: typeof captureVideo,
-): ExportNode {
-  void encode;
+function produceVideoFrames(graph: DocumentGraph): CompositeState[] {
   const projections = cssProjections(graph);
-  const sourceRefs: ContentAddress[] = projections.map((p) => p.id);
-
-  const config = { fps: 4, width: 16, height: 16, durationMs: 1000 as Millis };
-
-  // Build the REAL Compositor (one pose-parked quantizer per pose) and the REAL
-  // VideoRenderer over it; the renderer owns the fixed-step schedule/total-frame
-  // count. We drive its compositor + clock directly (its `frames()` async
-  // generator computes synchronously) so the cast stays sync and headless: each
-  // frame's `CompositeState` is the genuine compositor output VideoRenderer
-  // would yield. `captureVideo` (imported, type-only) is the codec byte-encode
-  // of exactly these frames — the lone deferred seam, since OffscreenCanvas /
-  // WebCodecs are absent in a headless test env (see exportVideo's doc + the
-  // capture pipeline). It does not change WHAT the frames are.
-  const frames: CompositeState[] = Effect.runSync(
+  return Effect.runSync(
     Effect.scoped(
       Effect.gen(function* () {
         const compositor = yield* Compositor.create();
@@ -250,7 +266,7 @@ export function exportVideo(
             yield* compositor.add(`${component.name}:${pose.state}`, poseQuantizer(boundary, pose.state as string));
           }
         }
-        const renderer = VideoRenderer.make(config, compositor);
+        const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
         const collected: CompositeState[] = [];
         for (let i = 0; i < renderer.totalFrames; i++) {
           renderer.scheduler.step();
@@ -260,16 +276,51 @@ export function exportVideo(
       }),
     ),
   );
+}
 
-  // Content-address the real spec + produced frame snapshots through the kernel.
-  const artifactDigest: AddressedDigest = AddressedDigestNS.of(
+/** Content-address the frame-level video artifact (spec + frame snapshots). */
+function videoFrameDigest(frames: readonly CompositeState[], encodedBytes?: AddressedDigest): AddressedDigest {
+  return AddressedDigestNS.of(
     CanonicalCbor.encode({
       _tag: 'VideoArtifact',
       _version: 1,
-      config: { fps: config.fps, width: config.width, height: config.height, durationMs: 1000 },
+      config: {
+        fps: VIDEO_CONFIG.fps,
+        width: VIDEO_CONFIG.width,
+        height: VIDEO_CONFIG.height,
+        durationMs: 1000,
+      },
       frames: frames.map((state) => ({ discrete: state.discrete, css: state.outputs.css })),
+      // When a real byte-encode ran, fold its byte digest into the address so
+      // the export node is a content address of the ENCODED video, not only the
+      // frames. Absent (frame-digest-only) when no encoder was injected.
+      encodedBytes: encodedBytes ? encodedBytes.integrity_digest : null,
     }),
   );
+}
+
+/**
+ * Cast the graph's Pose/Projection-derived state to a deterministic video,
+ * content-addressing the produced per-frame `CompositeState` snapshots (NOT the
+ * encoded bytes). For the REAL byte-encode use {@link exportVideoEncoded} with
+ * an injected {@link FrameEncoder} (headless: the ffmpeg adapter in
+ * `./ffmpeg-encoder`; browser: WebCodecs `captureVideo`). This frame-level cast
+ * stays sync + codec-free so the dual-export proof never depends on a codec.
+ */
+export function exportVideo(
+  graph: DocumentGraph,
+  // The codec byte-encode seam: in a browser/worker this is the real
+  // `captureVideo` (WebCodecs over an OffscreenCanvas). Left undefined here
+  // because OffscreenCanvas/WebCodecs are absent in a headless test env; the
+  // artifact digest content-addresses the produced frames regardless, so the
+  // proof does not depend on the codec running. Typed against the real
+  // `captureVideo` so a caller can wire it without a shape mismatch.
+  encode?: typeof captureVideo,
+): ExportNode {
+  void encode;
+  const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
+  const frames = produceVideoFrames(graph);
+  const artifactDigest = videoFrameDigest(frames);
 
   return sealNode({
     _tag: 'DocGraphExportNode',
@@ -281,6 +332,56 @@ export function exportVideo(
     sourceRefs,
     artifactDigest,
   });
+}
+
+/** The result of a REAL byte-encoded video cast: the export node + its bytes. */
+export interface EncodedVideoExport {
+  /** The sealed video {@link ExportNode}; its `artifactDigest` pins the byte digest. */
+  readonly node: ExportNode;
+  /** The real encoded video the injected {@link FrameEncoder} produced. */
+  readonly encoded: EncodedVideo;
+  /** Content address of the encoded container bytes (the mp4 byte stream). */
+  readonly bytesDigest: AddressedDigest;
+}
+
+/**
+ * Cast the graph to a video AND run a REAL byte-encode through the injected
+ * {@link FrameEncoder}. Produces the same frame stream as {@link exportVideo},
+ * hands it to the encoder (ffmpeg headless, or WebCodecs in a browser wrapper),
+ * and folds the encoded bytes' content address into the export node's
+ * `artifactDigest`. Stage's core imports no codec — `encode` is injected.
+ *
+ * This is the headless byte path made HONEST: the returned `encoded.bytes` are
+ * a real container (a validatable MP4 when the ffmpeg adapter is used), and the
+ * node's digest is a content address OF those bytes, not just the frames.
+ */
+export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEncoder): Promise<EncodedVideoExport> {
+  const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
+  const frames = produceVideoFrames(graph);
+
+  const encoded = await encode(frames, {
+    fps: VIDEO_CONFIG.fps,
+    width: VIDEO_CONFIG.width,
+    height: VIDEO_CONFIG.height,
+    durationMs: 1000,
+  });
+
+  // Content-address the REAL encoded bytes, then pin that into the node digest.
+  const bytesDigest = AddressedDigestNS.of(encoded.bytes);
+  const artifactDigest = videoFrameDigest(frames, bytesDigest);
+
+  const node = sealNode<ExportNode>({
+    _tag: 'DocGraphExportNode',
+    _version: 1,
+    family: 'export',
+    id: '' as ContentAddress,
+    meta: graph.meta,
+    carrier: 'video',
+    sourceRefs,
+    artifactDigest,
+  });
+
+  return { node, encoded, bytesDigest };
 }
 
 // ---------------------------------------------------------------------------

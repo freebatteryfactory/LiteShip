@@ -512,6 +512,9 @@ importers:
       '@czap/scene':
         specifier: workspace:*
         version: link:../scene
+      '@czap/stage':
+        specifier: workspace:*
+        version: link:../stage
       '@czap/vite':
         specifier: workspace:*
         version: link:../vite

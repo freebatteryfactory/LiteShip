@@ -232,9 +232,11 @@ export default tseslint.config(
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)
       'packages/command/src/host/ffmpeg-probe.ts', // reason: spawnSync libx264 availability probe — sync, shared by doctor + tests
+      'packages/stage/src/ffmpeg-encoder.ts', // reason: spawn('ffmpeg') raw stdin frame-pipe + spawnSync libx264 probe — the headless byte-encode backend of the stage FrameEncoder seam (B); same raw-stdio case as command/host/ffmpeg.ts, kept off @czap/command to respect stage's topology allowlist
       'packages/cli/src/commands/gauntlet.ts', // reason: spawnSync('pnpm run gauntlet:full', { shell: true }) — needs shell
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes
+      'tests/unit/stage/ffmpeg-encoder.test.ts', // reason: execFileSync('ffprobe') validates the encoded MP4 byte stream (sync, no code under test)
       // (4) Spike file scheduled for deletion in Task 21 of subprocess-coverage plan.
       'tests/scratch/spike-subprocess-coverage.test.ts',
     ],
