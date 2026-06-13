@@ -240,6 +240,15 @@ function poseQuantizer(boundary: Boundary.Shape, initialState: string): Quantize
 const VIDEO_CONFIG = { fps: 4, width: 16, height: 16, durationMs: 1000 as Millis } as const;
 
 /**
+ * A produced video frame: the compositor snapshot PLUS the per-track discrete
+ * states the swept signal actually crossed. `compute()` reflects only the parked
+ * pose, so the evaluated crossing track is captured here and folded into the
+ * artifact digest — a graph that CAN cross addresses differently than one that
+ * cannot. The byte-encoders consume `composite` only.
+ */
+type VideoFrame = { readonly composite: CompositeState; readonly posed: Record<string, string> };
+
+/**
  * Produce the REAL per-frame {@link CompositeState} snapshots for the graph's
  * video cast. Builds the REAL Compositor (one pose-parked quantizer per pose)
  * and the REAL VideoRenderer over it; the renderer owns the fixed-step
@@ -251,26 +260,58 @@ const VIDEO_CONFIG = { fps: 4, width: 16, height: 16, durationMs: 1000 as Millis
  * WebCodecs `captureVideo` and the node ffmpeg {@link FrameEncoder}. They
  * change the BYTES, never WHAT the frames are.
  */
-function produceVideoFrames(graph: DocumentGraph): CompositeState[] {
+function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
   const projections = cssProjections(graph);
   return Effect.runSync(
     Effect.scoped(
       Effect.gen(function* () {
         const compositor = yield* Compositor.create();
         const posed = poses(graph);
+        // Keep each added quantizer + its boundary so the per-frame schedule can
+        // drive `evaluate` over a swept input. A pose-parked quantizer that is
+        // never evaluated yields a frozen frame stream — a degenerate "video";
+        // driving `evaluate` across the boundary's threshold span makes the cast
+        // genuinely animate across the component's states over its duration, and
+        // folds that crossing track into the artifact digest below so the video
+        // address is a true content address of what plays, not the frozen pose.
+        // `lo`/`hi` span the boundary's threshold range. `boundaryOf` guarantees
+        // a non-empty thresholds tuple (it throws otherwise), so the endpoints
+        // are always present — no defensive fallback branch to leave uncovered.
+        const driven: { key: string; quantizer: Quantizer<Boundary.Shape>; lo: number; hi: number }[] = [];
         for (const projection of projections) {
           const component = componentFor(graph, projection.sourceRef);
           if (!component) continue;
           const boundary = boundaryOf(component);
+          const thresholds = boundary.thresholds as readonly number[];
+          const lo = thresholds[0]!;
+          const hi = thresholds[thresholds.length - 1]!;
           for (const pose of posed) {
-            yield* compositor.add(`${component.name}:${pose.state}`, poseQuantizer(boundary, pose.state as string));
+            const key = `${component.name}:${pose.state}`;
+            const quantizer = poseQuantizer(boundary, pose.state as string);
+            yield* compositor.add(key, quantizer);
+            driven.push({ key, quantizer, lo, hi });
           }
         }
         const renderer = VideoRenderer.make(VIDEO_CONFIG, compositor);
-        const collected: CompositeState[] = [];
+        // `denom` is the number of inter-frame steps; clamped to ≥1 so the sweep
+        // is well-defined for any frame count without a dead conditional branch.
+        const denom = Math.max(1, renderer.totalFrames - 1);
+        const collected: VideoFrame[] = [];
         for (let i = 0; i < renderer.totalFrames; i++) {
           renderer.scheduler.step();
-          collected.push(yield* compositor.compute());
+          // Sweep the input across the boundary's threshold span as the clock
+          // advances so each quantizer's `evaluate` re-derives its state per
+          // frame (a real boundary crossing over the video's timeline). The
+          // compositor's `compute()` reflects the parked pose-track; the
+          // evaluated crossing track is captured per-frame so the cast records
+          // BOTH what the compositor emits and the boundary states the signal
+          // actually crossed.
+          const progress = i / denom;
+          const posedFrame: Record<string, string> = {};
+          for (const { key, quantizer, lo, hi } of driven) {
+            posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
+          }
+          collected.push({ composite: yield* compositor.compute(), posed: posedFrame });
         }
         return collected;
       }),
@@ -278,8 +319,8 @@ function produceVideoFrames(graph: DocumentGraph): CompositeState[] {
   );
 }
 
-/** Content-address the frame-level video artifact (spec + frame snapshots). */
-function videoFrameDigest(frames: readonly CompositeState[], encodedBytes?: AddressedDigest): AddressedDigest {
+/** Content-address the frame-level video artifact (spec + frame snapshots + crossing track). */
+function videoFrameDigest(frames: readonly VideoFrame[], encodedBytes?: AddressedDigest): AddressedDigest {
   return AddressedDigestNS.of(
     CanonicalCbor.encode({
       _tag: 'VideoArtifact',
@@ -290,7 +331,11 @@ function videoFrameDigest(frames: readonly CompositeState[], encodedBytes?: Addr
         height: VIDEO_CONFIG.height,
         durationMs: 1000,
       },
-      frames: frames.map((state) => ({ discrete: state.discrete, css: state.outputs.css })),
+      frames: frames.map((frame) => ({
+        discrete: frame.composite.discrete,
+        css: frame.composite.outputs.css,
+        posed: frame.posed,
+      })),
       // When a real byte-encode ran, fold its byte digest into the address so
       // the export node is a content address of the ENCODED video, not only the
       // frames. Absent (frame-digest-only) when no encoder was injected.
@@ -359,7 +404,7 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
   const sourceRefs: ContentAddress[] = cssProjections(graph).map((p) => p.id);
   const frames = produceVideoFrames(graph);
 
-  const encoded = await encode(frames, {
+  const encoded = await encode(frames.map((frame) => frame.composite), {
     fps: VIDEO_CONFIG.fps,
     width: VIDEO_CONFIG.width,
     height: VIDEO_CONFIG.height,

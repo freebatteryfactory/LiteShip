@@ -133,6 +133,70 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
     expect(() => exportAstroPage(graph)).toThrow(/no states\/thresholds/);
   });
 
+  test('a component with omitted states/thresholds also trips the boundaryOf guard', () => {
+    // states/thresholds are optional on ComponentNode; omitting them drives the
+    // `?? []` fallbacks in boundaryOf, which then throws on the empty tuple.
+    const baldComponent = sealNode<ComponentNode>({
+      _tag: 'DocGraphComponentNode',
+      _version: 1,
+      family: 'component',
+      id: '' as ContentAddress,
+      meta,
+      name: 'bald',
+    });
+    const projection = sealNode<ProjectionNode>({
+      _tag: 'DocGraphProjectionNode',
+      _version: 1,
+      family: 'projection',
+      id: '' as ContentAddress,
+      meta,
+      target: 'css',
+      sourceRef: baldComponent.id,
+      keys: projectionKeys('bald'),
+      resultDigest: AddressedDigest.of(CanonicalCbor.encode({ target: 'css', name: 'bald' })),
+    });
+    const graph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [baldComponent, projection],
+      edges: [],
+    });
+    expect(() => exportVideo(graph)).toThrow(/no states\/thresholds/);
+  });
+
+  test('a css projection whose sourceRef resolves to no component is skipped by both casts', () => {
+    // The projection points at an id that is not a ComponentNode in the graph,
+    // so `componentFor` returns undefined and both casters take the
+    // `if (!component) continue` skip path. The casts still succeed (empty).
+    const danglingRef = AddressedDigest.of(CanonicalCbor.encode({ missing: true })).display_id as ContentAddress;
+    const projection = sealNode<ProjectionNode>({
+      _tag: 'DocGraphProjectionNode',
+      _version: 1,
+      family: 'projection',
+      id: '' as ContentAddress,
+      meta,
+      target: 'css',
+      sourceRef: danglingRef,
+      keys: projectionKeys('ghost'),
+      resultDigest: AddressedDigest.of(CanonicalCbor.encode({ target: 'css', name: 'ghost' })),
+    });
+    const graph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [projection],
+      edges: [],
+    });
+    const astro = exportAstroPage(graph);
+    const video = exportVideo(graph);
+    // The projection id is still recorded as a source ref even though its
+    // component is absent (the skip happens after the ref is pushed).
+    expect(astro.sourceRefs).toContain(projection.id);
+    expect(video.sourceRefs).toContain(projection.id);
+    expect(astro.carrier).toBe('astro-page');
+    expect(video.carrier).toBe('video');
+  });
 
   test('both casts reference the same source projection', async () => {
     const graph = buildGraph();
@@ -170,6 +234,81 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
     // Determinism: re-running the same graph yields the same artifact addresses.
     expect(exportAstroPage(graph).artifactDigest.display_id).toBe(astro.artifactDigest.display_id);
     expect(exportVideo(graph).artifactDigest.display_id).toBe(video.artifactDigest.display_id);
+  });
+
+  test('the video cast drives the pose quantizer across a real boundary crossing', () => {
+    // A graph whose css component boundary spans [0, 768] mobile→desktop. The
+    // video cast sweeps its input across that span, so each frame's quantizer
+    // `evaluate(value)` re-derives the discrete state — the first frame parks at
+    // the low band, the last clears the 768 threshold into the high band. The
+    // crossing track is folded into the artifact digest, so a graph that CAN
+    // cross must produce a different video address than one that CANNOT.
+    const crossing = buildGraph();
+
+    // A degenerate single-band component: the sweep collapses to one value (lo
+    // === hi), so `evaluate` can never cross — the video is a frozen pose.
+    const flatComponent = sealNode<ComponentNode>({
+      _tag: 'DocGraphComponentNode',
+      _version: 1,
+      family: 'component',
+      id: '' as ContentAddress,
+      meta,
+      name: 'card',
+      thresholds: [0],
+      states: ['only'],
+    });
+    const flatEntity = sealNode<EntityNode>({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '' as ContentAddress,
+      meta,
+      components: [flatComponent.id],
+    });
+    const flatProjection = sealNode<ProjectionNode>({
+      _tag: 'DocGraphProjectionNode',
+      _version: 1,
+      family: 'projection',
+      id: '' as ContentAddress,
+      meta,
+      target: 'css',
+      sourceRef: flatComponent.id,
+      keys: projectionKeys('card'),
+      resultDigest: AddressedDigest.of(CanonicalCbor.encode({ target: 'css', name: 'card' })),
+    });
+    const flatPose = sealNode<PoseNode>({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '' as ContentAddress,
+      meta,
+      entityRef: flatEntity.id,
+      state: 'only',
+      bindings: { 'font-size': 14 },
+    });
+    const flatGraph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [flatComponent, flatEntity, flatProjection, flatPose],
+      edges: [
+        { from: flatEntity.id, to: flatComponent.id, type: 'seq' },
+        { from: flatComponent.id, to: flatProjection.id, type: 'seq' },
+      ],
+    });
+
+    const crossingVideo = exportVideo(crossing);
+    const flatVideo = exportVideo(flatGraph);
+
+    // The crossing track is real: a boundary the sweep traverses yields a
+    // distinct artifact address from one it cannot (proves `evaluate`'s
+    // per-frame result is load-bearing, not dead sugar).
+    expect(crossingVideo.artifactDigest.display_id).not.toBe(flatVideo.artifactDigest.display_id);
+
+    // Driving `evaluate` per frame stays deterministic — the same graph casts to
+    // the same address every run.
+    expect(exportVideo(crossing).artifactDigest.display_id).toBe(crossingVideo.artifactDigest.display_id);
+    expect(crossingVideo.artifactDigest.integrity_digest).toMatch(/^sha256:/);
   });
 
   test('sharedSourceDigest === graph.digest (the ONE source both casts derive from)', async () => {
