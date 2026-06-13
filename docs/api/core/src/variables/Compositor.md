@@ -8,7 +8,7 @@
 
 > `const` **Compositor**: `CompositorFactory`
 
-Defined in: [core/src/compositor.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L119)
+Defined in: [core/src/compositor.ts:176](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L176)
 
 Compositor — the live merge point for every attached [Quantizer](../interfaces/Quantizer.md).
 

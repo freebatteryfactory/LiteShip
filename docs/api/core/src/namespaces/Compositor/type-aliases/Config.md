@@ -8,6 +8,6 @@
 
 > **Config** = [`CompositorConfig`](../../../interfaces/CompositorConfig.md)
 
-Defined in: [core/src/compositor.ts:385](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L385)
+Defined in: [core/src/compositor.ts:486](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L486)
 
 Alias for [CompositorConfig](../../../interfaces/CompositorConfig.md).

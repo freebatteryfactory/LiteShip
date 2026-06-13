@@ -71,6 +71,21 @@ for a CSS-only shell that ships zero runtime.
 
 ***
 
+### glsl?
+
+> `readonly` `optional` **glsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
+
+Defined in: [astro/src/Satellite.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L56)
+
+Authored per-state GLSL uniform values (`@glsl` blocks) for this boundary,
+keyed by state then `u_*` uniform name. The `<Satellite>` component supplies
+this automatically via the same content-address join as `aria`; pass it
+explicitly when calling `satelliteAttrs` directly. Rides the boundary payload
+so the client resolves `glslStateUniforms[currentState]` and the GPU runtime
+updates uniforms live on every crossing — the GLSL analog of `aria`.
+
+***
+
 ### initialState?
 
 > `readonly` `optional` **initialState?**: `string`
@@ -78,3 +93,19 @@ for a CSS-only shell that ships zero runtime.
 Defined in: [astro/src/Satellite.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L31)
 
 Server-side initial state (serialised into `data-czap-state`).
+
+***
+
+### wgsl?
+
+> `readonly` `optional` **wgsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
+
+Defined in: [astro/src/Satellite.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L66)
+
+Authored per-state WGSL uniform binding values (`@wgsl` blocks) for this
+boundary, keyed by state then bare snake_case field name (e.g.
+`{ mobile: { blur_radius: 2.0 } }`). Mirrors [aria](#aria): joined onto the
+satellite from the build manifest by content address. Rides the boundary
+payload (`stateWgsl`) so the `client:gpu` WGSL runtime resolves the live
+uniform-buffer values for the current state on every crossing — never
+SSR-frozen.

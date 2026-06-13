@@ -6,7 +6,7 @@
 
 # Interface: BoundaryCache
 
-Defined in: [edge/src/kv-cache.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L49)
+Defined in: [edge/src/kv-cache.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L100)
 
 Content-addressed cache for boundary compilation results keyed by
 tier combination.
@@ -17,7 +17,7 @@ tier combination.
 
 > **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L56)
+Defined in: [edge/src/kv-cache.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L107)
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
@@ -48,7 +48,7 @@ without it, the first name's compile result would serve every name.
 
 > **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L62)
+Defined in: [edge/src/kv-cache.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L113)
 
 #### Parameters
 

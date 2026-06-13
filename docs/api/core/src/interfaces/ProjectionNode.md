@@ -108,6 +108,6 @@ Defined in: [core/src/document-graph.ts:105](https://github.com/heyoub/LiteShip/
 
 ### target
 
-> `readonly` **target**: `"css"` \| `"glsl"` \| `"aria"` \| `"wgsl"` \| `"ai"` \| `"config"` \| `"svg"`
+> `readonly` **target**: `"css"` \| `"glsl"` \| `"wgsl"` \| `"aria"` \| `"ai"` \| `"config"` \| `"svg"`
 
 Defined in: [core/src/document-graph.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L104)

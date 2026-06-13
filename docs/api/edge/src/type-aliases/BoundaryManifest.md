@@ -8,7 +8,7 @@
 
 > **BoundaryManifest** = `Readonly`\<`Record`\<`string`, [`BoundaryManifestEntry`](../interfaces/BoundaryManifestEntry.md)\>\>
 
-Defined in: [edge/src/manifest.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L189)
+Defined in: [edge/src/manifest.ts:194](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L194)
 
 Build-derived boundary manifest: boundary export name to
 [BoundaryManifestEntry](../interfaces/BoundaryManifestEntry.md). This is the value of the
