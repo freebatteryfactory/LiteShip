@@ -498,6 +498,7 @@ describe('astro shared runtime adapters', () => {
       discrete: { hero: 'tablet' },
       css: { '--czap-gap': 24 },
       glsl: { u_time: 0.5 },
+      wgsl: {},
       aria: { 'aria-busy': 'true', role: 'status' },
     });
   });
@@ -538,6 +539,7 @@ describe('astro shared runtime adapters', () => {
       discrete: {},
       css: {},
       glsl: {},
+      wgsl: {},
       aria: {},
     });
 
@@ -665,6 +667,7 @@ describe('astro shared runtime adapters', () => {
         discrete: { hero: 'compact' },
         css: { '--czap-gap': 12 },
         glsl: {},
+        wgsl: {},
         aria: { role: 'status' },
       },
     ]);

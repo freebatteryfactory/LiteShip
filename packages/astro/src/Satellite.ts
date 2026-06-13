@@ -54,6 +54,16 @@ export interface SatelliteProps {
    * updates uniforms live on every crossing — the GLSL analog of `aria`.
    */
   readonly glsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Authored per-state WGSL uniform binding values (`@wgsl` blocks) for this
+   * boundary, keyed by state then bare snake_case field name (e.g.
+   * `{ mobile: { blur_radius: 2.0 } }`). Mirrors {@link aria}: joined onto the
+   * satellite from the build manifest by content address. Rides the boundary
+   * payload (`stateWgsl`) so the `client:gpu` WGSL runtime resolves the live
+   * uniform-buffer values for the current state on every crossing — never
+   * SSR-frozen.
+   */
+  readonly wgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -89,6 +99,9 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       // Authored per-state GLSL uniforms ride alongside ARIA so the GPU runtime
       // resolves `glslStateUniforms[currentState]` live on every crossing.
       ...(props.glsl ? { glslStateUniforms: props.glsl } : {}),
+      // Authored WGSL uniform binding values ride the payload the same way, so
+      // the WGSL `client:gpu` runtime resolves the live uniform buffer per state.
+      ...(props.wgsl ? { stateWgsl: props.wgsl } : {}),
     });
     if (props.directive !== false) {
       attrs['data-czap-directive'] = props.directive ?? 'satellite';

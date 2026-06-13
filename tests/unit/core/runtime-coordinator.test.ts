@@ -11,6 +11,7 @@ describe('RuntimeCoordinator', () => {
       'compute-blend',
       'emit-css',
       'emit-glsl',
+      'emit-wgsl',
       'emit-aria',
     ]);
   });

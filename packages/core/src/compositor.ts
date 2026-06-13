@@ -37,10 +37,10 @@ import { SpeculativeEvaluator } from './speculative.js';
  * maps (`css` / `glsl` / `wgsl` / `aria`).
  *
  * `wgsl` mirrors `glsl` (a per-quantizer numeric channel keyed by the
- * quantizer's projection key). D0 carries the channel through the state shape,
- * the pool, and the worker emit so the host and worker paths agree; populating
- * it from a boundary's `@wgsl` cast in the live emit phase is the WGSL agent's
- * job (the `emit-wgsl` runtime phase is deliberately not added here).
+ * quantizer's bare snake_case projection key). D0 carries the channel through
+ * the state shape, the pool, and the worker emit; D1-WGSL adds the live
+ * `emit-wgsl` runtime phase (below) that populates it from the state index,
+ * escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
  */
 export interface CompositeState {
   readonly discrete: Record<string, string>;
@@ -121,6 +121,7 @@ interface CompositorFactory {
 interface QuantizerMeta {
   readonly cssKey: string;
   readonly glslKey: string;
+  readonly wgslKey: string;
   readonly ariaKey: string;
   readonly oneHotWeights: Readonly<Record<string, Readonly<Record<string, number>>>>;
   /**
@@ -237,7 +238,7 @@ export const Compositor: CompositorFactory = {
           recomputeAll || dirtyFlags === null ? () => true : (name: string) => dirtyFlags.isDirty(name);
 
         const state = pool.acquire();
-        const { discrete, blend, css, glsl, aria } = accessCompositeState(state);
+        const { discrete, blend, css, glsl, wgsl, aria } = accessCompositeState(state);
 
         for (const [name] of qMap) {
           if (shouldRecompute(name)) {
@@ -261,6 +262,11 @@ export const Compositor: CompositorFactory = {
           const previousGlsl = previousState.outputs.glsl[meta.glslKey];
           if (previousGlsl !== undefined) {
             glsl[meta.glslKey] = previousGlsl;
+          }
+
+          const previousWgsl = previousState.outputs.wgsl[meta.wgslKey];
+          if (previousWgsl !== undefined) {
+            wgsl[meta.wgslKey] = previousWgsl;
           }
 
           const previousAria = previousState.outputs.aria[meta.ariaKey];
@@ -316,6 +322,23 @@ export const Compositor: CompositorFactory = {
                   // Escalation gate: skip projections whose policy does not admit `glsl`.
                   if (admits(meta, 'glsl')) {
                     glsl[meta.glslKey] = runtime.getStateIndex(name);
+                  }
+                }
+              }
+              break;
+
+            case 'emit-wgsl':
+              // Mirrors emit-glsl: a per-quantizer numeric channel keyed by the
+              // bare snake_case WGSL field name. WGSL is the heaviest (gpu-rung)
+              // target, so it shares glsl's `high` frame-budget gate; the value
+              // is the live state index the WGSL uniform buffer reads.
+              if (!frameBudget || frameBudget.canRun('high')) {
+                for (const name of dirtyNames) {
+                  const meta = metaMap.get(name)!;
+                  // Escalation gate: skip projections whose policy does not admit `wgsl`.
+                  // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
+                  if (admits(meta, 'wgsl')) {
+                    wgsl[meta.wgslKey] = runtime.getStateIndex(name);
                   }
                 }
               }

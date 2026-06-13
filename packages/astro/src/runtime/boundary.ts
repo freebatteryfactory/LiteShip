@@ -46,6 +46,13 @@ export interface SerializedBoundary {
    * Absent for boundaries with no `@glsl`; optional so old payloads parse.
    */
   readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Optional authored per-state WGSL uniform binding values (`@wgsl` blocks),
+   * keyed by state then bare snake_case field name. Joined onto the satellite
+   * from the build manifest by content address. Absent for boundaries with no
+   * `@wgsl` — optional, so old payloads need no `_version` bump.
+   */
+  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -72,6 +79,13 @@ export interface RuntimeBoundary {
    * the GLSL analog of {@link stateAttributes}.
    */
   readonly glslStateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Authored per-state WGSL uniform binding values resolved at parse time.
+   * `applyBoundaryState` resolves `stateWgsl[currentState]` into `detail.wgsl`
+   * so the WGSL `client:gpu` runtime rebinds the live uniform buffer on every
+   * state crossing (not SSR-frozen).
+   */
+  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -86,6 +100,8 @@ export interface BoundaryStateDetail {
   readonly css: Record<string, string | number>;
   /** GLSL uniform map (`u_*`). */
   readonly glsl: Record<string, number>;
+  /** WGSL uniform-struct field map (bare snake_case, e.g. `blur_radius`). */
+  readonly wgsl: Record<string, number>;
   /** Whitelisted ARIA attribute map. */
   readonly aria: Record<string, string>;
 }
@@ -189,6 +205,7 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
     ...(parsed.glslStateUniforms && typeof parsed.glslStateUniforms === 'object'
       ? { glslStateUniforms: parsed.glslStateUniforms }
       : {}),
+    ...(parsed.stateWgsl && typeof parsed.stateWgsl === 'object' ? { stateWgsl: parsed.stateWgsl } : {}),
   };
 }
 
@@ -355,10 +372,12 @@ export function normalizeBoundaryState(state: {
   readonly discrete?: Record<string, string>;
   readonly css?: Record<string, string | number>;
   readonly glsl?: Record<string, number>;
+  readonly wgsl?: Record<string, number>;
   readonly aria?: Record<string, string>;
   readonly outputs?: {
     readonly css?: Record<string, string | number>;
     readonly glsl?: Record<string, number>;
+    readonly wgsl?: Record<string, number>;
     readonly aria?: Record<string, string>;
   };
 }): BoundaryStateDetail {
@@ -369,6 +388,7 @@ export function normalizeBoundaryState(state: {
     discrete: { ...(state.discrete ?? {}) },
     css: Object.fromEntries(Object.entries(css).filter(([property]) => isAllowedBoundaryCssProperty(property))),
     glsl: { ...(state.outputs?.glsl ?? {}), ...(state.glsl ?? {}) },
+    wgsl: { ...(state.outputs?.wgsl ?? {}), ...(state.wgsl ?? {}) },
     aria: Object.fromEntries(Object.entries(aria).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute))),
   };
 }
@@ -386,10 +406,12 @@ export function applyBoundaryState(
     readonly discrete?: Record<string, string>;
     readonly css?: Record<string, string | number>;
     readonly glsl?: Record<string, number>;
+    readonly wgsl?: Record<string, number>;
     readonly aria?: Record<string, string>;
     readonly outputs?: {
       readonly css?: Record<string, string | number>;
       readonly glsl?: Record<string, number>;
+      readonly wgsl?: Record<string, number>;
       readonly aria?: Record<string, string>;
     };
   },
@@ -403,26 +425,28 @@ export function applyBoundaryState(
   // `stateAttributes` rides the satellite from the build manifest by content
   // address; absent for boundaries with no `@aria`, where this is a no-op.
   const authored = stateName ? boundary.stateAttributes?.[stateName] : undefined;
-  // Authored per-state GLSL uniforms for the LIVE state — the GLSL analog of the
-  // authored-aria composition above. Composed over `normalized.glsl` (which holds
-  // the compositor's live `u_state` index) so a crossing carries both the index
-  // and the authored `u_*` values in `detail.glsl`.
+  // Authored per-state GPU uniforms for the LIVE state, composed over the
+  // normalized outputs (which hold the compositor's live `u_state`/`state_index`)
+  // so a crossing carries both the index and the authored values in
+  // `detail.glsl` / `detail.wgsl` — the GPU analog of the authored-aria
+  // composition. Each rides its own payload field and is a no-op when absent.
   const authoredGlsl = stateName ? boundary.glslStateUniforms?.[stateName] : undefined;
-  const detail: BoundaryStateDetail =
-    authored || authoredGlsl
+  const authoredWgsl = stateName ? boundary.stateWgsl?.[stateName] : undefined;
+  const detail: BoundaryStateDetail = {
+    ...normalized,
+    ...(authored
       ? {
-          ...normalized,
-          aria: authored
-            ? {
-                ...normalized.aria,
-                ...Object.fromEntries(
-                  Object.entries(authored).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute)),
-                ),
-              }
-            : normalized.aria,
-          glsl: authoredGlsl ? { ...normalized.glsl, ...authoredGlsl } : normalized.glsl,
+          aria: {
+            ...normalized.aria,
+            ...Object.fromEntries(
+              Object.entries(authored).filter(([attribute]) => BoundaryAttribute.isAllowedKey(attribute)),
+            ),
+          },
         }
-      : normalized;
+      : {}),
+    ...(authoredGlsl ? { glsl: { ...normalized.glsl, ...authoredGlsl } } : {}),
+    ...(authoredWgsl ? { wgsl: { ...normalized.wgsl, ...authoredWgsl } } : {}),
+  };
 
   if (stateName && element.getAttribute('data-czap-state') !== stateName) {
     element.setAttribute('data-czap-state', stateName);

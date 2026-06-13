@@ -122,7 +122,10 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement):
     }
 
     void (async () => {
-      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '');
+      // Pass `el` (the satellite) so the runtime subscribes to its
+      // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
+      // live on every crossing.
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');

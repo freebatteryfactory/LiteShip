@@ -60,9 +60,10 @@ export { Boundary, BoundarySpec } from './boundary.js';
 // is the inlinable mirror the worker/render blob scripts embed.
 export { rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from './boundary-f32.js';
 // Projection vocabulary — the single home of per-quantizer output key naming
-// (CSS custom property / GLSL uniform / ARIA attribute). `glslIdent` is shared
-// with @czap/compiler's GLSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
-export { projectionKeys, glslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
+// (CSS custom property / GLSL uniform / WGSL struct field / ARIA attribute).
+// `glslIdent` is shared with @czap/compiler's GLSL arm and `wgslIdent` with its
+// WGSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
+export { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
 export type { ProjectionKeys } from './projection.js';
 // Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
 // @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).

@@ -20,7 +20,7 @@ import { Plan } from './plan.js';
  * Named stages of the runtime frame pass, in canonical topological order:
  * discrete quantization first, then blend weights, then target emitters.
  */
-export type RuntimePhase = 'compute-discrete' | 'compute-blend' | 'emit-css' | 'emit-glsl' | 'emit-aria';
+export type RuntimePhase = 'compute-discrete' | 'compute-blend' | 'emit-css' | 'emit-glsl' | 'emit-wgsl' | 'emit-aria';
 
 /** Options accepted by {@link RuntimeCoordinator.create}: entity capacity and plan name. */
 export interface RuntimeCoordinatorConfig {
@@ -70,11 +70,13 @@ function makeRuntimePlan(name: string): Plan.IR {
     .step('compute-blend', { type: 'noop' }, { phase: 'compute-blend' })
     .step('emit-css', { type: 'noop' }, { phase: 'emit-css' })
     .step('emit-glsl', { type: 'noop' }, { phase: 'emit-glsl' })
+    .step('emit-wgsl', { type: 'noop' }, { phase: 'emit-wgsl' })
     .step('emit-aria', { type: 'noop' }, { phase: 'emit-aria' })
     .seq('step-1', 'step-2')
     .par('step-2', 'step-3')
     .par('step-2', 'step-4')
     .par('step-2', 'step-5')
+    .par('step-2', 'step-6')
     .build();
 }
 
