@@ -38,6 +38,7 @@ export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
   '@czap/vite': ['packages/vite/src/index.ts'],
   '@czap/astro/runtime': ['packages/astro/src/runtime/index.ts'],
   '@czap/astro': ['packages/astro/src/index.ts'],
+  '@czap/stage': ['packages/stage/src/index.ts'],
   '@czap/remotion': ['packages/remotion/src/index.ts'],
   '@czap/scene/dev': ['packages/scene/src/dev/server.ts'],
   '@czap/scene': ['packages/scene/src/index.ts'],
