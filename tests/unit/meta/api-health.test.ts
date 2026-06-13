@@ -196,6 +196,10 @@ const STANDALONE_FUNCTIONS = [
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
   // consolidation). Public so @czap/worker's host startup path delegates to it.
   'rawIndexF32',
+  // Projection vocabulary (Phase-1 Layer 1): per-quantizer output key naming +
+  // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
+  'projectionKeys',
+  'glslIdent',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
@@ -230,6 +234,8 @@ const DEFAULT_CONSTANTS = [
   'CANVAS_FALLBACK_HEIGHT',
   // Worker-blob twin of rawIndexF32 as an inlinable JS source string (Phase-0).
   'EVALUATE_THRESHOLDS_SOURCE',
+  // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
+  'PROJECTION_KEYS_SOURCE',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────

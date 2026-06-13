@@ -9,6 +9,7 @@
  */
 
 import { EVALUATE_THRESHOLDS_SOURCE } from './evaluate-inline.js';
+import { PROJECTION_KEYS_SOURCE } from '@czap/core';
 
 /**
  * JavaScript source of the inline compositor worker.
@@ -122,11 +123,14 @@ function registerQuantizer(registration) {
   dirtyNames.add(registration.name);
 }
 
+${PROJECTION_KEYS_SOURCE}
+
 function resolveOutputKeys(q, name) {
   if (q._keysResolved) return;
-  q.cssKey = "--czap-" + name;
-  q.glslKey = "u_" + name;
-  q.ariaKey = "data-czap-" + name;
+  const keys = projectionKeys(name);
+  q.cssKey = keys.cssKey;
+  q.glslKey = keys.glslKey;
+  q.ariaKey = keys.ariaKey;
   q.oneHotWeights = Object.fromEntries(
     q.states.map((activeState) => [
       activeState,
