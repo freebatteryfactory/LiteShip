@@ -8,6 +8,9 @@ dist/
 .idea/
 crates/czap-compute/target/
 
+# Generated release notes — extracted from CHANGELOG at release time, never committed
+RELEASE_NOTES_v*.md
+
 # Build artifacts — never in src/
 packages/*/src/**/*.js
 packages/*/src/**/*.js.map
