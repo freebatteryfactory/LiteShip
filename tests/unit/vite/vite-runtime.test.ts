@@ -357,7 +357,11 @@ describe('@czap/vite plugin', () => {
   });
 
   test('resolves and loads virtual modules through the plugin hooks', async () => {
-    const vitePlugin = plugin();
+    // wasm: false makes the wasm-url assertion below deterministic — bare plugin() now
+    // AUTO-DETECTS a built crate (wave-3 DX), so `wasmUrl` would be a real path on a
+    // machine where czap-compute is built and null elsewhere. This test pins the hook
+    // wiring + the explicit-off case; the live-URL case is covered by the next test.
+    const vitePlugin = plugin({ wasm: false });
     const resolved = vitePlugin.resolveId?.('virtual:czap/tokens');
     const wasmResolved = vitePlugin.resolveId?.('virtual:czap/wasm-url');
 

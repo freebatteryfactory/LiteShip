@@ -3,6 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
+import fc from 'fast-check';
 import { compileTheme } from '@czap/edge';
 
 describe('compileTheme', () => {
@@ -134,5 +135,93 @@ describe('compileTheme', () => {
         tokens: { safe: '#fff' },
       }),
     ).toThrow(/Fix: use "brand-bad" instead/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Error-contract LAWS (wave-3 DX items #107, #108) — pinned as properties.
+//
+// The implementations already shipped; these guard the *contract* a user
+// relies on when a build fails: the error must name the exact offender, and
+// the "use X instead" suggestion must itself be usable. Example-based tests
+// (above) prove the happy reject; these prove it across the generated domain
+// so a refactor of the message-building or sanitization can't silently break
+// the locate-the-offender / next-thing-to-type guarantee. See
+// memory/testing-philosophy.md (pin LAWS, not implementation).
+// ---------------------------------------------------------------------------
+describe('compileTheme error contracts (properties)', () => {
+  const FORBIDDEN_VALUE_CHARS = [';', '{', '}', '<', '>'] as const;
+
+  // A token name that survives sanitization to a non-empty property — so the
+  // value check is actually reached. (Pure ASCII letters always survive.)
+  const safeNameArb = fc.stringMatching(/^[a-z]{1,12}$/).filter((s) => s.length > 0);
+
+  test('LAW (#107): a forbidden value names its EXACT offending token, whatever the name', () => {
+    fc.assert(
+      fc.property(
+        safeNameArb,
+        // any value guaranteed to contain at least one forbidden char
+        fc
+          .tuple(fc.string(), fc.constantFrom(...FORBIDDEN_VALUE_CHARS), fc.string())
+          .map(([a, bad, b]) => `${a}${bad}${b}`),
+        (name, value) => {
+          let thrown: unknown;
+          try {
+            compileTheme({ tokens: { [name]: value } });
+          } catch (error) {
+            thrown = error;
+          }
+          // Must reject, and the message must carry the literal token name so a
+          // user with hundreds of tokens can locate the one offender.
+          expect(thrown).toBeInstanceOf(Error);
+          expect((thrown as Error).message).toContain(`"${name}"`);
+        },
+      ),
+    );
+  });
+
+  test('LAW (#108): the suggested prefix is itself a VALID prefix — the literal next thing to type', () => {
+    // Build prefixes that are guaranteed to contain at least one illegal char,
+    // so normalizePrefix rejects and emits a suggestion.
+    const illegalChar = fc.constantFrom('@', '!', ';', ' ', '_', '.', '"', '/', 'É', '#');
+    const dirtyPrefixArb = fc.tuple(fc.string(), illegalChar, fc.string()).map(([a, bad, b]) => `${a}${bad}${b}`);
+
+    fc.assert(
+      fc.property(dirtyPrefixArb, (prefix) => {
+        let message: string | undefined;
+        try {
+          compileTheme({ tokens: { safe: '1' }, prefix });
+        } catch (error) {
+          message = (error as Error).message;
+        }
+        if (message === undefined) {
+          // The generated prefix happened to be valid after lowercasing
+          // (e.g. the illegal char was the only deviation and got normalized);
+          // contract only applies to the reject path.
+          return true;
+        }
+        const match = message.match(/Fix: use "([^"]*)" instead/);
+        expect(match).not.toBeNull();
+        const suggestion = match![1]!;
+        // The next thing the user types must actually compile — no second error.
+        expect(() => compileTheme({ tokens: { safe: '1' }, prefix: suggestion })).not.toThrow();
+        return true;
+      }),
+    );
+  });
+
+  test('LAW: a value with NO forbidden char never throws for a survivable name (no false reject)', () => {
+    fc.assert(
+      fc.property(
+        safeNameArb,
+        fc.string().filter((v) => !FORBIDDEN_VALUE_CHARS.some((c) => v.includes(c))),
+        (name, value) => {
+          // Round-trips cleanly: a benign value is emitted, never rejected.
+          const result = compileTheme({ tokens: { [name]: value } });
+          expect(result.declarations).toHaveLength(1);
+          expect(result.declarations[0]!.value).toBe(value);
+        },
+      ),
+    );
   });
 });

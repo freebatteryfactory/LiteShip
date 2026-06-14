@@ -46,7 +46,10 @@ export async function transformHTML(
       Diagnostics.warn({
         source: 'czap/vite.html-transform',
         code: 'boundary-not-found',
-        message: unresolvedPrimitiveWarning('boundary', boundaryName, fromFile, line, projectRoot, boundaryDir),
+        message:
+          unresolvedPrimitiveWarning('boundary', boundaryName, fromFile, line, projectRoot, boundaryDir) +
+          ` Consequence: the \`data-czap="${boundaryName}"\` attribute is left untransformed, ` +
+          `so this element renders with no reactivity (no boundary state is wired up).`,
         detail: { fromFile, line, boundaryName },
       });
       continue;

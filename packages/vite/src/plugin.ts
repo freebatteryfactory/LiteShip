@@ -44,24 +44,65 @@ export interface PluginConfig {
   readonly hmr?: boolean;
   /** Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted. */
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
-  /** Opt-in WASM runtime configuration (`true` or `{ enabled: true }`). */
+  /**
+   * WASM runtime configuration. Omitted (the default) **auto-detects**: the
+   * deterministic 3-step search in {@link resolveWASM} runs, and the compute
+   * binary is wired up automatically when one is found (no flag needed). Pass
+   * `false` (or `{ enabled: false }`) to force it off, `true` (or
+   * `{ enabled: true }`) to require it (warn if no binary resolves), or
+   * `{ path }` to point at a specific binary.
+   */
   readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
 /** Default Vite environments when {@link PluginConfig.environments} is omitted. */
 const DEFAULT_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser'];
 
-function resolveEnvironmentNames(configured?: readonly CzapEnvironmentName[]): readonly CzapEnvironmentName[] {
-  return configured ?? DEFAULT_ENVIRONMENTS;
+/** The environment names {@link buildEnvironments} knows how to configure. */
+const VALID_ENVIRONMENTS: readonly CzapEnvironmentName[] = ['browser', 'server', 'shader'];
+
+/**
+ * Resolve the requested environment names, defaulting to `['browser']` when
+ * omitted. Validates each name up front: an unknown environment (e.g. a typo
+ * like `'sever'`) would otherwise silently produce an empty / wrong
+ * environment map that no-ops at build time, so it throws a clear early error
+ * instead — naming the bad value and the supported set.
+ */
+function resolveEnvironmentNames(configured?: readonly string[]): readonly CzapEnvironmentName[] {
+  if (configured === undefined) return DEFAULT_ENVIRONMENTS;
+  const unknown = configured.filter((name) => !VALID_ENVIRONMENTS.includes(name as CzapEnvironmentName));
+  if (unknown.length > 0) {
+    throw new Error(
+      `[@czap/vite] Unknown environment ${unknown.map((n) => `"${n}"`).join(', ')} in czap({ environments }). ` +
+        `Supported environments are: ${VALID_ENVIRONMENTS.map((n) => `'${n}'`).join(', ')}. ` +
+        `Omit the option to default to ['browser'].`,
+    );
+  }
+  return configured as readonly CzapEnvironmentName[];
 }
 
+/**
+ * Resolved WASM intent. `mode` separates the three user stances so the
+ * "auto" default can defer the enable decision to {@link resolveWASM}
+ * (which only runs once the project root is known):
+ *
+ * - `'on'`   — explicitly requested (`wasm: true` / `{ enabled: true }`);
+ *   a missing binary is a warning.
+ * - `'off'`  — explicitly disabled (`wasm: false` / `{ enabled: false }`).
+ * - `'auto'` — omitted: enable iff a binary is found, silently otherwise.
+ */
 function normalizeWasmConfig(wasm?: boolean | { readonly enabled?: boolean; readonly path?: string }): {
-  readonly enabled: boolean;
+  readonly mode: 'on' | 'off' | 'auto';
   readonly path?: string;
 } {
-  if (wasm === true) return { enabled: true };
-  if (wasm === false || wasm === undefined) return { enabled: false };
-  return { enabled: wasm.enabled === true, path: wasm.path };
+  if (wasm === true) return { mode: 'on' };
+  if (wasm === false) return { mode: 'off' };
+  if (wasm === undefined) return { mode: 'auto' };
+  if (wasm.enabled === true) return { mode: 'on', path: wasm.path };
+  if (wasm.enabled === false) return { mode: 'off', path: wasm.path };
+  // `{ path }` (or `{}`) with no explicit `enabled`: treat as auto — the
+  // search still runs, so a supplied path is honoured without a second flag.
+  return { mode: 'auto', path: wasm.path };
 }
 
 // ---------------------------------------------------------------------------
@@ -139,13 +180,16 @@ function emptyQuantizeWarning(boundaryName: string, id: string, line: number): s
 export function plugin(config?: PluginConfig): Plugin {
   const hmrEnabled = config?.hmr !== false;
   const wasmConfig = normalizeWasmConfig(config?.wasm);
-  const wasmEnabled = wasmConfig.enabled;
+  const wasmMode = wasmConfig.mode;
   let projectRoot = process.cwd();
   let isBuild = false;
-  let resolvedWasm: ReturnType<typeof resolveWASM> = null;
-  if (wasmEnabled) {
-    resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
-  }
+  // Resolve once up front for `on`/`auto` (the `configResolved` hook re-runs
+  // it with the real root). `off` never touches the filesystem.
+  let resolvedWasm: ReturnType<typeof resolveWASM> =
+    wasmMode === 'off' ? null : resolveWASM(projectRoot, wasmConfig.path);
+  // In `auto` mode WASM is wired up exactly when a binary is present; in `on`
+  // mode it is always "wanted" (a missing binary becomes a buildStart warning).
+  let wasmEnabled = wasmMode === 'on' || (wasmMode === 'auto' && resolvedWasm !== null);
   let emittedWasmRefId: string | null = null;
 
   // Caches for resolved definitions to avoid re-importing on every transform
@@ -182,24 +226,31 @@ export function plugin(config?: PluginConfig): Plugin {
     configResolved(resolvedConfig) {
       projectRoot = resolvedConfig.root;
       isBuild = resolvedConfig.command === 'build';
-      resolvedWasm = null;
-      if (wasmEnabled) {
-        resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
-      }
+      resolvedWasm = wasmMode === 'off' ? null : resolveWASM(projectRoot, wasmConfig.path);
+      wasmEnabled = wasmMode === 'on' || (wasmMode === 'auto' && resolvedWasm !== null);
     },
 
     buildStart() {
-      if (!wasmEnabled) {
+      if (wasmMode === 'off') {
         return;
       }
 
       resolvedWasm = resolveWASM(projectRoot, wasmConfig.path);
+      wasmEnabled = wasmMode === 'on' || resolvedWasm !== null;
+
+      // `auto` stays silent when no binary exists — it is opt-out, not a
+      // request. Only an explicit `on` warns about a missing binary.
+      if (!resolvedWasm && wasmMode === 'auto') {
+        return;
+      }
+
       if (!resolvedWasm) {
         const searched = formatWasmSearchPaths(projectRoot, wasmConfig.path);
         this.warn(
           `WASM support was enabled, but no czap-compute binary could be resolved. Searched: ${searched}. ` +
-            'Fix: build the crate (`cargo build --target wasm32-unknown-unknown --release` in crates/czap-compute) ' +
-            'or copy the binary to public/czap-compute.wasm. Runtime will fall back to TypeScript kernels.',
+            'Fix: build the crate (`cargo build --target wasm32-unknown-unknown --release` in crates/czap-compute), ' +
+            'copy the binary to public/czap-compute.wasm, or point the plugin at it explicitly ' +
+            "via czap({ wasm: { path: './path/to.wasm' } }). Runtime will fall back to TypeScript kernels.",
         );
         return;
       }
