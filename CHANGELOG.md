@@ -798,7 +798,13 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 
 ---
 
-## [0.4.0] — 2026-04-05
+> **Pre-public internal milestones (2026-03 → 2026-04).** The `0.2.0`–`0.4.0`
+> headings below are the early in-repo numbering line. It was **reset** when the
+> canonical public release restarted at `0.1.0` on 2026-05-07 (top of file), so
+> these do **not** correspond to published npm versions and are kept only for
+> provenance. The public `0.2.0` is the substrate cut dated 2026-06-14 at the top.
+
+## [0.4.0] — 2026-04-05 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 
@@ -838,7 +844,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - Removed deprecated type aliases from all 5 spine files
 - Added MotionTier, SpringConfig, TIER_TARGETS, QuantizerFromOptions to quantizer spine
 
-## [0.3.0] — 2026-03-16
+## [0.3.0] — 2026-03-16 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 
@@ -864,7 +870,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - tinybench harness: core, compiler, video benchmarks
 - `bun run bench` script
 
-## [0.2.0] — 2026-03-16
+## [0.2.0] — 2026-03-16 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 
