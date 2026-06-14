@@ -71,7 +71,7 @@ jobs:
           CI: true
 
   publish:
-    name: Publish 18 @czap/* packages + the liteship umbrella + attach ShipCapsules
+    name: Publish 21 @czap/* packages + create-liteship + the liteship umbrella + attach ShipCapsules
     needs: release-certified
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -169,7 +169,7 @@ jobs:
           # added or removed in packages/, this assertion fails loud rather
           # than silently skipping the new one. Update both the EXPECTED
           # count and the loop list in the same commit.
-          EXPECTED_PUBLISHABLE=22
+          EXPECTED_PUBLISHABLE=23
           ACTUAL_PUBLISHABLE=$(find packages -maxdepth 2 -name package.json -print0 \
             | xargs -0 -I {} jq -r 'select(.private != true) | .name' {} \
             | wc -l)
@@ -178,7 +178,7 @@ jobs:
             exit 1
           fi
 
-          for pkg in @czap/_spine @czap/core @czap/canonical @czap/genui @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server create-liteship liteship; do
+          for pkg in @czap/_spine @czap/core @czap/canonical @czap/genui @czap/quantizer @czap/compiler @czap/web @czap/detect @czap/vite @czap/astro @czap/edge @czap/cloudflare @czap/worker @czap/remotion @czap/scene @czap/stage @czap/assets @czap/audit @czap/command @czap/cli @czap/mcp-server create-liteship liteship; do
             echo "::group::$pkg"
             node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
             if [ "$ATTACH" = "true" ]; then
