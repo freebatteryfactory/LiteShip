@@ -254,6 +254,9 @@ importers:
 
   examples/showcase:
     dependencies:
+      '@astrojs/cloudflare':
+        specifier: ^13.0.0
+        version: 13.6.1(@types/node@22.19.15)(astro@6.4.4(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(workerd@1.20260603.1)(wrangler@4.98.0)(yaml@2.8.3)
       '@czap/astro':
         specifier: workspace:*
         version: link:../../packages/astro
@@ -264,8 +267,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/edge
       astro:
-        specifier: ^6.0.0
-        version: 6.0.5(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(terser@5.46.1)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
+        specifier: ^6.3.0
+        version: 6.4.4(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.59.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

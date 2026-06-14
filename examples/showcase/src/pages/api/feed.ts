@@ -3,12 +3,13 @@ import type { APIRoute } from 'astro';
 /**
  * SSE feed for the streaming showcase (stream.astro / `client:stream`).
  *
- * Prerendered so the static showcase build serves a working snapshot —
- * the `data-czap-stream-url="/api/feed"` element morphs in this patch the
- * moment the EventSource opens. Swap `prerender = false` (with a server
- * adapter) to push live events on an interval.
+ * On-demand (`prerender = false`) so it serves a REAL `text/event-stream` with the
+ * correct MIME when deployed — a prerendered EventSource becomes a static snapshot a
+ * static host mislabels, so the stream never opens. The showcase keeps every PAGE
+ * static; only this route runs on the adapter. The `data-czap-stream-url="/api/feed"`
+ * element morphs in this patch the moment the EventSource connects.
  */
-export const prerender = true;
+export const prerender = false;
 
 export const GET: APIRoute = () => {
   const patch = JSON.stringify({
