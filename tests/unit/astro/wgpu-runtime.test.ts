@@ -255,13 +255,24 @@ describe('initWGSLRuntime — render loop and dispose', () => {
   });
 });
 
-// A WGSL shader that declares the @group(0) @binding(0) uniform — required now
-// that the runtime only binds a uniform group when the shader actually declares
-// one (the FULLSCREEN_WGSL fallback / bare shaders have no binding 0).
+// A WGSL shader that declares the @group(0) @binding(0) uniform STRUCT — the
+// runtime parses the struct to derive field offsets/types (declaration order is
+// the fixed buffer layout) and only binds when a real struct is declared (the
+// FULLSCREEN_WGSL fallback / bare shaders have none). Fields: state_index(u32) at
+// offset 0, blur_radius(f32) at 4, scale(f32) at 8, pad(f32) at 12.
 const UNIFORM_SHADER =
-  '@group(0) @binding(0) var<uniform> boundary_state: vec4<f32>;\n' +
+  'struct BoundaryState { state_index: u32, blur_radius: f32, scale: f32, pad: f32 }\n' +
+  '@group(0) @binding(0) var<uniform> boundary_state: BoundaryState;\n' +
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }\n' +
-  '@fragment fn fs_main() -> @location(0) vec4<f32> { return boundary_state; }';
+  '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(boundary_state.blur_radius); }';
+
+// Declares 5 fields (state_index + a,b,c,d); the buffer holds 4, so the 5th
+// overflows at binding setup with a warnOnce.
+const OVERFLOW_SHADER =
+  'struct BS { state_index: u32, a: f32, b: f32, c: f32, d: f32 }\n' +
+  '@group(0) @binding(0) var<uniform> bs: BS;\n' +
+  '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
+  '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }';
 
 describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
   it('binds detail.wgsl field values into the uniform buffer on every crossing', async () => {
@@ -319,7 +330,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     dispose!();
   });
 
-  it('warns once and skips the field when the uniform buffer overflows', async () => {
+  it('warns once when the WGSL struct declares more fields than the buffer holds', async () => {
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.setSink(sink);
     const harness = makeGpuHarness();
@@ -328,15 +339,29 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
-    // state_index claims slot 0; the buffer holds 4 floats, so 4 authored
-    // fields overflow it (slots 1,2,3 fill, the 4th is dropped with a warnOnce).
-    el.dispatchEvent(
-      new CustomEvent('czap:uniform-update', {
-        detail: { wgsl: { a: 1, b: 2, c: 3, d: 4 } },
-      }),
-    );
+    // OVERFLOW_SHADER declares 5 fields; the buffer holds 4, so the 5th overflows
+    // and is dropped with a warnOnce at binding setup (layout-derived from the
+    // declared struct, not from event payload order).
+    const dispose = await initWGSLRuntime(canvas, OVERFLOW_SHADER, el);
     expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-buffer-full' }));
+    dispose!();
+  });
+
+  it('writes fields at their DECLARED struct offset regardless of event order', async () => {
+    // Codex finding: a `{ scale }`-first crossing must land scale in its declared
+    // slot, NOT blur_radius's. UNIFORM_SHADER order: state_index(0), blur_radius(1),
+    // scale(2), pad(3) → scale lives at byte offset 8.
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    const { canvas } = makeCanvas(true);
+    const el = document.createElement('div');
+
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { scale: 7.5 } } }));
+    const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(dv.getFloat32(8, true)).toBe(7.5); // scale → declared slot 2 (offset 8)
+    expect(dv.getFloat32(4, true)).toBe(0); // blur_radius slot untouched (not in event)
     dispose!();
   });
 

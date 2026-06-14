@@ -138,7 +138,42 @@ export interface WgslUniformBinding {
   apply(wgsl: Record<string, number>): void;
 }
 
-function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): WgslUniformBinding {
+/** A parsed WGSL uniform field: its name and declared scalar type, in struct order. */
+interface WgslUniformField {
+  readonly name: string;
+  readonly type: string;
+}
+
+/**
+ * Parse the uniform struct bound at `@group(0) @binding(0)`, returning its fields
+ * in DECLARATION order with their WGSL types. The uniform-buffer layout is fixed
+ * by the WGSL declaration — NOT event-arrival order — so the runtime must write
+ * each field at its declared slot + type (writing by first-seen event order lands
+ * fields in the wrong struct members). An empty result is also the precise "does
+ * this shader actually declare a uniform group" test: the FULLSCREEN_WGSL fallback
+ * and bare shaders return `[]`, and a loose `@group(0)`/`@binding(0)` substring
+ * match (e.g. `@group(0) @binding(1)` + `@group(1) @binding(0)`) won't false-pass.
+ */
+function parseWgslUniformLayout(source: string): readonly WgslUniformField[] {
+  const bind = /@group\s*\(\s*0\s*\)\s*@binding\s*\(\s*0\s*\)\s*var\s*<\s*uniform\s*>\s*\w+\s*:\s*(\w+)/.exec(source);
+  const structName = bind?.[1];
+  if (!structName) return [];
+  const struct = new RegExp(`struct\\s+${structName}\\s*\\{([\\s\\S]*?)\\}`).exec(source);
+  const fieldBlock = struct?.[1];
+  if (!fieldBlock) return [];
+  const fields: WgslUniformField[] = [];
+  for (const part of fieldBlock.split(/[,\n]/)) {
+    const m = /([A-Za-z_]\w*)\s*:\s*([A-Za-z_][\w<>]*)/.exec(part);
+    if (m?.[1] && m[2]) fields.push({ name: m[1], type: m[2] });
+  }
+  return fields;
+}
+
+function createUniformBinding(
+  device: WebGpuDevice,
+  pipeline: WebGpuPipeline,
+  layout: readonly WgslUniformField[],
+): WgslUniformBinding {
   const buffer = device.createBuffer({
     size: UNIFORM_BUFFER_BYTES,
     usage: GPU_BUFFER_USAGE_UNIFORM | GPU_BUFFER_USAGE_COPY_DST,
@@ -148,16 +183,29 @@ function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): W
     entries: [{ binding: 0, resource: { buffer } }],
   });
 
-  // CPU-side scratch mirroring the uniform struct. `state_index` (slot 0) is a
-  // WGSL `u32`, so it MUST be written as integer bytes — writing it as f32 stores
-  // 0x3f800000 for `1`, which never matches the shader's u32 `STATE_*` constants.
-  // Authored fields (slots 1..) are written as f32 (the common `@wgsl` numeric
-  // case). The whole struct is re-uploaded each apply (small + cache-friendly).
+  // The uniform-buffer layout is FIXED by the WGSL struct declaration: field i
+  // sits at byte offset i*4 with its declared type (u32/i32 → integer bytes so it
+  // matches the shader's u32 `STATE_*` constants; else f32). Deriving offsets from
+  // the compiled layout — not event-arrival order — is what keeps a `{ scale }`-
+  // first crossing from writing `scale` into `blur_radius`'s slot.
   const data = new ArrayBuffer(UNIFORM_BUFFER_BYTES);
   const bytes = new Uint8Array(data);
   const view = new DataView(data);
-  const offsetOf = new Map<string, number>([['state_index', 0]]);
-  let nextSlot = 1;
+  const slots = new Map<string, { offset: number; isInt: boolean }>();
+  layout.forEach((field, i) => {
+    if (i >= UNIFORM_BUFFER_FLOATS) {
+      // Struct declares more fields than the buffer holds — drop the overflow.
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-uniform-buffer-full',
+        message:
+          `WGSL uniform buffer holds ${UNIFORM_BUFFER_FLOATS} fields; field "${field.name}" overflows it. ` +
+          `Fix: reduce @wgsl fields or widen UNIFORM_BUFFER_FLOATS in wgpu.ts.`,
+      });
+      return;
+    }
+    slots.set(field.name, { offset: i * 4, isInt: field.type === 'u32' || field.type === 'i32' });
+  });
 
   return {
     buffer,
@@ -167,25 +215,10 @@ function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): W
       // reverts to 0 instead of leaving the shader sampling a stale value.
       bytes.fill(0);
       for (const [field, value] of Object.entries(wgsl)) {
-        let slot = offsetOf.get(field);
-        if (slot === undefined) {
-          if (nextSlot >= UNIFORM_BUFFER_FLOATS) {
-            // Buffer full — the field cannot bind without widening the struct.
-            Diagnostics.warnOnce({
-              source: 'czap/astro.gpu',
-              code: 'wgsl-uniform-buffer-full',
-              message:
-                `WGSL uniform buffer holds ${UNIFORM_BUFFER_FLOATS} floats; field "${field}" overflows it. ` +
-                `Fix: reduce authored @wgsl fields or widen UNIFORM_BUFFER_FLOATS in wgpu.ts.`,
-            });
-            continue;
-          }
-          slot = nextSlot++;
-          offsetOf.set(field, slot);
-        }
-        // slot 0 is the u32 `state_index`; authored fields are f32.
-        if (slot === 0) view.setUint32(slot * 4, value >>> 0, true);
-        else view.setFloat32(slot * 4, value, true);
+        const slot = slots.get(field);
+        if (!slot) continue; // not a declared struct field — ignore
+        if (slot.isInt) view.setUint32(slot.offset, value >>> 0, true);
+        else view.setFloat32(slot.offset, value, true);
       }
       device.queue.writeBuffer(buffer, 0, bytes);
     },
@@ -230,11 +263,12 @@ export async function initWGSLRuntime(
   } catch {
     // fetchShaderSource already logged; keep built-in fallback shader.
   }
-  // Only bind a uniform group when the shader actually declares `@group(0)
-  // @binding(0)`. The built-in FULLSCREEN_WGSL fallback (and any simple custom
-  // shader without that uniform) has an `auto` layout with no binding 0, so
-  // unconditionally binding one makes WebGPU reject the bind group / render pass.
-  const hasUniformBinding = wgslSource.includes('@binding(0)') && wgslSource.includes('@group(0)');
+  // Bind a uniform group only when the shader declares a real `@group(0)
+  // @binding(0) var<uniform>` struct (the FULLSCREEN_WGSL fallback and bare
+  // shaders don't — unconditionally binding makes WebGPU reject the pass). The
+  // parsed layout drives BOTH the binding decision and the field offsets/types.
+  const uniformLayout = parseWgslUniformLayout(wgslSource);
+  const hasUniformBinding = uniformLayout.length > 0;
   const shaderModule = device.createShaderModule({ code: wgslSource });
 
   const format = nav.gpu.getPreferredCanvasFormat();
@@ -247,9 +281,26 @@ export async function initWGSLRuntime(
     primitive: { topology: 'triangle-list' },
   });
 
-  const binding = hasUniformBinding ? createUniformBinding(device, pipeline) : null;
-  // Seed the buffer so the first frame binds a defined (zeroed) struct.
-  binding?.apply({});
+  // Build the uniform binding, guarded: a shader can declare a `@binding(0)` that
+  // isn't a buffer-compatible uniform, which throws at bind-group creation —
+  // degrade to rendering without live uniforms instead of crashing.
+  let binding: WgslUniformBinding | null = null;
+  if (hasUniformBinding) {
+    try {
+      binding = createUniformBinding(device, pipeline, uniformLayout);
+      // Seed the buffer so the first frame binds a defined (zeroed) struct.
+      binding.apply({});
+    } catch (cause) {
+      binding = null;
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-uniform-bindgroup-invalid',
+        message:
+          `WGSL @group(0) @binding(0) is not a buffer-compatible uniform; rendering without live uniforms. ` +
+          String((cause as { message?: string })?.message ?? cause),
+      });
+    }
+  }
 
   // Subscribe to boundary crossings: map detail.wgsl → uniform buffer. The rAF
   // loop already redraws every frame, so writing the buffer here is enough — the
