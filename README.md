@@ -190,8 +190,7 @@ Both milestones are signal-gated, not promise-gated. Contributors are welcome to
 - [CONTRIBUTING.md](./CONTRIBUTING.md): dev environment, PR conventions, gauntlet workflow
 - [SECURITY.md](./SECURITY.md): vulnerability reporting, supported versions, security posture summary
 - [CHANGELOG.md](./CHANGELOG.md): release history
-- [docs/RELEASING.md](./docs/RELEASING.md): npm publish, tags, GitHub releases, optional history scrub
-- [docs/HISTORY_SCRUB.md](./docs/HISTORY_SCRUB.md): `git filter-repo` discovery checklist before going public
+- [docs/RELEASING.md](./docs/RELEASING.md): npm publish, tags, GitHub releases
 
 ## Security posture (summary)
 

@@ -150,7 +150,6 @@ Read [CHANGELOG.md](../CHANGELOG.md). For shipping npm/GitHub releases, see
 2. [STATUS.md](./STATUS.md): current bench posture, watch items, security defaults
 3. [AUDIT.md](./AUDIT.md): the codebase-audit signal, what to expect in a release artifact
 4. [RELEASING.md](./RELEASING.md): publish, tags, GitHub releases
-5. [HISTORY_SCRUB.md](./HISTORY_SCRUB.md): pre-public discovery checklist
 
 ---
 

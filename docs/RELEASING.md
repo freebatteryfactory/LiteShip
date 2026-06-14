@@ -88,10 +88,6 @@ git push origin v0.1.0
 
 Use `git push --force-with-lease` only after a coordinated history rewrite.
 
-## Pre-public history scrub
-
-Untracking a file does not remove old blobs. See [HISTORY_SCRUB.md](./HISTORY_SCRUB.md) for discovery, backup, and `git filter-repo` steps.
-
 ## MCP and CLI
 
 `@czap/cli` loads `@czap/mcp-server` only for the `czap mcp` subcommand (dynamic
