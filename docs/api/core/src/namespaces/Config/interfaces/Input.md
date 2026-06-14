@@ -6,7 +6,7 @@
 
 # Interface: Input
 
-Defined in: [core/src/config.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L144)
+Defined in: [core/src/config.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L145)
 
 Raw user-facing input to [Config.make](../../../variables/Config.md#make) — every field is optional.
 
@@ -16,7 +16,7 @@ Raw user-facing input to [Config.make](../../../variables/Config.md#make) — ev
 
 > `readonly` `optional` **astro?**: `Partial`\<[`CoreAstroConfig`](../../../interfaces/CoreAstroConfig.md)\>
 
-Defined in: [core/src/config.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L150)
+Defined in: [core/src/config.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L151)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/config.ts:150](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **boundaries?**: `Record`\<`string`, [`Shape`](../../Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>\>
 
-Defined in: [core/src/config.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L145)
+Defined in: [core/src/config.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L146)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/config.ts:145](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **styles?**: `Record`\<`string`, [`Shape`](../../Style/type-aliases/Shape.md)\<[`Shape`](../../Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>\>\>
 
-Defined in: [core/src/config.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L148)
+Defined in: [core/src/config.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L149)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/config.ts:148](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **themes?**: `Record`\<`string`, [`Shape`](../../Theme/type-aliases/Shape.md)\<readonly `string`[]\>\>
 
-Defined in: [core/src/config.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L147)
+Defined in: [core/src/config.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L148)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [core/src/config.ts:147](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **tokens?**: `Record`\<`string`, [`Shape`](../../Token/type-aliases/Shape.md)\<`string`, readonly `string`[]\>\>
 
-Defined in: [core/src/config.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L146)
+Defined in: [core/src/config.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L147)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [core/src/config.ts:146](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **vite?**: `Partial`\<[`CorePluginConfig`](../../../interfaces/CorePluginConfig.md)\>
 
-Defined in: [core/src/config.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L149)
+Defined in: [core/src/config.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/config.ts#L150)

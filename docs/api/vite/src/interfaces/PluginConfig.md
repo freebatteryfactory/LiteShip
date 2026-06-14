@@ -47,6 +47,11 @@ Toggle surgical HMR emission (default `true`).
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [vite/src/plugin.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L48)
+Defined in: [vite/src/plugin.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L55)
 
-Opt-in WASM runtime configuration (`true` or `{ enabled: true }`).
+WASM runtime configuration. Omitted (the default) **auto-detects**: the
+deterministic 3-step search in [resolveWASM](../functions/resolveWASM.md) runs, and the compute
+binary is wired up automatically when one is found (no flag needed). Pass
+`false` (or `{ enabled: false }`) to force it off, `true` (or
+`{ enabled: true }`) to require it (warn if no binary resolves), or
+`{ path }` to point at a specific binary.
