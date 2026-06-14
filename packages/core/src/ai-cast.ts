@@ -425,27 +425,40 @@ export type ProposalAcceptance<T> = {
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
 /** Coarse runtime kind of a required field — what `typeof`/`Array.isArray` must agree with. */
-type FieldKind = 'string' | 'array' | 'any';
+type FieldKind = 'string' | 'array' | 'object' | 'any';
 
 /**
- * Required payload fields per node family (all EIGHT {@link NodeFamily} discriminants),
- * each tagged with its coarse runtime kind. `'string'` covers the branded string types
- * (ContentAddress / CapLevel / RuntimeSite / EdgeType / SignalInput / StateName and the
- * closed string unions); `'array'` the ref lists; `'any'` the fields whose exact runtime
- * shape is intentionally not pinned here (CapSet, AddressedDigest) — presence only.
+ * Every REQUIRED (non-optional) payload field per node family, for all EIGHT
+ * {@link NodeFamily} discriminants, tagged with its coarse runtime kind. Mirrors the
+ * `*Node` interfaces in document-graph.ts (optional `?` fields are intentionally omitted).
+ * `'string'` covers the branded string types (ContentAddress / CapLevel / RuntimeSite /
+ * EdgeType / SignalInput / StateName and the closed string unions); `'array'` the ref
+ * lists; `'object'` the record fields (bindings / ProjectionKeys); `'any'` the fields whose
+ * exact runtime shape is intentionally not pinned here (CapSet, AddressedDigest) — presence
+ * only. Keep this in lockstep with document-graph.ts when a node family gains a field.
  */
 const NODE_FAMILY_FIELDS: Record<string, ReadonlyArray<readonly [string, FieldKind]>> = {
   signal: [['input', 'string']],
   entity: [['components', 'array']],
   component: [['name', 'string']],
-  pose: [['state', 'string']],
+  pose: [
+    ['entityRef', 'string'],
+    ['state', 'string'],
+    ['bindings', 'object'],
+  ],
   transition: [
     ['fromPose', 'string'],
     ['toPose', 'string'],
     ['routing', 'string'],
   ],
-  projection: [['target', 'string']],
+  projection: [
+    ['target', 'string'],
+    ['sourceRef', 'string'],
+    ['keys', 'object'],
+    ['resultDigest', 'any'],
+  ],
   policy: [
+    ['appliesTo', 'array'],
     ['requires', 'string'],
     ['grants', 'any'],
     ['sites', 'array'],
@@ -483,6 +496,9 @@ function nodeFamilyError(op: { family?: unknown; node: Record<string, unknown> }
     }
     if (kind === 'array' && !Array.isArray(v)) {
       return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be an array (got ${typeof v}).`;
+    }
+    if (kind === 'object' && (typeof v !== 'object' || Array.isArray(v))) {
+      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be an object (got ${Array.isArray(v) ? 'array' : typeof v}).`;
     }
   }
   return null;

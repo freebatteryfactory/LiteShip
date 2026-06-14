@@ -355,6 +355,23 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/must be a string/i);
   });
 
+  test('a pose node missing its OTHER required fields (entityRef/bindings, not just state) is REJECTED', () => {
+    const base = graph([node('a')]);
+    // The family table must carry EVERY required field of each of the 8 families —
+    // PoseNode requires entityRef + state + bindings, not just state.
+    const partialPose = { _tag: 'DocGraphPoseNode', _version: 1, family: 'pose', id: '', meta: META, state: 'mobile' };
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'pose', node: partialPose }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/missing required field '(entityRef|bindings)'/);
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
