@@ -611,7 +611,12 @@ const isWellFormedNode = Schema.is(DocumentGraphNodeSchema);
  */
 function nodeSchemaError(op: { family?: unknown; node: unknown }, i: number): string | null {
   const nodeFamily = (op.node as { family?: unknown } | null)?.family;
-  if (op.family !== undefined && op.family !== nodeFamily) {
+  // The advertised NodePatchOp REQUIRES `family`; a missing op.family must not slip
+  // through (it would mint a patch whose op violates the advertised schema).
+  if (op.family === undefined) {
+    return `Patch op[${i}] node op is missing its required 'family' field.`;
+  }
+  if (op.family !== nodeFamily) {
     return `Patch op[${i}] op.family ${JSON.stringify(op.family)} does not match node.family ${JSON.stringify(nodeFamily)}.`;
   }
   if (!isWellFormedNode(op.node)) {

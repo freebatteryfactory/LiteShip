@@ -169,6 +169,9 @@ export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
  * token.
  */
 export function proposalSubject<T>(proposal: ValidatedProposal<T>): ContentAddress {
+  // Provenance-gated like unwrapValidated/apply: a forged or post-validation-tampered
+  // proposal must not surface a citable identity, so re-assert the token binds first.
+  assertTokenBinds(proposal);
   return proposal.subject;
 }
 
@@ -215,5 +218,8 @@ export function unwrapValidated<T>(proposal: ValidatedProposal<T>): T {
  * the capsule + unit tests).
  */
 export function proposalReceiptSubject<T>(proposal: ValidatedProposal<T>): ReceiptSubject {
+  // Provenance-gated: a host chaining a receipt must not derive a subject from a forged
+  // or post-validation-tampered proposal. Run the same binding check apply/unwrap use.
+  assertTokenBinds(proposal);
   return { type: 'artifact', id: proposal.subject };
 }

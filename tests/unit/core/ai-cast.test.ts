@@ -17,7 +17,16 @@
  * @module
  */
 import { describe, test, expect } from 'vitest';
-import { AICast, GraphPatch, sealNode, sealGraph, contentAddressOf, assertTokenBinds, proposalSubject } from '@czap/core';
+import {
+  AICast,
+  GraphPatch,
+  sealNode,
+  sealGraph,
+  contentAddressOf,
+  assertTokenBinds,
+  proposalSubject,
+  proposalReceiptSubject,
+} from '@czap/core';
 import type {
   SignalNode,
   DocumentGraphNode,
@@ -123,6 +132,13 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const tampered = { ...checked.proposal, payload: evil } as ValidatedProposal<GraphPatch>;
     expect(() => AICast.applyValidatedPatch(base, tampered)).toThrow(/does not bind/);
     expect(() => assertTokenBinds(tampered)).toThrow(/does not bind/);
+    // The identity ACCESSORS are provenance-gated too — a host must not derive a citable
+    // subject / receipt subject from a tampered proposal.
+    expect(() => proposalSubject(tampered)).toThrow(/does not bind/);
+    expect(() => proposalReceiptSubject(tampered)).toThrow(/does not bind/);
+    // …but they work for the genuine proposal.
+    expect(proposalSubject(checked.proposal)).toBe(checked.proposal.subject);
+    expect(proposalReceiptSubject(checked.proposal)).toEqual({ type: 'artifact', id: checked.proposal.subject });
   });
 
   test('a validated proposal is refused against a DIFFERENT (advanced) graph — apply-time identity guard', () => {
@@ -320,6 +336,23 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
     expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
+  });
+
+  test("a node op missing its required 'family' field is REJECTED (the advertised op requires it)", () => {
+    const base = graph([node('a')]);
+    const validSignal = node('b');
+    // `{ op:'add', node: <valid signal> }` — the NODE is well-formed, but the OP lacks
+    // `family`, which the advertised NodePatchOp requires. Must not mint.
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', node: validSignal }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/missing its required 'family'/);
   });
 
   test('policy and export node families are RECOGNIZED — not false-rejected as unknown family', () => {
