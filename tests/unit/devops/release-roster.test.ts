@@ -68,4 +68,13 @@ describe('release.yml publish roster matches the workspace (the 4th roster locat
   it('@czap/stage is in the publish loop (the package whose promotion drifted release.yml)', () => {
     expect(releaseLoopNames()).toContain('@czap/stage');
   });
+
+  it('the trusted-publisher checklist (RELEASING.md) states the right publishable count', () => {
+    // The maintainer configures OIDC trusted publishing per package from this count
+    // before tagging; a stale number leaves a newly-public package without a publisher
+    // and the tag release fails. Pin the checklist count to the derived truth.
+    const count = derivePublishableNames().length;
+    const releasing = readFileSync(resolve(REPO, 'docs/RELEASING.md'), 'utf8');
+    expect(releasing).toContain(`${count} publishable packages`);
+  });
 });

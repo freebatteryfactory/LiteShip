@@ -118,7 +118,7 @@ publisher per package, form values below.
 
 ### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
-For each of the 22 publishable packages (20 `@czap/*` scopes + `create-liteship` + `liteship`), open
+For each of the 23 publishable packages (21 `@czap/*` scopes — including `@czap/stage`, public as of 0.2.0 — plus `create-liteship` + `liteship`), open
 `https://www.npmjs.com/package/<name>/access` (e.g.
 `https://www.npmjs.com/package/@czap/core/access`,
 `https://www.npmjs.com/package/liteship/access`) and add a trusted publisher
