@@ -290,14 +290,17 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
                 type: 'object',
                 required: ['op', 'family', 'node'],
                 properties: {
-                  // Nodes are CONTENT-ADDRESSED: a changed payload is a new id, so there is
-                  // no in-place "update" to advertise (an `update` would install a NEW node
-                  // and leave the old one). To change a node, `remove` the old id and `add`
-                  // the replacement. (The validator still TOLERATES a host-diff `update`; it
-                  // is just not advertised to the model as a meaningful in-place mutation.)
-                  op: { enum: ['add', 'remove'], description: 'add a node, or remove one by id.' },
+                  // Nodes are CONTENT-ADDRESSED, so a changed payload has a new id. `update`
+                  // is a LOGICAL REPLACE: apply drops the prior node in the same logical cell
+                  // (same signal axis / component name / pose key / …) and installs this one.
+                  // `add` introduces a new cell; `remove` deletes one by id.
+                  op: {
+                    enum: ['add', 'remove', 'update'],
+                    description:
+                      'add a new node, remove one by id, or update (replace the node in the same logical cell).',
+                  },
                   family: { enum: [...NODE_FAMILIES] },
-                  node: { type: 'object', description: 'A sealed DocumentGraphNode.' },
+                  node: { type: 'object', description: 'A sealed DocumentGraphNode (the new payload for add/update).' },
                 },
               },
               {

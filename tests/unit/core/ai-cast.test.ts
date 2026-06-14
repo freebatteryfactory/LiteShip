@@ -514,13 +514,13 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     expect(() => AICast.castContext(g, { targets: ['generated-ui'] })).toThrow(/requires a host component catalog/);
   });
 
-  test('the advertised graph-patch schema does NOT offer an in-place "update" op (nodes are content-addressed)', () => {
+  test('the advertised graph-patch schema offers add/remove/update (update = logical replace, now real)', () => {
     const g = graph([node('a')]);
     const ctx = AICast.castContext(g, { targets: ['graph-patch'] });
     const gp = ctx.proposalSchemas.find((s) => s.target === 'graph-patch')!;
     const ops = (gp.jsonSchema['properties'] as Record<string, Record<string, unknown>>)['ops']!;
     const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<string, Record<string, Record<string, unknown>>>;
-    expect(nodeOp['properties']!['op']!['enum']).toEqual(['add', 'remove']);
+    expect(nodeOp['properties']!['op']!['enum']).toEqual(['add', 'remove', 'update']);
   });
 
   test('a catalog shape change (same component NAMES, different props) changes the generated-ui context id', () => {

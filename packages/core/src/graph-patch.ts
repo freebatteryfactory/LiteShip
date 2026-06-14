@@ -102,8 +102,21 @@ export function apply(graph: DocumentGraph, patch: GraphPatch): DocumentGraph {
     if (isNodeOp(op)) {
       if (op.op === 'remove') {
         nodes.delete(op.node.id);
+      } else if (op.op === 'update') {
+        // LOGICAL REPLACE: a node is content-addressed, so a changed payload has a NEW id.
+        // An `update` therefore carries the new node and must DROP the prior node that
+        // occupies the same logical cell (same `logicalKey` — signal axis, component/pose
+        // name, …), then install the new one. Without the removal an `update` would orphan
+        // the old node (two cells where there should be one) and break `diff` round-trip
+        // for payload changes. Families whose logicalKey is id-based (entity/policy/export)
+        // never reach here — `diff` emits remove+add for them, not `update`.
+        const key = logicalKey(op.node);
+        for (const [id, existing] of nodes) {
+          if (id !== op.node.id && logicalKey(existing) === key) nodes.delete(id);
+        }
+        nodes.set(op.node.id, op.node);
       } else {
-        // 'add' and 'update' both install the node under its content-address id.
+        // 'add' installs the node under its content-address id.
         nodes.set(op.node.id, op.node);
       }
     } else if (op.op === 'remove') {
@@ -194,10 +207,13 @@ export function diff(a: DocumentGraph, b: DocumentGraph): GraphPatch {
 }
 
 /**
- * The logical identity of a node for `update` collapsing: family plus the
- * family's stable user-facing key (signal axis, component/entity name), falling
- * back to the node id. This is a READABILITY heuristic only — apply never relies
- * on it (it keys purely by content-address id).
+ * The logical identity of a node: family plus the family's stable user-facing key
+ * (signal axis, component/pose name, …), falling back to the node id. Used by `diff`
+ * to COLLAPSE a remove+add of the same cell into one `update`, AND by `apply` to
+ * REPLACE that cell (drop the prior node sharing this key before installing the new
+ * one) — so an `update` is a true logical replacement, not an orphaning add. Families
+ * with no stable non-payload key (entity/policy/export) fall back to the id, so each is
+ * its own cell and `diff` never collapses them into `update`.
  */
 function logicalKey(node: DocumentGraphNode): string {
   switch (node.family) {

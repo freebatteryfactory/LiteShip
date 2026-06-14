@@ -8,7 +8,7 @@
 
 > **ProposalAcceptance**\<`T`\> = `object`
 
-Defined in: [core/src/ai-cast.ts:431](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L431)
+Defined in: [core/src/ai-cast.ts:434](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L434)
 
 A passing validation — carries the minted [ValidatedProposal](../interfaces/ValidatedProposal.md).
 
@@ -24,7 +24,7 @@ A passing validation — carries the minted [ValidatedProposal](../interfaces/Va
 
 > `readonly` **ok**: `true`
 
-Defined in: [core/src/ai-cast.ts:432](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L432)
+Defined in: [core/src/ai-cast.ts:435](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L435)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/ai-cast.ts:432](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **proposal**: [`ValidatedProposal`](../interfaces/ValidatedProposal.md)\<`T`\>
 
-Defined in: [core/src/ai-cast.ts:433](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L433)
+Defined in: [core/src/ai-cast.ts:436](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L436)
