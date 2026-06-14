@@ -3,12 +3,10 @@ import { Diagnostics } from '@czap/core';
 import { Boundary } from '@czap/core';
 import { dedupeOutputsByTier, enumerateTierKeys } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestFile } from '@czap/edge';
-import {
-  cloudflareMiddleware,
-  getDefaultWorkersEnv,
-  resetWorkersEnvForTesting,
-  setWorkersEnvForTesting,
-} from '@czap/cloudflare';
+import * as frontDoor from '@czap/cloudflare';
+import { cloudflareMiddleware } from '@czap/cloudflare';
+import * as testingEntry from '@czap/cloudflare/testing';
+import { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from '@czap/cloudflare/testing';
 
 /** Mint a real boundary so test ids honor the ADR-0003 identity law. */
 function makeBoundary() {
@@ -61,6 +59,27 @@ function makeKVStore() {
 
 afterEach(() => {
   Diagnostics.reset();
+});
+
+describe('testing-mutator partition (DX item #115)', () => {
+  // LAW: the env-cache mutators are a footgun in production paths, so they must NOT
+  // be reachable from the front door (`@czap/cloudflare`) — only from the partitioned
+  // `@czap/cloudflare/testing` subpath. The documented production path stays the `env`
+  // option on CloudflareMiddlewareConfig. Pin the partition, not a name count.
+  const TEST_MUTATORS = ['setWorkersEnvForTesting', 'resetWorkersEnvForTesting', 'getDefaultWorkersEnv'] as const;
+
+  for (const name of TEST_MUTATORS) {
+    test(`'${name}' is exposed by /testing, not the front door`, () => {
+      expect(testingEntry[name as keyof typeof testingEntry]).toBeTypeOf('function');
+      expect((frontDoor as Record<string, unknown>)[name]).toBeUndefined();
+    });
+  }
+
+  test('the front door still exposes the production surface', () => {
+    expect(frontDoor.cloudflareMiddleware).toBeTypeOf('function');
+    expect(frontDoor.createCloudflareEdgeCache).toBeTypeOf('function');
+    expect(frontDoor.cloudflareAdapterCapsule).toBeDefined();
+  });
 });
 
 describe('cloudflareMiddleware', () => {
