@@ -40,7 +40,7 @@ core + assets -> command -> cli -> mcp-server   (command also -> mcp-server dire
 ```
 
 `@czap/command` is the shared command registry both `@czap/cli` and `@czap/mcp-server`
-dispatch through (CUT A1) — not a direct `cli -> mcp-server` edge. `@czap/audit` (CUT D9b)
+dispatch through — not a direct `cli -> mcp-server` edge. `@czap/audit`
 is a standalone leaf with no `@czap/*` dependencies.
 
 Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.

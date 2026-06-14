@@ -239,7 +239,7 @@ Astro gives the page a strong server-rendered base. LiteShip adds stateful adapt
 
 ## Capability ceilings
 
-A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings (see [ADR-0002](./docs/adr/0002-zero-alloc.md) for the cheapest-valid-default discipline).
+A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings: every surface starts at the cheapest projection that is still valid and escalates to a richer one only when the capability and frame budget allow — the *cheapest-valid-default* discipline. A boundary that can't reach the GPU still renders correct CSS; a worker that can't load WASM falls back to the TypeScript kernels. ([ADR-0002](./docs/adr/0002-zero-alloc.md) has the full rationale.)
 
 Inside Astro, that means:
 

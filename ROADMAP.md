@@ -144,7 +144,7 @@ to assert the override no longer appears.
 Spec `2026-04-23-capsule-factory-video-stack-design.md` shipped with 5 atomic phases:
 
 - Capsule factory kernel + 7-arm assembly catalog (ADR-0008)
-- Spine runtime-gap closure (ADR-0010, closes sixsigma Island #1)
+- Spine runtime-gap closure (ADR-0010)
 - Scene composition stack on existing ECS (ADR-0009, ADR-0002 amended)
 - Asset capsules + analysis cachedProjections
 - CLI + MCP dual-audience surfaces

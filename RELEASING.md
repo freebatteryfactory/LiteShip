@@ -29,7 +29,7 @@ gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE_NOTES_v0.1.0.md
 
 ## Publish packages
 
-Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then hands the matching tarballs to `pnpm publish` (ADR-0011). The default (no filter) is every publishable workspace package; the publish handoff passes one `--filter <pkg>` per minted package plus `-r` so pnpm publishes exactly the set we addressed.
+Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then hands the matching tarballs to `pnpm publish` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package; the publish handoff passes one `--filter <pkg>` per minted package plus `-r` so pnpm publishes exactly the set we addressed.
 
 Dry-run first so the receipts and `pnpm publish --dry-run` outputs are both observable without uploading:
 

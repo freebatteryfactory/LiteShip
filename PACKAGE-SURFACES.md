@@ -498,7 +498,7 @@ Main surfaces:
 
 Source: [`packages/command/src/index.ts`](./packages/command/src/index.ts)
 
-The shared command registry + dispatcher both the CLI and the MCP server route through (CUT A1). Runtime status: `host-wired`. Not imported by app code — it is the seam that keeps `czap <verb>` and the MCP tool surface one implementation.
+The shared command registry + dispatcher both the CLI and the MCP server route through. Runtime status: `host-wired`. Not imported by app code — it is the seam that keeps `czap <verb>` and the MCP tool surface one implementation.
 
 ---
 

@@ -32,4 +32,4 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 
 - `packages/_spine/*.d.ts` is now referenced from project references + vitest aliases.
 - `packages/core/src/brands.ts` re-exports branded types FROM `_spine`. Runtime constructors remain in the implementation packages.
-- ADR-0010 documents the closure of the Spine Runtime Gap (sixsigma Island #1).
+- ADR-0010 documents the closure of the Spine Runtime Gap.

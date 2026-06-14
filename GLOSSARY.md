@@ -37,6 +37,10 @@ Terms-of-art for the IR and the cast machinery. Pin the meaning; do not translat
 | **GraphPatch** | The one typed mutation over a document graph: propose -> validate -> apply -> re-seal. The editor and the AI cast both mutate *through* it; nothing edits node maps by hand. |
 | **ValidatedProposal / ApplyToken** | The AI-cast security envelope. A `ValidatedProposal` is what a validator mints; the `ApplyToken` it carries is the unforgeable witness that `applyValidatedPatch` demands. Describe it as an *envelope* or *witness*, never "permission" or "key". |
 | **seal / address** | `sealNode` / `sealGraph` mint a node's content address from its canonical bytes. "Seal" = assign identity; "re-seal" = re-address after a patch. Distinct from the unrelated "seal" (close) sense. |
+| **content address (CBOR / FNV-1a)** | A definition's identity: the **FNV-1a** hash of its **canonical CBOR** bytes — a deterministic binary encoding (RFC 8949 §4.2.1; ADR-0003 for the why). Identical definitions produce an identical address, so a cast computed once is provably correct on every surface. CBOR is the byte format; FNV-1a is the hash; together they are the address. |
+| **host-wired** | A package's runtime status: it is instantiated and driven by a host (Astro, a worker, the edge), not imported and run by app code on its own. Contrast `standalone` (runs anywhere) and `standalone subsystem`. The status tag in PACKAGE-SURFACES. |
+| **ECS** | Entity-Component-System — the composition model `@czap/scene` uses: a scene is a world of entities, each carrying components, advanced by systems once per tick. Chosen so video / audio / transition / effect tracks compose without per-track glue (ADR-0009). |
+| **DirtyFlags** | A bit-packed change-tracker on the hot path: up to 31 keys ride in one integer for allocation-free dirty checks; past 31 it falls back to a map. An instance of the "honest fallback past its regime" discipline (ADR-0002). |
 
 ## Banned in marketing-style prose
 
