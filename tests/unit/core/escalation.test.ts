@@ -141,15 +141,17 @@ describe('chooseRung — escalation chooser (P5c)', () => {
     // can never pollute the process-global memo.
     expect(a).toEqual(b);
     expect(a).not.toBe(b);
+    // A re-sealed structurally-equal policy shares the same content-addressed id,
+    // so it hits the same memo entry (value-equal verdict). Checked BEFORE the
+    // mutation below so `a` is still pristine.
+    const p2 = policy({ requires: 'reactive', grants: grantUpTo('reactive'), sites: ['browser', 'worker'] });
+    expect(chooseRung(p2, 'browser')).toEqual(a);
+    // Isolation LAW (done LAST — it mutates `a`): polluting a returned set must not
+    // leak into a later memo-hit.
     if ('error' in a) throw new Error('expected a rung');
-    // Isolation LAW: mutating a returned set must not leak into a later memo-hit.
     (a.admittedTargets as Set<string>).add('__probe__');
     const c = chooseRung(p, 'browser');
     if ('error' in c) throw new Error('expected a rung');
     expect((c.admittedTargets as ReadonlySet<string>).has('__probe__')).toBe(false);
-    // A re-sealed structurally-equal policy shares the same content-addressed id,
-    // so it hits the same memo entry (value-equal verdict).
-    const p2 = policy({ requires: 'reactive', grants: grantUpTo('reactive'), sites: ['browser', 'worker'] });
-    expect(chooseRung(p2, 'browser')).toEqual(a);
   });
 });
