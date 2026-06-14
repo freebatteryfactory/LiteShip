@@ -104,11 +104,14 @@ function buildInputs(seed: ARIACompileSeedValue): {
  */
 function compileQuietly(boundary: Boundary.Shape, authored: StateAttrs, currentState: string): ARIACompileResult {
   const { sink } = Diagnostics.createBufferSink();
-  Diagnostics.setSink(sink);
+  // Restore the PREVIOUSLY-active sink (not the default) so a host that installed
+  // a custom sink keeps capturing diagnostics after this capsule runs — the
+  // capsule stays pure w.r.t. global diagnostics state.
+  const previous = Diagnostics.setSink(sink);
   try {
     return ARIACompiler.compile(boundary, authored as { [s: string]: Record<string, string> }, currentState);
   } finally {
-    Diagnostics.resetSink();
+    Diagnostics.setSink(previous);
   }
 }
 

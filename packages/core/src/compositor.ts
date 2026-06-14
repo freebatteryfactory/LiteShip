@@ -463,6 +463,7 @@ export const Compositor: CompositorFactory = {
             runtime.removeQuantizer(name);
             speculativeEvaluators.delete(name);
             prefetchedStates.delete(name);
+            seenEpoch.delete(name);
             computeStateSync();
           }),
 

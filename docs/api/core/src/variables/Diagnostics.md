@@ -8,7 +8,7 @@
 
 > `const` **Diagnostics**: `object`
 
-Defined in: [core/src/diagnostics.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L158)
+Defined in: [core/src/diagnostics.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L160)
 
 Diagnostics facade — runtime boundaries call [Diagnostics.warn](#warn) / [Diagnostics.error](#error)
 instead of `console.*` so hosts can redirect or capture every diagnostic via [Diagnostics.setSink](#setsink).
@@ -81,7 +81,7 @@ Restore the default sink that writes through `console`.
 
 ### setSink
 
-> **setSink**: (`sink`) => `void`
+> **setSink**: (`sink`) => [`DiagnosticsSink`](../interfaces/DiagnosticsSink.md)
 
 Replace the active sink (e.g. for tests or hosted environments).
 
@@ -93,7 +93,7 @@ Replace the active sink (e.g. for tests or hosted environments).
 
 #### Returns
 
-`void`
+[`DiagnosticsSink`](../interfaces/DiagnosticsSink.md)
 
 ### warn
 

@@ -35,13 +35,24 @@ type ProjectionTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
  * superset of the one below, mirroring `@czap/quantizer`'s `TIER_TARGETS`
  * escalation (`none` within `transitions` within `physics` within `compute`).
  */
-export const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
+const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
   static: new Set<ProjectionTarget>(['aria']),
   styled: new Set<ProjectionTarget>(['css', 'aria']),
   reactive: new Set<ProjectionTarget>(['css', 'aria']),
   animated: new Set<ProjectionTarget>(['css', 'glsl', 'aria']),
   gpu: new Set<ProjectionTarget>(['css', 'glsl', 'wgsl', 'aria', 'ai']),
 };
+
+/**
+ * Immutable view of a rung's admissible targets. The raw `RUNG_TARGETS` table is
+ * module-PRIVATE on purpose: it holds mutable `Set`s, and `@czap/core` publishes
+ * wildcard subpaths (`./*`), so exporting it would let any consumer reach
+ * `@czap/core/escalation` and `.clear()`/`.add()` the escalation lattice
+ * process-wide. This returns a fresh copy each call.
+ */
+export function rungTargets(rung: CapLevel): ReadonlySet<ProjectionTarget> {
+  return new Set(RUNG_TARGETS[rung]);
+}
 
 /**
  * The Astro directive escalation order, encoded locally (core cannot import

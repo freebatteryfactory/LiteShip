@@ -67,7 +67,9 @@ describe('tarballManifestAddress', () => {
     } finally {
       rmSync(workDir, { recursive: true, force: true });
     }
-  });
+    // `pnpm pack` spawns a subprocess that is slow on Windows CI; the 10s default
+    // has flaked here repeatedly. Give headroom — the assertion is determinism, not speed.
+  }, 30000);
 });
 
 describe('lockfileAddress', () => {

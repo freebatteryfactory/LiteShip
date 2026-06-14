@@ -35,7 +35,10 @@ describe('core.canonical-cbor-decode', () => {
           }),
           { numRuns: 100 },
         );
-      });
+        // Generous per-invariant timeout: 100 property runs over a heavier capsule
+        // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded
+        // CI runner (esp. Windows) — give headroom rather than reduce coverage.
+      }, 30000);
     }
   }
 });

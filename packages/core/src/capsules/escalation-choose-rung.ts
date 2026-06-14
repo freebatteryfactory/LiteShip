@@ -34,7 +34,7 @@ import { sealNode } from '../document-graph-address.js';
 import { Cap } from '../caps.js';
 import type { PolicyNode, RuntimeSite } from '../document-graph.js';
 import type { CellMeta } from '../protocol.js';
-import { chooseRung, RUNG_TARGETS, _resetEscalationMemo } from '../escalation.js';
+import { chooseRung, rungTargets, _resetEscalationMemo } from '../escalation.js';
 import type { EscalationResult, RungChoice } from '../escalation.js';
 
 /** The five rungs, as a schema literal union the arbitrary fully supports. */
@@ -162,7 +162,7 @@ export const escalationChooseRungCapsule = defineCapsule({
         const o = output as EscalationOutput;
         // LAW: the admitted targets are a subset of the chosen rung's own table.
         if (!isChoice(o.result)) return true;
-        const table = RUNG_TARGETS[o.result.rung];
+        const table = rungTargets(o.result.rung);
         for (const t of o.result.admittedTargets) {
           if (!table.has(t as never)) return false;
         }
@@ -203,15 +203,18 @@ export const escalationChooseRungCapsule = defineCapsule({
       name: 'admitted-targets-fresh-set',
       check: (_input: unknown, output: unknown): boolean => {
         const o = output as EscalationOutput;
-        // LAW (the memoization scar): the returned admittedTargets is a FRESH Set,
-        // never a shared reference to the memoized `RUNG_TARGETS[rung]` const. A
-        // caller mutating the result must not corrupt the const or the memo.
+        // LAW (the memoization scar): the returned admittedTargets is a FRESH,
+        // ISOLATED Set — mutating it must not corrupt the canonical rung table or
+        // the memo. The raw table is module-private, so we prove isolation
+        // OBSERVABLY: mutate the result, then confirm a fresh `rungTargets()` view
+        // is unmoved.
         if (!isChoice(o.result)) return true;
-        const table = RUNG_TARGETS[o.result.rung];
-        // Reference identity: a fresh copy is a DIFFERENT object than the shared const.
-        return (o.result.admittedTargets as unknown) !== (table as unknown);
+        const before = rungTargets(o.result.rung).size;
+        (o.result.admittedTargets as Set<string>).add('__isolation_probe__');
+        const after = rungTargets(o.result.rung) as ReadonlySet<string>;
+        return !after.has('__isolation_probe__') && after.size === before;
       },
-      message: 'admittedTargets must be a fresh Set, not a reference to the shared RUNG_TARGETS const',
+      message: 'mutating admittedTargets must not corrupt the canonical rung table (fresh/isolated Set)',
     },
   ],
   budgets: { p95Ms: 0.2, allocClass: 'bounded' },
