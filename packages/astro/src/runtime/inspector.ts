@@ -9,8 +9,25 @@
  * @module
  */
 
-import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type SerializedBoundary } from './boundary.js';
+import {
+  boundaryParseFailureMessage,
+  parseBoundary,
+  readSignalValue,
+  type BoundaryStateDetail,
+  type SerializedBoundary,
+} from './boundary.js';
 import { inspectorPositionStorageKey } from './inspector-loader.js';
+import {
+  buildGraphPeek,
+  castValueRows,
+  deriveActiveTargets,
+  escalationViewForTargets,
+  readBoundaryPayload,
+  readInjectedPayload,
+  snapshotElementCasts,
+  type ActiveTarget,
+  type CastTarget,
+} from './inspector-panels.js';
 
 const HOST_TAG = 'czap-inspector';
 const DIRECTIVE_ATTR = 'data-czap-directive';
@@ -257,6 +274,33 @@ button.copy {
 }
 .note { color: #f9ab00; font-size: 11px; margin-top: 6px; }
 .empty { color: #9aa0a6; padding: 8px 0; }
+details.section { margin-top: 8px; border-top: 1px solid #2a2f3a; padding-top: 6px; }
+details.section > summary {
+  cursor: pointer;
+  color: #bdc1c6;
+  font-weight: 600;
+  font-size: 11px;
+  list-style: none;
+  user-select: none;
+}
+details.section > summary::-webkit-details-marker { display: none; }
+details.section > summary::before { content: '▸ '; color: #5f6368; }
+details.section[open] > summary::before { content: '▾ '; }
+.cast-target { margin: 6px 0 2px; }
+.cast-target-name { color: #8ab4f8; font-weight: 600; }
+.cast-evidence { color: #9aa0a6; font-size: 10px; }
+.cast-rows { margin: 2px 0 0 12px; color: #e8eaed; }
+.cast-rows .row { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cast-none { color: #9aa0a6; font-size: 11px; }
+.esc-line { margin: 3px 0; }
+.esc-rung { color: #34a853; font-weight: 600; }
+.esc-rung-err { color: #f28b82; font-weight: 600; }
+.esc-reason { color: #9aa0a6; font-size: 10px; margin-top: 2px; }
+.graph-node { font-size: 11px; margin: 2px 0; }
+.graph-fam { display: inline-block; min-width: 78px; color: #fdd663; }
+.graph-id { color: #5f6368; font-size: 10px; }
+.graph-edges { margin-top: 6px; color: #9aa0a6; font-size: 10px; }
+.panel-disclaimer { color: #9aa0a6; font-size: 10px; font-style: italic; margin-top: 4px; }
 `.trim();
 }
 
@@ -517,6 +561,28 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   actions.appendChild(copy);
   panel.appendChild(actions);
 
+  // --- Active casts + escalation panels (live, per-boundary) ---------------
+  const castsSection = document.createElement('details');
+  castsSection.className = 'section';
+  castsSection.open = true;
+  const castsSummary = document.createElement('summary');
+  castsSummary.textContent = 'active casts';
+  castsSection.appendChild(castsSummary);
+  const castsBody = document.createElement('div');
+  castsBody.dataset.role = 'casts';
+  castsSection.appendChild(castsBody);
+  panel.appendChild(castsSection);
+
+  const escSection = document.createElement('details');
+  escSection.className = 'section';
+  const escSummary = document.createElement('summary');
+  escSummary.textContent = 'escalation';
+  escSection.appendChild(escSummary);
+  const escBody = document.createElement('div');
+  escBody.dataset.role = 'escalation';
+  escSection.appendChild(escBody);
+  panel.appendChild(escSection);
+
   container.appendChild(panel);
 
   const stateEl = stateLine.querySelector('[data-role="state"]');
@@ -533,6 +599,31 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   };
 
   refreshSignal();
+
+  // Latest emitted cast values for this boundary (subscribed below). The
+  // active-casts panel reads this snapshot; it stays `null` until the first
+  // `czap:uniform-update` fires (e.g. the first state crossing).
+  let latestDetail: BoundaryStateDetail | null = null;
+
+  const renderCastsAndEscalation = (): void => {
+    const snapshot = snapshotElementCasts(element, latestDetail);
+    const active = deriveActiveTargets(snapshot);
+    renderCastRows(castsBody, active, latestDetail);
+    renderEscalation(escBody, active);
+  };
+  renderCastsAndEscalation();
+
+  const onUniformUpdate = (event: Event): void => {
+    if (!(event instanceof CustomEvent)) return;
+    const detail = event.detail as BoundaryStateDetail | undefined;
+    if (!detail) return;
+    latestDetail = detail;
+    renderCastsAndEscalation();
+  };
+  element.addEventListener('czap:uniform-update', onUniformUpdate);
+  // Re-derive when the element's cast attributes change (custom props / aria).
+  const castObserver = new MutationObserver(renderCastsAndEscalation);
+  castObserver.observe(element, { attributes: true });
 
   const stateObserver = new MutationObserver(() => {
     if (stateEl) {
@@ -555,11 +646,86 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
   return {
     dispose: () => {
       stateObserver.disconnect();
+      castObserver.disconnect();
+      element.removeEventListener('czap:uniform-update', onUniformUpdate);
       window.cancelAnimationFrame(raf);
       window.removeEventListener('resize', resizeHandler);
       window.removeEventListener('scroll', resizeHandler);
     },
   };
+}
+
+/** Render the active-casts rows for one boundary (live targets + emitted values). */
+function renderCastRows(body: HTMLElement, active: readonly ActiveTarget[], detail: BoundaryStateDetail | null): void {
+  body.replaceChildren();
+  if (active.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'cast-none';
+    none.textContent = 'No active casts (no shader-type, authored cast map, or emitted value yet).';
+    body.appendChild(none);
+    return;
+  }
+  for (const { target, evidence } of active) {
+    const head = document.createElement('div');
+    head.className = 'cast-target';
+    const name = document.createElement('span');
+    name.className = 'cast-target-name';
+    name.textContent = target;
+    const ev = document.createElement('span');
+    ev.className = 'cast-evidence';
+    ev.textContent = ` — ${evidence}`;
+    head.appendChild(name);
+    head.appendChild(ev);
+    body.appendChild(head);
+
+    const rows = castValueRows(target, detail);
+    if (rows.length > 0) {
+      const list = document.createElement('div');
+      list.className = 'cast-rows';
+      for (const text of rows) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.textContent = text;
+        list.appendChild(row);
+      }
+      body.appendChild(list);
+    }
+  }
+}
+
+/** Render the escalation verdict for one boundary from its active targets. */
+function renderEscalation(body: HTMLElement, active: readonly ActiveTarget[]): void {
+  body.replaceChildren();
+  const targets = active.map((a) => a.target);
+  const view = escalationViewForTargets(targets, 'browser');
+
+  const rungLine = document.createElement('div');
+  rungLine.className = 'esc-line';
+  if (view.chosenRung) {
+    rungLine.innerHTML =
+      `rung: <span class="esc-rung">${view.chosenRung}</span> ` +
+      `<span class="cast-evidence">(requires ${view.requiredRung})</span>`;
+  } else {
+    rungLine.innerHTML = `rung: <span class="esc-rung-err">unsatisfiable</span>`;
+  }
+  body.appendChild(rungLine);
+
+  if (view.admittedTargets.length > 0) {
+    const admitted = document.createElement('div');
+    admitted.className = 'esc-line';
+    admitted.textContent = `admits: ${view.admittedTargets.join(', ')}`;
+    body.appendChild(admitted);
+  }
+
+  const reason = document.createElement('div');
+  reason.className = 'esc-reason';
+  reason.textContent = view.reason;
+  body.appendChild(reason);
+
+  const disclaimer = document.createElement('div');
+  disclaimer.className = 'panel-disclaimer';
+  disclaimer.textContent = 'Derived from on-page cast targets (no authored PolicyNode serialized to the page).';
+  body.appendChild(disclaimer);
 }
 
 function refreshPanels(body: HTMLElement): void {
@@ -581,6 +747,79 @@ function refreshPanels(body: HTMLElement): void {
     prior?.dispose();
     panelHandles.set(element, renderBoundaryPanel(element, body));
   });
+
+  renderGraphPeek(body, Array.from(elements));
+}
+
+/** Render the read-only, content-addressed DocumentGraph peek for the page. */
+function renderGraphPeek(body: HTMLElement, elements: readonly HTMLElement[]): void {
+  const section = document.createElement('details');
+  section.className = 'section';
+  const summary = document.createElement('summary');
+  summary.textContent = 'DocumentGraph peek';
+  section.appendChild(summary);
+
+  // Prefer an injected authored graph if an integration provided one; else
+  // build the page-derived graph from the live boundaries.
+  const injected = readInjectedPayload();
+  const peek =
+    injected?.graph ??
+    buildGraphPeek(
+      elements
+        .map((element) => {
+          const payload = readBoundaryPayload(element.getAttribute('data-czap-boundary'));
+          if (!payload) return null;
+          const snapshot = snapshotElementCasts(element, null);
+          const targets: CastTarget[] = deriveActiveTargets(snapshot).map((a) => a.target);
+          return { payload, targets };
+        })
+        .filter((entry): entry is { payload: Partial<SerializedBoundary>; targets: CastTarget[] } => entry !== null),
+    );
+
+  if (peek.nodes.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'cast-none';
+    none.textContent = 'No graph nodes (no boundaries with a parseable payload on this page).';
+    section.appendChild(none);
+    body.appendChild(section);
+    return;
+  }
+
+  for (const node of peek.nodes) {
+    const row = document.createElement('div');
+    row.className = 'graph-node';
+    row.title = node.id;
+    const fam = document.createElement('span');
+    fam.className = 'graph-fam';
+    fam.textContent = node.family;
+    const label = document.createElement('span');
+    label.textContent = node.label;
+    const id = document.createElement('span');
+    id.className = 'graph-id';
+    id.textContent = ` ${node.shortId}`;
+    row.appendChild(fam);
+    row.appendChild(label);
+    row.appendChild(id);
+    section.appendChild(row);
+  }
+
+  const edges = document.createElement('div');
+  edges.className = 'graph-edges';
+  edges.textContent =
+    peek.edges.length > 0
+      ? `${peek.edges.length} edge${peek.edges.length === 1 ? '' : 's'}: ` +
+        peek.edges.map((e) => `${e.fromShort} →${e.type}→ ${e.toShort}`).join('  ·  ')
+      : 'no edges';
+  section.appendChild(edges);
+
+  const disclaimer = document.createElement('div');
+  disclaimer.className = 'panel-disclaimer';
+  disclaimer.textContent = injected?.graph
+    ? 'Injected authored graph (window.__CZAP_INSPECTOR__).'
+    : 'Page-derived (real @czap/core content addresses); the authored build-time graph is not serialized per page.';
+  section.appendChild(disclaimer);
+
+  body.appendChild(section);
 }
 
 /** Toggle the inspector overlay. When `visible` is omitted, flips current state. */

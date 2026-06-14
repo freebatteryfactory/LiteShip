@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { installInspectorLoader } from '../../packages/astro/src/runtime/inspector-loader.js';
-import { isInspectorOverlayVisible } from '../../packages/astro/src/runtime/inspector.js';
+import { isInspectorOverlayVisible, toggleInspectorOverlay } from '../../packages/astro/src/runtime/inspector.js';
 
 describe('astro dev inspector', () => {
   beforeEach(() => {
@@ -48,5 +48,52 @@ describe('astro dev inspector', () => {
     await vi.waitFor(() => {
       expect(isInspectorOverlayVisible()).toBe(false);
     });
+  });
+
+  test('full panels render: active casts, escalation, and the DocumentGraph peek', () => {
+    const el = document.createElement('div');
+    el.setAttribute(
+      'data-czap-boundary',
+      JSON.stringify({
+        id: 'hero',
+        input: 'viewport.width',
+        thresholds: [0, 768],
+        states: ['compact', 'wide'],
+        glslStateUniforms: { compact: { u_blur: 1 }, wide: { u_blur: 4 } },
+      }),
+    );
+    el.setAttribute('data-czap-directive', 'satellite');
+    el.setAttribute('data-czap-shader-type', 'glsl');
+    el.setAttribute('data-czap-state', 'compact');
+    document.body.appendChild(el);
+
+    toggleInspectorOverlay(true);
+    const shadow = document.querySelector('czap-inspector')!.shadowRoot!;
+
+    const casts = shadow.querySelector('[data-role="casts"]')!;
+    expect(casts.textContent).toContain('glsl');
+    expect(casts.textContent).toContain('shader-type');
+
+    const escalation = shadow.querySelector('[data-role="escalation"]')!;
+    expect(escalation.textContent).toContain('animated'); // glsl → animated rung
+
+    const graphSummary = Array.from(shadow.querySelectorAll('summary')).find((s) =>
+      s.textContent?.includes('DocumentGraph'),
+    );
+    expect(graphSummary).toBeTruthy();
+    const section = graphSummary!.parentElement!;
+    expect(section.textContent).toContain('viewport.width'); // signal node
+    expect(section.textContent).toContain('fnv1a:'); // real content address
+
+    // Live update: dispatching a uniform-update re-renders the cast values.
+    el.dispatchEvent(
+      new CustomEvent('czap:uniform-update', {
+        detail: { discrete: { hero: 'wide' }, css: {}, glsl: { u_blur: 4 }, wgsl: {}, aria: {} },
+        bubbles: true,
+      }),
+    );
+    expect(casts.textContent).toContain('u_blur = 4');
+
+    toggleInspectorOverlay(false);
   });
 });
