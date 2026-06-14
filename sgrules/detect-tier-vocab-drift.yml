@@ -1,0 +1,14 @@
+# Drift guard (same idiom as the repo's vocabulary drift-guard tests).
+#
+# A docblock @example must not teach a pre-rename tier vocabulary that no
+# shipped union contains. The canonical CapLevel is
+#   'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+# and DesignTier is 'minimal' | 'standard' | 'enhanced' | 'rich'. Pinned to the
+# specific dead vocab pairs so honest code naming real unions never trips.
+id: detect-tier-vocab-drift
+language: typescript
+severity: error
+message: "Doc example uses pre-rename tier vocabulary ('low'|'mid'|'high' / 'basic'|'standard'|'rich'); canonical CapLevel is 'static'|'styled'|'reactive'|'animated'|'gpu', DesignTier is 'minimal'|'standard'|'enhanced'|'rich'"
+rule:
+  kind: comment
+  regex: "'low'\\s*\\|\\s*'mid'\\s*\\|\\s*'high'|'basic'\\s*\\|\\s*'standard'\\s*\\|\\s*'rich'"
