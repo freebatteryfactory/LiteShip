@@ -1,6 +1,8 @@
 /**
- * `@quantize` ARIA authoring — the nested `@aria { … }` segment parses into a
- * per-state `ariaAttrs` map (P1 Layer 2), reusing the existing state-body parser.
+ * `@quantize` ARIA authoring — the nested `@aria { … }` segment parses into the
+ * generalized per-state `castAttrs.aria` map and is mirrored onto the parallel
+ * `ariaAttrs` field for existing consumers (D0 cast spine), reusing the existing
+ * state-body parser.
  *
  * @module
  */
@@ -29,11 +31,15 @@ describe('@quantize @aria authoring', () => {
 }`;
     const blocks = parseQuantizeBlocks(css, FILE);
     expect(blocks).toHaveLength(1);
+    // The `@aria` segment lands on the generalized `castAttrs.aria` map and is
+    // mirrored onto the parallel `ariaAttrs` field (existing-consumer shim).
     expect(blocks[0]!.states['collapsed']).toEqual({
       bareProps: { 'max-height': '0' },
       rules: [],
+      castAttrs: { aria: { 'aria-expanded': 'false', role: 'button' } },
       ariaAttrs: { 'aria-expanded': 'false', role: 'button' },
     });
+    expect(blocks[0]!.states['expanded']!.castAttrs).toEqual({ aria: { 'aria-expanded': 'true' } });
     expect(blocks[0]!.states['expanded']!.ariaAttrs).toEqual({ 'aria-expanded': 'true' });
   });
 
@@ -56,6 +62,22 @@ describe('@quantize @aria authoring', () => {
   test('states with no @aria have no ariaAttrs field (shape stays minimal)', () => {
     const blocks = parseQuantizeBlocks('@quantize v { a { color: red; } }', FILE);
     expect(blocks[0]!.states['a']).toEqual({ bareProps: { color: 'red' }, rules: [] });
+    expect(blocks[0]!.states['a']).not.toHaveProperty('castAttrs');
     expect(blocks[0]!.states['a']).not.toHaveProperty('ariaAttrs');
+  });
+
+  test('@glsl and @wgsl segments parse into castAttrs without deriving ariaAttrs', () => {
+    const css = `
+@quantize fx {
+  off {
+    @glsl { blur: 0.0; }
+    @wgsl { blur_radius: 0.0; }
+  }
+}`;
+    const blocks = parseQuantizeBlocks(css, FILE);
+    const off = blocks[0]!.states['off']!;
+    expect(off.castAttrs).toEqual({ glsl: { blur: '0.0' }, wgsl: { blur_radius: '0.0' } });
+    // ariaAttrs is derived only from `@aria`; a glsl/wgsl-only state has none.
+    expect(off).not.toHaveProperty('ariaAttrs');
   });
 });

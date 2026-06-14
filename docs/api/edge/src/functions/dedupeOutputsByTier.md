@@ -8,15 +8,18 @@
 
 > **dedupeOutputsByTier**(`outputsByTier`): `Pick`\<[`BoundaryManifestEntry`](../interfaces/BoundaryManifestEntry.md), `"outputs"` \| `"outputsByTier"`\>
 
-Defined in: [edge/src/manifest.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L120)
+Defined in: [edge/src/manifest.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L123)
 
 Deduplicate a fully-materialized per-tier outputs map into the pooled
 [BoundaryManifestEntry](../interfaces/BoundaryManifestEntry.md) shape (`outputs` + index refs).
 
-Identity is the full `(css, propertyRegistrations, containerQueries)`
-triple, and cells are visited in [enumerateTierKeys](enumerateTierKeys.md) order so the
-pool order -- and the serialized manifest bytes -- are stable regardless
-of the producer's insertion order.
+Identity is the full `css` / `propertyRegistrations` / `containerQueries` /
+`aria` / `glsl` / `wgsl` tuple, and cells are visited in
+[enumerateTierKeys](enumerateTierKeys.md) order so the pool order -- and the serialized
+manifest bytes -- are stable regardless of the producer's insertion order.
+Each non-CSS cast is part of identity so two boundaries that differ only in
+their `@glsl` / `@wgsl` cast get distinct content addresses (and distinct
+pool entries).
 
 ## Parameters
 

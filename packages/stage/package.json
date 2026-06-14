@@ -20,7 +20,6 @@
     "typescript"
   ],
   "type": "module",
-  "private": true,
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,6 +28,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
+    },
+    "./ffmpeg": {
+      "types": "./dist/ffmpeg.d.ts",
+      "import": "./dist/ffmpeg.js",
+      "development": "./src/ffmpeg.ts"
     }
   },
   "files": [

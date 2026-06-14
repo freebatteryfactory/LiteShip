@@ -66,6 +66,13 @@ export interface WGSLCompileResult {
   readonly bindings: readonly WGSLBinding[];
   /** Default field values keyed by WGSL field name. */
   readonly bindingValues: Record<string, number>;
+  /**
+   * Per-state binding values keyed by state name then snake_case field name —
+   * the WGSL analog of `GLSLCompileResult.stateUniforms`. Built alongside the
+   * merged `bindingValues` so the live runtime can resolve
+   * `stateBindings[currentState]` and update struct fields on each crossing.
+   */
+  readonly stateBindings: Record<string, Record<string, number>>;
   /** Pre-serialized WGSL preamble string. */
   readonly declarations: string;
 }
@@ -148,19 +155,25 @@ function compile<B extends Boundary.Shape>(
   const stateNames: ReadonlyArray<StateUnion<B> & string> = boundary.states as ReadonlyArray<StateUnion<B> & string>;
   const structName = toStructName(boundary.input);
 
-  // Pass 1: collect all values per field across all states
+  // Pass 1: collect all values per field across all states, plus the per-state
+  // map (the WGSL analog of GLSL's stateUniforms; null-proto since state names
+  // are author-controlled and could be `__proto__`).
   const fieldValues = new Map<string, number[]>();
   const mergedValues: Record<string, number> = {};
+  const stateBindings: Record<string, Record<string, number>> = Object.create(null);
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
+    const perState: Record<string, number> = {};
     for (const [key, val] of Object.entries(stateValues)) {
       const fieldName = toFieldName(key);
       if (!fieldValues.has(fieldName)) fieldValues.set(fieldName, []);
       fieldValues.get(fieldName)!.push(val);
       mergedValues[fieldName] = val;
+      perState[fieldName] = val;
     }
+    stateBindings[stateName] = perState;
   }
 
   // Always include a state_index field
@@ -205,7 +218,7 @@ function compile<B extends Boundary.Shape>(
     bindingDecl,
   ].join('\n');
 
-  return { structs, bindings, bindingValues: mergedValues, declarations };
+  return { structs, bindings, bindingValues: mergedValues, stateBindings, declarations };
 }
 
 /**

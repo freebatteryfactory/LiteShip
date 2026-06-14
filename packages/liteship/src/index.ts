@@ -34,6 +34,7 @@ export const LITESHIP_PACKAGES = [
   '@czap/worker',
   '@czap/remotion',
   '@czap/scene',
+  '@czap/stage',
   '@czap/assets',
   '@czap/audit',
   '@czap/command',

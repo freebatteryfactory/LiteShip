@@ -20,7 +20,7 @@ stringified helper that routes the values map into `uniform*` calls.
 
 > `readonly` **bindUniforms**: `string`
 
-Defined in: [compiler/src/glsl.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L74)
+Defined in: [compiler/src/glsl.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L82)
 
 Stringified `bindUniforms(gl, program, values)` helper.
 
@@ -30,7 +30,7 @@ Stringified `bindUniforms(gl, program, values)` helper.
 
 > `readonly` **declarations**: `string`
 
-Defined in: [compiler/src/glsl.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L72)
+Defined in: [compiler/src/glsl.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L80)
 
 Pre-serialized `#define` + `uniform` declarations block.
 
@@ -43,6 +43,20 @@ Pre-serialized `#define` + `uniform` declarations block.
 Defined in: [compiler/src/glsl.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L66)
 
 State-index `#define`s.
+
+***
+
+### stateUniforms
+
+> `readonly` **stateUniforms**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
+
+Defined in: [compiler/src/glsl.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L78)
+
+Per-state uniform values keyed by state name then `u_*` uniform name. Unlike
+the flat [uniformValues](#uniformvalues) default (last-state-wins), this preserves
+every state's authored values so the live runtime can resolve
+`stateUniforms[currentState]` and update uniforms on each boundary crossing
+— the GLSL analog of `ARIACompileResult.stateAttributes`.
 
 ***
 

@@ -6,7 +6,7 @@
 
 # Interface: SceneRuntimeHandle
 
-Defined in: [scene/src/runtime.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L113)
+Defined in: [scene/src/runtime.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L124)
 
 Live runtime handle returned by [SceneRuntime.build](../variables/SceneRuntime.md#build).
 
@@ -16,7 +16,7 @@ Live runtime handle returned by [SceneRuntime.build](../variables/SceneRuntime.m
 
 > `readonly` **currentFrame**: () => `number`
 
-Defined in: [scene/src/runtime.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L123)
+Defined in: [scene/src/runtime.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L134)
 
 Current frame index derived from `currentTimeMs * fps / 1000`.
 
@@ -30,7 +30,7 @@ Current frame index derived from `currentTimeMs * fps / 1000`.
 
 > `readonly` **currentTimeMs**: () => `number`
 
-Defined in: [scene/src/runtime.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L121)
+Defined in: [scene/src/runtime.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L132)
 
 Current scene time in milliseconds (advanced by [tick](#tick)).
 
@@ -44,7 +44,7 @@ Current scene time in milliseconds (advanced by [tick](#tick)).
 
 > `readonly` **entitySpawnCount**: `number`
 
-Defined in: [scene/src/runtime.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L119)
+Defined in: [scene/src/runtime.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L130)
 
 Number of entities spawned at build time (one per scene track).
 
@@ -54,7 +54,7 @@ Number of entities spawned at build time (one per scene track).
 
 > `readonly` **receipts**: readonly [`MixReceipt`](MixReceipt.md)[]
 
-Defined in: [scene/src/runtime.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L125)
+Defined in: [scene/src/runtime.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L136)
 
 Mix receipts collected via the configured sink. Empty when a custom sink was supplied.
 
@@ -64,7 +64,7 @@ Mix receipts collected via the configured sink. Empty when a custom sink was sup
 
 > `readonly` **release**: () => `Promise`\<`void`\>
 
-Defined in: [scene/src/runtime.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L132)
+Defined in: [scene/src/runtime.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L151)
 
 Release the world's scope. Idempotent.
 
@@ -74,11 +74,29 @@ Release the world's scope. Idempotent.
 
 ***
 
+### svgAttrs
+
+> `readonly` **svgAttrs**: () => [`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)
+
+Defined in: [scene/src/runtime.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L144)
+
+The SVG-egress frame collected on the most recent [tick](#tick) — an
+entity-keyed snapshot of the `_svgAttrs` SVGSystem composed. Empty
+before the first tick. Always populated regardless of whether a
+`svgSink` was supplied, so a consumer can pull the SVG cast post-tick
+without wiring a callback.
+
+#### Returns
+
+[`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)
+
+***
+
 ### systemsRegistered
 
 > `readonly` **systemsRegistered**: `number`
 
-Defined in: [scene/src/runtime.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L117)
+Defined in: [scene/src/runtime.ts:128](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L128)
 
 Number of systems registered (always [CANONICAL\_SYSTEM\_COUNT](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts)).
 
@@ -88,7 +106,7 @@ Number of systems registered (always [CANONICAL\_SYSTEM\_COUNT](https://github.c
 
 > `readonly` **tick**: (`dtMs`) => `Promise`\<`void`\>
 
-Defined in: [scene/src/runtime.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L130)
+Defined in: [scene/src/runtime.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L149)
 
 Advance the simulation by `dtMs` milliseconds, then run every
 registered system once over the world.
@@ -109,6 +127,6 @@ registered system once over the world.
 
 > `readonly` **world**: `WorldShape`
 
-Defined in: [scene/src/runtime.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L115)
+Defined in: [scene/src/runtime.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L126)
 
 The underlying ECS world — exposed for query-based assertions.

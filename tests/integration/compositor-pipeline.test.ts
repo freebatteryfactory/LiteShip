@@ -191,6 +191,7 @@ describe('Compositor pipeline integration', () => {
       'compute-blend',
       'emit-css',
       'emit-glsl',
+      'emit-wgsl',
       'emit-aria',
     ]);
     expect(compositor.runtime.getStateIndex('layout')).toBe(1);

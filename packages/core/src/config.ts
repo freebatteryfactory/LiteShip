@@ -121,6 +121,7 @@ export const Config = {
       '@czap/vite': r('packages/vite/src/index.ts'),
       '@czap/astro/runtime': r('packages/astro/src/runtime/index.ts'),
       '@czap/astro': r('packages/astro/src/index.ts'),
+      '@czap/stage/ffmpeg': r('packages/stage/src/ffmpeg.ts'),
       '@czap/stage': r('packages/stage/src/index.ts'),
       '@czap/remotion': r('packages/remotion/src/index.ts'),
       '@czap/scene/dev': r('packages/scene/src/dev/server.ts'),

@@ -69,6 +69,9 @@ const PACKAGES: readonly PackageSpec[] = [
   },
   { dir: 'packages/remotion', name: '@czap/remotion', imports: ['@czap/remotion'] },
   { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
+  // The verb / orchestration layer (P4). `.` is the pure graph-walk core;
+  // `./ffmpeg` is the node-only headless byte-encode backend (child_process).
+  { dir: 'packages/stage', name: '@czap/stage', imports: ['@czap/stage', '@czap/stage/ffmpeg'] },
   { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets', '@czap/assets/testing'] },
   { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
   // Shared command registry (CUT A1) — the dispatch layer @czap/cli and

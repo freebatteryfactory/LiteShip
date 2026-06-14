@@ -8,6 +8,6 @@
 
 > **Shape** = `CompositorShape`
 
-Defined in: [core/src/compositor.ts:383](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L383)
+Defined in: [core/src/compositor.ts:497](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L497)
 
 Structural shape of a live compositor instance.

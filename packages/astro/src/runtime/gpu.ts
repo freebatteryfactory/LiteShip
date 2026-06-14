@@ -122,7 +122,10 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement):
     }
 
     void (async () => {
-      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '');
+      // Pass `el` (the satellite) so the runtime subscribes to its
+      // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
+      // live on every crossing.
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
@@ -224,14 +227,30 @@ void main() {
     webgl.vertexAttribPointer(posLoc, 2, webgl.FLOAT, false, 0, 0);
 
     const uniforms = new Map<string, WebGLUniformLocation>();
+    // int/bool-typed scalar uniforms MUST be set with uniform1i; uniform1f raises
+    // INVALID_OPERATION and the uniform silently keeps its old value, so an
+    // integer-inferred `@glsl` uniform (e.g. `u_state`) would stop updating.
+    const intUniforms = new Set<string>();
     const numUniforms = webgl.getProgramParameter(program, webgl.ACTIVE_UNIFORMS);
     for (let i = 0; i < numUniforms; i++) {
       const info = webgl.getActiveUniform(program, i);
       if (info) {
         const loc = webgl.getUniformLocation(program, info.name);
-        if (loc) uniforms.set(info.name, loc);
+        if (loc) {
+          uniforms.set(info.name, loc);
+          // Guard `typeof number` so a context/mock with an undefined `type` (or
+          // undefined GL constants) can't misclassify every uniform as int via
+          // `undefined === undefined`; real WebGL always reports a numeric type.
+          if (typeof info.type === 'number' && (info.type === webgl.INT || info.type === webgl.BOOL)) {
+            intUniforms.add(info.name);
+          }
+        }
       }
     }
+    const setScalarUniform = (name: string, loc: WebGLUniformLocation, num: number): void => {
+      if (intUniforms.has(name)) webgl.uniform1i(loc, Math.round(num));
+      else webgl.uniform1f(loc, num);
+    };
 
     const startTime = performance.now();
     let animFrame = 0;
@@ -299,8 +318,20 @@ void main() {
           if (loc && typeof value === 'string') {
             const num = parseFloat(value);
             if (!Number.isNaN(num)) {
-              webgl.uniform1f(loc, num);
+              setScalarUniform(uniformName, loc, num);
             }
+          }
+        }
+      }
+
+      // Authored per-state GLSL uniforms (`@glsl` blocks). `applyBoundaryState`
+      // resolves `glslStateUniforms[currentState]` into `detail.glsl` so the
+      // uniform keys are already canonical `u_*` names — set them directly.
+      if (detail.glsl) {
+        for (const [uniformName, value] of Object.entries(detail.glsl)) {
+          const loc = uniforms.get(uniformName);
+          if (loc && typeof value === 'number' && !Number.isNaN(value)) {
+            setScalarUniform(uniformName, loc, value);
           }
         }
       }

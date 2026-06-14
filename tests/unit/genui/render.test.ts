@@ -5,7 +5,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@czap/genui';
+import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } from '@czap/genui';
 
 describe('@czap/genui renderFromCatalog', () => {
   it('renders trusted components without executing script-like prop strings', () => {
@@ -82,5 +82,172 @@ describe('@czap/genui renderFromCatalog', () => {
 
     target.querySelector('button')?.click();
     expect(actionId).toBe('save-draft');
+  });
+
+  it('renders allowlisted attributes including data-/aria- prefixed ones', () => {
+    const catalog = defineComponentCatalog({
+      version: 'attr-1',
+      components: {
+        Link: {
+          tag: 'a',
+          props: {
+            href: { type: 'string' },
+            class: { type: 'string' },
+            'aria-label': { type: 'string' },
+            'data-track': { type: 'string' },
+          },
+          children: 'none',
+        },
+      },
+    });
+    const target = document.createElement('div');
+    const ok = renderFromCatalog(
+      {
+        name: 'Link',
+        props: {
+          href: '/x',
+          class: 'btn',
+          'aria-label': 'go',
+          'data-track': 'cta',
+        },
+      },
+      { catalog, target },
+    );
+    expect(ok).toBe(true);
+    const a = target.querySelector('a')!;
+    expect(a.getAttribute('href')).toBe('/x');
+    expect(a.getAttribute('class')).toBe('btn');
+    expect(a.getAttribute('aria-label')).toBe('go');
+    expect(a.getAttribute('data-track')).toBe('cta');
+  });
+
+  it('does not set a declared-but-non-allowlisted string attribute', () => {
+    // `style` is declared on the def but is NOT in the attribute allowlist, so
+    // applyProps skips the setAttribute branch.
+    const catalog = defineComponentCatalog({
+      version: 'attr-2',
+      components: {
+        Box: { tag: 'div', props: { style: { type: 'string' } }, children: 'none' },
+      },
+    });
+    const target = document.createElement('div');
+    renderFromCatalog({ name: 'Box', props: { style: 'color:red' } }, { catalog, target });
+    expect(target.querySelector('div')?.hasAttribute('style')).toBe(false);
+  });
+
+  it('writes the `label` string prop as textContent (label branch)', () => {
+    const target = document.createElement('div');
+    renderFromCatalog(
+      { name: 'Button', props: { label: 'Press' } },
+      { catalog: DEMO_COMPONENT_CATALOG, target },
+    );
+    expect(target.querySelector('button')?.textContent).toBe('Press');
+  });
+
+  it('ignores an on* interaction prop that is not onClick', () => {
+    const catalog = defineComponentCatalog({
+      version: 'evt-1',
+      components: {
+        Box: { tag: 'div', props: { onHover: { type: 'string' } }, children: 'none' },
+      },
+    });
+    const target = document.createElement('div');
+    const eventRoot = document.createElement('div');
+    let fired = 0;
+    eventRoot.addEventListener('genui:interaction', () => {
+      fired += 1;
+    });
+    renderFromCatalog({ name: 'Box', props: { onHover: 'noop' } }, { catalog, target, eventRoot });
+    target.querySelector('div')?.dispatchEvent(new Event('click', { bubbles: true }));
+    expect(fired).toBe(0);
+  });
+
+  it('ignores a non-string onClick prop', () => {
+    const catalog = defineComponentCatalog({
+      version: 'evt-2',
+      components: {
+        Box: { tag: 'div', props: { onClick: { type: 'number' } }, children: 'none' },
+      },
+    });
+    const target = document.createElement('div');
+    const eventRoot = document.createElement('div');
+    let fired = 0;
+    eventRoot.addEventListener('genui:interaction', () => {
+      fired += 1;
+    });
+    renderFromCatalog(
+      { name: 'Box', props: { onClick: 5 as unknown as string } },
+      { catalog, target, eventRoot },
+    );
+    target.querySelector('div')?.click();
+    expect(fired).toBe(0);
+  });
+
+  it('renders an array slot value into a single slot host', () => {
+    const catalog = defineComponentCatalog({
+      version: 'slot-r1',
+      components: {
+        Panel: { tag: 'section', props: {}, children: 'optional' },
+        Text: { tag: 'p', props: { text: { type: 'string', required: true } }, children: 'none' },
+      },
+    });
+    const target = document.createElement('div');
+    const ok = renderFromCatalog(
+      {
+        name: 'Panel',
+        props: {},
+        slots: {
+          body: [
+            { name: 'Text', props: { text: 'a' } },
+            { name: 'Text', props: { text: 'b' } },
+          ],
+        },
+      },
+      { catalog, target },
+    );
+    expect(ok).toBe(true);
+    const slot = target.querySelector('[data-czap-genui-slot="body"]')!;
+    expect(slot.querySelectorAll('p')).toHaveLength(2);
+    expect(slot.textContent).toBe('ab');
+  });
+
+  it('renders child nodes under the parent element', () => {
+    const target = document.createElement('div');
+    const ok = renderFromCatalog(
+      {
+        name: 'Card',
+        props: { title: 'T' },
+        children: [
+          { name: 'Text', props: { text: 'one' } },
+          { name: 'Text', props: { text: 'two' } },
+        ],
+      },
+      { catalog: DEMO_COMPONENT_CATALOG, target },
+    );
+    expect(ok).toBe(true);
+    expect(target.querySelectorAll('section > p')).toHaveLength(2);
+  });
+
+  it('falls back to a div tag when the component def omits one', () => {
+    const catalog = defineComponentCatalog({
+      version: 'tagless-1',
+      components: { Bare: { props: {}, children: 'none' } },
+    });
+    const target = document.createElement('div');
+    renderFromCatalog({ name: 'Bare', props: {} }, { catalog, target });
+    expect(target.firstElementChild?.tagName).toBe('DIV');
+  });
+
+  it('preserves prior content when clear:false is passed', () => {
+    const target = document.createElement('div');
+    const keep = document.createElement('span');
+    keep.textContent = 'keep';
+    target.appendChild(keep);
+    renderFromCatalog(
+      { name: 'Text', props: { text: 'added' } },
+      { catalog: DEMO_COMPONENT_CATALOG, target, clear: false },
+    );
+    expect(target.querySelector('span')?.textContent).toBe('keep');
+    expect(target.querySelector('p')?.textContent).toBe('added');
   });
 });

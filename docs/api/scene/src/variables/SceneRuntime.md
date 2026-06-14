@@ -8,7 +8,7 @@
 
 > `const` **SceneRuntime**: `object`
 
-Defined in: [scene/src/runtime.ts:268](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L268)
+Defined in: [scene/src/runtime.ts:300](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L300)
 
 SceneRuntime namespace — build a live, tickable handle from a
 compiled scene. The companion type namespace exposes

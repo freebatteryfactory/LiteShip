@@ -204,6 +204,9 @@ const STANDALONE_FUNCTIONS = [
   // the canonical GLSL identifier, shared by compositor/worker/astro-gpu/compiler.
   'projectionKeys',
   'glslIdent',
+  // the canonical WGSL identifier (D1-WGSL): bare snake_case field name, shared
+  // by compositor/worker/astro-wgpu/compiler — the WGSL twin of `glslIdent`.
+  'wgslIdent',
   // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',
@@ -234,6 +237,9 @@ const STANDALONE_OBJECTS = [
   'tokenBufferCapsule',
   'canonicalCborCapsule',
   'canonicalCborDecodeCapsule',
+  // GraphPatch round-trip identity capsule (F): proves encode→decode→diff→patch
+  // →re-encode holds under the content-addressed multiset law.
+  'graphPatchIdentityCapsule',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────

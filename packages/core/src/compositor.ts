@@ -22,6 +22,8 @@ import type { Boundary } from './boundary.js';
 import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from './defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
 import { DirtyFlags } from './dirty.js';
+import type { PolicyNode, RuntimeSite } from './document-graph.js';
+import { chooseRung } from './escalation.js';
 import type { FrameBudget } from './frame-budget.js';
 import { projectionKeys } from './projection.js';
 import type { Quantizer } from './quantizer-types.js';
@@ -31,7 +33,13 @@ import { SpeculativeEvaluator } from './speculative.js';
 /**
  * Snapshot of the compositor's output per tick: discrete state names for each
  * quantizer, their blend-weight vectors, and the compiled per-target output
- * maps (`css` / `glsl` / `aria`).
+ * maps (`css` / `glsl` / `wgsl` / `aria`).
+ *
+ * `wgsl` mirrors `glsl` (a per-quantizer numeric channel keyed by the
+ * quantizer's bare snake_case projection key). D0 carries the channel through
+ * the state shape, the pool, and the worker emit; D1-WGSL adds the live
+ * `emit-wgsl` runtime phase (below) that populates it from the state index,
+ * escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
  */
 export interface CompositeState {
   readonly discrete: Record<string, string>;
@@ -39,18 +47,60 @@ export interface CompositeState {
   readonly outputs: {
     readonly css: Record<string, number | string>;
     readonly glsl: Record<string, number>;
+    readonly wgsl: Record<string, number>;
     readonly aria: Record<string, string>;
   };
 }
 
 /**
  * Options accepted by `Compositor.create`: pool capacity, optional
- * frame-budget gating, and whether to enable speculative pre-evaluation.
+ * frame-budget gating, whether to enable speculative pre-evaluation, and an
+ * optional escalation gate ({@link getPolicy} + {@link runtimeSite}).
  */
 export interface CompositorConfig {
   readonly poolCapacity?: number;
   readonly frameBudget?: FrameBudget.Shape;
   readonly speculative?: boolean;
+  /**
+   * Escalation gate: resolve the {@link PolicyNode} (if any) that governs a
+   * projection, keyed by the quantizer's compositor registry name (the same
+   * `name` passed to `add()` — the compositor knows names, not graph projection
+   * ids, so a host wiring graph projections maps id → name here). When a policy applies, the compositor
+   * computes `chooseRung(policy, runtimeSite)` at `add` time and emits ONLY the
+   * targets that rung admits (`admittedTargets`). A projection with NO matching
+   * policy is pass-through (all targets emit). A policy that matches but admits
+   * no rung (the `{ error }` branch — site not admitted, or budgets/grants
+   * exhaust every rung) DENIES every target for that projection: a constraint
+   * that cannot be satisfied must not silently emit at full capability.
+   */
+  readonly getPolicy?: (projectionName: string) => PolicyNode | undefined;
+  /**
+   * The runtime site the escalation gate evaluates policies against. Defaults to
+   * an environment hint: `'browser'` when a `window` global is present, else
+   * `'node'`. Ignored unless {@link getPolicy} is supplied.
+   */
+  readonly runtimeSite?: RuntimeSite;
+}
+
+/**
+ * Per-projection target admissibility resolved by the escalation gate. `null`
+ * (the default) means no policy governs the projection, so every target emits.
+ * A present set lists exactly the targets the chosen rung admits; the
+ * `{ error }` branch resolves to an EMPTY set, denying every target.
+ */
+type AdmittedTargets = ReadonlySet<string> | null;
+
+/** Default runtime-site hint when no explicit `runtimeSite` is configured. */
+function defaultRuntimeSite(): RuntimeSite {
+  // Detect the realm before falling back to `node`, so worker/edge runtimes
+  // (which this escalation gate explicitly targets) don't collapse to `node` and
+  // consult the wrong admission table. A real DOM document ⇒ browser; a worker
+  // global (`WorkerGlobalScope`/`importScripts`) ⇒ worker; an edge global ⇒ edge.
+  const g = globalThis as Record<string, unknown>;
+  if (typeof g['window'] !== 'undefined' && typeof g['document'] !== 'undefined') return 'browser';
+  if (typeof g['WorkerGlobalScope'] !== 'undefined' || typeof g['importScripts'] === 'function') return 'worker';
+  if (typeof g['EdgeRuntime'] !== 'undefined') return 'edge';
+  return 'node';
 }
 
 /**
@@ -80,19 +130,35 @@ interface CompositorFactory {
 interface QuantizerMeta {
   readonly cssKey: string;
   readonly glslKey: string;
+  readonly wgslKey: string;
   readonly ariaKey: string;
   readonly oneHotWeights: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Targets the escalation gate admits for this projection, resolved once at
+   * `add` time. `null` = no policy applies (pass-through, all targets emit);
+   * a set = emit only listed targets (an empty set denies everything).
+   */
+  readonly admitted: AdmittedTargets;
 }
 
 function emptyCompositeState(): CompositeState {
   return {
     discrete: {},
     blend: {},
-    outputs: { css: {}, glsl: {}, aria: {} },
+    outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
   };
 }
 
 const MAX_DIRTY_KEYS = DIRTY_FLAGS_MAX;
+
+/**
+ * Escalation emit gate: does this projection's resolved policy admit `target`?
+ * `meta.admitted === null` means no policy applies (pass-through). Otherwise the
+ * target must be in the admitted set (an empty set denies everything).
+ */
+function admits(meta: QuantizerMeta, target: string): boolean {
+  return meta.admitted === null || meta.admitted.has(target);
+}
 
 /**
  * Compositor — the live merge point for every attached {@link Quantizer}.
@@ -129,6 +195,22 @@ export const Compositor: CompositorFactory = {
       const pool = CompositorStatePool.make(config?.poolCapacity ?? COMPOSITOR_POOL_CAP);
       const frameBudget = config?.frameBudget;
       const useSpeculative = config?.speculative ?? false;
+      const getPolicy = config?.getPolicy;
+      const runtimeSite = config?.runtimeSite ?? defaultRuntimeSite();
+
+      /**
+       * Resolve the escalation-admitted target set for a projection at `add`
+       * time. No policy → `null` (pass-through). A policy that resolves to the
+       * `{ error }` branch → empty set (deny all targets). Otherwise the rung's
+       * `admittedTargets`.
+       */
+      const resolveAdmitted = (name: string): AdmittedTargets => {
+        if (getPolicy === undefined) return null;
+        const policy = getPolicy(name);
+        if (policy === undefined) return null;
+        const choice = chooseRung(policy, runtimeSite);
+        return 'error' in choice ? new Set<string>() : choice.admittedTargets;
+      };
       const runtime = RuntimeCoordinator.create({
         capacity: Math.max(config?.poolCapacity ?? COMPOSITOR_POOL_CAP, MAX_DIRTY_KEYS + 8),
         name: 'czap-compositor-runtime',
@@ -165,7 +247,7 @@ export const Compositor: CompositorFactory = {
           recomputeAll || dirtyFlags === null ? () => true : (name: string) => dirtyFlags.isDirty(name);
 
         const state = pool.acquire();
-        const { discrete, blend, css, glsl, aria } = accessCompositeState(state);
+        const { discrete, blend, css, glsl, wgsl, aria } = accessCompositeState(state);
 
         for (const [name] of qMap) {
           if (shouldRecompute(name)) {
@@ -189,6 +271,14 @@ export const Compositor: CompositorFactory = {
           const previousGlsl = previousState.outputs.glsl[meta.glslKey];
           if (previousGlsl !== undefined) {
             glsl[meta.glslKey] = previousGlsl;
+          }
+
+          // WGSL exposes a single fixed `state_index` struct field (the field the
+          // WGSL compiler generates and the runtime reads from uniform slot 0) —
+          // not a per-quantizer key like glsl/css.
+          const previousWgsl = previousState.outputs.wgsl['state_index'];
+          if (previousWgsl !== undefined) {
+            wgsl['state_index'] = previousWgsl;
           }
 
           const previousAria = previousState.outputs.aria[meta.ariaKey];
@@ -230,7 +320,8 @@ export const Compositor: CompositorFactory = {
               for (const name of dirtyNames) {
                 const meta = metaMap.get(name);
                 const stateStr = discrete[name];
-                if (stateStr !== undefined && meta) {
+                // Escalation gate: skip projections whose policy does not admit `css`.
+                if (stateStr !== undefined && meta && admits(meta, 'css')) {
                   css[meta.cssKey] = stateStr;
                 }
               }
@@ -240,7 +331,28 @@ export const Compositor: CompositorFactory = {
               if (!frameBudget || frameBudget.canRun('high')) {
                 for (const name of dirtyNames) {
                   const meta = metaMap.get(name)!;
-                  glsl[meta.glslKey] = runtime.getStateIndex(name);
+                  // Escalation gate: skip projections whose policy does not admit `glsl`.
+                  if (admits(meta, 'glsl')) {
+                    glsl[meta.glslKey] = runtime.getStateIndex(name);
+                  }
+                }
+              }
+              break;
+
+            case 'emit-wgsl':
+              // The live WGSL state index goes into the single fixed `state_index`
+              // struct field that `WGSLCompiler` generates and the `client:gpu`
+              // WGSL runtime reads from uniform-buffer slot 0 — NOT the authored
+              // per-quantizer field key (those ride the payload). WGSL is the
+              // heaviest (gpu-rung) target, so it shares glsl's `high` budget gate.
+              if (!frameBudget || frameBudget.canRun('high')) {
+                for (const name of dirtyNames) {
+                  const meta = metaMap.get(name)!;
+                  // Escalation gate: skip projections whose policy does not admit `wgsl`.
+                  // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
+                  if (admits(meta, 'wgsl')) {
+                    wgsl['state_index'] = runtime.getStateIndex(name);
+                  }
                 }
               }
               break;
@@ -250,7 +362,8 @@ export const Compositor: CompositorFactory = {
                 for (const name of dirtyNames) {
                   const meta = metaMap.get(name)!;
                   const stateStr = discrete[name];
-                  if (stateStr !== undefined) {
+                  // Escalation gate: skip projections whose policy does not admit `aria`.
+                  if (stateStr !== undefined && admits(meta, 'aria')) {
                     aria[meta.ariaKey] = stateStr;
                   }
                 }
@@ -283,6 +396,7 @@ export const Compositor: CompositorFactory = {
             qMap.set(name, widenQuantizer(quantizer));
             metaMap.set(name, {
               ...projectionKeys(name),
+              admitted: resolveAdmitted(name),
               oneHotWeights: Object.fromEntries(
                 quantizer.boundary.states.map((activeState) => [
                   activeState as string,

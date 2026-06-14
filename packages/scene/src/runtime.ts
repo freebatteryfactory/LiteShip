@@ -35,6 +35,7 @@ import { EffectSystem } from './systems/effect.js';
 import { SyncSystem } from './systems/sync.js';
 import { PassThroughMixer, type MixReceipt } from './systems/pass-through-mixer.js';
 import { SVGSystem } from './systems/svg.js';
+import { collectSvgAttrs, type SvgAttrsFrame } from './systems/svg-egress.js';
 
 /** Number of canonical scene systems — pinned for invariants. */
 const CANONICAL_SYSTEM_COUNT = 7;
@@ -107,6 +108,16 @@ export interface SceneRuntimeOptions {
    * `handle.receipts`. Pass an explicit sink to receive every receipt.
    */
   readonly mixSink?: (receipt: MixReceipt) => void;
+  /**
+   * SVG-egress sink. Invoked once per {@link SceneRuntimeHandle.tick} AFTER
+   * every system has run, with the entity-keyed {@link SvgAttrsFrame}
+   * collected from the persisted `_svgAttrs` components SVGSystem composed
+   * this tick. This is the reader that closes SVGSystem's dual-write: feed
+   * the frame to `applySvgAttrs` for a live SVG tree, or snapshot it
+   * headless. Regardless of whether a sink is supplied, the latest frame is
+   * always available via {@link SceneRuntimeHandle.svgAttrs}.
+   */
+  readonly svgSink?: (frame: SvgAttrsFrame) => void;
 }
 
 /** Live runtime handle returned by {@link SceneRuntime.build}. */
@@ -123,6 +134,14 @@ export interface SceneRuntimeHandle {
   readonly currentFrame: () => number;
   /** Mix receipts collected via the configured sink. Empty when a custom sink was supplied. */
   readonly receipts: readonly MixReceipt[];
+  /**
+   * The SVG-egress frame collected on the most recent {@link tick} — an
+   * entity-keyed snapshot of the `_svgAttrs` SVGSystem composed. Empty
+   * before the first tick. Always populated regardless of whether a
+   * `svgSink` was supplied, so a consumer can pull the SVG cast post-tick
+   * without wiring a callback.
+   */
+  readonly svgAttrs: () => SvgAttrsFrame;
   /**
    * Advance the simulation by `dtMs` milliseconds, then run every
    * registered system once over the world.
@@ -155,6 +174,12 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     if (collected.length > DEFAULT_MIX_RECEIPT_CAP) collected.shift();
   };
   const mixSink = opts.mixSink ?? defaultSink;
+
+  // Latest SVG-egress frame, refreshed after each tick from the persisted
+  // `_svgAttrs` components. Held so `handle.svgAttrs()` can surface the SVG
+  // cast even when no `svgSink` callback was supplied. Empty until tick 1.
+  let svgFrame: SvgAttrsFrame = new Map();
+  const svgSink = opts.svgSink;
 
   // Long-lived scope holds the world (and any future resources).
   const scope = await Effect.runPromise(Scope.make());
@@ -219,6 +244,7 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     currentTimeMs: () => ctx.timeMs,
     currentFrame: () => ctx.frameIndex,
     receipts: collected,
+    svgAttrs: () => svgFrame,
     tick: async (dtMs: number) => {
       if (released) {
         throw new Error(
@@ -228,6 +254,12 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
       ctx.timeMs += dtMs;
       ctx.frameIndex = Math.floor((ctx.timeMs / 1000) * compiled.fps);
       await Effect.runPromise(world.tick());
+      // SVG egress: SVGSystem ran last in the tick above and persisted
+      // `_svgAttrs`. Collect that durable output into the entity-keyed
+      // frame — the reader that closes the dual-write — then surface it via
+      // `svgAttrs()` and (if configured) the caller's sink.
+      svgFrame = await Effect.runPromise(collectSvgAttrs(world));
+      if (svgSink !== undefined) svgSink(svgFrame);
     },
     release: async () => {
       if (released) return;

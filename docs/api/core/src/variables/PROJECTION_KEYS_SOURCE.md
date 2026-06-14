@@ -6,9 +6,9 @@
 
 # Variable: PROJECTION\_KEYS\_SOURCE
 
-> `const` **PROJECTION\_KEYS\_SOURCE**: "/\*\*\n \* Per-quantizer output keys, matching @czap/core projectionKeys / glslIdent.\n \* @param \{string\} name\n \* @returns \{\{ cssKey: string, glslKey: string, ariaKey: string \}\}\n \*/\nfunction projectionKeys(name) \{\n  const snake = name.replace(/-/g, \"\_\").replace(/(\[a-z0-9\])(\[A-Z\])/g, \"$1\_$2\").toLowerCase();\n  return \{ cssKey: \"--czap-\" + name, glslKey: \"u\_\" + snake, ariaKey: \"data-czap-\" + name \};\n\}"
+> `const` **PROJECTION\_KEYS\_SOURCE**: "/\*\*\n \* Per-quantizer output keys, matching @czap/core projectionKeys / glslIdent / wgslIdent.\n \* @param \{string\} name\n \* @returns \{\{ cssKey: string, glslKey: string, wgslKey: string, ariaKey: string \}\}\n \*/\nfunction projectionKeys(name) \{\n  const snake = name.replace(/-/g, \"\_\").replace(/(\[a-z0-9\])(\[A-Z\])/g, \"$1\_$2\").toLowerCase();\n  return \{ cssKey: \"--czap-\" + name, glslKey: \"u\_\" + snake, wgslKey: snake, ariaKey: \"data-czap-\" + name \};\n\}"
 
-Defined in: [core/src/projection.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/projection.ts#L63)
+Defined in: [core/src/projection.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/projection.ts#L88)
 
 Worker-blob twin of [projectionKeys](../functions/projectionKeys.md) as an inlinable JavaScript source
 string (classic-worker scope, no ES imports). The worker/render blob scripts

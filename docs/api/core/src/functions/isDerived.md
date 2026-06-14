@@ -8,7 +8,7 @@
 
 > **isDerived**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:311](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L311)
+Defined in: [core/src/index.ts:312](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L312)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Derived](../namespaces/Derived/README.md).
 

@@ -12,8 +12,10 @@ import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync, utimesSync 
 import { join } from 'node:path';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { tmpdir } from 'node:os';
+import type { ContentAddress } from '@czap/core';
 import { Boundary, Diagnostics } from '@czap/core';
-import { enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
+import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
+import type { KVNamespace } from '@czap/edge';
 import { collectBoundaryManifest } from '../../../packages/vite/src/boundary-manifest.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js';
@@ -104,6 +106,59 @@ describe('collectBoundaryManifest', () => {
       compact: { 'aria-expanded': 'false' },
       wide: { 'aria-expanded': 'true' },
     });
+  });
+
+  test('@glsl blocks round-trip authoring → dispatch → CompiledOutputs.glsl → KV serialize/deserialize', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+  compact {
+    --gap: 8px;
+    @glsl { blur: 0.5; brightness: 1.0; }
+  }
+  wide {
+    --gap: 24px;
+    @glsl { blur: 0.0; brightness: 1.2; }
+  }
+}
+`,
+    );
+
+    // Authoring → manifest → dispatch(GLSLCompiler) → CompiledOutputs.glsl.
+    const manifest = await collectBoundaryManifest(root);
+    const entry = manifest['viewport']!;
+    const withGlsl = entry.outputs.find((o) => o.glsl);
+    expect(withGlsl?.glsl).toBeDefined();
+    // The GLSL cast carries the compiled shader preamble + default uniforms,
+    // keyed by the GLSL uniform identifiers the compiler declares (`u_*`).
+    expect(withGlsl!.glsl!.declarations).toContain('uniform');
+    expect(withGlsl!.glsl!.declarations).toContain('u_blur');
+    expect(withGlsl!.glsl!.uniformValues).toMatchObject({ u_blur: 0, u_brightness: 1.2, u_state: 0 });
+
+    // CompiledOutputs.glsl → KV serialize → deserialize (the edge storage seam).
+    const store = new Map<string, string>();
+    const kv: KVNamespace = {
+      async get(key) {
+        return store.get(key) ?? null;
+      },
+      async put(key, value) {
+        store.set(key, value);
+      },
+    };
+    const cache = createBoundaryCache(kv);
+    const tierResult = {
+      capLevel: 'reactive' as const,
+      motionTier: 'animations' as const,
+      designTier: 'enhanced' as const,
+    };
+    await cache.putCompiledOutputs(entry.id as ContentAddress, tierResult, withGlsl!);
+    const restored = await cache.getCompiledOutputs(entry.id as ContentAddress, tierResult);
+    expect(restored!.glsl).toEqual(withGlsl!.glsl);
   });
 
   test('derives entries with minted ids and full tier-grid outputs from boundary modules + @quantize CSS', async () => {

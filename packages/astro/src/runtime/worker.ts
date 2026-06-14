@@ -54,7 +54,8 @@ function sameBoundaryDetail(left: BoundaryStateDetail | null, right: BoundarySta
       Object.fromEntries(Object.entries(left.css).map(([key, value]) => [key, String(value)])),
       Object.fromEntries(Object.entries(right.css).map(([key, value]) => [key, String(value)])),
     ) &&
-    sameNumberRecord(left.glsl, right.glsl)
+    sameNumberRecord(left.glsl, right.glsl) &&
+    sameNumberRecord(left.wgsl, right.wgsl)
   );
 }
 
