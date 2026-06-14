@@ -160,7 +160,21 @@ const validateNode = (node: GeneratedUINode, catalog: ComponentCatalog, path: st
     }
   }
 
-  if (node.slots) {
+  if (node.slots !== undefined) {
+    // slots, when present, MUST be a record (not null / array / primitive). The old truthy
+    // check skipped `null` and `Object.entries(1|[])` is `[]`, so a malformed slots value
+    // was silently treated as absent/empty. Reject it at every node (this recurses).
+    const slots = node.slots as unknown;
+    if (slots === null || typeof slots !== 'object' || Array.isArray(slots)) {
+      return {
+        ok: false,
+        error: {
+          code: 'genui/invalid-slots',
+          message: `Component "${node.name}" has a non-record slots value.`,
+          path: `${path}.slots`,
+        },
+      };
+    }
     for (const [slotName, slotValue] of Object.entries(node.slots)) {
       const slotNodes = Array.isArray(slotValue) ? slotValue : [slotValue];
       for (let i = 0; i < slotNodes.length; i++) {

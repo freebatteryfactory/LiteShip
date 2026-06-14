@@ -636,6 +636,14 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     expect(ui.ok).toBe(false);
   });
 
+  test('a non-record slots value (string/number/array/null) is rejected, not treated as empty', () => {
+    const tree = { name: 'Card', props: { title: 'root' }, slots: 'nope' } as unknown as GeneratedUINode;
+    const ui = AICast.validateGeneratedUIProposal(tree, catalog, generatedUiValidator);
+    expect(ui.ok).toBe(false);
+    if (ui.ok) return;
+    expect(ui.errors.join(' ')).toMatch(/slots/i);
+  });
+
   test('the generated-ui validator is TOTAL — malformed/parsed-JSON input is rejected, never thrown', () => {
     // null / non-object would deref `node.name` inside the injected validator.
     expect(() => AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator)).not.toThrow();
