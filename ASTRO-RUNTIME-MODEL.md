@@ -30,7 +30,7 @@ LiteShip should own:
 
 ## The main Astro surfaces
 
-The public Astro package surface is in [`packages/astro/src/index.ts`](../packages/astro/src/index.ts).
+The public Astro package surface is in [`packages/astro/src/index.ts`](./packages/astro/src/index.ts).
 
 The important exports are:
 
@@ -239,7 +239,7 @@ Astro gives the page a strong server-rendered base. LiteShip adds stateful adapt
 
 ## Capability ceilings
 
-A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings (see [ADR-0002](./adr/0002-zero-alloc.md) for the cheapest-valid-default discipline).
+A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings (see [ADR-0002](./docs/adr/0002-zero-alloc.md) for the cheapest-valid-default discipline).
 
 Inside Astro, that means:
 

@@ -75,7 +75,7 @@ export const buildUrl = _buildUrl;
  * NOT perform gap recovery — replaying missed patches or fetching a
  * fresh snapshot is the host's job, composed from the sibling
  * `Resumption` namespace (see `./resumption.js` and the Runtime Wiring
- * Model in `docs/STATUS.md`, status `host-wired`). The reference wiring
+ * Model in `STATUS.md`, status `host-wired`). The reference wiring
  * lives in `packages/astro/src/runtime/stream.ts`
  * (`saveResumptionState` + `reconcileResumption`).
  *

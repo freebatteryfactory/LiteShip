@@ -367,14 +367,14 @@ const checks: Check[] = [
         ? readdirSync('docs/adr').filter((f) => f.endsWith('.md')).length
         : 0;
       const renderRuntimeGone = !existsSync('docs/RENDER-RUNTIME.md');
-      const archExists = existsSync('docs/ARCHITECTURE.md');
+      const archExists = existsSync('ARCHITECTURE.md');
       // ARCHITECTURE.md must be SELF-SUFFICIENT — it explains the system on its own,
       // not a thin stub that defers to the ADRs. This INVERTS the old `< 4KB slim
       // index` cap, which punished rich docs and once got the document-graph + AI-cast
       // explanations gutted out just to pass CI. The doc must carry real weight (the
       // old 4KB cap is now the FLOOR) AND actually describe the keystone IR in prose.
-      const archBytes = archExists ? statSync('docs/ARCHITECTURE.md').size : 0;
-      const archText = archExists ? readFileSync('docs/ARCHITECTURE.md', 'utf8') : '';
+      const archBytes = archExists ? statSync('ARCHITECTURE.md').size : 0;
+      const archText = archExists ? readFileSync('ARCHITECTURE.md', 'utf8') : '';
       const archIsSelfSufficient =
         archExists && archBytes >= 4096 && /document graph/i.test(archText);
       const apiExists =

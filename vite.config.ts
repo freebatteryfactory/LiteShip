@@ -26,7 +26,7 @@ export default defineConfig({
         '**/dist/**',
         '**/node_modules/**',
         // Browser-only modules that cannot be tested in vitest (no DOM/WebGL/AudioWorklet).
-        // Documented in docs/STATUS.md B.4/B.5.
+        // Documented in STATUS.md B.4/B.5.
         '**/capture/**',
         '**/audio/**',
         '**/slot/registry.ts',

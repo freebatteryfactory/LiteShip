@@ -36,14 +36,14 @@ Logs `tablet` (800 sits between the 768 and 1280 thresholds), then the boundary'
 ## Where it sits
 
 This is the foundation layer — every other `@czap/*` package imports its primitives. Its one `@czap` dependency is `@czap/_spine`, the shared type declarations its published types reference. Two things commonly assumed to be here live elsewhere: live evaluation against a changing signal is `@czap/quantizer`, and compiling definitions to CSS text is `@czap/compiler`. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — what you type, what comes out
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — what you type, what comes out
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/core/src/) — generated from source
 
 ---

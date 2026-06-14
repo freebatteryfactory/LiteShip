@@ -44,7 +44,7 @@ Renders and analyses are cached by a hash of their inputs; pass `--force` to re-
 
 ## Where it sits
 
-`@czap/cli` is a terminal adapter over `@czap/command`, the shared command catalog and dispatcher — the MCP server projects the same catalog, and neither imports the other (`czap mcp` only dynamically loads `@czap/mcp-server`). Scene and asset verbs execute through `@czap/scene` and `@czap/assets`, `czap audit` wires the `@czap/audit` engine, and shared types come from `@czap/core`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+`@czap/cli` is a terminal adapter over `@czap/command`, the shared command catalog and dispatcher — the MCP server projects the same catalog, and neither imports the other (`czap mcp` only dynamically loads `@czap/mcp-server`). Scene and asset verbs execute through `@czap/scene` and `@czap/assets`, `czap audit` wires the `@czap/audit` engine, and shared types come from `@czap/core`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -52,9 +52,9 @@ Renders and analyses are cached by a hash of their inputs; pass `--force` to re-
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Architecture](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Architecture](https://github.com/heyoub/LiteShip/blob/main/ARCHITECTURE.md)
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/cli/src/) — generated from source
 
 ---

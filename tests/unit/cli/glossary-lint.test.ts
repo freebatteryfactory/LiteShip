@@ -1,7 +1,7 @@
 /**
  * Glossary-lint: every maritime register term used in CLI user-facing
  * source must be defined in both `czap glossary` (in-CLI ENTRIES) and
- * `docs/GLOSSARY.md` (the documented register). This is the load-bearing
+ * `GLOSSARY.md` (the documented register). This is the load-bearing
  * drift-guard for the ontology — if someone adds "Stow the cargo" to a
  * doctor hint but forgets to add "cargo" to the glossary, this test
  * fails.
@@ -20,7 +20,7 @@ import { captureCli } from '../../integration/cli/capture.js';
 const REPO_ROOT = resolve(__dirname, '../../..');
 const CLI_SRC = resolve(REPO_ROOT, 'packages/cli/src');
 const SCRIPTS_DIR = resolve(REPO_ROOT, 'scripts');
-const GLOSSARY_MD = resolve(REPO_ROOT, 'docs/GLOSSARY.md');
+const GLOSSARY_MD = resolve(REPO_ROOT, 'GLOSSARY.md');
 
 /**
  * Maritime register the CLI surface uses. Each entry is a `{term, regex}`
@@ -66,14 +66,14 @@ describe('glossary lint', () => {
   const cliContent = collectCliSurfaceContent();
   const glossaryMd = readFileSync(GLOSSARY_MD, 'utf8');
 
-  it('every maritime term used in CLI source is defined in docs/GLOSSARY.md', () => {
+  it('every maritime term used in CLI source is defined in GLOSSARY.md', () => {
     const missing: string[] = [];
     for (const { term, pattern } of MARITIME_TERMS) {
       if (!pattern.test(cliContent)) continue;
       const docPattern = new RegExp(`\\b${term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
       if (!docPattern.test(glossaryMd)) missing.push(term);
     }
-    expect(missing, `terms used in CLI source but missing from docs/GLOSSARY.md: ${missing.join(', ')}`).toEqual([]);
+    expect(missing, `terms used in CLI source but missing from GLOSSARY.md: ${missing.join(', ')}`).toEqual([]);
   });
 
   it('every maritime term used in CLI source resolves to ≥1 entry in `czap glossary`', async () => {

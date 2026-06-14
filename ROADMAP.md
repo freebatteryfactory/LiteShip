@@ -1,6 +1,6 @@
 # LiteShip roadmap
 
-> Verified against the 2026-04-08 hardening wave. See `docs/STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
+> Verified against the 2026-04-08 hardening wave. See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
 
 ## Current Phase
 

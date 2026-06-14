@@ -2,7 +2,7 @@
 
 From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `Boundary.make` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
-LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](../examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](../CONTRIBUTING.md).
+LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ In your Astro project:
 pnpm add @czap/core @czap/astro effect@beta
 ```
 
-`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](../README.md#support-matrix) covers the pin and the stabilization plan.
+`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](./README.md#support-matrix) covers the pin and the stabilization plan.
 
 ## 2. Your first boundary
 
@@ -197,7 +197,7 @@ The compile step and the page must share one definition (that's why step 2 put t
 
 ## Working on LiteShip itself
 
-The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](../CONTRIBUTING.md). The short version:
+The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](./CONTRIBUTING.md). The short version:
 
 ```bash
 git clone https://github.com/heyoub/LiteShip.git

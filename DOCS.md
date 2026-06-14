@@ -28,8 +28,8 @@ Together these explain the ontology and the package shape:
 
 ### If the question is "What is the philosophy behind the runtime?"
 
-Read [ADR-0002 zero-alloc](./adr/0002-zero-alloc.md) and
-[ADR-0004 plan/coordinator](./adr/0004-plan-coordinator.md).
+Read [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md) and
+[ADR-0004 plan/coordinator](./docs/adr/0004-plan-coordinator.md).
 
 These are the performance and capability decisions:
 
@@ -40,7 +40,7 @@ These are the performance and capability decisions:
 ### If the question is "What is the IR everything casts from?"
 
 Read [ARCHITECTURE.md](./ARCHITECTURE.md) — "Document graph (the IR)" and "AI cast" — then
-[ADR-0015 document graph IR](./adr/0015-document-graph-ir.md).
+[ADR-0015 document graph IR](./docs/adr/0015-document-graph-ir.md).
 
 This is the keystone:
 
@@ -110,7 +110,7 @@ Read [ROADMAP.md](./ROADMAP.md).
 
 ### If the question is "What changed?"
 
-Read [CHANGELOG.md](../CHANGELOG.md). For shipping npm/GitHub releases, see
+Read [CHANGELOG.md](./CHANGELOG.md). For shipping npm/GitHub releases, see
 [RELEASING.md](./RELEASING.md).
 
 ---
@@ -122,7 +122,7 @@ Read [CHANGELOG.md](../CHANGELOG.md). For shipping npm/GitHub releases, see
 1. [GLOSSARY.md](./GLOSSARY.md): LiteShip / CZAP / `@czap/*` + prose register (short; read once)
 2. [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md)
 3. [ARCHITECTURE.md](./ARCHITECTURE.md)
-4. [ADR-0002 zero-alloc](./adr/0002-zero-alloc.md) + [ADR-0004 plan/coordinator](./adr/0004-plan-coordinator.md)
+4. [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md) + [ADR-0004 plan/coordinator](./docs/adr/0004-plan-coordinator.md)
 5. [AUTHORING-MODEL.md](./AUTHORING-MODEL.md)
 6. [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md)
 7. [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md)
@@ -139,14 +139,14 @@ Read [CHANGELOG.md](../CHANGELOG.md). For shipping npm/GitHub releases, see
 ### If you're contributing to LiteShip
 
 1. [ARCHITECTURE.md](./ARCHITECTURE.md): the package DAG and where things live
-2. [ADR-0001 namespace pattern](./adr/0001-namespace-pattern.md) + [ADR-0002 zero-alloc](./adr/0002-zero-alloc.md): the load-bearing conventions
+2. [ADR-0001 namespace pattern](./docs/adr/0001-namespace-pattern.md) + [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md): the load-bearing conventions
 3. [AUDIT.md](./AUDIT.md): the advisory pipeline that watches for drift
 4. [STATUS.md](./STATUS.md): live gates, watch items, runtime seam hotspots
-5. [../CONTRIBUTING.md](../CONTRIBUTING.md): the gauntlet, PR conventions, code style
+5. [../CONTRIBUTING.md](./CONTRIBUTING.md): the gauntlet, PR conventions, code style
 
 ### If you're operating LiteShip in production
 
-1. [../SECURITY.md](../SECURITY.md): trust boundaries, CSP requirements, Trusted Types policy
+1. [../SECURITY.md](./SECURITY.md): trust boundaries, CSP requirements, Trusted Types policy
 2. [STATUS.md](./STATUS.md): current bench posture, watch items, security defaults
 3. [AUDIT.md](./AUDIT.md): the codebase-audit signal, what to expect in a release artifact
 4. [RELEASING.md](./RELEASING.md): publish, tags, GitHub releases
@@ -179,7 +179,7 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the AI cast / how is a model proposal validated? | `packages/core/src/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `validated-output.ts` (ADR-0015) |
 | How does a surface choose a render tier? | `packages/core/src/escalation.ts` (`chooseRung`; budget-gated, wired in the compositor) |
 | Where is the dual-export (one graph → page + video)? | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@czap/stage/ffmpeg`) |
-| What runs in `lint:structural`? | `sgconfig.yml` + `sgrules/` (AST guards; `docs/AUDIT.md` "Structural lint") |
+| What runs in `lint:structural`? | `sgconfig.yml` + `sgrules/` (AST guards; `AUDIT.md` "Structural lint") |
 | How do I add a new compile target? | `docs/adr/0006-compiler-dispatch.md`, then `packages/compiler/src/dispatch.ts` |
 | How do I add a new primitive? | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/` |
 | How do I extend an existing type union? | The pattern is grep-first today; see CONTRIBUTING.md "Architecture changes" and the affected `_spine/*.d.ts` file |

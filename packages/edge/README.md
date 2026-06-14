@@ -41,7 +41,7 @@ The served `<html>` element carries `data-czap-cap`, `data-czap-motion`, and `da
 ## Where it sits
 
 A host-agnostic edge layer: it only parses headers and strings, touching no platform APIs, which keeps host adapters like `@czap/cloudflare` down to binding glue. It depends on [`@czap/detect`](https://github.com/heyoub/LiteShip/tree/main/packages/detect) (the same pure tier-mapping functions the browser runs, so edge and client agree on tiers) and [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) (shared tier types and branded ids). The KV-backed boundary cache (`createBoundaryCache`) keys entries by content address — a hash of the boundary definition — so cached CSS never goes stale: editing a boundary mints a new key. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -50,9 +50,9 @@ If every visitor detects as the lowest tier, the browser is not sending `Sec-CH-
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Hosting guide](https://github.com/heyoub/LiteShip/blob/main/docs/HOSTING.md) — per-host wiring, headers, and CSP
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Hosting guide](https://github.com/heyoub/LiteShip/blob/main/HOSTING.md) — per-host wiring, headers, and CSP
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/edge/src/) — generated from source
 
 ---

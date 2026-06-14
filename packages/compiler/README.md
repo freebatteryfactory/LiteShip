@@ -40,7 +40,7 @@ Prints two `@container` blocks: `(width < 768px)` styling `.card` at 14px, and `
 ## Where it sits
 
 This is a layered package of pure functions from definitions to text — no DOM, no file system, nothing thrown. Its only `@czap` dependency is `@czap/core`, the source of the boundary, token, style, and theme definitions it compiles. Live evaluation as values change at runtime lives in `@czap/quantizer`; writing compiled CSS into your bundle is `@czap/vite`'s job. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -49,9 +49,9 @@ State keys in the second argument are all optional, so a misspelled state name p
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — what you type, what comes out
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — what you type, what comes out
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/compiler/src/) — generated from source
 
 ---

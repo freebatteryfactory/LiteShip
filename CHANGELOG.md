@@ -493,7 +493,7 @@ structural-lint guard layer. Pre-1.0 break policy applies — breaking changes a
 - `@czap/detect`: an unrecognized GPU renderer string (e.g. next year's GPU) no longer classifies to tier 1 silently — `Diagnostics.warnOnce` (`unrecognized-gpu-renderer`) names the renderer string, the tier-1 default, and points at the issue tracker so new patterns get filed.
 - `@czap/remotion`: the silent degraded paths now teach. `stateAtFrame` warns once on 0 frames (`no-frames`: did `precomputeFrames` run/get awaited before render?) and once on frame overflow (`frame-overflow`: the video will freeze on the last state; probable cause is `fps`/`durationMs` drifting from `durationInFrames`, with the literal fix and a pointer at `rendererFromRemotionConfig()`; the offending frame index travels in `detail` so the warn-once dedup key stays frame-independent). `useCzapState` warns once (`no-provider-frames`) naming the missing `<Provider frames={...}>` and the `precomputeFrames` step. All total-function return values are unchanged.
 - `@czap/remotion`: the `remotionAdapterCapsule` invariant message now states the `frames[i].frame === i` contract, the likely causes (frames filtered, re-sorted, or concatenated after `precomputeFrames`), and the fix, instead of 'frames must arrive in order with contiguous indices'.
-- README quick start and docs/GETTING-STARTED.md restructured around the consumer path: `pnpm add @czap/core @czap/astro effect@beta` in your own Astro project, then the two layer-1 concepts (`Boundary.make` + `satelliteAttrs`) to a working resize demo; monorepo clone/build/test moved behind CONTRIBUTING.md, with tokens/styles/CSS casting layered behind links (#234, #235)
+- README quick start and GETTING-STARTED.md restructured around the consumer path: `pnpm add @czap/core @czap/astro effect@beta` in your own Astro project, then the two layer-1 concepts (`Boundary.make` + `satelliteAttrs`) to a working resize demo; monorepo clone/build/test moved behind CONTRIBUTING.md, with tokens/styles/CSS casting layered behind links (#234, #235)
 - Removed residual `as const` from `Boundary.make` and `Theme.make` docblock examples — both factories declare const-modified type parameters, so inference is exact without it (#236)
 - Docs now state `hysteresis` is optional with default `0` (no dead-zone) at first use in README and GETTING-STARTED instead of only in troubleshooting (#238)
 - `Boundary.make` validation errors now carry the literal next step: the strictly-ascending error appends a sort-lowest-first example (`at: [[0, 'mobile'], [768, 'tablet']]`), and the duplicate-state error names the colliding thresholds, gives a rename example, and inlines the hoist-to-module-scope hint previously found only in GETTING-STARTED prose (#243, #244)
@@ -663,7 +663,7 @@ Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0
 - `czap doctor --target cloudflare` — probes Astro, Wrangler, adapter output, and config bindings.
 - `examples/cloudflare-astro/` — end-to-end Astro + Cloudflare adapter example.
 - `pnpm run test:cloudflare` gauntlet phase; Windows and macOS CI smoke run it.
-- Hosting guide: `docs/HOSTING.md`.
+- Hosting guide: `HOSTING.md`.
 
 ### Fixed
 
@@ -729,7 +729,7 @@ substrate end-to-end on a real publish before any code change rides it.
 
 ### Documentation
 
-- `docs/RELEASING.md` documents the v0.1.1+ release-cutting flow
+- `RELEASING.md` documents the v0.1.1+ release-cutting flow
   (`git tag -a vX.Y.Z` → workflow auto-fires) and the per-package
   trusted-publisher form values for the eventual OIDC pivot.
 
@@ -780,7 +780,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
   PowerShell mojibake note) moved to appendix.
 - New: [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md),
   [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md),
-  [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md).
+  [GETTING-STARTED.md](./GETTING-STARTED.md).
 - `docs/api/` (TypeDoc output) regenerated to reflect the post-cleanup
   public surface.
 

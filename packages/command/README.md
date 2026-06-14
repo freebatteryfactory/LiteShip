@@ -31,7 +31,7 @@ Logs `ok` and a payload containing the glossary entry for "boundary". The dispat
 
 ## Where it sits
 
-This is the core of the command layer. It depends on `@czap/core` (command descriptor and result types) and `@czap/assets` (the asset-analysis handlers). The main entry is pure; anything that touches the host — process spawning, the ffmpeg render backend, the input-hash idempotency cache, capsule-manifest resolution — lives behind the `@czap/command/host` subpath (Node) and `@czap/command/host-browser` (browser, including the WebMCP projection), so importing the catalog never drags in `child_process`. Terminal-owned verbs like `doctor`, `gauntlet`, and `ship` appear here as descriptor-only catalog entries; their execution lives in `@czap/cli`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+This is the core of the command layer. It depends on `@czap/core` (command descriptor and result types) and `@czap/assets` (the asset-analysis handlers). The main entry is pure; anything that touches the host — process spawning, the ffmpeg render backend, the input-hash idempotency cache, capsule-manifest resolution — lives behind the `@czap/command/host` subpath (Node) and `@czap/command/host-browser` (browser, including the WebMCP projection), so importing the catalog never drags in `child_process`. Terminal-owned verbs like `doctor`, `gauntlet`, and `ship` appear here as descriptor-only catalog entries; their execution lives in `@czap/cli`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -39,9 +39,9 @@ Dispatching a catalog command that has no handler here (a CLI-owned verb such as
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Architecture](https://github.com/heyoub/LiteShip/blob/main/docs/ARCHITECTURE.md)
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Architecture](https://github.com/heyoub/LiteShip/blob/main/ARCHITECTURE.md)
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/) — generated from source
 
 ---

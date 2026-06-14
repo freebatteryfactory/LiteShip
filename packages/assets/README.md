@@ -37,13 +37,13 @@ Logs the tempo estimate and beat count for the file. `beats` are sample indices,
 
 ## Where it sits
 
-A layered package: `defineAsset` wraps each declaration in a capsule (a declared unit carrying budgets and invariant checks) via `@czap/core`, and the analysis output shapes come from `@czap/_spine` so `@czap/scene` can consume them without depending on this package. The image and video decoders probe format/dimension metadata only — frame decoding belongs to the render pipeline, not here. Test-only registry helpers ship at the `@czap/assets/testing` subpath. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+A layered package: `defineAsset` wraps each declaration in a capsule (a declared unit carrying budgets and invariant checks) via `@czap/core`, and the analysis output shapes come from `@czap/_spine` so `@czap/scene` can consume them without depending on this package. The image and video decoders probe format/dimension metadata only — frame decoding belongs to the render pipeline, not here. Test-only registry helpers ship at the `@czap/assets/testing` subpath. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
 - [Reference asset declarations](https://github.com/heyoub/LiteShip/blob/main/examples/scenes/assets.ts) — audio bed + beat-marker and metadata projections
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/assets/src/) — generated from source
 
 ---

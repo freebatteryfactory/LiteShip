@@ -4,7 +4,7 @@ This directory contains Architecture Decision Records (ADRs) for LiteShip: the C
 
 ADRs are the source of truth for *why* a decision was made. The code is the source of truth for *what* the current implementation looks like.
 
-Prose vocabulary: [../GLOSSARY.md](../GLOSSARY.md).
+Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 
 ## Index
 

@@ -1,5 +1,5 @@
 /**
- * Unit tests for `czap glossary`. The catalog mirrors docs/GLOSSARY.md;
+ * Unit tests for `czap glossary`. The catalog mirrors GLOSSARY.md;
  * we check shape + a few canonical terms so a future refactor of the
  * entries can't silently lose them.
  */

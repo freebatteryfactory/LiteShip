@@ -36,7 +36,7 @@ On dev serve or build, the `@quantize` block is rewritten to native `@container`
 
 ## Where it sits
 
-A build-time adapter — it hooks Vite's transform and HMR phases so stylesheets can reference definitions authored in TypeScript. It reads the primitive types (a boundary is named states over a numeric input; tokens, themes, and styles are named outputs) from `@czap/core`, compiles them to CSS through `@czap/compiler`, and can emit a boundary manifest in the `@czap/edge` shape for request-time adaptation. The definitions themselves are authored with `@czap/core` factories — this package only finds and compiles them. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+A build-time adapter — it hooks Vite's transform and HMR phases so stylesheets can reference definitions authored in TypeScript. It reads the primitive types (a boundary is named states over a numeric input; tokens, themes, and styles are named outputs) from `@czap/core`, compiles them to CSS through `@czap/compiler`, and can emit a boundary manifest in the `@czap/edge` shape for request-time adaptation. The definitions themselves are authored with `@czap/core` factories — this package only finds and compiles them. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -44,9 +44,9 @@ Browsers discard unknown at-rules, so a `@quantize` block whose name matches no 
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — the "Authoring surfaces in CSS" section covers all four at-rules
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — the "Authoring surfaces in CSS" section covers all four at-rules
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/vite/src/) — generated from source
 
 ---

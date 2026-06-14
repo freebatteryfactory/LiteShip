@@ -30,4 +30,4 @@ pnpm run dev
 3. Preflight: `pnpm exec czap doctor --target cloudflare --ci` (from this directory).
 4. Build and deploy: `pnpm run build && pnpm exec wrangler deploy`
 
-See [docs/HOSTING.md](../../docs/HOSTING.md#cloudflare-workers) for the full guide.
+See [HOSTING.md](../../HOSTING.md#cloudflare-workers) for the full guide.

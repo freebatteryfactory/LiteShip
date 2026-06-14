@@ -34,7 +34,7 @@ The `<h1>` carries the CSS variables (`--scale`, `--bg`, ...) computed for which
 
 ## Where it sits
 
-A host adapter — it calls Remotion's `useCurrentFrame` so nothing else has to. Its only `@czap` dependency is `@czap/core`, for the `VideoRenderer` that produces frames and the state type those frames carry. Timeline authoring (tracks, beats, transitions) lives in `@czap/scene`; this package only consumes rendered frames. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+A host adapter — it calls Remotion's `useCurrentFrame` so nothing else has to. Its only `@czap` dependency is `@czap/core`, for the `VideoRenderer` that produces frames and the state type those frames carry. Timeline authoring (tracks, beats, transitions) lives in `@czap/scene`; this package only consumes rendered frames. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -42,9 +42,9 @@ Every failure path returns a structurally-empty state instead of throwing: an em
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
 - [Remotion demo](https://github.com/heyoub/LiteShip/tree/main/examples/remotion-demo) — boundary → quantizer → renderer → composition, end to end
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/remotion/src/) — generated from source
 
 ---

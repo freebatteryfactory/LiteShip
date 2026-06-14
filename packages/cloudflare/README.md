@@ -34,7 +34,7 @@ Each request now resolves the visitor's device tier and serves that tier's preco
 ## Where it sits
 
 A host adapter — it touches Cloudflare APIs (the `cloudflare:workers` env and KV namespaces) so nothing else has to. It depends on [`@czap/astro`](https://github.com/heyoub/LiteShip/tree/main/packages/astro) for the middleware contract, [`@czap/edge`](https://github.com/heyoub/LiteShip/tree/main/packages/edge) for tier detection and the content-addressed cache, and [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) for the id types. Boundary authoring and compilation live upstream; this package is four files of glue. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -43,9 +43,9 @@ A mistyped `binding` fails silently: KV reads return null, writes no-op, and eve
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Cloudflare hosting guide](https://github.com/heyoub/LiteShip/blob/main/docs/HOSTING.md) — wrangler config, KV setup, deploy
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Cloudflare hosting guide](https://github.com/heyoub/LiteShip/blob/main/HOSTING.md) — wrangler config, KV setup, deploy
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/cloudflare/src/) — generated from source
 
 ---

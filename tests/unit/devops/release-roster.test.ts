@@ -74,7 +74,7 @@ describe('release.yml publish roster matches the workspace (the 4th roster locat
     // before tagging; a stale number leaves a newly-public package without a publisher
     // and the tag release fails. Pin the checklist count to the derived truth.
     const count = derivePublishableNames().length;
-    const releasing = readFileSync(resolve(REPO, 'docs/RELEASING.md'), 'utf8');
+    const releasing = readFileSync(resolve(REPO, 'RELEASING.md'), 'utf8');
     expect(releasing).toContain(`${count} publishable packages`);
   });
 });

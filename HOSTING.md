@@ -2,7 +2,7 @@
 
 LiteShip runs inside the host application's security boundary: the host's CSP, the host's Trusted Types policy, the host's runtime endpoints. This page is the **minimum host checklist** to get a v0.1.x install through its first page render without surprises.
 
-For the security architecture this checklist enforces, see [SECURITY.md](../SECURITY.md). For an end-to-end tutorial, see [docs/GETTING-STARTED.md](./GETTING-STARTED.md). For Cloudflare Workers, jump to the [Cloudflare Workers](#cloudflare-workers) section below.
+For the security architecture this checklist enforces, see [SECURITY.md](./SECURITY.md). For an end-to-end tutorial, see [GETTING-STARTED.md](./GETTING-STARTED.md). For Cloudflare Workers, jump to the [Cloudflare Workers](#cloudflare-workers) section below.
 
 ## Minimum versions
 
@@ -106,7 +106,7 @@ On top of Node `>= 22` and pnpm `>= 10` from the table above:
 
 ### Quick start
 
-See the runnable proof at [`examples/cloudflare-astro/`](../examples/cloudflare-astro/).
+See the runnable proof at [`examples/cloudflare-astro/`](./examples/cloudflare-astro/).
 
 ```bash
 pnpm install
@@ -198,7 +198,7 @@ Create the KV namespace first: `pnpm exec wrangler kv namespace create CZAP_BOUN
 
 ### CSP and isolation (Cloudflare)
 
-Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `client:worker` in `@czap/astro`, also emit COOP/COEP on HTML responses (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`). See [SECURITY.md](../SECURITY.md) §Cloudflare Workers.
+Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `client:worker` in `@czap/astro`, also emit COOP/COEP on HTML responses (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`). See [SECURITY.md](./SECURITY.md) §Cloudflare Workers.
 
 ### KV trust boundary
 
@@ -206,7 +206,7 @@ Treat KV as a host-controlled cache — not a secrets store. Boundary compile ou
 
 ## Where to look next
 
-- [SECURITY.md](../SECURITY.md) — full security posture, allowlist details, sanitizer reference
-- [docs/GETTING-STARTED.md](./GETTING-STARTED.md) — install → hello-world boundary → cast to CSS → hydrate through Astro
-- [docs/ARCHITECTURE.md](./ARCHITECTURE.md) — module DAG and projection pipeline
-- [docs/RELEASING.md](./RELEASING.md) — release flow for maintainers (ADR-0011 ShipCapsules)
+- [SECURITY.md](./SECURITY.md) — full security posture, allowlist details, sanitizer reference
+- [GETTING-STARTED.md](./GETTING-STARTED.md) — install → hello-world boundary → cast to CSS → hydrate through Astro
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — module DAG and projection pipeline
+- [RELEASING.md](./RELEASING.md) — release flow for maintainers (ADR-0011 ShipCapsules)

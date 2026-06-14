@@ -7,9 +7,9 @@ The structural map: what the pieces are and how they fit. This doc explains the 
 Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
 - Mental model: [`ASTRO-STATIC-MENTAL-MODEL.md`](./ASTRO-STATIC-MENTAL-MODEL.md), [`AUTHORING-MODEL.md`](./AUTHORING-MODEL.md), and [`ASTRO-RUNTIME-MODEL.md`](./ASTRO-RUNTIME-MODEL.md).
-- Public surfaces: [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md) and [`docs/api/`](./api/) (TypeDoc-generated from source TSDoc).
-- Decisions: [`docs/adr/`](./adr/), where each non-obvious choice has a record.
-- Status: [`docs/STATUS.md`](./STATUS.md), live gates, perf, watch items.
+- Public surfaces: [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md) and [`docs/api/`](./docs/api/) (TypeDoc-generated from source TSDoc).
+- Decisions: [`docs/adr/`](./docs/adr/), where each non-obvious choice has a record.
+- Status: [`STATUS.md`](./STATUS.md), live gates, perf, watch items.
 
 ## System shape
 
@@ -17,11 +17,11 @@ Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core`
 
 ## Document graph (the IR)
 
-That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. Full rationale: [ADR-0015](./adr/0015-document-graph-ir.md).
+That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./docs/adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. Full rationale: [ADR-0015](./docs/adr/0015-document-graph-ir.md).
 
 ## AI cast
 
-The same graph casts *out* to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
+The same graph casts *out* to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./docs/adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
 
 ## Package DAG
 
@@ -47,7 +47,7 @@ Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.
 
 ## Packages
 
-API docs per package live at [`docs/api/<name>/`](./api/); import guidance at [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md).
+API docs per package live at [`docs/api/<name>/`](./docs/api/); import guidance at [`PACKAGE-SURFACES.md`](./PACKAGE-SURFACES.md).
 
 - `@czap/_spine` — type spine
 - `@czap/canonical` — sync bytes kernel (CBOR, FNV-1a, addressed digests)
@@ -77,13 +77,13 @@ Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`
 
 ## Architectural decisions
 
-Full index + accepted set (0001–0015): [`docs/adr/README.md`](./adr/README.md).
+Full index + accepted set (0001–0015): [`docs/adr/README.md`](./docs/adr/README.md).
 
 Capsule factory + video stack: [CAPSULE-FACTORY.md](./CAPSULE-FACTORY.md).
 
 ## Where to start
 
-- New contributors: [mental model](./ASTRO-STATIC-MENTAL-MODEL.md), [GLOSSARY](./GLOSSARY.md), [ADR-0001](./adr/0001-namespace-pattern.md), [ADR-0002](./adr/0002-zero-alloc.md).
-- Using primitives: [api/core/](./api/core/).
-- Adding a projection target: [ADR-0006](./adr/0006-compiler-dispatch.md), `packages/compiler/src/dispatch.ts`.
+- New contributors: [mental model](./ASTRO-STATIC-MENTAL-MODEL.md), [GLOSSARY](./GLOSSARY.md), [ADR-0001](./docs/adr/0001-namespace-pattern.md), [ADR-0002](./docs/adr/0002-zero-alloc.md).
+- Using primitives: [api/core/](./docs/api/core/).
+- Adding a projection target: [ADR-0006](./docs/adr/0006-compiler-dispatch.md), `packages/compiler/src/dispatch.ts`.
 - Host integration: [HOSTING.md](./HOSTING.md).

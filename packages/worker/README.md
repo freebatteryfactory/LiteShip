@@ -46,7 +46,7 @@ Logs `compact` (below 768px) or `wide` — selected inside the worker, delivered
 ## Where it sits
 
 A runtime layer one step below the host integrations: `@czap/astro` delegates its worker directive here rather than carrying its own worker protocol. Its only dependency is [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core), for boundary definitions and the shared state-snapshot contracts. It also ships `SPSCRing` (a lock-free shared-memory ring for streaming values out of a worker without blocking either side), `RenderWorker` for OffscreenCanvas rendering, and `WorkerHost`, a typed lifecycle wrapper around `Worker`. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -55,9 +55,9 @@ for the full layout.
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Hosting guide](https://github.com/heyoub/LiteShip/blob/main/docs/HOSTING.md) — the COOP/COEP headers per host
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Hosting guide](https://github.com/heyoub/LiteShip/blob/main/HOSTING.md) — the COOP/COEP headers per host
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/worker/src/) — generated from source
 
 ---

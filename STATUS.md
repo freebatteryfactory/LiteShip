@@ -521,7 +521,7 @@ First-run developer experience built on top of the existing CLI dispatch:
   parses the build script out of root package.json; can't drift.
 - **Glossary-lint** — `tests/unit/cli/glossary-lint.test.ts` scans CLI
   source for maritime register terms and asserts each is defined in both
-  `docs/GLOSSARY.md` and `czap glossary`. Future ontology additions can't
+  `GLOSSARY.md` and `czap glossary`. Future ontology additions can't
   land without their glossary entry.
 - **`SKIP_PRECOMMIT=1`** escape hatch in pre-commit hook (with re-run
   reminder banner).

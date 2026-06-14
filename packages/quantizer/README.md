@@ -44,7 +44,7 @@ Logs `{ display: 'grid' }` — the CSS output for the `lg` state that 1024 falls
 ## Where it sits
 
 This is a layered package between definitions and hosts: it imports `Boundary`, easing, and content-address utilities from `@czap/core` — its only `@czap` dependency. Compiling outputs to static CSS text for a build step is `@czap/compiler`'s job; this package is for runtime, where the value keeps changing. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -53,9 +53,9 @@ If you pass `tier` to `Q.from(boundary, { tier })`, outputs for targets outside 
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — what you type, what comes out
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — what you type, what comes out
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/quantizer/src/) — generated from source
 
 ---

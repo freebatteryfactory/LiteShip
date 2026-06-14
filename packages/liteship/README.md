@@ -33,13 +33,13 @@ Logs `tablet` — the named state for a 768–1279px viewport width. That signal
 
 ## Where it sits
 
-The umbrella sits above everything: it depends on all twenty publishable `@czap/*` packages, pinned at exactly its own version, and deliberately re-exports none of them — the host integrations (`@czap/astro`, `@czap/vite`, `@czap/cloudflare`) carry host-specific peer expectations, and a barrel importing all of them would force every consumer to satisfy all of them at once. You import from the individual scopes exactly as the docs show; this package just makes sure they're installed. Its only export is `LITESHIP_PACKAGES`, the list of what it installs. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.
+The umbrella sits above everything: it depends on all twenty publishable `@czap/*` packages, pinned at exactly its own version, and deliberately re-exports none of them — the host integrations (`@czap/astro`, `@czap/vite`, `@czap/cloudflare`) carry host-specific peer expectations, and a barrel importing all of them would force every consumer to satisfy all of them at once. You import from the individual scopes exactly as the docs show; this package just makes sure they're installed. Its only export is `LITESHIP_PACKAGES`, the list of what it installs. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — how definitions compose into surfaces
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — how definitions compose into surfaces
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/) — generated from source
 
 ---

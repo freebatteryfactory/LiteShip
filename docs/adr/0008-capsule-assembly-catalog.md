@@ -42,7 +42,7 @@ Each arm has a typed contract (`CapsuleContract<K, In, Out, R>`), a factory (`de
 
 ## References
 
-- [LiteShip vocabulary](../GLOSSARY.md): product / engine / `@czap/*` naming
+- [LiteShip vocabulary](../../GLOSSARY.md): product / engine / `@czap/*` naming
 - `docs/adr/0007-adapter-vs-peer-framing.md` (paired adapter framing ADR)
 - `docs/adr/0010-spine-canonical-type-source.md` (paired bridge ADR)
 
