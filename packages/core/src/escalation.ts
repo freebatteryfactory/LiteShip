@@ -139,11 +139,21 @@ export function chooseRung(policy: PolicyNode, runtimeSite: RuntimeSite): Escala
   // unambiguous separator between the policy id and the runtime site.
   const key = `${policy.id}|${runtimeSite}`;
   const cached = memo.get(key);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) return isolate(cached);
 
   const result = compute(policy, runtimeSite);
   memo.set(key, result);
-  return result;
+  return isolate(result);
+}
+
+/**
+ * Return an ISOLATED copy of a memoized verdict — a FRESH `admittedTargets` Set —
+ * so a caller mutating the returned result can never pollute the process-global
+ * memo (a later memo hit would otherwise hand back the mutated Set). The `{error}`
+ * branch is an immutable string payload, returned as-is.
+ */
+function isolate(result: EscalationResult): EscalationResult {
+  return 'error' in result ? result : { rung: result.rung, admittedTargets: new Set(result.admittedTargets) };
 }
 
 function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult {

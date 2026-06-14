@@ -201,20 +201,18 @@ export const escalationChooseRungCapsule = defineCapsule({
     },
     {
       name: 'admitted-targets-fresh-set',
-      check: (_input: unknown, output: unknown): boolean => {
+      check: (input: unknown, output: unknown): boolean => {
         const o = output as EscalationOutput;
-        // LAW (the memoization scar): the returned admittedTargets is a FRESH,
-        // ISOLATED Set — mutating it must not corrupt the canonical rung table or
-        // the memo. The raw table is module-private, so we prove isolation
-        // OBSERVABLY: mutate the result, then confirm a fresh `rungTargets()` view
-        // is unmoved.
+        // LAW (the memoization scar): mutating the returned admittedTargets must
+        // NOT pollute the process-global memo — a subsequent chooseRung() for the
+        // SAME policy (a memo HIT) must hand back a clean, isolated Set.
         if (!isChoice(o.result)) return true;
-        const before = rungTargets(o.result.rung).size;
+        const seed = input as EscalationSeedValue;
         (o.result.admittedTargets as Set<string>).add('__isolation_probe__');
-        const after = rungTargets(o.result.rung) as ReadonlySet<string>;
-        return !after.has('__isolation_probe__') && after.size === before;
+        const result2 = chooseRung(buildPolicy(seed), seed.site); // same policy id → memo hit
+        return isChoice(result2) && !(result2.admittedTargets as ReadonlySet<string>).has('__isolation_probe__');
       },
-      message: 'mutating admittedTargets must not corrupt the canonical rung table (fresh/isolated Set)',
+      message: 'mutating admittedTargets must not pollute the memo (a memo-hit must return a fresh, isolated Set)',
     },
   ],
   budgets: { p95Ms: 0.2, allocClass: 'bounded' },
