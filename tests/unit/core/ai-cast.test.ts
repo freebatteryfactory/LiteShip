@@ -240,6 +240,40 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(mintedNode?.id).not.toBe(base.nodes[0]!.id); // NOT the forged (impersonated) id
   });
 
+  test('the validator is TOTAL on untrusted input — a malformed envelope is REJECTED, never thrown', () => {
+    const base = graph([node('a')]);
+    // Parsed model JSON with a matching tag but `ops` missing / not an array would
+    // crash `patch.ops.forEach` — the validator must return a rejection instead.
+    const noOps = { _tag: 'GraphPatch', _version: 1, base: base.id } as unknown as GraphPatch;
+    let r: ReturnType<typeof AICast.validateGraphPatchProposal> | undefined;
+    expect(() => {
+      r = AICast.validateGraphPatchProposal(base, noOps);
+    }).not.toThrow();
+    expect(r?.ok).toBe(false);
+    // A wholly non-object / non-envelope patch is also a clean rejection, not a crash.
+    expect(() => AICast.validateGraphPatchProposal(base, null as unknown as GraphPatch)).not.toThrow();
+    expect(AICast.validateGraphPatchProposal(base, 'nope' as unknown as GraphPatch).ok).toBe(false);
+    expect(AICast.validateGraphPatchProposal(base, { _tag: 'GraphPatch', ops: 'no' } as unknown as GraphPatch).ok).toBe(false);
+  });
+
+  test('a proposed edge with an off-schema type is REJECTED before minting', () => {
+    const a = node('a');
+    const b = node('b');
+    const base = graph([a, b]);
+    // An edge between existing nodes but with a type outside the closed EdgeType set.
+    // GraphPatch.validate only checks endpoints/cycles, so the cast-in path must gate it.
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', edge: { from: a.id, to: b.id, type: 'foo' } }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/invalid type|seq\|par/i);
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);

@@ -437,6 +437,19 @@ export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
  */
 export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPatch): ProposalResult<GraphPatch> {
   const errors: string[] = [];
+  // TOTAL on untrusted input: a parsed model response may not be a well-formed
+  // GraphPatch envelope at all. Guard the SHAPE before touching `patch.base`/`patch.ops`
+  // — a non-object patch or a missing / non-array `ops` must yield a clean
+  // ProposalRejection, never a TypeError that escapes the validation boundary and
+  // crashes host admission code.
+  const env = patch as { _tag?: unknown; ops?: unknown } | null;
+  if (env === null || typeof env !== 'object' || env._tag !== 'GraphPatch' || !Array.isArray(env.ops)) {
+    return {
+      ok: false,
+      target: 'graph-patch',
+      errors: ['Proposal is not a well-formed GraphPatch envelope (expected { _tag: "GraphPatch", ops: [...] }).'],
+    };
+  }
   if (patch.base !== graph.id) {
     errors.push(
       `Patch base ${patch.base} does not match the cast graph ${graph.id}. ` +
@@ -453,6 +466,11 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
   if (errors.length === 0) {
     const NODE_DISCRIMINANTS = new Set(['add', 'remove', 'update']);
     const EDGE_DISCRIMINANTS = new Set(['add', 'remove']);
+    // The closed EdgeType set (plan.ts). `GraphPatch.validate` only checks
+    // cycles/dangling endpoints, NOT the edge `type` — so without this an edge with an
+    // off-schema `type` ("foo") would mint and persist as a structurally-invalid
+    // DocumentGraphEdge. Model JSON is untrusted, so the edge type is gated here.
+    const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
     patch.ops.forEach((rawOp, i) => {
       const op = rawOp as { op?: unknown; node?: unknown; edge?: unknown };
       if (op === null || typeof op !== 'object') {
@@ -466,8 +484,18 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
         errors.push(
           `Patch op[${i}] (node) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove|update).`,
         );
-      } else if (kind === 'edge' && !EDGE_DISCRIMINANTS.has(op.op as string)) {
-        errors.push(`Patch op[${i}] (edge) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove).`);
+      } else if (kind === 'edge') {
+        if (!EDGE_DISCRIMINANTS.has(op.op as string)) {
+          errors.push(`Patch op[${i}] (edge) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove).`);
+        } else {
+          const edge = op.edge as { type?: unknown } | null;
+          if (edge === null || typeof edge !== 'object' || !EDGE_TYPES.has(edge.type as string)) {
+            errors.push(
+              `Patch op[${i}] (edge) has invalid type ${JSON.stringify((edge as { type?: unknown } | null)?.type)} ` +
+                '(expected seq|par|choice_then|choice_else).',
+            );
+          }
+        }
       }
     });
   }
