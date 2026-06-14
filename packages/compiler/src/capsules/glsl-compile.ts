@@ -113,10 +113,19 @@ function buildInputs(seed: GLSLCompileSeedValue): {
   const boundary = makeBoundary(stateNames);
 
   // Zip the value matrix into per-state value maps. A short row omits the tail.
-  const states: StateMaps = {};
+  // NULL-PROTOTYPE (both the outer state map and each inner field map): state and
+  // field names are author-controlled seed strings, so a name literally `__proto__`
+  // or `constructor` must land as an OWN property, never mutate the object's
+  // prototype. A plain `{}` here would make `states['__proto__'] = map` set the
+  // PROTOTYPE — the production `GLSLCompiler.compile` then reads it back via bracket
+  // access (`states[name]`, reaching through the chain) while the invariant's
+  // `Object.values(o.states)` sees only own keys, and the two disagree on the
+  // inferred type. This mirrors the compiler's own `stateUniforms = Object.create(null)`
+  // (glsl.ts) so the harness faithfully represents what it feeds the compiler.
+  const states: StateMaps = Object.create(null) as StateMaps;
   for (let s = 0; s < stateNames.length; s++) {
     const row = seed.values[s] ?? [];
-    const map: Record<string, number> = {};
+    const map: Record<string, number> = Object.create(null) as Record<string, number>;
     for (let f = 0; f < fieldNames.length; f++) {
       const v = row[f];
       if (v === undefined) continue; // ragged → omit this field for this state

@@ -85,10 +85,14 @@ function buildInputs(seed: ARIACompileSeedValue): {
   }
   if (stateNames.length === 0) stateNames.push('s0');
 
-  const authored: StateAttrs = {};
+  // NULL-PROTOTYPE: author-controlled state names and attr keys (a literal
+  // `__proto__`/`constructor`) must land as OWN properties, not mutate the
+  // prototype — else a bracket-access read in the compiler and an own-keys read
+  // in an invariant disagree. Mirrors the GLSL/WGSL capsule fixes.
+  const authored: StateAttrs = Object.create(null) as StateAttrs;
   for (let s = 0; s < stateNames.length; s++) {
     const entries = seed.entries[s] ?? [];
-    const map: Record<string, string> = {};
+    const map: Record<string, string> = Object.create(null) as Record<string, string>;
     for (const { key, value } of entries) map[key] = value; // later entry wins on dup key
     authored[stateNames[s]!] = map;
   }

@@ -86,10 +86,14 @@ function buildInputs(seed: WGSLCompileSeedValue): {
 
   const boundary = makeBoundary(stateNames);
 
-  const states: StateMaps = {};
+  // NULL-PROTOTYPE: author-controlled state/field names (a literal `__proto__` or
+  // `constructor`) must land as OWN properties, not mutate the prototype — else a
+  // bracket-access read in the compiler and an own-keys read in an invariant
+  // disagree. Mirrors the GLSL capsule fix and the compiler's own null-proto maps.
+  const states: StateMaps = Object.create(null) as StateMaps;
   for (let s = 0; s < stateNames.length; s++) {
     const row = seed.values[s] ?? [];
-    const map: Record<string, number> = {};
+    const map: Record<string, number> = Object.create(null) as Record<string, number>;
     for (let f = 0; f < fieldNames.length; f++) {
       const v = row[f];
       if (v === undefined) continue;
