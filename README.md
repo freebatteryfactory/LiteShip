@@ -186,7 +186,7 @@ Both milestones are signal-gated, not promise-gated. Contributors are welcome to
 - [docs/GLOSSARY.md](./docs/GLOSSARY.md): LiteShip / CZAP / `@czap/*` naming and prose register
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md): package and system architecture
 - [docs/adr/](./docs/adr): architecture decision records, numbered and indexed
-- [docs/api/](./docs/api): generated API reference (typedoc) for every package; intro text in [docs/TYPEDOC_README.md](./docs/TYPEDOC_README.md)
+- [docs/api/](./docs/api): generated API reference (typedoc) for every package; intro text in [docs/TYPEDOC.md](./docs/TYPEDOC.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md): dev environment, PR conventions, gauntlet workflow
 - [SECURITY.md](./SECURITY.md): vulnerability reporting, supported versions, security posture summary
 - [CHANGELOG.md](./CHANGELOG.md): release history

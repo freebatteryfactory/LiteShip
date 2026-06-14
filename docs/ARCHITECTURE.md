@@ -79,7 +79,7 @@ Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`
 
 Full index + accepted set (0001–0015): [`docs/adr/README.md`](./adr/README.md).
 
-Capsule factory + video stack: [capsule-factory.md](./capsule-factory.md).
+Capsule factory + video stack: [CAPSULE-FACTORY.md](./CAPSULE-FACTORY.md).
 
 ## Where to start
 
