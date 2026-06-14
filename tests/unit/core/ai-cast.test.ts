@@ -160,6 +160,42 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.proposal.payload.resultId).not.toBe('czap:forged-stale-id');
   });
 
+  test('applyValidatedPatch verifies the PRIVATE WITNESS — a forged proposal with a correct subject but no witness is refused', () => {
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+
+    // Forge a proposal-shaped object: SAME payload + subject — so an ADDRESS-ONLY
+    // guard would pass, since `contentAddressOf` is public and a caller can compute
+    // the subject itself — but a hand-built token WITHOUT the module-private
+    // `ApplyTokenWitness`. The provenance gate (assertTokenBinds) must refuse it: the
+    // witness is the only unforgeable part of the envelope. (Before the gate routed
+    // through assertTokenBinds, this address-only impostor would have applied.)
+    const forgedToken = { subject: checked.proposal.subject, target: 'graph-patch' as const };
+    const forged = { ...checked.proposal, token: forgedToken } as unknown as ValidatedProposal<GraphPatch>;
+    expect(() => AICast.applyValidatedPatch(base, forged)).toThrow(/not validator-minted/);
+  });
+
+  test('a malformed EDGE op (off-schema discriminant) is REJECTED before minting — not silently applied as an add', () => {
+    const base = graph([node('a'), node('b')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+    // Untrusted model JSON supplies an EDGE op with `op:'update'` — off-schema for
+    // edges (only add/remove). `GraphPatch.apply` treats any non-'remove' edge op as
+    // an add, so without the discriminant gate this would apply as an edge-add, pass
+    // the structural preview, and MINT a validated edge from an off-schema op. The
+    // gate refuses it before the preview, so it never mints.
+    const malformed = {
+      ...honest,
+      ops: [{ op: 'update', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id } }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, malformed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/discriminant/i);
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);

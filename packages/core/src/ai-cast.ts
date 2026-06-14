@@ -45,7 +45,7 @@ import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-gr
 import { linearizeGraph } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
-import { mintValidated } from './validated-output.js';
+import { mintValidated, assertTokenBinds } from './validated-output.js';
 
 // genui types are re-anchored from the shared spine (the same source `@czap/genui`
 // uses) — TYPES ONLY, no genui runtime import, so the cast stays pure and core
@@ -442,6 +442,34 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
         'A proposal must apply to the graph it was cast from.',
     );
   }
+  // Enforce PatchOp discriminants on the UNTRUSTED ops BEFORE the structural preview.
+  // `GraphPatch.validate` only checks the graph PRODUCED by applying the ops, and
+  // `GraphPatch.apply` treats every non-'remove' EDGE op as an add — so a malformed
+  // edge op (e.g. `op:'update'`, off-schema for edges) would otherwise be silently
+  // applied as an add, pass validate, and mint a validated edge from an off-schema op.
+  // Model JSON is untrusted, so the op shape itself must be gated here (the discriminant
+  // is a contract the parsed payload can violate even though the TS type forbids it).
+  if (errors.length === 0) {
+    const NODE_DISCRIMINANTS = new Set(['add', 'remove', 'update']);
+    const EDGE_DISCRIMINANTS = new Set(['add', 'remove']);
+    patch.ops.forEach((rawOp, i) => {
+      const op = rawOp as { op?: unknown; node?: unknown; edge?: unknown };
+      if (op === null || typeof op !== 'object') {
+        errors.push(`Patch op[${i}] is not an object (malformed).`);
+        return;
+      }
+      const kind = 'node' in op ? 'node' : 'edge' in op ? 'edge' : null;
+      if (kind === null) {
+        errors.push(`Patch op[${i}] is neither a node nor an edge op (malformed).`);
+      } else if (kind === 'node' && !NODE_DISCRIMINANTS.has(op.op as string)) {
+        errors.push(
+          `Patch op[${i}] (node) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove|update).`,
+        );
+      } else if (kind === 'edge' && !EDGE_DISCRIMINANTS.has(op.op as string)) {
+        errors.push(`Patch op[${i}] (edge) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove).`);
+      }
+    });
+  }
   if (errors.length === 0) {
     const structural = GraphPatch.validate(graph, patch);
     if (!structural.ok) {
@@ -546,11 +574,13 @@ export function validateGeneratedUIProposal(
  * wrong graph (re-validate against the advanced graph to get a fresh proposal).
  */
 export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedProposal<GraphPatch>): DocumentGraph {
-  // Re-derive the token binding before honoring it (catches a swapped payload).
-  const rederived = contentAddressOf({ target: proposal.target, payload: proposal.payload });
-  if (rederived !== proposal.subject || proposal.token.subject !== proposal.subject) {
-    throw new Error('applyValidatedPatch: proposal token does not bind to its payload; refusing to apply.');
-  }
+  // FULL provenance gate via assertTokenBinds — NOT an inline address-only check.
+  // `contentAddressOf` is part of the public surface, so a caller from JS (or TS
+  // casting untrusted model output) could fabricate a proposal-shaped object whose
+  // `subject` it computed itself and pass an address-only guard. The module-private
+  // `ApplyTokenWitness` is the real, unforgeable defense; assertTokenBinds verifies
+  // the witness (validator-minted) AND target consistency AND the payload binding.
+  assertTokenBinds(proposal);
   // Bind the proposal to the graph it was validated against (its pinned `base`).
   if (proposal.payload.base !== graph.id) {
     throw new Error(
