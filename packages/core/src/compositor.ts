@@ -225,6 +225,26 @@ export const Compositor: CompositorFactory = {
       let previousState: CompositeState = emptyCompositeState();
       let priorPreviousState: CompositeState | null = null;
       let batchScheduled = false;
+      // Last runtime dirty-epoch this compositor has already folded into its
+      // local `dirty` set, per quantizer name. `runtime.markDirty(name)` is the
+      // public re-mark the Stage dual-export sweep and the worker host call
+      // between ticks; it advances the runtime's epoch but does NOT touch the
+      // compositor's local `dirty` flags. Without reconciling the two, `compute()`
+      // would take the stale carry-forward path and FREEZE on every tick after the
+      // first (the dual-export frozen-MP4 class of bug). Folding epoch advances in
+      // at the top of `computeStateSync` makes `runtime.markDirty` a real recompute
+      // trigger while preserving the freeze-when-nothing-was-marked law.
+      const seenEpoch = new Map<string, number>();
+      function reconcileRuntimeDirty(): void {
+        if (dirty === null) return; // recomputeAll path already recomputes everything
+        for (const name of qMap.keys()) {
+          const epoch = runtime.getDirtyEpoch(name);
+          if (epoch !== (seenEpoch.get(name) ?? 0)) {
+            dirty.mark(name);
+            seenEpoch.set(name, epoch);
+          }
+        }
+      }
       function rebuildDirtyFlags(): void {
         if (nameList.length > MAX_DIRTY_KEYS) {
           dirty = null;
@@ -241,6 +261,11 @@ export const Compositor: CompositorFactory = {
       }
 
       function computeStateSync(): CompositeState {
+        // Fold any out-of-band `runtime.markDirty` re-marks into the local dirty
+        // set before reading it, so a host that drives a quantizer's `evaluate`
+        // and then `runtime.markDirty(name)` (Stage dual-export, worker) sees the
+        // new state instead of the frozen carry-forward.
+        reconcileRuntimeDirty();
         const dirtyFlags = dirty;
         const dirtyNames = recomputeAll || dirtyFlags === null ? Array.from(qMap.keys()) : dirtyFlags.getDirty();
         const shouldRecompute =
