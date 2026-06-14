@@ -196,6 +196,50 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/discriminant/i);
   });
 
+  test('a REFLECTION-FORGED token (witness symbol harvested off a real proposal) is still refused — authenticity is WeakSet identity, not a property brand', () => {
+    const base = graph([node('a')]);
+    const real = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    expect(real.ok).toBe(true);
+    if (!real.ok) return;
+
+    // Harvest the module-private witness symbol off the REAL token via reflection,
+    // then build a NEW token object carrying that exact symbol plus a self-consistent
+    // subject. An own-property-brand check would PASS (the symbol is present and the
+    // subject matches); the WeakSet identity check refuses it because this fabricated
+    // object was never minted here. This is the attack Codex flagged (P1).
+    const witnessSym = Object.getOwnPropertySymbols(real.proposal.token)[0]!;
+    const forgedToken = { [witnessSym]: true, subject: real.proposal.subject, target: 'graph-patch' as const };
+    const forged = { ...real.proposal, token: forgedToken } as unknown as ValidatedProposal<GraphPatch>;
+    expect(() => AICast.applyValidatedPatch(base, forged)).toThrow(/not validator-minted/);
+    // The real proposal still applies (sanity — the gate isn't over-rejecting).
+    expect(() => AICast.applyValidatedPatch(base, real.proposal)).not.toThrow();
+  });
+
+  test('a minted proposal and its token are FROZEN — the bound subject cannot be mutated in place', () => {
+    const base = graph([node('a')]);
+    const checked = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+    expect(Object.isFrozen(checked.proposal.token)).toBe(true);
+    expect(Object.isFrozen(checked.proposal)).toBe(true);
+  });
+
+  test('a forged node.id (≠ its content address) is RE-SEALED to its true address — a node cannot impersonate another', () => {
+    const base = graph([node('a')]);
+    const honestB = node('b'); // correctly sealed: id == content address of {input:'b', …}
+    // The model claims node 'b''s payload but FORGES its id to be node 'a''s id (an
+    // impersonation / content-address forgery). The validator re-seals it to the TRUE id.
+    const forgedNode = { ...honestB, id: base.nodes[0]!.id } as typeof honestB;
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: forgedNode }]);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+
+    const mintedNode = checked.proposal.payload.ops.find((o): o is Extract<typeof o, { node: unknown }> => 'node' in o)?.node;
+    expect(mintedNode?.id).toBe(honestB.id); // re-sealed to the true address
+    expect(mintedNode?.id).not.toBe(base.nodes[0]!.id); // NOT the forged (impersonated) id
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
@@ -203,19 +247,24 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
 
-    // An impostor token that is structurally shaped (right subject) but carries NO
-    // private witness must be refused — the type forbids it, but the runtime gate
-    // backs it up (a value cast past the type cannot sneak through apply).
+    // An impostor token that is structurally shaped (right subject) but was not minted
+    // here must be refused. Authenticity is WeakSet IDENTITY: any fabricated or copied
+    // token object — even one carrying the (reflectable) witness symbol — is a non-member
+    // and is rejected as "not validator-minted".
     const witnessless = {
       ...checked.proposal,
       token: { subject: checked.proposal.subject, target: checked.proposal.target },
     } as unknown as ValidatedProposal<GraphPatch>;
     expect(() => assertTokenBinds(witnessless)).toThrow(/not validator-minted/);
 
-    // A token whose `target` diverges from the proposal target is refused.
+    // A proposal whose top-level `target` diverges from its (REAL, minted) token's
+    // target is refused — keep the authentic registry-member token but mislabel the
+    // proposal. (Reaches the target-consistency branch, which a copied token can't,
+    // since a copy fails the identity gate first.)
     const targetDiverged = {
       ...checked.proposal,
-      token: { ...checked.proposal.token, target: 'generated-ui' },
+      target: 'generated-ui',
+      token: checked.proposal.token,
     } as unknown as ValidatedProposal<GraphPatch>;
     expect(() => assertTokenBinds(targetDiverged)).toThrow(/target mismatch/);
   });

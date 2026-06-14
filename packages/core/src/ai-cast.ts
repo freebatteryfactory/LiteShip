@@ -42,8 +42,9 @@
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-graph.js';
-import { linearizeGraph } from './document-graph-address.js';
+import { linearizeGraph, sealNode } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
+import type { PatchOp } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
 import { mintValidated, assertTokenBinds } from './validated-output.js';
 
@@ -470,31 +471,40 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
       }
     });
   }
+  // RE-SEAL each proposed node before trusting its identity. A node op carries a
+  // DocumentGraphNode whose `id` is a content address; untrusted model JSON can claim
+  // `node.id` equal to an EXISTING node's id while carrying a DIFFERENT payload (a
+  // content-address forgery — an add/update masquerading as another node). `sealNode`
+  // recomputes the id from the payload (addressing excludes the id field), so a forged
+  // id is corrected to the node's TRUE address; an edge that referenced the forged id
+  // then dangles and is caught by the structural preview. Re-sealing an already-correct
+  // node is a no-op (deterministic addressing). A node payload too malformed to seal is
+  // rejected rather than thrown.
+  let resealedOps: readonly PatchOp[] = patch.ops;
   if (errors.length === 0) {
-    const structural = GraphPatch.validate(graph, patch);
-    if (!structural.ok) {
-      for (const err of structural.errors) {
-        errors.push(typeof err === 'string' ? err : JSON.stringify(err));
-      }
+    try {
+      resealedOps = patch.ops.map((op) => ('node' in op && op.node ? { ...op, node: sealNode(op.node) } : op));
+    } catch (e) {
+      errors.push(`A proposed node could not be sealed (malformed node payload): ${String(e)}`);
     }
   }
-  if (errors.length > 0) {
-    return { ok: false, target: 'graph-patch', errors };
+  if (errors.length === 0) {
+    // RESOLVED (open question #5 — RE-STAMP the result identity, never trust the
+    // model's). `propose` recomputes `base` + `resultId` deterministically from the
+    // (re-sealed) ops through the one kernel, discarding any model-supplied `resultId`
+    // (a stale/forged value would mis-key a host that cites/caches by it). It never
+    // changes WHICH patch is validated. We then validate the RE-SEALED, stamped patch
+    // structurally (no cycles, no dangling edges) and mint only on success.
+    const stamped = GraphPatch.propose(graph, resealedOps);
+    const structural = GraphPatch.validate(graph, stamped);
+    if (structural.ok) {
+      return { ok: true, proposal: mintValidated('graph-patch', stamped) };
+    }
+    for (const err of structural.errors) {
+      errors.push(typeof err === 'string' ? err : JSON.stringify(err));
+    }
   }
-  // RESOLVED (open question #5 — RE-STAMP the validated payload's resultId, never
-  // trust the model's). A model-supplied `resultId` is untrusted: a stale or forged
-  // value would disagree with `apply(graph, ops).id`, so a host that cites/caches/
-  // receipts the validated artifact by `resultId` would key on the WRONG identity
-  // even though validation passed. We therefore ALWAYS recompute it deterministically
-  // from the patch content via `propose` (a pure preview through the one kernel),
-  // discarding any carried `resultId`. `propose` is deterministic over `(graph, ops)`,
-  // so this never changes WHICH patch is validated — it only stamps the correct,
-  // self-describing result identity. (Defense-in-depth: the apply token also binds
-  // the WHOLE payload by content address, and `applyValidatedPatch` re-checks the
-  // apply-time graph identity — but a host should never have to distrust a field of
-  // an *accepted* envelope, so we make the envelope's `resultId` authoritative here.)
-  const stamped = GraphPatch.propose(graph, patch.ops);
-  return { ok: true, proposal: mintValidated('graph-patch', stamped) };
+  return { ok: false, target: 'graph-patch', errors };
 }
 
 /**

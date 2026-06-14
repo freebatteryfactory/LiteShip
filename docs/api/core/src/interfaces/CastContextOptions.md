@@ -6,7 +6,7 @@
 
 # Interface: CastContextOptions
 
-Defined in: [core/src/ai-cast.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L123)
+Defined in: [core/src/ai-cast.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L124)
 
 Options for [castContext](../variables/AICast.md#castcontext).
 
@@ -16,7 +16,7 @@ Options for [castContext](../variables/AICast.md#castcontext).
 
 > `readonly` `optional` **catalog?**: `ComponentCatalog`
 
-Defined in: [core/src/ai-cast.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L137)
+Defined in: [core/src/ai-cast.ts:138](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L138)
 
 Host component catalog, REQUIRED when `'generated-ui'` is among the targets:
 the advertised GeneratedUITree schema enumerates the catalog's components so
@@ -28,7 +28,7 @@ the model proposes only registered names.
 
 > `readonly` `optional` **targets?**: readonly [`ProposalTarget`](../type-aliases/ProposalTarget.md)[]
 
-Defined in: [core/src/ai-cast.ts:131](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L131)
+Defined in: [core/src/ai-cast.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L132)
 
 Which output contracts to advertise to the model. Default: `['graph-patch']`
 (the graph-native target). Add `'generated-ui'` when the host also exposes a
@@ -40,6 +40,6 @@ component catalog (pass it via [CastContextOptions.catalog](#catalog)).
 
 > `readonly` `optional` **tokenBudget?**: `number`
 
-Defined in: [core/src/ai-cast.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L125)
+Defined in: [core/src/ai-cast.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L126)
 
 Token budget for the embedded graph summary. Default 1024.

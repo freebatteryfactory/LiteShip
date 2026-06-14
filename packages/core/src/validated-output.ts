@@ -83,6 +83,14 @@ export interface ValidatedProposal<T> {
 }
 
 /**
+ * Module-private registry of authentically-minted apply tokens. Authenticity is an
+ * IDENTITY question (was this exact token minted here?), answered by membership —
+ * unforgeable by reflection, unlike an own-property symbol brand. Weak so a token
+ * the host drops is GC'd without a leak.
+ */
+const mintedTokens = new WeakSet<ApplyToken>();
+
+/**
  * Mint a {@link ValidatedProposal}. PRIVATE to validators (not re-exported from
  * the package index): this is the single mint site for the apply token, exactly
  * as `sealGraph`/`makeEntityId` are the single mint sites for their addresses.
@@ -92,7 +100,21 @@ export interface ValidatedProposal<T> {
 export function mintValidated<T>(target: ProposalTarget, payload: T): ValidatedProposal<T> {
   const subject = contentAddressOf({ target, payload });
   const token: ApplyToken = { [ApplyTokenWitness]: true, subject, target };
-  return { _tag: 'ValidatedProposal', _version: 1, target, payload, subject, token };
+  // FROZEN so the bound `subject` cannot be mutated in place to re-point a real,
+  // registry-member token at a different payload. (Frozen in place so the literal
+  // `true`/`1` types are not widened by `Object.freeze`'s return type.)
+  Object.freeze(token);
+  // Register by IDENTITY in the module-private WeakSet — this, not the own-property
+  // witness, is the runtime authenticity proof. The witness symbol's VALUE is
+  // reflectable off any real token a consumer holds (`Object.getOwnPropertySymbols`),
+  // so a property-based brand can be copied onto a forged object; WeakSet membership
+  // cannot — only tokens this function minted are members (and it leaks nothing: no
+  // strong reference). The symbol stays on the type as the COMPILE-TIME unforgeable
+  // brand; `mintedTokens` is the RUNTIME one.
+  mintedTokens.add(token);
+  const proposal: ValidatedProposal<T> = { _tag: 'ValidatedProposal', _version: 1, target, payload, subject, token };
+  Object.freeze(proposal);
+  return proposal;
 }
 
 /**
@@ -116,7 +138,10 @@ export function mintValidated<T>(target: ProposalTarget, payload: T): ValidatedP
  *     (no post-validation payload swap).
  */
 export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
-  if (proposal.token[ApplyTokenWitness] !== true) {
+  // PROVENANCE by identity: only a token THIS module minted is in the registry. A
+  // reflection-forged token (symbol copied off a real token onto a new object) is
+  // NOT a member, so it is refused here even though it carries the witness symbol.
+  if (!mintedTokens.has(proposal.token)) {
     throw new Error(
       `ValidatedProposal token is not validator-minted (target=${proposal.target}); ` +
         'refusing to surface it for apply.',
