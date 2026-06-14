@@ -66,6 +66,8 @@ plan graph, ECS, capsule factory).
 
 ## Interfaces
 
+- [AIContext](interfaces/AIContext.md)
+- [ApplyToken](interfaces/ApplyToken.md)
 - [AttributionDecl](interfaces/AttributionDecl.md)
 - [BoundarySpec](interfaces/BoundarySpec.md)
 - [BudgetDecl](interfaces/BudgetDecl.md)
@@ -76,6 +78,7 @@ plan graph, ECS, capsule factory).
 - [CaptureConfig](interfaces/CaptureConfig.md)
 - [CaptureFrame](interfaces/CaptureFrame.md)
 - [CaptureResult](interfaces/CaptureResult.md)
+- [CastContextOptions](interfaces/CastContextOptions.md)
 - [CellEnvelope](interfaces/CellEnvelope.md)
 - [CellMeta](interfaces/CellMeta.md)
 - [ComponentNode](interfaces/ComponentNode.md)
@@ -102,6 +105,7 @@ plan graph, ECS, capsule factory).
 - [ForkViolation](interfaces/ForkViolation.md)
 - [FrameCapture](interfaces/FrameCapture.md)
 - [GraphPatch](interfaces/GraphPatch.md)
+- [GraphSummary](interfaces/GraphSummary.md)
 - [HLCBrand](interfaces/HLCBrand.md)
 - [Invariant](interfaces/Invariant.md)
 - [MergeResult](interfaces/MergeResult.md)
@@ -110,6 +114,7 @@ plan graph, ECS, capsule factory).
 - [PoseNode](interfaces/PoseNode.md)
 - [ProjectionKeys](interfaces/ProjectionKeys.md)
 - [ProjectionNode](interfaces/ProjectionNode.md)
+- [ProposalSchema](interfaces/ProposalSchema.md)
 - [Quantizer](interfaces/Quantizer.md)
 - [ReceiptDAG](interfaces/ReceiptDAG.md)
 - [ReceiptEnvelope](interfaces/ReceiptEnvelope.md)
@@ -123,6 +128,7 @@ plan graph, ECS, capsule factory).
 - [System](interfaces/System.md)
 - [TransitionNode](interfaces/TransitionNode.md)
 - [UIFrame](interfaces/UIFrame.md)
+- [ValidatedProposal](interfaces/ValidatedProposal.md)
 - [VideoConfig](interfaces/VideoConfig.md)
 - [VideoFrameOutput](interfaces/VideoFrameOutput.md)
 - [WASMDispatchAPI](interfaces/WASMDispatchAPI.md)
@@ -156,6 +162,7 @@ plan graph, ECS, capsule factory).
 - [EscalationResult](type-aliases/EscalationResult.md)
 - [FrameType](type-aliases/FrameType.md)
 - [GapStrategy](type-aliases/GapStrategy.md)
+- [GeneratedUIValidator](type-aliases/GeneratedUIValidator.md)
 - [IntegrityDigest](type-aliases/IntegrityDigest.md)
 - [Millis](type-aliases/Millis.md)
 - [MorphStrategy](type-aliases/MorphStrategy.md)
@@ -168,6 +175,10 @@ plan graph, ECS, capsule factory).
 - [Primitive](type-aliases/Primitive.md)
 - [PrimitiveKind](type-aliases/PrimitiveKind.md)
 - [Priority](type-aliases/Priority.md)
+- [ProposalAcceptance](type-aliases/ProposalAcceptance.md)
+- [ProposalRejection](type-aliases/ProposalRejection.md)
+- [ProposalResult](type-aliases/ProposalResult.md)
+- [ProposalTarget](type-aliases/ProposalTarget.md)
 - [RequireAtLeastOne](type-aliases/RequireAtLeastOne.md)
 - [RuntimePhase](type-aliases/RuntimePhase.md)
 - [RuntimeSite](type-aliases/RuntimeSite.md)
@@ -186,6 +197,9 @@ plan graph, ECS, capsule factory).
 ## Variables
 
 - [AddressedDigest](variables/AddressedDigest.md)
+- [AICast](variables/AICast.md)
+- [aiCastProposalCapsule](variables/aiCastProposalCapsule.md)
+- [aiCastSummarizeCapsule](variables/aiCastSummarizeCapsule.md)
 - [Animation](variables/Animation.md)
 - [AVBridge](variables/AVBridge.md)
 - [AVRenderer](variables/AVRenderer.md)
@@ -274,6 +288,7 @@ plan graph, ECS, capsule factory).
 
 ## Functions
 
+- [assertTokenBinds](functions/assertTokenBinds.md)
 - [chooseRung](functions/chooseRung.md)
 - [contentAddressOf](functions/contentAddressOf.md)
 - [defineCapsule](functions/defineCapsule.md)
@@ -289,9 +304,12 @@ plan graph, ECS, capsule factory).
 - [isZap](functions/isZap.md)
 - [linearizeGraph](functions/linearizeGraph.md)
 - [projectionKeys](functions/projectionKeys.md)
+- [proposalReceiptSubject](functions/proposalReceiptSubject.md)
+- [proposalSubject](functions/proposalSubject.md)
 - [rawIndexF32](functions/rawIndexF32.md)
 - [sealGraph](functions/sealGraph.md)
 - [sealNode](functions/sealNode.md)
 - [tupleMap](functions/tupleMap.md)
+- [unwrapValidated](functions/unwrapValidated.md)
 - [validateGraph](functions/validateGraph.md)
 - [wgslIdent](functions/wgslIdent.md)

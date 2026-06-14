@@ -27,6 +27,38 @@ describe('validateGeneratedUITree', () => {
     }
   });
 
+  // LESSON #12/#26 (author-controlled keys → prototype poison): `node.name` and
+  // prop keys are MODEL-controlled. A bare `catalog.components[node.name]` /
+  // `key in def.props` walks the prototype chain, so a model proposing a component
+  // (or prop) named `constructor`/`toString`/`__proto__`/`valueOf`/`hasOwnProperty`
+  // would either CRASH the validator (the inherited member has no `.props`) or
+  // SMUGGLE an unregistered name past the gate — a real bypass of the AI-cast
+  // validation boundary. The validator must treat every inherited name as UNKNOWN.
+  // Surfaced by the AI-cast genui-unification property test; guarded here at root.
+  it.each(['constructor', 'toString', '__proto__', 'valueOf', 'hasOwnProperty', 'prototype'])(
+    'rejects a prototype-named component %s as unknown (no crash, no bypass)',
+    (name) => {
+      const result = validateGeneratedUITree({ name, props: {} }, DEMO_COMPONENT_CATALOG);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('genui/unknown-component');
+      }
+    },
+  );
+
+  it('rejects a prototype-named PROP key as unknown (no inherited-key bypass)', () => {
+    const catalog = defineComponentCatalog({
+      version: '1',
+      components: { Box: { props: { id: { type: 'string', required: false } }, children: 'none' } },
+    });
+    const result = validateGeneratedUITree({ name: 'Box', props: { toString: 'x' } }, catalog);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('genui/invalid-prop');
+      expect(result.error.message).toMatch(/Unknown prop/);
+    }
+  });
+
   it('rejects invalid props with genui/invalid-prop', () => {
     const result = validateGeneratedUITree({ name: 'Text', props: { text: 42 } }, DEMO_COMPONENT_CATALOG);
     expect(result.ok).toBe(false);

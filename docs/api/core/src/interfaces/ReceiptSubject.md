@@ -22,6 +22,6 @@ Defined in: [core/src/receipt.ts:17](https://github.com/heyoub/LiteShip/blob/mai
 
 ### type
 
-> `readonly` **type**: `"run"` \| `"effect"` \| `"artifact"` \| `"intent"`
+> `readonly` **type**: `"effect"` \| `"run"` \| `"artifact"` \| `"intent"`
 
 Defined in: [core/src/receipt.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L16)
