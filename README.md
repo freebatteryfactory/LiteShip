@@ -57,9 +57,9 @@ Register the integration and spread the boundary onto any element:
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import czap from '@czap/astro';
+import { integration } from '@czap/astro';
 
-export default defineConfig({ integrations: [czap()] });
+export default defineConfig({ integrations: [integration()] });
 ```
 
 ```astro

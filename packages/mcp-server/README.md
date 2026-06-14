@@ -29,6 +29,23 @@ The process stays alive serving MCP JSON-RPC on stdin/stdout. For Claude Desktop
 
 After the host connects, its `tools/list` call returns the czap command catalog.
 
+## Tools
+
+`tools/list` is authoritative, but so you know what's there before you connect — the MCP-exposed subset (explicit opt-in via `mcpExposed`; blocking/interactive verbs like `gauntlet` and `ship` are deliberately CLI-only):
+
+| Tool | What it does |
+|---|---|
+| `capsule.list` | List the capsules in the factory registry |
+| `capsule.inspect` | Inspect one capsule — its arm, contract, and receipt |
+| `capsule.verify` | Verify a capsule is fresh (regeneration-diff check) |
+| `scene.compile` | Compile a scene contract to a `CompiledScene` |
+| `scene.render` | Render a compiled scene to frames |
+| `scene.verify` | Verify a scene contract resolves |
+| `asset.analyze` | Run analysis projections on an asset (beats / onsets / waveform) |
+| `asset.verify` | Verify an asset declaration decodes |
+
+Each tool runs the **same handler** as the matching `czap <verb>` (one registry, two skins — `@czap/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are in the [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/mcp-server/src/).
+
 ## Where it sits
 
 This is a protocol adapter over `@czap/command` — the shared command registry the CLI also projects, so a tool call and a terminal verb run the identical handler. `@czap/core` supplies the command and receipt types, and `@czap/compiler` backs the MCP-app manifest resource. It deliberately has no `bin` and never imports `@czap/cli`; the two are sibling skins, connected only by the CLI's dynamic import in `czap mcp`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md) for the full layout.

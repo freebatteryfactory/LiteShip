@@ -56,6 +56,16 @@ It is responsible for:
 
 Use it when the site itself is a LiteShip-aware Astro host.
 
+### Defaults (0.2.0 ergonomics)
+
+`integration()` runs with batteries included — most surfaces need no config:
+
+- **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (Alt+Shift+C in `astro dev`).
+- **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
+- **auto-resolved:** initial state defaults from the server-resolved bearing, and the `czap-compute` WASM URL resolves itself — you don't thread either by hand.
+
+So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
+
 ---
 
 ## Middleware

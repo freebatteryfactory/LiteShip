@@ -282,6 +282,15 @@ Main surfaces:
 - `resolveStyle`
 - `resolveBoundary`
 - `resolveVirtualId`
+
+Virtual modules the plugin serves (import them from app code; the boundary/token/theme ones are also emitted automatically into the build):
+
+- `virtual:czap/boundaries` — the build-derived boundary manifest (the shape the edge cache reads)
+- `virtual:czap/tokens` / `virtual:czap/tokens.css` — resolved token values (JS + emitted CSS)
+- `virtual:czap/themes` — resolved theme variants
+- `virtual:czap/wasm-url` — the resolved URL of the `czap-compute` WASM (or `null` when `wasm` is off)
+- `virtual:czap/config` — the resolved plugin config
+- `virtual:czap/hmr-client` — the dev HMR client (dev only)
 - `isVirtualId`
 - `loadVirtualModule`
 - `handleHMR`
