@@ -424,6 +424,40 @@ export type ProposalAcceptance<T> = {
 /** The outcome of validating a model proposal: an acceptance (with envelope) or a rejection (with errors). */
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
+/** Required payload fields per node family — the discriminant-specific shape a proposed node must carry. */
+const NODE_FAMILY_REQUIRED: Record<string, readonly string[]> = {
+  signal: ['input'],
+  entity: ['components'],
+  component: ['name'],
+  pose: ['state'],
+  transition: ['fromPose', 'toPose', 'routing'],
+  projection: ['target'],
+};
+
+/**
+ * Validate a proposed node op's payload conforms to its family. `sealNode` only
+ * recomputes the content address — it does NOT verify the family-specific fields — so a
+ * model could otherwise mint a structurally-incomplete node (e.g. a `transition` carrying
+ * only `{ family: 'transition' }`, no `fromPose`/`toPose`). Checks the op's declared
+ * family matches the node's family and every family-required field is present. Returns an
+ * error string, or null when well-formed.
+ */
+function nodeFamilyError(op: { family?: unknown; node: Record<string, unknown> }, i: number): string | null {
+  const nodeFamily = op.node.family;
+  if (typeof nodeFamily !== 'string') return `Patch op[${i}] node is missing its 'family' discriminant.`;
+  if (op.family !== undefined && op.family !== nodeFamily) {
+    return `Patch op[${i}] op.family ${JSON.stringify(op.family)} does not match node.family ${JSON.stringify(nodeFamily)}.`;
+  }
+  const required = NODE_FAMILY_REQUIRED[nodeFamily];
+  if (!required) return `Patch op[${i}] node has unknown family ${JSON.stringify(nodeFamily)}.`;
+  for (const field of required) {
+    if (op.node[field] === undefined || op.node[field] === null) {
+      return `Patch op[${i}] (${nodeFamily} node) is missing required field '${field}'.`;
+    }
+  }
+  return null;
+}
+
 /**
  * Validate a model-proposed {@link GraphPatch} against the graph it was cast from,
  * then MINT a {@link ValidatedProposal} on success. This is the ONLY way to obtain
@@ -490,6 +524,10 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
           // guard skips it, leaving `GraphPatch.propose` to deref `node.id` and throw.
           // Gate it here so the validator stays TOTAL.
           errors.push(`Patch op[${i}] (node) is missing its node object (got ${JSON.stringify(op.node)}).`);
+        } else {
+          // Family/field conformance: sealNode fixes only the id, not the payload shape.
+          const famErr = nodeFamilyError(op as { family?: unknown; node: Record<string, unknown> }, i);
+          if (famErr) errors.push(famErr);
         }
       } else if (kind === 'edge') {
         if (!EDGE_DISCRIMINANTS.has(op.op as string)) {

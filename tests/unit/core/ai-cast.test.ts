@@ -274,6 +274,38 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/invalid type|seq\|par/i);
   });
 
+  test('a node missing its family-required fields (incomplete transition) is REJECTED before minting', () => {
+    const base = graph([node('a')]);
+    // A transition node carrying only its family discriminant — no fromPose/toPose/routing.
+    // sealNode would happily re-address it; the family/field gate rejects it.
+    const incomplete = { _tag: 'DocGraphTransitionNode', _version: 1, family: 'transition', id: '', meta: META };
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'transition', node: incomplete }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/missing required field|fromPose/i);
+  });
+
+  test("a node op whose op.family disagrees with the node's own family is REJECTED", () => {
+    const base = graph([node('a')]);
+    const sig = node('b'); // a real, complete 'signal' node
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'pose', node: sig }], // op claims 'pose', node is 'signal'
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/does not match node.family/i);
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
@@ -448,6 +480,19 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     expect(() => AICast.applyValidatedPatch(base, ui.proposal as unknown as ValidatedProposal<GraphPatch>)).toThrow(
       /expected a 'graph-patch'/,
     );
+  });
+
+  test('a NESTED node with non-array children is rejected (recursive totality through the injected validator)', () => {
+    // The root is well-formed, but a nested Card carries `children` as a plain object.
+    // genui validateNode recurses, so the malformed nested children is caught (not
+    // silently read as "no children").
+    const tree = {
+      name: 'Card',
+      props: { title: 'root' },
+      children: [{ name: 'Card', props: { title: 'nested' }, children: { bad: true } }],
+    } as unknown as GeneratedUINode;
+    const ui = AICast.validateGeneratedUIProposal(tree, catalog, generatedUiValidator);
+    expect(ui.ok).toBe(false);
   });
 
   test('the generated-ui validator is TOTAL — malformed/parsed-JSON input is rejected, never thrown', () => {

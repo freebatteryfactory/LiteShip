@@ -103,6 +103,21 @@ const validateNode = (node: GeneratedUINode, catalog: ComponentCatalog, path: st
   }
 
   const childPolicy = def.children ?? 'none';
+  // Children, when present, MUST be an array. A non-array `children` (e.g. a plain
+  // object from parsed model JSON) makes `.length` read as `undefined` and silently
+  // counts as "no children", accepting a malformed tree. Reject it at EVERY node — this
+  // validator recurses (below), so a malformed NESTED children is caught when that
+  // child is validated.
+  if (node.children !== undefined && !Array.isArray(node.children)) {
+    return {
+      ok: false,
+      error: {
+        code: 'genui/invalid-children',
+        message: `Component "${node.name}" has a non-array children value.`,
+        path: `${path}.children`,
+      },
+    };
+  }
   const children = node.children ?? [];
 
   if (childPolicy === 'none' && children.length > 0) {
