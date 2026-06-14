@@ -76,6 +76,34 @@ describe('GraphPatch propose + apply (re-addressing)', () => {
     // Removing b yields the same id as a graph authored with only a.
     expect(next.id).toBe(graph([a], []).id);
   });
+
+  test('update REPLACES the node in the same logical cell (no orphan) and round-trips a payload change', () => {
+    // Same logical cell 'signal x' (same input axis), different payload (one carries a
+    // range) ⇒ different content id but the SAME logicalKey.
+    const sigA = node('x');
+    const sigB = sealNode({
+      _tag: 'DocGraphSignalNode',
+      _version: 1,
+      family: 'signal',
+      id: '',
+      meta: META,
+      input: 'x',
+      range: [0, 1],
+    } as unknown as SignalNode);
+    expect(sigB.id).not.toBe(sigA.id);
+
+    const a = graph([sigA], []);
+    const b = graph([sigB], []);
+    const patch = GraphPatch.diff(a, b);
+    // diff collapses the remove+add of the same cell into a single `update`.
+    expect(patch.ops.some((o) => 'op' in o && (o as { op: string }).op === 'update')).toBe(true);
+
+    // apply REPLACES (drops sigA, installs sigB) — exactly one node, not two — so the
+    // payload-change round-trip holds: apply(a, diff(a,b)) === b.
+    const next = GraphPatch.apply(a, patch);
+    expect(next.nodes.map((n) => n.id)).toEqual([sigB.id]); // NOT [sigA.id, sigB.id]
+    expect(next.id).toBe(b.id);
+  });
 });
 
 describe('GraphPatch validate (re-runs validateGraph on the apply result)', () => {

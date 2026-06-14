@@ -175,6 +175,24 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   AddressedDigest: { methods: ['of'] },
   ShipCapsule: { methods: ['make', 'canonicalize', 'decode', 'computeId'] },
 
+  // ── AI cast PRIMITIVE (graph→context/schema→validated proposal) ───
+  // "LiteShip teaches graphs how to speak to models; products decide whether
+  // model suggestions become action." Casts a DocumentGraph OUT to a content-
+  // addressed AIContext + output schemas; validates the patch / UI tree the
+  // model proposes back IN (minting the ValidatedProposal envelope); exposes
+  // (never invokes) the host-authorized apply step. NO auto-apply, NO network.
+  AICast: {
+    methods: [
+      'castContext',
+      'summarizeGraph',
+      'graphPatchProposalSchema',
+      'generatedUIProposalSchema',
+      'validateGraphPatchProposal',
+      'validateGeneratedUIProposal',
+      'applyValidatedPatch',
+    ],
+  },
+
   // Harness lives at `@czap/core/harness` sub-path — intentionally NOT in
   // the main entry to keep fast-check + code-gen surface out of every
   // consumer's bundle. Verified separately below.
@@ -217,6 +235,18 @@ const STANDALONE_FUNCTIONS = [
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
   // CapLevel rung a policy admits on a runtime site.
   'chooseRung',
+  // AI cast validated-output envelope (the shared discipline for GraphPatch AND
+  // genui GeneratedUITree proposals). `mintValidated` (the sole token mint site)
+  // is intentionally NOT exported, so the envelope stays un-forgeable. These are
+  // the CONSUMER-side helpers: `assertTokenBinds`/`unwrapValidated` re-derive the
+  // token binding before a host applies/renders (the un-bypassable door, generalized
+  // to both targets); `proposalSubject` exposes the citable content-address;
+  // `proposalReceiptSubject` derives the `{ type:'artifact', id }` a host seeds its
+  // receipt DAG with (sync seam onto the existing receipt machinery).
+  'assertTokenBinds',
+  'unwrapValidated',
+  'proposalSubject',
+  'proposalReceiptSubject',
   'defineCapsule',
   'getCapsuleCatalog',
   // `resetCapsuleCatalog` lives at `@czap/core/testing` sub-path — see below.
@@ -246,6 +276,13 @@ const STANDALONE_OBJECTS = [
   // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
   // fnv1a format / order-independence (CUT B1 code-unit guard).
   'documentGraphAddressCapsule',
+  // AI cast summarizer capsule: locks summarizeGraph's determinism / budget-honesty
+  // / budget-monotonicity / node-count-honesty as a standing pureTransform contract.
+  'aiCastSummarizeCapsule',
+  // AI cast proposal-envelope capsule: locks the load-bearing security laws —
+  // no-bypass (tampered proposal refused at apply), apply-accepts-only-minted-token,
+  // validated-proposal determinism, valid-applies-and-re-addresses, rejection-never-mints.
+  'aiCastProposalCapsule',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────

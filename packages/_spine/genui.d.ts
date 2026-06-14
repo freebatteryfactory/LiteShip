@@ -36,7 +36,7 @@ export interface ComponentCatalog {
 
 /** Validation failure for generated UI trees. */
 export interface GeneratedUIValidationError {
-  readonly code: 'genui/unknown-component' | 'genui/invalid-prop' | 'genui/invalid-children';
+  readonly code: 'genui/unknown-component' | 'genui/invalid-prop' | 'genui/invalid-children' | 'genui/invalid-slots';
   readonly message: string;
   readonly path?: string;
 }
