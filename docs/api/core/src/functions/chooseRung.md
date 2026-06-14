@@ -8,7 +8,7 @@
 
 > **chooseRung**(`policy`, `runtimeSite`): [`EscalationResult`](../type-aliases/EscalationResult.md)
 
-Defined in: [core/src/escalation.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L126)
+Defined in: [core/src/escalation.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L137)
 
 Choose the minimal capability rung a [PolicyNode](../interfaces/PolicyNode.md) admits on a runtime site.
 

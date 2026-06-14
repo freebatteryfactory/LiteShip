@@ -60,15 +60,18 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 ## Variables
 
 - [AIManifestCompiler](variables/AIManifestCompiler.md)
+- [ariaCompileCapsule](variables/ariaCompileCapsule.md)
 - [ARIACompiler](variables/ARIACompiler.md)
 - [ComponentCSSCompiler](variables/ComponentCSSCompiler.md)
 - [CSSCompiler](variables/CSSCompiler.md)
+- [glslCompileCapsule](variables/glslCompileCapsule.md)
 - [GLSLCompiler](variables/GLSLCompiler.md)
 - [StyleCSSCompiler](variables/StyleCSSCompiler.md)
 - [ThemeCSSCompiler](variables/ThemeCSSCompiler.md)
 - [TokenCSSCompiler](variables/TokenCSSCompiler.md)
 - [TokenJSCompiler](variables/TokenJSCompiler.md)
 - [TokenTailwindCompiler](variables/TokenTailwindCompiler.md)
+- [wgslCompileCapsule](variables/wgslCompileCapsule.md)
 - [WGSLCompiler](variables/WGSLCompiler.md)
 
 ## Functions

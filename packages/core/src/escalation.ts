@@ -44,6 +44,17 @@ const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
 };
 
 /**
+ * Immutable view of a rung's admissible targets. The raw `RUNG_TARGETS` table is
+ * module-PRIVATE on purpose: it holds mutable `Set`s, and `@czap/core` publishes
+ * wildcard subpaths (`./*`), so exporting it would let any consumer reach
+ * `@czap/core/escalation` and `.clear()`/`.add()` the escalation lattice
+ * process-wide. This returns a fresh copy each call.
+ */
+export function rungTargets(rung: CapLevel): ReadonlySet<ProjectionTarget> {
+  return new Set(RUNG_TARGETS[rung]);
+}
+
+/**
  * The Astro directive escalation order, encoded locally (core cannot import
  * `@czap/astro`). Used ONLY as the deterministic tiebreak after `Cap.ordinal`.
  * Each `CapLevel` is mapped to the directive whose capability ceiling it
@@ -128,11 +139,21 @@ export function chooseRung(policy: PolicyNode, runtimeSite: RuntimeSite): Escala
   // unambiguous separator between the policy id and the runtime site.
   const key = `${policy.id}|${runtimeSite}`;
   const cached = memo.get(key);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) return isolate(cached);
 
   const result = compute(policy, runtimeSite);
   memo.set(key, result);
-  return result;
+  return isolate(result);
+}
+
+/**
+ * Return an ISOLATED copy of a memoized verdict — a FRESH `admittedTargets` Set —
+ * so a caller mutating the returned result can never pollute the process-global
+ * memo (a later memo hit would otherwise hand back the mutated Set). The `{error}`
+ * branch is an immutable string payload, returned as-is.
+ */
+function isolate(result: EscalationResult): EscalationResult {
+  return 'error' in result ? result : { rung: result.rung, admittedTargets: new Set(result.admittedTargets) };
 }
 
 function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult {

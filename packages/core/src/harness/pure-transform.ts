@@ -85,6 +85,7 @@ import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 import { schemaToArbitrary, UnsupportedSchemaError } from '${arbitraryImport}';
+import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('${cap.name}', () => {
   const cap = ${ctx.bindingName};
@@ -117,7 +118,11 @@ describe('${cap.name}', () => {
           }),
           { numRuns: 100 },
         );
-      });
+        // Generous per-invariant timeout: 100 property runs over a heavier capsule
+        // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded
+        // CI runner (esp. Windows) — give headroom rather than reduce coverage.
+        // scaledTimeout keeps the repo's central CI-scaling policy (no raw literals).
+      }, scaledTimeout(30000));
     }
   }
 });

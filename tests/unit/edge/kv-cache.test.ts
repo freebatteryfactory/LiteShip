@@ -3,6 +3,7 @@
  */
 
 import { afterEach, describe, test, expect, vi } from 'vitest';
+import fc from 'fast-check';
 import { Diagnostics } from '@czap/core';
 import { createBoundaryCache } from '@czap/edge';
 import type { ContentAddress } from '@czap/core';
@@ -209,5 +210,76 @@ describe('createBoundaryCache', () => {
     await expect(cache.getCompiledOutputs(boundaryId, tierResult)).rejects.toThrow('parse boom');
 
     parseSpy.mockRestore();
+  });
+});
+
+describe('parseShaderCast degradation — malformed shader payload omits the cast (never coerces)', () => {
+  const key = `czap:boundary:${boundaryId}:${tierResult.motionTier}:${tierResult.designTier}`;
+
+  // A WELL-FORMED base entry whose css/propertyRegistrations/containerQueries pass
+  // the outer shape check, so the parser reaches (and judges) the glsl/wgsl cast.
+  const baseEntry = { css: ':root{}', propertyRegistrations: '', containerQueries: '' };
+
+  /**
+   * Malformed `glsl`/`wgsl` payloads that must DEGRADE to "no cast authored":
+   * a non-string `declarations` (would stringify to "[object Object]"), an empty
+   * `declarations`, a values map that collapsed to `{}` (no authored output), and
+   * foreign/wrong-shaped objects. None may rehydrate a bogus cast.
+   */
+  const malformedCast = fc.oneof(
+    fc.constant({ declarations: { not: 'a string' }, uniformValues: { u_x: 1 } }),
+    fc.constant({ declarations: 42, uniformValues: { u_x: 1 } }),
+    fc.constant({ declarations: '', uniformValues: { u_x: 1 } }),
+    fc.constant({ declarations: 'uniform int u_state;', uniformValues: {} }),
+    fc.constant({ declarations: 'uniform int u_state;', uniformValues: { u_x: 'not-a-number' } }),
+    fc.constant({ declarations: 'uniform int u_state;' /* values key absent */ }),
+    fc.constant({ foreign: 'object', with: ['no', 'declarations'] }),
+    fc.constant({}),
+    fc.constant([1, 2, 3]),
+    fc.constant('a bare string'),
+    fc.constant(null),
+  );
+
+  test('LESSON (kv-cache malformed→no-cast): a malformed glsl/wgsl payload omits the cast rather than coercing it', async () => {
+    // WHY: a stale/foreign KV writer can leave a half-formed cast. The reader must
+    // treat it as "no cast" (degrade), never surface `declarations: "[object Object]"`
+    // or a `{}`-valued cast — a bogus cast would feed garbage uniforms to the GPU.
+    await fc.assert(
+      fc.asyncProperty(malformedCast, malformedCast, async (badGlsl, badWgsl) => {
+        const kv = createMockKV();
+        const cache = createBoundaryCache(kv);
+        kv.store.set(key, JSON.stringify({ ...baseEntry, glsl: badGlsl, wgsl: badWgsl }));
+
+        const result = await cache.getCompiledOutputs(boundaryId, tierResult);
+        // The base entry is valid, so the result is non-null...
+        expect(result).not.toBeNull();
+        // ...but the malformed casts are OMITTED entirely (degraded), never coerced.
+        expect(result!.glsl).toBeUndefined();
+        expect(result!.wgsl).toBeUndefined();
+        // And nothing stringified a non-string declarations into "[object Object]".
+        expect(JSON.stringify(result)).not.toContain('[object Object]');
+      }),
+      { numRuns: 80, seed: 0xca5cade },
+    );
+  });
+
+  test('LESSON (kv-cache malformed→no-cast): a WELL-formed cast alongside a malformed twin still survives selectively', async () => {
+    // WHY: degradation is per-cast, not all-or-nothing — a valid glsl must round-trip
+    // even when the wgsl twin is garbage, and vice-versa.
+    const kv = createMockKV();
+    const cache = createBoundaryCache(kv);
+    kv.store.set(
+      key,
+      JSON.stringify({
+        ...baseEntry,
+        glsl: { declarations: 'uniform int u_state;', uniformValues: { u_state: 0 } },
+        wgsl: { declarations: 99, bindingValues: { state_index: 1 } }, // malformed
+      }),
+    );
+
+    const result = await cache.getCompiledOutputs(boundaryId, tierResult);
+    expect(result!.glsl?.declarations).toBe('uniform int u_state;');
+    expect(result!.glsl?.uniformValues).toEqual({ u_state: 0 });
+    expect(result!.wgsl).toBeUndefined();
   });
 });

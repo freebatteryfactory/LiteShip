@@ -240,6 +240,12 @@ const STANDALONE_OBJECTS = [
   // GraphPatch round-trip identity capsule (F): proves encode→decode→diff→patch
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
+  // Escalation chooser capsule: locks chooseRung's minimal-downgrade / site-gate /
+  // determinism / fresh-Set laws as a standing pureTransform contract.
+  'escalationChooseRungCapsule',
+  // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
+  // fnv1a format / order-independence (CUT B1 code-unit guard).
+  'documentGraphAddressCapsule',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────

@@ -69,3 +69,13 @@ export { StyleCSSCompiler } from './style-css.js';
 export type { StyleCSSResult } from './style-css.js';
 
 export { ComponentCSSCompiler } from './component-css.js';
+
+// ── Capsule declarations — cast-compiler hardening (property + bench + budget) ──
+// Concrete `pureTransform` instances of the 7-arm capsule factory, exported here
+// so they register in the live `getCapsuleCatalog()` and the type-directed
+// capsule detector (`scripts/lib/capsule-detector.ts`) walks them from
+// `@czap/compiler`'s source root. Each pins the GLSL / WGSL / ARIA compiler's
+// LAWS over a seeded Boundary + per-state value domain.
+export { glslCompileCapsule } from './capsules/glsl-compile.js';
+export { wgslCompileCapsule } from './capsules/wgsl-compile.js';
+export { ariaCompileCapsule } from './capsules/aria-compile.js';
