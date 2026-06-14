@@ -82,6 +82,31 @@ describe('GLSLCompiler.compile', () => {
     expect(result.stateUniforms.light!['u_blur']).toBe(0); // reset, not absent/stale
   });
 
+  test('LESSON (review): a state named __proto__ is a real own entry, not prototype pollution', () => {
+    // State names are author-controlled; a plain-object per-state map would let a
+    // state literally named `__proto__` collide with Object.prototype. The compiler
+    // uses Object.create(null) so the name is an ordinary own key and nothing
+    // pollutes the global prototype.
+    const protoBoundary = Boundary.make({
+      input: 'x',
+      at: [
+        [0, '__proto__'],
+        [1, 'normal'],
+      ] as const,
+    });
+    const states: Record<string, Record<string, number>> = Object.create(null);
+    states['__proto__'] = { blur: 1 };
+    states['normal'] = { blur: 2 };
+
+    const result = GLSLCompiler.compile(protoBoundary, states);
+
+    expect(Object.prototype.hasOwnProperty.call(result.stateUniforms, '__proto__')).toBe(true);
+    expect(result.stateUniforms['__proto__']!['u_blur']).toBe(1);
+    expect(result.stateUniforms.normal!['u_blur']).toBe(2);
+    // Object.prototype was not polluted by the malicious state name.
+    expect(({} as Record<string, unknown>)['u_blur']).toBeUndefined();
+  });
+
   test('all-integer values infer as int', () => {
     const result = GLSLCompiler.compile(simpleBoundary, {
       dark: { opacity: 1 },
