@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { emitError } from '../../../../packages/cli/src/receipts.js';
+import { readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
 
 vi.mock('@czap/mcp-server', () => {
   const err = new Error("Cannot find package '@czap/mcp-server'");
@@ -62,6 +63,14 @@ describe('czap mcp without @czap/mcp-server installed', () => {
     expect(receipt.status).toBe('failed');
     expect(receipt.command).toBe('mcp');
     expect(receipt.error).toBe('@czap/mcp-server is not installed');
-    expect(receipt.hint).toBe('Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@0.1.x');
+    // Pin the LAW, not the literal: the hint pins the sibling MCP server to the
+    // CLI's OWN minor line, so it tracks every release bump (a hard-coded `0.1.x`
+    // is exactly what drifted — Codex P2, #45). Assert the shape too, so a broken
+    // readCliVersion can't make this vacuous.
+    const [major, minor] = readCliVersion().split('.');
+    expect(receipt.hint).toBe(
+      `Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@${major}.${minor}.x`,
+    );
+    expect(receipt.hint).toMatch(/pnpm add @czap\/mcp-server@\d+\.\d+\.x$/);
   });
 });

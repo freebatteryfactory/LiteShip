@@ -19,6 +19,7 @@ import { audit } from './commands/audit.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
+import { readCliVersion } from './commands/doctor.js';
 import { gauntlet } from './commands/gauntlet.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
@@ -186,10 +187,14 @@ export async function run(argv: readonly string[]): Promise<number> {
         // (custom ESM hooks, test harnesses) carry the original on cause.
         const code = (err as { code?: string }).code ?? (err as { cause?: { code?: string } }).cause?.code;
         if (code !== 'ERR_MODULE_NOT_FOUND') throw err;
+        // Derive the install hint from the CLI's OWN version so the sibling
+        // MCP server lands on the same minor line — a hard-coded pin drifts
+        // every release and desyncs the command/tool schemas (Codex P2, #45).
+        const [major, minor] = readCliVersion().split('.');
         emitError(
           'mcp',
           '@czap/mcp-server is not installed',
-          'Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@0.1.x',
+          `Install it next to @czap/cli on the same version line: pnpm add @czap/mcp-server@${major}.${minor}.x`,
         );
         return 1;
       }
