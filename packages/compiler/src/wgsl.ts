@@ -156,16 +156,21 @@ function compile<B extends Boundary.Shape>(
   const structName = toStructName(boundary.input);
 
   // Pass 1: collect all values per field across all states, plus the per-state
-  // map (the WGSL analog of GLSL's stateUniforms; null-proto since state names
-  // are author-controlled and could be `__proto__`).
+  // map (the WGSL analog of GLSL's stateUniforms). NULL-PROTO throughout: BOTH
+  // state names AND field names are author-controlled, and a field that folds to
+  // `__proto__`/`constructor` (snakeFold leaves an already-snake `__proto__`
+  // unchanged) must land as an OWN property. `mergedValues` and each `perState`
+  // are keyed by FIELD name, so they need it as much as the state-keyed
+  // `stateBindings` — a plain `{}` would silently drop a `__proto__`-named field
+  // (prototype write → `Object.keys` empty), losing the binding entirely.
   const fieldValues = new Map<string, number[]>();
-  const mergedValues: Record<string, number> = {};
+  const mergedValues: Record<string, number> = Object.create(null);
   const stateBindings: Record<string, Record<string, number>> = Object.create(null);
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
-    const perState: Record<string, number> = {};
+    const perState: Record<string, number> = Object.create(null);
     for (const [key, val] of Object.entries(stateValues)) {
       const fieldName = toFieldName(key);
       if (!fieldValues.has(fieldName)) fieldValues.set(fieldName, []);

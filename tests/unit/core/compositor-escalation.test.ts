@@ -176,4 +176,31 @@ describe('Compositor escalation gate (E)', () => {
     expect(state.outputs.glsl['u_free']).toBe(1);
     expect(state.outputs.aria['data-czap-free']).toBe('tablet');
   });
+
+  test('LESSON (getPolicy name-keyed): getPolicy receives the registry NAME passed to add(), not a content address', async () => {
+    // WHY: the compositor knows projections by their registry name (the string
+    // handed to `add`), NOT by graph projection ids / content addresses. A host
+    // that maps graph ids → names does so at the `getPolicy` boundary. If the gate
+    // ever passed a content address instead, every name-keyed `getPolicy` lookup
+    // would silently miss and fall through to pass-through — disabling escalation.
+    const seen: string[] = [];
+    const compositor = await runScoped(
+      Compositor.create({
+        runtimeSite: 'node',
+        getPolicy: (name) => {
+          seen.push(name);
+          return undefined;
+        },
+      }),
+    );
+    await Effect.runPromise(compositor.add('hero-layout', makeQuantizer(widthBoundary, 'tablet')));
+
+    // The argument is exactly the name passed to `add` — a plain registry string,
+    // never a `fnv1a:...`/content-address shape.
+    expect(seen).toContain('hero-layout');
+    for (const arg of seen) {
+      expect(arg).toBe('hero-layout');
+      expect(arg).not.toMatch(/^[a-z0-9]+:[0-9a-f]+$/i);
+    }
+  });
 });

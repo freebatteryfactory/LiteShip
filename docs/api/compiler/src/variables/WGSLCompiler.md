@@ -8,7 +8,7 @@
 
 > `const` **WGSLCompiler**: `object`
 
-Defined in: [compiler/src/wgsl.ts:265](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L265)
+Defined in: [compiler/src/wgsl.ts:270](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L270)
 
 WGSL compiler namespace.
 

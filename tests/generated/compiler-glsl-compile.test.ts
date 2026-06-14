@@ -1,12 +1,12 @@
 // GENERATED — do not edit by hand
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { jsonRpcServerCapsule } from '../../packages/mcp-server/src/jsonrpc.js';
+import { glslCompileCapsule } from '../../packages/compiler/src/capsules/glsl-compile.js';
 import { schemaToArbitrary, UnsupportedSchemaError } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 import { scaledTimeout } from '../../vitest.shared.js';
 
-describe('mcp.jsonrpc-server', () => {
-  const cap = jsonRpcServerCapsule;
+describe('compiler.glsl-compile', () => {
+  const cap = glslCompileCapsule;
   let arb: fc.Arbitrary<unknown>;
   let arbError: unknown;
   try {

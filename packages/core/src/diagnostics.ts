@@ -122,8 +122,10 @@ function warnOnce(payload: DiagnosticPayload): DiagnosticEvent | null {
   return warn(payload);
 }
 
-function setSink(sink: DiagnosticsSink): void {
+function setSink(sink: DiagnosticsSink): DiagnosticsSink {
+  const previous = currentSink;
   currentSink = sink;
+  return previous;
 }
 
 function resetSink(): void {

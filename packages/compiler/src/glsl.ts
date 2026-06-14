@@ -177,7 +177,10 @@ function compile<B extends Boundary.Shape>(
 
   // Collect all unique value keys across all states
   const allKeys = new Set<string>();
-  const mergedValues: Record<string, number> = {};
+  // NULL-PROTO: keyed by author-controlled uniform names; a name that folds to
+  // `__proto__`/`constructor` must land as an OWN property, never a prototype
+  // write that drops it from `uniformValues`. Mirrors `stateUniforms` below.
+  const mergedValues: Record<string, number> = Object.create(null);
   // Per-state uniform values keyed by state name then `u_*` name. Preserved
   // alongside the flat `mergedValues` default so the live runtime can resolve
   // the authored values for whichever state a crossing lands on.
@@ -189,7 +192,8 @@ function compile<B extends Boundary.Shape>(
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
-    const perState: Record<string, number> = {};
+    // NULL-PROTO: keyed by author-controlled uniform names (see mergedValues above).
+    const perState: Record<string, number> = Object.create(null);
     for (const [key, val] of Object.entries(stateValues)) {
       allKeys.add(key);
       const uniformName = toUniformName(key);

@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgv } from '../../scripts/lib/spawn.js';
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -67,7 +68,9 @@ describe('tarballManifestAddress', () => {
     } finally {
       rmSync(workDir, { recursive: true, force: true });
     }
-  });
+    // `pnpm pack` spawns a subprocess that is slow on Windows CI; the 10s default
+    // has flaked here repeatedly. Give headroom — the assertion is determinism, not speed.
+  }, scaledTimeout(30000));
 });
 
 describe('lockfileAddress', () => {
