@@ -44,7 +44,7 @@ A mistyped `binding` fails silently: KV reads return null, writes no-op, and eve
 ## Docs
 
 - [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Cloudflare hosting guide](https://github.com/heyoub/LiteShip/blob/main/docs/hosting/cloudflare.md) — wrangler config, KV setup, deploy
+- [Cloudflare hosting guide](https://github.com/heyoub/LiteShip/blob/main/docs/HOSTING.md) — wrangler config, KV setup, deploy
 - [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/cloudflare/src/) — generated from source
 

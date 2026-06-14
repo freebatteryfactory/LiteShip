@@ -1721,7 +1721,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       title: 'Workerd/edge-first optimization',
       status: 'partial',
       summary: '@czap/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
-      evidence: ['docs/hosting/cloudflare.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
+      evidence: ['docs/HOSTING.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
       recommendation: 'architecture_hardening',
     },
     {

@@ -372,7 +372,7 @@ Main surfaces:
 - `createCloudflareEdgeCache`
 - `cloudflareAdapterCapsule`
 
-See [hosting/cloudflare.md](./hosting/cloudflare.md) for the full deploy guide.
+See [HOSTING.md](./HOSTING.md#cloudflare-workers) for the full deploy guide.
 
 ---
 

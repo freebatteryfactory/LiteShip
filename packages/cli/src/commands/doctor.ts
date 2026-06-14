@@ -742,7 +742,7 @@ function probeCloudflareConfig(cwd: string): DoctorCheck {
       label: 'Wrangler config',
       status: 'warn',
       detail: 'no wrangler.jsonc / wrangler.toml (optional when using adapter defaults)',
-      hint: 'Add wrangler.jsonc when you need KV/D1/R2 bindings — see docs/hosting/cloudflare.md',
+      hint: 'Add wrangler.jsonc when you need KV/D1/R2 bindings — see docs/HOSTING.md',
     };
   }
   const raw = config.value;

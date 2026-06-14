@@ -663,7 +663,7 @@ Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0
 - `czap doctor --target cloudflare` — probes Astro, Wrangler, adapter output, and config bindings.
 - `examples/cloudflare-astro/` — end-to-end Astro + Cloudflare adapter example.
 - `pnpm run test:cloudflare` gauntlet phase; Windows and macOS CI smoke run it.
-- Hosting guide: `docs/hosting/cloudflare.md`.
+- Hosting guide: `docs/HOSTING.md`.
 
 ### Fixed
 
