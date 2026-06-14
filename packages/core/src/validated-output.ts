@@ -27,6 +27,7 @@
 
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
+import type { ReceiptSubject } from './receipt.js';
 
 /**
  * The unforgeable witness for {@link ApplyToken}. A REAL, module-private symbol
@@ -123,4 +124,50 @@ export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
  */
 export function proposalSubject<T>(proposal: ValidatedProposal<T>): ContentAddress {
   return proposal.subject;
+}
+
+/**
+ * RESOLVED (open question #1 — the generated-UI apply seam). The graph-patch
+ * target has a host-authorized framework step (`AICast.applyValidatedPatch`): the
+ * framework owns the re-addressing kernel, so it exposes (never invokes) apply.
+ * The generated-UI target has NO such framework step — rendering belongs to the
+ * host's renderer, and core stays renderer-FREE (the product boundary). So the
+ * seam is an `unwrapValidated` ACCESSOR, not a framework-calls-renderer path:
+ * the framework hands back the validated payload + asserts the token still binds;
+ * the host then calls its OWN renderer with the returned tree.
+ *
+ * This is the SAME binding guard `AICast.applyValidatedPatch` runs before it
+ * mutates — defense-in-depth against a post-validation payload swap — generalized
+ * to ANY target. Concretely: `unwrapValidated` is `assertTokenBinds` named for
+ * the host's intent (its return value is what you feed your renderer/applier),
+ * so there is exactly one un-bypassable door for BOTH targets and the framework
+ * never reaches into a renderer it does not own.
+ */
+export function unwrapValidated<T>(proposal: ValidatedProposal<T>): T {
+  return assertTokenBinds(proposal);
+}
+
+/**
+ * RESOLVED (open question #7 — receipt integration). A full {@link
+ * ReceiptEnvelope} is async (it hashes via `crypto.subtle`/SHA-256 inside an
+ * `Effect`, exactly like `GraphPatch.receipt`). Folding that into the validators
+ * would force `validateGraphPatchProposal`/`validateGeneratedUIProposal` async and
+ * pull the whole cast-IN path into Effect — a scope balloon for no extra safety,
+ * since the envelope's unforgeability already lives in the apply token, not a
+ * receipt.
+ *
+ * Instead we wire the SMALL, real, SYNCHRONOUS integration that composes cleanly:
+ * a `ValidatedProposal` already carries a content-address `subject` (the fnv1a∘
+ * CanonicalCbor identity — the same kernel `GraphPatch.receipt` subject-keys its
+ * envelope on via `{ type: 'artifact', id }`). This derives the EXACT
+ * {@link ReceiptSubject} a host would mint a receipt against, so a host can chain
+ * the proposal into its receipt DAG WITHOUT re-running the model and without core
+ * taking on the async hashing path. The full `ReceiptEnvelope` mint stays a
+ * host-side step (the host owns timestamps/`previous`/chain authority — the
+ * product boundary), seeded by this subject. That is the next step, not a stub:
+ * the citable identity is real and pinned (see the content-address-subject law in
+ * the capsule + unit tests).
+ */
+export function proposalReceiptSubject<T>(proposal: ValidatedProposal<T>): ReceiptSubject {
+  return { type: 'artifact', id: proposal.subject };
 }

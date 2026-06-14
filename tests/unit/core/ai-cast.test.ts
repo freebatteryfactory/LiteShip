@@ -259,14 +259,26 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
 // ---------------------------------------------------------------------------
 
 describe('AI cast: purity (== no producer)', () => {
-  test('ai-cast.ts + validated-output.ts import no network/provider/credential modules', async () => {
+  // RESOLVED (open question #6 — purity enforcement mechanism). The proper home
+  // for "the AI-cast module imports no network/provider/credential API" is a real
+  // `@czap/audit` POLICY (a declarative capability rule the audit engine walks).
+  // That engine is not built yet, so until it lands we enforce purity HERE with a
+  // robust import-grep over the actual source: it asserts neither ai-cast.ts nor
+  // validated-output.ts imports a network transport (net/http/https/tls/ws/dns),
+  // an HTTP client (undici/axios/node-fetch/got), `fetch(`/`EventSource`/`WebSocket`,
+  // or any provider SDK (openai/anthropic/@anthropic/cohere/google-generativeai/
+  // mistral/groq). When the audit engine lands, this graduates to a policy and the
+  // grep can be deleted. We scan IMPORT/REQUIRE lines only so a forbidden substring
+  // inside a doc-comment or string literal does not false-fail the law.
+  test('LESSON (purity == no producer): ai-cast.ts + validated-output.ts import no network/provider/credential modules', async () => {
     const { readFileSync } = await import('node:fs');
     const { fileURLToPath } = await import('node:url');
     const { dirname, resolve } = await import('node:path');
     const here = dirname(fileURLToPath(import.meta.url));
     // tests/unit/core → repo root is three up.
     const srcDir = resolve(here, '../../../packages/core/src');
-    const forbidden = /\b(node:net|node:http|node:https|node:tls|undici|axios|node-fetch|openai|anthropic|@anthropic|fetch\()/;
+    const forbidden =
+      /\b(node:net|node:http|node:https|node:tls|node:dns|undici|axios|node-fetch|\bgot\b|ws|eventsource|websocket|openai|anthropic|@anthropic|cohere|google-generativeai|@google\/genai|mistralai|groq-sdk|fetch\(|EventSource|WebSocket)/i;
     for (const file of ['ai-cast.ts', 'validated-output.ts']) {
       const text = readFileSync(resolve(srcDir, file), 'utf8');
       const importLines = text.split('\n').filter((l) => /^\s*import\b/.test(l) || /require\(/.test(l));

@@ -189,9 +189,14 @@ function summarizeNode(node: DocumentGraphNode): string {
 export function summarizeGraph(graph: DocumentGraph, tokenBudget = DEFAULT_TOKEN_BUDGET): GraphSummary {
   const byId = new Map<ContentAddress, DocumentGraphNode>(graph.nodes.map((n) => [n.id, n]));
   const { sorted } = linearizeGraph(graph);
-  // Topological order when acyclic; for a cyclic graph `sorted` is the partial
-  // order — append any nodes the sort could not place (in their authoring order,
-  // which is itself canonical for an addressed graph) so every node is reachable.
+  // RESOLVED (open question #4 — summary on a cyclic / in-progress graph). A
+  // budgeted summary must be emittable EVEN for an invalid graph (the model is
+  // often asked to FIX exactly such a graph), so summarize never throws on a
+  // cycle. Topological order when acyclic; for a cyclic graph `sorted` is the
+  // partial order — append any nodes the sort could not place (in their authoring
+  // order, which is itself canonical for an addressed graph) so every node is
+  // reachable AND the summary stays deterministic (a stable, total ordering for
+  // any graph, valid or not). Validation of a PROPOSED change is a separate gate.
   const ordered: DocumentGraphNode[] = [];
   const seen = new Set<ContentAddress>();
   for (const id of sorted) {
@@ -369,6 +374,12 @@ function buildSystemPrompt(summary: GraphSummary, schemas: readonly ProposalSche
  */
 export function castContext(graph: DocumentGraph, options: CastContextOptions = {}): AIContext {
   const tokenBudget = options.tokenBudget ?? DEFAULT_TOKEN_BUDGET;
+  // RESOLVED (open question #3 — default advertised targets). Default to the
+  // graph-NATIVE target alone (`['graph-patch']`): it is the only target a bare
+  // DocumentGraph can advertise without extra host input. `generated-ui` needs a
+  // host component catalog (a renderer concern the framework does not own), so a
+  // host opts INTO it explicitly by passing `targets` + `catalog`. The
+  // conservative default never advertises a contract the framework cannot close.
   const targets = options.targets ?? (['graph-patch'] as const);
   const summary = summarizeGraph(graph, tokenBudget);
 
@@ -423,10 +434,7 @@ export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
  * Only when BOTH pass does it call `mintValidated` — so an unvalidated patch can
  * never become a `ValidatedProposal`.
  */
-export function validateGraphPatchProposal(
-  graph: DocumentGraph,
-  patch: GraphPatch,
-): ProposalResult<GraphPatch> {
+export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPatch): ProposalResult<GraphPatch> {
   const errors: string[] = [];
   if (patch.base !== graph.id) {
     errors.push(
@@ -445,22 +453,46 @@ export function validateGraphPatchProposal(
   if (errors.length > 0) {
     return { ok: false, target: 'graph-patch', errors };
   }
-  // Stamp the resultId via propose's preview so the validated payload carries the
-  // re-addressed result id (a proposal without it would force the host to recompute).
+  // RESOLVED (open question #5 — stamp the validated payload's resultId). A model
+  // may propose a patch with no `resultId` (it cannot compute the content address
+  // of the would-be graph). Rather than mint an under-specified proposal, re-run
+  // `propose` (a pure preview through the one kernel) to stamp the re-addressed
+  // result id, so the validated payload is self-describing and a host need not
+  // recompute it. `propose` is deterministic over `(graph, ops)`, so this never
+  // changes WHICH patch is validated — only completes its addressing. A patch that
+  // already carries a `resultId` is honored as-is (the binding guard re-derives
+  // the subject either way, so a forged `resultId` cannot survive apply).
   const stamped = patch.resultId ? patch : GraphPatch.propose(graph, patch.ops);
   return { ok: true, proposal: mintValidated('graph-patch', stamped) };
 }
 
 /**
- * The catalog-validation contract genui owns. The cast core does NOT depend on
- * genui's runtime; the host (which already has `@czap/genui`) passes its
- * `validateGeneratedUITree` in as this function, so the cast reuses genui's EXACT
- * validation discipline without core gaining an edge into the renderer.
+ * The catalog-validation contract genui owns.
+ *
+ * RESOLVED (open question #2 — inject vs MOVE genui's `validateGeneratedUITree`
+ * into core). INJECTION: the cast core does NOT depend on genui's runtime, and we
+ * do NOT relocate genui's validator into core. The host (which already has
+ * `@czap/genui`) passes its `validateGeneratedUITree` in as this function, so the
+ * cast reuses genui's EXACT validation discipline with ZERO genui-file churn and
+ * no core→genui (renderer) edge — preserving the product boundary and keeping the
+ * core pure. genui's internals are untouched; this is the only seam between them.
+ *
+ * RESOLVED (open question #8 — the injected validator's error SHAPE). We pin the
+ * narrowest contract that lets the cast surface a structured rejection: a success
+ * or a failure carrying `error.message` (plus an optional `error.path`). This is
+ * genui's existing `validateGeneratedUITree` return shape, so the host injects it
+ * verbatim (no adapter). The cast NORMALIZES it into its own `ProposalRejection`
+ * so both
+ * targets reject through one `ProposalResult` shape — a foreign validator that
+ * conforms to the type slots in cleanly, but a malformed model tree never reaches
+ * a renderer because only `ok: true` mints the envelope.
  */
 export type GeneratedUIValidator = (
   node: GeneratedUINode,
   catalog: ComponentCatalog,
-) => { readonly ok: true } | { readonly ok: false; readonly error: { readonly message: string; readonly path?: string } };
+) =>
+  | { readonly ok: true }
+  | { readonly ok: false; readonly error: { readonly message: string; readonly path?: string } };
 
 /**
  * Validate a model-proposed {@link GeneratedUINode} against a host catalog using

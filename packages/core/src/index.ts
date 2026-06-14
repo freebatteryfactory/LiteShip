@@ -262,7 +262,14 @@ export type {
 // as CONSUMER types only — `mintValidated` (the sole token mint site) is NOT
 // re-exported, so the envelope stays un-forgeable outside the validators.
 export type { ValidatedProposal, ApplyToken, ProposalTarget } from './validated-output.js';
-export { assertTokenBinds, proposalSubject } from './validated-output.js';
+// `assertTokenBinds` re-derives the token binding (the host-side swap guard);
+// `unwrapValidated` is the generated-UI apply SEAM (open question #1) — the same
+// binding guard named for the host's intent: it hands back the validated payload
+// for the host's OWN renderer/applier (core stays renderer-free, never invokes
+// apply). `proposalSubject` exposes the citable content-address; `proposalReceiptSubject`
+// derives the `ReceiptSubject` a host seeds its receipt DAG with (open question #7
+// — a real sync seam onto the existing receipt machinery, not the async envelope).
+export { assertTokenBinds, unwrapValidated, proposalSubject, proposalReceiptSubject } from './validated-output.js';
 // ── end AI cast ─────────────────────────────────────────────────────────────
 
 // Runtime coordination
@@ -386,6 +393,17 @@ export { escalationChooseRungCapsule } from './capsules/escalation-choose-rung.j
 // regression guard) as a standing pureTransform contract. Exported here so it
 // registers in the live `getCapsuleCatalog()`.
 export { documentGraphAddressCapsule } from './capsules/document-graph-address.js';
+// The AI cast summarizer capsule — locks `summarizeGraph`'s determinism, budget
+// honesty (estimatedTokens ≤ budget), budget monotonicity (a smaller budget never
+// yields a larger summary), and node-count honesty as a standing pureTransform
+// contract. Exported here so it registers in the live `getCapsuleCatalog()`.
+export { aiCastSummarizeCapsule } from './capsules/ai-cast-summarize.js';
+// The AI cast proposal-envelope capsule — locks the LOAD-BEARING security laws:
+// no-bypass (a tampered proposal is refused at apply), apply-accepts-only-minted-
+// token, validated-proposal determinism (stable subject + result id), valid-applies-
+// and-re-addresses, and rejection-never-mints — as a standing pureTransform contract.
+// Exported here so it registers in the live `getCapsuleCatalog()`.
+export { aiCastProposalCapsule } from './capsules/ai-cast-proposal.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and
