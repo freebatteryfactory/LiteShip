@@ -68,6 +68,14 @@ export interface GLSLCompileResult {
   readonly uniforms: readonly GLSLUniform[];
   /** Default uniform values keyed by uniform name (from the last state's values). */
   readonly uniformValues: Record<string, number>;
+  /**
+   * Per-state uniform values keyed by state name then `u_*` uniform name. Unlike
+   * the flat {@link uniformValues} default (last-state-wins), this preserves
+   * every state's authored values so the live runtime can resolve
+   * `stateUniforms[currentState]` and update uniforms on each boundary crossing
+   * — the GLSL analog of `ARIACompileResult.stateAttributes`.
+   */
+  readonly stateUniforms: Record<string, Record<string, number>>;
   /** Pre-serialized `#define` + `uniform` declarations block. */
   readonly declarations: string;
   /** Stringified `bindUniforms(gl, program, values)` helper. */
@@ -170,14 +178,40 @@ function compile<B extends Boundary.Shape>(
   // Collect all unique value keys across all states
   const allKeys = new Set<string>();
   const mergedValues: Record<string, number> = {};
+  // Per-state uniform values keyed by state name then `u_*` name. Preserved
+  // alongside the flat `mergedValues` default so the live runtime can resolve
+  // the authored values for whichever state a crossing lands on.
+  // Null-prototype: state names are author-controlled, so a state literally named
+  // `__proto__`/`constructor` must not collide with Object.prototype and corrupt
+  // the per-state lookup.
+  const stateUniforms: Record<string, Record<string, number>> = Object.create(null);
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
+    const perState: Record<string, number> = {};
     for (const [key, val] of Object.entries(stateValues)) {
       allKeys.add(key);
+      const uniformName = toUniformName(key);
       // Use the last state's values as defaults for the uniform values map
-      mergedValues[toUniformName(key)] = val;
+      mergedValues[uniformName] = val;
+      perState[uniformName] = val;
+    }
+    stateUniforms[stateName] = perState;
+  }
+
+  // Complete every per-state map: a uniform authored in some states but omitted
+  // in others must be explicitly RESET (0) on entering a state that omits it.
+  // WebGL uniforms persist, so a partial `detail.glsl` would leave the shader
+  // sampling the prior state's value (a stale-GPU-state bug). WGSL gets this for
+  // free via the per-snapshot buffer clear; GLSL sets uniforms individually, so
+  // the map itself must carry the full uniform set for every state.
+  const allUniformNames = [...allKeys].map(toUniformName);
+  for (const stateName of stateNames) {
+    const perState = stateUniforms[stateName];
+    if (!perState) continue;
+    for (const uniformName of allUniformNames) {
+      if (!(uniformName in perState)) perState[uniformName] = 0;
     }
   }
 
@@ -220,7 +254,7 @@ function compile<B extends Boundary.Shape>(
 
   const bindUniforms = ['function bindUniforms(gl, program, values) {', ...bindBody, '}'].join('\n');
 
-  return { defines, uniforms, uniformValues: mergedValues, declarations, bindUniforms };
+  return { defines, uniforms, uniformValues: mergedValues, stateUniforms, declarations, bindUniforms };
 }
 
 /**

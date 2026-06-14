@@ -39,20 +39,42 @@ export interface Props extends SatelliteProps {}
 // authoring. Guarded: outside the integration (no virtual module), or when the
 // caller already passed `aria`, this is a no-op and `satelliteAttrs` still works.
 let resolvedAria = Astro.props.aria;
-if (!resolvedAria && Astro.props.boundary) {
+// Authored `@glsl`/`@wgsl` per-state values ride the same content-addressed join
+// as `@aria` — the manifest's `outputs[].glsl.stateUniforms` /
+// `outputs[].wgsl.stateBindings` keyed by boundary id.
+let resolvedGlsl = Astro.props.glsl;
+let resolvedWgsl = Astro.props.wgsl;
+if ((!resolvedAria || !resolvedGlsl || !resolvedWgsl) && Astro.props.boundary) {
   try {
     const { boundaries } = (await import('virtual:czap/boundaries')) as {
-      boundaries: Record<string, { id: string; outputs: ReadonlyArray<{ aria?: Record<string, Record<string, string>> }> }>;
+      boundaries: Record<
+        string,
+        {
+          id: string;
+          outputs: ReadonlyArray<{
+            aria?: Record<string, Record<string, string>>;
+            glsl?: { stateUniforms?: Record<string, Record<string, number>> };
+            wgsl?: { stateBindings?: Record<string, Record<string, number>> };
+          }>;
+        }
+      >;
     };
     const entry = Object.values(boundaries).find((e) => e.id === Astro.props.boundary!.id);
-    resolvedAria = entry?.outputs.find((o) => o.aria)?.aria;
+    resolvedAria ??= entry?.outputs.find((o) => o.aria)?.aria;
+    resolvedGlsl ??= entry?.outputs.find((o) => o.glsl?.stateUniforms)?.glsl?.stateUniforms;
+    resolvedWgsl ??= entry?.outputs.find((o) => o.wgsl?.stateBindings)?.wgsl?.stateBindings;
   } catch {
     // virtual:czap/boundaries unavailable (e.g. rendered outside the czap
-    // integration) — authored ARIA can still be supplied via the `aria` prop.
+    // integration) — authored ARIA/GLSL can still be supplied via the props.
   }
 }
 
-const attrs = satelliteAttrs({ ...Astro.props, ...(resolvedAria ? { aria: resolvedAria } : {}) });
+const attrs = satelliteAttrs({
+  ...Astro.props,
+  ...(resolvedAria ? { aria: resolvedAria } : {}),
+  ...(resolvedGlsl ? { glsl: resolvedGlsl } : {}),
+  ...(resolvedWgsl ? { wgsl: resolvedWgsl } : {}),
+});
 ---
 
 <div {...attrs}>

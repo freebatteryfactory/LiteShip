@@ -39,9 +39,22 @@ Default field values keyed by WGSL field name.
 
 > `readonly` **declarations**: `string`
 
-Defined in: [compiler/src/wgsl.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L70)
+Defined in: [compiler/src/wgsl.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L77)
 
 Pre-serialized WGSL preamble string.
+
+***
+
+### stateBindings
+
+> `readonly` **stateBindings**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
+
+Defined in: [compiler/src/wgsl.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L75)
+
+Per-state binding values keyed by state name then snake_case field name —
+the WGSL analog of `GLSLCompileResult.stateUniforms`. Built alongside the
+merged `bindingValues` so the live runtime can resolve
+`stateBindings[currentState]` and update struct fields on each crossing.
 
 ***
 

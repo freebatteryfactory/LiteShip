@@ -40,6 +40,64 @@ export interface CompiledOutputs {
    * resolves `aria[currentState]` so authored attributes update on crossings.
    */
   readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * Compiled GLSL cast (`@glsl` blocks): the shader preamble `declarations`
+   * the runtime prepends to a fragment shader plus the default `uniformValues`
+   * keyed by GLSL uniform identifier (`GLSLCompileResult`). Tier-invariant.
+   * Absent when the boundary declares no `@glsl` — most boundaries. The live
+   * GPU runtime consumer (`runtime/gpu.ts`) is out of the D0 data-path scope;
+   * D0 only carries this field end to end.
+   */
+  readonly glsl?: CompiledGLSLOutput;
+  /**
+   * Compiled WGSL cast (`@wgsl` blocks): the WebGPU preamble `declarations`
+   * (state consts + uniform struct + binding) plus the default `bindingValues`
+   * keyed by WGSL field name (`WGSLCompileResult`). Tier-invariant. Absent when
+   * the boundary declares no `@wgsl`. The live WebGPU runtime consumer
+   * (`runtime/wgpu.ts`) is out of the D0 data-path scope; D0 only carries it.
+   */
+  readonly wgsl?: CompiledWGSLOutput;
+}
+
+/**
+ * Serialized GLSL cast artifact stored on {@link CompiledOutputs.glsl}: the
+ * shader preamble plus default uniform values. JSON-round-trippable subset of
+ * `@czap/compiler`'s `GLSLCompileResult` (the structured `defines`/`uniforms`
+ * arrays re-derive from `declarations`, so only the runtime-needed fields are
+ * stored).
+ */
+export interface CompiledGLSLOutput {
+  /** `#define` + `uniform` shader preamble block. */
+  readonly declarations: string;
+  /** Default uniform values keyed by GLSL uniform identifier (`u_*`). */
+  readonly uniformValues: Readonly<Record<string, number>>;
+  /**
+   * Per-state authored uniform values keyed by state name then `u_*` identifier.
+   * Rides the satellite payload so the live runtime resolves
+   * `stateUniforms[currentState]` and updates uniforms on each boundary crossing
+   * — the GLSL analog of `CompiledOutputs.aria`. Absent when the boundary's
+   * `@glsl` blocks authored no per-state values.
+   */
+  readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+}
+
+/**
+ * Serialized WGSL cast artifact stored on {@link CompiledOutputs.wgsl}: the
+ * WebGPU preamble plus default binding values. JSON-round-trippable subset of
+ * `@czap/compiler`'s `WGSLCompileResult`.
+ */
+export interface CompiledWGSLOutput {
+  /** State consts + uniform struct + `@group/@binding` preamble block. */
+  readonly declarations: string;
+  /** Default binding values keyed by WGSL struct field name. */
+  readonly bindingValues: Readonly<Record<string, number>>;
+  /**
+   * Per-state authored binding values keyed by state name then field name — the
+   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the satellite
+   * payload so the runtime resolves `stateBindings[currentState]` and updates
+   * struct fields on each crossing. Absent when no per-state values were authored.
+   */
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -98,6 +156,58 @@ function buildCacheKey(
   return qualifier === undefined
     ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
     : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
+}
+
+/**
+ * Coerce an `unknown` JSON value into a per-state `Record<state, Record<u_*, number>>`
+ * (drops non-numeric leaves, non-object states). Returns `undefined` when nothing
+ * survives so the GLSL `stateUniforms` field stays absent. The live runtime
+ * resolves `stateUniforms[currentState]` to update authored uniforms on crossings.
+ */
+function asNestedNumberRecord(value: unknown): Readonly<Record<string, Readonly<Record<string, number>>>> | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const out: Record<string, Record<string, number>> = {};
+  for (const [state, inner] of Object.entries(value)) {
+    out[state] = asNumberRecord(inner);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Coerce an `unknown` JSON value into a `Record<string, number>` (drops non-numeric). */
+function asNumberRecord(value: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (typeof value === 'object' && value !== null) {
+    for (const [k, v] of Object.entries(value)) {
+      if (typeof v === 'number') out[k] = v;
+    }
+  }
+  return out;
+}
+
+/**
+ * Parse a serialized GLSL/WGSL cast artifact: a `declarations` string plus a
+ * numeric values map under `valuesKey` (`uniformValues` for GLSL,
+ * `bindingValues` for WGSL). Returns `null` for absent/malformed entries so
+ * the caller treats them as "no cast authored" rather than throwing — the
+ * same lenient policy the `aria` field follows.
+ */
+function parseShaderCast<K extends 'uniformValues' | 'bindingValues'>(
+  value: unknown,
+  valuesKey: K,
+): ({ readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> }) | null {
+  if (typeof value !== 'object' || value === null || !('declarations' in value)) return null;
+  // Reject malformed cache data (e.g. a stale or foreign KV entry) so it degrades
+  // cleanly to "no cast" instead of rehydrating a bogus cast: a non-string
+  // `declarations` must NOT be coerced to "[object Object]", and a values map that
+  // collapsed to `{}` carries no authored output.
+  const declarations = (value as { declarations: unknown }).declarations;
+  if (typeof declarations !== 'string' || declarations.length === 0) return null;
+  const values = asNumberRecord((value as Record<string, unknown>)[valuesKey]);
+  if (Object.keys(values).length === 0) return null;
+  return {
+    declarations,
+    [valuesKey]: values,
+  } as { readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> };
 }
 
 // ---------------------------------------------------------------------------
@@ -189,6 +299,24 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         'containerQueries' in parsed
       ) {
         const aria = (parsed as { aria?: unknown }).aria;
+        const glslBase = parseShaderCast((parsed as { glsl?: unknown }).glsl, 'uniformValues');
+        // Per-state authored uniforms ride the GLSL cast so the live runtime can
+        // resolve `stateUniforms[currentState]` — the GLSL analog of `aria`.
+        const glslStateUniforms = asNestedNumberRecord(
+          (parsed as { glsl?: { stateUniforms?: unknown } }).glsl?.stateUniforms,
+        );
+        const glsl = glslBase
+          ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) }
+          : null;
+        const wgslBase = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
+        // Per-state authored bindings ride the WGSL cast so the live runtime can
+        // resolve `stateBindings[currentState]` — the WGSL analog of stateUniforms.
+        const wgslStateBindings = asNestedNumberRecord(
+          (parsed as { wgsl?: { stateBindings?: unknown } }).wgsl?.stateBindings,
+        );
+        const wgsl = wgslBase
+          ? { ...wgslBase, ...(wgslStateBindings ? { stateBindings: wgslStateBindings } : {}) }
+          : null;
         return {
           css: String(parsed.css),
           propertyRegistrations: String(parsed.propertyRegistrations),
@@ -196,6 +324,8 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
           ...(typeof aria === 'object' && aria !== null
             ? { aria: aria as Readonly<Record<string, Readonly<Record<string, string>>>> }
             : {}),
+          ...(glsl ? { glsl } : {}),
+          ...(wgsl ? { wgsl } : {}),
         };
       }
 
@@ -223,6 +353,8 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         propertyRegistrations: outputs.propertyRegistrations,
         containerQueries: outputs.containerQueries,
         ...(outputs.aria ? { aria: outputs.aria } : {}),
+        ...(outputs.glsl ? { glsl: outputs.glsl } : {}),
+        ...(outputs.wgsl ? { wgsl: outputs.wgsl } : {}),
       });
 
       await kv.put(key, value, ttl !== undefined ? { expirationTtl: ttl } : undefined);

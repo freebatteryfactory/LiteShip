@@ -6,7 +6,7 @@
 
 # Type Alias: RuntimePhase
 
-> **RuntimePhase** = `"compute-discrete"` \| `"compute-blend"` \| `"emit-css"` \| `"emit-glsl"` \| `"emit-aria"`
+> **RuntimePhase** = `"compute-discrete"` \| `"compute-blend"` \| `"emit-css"` \| `"emit-glsl"` \| `"emit-wgsl"` \| `"emit-aria"`
 
 Defined in: [core/src/runtime-coordinator.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/runtime-coordinator.ts#L23)
 

@@ -37,7 +37,12 @@ describe('coverage config drift guard', () => {
     // --dry-run path that runs in every package:smoke gauntlet phase) and
     // cli/src/render-backend/ffmpeg.ts (spawns ffmpeg; skip-when-unavailable
     // smoke test makes this structurally 0% on machines without ffmpeg).
-    expect(coverageExclude).toHaveLength(21);
+    // + 1 stage ffmpeg backend (productionization wave): stage/src/ffmpeg-encoder.ts
+    // is the host-realm twin of command/host/ffmpeg.ts — it spawns the system
+    // ffmpeg to encode the video cast headless; its branch surface is dominated
+    // by ffmpeg-absent/encode-failure paths unreachable when ffmpeg succeeds (the
+    // CI condition). Happy path stays tested by tests/unit/stage/ffmpeg-encoder.test.ts.
+    expect(coverageExclude).toHaveLength(22);
   });
 
   it('merge-coverage.ts PACKAGE_THRESHOLD_OVERRIDES are pinned', () => {

@@ -225,6 +225,7 @@ plan graph, ECS, capsule factory).
 - [FrameBudget](variables/FrameBudget.md)
 - [GenFrame](variables/GenFrame.md)
 - [GraphPatch](variables/GraphPatch.md)
+- [graphPatchIdentityCapsule](variables/graphPatchIdentityCapsule.md)
 - [HLC](variables/HLC.md)
 - [IntegrityDigest](variables/IntegrityDigest.md)
 - [LiveCell](variables/LiveCell.md)
@@ -291,3 +292,4 @@ plan graph, ECS, capsule factory).
 - [sealNode](functions/sealNode.md)
 - [tupleMap](functions/tupleMap.md)
 - [validateGraph](functions/validateGraph.md)
+- [wgslIdent](functions/wgslIdent.md)

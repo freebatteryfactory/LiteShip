@@ -10,19 +10,20 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { projectionKeys, glslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
+import { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
 
 /** Execute the worker-blob source exactly as the worker does. */
 const blobProjectionKeys = new Function(
   'name',
   `${PROJECTION_KEYS_SOURCE}\nreturn projectionKeys(name);`,
-) as (name: string) => { cssKey: string; glslKey: string; ariaKey: string };
+) as (name: string) => { cssKey: string; glslKey: string; wgslKey: string; ariaKey: string };
 
 describe('projectionKeys', () => {
-  it('mints css/aria keys with the name verbatim, glsl as a u_ identifier', () => {
+  it('mints css/aria keys with the name verbatim, glsl as u_<snake>, wgsl as bare <snake>', () => {
     expect(projectionKeys('hero')).toEqual({
       cssKey: '--czap-hero',
       glslKey: 'u_hero',
+      wgslKey: 'hero',
       ariaKey: 'data-czap-hero',
     });
   });
@@ -35,6 +36,16 @@ describe('projectionKeys', () => {
   it('glslKey folds camelCase to snake_case, matching the GLSL compiler', () => {
     expect(projectionKeys('heroImage').glslKey).toBe('u_hero_image');
     expect(projectionKeys('fooBarBaz').glslKey).toBe('u_foo_bar_baz');
+  });
+
+  it('wgslKey is the bare snake fold (no u_ prefix), matching the WGSL compiler toFieldName', () => {
+    expect(projectionKeys('blurRadius').wgslKey).toBe('blur_radius');
+    expect(projectionKeys('my-thing').wgslKey).toBe('my_thing');
+    expect(wgslIdent('heroImage')).toBe('hero_image');
+    // glslKey === 'u_' + wgslKey for every name — the shared snake fold.
+    for (const name of ['hero', 'blurRadius', 'a-b-c']) {
+      expect(projectionKeys(name).glslKey).toBe(`u_${projectionKeys(name).wgslKey}`);
+    }
   });
 
   it('css/aria keys preserve case (custom properties + data attributes are case-sensitive)', () => {

@@ -103,7 +103,7 @@ export function rendererFromRemotionConfig(
 const emptyState: CompositeState = {
   discrete: {},
   blend: {},
-  outputs: { css: {}, glsl: {}, aria: {} },
+  outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
 };
 
 const CzapContext = createContext<ReadonlyArray<VideoFrameOutput>>([]);

@@ -152,7 +152,7 @@ ${EVALUATE_THRESHOLDS_SOURCE}
 
 /**
  * Build a CompositeState from the current quantizer state.
- * @returns {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; aria: Record<string, string> } }}
+ * @returns {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; wgsl: Record<string, number>; aria: Record<string, string> } }}
  */
 function compute() {
   const now = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -161,6 +161,10 @@ function compute() {
   const blend = {};
   const css = {};
   const glsl = {};
+  // WGSL channel: the live state index is emitted below into the single fixed
+  // state_index struct field (slot 0), mirroring the host emit-wgsl so off-thread
+  // WGSL shaders driven by client:worker receive the same crossing as client:gpu.
+  const wgsl = {};
   const aria = {};
   const resolvedStateGenerations = {};
 
@@ -202,6 +206,10 @@ function compute() {
     }
       glsl[q.glslKey] = stateIndex;
 
+      // WGSL output: the live state index goes into the single fixed state_index
+      // struct field (slot 0), matching the host emit-wgsl + the wgpu runtime.
+      wgsl['state_index'] = stateIndex;
+
       // ARIA output
       aria[q.ariaKey] = stateStr;
   }
@@ -227,7 +235,7 @@ function compute() {
   }
   lastComputeTime = now;
 
-  return { discrete, blend, outputs: { css, glsl, aria }, resolvedStateGenerations };
+  return { discrete, blend, outputs: { css, glsl, wgsl, aria }, resolvedStateGenerations };
 }
 
 // ---------------------------------------------------------------------------

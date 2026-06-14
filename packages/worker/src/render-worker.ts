@@ -108,6 +108,9 @@ function computeState() {
   const blend = {};
   const css = {};
   const glsl = {};
+  // WGSL channel — the live state index is emitted below into the fixed
+  // state_index struct field (slot 0), mirroring the host emit-wgsl.
+  const wgsl = {};
   const aria = {};
 
   for (const [name, q] of quantizers) {
@@ -136,10 +139,13 @@ function computeState() {
       }
     }
     glsl[keys.glslKey] = stateIndex;
+    // WGSL: live state index → the single fixed state_index field (slot 0),
+    // mirroring the host emit-wgsl so client:worker WGSL shaders see crossings.
+    wgsl['state_index'] = stateIndex;
     aria[keys.ariaKey] = stateStr;
   }
 
-  return { discrete, blend, outputs: { css, glsl, aria } };
+  return { discrete, blend, outputs: { css, glsl, wgsl, aria } };
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +157,7 @@ function computeState() {
  * This is a diagnostic visualization; real applications would
  * implement domain-specific rendering.
  *
- * @param {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; aria: Record<string, string> } }} state
+ * @param {{ discrete: Record<string, string>; blend: Record<string, Record<string, number>>; outputs: { css: Record<string, number|string>; glsl: Record<string, number>; wgsl: Record<string, number>; aria: Record<string, string> } }} state
  * @param {number} frame
  * @param {number} progress
  */

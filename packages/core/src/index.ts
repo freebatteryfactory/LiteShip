@@ -60,9 +60,10 @@ export { Boundary, BoundarySpec } from './boundary.js';
 // is the inlinable mirror the worker/render blob scripts embed.
 export { rawIndexF32, EVALUATE_THRESHOLDS_SOURCE } from './boundary-f32.js';
 // Projection vocabulary — the single home of per-quantizer output key naming
-// (CSS custom property / GLSL uniform / ARIA attribute). `glslIdent` is shared
-// with @czap/compiler's GLSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
-export { projectionKeys, glslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
+// (CSS custom property / GLSL uniform / WGSL struct field / ARIA attribute).
+// `glslIdent` is shared with @czap/compiler's GLSL arm and `wgslIdent` with its
+// WGSL arm; `PROJECTION_KEYS_SOURCE` is the worker twin.
+export { projectionKeys, glslIdent, wgslIdent, PROJECTION_KEYS_SOURCE } from './projection.js';
 export type { ProjectionKeys } from './projection.js';
 // Shared boundary/runtime attribute-projection predicate (CUT A4) — consumed by
 // @czap/compiler (ARIA compilation) and @czap/astro (runtime boundary attrs).
@@ -344,6 +345,11 @@ export { canonicalCborCapsule } from './capsules/canonical-cbor.js';
 // here so it registers in the live `getCapsuleCatalog()` alongside the encoder
 // (the reader the encoder's content-addressed bytes have lacked).
 export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js';
+// The GraphPatch round-trip identity capsule (F) — locks `apply(a, diff(a, b))`
+// deep-equals `b` as a standing pureTransform contract. Exported here so it
+// registers in the live `getCapsuleCatalog()` (the contract the future graph
+// editor builds against).
+export { graphPatchIdentityCapsule } from './capsules/graph-patch-identity.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and

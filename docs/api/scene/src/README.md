@@ -47,6 +47,8 @@ ECS substrate in `@czap/core`.
 - [ResolvedSceneContract](type-aliases/ResolvedSceneContract.md)
 - [SceneBeat](type-aliases/SceneBeat.md)
 - [SceneSubscenePartial](type-aliases/SceneSubscenePartial.md)
+- [SvgAttrsFrame](type-aliases/SvgAttrsFrame.md)
+- [SvgElementResolver](type-aliases/SvgElementResolver.md)
 - [TrackEnvelope](type-aliases/TrackEnvelope.md)
 - [TrackId](type-aliases/TrackId.md)
 - [TrackKind](type-aliases/TrackKind.md)
@@ -69,9 +71,11 @@ ECS substrate in `@czap/core`.
 ## Functions
 
 - [addFrameMarks](functions/addFrameMarks.md)
+- [applySvgAttrs](functions/applySvgAttrs.md)
 - [AudioSystem](functions/AudioSystem.md)
 - [Beat](functions/Beat.md)
 - [bindBeats](functions/bindBeats.md)
+- [collectSvgAttrs](functions/collectSvgAttrs.md)
 - [compileScene](functions/compileScene.md)
 - [easeFnFor](functions/easeFnFor.md)
 - [EffectSystem](functions/EffectSystem.md)

@@ -8,7 +8,7 @@
 
 > `const` **sceneRuntimeCapsule**: `CapsuleDef`\<`"stateMachine"`, \{ `scene`: `unknown`; \}, \{ `entitySpawnCount`: `number`; `systemsRegistered`: `number`; \}, `unknown`\>
 
-Defined in: [scene/src/runtime.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L60)
+Defined in: [scene/src/runtime.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L61)
 
 The declared `scene.runtime` capsule. Registered in the module-level
 catalog at import time; walked by the factory compiler. Behavior is

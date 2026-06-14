@@ -56,6 +56,21 @@ describe('WGSLCompiler.compile', () => {
     expect(result.structs[0]!.fields[0]).toEqual({ name: 'state_index', type: 'u32' });
   });
 
+  test('LESSON (review): per-state @wgsl values are exposed via stateBindings (mirrors GLSL stateUniforms)', () => {
+    // The compiler must expose per-state binding values, not just the merged
+    // last-state default, so a crossing resolves stateBindings[currentState] — the
+    // WGSL analog of GLSL's stateUniforms, carried end-to-end by manifest +
+    // kv-cache + Satellite + applyBoundaryState. Before this the manifest dropped
+    // per-state, so authored @wgsl field values couldn't update on crossings.
+    const result = WGSLCompiler.compile(simpleBoundary, {
+      dark: { blur: 1 },
+      light: { blur: 4 },
+    });
+    expect(result.stateBindings.dark!['blur']).toBe(1);
+    expect(result.stateBindings.light!['blur']).toBe(4);
+    expect(result.bindingValues['blur']).toBe(4); // merged default = last state
+  });
+
   test('all-positive-integer values infer as u32', () => {
     const result = WGSLCompiler.compile(simpleBoundary, {
       dark: { count: 1 },

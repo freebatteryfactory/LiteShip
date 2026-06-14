@@ -68,7 +68,7 @@ export function stateAtFrame(frames: ReadonlyArray<VideoFrameOutput>, frameIndex
       message:
         'stateAtFrame received 0 frames — did precomputeFrames run? Await it before render (e.g. in calculateMetadata) and pass its result through unmodified.',
     });
-    return { discrete: {}, blend: {}, outputs: { css: {}, glsl: {}, aria: {} } };
+    return { discrete: {}, blend: {}, outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} } };
   }
   if (frameIndex > frames.length - 1) {
     // Dedup key stays frame-independent — this fires on every frame past the

@@ -57,6 +57,7 @@
     "@czap/quantizer": "workspace:*",
     "@czap/remotion": "workspace:*",
     "@czap/scene": "workspace:*",
+    "@czap/stage": "workspace:*",
     "@czap/vite": "workspace:*",
     "@czap/web": "workspace:*",
     "@czap/worker": "workspace:*"

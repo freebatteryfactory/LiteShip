@@ -24,9 +24,11 @@ import { CSSCompiler, dispatch } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
 import {
+  CAST_TARGETS,
   parseQuantizeBlocks,
   viewportContainmentRule,
   viewportQueryAxis,
+  type CastTarget,
   type QuantizeStateBody,
 } from './css-quantize.js';
 import { findConventionFiles } from './resolve-fs.js';
@@ -162,6 +164,132 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
   return found;
 }
 
+/** The slice of {@link CompiledOutputs} the non-CSS cast loop populates. */
+type CastOutputs = Pick<CompiledOutputs, 'aria' | 'glsl' | 'wgsl'>;
+
+/**
+ * Coerce a `@glsl`/`@wgsl` segment's authored string values into the numeric
+ * uniform map the shader compilers consume. Non-numeric values are dropped
+ * (the segment authored `1.0`, `0`, `-2` etc.); the shader compilers then
+ * infer a stable type across states.
+ */
+function numericCastState(attrs: Record<string, string>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(attrs)) {
+    const n = Number(value);
+    if (value.trim() !== '' && Number.isFinite(n)) out[key] = n;
+  }
+  return out;
+}
+
+/**
+ * One non-CSS cast target's wiring: how to gather its authored per-state
+ * attribute maps and how to route them through {@link dispatch} onto a
+ * {@link CompiledOutputs} field. The build loop iterates these in order, so
+ * adding a cast target is a new entry here — not a hand-written arm.
+ */
+interface CastDescriptor {
+  /** The `CompiledOutputs` field this cast lands on (also its `castAttrs` key). */
+  readonly target: CastTarget;
+  /**
+   * Gather authored per-state maps and run the matching compiler, returning the
+   * value stored on `CompiledOutputs[target]`, or `undefined` when no state
+   * authored this cast (so the field stays absent — the `aria` policy).
+   */
+  readonly compile: (
+    boundary: Boundary.Shape,
+    perState: Readonly<Record<string, Record<string, string>>>,
+  ) => CastOutputs[CastTarget];
+}
+
+/**
+ * Ordered non-CSS cast descriptors — the generalized spine. Each routes a
+ * cast target through `dispatch` (ARIA → `ARIACompiler`, GLSL → `GLSLCompiler`,
+ * WGSL → `WGSLCompiler`) and content-addresses identically (the result is part
+ * of `CompiledOutputs`, hashed by `dedupeOutputsByTier`). The order matches
+ * `CAST_TARGETS`.
+ */
+const NON_CSS_CASTS: readonly CastDescriptor[] = [
+  {
+    target: 'aria',
+    compile: (boundary, perState) => {
+      // `stateAttributes` is fully keyed by ARIACompiler (states without `@aria`
+      // get `{}`), so the runtime can resolve any state.
+      const result = dispatch({
+        _tag: 'ARIACompiler',
+        boundary,
+        states: { states: { ...perState }, currentState: boundary.states[0] },
+      });
+      return result.target === 'aria' ? result.result.stateAttributes : undefined;
+    },
+  },
+  {
+    target: 'glsl',
+    compile: (boundary, perState) => {
+      const numericStates = Object.fromEntries(
+        Object.entries(perState).map(([state, attrs]) => [state, numericCastState(attrs)]),
+      );
+      const result = dispatch({ _tag: 'GLSLCompiler', boundary, states: numericStates });
+      return result.target === 'glsl'
+        ? {
+            declarations: result.result.declarations,
+            uniformValues: result.result.uniformValues,
+            // Per-state authored uniforms ride to the runtime so a crossing
+            // resolves `stateUniforms[currentState]` (the GLSL analog of ARIA's
+            // per-state `stateAttributes`), not just the flat default.
+            stateUniforms: result.result.stateUniforms,
+          }
+        : undefined;
+    },
+  },
+  {
+    target: 'wgsl',
+    compile: (boundary, perState) => {
+      const numericStates = Object.fromEntries(
+        Object.entries(perState).map(([state, attrs]) => [state, numericCastState(attrs)]),
+      );
+      const result = dispatch({ _tag: 'WGSLCompiler', boundary, states: numericStates });
+      return result.target === 'wgsl'
+        ? {
+            declarations: result.result.declarations,
+            bindingValues: result.result.bindingValues,
+            // Per-state authored bindings ride to the runtime so a crossing
+            // resolves `stateBindings[currentState]` — the WGSL analog of GLSL's
+            // per-state `stateUniforms`, not just the flat default.
+            stateBindings: result.result.stateBindings,
+          }
+        : undefined;
+    },
+  },
+];
+
+/**
+ * Run every non-CSS cast target against a boundary's authored `@<target>`
+ * segments and collect the results onto the {@link CompiledOutputs} cast
+ * fields. A target with no authored segment is omitted entirely (the field
+ * stays absent), so byte-identical boundaries without a cast hash the same.
+ *
+ * This is the target-driven loop that replaced the hand-written CSS+ARIA arms:
+ * the CSS cast stays inline above (it owns the tier grid + containment), while
+ * every other target is one {@link NON_CSS_CASTS} descriptor.
+ */
+function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, QuantizeStateBody>): Partial<CastOutputs> {
+  const casts: Partial<Record<CastTarget, CastOutputs[CastTarget]>> = {};
+  for (const descriptor of NON_CSS_CASTS) {
+    // Per-state authored attribute maps for this target, dropping states that
+    // did not author it (and empty segments).
+    const perState: Record<string, Record<string, string>> = {};
+    for (const [stateName, body] of Object.entries(states)) {
+      const attrs = body.castAttrs?.[descriptor.target];
+      if (attrs && Object.keys(attrs).length > 0) perState[stateName] = attrs;
+    }
+    if (Object.keys(perState).length === 0) continue;
+    const output = descriptor.compile(boundary, perState);
+    if (output !== undefined) casts[descriptor.target] = output;
+  }
+  return casts as Partial<CastOutputs>;
+}
+
 /**
  * Compile one boundary's `@quantize` states into the deduplicated
  * `outputs` pool + per-tier index map, covering the full finite
@@ -205,25 +333,12 @@ function compileOutputsByTier(
   const compiled = cssCast.target === 'css' ? cssCast.result.raw : '';
   const containerQueries = containment ? `${containment}\n\n${compiled}` : compiled;
 
-  // ARIA cast (tier-invariant): collect authored per-state `@aria` attributes
-  // and run the same caster. `stateAttributes` is fully keyed by ARIACompiler
-  // (states without `@aria` get `{}`), so the runtime can resolve any state.
-  const ariaStates = Object.fromEntries(
-    Object.entries(states)
-      .filter(([, body]) => body.ariaAttrs && Object.keys(body.ariaAttrs).length > 0)
-      .map(([stateName, body]) => [stateName, body.ariaAttrs as Record<string, string>]),
-  );
-  let aria: Readonly<Record<string, Readonly<Record<string, string>>>> | undefined;
-  if (Object.keys(ariaStates).length > 0) {
-    const ariaCast = dispatch({
-      _tag: 'ARIACompiler',
-      boundary,
-      states: { states: ariaStates, currentState: boundary.states[0] },
-    });
-    if (ariaCast.target === 'aria') {
-      aria = ariaCast.result.stateAttributes;
-    }
-  }
+  // Non-CSS casts (tier-invariant): each authored `@<target> { … }` segment
+  // routes through the same build caster (`dispatch`) and lands on its own
+  // `CompiledOutputs` field. The loop below is the generalized spine — adding a
+  // cast target is one entry in `NON_CSS_CASTS`, not a new hand-written arm.
+  const casts = compileNonCssCasts(boundary, states);
+
   // Property registrations scan custom-property names/syntax only, so the
   // nested-rule props flatten into the same per-state map as bareProps.
   const flatStates = Object.fromEntries(
@@ -242,7 +357,7 @@ function compileOutputsByTier(
       css,
       propertyRegistrations: registrations,
       containerQueries,
-      ...(aria ? { aria } : {}),
+      ...casts,
     };
     for (const designTier of DESIGN_TIERS) {
       outputsByTier[tierKey({ motionTier, designTier })] = outputs;
@@ -383,18 +498,29 @@ export async function collectBoundaryManifest(
             }
           }
         }
-        // Authored `@aria` attributes conflict the same way across files.
-        for (const [prop, value] of Object.entries(body.ariaAttrs ?? {})) {
-          const priorValue = prior?.ariaAttrs?.[prop];
-          if (priorValue !== undefined && priorValue !== value) {
-            warnConflict('@aria', prop, priorValue, value);
+        // Authored `@<target>` cast attributes conflict the same way across
+        // files. Merge each cast target uniformly (the generalized spine), then
+        // derive `ariaAttrs` from the merged `aria` cast so existing consumers
+        // read it unchanged.
+        const mergedCasts: Partial<Record<CastTarget, Record<string, string>>> = {};
+        for (const target of CAST_TARGETS) {
+          const priorAttrs = prior?.castAttrs?.[target];
+          const bodyAttrs = body.castAttrs?.[target];
+          for (const [prop, value] of Object.entries(bodyAttrs ?? {})) {
+            const priorValue = priorAttrs?.[prop];
+            if (priorValue !== undefined && priorValue !== value) {
+              warnConflict(`@${target}`, prop, priorValue, value);
+            }
           }
+          const mergedTarget = { ...priorAttrs, ...bodyAttrs };
+          if (Object.keys(mergedTarget).length > 0) mergedCasts[target] = mergedTarget;
         }
-        const mergedAria = { ...prior?.ariaAttrs, ...body.ariaAttrs };
+        const hasCasts = Object.keys(mergedCasts).length > 0;
         merged[stateName] = {
           bareProps: { ...prior?.bareProps, ...body.bareProps },
           rules: [...(prior?.rules ?? []), ...body.rules],
-          ...(Object.keys(mergedAria).length > 0 ? { ariaAttrs: mergedAria } : {}),
+          ...(hasCasts ? { castAttrs: mergedCasts } : {}),
+          ...(mergedCasts.aria ? { ariaAttrs: mergedCasts.aria } : {}),
         };
       }
       statesByBoundary.set(block.boundaryName, merged);

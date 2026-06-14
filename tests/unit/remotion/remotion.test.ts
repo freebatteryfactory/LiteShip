@@ -74,7 +74,7 @@ describe('@czap/remotion stateAtFrame', () => {
     expect(stateAtFrame([], 5)).toEqual({
       discrete: {},
       blend: {},
-      outputs: { css: {}, glsl: {}, aria: {} },
+      outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
     });
   });
 });
@@ -118,7 +118,7 @@ describe('@czap/remotion hooks', () => {
     expect(observed).toEqual({
       discrete: {},
       blend: {},
-      outputs: { css: {}, glsl: {}, aria: {} },
+      outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
     });
   });
 });
@@ -241,7 +241,7 @@ describe('@czap/remotion degraded-path diagnostics', () => {
     expect(observed).toEqual({
       discrete: {},
       blend: {},
-      outputs: { css: {}, glsl: {}, aria: {} },
+      outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
     });
     const events = buffer.events.filter((e) => e.code === 'no-provider-frames');
     expect(events).toHaveLength(1);

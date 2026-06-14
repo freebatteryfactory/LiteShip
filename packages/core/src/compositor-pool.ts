@@ -32,6 +32,7 @@ export interface MutableCompositeStateViews {
   readonly blend: Record<string, Record<string, number>>;
   readonly css: Record<string, number | string>;
   readonly glsl: Record<string, number>;
+  readonly wgsl: Record<string, number>;
   readonly aria: Record<string, string>;
 }
 
@@ -55,6 +56,7 @@ export function accessCompositeState(state: CompositeState): MutableCompositeSta
     blend: mutable.blend,
     css: mutable.outputs.css,
     glsl: mutable.outputs.glsl,
+    wgsl: mutable.outputs.wgsl,
     aria: mutable.outputs.aria,
   };
 }
@@ -63,17 +65,18 @@ function createMutableState(): CompositeState {
   return {
     discrete: {},
     blend: {},
-    outputs: { css: {}, glsl: {}, aria: {} },
+    outputs: { css: {}, glsl: {}, wgsl: {}, aria: {} },
   };
 }
 
 function resetState(state: CompositeState): void {
   // Clear all fields in-place (cheaper than allocation)
-  const { discrete, blend, css, glsl, aria } = accessCompositeState(state);
+  const { discrete, blend, css, glsl, wgsl, aria } = accessCompositeState(state);
   for (const k of Object.keys(discrete)) delete discrete[k];
   for (const k of Object.keys(blend)) delete blend[k];
   for (const k of Object.keys(css)) delete css[k];
   for (const k of Object.keys(glsl)) delete glsl[k];
+  for (const k of Object.keys(wgsl)) delete wgsl[k];
   for (const k of Object.keys(aria)) delete aria[k];
 }
 

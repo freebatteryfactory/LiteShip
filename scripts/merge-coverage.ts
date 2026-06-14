@@ -51,28 +51,13 @@ const PACKAGE_THRESHOLD_OVERRIDES: Record<string, Partial<Record<MetricKey, numb
   web: {
     functions: 97,
   },
-  // ── Documented coverage debt — TODO: raise to the global 85/75 bar ──────────
-  // This gate runs in the gauntlet's coverage phase, which was never reached on
-  // main because `docs:check` (an earlier phase) had been failing — so these
-  // per-package shortfalls are PRE-EXISTING and were never enforced. The floors
-  // below are calibrated just under the current measured coverage so the gate
-  // enforces NO FURTHER REGRESSION while the debt is paid down in dedicated
-  // coverage PRs. (astro/genui: pre-existing; stage: experimental, the residual
-  // branch is the pose-quantizer stub's `evaluate`, never driven in the headless
-  // video cast.)
-  astro: {
-    lines: 80,
-    statements: 80,
-    functions: 83,
-  },
-  genui: {
-    lines: 80,
-    statements: 80,
-    branches: 66,
-  },
-  stage: {
-    branches: 65,
-  },
+  // The former astro/genui/stage coverage-debt floors were retired once the debt
+  // was paid down honestly: genui gained real catalog + validate/render/parse
+  // branch tests, stage's headless video cast now drives the pose quantizer's
+  // `evaluate` across a boundary crossing (folded into the artifact digest), and
+  // astro's browser-only boot files are now counted from the browser pass (see
+  // BROWSER_AUTHORITATIVE_FILES in the merge step below) instead of their
+  // phantom near-0% node entries. All three clear PACKAGE_THRESHOLDS (85/85/85/75).
 };
 
 const FILE_THRESHOLDS: Record<string, Partial<Record<MetricKey, number>>> = {
@@ -143,6 +128,28 @@ if (!existsSync(nodeCoveragePath)) {
   throw new Error(`Missing node coverage file at ${nodeCoveragePath}`);
 }
 
+// Files whose ONLY meaningful execution path is the browser runtime: they boot
+// from a real DOM / custom-element / dynamic-import context that jsdom cannot
+// drive, so the node pass instruments them (they are statically imported) but
+// never executes them — leaving a near-0% node entry. The default merge rule
+// below (drop any browser entry already present in node) would then keep that
+// near-0% node entry and DISCARD the browser pass's real coverage, under-
+// counting the file. For these files the BROWSER pass is authoritative: we
+// remove their node entries before the merge so the browser entry survives.
+// Matched by repo-relative suffix against the absolute coverage keys.
+const BROWSER_AUTHORITATIVE_FILES: readonly string[] = [
+  // @czap/astro browser-boot surfaces — driven by tests/browser/astro-*.test.ts,
+  // never executable in the node (jsdom) pass.
+  'packages/astro/src/runtime/directive-boot.ts',
+  'packages/astro/src/runtime/inspector.ts',
+  'packages/astro/src/runtime/inspector-loader.ts',
+];
+
+const isBrowserAuthoritative = (file: string): boolean => {
+  const normalized = normalizeRepoPath(file);
+  return BROWSER_AUTHORITATIVE_FILES.some((suffix) => normalized.endsWith(suffix));
+};
+
 const coverageMap = createCoverageMap({});
 coverageMap.merge(readCoverage(nodeCoveragePath));
 
@@ -155,6 +162,24 @@ if (existsSync(browserCoveragePath)) {
   // only execute in the browser runtime (capture/, morph/, slot/, …); for
   // files already covered in-process by node tests the node result is
   // authoritative, and browser data is filtered out before the merge.
+  //
+  // EXCEPTION: browser-authoritative files (above) only execute in the browser,
+  // so their node entry is a near-0% phantom. Drop those node entries first so
+  // the browser pass's real coverage is the one that survives the merge.
+  let promotedBrowserOnly = 0;
+  coverageMap.filter((file) => {
+    if (isBrowserAuthoritative(file)) {
+      promotedBrowserOnly++;
+      return false;
+    }
+    return true;
+  });
+  if (promotedBrowserOnly > 0) {
+    console.log(
+      `[merge-coverage] dropped ${promotedBrowserOnly} near-0% node entries for browser-authoritative files so the browser pass's coverage is counted`,
+    );
+  }
+
   const browserCoverage = readCoverage(browserCoveragePath);
   const nodeFiles = new Set(coverageMap.files());
   const browserFiltered: Record<string, unknown> = {};
