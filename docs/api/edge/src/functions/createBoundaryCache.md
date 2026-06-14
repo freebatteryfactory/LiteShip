@@ -8,7 +8,7 @@
 
 > **createBoundaryCache**(`kv`, `options?`): [`BoundaryCache`](../interfaces/BoundaryCache.md)
 
-Defined in: [edge/src/kv-cache.ts:240](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L240)
+Defined in: [edge/src/kv-cache.ts:248](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L248)
 
 Create a [BoundaryCache](../interfaces/BoundaryCache.md) backed by the provided KV namespace.
 

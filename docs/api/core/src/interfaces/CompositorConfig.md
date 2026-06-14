@@ -6,7 +6,7 @@
 
 # Interface: CompositorConfig
 
-Defined in: [core/src/compositor.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L61)
+Defined in: [core/src/compositor.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L60)
 
 Options accepted by `Compositor.create`: pool capacity, optional
 frame-budget gating, whether to enable speculative pre-evaluation, and an
@@ -18,18 +18,20 @@ optional escalation gate ([getPolicy](#getpolicy) + [runtimeSite](#runtimesite))
 
 > `readonly` `optional` **frameBudget?**: `FrameBudgetShape`
 
-Defined in: [core/src/compositor.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L63)
+Defined in: [core/src/compositor.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L62)
 
 ***
 
 ### getPolicy?
 
-> `readonly` `optional` **getPolicy?**: (`projectionId`) => [`PolicyNode`](PolicyNode.md) \| `undefined`
+> `readonly` `optional` **getPolicy?**: (`projectionName`) => [`PolicyNode`](PolicyNode.md) \| `undefined`
 
-Defined in: [core/src/compositor.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L75)
+Defined in: [core/src/compositor.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L76)
 
 Escalation gate: resolve the [PolicyNode](PolicyNode.md) (if any) that governs a
-projection, by its `ContentAddress`. When a policy applies, the compositor
+projection, keyed by the quantizer's compositor registry name (the same
+`name` passed to `add()` — the compositor knows names, not graph projection
+ids, so a host wiring graph projections maps id → name here). When a policy applies, the compositor
 computes `chooseRung(policy, runtimeSite)` at `add` time and emits ONLY the
 targets that rung admits (`admittedTargets`). A projection with NO matching
 policy is pass-through (all targets emit). A policy that matches but admits
@@ -39,9 +41,9 @@ that cannot be satisfied must not silently emit at full capability.
 
 #### Parameters
 
-##### projectionId
+##### projectionName
 
-`ContentAddress`
+`string`
 
 #### Returns
 
@@ -53,7 +55,7 @@ that cannot be satisfied must not silently emit at full capability.
 
 > `readonly` `optional` **poolCapacity?**: `number`
 
-Defined in: [core/src/compositor.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L62)
+Defined in: [core/src/compositor.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L61)
 
 ***
 
@@ -61,7 +63,7 @@ Defined in: [core/src/compositor.ts:62](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **runtimeSite?**: [`RuntimeSite`](../type-aliases/RuntimeSite.md)
 
-Defined in: [core/src/compositor.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L81)
+Defined in: [core/src/compositor.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L82)
 
 The runtime site the escalation gate evaluates policies against. Defaults to
 an environment hint: `'browser'` when a `window` global is present, else
@@ -73,4 +75,4 @@ an environment hint: `'browser'` when a `window` global is present, else
 
 > `readonly` `optional` **speculative?**: `boolean`
 
-Defined in: [core/src/compositor.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L64)
+Defined in: [core/src/compositor.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L63)

@@ -6,7 +6,7 @@
 
 # Interface: CompositeState
 
-Defined in: [core/src/compositor.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L45)
+Defined in: [core/src/compositor.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L44)
 
 Snapshot of the compositor's output per tick: discrete state names for each
 quantizer, their blend-weight vectors, and the compiled per-target output
@@ -24,7 +24,7 @@ escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
 
 > `readonly` **blend**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
 
-Defined in: [core/src/compositor.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L47)
+Defined in: [core/src/compositor.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L46)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/compositor.ts:47](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **discrete**: `Record`\<`string`, `string`\>
 
-Defined in: [core/src/compositor.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L46)
+Defined in: [core/src/compositor.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L45)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/compositor.ts:46](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **outputs**: `object`
 
-Defined in: [core/src/compositor.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L48)
+Defined in: [core/src/compositor.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L47)
 
 #### aria
 
