@@ -5,6 +5,7 @@
  * @module
  */
 import { describe, it, expect, beforeEach } from 'vitest';
+import fc from 'fast-check';
 import {
   defineAsset,
   AssetRef,
@@ -35,6 +36,49 @@ describe('registry-miss (#160, #158)', () => {
     defineAsset({ id: 'alpha', source: 'a.wav', kind: 'audio' });
     expect(() => AssetRef('missing-id')).toThrow(
       /registry-miss.*missing-id.*Registered ids: alpha, zebra.*defineAsset\('missing-id'/s,
+    );
+  });
+
+  it('a near-miss id gets a Did-you-mean suggestion of the closest registered id (#160)', () => {
+    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    defineAsset({ id: 'intro-sting', source: 'intro-sting.wav', kind: 'audio' });
+    // A single-edit typo of a registered id surfaces the nearest match.
+    expect(() => AssetRef('intro-bd')).toThrow(/Did you mean 'intro-bed'\?/);
+  });
+
+  it('a far-off id does NOT fabricate a Did-you-mean (no misleading suggestion) (#160)', () => {
+    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    // 'zzzzzzzz' is nowhere near any registered id — suggesting one would mislead.
+    expect(() => AssetRef('zzzzzzzz')).toThrow(/registry-miss/);
+    expect(() => AssetRef('zzzzzzzz')).not.toThrow(/Did you mean/);
+  });
+
+  it('LAW: a single-character edit of a registered id always suggests that id (#160)', () => {
+    fc.assert(
+      fc.property(
+        // Ids of length >= 4 (so a 1-edit typo stays within threshold) over a
+        // small alphabet, plus an edit position to mutate.
+        fc.stringMatching(/^[a-z]{4,12}$/),
+        fc.nat(),
+        (id, posSeed) => {
+          resetAssetRegistry();
+          defineAsset({ id, source: `${id}.wav`, kind: 'audio' });
+          // Substitute one character with a guaranteed-different one.
+          const pos = posSeed % id.length;
+          const orig = id[pos]!;
+          const repl = orig === 'a' ? 'b' : 'a';
+          const typo = id.slice(0, pos) + repl + id.slice(pos + 1);
+          if (typo === id) return; // alphabet collision guard (never happens here)
+          let msg = '';
+          try {
+            AssetRef(typo);
+          } catch (e) {
+            msg = (e as Error).message;
+          }
+          expect(msg).toContain(`Did you mean '${id}'?`);
+        },
+      ),
+      { numRuns: 200 },
     );
   });
 
@@ -106,6 +150,36 @@ describe('audioDecoder teaching errors (#161, #162)', () => {
     new DataView(riff.buffer).setUint32(4, body.length, true);
     riff.set(body, 8);
     await expect(audioDecoder(riff.buffer)).rejects.toThrow(/no data chunk.*fmt .*pcm_s16le/s);
+  });
+
+  it("no 'fmt ' chunk lists the chunks present and frames it as RIFF-but-not-WAV (#161)", async () => {
+    const enc = new TextEncoder();
+    function u32le(n: number): Uint8Array {
+      const out = new Uint8Array(4);
+      new DataView(out.buffer).setUint32(0, n, true);
+      return out;
+    }
+    function concat(...parts: Uint8Array[]): Uint8Array {
+      const total = parts.reduce((sum, p) => sum + p.byteLength, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      for (const p of parts) {
+        out.set(p, off);
+        off += p.byteLength;
+      }
+      return out;
+    }
+    function chunk(id: string, payload: Uint8Array): Uint8Array {
+      return concat(enc.encode(id), u32le(payload.byteLength), payload);
+    }
+    // A valid RIFF carrying a LIST chunk but NO 'fmt ' — e.g. a metadata-only
+    // sidecar mistaken for the audio file.
+    const listChunk = chunk('LIST', concat(enc.encode('INFO'), new Uint8Array(4)));
+    const body = concat(enc.encode('WAVE'), listChunk);
+    const riff = concat(enc.encode('RIFF'), u32le(body.byteLength), body);
+    await expect(audioDecoder(riff.buffer)).rejects.toThrow(
+      /no 'fmt ' chunk found.*RIFF but not a playable WAV.*chunks present: LIST.*pcm_s16le/s,
+    );
   });
 
   it('unsupported-format names the found format and enumerates supported combos', async () => {

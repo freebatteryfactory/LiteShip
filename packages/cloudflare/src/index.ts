@@ -15,7 +15,7 @@ export { cloudflareMiddleware, type CloudflareMiddlewareConfig } from './middlew
 
 export { cloudflareAdapterCapsule } from './capsules/cloudflare-adapter.js';
 
-// --- testing ---
-
-/** @group Testing */
-export { getDefaultWorkersEnv, resetWorkersEnvForTesting, setWorkersEnvForTesting } from './middleware.js';
+// Test-only env mutators (`setWorkersEnvForTesting` / `resetWorkersEnvForTesting` /
+// `getDefaultWorkersEnv`) live behind `@czap/cloudflare/testing` (see ./testing.ts) so
+// they stay off the front-door surface. Inject env in production via the `env` option
+// on `CloudflareMiddlewareConfig`.

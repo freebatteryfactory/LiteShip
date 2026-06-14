@@ -43,7 +43,9 @@ export const cloudflareAdapterCapsule = defineCapsule({
         );
       },
       message:
-        'cloudflare.workers-kv-boundary: cacheStatus must be disabled, precompiled, hit, or miss. Fix: pass EdgeHostAdapter.resolve().cacheStatus through unchanged.',
+        "cloudflare.workers-kv-boundary returned an unexpected cacheStatus — expected 'disabled' | 'precompiled' | 'hit' | 'miss'. " +
+        'This means the resolution object was constructed outside createEdgeHostAdapter. ' +
+        'Fix: return resolution.cacheStatus from EdgeHostAdapter.resolve unchanged.',
     },
   ],
   budgets: { p95Ms: 12 },

@@ -26,9 +26,3 @@
 - [cloudflareMiddleware](functions/cloudflareMiddleware.md)
 - [createCloudflareEdgeCache](functions/createCloudflareEdgeCache.md)
 - [resolveKvBinding](functions/resolveKvBinding.md)
-
-## Testing
-
-- [getDefaultWorkersEnv](functions/getDefaultWorkersEnv.md)
-- [resetWorkersEnvForTesting](functions/resetWorkersEnvForTesting.md)
-- [setWorkersEnvForTesting](functions/setWorkersEnvForTesting.md)

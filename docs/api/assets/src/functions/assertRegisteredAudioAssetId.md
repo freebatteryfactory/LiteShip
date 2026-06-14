@@ -8,7 +8,7 @@
 
 > **assertRegisteredAudioAssetId**(`audioAssetId`, `factory`): `void`
 
-Defined in: [assets/src/contract.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L114)
+Defined in: [assets/src/contract.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L156)
 
 Validate that an audio asset id is registered before constructing a
 projection factory. Throws a registry-miss teaching error when missing.

@@ -8,7 +8,7 @@
 
 > **AssetRef**(`id`): [`AssetRefId`](../type-aliases/AssetRefId.md)
 
-Defined in: [assets/src/contract.ts:235](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L235)
+Defined in: [assets/src/contract.ts:277](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L277)
 
 Resolve an asset id to a branded [AssetRefId](../type-aliases/AssetRefId.md) after confirming it's registered. Throws on unknown ids.
 

@@ -38,7 +38,13 @@ export async function audioDecoder(bytes: ArrayBuffer): Promise<DecodedAudio> {
     if (chunk.id === 'fmt ' && 'data' in chunk) fmt = chunk.data;
     else if (chunk.id === 'data' && 'data' in chunk) data = chunk.data;
   }
-  if (!fmt) throw new Error('audioDecoder: missing fmt chunk');
+  if (!fmt) {
+    throw new Error(
+      `audioDecoder: no 'fmt ' chunk found — this buffer is RIFF but not a playable WAV ` +
+        `(chunks present: ${chunkIds.join(', ') || '(none)'}). ` +
+        `If this file came from an export tool, re-export as PCM WAV: ffmpeg -i input -c:a pcm_s16le output.wav`,
+    );
+  }
   if (!data) {
     throw new Error(
       `audioDecoder: no data chunk — found chunk ids [${chunkIds.join(', ') || '(none)'}]. ` +

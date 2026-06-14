@@ -63,7 +63,9 @@ export async function tryImportNamed<T>(
       message:
         `Failed to import "${modulePath}" for ${diagnosticNoun} "${exportName}". ` +
         `Probable cause: ${causeMessage}. ` +
-        `Fix: ensure the module exists, is valid ESM, and exports \`${exportName}\` with _tag "${expectedTag}".`,
+        `This usually means the file has a syntax/type error or imports something unavailable in Node. ` +
+        `Fix: run \`npx tsc --noEmit ${modulePath}\` to surface the underlying error, then ensure the module ` +
+        `is valid ESM and exports \`${exportName}\` with _tag "${expectedTag}".`,
       cause: err,
     });
   }
@@ -74,8 +76,9 @@ export async function tryImportNamed<T>(
       source: diagnosticSource,
       code: 'export-tag-mismatch',
       message:
-        `Export "${exportName}" in "${modulePath}" has _tag "${String(exported._tag)}" but expected "${expectedTag}". ` +
-        `Fix: wrap the value with ${TAG_TO_FACTORY[expectedTag] ?? NOUN_TO_FACTORY[diagnosticNoun] ?? 'the correct factory'}.make({ ... }) ` +
+        `Found export "${exportName}" in "${modulePath}", but it is not a ${diagnosticNoun} definition ` +
+        `(its _tag is "${String(exported._tag)}", expected "${expectedTag}"), so it was skipped and the reference stays unresolved. ` +
+        `Fix: create it with the factory — \`export const ${exportName} = ${TAG_TO_FACTORY[expectedTag] ?? NOUN_TO_FACTORY[diagnosticNoun] ?? 'TheCorrectFactory'}.make({ ... })\` ` +
         `so the export carries _tag "${expectedTag}".`,
       detail: { exportName, modulePath, expectedTag, foundTag: exported._tag },
     });

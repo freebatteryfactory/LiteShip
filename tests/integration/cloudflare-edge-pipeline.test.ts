@@ -16,7 +16,8 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Boundary } from '@czap/core';
 import { collectBoundaryManifest } from '@czap/vite';
-import { cloudflareMiddleware, setWorkersEnvForTesting, resetWorkersEnvForTesting } from '@czap/cloudflare';
+import { cloudflareMiddleware } from '@czap/cloudflare';
+import { setWorkersEnvForTesting, resetWorkersEnvForTesting } from '@czap/cloudflare/testing';
 
 const tempDirs: string[] = [];
 
