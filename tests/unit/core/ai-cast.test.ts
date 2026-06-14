@@ -306,6 +306,22 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/does not match node.family/i);
   });
 
+  test('a node missing the DocumentGraphNode base envelope (_tag/_version/id/meta) is REJECTED', () => {
+    const base = graph([node('a')]);
+    // `{ family:'signal', input:'x' }` has the family + a family field but NONE of the base
+    // envelope. The schema requires the full NodeBase on every family, so it is rejected.
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'signal', node: { family: 'signal', input: 'x' } }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
+  });
+
   test('policy and export node families are RECOGNIZED — not false-rejected as unknown family', () => {
     const base = graph([node('a')]);
     const policyNode = {
@@ -496,6 +512,32 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
   test('generated-ui target without a catalog is a hard error', () => {
     const g = graph([node('a')]);
     expect(() => AICast.castContext(g, { targets: ['generated-ui'] })).toThrow(/requires a host component catalog/);
+  });
+
+  test('the advertised graph-patch schema does NOT offer an in-place "update" op (nodes are content-addressed)', () => {
+    const g = graph([node('a')]);
+    const ctx = AICast.castContext(g, { targets: ['graph-patch'] });
+    const gp = ctx.proposalSchemas.find((s) => s.target === 'graph-patch')!;
+    const ops = (gp.jsonSchema['properties'] as Record<string, Record<string, unknown>>)['ops']!;
+    const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<string, Record<string, Record<string, unknown>>>;
+    expect(nodeOp['properties']!['op']!['enum']).toEqual(['add', 'remove']);
+  });
+
+  test('a catalog shape change (same component NAMES, different props) changes the generated-ui context id', () => {
+    const g = graph([node('a')]);
+    const catA = defineComponentCatalog({
+      version: '1',
+      components: { Card: { props: { title: { type: 'string', required: true } }, children: 'optional' } },
+    });
+    const catB = defineComponentCatalog({
+      version: '1',
+      components: { Card: { props: { title: { type: 'string', required: false } }, children: 'optional' } },
+    });
+    const idA = AICast.castContext(g, { targets: ['generated-ui'], catalog: catA }).id;
+    const idB = AICast.castContext(g, { targets: ['generated-ui'], catalog: catB }).id;
+    // Names match ('Card'), but the catalog HASH differs (required-ness changed), so the
+    // advertised schema — and the content-addressed context that embeds it — differ.
+    expect(idA).not.toBe(idB);
   });
 
   // Bind the injected validator through an EXPLICITLY-TYPED constant rather than a

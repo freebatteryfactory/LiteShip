@@ -290,7 +290,12 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
                 type: 'object',
                 required: ['op', 'family', 'node'],
                 properties: {
-                  op: { enum: ['add', 'remove', 'update'] },
+                  // Nodes are CONTENT-ADDRESSED: a changed payload is a new id, so there is
+                  // no in-place "update" to advertise (an `update` would install a NEW node
+                  // and leave the old one). To change a node, `remove` the old id and `add`
+                  // the replacement. (The validator still TOLERATES a host-diff `update`; it
+                  // is just not advertised to the model as a meaningful in-place mutation.)
+                  op: { enum: ['add', 'remove'], description: 'add a node, or remove one by id.' },
                   family: { enum: [...NODE_FAMILIES] },
                   node: { type: 'object', description: 'A sealed DocumentGraphNode.' },
                 },
@@ -332,6 +337,12 @@ export function generatedUIProposalSchema(catalog: ComponentCatalog): ProposalSc
       'validates names, props, and child policy before any host renders it.',
     jsonSchema: {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
+      // The catalog's content hash binds this schema to the EXACT catalog version. A host
+      // can change a component's required props / child policy / tag WITHOUT renaming it;
+      // the component-name enum would then be identical and a cached AIContext stale. Folding
+      // the hash in makes the advertised schema — and the content-addressed AIContext that
+      // embeds it — change whenever the catalog changes.
+      'x-catalog-hash': catalog.catalogHash,
       type: 'object',
       required: ['name', 'props'],
       properties: {
