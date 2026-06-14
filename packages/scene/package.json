@@ -1,6 +1,6 @@
 {
   "name": "@czap/scene",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "ECS-backed scene composition capsule for czap",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

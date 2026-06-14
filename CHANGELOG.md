@@ -6,10 +6,59 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
-Hardening follow-ups to the 0.1.5 dogfood wave: ROADMAP epics #1 (branch
-hotspots) and #2 (advisory cleanup), the timeout-flake class seen during the
-release, and the two deferred dogfood items. Plus the v0.2 release-trust
-pivot (epic #4) — these notes ship as 0.2.0.
+## [0.2.0] - 2026-06-14
+
+The substrate cut. 0.1.x proved the casts; 0.2.0 makes the **DocumentGraph IR** the
+keystone they all project from, lands the **production cast family** (CSS / SVG / GLSL /
+WGSL / ARIA / video / AI), and ships the **AI cast primitive** — a content-addressed
+graph spoken to a model and a validated, unforgeable proposal taken back. Plus a
+developer-experience pass (defaults + teaching errors), a full dev inspector, and a
+structural-lint guard layer. Pre-1.0 break policy applies — breaking changes are noted.
+
+### Added — substrate, casts, AI
+
+- `@czap/core` — **DocumentGraph IR** (the keystone): a content-addressed graph of
+  signal / entity / component / pose / transition / projection / policy / export nodes,
+  with deterministic evaluation across the render seam and the dual-export proof. Every
+  cast now projects from one graph.
+- `@czap/compiler` + `@czap/astro` — **live GLSL and WGSL casts**: the compilers emit
+  per-state uniform/binding declarations and a `bindUniforms` helper; the runtime
+  subscribes to `czap:uniform-update` and binds `detail.glsl` / `detail.wgsl` on every
+  boundary crossing (the WGSL consumer is net-new).
+- `@czap/scene` — **SVG egress**: an ECS render sink applies `_svgAttrs`
+  (transform / opacity / mixBlendMode / clipPath) post-tick, closing the SVG cast.
+- `@czap/core` — **AI Cast Primitive** (`AICast`): a graph → token-budgeted
+  `AIContext` + tool/output schema → model proposes a `GraphPatch` / `GeneratedUITree`
+  → the framework **validates + previews** → a `ValidatedProposal` envelope a host can
+  apply. The envelope is unforgeable (a module-private `ApplyToken` witness backed by a
+  WeakSet identity registry, frozen), untrusted nodes are decoded against a declarative
+  `Schema.Union` over all node families, and there is **no model-output → mutation path
+  that skips validation**. Zero network/provider imports — the host owns all authority.
+- `@czap/core` — **escalation chooser** (`chooseRung`) wired into the compositor as a
+  per-projection target gate: a budget/policy constraint downgrades the admitted casts.
+- `@czap/core` — **GraphPatch round-trip capsule**; `apply`'s `update` is now a true
+  logical replace (drops the prior node sharing a `logicalKey`, not an orphaning add).
+- `@czap/stage` — headless video **`FrameEncoder`** behind the `encode?` seam (ffmpeg);
+  `@czap/stage` promoted to a published package.
+- `@czap/astro` — the dev inspector now covers the **full** 0.2.0 surface: per-boundary
+  active-casts (css/glsl/wgsl/aria/svg + live values), an escalation panel (rung +
+  admitted targets), and a read-only DocumentGraph peek, on the Alt+Shift+C overlay.
+- **Capsule system** — one `defineCapsule` generates a fast-check property test + a
+  budgeted bench; `bench:gate` fails the build on a budget regression. 24 capsules.
+- **ast-grep structural guards** — a `lint:structural` gauntlet phase backstops the
+  hand-rolled meta-guards (raw-timeout, seam-integrity, c8-ignore-reason, doc drift).
+- **Wave-3 DX sweep** — backward-compatible defaults + teaching errors across
+  `@czap/vite` (wasm auto-detect, env validation), `@czap/astro` (no rename ritual,
+  workers configured once), `@czap/edge`, `@czap/cloudflare` (default KV binding,
+  `/testing` subpath), and `@czap/assets`; examples adopt the modern usage.
+
+### Fixed — caught by the property tests / adversarial review
+
+- `@czap/compiler` — GLSL/WGSL compilers null-proto their per-state field maps; a
+  boundary field named `__proto__` is no longer silently dropped from the bindings.
+- `@czap/genui` — `validateGeneratedUITree` guards own-property lookups; a model
+  proposing a `constructor` / `__proto__` component or prop name can't bypass the
+  unknown-component gate or crash the validator.
 
 ### Removed
 

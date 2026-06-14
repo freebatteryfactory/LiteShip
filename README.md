@@ -12,6 +12,19 @@ From one definition, the system can emit a CSS variable, a GLSL preamble, an ARI
 
 This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
 
+## Examples
+
+Open any example live on StackBlitz (it installs the published `@czap/*` packages — available from 0.2.0 onward):
+
+| Example | What it shows | Try it |
+|---|---|---|
+| [`tutorial`](./examples/tutorial) | The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/tutorial) |
+| [`showcase`](./examples/showcase) | The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/showcase) |
+| [`default`](./examples/default) | The minimal `npm create liteship` starter | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/default) |
+| [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/cloudflare-astro) |
+
+Or scaffold one locally: `npm create liteship` (also `pnpm create liteship`). In `astro dev`, press **Alt+Shift+C** to open the boundary inspector.
+
 ## Quick start
 
 Two concepts get you to a working page: `Boundary.make` (define the states) and `satelliteAttrs` (put them on an element). In an Astro project:
