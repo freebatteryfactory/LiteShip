@@ -102,19 +102,11 @@ function buildInputs(seed: ARIACompileSeedValue): {
  * buffer (suppressing console noise from dropped-key warnings), then restore the
  * default sink. Pure from the caller's view.
  */
-function compileQuietly(
-  boundary: Boundary.Shape,
-  authored: StateAttrs,
-  currentState: string,
-): ARIACompileResult {
+function compileQuietly(boundary: Boundary.Shape, authored: StateAttrs, currentState: string): ARIACompileResult {
   const { sink } = Diagnostics.createBufferSink();
   Diagnostics.setSink(sink);
   try {
-    return ARIACompiler.compile(
-      boundary,
-      authored as { [s: string]: Record<string, string> },
-      currentState,
-    );
+    return ARIACompiler.compile(boundary, authored as { [s: string]: Record<string, string> }, currentState);
   } finally {
     Diagnostics.resetSink();
   }
@@ -152,8 +144,10 @@ export const ariaCompileCapsule = defineCapsule({
       check: (_input: unknown, output: unknown): boolean => {
         const o = output as ARIACompileOutput;
         const again = compileQuietly(makeBoundary(o.stateNames), o.authored, o.currentState);
-        return JSON.stringify(again.stateAttributes) === JSON.stringify(o.result.stateAttributes) &&
-          JSON.stringify(again.currentAttributes) === JSON.stringify(o.result.currentAttributes);
+        return (
+          JSON.stringify(again.stateAttributes) === JSON.stringify(o.result.stateAttributes) &&
+          JSON.stringify(again.currentAttributes) === JSON.stringify(o.result.currentAttributes)
+        );
       },
       message: 'compile must be deterministic (same boundary + attributes → identical output)',
     },

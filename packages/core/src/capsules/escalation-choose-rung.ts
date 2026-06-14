@@ -34,11 +34,7 @@ import { sealNode } from '../document-graph-address.js';
 import { Cap } from '../caps.js';
 import type { PolicyNode, RuntimeSite } from '../document-graph.js';
 import type { CellMeta } from '../protocol.js';
-import {
-  chooseRung,
-  RUNG_TARGETS,
-  _resetEscalationMemo,
-} from '../escalation.js';
+import { chooseRung, RUNG_TARGETS, _resetEscalationMemo } from '../escalation.js';
 import type { EscalationResult, RungChoice } from '../escalation.js';
 
 /** The five rungs, as a schema literal union the arbitrary fully supports. */
@@ -59,11 +55,7 @@ const RuntimeSiteSchema = Schema.Union([
 ]);
 
 /** Optional allocation class — the only budget axis with a categorical floor. */
-const AllocClassSchema = Schema.Union([
-  Schema.Literal('zero'),
-  Schema.Literal('bounded'),
-  Schema.Literal('unbounded'),
-]);
+const AllocClassSchema = Schema.Union([Schema.Literal('zero'), Schema.Literal('bounded'), Schema.Literal('unbounded')]);
 
 /**
  * Seed material the schema-arbitrary CAN produce: the policy's capability /

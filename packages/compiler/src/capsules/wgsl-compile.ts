@@ -161,7 +161,7 @@ export const wgslCompileCapsule = defineCapsule({
         }
         return true;
       },
-      message: 'stateBindings[state] must carry exactly each state\'s authored fields (the GLSL stateUniforms mirror)',
+      message: "stateBindings[state] must carry exactly each state's authored fields (the GLSL stateUniforms mirror)",
     },
     {
       name: 'type-promotion-f32-i32-u32',
