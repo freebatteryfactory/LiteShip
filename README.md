@@ -14,7 +14,7 @@ This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
 
 ## Examples
 
-The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@czap/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `pnpm --filter <name> dev`.
+The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@czap/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `cd examples/<name> && pnpm dev` (each example carries its own `dev` script).
 
 | Example | What it shows |
 |---|---|
