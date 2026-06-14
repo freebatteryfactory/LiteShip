@@ -1,0 +1,18 @@
+# Backstops tests/unit/meta/a1-seam-integrity.test.ts (CUT A1 stdout-capture seam).
+#
+# The deleted MCP dispatch seam monkey-patched process.stdout.write to capture
+# CLI output. The meta-test matches with
+#   /process\.stdout[\s\S]{0,40}\.write\s*=/
+# which also fires on `===` comparisons and prose within 40 chars. This rule
+# matches only a real assignment expression whose target is `.stdout.write`,
+# so equality checks and documentation can never trip it.
+id: a1-no-stdout-monkeypatch
+language: typescript
+severity: error
+message: "process.stdout.write monkey-patch is forbidden (CUT A1 stdout-capture seam) — return structuredContent instead"
+files:
+  - "**/packages/mcp-server/src/**"
+rule:
+  any:
+    - pattern: process.stdout.write = $FN
+    - pattern: $OBJ.stdout.write = $FN

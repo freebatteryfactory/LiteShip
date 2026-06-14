@@ -4,6 +4,7 @@ packages:
   - 'tests/integration/astro'
   - 'tests/integration/vite'
 allowBuilds:
+  '@ast-grep/cli': true
   esbuild: false
   msgpackr-extract: false
   sharp: false

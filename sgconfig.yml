@@ -1,0 +1,12 @@
+# ast-grep configuration — structural lint guards (wave3/ast-grep adoption).
+#
+# These rules are AST-based ports of the highest-value hand-rolled meta-guards
+# under tests/unit/meta/. They run in the gauntlet `lint:structural` phase and
+# FAIL the build on any error-severity match. Every rule here passes clean on
+# the current tree; each one BACKSTOPS an existing vitest meta-test (the test
+# keeps the budget/byte-level assertions; the ast-grep rule catches structural
+# regressions the line-anchored regex misses — e.g. multiline call signatures).
+#
+# Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
+ruleDirs:
+  - sgrules

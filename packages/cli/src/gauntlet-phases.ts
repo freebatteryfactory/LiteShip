@@ -31,7 +31,7 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 35-phase gauntlet sequence, in execution order. */
+/** The canonical 36-phase gauntlet sequence, in execution order. */
 export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
@@ -41,6 +41,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'capsule:compile', command: 'pnpm run capsule:compile' },
   { label: 'typecheck', command: 'pnpm run typecheck' },
   { label: 'lint', command: 'pnpm run lint' },
+  { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
   { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },

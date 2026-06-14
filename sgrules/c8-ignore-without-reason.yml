@@ -1,0 +1,28 @@
+# Backstops tests/unit/meta/c8-ignore-budget.test.ts.
+#
+# The budget test caps `/* c8 ignore` annotations at 5 repo-wide; this rule
+# adds the qualitative half the count-based test can't express: every c8-ignore
+# must carry an adjacent `// reason: ...` rationale, so a narrow coverage
+# exemption can never land unexplained. (The numeric budget stays in the
+# vitest test — ast-grep counts matches but the "<= 5" assertion lives there.)
+id: c8-ignore-without-reason
+language: typescript
+severity: error
+message: "c8 ignore annotation without an adjacent '// reason: ...' rationale — explain why the branch is unreachable"
+files:
+  - "**/packages/*/src/**/*.ts"
+  - "**/scripts/**/*.ts"
+rule:
+  kind: comment
+  regex: "^/\\*\\s*c8\\s+ignore"
+  all:
+    - not:
+        follows:
+          kind: comment
+          regex: "reason:"
+          stopBy: neighbor
+    - not:
+        precedes:
+          kind: comment
+          regex: "reason:"
+          stopBy: neighbor

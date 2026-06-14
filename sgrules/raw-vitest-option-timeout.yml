@@ -1,0 +1,28 @@
+# Backstops tests/unit/meta/test-timeout-policy.test.ts (OPTION_TIMEOUT).
+#
+# The option-object form of the same budget: a vitest timeout/hookTimeout/
+# testTimeout key paired with a bare numeric literal instead of scaledTimeout().
+# The meta-test's regex
+#   /\b(timeout|hookTimeout|testTimeout)\s*:\s*([0-9][0-9_]*)/
+# also fires on comments, strings, and unrelated objects (and on Playwright's
+# own config timeouts). This rule fires only on a real object-literal pair with
+# a bare numeric value — scaledTimeout(...) values are call_expressions and pass.
+# Scoped to vitest test files + vitest*.ts configs so the Playwright config's
+# legitimate `timeout: 60_000` is out of range.
+id: raw-vitest-option-timeout
+language: typescript
+severity: error
+message: "Raw numeric vitest timeout option — wrap it in scaledTimeout(...) from vitest.shared.ts"
+files:
+  - "**/tests/**/*.test.ts"
+  - "**/vitest*.ts"
+rule:
+  kind: pair
+  all:
+    - has:
+        field: key
+        regex: "^(timeout|hookTimeout|testTimeout)$"
+    - has:
+        field: value
+        kind: number
+        regex: "^[0-9][0-9_]{3,}$"
