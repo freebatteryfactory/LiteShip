@@ -8,7 +8,7 @@
 
 > `const` **ariaCompileCapsule**: `CapsuleDef`\<`"pureTransform"`, \{ `entries`: readonly readonly `object`[][]; `states`: readonly `string`[]; \}, `unknown`, `unknown`\>
 
-Defined in: [compiler/src/capsules/aria-compile.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/capsules/aria-compile.ts#L124)
+Defined in: [compiler/src/capsules/aria-compile.ts:128](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/capsules/aria-compile.ts#L128)
 
 Declared capsule for the ARIA compiler. The generated property test feeds
 schema-seeds; `run` builds a real Boundary + attribute maps and calls
