@@ -15,14 +15,6 @@ Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
 Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core` owns the language; host packages rig it to browsers, Astro, edge, workers, video, CLI, and AI-tooling surfaces. Worth noting: the grammar holds across all of them. Hosts do not define boundary semantics; every projection target reads the same content-addressed definition.
 
-## Document graph (the IR)
-
-That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. Full rationale: [ADR-0015](./adr/0015-document-graph-ir.md).
-
-## AI cast
-
-The same graph casts *out* to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
-
 ## Package DAG
 
 ```text
