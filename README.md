@@ -14,16 +14,16 @@ This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
 
 ## Examples
 
-Open any example live on StackBlitz (it installs the published `@czap/*` packages — available from 0.2.0 onward):
+The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@czap/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `pnpm --filter <name> dev`.
 
-| Example | What it shows | Try it |
-|---|---|---|
-| [`tutorial`](./examples/tutorial) | The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/tutorial) |
-| [`showcase`](./examples/showcase) | The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/showcase) |
-| [`default`](./examples/default) | The minimal `npm create liteship` starter | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/default) |
-| [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare | [Open ↗](https://stackblitz.com/github/heyoub/LiteShip/tree/main/examples/cloudflare-astro) |
+| Example | What it shows |
+|---|---|
+| [`tutorial`](./examples/tutorial) | The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming |
+| [`showcase`](./examples/showcase) | The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI |
+| [`default`](./examples/default) | The minimal `npm create liteship` starter |
+| [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare |
 
-Or scaffold one locally: `npm create liteship` (also `pnpm create liteship`). In `astro dev`, press **Alt+Shift+C** to open the boundary inspector.
+For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@czap/*` ranges, so it installs anywhere once 0.2.0 is on npm. In `astro dev`, press **Alt+Shift+C** to open the boundary inspector.
 
 ## Quick start
 
@@ -98,7 +98,7 @@ The Quick Start installs the smallest useful set: `@czap/core` (the snippet's on
 
 | Package | Description |
 | --- | --- |
-| [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, Compositor, ECS, HLC, DAG, Plan, AVBridge |
+| [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge |
 | [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package) |
 | [`@czap/genui`](./packages/genui) | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions) |
 | [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating |
@@ -123,6 +123,7 @@ Reach for the rest only when the surface meaning justifies the runtime escalatio
 | [`@czap/remotion`](./packages/remotion) | Remotion adapter: React hooks + composition helpers |
 | [`@czap/scene`](./packages/scene) | ECS-backed scene composition + timeline authoring |
 | [`@czap/assets`](./packages/assets) | Asset capsules + analysis projections (audio waveform, beat markers, ...) |
+| [`@czap/stage`](./packages/stage) | Dual-export orchestration: one document graph → static Astro page + headless video, proven same-source (ffmpeg backend on `@czap/stage/ffmpeg`) |
 | [`@czap/cli`](./packages/cli) | `czap` CLI: AI-first JSON I/O with human-pretty TTY mode |
 | [`@czap/mcp-server`](./packages/mcp-server) | Model Context Protocol server for AI tooling integration |
 | [`@czap/_spine`](./packages/_spine) | Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene` |

@@ -112,6 +112,30 @@ Main surfaces:
 - `World`
 - `Receipt`
 - `DAG`
+- `DocumentGraph`
+- `GraphPatch`
+- `AICast`
+- `chooseRung`
+
+### Document graph (the IR)
+
+The content-addressed keystone every cast reads from ([ADR-0015](./adr/0015-document-graph-ir.md)). Reach for it when you need:
+
+- a typed, addressable form of a definition (eight node families: `signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`)
+- proof that two casts share one source (same content address)
+- typed graph mutation — `GraphPatch`: `diff` / `apply` / `validate` / `receipt`
+
+Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `sealNode` / `sealGraph`, `validateGraph`, `linearizeGraph`, `GraphPatch`. `apply` re-seals the graph, so a patched node's address stays honest.
+
+### AI cast
+
+Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./adr/0015-document-graph-ir.md)). Reach for it when you need:
+
+- a deterministic, token-budgeted `AIContext` (graph summary + tool schema) for a model call
+- validation of a model's `GraphPatch` proposal (or a genui tree, ADR-0014)
+- the envelope that keeps raw model output from ever mutating a graph
+
+Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchProposal`, `validateGeneratedUIProposal`, `applyValidatedPatch`, `ValidatedProposal`, `ApplyToken`. The primitive is pure — zero network, zero provider imports — and `mintValidated` is denied at the package subpath, so a consumer cannot forge a proposal. The host owns the model call and the authority to apply.
 
 ---
 
@@ -394,6 +418,119 @@ This package is for the Remotion / video branch of the ecosystem, not the main A
 
 ---
 
+## `@czap/stage`
+
+Source: [`packages/stage/src/index.ts`](../packages/stage/src/index.ts)
+
+The dual-export orchestration layer: cast one document graph to more than one carrier and prove they share a source. Runtime status: `standalone subsystem`.
+
+Reach for it when you need:
+
+- a static Astro page and a video export from the same definition
+- proof both outputs trace to one content address
+- headless, byte-real video encoding without a system-codec hard dependency
+
+Main surfaces:
+
+- `dualExport`
+- `exportAstroPage`
+- `exportVideo` / `exportVideoEncoded`
+- `FrameEncoder` (the injectable seam)
+
+The `encode?` seam keeps `@czap/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@czap/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked.
+
+---
+
+## `@czap/scene`
+
+Source: [`packages/scene/src/index.ts`](../packages/scene/src/index.ts)
+
+ECS-backed scene composition + timeline authoring (ADR-0009). Runtime status: `host-wired`.
+
+Reach for it when you need:
+
+- timeline-driven composition (video, audio, transitions, effects)
+- an ECS world with the canonical systems already written
+- a compiled scene that drives a frame loop
+
+Main surfaces:
+
+- `SceneContract` / `compileScene`
+- `Track` (`Track.video` / `Track.audio` / `Track.transition` / `Track.effect`)
+- `SceneRuntime`
+- `VideoSystem` / `AudioSystem` / `TransitionSystem` / `EffectSystem` (+ the sync + pass-through mixer)
+- `bindBeats` (beat-indexed composition from `@czap/assets` projections)
+
+Paired with `@czap/stage` for the video-export branch.
+
+---
+
+## `@czap/assets`
+
+Source: [`packages/assets/src/index.ts`](../packages/assets/src/index.ts)
+
+Asset capsules + analysis projections, built on the `cachedProjection` arm. Runtime status: `host-wired`.
+
+Reach for it when you need:
+
+- declarative asset loading + caching (`defineAsset`)
+- audio / video / image decoders
+- signal-indexed analysis projections to drive boundaries or scenes
+
+Main surfaces:
+
+- `defineAsset`
+- `audioDecoder` / `videoDecoder` / `imageDecoder`
+- `BeatMarkerProjection` / `OnsetProjection` / `WaveformProjection` / `WavMetadataProjection`
+
+---
+
+## `@czap/command`
+
+Source: [`packages/command/src/index.ts`](../packages/command/src/index.ts)
+
+The shared command registry + dispatcher both the CLI and the MCP server route through (CUT A1). Runtime status: `host-wired`. Not imported by app code — it is the seam that keeps `czap <verb>` and the MCP tool surface one implementation.
+
+---
+
+## `@czap/cli`
+
+Source: [`packages/cli/src/index.ts`](../packages/cli/src/index.ts)
+
+The JSON-first `czap` CLI (human-pretty in a TTY). Runtime status: build tooling — not an app dependency.
+
+Reach for it when you need:
+
+- structural description + audit (`czap describe`, `czap audit`, `czap doctor`)
+- scene + asset operations (`czap scene.compile`, `czap scene.render`, `czap asset.analyze`)
+- capsule inspection (`czap capsule.inspect`)
+- release + gauntlet (`czap ship`, `czap verify`, `czap gauntlet`)
+
+Entry: `pnpm exec czap <verb>` in a LiteShip checkout. `czap help` prints the chart.
+
+---
+
+## `@czap/audit`
+
+Source: [`packages/audit/src/index.ts`](../packages/audit/src/index.ts)
+
+The profile-driven structure / integrity / surface audit engine. Runtime status: `standalone` (zero `@czap/*` deps). Consumed by `@czap/cli` and the gauntlet; see [AUDIT.md](./AUDIT.md).
+
+Main surfaces:
+
+- `runAuditPasses`
+- `AuditPassResult`
+
+---
+
+## `@czap/mcp-server`
+
+Source: [`packages/mcp-server/src/index.ts`](../packages/mcp-server/src/index.ts)
+
+The Model Context Protocol server that exposes LiteShip document graphs + command dispatch to AI tooling. Runtime status: build tooling. Entry: `czap mcp` (stdio) or `czap mcp --http=:port`. Dispatches through `@czap/command`, so its tool surface and the CLI's verb surface never drift.
+
+---
+
 ## A simple selection rule
 
 If the problem is:
@@ -408,3 +545,8 @@ If the problem is:
 - request-time adaptation: `@czap/edge`
 - off-thread runtime: `@czap/worker`
 - Remotion / video composition: `@czap/remotion`
+- dual-export (page + video from one graph): `@czap/stage`
+- timeline / ECS scene composition: `@czap/scene`
+- asset loading + analysis projections: `@czap/assets`
+- the `czap` CLI or codebase auditing: `@czap/cli`, `@czap/audit`
+- an MCP server for AI tooling: `@czap/mcp-server`

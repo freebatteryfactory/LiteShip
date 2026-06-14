@@ -37,6 +37,17 @@ These are the performance and capability decisions:
 - zero-allocation hot path (pool, dirty, dense ECS, microtask batching)
 - per-tick phase sequencing
 
+### If the question is "What is the IR everything casts from?"
+
+Read [ARCHITECTURE.md](./ARCHITECTURE.md) — "Document graph (the IR)" and "AI cast" — then
+[ADR-0015 document graph IR](./adr/0015-document-graph-ir.md).
+
+This is the keystone:
+
+- the content-addressed document graph (eight node families)
+- `GraphPatch`, the one typed mutation path
+- the AI cast envelope (validate before apply, never the reverse)
+
 ### If the question is "How should I think with this on a visually rich Astro site?"
 
 Read [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md).
@@ -164,6 +175,12 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the runtime policy global written? | `packages/astro/src/runtime/policy.ts`, via `globals.ts` |
 | Where does `client:satellite` register? | `packages/astro/src/integration.ts` |
 | Where is the `Satellite` Astro component? | `packages/astro/src/Satellite.astro` (default export from `@czap/astro/Satellite`) |
+| Where is the document graph IR? | `packages/core/src/document-graph.ts` + `document-graph-address.ts` (`sealNode`/`sealGraph`; ADR-0015) |
+| How do I mutate a graph? | `packages/core/src/graph-patch.ts` (`GraphPatch.diff`/`apply`/`validate`; apply re-seals) |
+| Where is the AI cast / how is a model proposal validated? | `packages/core/src/ai-cast.ts` (`castContext` → `validateGraphPatchProposal` → `applyValidatedPatch`); envelope in `validated-output.ts` (ADR-0015) |
+| How does a surface choose a render tier? | `packages/core/src/escalation.ts` (`chooseRung`; budget-gated, wired in the compositor) |
+| Where is the dual-export (one graph → page + video)? | `packages/stage/src/dual-export.ts` (`dualExport`; ffmpeg backend on `@czap/stage/ffmpeg`) |
+| What runs in `lint:structural`? | `sgconfig.yml` + `sgrules/` (AST guards; `docs/AUDIT.md` "Structural lint") |
 | How do I add a new compile target? | `docs/adr/0006-compiler-dispatch.md`, then `packages/compiler/src/dispatch.ts` |
 | How do I add a new primitive? | `docs/adr/0001-namespace-pattern.md`, then mirror the existing primitive shape in `packages/core/src/` |
 | How do I extend an existing type union? | The pattern is grep-first today; see CONTRIBUTING.md "Architecture changes" and the affected `_spine/*.d.ts` file |
