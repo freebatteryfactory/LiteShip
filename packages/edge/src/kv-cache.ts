@@ -91,6 +91,13 @@ export interface CompiledWGSLOutput {
   readonly declarations: string;
   /** Default binding values keyed by WGSL struct field name. */
   readonly bindingValues: Readonly<Record<string, number>>;
+  /**
+   * Per-state authored binding values keyed by state name then field name — the
+   * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the satellite
+   * payload so the runtime resolves `stateBindings[currentState]` and updates
+   * struct fields on each crossing. Absent when no per-state values were authored.
+   */
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 /**
@@ -301,7 +308,15 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         const glsl = glslBase
           ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) }
           : null;
-        const wgsl = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
+        const wgslBase = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
+        // Per-state authored bindings ride the WGSL cast so the live runtime can
+        // resolve `stateBindings[currentState]` — the WGSL analog of stateUniforms.
+        const wgslStateBindings = asNestedNumberRecord(
+          (parsed as { wgsl?: { stateBindings?: unknown } }).wgsl?.stateBindings,
+        );
+        const wgsl = wgslBase
+          ? { ...wgslBase, ...(wgslStateBindings ? { stateBindings: wgslStateBindings } : {}) }
+          : null;
         return {
           css: String(parsed.css),
           propertyRegistrations: String(parsed.propertyRegistrations),

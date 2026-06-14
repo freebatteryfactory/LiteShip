@@ -39,10 +39,12 @@ export interface Props extends SatelliteProps {}
 // authoring. Guarded: outside the integration (no virtual module), or when the
 // caller already passed `aria`, this is a no-op and `satelliteAttrs` still works.
 let resolvedAria = Astro.props.aria;
-// Authored `@glsl` per-state uniforms ride the same content-addressed join as
-// `@aria` — the manifest's `outputs[].glsl.stateUniforms` keyed by boundary id.
+// Authored `@glsl`/`@wgsl` per-state values ride the same content-addressed join
+// as `@aria` — the manifest's `outputs[].glsl.stateUniforms` /
+// `outputs[].wgsl.stateBindings` keyed by boundary id.
 let resolvedGlsl = Astro.props.glsl;
-if ((!resolvedAria || !resolvedGlsl) && Astro.props.boundary) {
+let resolvedWgsl = Astro.props.wgsl;
+if ((!resolvedAria || !resolvedGlsl || !resolvedWgsl) && Astro.props.boundary) {
   try {
     const { boundaries } = (await import('virtual:czap/boundaries')) as {
       boundaries: Record<
@@ -52,6 +54,7 @@ if ((!resolvedAria || !resolvedGlsl) && Astro.props.boundary) {
           outputs: ReadonlyArray<{
             aria?: Record<string, Record<string, string>>;
             glsl?: { stateUniforms?: Record<string, Record<string, number>> };
+            wgsl?: { stateBindings?: Record<string, Record<string, number>> };
           }>;
         }
       >;
@@ -59,6 +62,7 @@ if ((!resolvedAria || !resolvedGlsl) && Astro.props.boundary) {
     const entry = Object.values(boundaries).find((e) => e.id === Astro.props.boundary!.id);
     resolvedAria ??= entry?.outputs.find((o) => o.aria)?.aria;
     resolvedGlsl ??= entry?.outputs.find((o) => o.glsl?.stateUniforms)?.glsl?.stateUniforms;
+    resolvedWgsl ??= entry?.outputs.find((o) => o.wgsl?.stateBindings)?.wgsl?.stateBindings;
   } catch {
     // virtual:czap/boundaries unavailable (e.g. rendered outside the czap
     // integration) — authored ARIA/GLSL can still be supplied via the props.
@@ -69,6 +73,7 @@ const attrs = satelliteAttrs({
   ...Astro.props,
   ...(resolvedAria ? { aria: resolvedAria } : {}),
   ...(resolvedGlsl ? { glsl: resolvedGlsl } : {}),
+  ...(resolvedWgsl ? { wgsl: resolvedWgsl } : {}),
 });
 ---
 

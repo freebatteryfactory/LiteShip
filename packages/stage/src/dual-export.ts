@@ -297,16 +297,17 @@ function produceVideoFrames(graph: DocumentGraph): VideoFrame[] {
         for (let i = 0; i < renderer.totalFrames; i++) {
           renderer.scheduler.step();
           // Sweep the input across the boundary's threshold span as the clock
-          // advances so each quantizer's `evaluate` re-derives its state per
-          // frame (a real boundary crossing over the video's timeline). The
-          // compositor's `compute()` reflects the parked pose-track; the
-          // evaluated crossing track is captured per-frame so the cast records
-          // BOTH what the compositor emits and the boundary states the signal
-          // actually crossed.
+          // advances so each quantizer's `evaluate` re-derives its state per frame
+          // (a real boundary crossing over the video's timeline). Marking each
+          // driven quantizer dirty makes `compute()` read its swept state instead
+          // of carrying forward the previous composite — the same evaluate→mark-
+          // dirty contract the worker compositor uses. The crossing is also
+          // captured in `posed` so the artifact digest records it explicitly.
           const progress = i / denom;
           const posedFrame: Record<string, string> = {};
           for (const { key, quantizer, lo, hi } of driven) {
             posedFrame[key] = quantizer.evaluate(lo + (hi - lo) * progress) as string;
+            compositor.runtime.markDirty(key);
           }
           collected.push({ composite: yield* compositor.compute(), posed: posedFrame });
         }

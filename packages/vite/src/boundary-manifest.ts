@@ -250,7 +250,14 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
       );
       const result = dispatch({ _tag: 'WGSLCompiler', boundary, states: numericStates });
       return result.target === 'wgsl'
-        ? { declarations: result.result.declarations, bindingValues: result.result.bindingValues }
+        ? {
+            declarations: result.result.declarations,
+            bindingValues: result.result.bindingValues,
+            // Per-state authored bindings ride to the runtime so a crossing
+            // resolves `stateBindings[currentState]` — the WGSL analog of GLSL's
+            // per-state `stateUniforms`, not just the flat default.
+            stateBindings: result.result.stateBindings,
+          }
         : undefined;
     },
   },
