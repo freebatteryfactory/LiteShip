@@ -200,6 +200,21 @@ function compile<B extends Boundary.Shape>(
     stateUniforms[stateName] = perState;
   }
 
+  // Complete every per-state map: a uniform authored in some states but omitted
+  // in others must be explicitly RESET (0) on entering a state that omits it.
+  // WebGL uniforms persist, so a partial `detail.glsl` would leave the shader
+  // sampling the prior state's value (a stale-GPU-state bug). WGSL gets this for
+  // free via the per-snapshot buffer clear; GLSL sets uniforms individually, so
+  // the map itself must carry the full uniform set for every state.
+  const allUniformNames = [...allKeys].map(toUniformName);
+  for (const stateName of stateNames) {
+    const perState = stateUniforms[stateName];
+    if (!perState) continue;
+    for (const uniformName of allUniformNames) {
+      if (!(uniformName in perState)) perState[uniformName] = 0;
+    }
+  }
+
   // Build uniform declarations
   const uniforms: GLSLUniform[] = [{ name: 'u_state', type: 'int', comment: 'Current state index' }];
 

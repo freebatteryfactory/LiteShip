@@ -68,6 +68,20 @@ describe('GLSLCompiler.compile', () => {
     expect(result.uniforms.find((u) => u.name === 'u_gap')).toBeDefined();
   });
 
+  test('LESSON (review): a uniform authored in only some states RESETS to 0 where omitted', () => {
+    // WebGL uniforms persist across draws: if `blur` is authored only in `dark`
+    // and the crossing into `light` omits `u_blur`, the shader keeps sampling
+    // dark's blur forever. The compiler must emit a COMPLETE per-state map
+    // (omitted → 0) so every crossing fully defines the GPU state. (WGSL gets this
+    // free via the per-snapshot buffer clear; GLSL sets uniforms individually.)
+    const result = GLSLCompiler.compile(simpleBoundary, {
+      dark: { blur: 4 },
+      light: {}, // omits blur entirely
+    });
+    expect(result.stateUniforms.dark!['u_blur']).toBe(4);
+    expect(result.stateUniforms.light!['u_blur']).toBe(0); // reset, not absent/stale
+  });
+
   test('all-integer values infer as int', () => {
     const result = GLSLCompiler.compile(simpleBoundary, {
       dark: { opacity: 1 },
