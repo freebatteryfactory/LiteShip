@@ -1,6 +1,6 @@
 # LiteShip architecture
 
-Slim structural index. Deeper explanation lives in the linked docs.
+The structural map: what the pieces are and how they fit. This doc explains the system on its own — the ADRs record *why* each choice was made, but you shouldn't need them to understand it.
 
 *LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages on npm.*
 
@@ -15,6 +15,14 @@ Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
 
 Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core` owns the language; host packages rig it to browsers, Astro, edge, workers, video, CLI, and AI-tooling surfaces. Worth noting: the grammar holds across all of them. Hosts do not define boundary semantics; every projection target reads the same content-addressed definition.
 
+## Document graph (the IR)
+
+That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. Full rationale: [ADR-0015](./adr/0015-document-graph-ir.md).
+
+## AI cast
+
+The same graph casts *out* to a model. `AICast.castContext` turns a sealed graph into a token-budgeted `AIContext` (a deterministic summary plus a tool schema); a model's reply returns as a `GraphPatch` proposal that must clear `validateGraphPatchProposal` before `applyValidatedPatch` will touch the graph. Validation mints a `ValidatedProposal` carrying an unforgeable `ApplyToken` — there is no path from raw model output to a graph mutation that skips it (`mintValidated` is denied at the package subpath; see `packages/core/package.json` `"./validated-output": null`). The primitive is pure: zero network, zero provider imports. The framework owns the envelope; the host owns the model call and the authority to apply. See [ADR-0015](./adr/0015-document-graph-ir.md) and `packages/core/src/ai-cast.ts`.
+
 ## Package DAG
 
 ```text
@@ -22,6 +30,7 @@ Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core`
 @czap/canonical -> @czap/core (bytes implementation; re-exported at core boundary)
 @czap/canonical -> @czap/genui -> @czap/web / @czap/astro / @czap/mcp-server
 @czap/core -> quantizer / compiler / detect / web / worker / remotion / assets / scene
+core + scene -> stage                              (dual-export: one graph -> static page + video)
 compiler -> vite -> astro
 detect -> edge -> astro
 edge + astro -> cloudflare
@@ -42,7 +51,7 @@ API docs per package live at [`docs/api/<name>/`](./api/); import guidance at [`
 
 - `@czap/_spine` — type spine
 - `@czap/canonical` — sync bytes kernel (CBOR, FNV-1a, addressed digests)
-- `@czap/core` — primitives + runtime coordination
+- `@czap/core` — primitives + runtime coordination + the document graph IR / AI cast
 - `@czap/genui` — closed catalog renderer for structured LLM UI trees
 - `@czap/quantizer` — boundary evaluation + transitions
 - `@czap/compiler` — CSS / GLSL / WGSL / ARIA / AI / Tailwind output
@@ -55,6 +64,7 @@ API docs per package live at [`docs/api/<name>/`](./api/); import guidance at [`
 - `@czap/worker` — off-thread compositor / render workers
 - `@czap/remotion` — Remotion adapter
 - `@czap/scene` — ECS scene composition
+- `@czap/stage` — dual-export orchestration (one graph -> static page + headless video)
 - `@czap/assets` — asset capsules + projections
 - `@czap/command` — shared command registry + dispatcher (CLI + MCP)
 - `@czap/audit` — profile-driven structure/integrity/surface audit engine (standalone)
