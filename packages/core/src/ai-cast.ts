@@ -424,23 +424,46 @@ export type ProposalAcceptance<T> = {
 /** The outcome of validating a model proposal: an acceptance (with envelope) or a rejection (with errors). */
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
-/** Required payload fields per node family — the discriminant-specific shape a proposed node must carry. */
-const NODE_FAMILY_REQUIRED: Record<string, readonly string[]> = {
-  signal: ['input'],
-  entity: ['components'],
-  component: ['name'],
-  pose: ['state'],
-  transition: ['fromPose', 'toPose', 'routing'],
-  projection: ['target'],
+/** Coarse runtime kind of a required field — what `typeof`/`Array.isArray` must agree with. */
+type FieldKind = 'string' | 'array' | 'any';
+
+/**
+ * Required payload fields per node family (all EIGHT {@link NodeFamily} discriminants),
+ * each tagged with its coarse runtime kind. `'string'` covers the branded string types
+ * (ContentAddress / CapLevel / RuntimeSite / EdgeType / SignalInput / StateName and the
+ * closed string unions); `'array'` the ref lists; `'any'` the fields whose exact runtime
+ * shape is intentionally not pinned here (CapSet, AddressedDigest) — presence only.
+ */
+const NODE_FAMILY_FIELDS: Record<string, ReadonlyArray<readonly [string, FieldKind]>> = {
+  signal: [['input', 'string']],
+  entity: [['components', 'array']],
+  component: [['name', 'string']],
+  pose: [['state', 'string']],
+  transition: [
+    ['fromPose', 'string'],
+    ['toPose', 'string'],
+    ['routing', 'string'],
+  ],
+  projection: [['target', 'string']],
+  policy: [
+    ['requires', 'string'],
+    ['grants', 'any'],
+    ['sites', 'array'],
+  ],
+  export: [
+    ['carrier', 'string'],
+    ['sourceRefs', 'array'],
+    ['artifactDigest', 'any'],
+  ],
 };
 
 /**
  * Validate a proposed node op's payload conforms to its family. `sealNode` only
  * recomputes the content address — it does NOT verify the family-specific fields — so a
- * model could otherwise mint a structurally-incomplete node (e.g. a `transition` carrying
- * only `{ family: 'transition' }`, no `fromPose`/`toPose`). Checks the op's declared
- * family matches the node's family and every family-required field is present. Returns an
- * error string, or null when well-formed.
+ * model could otherwise mint a structurally-incomplete or wrong-typed node (e.g. a
+ * `transition` with no `fromPose`, or `fromPose: 1`). Checks the op's declared family
+ * matches the node's family and every family-required field is present AND of the right
+ * coarse runtime kind. Returns an error string, or null when well-formed.
  */
 function nodeFamilyError(op: { family?: unknown; node: Record<string, unknown> }, i: number): string | null {
   const nodeFamily = op.node.family;
@@ -448,11 +471,18 @@ function nodeFamilyError(op: { family?: unknown; node: Record<string, unknown> }
   if (op.family !== undefined && op.family !== nodeFamily) {
     return `Patch op[${i}] op.family ${JSON.stringify(op.family)} does not match node.family ${JSON.stringify(nodeFamily)}.`;
   }
-  const required = NODE_FAMILY_REQUIRED[nodeFamily];
-  if (!required) return `Patch op[${i}] node has unknown family ${JSON.stringify(nodeFamily)}.`;
-  for (const field of required) {
-    if (op.node[field] === undefined || op.node[field] === null) {
+  const fields = NODE_FAMILY_FIELDS[nodeFamily];
+  if (!fields) return `Patch op[${i}] node has unknown family ${JSON.stringify(nodeFamily)}.`;
+  for (const [field, kind] of fields) {
+    const v = op.node[field];
+    if (v === undefined || v === null) {
       return `Patch op[${i}] (${nodeFamily} node) is missing required field '${field}'.`;
+    }
+    if (kind === 'string' && typeof v !== 'string') {
+      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be a string (got ${typeof v}).`;
+    }
+    if (kind === 'array' && !Array.isArray(v)) {
+      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be an array (got ${typeof v}).`;
     }
   }
   return null;

@@ -306,6 +306,55 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/does not match node.family/i);
   });
 
+  test('policy and export node families are RECOGNIZED — not false-rejected as unknown family', () => {
+    const base = graph([node('a')]);
+    const policyNode = {
+      _tag: 'DocGraphPolicyNode',
+      _version: 1,
+      family: 'policy',
+      id: '',
+      meta: META,
+      appliesTo: [],
+      requires: 'static',
+      grants: 0,
+      sites: ['node'],
+    };
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'policy', node: policyNode }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    // It may pass, or fail structural validate for unrelated reasons — but it must NEVER
+    // be rejected for "unknown family" (the round-6 6-family table missed policy/export).
+    if (!checked.ok) expect(checked.errors.join(' ')).not.toMatch(/unknown family/i);
+  });
+
+  test('a node field of the WRONG TYPE (transition fromPose as a number) is REJECTED — presence is not enough', () => {
+    const base = graph([node('a')]);
+    const badTransition = {
+      _tag: 'DocGraphTransitionNode',
+      _version: 1,
+      family: 'transition',
+      id: '',
+      meta: META,
+      fromPose: 1, // should be a ContentAddress string
+      toPose: 'x',
+      routing: 'seq',
+    };
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'transition', node: badTransition }],
+    } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/must be a string/i);
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
