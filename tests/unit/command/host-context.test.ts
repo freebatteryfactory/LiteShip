@@ -7,6 +7,7 @@ import { createNodeCommandContext, startSpawnHandle } from '@czap/command/host';
 import { defineAsset, type DecodedAudio } from '@czap/assets';
 import { resetAssetRegistry } from '@czap/assets/testing';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
 /** Minimal mono 16-bit PCM WAV for @czap/assets decoders. */
 function minimalWav(sampleCount: number): ArrayBuffer {
@@ -202,7 +203,12 @@ describe('createNodeCommandContext', () => {
     const result = await ctx.runVitest?.([join(process.cwd(), 'tests/unit/command/manifest-path.test.ts')]);
     expect(result?.exitCode).toBe(0);
     expect(result?.stderrTail).toBeDefined();
-  });
+    // This test spawns a REAL vitest subprocess (startup + transform + run of
+    // another test file), which routinely exceeds vitest's 10s default under the
+    // gauntlet's concurrent phase load — it timed out there while passing in
+    // isolation. scaledTimeout gives CI-scaled headroom via the repo's central
+    // policy (no raw >=1000ms literal, per test-timeout-policy).
+  }, scaledTimeout(30000));
 
   it('startSpawnHandle readline yields stdout lines and dispose is idempotent', async () => {
     const handle = startSpawnHandle('node', ['-e', 'process.stdout.write("alpha\\nbeta")'], {
