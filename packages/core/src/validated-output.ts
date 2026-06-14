@@ -105,8 +105,29 @@ export function mintValidated<T>(target: ProposalTarget, payload: T): ValidatedP
  *
  * This is defense-in-depth ON TOP of the unforgeable token: even a correctly
  * minted token cannot be paired with a different payload at apply time.
+ *
+ * It enforces, at runtime, the same three properties the type encodes:
+ *  1. PROVENANCE — the token carries the module-private witness, so it was minted
+ *     by {@link mintValidated} (a runtime brand check that backs the type-level
+ *     guarantee against a structurally-shaped but un-minted impostor token).
+ *  2. TARGET CONSISTENCY — `token.target === proposal.target` (no target/token
+ *     divergence routing a payload through the wrong validator's authority).
+ *  3. PAYLOAD BINDING — the re-derived content address matches the token subject
+ *     (no post-validation payload swap).
  */
 export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
+  if (proposal.token[ApplyTokenWitness] !== true) {
+    throw new Error(
+      `ValidatedProposal token is not validator-minted (target=${proposal.target}); ` +
+        'refusing to surface it for apply.',
+    );
+  }
+  if (proposal.token.target !== proposal.target) {
+    throw new Error(
+      `ValidatedProposal target mismatch (proposal=${proposal.target}, token=${proposal.token.target}); ` +
+        'refusing to surface it for apply.',
+    );
+  }
   const rederived = contentAddressOf({ target: proposal.target, payload: proposal.payload });
   if (rederived !== proposal.subject || proposal.token.subject !== proposal.subject) {
     throw new Error(

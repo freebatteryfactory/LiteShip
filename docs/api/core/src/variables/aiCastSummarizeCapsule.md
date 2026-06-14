@@ -8,7 +8,7 @@
 
 > `const` **aiCastSummarizeCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `budgetA`: `number`; `budgetB`: `number`; `inputs`: readonly `string`[]; \}, `unknown`, `unknown`\>
 
-Defined in: [core/src/capsules/ai-cast-summarize.ts:131](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/ai-cast-summarize.ts#L131)
+Defined in: [core/src/capsules/ai-cast-summarize.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/ai-cast-summarize.ts#L134)
 
 Declared capsule for the AI cast summarizer. Registered in the module-level
 catalog at import time; walked by the factory compiler. The generated property

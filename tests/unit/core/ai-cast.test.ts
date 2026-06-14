@@ -124,6 +124,65 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(() => AICast.applyValidatedPatch(base, tampered)).toThrow(/does not bind/);
     expect(() => assertTokenBinds(tampered)).toThrow(/does not bind/);
   });
+
+  test('a validated proposal is refused against a DIFFERENT (advanced) graph — apply-time identity guard', () => {
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+
+    // The host validated against `base`, then the document graph ADVANCED to a
+    // different graph. Applying the validated ops to the advanced graph is refused:
+    // the proposal is bound to the graph it was validated against (payload.base).
+    const advanced = graph([node('a'), node('z')]);
+    expect(advanced.id).not.toBe(base.id);
+    expect(() => AICast.applyValidatedPatch(advanced, checked.proposal)).toThrow(/graph advanced after validation/);
+    // It still applies cleanly to the graph it WAS validated against.
+    expect(() => AICast.applyValidatedPatch(base, checked.proposal)).not.toThrow();
+  });
+
+  test('a model-supplied resultId is RE-STAMPED, never trusted (forge/stale guard)', () => {
+    const base = graph([node('a')]);
+    // The honest patch + its deterministic result id (what `propose` computes).
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    expect(honest.resultId).toBeDefined();
+
+    // A model forges a stale/wrong resultId on the SAME ops.
+    const forged = { ...honest, resultId: 'czap:forged-stale-id' as never } as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, forged);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+
+    // The minted envelope carries the RECOMPUTED result id (== the honest one), not
+    // the forged value — a host that cites/caches by resultId gets the right identity.
+    expect(checked.proposal.payload.resultId).toBe(honest.resultId);
+    expect(checked.proposal.payload.resultId).not.toBe('czap:forged-stale-id');
+  });
+
+  test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
+    const base = graph([node('a')]);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+
+    // An impostor token that is structurally shaped (right subject) but carries NO
+    // private witness must be refused — the type forbids it, but the runtime gate
+    // backs it up (a value cast past the type cannot sneak through apply).
+    const witnessless = {
+      ...checked.proposal,
+      token: { subject: checked.proposal.subject, target: checked.proposal.target },
+    } as unknown as ValidatedProposal<GraphPatch>;
+    expect(() => assertTokenBinds(witnessless)).toThrow(/not validator-minted/);
+
+    // A token whose `target` diverges from the proposal target is refused.
+    const targetDiverged = {
+      ...checked.proposal,
+      token: { ...checked.proposal.token, target: 'generated-ui' },
+    } as unknown as ValidatedProposal<GraphPatch>;
+    expect(() => assertTokenBinds(targetDiverged)).toThrow(/target mismatch/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -222,9 +281,16 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     expect(() => AICast.castContext(g, { targets: ['generated-ui'] })).toThrow(/requires a host component catalog/);
   });
 
+  // Bind the injected validator through an EXPLICITLY-TYPED constant rather than a
+  // call-site `as GeneratedUIValidator` cast: a cast hides a signature drift at the
+  // call site, whereas this annotation fails at definition time (tsconfig.tests.json
+  // type-checks this file) the moment genui's `validateGeneratedUITree` stops
+  // conforming to the cast's `GeneratedUIValidator` contract.
+  const generatedUiValidator: GeneratedUIValidator = validateGeneratedUITree;
+
   test('a valid UI tree validates → mints a ValidatedProposal with the SAME envelope shape as a patch', () => {
     const validNode: GeneratedUINode = { name: 'Text', props: { value: 'hi' } };
-    const ui = AICast.validateGeneratedUIProposal(validNode, catalog, validateGeneratedUITree as GeneratedUIValidator);
+    const ui = AICast.validateGeneratedUIProposal(validNode, catalog, generatedUiValidator);
     expect(ui.ok).toBe(true);
     if (!ui.ok) return;
 
@@ -246,7 +312,7 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
 
   test('an invalid UI tree (unknown component) is rejected — no envelope minted', () => {
     const badNode: GeneratedUINode = { name: 'Nope', props: {} };
-    const ui = AICast.validateGeneratedUIProposal(badNode, catalog, validateGeneratedUITree as GeneratedUIValidator);
+    const ui = AICast.validateGeneratedUIProposal(badNode, catalog, generatedUiValidator);
     expect(ui.ok).toBe(false);
     if (ui.ok) return;
     expect(ui.target).toBe('generated-ui');
@@ -281,8 +347,20 @@ describe('AI cast: purity (== no producer)', () => {
       /\b(node:net|node:http|node:https|node:tls|node:dns|undici|axios|node-fetch|\bgot\b|ws|eventsource|websocket|openai|anthropic|@anthropic|cohere|google-generativeai|@google\/genai|mistralai|groq-sdk|fetch\(|EventSource|WebSocket)/i;
     for (const file of ['ai-cast.ts', 'validated-output.ts']) {
       const text = readFileSync(resolve(srcDir, file), 'utf8');
-      const importLines = text.split('\n').filter((l) => /^\s*import\b/.test(l) || /require\(/.test(l));
-      for (const line of importLines) {
+      // Cover ALL module-loading forms that can introduce a producer edge: static
+      // `import`, `export … from`, dynamic `import()`, and `require()` — not just the
+      // first two (a forbidden module smuggled in via `export {x} from 'undici'` or
+      // `await import('axios')` would otherwise evade this gate).
+      const moduleEdgeLines = text
+        .split('\n')
+        .filter(
+          (l) =>
+            /^\s*import\b/.test(l) ||
+            /^\s*export\b[^;]*\bfrom\b/.test(l) ||
+            /\brequire\s*\(/.test(l) ||
+            /\bimport\s*\(/.test(l),
+        );
+      for (const line of moduleEdgeLines) {
         expect(line).not.toMatch(forbidden);
       }
     }

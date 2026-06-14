@@ -42,6 +42,7 @@ import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
 import { sealGraph, sealNode } from '../document-graph-address.js';
+import { contentAddressOf } from '../content-address.js';
 import { GraphPatch } from '../graph-patch.js';
 import type { PatchOp } from '../graph-patch.js';
 import { validateGraphPatchProposal, applyValidatedPatch } from '../ai-cast.js';
@@ -235,12 +236,25 @@ export const aiCastProposalCapsule = defineCapsule({
       appliedReAddressed = ops.length === 0 ? null : applied.id !== base.id;
 
       // Tamper probe: keep the validated token, swap in a DIFFERENT payload. The
-      // binding guard must refuse. We need a genuinely different patch — add a
-      // sentinel axis guaranteed absent from the validated payload's ops.
-      const evilPatch = GraphPatch.propose(base, [
-        { op: 'add', family: 'signal', node: signalNode('__ai_cast_tamper_probe__') },
-      ]);
+      // binding guard must refuse. We need a payload GUARANTEED to differ from the
+      // validated one, else the "tampered" proposal could be byte-identical and the
+      // probe vacuous. Derive a sentinel axis name known-absent from BOTH the base
+      // graph and the validated ops (bump a suffix until unused), so the evil patch's
+      // single add-op cannot already exist in the validated payload.
+      const used = new Set<string>(base.nodes.map((n) => (n as SignalNode).input));
+      for (const op of result.proposal.payload.ops) {
+        if ('family' in op && op.op === 'add' && op.family === 'signal') {
+          used.add((op.node as SignalNode).input);
+        }
+      }
+      let probeInput = '__ai_cast_tamper_probe__';
+      while (used.has(probeInput)) probeInput = `${probeInput}_x`;
+      const evilPatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signalNode(probeInput) }]);
       const tampered = { ...result.proposal, payload: evilPatch } as ValidatedProposal<GraphPatch>;
+      // The probe is only meaningful if the swapped payload truly differs from the
+      // validated one (its subject must not re-derive to the bound token subject).
+      const tamperDiffers =
+        contentAddressOf({ target: tampered.target, payload: evilPatch }) !== result.proposal.subject;
       let refused = false;
       try {
         applyValidatedPatch(base, tampered);
@@ -255,7 +269,7 @@ export const aiCastProposalCapsule = defineCapsule({
       } catch {
         assertRefused = true;
       }
-      tamperRefused = refused && assertRefused;
+      tamperRefused = tamperDiffers && refused && assertRefused;
     }
 
     return { base, result, deterministic, appliedReAddressed, tamperRefused };

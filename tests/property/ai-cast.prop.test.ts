@@ -51,6 +51,12 @@ const META: CellMeta = {
   version: 1,
 };
 
+// The injected genui validator, bound through an EXPLICITLY-TYPED constant rather
+// than a call-site `as GeneratedUIValidator` cast: a cast hides a signature drift
+// at the call site, whereas this annotation fails at definition time the moment
+// genui's `validateGeneratedUITree` stops conforming to the cast contract.
+const generatedUiValidator: GeneratedUIValidator = validateGeneratedUITree;
+
 const node = (input: string): SignalNode =>
   sealNode({
     _tag: 'DocGraphSignalNode',
@@ -173,7 +179,7 @@ describe('AI cast property: genui GeneratedUITree rides the SAME validated-propo
     fc.assert(
       fc.property(fc.string({ maxLength: 16 }), (value) => {
         const validNode: GeneratedUINode = { name: 'Text', props: { value } };
-        const ui = AICast.validateGeneratedUIProposal(validNode, catalog, validateGeneratedUITree as GeneratedUIValidator);
+        const ui = AICast.validateGeneratedUIProposal(validNode, catalog, generatedUiValidator);
         expect(ui.ok).toBe(true);
         if (!ui.ok) return;
         // Same envelope: _tag/target/subject + an unforgeable token that binds.
@@ -206,7 +212,7 @@ describe('AI cast property: genui GeneratedUITree rides the SAME validated-propo
           const ui = AICast.validateGeneratedUIProposal(
             badNode,
             catalog,
-            validateGeneratedUITree as GeneratedUIValidator,
+            generatedUiValidator,
           );
           expect(ui.ok).toBe(false);
           if (ui.ok) return;
@@ -220,7 +226,7 @@ describe('AI cast property: genui GeneratedUITree rides the SAME validated-propo
 
   test('LAW: a tampered UI proposal (swapped tree) is refused at the unwrap seam', () => {
     const okNode: GeneratedUINode = { name: 'Text', props: { value: 'hi' } };
-    const ui = AICast.validateGeneratedUIProposal(okNode, catalog, validateGeneratedUITree as GeneratedUIValidator);
+    const ui = AICast.validateGeneratedUIProposal(okNode, catalog, generatedUiValidator);
     expect(ui.ok).toBe(true);
     if (!ui.ok) return;
     const swapped: GeneratedUINode = { name: 'Card', props: { title: 'evil' } };

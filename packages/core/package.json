@@ -25,6 +25,7 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "//exports-deny": "SECURITY: `\"./validated-output\": null` denies that subpath BEFORE the `\"./*\"` wildcard would expose it. validated-output.ts holds `mintValidated`, the sole mint site for the un-forgeable apply token; exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the RUNG_TARGETS subpath leak). Internal relative imports `./validated-output.js` are unaffected. Guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -41,6 +42,7 @@
       "import": "./dist/harness/index.js",
       "development": "./src/harness/index.ts"
     },
+    "./validated-output": null,
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js",

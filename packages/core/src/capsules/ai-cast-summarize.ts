@@ -96,7 +96,10 @@ function buildGraph(seed: AiCastSummarizeSeedValue): DocumentGraph {
 /** Clamp a raw seed number to a non-negative integer budget the summarizer accepts. */
 function clampBudget(n: number): number {
   if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.trunc(Math.abs(n)));
+  // CLAMP (not fold): a negative budget is clamped to 0 (a 0 budget → minimal/empty
+  // summary), preserving the budget-edge semantics. `Math.abs` would turn -5 into 5
+  // and silently grant a positive budget — wrong.
+  return Math.max(0, Math.trunc(n));
 }
 
 /** Byte-faithful structural equality over a {@link GraphSummary} (deterministic VALUE). */

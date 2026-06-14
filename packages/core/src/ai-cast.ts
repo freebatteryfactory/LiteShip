@@ -453,16 +453,19 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
   if (errors.length > 0) {
     return { ok: false, target: 'graph-patch', errors };
   }
-  // RESOLVED (open question #5 — stamp the validated payload's resultId). A model
-  // may propose a patch with no `resultId` (it cannot compute the content address
-  // of the would-be graph). Rather than mint an under-specified proposal, re-run
-  // `propose` (a pure preview through the one kernel) to stamp the re-addressed
-  // result id, so the validated payload is self-describing and a host need not
-  // recompute it. `propose` is deterministic over `(graph, ops)`, so this never
-  // changes WHICH patch is validated — only completes its addressing. A patch that
-  // already carries a `resultId` is honored as-is (the binding guard re-derives
-  // the subject either way, so a forged `resultId` cannot survive apply).
-  const stamped = patch.resultId ? patch : GraphPatch.propose(graph, patch.ops);
+  // RESOLVED (open question #5 — RE-STAMP the validated payload's resultId, never
+  // trust the model's). A model-supplied `resultId` is untrusted: a stale or forged
+  // value would disagree with `apply(graph, ops).id`, so a host that cites/caches/
+  // receipts the validated artifact by `resultId` would key on the WRONG identity
+  // even though validation passed. We therefore ALWAYS recompute it deterministically
+  // from the patch content via `propose` (a pure preview through the one kernel),
+  // discarding any carried `resultId`. `propose` is deterministic over `(graph, ops)`,
+  // so this never changes WHICH patch is validated — it only stamps the correct,
+  // self-describing result identity. (Defense-in-depth: the apply token also binds
+  // the WHOLE payload by content address, and `applyValidatedPatch` re-checks the
+  // apply-time graph identity — but a host should never have to distrust a field of
+  // an *accepted* envelope, so we make the envelope's `resultId` authoritative here.)
+  const stamped = GraphPatch.propose(graph, patch.ops);
   return { ok: true, proposal: mintValidated('graph-patch', stamped) };
 }
 
@@ -531,12 +534,29 @@ export function validateGeneratedUIProposal(
  *
  * Re-addresses through the one kernel ({@link GraphPatch.apply} → `sealGraph`), so
  * the result is indistinguishable from a graph authored fresh.
+ *
+ * APPLY-TIME GRAPH IDENTITY GUARD: a proposal is validated against a SPECIFIC graph
+ * (its `payload.base` is pinned to that graph's id by {@link validateGraphPatchProposal}).
+ * If the document graph advances between validate and apply, applying the validated
+ * ops to a DIFFERENT graph could silently produce a structurally invalid result (an
+ * edge valid in graph A may dangle in graph B). `GraphPatch.apply` itself ignores
+ * `patch.base`, so we enforce the binding here: refuse to apply unless the apply-time
+ * `graph.id` matches the `base` the proposal was validated against. The host remains
+ * the authority over WHETHER to apply; this just stops a silent mis-apply against the
+ * wrong graph (re-validate against the advanced graph to get a fresh proposal).
  */
 export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedProposal<GraphPatch>): DocumentGraph {
   // Re-derive the token binding before honoring it (catches a swapped payload).
   const rederived = contentAddressOf({ target: proposal.target, payload: proposal.payload });
   if (rederived !== proposal.subject || proposal.token.subject !== proposal.subject) {
     throw new Error('applyValidatedPatch: proposal token does not bind to its payload; refusing to apply.');
+  }
+  // Bind the proposal to the graph it was validated against (its pinned `base`).
+  if (proposal.payload.base !== graph.id) {
+    throw new Error(
+      `applyValidatedPatch: proposal was validated against graph ${proposal.payload.base} but is being applied to ${graph.id}. ` +
+        'The graph advanced after validation; refusing to apply. Re-validate the proposal against the current graph.',
+    );
   }
   return GraphPatch.apply(graph, proposal.payload);
 }

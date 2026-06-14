@@ -8,7 +8,7 @@
 
 > `const` **aiCastProposalCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"pureTransform"`, \{ `base`: readonly `string`[]; `ops`: readonly (\{ `input`: `string`; `kind`: `"add"`; \} \| \{ `index`: `number`; `kind`: `"remove"`; \})[]; \}, `unknown`, `unknown`\>
 
-Defined in: [core/src/capsules/ai-cast-proposal.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/ai-cast-proposal.ts#L155)
+Defined in: [core/src/capsules/ai-cast-proposal.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/ai-cast-proposal.ts#L156)
 
 Declared capsule for the AI cast proposal envelope. Registered in the
 module-level catalog at import time; walked by the factory compiler. The

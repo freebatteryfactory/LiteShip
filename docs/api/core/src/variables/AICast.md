@@ -8,7 +8,7 @@
 
 > `const` **AICast**: `object`
 
-Defined in: [core/src/ai-cast.ts:567](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L567)
+Defined in: [core/src/ai-cast.ts:587](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L587)
 
 The AI cast namespace — the framework PRIMITIVE that casts a [DocumentGraph](../interfaces/DocumentGraph.md)
 OUT to a model-facing [AIContext](../interfaces/AIContext.md), validates the patch / UI tree the model
@@ -33,6 +33,16 @@ payload (defense-in-depth against post-validation tampering).
 
 Re-addresses through the one kernel ([GraphPatch.apply](GraphPatch.md#apply) → `sealGraph`), so
 the result is indistinguishable from a graph authored fresh.
+
+APPLY-TIME GRAPH IDENTITY GUARD: a proposal is validated against a SPECIFIC graph
+(its `payload.base` is pinned to that graph's id by [validateGraphPatchProposal](#validategraphpatchproposal)).
+If the document graph advances between validate and apply, applying the validated
+ops to a DIFFERENT graph could silently produce a structurally invalid result (an
+edge valid in graph A may dangle in graph B). `GraphPatch.apply` itself ignores
+`patch.base`, so we enforce the binding here: refuse to apply unless the apply-time
+`graph.id` matches the `base` the proposal was validated against. The host remains
+the authority over WHETHER to apply; this just stops a silent mis-apply against the
+wrong graph (re-validate against the advanced graph to get a fresh proposal).
 
 #### Parameters
 
