@@ -115,14 +115,15 @@ describe('wgslKey — bare snake_case, no u_ prefix (matches the WGSL compiler t
 // ---------------------------------------------------------------------------
 
 describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu rung', () => {
-  test('pass-through (no policy): outputs.wgsl carries the bare snake_case state index', async () => {
+  test('pass-through (no policy): outputs.wgsl carries the live state index under the fixed state_index field', async () => {
     const compositor = await runScoped(Compositor.create({ runtimeSite: 'browser' }));
     await Effect.runPromise(compositor.add('blurRadius', makeQuantizer(widthBoundary, 'tablet')));
     const state = await Effect.runPromise(compositor.compute());
 
-    // bare snake_case key (no u_), state index of 'tablet' (= 1).
-    expect(state.outputs.wgsl['blur_radius']).toBe(1);
-    // glsl mirrors it under the u_ key.
+    // The WGSL state index lands in the single fixed `state_index` field that the
+    // WGSL compiler generates and wgpu.ts reads from slot 0 — 'tablet' = index 1.
+    expect(state.outputs.wgsl['state_index']).toBe(1);
+    // glsl mirrors it under the per-quantizer u_ key.
     expect(state.outputs.glsl['u_blur_radius']).toBe(1);
   });
 
@@ -133,7 +134,7 @@ describe('compositor emit-wgsl: live WGSL channel, escalation-gated at the gpu r
     const state = await Effect.runPromise(compositor.compute());
 
     // desktop = state index 2; gpu rung admits css/glsl/wgsl/aria.
-    expect(state.outputs.wgsl['layout']).toBe(2);
+    expect(state.outputs.wgsl['state_index']).toBe(2);
     expect(state.outputs.glsl['u_layout']).toBe(2);
     expect(state.outputs.css['--czap-layout']).toBe('desktop');
   });

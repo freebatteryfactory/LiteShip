@@ -23,8 +23,9 @@ interface FakeGpuHarness {
     shaderCodes: string[];
     configured: Array<Record<string, unknown>>;
     submits: number;
-    /** Each `queue.writeBuffer` upload, snapshotted as a copy of the Float32Array. */
-    bufferWrites: Float32Array[];
+    /** Each `queue.writeBuffer` upload, snapshotted as a raw byte copy (the WGSL
+     * uniform struct: `state_index` is u32 in slot 0, authored fields f32). */
+    bufferWrites: Uint8Array[];
     /** Each `setBindGroup(index, …)` call's group index. */
     bindGroups: number[];
   };
@@ -62,9 +63,9 @@ function makeGpuHarness(): FakeGpuHarness {
         calls.submits += 1;
       },
       writeBuffer: (_buffer: unknown, _offset: number, data: ArrayBufferView) => {
-        // Snapshot the upload so assertions see the value at write time, not a
-        // later-mutated scratch array.
-        calls.bufferWrites.push(Float32Array.from(data as unknown as ArrayLike<number>));
+        // Snapshot the raw bytes at write time (not a later-mutated scratch
+        // buffer). The struct is read back via DataView in the assertions.
+        calls.bufferWrites.push(new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)));
       },
     },
   };
@@ -254,6 +255,14 @@ describe('initWGSLRuntime — render loop and dispose', () => {
   });
 });
 
+// A WGSL shader that declares the @group(0) @binding(0) uniform — required now
+// that the runtime only binds a uniform group when the shader actually declares
+// one (the FULLSCREEN_WGSL fallback / bare shaders have no binding 0).
+const UNIFORM_SHADER =
+  '@group(0) @binding(0) var<uniform> boundary_state: vec4<f32>;\n' +
+  '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }\n' +
+  '@fragment fn fs_main() -> @location(0) vec4<f32> { return boundary_state; }';
+
 describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
   it('binds detail.wgsl field values into the uniform buffer on every crossing', async () => {
     const harness = makeGpuHarness();
@@ -262,24 +271,25 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, 'inline', el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
     expect(dispose).not.toBeNull();
-    // The render loop binds group 0 each frame.
+    // The render loop binds group 0 each frame (the shader declares @binding(0)).
     expect(harness.calls.bindGroups[0]).toBe(0);
-    // The seed write zeroes the struct before the first crossing.
+    // The seed write zeroes the whole 16-byte struct before the first crossing.
     const seeded = harness.calls.bufferWrites.at(-1)!;
-    expect(Array.from(seeded)).toEqual([0, 0, 0, 0]);
+    expect(seeded.length).toBe(16);
+    expect(seeded.every((b) => b === 0)).toBe(true);
 
     // A boundary crossing: detail.wgsl carries the live state index plus an
-    // authored field. state_index claims slot 0; blur_radius the next slot.
+    // authored field. state_index claims slot 0 (u32); blur_radius the next (f32).
     el.dispatchEvent(
       new CustomEvent('czap:uniform-update', {
         detail: { wgsl: { state_index: 1, blur_radius: 2.5 } },
       }),
     );
-    const afterCross = harness.calls.bufferWrites.at(-1)!;
-    expect(afterCross[0]).toBe(1); // state_index → slot 0
-    expect(afterCross[1]).toBe(2.5); // blur_radius → slot 1 (first-seen order)
+    const afterCross = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(afterCross.getUint32(0, true)).toBe(1); // state_index → slot 0 as u32
+    expect(afterCross.getFloat32(4, true)).toBe(2.5); // blur_radius → slot 1 as f32
 
     // A field keeps its slot across crossings (stable offset).
     el.dispatchEvent(
@@ -287,9 +297,9 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
         detail: { wgsl: { state_index: 0, blur_radius: 0.5 } },
       }),
     );
-    const after2 = harness.calls.bufferWrites.at(-1)!;
-    expect(after2[0]).toBe(0);
-    expect(after2[1]).toBe(0.5);
+    const after2 = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(after2.getUint32(0, true)).toBe(0);
+    expect(after2.getFloat32(4, true)).toBe(0.5);
 
     dispose!();
   });
@@ -301,7 +311,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, 'inline', el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
     const writesBefore = harness.calls.bufferWrites.length;
     // No `wgsl` key → the handler is a no-op (no extra buffer write).
     el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { glsl: { u_layout: 1 } } }));
@@ -318,7 +328,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, 'inline', el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
     // state_index claims slot 0; the buffer holds 4 floats, so 4 authored
     // fields overflow it (slots 1,2,3 fill, the 4th is dropped with a warnOnce).
     el.dispatchEvent(

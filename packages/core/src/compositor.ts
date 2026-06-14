@@ -19,7 +19,6 @@
 import type { Scope, Stream } from 'effect';
 import { Effect, SubscriptionRef } from 'effect';
 import type { Boundary } from './boundary.js';
-import type { ContentAddress } from './brands.js';
 import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from './defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
 import { DirtyFlags } from './dirty.js';
@@ -64,7 +63,9 @@ export interface CompositorConfig {
   readonly speculative?: boolean;
   /**
    * Escalation gate: resolve the {@link PolicyNode} (if any) that governs a
-   * projection, by its `ContentAddress`. When a policy applies, the compositor
+   * projection, keyed by the quantizer's compositor registry name (the same
+   * `name` passed to `add()` — the compositor knows names, not graph projection
+   * ids, so a host wiring graph projections maps id → name here). When a policy applies, the compositor
    * computes `chooseRung(policy, runtimeSite)` at `add` time and emits ONLY the
    * targets that rung admits (`admittedTargets`). A projection with NO matching
    * policy is pass-through (all targets emit). A policy that matches but admits
@@ -72,7 +73,7 @@ export interface CompositorConfig {
    * exhaust every rung) DENIES every target for that projection: a constraint
    * that cannot be satisfied must not silently emit at full capability.
    */
-  readonly getPolicy?: (projectionId: ContentAddress) => PolicyNode | undefined;
+  readonly getPolicy?: (projectionName: string) => PolicyNode | undefined;
   /**
    * The runtime site the escalation gate evaluates policies against. Defaults to
    * an environment hint: `'browser'` when a `window` global is present, else
@@ -91,7 +92,15 @@ type AdmittedTargets = ReadonlySet<string> | null;
 
 /** Default runtime-site hint when no explicit `runtimeSite` is configured. */
 function defaultRuntimeSite(): RuntimeSite {
-  return typeof window !== 'undefined' ? 'browser' : 'node';
+  // Detect the realm before falling back to `node`, so worker/edge runtimes
+  // (which this escalation gate explicitly targets) don't collapse to `node` and
+  // consult the wrong admission table. A real DOM document ⇒ browser; a worker
+  // global (`WorkerGlobalScope`/`importScripts`) ⇒ worker; an edge global ⇒ edge.
+  const g = globalThis as Record<string, unknown>;
+  if (typeof g['window'] !== 'undefined' && typeof g['document'] !== 'undefined') return 'browser';
+  if (typeof g['WorkerGlobalScope'] !== 'undefined' || typeof g['importScripts'] === 'function') return 'worker';
+  if (typeof g['EdgeRuntime'] !== 'undefined') return 'edge';
+  return 'node';
 }
 
 /**
@@ -197,7 +206,7 @@ export const Compositor: CompositorFactory = {
        */
       const resolveAdmitted = (name: string): AdmittedTargets => {
         if (getPolicy === undefined) return null;
-        const policy = getPolicy(name as ContentAddress);
+        const policy = getPolicy(name);
         if (policy === undefined) return null;
         const choice = chooseRung(policy, runtimeSite);
         return 'error' in choice ? new Set<string>() : choice.admittedTargets;
@@ -264,9 +273,12 @@ export const Compositor: CompositorFactory = {
             glsl[meta.glslKey] = previousGlsl;
           }
 
-          const previousWgsl = previousState.outputs.wgsl[meta.wgslKey];
+          // WGSL exposes a single fixed `state_index` struct field (the field the
+          // WGSL compiler generates and the runtime reads from uniform slot 0) —
+          // not a per-quantizer key like glsl/css.
+          const previousWgsl = previousState.outputs.wgsl['state_index'];
           if (previousWgsl !== undefined) {
-            wgsl[meta.wgslKey] = previousWgsl;
+            wgsl['state_index'] = previousWgsl;
           }
 
           const previousAria = previousState.outputs.aria[meta.ariaKey];
@@ -328,17 +340,18 @@ export const Compositor: CompositorFactory = {
               break;
 
             case 'emit-wgsl':
-              // Mirrors emit-glsl: a per-quantizer numeric channel keyed by the
-              // bare snake_case WGSL field name. WGSL is the heaviest (gpu-rung)
-              // target, so it shares glsl's `high` frame-budget gate; the value
-              // is the live state index the WGSL uniform buffer reads.
+              // The live WGSL state index goes into the single fixed `state_index`
+              // struct field that `WGSLCompiler` generates and the `client:gpu`
+              // WGSL runtime reads from uniform-buffer slot 0 — NOT the authored
+              // per-quantizer field key (those ride the payload). WGSL is the
+              // heaviest (gpu-rung) target, so it shares glsl's `high` budget gate.
               if (!frameBudget || frameBudget.canRun('high')) {
                 for (const name of dirtyNames) {
                   const meta = metaMap.get(name)!;
                   // Escalation gate: skip projections whose policy does not admit `wgsl`.
                   // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
                   if (admits(meta, 'wgsl')) {
-                    wgsl[meta.wgslKey] = runtime.getStateIndex(name);
+                    wgsl['state_index'] = runtime.getStateIndex(name);
                   }
                 }
               }

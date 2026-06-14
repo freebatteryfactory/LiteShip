@@ -181,7 +181,10 @@ function compile<B extends Boundary.Shape>(
   // Per-state uniform values keyed by state name then `u_*` name. Preserved
   // alongside the flat `mergedValues` default so the live runtime can resolve
   // the authored values for whichever state a crossing lands on.
-  const stateUniforms: Record<string, Record<string, number>> = {};
+  // Null-prototype: state names are author-controlled, so a state literally named
+  // `__proto__`/`constructor` must not collide with Object.prototype and corrupt
+  // the per-state lookup.
+  const stateUniforms: Record<string, Record<string, number>> = Object.create(null);
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];

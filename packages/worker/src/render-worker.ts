@@ -108,9 +108,8 @@ function computeState() {
   const blend = {};
   const css = {};
   const glsl = {};
-  // WGSL channel — present so this worker's output shape matches the host
-  // CompositeState.outputs; the live per-quantizer WGSL emit is the WGSL
-  // agent's job, so it is left empty here (parity with the host emit).
+  // WGSL channel — the live state index is emitted below into the fixed
+  // state_index struct field (slot 0), mirroring the host emit-wgsl.
   const wgsl = {};
   const aria = {};
 
@@ -140,6 +139,9 @@ function computeState() {
       }
     }
     glsl[keys.glslKey] = stateIndex;
+    // WGSL: live state index → the single fixed state_index field (slot 0),
+    // mirroring the host emit-wgsl so client:worker WGSL shaders see crossings.
+    wgsl['state_index'] = stateIndex;
     aria[keys.ariaKey] = stateStr;
   }
 

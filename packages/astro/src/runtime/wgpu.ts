@@ -148,10 +148,14 @@ function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): W
     entries: [{ binding: 0, resource: { buffer } }],
   });
 
-  // `state_index` is the WGSL struct's first field (slot 0); authored fields
-  // claim slots 1.. in first-seen order. The CPU-side scratch array mirrors the
-  // buffer so each `apply` re-uploads the whole struct (small + cache-friendly).
-  const data = new Float32Array(UNIFORM_BUFFER_FLOATS);
+  // CPU-side scratch mirroring the uniform struct. `state_index` (slot 0) is a
+  // WGSL `u32`, so it MUST be written as integer bytes — writing it as f32 stores
+  // 0x3f800000 for `1`, which never matches the shader's u32 `STATE_*` constants.
+  // Authored fields (slots 1..) are written as f32 (the common `@wgsl` numeric
+  // case). The whole struct is re-uploaded each apply (small + cache-friendly).
+  const data = new ArrayBuffer(UNIFORM_BUFFER_BYTES);
+  const bytes = new Uint8Array(data);
+  const view = new DataView(data);
   const offsetOf = new Map<string, number>([['state_index', 0]]);
   let nextSlot = 1;
 
@@ -159,6 +163,9 @@ function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): W
     buffer,
     bindGroup,
     apply(wgsl: Record<string, number>): void {
+      // Fresh snapshot: zero the struct first so a field dropped by a later state
+      // reverts to 0 instead of leaving the shader sampling a stale value.
+      bytes.fill(0);
       for (const [field, value] of Object.entries(wgsl)) {
         let slot = offsetOf.get(field);
         if (slot === undefined) {
@@ -176,9 +183,11 @@ function createUniformBinding(device: WebGpuDevice, pipeline: WebGpuPipeline): W
           slot = nextSlot++;
           offsetOf.set(field, slot);
         }
-        data[slot] = value;
+        // slot 0 is the u32 `state_index`; authored fields are f32.
+        if (slot === 0) view.setUint32(slot * 4, value >>> 0, true);
+        else view.setFloat32(slot * 4, value, true);
       }
-      device.queue.writeBuffer(buffer, 0, data);
+      device.queue.writeBuffer(buffer, 0, bytes);
     },
   };
 }
@@ -221,6 +230,11 @@ export async function initWGSLRuntime(
   } catch {
     // fetchShaderSource already logged; keep built-in fallback shader.
   }
+  // Only bind a uniform group when the shader actually declares `@group(0)
+  // @binding(0)`. The built-in FULLSCREEN_WGSL fallback (and any simple custom
+  // shader without that uniform) has an `auto` layout with no binding 0, so
+  // unconditionally binding one makes WebGPU reject the bind group / render pass.
+  const hasUniformBinding = wgslSource.includes('@binding(0)') && wgslSource.includes('@group(0)');
   const shaderModule = device.createShaderModule({ code: wgslSource });
 
   const format = nav.gpu.getPreferredCanvasFormat();
@@ -233,9 +247,9 @@ export async function initWGSLRuntime(
     primitive: { topology: 'triangle-list' },
   });
 
-  const binding = createUniformBinding(device, pipeline);
+  const binding = hasUniformBinding ? createUniformBinding(device, pipeline) : null;
   // Seed the buffer so the first frame binds a defined (zeroed) struct.
-  binding.apply({});
+  binding?.apply({});
 
   // Subscribe to boundary crossings: map detail.wgsl → uniform buffer. The rAF
   // loop already redraws every frame, so writing the buffer here is enough — the
@@ -246,7 +260,7 @@ export async function initWGSLRuntime(
     if (!(event instanceof CustomEvent)) return;
     const wgsl = event.detail?.wgsl as Record<string, number> | undefined;
     if (wgsl) {
-      binding.apply(wgsl);
+      binding?.apply(wgsl);
     }
   };
   element?.addEventListener('czap:uniform-update', onUniformUpdate);
@@ -269,7 +283,7 @@ export async function initWGSLRuntime(
       colorAttachments: [{ view, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' }],
     });
     pass.setPipeline(pipeline);
-    pass.setBindGroup(0, binding.bindGroup);
+    if (binding) pass.setBindGroup(0, binding.bindGroup);
     pass.draw(6);
     pass.end();
     device.queue.submit([encoder.finish()]);

@@ -189,9 +189,17 @@ function parseShaderCast<K extends 'uniformValues' | 'bindingValues'>(
   valuesKey: K,
 ): ({ readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> }) | null {
   if (typeof value !== 'object' || value === null || !('declarations' in value)) return null;
+  // Reject malformed cache data (e.g. a stale or foreign KV entry) so it degrades
+  // cleanly to "no cast" instead of rehydrating a bogus cast: a non-string
+  // `declarations` must NOT be coerced to "[object Object]", and a values map that
+  // collapsed to `{}` carries no authored output.
+  const declarations = (value as { declarations: unknown }).declarations;
+  if (typeof declarations !== 'string' || declarations.length === 0) return null;
+  const values = asNumberRecord((value as Record<string, unknown>)[valuesKey]);
+  if (Object.keys(values).length === 0) return null;
   return {
-    declarations: String((value as { declarations: unknown }).declarations),
-    [valuesKey]: asNumberRecord((value as Record<string, unknown>)[valuesKey]),
+    declarations,
+    [valuesKey]: values,
   } as { readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> };
 }
 

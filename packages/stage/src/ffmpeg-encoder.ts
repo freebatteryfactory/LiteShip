@@ -40,8 +40,8 @@ export interface FfmpegEncodeProbe {
  * Fast (sub-second), safe at test-module init. Returns a real verdict so a
  * caller can `test.skip` honestly when the codec is absent.
  */
-export function probeFfmpegEncode(): FfmpegEncodeProbe {
-  const version = spawnSync('ffmpeg', ['-version'], { encoding: 'utf8' });
+export function probeFfmpegEncode(bin = 'ffmpeg'): FfmpegEncodeProbe {
+  const version = spawnSync(bin, ['-version'], { encoding: 'utf8' });
   if (version.error || version.status !== 0) {
     return {
       ok: false,
@@ -51,7 +51,7 @@ export function probeFfmpegEncode(): FfmpegEncodeProbe {
   }
 
   const encode = spawnSync(
-    'ffmpeg',
+    bin,
     [
       '-hide_banner',
       '-loglevel',
@@ -83,8 +83,8 @@ export function probeFfmpegEncode(): FfmpegEncodeProbe {
 }
 
 /** True when a real ffmpeg+libx264 encode of the headless video path will work. */
-export function ffmpegEncodeAvailable(): boolean {
-  return probeFfmpegEncode().ok;
+export function ffmpegEncodeAvailable(bin = 'ffmpeg'): boolean {
+  return probeFfmpegEncode(bin).ok;
 }
 
 function platformHint(): string {
@@ -195,7 +195,7 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
   const bin = options?.bin ?? 'ffmpeg';
 
   return async (frames: readonly CompositeState[], config: VideoEncodeConfig): Promise<EncodedVideo> => {
-    const probe = probeFfmpegEncode();
+    const probe = probeFfmpegEncode(bin);
     if (!probe.ok) {
       throw new Error(
         probe.hint

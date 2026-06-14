@@ -161,10 +161,9 @@ function compute() {
   const blend = {};
   const css = {};
   const glsl = {};
-  // WGSL channel: present in the output shape so the worker path stays in sync
-  // with the host CompositeState.outputs. D0 carries the channel; the live
-  // per-quantizer WGSL emit (keyed via a projection wgslKey) is the WGSL
-  // agent's job, so it is left empty here — exactly as the host emit leaves it.
+  // WGSL channel: the live state index is emitted below into the single fixed
+  // state_index struct field (slot 0), mirroring the host emit-wgsl so off-thread
+  // WGSL shaders driven by client:worker receive the same crossing as client:gpu.
   const wgsl = {};
   const aria = {};
   const resolvedStateGenerations = {};
@@ -206,6 +205,10 @@ function compute() {
       }
     }
       glsl[q.glslKey] = stateIndex;
+
+      // WGSL output: the live state index goes into the single fixed state_index
+      // struct field (slot 0), matching the host emit-wgsl + the wgpu runtime.
+      wgsl['state_index'] = stateIndex;
 
       // ARIA output
       aria[q.ariaKey] = stateStr;
