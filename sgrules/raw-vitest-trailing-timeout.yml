@@ -1,0 +1,27 @@
+# Backstops tests/unit/meta/test-timeout-policy.test.ts (TRAILING_ARG_TIMEOUT).
+#
+# An explicit vitest timeout must go through scaledTimeout(...) — a raw literal
+# silently LOWERS the coverage-run budget (the 0.1.5 audit-floor flake). The
+# meta-test's regex
+#   /^\s*\},\s*([0-9][0-9_]*)\s*\)\s*;/
+# is line-anchored: a multiline call signature (`it(name,\n fn,\n 90_000\n)`)
+# slips straight past it — exactly how a raw 90_000 once shipped green. This
+# rule matches the vitest call SIGNATURE, so formatting is irrelevant and a
+# setTimeout closer in a body can never collide. Bounded to >=1000ms (>=4
+# digits) so sub-second setTimeout/setInterval values inside bodies don't trip.
+id: raw-vitest-trailing-timeout
+language: typescript
+severity: error
+message: "Raw numeric timeout passed to it/test/describe — wrap it in scaledTimeout(...) from vitest.shared.ts"
+files:
+  - "**/tests/**/*.test.ts"
+rule:
+  any:
+    - pattern: it($DESC, $FN, $T)
+    - pattern: test($DESC, $FN, $T)
+    - pattern: describe($DESC, $FN, $T)
+    - pattern: it.each($$$E)($DESC, $FN, $T)
+constraints:
+  T:
+    kind: number
+    regex: "^[0-9][0-9_]{3,}$"
