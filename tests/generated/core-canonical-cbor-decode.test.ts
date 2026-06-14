@@ -3,6 +3,7 @@ import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
 import { canonicalCborDecodeCapsule } from '../../packages/core/src/capsules/canonical-cbor-decode.js';
 import { schemaToArbitrary, UnsupportedSchemaError } from '../../packages/core/src/harness/arbitrary-from-schema.js';
+import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('core.canonical-cbor-decode', () => {
   const cap = canonicalCborDecodeCapsule;
@@ -38,7 +39,8 @@ describe('core.canonical-cbor-decode', () => {
         // Generous per-invariant timeout: 100 property runs over a heavier capsule
         // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded
         // CI runner (esp. Windows) — give headroom rather than reduce coverage.
-      }, 30000);
+        // scaledTimeout keeps the repo's central CI-scaling policy (no raw literals).
+      }, scaledTimeout(30000));
     }
   }
 });
