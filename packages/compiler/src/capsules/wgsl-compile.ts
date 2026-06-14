@@ -75,11 +75,17 @@ function buildInputs(seed: WGSLCompileSeedValue): {
   }
   if (stateNames.length === 0) stateNames.push('s0');
 
+  // Dedup field names by their FOLDED identity (`wgslIdent`), not the raw string —
+  // two raw keys that fold to the same struct field (e.g. `C` and `c`) are the
+  // SAME field. The real pipeline feeds canonical folded keys, so colliding raw
+  // keys never co-occur; synthesizing both would make the per-state value-fidelity
+  // law impossible (two values, one folded slot). Mirrors the GLSL capsule fix.
   const fieldNames: string[] = [];
   const seenFields = new Set<string>();
   for (const raw of seed.fields) {
-    if (seenFields.has(raw)) continue;
-    seenFields.add(raw);
+    const folded = wgslIdent(raw);
+    if (seenFields.has(folded)) continue;
+    seenFields.add(folded);
     fieldNames.push(raw);
     if (fieldNames.length >= 6) break;
   }

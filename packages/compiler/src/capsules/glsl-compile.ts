@@ -100,12 +100,19 @@ function buildInputs(seed: GLSLCompileSeedValue): {
   }
   if (stateNames.length === 0) stateNames.push('s0');
 
-  // Dedup field names (the authored uniform-key set).
+  // Dedup field names by their FOLDED identity (`glslIdent`), not the raw string.
+  // Two distinct raw keys that fold to the same uniform (e.g. `C` and `c` both →
+  // `u_c`) denote the SAME uniform: the real projection pipeline feeds canonical,
+  // already-folded keys, so colliding raw keys never co-occur. Synthesizing both
+  // would make the per-state value-fidelity law impossible (two authored values,
+  // one folded slot) and the type-inference law ambiguous (one uniform, two
+  // types). Deduping on the fold keeps the seed faithful and the laws well-defined.
   const fieldNames: string[] = [];
   const seenFields = new Set<string>();
   for (const raw of seed.fields) {
-    if (seenFields.has(raw)) continue;
-    seenFields.add(raw);
+    const folded = glslIdent(raw);
+    if (seenFields.has(folded)) continue;
+    seenFields.add(folded);
     fieldNames.push(raw);
     if (fieldNames.length >= 6) break;
   }
