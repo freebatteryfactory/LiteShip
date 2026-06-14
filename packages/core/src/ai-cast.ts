@@ -39,6 +39,7 @@
  * @module
  */
 
+import { Schema } from 'effect';
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-graph.js';
@@ -424,82 +425,183 @@ export type ProposalAcceptance<T> = {
 /** The outcome of validating a model proposal: an acceptance (with envelope) or a rejection (with errors). */
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
-/** Coarse runtime kind of a required field — what `typeof`/`Array.isArray` must agree with. */
-type FieldKind = 'string' | 'array' | 'object' | 'any';
+// ---------------------------------------------------------------------------
+// Untrusted-node validation — a declarative schema, the SINGLE source of truth.
+//
+// A model-proposed node is untrusted JSON. `sealNode` only recomputes its content
+// address; it does NOT verify the node's shape. Rather than hand-roll a per-family
+// field table (which kept missing families and fields), validate each proposed node
+// against a discriminated `Schema.Union` over ALL EIGHT node families: the union forces
+// every family, each struct forces that family's required fields + types, and the
+// compile-time exhaustiveness check below makes "added a family but not a schema" a
+// BUILD error. Branded string types (ContentAddress / SignalInput / StateName /
+// AddressedDigest) validate as plain `Schema.String` (the brand is a compile-time
+// refinement; address FORMAT is an invariant, not a wire law). `meta` and the
+// structurally-opaque fields (CapSet, the digests, ProjectionKeys, the evaluate cache)
+// are `Schema.Unknown` — presence is the contract; their shape is sealed/derived
+// elsewhere. Optional (`?`) interface fields are `Schema.optional`.
+// ---------------------------------------------------------------------------
 
-/**
- * Every REQUIRED (non-optional) payload field per node family, for all EIGHT
- * {@link NodeFamily} discriminants, tagged with its coarse runtime kind. Mirrors the
- * `*Node` interfaces in document-graph.ts (optional `?` fields are intentionally omitted).
- * `'string'` covers the branded string types (ContentAddress / CapLevel / RuntimeSite /
- * EdgeType / SignalInput / StateName and the closed string unions); `'array'` the ref
- * lists; `'object'` the record fields (bindings / ProjectionKeys); `'any'` the fields whose
- * exact runtime shape is intentionally not pinned here (CapSet, AddressedDigest) — presence
- * only. Keep this in lockstep with document-graph.ts when a node family gains a field.
- */
-const NODE_FAMILY_FIELDS: Record<string, ReadonlyArray<readonly [string, FieldKind]>> = {
-  signal: [['input', 'string']],
-  entity: [['components', 'array']],
-  component: [['name', 'string']],
-  pose: [
-    ['entityRef', 'string'],
-    ['state', 'string'],
-    ['bindings', 'object'],
-  ],
-  transition: [
-    ['fromPose', 'string'],
-    ['toPose', 'string'],
-    ['routing', 'string'],
-  ],
-  projection: [
-    ['target', 'string'],
-    ['sourceRef', 'string'],
-    ['keys', 'object'],
-    ['resultDigest', 'any'],
-  ],
-  policy: [
-    ['appliesTo', 'array'],
-    ['requires', 'string'],
-    ['grants', 'any'],
-    ['sites', 'array'],
-  ],
-  export: [
-    ['carrier', 'string'],
-    ['sourceRefs', 'array'],
-    ['artifactDigest', 'any'],
-  ],
+/** Branded-string fields validate as plain strings (brand + format are compile-time / invariant laws). */
+const Addr = Schema.String;
+/** `meta` + structurally-opaque fields: presence is the contract, internal shape is sealed/derived elsewhere. */
+const Opaque = Schema.Unknown;
+
+const SignalNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphSignalNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('signal'),
+  id: Addr,
+  meta: Opaque,
+  input: Schema.String,
+  range: Schema.optional(Schema.Tuple([Schema.Number, Schema.Number])),
+});
+const EntityNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphEntityNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('entity'),
+  id: Addr,
+  meta: Opaque,
+  components: Schema.Array(Addr),
+});
+const ComponentNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphComponentNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('component'),
+  id: Addr,
+  meta: Opaque,
+  name: Schema.String,
+  boundaryRef: Schema.optional(Addr),
+  thresholds: Schema.optional(Schema.Array(Opaque)),
+  states: Schema.optional(Schema.Array(Schema.String)),
+});
+const PoseNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphPoseNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('pose'),
+  id: Addr,
+  meta: Opaque,
+  entityRef: Addr,
+  state: Schema.String,
+  bindings: Schema.Record(Schema.String, Schema.Union([Schema.Number, Schema.String])),
+  evaluated: Schema.optional(Opaque),
+});
+const TransitionNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphTransitionNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('transition'),
+  id: Addr,
+  meta: Opaque,
+  fromPose: Addr,
+  toPose: Addr,
+  routing: Schema.Union([
+    Schema.Literal('seq'),
+    Schema.Literal('par'),
+    Schema.Literal('choice_then'),
+    Schema.Literal('choice_else'),
+  ]),
+  durationMs: Schema.optional(Schema.Number),
+});
+const ProjectionNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphProjectionNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('projection'),
+  id: Addr,
+  meta: Opaque,
+  target: Schema.Union([
+    Schema.Literal('css'),
+    Schema.Literal('glsl'),
+    Schema.Literal('wgsl'),
+    Schema.Literal('aria'),
+    Schema.Literal('ai'),
+    Schema.Literal('config'),
+    Schema.Literal('svg'),
+  ]),
+  sourceRef: Addr,
+  keys: Opaque,
+  resultDigest: Opaque,
+});
+const PolicyNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphPolicyNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('policy'),
+  id: Addr,
+  meta: Opaque,
+  appliesTo: Schema.Array(Addr),
+  requires: Schema.Union([
+    Schema.Literal('static'),
+    Schema.Literal('styled'),
+    Schema.Literal('reactive'),
+    Schema.Literal('animated'),
+    Schema.Literal('gpu'),
+  ]),
+  grants: Opaque,
+  sites: Schema.Array(
+    Schema.Union([Schema.Literal('node'), Schema.Literal('browser'), Schema.Literal('worker'), Schema.Literal('edge')]),
+  ),
+  budgets: Schema.optional(Opaque),
+});
+const ExportNodeSchema = Schema.Struct({
+  _tag: Schema.Literal('DocGraphExportNode'),
+  _version: Schema.Literal(1),
+  family: Schema.Literal('export'),
+  id: Addr,
+  meta: Opaque,
+  carrier: Schema.Union([
+    Schema.Literal('astro-page'),
+    Schema.Literal('video'),
+    Schema.Literal('svg'),
+    Schema.Literal('ship-capsule'),
+    Schema.Literal('receipt'),
+  ]),
+  sourceRefs: Schema.Array(Addr),
+  artifactDigest: Opaque,
+  receiptHash: Schema.optional(Schema.String),
+});
+
+/** Per-family schemas, keyed by family. */
+const NODE_FAMILY_SCHEMAS = {
+  signal: SignalNodeSchema,
+  entity: EntityNodeSchema,
+  component: ComponentNodeSchema,
+  pose: PoseNodeSchema,
+  transition: TransitionNodeSchema,
+  projection: ProjectionNodeSchema,
+  policy: PolicyNodeSchema,
+  export: ExportNodeSchema,
 };
 
+// COMPILE-TIME EXHAUSTIVENESS: every NodeFamily MUST have a schema above. Adding a family
+// to document-graph.ts without one here is a build error — this is what closes the
+// "validator missed a family" class for good (no runtime table to forget to update).
+const _familyExhaustiveness: Record<NodeFamily, unknown> = NODE_FAMILY_SCHEMAS;
+void _familyExhaustiveness;
+
+/** The single source of truth for "is this a well-formed DocumentGraph node?" */
+const DocumentGraphNodeSchema = Schema.Union([
+  SignalNodeSchema,
+  EntityNodeSchema,
+  ComponentNodeSchema,
+  PoseNodeSchema,
+  TransitionNodeSchema,
+  ProjectionNodeSchema,
+  PolicyNodeSchema,
+  ExportNodeSchema,
+]);
+const isWellFormedNode = Schema.is(DocumentGraphNodeSchema);
+
 /**
- * Validate a proposed node op's payload conforms to its family. `sealNode` only
- * recomputes the content address — it does NOT verify the family-specific fields — so a
- * model could otherwise mint a structurally-incomplete or wrong-typed node (e.g. a
- * `transition` with no `fromPose`, or `fromPose: 1`). Checks the op's declared family
- * matches the node's family and every family-required field is present AND of the right
- * coarse runtime kind. Returns an error string, or null when well-formed.
+ * Validate a proposed node op's payload against {@link DocumentGraphNodeSchema} — the one
+ * declarative schema for all eight families. Also checks the op's declared `family`
+ * matches the node's own `family`. Returns an error string, or null when well-formed.
  */
-function nodeFamilyError(op: { family?: unknown; node: Record<string, unknown> }, i: number): string | null {
-  const nodeFamily = op.node.family;
-  if (typeof nodeFamily !== 'string') return `Patch op[${i}] node is missing its 'family' discriminant.`;
+function nodeSchemaError(op: { family?: unknown; node: unknown }, i: number): string | null {
+  const nodeFamily = (op.node as { family?: unknown } | null)?.family;
   if (op.family !== undefined && op.family !== nodeFamily) {
     return `Patch op[${i}] op.family ${JSON.stringify(op.family)} does not match node.family ${JSON.stringify(nodeFamily)}.`;
   }
-  const fields = NODE_FAMILY_FIELDS[nodeFamily];
-  if (!fields) return `Patch op[${i}] node has unknown family ${JSON.stringify(nodeFamily)}.`;
-  for (const [field, kind] of fields) {
-    const v = op.node[field];
-    if (v === undefined || v === null) {
-      return `Patch op[${i}] (${nodeFamily} node) is missing required field '${field}'.`;
-    }
-    if (kind === 'string' && typeof v !== 'string') {
-      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be a string (got ${typeof v}).`;
-    }
-    if (kind === 'array' && !Array.isArray(v)) {
-      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be an array (got ${typeof v}).`;
-    }
-    if (kind === 'object' && (typeof v !== 'object' || Array.isArray(v))) {
-      return `Patch op[${i}] (${nodeFamily} node) field '${field}' must be an object (got ${Array.isArray(v) ? 'array' : typeof v}).`;
-    }
+  if (!isWellFormedNode(op.node)) {
+    return `Patch op[${i}] node does not conform to the DocumentGraph node schema for family ${JSON.stringify(nodeFamily)} (missing or wrong-typed required fields).`;
   }
   return null;
 }
@@ -571,9 +673,10 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
           // Gate it here so the validator stays TOTAL.
           errors.push(`Patch op[${i}] (node) is missing its node object (got ${JSON.stringify(op.node)}).`);
         } else {
-          // Family/field conformance: sealNode fixes only the id, not the payload shape.
-          const famErr = nodeFamilyError(op as { family?: unknown; node: Record<string, unknown> }, i);
-          if (famErr) errors.push(famErr);
+          // Schema conformance: sealNode fixes only the id, not the payload shape, so the
+          // node is decoded against its family's schema (the single source of truth).
+          const schemaErr = nodeSchemaError(op as { family?: unknown; node: unknown }, i);
+          if (schemaErr) errors.push(schemaErr);
         }
       } else if (kind === 'edge') {
         if (!EDGE_DISCRIMINANTS.has(op.op as string)) {

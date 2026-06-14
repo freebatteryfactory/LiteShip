@@ -288,7 +288,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const checked = AICast.validateGraphPatchProposal(base, patch);
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
-    expect(checked.errors.join(' ')).toMatch(/missing required field|fromPose/i);
+    expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
   });
 
   test("a node op whose op.family disagrees with the node's own family is REJECTED", () => {
@@ -352,7 +352,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const checked = AICast.validateGraphPatchProposal(base, patch);
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
-    expect(checked.errors.join(' ')).toMatch(/must be a string/i);
+    expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
   });
 
   test('a pose node missing its OTHER required fields (entityRef/bindings, not just state) is REJECTED', () => {
@@ -369,7 +369,7 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const checked = AICast.validateGraphPatchProposal(base, patch);
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
-    expect(checked.errors.join(' ')).toMatch(/missing required field '(entityRef|bindings)'/);
+    expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
   });
 
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
