@@ -18,10 +18,28 @@ export const prerender = false;
 const REPLY = ['Hello! ', 'This is a canned ', 'generative-UI stream ', 'echoed chunk by chunk.'];
 
 export const GET: APIRoute = () => {
-  const frames = REPLY.map((content) => `data: ${JSON.stringify({ type: 'text', partial: true, content })}\n\n`);
-  frames.push(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+  const enc = new TextEncoder();
+  let keepAlive: ReturnType<typeof setInterval> | undefined;
 
-  return new Response(frames.join(''), {
+  // A REAL streaming response: emit each chunk + the `done` frame, then hold the
+  // connection OPEN. A buffered body hits EOF immediately, which the browser reads as a
+  // disconnect — the stream directive then reconnects + replays forever. The llm client
+  // closes the EventSource when it sees `done`; the keep-alive just guards idle proxies
+  // until it does.
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const content of REPLY) {
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'text', partial: true, content })}\n\n`));
+      }
+      controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+      keepAlive = setInterval(() => controller.enqueue(enc.encode(': keep-alive\n\n')), 15_000);
+    },
+    cancel() {
+      if (keepAlive) clearInterval(keepAlive);
+    },
+  });
+
+  return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
