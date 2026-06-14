@@ -1,18 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
+import { satelliteAttrs } from '@czap/astro';
+import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
 <Base title="czap showcase -- adaptive layout">
-  <section class="hero" data-czap="layout">
+  <section class="hero" {...satelliteAttrs({ boundary: layout })}>
     <h1 class="hero__title">Constraint-Based Adaptive Rendering</h1>
     <p class="hero__subtitle">
       Quantize continuous signals into discrete states.
       Resize your browser to see boundaries in action.
     </p>
-    <span class="hero__state-badge" data-czap-state></span>
+    <!-- The .hero section is the live satellite; the directive keeps its
+         data-czap-state current and this badge mirrors it via CSS. -->
+    <span class="hero__state-badge"></span>
   </section>
 
-  <section class="cards" data-czap="layout">
+  <section class="cards" {...satelliteAttrs({ boundary: layout })}>
     <article class="card">
       <h2>Boundaries</h2>
       <p>Define quantization thresholds with hysteresis to prevent jitter at breakpoints.</p>
@@ -73,6 +77,14 @@ import Base from '../layouts/Base.astro';
     background: var(--czap-primary, #4f46e5);
     color: #ffffff;
   }
+
+  /* Mirror the live boundary state the satellite directive writes onto the
+     .hero wrapper, so the badge shows the current tier instead of staying blank. */
+  .hero { --czap-state: 'detecting…'; }
+  .hero[data-czap-state='mobile'] { --czap-state: 'mobile'; }
+  .hero[data-czap-state='tablet'] { --czap-state: 'tablet'; }
+  .hero[data-czap-state='desktop'] { --czap-state: 'desktop'; }
+  .hero__state-badge::before { content: var(--czap-state); }
 
   /* ── Adaptive hero via @quantize ── */
   @quantize layout {

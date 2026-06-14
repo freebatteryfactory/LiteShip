@@ -22,7 +22,7 @@ import { Theme } from '@czap/core';
 // variant name to design value.
 const brandTheme = Theme.make({
   name: 'brand',
-  variants: ['light', 'dark'] as const,
+  variants: ['light', 'dark'],
   tokens: {
     'bg':         { light: '#ffffff', dark: '#0f0f23' },
     'bg-surface': { light: '#f8f9fa', dark: '#1a1a2e' },
@@ -99,7 +99,7 @@ const darkTokens = Theme.tap(brandTheme, 'dark');
 
 const brandTheme = Theme.make({'{'}&br;
   name: 'brand',
-  variants: ['light', 'dark'] as const,
+  variants: ['light', 'dark'],
   tokens: {'{'}&br;
     'bg':         {'{'} light: '#ffffff', dark: '#0f0f23' {'}'},
     'bg-surface': {'{'} light: '#f8f9fa', dark: '#1a1a2e' {'}'},

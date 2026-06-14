@@ -39,7 +39,7 @@ export const spacingLg = Token.make({
 export const colorText = Token.make({
   name: 'color-text',
   category: 'color',
-  axes: ['theme'] as const,
+  axes: ['theme'],
   values: { light: '#1a1a2e', dark: '#e8e8f0' },
   fallback: '#1a1a2e',
 });
@@ -47,7 +47,7 @@ export const colorText = Token.make({
 export const colorSurface = Token.make({
   name: 'color-surface',
   category: 'color',
-  axes: ['theme'] as const,
+  axes: ['theme'],
   values: { light: '#ffffff', dark: '#1a1a2e' },
   fallback: '#ffffff',
 });

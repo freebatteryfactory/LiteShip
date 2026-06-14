@@ -6,7 +6,8 @@ import { boundaries } from 'virtual:czap/boundaries';
 // precompiled per-tier outputs from the @quantize CSS block -- nothing
 // here is hand-typed, and the worker bundle stays compiler-free.
 export const onRequest = cloudflareMiddleware({
-  binding: 'CZAP_BOUNDARY_CACHE',
+  // `binding` defaults to 'CZAP_BOUNDARY_CACHE' (the wrangler.jsonc
+  // kv_namespaces binding name) — omit it unless you override that name.
   manifest: boundaries,
   boundary: 'viewport',
 });
