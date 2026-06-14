@@ -437,6 +437,43 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     expect(ui.target).toBe('generated-ui');
     expect(ui.errors[0]).toMatch(/Unknown generated UI component/);
   });
+
+  test('applyValidatedPatch refuses a (genuinely minted) GENERATED-UI proposal — the graph-patch apply step is target-gated', () => {
+    const ui = AICast.validateGeneratedUIProposal({ name: 'Text', props: { value: 'hi' } }, catalog, generatedUiValidator);
+    expect(ui.ok).toBe(true);
+    if (!ui.ok) return;
+    // The proposal is authentic for its OWN target, but its UI-tree payload must never
+    // reach GraphPatch.apply — applyValidatedPatch pins target === 'graph-patch'.
+    const base = graph([node('a')]);
+    expect(() => AICast.applyValidatedPatch(base, ui.proposal as unknown as ValidatedProposal<GraphPatch>)).toThrow(
+      /expected a 'graph-patch'/,
+    );
+  });
+
+  test('the generated-ui validator is TOTAL — malformed/parsed-JSON input is rejected, never thrown', () => {
+    // null / non-object would deref `node.name` inside the injected validator.
+    expect(() => AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator)).not.toThrow();
+    expect(AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator).ok).toBe(false);
+    // `children` as a non-array is a clean rejection, not a crash.
+    const badShape = { name: 'Text', children: 'nope' } as unknown as GeneratedUINode;
+    expect(AICast.validateGeneratedUIProposal(badShape, catalog, generatedUiValidator).ok).toBe(false);
+  });
+
+  test('a node op carrying a null node is REJECTED before re-stamping — the validator stays total', () => {
+    const base = graph([node('a')]);
+    // `node:null` passes the node-op discriminant but would crash `propose` deref'ing node.id.
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: base.id,
+      ops: [{ op: 'add', family: 'signal', node: null }],
+    } as unknown as GraphPatch;
+    let r: ReturnType<typeof AICast.validateGraphPatchProposal> | undefined;
+    expect(() => {
+      r = AICast.validateGraphPatchProposal(base, patch);
+    }).not.toThrow();
+    expect(r?.ok).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

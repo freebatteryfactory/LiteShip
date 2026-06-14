@@ -480,10 +480,17 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
       const kind = 'node' in op ? 'node' : 'edge' in op ? 'edge' : null;
       if (kind === null) {
         errors.push(`Patch op[${i}] is neither a node nor an edge op (malformed).`);
-      } else if (kind === 'node' && !NODE_DISCRIMINANTS.has(op.op as string)) {
-        errors.push(
-          `Patch op[${i}] (node) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove|update).`,
-        );
+      } else if (kind === 'node') {
+        if (!NODE_DISCRIMINANTS.has(op.op as string)) {
+          errors.push(
+            `Patch op[${i}] (node) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove|update).`,
+          );
+        } else if (op.node === null || typeof op.node !== 'object') {
+          // A node op with `node:null` passes the discriminant but the truthy re-seal
+          // guard skips it, leaving `GraphPatch.propose` to deref `node.id` and throw.
+          // Gate it here so the validator stays TOTAL.
+          errors.push(`Patch op[${i}] (node) is missing its node object (got ${JSON.stringify(op.node)}).`);
+        }
       } else if (kind === 'edge') {
         if (!EDGE_DISCRIMINANTS.has(op.op as string)) {
           errors.push(`Patch op[${i}] (edge) has invalid discriminant ${JSON.stringify(op.op)} (expected add|remove).`);
@@ -578,7 +585,34 @@ export function validateGeneratedUIProposal(
   catalog: ComponentCatalog,
   validate: GeneratedUIValidator,
 ): ProposalResult<GeneratedUINode> {
-  const result = validate(node, catalog);
+  // TOTAL on untrusted input: parsed model JSON may not be a well-formed GeneratedUINode.
+  // Guard the shape before the INJECTED validator (a host function the cast cannot assume
+  // is total — it may deref `node.name`/`node.children`). A bad shape is a clean rejection.
+  const n = node as { name?: unknown; children?: unknown } | null;
+  if (
+    n === null ||
+    typeof n !== 'object' ||
+    typeof n.name !== 'string' ||
+    (n.children !== undefined && !Array.isArray(n.children))
+  ) {
+    return {
+      ok: false,
+      target: 'generated-ui',
+      errors: ['Proposal is not a well-formed GeneratedUINode (expected { name: string, children?: [...] }).'],
+    };
+  }
+  // The injected validator is host-provided; wrap it so a throw becomes a rejection
+  // rather than escaping the validation boundary into host admission code.
+  let result: ReturnType<GeneratedUIValidator>;
+  try {
+    result = validate(node, catalog);
+  } catch (e) {
+    return {
+      ok: false,
+      target: 'generated-ui',
+      errors: [`Generated-UI validation threw on the proposal: ${String(e)}`],
+    };
+  }
   if (!result.ok) {
     const where = result.error.path ? ` (at ${result.error.path})` : '';
     return { ok: false, target: 'generated-ui', errors: [`${result.error.message}${where}`] };
@@ -612,6 +646,17 @@ export function validateGeneratedUIProposal(
  * wrong graph (re-validate against the advanced graph to get a fresh proposal).
  */
 export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedProposal<GraphPatch>): DocumentGraph {
+  // TARGET GATE: this is the GRAPH-PATCH apply step. A proposal authentically minted
+  // for a DIFFERENT target (e.g. 'generated-ui') must NOT reach `GraphPatch.apply` —
+  // `assertTokenBinds` only proves the token agrees with the proposal's OWN target, not
+  // that the target is the one THIS entrypoint serves. From JS (or a cast), a validated
+  // generated-ui proposal could otherwise be handed here and its UI-tree payload fed to
+  // the graph mutator. Pin the target before anything else.
+  if (proposal.target !== 'graph-patch') {
+    throw new Error(
+      `applyValidatedPatch: expected a 'graph-patch' proposal but got '${proposal.target}'; refusing to apply.`,
+    );
+  }
   // FULL provenance gate via assertTokenBinds — NOT an inline address-only check.
   // `contentAddressOf` is part of the public surface, so a caller from JS (or TS
   // casting untrusted model output) could fabricate a proposal-shaped object whose
