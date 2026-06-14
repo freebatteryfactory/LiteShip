@@ -69,7 +69,7 @@ import { gapSm, gapMd, gapLg } from '../tokens/spacing.tokens.js';
 export const gapSm = Token.make({'{'}&br;
   name: 'gap-sm',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {'{'}&br;
     default: '0.5rem',   // Standard spacing
     compact: '0.25rem',  // Tighter for dense layouts
@@ -80,7 +80,7 @@ export const gapSm = Token.make({'{'}&br;
 export const gapMd = Token.make({'{'}&br;
   name: 'gap-md',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {'{'}&br;
     default: '1rem',
     compact: '0.5rem',
@@ -91,7 +91,7 @@ export const gapMd = Token.make({'{'}&br;
 export const gapLg = Token.make({'{'}&br;
   name: 'gap-lg',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {'{'}&br;
     default: '2rem',
     compact: '1rem',
@@ -251,7 +251,7 @@ export const gapLg = Token.make({'{'}&br;
 const textColor = Token.make({'{'}&br;
   name: 'text-primary',
   category: 'color',
-  axes: ['theme', 'contrast'] as const,
+  axes: ['theme', 'contrast'],
   values: {'{'}&br;
     'light:normal': '#1a1a2e',
     'light:high':   '#000000',

@@ -9,7 +9,7 @@ import { Theme } from '@czap/core';
  */
 export const dark = Theme.make({
   name: 'brand',
-  variants: ['light', 'dark'] as const,
+  variants: ['light', 'dark'],
   tokens: {
     primary: { light: '#4f46e5', dark: '#818cf8' },
     secondary: { light: '#0d9488', dark: '#2dd4bf' },

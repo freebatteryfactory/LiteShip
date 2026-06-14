@@ -1,5 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
+import { satelliteAttrs } from '@czap/astro';
+import { layout } from '../boundaries/layout.boundaries.ts';
 ---
 
 <Base title="czap showcase -- GPU shaders">
@@ -12,7 +14,7 @@ import Base from '../layouts/Base.astro';
     </p>
   </header>
 
-  <section class="gpu-demo" data-czap="layout">
+  <section class="gpu-demo" {...satelliteAttrs({ boundary: layout })}>
     <div class="gpu-canvas-wrap">
       <canvas
         class="gpu-canvas"
@@ -24,10 +26,7 @@ import Base from '../layouts/Base.astro';
       ></canvas>
     </div>
 
-    <div
-      class="gpu-satellite"
-      data-czap="layout"
-    >
+    <div {...satelliteAttrs({ boundary: layout, class: 'gpu-satellite' })}>
       <h2>Satellite Boundary</h2>
       <p>
         This panel is driven by the same <code>layout</code> boundary as the
@@ -36,7 +35,11 @@ import Base from '../layouts/Base.astro';
       </p>
       <div class="state-indicator">
         <span class="state-dot"></span>
-        <span data-czap-state>detecting...</span>
+        <!-- The .gpu-satellite wrapper is the live satellite (satelliteAttrs
+             emits data-czap-boundary + data-czap-directive); the directive
+             keeps its data-czap-state current, and this label mirrors it via
+             CSS content: attr() so it never sticks on a placeholder. -->
+        <span class="state-label"></span>
       </div>
     </div>
   </section>
@@ -133,6 +136,14 @@ import Base from '../layouts/Base.astro';
     background: var(--czap-secondary, #0d9488);
     animation: pulse 2s ease-in-out infinite;
   }
+
+  /* Mirror the live boundary state the directive writes onto the
+     .gpu-satellite wrapper. Falls back to "detecting…" until hydration. */
+  .gpu-satellite { --czap-state: 'detecting…'; }
+  .gpu-satellite[data-czap-state='mobile'] { --czap-state: 'mobile'; }
+  .gpu-satellite[data-czap-state='tablet'] { --czap-state: 'tablet'; }
+  .gpu-satellite[data-czap-state='desktop'] { --czap-state: 'desktop'; }
+  .state-label::before { content: var(--czap-state); }
 
   @keyframes pulse {
     0%, 100% { opacity: 1; }

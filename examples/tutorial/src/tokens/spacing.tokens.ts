@@ -22,7 +22,7 @@ import { Token } from '@czap/core';
 export const gapSm = Token.make({
   name: 'gap-sm',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {
     default: '0.5rem',
     compact: '0.25rem',
@@ -33,7 +33,7 @@ export const gapSm = Token.make({
 export const gapMd = Token.make({
   name: 'gap-md',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {
     default: '1rem',
     compact: '0.5rem',
@@ -44,7 +44,7 @@ export const gapMd = Token.make({
 export const gapLg = Token.make({
   name: 'gap-lg',
   category: 'spacing',
-  axes: ['density'] as const,
+  axes: ['density'],
   values: {
     default: '2rem',
     compact: '1rem',
