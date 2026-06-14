@@ -350,6 +350,16 @@ export { canonicalCborDecodeCapsule } from './capsules/canonical-cbor-decode.js'
 // registers in the live `getCapsuleCatalog()` (the contract the future graph
 // editor builds against).
 export { graphPatchIdentityCapsule } from './capsules/graph-patch-identity.js';
+// The escalation chooser capsule — locks `chooseRung`'s minimal-downgrade law
+// (never escalates above `requires`), the site gate, determinism, and the
+// fresh-Set memoization scar as a standing pureTransform contract. Exported here
+// so it registers in the live `getCapsuleCatalog()`.
+export { escalationChooseRungCapsule } from './capsules/escalation-choose-rung.js';
+// The DocumentGraph addressing capsule — locks `addressDocumentGraph`'s
+// determinism, fnv1a format, and order-independence (the CUT B1 code-unit
+// regression guard) as a standing pureTransform contract. Exported here so it
+// registers in the live `getCapsuleCatalog()`.
+export { documentGraphAddressCapsule } from './capsules/document-graph-address.js';
 
 // Harness lives at `@czap/core/harness` — per-arm test + bench template
 // generators. Not re-exported here so consumers don't pull fast-check and

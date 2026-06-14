@@ -35,7 +35,7 @@ type ProjectionTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
  * superset of the one below, mirroring `@czap/quantizer`'s `TIER_TARGETS`
  * escalation (`none` within `transitions` within `physics` within `compute`).
  */
-const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
+export const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
   static: new Set<ProjectionTarget>(['aria']),
   styled: new Set<ProjectionTarget>(['css', 'aria']),
   reactive: new Set<ProjectionTarget>(['css', 'aria']),
