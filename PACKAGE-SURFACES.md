@@ -20,7 +20,7 @@ Product naming for surrounding docs: [GLOSSARY.md](./GLOSSARY.md).
 
 ## `@czap/canonical`
 
-Source: [`packages/canonical/src/index.ts`](../packages/canonical/src/index.ts)
+Source: [`packages/canonical/src/index.ts`](./packages/canonical/src/index.ts)
 
 The sync bytes kernel: canonical CBOR encoding, FNV-1a content labels, and addressed digests. Runtime status: `standalone leaf` (sole dep `@noble/hashes`; no Effect, no spine imports in-package).
 
@@ -42,7 +42,7 @@ Main surfaces:
 
 ## `@czap/genui`
 
-Source: [`packages/genui/src/index.ts`](../packages/genui/src/index.ts)
+Source: [`packages/genui/src/index.ts`](./packages/genui/src/index.ts)
 
 Host-owned generated UI catalog renderer. Runtime status: `host-wired` through `@czap/astro` (`client:llm` + `genuiCatalog`), `@czap/web` (chunk parsing), and `@czap/mcp-server` (registry discovery).
 
@@ -67,7 +67,7 @@ Wire protocol discriminator: `{ "_genui": true, "name": "...", "props": { ... } 
 
 ## `@czap/core`
 
-Source: [`packages/core/src/index.ts`](../packages/core/src/index.ts)
+Source: [`packages/core/src/index.ts`](./packages/core/src/index.ts)
 
 The semantic and runtime foundation. Runtime status: `host-wired`, including `Plan` and `ECS` through the shared `RuntimeCoordinator` host surface.
 
@@ -112,12 +112,36 @@ Main surfaces:
 - `World`
 - `Receipt`
 - `DAG`
+- `DocumentGraph`
+- `GraphPatch`
+- `AICast`
+- `chooseRung`
+
+### Document graph (the IR)
+
+The content-addressed keystone every cast reads from ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
+
+- a typed, addressable form of a definition (eight node families: `signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`)
+- proof that two casts share one source (same content address)
+- typed graph mutation — `GraphPatch`: `diff` / `apply` / `validate` / `receipt`
+
+Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `sealNode` / `sealGraph`, `validateGraph`, `linearizeGraph`, `GraphPatch`. `apply` re-seals the graph, so a patched node's address stays honest.
+
+### AI cast
+
+Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./docs/adr/0015-document-graph-ir.md)). Reach for it when you need:
+
+- a deterministic, token-budgeted `AIContext` (graph summary + tool schema) for a model call
+- validation of a model's `GraphPatch` proposal (or a genui tree, ADR-0014)
+- the envelope that keeps raw model output from ever mutating a graph
+
+Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchProposal`, `validateGeneratedUIProposal`, `applyValidatedPatch`, `ValidatedProposal`, `ApplyToken`. The primitive is pure — zero network, zero provider imports — and `mintValidated` is denied at the package subpath, so a consumer cannot forge a proposal. The host owns the model call and the authority to apply.
 
 ---
 
 ## `@czap/quantizer`
 
-Source: [`packages/quantizer/src/index.ts`](../packages/quantizer/src/index.ts)
+Source: [`packages/quantizer/src/index.ts`](./packages/quantizer/src/index.ts)
 
 Turns boundaries and outputs into live quantized behavior. Runtime status: `host-wired`.
 
@@ -141,7 +165,7 @@ Testing-only surfaces (`@czap/quantizer/testing`): `MemoCache`, `TIER_TARGETS`
 
 ## `@czap/compiler`
 
-Source: [`packages/compiler/src/index.ts`](../packages/compiler/src/index.ts)
+Source: [`packages/compiler/src/index.ts`](./packages/compiler/src/index.ts)
 
 Projects authored definitions into target-specific outputs. Runtime status: `host-wired` through the Vite and Astro host paths.
 
@@ -172,7 +196,7 @@ Main surfaces:
 
 ## `@czap/web`
 
-Source: [`packages/web/src/index.ts`](../packages/web/src/index.ts)
+Source: [`packages/web/src/index.ts`](./packages/web/src/index.ts)
 
 The browser runtime package. Runtime status: `host-wired`.
 
@@ -180,7 +204,7 @@ Reach for it when you need:
 
 - DOM morphing
 - slot registration
-- SSE and resumption — `SSE` is the transport, `Resumption` is the recovery protocol; hosts compose them (see [`packages/astro/src/runtime/stream.ts`](../packages/astro/src/runtime/stream.ts) for the reference wiring)
+- SSE and resumption — `SSE` is the transport, `Resumption` is the recovery protocol; hosts compose them (see [`packages/astro/src/runtime/stream.ts`](./packages/astro/src/runtime/stream.ts) for the reference wiring)
 - physical state capture and restore
 - WebCodecs capture
 - LLM chunk adaptation
@@ -206,7 +230,7 @@ Main surfaces:
 
 ## `@czap/detect`
 
-Source: [`packages/detect/src/index.ts`](../packages/detect/src/index.ts)
+Source: [`packages/detect/src/index.ts`](./packages/detect/src/index.ts)
 
 Reads capabilities and maps them into the tier lattice. Runtime status: `host-wired`.
 
@@ -230,7 +254,7 @@ Main surfaces:
 
 ## `@czap/vite`
 
-Source: [`packages/vite/src/index.ts`](../packages/vite/src/index.ts)
+Source: [`packages/vite/src/index.ts`](./packages/vite/src/index.ts)
 
 The authored-CSS transformation layer. Runtime status: `host-wired`.
 
@@ -258,6 +282,15 @@ Main surfaces:
 - `resolveStyle`
 - `resolveBoundary`
 - `resolveVirtualId`
+
+Virtual modules the plugin serves (import them from app code; the boundary/token/theme ones are also emitted automatically into the build):
+
+- `virtual:czap/boundaries` — the build-derived boundary manifest (the shape the edge cache reads)
+- `virtual:czap/tokens` / `virtual:czap/tokens.css` — resolved token values (JS + emitted CSS)
+- `virtual:czap/themes` — resolved theme variants
+- `virtual:czap/wasm-url` — the resolved URL of the `czap-compute` WASM (or `null` when `wasm` is off)
+- `virtual:czap/config` — the resolved plugin config
+- `virtual:czap/hmr-client` — the dev HMR client (dev only)
 - `isVirtualId`
 - `loadVirtualModule`
 - `handleHMR`
@@ -266,7 +299,7 @@ Main surfaces:
 
 ## `@czap/astro`
 
-Source: [`packages/astro/src/index.ts`](../packages/astro/src/index.ts)
+Source: [`packages/astro/src/index.ts`](./packages/astro/src/index.ts)
 
 The Astro host package. Runtime status: `host-wired`.
 
@@ -297,7 +330,7 @@ Host-owned shared runtime surfaces:
 
 ## `@czap/edge`
 
-Source: [`packages/edge/src/index.ts`](../packages/edge/src/index.ts)
+Source: [`packages/edge/src/index.ts`](./packages/edge/src/index.ts)
 
 The edge / server capability and caching layer. Runtime status: `host-wired`.
 
@@ -324,7 +357,7 @@ The default Astro host path now routes through `createEdgeHostAdapter`, which co
 
 ## `@czap/cloudflare`
 
-Source: [`packages/cloudflare/src/index.ts`](../packages/cloudflare/src/index.ts)
+Source: [`packages/cloudflare/src/index.ts`](./packages/cloudflare/src/index.ts)
 
 The Cloudflare Workers siteAdapter. Runtime status: `host-wired` on workerd.
 
@@ -339,13 +372,13 @@ Main surfaces:
 - `createCloudflareEdgeCache`
 - `cloudflareAdapterCapsule`
 
-See [hosting/cloudflare.md](./hosting/cloudflare.md) for the full deploy guide.
+See [HOSTING.md](./HOSTING.md#cloudflare-workers) for the full deploy guide.
 
 ---
 
 ## `@czap/worker`
 
-Source: [`packages/worker/src/index.ts`](../packages/worker/src/index.ts)
+Source: [`packages/worker/src/index.ts`](./packages/worker/src/index.ts)
 
 The off-main-thread runtime layer. Runtime status: `host-wired`.
 
@@ -371,7 +404,7 @@ This package assumes stronger runtime requirements and should be used where the 
 
 ## `@czap/remotion`
 
-Source: [`packages/remotion/src/index.ts`](../packages/remotion/src/index.ts)
+Source: [`packages/remotion/src/index.ts`](./packages/remotion/src/index.ts)
 
 The React / Remotion video adapter. Runtime status: `standalone subsystem`.
 
@@ -394,6 +427,119 @@ This package is for the Remotion / video branch of the ecosystem, not the main A
 
 ---
 
+## `@czap/stage`
+
+Source: [`packages/stage/src/index.ts`](./packages/stage/src/index.ts)
+
+The dual-export orchestration layer: cast one document graph to more than one carrier and prove they share a source. Runtime status: `standalone subsystem`.
+
+Reach for it when you need:
+
+- a static Astro page and a video export from the same definition
+- proof both outputs trace to one content address
+- headless, byte-real video encoding without a system-codec hard dependency
+
+Main surfaces:
+
+- `dualExport`
+- `exportAstroPage`
+- `exportVideo` / `exportVideoEncoded`
+- `FrameEncoder` (the injectable seam)
+
+The `encode?` seam keeps `@czap/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@czap/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked.
+
+---
+
+## `@czap/scene`
+
+Source: [`packages/scene/src/index.ts`](./packages/scene/src/index.ts)
+
+ECS-backed scene composition + timeline authoring (ADR-0009). Runtime status: `host-wired`.
+
+Reach for it when you need:
+
+- timeline-driven composition (video, audio, transitions, effects)
+- an ECS world with the canonical systems already written
+- a compiled scene that drives a frame loop
+
+Main surfaces:
+
+- `SceneContract` / `compileScene`
+- `Track` (`Track.video` / `Track.audio` / `Track.transition` / `Track.effect`)
+- `SceneRuntime`
+- `VideoSystem` / `AudioSystem` / `TransitionSystem` / `EffectSystem` (+ the sync + pass-through mixer)
+- `bindBeats` (beat-indexed composition from `@czap/assets` projections)
+
+Paired with `@czap/stage` for the video-export branch.
+
+---
+
+## `@czap/assets`
+
+Source: [`packages/assets/src/index.ts`](./packages/assets/src/index.ts)
+
+Asset capsules + analysis projections, built on the `cachedProjection` arm. Runtime status: `host-wired`.
+
+Reach for it when you need:
+
+- declarative asset loading + caching (`defineAsset`)
+- audio / video / image decoders
+- signal-indexed analysis projections to drive boundaries or scenes
+
+Main surfaces:
+
+- `defineAsset`
+- `audioDecoder` / `videoDecoder` / `imageDecoder`
+- `BeatMarkerProjection` / `OnsetProjection` / `WaveformProjection` / `WavMetadataProjection`
+
+---
+
+## `@czap/command`
+
+Source: [`packages/command/src/index.ts`](./packages/command/src/index.ts)
+
+The shared command registry + dispatcher both the CLI and the MCP server route through. Runtime status: `host-wired`. Not imported by app code — it is the seam that keeps `czap <verb>` and the MCP tool surface one implementation.
+
+---
+
+## `@czap/cli`
+
+Source: [`packages/cli/src/index.ts`](./packages/cli/src/index.ts)
+
+The JSON-first `czap` CLI (human-pretty in a TTY). Runtime status: build tooling — not an app dependency.
+
+Reach for it when you need:
+
+- structural description + audit (`czap describe`, `czap audit`, `czap doctor`)
+- scene + asset operations (`czap scene.compile`, `czap scene.render`, `czap asset.analyze`)
+- capsule inspection (`czap capsule.inspect`)
+- release + gauntlet (`czap ship`, `czap verify`, `czap gauntlet`)
+
+Entry: `pnpm exec czap <verb>` in a LiteShip checkout. `czap help` prints the chart.
+
+---
+
+## `@czap/audit`
+
+Source: [`packages/audit/src/index.ts`](./packages/audit/src/index.ts)
+
+The profile-driven structure / integrity / surface audit engine. Runtime status: `standalone` (zero `@czap/*` deps). Consumed by `@czap/cli` and the gauntlet; see [AUDIT.md](./AUDIT.md).
+
+Main surfaces:
+
+- `runAuditPasses`
+- `AuditPassResult`
+
+---
+
+## `@czap/mcp-server`
+
+Source: [`packages/mcp-server/src/index.ts`](./packages/mcp-server/src/index.ts)
+
+The Model Context Protocol server that exposes LiteShip document graphs + command dispatch to AI tooling. Runtime status: build tooling. Entry: `czap mcp` (stdio) or `czap mcp --http=:port`. Dispatches through `@czap/command`, so its tool surface and the CLI's verb surface never drift.
+
+---
+
 ## A simple selection rule
 
 If the problem is:
@@ -408,3 +554,8 @@ If the problem is:
 - request-time adaptation: `@czap/edge`
 - off-thread runtime: `@czap/worker`
 - Remotion / video composition: `@czap/remotion`
+- dual-export (page + video from one graph): `@czap/stage`
+- timeline / ECS scene composition: `@czap/scene`
+- asset loading + analysis projections: `@czap/assets`
+- the `czap` CLI or codebase auditing: `@czap/cli`, `@czap/audit`
+- an MCP server for AI tooling: `@czap/mcp-server`

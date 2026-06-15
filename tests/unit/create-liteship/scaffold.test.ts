@@ -131,6 +131,32 @@ describe('create-liteship scaffold', () => {
       expect(spec, dep).not.toMatch(/^(workspace|file|link):/);
     }
   });
+
+  // Drift guard: a scaffolded app must pull the SAME release line the workspace
+  // is publishing, not a stale one. `^0.1.5` once survived into a 0.2.0 cut
+  // because nothing pinned the template's @czap/* ranges to the release version
+  // — `npm create liteship@latest` would then hand users a previous-minor app.
+  // Pin the LAW (major.minor must match the workspace version), not the exact
+  // patch, so caret-compatible patch releases need no template churn.
+  it('template @czap/* ranges track the workspace release line (no stale-minor drift)', () => {
+    const root = JSON.parse(readFileSync(join(defaultTemplateDir(), '../../../../package.json'), 'utf8')) as {
+      version: string;
+    };
+    const [rootMajor, rootMinor] = root.version.split('.');
+    const manifest = JSON.parse(readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
+    const czapDeps = Object.entries(manifest.dependencies).filter(([dep]) => dep.startsWith('@czap/'));
+    expect(czapDeps.length, 'template should depend on at least one @czap/* package').toBeGreaterThan(0);
+    for (const [dep, spec] of czapDeps) {
+      const match = spec.match(/^\^(\d+)\.(\d+)\.\d+/);
+      expect(match, `${dep} spec ${spec} should be a caret range`).not.toBeNull();
+      const [, major, minor] = match!;
+      expect(`${major}.${minor}`, `${dep} (${spec}) must track workspace ${root.version}`).toBe(
+        `${rootMajor}.${rootMinor}`,
+      );
+    }
+  });
 });
 
 describe('create-liteship run (CLI surface)', () => {

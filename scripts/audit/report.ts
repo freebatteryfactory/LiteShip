@@ -1513,8 +1513,8 @@ function buildProtocolGapReport(
         ? 'Requirement/invariant/decision identifiers exist in-band, but the repo still leans on advisory linkage rather than a full explicit traceability graph.'
         : 'Status docs, invariant checks, and audit artifacts exist, but stable requirement IDs and backward links remain mostly implicit.',
       evidence: [
-        'docs/STATUS.md',
-        'docs/AUDIT.md',
+        'STATUS.md',
+        'AUDIT.md',
         'scripts/check-invariants.ts',
         'reports/codebase-audit.json',
       ],
@@ -1631,7 +1631,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       title: 'Backend-agnostic full-stack unifier',
       status: 'absent',
       summary: 'The repo is a rendering/runtime framework, not a Hono-style full-stack app framework spanning multiple UI libraries and backend adapters.',
-      evidence: ['README.md', 'docs/ARCHITECTURE.md'],
+      evidence: ['README.md', 'ARCHITECTURE.md'],
       recommendation: 'documentation_clarification',
     },
     {
@@ -1667,7 +1667,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       title: 'Integrated edge KV/binding story',
       status: 'present',
       summary: 'KV-backed edge caching and request-time adaptation are already first-class surfaces.',
-      evidence: ['packages/edge/src/kv-cache.ts', 'packages/edge/src/host-adapter.ts', 'docs/STATUS.md'],
+      evidence: ['packages/edge/src/kv-cache.ts', 'packages/edge/src/host-adapter.ts', 'STATUS.md'],
       recommendation: 'no_action',
     },
     {
@@ -1703,7 +1703,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       title: 'Intentional platform/runtime coupling',
       status: 'partial',
       summary: 'The docs discuss Cloudflare-style edge execution, but the actual interfaces stay intentionally generic rather than locking into one vendor runtime.',
-      evidence: ['docs/ARCHITECTURE.md', 'packages/edge/src/kv-cache.ts', 'packages/astro/src/middleware.ts'],
+      evidence: ['ARCHITECTURE.md', 'packages/edge/src/kv-cache.ts', 'packages/astro/src/middleware.ts'],
       recommendation: 'documentation_clarification',
     },
     {
@@ -1721,7 +1721,7 @@ function buildFrameworkBlueprintReport(root: string): FrameworkBlueprintReport {
       title: 'Workerd/edge-first optimization',
       status: 'partial',
       summary: '@czap/cloudflare is now a first-party siteAdapter with KV middleware glue and a gauntlet-gated example, but platform-owned runtime contracts beyond KV boundary cache are still evolving.',
-      evidence: ['docs/hosting/cloudflare.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
+      evidence: ['HOSTING.md', 'packages/cloudflare/src/middleware.ts', 'examples/cloudflare-astro/'],
       recommendation: 'architecture_hardening',
     },
     {

@@ -2,7 +2,7 @@
 
 From `pnpm add` in your Astro project to a boundary changing state as you drag the window edge, in about five minutes. Two concepts get you there: `Boundary.make` and `satelliteAttrs`. Everything else (tokens, styles, casting to CSS) is layered behind links.
 
-LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [hosting/cloudflare.md](./hosting/cloudflare.md) and [examples/cloudflare-astro/](../examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](../CONTRIBUTING.md).
+LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare Workers hosting, see [HOSTING.md](./HOSTING.md#cloudflare-workers) and [examples/cloudflare-astro/](./examples/cloudflare-astro/). Contributing to LiteShip itself (cloning the monorepo, building, running the gauntlet) is a different path: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ In your Astro project:
 pnpm add @czap/core @czap/astro effect@beta
 ```
 
-`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](../README.md#support-matrix) covers the pin and the stabilization plan.
+`effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. The [support matrix](./README.md#support-matrix) covers the pin and the stabilization plan.
 
 ## 2. Your first boundary
 
@@ -48,10 +48,10 @@ Register the integration (it injects the client boot scanner that activates boun
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import czap from '@czap/astro';
+import { integration } from '@czap/astro';
 
 export default defineConfig({
-  integrations: [czap()],
+  integrations: [integration()],
 });
 ```
 
@@ -79,7 +79,7 @@ Run `pnpm dev`, open the page, and drag the window edge: the element's `data-cza
 }
 ```
 
-`satelliteAttrs` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@czap/astro/Satellite'`) wraps the same attributes around a div for you, and you can also write the `data-czap-boundary` / `data-czap-directive` attributes yourself.
+`satelliteAttrs` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@czap/astro/Satellite'`) wraps the same attributes around a div for you. Always go through `satelliteAttrs` or `Satellite` — the `data-czap-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
 
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
@@ -134,7 +134,7 @@ Rendered output carries `data-czap-genui-render-hash` for cache/replay; click ha
 
 ## Dev inspector (astro dev only)
 
-While running `pnpm dev`, press **Alt+Shift+C** to open the czap boundary inspector — a floating panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `czap({ inspector: false })` in `astro.config.mjs`.
+While running `pnpm dev`, press **Alt+Shift+C** to open the czap boundary inspector — a floating panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
 
 <!-- gif: inspector overlay tuning thresholds and copying snippet -->
 
@@ -197,7 +197,7 @@ The compile step and the page must share one definition (that's why step 2 put t
 
 ## Working on LiteShip itself
 
-The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](../CONTRIBUTING.md). The short version:
+The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](./CONTRIBUTING.md). The short version:
 
 ```bash
 git clone https://github.com/heyoub/LiteShip.git

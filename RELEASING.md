@@ -29,7 +29,7 @@ gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE_NOTES_v0.1.0.md
 
 ## Publish packages
 
-Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then hands the matching tarballs to `pnpm publish` (ADR-0011). The default (no filter) is every publishable workspace package; the publish handoff passes one `--filter <pkg>` per minted package plus `-r` so pnpm publishes exactly the set we addressed.
+Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then hands the matching tarballs to `pnpm publish` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package; the publish handoff passes one `--filter <pkg>` per minted package plus `-r` so pnpm publishes exactly the set we addressed.
 
 Dry-run first so the receipts and `pnpm publish --dry-run` outputs are both observable without uploading:
 
@@ -88,10 +88,6 @@ git push origin v0.1.0
 
 Use `git push --force-with-lease` only after a coordinated history rewrite.
 
-## Pre-public history scrub
-
-Untracking a file does not remove old blobs. See [HISTORY_SCRUB.md](./HISTORY_SCRUB.md) for discovery, backup, and `git filter-repo` steps.
-
 ## MCP and CLI
 
 `@czap/cli` loads `@czap/mcp-server` only for the `czap mcp` subcommand (dynamic
@@ -118,7 +114,7 @@ publisher per package, form values below.
 
 ### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
-For each of the 22 publishable packages (20 `@czap/*` scopes + `create-liteship` + `liteship`), open
+For each of the 23 publishable packages (21 `@czap/*` scopes — including `@czap/stage`, public as of 0.2.0 — plus `create-liteship` + `liteship`), open
 `https://www.npmjs.com/package/<name>/access` (e.g.
 `https://www.npmjs.com/package/@czap/core/access`,
 `https://www.npmjs.com/package/liteship/access`) and add a trusted publisher

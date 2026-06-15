@@ -6,10 +6,59 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
-Hardening follow-ups to the 0.1.5 dogfood wave: ROADMAP epics #1 (branch
-hotspots) and #2 (advisory cleanup), the timeout-flake class seen during the
-release, and the two deferred dogfood items. Plus the v0.2 release-trust
-pivot (epic #4) — these notes ship as 0.2.0.
+## [0.2.0] - 2026-06-14
+
+The substrate cut. 0.1.x proved the casts; 0.2.0 makes the **DocumentGraph IR** the
+keystone they all project from, lands the **production cast family** (CSS / SVG / GLSL /
+WGSL / ARIA / video / AI), and ships the **AI cast primitive** — a content-addressed
+graph spoken to a model and a validated, unforgeable proposal taken back. Plus a
+developer-experience pass (defaults + teaching errors), a full dev inspector, and a
+structural-lint guard layer. Pre-1.0 break policy applies — breaking changes are noted.
+
+### Added — substrate, casts, AI
+
+- `@czap/core` — **DocumentGraph IR** (the keystone): a content-addressed graph of
+  signal / entity / component / pose / transition / projection / policy / export nodes,
+  with deterministic evaluation across the render seam and the dual-export proof. Every
+  cast now projects from one graph.
+- `@czap/compiler` + `@czap/astro` — **live GLSL and WGSL casts**: the compilers emit
+  per-state uniform/binding declarations and a `bindUniforms` helper; the runtime
+  subscribes to `czap:uniform-update` and binds `detail.glsl` / `detail.wgsl` on every
+  boundary crossing (the WGSL consumer is net-new).
+- `@czap/scene` — **SVG egress**: an ECS render sink applies `_svgAttrs`
+  (transform / opacity / mixBlendMode / clipPath) post-tick, closing the SVG cast.
+- `@czap/core` — **AI Cast Primitive** (`AICast`): a graph → token-budgeted
+  `AIContext` + tool/output schema → model proposes a `GraphPatch` / `GeneratedUITree`
+  → the framework **validates + previews** → a `ValidatedProposal` envelope a host can
+  apply. The envelope is unforgeable (a module-private `ApplyToken` witness backed by a
+  WeakSet identity registry, frozen), untrusted nodes are decoded against a declarative
+  `Schema.Union` over all node families, and there is **no model-output → mutation path
+  that skips validation**. Zero network/provider imports — the host owns all authority.
+- `@czap/core` — **escalation chooser** (`chooseRung`) wired into the compositor as a
+  per-projection target gate: a budget/policy constraint downgrades the admitted casts.
+- `@czap/core` — **GraphPatch round-trip capsule**; `apply`'s `update` is now a true
+  logical replace (drops the prior node sharing a `logicalKey`, not an orphaning add).
+- `@czap/stage` — headless video **`FrameEncoder`** behind the `encode?` seam (ffmpeg);
+  `@czap/stage` promoted to a published package.
+- `@czap/astro` — the dev inspector now covers the **full** 0.2.0 surface: per-boundary
+  active-casts (css/glsl/wgsl/aria/svg + live values), an escalation panel (rung +
+  admitted targets), and a read-only DocumentGraph peek, on the Alt+Shift+C overlay.
+- **Capsule system** — one `defineCapsule` generates a fast-check property test + a
+  budgeted bench; `bench:gate` fails the build on a budget regression. 24 capsules.
+- **ast-grep structural guards** — a `lint:structural` gauntlet phase backstops the
+  hand-rolled meta-guards (raw-timeout, seam-integrity, c8-ignore-reason, doc drift).
+- **Wave-3 DX sweep** — backward-compatible defaults + teaching errors across
+  `@czap/vite` (wasm auto-detect, env validation), `@czap/astro` (no rename ritual,
+  workers configured once), `@czap/edge`, `@czap/cloudflare` (default KV binding,
+  `/testing` subpath), and `@czap/assets`; examples adopt the modern usage.
+
+### Fixed — caught by the property tests / adversarial review
+
+- `@czap/compiler` — GLSL/WGSL compilers null-proto their per-state field maps; a
+  boundary field named `__proto__` is no longer silently dropped from the bindings.
+- `@czap/genui` — `validateGeneratedUITree` guards own-property lookups; a model
+  proposing a `constructor` / `__proto__` component or prop name can't bypass the
+  unknown-component gate or crash the validator.
 
 ### Removed
 
@@ -444,7 +493,7 @@ pivot (epic #4) — these notes ship as 0.2.0.
 - `@czap/detect`: an unrecognized GPU renderer string (e.g. next year's GPU) no longer classifies to tier 1 silently — `Diagnostics.warnOnce` (`unrecognized-gpu-renderer`) names the renderer string, the tier-1 default, and points at the issue tracker so new patterns get filed.
 - `@czap/remotion`: the silent degraded paths now teach. `stateAtFrame` warns once on 0 frames (`no-frames`: did `precomputeFrames` run/get awaited before render?) and once on frame overflow (`frame-overflow`: the video will freeze on the last state; probable cause is `fps`/`durationMs` drifting from `durationInFrames`, with the literal fix and a pointer at `rendererFromRemotionConfig()`; the offending frame index travels in `detail` so the warn-once dedup key stays frame-independent). `useCzapState` warns once (`no-provider-frames`) naming the missing `<Provider frames={...}>` and the `precomputeFrames` step. All total-function return values are unchanged.
 - `@czap/remotion`: the `remotionAdapterCapsule` invariant message now states the `frames[i].frame === i` contract, the likely causes (frames filtered, re-sorted, or concatenated after `precomputeFrames`), and the fix, instead of 'frames must arrive in order with contiguous indices'.
-- README quick start and docs/GETTING-STARTED.md restructured around the consumer path: `pnpm add @czap/core @czap/astro effect@beta` in your own Astro project, then the two layer-1 concepts (`Boundary.make` + `satelliteAttrs`) to a working resize demo; monorepo clone/build/test moved behind CONTRIBUTING.md, with tokens/styles/CSS casting layered behind links (#234, #235)
+- README quick start and GETTING-STARTED.md restructured around the consumer path: `pnpm add @czap/core @czap/astro effect@beta` in your own Astro project, then the two layer-1 concepts (`Boundary.make` + `satelliteAttrs`) to a working resize demo; monorepo clone/build/test moved behind CONTRIBUTING.md, with tokens/styles/CSS casting layered behind links (#234, #235)
 - Removed residual `as const` from `Boundary.make` and `Theme.make` docblock examples — both factories declare const-modified type parameters, so inference is exact without it (#236)
 - Docs now state `hysteresis` is optional with default `0` (no dead-zone) at first use in README and GETTING-STARTED instead of only in troubleshooting (#238)
 - `Boundary.make` validation errors now carry the literal next step: the strictly-ascending error appends a sort-lowest-first example (`at: [[0, 'mobile'], [768, 'tablet']]`), and the duplicate-state error names the colliding thresholds, gives a rename example, and inlines the hoist-to-module-scope hint previously found only in GETTING-STARTED prose (#243, #244)
@@ -614,7 +663,7 @@ Cloudflare Workers first-class support. All **18** `@czap/*` packages ship at `0
 - `czap doctor --target cloudflare` — probes Astro, Wrangler, adapter output, and config bindings.
 - `examples/cloudflare-astro/` — end-to-end Astro + Cloudflare adapter example.
 - `pnpm run test:cloudflare` gauntlet phase; Windows and macOS CI smoke run it.
-- Hosting guide: `docs/hosting/cloudflare.md`.
+- Hosting guide: `HOSTING.md`.
 
 ### Fixed
 
@@ -680,7 +729,7 @@ substrate end-to-end on a real publish before any code change rides it.
 
 ### Documentation
 
-- `docs/RELEASING.md` documents the v0.1.1+ release-cutting flow
+- `RELEASING.md` documents the v0.1.1+ release-cutting flow
   (`git tag -a vX.Y.Z` → workflow auto-fires) and the per-package
   trusted-publisher form values for the eventual OIDC pivot.
 
@@ -731,7 +780,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
   PowerShell mojibake note) moved to appendix.
 - New: [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md),
   [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md),
-  [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md).
+  [GETTING-STARTED.md](./GETTING-STARTED.md).
 - `docs/api/` (TypeDoc output) regenerated to reflect the post-cleanup
   public surface.
 
@@ -749,7 +798,13 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 
 ---
 
-## [0.4.0] — 2026-04-05
+> **Pre-public internal milestones (2026-03 → 2026-04).** The `0.2.0`–`0.4.0`
+> headings below are the early in-repo numbering line. It was **reset** when the
+> canonical public release restarted at `0.1.0` on 2026-05-07 (top of file), so
+> these do **not** correspond to published npm versions and are kept only for
+> provenance. The public `0.2.0` is the substrate cut dated 2026-06-14 at the top.
+
+## [0.4.0] — 2026-04-05 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 
@@ -789,7 +844,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - Removed deprecated type aliases from all 5 spine files
 - Added MotionTier, SpringConfig, TIER_TARGETS, QuantizerFromOptions to quantizer spine
 
-## [0.3.0] — 2026-03-16
+## [0.3.0] — 2026-03-16 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 
@@ -815,7 +870,7 @@ all **15** `@czap/*` packages (including type-only `@czap/_spine`) land on npm a
 - tinybench harness: core, compiler, video benchmarks
 - `bun run bench` script
 
-## [0.2.0] — 2026-03-16
+## [0.2.0] — 2026-03-16 (internal milestone; superseded by public 0.1.0 on 2026-05-07)
 
 ### Core
 

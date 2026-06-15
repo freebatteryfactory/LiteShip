@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution. LiteShip is pre-1.0 and intentionally greenfield (we'd rather break things now than later), so most of the guidance here is about keeping the gauntlet honest, not gatekeeping.
 
-Ontology for prose and docs: [docs/GLOSSARY.md](./docs/GLOSSARY.md). The git remote and directory name may still read `czap`; `@czap/*` on npm is the package line.
+Ontology for prose and docs: [GLOSSARY.md](./GLOSSARY.md). The git remote and directory name may still read `czap`; `@czap/*` on npm is the package line.
 
 ## Quick start (development)
 
@@ -81,7 +81,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 35 phases (see `docs/STATUS.md` for the canonical ordered list):
+`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 35 phases (see `STATUS.md` for the canonical ordered list):
 
 - rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
@@ -272,7 +272,7 @@ The test now lives permanently in `tests/regression/` and runs on every `pnpm te
 
 ### Gauntlet integration
 
-Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after rig-check, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [docs/STATUS.md](./docs/STATUS.md) for the complete phase list.
+Worth noting: `pnpm test` is phase 9 of `pnpm run gauntlet:full` (after rig-check, build, validate, and audit:floor) and covers the full vitest surface including `tests/regression/`; see [STATUS.md](./STATUS.md) for the complete phase list.
 
 ## Architecture changes
 

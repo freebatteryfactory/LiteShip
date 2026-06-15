@@ -26,10 +26,10 @@ const LIVE_DOCS = [
   'README.md',
   'CONTRIBUTING.md',
   'SECURITY.md',
-  'docs/GETTING-STARTED.md',
-  'docs/STATUS.md',
-  'docs/RELEASING.md',
-  'docs/ARCHITECTURE.md',
+  'GETTING-STARTED.md',
+  'STATUS.md',
+  'RELEASING.md',
+  'ARCHITECTURE.md',
   'packages/compiler/README.md',
   'packages/cli/README.md',
 ];
@@ -55,7 +55,7 @@ describe('B6b — SECURITY.md does not pin a brittle gauntlet phase number for t
 });
 
 describe('B6b — STATUS.md points at the canonical phase source instead of mirroring it', () => {
-  const src = read('docs/STATUS.md');
+  const src = read('STATUS.md');
   it('points at packages/cli/src/gauntlet-phases.ts (the ONE phase source, CUT D8)', () => {
     expect(src).toMatch(/gauntlet-phases\.ts/);
   });
@@ -65,7 +65,7 @@ describe('B6b — STATUS.md points at the canonical phase source instead of mirr
 });
 
 describe('B6b — roster docs name the real package set (command + audit present)', () => {
-  for (const rel of ['docs/ARCHITECTURE.md', 'README.md']) {
+  for (const rel of ['ARCHITECTURE.md', 'README.md']) {
     it(`${rel} lists @czap/command and @czap/audit`, () => {
       const src = read(rel);
       expect(src, `${rel} must list @czap/command`).toMatch(/@czap\/command/);

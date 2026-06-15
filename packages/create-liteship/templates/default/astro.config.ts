@@ -10,7 +10,7 @@ export default defineConfig({
       detect: true,
       // Optional generated UI: `pnpm add @czap/genui`, define a catalog with
       // `defineComponentCatalog`, pass `genuiCatalog` to createLLMSession (or
-      // set `data-czap-genui` on `client:llm`). See docs/GETTING-STARTED.md.
+      // set `data-czap-genui` on `client:llm`). See GETTING-STARTED.md.
       vite: {
         dirs: {
           boundary: dir('./src/boundaries'),

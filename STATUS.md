@@ -181,7 +181,7 @@ Startup steering now follows a generic `paired-truth` model:
 - `ReceiptDAG.nodes` has no pruning, TTL, or max-size guard; per-session DAGs grow until `tracker.reset()` on session close. Bounded by user behavior in normal flows, but worth a future `linearizeFrom`-or-pruning policy if long-lived LLM sessions become common. Not a bench watch; a memory-shape watch.
 
 `pnpm run gauntlet:full` runs the canonical phase sequence. That sequence has ONE
-source of truth — `packages/cli/src/gauntlet-phases.ts` (CUT D8) — and `scripts/gauntlet.ts`
+source of truth — `packages/cli/src/gauntlet-phases.ts` — and `scripts/gauntlet.ts`
 simply loops it; there are no per-phase `run(...)` call sites to count against. Do not
 re-list the phases here (a hand-maintained mirror drifts the moment a phase is added,
 removed, or reordered). To see the live ordered sequence, run `czap gauntlet --dry-run`
@@ -521,7 +521,7 @@ First-run developer experience built on top of the existing CLI dispatch:
   parses the build script out of root package.json; can't drift.
 - **Glossary-lint** — `tests/unit/cli/glossary-lint.test.ts` scans CLI
   source for maritime register terms and asserts each is defined in both
-  `docs/GLOSSARY.md` and `czap glossary`. Future ontology additions can't
+  `GLOSSARY.md` and `czap glossary`. Future ontology additions can't
   land without their glossary entry.
 - **`SKIP_PRECOMMIT=1`** escape hatch in pre-commit hook (with re-run
   reminder banner).

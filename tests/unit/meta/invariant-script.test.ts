@@ -19,7 +19,7 @@ describe('check-invariants script', () => {
   test('resolves expected line endings from .gitattributes precedence', () => {
     const rules = parseLineEndingRules('* text=auto eol=lf\n*.ps1 text eol=crlf\n');
 
-    expect(expectedLineEnding('docs/STATUS.md', rules)).toBe('lf');
+    expect(expectedLineEnding('STATUS.md', rules)).toBe('lf');
     expect(expectedLineEnding('scripts/dev.ps1', rules)).toBe('crlf');
   });
 

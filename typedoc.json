@@ -26,7 +26,7 @@
   "entryPointStrategy": "expand",
   "out": "docs/api",
   "plugin": ["typedoc-plugin-markdown"],
-  "readme": "docs/TYPEDOC_README.md",
+  "readme": "TYPEDOC.md",
   "excludePrivate": true,
   "excludeInternal": true,
   "excludeExternals": true,

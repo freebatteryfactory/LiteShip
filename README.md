@@ -8,9 +8,22 @@ Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/
 
 From one definition, the system can emit a CSS variable, a GLSL preamble, an ARIA attribute on the body, an AI manifest, and a TypeScript union. Same boundary, five surfaces, no silent drift between projection layers. Every output is computed from a content address of the definition, so if it renders right once, it renders right everywhere — the engine can prove it ([ADR-0003](./docs/adr/0003-content-addressing.md)).
 
-*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [docs/GLOSSARY.md](./docs/GLOSSARY.md) — you don't need it for the quick start.
+*LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
 
 This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.
+
+## Examples
+
+The [`examples/`](./examples) directory has a runnable app per surface. They're workspace members — they consume `@czap/*` via `workspace:*`, so they run from a clone of this repo: `pnpm install` at the root, then `cd examples/<name> && pnpm dev` (each example carries its own `dev` script).
+
+| Example | What it shows |
+|---|---|
+| [`tutorial`](./examples/tutorial) | The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming |
+| [`showcase`](./examples/showcase) | The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI |
+| [`default`](./examples/default) | The minimal `npm create liteship` starter |
+| [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare |
+
+For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@czap/*` ranges, so it installs anywhere once 0.2.0 is on npm. In `astro dev`, press **Alt+Shift+C** to open the boundary inspector.
 
 ## Quick start
 
@@ -44,9 +57,9 @@ Register the integration and spread the boundary onto any element:
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import czap from '@czap/astro';
+import { integration } from '@czap/astro';
 
-export default defineConfig({ integrations: [czap()] });
+export default defineConfig({ integrations: [integration()] });
 ```
 
 ```astro
@@ -63,7 +76,7 @@ import { viewport } from '../boundaries.js';
 
 Resize the window and watch `data-czap-state` change in devtools. `hysteresis` is optional (default `0`, no dead-zone): a value of `20` is a half-width dead-zone — cross a threshold and you stay across until the signal moves past the next half-tick, so no flicker at 768.0001px when the user is dragging the window edge.
 
-That's layer 1. Tokens, styles, themes, and casting a boundary to compiled CSS / GLSL / ARIA live one layer up: the full walkthrough (install, first boundary, cast to CSS, hydrate through Astro) is [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md), and the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it) is [docs/AUTHORING-MODEL.md](./docs/AUTHORING-MODEL.md), which opens with a one-paragraph "what it feels like to author" before the reference.
+That's layer 1. Tokens, styles, themes, and casting a boundary to compiled CSS / GLSL / ARIA live one layer up: the full walkthrough (install, first boundary, cast to CSS, hydrate through Astro) is [GETTING-STARTED.md](./GETTING-STARTED.md), and the shape of day-to-day authoring (what you actually type, what comes out, how the rest of the pipeline reads it) is [AUTHORING-MODEL.md](./AUTHORING-MODEL.md), which opens with a one-paragraph "what it feels like to author" before the reference.
 
 ## What you can stop hand-rolling
 
@@ -85,7 +98,7 @@ The Quick Start installs the smallest useful set: `@czap/core` (the snippet's on
 
 | Package | Description |
 | --- | --- |
-| [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, Compositor, ECS, HLC, DAG, Plan, AVBridge |
+| [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge |
 | [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package) |
 | [`@czap/genui`](./packages/genui) | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions) |
 | [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating |
@@ -110,6 +123,7 @@ Reach for the rest only when the surface meaning justifies the runtime escalatio
 | [`@czap/remotion`](./packages/remotion) | Remotion adapter: React hooks + composition helpers |
 | [`@czap/scene`](./packages/scene) | ECS-backed scene composition + timeline authoring |
 | [`@czap/assets`](./packages/assets) | Asset capsules + analysis projections (audio waveform, beat markers, ...) |
+| [`@czap/stage`](./packages/stage) | Dual-export orchestration: one document graph → static Astro page + headless video, proven same-source (ffmpeg backend on `@czap/stage/ffmpeg`) |
 | [`@czap/cli`](./packages/cli) | `czap` CLI: AI-first JSON I/O with human-pretty TTY mode |
 | [`@czap/mcp-server`](./packages/mcp-server) | Model Context Protocol server for AI tooling integration |
 | [`@czap/_spine`](./packages/_spine) | Type-only declaration spine referenced by published `.d.ts` from `@czap/core` / `@czap/scene` |
@@ -162,22 +176,21 @@ Both milestones are signal-gated, not promise-gated. Contributors are welcome to
 
 ## Documentation
 
-- [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md): install in your project, first boundary, end-to-end
-- [docs/HOSTING.md](./docs/HOSTING.md): host-application first-hour checklist (versions, CSP, Trusted Types, five common failure modes)
-- [docs/ASTRO-STATIC-MENTAL-MODEL.md](./docs/ASTRO-STATIC-MENTAL-MODEL.md): signals to boundaries to named states to outputs, the theory-first authoring frame
-- [docs/AUTHORING-MODEL.md](./docs/AUTHORING-MODEL.md): definition shapes, naming, and composition rules
-- [docs/ASTRO-RUNTIME-MODEL.md](./docs/ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path
-- [docs/PACKAGE-SURFACES.md](./docs/PACKAGE-SURFACES.md): package-by-package import and ownership map
-- [docs/DOCS.md](./docs/DOCS.md): full documentation map
-- [docs/GLOSSARY.md](./docs/GLOSSARY.md): LiteShip / CZAP / `@czap/*` naming and prose register
-- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md): package and system architecture
+- [GETTING-STARTED.md](./GETTING-STARTED.md): install in your project, first boundary, end-to-end
+- [HOSTING.md](./HOSTING.md): host-application first-hour checklist (versions, CSP, Trusted Types, five common failure modes)
+- [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md): signals to boundaries to named states to outputs, the theory-first authoring frame
+- [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): definition shapes, naming, and composition rules
+- [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): how Astro hosts the runtime, directives, and the escalation path
+- [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md): package-by-package import and ownership map
+- [DOCS.md](./DOCS.md): full documentation map
+- [GLOSSARY.md](./GLOSSARY.md): LiteShip / CZAP / `@czap/*` naming and prose register
+- [ARCHITECTURE.md](./ARCHITECTURE.md): package and system architecture
 - [docs/adr/](./docs/adr): architecture decision records, numbered and indexed
-- [docs/api/](./docs/api): generated API reference (typedoc) for every package; intro text in [docs/TYPEDOC_README.md](./docs/TYPEDOC_README.md)
+- [docs/api/](./docs/api): generated API reference (typedoc) for every package; intro text in [TYPEDOC.md](./TYPEDOC.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md): dev environment, PR conventions, gauntlet workflow
 - [SECURITY.md](./SECURITY.md): vulnerability reporting, supported versions, security posture summary
 - [CHANGELOG.md](./CHANGELOG.md): release history
-- [docs/RELEASING.md](./docs/RELEASING.md): npm publish, tags, GitHub releases, optional history scrub
-- [docs/HISTORY_SCRUB.md](./docs/HISTORY_SCRUB.md): `git filter-repo` discovery checklist before going public
+- [RELEASING.md](./RELEASING.md): npm publish, tags, GitHub releases
 
 ## Security posture (summary)
 
@@ -189,7 +202,7 @@ Trust is set explicitly, not by permission default.
 - The runtime carries no `eval` and no `new Function`. Untrusted text never becomes executable JavaScript at runtime. (WASM bytecode does run at runtime, sandboxed by the host's WASM runtime; see `packages/core/src/wasm-fallback.ts` for the no-WASM path.)
 - The Astro integration publishes a frozen `__CZAP_RUNTIME_POLICY__` snapshot for runtime endpoint and HTML trust decisions.
 
-Full posture and trust-boundary detail in [SECURITY.md](./SECURITY.md) and [docs/STATUS.md](./docs/STATUS.md).
+Full posture and trust-boundary detail in [SECURITY.md](./SECURITY.md) and [STATUS.md](./STATUS.md).
 
 ## Scope and non-goals
 
@@ -223,7 +236,7 @@ Dev-loop ergonomics: `pnpm dev` (vitest watch), `pnpm run clean` (dry-dock), `pn
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-five phases (see `docs/STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to twenty-two minutes end-to-end depending on cold caches and machine speed (recent local: 14m47s on Linux x64, 8 vCPU). It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
+`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-five phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to twenty-two minutes end-to-end depending on cold caches and machine speed (recent local: 14m47s on Linux x64, 8 vCPU). It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
 
 ## Latest gauntlet benchmark snapshot
 
@@ -248,9 +261,9 @@ Diagnostic watch, not a release gate: `llm-runtime-steady` remains above its rel
 
 ## Operational telemetry
 
-For run-by-run truth (current test counts, coverage totals, benchmark posture, watch items, artifact policy) read [docs/STATUS.md](./docs/STATUS.md). Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are the live source of truth when they're fresh and `pnpm run feedback:verify` passes.
+For run-by-run truth (current test counts, coverage totals, benchmark posture, watch items, artifact policy) read [STATUS.md](./STATUS.md). Generated artifacts in `coverage/`, `benchmarks/`, and `reports/` are the live source of truth when they're fresh and `pnpm run feedback:verify` passes.
 
-[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md), the ADRs, and the package surface docs explain shape and intent. They are not run-by-run ledgers.
+[`ARCHITECTURE.md`](./ARCHITECTURE.md), the ADRs, and the package surface docs explain shape and intent. They are not run-by-run ledgers.
 
 ## Appendix: Windows / PowerShell log capture
 

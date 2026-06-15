@@ -49,7 +49,7 @@ Drag the window edge across 768px: the wrapper's `data-czap-state` attribute fli
 ## Where it sits
 
 The host integration most apps touch: it registers [`@czap/vite`](https://github.com/heyoub/LiteShip/tree/main/packages/vite) (build-time boundary scanning and CSS), injects [`@czap/detect`](https://github.com/heyoub/LiteShip/tree/main/packages/detect)'s device-tier probe, and rigs the client directives backed by [`@czap/web`](https://github.com/heyoub/LiteShip/tree/main/packages/web) (DOM morphing, SSE, LLM streams) and [`@czap/worker`](https://github.com/heyoub/LiteShip/tree/main/packages/worker) (off-thread evaluation), with [`@czap/edge`](https://github.com/heyoub/LiteShip/tree/main/packages/edge) supplying SSR tier detection for the optional middleware. Boundary authoring itself lives in [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core); Cloudflare deploys add [`@czap/cloudflare`](https://github.com/heyoub/LiteShip/tree/main/packages/cloudflare) on top. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -58,9 +58,9 @@ If `data-czap-state` never changes on resize, the boot script was never injected
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [LiteShip for Astro static sites](https://github.com/heyoub/LiteShip/blob/main/docs/ASTRO-STATIC-MENTAL-MODEL.md) — the authoring mental model
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [LiteShip for Astro static sites](https://github.com/heyoub/LiteShip/blob/main/ASTRO-STATIC-MENTAL-MODEL.md) — the authoring mental model
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/astro/src/) — generated from source
 
 ---

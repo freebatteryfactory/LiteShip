@@ -109,3 +109,27 @@ Wave 1 keeps the audit advisory-first:
 
 The existing fast-lane invariant checker stays separate on purpose. It remains the
 small, cheap pre-flight check while the broader audit matures.
+
+## Structural lint (ast-grep)
+
+Alongside the advisory audit runs a *hard* structural lane: `pnpm run lint:structural`
+(`ast-grep scan -c sgconfig.yml`). Where the audit is advisory-first, these rules FAIL
+the build on any error-severity match — they are the gauntlet's `lint:structural` phase.
+
+The rules in `sgrules/` are AST-based ports of the highest-value hand-rolled meta-guards
+under `tests/unit/meta/`. Each one BACKSTOPS an existing vitest meta-test: the test keeps
+the budget/byte-level assertions; the ast-grep rule catches the *structural* regression the
+line-anchored regex misses (a multiline call signature, a renamed import). Current rules:
+
+- `a1-no-cli-import` / `a1-no-stdout-monkeypatch` — keep the CLI seam clean (no deep CLI
+  imports, no stdout monkey-patching).
+- `raw-vitest-option-timeout` / `raw-vitest-trailing-timeout` — force `scaledTimeout` over
+  raw millis, so coverage runs do not false-fail under load (scar #lessons).
+- `c8-ignore-without-reason` — every coverage-ignore carries a reason.
+- `detect-tier-vocab-drift` — tier vocabulary stays in sync across `@czap/detect`.
+- `hallucinated-themes-option` — blocks a doc-cut config option from creeping back in.
+
+Every rule passes clean on the current tree. To add one: drop a rule file in `sgrules/`,
+prove it stays green, and (if it guards a behavior a meta-test already pins) note the test
+it backstops in the rule comment. This is the structural-regression net; the meta-tests
+remain the semantic truth.

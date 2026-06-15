@@ -1,6 +1,6 @@
 # LiteShip roadmap
 
-> Verified against the 2026-04-08 hardening wave. See `docs/STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
+> Verified against the 2026-04-08 hardening wave. See `STATUS.md` for live counts, gate totals, coverage numbers, and current telemetry watch items.
 
 ## Current Phase
 
@@ -76,7 +76,7 @@ fallback, and the deprecated `attachViewportObserver` alias is removed
 (superseded by `attachSignalObserver` in 0.1.5).
 
 **Remaining (maintainer, one-time, npm-side):** configure a trusted
-publisher for each of the 22 publishable packages at
+publisher for each of the 23 publishable packages at
 `npmjs.com/package/<name>/access` — form values in RELEASING.md. Until
 then a v0.2.0 tag fails its publish step loudly with an auth error
 (re-runs are safe and idempotent). Afterwards, delete the dead
@@ -144,7 +144,7 @@ to assert the override no longer appears.
 Spec `2026-04-23-capsule-factory-video-stack-design.md` shipped with 5 atomic phases:
 
 - Capsule factory kernel + 7-arm assembly catalog (ADR-0008)
-- Spine runtime-gap closure (ADR-0010, closes sixsigma Island #1)
+- Spine runtime-gap closure (ADR-0010)
 - Scene composition stack on existing ECS (ADR-0009, ADR-0002 amended)
 - Asset capsules + analysis cachedProjections
 - CLI + MCP dual-audience surfaces

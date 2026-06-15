@@ -30,7 +30,7 @@ LiteShip should own:
 
 ## The main Astro surfaces
 
-The public Astro package surface is in [`packages/astro/src/index.ts`](../packages/astro/src/index.ts).
+The public Astro package surface is in [`packages/astro/src/index.ts`](./packages/astro/src/index.ts).
 
 The important exports are:
 
@@ -55,6 +55,16 @@ It is responsible for:
 - connecting Astro lifecycle behavior to LiteShip's assumptions
 
 Use it when the site itself is a LiteShip-aware Astro host.
+
+### Defaults (0.2.0 ergonomics)
+
+`integration()` runs with batteries included — most surfaces need no config:
+
+- **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (Alt+Shift+C in `astro dev`).
+- **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
+- **auto-resolved:** initial state defaults from the server-resolved bearing, and the `czap-compute` WASM URL resolves itself — you don't thread either by hand.
+
+So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
 
 ---
 
@@ -229,7 +239,7 @@ Astro gives the page a strong server-rendered base. LiteShip adds stateful adapt
 
 ## Capability ceilings
 
-A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings (see [ADR-0002](./adr/0002-zero-alloc.md) for the cheapest-valid-default discipline).
+A key LiteShip invariant is that authored intent degrades gracefully under capability ceilings: every surface starts at the cheapest projection that is still valid and escalates to a richer one only when the capability and frame budget allow — the *cheapest-valid-default* discipline. A boundary that can't reach the GPU still renders correct CSS; a worker that can't load WASM falls back to the TypeScript kernels. ([ADR-0002](./docs/adr/0002-zero-alloc.md) has the full rationale.)
 
 Inside Astro, that means:
 

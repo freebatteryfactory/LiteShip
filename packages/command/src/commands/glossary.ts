@@ -1,6 +1,6 @@
 /**
  * glossary command (CUT A1) — terminal access to the LiteShip prose register,
- * mirroring docs/GLOSSARY.md. Pure data + lookup returning a structured result;
+ * mirroring GLOSSARY.md. Pure data + lookup returning a structured result;
  * the CLI adapter owns pretty rendering and stdout emission.
  *
  * @module
@@ -8,7 +8,7 @@
 import type { CapsuleCommandResult } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
 
-/** One ontology term. Mirrors a row in docs/GLOSSARY.md. */
+/** One ontology term. Mirrors a row in GLOSSARY.md. */
 export interface GlossaryEntry {
   readonly term: string;
   readonly category: 'naming' | 'primitive' | 'translator-note';

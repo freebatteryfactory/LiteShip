@@ -29,7 +29,7 @@ In a browser this logs the device's capability level, its motion tier (reduced-m
 ## Where it sits
 
 This package is host-adjacent — it touches browser APIs so nothing else has to. Its only `@czap` dependency is `@czap/core`, for the `CapLevel` and `MotionTier` types it maps detected hardware onto. What to *do* at each tier is decided elsewhere: `@czap/quantizer` gates outputs by motion tier, and `@czap/astro` applies detection during hydration. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/docs/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -38,9 +38,9 @@ Detection never throws; outside a browser (SSR, Node tests) every probe falls ba
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/docs/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/docs/AUTHORING-MODEL.md) — authoring for tiers, including reduced motion
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/docs/GLOSSARY.md) — the vocabulary used above
+- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — authoring for tiers, including reduced motion
+- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
 - [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/detect/src/) — generated from source
 
 ---

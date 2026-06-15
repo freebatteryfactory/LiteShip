@@ -4,7 +4,7 @@ This directory contains Architecture Decision Records (ADRs) for LiteShip: the C
 
 ADRs are the source of truth for *why* a decision was made. The code is the source of truth for *what* the current implementation looks like.
 
-Prose vocabulary: [../GLOSSARY.md](../GLOSSARY.md).
+Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 
 ## Index
 
@@ -24,6 +24,7 @@ Prose vocabulary: [../GLOSSARY.md](../GLOSSARY.md).
 | [0012](./0012-devops-profile-boundary.md) | DevopsProfile boundary (reusable seam vs repo-local contracts) | Accepted |
 | [0013](./0013-canonical-package.md) | `@czap/canonical` self-contained bytes kernel | Accepted |
 | [0014](./0014-genui-catalog.md) | `@czap/genui` closed catalog renderer | Accepted |
+| [0015](./0015-document-graph-ir.md) | Document graph IR + AI cast envelope | Accepted |
 
 ## Template
 

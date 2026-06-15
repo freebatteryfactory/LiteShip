@@ -23,6 +23,25 @@ Vocabulary for prose across this repository. Technical identifiers (`Boundary`, 
 | **Compile path** | Cast to CSS, project to GLSL / WGSL / ARIA / AI. Not "compile" in casual prose if a register verb fits. |
 | **Runtime / hot path** | Working deck, working line, thrust / photon language for trim and off-main-thread work; off-deck or engine room for workers. |
 
+## Substrate & cast vocabulary (prose register)
+
+Terms-of-art for the IR and the cast machinery. Pin the meaning; do not translate by surface form.
+
+| Term | Consistent description |
+| --- | --- |
+| **Document graph** | `@czap/core`'s content-addressed IR: a graph of typed nodes that authored definitions seal into, and that every cast target reads from. The keystone. Capitalize as a proper noun for the symbol (`DocumentGraph`); lowercase "document graph" in running prose. |
+| **Node family** | One of the eight node kinds a document graph holds: `signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`. A closed union — adding one is a typed change, not a copy-paste. |
+| **Cast target** | A surface a definition casts to: CSS, GLSL, WGSL, ARIA, AI manifest, video. "Cast" is the verb (always with a target); "surface" is the noun the cast emits to. |
+| **Escalation rung** | A runtime tier a projection may be admitted to under a policy + frame budget. `chooseRung` returns the admitted target set; a surface over budget drops to a cheaper rung. Not "level" in prose. |
+| **Capsule** | A unit of reusable assembly built from the closed set of factory arms (ADR-0008). A property test plus a budgeted bench, not a component. "Capsule-ize" = lock a behavior as a standing capsule. |
+| **GraphPatch** | The one typed mutation over a document graph: propose -> validate -> apply -> re-seal. The editor and the AI cast both mutate *through* it; nothing edits node maps by hand. |
+| **ValidatedProposal / ApplyToken** | The AI-cast security envelope. A `ValidatedProposal` is what a validator mints; the `ApplyToken` it carries is the unforgeable witness that `applyValidatedPatch` demands. Describe it as an *envelope* or *witness*, never "permission" or "key". |
+| **seal / address** | `sealNode` / `sealGraph` mint a node's content address from its canonical bytes. "Seal" = assign identity; "re-seal" = re-address after a patch. Distinct from the unrelated "seal" (close) sense. |
+| **content address (CBOR / FNV-1a)** | A definition's identity: the **FNV-1a** hash of its **canonical CBOR** bytes — a deterministic binary encoding (RFC 8949 §4.2.1; ADR-0003 for the why). Identical definitions produce an identical address, so a cast computed once is provably correct on every surface. CBOR is the byte format; FNV-1a is the hash; together they are the address. |
+| **host-wired** | A package's runtime status: it is instantiated and driven by a host (Astro, a worker, the edge), not imported and run by app code on its own. Contrast `standalone` (runs anywhere) and `standalone subsystem`. The status tag in PACKAGE-SURFACES. |
+| **ECS** | Entity-Component-System — the composition model `@czap/scene` uses: a scene is a world of entities, each carrying components, advanced by systems once per tick. Chosen so video / audio / transition / effect tracks compose without per-track glue (ADR-0009). |
+| **DirtyFlags** | A bit-packed change-tracker on the hot path: up to 31 keys ride in one integer for allocation-free dirty checks; past 31 it falls back to a map. An instance of the "honest fallback past its regime" discipline (ADR-0002). |
+
 ## Banned in marketing-style prose
 
 *next-generation, leverage, robust, powerful, seamless, blazingly fast, cutting-edge, world-class, enterprise-grade, paradigm-shifting, game-changing, revolutionary, unleash, supercharge, harness the power of.* Replace with concrete behavior, or cut.
