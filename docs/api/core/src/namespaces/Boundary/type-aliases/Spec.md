@@ -8,6 +8,6 @@
 
 > **Spec** = [`BoundarySpec`](../../../interfaces/BoundarySpec.md)
 
-Defined in: [core/src/boundary.ts:410](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L410)
+Defined in: [core/src/boundary.ts:423](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L423)
 
 Alias for [BoundarySpec](../../../variables/BoundarySpec.md).

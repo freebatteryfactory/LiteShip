@@ -34,6 +34,16 @@ export const DIRTY_FLAGS_MAX = 31;
 /** WASM linear memory scratch offset for boundary/spring kernels. Used by: wasm-dispatch.ts */
 export const WASM_SCRATCH_BASE = 32768;
 
+/**
+ * Max values the WASM `batch_boundary_eval` kernel evaluates per call. The
+ * crate's static output buffer clamps `values_len` to this (MUST equal
+ * `MAX_VALUES` in crates/czap-compute/src/boundary.rs — pinned by
+ * tests/property/boundary-evaluate-batch.prop.test.ts); larger inputs are
+ * chunked by `Boundary.evaluateBatch` so every value is evaluated. Used by:
+ * boundary.ts
+ */
+export const WASM_BATCH_MAX = 4096;
+
 /** Default keyframe interval in frames for video encoding. Used by: web/capture/webcodecs.ts */
 export const CAPTURE_KEYFRAME_INTERVAL = 30;
 

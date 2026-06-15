@@ -140,7 +140,7 @@ Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchPropos
 
 ### WASM compute
 
-The Rust `czap-compute` kernel (spring / boundary / blend) ships inside `@czap/core` as of 0.2.1, exported at `@czap/core/czap-compute.wasm`. `@czap/vite` resolves it from `node_modules` automatically when you set `czap({ wasm: { enabled: true } })` — no hand-built or hand-copied artifact. Reach for it when you need:
+The Rust `czap-compute` kernel (spring / boundary / blend) ships inside `@czap/core`'s `dist/` as of 0.2.1. `@czap/vite` locates it through the module graph (pnpm-nesting-safe) when you set `czap({ wasm: { enabled: true } })` — no hand-built or hand-copied artifact. Reach for it when you need:
 
 - batch boundary evaluation — `Boundary.evaluateBatch(boundary, values)`: many values against one boundary, into state indices, routed through `WASMDispatch.kernels()`
 - the kernel handle directly — `WASMDispatch.load` / `kernels` / `isLoaded`

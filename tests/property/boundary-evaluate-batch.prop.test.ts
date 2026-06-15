@@ -17,7 +17,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fc from 'fast-check';
-import { Boundary, rawIndexF32, WASMDispatch } from '@czap/core';
+import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX } from '@czap/core';
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
@@ -65,6 +65,32 @@ describe('Boundary.evaluateBatch agrees with scalar evaluate (fallback kernels)'
     const probes = Float64Array.from([50, 150, 250]);
     expect(Array.from(Boundary.evaluateBatch(bp, probes))).toEqual([0, 1, 2]);
   });
+
+  it('evaluates EVERY value past the WASM batch cap (chunking, not truncation)', () => {
+    // The WASM kernel writes at most WASM_BATCH_MAX results; a naive single call
+    // would leave entries past the cap reading unwritten memory. Cross the cap by
+    // a few multiples and assert bit-identity with scalar across the whole range.
+    const bp = makeBoundary([0, 640, 1024]);
+    const n = WASM_BATCH_MAX * 2 + 137;
+    const values = Array.from({ length: n }, (_, i) => (i % 1500) - 1);
+    const batch = Boundary.evaluateBatch(bp, values);
+    expect(batch.length).toBe(n);
+    expect(Array.from(batch)).toEqual(scalarIndices([0, 640, 1024], values));
+  });
+});
+
+describe('the WASM batch cap matches the crate', () => {
+  it('WASM_BATCH_MAX equals the kernel buffer size (MAX_VALUES in boundary.rs)', () => {
+    // Drift guard: the chunk width MUST equal the crate's static buffer cap, or
+    // chunking silently mis-sizes and the >cap entries diverge again.
+    const rust = readFileSync(
+      resolve(import.meta.dirname, '..', '..', 'crates/czap-compute/src/boundary.rs'),
+      'utf8',
+    );
+    const match = rust.match(/const\s+MAX_VALUES:\s*usize\s*=\s*(\d+)/);
+    expect(match, 'boundary.rs must declare MAX_VALUES').not.toBeNull();
+    expect(Number(match![1])).toBe(WASM_BATCH_MAX);
+  });
 });
 
 // --- loaded-kernel half: identical indices once the Rust WASM is loaded ------
@@ -94,5 +120,15 @@ describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluat
       }),
       { numRuns: 200 },
     );
+  });
+
+  it('chunks past the kernel cap with the Rust kernel loaded (the real truncation risk)', async () => {
+    const bytes = readFileSync(WASM_PATH);
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    await WASMDispatch.load(buffer);
+    const bp = makeBoundary([0, 640, 1024]);
+    const n = WASM_BATCH_MAX * 3 + 5;
+    const values = Array.from({ length: n }, (_, i) => (i % 1500) - 1);
+    expect(Array.from(Boundary.evaluateBatch(bp, values))).toEqual(scalarIndices([0, 640, 1024], values));
   });
 });

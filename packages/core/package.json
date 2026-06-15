@@ -43,7 +43,6 @@
       "development": "./src/harness/index.ts"
     },
     "./validated-output": null,
-    "./czap-compute.wasm": "./dist/czap-compute.wasm",
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js",

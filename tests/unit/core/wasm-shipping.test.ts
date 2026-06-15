@@ -20,12 +20,11 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { resolve, join } from 'node:path';
+import { resolvePackagedWasm } from '../../../packages/vite/src/wasm-package-resolve.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const corePkg = JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
-  exports: Record<string, unknown>;
   files: string[];
 };
 const rootPkg = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')) as {
@@ -33,16 +32,16 @@ const rootPkg = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')) as 
 };
 
 describe('@czap/core ships the czap-compute WASM kernel', () => {
-  it('exports the artifact under a resolvable `./czap-compute.wasm` subpath', () => {
-    // The exact specifier @czap/vite resolves from node_modules. A bare-string
-    // export (not the `./*` JS wildcard) so `require.resolve` returns the raw
-    // binary, not a `.js`.
-    expect(corePkg.exports['./czap-compute.wasm']).toBe('./dist/czap-compute.wasm');
-  });
-
-  it('includes the dist directory in the published files allowlist', () => {
-    // `build:wasm` stages into dist/; `files` is what npm pack actually ships.
+  it('ships the binary via the dist files allowlist (no export — it is a data file, not a module)', () => {
+    // The wasm is located by the @czap/vite resolver as a filesystem path, not
+    // imported as a module — so it must NOT be an `exports` subpath (a dangling
+    // export of a build-on-demand artifact fails the package-export audit), but
+    // it MUST be in `files` so `npm pack` includes dist/czap-compute.wasm.
     expect(corePkg.files).toContain('dist');
+    const exportsMap = (JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
+      exports: Record<string, unknown>;
+    }).exports;
+    expect('./czap-compute.wasm' in exportsMap).toBe(false);
   });
 
   it('the root build:wasm script drives scripts/build-wasm.ts', () => {
@@ -50,17 +49,21 @@ describe('@czap/core ships the czap-compute WASM kernel', () => {
     expect(existsSync(join(REPO, 'scripts/build-wasm.ts'))).toBe(true);
   });
 
-  it('build-wasm.ts stages into exactly the path the export points at', () => {
+  it('build-wasm.ts stages into @czap/core dist where the resolver expects it', () => {
     const src = readFileSync(join(REPO, 'scripts/build-wasm.ts'), 'utf8');
     expect(src).toContain('packages/core/dist/czap-compute.wasm');
   });
 
-  it('the @czap/vite resolver has a hermetic node_modules (@czap/core) branch', () => {
-    const src = readFileSync(join(REPO, 'packages/vite/src/wasm-resolve.ts'), 'utf8');
-    // Probes the project's OWN node_modules (not require.resolve, which would
-    // leak a parent @czap/core) and yields the `'package'` source.
-    expect(src).toContain('node_modules/@czap/core/dist/czap-compute.wasm');
-    expect(src).toContain("source: 'package'");
+  it('the @czap/vite resolver finds @czap/core through the module graph (pnpm-nesting-safe)', () => {
+    // Resolution lives in its own module (so tests can mock it). It resolves
+    // @czap/core via THIS plugin's dep edge (import.meta.url) — NOT a top-level
+    // node_modules/@czap/core probe, which a nested pnpm install would miss.
+    const pkgResolve = readFileSync(join(REPO, 'packages/vite/src/wasm-package-resolve.ts'), 'utf8');
+    expect(pkgResolve).toContain('import.meta.url');
+    expect(pkgResolve).toContain("resolve('@czap/core')");
+    const resolver = readFileSync(join(REPO, 'packages/vite/src/wasm-resolve.ts'), 'utf8');
+    expect(resolver).toContain('resolvePackagedWasm');
+    expect(resolver).toContain("source: 'package'");
   });
 
   it("release.yml builds the wasm (with the wasm32 toolchain) BEFORE the ship loop packs it", () => {
@@ -75,14 +78,17 @@ describe('@czap/core ships the czap-compute WASM kernel', () => {
   });
 });
 
-// Functional: the export actually resolves to a real file. Self-skips until
-// `build:wasm` has staged the binary (it has cargo only in rust-wasm-parity).
+// Functional: the resolver lands on the staged binary through the module graph.
+// Self-skips until `build:wasm` has staged it (cargo runs only in rust-wasm-parity).
+// The "absent → null" fall-through is exercised by the mocked plugin tests
+// (vite-dx-wave3 / vite-runtime), since in-workspace @czap/core is always
+// resolvable and can't be made genuinely absent here.
 const staged = existsSync(join(REPO, 'packages/core/dist/czap-compute.wasm'));
-describe.skipIf(!staged)('the shipped artifact resolves and exists on disk', () => {
-  it('require.resolve(@czap/core/czap-compute.wasm) lands on the staged binary', () => {
-    const require = createRequire(join(REPO, 'package.json'));
-    const resolved = require.resolve('@czap/core/czap-compute.wasm');
-    expect(resolved.endsWith('czap-compute.wasm')).toBe(true);
-    expect(existsSync(resolved)).toBe(true);
+describe('resolvePackagedWasm', () => {
+  it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {
+    const resolved = resolvePackagedWasm();
+    expect(resolved).not.toBeNull();
+    expect(resolved!.endsWith(join('dist', 'czap-compute.wasm'))).toBe(true);
+    expect(existsSync(resolved!)).toBe(true);
   });
 });

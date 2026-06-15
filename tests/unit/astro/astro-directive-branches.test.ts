@@ -562,10 +562,11 @@ describe('astro directive branch coverage', () => {
     expect(getContext).not.toHaveBeenCalled();
     expect(gatedLoad).toHaveBeenCalledOnce();
 
-    // Force via the directive value `client:gpu={{ force: true }}`.
+    // Force via the directive value `client:gpu={{ force: true }}`. Astro passes
+    // it as `{ name, value }`, NOT a top-level `force` — exercise that real shape.
     const forcedOpts = makeEl('div');
     const forcedOptsLoad = vi.fn(async () => {});
-    gpuDirective(forcedOptsLoad, { force: true }, forcedOpts);
+    gpuDirective(forcedOptsLoad, { name: 'gpu', value: { force: true } }, forcedOpts);
     expect(forcedOpts.querySelector('canvas')).not.toBeNull();
     expect(getContext).toHaveBeenCalled();
     expect(forcedOptsLoad).toHaveBeenCalledOnce();

@@ -16,13 +16,15 @@ No breaking changes — purely additive.
 ### Added
 
 - `@czap/core` — **the czap-compute WASM kernel now ships**. `build:wasm` builds
-  the Rust crate and stages `czap-compute.wasm` into `@czap/core`, exported under
-  `@czap/core/czap-compute.wasm`. Until now `WASMDispatch.load()` had nothing to
-  load from an npm install, so every consumer silently ran the TS fallback.
-- `@czap/vite` — the WASM resolver now finds the artifact shipped inside
-  `@czap/core` in `node_modules` (a 4th `'package'` source, after config / crate,
-  before public). `czap({ wasm: { enabled: true } })` now "just works" off a plain
-  install — no hand-copied artifact, no local Rust build.
+  the Rust crate and stages `czap-compute.wasm` into `@czap/core/dist` (shipped via
+  the package `files`). Until now `WASMDispatch.load()` had nothing to load from an
+  npm install, so every consumer silently ran the TS fallback.
+- `@czap/vite` — the WASM resolver now finds the shipped artifact through the
+  module graph (`@czap/vite` → `@czap/core`, a 4th `'package'` source after config /
+  crate, before public) — pnpm-nesting-safe, so it works even when an app installs
+  only `@czap/astro`/`liteship` and has no top-level `node_modules/@czap/core`.
+  `czap({ wasm: { enabled: true } })` now "just works" off a plain install — no
+  hand-copied artifact, no local Rust build.
 - `@czap/core` — **`Boundary.evaluateBatch(boundary, values)`**: batch-evaluate
   many values against one boundary into state indices, routed through
   `WASMDispatch.kernels()` (Rust when loaded, TS fallback otherwise). Output is

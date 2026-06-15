@@ -8,6 +8,6 @@
 
 > `const` **THEME\_TRANSITION\_EASING**: `"ease-in-out"` = `'ease-in-out'`
 
-Defined in: [core/src/defaults.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L53)
+Defined in: [core/src/defaults.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L63)
 
 Default theme transition easing function. Used by: compiler/theme-css.ts

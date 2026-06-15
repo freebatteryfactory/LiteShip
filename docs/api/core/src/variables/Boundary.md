@@ -8,7 +8,7 @@
 
 > `const` **Boundary**: `BoundaryFactory` & `object`
 
-Defined in: [core/src/boundary.ts:277](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L277)
+Defined in: [core/src/boundary.ts:290](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L290)
 
 Boundary — core primitive of constraint-based adaptive rendering.
 

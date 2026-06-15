@@ -114,7 +114,7 @@ jobs:
       # published @czap/core carries no `.wasm` and an installed consumer's
       # `czap({ wasm: { enabled: true } })` silently runs the TS fallback (the
       # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
         with:
           targets: wasm32-unknown-unknown
       - run: pnpm run build:wasm

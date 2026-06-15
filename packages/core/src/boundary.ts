@@ -13,6 +13,7 @@ import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
 import { rawIndexF32 } from './boundary-f32.js';
 import { WASMDispatch } from './wasm-dispatch.js';
+import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from './diagnostics.js';
 import type { EvaluateResult } from './type-utils.js';
 import { CzapValidationError } from './validation-error.js';
@@ -111,8 +112,20 @@ function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states
  */
 function _evaluateBatch<B extends BoundaryDef>(boundary: B, values: ArrayLike<number>): Uint32Array {
   const thresholds = Float64Array.from(boundary.thresholds as readonly number[]);
-  const vals = values instanceof Float64Array ? values : Float64Array.from(values);
-  return WASMDispatch.kernels().batchBoundaryEval(thresholds, vals);
+  const total = values.length;
+  const out = new Uint32Array(total);
+  const kernels = WASMDispatch.kernels();
+  // The WASM kernel evaluates at most WASM_BATCH_MAX values per call (its static
+  // buffer clamps the rest), so chunk to that width. Every value is evaluated and
+  // the result stays bit-identical to mapping `evaluate` no matter the batch size
+  // — the >4096 entries would otherwise read unwritten kernel memory.
+  for (let offset = 0; offset < total; offset += WASM_BATCH_MAX) {
+    const end = Math.min(offset + WASM_BATCH_MAX, total);
+    const chunk = new Float64Array(end - offset);
+    for (let i = offset; i < end; i++) chunk[i - offset] = values[i]!;
+    out.set(kernels.batchBoundaryEval(thresholds, chunk), offset);
+  }
+  return out;
 }
 
 /**

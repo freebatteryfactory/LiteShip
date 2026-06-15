@@ -6,7 +6,7 @@
 
 # Interface: WASMResolution
 
-Defined in: [vite/src/wasm-resolve.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L46)
+Defined in: [vite/src/wasm-resolve.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L27)
 
 Successful WASM-resolution result: the absolute binary path plus the
 search step that found it (useful for diagnostics).
@@ -17,7 +17,7 @@ search step that found it (useful for diagnostics).
 
 > `readonly` **filePath**: `string`
 
-Defined in: [vite/src/wasm-resolve.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L48)
+Defined in: [vite/src/wasm-resolve.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L29)
 
 Absolute filesystem path to the WASM binary.
 
@@ -27,6 +27,6 @@ Absolute filesystem path to the WASM binary.
 
 > `readonly` **source**: `"config"` \| `"crate"` \| `"package"` \| `"public"`
 
-Defined in: [vite/src/wasm-resolve.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L50)
+Defined in: [vite/src/wasm-resolve.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/wasm-resolve.ts#L31)
 
 Which search step matched (`'config'`, `'crate'`, `'package'`, or `'public'`).
