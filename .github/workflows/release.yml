@@ -116,6 +116,9 @@ jobs:
       # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
         with:
+          # Pinning to a SHA strips the channel the action otherwise reads from the
+          # ref (`@stable`), so name it explicitly or the action errors.
+          toolchain: stable
           targets: wasm32-unknown-unknown
       - run: pnpm run build:wasm
 
