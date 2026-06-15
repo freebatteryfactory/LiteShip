@@ -15,7 +15,7 @@
  * @module
  */
 
-import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileExists } from './resolve-fs.js';
@@ -53,19 +53,21 @@ function packageRootFrom(entryPath: string, pkgName: string): string | null {
  * fall through to the next WASM source.
  */
 export function resolvePackagedWasm(): string | null {
+  let coreEntry: string;
   try {
-    const coreEntry = createRequire(import.meta.url).resolve('@czap/core');
-    const coreRoot = packageRootFrom(coreEntry, '@czap/core');
-    if (coreRoot === null) return null;
-    const wasm = path.join(coreRoot, CORE_WASM_DIST_PATH);
-    return fileExists(wasm, 'czap/vite.wasm-resolve') ? wasm : null;
-  } catch (err) {
-    // `require.resolve` throws MODULE_NOT_FOUND when @czap/core isn't installed
-    // (or predates the artifact) — the designed signal to fall through to the
-    // next source. Any OTHER failure (e.g. a corrupt install) is a real fault we
-    // must not launder into a silent "no wasm"; surface it.
-    const code = (err as NodeJS.ErrnoException)?.code;
-    if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') throw err;
+    // ESM resolution (import.meta.resolve), NOT createRequire: @czap/core's
+    // exports are import-only (no `require`/`default` condition), so the CJS
+    // resolver throws "No exports main defined". A build-time resolver must
+    // NEVER throw — any resolution failure (not installed, predates the
+    // artifact, unexpected) degrades to null so the build proceeds on the TS
+    // fallback. The silent null is the designed contract, not laundering
+    // (allowlisted in @czap/audit policy).
+    coreEntry = fileURLToPath(import.meta.resolve('@czap/core'));
+  } catch {
     return null;
   }
+  const coreRoot = packageRootFrom(coreEntry, '@czap/core');
+  if (coreRoot === null) return null;
+  const wasm = path.join(coreRoot, CORE_WASM_DIST_PATH);
+  return fileExists(wasm, 'czap/vite.wasm-resolve') ? wasm : null;
 }

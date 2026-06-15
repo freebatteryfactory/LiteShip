@@ -373,6 +373,21 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       'Fail-closed workspace guard for doctor --fix and gauntlet: unreadable root manifest must refuse workspace verbs (Codex P1); the refusal is surfaced by each caller, so no context is laundered.',
   },
   {
+    // The WASM artifact resolver runs inside a consumer's Vite/Astro BUILD. If
+    // @czap/core (or its wasm) can't be resolved — not installed, predates the
+    // artifact, or an unexpected resolver error — it must degrade to null so the
+    // build proceeds on the numerically-identical TS fallback. Throwing would
+    // crash the consumer's build over an optional perf upgrade. The silent null
+    // IS the cheapest-valid-default contract; the absence is observable via the
+    // plugin's missing-binary warning, so nothing is laundered.
+    rule: 'fallback-laundering',
+    package: '@czap/vite',
+    filePrefix: 'src/wasm-package-resolve.ts',
+    summaryIncludes: 'returns null',
+    reason:
+      'Build-time WASM resolver must never throw: any failure to resolve @czap/core or its wasm degrades to null so the consumer build proceeds on the identical TS fallback; the missing-binary warning surfaces the absence.',
+  },
+  {
     // gauntlet's failed-phase enrichment reads an OPTIONAL artifact: the
     // docblock pins the degradation contract (absent/corrupt artifact →
     // null → error reports the bare exit status, which is still correct).
