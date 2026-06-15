@@ -116,6 +116,7 @@ Main surfaces:
 - `GraphPatch`
 - `AICast`
 - `chooseRung`
+- `WASMDispatch`
 
 ### Document graph (the IR)
 
@@ -136,6 +137,15 @@ Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./docs/adr
 - the envelope that keeps raw model output from ever mutating a graph
 
 Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchProposal`, `validateGeneratedUIProposal`, `applyValidatedPatch`, `ValidatedProposal`, `ApplyToken`. The primitive is pure — zero network, zero provider imports — and `mintValidated` is denied at the package subpath, so a consumer cannot forge a proposal. The host owns the model call and the authority to apply.
+
+### WASM compute
+
+The Rust `czap-compute` kernel (spring / boundary / blend) ships inside `@czap/core` as of 0.2.1, exported at `@czap/core/czap-compute.wasm`. `@czap/vite` resolves it from `node_modules` automatically when you set `czap({ wasm: { enabled: true } })` — no hand-built or hand-copied artifact. Reach for it when you need:
+
+- batch boundary evaluation — `Boundary.evaluateBatch(boundary, values)`: many values against one boundary, into state indices, routed through `WASMDispatch.kernels()`
+- the kernel handle directly — `WASMDispatch.load` / `kernels` / `isLoaded`
+
+Main surfaces: `WASMDispatch`, `Boundary.evaluateBatch`. The WASM path is a throughput upgrade, never a behavior change: every kernel is output-identical to its TypeScript fallback (`packages/core/src/wasm-fallback.ts`), locked by the wasm-parity property suite. A boundary that can't load WASM selects the same indices in JS.
 
 ---
 

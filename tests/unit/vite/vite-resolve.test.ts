@@ -388,6 +388,31 @@ describe('@czap/vite resolveWASM', () => {
     expect(resolveWASM(root)?.source).toBe('public');
   });
 
+  test('resolves the artifact shipped inside @czap/core in node_modules (installed-consumer default)', () => {
+    const root = makeTempDir();
+    const pkgDir = join(root, 'node_modules/@czap/core/dist');
+    mkdirSync(pkgDir, { recursive: true });
+    const pkgWasm = join(pkgDir, 'czap-compute.wasm');
+    writeFileSync(pkgWasm, 'packaged');
+
+    // No config, no crate, no public — just an npm install. This is the branch
+    // that makes `czap({ wasm: { enabled: true } })` work off the box.
+    expect(resolveWASM(root)).toEqual({ filePath: pkgWasm, source: 'package' });
+
+    // A fresh crate build (monorepo dev) still takes precedence over the package copy.
+    const cratePath = join(root, 'crates/czap-compute/target/wasm32-unknown-unknown/release');
+    mkdirSync(cratePath, { recursive: true });
+    writeFileSync(join(cratePath, 'czap_compute.wasm'), 'crate');
+    expect(resolveWASM(root)?.source).toBe('crate');
+  });
+
+  test('the packaged artifact is hermetic to projectRoot (no upward node_modules leak)', () => {
+    // A project WITHOUT @czap/core installed must resolve nothing, even though a
+    // parent/monorepo node_modules may carry one — `require.resolve` would leak it.
+    const root = makeTempDir();
+    expect(resolveWASM(root)).toBeNull();
+  });
+
   test('falls back from a missing configured wasm path to the crate output', () => {
     const root = makeTempDir();
     const cratePath = join(root, 'crates/czap-compute/target/wasm32-unknown-unknown/release');

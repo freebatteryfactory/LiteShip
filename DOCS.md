@@ -186,6 +186,10 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the canonical CI workflow? | `.github/workflows/ci.yml` (truth-linux job runs `pnpm run gauntlet:full`) |
 | Where is the red-team regression suite? | `tests/regression/red-team-runtime.test.ts` |
 | What does `flex:verify` check? | `scripts/flex-verify.ts` (7 dimensions; gauntlet's final phase rollup) |
+| How do I batch-evaluate many values against one boundary? | `Boundary.evaluateBatch(boundary, values)` in `packages/core/src/boundary.ts` (routed through `WASMDispatch.kernels()`; output-identical to scalar `evaluate`) |
+| Where does the WASM kernel ship / get resolved? | `scripts/build-wasm.ts` stages it into `@czap/core` (`@czap/core/czap-compute.wasm`); `packages/vite/src/wasm-resolve.ts` resolves it from `node_modules` |
+| How do I force the GPU shader below the tier gate? | `client:gpu={{ force: true }}` or `data-czap-gpu-force` (ASTRO-RUNTIME-MODEL.md § `gpu`; `packages/astro/src/runtime/gpu.ts`) |
+| When does capability detection finish? | the `czap:detect-ready` event on `document` (ASTRO-RUNTIME-MODEL.md § "Capability detection"; `packages/astro/src/detect-upgrade.ts`) |
 
 ---
 

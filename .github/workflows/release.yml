@@ -109,6 +109,16 @@ jobs:
 
       - run: pnpm run build
 
+      # Build the czap-compute WASM kernel from Rust and stage it into
+      # @czap/core's dist BEFORE the ship loop packs the tarball — otherwise the
+      # published @czap/core carries no `.wasm` and an installed consumer's
+      # `czap({ wasm: { enabled: true } })` silently runs the TS fallback (the
+      # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: pnpm run build:wasm
+
       # ─── GitHub Release FIRST, then the ship loop ────────────────────
       # The Release is created BEFORE any package publishes so each
       # package's ShipCapsule can be attached the moment it is minted

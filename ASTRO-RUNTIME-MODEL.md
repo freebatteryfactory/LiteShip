@@ -62,7 +62,7 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 - **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (Alt+Shift+C in `astro dev`).
 - **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
-- **auto-resolved:** initial state defaults from the server-resolved bearing, and the `czap-compute` WASM URL resolves itself — you don't thread either by hand.
+- **auto-resolved:** initial state defaults from the server-resolved bearing, and the `czap-compute` WASM artifact — shipped inside `@czap/core` (0.2.1+) — resolves itself from `node_modules`; you don't thread either by hand.
 
 So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
 
@@ -212,7 +212,7 @@ Use when generative content is part of the presentation system.
 
 ### `gpu`
 
-Use when the visual meaning depends on shader execution, not merely decoration.
+Use when the visual meaning depends on shader execution, not merely decoration. The directive no-ops below the GPU perf-tier by default; `client:gpu={{ force: true }}` (or a `data-czap-gpu-force` attribute) boots it anyway — for headless/CI (SwiftShader reports tier 0 yet WebGL2 works) and low-tier-but-capable devices. The real WebGL2/WebGPU probe still gates it, so a missing context degrades to CSS, never a crash.
 
 ### `worker`
 
@@ -220,7 +220,7 @@ Use when off-main-thread coordination is part of the surface's runtime need.
 
 ### `wasm`
 
-Use when compute cost meaningfully exceeds what the normal runtime should carry. Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
+Use when compute cost meaningfully exceeds what the normal runtime should carry. The `czap-compute` kernel ships inside `@czap/core` (0.2.1+) and `@czap/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
 
 ---
 
@@ -248,6 +248,12 @@ Inside Astro, that means:
 - surfaces should preserve narrative and hierarchy even when the runtime is reduced
 
 This makes the system suitable for static visual websites rather than only for full client apps.
+
+---
+
+## Capability detection
+
+The integration writes a provisional `data-czap-tier` inline in `<head>`, then an async probe (GPU renderer, WebGPU, cores/memory, reduced-motion) settles the real tier after load. When it finishes — `__CZAP_DETECT__` and the `data-czap-*` attributes final — it fires one `czap:detect-ready` event on `document` carrying `{ tier, gpuTier, webgpu, motionTier }` (or `{ error: true }` if the probe threw). Listen for that one event instead of polling `__CZAP_DETECT__` or racing a `setTimeout` backstop; it is the single signal that detection has settled.
 
 ---
 

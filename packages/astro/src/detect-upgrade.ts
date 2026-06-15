@@ -94,7 +94,25 @@ export const DETECT_UPGRADE_SCRIPT = `
         webgpu: webgpu,
         motionTier: motionTier
       });
-    } catch(e) { try { document.documentElement.setAttribute('data-czap-tier-probe-error', 'true'); } catch(_) {} }
+
+      // Single consolidated "detect settled" signal. __CZAP_DETECT__ and the
+      // data-czap-* attributes are now final; consumers that need post-probe
+      // values (gpuTier/webgpu) listen for this ONE event instead of polling or
+      // racing setTimeout backstops. The detail carries the final payload so a
+      // late listener can read it straight off the event.
+      try {
+        document.dispatchEvent(new CustomEvent('czap:detect-ready', {
+          detail: { tier: capLevel, gpuTier: tier, webgpu: webgpu, motionTier: motionTier }
+        }));
+      } catch(_) {}
+    } catch(e) {
+      try { document.documentElement.setAttribute('data-czap-tier-probe-error', 'true'); } catch(_) {}
+      // Still fire detect-ready (flagged) so listeners awaiting the probe never
+      // hang on a thrown probe — the provisional tier stands.
+      try {
+        document.dispatchEvent(new CustomEvent('czap:detect-ready', { detail: { error: true } }));
+      } catch(_) {}
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', upgrade);

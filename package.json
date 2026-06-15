@@ -1,6 +1,6 @@
 {
   "name": "czap",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Constraint-based adaptive rendering framework — monorepo root",
   "license": "MIT",
@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "tsc --build packages/canonical packages/genui packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/stage packages/cloudflare packages/remotion packages/scene packages/assets packages/audit packages/command packages/cli packages/mcp-server packages/liteship packages/create-liteship",
+    "build:wasm": "pnpm exec tsx scripts/build-wasm.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm run typecheck:scripts && pnpm run typecheck:tests",
     "typecheck:scripts": "tsc --project tsconfig.scripts.json",
     "typecheck:tests": "tsc --project tsconfig.tests.json",
@@ -66,7 +67,7 @@
     "test:vite": "pnpm exec tsx scripts/test-vite.ts",
     "test:tailwind": "pnpm exec tsx scripts/test-tailwind.ts",
     "package:smoke": "pnpm run build && pnpm exec tsx scripts/package-smoke.ts",
-    "release:notes": "pnpm exec tsx scripts/extract-changelog-section.ts --version 0.2.0 --out RELEASE_NOTES_v0.2.0.md",
+    "release:notes": "pnpm exec tsx scripts/extract-changelog-section.ts --version 0.2.1 --out RELEASE_NOTES_v0.2.1.md",
     "ship": "node packages/cli/bin/czap.mjs ship",
     "verify": "node packages/cli/bin/czap.mjs verify",
     "gauntlet:full": "tsx scripts/gauntlet.ts",

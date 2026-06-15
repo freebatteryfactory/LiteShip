@@ -12,6 +12,7 @@ import { SignalInput as mkSignalInput, ThresholdValue as mkThresholdValue } from
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
 import { rawIndexF32 } from './boundary-f32.js';
+import { WASMDispatch } from './wasm-dispatch.js';
 import { Diagnostics } from './diagnostics.js';
 import type { EvaluateResult } from './type-utils.js';
 import { CzapValidationError } from './validation-error.js';
@@ -82,6 +83,36 @@ function deterministicId(
  */
 function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states'][number] {
   return boundary.states[rawIndexF32(boundary.thresholds, value)]!;
+}
+
+/**
+ * Batch-evaluate many values against ONE boundary into their raw state
+ * indices — the `i` such that `boundary.states[i]` is the state for that value.
+ *
+ * This is the WASM-accelerated face of {@link _evaluate}. It routes through
+ * `WASMDispatch.kernels().batchBoundaryEval`: the Rust `czap-compute` kernel
+ * once {@link WASMDispatch.load} has run, the pure-TS `fallbackKernels`
+ * otherwise. BOTH select the identical index — the fallback IS the
+ * {@link rawIndexF32} loop and the WASM kernel is locked to it by the
+ * wasm-parity property suite — so the output is bit-identical to mapping
+ * {@link _evaluate} over `values`, loaded or not. The win is throughput on
+ * large value sets (offline frame precompute, scrub timelines, per-entity
+ * scene signals), never different numbers.
+ *
+ * Stateless raw selection, like {@link _evaluate} (no hysteresis). Map indices
+ * to state names with `boundary.states[i]` when you need them.
+ *
+ * @example
+ * ```ts
+ * const bp = Boundary.make({ input: 'scroll', at: [[0, 'top'], [500, 'mid'], [1500, 'deep']] });
+ * const idx = Boundary.evaluateBatch(bp, [120, 800, 2000]);
+ * // idx → Uint32Array [0, 1, 2]; bp.states[idx[1]] === 'mid'
+ * ```
+ */
+function _evaluateBatch<B extends BoundaryDef>(boundary: B, values: ArrayLike<number>): Uint32Array {
+  const thresholds = Float64Array.from(boundary.thresholds as readonly number[]);
+  const vals = values instanceof Float64Array ? values : Float64Array.from(values);
+  return WASMDispatch.kernels().batchBoundaryEval(thresholds, vals);
 }
 
 /**
@@ -246,6 +277,7 @@ function _isActive<B extends BoundaryDef>(
 export const Boundary: BoundaryFactory & {
   evaluate: typeof _evaluate;
   evaluateResult: typeof _evaluateResult;
+  evaluateBatch: typeof _evaluateBatch;
   evaluateWithHysteresis: typeof _evaluateWithHysteresis;
   isActive: typeof _isActive;
 } = {
@@ -314,6 +346,7 @@ export const Boundary: BoundaryFactory & {
   },
   evaluate: _evaluate,
   evaluateResult: _evaluateResult,
+  evaluateBatch: _evaluateBatch,
   evaluateWithHysteresis: _evaluateWithHysteresis,
   isActive: _isActive,
 };

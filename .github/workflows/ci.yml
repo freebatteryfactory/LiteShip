@@ -136,6 +136,18 @@ jobs:
       - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts
         env:
           CI: true
+      # 0.2.1 shipping path: stage the freshly-built kernel into @czap/core's
+      # publish surface and prove it lands where the @czap/vite resolver and the
+      # `./czap-compute.wasm` export expect it — the artifact an installed
+      # consumer resolves from node_modules, validated on the one runner that
+      # has the Rust toolchain.
+      - name: Stage + verify the shipped artifact
+        run: |
+          pnpm run build:wasm
+          test -f packages/core/dist/czap-compute.wasm
+      - run: pnpm exec vitest run tests/unit/core/wasm-shipping.test.ts
+        env:
+          CI: true
 
   windows-smoke:
     runs-on: windows-latest
