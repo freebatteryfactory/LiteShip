@@ -69,15 +69,12 @@ describe('czap({ exclude }) route scope guard', () => {
     expect(probe?.content).toContain('if (window.__CZAP_OFF__) return;');
     expect(wasm?.content).toContain('if (!window.__CZAP_OFF__)');
     expect(inspector?.content).toContain('if (!window.__CZAP_OFF__)');
-    // Bootstrap: the initial slot/directive activation is guarded, but policy +
-    // swap machinery (installSwapReinit) register UNCONDITIONALLY so a later
-    // View Transition to an included route can re-activate after an excluded landing.
-    const b = bootstrap!.content;
-    expect(b).toContain('if (!window.__CZAP_OFF__)');
-    // Paren forms target the CALLS, not the import line. Policy call before the
-    // guard, swap-machinery call after it (both unconditional).
-    expect(b.indexOf('configureRuntimePolicy(')).toBeLessThan(b.indexOf('if (!window.__CZAP_OFF__)'));
-    expect(b.indexOf('installSwapReinit()')).toBeGreaterThan(b.indexOf('if (!window.__CZAP_OFF__)'));
+    // The directive bootstrap is intentionally NOT guarded — it's idempotent and
+    // a no-op on marker-less pages, and its astro:after-swap scanner must stay
+    // wired so a View Transition to an included route binds directives even after
+    // an excluded landing (the GPU probe / detect / wasm / inspector carry the savings).
+    expect(bootstrap?.content).toContain('bootstrapDirectives');
+    expect(bootstrap?.content).not.toContain('__CZAP_OFF__');
   });
 
   test('NO guard is injected when no routes are excluded (zero overhead default)', () => {
@@ -116,5 +113,17 @@ describe('czap({ exclude }) route scope guard', () => {
     expect(guardFlagFor(guard!, '/')).toBe(false); // marketing root — czap runs
     expect(guardFlagFor(guard!, '/documentation')).toBe(false); // NOT under /docs/** (prefix-safe)
     expect(guardFlagFor(guard!, '/blog/post')).toBe(false); // exact /blog only, not children
+  });
+
+  test('only TRAILING `**` is a glob — a mid/leading `**` is treated as an exact path', () => {
+    const [guard] = runSetup({ exclude: ['/a**b', '/docs/**'] })
+      .filter((s) => s.stage === 'head-inline' && s.content.includes('window.__CZAP_OFF__'))
+      .map((s) => s.content);
+    // `/a**b` is NOT a trailing glob → exact match only, so it must NOT broadly
+    // disable `/anything`. The trailing `/docs/**` still works.
+    expect(guardFlagFor(guard!, '/abc')).toBe(false);
+    expect(guardFlagFor(guard!, '/a/deep/path')).toBe(false);
+    expect(guardFlagFor(guard!, '/a**b')).toBe(true); // matches itself, exactly
+    expect(guardFlagFor(guard!, '/docs/x')).toBe(true); // trailing glob unaffected
   });
 });

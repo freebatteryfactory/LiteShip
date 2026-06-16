@@ -43,15 +43,17 @@ export interface IntegrationConfig {
   /** Overrides passed through to `@czap/vite`'s plugin. */
   readonly vite?: PluginConfig;
   /**
-   * Route globs on which czap's head/page runtime scripts (detect, the GPU
-   * probe, the runtime bootstrap, wasm, the dev inspector) should NOT run. For
-   * embedding czap alongside another Astro sub-app (e.g. a Starlight `/docs/**`
-   * section) that never consumes czap, so those pages don't pay for a pointless
-   * GPU probe or attr writes. Astro's `injectScript` is global (no build-time
-   * route filter), so this is a runtime guard: a tiny inline script matches
-   * `location.pathname` and short-circuits the rest. Supports exact paths and a
-   * trailing `**` (e.g. `'/docs/**'` matches `/docs` and everything under it).
-   * Default `[]` (czap runs everywhere).
+   * Route globs on which czap's costly runtime scripts (detect, the GPU probe,
+   * wasm, the dev inspector) should NOT run. For embedding czap alongside another
+   * Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes czap,
+   * so those pages don't pay for a pointless GPU probe or attr writes. Astro's
+   * `injectScript` is global (no build-time route filter), so this is a runtime
+   * guard: a tiny inline script matches `location.pathname` and short-circuits
+   * the rest (re-evaluating on View-Transition swaps). The directive bootstrap
+   * stays wired — it's a no-op without czap markers, and keeps View Transitions
+   * working across the boundary. Supports exact paths and a trailing `**` (e.g.
+   * `'/docs/**'` matches `/docs` and everything under it). Default `[]` (czap
+   * runs everywhere).
    */
   readonly exclude?: readonly string[];
   /** Enable the inline detect script (default `true`). */
@@ -108,9 +110,9 @@ function scopeGuardScript(exclude: readonly string[]): string {
       var off = false;
       for (var i = 0; i < patterns.length; i++) {
         var p = patterns[i];
-        var star = p.indexOf('**');
-        if (star >= 0) {
-          var prefix = p.slice(0, star);
+        // Trailing ** only (the documented semantics); anything else is exact.
+        if (p.slice(-2) === '**') {
+          var prefix = p.slice(0, -2);
           var bare = prefix.replace(/\\/$/, '');
           if (path === bare || path.indexOf(prefix) === 0) { off = true; break; }
         } else if (path === p) { off = true; break; }
@@ -193,18 +195,18 @@ function serializeInlineRuntimePolicy(policy: RuntimeSecurityPolicy): string {
 }
 
 function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: readonly DirectiveName[]): string {
+  // NOT gated on __CZAP_OFF__: the directive bootstrap is idempotent and a cheap
+  // no-op on a page with no czap markers (an excluded Starlight route), and its
+  // astro:after-swap scan listener MUST stay wired so a View Transition from an
+  // excluded landing to an included route still binds directives. The real
+  // exclusion savings (the GPU probe, detect, wasm, inspector) are guarded at
+  // their own scripts; this machinery is invisible where nothing uses it.
   return `
 import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
 
-// Policy + swap machinery register UNCONDITIONALLY: if the first page a visitor
-// lands on is excluded, installSwapReinit must still be wired so a later View
-// Transition to an INCLUDED route re-activates czap. Only the initial
-// slot/directive activation is skipped on an excluded page.
 configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
-if (!window.__CZAP_OFF__) {
-  bootstrapSlots();
-  bootstrapDirectives(${JSON.stringify(directives)});
-}
+bootstrapSlots();
+bootstrapDirectives(${JSON.stringify(directives)});
 installSwapReinit();
 `.trim();
 }

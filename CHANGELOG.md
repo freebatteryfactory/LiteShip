@@ -15,13 +15,15 @@ changes.
 ### Added
 
 - `@czap/astro` — **`czap({ exclude: ['/docs/**'] })`**: route globs on which
-  czap's head/page runtime scripts (detect, the GPU probe, the runtime bootstrap,
-  wasm, the dev inspector) do not run. Astro's `injectScript` is global with no
-  build-time route filter, so this is a runtime guard — a tiny head-inline script,
-  injected ahead of everything else, matches `location.pathname` and sets
-  `window.__CZAP_OFF__`, which every czap script short-circuits on. For embedding
-  czap alongside another Astro sub-app that never consumes it, so those pages
-  don't pay for a pointless GPU probe. Matches exact paths and a trailing `**`
+  czap's costly runtime scripts (detect, the GPU probe, wasm, the dev inspector)
+  do not run. Astro's `injectScript` is global with no build-time route filter, so
+  this is a runtime guard — a tiny head-inline script, injected ahead of
+  everything else, matches `location.pathname` and sets `window.__CZAP_OFF__`
+  (re-evaluating on View-Transition swaps), which those scripts short-circuit on.
+  The directive bootstrap stays wired (a no-op without czap markers) so View
+  Transitions still work across the boundary. For embedding czap alongside another
+  Astro sub-app that never consumes it, so those pages don't pay for a pointless
+  GPU probe. Matches exact paths and a trailing `**`
   (`/docs/**` covers `/docs` and everything under it; `/documentation` is not
   matched). Default `[]` (czap runs everywhere) — zero overhead when unused.
 

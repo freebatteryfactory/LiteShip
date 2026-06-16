@@ -66,7 +66,7 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
 
-**Scoping czap off some routes (0.2.2+):** when czap shares a site with another Astro sub-app — say a Starlight `/docs` section — pass `exclude` so czap's head/page scripts (detect, the GPU probe, bootstrap, wasm, inspector) don't run there: `czap({ exclude: ['/docs/**'] })`. Astro's `injectScript` is global (no build-time route filter), so this is a runtime guard — a head-inline script, injected first, sets `window.__CZAP_OFF__` from `location.pathname` and every czap script short-circuits on it. Matches exact paths and a trailing `**` (`/docs/**` covers `/docs` and under it; `/documentation` is not matched). Default `[]`.
+**Scoping czap off some routes (0.2.2+):** when czap shares a site with another Astro sub-app — say a Starlight `/docs` section — pass `exclude` so czap's costly scripts (detect, the GPU probe, wasm, inspector) don't run there: `czap({ exclude: ['/docs/**'] })`. Astro's `injectScript` is global (no build-time route filter), so this is a runtime guard — a head-inline script, injected first, sets `window.__CZAP_OFF__` from `location.pathname` (re-evaluating on View-Transition swaps) and those scripts short-circuit on it. The directive bootstrap stays wired (a no-op without czap markers) so View Transitions keep working across the boundary. Matches exact paths and a trailing `**` (`/docs/**` covers `/docs` and under it; `/documentation` is not matched). Default `[]`.
 
 ---
 
