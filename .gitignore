@@ -64,6 +64,10 @@ docs/sixsigma/
 docs/plans/
 docs/internal/
 
+# TypeDoc HTML output — the committed API reference is the markdown in docs/api/;
+# the HTML build (docs/api-html/) is a heavy, regenerable artifact, never committed.
+docs/api-html/
+
 # Stale tsc emit artifacts in scripts/ (tsconfig.scripts.json sets noEmit;
 # anything compiled here is leftover from misconfigured local runs)
 scripts/**/*.js

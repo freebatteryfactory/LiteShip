@@ -12,6 +12,8 @@ import { SignalInput as mkSignalInput, ThresholdValue as mkThresholdValue } from
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
 import { rawIndexF32 } from './boundary-f32.js';
+import { WASMDispatch } from './wasm-dispatch.js';
+import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from './diagnostics.js';
 import type { EvaluateResult } from './type-utils.js';
 import { CzapValidationError } from './validation-error.js';
@@ -82,6 +84,48 @@ function deterministicId(
  */
 function _evaluate<B extends BoundaryDef>(boundary: B, value: number): B['states'][number] {
   return boundary.states[rawIndexF32(boundary.thresholds, value)]!;
+}
+
+/**
+ * Batch-evaluate many values against ONE boundary into their raw state
+ * indices — the `i` such that `boundary.states[i]` is the state for that value.
+ *
+ * This is the WASM-accelerated face of {@link _evaluate}. It routes through
+ * `WASMDispatch.kernels().batchBoundaryEval`: the Rust `czap-compute` kernel
+ * once {@link WASMDispatch.load} has run, the pure-TS `fallbackKernels`
+ * otherwise. BOTH select the identical index — the fallback IS the
+ * {@link rawIndexF32} loop and the WASM kernel is locked to it by the
+ * wasm-parity property suite — so the output is bit-identical to mapping
+ * {@link _evaluate} over `values`, loaded or not. The win is throughput on
+ * large value sets (offline frame precompute, scrub timelines, per-entity
+ * scene signals), never different numbers.
+ *
+ * Stateless raw selection, like {@link _evaluate} (no hysteresis). Map indices
+ * to state names with `boundary.states[i]` when you need them.
+ *
+ * @example
+ * ```ts
+ * const bp = Boundary.make({ input: 'scroll', at: [[0, 'top'], [500, 'mid'], [1500, 'deep']] });
+ * const idx = Boundary.evaluateBatch(bp, [120, 800, 2000]);
+ * // idx → Uint32Array [0, 1, 2]; bp.states[idx[1]] === 'mid'
+ * ```
+ */
+function _evaluateBatch<B extends BoundaryDef>(boundary: B, values: ArrayLike<number>): Uint32Array {
+  const thresholds = Float64Array.from(boundary.thresholds as readonly number[]);
+  const total = values.length;
+  const out = new Uint32Array(total);
+  const kernels = WASMDispatch.kernels();
+  // The WASM kernel evaluates at most WASM_BATCH_MAX values per call (its static
+  // buffer clamps the rest), so chunk to that width. Every value is evaluated and
+  // the result stays bit-identical to mapping `evaluate` no matter the batch size
+  // — the >4096 entries would otherwise read unwritten kernel memory.
+  for (let offset = 0; offset < total; offset += WASM_BATCH_MAX) {
+    const end = Math.min(offset + WASM_BATCH_MAX, total);
+    const chunk = new Float64Array(end - offset);
+    for (let i = offset; i < end; i++) chunk[i - offset] = values[i]!;
+    out.set(kernels.batchBoundaryEval(thresholds, chunk), offset);
+  }
+  return out;
 }
 
 /**
@@ -246,6 +290,7 @@ function _isActive<B extends BoundaryDef>(
 export const Boundary: BoundaryFactory & {
   evaluate: typeof _evaluate;
   evaluateResult: typeof _evaluateResult;
+  evaluateBatch: typeof _evaluateBatch;
   evaluateWithHysteresis: typeof _evaluateWithHysteresis;
   isActive: typeof _isActive;
 } = {
@@ -314,6 +359,7 @@ export const Boundary: BoundaryFactory & {
   },
   evaluate: _evaluate,
   evaluateResult: _evaluateResult,
+  evaluateBatch: _evaluateBatch,
   evaluateWithHysteresis: _evaluateWithHysteresis,
   isActive: _isActive,
 };

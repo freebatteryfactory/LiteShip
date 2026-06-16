@@ -8,6 +8,6 @@
 
 > `const` **CANVAS\_FALLBACK\_WIDTH**: `300` = `300`
 
-Defined in: [core/src/defaults.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L56)
+Defined in: [core/src/defaults.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L66)
 
 Default canvas fallback width when clientWidth is 0. Used by: astro/runtime/gpu.ts

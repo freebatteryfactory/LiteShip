@@ -108,8 +108,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
         with:
+          # Pinning to a SHA strips the channel the action otherwise reads from the
+          # ref (`@stable`), so name it explicitly or the action errors.
+          toolchain: stable
           targets: wasm32-unknown-unknown
       - run: cargo test
         working-directory: crates/czap-compute
@@ -134,6 +137,18 @@ jobs:
       - name: Artifact must exist — otherwise the parity suite self-skips
         run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
       - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts
+        env:
+          CI: true
+      # 0.2.1 shipping path: stage the freshly-built kernel into @czap/core's
+      # publish surface and prove it lands where the @czap/vite resolver and the
+      # `./czap-compute.wasm` export expect it — the artifact an installed
+      # consumer resolves from node_modules, validated on the one runner that
+      # has the Rust toolchain.
+      - name: Stage + verify the shipped artifact
+        run: |
+          pnpm run build:wasm
+          test -f packages/core/dist/czap-compute.wasm
+      - run: pnpm exec vitest run tests/unit/core/wasm-shipping.test.ts
         env:
           CI: true
 

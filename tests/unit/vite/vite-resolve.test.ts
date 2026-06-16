@@ -1,4 +1,12 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
+
+// The `'package'` source resolves @czap/core through the module graph, which a
+// synthetic temp root cannot model (and vitest's aliases would always resolve
+// the workspace @czap/core). Force it absent so the config/crate/public/null
+// ordering is exercised cleanly; the real resolver is covered in
+// tests/unit/core/wasm-shipping.test.ts.
+vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
+
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -387,6 +395,13 @@ describe('@czap/vite resolveWASM', () => {
 
     expect(resolveWASM(root)?.source).toBe('public');
   });
+
+  // The `'package'` (node_modules) source is resolved through the module graph
+  // (@czap/vite → @czap/core), which a synthetic temp root can't model; its
+  // behavior — real resolution + hermeticity — is covered in
+  // tests/unit/core/wasm-shipping.test.ts (resolvePackagedWASM). A temp root has
+  // no @czap/vite, so the package branch is null here and the config/crate/public
+  // ordering below is exercised cleanly.
 
   test('falls back from a missing configured wasm path to the crate output', () => {
     const root = makeTempDir();

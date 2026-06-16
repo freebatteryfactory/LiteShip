@@ -280,6 +280,7 @@ plan graph, ECS, capsule factory).
 - [VectorClock](variables/VectorClock.md)
 - [VideoRenderer](variables/VideoRenderer.md)
 - [VIEWPORT](variables/VIEWPORT.md)
+- [WASM\_BATCH\_MAX](variables/WASM_BATCH_MAX.md)
 - [WASM\_SCRATCH\_BASE](variables/WASM_SCRATCH_BASE.md)
 - [WASMDispatch](variables/WASMDispatch.md)
 - [Wire](variables/Wire.md)

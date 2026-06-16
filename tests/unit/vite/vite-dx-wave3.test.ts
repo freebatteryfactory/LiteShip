@@ -14,6 +14,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Boundary, Diagnostics } from '@czap/core';
+
+// These tests simulate consumer projects via temp roots. The packaged-wasm
+// source resolves @czap/core through the module graph (which vitest would always
+// resolve to the workspace), so force it absent — the "no binary" / public-only
+// scenarios below are then driven entirely by the temp-root fixtures.
+vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
+
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import * as IndexModule from '../../../packages/vite/src/index.js';
 import { resolvePrimitive } from '../../../packages/vite/src/primitive-resolve.js';

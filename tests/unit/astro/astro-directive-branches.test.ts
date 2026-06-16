@@ -546,6 +546,37 @@ describe('astro directive branch coverage', () => {
     );
   });
 
+  test('gpu directive force escape hatch boots below the tier gate (headless/CI)', () => {
+    // A low/headless tier normally no-ops the directive BEFORE it ever probes
+    // WebGL2 — so SwiftShader (gpuTier 0, WebGL2 fine) can't boot. The force
+    // hatch must bypass the heuristic gate while the real getContext probe still
+    // guards capability (here mocked absent → graceful CSS fallback, not a crash).
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    // Baseline: no force at a styled tier → hard no-op, never touches a canvas.
+    const gated = makeEl('div');
+    const gatedLoad = vi.fn(async () => {});
+    gpuDirective(gatedLoad, {}, gated);
+    expect(gated.querySelector('canvas')).toBeNull();
+    expect(getContext).not.toHaveBeenCalled();
+    expect(gatedLoad).toHaveBeenCalledOnce();
+
+    // Force via the directive value `client:gpu={{ force: true }}`. Astro passes
+    // it as `{ name, value }`, NOT a top-level `force` — exercise that real shape.
+    const forcedOpts = makeEl('div');
+    const forcedOptsLoad = vi.fn(async () => {});
+    gpuDirective(forcedOptsLoad, { name: 'gpu', value: { force: true } }, forcedOpts);
+    expect(forcedOpts.querySelector('canvas')).not.toBeNull();
+    expect(getContext).toHaveBeenCalled();
+    expect(forcedOptsLoad).toHaveBeenCalledOnce();
+
+    // Force via the `data-czap-gpu-force` attribute (no directive value).
+    const forcedAttr = makeEl('div', { 'data-czap-gpu-force': '' });
+    gpuDirective(async () => {}, {}, forcedAttr);
+    expect(forcedAttr.querySelector('canvas')).not.toBeNull();
+  });
+
   test('gpu directive handles document uniform updates and shader compile failures', async () => {
     const load = vi.fn(async () => {});
     const { sink, events } = Diagnostics.createBufferSink();

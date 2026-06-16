@@ -6,6 +6,42 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-15
+
+The escape-hatch patch. 0.2.0 shipped the WASM compute API and the GPU detect
+ladder; dogfooding two sites surfaced that the API was reachable but the
+**artifact never shipped**, and the GPU/detect runtime lacked two escape hatches.
+No breaking changes — purely additive.
+
+### Added
+
+- `@czap/core` — **the czap-compute WASM kernel now ships**. `build:wasm` builds
+  the Rust crate and stages `czap-compute.wasm` into `@czap/core/dist` (shipped via
+  the package `files`). Until now `WASMDispatch.load()` had nothing to load from an
+  npm install, so every consumer silently ran the TS fallback.
+- `@czap/vite` — the WASM resolver now finds the shipped artifact through the
+  module graph (`@czap/vite` → `@czap/core`, a 4th `'package'` source after config /
+  crate, before public) — pnpm-nesting-safe, so it works even when an app installs
+  only `@czap/astro`/`liteship` and has no top-level `node_modules/@czap/core`.
+  `czap({ wasm: { enabled: true } })` now "just works" off a plain install — no
+  hand-copied artifact, no local Rust build.
+- `@czap/core` — **`Boundary.evaluateBatch(boundary, values)`**: batch-evaluate
+  many values against one boundary into state indices, routed through
+  `WASMDispatch.kernels()` (Rust when loaded, TS fallback otherwise). Output is
+  bit-identical to mapping `Boundary.evaluate` — the win is throughput on large
+  value sets (offline precompute, scrub timelines, per-entity scene signals),
+  never different numbers. Locked by the wasm-parity property suite on both paths.
+- `@czap/astro` — **`client:gpu` force escape hatch**: `client:gpu={{ force: true }}`
+  (or a `data-czap-gpu-force` attribute) boots the shader even below the GPU rung,
+  for headless/CI (SwiftShader reports gpuTier 0 yet WebGL2 works) and real
+  low-tier-but-capable devices. Capability is still re-checked by the actual
+  WebGL2/WebGPU probe, which degrades to CSS if the context is genuinely absent.
+- `@czap/astro` — **`czap:detect-ready` event**: the async GPU probe now fires one
+  consolidated event on `document` once `__CZAP_DETECT__` and the `data-czap-*`
+  attributes are final, carrying the settled `{ tier, gpuTier, webgpu, motionTier }`
+  payload (or `{ error: true }` if the probe throws, so listeners never hang).
+  Replaces `setTimeout` backstops that raced the probe.
+
 ## [0.2.0] - 2026-06-14
 
 The substrate cut. 0.1.x proved the casts; 0.2.0 makes the **DocumentGraph IR** the

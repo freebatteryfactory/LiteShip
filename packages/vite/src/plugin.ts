@@ -248,8 +248,10 @@ export function plugin(config?: PluginConfig): Plugin {
         const searched = formatWasmSearchPaths(projectRoot, wasmConfig.path);
         this.warn(
           `WASM support was enabled, but no czap-compute binary could be resolved. Searched: ${searched}. ` +
-            'Fix: build the crate (`cargo build --target wasm32-unknown-unknown --release` in crates/czap-compute), ' +
-            'copy the binary to public/czap-compute.wasm, or point the plugin at it explicitly ' +
+            'Fix: the binary ships inside @czap/core (>=0.2.1) — ensure it is installed so it resolves from ' +
+            'node_modules automatically. In the monorepo, build the crate (`cargo build --target ' +
+            'wasm32-unknown-unknown --release` in crates/czap-compute) or run `pnpm run build:wasm`. ' +
+            'Otherwise copy the binary to public/czap-compute.wasm, or point the plugin at it explicitly ' +
             "via czap({ wasm: { path: './path/to.wasm' } }). Runtime will fall back to TypeScript kernels.",
         );
         return;

@@ -85,8 +85,15 @@ function createProgram(
  * @param load - Dynamic-import factory the directive passes in (kept
  *   async so the expensive GPU module is code-split).
  * @param el - Satellite element carrying the shader attributes.
+ * @param opts - Directive value. `{ force: true }` (or a
+ *   `data-czap-gpu-force` attribute) boots the shader even when the resolved
+ *   perf-tier is below the GPU rung — the escape hatch for headless/CI
+ *   (SwiftShader reports gpuTier 0 yet WebGL2 works) and real low-tier-but-
+ *   capable devices. It only bypasses the *heuristic* gate; the actual
+ *   `getContext('webgl2')` / WebGPU probe still guards real capability and
+ *   degrades to CSS if the context genuinely isn't there.
  */
-export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement): void {
+export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, opts?: Record<string, unknown>): void {
   const elementLabel = elementGpuLabel(el);
   const shaderType = el.getAttribute('data-czap-shader-type') ?? 'glsl';
   const shaderSrc = allowRuntimeEndpointUrl(
@@ -102,8 +109,14 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement):
     readRuntimeEndpointPolicy(),
   );
 
+  // Force escape hatch: `client:gpu={{ force: true }}` or a `data-czap-gpu-force`
+  // attr bypasses the perf-tier gate so headless/CI (SwiftShader → gpuTier 0,
+  // WebGL2 fine) and low-tier-but-capable devices can still boot. Capability is
+  // re-checked downstream by the real getContext/WebGPU probe, which falls back
+  // to CSS if the context is truly absent — so forcing is safe, never a crash.
+  const forced = opts?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
   const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
-  if (tier === 'static' || tier === 'styled') {
+  if (!forced && (tier === 'static' || tier === 'styled')) {
     load();
     return;
   }

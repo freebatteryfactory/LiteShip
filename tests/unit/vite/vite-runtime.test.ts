@@ -1,4 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
+
+// The packaged-wasm source resolves @czap/core through the module graph (always
+// present in the workspace under vitest); force it absent so the temp-root
+// "no binary" / public-fixture scenarios are deterministic.
+vi.mock('../../../packages/vite/src/wasm-package-resolve.js', () => ({ resolvePackagedWasm: () => null }));
+
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';

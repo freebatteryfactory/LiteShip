@@ -8,7 +8,7 @@
 
 > `const` **Boundary**: `BoundaryFactory` & `object`
 
-Defined in: [core/src/boundary.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L246)
+Defined in: [core/src/boundary.ts:290](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary.ts#L290)
 
 Boundary — core primitive of constraint-based adaptive rendering.
 
@@ -22,6 +22,10 @@ can be gated by a [BoundarySpec](BoundarySpec.md) for A/B or device-conditional 
 ### evaluate
 
 > **evaluate**: *typeof* `_evaluate`
+
+### evaluateBatch
+
+> **evaluateBatch**: *typeof* `_evaluateBatch`
 
 ### evaluateResult
 

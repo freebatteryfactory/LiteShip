@@ -15,6 +15,17 @@ Operator checklist for public npm and GitHub releases. Run destructive git steps
   `workspace:*` specs for downstream consumers.
 - Run `pnpm run release:notes` so `RELEASE_NOTES_v0.1.0.md` matches the canonical `## [0.1.0]` block in `CHANGELOG.md`. Do not paste the full changelog into GitHub Releases.
 
+## Build the WASM artifact (0.2.1+)
+
+The `czap-compute` kernel ships inside `@czap/core`, so it must be staged into `packages/core/dist/` before `czap ship` packs the tarball. CI's `release.yml` does this automatically (a `wasm32-unknown-unknown` Rust toolchain + `pnpm run build:wasm` before the ship loop). For a local release, after `pnpm run build`:
+
+```bash
+rustup target add wasm32-unknown-unknown   # one-time
+pnpm run build:wasm
+```
+
+Without it, the published `@czap/core` carries no binary and `czap({ wasm: { enabled: true } })` silently runs the TypeScript fallback.
+
 ## Extract release notes
 
 ```bash

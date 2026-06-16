@@ -8,7 +8,7 @@
 
 > `const` **VIEWPORT**: `object`
 
-Defined in: [core/src/defaults.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L62)
+Defined in: [core/src/defaults.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L72)
 
 Viewport breakpoints in CSS pixels. Used by: astro/quantize.ts
 
