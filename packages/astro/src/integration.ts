@@ -42,6 +42,20 @@ import {
 export interface IntegrationConfig {
   /** Overrides passed through to `@czap/vite`'s plugin. */
   readonly vite?: PluginConfig;
+  /**
+   * Route globs on which czap's costly runtime scripts (detect, the GPU probe,
+   * wasm, the dev inspector) should NOT run. For embedding czap alongside another
+   * Astro sub-app (e.g. a Starlight `/docs/**` section) that never consumes czap,
+   * so those pages don't pay for a pointless GPU probe or attr writes. Astro's
+   * `injectScript` is global (no build-time route filter), so this is a runtime
+   * guard: a tiny inline script matches `location.pathname` and short-circuits
+   * the rest (re-evaluating on View-Transition swaps). The directive bootstrap
+   * stays wired — it's a no-op without czap markers, and keeps View Transitions
+   * working across the boundary. Supports exact paths and a trailing `**` (e.g.
+   * `'/docs/**'` matches `/docs` and everything under it). Default `[]` (czap
+   * runs everywhere).
+   */
+  readonly exclude?: readonly string[];
   /** Enable the inline detect script (default `true`). */
   readonly detect?: boolean;
   /** Turn on Astro's experimental server-islands flag (default `false`). */
@@ -74,6 +88,48 @@ export interface IntegrationConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Route scope guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the head-inline guard that disables czap's runtime scripts on excluded
+ * routes. Injected FIRST (before the detect inline script and ahead of every
+ * `page` module), so `window.__CZAP_OFF__` is set before anything reads it. Each
+ * czap script early-returns when the flag is set; when no routes are excluded
+ * the guard is not injected at all and the flag stays undefined (falsy), so the
+ * scripts run as before. Matching: exact pathname, or a trailing `**` glob
+ * (`/docs/**` matches `/docs` and `/docs/...`). Patterns are JSON-embedded.
+ */
+function scopeGuardScript(exclude: readonly string[]): string {
+  return `
+(function(){
+  var patterns = ${JSON.stringify(exclude)};
+  function evaluate() {
+    try {
+      var path = location.pathname;
+      var off = false;
+      for (var i = 0; i < patterns.length; i++) {
+        var p = patterns[i];
+        // Trailing ** only (the documented semantics); anything else is exact.
+        if (p.slice(-2) === '**') {
+          var prefix = p.slice(0, -2);
+          var bare = prefix.replace(/\\/$/, '');
+          if (path === bare || path.indexOf(prefix) === 0) { off = true; break; }
+        } else if (path === p) { off = true; break; }
+      }
+      // Always assign (not just when matched) so the flag is never sticky: a
+      // same-document navigation (Astro View Transitions) from an excluded path
+      // to an included one must re-enable czap.
+      window.__CZAP_OFF__ = off;
+    } catch(e) {}
+  }
+  evaluate();
+  try { document.addEventListener('astro:after-swap', evaluate); } catch(e) {}
+})();
+`.trim();
+}
+
+// ---------------------------------------------------------------------------
 // Detect Script
 // ---------------------------------------------------------------------------
 
@@ -84,6 +140,7 @@ export interface IntegrationConfig {
  */
 const DETECT_INLINE_SCRIPT = `
 (function(){
+  if (window.__CZAP_OFF__) return;
   function writeDetectState(next) {
     var safe = Object.freeze(Object.assign({}, next));
     try {
@@ -138,6 +195,12 @@ function serializeInlineRuntimePolicy(policy: RuntimeSecurityPolicy): string {
 }
 
 function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: readonly DirectiveName[]): string {
+  // NOT gated on __CZAP_OFF__: the directive bootstrap is idempotent and a cheap
+  // no-op on a page with no czap markers (an excluded Starlight route), and its
+  // astro:after-swap scan listener MUST stay wired so a View Transition from an
+  // excluded landing to an included route still binds directives. The real
+  // exclusion savings (the GPU probe, detect, wasm, inspector) are guarded at
+  // their own scripts; this machinery is invisible where nothing uses it.
   return `
 import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
 
@@ -148,17 +211,33 @@ installSwapReinit();
 `.trim();
 }
 
+// When wasm is enabled, advertise the resolved URL AND eagerly load the kernel
+// at the document level. configureWasmRuntime only sets data-czap-wasm-url —
+// the actual load lives in loadWasmRuntime, which otherwise fires only via a
+// per-element `client:wasm` directive. Without this auto-load, enabling wasm in
+// config silently no-ops (URL set, kernel never loaded, czap:wasm-ready never
+// fires) unless the page happens to carry a wasm directive element — a dogfood
+// sharp edge. `boot` also runs on `astro:after-swap` (registered unconditionally)
+// so a View Transition from an excluded landing to an included route still loads
+// the kernel — page-module scripts don't re-execute on swap. WASMDispatch.load is
+// idempotent after completion, so the repeat is free.
 const WASM_RUNTIME_SCRIPT = `
 import { wasmUrl } from 'virtual:czap/wasm-url';
-import { configureWasmRuntime } from '@czap/astro/runtime';
+import { configureWasmRuntime, loadWasmRuntime } from '@czap/astro/runtime';
 
-configureWasmRuntime(wasmUrl);
+function boot() {
+  if (window.__CZAP_OFF__ || !wasmUrl) return;
+  configureWasmRuntime(wasmUrl);
+  void loadWasmRuntime(document.documentElement);
+}
+boot();
+document.addEventListener('astro:after-swap', boot);
 `.trim();
 
 const INSPECTOR_LOADER_SCRIPT = `
 import { installInspectorLoader } from '@czap/astro/runtime/inspector-loader';
 
-installInspectorLoader();
+if (!window.__CZAP_OFF__) installInspectorLoader();
 `.trim();
 
 /**
@@ -207,6 +286,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const llmEnabled = config?.llm?.enabled !== false;
   const wasmEnabled = config?.wasm?.enabled === true;
   const inspectorEnabled = config?.inspector !== false;
+  const excludeRoutes = (config?.exclude ?? []).filter((route): route is string => typeof route === 'string');
   const runtimePolicy = normalizeRuntimeSecurityPolicy({
     endpointPolicy: config?.security?.endpointPolicy,
     htmlPolicy: config?.security?.htmlPolicy,
@@ -293,6 +373,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
             entrypoint: '@czap/astro/client-directives/wasm',
           });
           logger.info('Registered wasm client directive');
+        }
+
+        // Route scope guard FIRST (head-inline, ahead of every other czap
+        // script) so `__CZAP_OFF__` is set before anything reads it. Only when
+        // routes are excluded — otherwise no guard, no flag, scripts run as before.
+        if (excludeRoutes.length > 0) {
+          injectScript('head-inline', scopeGuardScript(excludeRoutes));
+          logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
         }
 
         // Inject detect script for client-side capability detection

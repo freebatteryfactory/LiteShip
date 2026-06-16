@@ -6,6 +6,40 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-06-16
+
+Route-scoping for embedded sub-apps. Surfaced dogfooding a site that mounts a
+Starlight `/docs` section next to a `@czap/astro` marketing app. No breaking
+changes.
+
+### Added
+
+- `@czap/astro` — **`czap({ exclude: ['/docs/**'] })`**: route globs on which
+  czap's costly runtime scripts (detect, the GPU probe, wasm, the dev inspector)
+  do not run. Astro's `injectScript` is global with no build-time route filter, so
+  this is a runtime guard — a tiny head-inline script, injected ahead of
+  everything else, matches `location.pathname` and sets `window.__CZAP_OFF__`
+  (re-evaluating on View-Transition swaps), which those scripts short-circuit on.
+  The directive bootstrap stays wired (a no-op without czap markers) so View
+  Transitions still work across the boundary. For embedding czap alongside another
+  Astro sub-app that never consumes it, so those pages don't pay for a pointless
+  GPU probe. Matches exact paths and a trailing `**`
+  (`/docs/**` covers `/docs` and everything under it; `/documentation` is not
+  matched). Default `[]` (czap runs everywhere) — zero overhead when unused.
+
+### Fixed
+
+- `@czap/astro` — **`czap({ wasm: { enabled: true } })` now actually loads the
+  kernel.** The injected bootstrap only called `configureWasmRuntime` (which sets
+  `data-czap-wasm-url` but never loads), so enabling wasm in config silently
+  no-op'd — the kernel loaded only if the page happened to carry a per-element
+  `client:wasm` directive, and `czap:wasm-ready` never fired otherwise (a 0.2.1
+  dogfood sharp edge). The bootstrap now eagerly calls
+  `loadWasmRuntime(document.documentElement)` at the document level (and re-fires
+  on `astro:after-swap`, so a View Transition from an excluded route still loads
+  the kernel); the per-element directive still works, and `WASMDispatch.load` is
+  idempotent after completion so nothing re-fetches.
+
 ## [0.2.1] - 2026-06-15
 
 The escape-hatch patch. 0.2.0 shipped the WASM compute API and the GPU detect

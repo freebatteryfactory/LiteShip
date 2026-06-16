@@ -66,6 +66,8 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 So `integration()` with no arguments is the right call for a static-first site; reach into the config object only to turn something off (`{ gpu: { enabled: false } }`, `{ inspector: false }`) or to opt `workers`/`wasm` in. Don't re-enable what's already on.
 
+**Scoping czap off some routes (0.2.2+):** when czap shares a site with another Astro sub-app — say a Starlight `/docs` section — pass `exclude` so czap's costly scripts (detect, the GPU probe, wasm, inspector) don't run there: `czap({ exclude: ['/docs/**'] })`. Astro's `injectScript` is global (no build-time route filter), so this is a runtime guard — a head-inline script, injected first, sets `window.__CZAP_OFF__` from `location.pathname` (re-evaluating on View-Transition swaps) and those scripts short-circuit on it. The directive bootstrap stays wired (a no-op without czap markers) so View Transitions keep working across the boundary. Matches exact paths and a trailing `**` (`/docs/**` covers `/docs` and under it; `/documentation` is not matched). Default `[]`.
+
 ---
 
 ## Middleware
@@ -220,7 +222,7 @@ Use when off-main-thread coordination is part of the surface's runtime need.
 
 ### `wasm`
 
-Use when compute cost meaningfully exceeds what the normal runtime should carry. The `czap-compute` kernel ships inside `@czap/core` (0.2.1+) and `@czap/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
+Use when compute cost meaningfully exceeds what the normal runtime should carry. The `czap-compute` kernel ships inside `@czap/core` (0.2.1+) and `@czap/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `czap({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `czap:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
 
 ---
 

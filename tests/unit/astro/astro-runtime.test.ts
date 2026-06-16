@@ -389,6 +389,28 @@ describe('astro shared runtime adapters', () => {
     expect(detail).toEqual({ url: '/runtime.wasm' });
   });
 
+  test('auto-loads at the document level with NO wasm directive element (the enable-in-config path)', async () => {
+    // The dogfood sharp edge: czap({ wasm: { enabled: true } }) advertised the
+    // root URL but never loaded, because the load only ran via a per-element
+    // `client:wasm` directive. The injected bootstrap now calls
+    // loadWasmRuntime(document.documentElement) — this proves it loads off the
+    // ROOT url with no [data-czap-wasm] element anywhere on the page.
+    expect(document.querySelectorAll('[data-czap-wasm]').length).toBe(0);
+    configureWasmRuntime('/runtime.wasm');
+
+    const kernels = WASMDispatch.kernels();
+    const loadSpy = vi.spyOn(WASMDispatch, 'load').mockResolvedValue(kernels);
+    let detail: { url: string } | null = null;
+    document.addEventListener('czap:wasm-ready', ((event: CustomEvent<{ url: string }>) => {
+      detail = event.detail;
+    }) as EventListener);
+
+    await loadWasmRuntime(document.documentElement);
+
+    expect(loadSpy).toHaveBeenCalledWith('/runtime.wasm');
+    expect(detail).toEqual({ url: '/runtime.wasm' });
+  });
+
   test('skips empty wasm loads and surfaces shared wasm runtime errors', async () => {
     const element = document.createElement('div');
     document.body.appendChild(element);
