@@ -1,6 +1,6 @@
 {
   "name": "@czap/canonical",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Self-contained canonical bytes kernel — deterministic CBOR, FNV-1a, and sync digests",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

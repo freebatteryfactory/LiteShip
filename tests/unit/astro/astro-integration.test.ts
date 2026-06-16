@@ -547,7 +547,13 @@ describe('integration', () => {
       },
     });
     expect(scripts.some((script) => script.includes('__CZAP_DETECT__'))).toBe(false);
-    expect(scripts.some((script) => script.includes('virtual:czap/wasm-url'))).toBe(true);
+    // The wasm bootstrap advertises the URL AND eagerly auto-loads at the
+    // document level — without this, enabling wasm in config silently no-ops
+    // unless the page carries a per-element `client:wasm` directive.
+    const wasmBootstrap = scripts.find((script) => script.includes('virtual:czap/wasm-url'));
+    expect(wasmBootstrap).toBeDefined();
+    expect(wasmBootstrap).toContain('configureWasmRuntime(wasmUrl)');
+    expect(wasmBootstrap).toContain('loadWasmRuntime(document.documentElement)');
   });
 
   test('config:setup still injects detect without the gpu probe upgrade when gpu is disabled', () => {

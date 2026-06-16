@@ -1,6 +1,6 @@
 {
   "name": "@czap/genui",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Host-owned generated UI catalog — validate structured trees and render trusted components only",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

@@ -19,9 +19,27 @@ islands opt-in).
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/integration.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L46)
+Defined in: [astro/src/integration.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L58)
 
 Enable the inline detect script (default `true`).
+
+***
+
+### exclude?
+
+> `readonly` `optional` **exclude?**: readonly `string`[]
+
+Defined in: [astro/src/integration.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L56)
+
+Route globs on which czap's head/page runtime scripts (detect, the GPU
+probe, the runtime bootstrap, wasm, the dev inspector) should NOT run. For
+embedding czap alongside another Astro sub-app (e.g. a Starlight `/docs/**`
+section) that never consumes czap, so those pages don't pay for a pointless
+GPU probe or attr writes. Astro's `injectScript` is global (no build-time
+route filter), so this is a runtime guard: a tiny inline script matches
+`location.pathname` and short-circuits the rest. Supports exact paths and a
+trailing `**` (e.g. `'/docs/**'` matches `/docs` and everything under it).
+Default `[]` (czap runs everywhere).
 
 ***
 
@@ -29,7 +47,7 @@ Enable the inline detect script (default `true`).
 
 > `readonly` `optional` **gpu?**: `object`
 
-Defined in: [astro/src/integration.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L52)
+Defined in: [astro/src/integration.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L64)
 
 GPU runtime configuration.
 
@@ -47,7 +65,7 @@ GPU runtime configuration.
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [astro/src/integration.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L68)
+Defined in: [astro/src/integration.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L80)
 
 Dev-only boundary inspector overlay (default enabled in `astro dev`).
 Pass `false` to opt out of the Alt+Shift+C overlay.
@@ -58,7 +76,7 @@ Pass `false` to opt out of the Alt+Shift+C overlay.
 
 > `readonly` `optional` **llm?**: `object`
 
-Defined in: [astro/src/integration.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L63)
+Defined in: [astro/src/integration.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L75)
 
 LLM streaming runtime configuration.
 
@@ -72,7 +90,7 @@ LLM streaming runtime configuration.
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [astro/src/integration.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L70)
+Defined in: [astro/src/integration.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L82)
 
 Security policies applied to runtime fetch/HTML boundaries.
 
@@ -90,7 +108,7 @@ Security policies applied to runtime fetch/HTML boundaries.
 
 > `readonly` `optional` **serverIslands?**: `boolean`
 
-Defined in: [astro/src/integration.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L48)
+Defined in: [astro/src/integration.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L60)
 
 Turn on Astro's experimental server-islands flag (default `false`).
 
@@ -100,7 +118,7 @@ Turn on Astro's experimental server-islands flag (default `false`).
 
 > `readonly` `optional` **stream?**: `object`
 
-Defined in: [astro/src/integration.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L61)
+Defined in: [astro/src/integration.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L73)
 
 SSE streaming runtime configuration.
 
@@ -124,7 +142,7 @@ Overrides passed through to `@czap/vite`'s plugin.
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [astro/src/integration.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L50)
+Defined in: [astro/src/integration.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L62)
 
 WASM runtime configuration.
 
@@ -142,7 +160,7 @@ WASM runtime configuration.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/integration.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L59)
+Defined in: [astro/src/integration.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L71)
 
 Off-thread worker runtime configuration. `coep` selects the
 Cross-Origin-Embedder-Policy value emitted with COOP (default

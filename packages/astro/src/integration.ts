@@ -42,6 +42,18 @@ import {
 export interface IntegrationConfig {
   /** Overrides passed through to `@czap/vite`'s plugin. */
   readonly vite?: PluginConfig;
+  /**
+   * Route globs on which czap's head/page runtime scripts (detect, the GPU
+   * probe, the runtime bootstrap, wasm, the dev inspector) should NOT run. For
+   * embedding czap alongside another Astro sub-app (e.g. a Starlight `/docs/**`
+   * section) that never consumes czap, so those pages don't pay for a pointless
+   * GPU probe or attr writes. Astro's `injectScript` is global (no build-time
+   * route filter), so this is a runtime guard: a tiny inline script matches
+   * `location.pathname` and short-circuits the rest. Supports exact paths and a
+   * trailing `**` (e.g. `'/docs/**'` matches `/docs` and everything under it).
+   * Default `[]` (czap runs everywhere).
+   */
+  readonly exclude?: readonly string[];
   /** Enable the inline detect script (default `true`). */
   readonly detect?: boolean;
   /** Turn on Astro's experimental server-islands flag (default `false`). */
@@ -74,6 +86,41 @@ export interface IntegrationConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Route scope guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the head-inline guard that disables czap's runtime scripts on excluded
+ * routes. Injected FIRST (before the detect inline script and ahead of every
+ * `page` module), so `window.__CZAP_OFF__` is set before anything reads it. Each
+ * czap script early-returns when the flag is set; when no routes are excluded
+ * the guard is not injected at all and the flag stays undefined (falsy), so the
+ * scripts run as before. Matching: exact pathname, or a trailing `**` glob
+ * (`/docs/**` matches `/docs` and `/docs/...`). Patterns are JSON-embedded.
+ */
+function scopeGuardScript(exclude: readonly string[]): string {
+  return `
+(function(){
+  try {
+    var patterns = ${JSON.stringify(exclude)};
+    var path = location.pathname;
+    var off = false;
+    for (var i = 0; i < patterns.length; i++) {
+      var p = patterns[i];
+      var star = p.indexOf('**');
+      if (star >= 0) {
+        var prefix = p.slice(0, star);
+        var bare = prefix.replace(/\\/$/, '');
+        if (path === bare || path.indexOf(prefix) === 0) { off = true; break; }
+      } else if (path === p) { off = true; break; }
+    }
+    if (off) { window.__CZAP_OFF__ = true; }
+  } catch(e) {}
+})();
+`.trim();
+}
+
+// ---------------------------------------------------------------------------
 // Detect Script
 // ---------------------------------------------------------------------------
 
@@ -84,6 +131,7 @@ export interface IntegrationConfig {
  */
 const DETECT_INLINE_SCRIPT = `
 (function(){
+  if (window.__CZAP_OFF__) return;
   function writeDetectState(next) {
     var safe = Object.freeze(Object.assign({}, next));
     try {
@@ -141,24 +189,36 @@ function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: reado
   return `
 import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
 
-configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
-bootstrapSlots();
-bootstrapDirectives(${JSON.stringify(directives)});
-installSwapReinit();
+if (!window.__CZAP_OFF__) {
+  configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
+  bootstrapSlots();
+  bootstrapDirectives(${JSON.stringify(directives)});
+  installSwapReinit();
+}
 `.trim();
 }
 
+// When wasm is enabled, advertise the resolved URL AND eagerly load the kernel
+// at the document level. configureWasmRuntime only sets data-czap-wasm-url —
+// the actual load lives in loadWasmRuntime, which otherwise fires only via a
+// per-element `client:wasm` directive. Without this auto-load, enabling wasm in
+// config silently no-ops (URL set, kernel never loaded, czap:wasm-ready never
+// fires) unless the page happens to carry a wasm directive element — a dogfood
+// sharp edge. The WASMDispatch singleton makes a later per-element load idempotent.
 const WASM_RUNTIME_SCRIPT = `
 import { wasmUrl } from 'virtual:czap/wasm-url';
-import { configureWasmRuntime } from '@czap/astro/runtime';
+import { configureWasmRuntime, loadWasmRuntime } from '@czap/astro/runtime';
 
-configureWasmRuntime(wasmUrl);
+if (!window.__CZAP_OFF__) {
+  configureWasmRuntime(wasmUrl);
+  if (wasmUrl) void loadWasmRuntime(document.documentElement);
+}
 `.trim();
 
 const INSPECTOR_LOADER_SCRIPT = `
 import { installInspectorLoader } from '@czap/astro/runtime/inspector-loader';
 
-installInspectorLoader();
+if (!window.__CZAP_OFF__) installInspectorLoader();
 `.trim();
 
 /**
@@ -207,6 +267,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const llmEnabled = config?.llm?.enabled !== false;
   const wasmEnabled = config?.wasm?.enabled === true;
   const inspectorEnabled = config?.inspector !== false;
+  const excludeRoutes = (config?.exclude ?? []).filter((route): route is string => typeof route === 'string');
   const runtimePolicy = normalizeRuntimeSecurityPolicy({
     endpointPolicy: config?.security?.endpointPolicy,
     htmlPolicy: config?.security?.htmlPolicy,
@@ -293,6 +354,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
             entrypoint: '@czap/astro/client-directives/wasm',
           });
           logger.info('Registered wasm client directive');
+        }
+
+        // Route scope guard FIRST (head-inline, ahead of every other czap
+        // script) so `__CZAP_OFF__` is set before anything reads it. Only when
+        // routes are excluded — otherwise no guard, no flag, scripts run as before.
+        if (excludeRoutes.length > 0) {
+          injectScript('head-inline', scopeGuardScript(excludeRoutes));
+          logger.info(`Injected route scope guard (excluded: ${excludeRoutes.join(', ')})`);
         }
 
         // Inject detect script for client-side capability detection

@@ -15,6 +15,7 @@
  */
 export const DETECT_UPGRADE_SCRIPT = `
 (function(){
+  if (window.__CZAP_OFF__) return;
   function writeDetectState(next) {
     var safe = Object.freeze(Object.assign({}, next));
     try {
