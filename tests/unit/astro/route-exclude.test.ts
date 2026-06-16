@@ -67,8 +67,11 @@ describe('czap({ exclude }) route scope guard', () => {
     const inspector = scripts.find((s) => s.content.includes('installInspectorLoader'));
     expect(detect?.content).toContain('if (window.__CZAP_OFF__) return;');
     expect(probe?.content).toContain('if (window.__CZAP_OFF__) return;');
-    expect(wasm?.content).toContain('if (!window.__CZAP_OFF__)');
     expect(inspector?.content).toContain('if (!window.__CZAP_OFF__)');
+    // wasm boot() short-circuits on the flag AND re-boots on View-Transition swaps
+    // (the kernel must still load after a VT from an excluded landing).
+    expect(wasm?.content).toContain('window.__CZAP_OFF__');
+    expect(wasm?.content).toContain("addEventListener('astro:after-swap'");
     // The directive bootstrap is intentionally NOT guarded — it's idempotent and
     // a no-op on marker-less pages, and its astro:after-swap scanner must stay
     // wired so a View Transition to an included route binds directives even after

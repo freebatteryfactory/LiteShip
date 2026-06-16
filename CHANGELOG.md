@@ -35,8 +35,10 @@ changes.
   no-op'd — the kernel loaded only if the page happened to carry a per-element
   `client:wasm` directive, and `czap:wasm-ready` never fired otherwise (a 0.2.1
   dogfood sharp edge). The bootstrap now eagerly calls
-  `loadWasmRuntime(document.documentElement)` at the document level; the
-  per-element directive still works (the `WASMDispatch` load is idempotent).
+  `loadWasmRuntime(document.documentElement)` at the document level (and re-fires
+  on `astro:after-swap`, so a View Transition from an excluded route still loads
+  the kernel); the per-element directive still works, and `WASMDispatch.load` is
+  idempotent after completion so nothing re-fetches.
 
 ## [0.2.1] - 2026-06-15
 

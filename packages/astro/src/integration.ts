@@ -217,15 +217,21 @@ installSwapReinit();
 // per-element `client:wasm` directive. Without this auto-load, enabling wasm in
 // config silently no-ops (URL set, kernel never loaded, czap:wasm-ready never
 // fires) unless the page happens to carry a wasm directive element — a dogfood
-// sharp edge. The WASMDispatch singleton makes a later per-element load idempotent.
+// sharp edge. `boot` also runs on `astro:after-swap` (registered unconditionally)
+// so a View Transition from an excluded landing to an included route still loads
+// the kernel — page-module scripts don't re-execute on swap. WASMDispatch.load is
+// idempotent after completion, so the repeat is free.
 const WASM_RUNTIME_SCRIPT = `
 import { wasmUrl } from 'virtual:czap/wasm-url';
 import { configureWasmRuntime, loadWasmRuntime } from '@czap/astro/runtime';
 
-if (!window.__CZAP_OFF__) {
+function boot() {
+  if (window.__CZAP_OFF__ || !wasmUrl) return;
   configureWasmRuntime(wasmUrl);
-  if (wasmUrl) void loadWasmRuntime(document.documentElement);
+  void loadWasmRuntime(document.documentElement);
 }
+boot();
+document.addEventListener('astro:after-swap', boot);
 `.trim();
 
 const INSPECTOR_LOADER_SCRIPT = `
