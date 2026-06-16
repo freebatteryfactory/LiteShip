@@ -300,6 +300,32 @@ describe('WASMDispatch integration', () => {
     expect(Math.abs(blend[1]! - 0.5)).toBeLessThan(1e-6);
   });
 
+  test('load() is idempotent after completion — no re-instantiate on a second call', async () => {
+    // A document-level auto-load followed by a per-element client:wasm directive
+    // (or any repeat) must NOT re-fetch/re-instantiate. `loadingPromise` only
+    // coalesces while in flight; the live-kernels guard covers post-completion.
+    WASMDispatch.unload();
+    const fakeExports = {
+      memory: new WebAssembly.Memory({ initial: 1 }),
+      spring_curve: () => 0,
+      batch_boundary_eval: () => 0,
+      blend_normalize: () => {},
+    };
+    const instSpy = vi
+      .spyOn(WebAssembly, 'instantiate')
+      .mockResolvedValue({ instance: { exports: fakeExports } } as never);
+    try {
+      const k1 = await WASMDispatch.load(new ArrayBuffer(8));
+      const k2 = await WASMDispatch.load(new ArrayBuffer(8));
+      expect(instSpy).toHaveBeenCalledTimes(1);
+      expect(k2).toBe(k1);
+      expect(WASMDispatch.isLoaded()).toBe(true);
+    } finally {
+      instSpy.mockRestore();
+      WASMDispatch.unload();
+    }
+  });
+
   test('load() rejects when given invalid input', async () => {
     try {
       await WASMDispatch.load(new ArrayBuffer(0));

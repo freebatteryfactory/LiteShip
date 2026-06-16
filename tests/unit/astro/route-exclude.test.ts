@@ -67,14 +67,41 @@ describe('czap({ exclude }) route scope guard', () => {
     const inspector = scripts.find((s) => s.content.includes('installInspectorLoader'));
     expect(detect?.content).toContain('if (window.__CZAP_OFF__) return;');
     expect(probe?.content).toContain('if (window.__CZAP_OFF__) return;');
-    expect(bootstrap?.content).toContain('if (!window.__CZAP_OFF__)');
     expect(wasm?.content).toContain('if (!window.__CZAP_OFF__)');
     expect(inspector?.content).toContain('if (!window.__CZAP_OFF__)');
+    // Bootstrap: the initial slot/directive activation is guarded, but policy +
+    // swap machinery (installSwapReinit) register UNCONDITIONALLY so a later
+    // View Transition to an included route can re-activate after an excluded landing.
+    const b = bootstrap!.content;
+    expect(b).toContain('if (!window.__CZAP_OFF__)');
+    // Paren forms target the CALLS, not the import line. Policy call before the
+    // guard, swap-machinery call after it (both unconditional).
+    expect(b.indexOf('configureRuntimePolicy(')).toBeLessThan(b.indexOf('if (!window.__CZAP_OFF__)'));
+    expect(b.indexOf('installSwapReinit()')).toBeGreaterThan(b.indexOf('if (!window.__CZAP_OFF__)'));
   });
 
   test('NO guard is injected when no routes are excluded (zero overhead default)', () => {
+    // Other scripts always READ the flag (harmless `if (window.__CZAP_OFF__)`);
+    // only the guard ASSIGNS it. With no exclude, the guard isn't injected.
     const scripts = runSetup();
-    expect(scripts.some((s) => s.content.includes('window.__CZAP_OFF__ = true'))).toBe(false);
+    expect(scripts.some((s) => s.content.includes('window.__CZAP_OFF__ = off'))).toBe(false);
+  });
+
+  test('the flag is never sticky — re-evaluates on View Transition swaps', () => {
+    const [guard] = runSetup({ exclude: ['/docs/**'] })
+      .filter((s) => s.stage === 'head-inline' && s.content.includes('window.__CZAP_OFF__'))
+      .map((s) => s.content);
+    expect(guard).toBeDefined();
+
+    // Land on an excluded path → off. Then swap to an included one → must clear.
+    vi.stubGlobal('location', { pathname: '/docs/x' });
+    (window as unknown as { __CZAP_OFF__?: boolean }).__CZAP_OFF__ = undefined;
+    new Function(guard!)();
+    expect((window as unknown as { __CZAP_OFF__?: boolean }).__CZAP_OFF__).toBe(true);
+
+    vi.stubGlobal('location', { pathname: '/' });
+    document.dispatchEvent(new Event('astro:after-swap'));
+    expect((window as unknown as { __CZAP_OFF__?: boolean }).__CZAP_OFF__).toBe(false);
   });
 
   test('the guard matches excluded paths — and ONLY those', () => {

@@ -101,21 +101,28 @@ export interface IntegrationConfig {
 function scopeGuardScript(exclude: readonly string[]): string {
   return `
 (function(){
-  try {
-    var patterns = ${JSON.stringify(exclude)};
-    var path = location.pathname;
-    var off = false;
-    for (var i = 0; i < patterns.length; i++) {
-      var p = patterns[i];
-      var star = p.indexOf('**');
-      if (star >= 0) {
-        var prefix = p.slice(0, star);
-        var bare = prefix.replace(/\\/$/, '');
-        if (path === bare || path.indexOf(prefix) === 0) { off = true; break; }
-      } else if (path === p) { off = true; break; }
-    }
-    if (off) { window.__CZAP_OFF__ = true; }
-  } catch(e) {}
+  var patterns = ${JSON.stringify(exclude)};
+  function evaluate() {
+    try {
+      var path = location.pathname;
+      var off = false;
+      for (var i = 0; i < patterns.length; i++) {
+        var p = patterns[i];
+        var star = p.indexOf('**');
+        if (star >= 0) {
+          var prefix = p.slice(0, star);
+          var bare = prefix.replace(/\\/$/, '');
+          if (path === bare || path.indexOf(prefix) === 0) { off = true; break; }
+        } else if (path === p) { off = true; break; }
+      }
+      // Always assign (not just when matched) so the flag is never sticky: a
+      // same-document navigation (Astro View Transitions) from an excluded path
+      // to an included one must re-enable czap.
+      window.__CZAP_OFF__ = off;
+    } catch(e) {}
+  }
+  evaluate();
+  try { document.addEventListener('astro:after-swap', evaluate); } catch(e) {}
 })();
 `.trim();
 }
@@ -189,12 +196,16 @@ function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: reado
   return `
 import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
 
+// Policy + swap machinery register UNCONDITIONALLY: if the first page a visitor
+// lands on is excluded, installSwapReinit must still be wired so a later View
+// Transition to an INCLUDED route re-activates czap. Only the initial
+// slot/directive activation is skipped on an excluded page.
+configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
 if (!window.__CZAP_OFF__) {
-  configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
   bootstrapSlots();
   bootstrapDirectives(${JSON.stringify(directives)});
-  installSwapReinit();
 }
+installSwapReinit();
 `.trim();
 }
 

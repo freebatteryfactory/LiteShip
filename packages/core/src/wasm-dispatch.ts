@@ -230,6 +230,14 @@ export const WASMDispatch: WASMDispatchAPI = {
       return Promise.reject(new Error('WebAssembly is not available in this environment'));
     }
 
+    // Already loaded → return the live kernels without re-fetching/re-instantiating.
+    // `loadingPromise` only coalesces concurrent loads while one is in flight; once
+    // it resolves, a later load() (e.g. a document-level auto-load followed by a
+    // per-element `client:wasm` directive) would otherwise fetch the module again.
+    if (wasmKernels !== null) {
+      return Promise.resolve(wasmKernels);
+    }
+
     if (loadingPromise !== null) {
       return loadingPromise;
     }
