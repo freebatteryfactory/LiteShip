@@ -47,17 +47,25 @@ export const DETECT_UPGRADE_SCRIPT = `
         if (ext) {
           renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
         }
-        // Classify GPU tier from renderer string
+        // Classify GPU tier from renderer string. Mirrors classifyGPURenderer
+        // (packages/detect/src/detect.ts) group-for-group in canonical
+        // precedence (0 → 3 → 2 → 1, default 1). data-czap-tier AND the
+        // now-CSS-keyed data-czap-motion both derive from this, so a looser
+        // inline shortcut (e.g. any 'geforce' → tier 2) would over-classify a
+        // desktop GTX that canonical settles at tier 1 and over-grant motion.
+        // Head-inline can't import — keep these groups in lockstep. (\s* written
+        // as " *" to survive the script-string; renderer strings use spaces.)
         var r = renderer.toLowerCase();
-        if (/swiftshader|llvmpipe|virtualbox|vmware/.test(r)) {
+        if (/swiftshader|llvmpipe|software|virtualbox|vmware|microsoft basic/.test(r)) {
           tier = 0; // software
-        } else if (/rtx|radeon rx [67]|apple m[3-9]|adreno 7/.test(r)) {
+        } else if (/geforce.*rtx|radeon.*rx *[6-9][0-9]{2,}|apple.*m[3-9]|adreno.*[6-9][0-9]{2}|mali-g[7-9][0-9]|nvidia.*a[0-9]{3,}/.test(r)) {
           tier = 3; // high
-        } else if (/geforce|radeon rx [45]|adreno [56]|mali-g7|apple m[12]|intel arc/.test(r)) {
+        } else if (/adreno.*[4-5][0-9]{2}|mali-g[0-9]{2}|geforce.*[0-9]{3}m|geforce.*mx|radeon.*rx *[0-5][0-9]{2}|radeon.*vega|intel.*arc|apple.*m[12]/.test(r)) {
           tier = 2; // mid
-        } else if (/intel|mali|adreno [1-4]|powervr|apple gpu/.test(r)) {
+        } else if (/intel.*hd|intel.*uhd|intel.*iris|mali-[gt][0-9]|adreno.*[0-3][0-9]{2}|powervr|apple gpu/.test(r)) {
           tier = 1; // integrated
         }
+        // else: tier stays 1 (canonical defaults unmatched renderers to integrated)
         gl.getExtension('WEBGL_lose_context')?.loseContext();
       }
 
@@ -77,14 +85,27 @@ export const DETECT_UPGRADE_SCRIPT = `
       else if (tier >= 3 && cores >= 4 && webgpu) capLevel = 'gpu';
       else if (tier >= 2 && cores >= 4) capLevel = 'animated';
 
-      var motionTier = 'animations';
+      // Mirror motionTierFromCapabilities (packages/detect/src/tiers.ts) branch
+      // for branch. data-czap-motion is now CSS-keyed, so an inline shortcut
+      // that diverged from canonical (e.g. tier-2/3-core falling to 'physics'
+      // where canonical settles 'animations') would hand clients motion the
+      // rest of the stack gates lower. Head-inline can't import — keep lockstep.
+      var motionTier;
       if (motion) motionTier = 'none';
-      else if (tier === 0 || cores <= 2) motionTier = 'transitions';
-      else if (tier >= 3 && webgpu) motionTier = 'compute';
-      else if (tier >= 2) motionTier = 'physics';
+      else if (tier === 0) motionTier = 'transitions';
+      else if (tier === 1) motionTier = cores >= 4 ? 'animations' : 'transitions';
+      else if (tier === 2) motionTier = cores >= 4 ? 'physics' : 'animations';
+      else motionTier = webgpu ? 'compute' : 'physics';
 
       h.setAttribute('data-czap-tier', capLevel);
       h.setAttribute('data-czap-gpu-tier', String(tier));
+      // The motion capability TIER, in the same vocabulary EdgeTier emits
+      // server-side (data-czap-motion). The probe already computes it; write it
+      // so CSS keyed on [data-czap-motion="physics"/"none"] matches on
+      // non-edge pages too (where EdgeTier never ran), and so the edge value is
+      // refined by the real GPU probe just like data-czap-tier is. The
+      // reduced-motion PREFERENCE lives separately on data-czap-reduced-motion.
+      h.setAttribute('data-czap-motion', motionTier);
       if (webgpu) h.setAttribute('data-czap-webgpu', 'true');
       h.removeAttribute('data-czap-tier-provisional');
 

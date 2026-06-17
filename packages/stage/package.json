@@ -1,6 +1,6 @@
 {
   "name": "@czap/stage",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Stage — the verb layer: cast one DocumentGraph to multiple carriers from one source digest",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

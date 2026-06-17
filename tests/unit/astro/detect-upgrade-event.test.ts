@@ -14,6 +14,8 @@
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DETECT_UPGRADE_SCRIPT } from '../../../packages/astro/src/detect-upgrade.js';
+import { motionTierFromCapabilities } from '../../../packages/detect/src/tiers.js';
+import { classifyGPURenderer } from '../../../packages/detect/src/detect.js';
 
 function defineNavigator(props: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(props)) {
@@ -34,6 +36,7 @@ describe('detect-upgrade fires czap:detect-ready', () => {
     vi.unstubAllGlobals();
     document.documentElement.removeAttribute('data-czap-tier');
     document.documentElement.removeAttribute('data-czap-gpu-tier');
+    document.documentElement.removeAttribute('data-czap-motion');
   });
 
   test('emits the final settled payload on a successful probe', () => {
@@ -58,6 +61,74 @@ describe('detect-upgrade fires czap:detect-ready', () => {
     expect(detail).toMatchObject({ tier: 'gpu', gpuTier: 3, webgpu: true, motionTier: 'compute' });
     // And __CZAP_DETECT__ is final/consistent with the event by the time it fires.
     expect((window as unknown as { __CZAP_DETECT__: { gpuTier: number } }).__CZAP_DETECT__.gpuTier).toBe(3);
+    // The probe writes the computed motion TIER to data-czap-motion (same
+    // vocabulary EdgeTier emits server-side) so CSS keyed on the capability
+    // tier matches on non-edge pages too — not just the event payload.
+    expect(document.documentElement.getAttribute('data-czap-motion')).toBe('compute');
+  });
+
+  // The inline probe writes data-czap-motion (CSS-keyed) from a hand-rolled
+  // copy of BOTH the renderer→tier classifier and the tier→motion mapping —
+  // head-inline can't import @czap/detect. This drives the REAL shipped script
+  // and asserts the DOM attribute equals the canonical pipeline run on the SAME
+  // renderer string: motionTierFromCapabilities(classifyGPURenderer(renderer)).
+  // Expected is computed from canonical, never hardcoded — so drift in EITHER
+  // the inline classifier (e.g. desktop GTX → tier 2 vs canonical tier 1) or
+  // the mapping fails here instead of silently over-granting motion via CSS.
+  const RENDERERS = [
+    'SwiftShader', // tier 0
+    'Intel(R) UHD Graphics 620', // tier 1
+    'NVIDIA GeForce GTX 1660', // tier 1 (desktop GTX — the Codex case, NOT tier 2)
+    'NVIDIA GeForce MX450', // tier 2 (geforce.*mx)
+    'AMD Radeon RX 580', // tier 2
+    'Apple M1', // tier 2
+    'NVIDIA GeForce RTX 4090', // tier 3
+    'AMD Radeon RX 6800', // tier 3
+    'Apple M3 Max', // tier 3
+  ] as const;
+
+  for (const renderer of RENDERERS) {
+    for (const cores of [3, 8] as const) {
+      for (const webgpu of [true, false] as const) {
+        test(`data-czap-motion mirrors canonical for ${renderer} / ${cores}c / webgpu=${webgpu}`, () => {
+          vi.stubGlobal('matchMedia', () => ({ matches: false }) as MediaQueryList);
+          defineNavigator({ hardwareConcurrency: cores, deviceMemory: 8, gpu: webgpu ? {} : undefined });
+          vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+            () =>
+              ({
+                getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null),
+                getParameter: () => renderer,
+              }) as never,
+          );
+
+          runUpgradeScript();
+
+          // Single source of truth: canonical classify + map on the same string.
+          const expected = motionTierFromCapabilities({
+            gpu: classifyGPURenderer(renderer),
+            cores,
+            memory: 8,
+            webgpu,
+            prefersReducedMotion: false,
+          } as Parameters<typeof motionTierFromCapabilities>[0]);
+          expect(document.documentElement.getAttribute('data-czap-motion')).toBe(expected);
+        });
+      }
+    }
+  }
+
+  test('reduced-motion settles data-czap-motion to none (canonical short-circuit)', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }) as MediaQueryList);
+    defineNavigator({ hardwareConcurrency: 8, deviceMemory: 8, gpu: {} });
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+      () =>
+        ({
+          getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null),
+          getParameter: () => 'NVIDIA GeForce RTX 4090',
+        }) as never,
+    );
+    runUpgradeScript();
+    expect(document.documentElement.getAttribute('data-czap-motion')).toBe('none');
   });
 
   test('still fires (flagged error) when the probe throws, so listeners never hang', () => {

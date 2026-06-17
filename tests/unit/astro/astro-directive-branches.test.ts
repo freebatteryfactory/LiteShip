@@ -577,6 +577,79 @@ describe('astro directive branch coverage', () => {
     expect(forcedAttr.querySelector('canvas')).not.toBeNull();
   });
 
+  test('gpu directive re-boots when the async probe upgrades the tier (czap:detect-ready)', () => {
+    // The fix for the force-hatch root cause: a directive that bails on the
+    // conservative PROVISIONAL tier must re-boot when the GPU probe settles a
+    // higher tier — no force needed in the capable-GPU case.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas'), 'bails on the provisional tier').toBeNull();
+    expect(getContext).not.toHaveBeenCalled();
+
+    // Probe upgrades the tier and fires the settle signal → the directive re-boots.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'boots after the upgrade').not.toBeNull();
+    expect(getContext).toHaveBeenCalled();
+  });
+
+  test('gpu directive stays dark if the probe settles a still-low tier', () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+
+    // Probe ran but the device is genuinely low — tier stays styled → no boot.
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas')).toBeNull();
+  });
+
+  test('gpu directive does not re-boot a DETACHED host when the probe settles', () => {
+    // A host removed from the DOM before the probe settles (replaced by a VT
+    // swap, torn down) must never re-init — that would allocate an orphan GPU
+    // context on a node nobody can see. The el.isConnected guard enforces it.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas')).toBeNull();
+
+    host.remove(); // detached before the async probe settles
+
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'no re-boot on a detached host').toBeNull();
+    expect(getContext, 'no GPU context allocated on a detached node').not.toHaveBeenCalled();
+  });
+
+  test('gpu directive still re-boots a host that SURVIVES a live reinit before the probe settles', () => {
+    // slots.ts dispatches czap:dispose + czap:reinit on still-connected roots on
+    // every VT after-swap. A persisted (transition:persist) host that bailed on
+    // the provisional tier must keep its deferred boot through that reinit — the
+    // bail path has no czap:reinit re-registration, so dropping the listener on
+    // dispose would strand a capable device that upgrades right after the swap.
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas')).toBeNull();
+
+    // Live VT reinit lands before the probe settles; the host stays connected.
+    host.dispatchEvent(new CustomEvent('czap:dispose', { bubbles: true }));
+    host.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    expect(host.isConnected).toBe(true);
+
+    // Probe then settles a GPU-admitting tier → the survivor boots.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'boots after upgrade despite the reinit').not.toBeNull();
+  });
+
   test('gpu directive handles document uniform updates and shader compile failures', async () => {
     const load = vi.fn(async () => {});
     const { sink, events } = Diagnostics.createBufferSink();

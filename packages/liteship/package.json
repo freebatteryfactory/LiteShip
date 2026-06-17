@@ -1,6 +1,6 @@
 {
   "name": "liteship",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "LiteShip umbrella — installs the full @czap/* constraint-based adaptive rendering stack in one dependency",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

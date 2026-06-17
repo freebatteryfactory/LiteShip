@@ -452,6 +452,11 @@ describe('integration', () => {
     expect(detectScript?.content).toContain('Object.freeze');
     expect(detectScript?.content).toContain('writable: false');
     expect(detectScript?.content).toContain('provisional: true');
+    // Collision guard: the head script writes the reduced-motion PREFERENCE to
+    // data-czap-reduced-motion, never data-czap-motion — which is the motion
+    // capability TIER (EdgeTier.tierDataAttributes). The two must not share an attr.
+    expect(detectScript?.content).toContain('data-czap-reduced-motion');
+    expect(detectScript?.content).not.toContain("setAttribute('data-czap-motion'");
     expect(detectScript?.content).not.toContain('memory:');
     expect(detectScript?.content).not.toContain('colorScheme:');
     expect(detectScript?.content).not.toContain('eval(');

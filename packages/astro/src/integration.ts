@@ -171,7 +171,11 @@ const DETECT_INLINE_SCRIPT = `
     h.style.setProperty('--czap-cores', String(cores));
     h.style.setProperty('--czap-dpr', String(dpr));
     h.setAttribute('data-czap-touch', String(touch));
-    h.setAttribute('data-czap-motion', motion ? 'reduce' : 'no-preference');
+    // The reduced-motion PREFERENCE — distinct from data-czap-motion, which is the
+    // motion capability TIER (animations/transitions/.../none) emitted by
+    // EdgeTier.tierDataAttributes server-side. They previously collided on
+    // data-czap-motion; this keeps the cap/motion/design tier triple coherent.
+    h.setAttribute('data-czap-reduced-motion', motion ? 'reduce' : 'no-preference');
     h.setAttribute('data-czap-scheme', dark ? 'dark' : 'light');
 
     // Provisional tier -- conservative, no GPU probe available inline.

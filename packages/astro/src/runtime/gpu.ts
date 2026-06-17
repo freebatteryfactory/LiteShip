@@ -115,9 +115,38 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   // re-checked downstream by the real getContext/WebGPU probe, which falls back
   // to CSS if the context is truly absent — so forcing is safe, never a crash.
   const forced = opts?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
-  const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
-  if (!forced && (tier === 'static' || tier === 'styled')) {
+
+  // The GPU probe runs ASYNC, so the directive's first activation sees only the
+  // conservative provisional tier — a genuinely capable device starts at
+  // 'styled'/'static' and would never boot. So when the tier doesn't admit (and
+  // not forced), defer and re-check when the probe settles (`czap:detect-ready`):
+  // a GPU upgrade boots the shader THEN, no force needed. Headless/CI stays at
+  // tier 0 → the force hatch. The re-run is forced (the tier now admits) with a
+  // no-op load so hydration — done once here — never repeats; the bail created no
+  // canvas, so the re-run appends exactly one.
+  const tierAdmitsGpu = (): boolean => {
+    const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
+    return tier !== 'static' && tier !== 'styled';
+  };
+  if (!forced && !tierAdmitsGpu()) {
     load();
+    // Re-boot once the async probe settles a GPU-admitting tier. detect-ready is
+    // guaranteed to fire (success AND error paths dispatch it), so { once: true }
+    // self-removes — no leak even if it lands after a swap. The el.isConnected
+    // guard is the safety net: a detached host (replaced by a VT swap, torn
+    // down) never re-inits into orphan GPU resources. We deliberately do NOT
+    // drop this on czap:dispose — slots.ts fires dispose on LIVE reinit too
+    // (still-connected roots, before czap:reinit), and the bail path returns
+    // before the main czap:reinit re-registration, so removing here would
+    // strand a persisted host that upgrades right after a swap. Surviving the
+    // reinit is correct: tierAdmitsGpu re-reads the fresh data-czap-tier.
+    const onDetectReady = (): void => {
+      if (!el.isConnected) return;
+      if (tierAdmitsGpu()) {
+        initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
+      }
+    };
+    document.addEventListener('czap:detect-ready', onDetectReady, { once: true });
     return;
   }
 
