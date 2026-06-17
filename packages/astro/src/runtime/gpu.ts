@@ -130,15 +130,22 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   };
   if (!forced && !tierAdmitsGpu()) {
     load();
-    document.addEventListener(
-      'czap:detect-ready',
-      () => {
-        if (tierAdmitsGpu()) {
-          initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
-        }
-      },
-      { once: true },
-    );
+    // Re-boot once the async probe settles a GPU-admitting tier. detect-ready is
+    // guaranteed to fire (success AND error paths dispatch it), so { once: true }
+    // self-removes — but a swap/dispose can land first. Guard on el.isConnected
+    // so the callback never re-inits a detached node into orphan GPU resources,
+    // and drop the listener on czap:dispose, matching the cleanup the other
+    // directives register (slots.ts dispatches it on every directive on swap).
+    const onDetectReady = (): void => {
+      if (!el.isConnected) return;
+      if (tierAdmitsGpu()) {
+        initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
+      }
+    };
+    document.addEventListener('czap:detect-ready', onDetectReady, { once: true });
+    el.addEventListener('czap:dispose', () => document.removeEventListener('czap:detect-ready', onDetectReady), {
+      once: true,
+    });
     return;
   }
 

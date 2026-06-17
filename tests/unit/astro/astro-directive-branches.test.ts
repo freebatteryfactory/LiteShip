@@ -607,6 +607,28 @@ describe('astro directive branch coverage', () => {
     expect(host.querySelector('canvas')).toBeNull();
   });
 
+  test('gpu directive drops the deferred re-boot when the host is disposed before the probe settles', () => {
+    // The bail-branch detect-ready listener must not re-init a disposed/detached
+    // node (orphan GPU resources). czap:dispose removes it; a detached el is also
+    // guarded. Either way a late upgrade must NOT boot a canvas on the dead host.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas')).toBeNull();
+
+    // Host is swapped out before the async probe settles.
+    host.dispatchEvent(new CustomEvent('czap:dispose'));
+    host.remove();
+
+    // Late upgrade + settle signal: the cleaned-up listener must stay silent.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'no re-boot on a disposed host').toBeNull();
+    expect(getContext, 'no GPU context allocated on a detached node').not.toHaveBeenCalled();
+  });
+
   test('gpu directive handles document uniform updates and shader compile failures', async () => {
     const load = vi.fn(async () => {});
     const { sink, events } = Diagnostics.createBufferSink();
