@@ -77,11 +77,17 @@ export const DETECT_UPGRADE_SCRIPT = `
       else if (tier >= 3 && cores >= 4 && webgpu) capLevel = 'gpu';
       else if (tier >= 2 && cores >= 4) capLevel = 'animated';
 
-      var motionTier = 'animations';
+      // Mirror motionTierFromCapabilities (packages/detect/src/tiers.ts) branch
+      // for branch. data-czap-motion is now CSS-keyed, so an inline shortcut
+      // that diverged from canonical (e.g. tier-2/3-core falling to 'physics'
+      // where canonical settles 'animations') would hand clients motion the
+      // rest of the stack gates lower. Head-inline can't import — keep lockstep.
+      var motionTier;
       if (motion) motionTier = 'none';
-      else if (tier === 0 || cores <= 2) motionTier = 'transitions';
-      else if (tier >= 3 && webgpu) motionTier = 'compute';
-      else if (tier >= 2) motionTier = 'physics';
+      else if (tier === 0) motionTier = 'transitions';
+      else if (tier === 1) motionTier = cores >= 4 ? 'animations' : 'transitions';
+      else if (tier === 2) motionTier = cores >= 4 ? 'physics' : 'animations';
+      else motionTier = webgpu ? 'compute' : 'physics';
 
       h.setAttribute('data-czap-tier', capLevel);
       h.setAttribute('data-czap-gpu-tier', String(tier));
