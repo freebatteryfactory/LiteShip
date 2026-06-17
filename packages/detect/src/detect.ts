@@ -241,7 +241,17 @@ const GPU_TIER_3_PATTERNS = [
   /nvidia.*a[0-9]{3,}/i,
 ] as const;
 
-function classifyGPURenderer(renderer: string): GPUTier {
+/**
+ * Classify an unmasked WebGL renderer string into a {@link GPUTier} (0–3).
+ * Pure and side-effect-free apart from a one-time diagnostic on an unrecognized
+ * string (which still classifies conservatively as tier 1). Exported as the
+ * single source of truth the Astro head-inline probe mirrors — guarded by a
+ * drift test so the inline copy can't diverge.
+ *
+ * @param renderer - The `UNMASKED_RENDERER_WEBGL` string from a WebGL context.
+ * @returns The GPU tier: `0` software · `1` integrated · `2` mid · `3` high-end.
+ */
+export function classifyGPURenderer(renderer: string): GPUTier {
   for (const pattern of GPU_TIER_0_PATTERNS) {
     if (pattern.test(renderer)) return 0;
   }

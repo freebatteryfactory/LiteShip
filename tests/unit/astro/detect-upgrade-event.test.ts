@@ -15,6 +15,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DETECT_UPGRADE_SCRIPT } from '../../../packages/astro/src/detect-upgrade.js';
 import { motionTierFromCapabilities } from '../../../packages/detect/src/tiers.js';
+import { classifyGPURenderer } from '../../../packages/detect/src/detect.js';
 
 function defineNavigator(props: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(props)) {
@@ -66,47 +67,53 @@ describe('detect-upgrade fires czap:detect-ready', () => {
     expect(document.documentElement.getAttribute('data-czap-motion')).toBe('compute');
   });
 
-  // The inline probe writes data-czap-motion, which is CSS-keyed — so its
-  // hand-rolled tier mapping (head-inline can't import) must stay branch-for-
-  // branch identical to the canonical motionTierFromCapabilities. This drives
-  // the REAL shipped script across a capability grid and asserts the DOM
-  // attribute equals canonical, so any future drift fails here instead of
-  // silently handing clients motion the rest of the stack gates lower.
-  // Renderer strings map to the gpuTier the script classifies (see the
-  // renderer regexes): SwiftShader→0, Intel UHD→1, GTX→2, RTX→3.
-  const GRID = [
-    { renderer: 'SwiftShader', gpu: 0, cores: 8 },
-    { renderer: 'Intel(R) UHD Graphics 620', gpu: 1, cores: 3 }, // gpu1/<4 cores → transitions
-    { renderer: 'Intel(R) UHD Graphics 620', gpu: 1, cores: 8 }, // gpu1/≥4 cores → animations
-    { renderer: 'NVIDIA GeForce GTX 1660', gpu: 2, cores: 3 }, // Codex's case: animations, NOT physics
-    { renderer: 'NVIDIA GeForce GTX 1660', gpu: 2, cores: 8 }, // gpu2/≥4 cores → physics
-    { renderer: 'NVIDIA GeForce RTX 4090', gpu: 3, cores: 8 }, // gpu3 + webgpu → compute
+  // The inline probe writes data-czap-motion (CSS-keyed) from a hand-rolled
+  // copy of BOTH the renderer→tier classifier and the tier→motion mapping —
+  // head-inline can't import @czap/detect. This drives the REAL shipped script
+  // and asserts the DOM attribute equals the canonical pipeline run on the SAME
+  // renderer string: motionTierFromCapabilities(classifyGPURenderer(renderer)).
+  // Expected is computed from canonical, never hardcoded — so drift in EITHER
+  // the inline classifier (e.g. desktop GTX → tier 2 vs canonical tier 1) or
+  // the mapping fails here instead of silently over-granting motion via CSS.
+  const RENDERERS = [
+    'SwiftShader', // tier 0
+    'Intel(R) UHD Graphics 620', // tier 1
+    'NVIDIA GeForce GTX 1660', // tier 1 (desktop GTX — the Codex case, NOT tier 2)
+    'NVIDIA GeForce MX450', // tier 2 (geforce.*mx)
+    'AMD Radeon RX 580', // tier 2
+    'Apple M1', // tier 2
+    'NVIDIA GeForce RTX 4090', // tier 3
+    'AMD Radeon RX 6800', // tier 3
+    'Apple M3 Max', // tier 3
   ] as const;
 
-  for (const cell of GRID) {
-    for (const webgpu of [true, false] as const) {
-      test(`data-czap-motion matches canonical for ${cell.renderer} / ${cell.cores}c / webgpu=${webgpu}`, () => {
-        vi.stubGlobal('matchMedia', () => ({ matches: false }) as MediaQueryList);
-        defineNavigator({ hardwareConcurrency: cell.cores, deviceMemory: 8, gpu: webgpu ? {} : undefined });
-        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
-          () =>
-            ({
-              getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null),
-              getParameter: () => cell.renderer,
-            }) as never,
-        );
+  for (const renderer of RENDERERS) {
+    for (const cores of [3, 8] as const) {
+      for (const webgpu of [true, false] as const) {
+        test(`data-czap-motion mirrors canonical for ${renderer} / ${cores}c / webgpu=${webgpu}`, () => {
+          vi.stubGlobal('matchMedia', () => ({ matches: false }) as MediaQueryList);
+          defineNavigator({ hardwareConcurrency: cores, deviceMemory: 8, gpu: webgpu ? {} : undefined });
+          vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+            () =>
+              ({
+                getExtension: (name: string) => (name === 'WEBGL_debug_renderer_info' ? { UNMASKED_RENDERER_WEBGL: 37446 } : null),
+                getParameter: () => renderer,
+              }) as never,
+          );
 
-        runUpgradeScript();
+          runUpgradeScript();
 
-        const expected = motionTierFromCapabilities({
-          gpu: cell.gpu,
-          cores: cell.cores,
-          memory: 8,
-          webgpu,
-          prefersReducedMotion: false,
-        } as Parameters<typeof motionTierFromCapabilities>[0]);
-        expect(document.documentElement.getAttribute('data-czap-motion')).toBe(expected);
-      });
+          // Single source of truth: canonical classify + map on the same string.
+          const expected = motionTierFromCapabilities({
+            gpu: classifyGPURenderer(renderer),
+            cores,
+            memory: 8,
+            webgpu,
+            prefersReducedMotion: false,
+          } as Parameters<typeof motionTierFromCapabilities>[0]);
+          expect(document.documentElement.getAttribute('data-czap-motion')).toBe(expected);
+        });
+      }
     }
   }
 
