@@ -607,10 +607,10 @@ describe('astro directive branch coverage', () => {
     expect(host.querySelector('canvas')).toBeNull();
   });
 
-  test('gpu directive drops the deferred re-boot when the host is disposed before the probe settles', () => {
-    // The bail-branch detect-ready listener must not re-init a disposed/detached
-    // node (orphan GPU resources). czap:dispose removes it; a detached el is also
-    // guarded. Either way a late upgrade must NOT boot a canvas on the dead host.
+  test('gpu directive does not re-boot a DETACHED host when the probe settles', () => {
+    // A host removed from the DOM before the probe settles (replaced by a VT
+    // swap, torn down) must never re-init — that would allocate an orphan GPU
+    // context on a node nobody can see. The el.isConnected guard enforces it.
     const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
     document.documentElement.setAttribute('data-czap-tier', 'styled');
 
@@ -618,15 +618,36 @@ describe('astro directive branch coverage', () => {
     gpuDirective(async () => {}, {}, host);
     expect(host.querySelector('canvas')).toBeNull();
 
-    // Host is swapped out before the async probe settles.
-    host.dispatchEvent(new CustomEvent('czap:dispose'));
-    host.remove();
+    host.remove(); // detached before the async probe settles
 
-    // Late upgrade + settle signal: the cleaned-up listener must stay silent.
     document.documentElement.setAttribute('data-czap-tier', 'gpu');
     document.dispatchEvent(new Event('czap:detect-ready'));
-    expect(host.querySelector('canvas'), 'no re-boot on a disposed host').toBeNull();
+    expect(host.querySelector('canvas'), 'no re-boot on a detached host').toBeNull();
     expect(getContext, 'no GPU context allocated on a detached node').not.toHaveBeenCalled();
+  });
+
+  test('gpu directive still re-boots a host that SURVIVES a live reinit before the probe settles', () => {
+    // slots.ts dispatches czap:dispose + czap:reinit on still-connected roots on
+    // every VT after-swap. A persisted (transition:persist) host that bailed on
+    // the provisional tier must keep its deferred boot through that reinit — the
+    // bail path has no czap:reinit re-registration, so dropping the listener on
+    // dispose would strand a capable device that upgrades right after the swap.
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas')).toBeNull();
+
+    // Live VT reinit lands before the probe settles; the host stays connected.
+    host.dispatchEvent(new CustomEvent('czap:dispose', { bubbles: true }));
+    host.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    expect(host.isConnected).toBe(true);
+
+    // Probe then settles a GPU-admitting tier → the survivor boots.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'boots after upgrade despite the reinit').not.toBeNull();
   });
 
   test('gpu directive handles document uniform updates and shader compile failures', async () => {

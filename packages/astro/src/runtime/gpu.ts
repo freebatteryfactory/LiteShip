@@ -132,10 +132,14 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     load();
     // Re-boot once the async probe settles a GPU-admitting tier. detect-ready is
     // guaranteed to fire (success AND error paths dispatch it), so { once: true }
-    // self-removes — but a swap/dispose can land first. Guard on el.isConnected
-    // so the callback never re-inits a detached node into orphan GPU resources,
-    // and drop the listener on czap:dispose, matching the cleanup the other
-    // directives register (slots.ts dispatches it on every directive on swap).
+    // self-removes — no leak even if it lands after a swap. The el.isConnected
+    // guard is the safety net: a detached host (replaced by a VT swap, torn
+    // down) never re-inits into orphan GPU resources. We deliberately do NOT
+    // drop this on czap:dispose — slots.ts fires dispose on LIVE reinit too
+    // (still-connected roots, before czap:reinit), and the bail path returns
+    // before the main czap:reinit re-registration, so removing here would
+    // strand a persisted host that upgrades right after a swap. Surviving the
+    // reinit is correct: tierAdmitsGpu re-reads the fresh data-czap-tier.
     const onDetectReady = (): void => {
       if (!el.isConnected) return;
       if (tierAdmitsGpu()) {
@@ -143,9 +147,6 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       }
     };
     document.addEventListener('czap:detect-ready', onDetectReady, { once: true });
-    el.addEventListener('czap:dispose', () => document.removeEventListener('czap:detect-ready', onDetectReady), {
-      once: true,
-    });
     return;
   }
 
