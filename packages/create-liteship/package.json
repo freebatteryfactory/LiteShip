@@ -1,6 +1,6 @@
 {
   "name": "create-liteship",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Scaffold a minimal Astro + @czap project — `npm create liteship` and you're rendering boundaries in five minutes",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

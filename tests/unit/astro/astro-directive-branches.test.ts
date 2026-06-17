@@ -577,6 +577,36 @@ describe('astro directive branch coverage', () => {
     expect(forcedAttr.querySelector('canvas')).not.toBeNull();
   });
 
+  test('gpu directive re-boots when the async probe upgrades the tier (czap:detect-ready)', () => {
+    // The fix for the force-hatch root cause: a directive that bails on the
+    // conservative PROVISIONAL tier must re-boot when the GPU probe settles a
+    // higher tier — no force needed in the capable-GPU case.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+    expect(host.querySelector('canvas'), 'bails on the provisional tier').toBeNull();
+    expect(getContext).not.toHaveBeenCalled();
+
+    // Probe upgrades the tier and fires the settle signal → the directive re-boots.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas'), 'boots after the upgrade').not.toBeNull();
+    expect(getContext).toHaveBeenCalled();
+  });
+
+  test('gpu directive stays dark if the probe settles a still-low tier', () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+    const host = makeEl('div');
+    gpuDirective(async () => {}, {}, host);
+
+    // Probe ran but the device is genuinely low — tier stays styled → no boot.
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(host.querySelector('canvas')).toBeNull();
+  });
+
   test('gpu directive handles document uniform updates and shader compile failures', async () => {
     const load = vi.fn(async () => {});
     const { sink, events } = Diagnostics.createBufferSink();

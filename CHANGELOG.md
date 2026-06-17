@@ -6,6 +6,29 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-06-16
+
+Detect-ladder fixes from dogfooding. No breaking changes to public APIs (one
+client-side data attribute renamed).
+
+### Fixed
+
+- `@czap/astro` — **`client:gpu` now re-boots when the async probe upgrades the
+  tier.** The probe is async, so the directive's first activation saw only the
+  conservative provisional tier and a capable GPU bailed permanently — forcing
+  the `force` hatch. It now listens for `czap:detect-ready` and boots the shader
+  once a GPU-admitting tier settles (re-running forced with a no-op `load`, so
+  hydration never repeats and exactly one canvas is created). `force` stays for
+  headless/CI and genuinely-low devices that never upgrade.
+- `@czap/astro` — **the reduced-motion preference moved off `data-czap-motion`.**
+  The head detect script wrote the reduced-motion preference (`reduce`/
+  `no-preference`) to `data-czap-motion`, colliding with `EdgeTier.tierDataAttributes`
+  (SSR), which writes the motion capability **tier** (`animations`/.../`none`) to
+  the same attribute — whichever ran last won. The preference is now
+  `data-czap-reduced-motion`; `data-czap-motion` is the tier consistently (keeping
+  the `cap`/`motion`/`design` triple coherent). **Breaking** for CSS keyed on
+  `[data-czap-motion="reduce"]` → use `[data-czap-reduced-motion="reduce"]`.
+
 ## [0.2.2] - 2026-06-16
 
 Route-scoping for embedded sub-apps. Surfaced dogfooding a site that mounts a

@@ -115,9 +115,30 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   // re-checked downstream by the real getContext/WebGPU probe, which falls back
   // to CSS if the context is truly absent — so forcing is safe, never a crash.
   const forced = opts?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
-  const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
-  if (!forced && (tier === 'static' || tier === 'styled')) {
+
+  // The GPU probe runs ASYNC, so the directive's first activation sees only the
+  // conservative provisional tier — a genuinely capable device starts at
+  // 'styled'/'static' and would never boot. So when the tier doesn't admit (and
+  // not forced), defer and re-check when the probe settles (`czap:detect-ready`):
+  // a GPU upgrade boots the shader THEN, no force needed. Headless/CI stays at
+  // tier 0 → the force hatch. The re-run is forced (the tier now admits) with a
+  // no-op load so hydration — done once here — never repeats; the bail created no
+  // canvas, so the re-run appends exactly one.
+  const tierAdmitsGpu = (): boolean => {
+    const tier = document.documentElement.getAttribute('data-czap-tier') ?? 'reactive';
+    return tier !== 'static' && tier !== 'styled';
+  };
+  if (!forced && !tierAdmitsGpu()) {
     load();
+    document.addEventListener(
+      'czap:detect-ready',
+      () => {
+        if (tierAdmitsGpu()) {
+          initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
+        }
+      },
+      { once: true },
+    );
     return;
   }
 
