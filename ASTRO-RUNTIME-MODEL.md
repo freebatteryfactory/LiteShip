@@ -257,7 +257,7 @@ This makes the system suitable for static visual websites rather than only for f
 
 The integration writes a provisional `data-czap-tier` inline in `<head>`, then an async probe (GPU renderer, WebGPU, cores/memory, reduced-motion) settles the real tier after load. When it finishes — `__CZAP_DETECT__` and the `data-czap-*` attributes final — it fires one `czap:detect-ready` event on `document` carrying `{ tier, gpuTier, webgpu, motionTier }` (or `{ error: true }` if the probe threw). Listen for that one event instead of polling `__CZAP_DETECT__` or racing a `setTimeout` backstop; it is the single signal that detection has settled. The `client:gpu` directive consumes it internally to re-boot after a tier upgrade (above).
 
-Attribute note: `data-czap-motion` is the motion capability **tier** (`animations`/`transitions`/`physics`/`compute`/`none`, also emitted server-side by `EdgeTier.tierDataAttributes`); the reduced-motion **preference** is a separate `data-czap-reduced-motion` (`reduce`/`no-preference`) — they used to collide on one attribute.
+Attribute note: `data-czap-motion` is the motion capability **tier** (`animations`/`transitions`/`physics`/`compute`/`none`) — emitted server-side by `EdgeTier.tierDataAttributes` and written client-side by the async probe when it settles (so it's present on non-edge pages too, and the edge value gets refined by the real GPU probe). The reduced-motion **preference** is a separate `data-czap-reduced-motion` (`reduce`/`no-preference`); the two used to collide on one attribute.
 
 ---
 

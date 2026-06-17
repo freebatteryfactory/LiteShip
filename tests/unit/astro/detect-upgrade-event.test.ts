@@ -34,6 +34,7 @@ describe('detect-upgrade fires czap:detect-ready', () => {
     vi.unstubAllGlobals();
     document.documentElement.removeAttribute('data-czap-tier');
     document.documentElement.removeAttribute('data-czap-gpu-tier');
+    document.documentElement.removeAttribute('data-czap-motion');
   });
 
   test('emits the final settled payload on a successful probe', () => {
@@ -58,6 +59,10 @@ describe('detect-upgrade fires czap:detect-ready', () => {
     expect(detail).toMatchObject({ tier: 'gpu', gpuTier: 3, webgpu: true, motionTier: 'compute' });
     // And __CZAP_DETECT__ is final/consistent with the event by the time it fires.
     expect((window as unknown as { __CZAP_DETECT__: { gpuTier: number } }).__CZAP_DETECT__.gpuTier).toBe(3);
+    // The probe writes the computed motion TIER to data-czap-motion (same
+    // vocabulary EdgeTier emits server-side) so CSS keyed on the capability
+    // tier matches on non-edge pages too — not just the event payload.
+    expect(document.documentElement.getAttribute('data-czap-motion')).toBe('compute');
   });
 
   test('still fires (flagged error) when the probe throws, so listeners never hang', () => {

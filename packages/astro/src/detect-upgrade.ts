@@ -85,6 +85,13 @@ export const DETECT_UPGRADE_SCRIPT = `
 
       h.setAttribute('data-czap-tier', capLevel);
       h.setAttribute('data-czap-gpu-tier', String(tier));
+      // The motion capability TIER, in the same vocabulary EdgeTier emits
+      // server-side (data-czap-motion). The probe already computes it; write it
+      // so CSS keyed on [data-czap-motion="physics"/"none"] matches on
+      // non-edge pages too (where EdgeTier never ran), and so the edge value is
+      // refined by the real GPU probe just like data-czap-tier is. The
+      // reduced-motion PREFERENCE lives separately on data-czap-reduced-motion.
+      h.setAttribute('data-czap-motion', motionTier);
       if (webgpu) h.setAttribute('data-czap-webgpu', 'true');
       h.removeAttribute('data-czap-tier-provisional');
 
