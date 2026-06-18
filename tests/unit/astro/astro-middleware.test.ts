@@ -46,7 +46,7 @@ describe('czapMiddleware', () => {
 
     const czap = context.locals.czap as Record<string, unknown>;
     expect(czap).toBeDefined();
-    expect(czap.tier).toBeDefined();
+    expect(czap.tiers).toBeDefined();
     expect(czap.capabilities).toBeDefined();
   });
 
@@ -149,10 +149,10 @@ describe('czapMiddleware', () => {
     await middleware(context, makeNext());
 
     const czap = context.locals.czap as Record<string, unknown>;
-    const tier = czap.tier as Record<string, string>;
-    expect(tier.cap).toBeDefined();
-    expect(tier.motion).toBeDefined();
-    expect(tier.design).toBeDefined();
+    const tiers = czap.tiers as Record<string, string>;
+    expect(tiers.tier).toBeDefined();
+    expect(tiers.motion).toBeDefined();
+    expect(tiers.design).toBeDefined();
   });
 
   test('does not attach edge locals when no edge adapter is configured', async () => {
@@ -215,7 +215,7 @@ describe('czapMiddleware', () => {
     const czap = context.locals.czap as Record<string, unknown>;
     const edge = czap.edge as Record<string, unknown>;
 
-    expect(edge.htmlAttributes).toContain('data-czap-cap=');
+    expect(edge.htmlAttributes).toContain('data-czap-tier=');
     expect((edge.theme as Record<string, string>).css).toContain('--brand-color-primary');
     expect((edge.compiledOutputs as Record<string, string>).css).toContain('.cached');
     expect(edge.cacheStatus).toBe('miss');

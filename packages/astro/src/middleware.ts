@@ -15,7 +15,7 @@ import type {
   EdgeHostCacheStatus,
   ThemeCompileResult,
 } from '@czap/edge';
-import type { ExtendedDeviceCapabilities } from '@czap/detect';
+import type { CapAxis, ExtendedDeviceCapabilities } from '@czap/detect';
 import { applyCzapHeaders } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import { consumeIntegrationToggles } from './integration-toggles.js';
@@ -30,12 +30,13 @@ import { consumeIntegrationToggles } from './integration-toggles.js';
  * adaptive rendering decisions.
  */
 export interface CzapLocals {
-  /** Resolved tiers (capability, motion, design). */
-  readonly tier: {
-    readonly cap: string;
-    readonly motion: string;
-    readonly design: string;
-  };
+  /**
+   * Resolved capability tiers keyed by axis. Each field projects to the
+   * matching `data-czap-<axis>` attribute on `<html>` — the field name and the
+   * attribute name are the same {@link CapAxis} key (one source: `CAP_AXES`),
+   * so they can never disagree.
+   */
+  readonly tiers: Readonly<Record<CapAxis, string>>;
   /** Parsed device capabilities. */
   readonly capabilities: ExtendedDeviceCapabilities;
   /** Edge-host resolution result, present when an edge adapter is configured. */
@@ -48,6 +49,19 @@ export interface CzapLocals {
     readonly htmlAttributes: string;
     readonly cacheStatus: EdgeHostCacheStatus;
   };
+}
+
+declare global {
+  namespace App {
+    interface Locals {
+      /**
+       * Capability detection injected by `czapMiddleware`. The integration's
+       * `injectTypes` also writes this augmentation into consumer projects so
+       * `Astro.locals.czap` is typed end-to-end.
+       */
+      czap?: CzapLocals;
+    }
+  }
 }
 
 /**
@@ -113,8 +127,8 @@ export function czapMiddleware(
 
     // Inject into locals for component access
     context.locals.czap = {
-      tier: {
-        cap: tier.capLevel,
+      tiers: {
+        tier: tier.capLevel,
         motion: tier.motionTier,
         design: tier.designTier,
       },

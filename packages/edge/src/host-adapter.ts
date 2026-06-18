@@ -182,7 +182,7 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly compiledOutputs?: CompiledOutputs;
   /** Per-boundary outcomes, keyed by name; present with the `boundaries` cache form. */
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
-  /** `data-czap-cap`/`data-czap-motion`/`data-czap-design` string for `<html>`. */
+  /** `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`). */
   readonly htmlAttributes: string;
   /** Response headers to send back so the browser will supply hints next time. */
   readonly responseHeaders: {

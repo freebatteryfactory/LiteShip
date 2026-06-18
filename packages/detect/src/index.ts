@@ -26,3 +26,5 @@ export {
   designTierFromCapabilities,
   motionTierFromCapabilities,
 } from './tiers.js';
+export { CAP_AXES, capAxisAttr } from './cap-axes.js';
+export type { CapAxis } from './cap-axes.js';
