@@ -79,11 +79,18 @@ export const DETECT_UPGRADE_SCRIPT = `
       var mem = navigator.deviceMemory || 4;
       var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      var capLevel = 'reactive';
-      if (motion) capLevel = 'static';
-      else if (tier === 0 || cores <= 2 || mem <= 2) capLevel = 'styled';
-      else if (tier >= 3 && cores >= 4 && webgpu) capLevel = 'gpu';
-      else if (tier >= 2 && cores >= 4) capLevel = 'animated';
+      // Mirror tierFromCapabilities (packages/detect/src/tiers.ts) branch for
+      // branch — head-inline can't import, so this hand copy MUST stay lockstep
+      // with canonical or it over/under-grants the capability tier (pinned by the
+      // drift test in tests/unit/astro/detect-upgrade-event.test.ts).
+      var capLevel;
+      if (motion && tier <= 1) capLevel = 'static';
+      else if (tier === 0) capLevel = 'styled';
+      else if (tier === 1) capLevel = cores >= 4 && mem >= 4 ? 'reactive' : 'styled';
+      else if (tier === 2) capLevel = motion ? 'reactive' : (cores >= 4 && mem >= 4 ? 'animated' : 'reactive');
+      else if (webgpu && cores >= 4 && mem >= 4) capLevel = motion ? 'animated' : 'gpu';
+      else if (motion) capLevel = 'reactive';
+      else capLevel = 'animated';
 
       // Mirror motionTierFromCapabilities (packages/detect/src/tiers.ts) branch
       // for branch. data-czap-motion is now CSS-keyed, so an inline shortcut
@@ -98,7 +105,6 @@ export const DETECT_UPGRADE_SCRIPT = `
       else motionTier = webgpu ? 'compute' : 'physics';
 
       h.setAttribute('data-czap-tier', capLevel);
-      h.setAttribute('data-czap-gpu-tier', String(tier));
       // The motion capability TIER, in the same vocabulary EdgeTier emits
       // server-side (data-czap-motion). The probe already computes it; write it
       // so CSS keyed on [data-czap-motion="physics"/"none"] matches on
@@ -106,7 +112,9 @@ export const DETECT_UPGRADE_SCRIPT = `
       // refined by the real GPU probe just like data-czap-tier is. The
       // reduced-motion PREFERENCE lives separately on data-czap-reduced-motion.
       h.setAttribute('data-czap-motion', motionTier);
-      if (webgpu) h.setAttribute('data-czap-webgpu', 'true');
+      // gpuTier (numeric) and webgpu (bool) are pure ENGINE state, not author
+      // CSS keys — they ride czap:detect-ready + __CZAP_DETECT__ only, never the
+      // DOM root (zero readers; keeps engine state off the DOM).
       h.removeAttribute('data-czap-tier-provisional');
 
       // Update a minimal runtime snapshot instead of exposing the full probe payload.
