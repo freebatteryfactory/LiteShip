@@ -9,6 +9,7 @@
  * @module
  */
 
+import { inputToSource } from '@czap/core';
 import {
   boundaryParseFailureMessage,
   parseBoundary,
@@ -158,14 +159,23 @@ function isDirectiveActive(element: HTMLElement): boolean {
 
 function trackMaxForInput(input: string, thresholds: readonly number[]): number {
   const peak = thresholds.length > 0 ? Math.max(...thresholds) : 0;
-  if (input.startsWith('viewport.')) {
+  // Family is derived from the SOURCE OF TRUTH (inputToSource), not re-parsed.
+  const source = inputToSource(input);
+  if (source?.type === 'viewport') {
     return Math.max(peak * 1.5, typeof window !== 'undefined' ? window.innerWidth : peak, 1200);
   }
-  if (input.startsWith('scroll.')) {
-    if (input === 'scroll.progress') {
-      return 100;
+  if (source?.type === 'scroll') {
+    // scroll.progress is the canonical 0..1 scale (see readSignalValue): the
+    // track runs 0..1 so the cursor/notches map a 0.5-authored boundary to the
+    // middle. A drift guard pins this 1 to readSignalValue's 0..1 range.
+    if (source.axis === 'progress') {
+      return 1;
     }
     return Math.max(peak * 1.5, 2000);
+  }
+  // audio.amplitude / audio.beat are normalized 0..1 feeds.
+  if (source?.type === 'audio') {
+    return 1;
   }
   return Math.max(peak * 1.5, peak + 100, 100);
 }

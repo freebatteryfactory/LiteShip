@@ -67,6 +67,24 @@ export const INVARIANTS: readonly Invariant[] = [
     ],
     message: 'Use const/let, not var.',
   },
+  {
+    // 0.3.0 signal source-of-truth: the runtime hot path must derive its signal
+    // axis from `inputToSource` (@czap/core, the SignalSource source of truth),
+    // never re-parse the dot-string with `startsWith('scroll.'/'viewport.')`.
+    // The two diagnostic sites below legitimately namespace-check the input to
+    // pick a teaching message (not to read a value), so they are excluded.
+    name: 'NO_SIGNAL_INPUT_REPARSE',
+    pattern: /\.startsWith\(\s*['"](?:scroll|viewport)\./,
+    dirs: ['packages/astro/src/runtime', 'packages/vite/src'],
+    exclude: [
+      // Diagnostic namespace checks (which container message to emit), not axis reads.
+      'packages/vite/src/css-quantize.ts',
+      'packages/astro/src/runtime/inspector.ts',
+    ],
+    message:
+      'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +
+      'If this is a diagnostic namespace check, add the file to the NO_SIGNAL_INPUT_REPARSE exclude.',
+  },
 ] as const;
 
 function walkTsFiles(dir: string): string[] {
