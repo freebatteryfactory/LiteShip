@@ -325,7 +325,9 @@ export function attachSignalObserver(input: string, callback: () => void): (() =
     case 'scroll':
       return attachScrollListener(source.axis ?? 'y', callback);
     case 'audio':
-      return attachAudioObserver(callback);
+      // Only amplitude/beat have a live producer; sample/normalized are offline
+      // modes that defer to the quantizer (no observer — frozen).
+      return source.mode === 'amplitude' || source.mode === 'beat' ? attachAudioObserver(callback) : null;
     default:
       return null;
   }
@@ -368,7 +370,9 @@ export function readSignalValue(input: string): number | undefined {
       return Math.min(1, Math.max(0, window.scrollY / max));
     }
     case 'audio':
-      return readAudioSignal(source.mode ?? 'sample');
+      // Only amplitude/beat are live; sample/normalized defer to the quantizer
+      // (undefined → frozen), per the hand-off noted above.
+      return source.mode === 'amplitude' || source.mode === 'beat' ? readAudioSignal(source.mode) : undefined;
     default:
       return undefined;
   }

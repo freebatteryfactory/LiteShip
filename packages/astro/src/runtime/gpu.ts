@@ -45,9 +45,11 @@ function readShaderDeclarations(
  *
  * GLSL requires `#version` to be the very first token, so the preamble is
  * spliced in AFTER the leading `#version` line (and any immediately following
- * `precision` directive) rather than at the top. Declarations the author's
- * fragment already declares are dropped to avoid GLSL redeclaration errors —
- * the compiler's emitted line wins, since it carries the inferred type.
+ * `precision` directive) rather than at the top. A compiler declaration whose
+ * name the author's fragment ALSO declares is dropped (a redeclaration is a hard
+ * compile error), so on a name collision the author's explicit line wins — but
+ * normally the author writes none, letting the compiler's declarations cover the
+ * whole uniform vocabulary.
  */
 export function prependGlslDeclarations(source: string, declarations: string): string {
   if (!declarations) return source;

@@ -55,9 +55,9 @@ declare global {
   namespace App {
     interface Locals {
       /**
-       * Capability detection injected by `czapMiddleware`. The integration's
-       * `injectTypes` also writes this augmentation into consumer projects so
-       * `Astro.locals.czap` is typed end-to-end.
+       * Capability detection injected by `czapMiddleware`. Importing
+       * `@czap/astro` pulls in this `App.Locals` augmentation, so
+       * `Astro.locals.czap` is typed end-to-end (no cast needed).
        */
       czap?: CzapLocals;
     }

@@ -80,8 +80,10 @@ describe('audio.amplitude boundary carve-path', () => {
     expect(readSignalValue('audio.beat')).toBe(1);
   });
 
-  test('offline audio modes (sample/normalized) read frozen 0 — no live producer', () => {
-    expect(readSignalValue('audio.sample')).toBe(0);
-    expect(readSignalValue('audio.normalized')).toBe(0);
+  test('offline audio modes (sample/normalized) defer to the quantizer — undefined, no live producer', () => {
+    // No live producer: they read undefined (frozen, deferred to
+    // @czap/quantizer's live.evaluate), not a constant 0 that would override it.
+    expect(readSignalValue('audio.sample')).toBeUndefined();
+    expect(readSignalValue('audio.normalized')).toBeUndefined();
   });
 });
