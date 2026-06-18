@@ -87,6 +87,16 @@ export interface IntegrationConfig {
    * `false` to skip registering the toolbar app.
    */
   readonly inspector?: boolean;
+  /**
+   * Opt in (`true`) to auto-register a zero-config capability-detection
+   * middleware, so a consumer needs no `src/middleware.ts` for the common case;
+   * it populates `Astro.locals.czap` from Client Hints. The edge boundary cache
+   * (whose `theme`/`compile` carry functions) always needs a consumer
+   * `src/middleware.ts` calling `czapMiddleware({ edge })`; when both are present
+   * this auto entry runs first (`order: 'pre'`) and the consumer middleware
+   * refines the same locals. Default off (wire middleware yourself).
+   */
+  readonly middleware?: boolean;
   /** Security policies applied to runtime fetch/HTML boundaries. */
   readonly security?: {
     readonly endpointPolicy?: RuntimeEndpointPolicy;
@@ -312,6 +322,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         updateConfig,
         addClientDirective,
         addDevToolbarApp,
+        addMiddleware,
         injectScript,
         logger,
         command,
@@ -407,6 +418,18 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         if (wasmEnabled) {
           injectScript('page', WASM_RUNTIME_SCRIPT);
           logger.info('Injected wasm runtime bootstrap');
+        }
+
+        // Zero-config detection: auto-wire the detection-only middleware so a
+        // consumer needs no src/middleware.ts for the common case. It inherits
+        // the integration's detect/workers toggles (published-toggles channel)
+        // and populates Astro.locals.czap. Edge/theme config carries functions
+        // that can't ride a static integration option, so the edge cache still
+        // needs a consumer middleware — it runs after this 'pre' one and refines
+        // the same locals. Opt in with `middleware: true` (default off).
+        if (config?.middleware === true) {
+          addMiddleware({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
+          logger.info('Auto-wired capability-detection middleware');
         }
 
         // Register the boundary inspector as a dev-toolbar app (dev only).

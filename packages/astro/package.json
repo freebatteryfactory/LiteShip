@@ -65,6 +65,11 @@
       "import": "./dist/middleware.js",
       "development": "./src/middleware.ts"
     },
+    "./middleware-entry": {
+      "types": "./dist/middleware-entry.d.ts",
+      "import": "./dist/middleware-entry.js",
+      "development": "./src/middleware-entry.ts"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",

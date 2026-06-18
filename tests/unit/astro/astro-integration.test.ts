@@ -472,6 +472,34 @@ describe('integration', () => {
     expect(logs).toContain('Injected GPU probe upgrade');
   });
 
+  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', () => {
+    const optedIn = integration({ middleware: true });
+    const wired: Array<{ order: string; entrypoint: string }> = [];
+    optedIn.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: () => undefined,
+      addMiddleware: (m: { order: string; entrypoint: string }) => {
+        wired.push(m);
+      },
+      logger: { info() {} },
+    } as never);
+    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
+
+    // Default (no opt-in): nothing auto-wired.
+    let calledByDefault = false;
+    integration().hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: () => undefined,
+      addMiddleware: () => {
+        calledByDefault = true;
+      },
+      logger: { info() {} },
+    } as never);
+    expect(calledByDefault).toBe(false);
+  });
+
   test('config:setup registers the inspector toolbar app only in dev command', () => {
     const integ = integration();
     const devApps: Array<{ id: string; entrypoint: string }> = [];
