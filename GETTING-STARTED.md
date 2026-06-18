@@ -134,9 +134,9 @@ Rendered output carries `data-czap-genui-render-hash` for cache/replay; click ha
 
 ## Dev inspector (astro dev only)
 
-While running `pnpm dev`, press **Alt+Shift+C** to open the czap boundary inspector — a floating panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
+While running `pnpm dev`, open the czap boundary inspector from the Astro dev-toolbar (click the czap toolbar icon) — a panel that lists every `[data-czap-boundary]` element, live signal values, draggable threshold notches, and a **Copy Boundary.make** button for paste-back into source. DOM edits are session-only (source files are untouched). Opt out with `integration({ inspector: false })` in `astro.config.mjs`.
 
-<!-- gif: inspector overlay tuning thresholds and copying snippet -->
+<!-- gif: inspector dev-toolbar app tuning thresholds and copying snippet -->
 
 ## 4. Cast to CSS (the compiler path)
 

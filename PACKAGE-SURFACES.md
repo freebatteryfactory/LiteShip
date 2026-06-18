@@ -87,7 +87,7 @@ Main surfaces:
 - `Theme`
 - `Style`
 - `Component`
-- `Signal`
+- `Signal` (+ `SignalSource` / `sourceToInput` / `inputToSource` / `inputSourceType` — the canonical signal-input vocabulary, source of truth for input strings like `viewport.width`, `scroll.progress`, `audio.amplitude`/`audio.beat`)
 - `Animation`
 - `Timeline`
 - `Scheduler`
@@ -259,6 +259,7 @@ Main surfaces:
 - `designTierFromCapabilities`
 - `motionTierFromCapabilities`
 - `capSetFromCapabilities`
+- `CAP_AXES` / `capAxisAttr` / `CapAxis` — the single source for the `data-czap-*` capability vocabulary (`tier`/`motion`/`design`); the attribute suffix is the axis key by construction
 
 ---
 
@@ -328,12 +329,14 @@ Main surfaces:
 - `resolveInitialStateFallback`
 - `czapMiddleware`
 - `CzapMiddlewareConfig`
+- `@czap/astro/middleware-entry` — the auto-wired detection middleware registered by `czap({ middleware: true })`; populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` via an `App.Locals` augmentation
 
 Host-owned shared runtime surfaces:
 
 - `@czap/astro/runtime` slot bootstrap and swap reinit helpers
 - `@czap/astro/runtime` directive boot scanner (`bootstrapDirectives`, `scanAndBootDirectives`) — activates `data-czap-directive` / legacy `client:*` markers on plain elements and `.astro` output
 - `@czap/astro/runtime` wasm runtime configuration and loading
+- `@czap/astro/runtime` audio-signal producer/readers (`driveAudioFromAnalyser`, `readAudioSignal`, `attachAudioObserver`) — wire a live `AnalyserNode` so `audio.amplitude`/`audio.beat` boundaries carve
 - internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, and `wasm`
 
 ---
@@ -361,7 +364,7 @@ Main surfaces:
 - `KVCache`
 - `compileTheme`
 
-The default Astro host path now routes through `createEdgeHostAdapter`, which combines `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` into one request-time resolution pass. This is the package for request-time adaptation outside the browser.
+The default Astro host path now routes through `createEdgeHostAdapter`, which combines `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` into one request-time resolution pass. A KV entry is keyed by boundary id + tier + name + a resolved-theme fingerprint; the cache config's `prefix` doubles as the per-deploy content version for a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover. This is the package for request-time adaptation outside the browser.
 
 ---
 

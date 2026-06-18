@@ -688,7 +688,7 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 - **`@czap/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
 - **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
 - **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
-- **22 publishable packages** — 20 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
+- **23 publishable packages** — 21 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
 
 ---
 

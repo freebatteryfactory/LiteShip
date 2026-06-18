@@ -60,7 +60,7 @@ Use it when the site itself is a LiteShip-aware Astro host.
 
 `integration()` runs with batteries included — most surfaces need no config:
 
-- **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (Alt+Shift+C in `astro dev`).
+- **on by default:** `detect`, `stream`, `llm`, `gpu`, and the dev `inspector` (an Astro dev-toolbar app in `astro dev`).
 - **opt-in:** `workers` (`workers: { enabled: true }` — only the `client:worker` directive needs it) and `wasm`.
 - **auto-resolved:** initial state defaults from the server-resolved bearing, and the `czap-compute` WASM artifact — shipped inside `@czap/core` (0.2.1+) — resolves itself from `node_modules`; you don't thread either by hand.
 

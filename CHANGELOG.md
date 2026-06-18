@@ -6,6 +6,86 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [Unreleased]
 
+The **source-of-truth cut**: every identity — a name, a cache key, a guard's
+expected value, a content address, a signal scale — is computed from its source,
+not a proxy standing beside it. Carries breaking surface (pre-1.0 minor).
+
+### Breaking
+
+- `@czap/edge` / `@czap/astro` — **`data-czap-cap` → `data-czap-tier`.** The edge
+  `<html>` capability-tier attribute was emitted as `data-czap-cap` while every
+  reader, the probe, and all examples used `data-czap-tier`. It is now one name,
+  projected from a single `CAP_AXES` registry. CSS/selectors keyed on
+  `[data-czap-cap]` must migrate to `[data-czap-tier]`.
+- `@czap/astro` — **`Astro.locals.czap.tier.{cap,motion,design}` →
+  `czap.tiers.{tier,motion,design}`.** The locals triple was renamed so the field
+  names match the `data-czap-<axis>` attributes (one source) — and is now typed
+  via an `App.Locals` augmentation, so no cast is needed. Host code reading
+  `locals.czap.tier.cap` must read `locals.czap.tiers.tier`.
+- `@czap/astro` — **`scroll.progress` runtime value is now `0..1`** (was
+  `0..100`). A boundary authored against `0.5` now evaluates correctly at runtime;
+  any host math or thresholds on the old `0..100` scale must rescale.
+- `@czap/astro` — **`data-czap-gpu-tier` / `data-czap-webgpu` are no longer
+  written to `<html>`.** They were write-only engine state; post-probe `gpuTier`/
+  `webgpu` ride the `czap:detect-ready` event detail + `window.__CZAP_DETECT__`
+  only. Anything reading those attributes must read the event/global.
+- `@czap/astro` — **the boundary inspector is now an Astro dev-toolbar app**
+  (toggle from the toolbar icon). The `Alt+Shift+C` overlay and the
+  `./runtime/inspector-loader` export are gone.
+- `@czap/edge` / `@czap/cloudflare` — **the cache "never go stale" guarantee is
+  now conditional.** An entry is keyed by boundary id + tier + name + a
+  resolved-theme fingerprint; a bundled `compile()` whose output depends on
+  build-time content the boundary id doesn't cover must set `prefix` as a
+  per-deploy content version.
+
+### Added
+
+- `@czap/core` / `@czap/astro` — **full audio boundary signals.**
+  `Boundary.make({ input: 'audio.amplitude', at: [...] })` (and `audio.beat`) now
+  light up the same evaluator → CSS/GPU casts, driven by a main-thread
+  `AnalyserNode` producer (`driveAudioFromAnalyser`, `@czap/astro/runtime`).
+- `@czap/core` — **unified Signal vocabulary.** `SignalSource` is the source of
+  truth; `sourceToInput`/`inputToSource`/`inputSourceType` round-trip the
+  dot-string input form, replacing the per-domain string parsers the runtime,
+  inspector, and CSS-axis compiler each forked.
+- `@czap/astro` / `@czap/edge` — **GLSL/WGSL shader-declaration delivery.** The
+  compiler's emitted `.declarations` block now reaches the runtime (prepended
+  before `gl.shaderSource` / `createShaderModule`); authors no longer hand-write
+  the matching `u_*` uniform declarations.
+- `@czap/detect` — **`CAP_AXES` / `capAxisAttr` / `CapAxis`**, the single source
+  for the `data-czap-*` capability vocabulary (the attribute suffix is the axis
+  key by construction, so a DOM attribute can't drift from its locals field).
+- `@czap/astro` — **opt-in detection middleware.** `czap({ middleware: true })`
+  auto-wires `@czap/astro/middleware-entry`, so the common case needs no
+  hand-written `src/middleware.ts`.
+- `@czap/vite` — `addWatchFile` on convention directories, so editing an
+  out-of-module-graph `*.tokens.ts` / `*.themes.ts` triggers HMR.
+
+### Changed
+
+- `@czap/astro` — **the `serverIslands` integration option is a deprecated
+  no-op.** Server Islands are stable in Astro 6 (since v5); the
+  `experimental.serverIslands` bridge was removed.
+
+### Fixed
+
+- `@czap/astro` — the inline `capLevel` ladder in the head detect probe had
+  silently diverged from canonical `tierFromCapabilities` (reduced-motion forced
+  `static` at every GPU tier; `cores`/`memory` shortcuts to `styled`); reconciled
+  and pinned by a drift guard against canonical.
+- `@czap/astro` — the LLM directive's device-tier read now uses the
+  source-of-truth `data-czap-motion`, falling back to deriving from the capability
+  tier only pre-probe.
+- `@czap/web` — the runtime-URL SSRF private-IP check now gates on cross-origin
+  rather than scheme presence, closing the protocol-relative `//169.254.169.254`
+  bypass.
+- `@czap/stage` — `videoFrameDigest` folds `VIDEO_CONFIG.durationMs` instead of a
+  hardcoded literal, so the content address can't silently lie when the config
+  changes.
+- `@czap/command` — the idempotency cache folds an environment fingerprint
+  (node/platform/arch/package-manager) into its identity, preventing
+  cross-toolchain stale hits.
+
 ## [0.2.3] - 2026-06-16
 
 Detect-ladder fixes from dogfooding. No breaking changes to public APIs (one

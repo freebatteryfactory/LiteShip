@@ -23,7 +23,7 @@ The [`examples/`](./examples) directory has a runnable app per surface. They're 
 | [`default`](./examples/default) | The minimal `npm create liteship` starter |
 | [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare |
 
-For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@czap/*` ranges, so it installs anywhere once 0.2.0 is on npm. In `astro dev`, press **Alt+Shift+C** to open the boundary inspector.
+For a standalone app — one you can drop into StackBlitz or CodeSandbox — scaffold with `npm create liteship` (also `pnpm create liteship`). Unlike the workspace examples, the scaffold pins published `@czap/*` ranges, so it installs anywhere from npm. In `astro dev`, open the boundary inspector from the Astro dev-toolbar (the czap toolbar icon).
 
 ## Quick start
 

@@ -36,11 +36,11 @@ export default {
 };
 ```
 
-The served `<html>` element carries `data-czap-cap`, `data-czap-motion`, and `data-czap-design` attributes — the same capability/motion/visual-fidelity triple the browser-side detector would compute, available before any client JavaScript runs.
+The served `<html>` element carries `data-czap-tier`, `data-czap-motion`, and `data-czap-design` attributes — the same capability/motion/visual-fidelity triple the browser-side detector would compute, available before any client JavaScript runs.
 
 ## Where it sits
 
-A host-agnostic edge layer: it only parses headers and strings, touching no platform APIs, which keeps host adapters like `@czap/cloudflare` down to binding glue. It depends on [`@czap/detect`](https://github.com/heyoub/LiteShip/tree/main/packages/detect) (the same pure tier-mapping functions the browser runs, so edge and client agree on tiers) and [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) (shared tier types and branded ids). The KV-backed boundary cache (`createBoundaryCache`) keys entries by content address — a hash of the boundary definition — so cached CSS never goes stale: editing a boundary mints a new key. See the
+A host-agnostic edge layer: it only parses headers and strings, touching no platform APIs, which keeps host adapters like `@czap/cloudflare` down to binding glue. It depends on [`@czap/detect`](https://github.com/heyoub/LiteShip/tree/main/packages/detect) (the same pure tier-mapping functions the browser runs, so edge and client agree on tiers) and [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) (shared tier types and branded ids). The KV-backed boundary cache (`createBoundaryCache`) keys entries by the boundary's content address, the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match, and editing a boundary mints a new key. (A bundled `compile()` whose output depends on build-time content the boundary id doesn't cover bumps `prefix` to version it.) See the
 [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
