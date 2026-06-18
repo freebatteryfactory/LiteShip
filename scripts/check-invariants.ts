@@ -50,9 +50,15 @@ export const INVARIANTS: readonly Invariant[] = [
     pattern: /export default/,
     dirs: ['packages'],
     // client-directives: Astro's addClientDirective contract requires a
-    // default export. create-liteship templates: scaffolder *data*, not
-    // production code — astro.config.ts must default-export defineConfig.
-    exclude: ['packages/astro/src/client-directives/', 'packages/create-liteship/templates/'],
+    // default export. inspector-toolbar-app: Astro's addDevToolbarApp
+    // entrypoint contract likewise requires a default-exported DevToolbarApp.
+    // create-liteship templates: scaffolder *data*, not production code —
+    // astro.config.ts must default-export defineConfig.
+    exclude: [
+      'packages/astro/src/client-directives/',
+      'packages/astro/src/runtime/inspector-toolbar-app.ts',
+      'packages/create-liteship/templates/',
+    ],
     message: 'Named exports only, except Astro client directives.',
   },
   {

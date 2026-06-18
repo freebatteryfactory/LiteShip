@@ -1,15 +1,29 @@
 /**
- * Dev inspector overlay — keyboard toggle and lazy loader.
+ * Dev inspector overlay — panel rendering into an injected shadow root.
+ *
+ * The inspector ships as an Astro dev-toolbar app: Astro hands its
+ * `init(canvas)` a ShadowRoot and `mountInspectorPanel` renders into it.
+ * The live `addDevToolbarApp` registration + toolbar toggle is not
+ * coverable by the jsdom harness (no Astro dev server, no toolbar custom
+ * elements) — that path needs a manual dev-server check. Here we exercise
+ * the render contract directly by passing our own `attachShadow` root, so
+ * the rich panel assertions (casts, escalation, DocumentGraph peek, live
+ * uniform-update) stay pinned.
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { installInspectorLoader } from '../../packages/astro/src/runtime/inspector-loader.js';
-import { isInspectorOverlayVisible, toggleInspectorOverlay } from '../../packages/astro/src/runtime/inspector.js';
+import { mountInspectorPanel } from '../../packages/astro/src/runtime/inspector.js';
+
+function makeShadowRoot(): { host: HTMLElement; shadow: ShadowRoot } {
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const shadow = host.attachShadow({ mode: 'open' });
+  return { host, shadow };
+}
 
 describe('astro dev inspector', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    document.querySelector('czap-inspector')?.remove();
     vi.stubGlobal(
       'ResizeObserver',
       class {
@@ -21,33 +35,20 @@ describe('astro dev inspector', () => {
   });
 
   afterEach(() => {
-    document.querySelector('czap-inspector')?.remove();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     document.body.innerHTML = '';
   });
 
-  test('Alt+Shift+C toggles the overlay after lazy import', async () => {
-    installInspectorLoader();
-    expect(isInspectorOverlayVisible()).toBe(false);
+  test('renders an empty-state panel when no boundaries are present', () => {
+    const { shadow } = makeShadowRoot();
+    const handle = mountInspectorPanel(shadow);
 
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'C', code: 'KeyC', altKey: true, shiftKey: true, bubbles: true }),
-    );
+    const body = shadow.querySelector<HTMLElement>('[data-role="inspector-body"]');
+    expect(body).not.toBeNull();
+    expect(body!.textContent).toContain('No [data-czap-boundary] elements');
 
-    await vi.waitFor(() => {
-      expect(document.querySelector('czap-inspector')).not.toBeNull();
-    });
-    expect(isInspectorOverlayVisible()).toBe(true);
-
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'C', code: 'KeyC', altKey: true, shiftKey: true, bubbles: true }),
-    );
-    // The loader toggles after its dynamic import settles (a microtask even
-    // when the module is cached), so the hide lands asynchronously too.
-    await vi.waitFor(() => {
-      expect(isInspectorOverlayVisible()).toBe(false);
-    });
+    handle.dispose();
   });
 
   test('full panels render: active casts, escalation, and the DocumentGraph peek', () => {
@@ -67,8 +68,8 @@ describe('astro dev inspector', () => {
     el.setAttribute('data-czap-state', 'compact');
     document.body.appendChild(el);
 
-    toggleInspectorOverlay(true);
-    const shadow = document.querySelector('czap-inspector')!.shadowRoot!;
+    const { shadow } = makeShadowRoot();
+    const handle = mountInspectorPanel(shadow);
 
     const casts = shadow.querySelector('[data-role="casts"]')!;
     expect(casts.textContent).toContain('glsl');
@@ -94,6 +95,30 @@ describe('astro dev inspector', () => {
     );
     expect(casts.textContent).toContain('u_blur = 4');
 
-    toggleInspectorOverlay(false);
+    handle.dispose();
+  });
+
+  test('dispose tears down a mount and a fresh mount re-reflects the page', () => {
+    const { shadow } = makeShadowRoot();
+    const first = mountInspectorPanel(shadow);
+    let body = shadow.querySelector<HTMLElement>('[data-role="inspector-body"]')!;
+    expect(body.textContent).toContain('No [data-czap-boundary] elements');
+    first.dispose();
+
+    // Add a boundary, then re-mount fresh into a new render target (the
+    // toolbar app's open-after-close lifecycle).
+    const el = document.createElement('div');
+    el.setAttribute(
+      'data-czap-boundary',
+      JSON.stringify({ id: 'b', input: 'viewport.width', thresholds: [0, 600], states: ['s', 'l'] }),
+    );
+    el.setAttribute('data-czap-directive', 'satellite');
+    document.body.appendChild(el);
+
+    const { shadow: shadow2 } = makeShadowRoot();
+    const second = mountInspectorPanel(shadow2);
+    body = shadow2.querySelector<HTMLElement>('[data-role="inspector-body"]')!;
+    expect(body.textContent).toContain('viewport.width');
+    second.dispose();
   });
 });

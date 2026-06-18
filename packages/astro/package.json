@@ -70,10 +70,10 @@
       "import": "./dist/runtime/index.js",
       "development": "./src/runtime/index.ts"
     },
-    "./runtime/inspector-loader": {
-      "types": "./dist/runtime/inspector-loader.d.ts",
-      "import": "./dist/runtime/inspector-loader.js",
-      "development": "./src/runtime/inspector-loader.ts"
+    "./runtime/inspector-toolbar-app": {
+      "types": "./dist/runtime/inspector-toolbar-app.d.ts",
+      "import": "./dist/runtime/inspector-toolbar-app.js",
+      "development": "./src/runtime/inspector-toolbar-app.ts"
     },
     "./Satellite": "./src/Satellite.astro",
     "./Satellite.astro": "./src/Satellite.astro"

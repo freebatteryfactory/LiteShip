@@ -29,6 +29,31 @@ import { buildEnvironments, type CzapEnvironmentName } from './environments.js';
 import { resolveWASM, formatWasmSearchPaths } from './wasm-resolve.js';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 
+/** Minimal slice of the Rollup transform context we use to register watches. */
+interface WatchContext {
+  addWatchFile?(id: string): void;
+}
+
+/**
+ * Register a convention-file path as a watch dependency of the module being
+ * transformed. Convention files (`tokens.ts` / `themes.ts` / `*.boundaries.ts`
+ * / boundary dirs) are imported by the plugin's resolver, NOT by the CSS/.astro
+ * module graph, so without this the dev server never re-runs the transform when
+ * one is edited (stale output). Outside watch mode `addWatchFile` is a harmless
+ * no-op. Undefined source = an unresolved primitive (nothing to watch).
+ *
+ * `addWatchFile` is guarded as optional: the real Rollup/Vite transform context
+ * always provides it, but the plugin's `transform` is also invoked directly in
+ * unit tests with a bare `this`, where it is absent — watch registration is a
+ * dev-server concern those tests don't exercise, so a missing method is a
+ * legitimate no-op rather than a crash.
+ */
+function watchPrimitiveSource(ctx: WatchContext, source: string | undefined): void {
+  if (source && typeof ctx.addWatchFile === 'function') {
+    ctx.addWatchFile(source);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -197,6 +222,16 @@ export function plugin(config?: PluginConfig): Plugin {
   const tokenCache = new Map<string, Token.Shape | null>();
   const themeCache = new Map<string, Theme.Shape | null>();
   const styleCache = new Map<string, Style.Shape | null>();
+
+  // Resolved convention-file path per cache key (`${name}:${id}`). Convention
+  // files (`tokens.ts` / `themes.ts` / `*.boundaries.ts` / boundary dirs) live
+  // OUTSIDE the importing CSS/.astro module graph, so editing one wouldn't
+  // re-run the transform that compiled it — the dev server would serve stale
+  // output. We re-`addWatchFile` the resolved source on every transform (cache
+  // hit or miss) so Vite watches it and `hotUpdate` re-compiles the importer
+  // when it changes. (`source` is recorded only on a resolution; a `null`
+  // resolution has no file to watch.)
+  const primitiveSourceCache = new Map<string, string>();
 
   // Lazily-collected boundary manifest backing `virtual:czap/boundaries`.
   // Reset whenever a definition or CSS file changes so dev imports stay fresh.
@@ -388,7 +423,9 @@ export function plugin(config?: PluginConfig): Plugin {
             const resolution = await resolvePrimitive('token', block.tokenName, id, projectRoot, config?.dirs?.token);
             token = resolution?.primitive ?? null;
             tokenCache.set(cacheKey, token);
+            if (resolution) primitiveSourceCache.set(cacheKey, resolution.source);
           }
+          watchPrimitiveSource(this, primitiveSourceCache.get(cacheKey));
 
           if (token === null) {
             this.warn(
@@ -418,7 +455,9 @@ export function plugin(config?: PluginConfig): Plugin {
             const resolution = await resolvePrimitive('theme', block.themeName, id, projectRoot, config?.dirs?.theme);
             theme = resolution?.primitive ?? null;
             themeCache.set(cacheKey, theme);
+            if (resolution) primitiveSourceCache.set(cacheKey, resolution.source);
           }
+          watchPrimitiveSource(this, primitiveSourceCache.get(cacheKey));
 
           if (theme === null) {
             this.warn(
@@ -448,7 +487,9 @@ export function plugin(config?: PluginConfig): Plugin {
             const resolution = await resolvePrimitive('style', block.styleName, id, projectRoot, config?.dirs?.style);
             style = resolution?.primitive ?? null;
             styleCache.set(cacheKey, style);
+            if (resolution) primitiveSourceCache.set(cacheKey, resolution.source);
           }
+          watchPrimitiveSource(this, primitiveSourceCache.get(cacheKey));
 
           if (style === null) {
             this.warn(
@@ -512,7 +553,9 @@ export function plugin(config?: PluginConfig): Plugin {
             );
             boundary = resolution?.primitive ?? null;
             boundaryCache.set(cacheKey, boundary);
+            if (resolution) primitiveSourceCache.set(cacheKey, resolution.source);
           }
+          watchPrimitiveSource(this, primitiveSourceCache.get(cacheKey));
 
           if (boundary === null) {
             this.warn(
@@ -586,6 +629,7 @@ export function plugin(config?: PluginConfig): Plugin {
         tokenCache.clear();
         themeCache.clear();
         styleCache.clear();
+        primitiveSourceCache.clear();
         boundaryManifestPromise = null;
         tokenThemeManifestPromise = null;
 

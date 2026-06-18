@@ -4,8 +4,8 @@
  * Registers the `@czap/vite` plugin, injects the detect/boot scripts,
  * registers every client directive (`client:satellite`,
  * `client:stream`, `client:llm`, `client:worker`, `client:gpu`,
- * `client:wasm`) that the host opts into, and turns on Astro's
- * `serverIslands` experimental flag when requested.
+ * `client:wasm`) that the host opts into, and (in `astro dev`) registers
+ * the boundary inspector as a dev-toolbar app.
  *
  * @module
  */
@@ -36,8 +36,8 @@ import {
 /**
  * Options passed to {@link integration} from `astro.config.mjs`. Every
  * field is optional; omitted features fall back to conservative
- * defaults (detect enabled, stream/llm/gpu enabled, workers/wasm/server
- * islands opt-in).
+ * defaults (detect enabled, stream/llm/gpu enabled, workers/wasm
+ * opt-in).
  */
 export interface IntegrationConfig {
   /** Overrides passed through to `@czap/vite`'s plugin. */
@@ -58,7 +58,13 @@ export interface IntegrationConfig {
   readonly exclude?: readonly string[];
   /** Enable the inline detect script (default `true`). */
   readonly detect?: boolean;
-  /** Turn on Astro's experimental server-islands flag (default `false`). */
+  /**
+   * @deprecated No-op. Server Islands is stable in Astro (since v5); there is
+   * no experimental flag to toggle on Astro 6. Using `server:defer` with a
+   * configured adapter is all that's needed — czap does nothing here. This
+   * option is retained only so existing configs keep type-checking; it will
+   * be removed in a future major.
+   */
   readonly serverIslands?: boolean;
   /** WASM runtime configuration. */
   readonly wasm?: { readonly enabled?: boolean; readonly path?: string };
@@ -76,8 +82,9 @@ export interface IntegrationConfig {
   /** LLM streaming runtime configuration. */
   readonly llm?: { readonly enabled?: boolean };
   /**
-   * Dev-only boundary inspector overlay (default enabled in `astro dev`).
-   * Pass `false` to opt out of the Alt+Shift+C overlay.
+   * Dev-only boundary inspector (default enabled in `astro dev`). Registered
+   * as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
+   * `false` to skip registering the toolbar app.
    */
   readonly inspector?: boolean;
   /** Security policies applied to runtime fetch/HTML boundaries. */
@@ -238,23 +245,13 @@ boot();
 document.addEventListener('astro:after-swap', boot);
 `.trim();
 
-const INSPECTOR_LOADER_SCRIPT = `
-import { installInspectorLoader } from '@czap/astro/runtime/inspector-loader';
-
-if (!window.__CZAP_OFF__) installInspectorLoader();
-`.trim();
-
-/**
- * Build an `updateConfig` payload that toggles a single experimental flag
- * not yet present in Astro's declared `experimental` shape.
- *
- * The `experimental` field on `AstroConfig` is strictly keyed, so adding
- * an unknown flag requires a widening bridge. Containing that bridge
- * here keeps the cast off individual call sites.
- */
-function withExperimentalFlag(flag: string, value: boolean): { experimental: Record<string, unknown> } {
-  return { experimental: { [flag]: value } };
-}
+// Inline SVG for the dev-toolbar inspector icon (a boundary/threshold glyph).
+// Astro's `addDevToolbarApp` accepts an inline SVG string for `icon`.
+const INSPECTOR_TOOLBAR_ICON =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+  'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>' +
+  '<line x1="15" y1="3" x2="15" y2="21"/></svg>';
 
 // ---------------------------------------------------------------------------
 // Integration
@@ -282,7 +279,6 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   const runtimeToggles = resolveIntegrationToggles(config);
   publishIntegrationToggles(runtimeToggles);
   const detectEnabled = runtimeToggles.detectEnabled;
-  const serverIslandsEnabled = config?.serverIslands === true;
   const workersEnabled = runtimeToggles.workersEnabled;
   const coep = runtimeToggles.coep;
   const gpuEnabled = config?.gpu?.enabled !== false;
@@ -312,7 +308,14 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     name: '@czap/astro',
 
     hooks: {
-      'astro:config:setup': ({ updateConfig, addClientDirective, injectScript, logger, command }) => {
+      'astro:config:setup': ({
+        updateConfig,
+        addClientDirective,
+        addDevToolbarApp,
+        injectScript,
+        logger,
+        command,
+      }) => {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
         logger.info('Setting up @czap integration');
 
@@ -406,18 +409,20 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           logger.info('Injected wasm runtime bootstrap');
         }
 
+        // Register the boundary inspector as a dev-toolbar app (dev only).
+        // Astro mounts the entrypoint in the main page realm and toggles it
+        // from a toolbar icon — no injected page script, no custom hotkey.
         if (command === 'dev' && inspectorEnabled) {
-          injectScript('page', INSPECTOR_LOADER_SCRIPT);
-          logger.info('Injected dev boundary inspector loader');
-        }
-
-        // Configure server islands if enabled.
-        // `serverIslands` is not in Astro 6's declared experimental keys yet;
-        // enablement is delegated via a named bridge so only the one call site
-        // opts out of the declared-config shape.
-        if (serverIslandsEnabled) {
-          updateConfig(withExperimentalFlag('serverIslands', true));
-          logger.info('Enabled server islands');
+          addDevToolbarApp({
+            id: 'czap-inspector',
+            name: 'czap boundaries',
+            icon: INSPECTOR_TOOLBAR_ICON,
+            // Resolved through @czap/astro's package exports so the `development`
+            // condition maps to the TS source in `astro dev` and to `dist` in a
+            // built integration — never a bare `.js` path that misses in dev.
+            entrypoint: '@czap/astro/runtime/inspector-toolbar-app',
+          });
+          logger.info('Registered dev boundary inspector toolbar app');
         }
       },
 

@@ -28,6 +28,7 @@ function runSetup(config?: Parameters<typeof integration>[0], command = 'dev'): 
     command,
     updateConfig: () => {},
     addClientDirective: () => {},
+    addDevToolbarApp: () => {},
     injectScript: (stage: string, content: string) => void scripts.push({ stage, content }),
     logger: { info: () => {} },
   } as never);
@@ -59,15 +60,15 @@ describe('czap({ exclude }) route scope guard', () => {
 
   test('every czap script short-circuits on the flag', () => {
     const scripts = runSetup({ exclude: ['/docs/**'], wasm: { enabled: true } }, 'dev');
-    // detect inline + GPU probe early-return; bootstrap/wasm/inspector gate their effects.
+    // detect inline + GPU probe early-return; bootstrap/wasm gate their effects.
+    // (The inspector is a dev-toolbar app now — registered via addDevToolbarApp,
+    // not an injected page script — so it has no __CZAP_OFF__ seam to assert.)
     const detect = scripts.find((s) => s.content.includes('__CZAP_DETECT__') && s.content.includes('provisional'));
     const probe = scripts.find((s) => s.content.includes('gpuTier'));
     const bootstrap = scripts.find((s) => s.content.includes('bootstrapSlots'));
     const wasm = scripts.find((s) => s.content.includes('configureWasmRuntime'));
-    const inspector = scripts.find((s) => s.content.includes('installInspectorLoader'));
     expect(detect?.content).toContain('if (window.__CZAP_OFF__) return;');
     expect(probe?.content).toContain('if (window.__CZAP_OFF__) return;');
-    expect(inspector?.content).toContain('if (!window.__CZAP_OFF__)');
     // wasm boot() short-circuits on the flag AND re-boots on View-Transition swaps
     // (the kernel must still load after a VT from an excluded landing).
     expect(wasm?.content).toContain('window.__CZAP_OFF__');
