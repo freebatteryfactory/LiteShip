@@ -14,6 +14,74 @@ void main() {
 
 const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
+/**
+ * Read the compiler's emitted shader preamble off the satellite's
+ * `data-czap-boundary` payload. `<Satellite>`/`satelliteAttrs` ride
+ * `glslDeclarations`/`wgslDeclarations` (joined from the build manifest by
+ * content address) so the runtime never hand-types the uniform vocabulary.
+ * Returns `''` when absent or the payload doesn't parse — the directive then
+ * keeps its built-in fallback shader.
+ */
+function readShaderDeclarations(
+  boundaryJson: string | null,
+  key: 'glslDeclarations' | 'wgslDeclarations',
+): string {
+  if (!boundaryJson) return '';
+  try {
+    const parsed = JSON.parse(boundaryJson) as Record<string, unknown>;
+    const value = parsed[key];
+    return typeof value === 'string' ? value : '';
+  } catch {
+    // Malformed payload — the per-element uniform-update handler already warns
+    // (uniform-update-parse-failed); here we silently fall back to no preamble.
+    return '';
+  }
+}
+
+/**
+ * Prepend the compiler's emitted `declarations` preamble (`#define STATE_*` +
+ * `uniform <type> u_*;` lines) into a GLSL ES 3.00 fragment source so the
+ * runtime's uniform vocabulary is the compiler's, never a hand-typed mirror.
+ *
+ * GLSL requires `#version` to be the very first token, so the preamble is
+ * spliced in AFTER the leading `#version` line (and any immediately following
+ * `precision` directive) rather than at the top. Declarations the author's
+ * fragment already declares are dropped to avoid GLSL redeclaration errors —
+ * the compiler's emitted line wins, since it carries the inferred type.
+ */
+export function prependGlslDeclarations(source: string, declarations: string): string {
+  if (!declarations) return source;
+  // Drop any compiler-emitted `uniform … u_name;` whose name the fragment already
+  // declares (a redeclaration is a hard compile error). Identifier match on the
+  // declared name keeps `u_state` from colliding with a default fragment that
+  // declares its own. `#define`s are idempotent across identical text but a
+  // differing value would warn — emit only those the source lacks by name too.
+  const declaredUniforms = new Set(
+    [...source.matchAll(/\buniform\s+\w+\s+(\w+)\s*;/g)].map((m) => m[1]),
+  );
+  const declaredDefines = new Set([...source.matchAll(/#define\s+(\w+)\b/g)].map((m) => m[1]));
+  const keptLines = declarations.split('\n').filter((line) => {
+    const uni = /\buniform\s+\w+\s+(\w+)\s*;/.exec(line);
+    if (uni) return !declaredUniforms.has(uni[1]);
+    const def = /#define\s+(\w+)\b/.exec(line);
+    if (def) return !declaredDefines.has(def[1]);
+    return true; // blank lines / comments pass through
+  });
+  const preamble = keptLines.join('\n');
+  if (!preamble.trim()) return source;
+
+  // Splice after `#version` (mandatory first line) + an optional `precision`
+  // directive, so `#define`/`uniform` land in a legal position.
+  const lines = source.split('\n');
+  let insertAt = 0;
+  if (lines[0]?.trimStart().startsWith('#version')) {
+    insertAt = 1;
+    while (lines[insertAt]?.trimStart().startsWith('precision')) insertAt++;
+  }
+  lines.splice(insertAt, 0, preamble);
+  return lines.join('\n');
+}
+
 function elementGpuLabel(element: HTMLElement): string {
   return (
     element.id || element.getAttribute('data-czap-id') || element.getAttribute('data-czap-satellite') || 'gpu-element'
@@ -96,6 +164,15 @@ function createProgram(
 export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, opts?: Record<string, unknown>): void {
   const elementLabel = elementGpuLabel(el);
   const shaderType = el.getAttribute('data-czap-shader-type') ?? 'glsl';
+  // The compiler's emitted shader preamble rides the boundary payload
+  // (`glslDeclarations` / `wgslDeclarations`). Reading it here lets both the
+  // GLSL and WGSL paths prepend the compiler's OWN uniform vocabulary to the
+  // shader source before compile — so the names the runtime binds (gpu.ts:~372
+  // via canonical `glslIdent`) and the names the compiler emits stay one source.
+  const shaderDeclarations = readShaderDeclarations(
+    el.getAttribute('data-czap-boundary'),
+    shaderType === 'wgsl' ? 'wgslDeclarations' : 'glslDeclarations',
+  );
   const shaderSrc = allowRuntimeEndpointUrl(
     el.getAttribute('data-czap-shader-src'),
     'gpu-shader',
@@ -167,7 +244,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       // Pass `el` (the satellite) so the runtime subscribes to its
       // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
       // live on every crossing.
-      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el);
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
@@ -254,7 +331,16 @@ void main() {
 }`;
     }
 
-    const program = createProgram(webgl, DEFAULT_VERTEX_SHADER, fragSource, elementLabel);
+    // Prepend the compiler's emitted preamble (`#define STATE_*` + `uniform u_*;`)
+    // so the authored fragment can REFERENCE the compiler's uniforms without
+    // hand-typing matching declarations. Redeclarations the fragment already
+    // carries (e.g. the built-in fallback's `u_state`/`u_time`) are dropped, so
+    // prepending is always safe. With declarations present, an authored `@glsl`
+    // boundary's uniform vocabulary reaches `gl.shaderSource` straight from the
+    // compiler — the binding loop below then resolves real `u_*` locations.
+    const fragWithDeclarations = prependGlslDeclarations(fragSource, shaderDeclarations);
+
+    const program = createProgram(webgl, DEFAULT_VERTEX_SHADER, fragWithDeclarations, elementLabel);
     if (!program) return;
 
     webgl.useProgram(program);

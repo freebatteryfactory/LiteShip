@@ -53,6 +53,22 @@ export interface SerializedBoundary {
    * `@wgsl` — optional, so old payloads need no `_version` bump.
    */
   readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Optional emitted GLSL preamble (`GLSLCompileResult.declarations`: state
+   * `#define`s + `uniform <type> u_*;` lines). Joined onto the satellite from the
+   * build manifest's `outputs[].glsl.declarations` — the compiler's OWN uniform
+   * vocabulary, which the `client:gpu` GLSL runtime prepends to the fragment
+   * source before compile. The uniform names the runtime binds and the names the
+   * compiler emits are then two views of one source, never a hand-typed mirror.
+   */
+  readonly glslDeclarations?: string;
+  /**
+   * Optional emitted WGSL preamble (`WGSLCompileResult.declarations`: state
+   * consts + the uniform struct + `@group(0) @binding(0)`). The WGSL analog of
+   * {@link glslDeclarations}, prepended to the shader module before
+   * `createShaderModule`.
+   */
+  readonly wgslDeclarations?: string;
 }
 
 /**
