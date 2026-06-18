@@ -7,7 +7,7 @@
  * @module
  */
 
-import { Diagnostics } from '@czap/core';
+import { Diagnostics, contentAddressOf } from '@czap/core';
 import type { ContentAddress } from '@czap/core';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
 import { ClientHints } from './client-hints.js';
@@ -111,13 +111,21 @@ export interface EdgeHostCacheConfig {
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryConfig>>;
   /**
    * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
-   * knob. Entries are content-addressed and never go stale; deploys that
-   * change boundary content mint a new `ContentAddress` and orphan the old
-   * `boundaryId` x tier keys, which KV stores (and bills) forever unless a
-   * TTL reclaims them. Omit to cache indefinitely.
+   * knob. An entry is keyed by boundary content address, tier, name, and
+   * resolved-theme fingerprint, so it never goes stale for a change in any of
+   * those. (A `compile` whose output also depends on build-time inputs the
+   * boundary id does not cover must vary `prefix` per deploy — see `prefix`.)
+   * Deploys that change boundary content mint a new `ContentAddress` and
+   * orphan the old keys, which KV stores (and bills) forever unless a TTL
+   * reclaims them. Omit to cache indefinitely.
    */
   readonly ttl?: number;
-  /** Optional KV key prefix. */
+  /**
+   * Optional KV key prefix. Doubles as the per-deploy content version for a
+   * bundled `compile`: set it to a hash of compile's output (e.g.
+   * `layout-${fnv1a(compileLayoutCss())}`) when that output depends on
+   * build-time content outside the boundary's own address.
+   */
   readonly prefix?: string;
 }
 
@@ -268,6 +276,16 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
 /** Badness order for the top-level aggregate: a miss anywhere wins. */
 const CACHE_STATUS_RANK = { miss: 0, hit: 1, precompiled: 2 } as const;
 
+/**
+ * Short content fingerprint of a resolved theme, folded into the boundary
+ * cache key. A per-request theme resolver feeds different tokens into
+ * `compile`'s output, so the theme is part of the cached value's identity —
+ * computed from the theme itself, never assumed invariant.
+ */
+function themeFingerprint(theme: ThemeCompileResult): string {
+  return contentAddressOf(theme).replace(/^fnv1a:/, '').slice(0, 12);
+}
+
 async function resolveBoundaryOutputs(
   cache: ReturnType<typeof createBoundaryCache>,
   [name, source]: NormalizedBoundary,
@@ -281,7 +299,11 @@ async function resolveBoundaryOutputs(
   // ContentAddress (same Boundary.make definition) while their @quantize
   // CSS differs — id+tier alone would let the first compile serve both.
   const qualifier = name ?? undefined;
-  const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier, qualifier);
+  // The resolved theme is a real input to a compiled output (compile may bake
+  // theme tokens into the CSS), so its fingerprint joins the cache key — a
+  // per-request theme can never serve another request's theme-baked CSS.
+  const themeFp = context.theme ? themeFingerprint(context.theme) : undefined;
+  const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier, qualifier, themeFp);
   if (cached) {
     return { boundaryId: source.boundaryId, compiledOutputs: cached, cacheStatus: 'hit' };
   }
@@ -291,7 +313,7 @@ async function resolveBoundaryOutputs(
       boundaryId: source.boundaryId,
       ...(name === null ? {} : { boundaryName: name }),
     });
-    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier);
+    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier, themeFp);
     return { boundaryId: source.boundaryId, compiledOutputs, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
@@ -322,6 +344,22 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
       ttl: config.cache.ttl,
       prefix: config.cache.prefix,
     });
+    // The KV key folds the boundary id, tier, name, and resolved theme; a
+    // bundled `compile` whose output depends on build-time content beyond
+    // those (e.g. shared layout CSS) needs a per-deploy content version via
+    // `prefix`. Warn when a compile is configured without one so the
+    // resulting cross-deploy staleness can't ship silently.
+    if (config.cache.prefix === undefined && boundarySources.some(([, s]) => s.compile !== undefined)) {
+      Diagnostics.warnOnce({
+        source: 'czap/edge.host-adapter',
+        code: 'compile-without-content-version',
+        message:
+          'A boundary `compile` callback is configured without a `prefix`. If compile\'s output depends on ' +
+          'build-time content the boundary id does not cover (e.g. shared layout CSS), the cache can serve ' +
+          'stale outputs across deploys that change it. Fix: set `prefix` to a per-deploy hash of compile\'s ' +
+          'output, e.g. `prefix: "layout-" + fnv1a(compileLayoutCss())`.',
+      });
+    }
   }
   const staticThemeConfig = typeof config.theme === 'function' ? undefined : config.theme;
   let compiledStaticTheme: ThemeCompileResult | undefined;

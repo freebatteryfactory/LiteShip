@@ -70,6 +70,23 @@ describe('createBoundaryCache', () => {
     expect(result!.containerQueries).toBe(outputs.containerQueries);
   });
 
+  test('theme fingerprint segregates the cache key — a per-request theme cannot serve another theme CSS', async () => {
+    const kv = createMockKV();
+    const cache = createBoundaryCache(kv);
+    const themedA = { css: ':root { --czap-accent: red; }', propertyRegistrations: '', containerQueries: '' };
+
+    // Cache the output compiled under theme A's fingerprint.
+    await cache.putCompiledOutputs(boundaryId, tierResult, themedA, undefined, 'themeAAA');
+
+    // Same boundary + tier under theme A → hit.
+    expect((await cache.getCompiledOutputs(boundaryId, tierResult, undefined, 'themeAAA'))?.css).toBe(themedA.css);
+    // Same boundary + tier under a DIFFERENT theme → MISS (real-lie #1: theme is
+    // a real input to the cached value, so it belongs IN the key).
+    expect(await cache.getCompiledOutputs(boundaryId, tierResult, undefined, 'themeBBB')).toBeNull();
+    // The un-themed key is distinct from a themed one.
+    expect(await cache.getCompiledOutputs(boundaryId, tierResult, undefined, undefined)).toBeNull();
+  });
+
   test('putCompiledOutputs round-trips the authored aria map', async () => {
     const kv = createMockKV();
     const cache = createBoundaryCache(kv);

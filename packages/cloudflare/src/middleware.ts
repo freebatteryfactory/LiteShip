@@ -37,7 +37,8 @@ export interface CloudflareMiddlewareConfig {
    * Escape hatch for custom hosts without a manifest: the boundary's
    * content address. Must be a real minted id (`Boundary.make(...).id`,
    * `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
-   * fabricated id breaks the never-stale invariant.
+   * fabricated id breaks content-addressing (the cache could then serve a
+   * different boundary's compiled CSS).
    */
   readonly boundaryId?: ContentAddress;
   /**
@@ -51,7 +52,10 @@ export interface CloudflareMiddlewareConfig {
   readonly theme?: EdgeHostAdapterConfig['theme'];
   /**
    * Cache entry TTL in seconds — an eviction/cost knob, not a freshness
-   * knob. Compiled outputs are content-addressed and never go stale; each
+   * knob. An entry is keyed by boundary content address, tier, name, and
+   * resolved-theme fingerprint, so it never goes stale for a change in any of
+   * those. (A shared `compile` whose output also depends on build-time content
+   * the boundary id does not cover must vary `prefix` per deploy.) Each
    * deploy that changes boundary content mints a new `ContentAddress`,
    * orphaning the old `boundaryId` x tier keys. Workers KV has no eviction
    * and bills storage, so set a TTL (e.g. `2592000` = 30 days) to reclaim
