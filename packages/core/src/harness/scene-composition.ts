@@ -38,6 +38,7 @@
 
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
+import { benchNotApplicableMarker } from './bench-marker.js';
 
 /**
  * The lanes a generated check can run in. `unit` checks land in the `.test.ts`
@@ -426,17 +427,13 @@ bench(
 `;
   }
 
-  // Budget check not-applicable (no tickable scene): documented bench stub.
+  // Budget check not-applicable (no tickable scene): typed not-applicable bench
+  // (marker + premise guard), never a comment-only stub.
   const reason =
     benchCheck !== undefined && benchCheck.disposition.status === 'not-applicable'
       ? sanitize(benchCheck.disposition.reason)
       : 'no compileScene-able scene to tick';
-  return `// GENERATED — do not edit by hand
-// per-frame budget (bench lane): EXEMPTED — not-applicable for '${name}'.
-// ${reason}
-// Recorded as a typed exemption, deliberately no empty bench placeholder.
-import 'vitest';
-`;
+  return notApplicableBench(name, reason);
 }
 
 // ---------------------------------------------------------------------------
@@ -506,12 +503,7 @@ ${checkNotes}
 
   return {
     testFile,
-    benchFile: `// GENERATED — do not edit by hand
-// per-frame budget (bench lane): EXEMPTED — not-applicable for '${name}'.
-// ${r}
-// Recorded as a typed exemption, deliberately no empty bench placeholder.
-import 'vitest';
-`,
+    benchFile: notApplicableBench(name, r),
   };
 }
 
@@ -557,4 +549,27 @@ function escapeSingle(s: string): string {
     .replace(/\\/g, '\\\\')
     .replace(/'/g, "\\'")
     .replace(/[\r\n]+/g, ' ');
+}
+
+/**
+ * TYPED not-applicable bench for a sceneComposition capsule with no tickable
+ * scene (e.g. scene.beat-binding — a pre-runtime beat-to-spawn transform). Emits
+ * the machine-readable marker line + a real premise-guard body — never a
+ * comment-only `import 'vitest'` stub (which classifies as a lazy placeholder),
+ * never a `bench.skip`. The driver records a matching `benchExemption` in the
+ * manifest.
+ */
+function notApplicableBench(name: string, reason: string): string {
+  return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). '${name}' has no compileScene-able
+// scene to tick — no frame stream / per-frame loop to time — so instead of a
+// comment-only placeholder this bench is a real PREMISE GUARD.
+bench('${escapeSingle(name)} — bench not-applicable (premise guard)', () => {
+  expect(typeof '${escapeSingle(name)}').toBe('string');
+}, { time: 50 });
+`;
 }

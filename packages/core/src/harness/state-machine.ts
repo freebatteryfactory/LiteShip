@@ -15,8 +15,105 @@
 
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
+import { benchNotApplicableMarker } from './bench-marker.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
+
+/** Inputs presampled from the event arbitrary at module load (see pure-transform). */
+const BENCH_SAMPLE_COUNT = 64;
+
+/** Escape backtick + dollar-brace for a template-literal interpolation site. */
+function escapeBacktick(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+}
+
+/**
+ * TYPED not-applicable bench: the marker line + a real premise-guard body (never
+ * a comment-only stub, never a `bench.skip`). Used when a stateMachine has no
+ * pure-drivable transition to time at compile resolution.
+ */
+function notApplicableBench(name: string, reason: string): string {
+  return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). No pure, perf-sensitive transition
+// resolved for '${name}', so instead of a comment-only placeholder this bench is a
+// real PREMISE GUARD asserting the not-applicable disposition.
+bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
+  expect(typeof '${escapeBacktick(name)}').toBe('string');
+}, { time: 50 });
+`;
+}
+
+/**
+ * REAL bench for a runtime-backed stateMachine (scene.runtime): build the handle
+ * from the pure compiled descriptor in setup, time ONE `tick(dtMs)` per iteration
+ * (the real ECS transition — the same handle the generated test drives), release
+ * in teardown. dtMs derives from the descriptor's fps, the source of truth.
+ */
+function runtimeDriverBench(name: string, d: NonNullable<HarnessContext['runtimeDriver']>): string {
+  return `// GENERATED — do not edit by hand
+import { bench } from 'vitest';
+import { ${d.compileName} } from '${d.compileImport}';
+import { ${d.builderName} } from '${d.builderImport}';
+
+// REAL bench: time the runtime-backed transition — SceneRuntime.build(...).tick(dt).
+// The compiled descriptor is pure data (built once); the handle is built in setup
+// and ticked one frame per iteration, so the loop measures the real ECS tick.
+const compiled = ${d.compileName}();
+const dtMs = 1000 / (compiled as { fps: number }).fps;
+let handle;
+
+bench(
+  \`${escapeBacktick(name)} — tick() throughput\`,
+  async () => {
+    await handle.tick(dtMs);
+  },
+  {
+    time: 2000,
+    setup: async () => {
+      handle = await ${d.builderName}.build(compiled);
+    },
+    teardown: async () => {
+      await handle.release();
+    },
+  },
+);
+`;
+}
+
+/**
+ * REAL bench for a field-driven stateMachine (token-buffer): presample the event
+ * arbitrary the generated test drives, then time `step(initialState, event)` over
+ * the presampled batch — the real transition hot path. Samples are drawn once at
+ * module load (fixed seed) so the timed loop measures `step`, never fast-check.
+ */
+function fieldStepBench(name: string, ctx: HarnessContext): string {
+  const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  return `// GENERATED — do not edit by hand
+import { bench } from 'vitest';
+import * as fc from 'fast-check';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+import { schemaToArbitrary } from '${arbitraryImport}';
+
+// REAL bench: drive the capsule's \`step\` over presampled events — the SAME
+// binding + arbitrary the generated test drives. The seed state is cloned per
+// iteration (step may mutate-and-return its state), and events are presampled
+// once at module load so the timed loop measures \`step\`, never fast-check.
+const cap = ${ctx.bindingName};
+const step = cap.step!;
+const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+const events = fc.sample(arb, { numRuns: ${BENCH_SAMPLE_COUNT}, seed: 0x5eed });
+let i = 0;
+
+bench(\`${escapeBacktick(name)} — step() over canonical events\`, () => {
+  const state = structuredClone(cap.initialState!);
+  step(state as never, events[i++ % events.length] as never);
+}, { time: 500 });
+`;
+}
 
 /** Required driver shape for {@link generateRuntimeDriverTest}. */
 type RuntimeDriver = NonNullable<HarnessContext['runtimeDriver']>;
@@ -141,13 +238,25 @@ export function generateStateMachine(
 ): HarnessOutput {
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
 
-  const benchFile = `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
-
-bench('${cap.name}', () => {
-  // state-machine step with a canonical event
-}, { time: 500 });
-`;
+  // Bench disposition mirrors the test disposition: a runtime-backed machine
+  // benches its real `tick`; a field-driven machine with a derivable event
+  // schema + step benches its real `step`; anything else has no pure transition
+  // to time and emits a TYPED not-applicable bench (marker + premise guard).
+  const fieldRealOnly =
+    ctx.bindingImport !== undefined &&
+    ctx.bindingName !== undefined &&
+    ctx.arbitraryDerivable === true &&
+    ctx.handlersPresent === true;
+  const benchFile =
+    ctx.runtimeDriver !== undefined
+      ? runtimeDriverBench(cap.name, ctx.runtimeDriver)
+      : fieldRealOnly
+        ? fieldStepBench(cap.name, ctx)
+        : notApplicableBench(
+            cap.name,
+            `'${cap.name}': capsule:compile resolved no pure transition to time — neither a ` +
+              `runtime tick driver nor a field-driven (arbitrary-derivable event ✕ step) path.`,
+          );
 
   if (ctx.bindingImport === undefined || ctx.bindingName === undefined) {
     const testFile = `// GENERATED — do not edit by hand

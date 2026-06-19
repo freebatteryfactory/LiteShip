@@ -62,6 +62,7 @@ import {
   generatePolicyGate,
   generateCachedProjection,
   generateSceneComposition,
+  BENCH_NOT_APPLICABLE_RE,
   type HarnessOutput,
   type HarnessContext,
 } from '../packages/core/src/harness/index.js';
@@ -122,6 +123,20 @@ interface ManifestEntry {
     }>;
     readonly gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }>;
   };
+  /**
+   * Set when the capsule's generated bench is a TYPED not-applicable EXEMPTION
+   * rather than a real measurement: the capsule has NO pure, perf-sensitive hot
+   * path to time (its real behavior is an external effect — a process spawn, a
+   * DOM morph — or a not-yet-tickable scene). The generated `.bench.ts` carries
+   * the matching `// BENCH-NOT-APPLICABLE: <reason>` marker line (see
+   * `packages/core/src/harness/bench-marker.ts`); recording the same reason here
+   * makes the exemption a tracked, machine-readable manifest fact a gate can
+   * cross-check against the marker — a real `bench()` body with NO marker AND no
+   * `benchExemption` is a real measurement; a comment-only body with neither is a
+   * LAZY PLACEHOLDER the gate must fail on. Absent for capsules whose bench is a
+   * real measurement.
+   */
+  readonly benchExemption?: { readonly reason: string };
 }
 
 /** The shape written to reports/capsule-manifest.json. */
@@ -1023,6 +1038,14 @@ async function main(): Promise<void> {
     }
     const { testFile, benchFile, integrationFile } = dispatchHarness(d.kind, stub, harnessCtx);
 
+    // Bench disposition: a generated bench carrying the BENCH-NOT-APPLICABLE
+    // marker is a TYPED not-applicable exemption (no pure perf-sensitive path to
+    // time). Lift its reason from the marker — the single source of truth the
+    // harness emitted — into a tracked manifest fact, so a gate can cross-check
+    // the file's marker against this record (and fail a marker/manifest mismatch).
+    const benchMarker = BENCH_NOT_APPLICABLE_RE.exec(benchFile);
+    const benchExemptionReason = benchMarker?.[1]?.trim();
+
     // INTEGRATION-lane file (siteAdapter only): lands under
     // tests/generated/integration/<slug>.test.ts. The plumb-gate scans
     // tests/generated/ recursively, so nested integration files ARE gate-scanned.
@@ -1061,6 +1084,11 @@ async function main(): Promise<void> {
       // coverage links + tracked gaps, recorded as a machine-readable fact (a
       // waiver with teeth, the gaps the owner must see), not just a test comment.
       ...(declaredIntegration !== undefined ? { declaredIntegration } : {}),
+      // TYPED not-applicable bench exemption (marker -> manifest), so a gate can
+      // tell an honest not-applicable bench from a lazy comment-only placeholder.
+      ...(benchExemptionReason !== undefined
+        ? { benchExemption: { reason: benchExemptionReason } }
+        : {}),
     };
     // The generated-artifact triple, with the INTEGRATION file recorded only
     // when the arm emitted one (siteAdapter). Tracking it in the manifest makes

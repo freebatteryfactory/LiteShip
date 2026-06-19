@@ -134,7 +134,49 @@ describe('generateReceiptedMutation', () => {
     expect(testFile).not.toMatch(/it\.skip|test\.skip/);
     expect(testFile).not.toContain("it('");
     expect(testFile).toContain('No capsule binding import was wired');
-    expect(benchFile).toContain("bench('demo.unbound'");
+    // No pure `mutate` core wired → TYPED not-applicable bench: marker + a real
+    // premise-guard `bench()` naming the capsule, never a comment-only stub.
+    expect(benchFile).toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).toContain('demo.unbound');
+    expect(benchFile).toContain('bench(');
+    expect(benchFile).not.toContain('bench.skip');
+  });
+
+  it('emits a REAL mutate() bench when a pure mutate core + round-trippable input are resolved', () => {
+    const cap = defineCapsule({ ...base, name: 'demo.bound' });
+    const { benchFile } = Harness.generateReceiptedMutation(cap, {
+      bindingImport: './bound.js',
+      bindingName: 'boundCapsule',
+      arbitraryImport: './arb.js',
+      contractRoundTrippable: true,
+      mutatePresent: true,
+      faultsDeclared: false,
+    });
+    // REAL bench: imports the binding + arbitrary, presamples, drives `mutate`.
+    expect(benchFile).not.toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).not.toContain('bench.skip');
+    expect(benchFile).toContain('boundCapsule');
+    expect(benchFile).toContain('cap.mutate!');
+    expect(benchFile).toContain('await mutate(samples[');
+    expect(benchFile).toContain('bench(');
+  });
+
+  it('emits a TYPED not-applicable bench carrying the effect-outcome reason', () => {
+    const cap = defineCapsule({ ...base, name: 'demo.effect' });
+    const { benchFile } = Harness.generateReceiptedMutation(cap, {
+      bindingImport: './eff.js',
+      bindingName: 'effCapsule',
+      arbitraryImport: './arb.js',
+      contractRoundTrippable: true,
+      mutatePresent: false,
+      faultsDeclared: false,
+      effectOutcomeReason: 'receipt is the outcome of spawning a process',
+    });
+    expect(benchFile).toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).toContain('effect-outcome');
+    expect(benchFile).toContain('spawning a process');
+    expect(benchFile).toContain('bench(');
+    expect(benchFile).not.toContain('bench.skip');
   });
 
   it('defineCapsule REJECTS a receiptedMutation with neither a mutate core nor an exemption', () => {

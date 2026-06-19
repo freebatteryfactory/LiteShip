@@ -24,8 +24,13 @@ describe('generateStateMachine', () => {
     expect(testFile).toContain('invariant holds');
     expect(testFile).toContain('it.skip');
     expect(testFile).not.toContain('fc.assert');
-    expect(benchFile).toContain("bench('demo.tokenBuffer'");
-    expect(benchFile).toContain('{ time: 500 }');
+    // No binding context → no pure transition to time → TYPED not-applicable
+    // bench: the machine-readable marker + a real premise-guard `bench()` body
+    // naming the capsule, never a comment-only placeholder and never a bench.skip.
+    expect(benchFile).toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).toContain('demo.tokenBuffer');
+    expect(benchFile).toContain('bench(');
+    expect(benchFile).not.toContain('bench.skip');
   });
 
   it('emits runtime-probing property tests wired to the binding when a HarnessContext is supplied', () => {

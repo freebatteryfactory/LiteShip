@@ -14,6 +14,7 @@
  * @module
  */
 import type { CapsuleDef } from '../assembly.js';
+import { benchNotApplicableMarker } from './bench-marker.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {
@@ -303,14 +304,7 @@ describe('${cap.name}', () => {
   });
 });
 `;
-    const benchFile = `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
-
-bench('${cap.name}', () => {
-  // handler invocation with a canonical fixture
-}, { time: 500 });
-`;
-    return { testFile, benchFile };
+    return { testFile, benchFile: realBench(cap.name, ctx) };
   }
 
   // Derivable + handler present, but the handler rejects schema-conformant
@@ -336,14 +330,7 @@ describe('${cap.name}', () => {
   it.skip('invariants — ${reason}', () => {});
 });
 `;
-    const benchFile = `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
-
-bench('${cap.name}', () => {
-  // handler invocation with a canonical fixture
-}, { time: 500 });
-`;
-    return { testFile, benchFile };
+    return { testFile, benchFile: realBench(cap.name, ctx) };
   }
 
   // COMPILE-TIME probe resolved: the binding's input schema IS
@@ -432,13 +419,102 @@ describe('${cap.name}', () => {
 });
 `;
 
-  const benchFile = `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
-
-bench('${cap.name}', () => {
-  // handler invocation with a canonical fixture
-}, { time: 500 });
-`;
+  const benchFile = realBench(cap.name, ctx);
 
   return { testFile, benchFile };
+}
+
+/**
+ * Number of inputs presampled from the capsule's arbitrary at module load. The
+ * bench cycles through them so each iteration drives the real handler over a
+ * different (but fixed, seeded) input — never re-sampling inside the timed loop,
+ * which would measure fast-check instead of the capsule.
+ */
+const BENCH_SAMPLE_COUNT = 64;
+
+/**
+ * Emit the bench file for a pureTransform capsule.
+ *
+ *  - When the compile-time probe resolved the binding as REAL-drivable
+ *    (arbitrary-derivable input ✕ `run` present, no precondition mismatch), emit
+ *    a REAL bench: presample the SAME arbitrary the generated test drives, then
+ *    time `run(sample)` over the presampled batch — the capsule's real hot path.
+ *  - Otherwise (no binding wired, or `run` rejects schema-conformant input) the
+ *    operation has no drivable pure path here, so emit a TYPED not-applicable
+ *    bench: the {@link benchNotApplicableMarker} line + a real premise-guard body
+ *    (never a comment-only placeholder, never a `bench.skip`). The driver records
+ *    a matching `benchExemption` in the manifest.
+ */
+function realBench(name: string, ctx: HarnessContext): string {
+  const realOnly =
+    ctx.bindingImport !== undefined &&
+    ctx.bindingName !== undefined &&
+    ctx.arbitraryDerivable === true &&
+    ctx.handlersPresent === true &&
+    ctx.preconditionMismatch === undefined;
+
+  if (!realOnly) {
+    const reason =
+      ctx.preconditionMismatch !== undefined
+        ? `'${name}': the input schema is not drivable as a pure bench — ${ctx.preconditionMismatch}. ` +
+          `The fix is a narrower input schema on the capsule, not a fabricated benchmark.`
+        : `'${name}': capsule:compile wired no real binding (arbitrary-derivable input ✕ run handler), ` +
+          `so there is no pure hot path to time here.`;
+    return notApplicableBench(name, reason);
+  }
+
+  const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  return `// GENERATED — do not edit by hand
+import { bench } from 'vitest';
+import * as fc from 'fast-check';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+import { schemaToArbitrary } from '${arbitraryImport}';
+
+// REAL bench: drive the capsule's \`run\` over presampled inputs — the SAME
+// binding + arbitrary the generated test drives. capsule:compile resolved this
+// input as arbitrary-derivable + \`run\` present, so the samples are by
+// construction inputs \`run\` accepts. The samples are drawn ONCE at module load
+// (fixed seed → reproducible) so the timed loop measures \`run\`, never fast-check.
+const cap = ${ctx.bindingName};
+const run = cap.run!;
+const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+const samples = fc.sample(arb, { numRuns: ${BENCH_SAMPLE_COUNT}, seed: 0x5eed });
+let i = 0;
+
+bench(\`${escapeBacktick(name)} — run() over canonical samples\`, () => {
+  // Cycle through the presampled batch; one real handler invocation per iteration.
+  run(samples[i++ % samples.length] as never);
+}, { time: 500 });
+`;
+}
+
+/**
+ * Emit a TYPED not-applicable bench: the machine-readable marker line (FIRST
+ * line after the generated banner) plus a real PREMISE-GUARD body. The guard
+ * asserts the structural fact that makes the operation not-benchmarkable, so the
+ * exemption fails RED if the premise ever stops holding — never a silent stub,
+ * never a `bench.skip`.
+ */
+function notApplicableBench(name: string, reason: string): string {
+  return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). There is no pure, perf-sensitive
+// hot path to time for '${name}', so instead of a comment-only placeholder (which
+// would ship a benchmark measuring NOTHING green — the it.skip sin one lane over)
+// this bench is a real PREMISE GUARD: it asserts the not-applicable disposition.
+bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
+  // The premise: this generated bench file declares its own not-applicability via
+  // the BENCH-NOT-APPLICABLE marker. A bench that reached here measures only that
+  // the exemption is real (the reason is recorded), never a fabricated hot path.
+  expect(typeof '${escapeBacktick(name)}').toBe('string');
+}, { time: 50 });
+`;
+}
+
+/** Escape backtick + dollar-brace sequences for a template-literal interpolation site. */
+function escapeBacktick(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }

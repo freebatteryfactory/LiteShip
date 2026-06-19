@@ -117,9 +117,13 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(testFile).toContain('demoCapsule');
     expect(testFile.toLowerCase()).toContain('not-applicable');
     expect(testFile).not.toMatch(/\b(it|test|describe)\.skip\(/);
-    // Bench lane records the typed exemption, no empty bench stub.
+    // Bench lane records the typed exemption with a machine-readable marker +
+    // a real premise-guard `bench()` body (never a comment-only stub, never a
+    // bench.skip) so a gate can tell it from a lazy placeholder.
+    expect(benchFile).toContain('// BENCH-NOT-APPLICABLE:');
     expect(benchFile.toLowerCase()).toContain('not-applicable');
-    expect(benchFile).not.toContain('bench(');
+    expect(benchFile).toContain('bench(');
+    expect(benchFile).not.toContain('bench.skip');
   });
 
   it('exposes the lane model: SCENE_CHECKS tags each check with its lane', () => {

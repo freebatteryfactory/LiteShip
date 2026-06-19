@@ -16,3 +16,4 @@ export { generatePolicyGate } from './policy-gate.js';
 export { generateCachedProjection } from './cached-projection.js';
 export { generateSceneComposition, SCENE_CHECKS } from './scene-composition.js';
 export type { HarnessLane, SceneCheckDisposition, SceneDriver } from './scene-composition.js';
+export { BENCH_NOT_APPLICABLE_MARKER, BENCH_NOT_APPLICABLE_RE, benchNotApplicableMarker } from './bench-marker.js';

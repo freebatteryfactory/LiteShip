@@ -35,6 +35,10 @@
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessLane } from './scene-composition.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
+import { benchNotApplicableMarker } from './bench-marker.js';
+
+/** Inputs presampled from the round-trip arbitrary at module load. */
+const BENCH_SAMPLE_COUNT = 64;
 
 /**
  * Resolution of one declared siteAdapter check. Either the check is WIRED real
@@ -111,7 +115,7 @@ export function generateSiteAdapter(
 
   return {
     testFile: emitUnitFile(cap.name, ctx.bindingName, ctx.bindingImport, driver),
-    benchFile: emitBenchFile(cap.name),
+    benchFile: emitBenchFile(cap.name, ctx.bindingName, ctx.bindingImport, driver),
     integrationFile: emitIntegrationFile(cap.name, ctx.bindingName, ctx.bindingImport, driver),
   };
 }
@@ -284,13 +288,49 @@ describe('${name} (integration: host capability matrix — declared-integration)
 // Bench lane.
 // ---------------------------------------------------------------------------
 
-function emitBenchFile(name: string): string {
+function emitBenchFile(name: string, bindingName: string, bindingImport: string, driver: SiteAdapterDriver): string {
+  // REAL bench: time the pure native -> czap -> native round trip — the SAME
+  // canonical serialization the UNIT round-trip test asserts structure-preserving.
+  // The native fixtures are presampled ONCE at module load from the adapter's
+  // round-trip schema (fixed seed → reproducible), so the timed loop measures the
+  // CanonicalCbor encode + decode, never fast-check.
   return `// GENERATED — do not edit by hand
 import { bench } from 'vitest';
+import * as fc from 'fast-check';
+import { ${bindingName} } from '${bindingImport}';
+import { schemaToArbitrary } from '${driver.arbitraryImport}';
+import { CanonicalCbor } from '${driver.canonicalCborImport}';
+import { decode } from '${driver.cborDecodeImport}';
 
-bench('${name}', () => {
-  // adapter call with a canonical native fixture
+const cap = ${bindingName} as { ${driver.roundTripSchema}: unknown };
+const arb = schemaToArbitrary(cap.${driver.roundTripSchema} as never) as fc.Arbitrary<unknown>;
+const natives = fc.sample(arb, { numRuns: ${BENCH_SAMPLE_COUNT}, seed: 0x5eed });
+let i = 0;
+
+bench(\`${escapeSingle(name)} — native -> czap -> native round trip\`, () => {
+  const native = natives[i++ % natives.length];
+  decode(CanonicalCbor.encode(native));
 }, { time: 500 });
+`;
+}
+
+/**
+ * TYPED not-applicable bench for an unwired siteAdapter (no round-trip schema
+ * resolved): the marker line + a real premise-guard body. Never a comment-only
+ * stub, never a `bench.skip`.
+ */
+function notApplicableBench(name: string, reason: string): string {
+  return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). No arbitrary-derivable round-trip
+// schema resolved for '${name}', so there is no pure path to time — this bench is a
+// real PREMISE GUARD, never a comment-only placeholder.
+bench('${escapeSingle(name)} — bench not-applicable (premise guard)', () => {
+  expect(typeof '${escapeSingle(name)}').toBe('string');
+}, { time: 50 });
 `;
 }
 
@@ -308,7 +348,7 @@ function notWiredOutput(name: string, reason: string): HarnessOutput {
 //   ${r}
 import 'vitest';
 `,
-    benchFile: emitBenchFile(name),
+    benchFile: notApplicableBench(name, reason),
   };
 }
 

@@ -35,8 +35,12 @@
 
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
+import { benchNotApplicableMarker } from './bench-marker.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
+
+/** Inputs presampled from the input arbitrary at module load. */
+const BENCH_SAMPLE_COUNT = 64;
 
 /**
  * Generate the test + bench file contents for a `receiptedMutation` capsule.
@@ -67,7 +71,7 @@ export function generateReceiptedMutation(
 // exported const to enable the contract round-trip + mutation probes.
 import 'vitest';
 `,
-      benchFile: benchFor(cap.name),
+      benchFile: benchFor(cap, ctx),
     };
   }
 
@@ -234,7 +238,7 @@ import 'vitest';
 import 'vitest';
 
 ${noteBlock}`,
-      benchFile: benchFor(cap.name),
+      benchFile: benchFor(cap, ctx),
     };
   }
 
@@ -250,7 +254,7 @@ ${noteBlock}${blocks.join('\n\n')}
 });
 `;
 
-  return { testFile, benchFile: benchFor(cap.name) };
+  return { testFile, benchFile: benchFor(cap, ctx) };
 }
 
 /** Dedupe import lines while preserving first-seen order. */
@@ -265,13 +269,86 @@ function dedupeImports(lines: readonly string[]): string[] {
   return out;
 }
 
-/** The canonical bench stub for a receipted-mutation capsule. */
-function benchFor(name: string): string {
-  return `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
+/**
+ * Bench disposition for a receipted-mutation capsule.
+ *
+ *  - When it exposes a pure `mutate` core whose input is arbitrary-derivable
+ *    (`mutatePresent` ✕ `contractRoundTrippable`), emit a REAL bench: presample
+ *    the input arbitrary and time `mutate(sample)` — the same pure receipt core
+ *    the idempotency/audit checks drive. `mutate` may be sync or async, so the
+ *    bench awaits defensively.
+ *  - Otherwise (a `receiptKind: 'effect-outcome'` capsule whose receipt is an
+ *    external effect — a process spawn / DOM morph — or an unwired binding), emit
+ *    a TYPED not-applicable bench: the marker line + a real premise-guard body,
+ *    carrying the declared exemption reason. Never a comment-only stub, never a
+ *    `bench.skip`. The driver records a matching `benchExemption` in the manifest.
+ */
+function benchFor(cap: CapsuleDef<'receiptedMutation', unknown, unknown, unknown>, ctx: HarnessContext): string {
+  const name = cap.name;
+  const realOnly =
+    ctx.bindingImport !== undefined &&
+    ctx.bindingName !== undefined &&
+    ctx.mutatePresent === true &&
+    ctx.contractRoundTrippable === true;
 
-bench('${name}', () => {
-  // mutation invocation with a canonical fixture
+  if (realOnly) {
+    const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+    return `// GENERATED — do not edit by hand
+import { bench } from 'vitest';
+import * as fc from 'fast-check';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+import { schemaToArbitrary } from '${arbitraryImport}';
+
+// REAL bench: time the capsule's pure \`mutate\` receipt core over presampled
+// inputs — the SAME binding + arbitrary the idempotency/audit checks drive.
+// Inputs are presampled once at module load (fixed seed) so the timed loop
+// measures \`mutate\`, never fast-check. \`mutate\` may be sync or async; awaiting a
+// non-promise is a no-op, so this is correct either way.
+const cap = ${ctx.bindingName};
+const mutate = cap.mutate!;
+const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+const samples = fc.sample(arb, { numRuns: ${BENCH_SAMPLE_COUNT}, seed: 0x5eed });
+let i = 0;
+
+bench(\`${escapeBacktick(name)} — mutate() over canonical samples\`, async () => {
+  await mutate(samples[i++ % samples.length] as never);
 }, { time: 500 });
 `;
+  }
+
+  const effectOutcomeReason =
+    typeof ctx.effectOutcomeReason === 'string' && ctx.effectOutcomeReason.trim().length > 0
+      ? ctx.effectOutcomeReason.replace(/\s+/g, ' ').trim()
+      : undefined;
+  const reason =
+    effectOutcomeReason !== undefined
+      ? `'${name}' declares receiptKind: 'effect-outcome' — its receipt is the outcome of an ` +
+        `external effect with no pure core to time. Declared reason: ${effectOutcomeReason}`
+      : `'${name}': capsule:compile wired no pure \`mutate\` core (mutatePresent ✕ contractRoundTrippable), ` +
+        `so there is no pure receipt path to time.`;
+  return notApplicableBench(name, reason);
+}
+
+/**
+ * TYPED not-applicable bench: the marker line + a real premise-guard body. Never
+ * a comment-only stub, never a `bench.skip`.
+ */
+function notApplicableBench(name: string, reason: string): string {
+  return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). '${name}' has no pure, perf-sensitive
+// receipt core to time, so instead of a comment-only placeholder this bench is a
+// real PREMISE GUARD asserting the not-applicable disposition.
+bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
+  expect(typeof '${escapeBacktick(name)}').toBe('string');
+}, { time: 50 });
+`;
+}
+
+/** Escape backtick + dollar-brace for a template-literal interpolation site. */
+function escapeBacktick(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 }

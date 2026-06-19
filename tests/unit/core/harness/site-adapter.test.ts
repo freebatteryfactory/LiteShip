@@ -70,7 +70,13 @@ describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
     expect(out.integrationFile ?? '').toContain('host capability');
     // The coverage link's teeth are emitted (the suite ref + needle).
     expect(out.integrationFile ?? '').toContain('tests/integration/demo-host.test.ts');
-    expect(out.benchFile).toContain("bench('demo.wired'");
+    // REAL bench: times the pure native -> czap -> native round trip over the
+    // resolved round-trip schema — no not-applicable marker, no bench.skip.
+    expect(out.benchFile).not.toContain('// BENCH-NOT-APPLICABLE:');
+    expect(out.benchFile).toContain('demo.wired');
+    expect(out.benchFile).toContain('CanonicalCbor.encode');
+    expect(out.benchFile).toContain('decode(');
+    expect(out.benchFile).toContain('bench(');
   });
 
   it('NEVER emits a .skip( in any lane — wired path', () => {

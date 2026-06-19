@@ -28,7 +28,43 @@ describe('generatePureTransformHarness', () => {
     expect(testFile).toContain('schemaToArbitrary');
     expect(testFile).toContain('doubleCapsule');
     expect(testFile).toContain("from '../../packages/demo/src/double.js'");
-    expect(benchFile).toContain("bench('demo.double'");
+    // A binding is present but the compile-time probe (arbitraryDerivable ✕
+    // handlersPresent) was NOT supplied, so the harness cannot safely drive
+    // `run` in a bench — it emits a TYPED not-applicable bench (marker + a real
+    // premise-guard `bench()`), never a comment-only placeholder.
+    expect(benchFile).toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).toContain('demo.double');
+    expect(benchFile).toContain('bench(');
+    expect(benchFile).not.toContain('bench.skip');
+  });
+
+  it('emits a REAL run() bench when the compile-time probe resolved the binding', () => {
+    const cap = defineCapsule({
+      _kind: 'pureTransform',
+      name: 'demo.double',
+      input: Schema.Number,
+      output: Schema.Number,
+      capabilities: { reads: [], writes: [] },
+      invariants: [{ name: 'idempotent-on-zero', check: (i: number, o: number) => i !== 0 || o === 0, message: '' }],
+      budgets: { p95Ms: 1 },
+      site: ['node'],
+    });
+    const { benchFile } = Harness.generatePureTransform(cap, {
+      bindingImport: '../../packages/demo/src/double.js',
+      bindingName: 'doubleCapsule',
+      arbitraryImport: '../../packages/core/src/harness/arbitrary-from-schema.js',
+      arbitraryDerivable: true,
+      handlersPresent: true,
+    });
+    // REAL bench: imports the real binding + arbitrary, presamples once, and
+    // drives `run` over the batch — no not-applicable marker, no bench.skip.
+    expect(benchFile).not.toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).not.toContain('bench.skip');
+    expect(benchFile).toContain('doubleCapsule');
+    expect(benchFile).toContain('schemaToArbitrary');
+    expect(benchFile).toContain('cap.run!');
+    expect(benchFile).toContain('run(samples[');
+    expect(benchFile).toContain('bench(');
   });
 
   it('emits an honest it.skip placeholder when no binding context is supplied', () => {
