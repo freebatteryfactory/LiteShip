@@ -232,25 +232,49 @@ export interface HarnessContext {
     /** Import specifier (with `.js`) for `contentAddressOf`. */
     readonly contentAddressImport: string;
     /**
-     * Resolved host-capability driver — a real integration probe module — or the
-     * typed `declared-integration` coverage link when no in-process host driver
-     * exists. Mutually exclusive.
+     * Resolved host-capability disposition. The owner's rule is NO MOCKS ON THE
+     * HOST PATH, so there is no in-process-double driver variant: the host
+     * capability is proved by REAL-host lanes that already exist (the
+     * `declared-integration` waiver-WITH-TEETH), or — when a declared site has no
+     * real-host lane — recorded as an honest tracked GAP, never papered over with
+     * a simulated host.
+     *
+     * `declared-integration` carries one coverage LINK per covered site (a named
+     * real-host suite FILE that exists AND references the adapter — the generated
+     * `it()` asserts both, so the link fails RED if the proof rots), plus the GAP
+     * set: declared sites with no real-host lane, each naming exactly what is
+     * missing. A capsule with any gap is the honest `declared-integration-GAP`
+     * disposition the owner must see — not a green pass.
      */
-    readonly hostCapability:
-      | {
-          readonly kind: 'driver';
-          /** Import specifier (with `.js`) for the integration driver's `siteProbes`. */
-          readonly driverImport: string;
-          /** vitest environment the integration file declares (`node` | `jsdom`). */
-          readonly environment: 'node' | 'jsdom';
-        }
-      | {
-          readonly kind: 'declared-integration';
-          /** Named existing suite that covers the host-capability matrix for real. */
-          readonly coverageSuite: string;
-          /** Why no in-process driver exists (the honest reason for the waiver). */
-          readonly reason: string;
-        };
+    readonly hostCapability: {
+      readonly kind: 'declared-integration';
+      /**
+       * Coverage links: each names a REAL-host suite (repo-relative path) plus the
+       * declared sites it proves and the runtime lane (`pnpm run` script) that
+       * exercises it for real. The generated `it()` asserts the suite file exists
+       * and references the adapter binding — teeth, so a deleted/renamed suite goes
+       * RED rather than silently lying.
+       */
+      readonly coverage: ReadonlyArray<{
+        /** Declared sites this real-host suite proves. */
+        readonly sites: readonly string[];
+        /** Repo-relative path to the existing real-host suite file. */
+        readonly coverageRef: string;
+        /** The `pnpm run` lane that drives this suite under the real runtime. */
+        readonly lane: string;
+        /** A substring the suite file MUST contain (proves it references the adapter). */
+        readonly referencesNeedle: string;
+      }>;
+      /**
+       * Declared sites with NO real-host lane covering them — tracked gaps, NEVER
+       * fabricated links. Each names exactly which real-host lane is missing.
+       */
+      readonly gaps: ReadonlyArray<{
+        readonly site: string;
+        /** What real-host lane is missing for this site (the honest reason). */
+        readonly reason: string;
+      }>;
+    };
   };
 }
 

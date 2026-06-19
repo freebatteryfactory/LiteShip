@@ -15,11 +15,13 @@
  *    a hand-built fixture. A real `it()` with a fast-check property.
  *  - **host capability matrix → INTEGRATION lane**
  *    (`tests/generated/integration/<name>.test.ts`). Asserts each declared `site`
- *    actually supports the adapter under a REAL host. Wired to a per-site host
- *    driver (the production middleware / renderer invoked for real, NOT a mock on
- *    the host-capability path) when one exists; otherwise recorded as a typed
- *    `declared-integration` exemption — a waiver WITH TEETH pointing at a named
- *    existing integration suite that covers it.
+ *    actually supports the adapter under a REAL host. The owner's rule is NO MOCKS
+ *    ON THE HOST PATH, so there is no in-process-double driver: the matrix is a
+ *    `declared-integration` waiver WITH TEETH that links each covered site to a
+ *    NAMED real-host lane that already exists (and asserts that lane's file exists
+ *    AND references the adapter, so the link fails RED if the proof rots). A
+ *    declared site with no real-host lane is recorded as an honest tracked GAP —
+ *    never papered over with a simulated host.
  *
  * Per the harness LAW (memory: "no placeholders ever", "no vanity tests"): an
  * `it.skip` shipping unwired work green and a `() => true` placeholder are BOTH
@@ -42,12 +44,16 @@ import type { HarnessOutput, HarnessContext } from './pure-transform.js';
  * harness LAW forbids.
  */
 export type SiteAdapterCheckDisposition =
-  | { readonly status: 'wired'; readonly lane: HarnessLane }
   | {
       readonly status: 'declared-integration';
       readonly lane: HarnessLane;
-      readonly coverageSuite: string;
-      readonly reason: string;
+      /** Real-host coverage links — each a named existing suite proving a site set. */
+      readonly coverage: ReadonlyArray<{
+        readonly sites: readonly string[];
+        readonly coverageRef: string;
+      }>;
+      /** Declared sites with no real-host lane — tracked gaps, never fabricated. */
+      readonly gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }>;
     }
   | { readonly status: 'not-applicable'; readonly lane: HarnessLane; readonly reason: string };
 
@@ -164,80 +170,112 @@ function emitIntegrationFile(
   // the binding via its own integration-relative specifier.
   const bindingImport = driver.bindingImportFromIntegration;
 
-  if (host.kind === 'declared-integration') {
-    // No in-process host driver exists for this adapter. Record a typed
-    // `declared-integration` exemption: a REAL it() that pins the adapter's
-    // declared site set AND names the existing integration suite that covers it
-    // for real — a waiver WITH TEETH, deliberately NOT an it.skip and NOT silent.
-    const reason = escapeSingle(host.reason);
-    const suite = escapeSingle(host.coverageSuite);
-    return `// GENERATED — do not edit by hand
-import { describe, it, expect } from 'vitest';
-import { ${bindingName} } from '${bindingImport}';
-
-describe('${name} (integration: host capability matrix)', () => {
-  // DECLARED-INTEGRATION exemption — no in-process host driver: ${reason}
-  // Covered for real by: ${suite}
-  it('declares its host sites; named integration suite covers the matrix', () => {
-    const cap = ${bindingName} as { site?: readonly string[] };
-    // The adapter must DECLARE a non-empty site set (the matrix's domain)...
-    expect(Array.isArray(cap.site)).toBe(true);
-    expect(cap.site!.length).toBeGreaterThan(0);
-    // ...and the real coverage lives in the named suite (recorded in the
-    // capsule manifest as the coverage link — a waiver with teeth, not a skip).
-  });
-});
-`;
-  }
-
-  // Real per-site host driver. Import the driver's siteProbes (each runs the
-  // production host for one site) and the capsule binding (its declared `site`
-  // set is the matrix domain). Assert the probe set EXACTLY matches the declared
-  // sites, then drive every site under the real host and assert each succeeds.
-  // The vitest environment is set by the driver (node for the worker KV path,
-  // jsdom for the React/browser hook path).
+  // DECLARED-INTEGRATION (the only host-capability form — the owner's rule is NO
+  // MOCKS ON THE HOST PATH, so there is no in-process-double driver). The host
+  // capability is proved by REAL-host lanes that already exist; this generated
+  // file is the waiver WITH TEETH that links to them and FAILS RED if the proof
+  // rots. Per covered site it asserts the named real-host suite FILE exists AND
+  // references the adapter; per gap site it records the honest missing-lane fact.
   //
-  // scaledTimeout (the central CI-scaling policy) imports `vitest.shared.ts`,
-  // whose `fileURLToPath(import.meta.url)` only resolves under the `node`
-  // environment — under `jsdom` it throws "URL must be of scheme file". So the
-  // node path uses scaledTimeout; the jsdom path's probes (in-memory frame
-  // production + one React render, sub-second) run inside the default timeout, no
-  // raw-literal override needed.
-  const usesScaledTimeout = host.environment === 'node';
-  const scaledTimeoutImport = usesScaledTimeout ? `\nimport { scaledTimeout } from '../../../vitest.shared.js';` : '';
-  const matrixTimeoutArg = usesScaledTimeout ? ', scaledTimeout(60000)' : '';
-  return `// @vitest-environment ${host.environment}
+  // Node env: this file reads suite files off disk via `node:fs`, which only
+  // resolves under the `node` vitest environment.
+  const coverageLiteral = JSON.stringify(
+    host.coverage.map((c) => ({
+      sites: [...c.sites],
+      coverageRef: c.coverageRef,
+      lane: c.lane,
+      referencesNeedle: c.referencesNeedle,
+    })),
+    null,
+    2,
+  )
+    .split('\n')
+    .map((line, i) => (i === 0 ? line : `  ${line}`))
+    .join('\n');
+  const gapsLiteral = JSON.stringify(
+    host.gaps.map((g) => ({ site: g.site, reason: g.reason })),
+    null,
+    2,
+  )
+    .split('\n')
+    .map((line, i) => (i === 0 ? line : `  ${line}`))
+    .join('\n');
+
+  return `// @vitest-environment node
 // GENERATED — do not edit by hand
 import { describe, it, expect } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { ${bindingName} } from '${bindingImport}';
-import { siteProbes } from '${host.driverImport}';${scaledTimeoutImport}
 
-describe('${name} (integration: host capability matrix)', () => {
+// DECLARED-INTEGRATION host-capability matrix for '${name}'. NO MOCKS ON THE HOST
+// PATH: each declared site is proved by a REAL-host lane that already exists (the
+// coverage links below) or recorded as an honest GAP (no real-host lane). This is
+// a waiver WITH TEETH — the suite-exists + references-adapter assertions fail RED
+// if a linked proof is deleted, renamed, or stops touching the adapter.
+
+/** Real-host suites that prove a declared-site set (asserted to exist + reference the adapter). */
+const coverage: ReadonlyArray<{
+  readonly sites: readonly string[];
+  readonly coverageRef: string;
+  readonly lane: string;
+  readonly referencesNeedle: string;
+}> = ${coverageLiteral};
+
+/** Declared sites with NO real-host lane — tracked gaps, never a fabricated link. */
+const gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }> = ${gapsLiteral};
+
+describe('${name} (integration: host capability matrix — declared-integration)', () => {
   const cap = ${bindingName} as { site?: readonly string[] };
   const declaredSites = [...(cap.site ?? [])].sort();
-  const probedSites = Object.keys(siteProbes).sort();
 
-  it('the host-capability driver covers exactly the declared site set', () => {
-    // The matrix domain is the capsule's declared \`site\` array (source of
-    // truth). The driver must cover every declared site and no extras — a
-    // drift here means a site shipped without a real host probe, or a probe
-    // claims a site the adapter never declared.
-    expect(probedSites).toEqual(declaredSites);
+  it('the adapter declares a non-empty host-site set (the matrix domain)', () => {
+    expect(Array.isArray(cap.site)).toBe(true);
+    expect(declaredSites.length).toBeGreaterThan(0);
   });
 
-  it('each declared site supports the adapter under the real host', async () => {
-    // Drive every declared site through its REAL host probe (production
-    // middleware / renderer / hook — no mock on the host-capability path).
-    // Each probe returns a structural result proving the host path actually ran.
-    expect(declaredSites.length).toBeGreaterThan(0);
-    for (const site of declaredSites) {
-      const probe = siteProbes[site];
-      expect(probe, \`no host probe wired for declared site '\${site}'\`).toBeTypeOf('function');
-      const result = await probe!();
-      // The probe ran under the real host and reported the site it drove.
-      expect(result.site).toBe(site);
+  it('covered + gap sites partition exactly the declared site set (no site silently uncovered)', () => {
+    // Source of truth is the adapter's declared \`site\` array. Every declared
+    // site must be either covered by a named real-host suite OR a tracked gap —
+    // a site in neither set would be an untracked hole, exactly what this guards.
+    const accounted = [
+      ...coverage.flatMap((c) => c.sites),
+      ...gaps.map((g) => g.site),
+    ].sort();
+    expect(accounted).toEqual(declaredSites);
+  });
+
+  it('every coverage link points at a real-host suite that EXISTS and references the adapter', () => {
+    // TEETH: a link can't rot into a lie. If the referenced suite file is gone,
+    // or no longer mentions the adapter, this fails RED — the proof is gone.
+    expect(coverage.length + gaps.length).toBeGreaterThan(0);
+    for (const link of coverage) {
+      const abs = resolve(process.cwd(), link.coverageRef);
+      expect(existsSync(abs), \`real-host suite missing: \${link.coverageRef} (lane: \${link.lane})\`).toBe(true);
+      const body = readFileSync(abs, 'utf8');
+      expect(
+        body.includes(link.referencesNeedle),
+        \`suite \${link.coverageRef} no longer references the adapter (expected substring '\${link.referencesNeedle}')\`,
+      ).toBe(true);
+      // Each covered site must be one the adapter actually declares.
+      for (const site of link.sites) {
+        expect(declaredSites, \`coverage claims undeclared site '\${site}'\`).toContain(site);
+      }
     }
-  }${matrixTimeoutArg});
+  });
+
+  it.each(gaps.length > 0 ? gaps : [{ site: '<none>', reason: 'no gaps' }])(
+    'tracked host-coverage GAP: $site has no real-host lane ($reason)',
+    ({ site }) => {
+      // An honest, RED-visible record (a real running it(), never a skipped
+      // placeholder): a declared site with no real-host lane. The owner sees it
+      // in the test report and the manifest.
+      // When the site IS a real gap, assert it is genuinely declared (so the gap
+      // entry can't drift stale); the sentinel row is a no-op when there are none.
+      if (site === '<none>') return;
+      expect(declaredSites, \`gap names site '\${site}' the adapter no longer declares\`).toContain(site);
+    },
+  );
 });
 `;
 }

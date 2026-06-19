@@ -97,6 +97,31 @@ interface ManifestEntry {
    * capsules with a pure `mutate` core (their real checks are the proof).
    */
   readonly effectOutcomeExemption?: string;
+  /**
+   * siteAdapter only: the `declared-integration` host-capability proof, recorded
+   * as a tracked manifest fact (a waiver WITH TEETH — points at real proof, fails
+   * RED if that proof's file disappears). The owner's rule is NO MOCKS ON THE HOST
+   * PATH, so the host capability is proved by the lanes that already run the REAL
+   * runtime, linked here per declared site.
+   *
+   *  - `sites`        — the adapter's declared host-site set (the matrix domain).
+   *  - `coverageRef`  — the PRIMARY real-host suite path, or `null` when EVERY
+   *    declared site is an uncovered gap (an honest, visible no-real-host state).
+   *  - `coverage`     — every real-host coverage link: which sites it proves, the
+   *    suite file, and the `pnpm run` lane that drives it under the real runtime.
+   *  - `gaps`         — declared sites with NO real-host lane (tracked, never a
+   *    fabricated link) — the gaps the owner must see, not papered over.
+   */
+  readonly declaredIntegration?: {
+    readonly sites: readonly string[];
+    readonly coverageRef: string | null;
+    readonly coverage: ReadonlyArray<{
+      readonly sites: readonly string[];
+      readonly coverageRef: string;
+      readonly lane: string;
+    }>;
+    readonly gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }>;
+  };
 }
 
 /** The shape written to reports/capsule-manifest.json. */
@@ -391,48 +416,83 @@ const STATE_MACHINE_DRIVERS: Readonly<Record<string, StateMachineDriverSpec>> = 
 };
 
 /**
- * Host-capability driver registry for `siteAdapter` capsules — the siteAdapter
- * analogue of {@link SCENE_DRIVERS}. The host-capability-matrix check (INTEGRATION
- * lane) must drive each declared `site` under a REAL host. Adapter-specific host
- * logic does NOT live in the generic harness; it lives in a per-capsule
- * integration driver under `tests/support/site-adapter-integration/<name>.ts`
- * that exports `siteProbes` (one real host probe per declared site). This map
- * names that driver + the vitest environment its probes need.
+ * Real-host coverage registry for `siteAdapter` capsules. The host-capability
+ * matrix (INTEGRATION lane) must prove each declared `site` supports the adapter
+ * under a REAL host. The owner's rule is NO MOCKS ON THE HOST PATH, so the proof
+ * does NOT come from an in-process double living beside the harness — it comes
+ * from the lanes that already run the REAL runtime. This map links each capsule's
+ * declared sites to those existing real-host suites (`declared-integration`, a
+ * waiver WITH TEETH), and records any declared site that has NO real-host lane as
+ * an honest `gap` — never a fabricated link.
  *
- * `environment`: the integration file declares `// @vitest-environment <env>`.
- * The cloudflare worker-KV path runs under `node` (the `cloudflare:workers`
- * virtual module resolves only off the jsdom transform); the remotion path needs
- * `jsdom` for its React/browser hook probe.
- *
- * A capsule NOT listed here resolves a `declared-integration` exemption instead —
- * a typed coverage link (waiver with teeth) pointing at a named existing suite.
- * The driver module MUST cover exactly the capsule's declared `site` set; the
- * generated integration test asserts that equality, so a drifted driver fails RED.
+ * Each coverage link names: the declared `sites` it proves, the repo-relative
+ * `coverageRef` suite FILE that proves them, the `pnpm run` `lane` that drives
+ * that suite under the real runtime, and a `referencesNeedle` substring the suite
+ * must contain (proof it actually references the adapter). The generated test
+ * asserts the file exists and contains the needle — so a deleted/renamed/drifted
+ * suite fails RED rather than silently lying. `coverage ∪ gaps` MUST partition the
+ * declared site set exactly; the generated test asserts that too.
  */
-interface SiteAdapterDriverSpec {
-  /**
-   * Repo-relative path to the integration driver module exporting `siteProbes`
-   * (resolved to a `.js` import specifier relative to the generated test file).
-   */
-  readonly driverModule: string;
-  /** vitest environment the integration file declares. */
-  readonly environment: 'node' | 'jsdom';
+interface SiteAdapterIntegrationSpec {
+  readonly coverage: ReadonlyArray<{
+    /** Declared sites this real-host suite proves. */
+    readonly sites: readonly string[];
+    /** Repo-relative path to the existing real-host suite file. */
+    readonly coverageRef: string;
+    /** The `pnpm run` lane that drives this suite under the real runtime. */
+    readonly lane: string;
+    /** A substring the suite file MUST contain (proof it references the adapter). */
+    readonly referencesNeedle: string;
+  }>;
+  /** Declared sites with NO real-host lane — tracked gaps, never fabricated. */
+  readonly gaps: ReadonlyArray<{ readonly site: string; readonly reason: string }>;
 }
-const SITE_ADAPTER_DRIVERS: Readonly<Record<string, SiteAdapterDriverSpec>> = {
-  // packages/cloudflare — sites ['edge','worker']. Driver drives the production
-  // cloudflareMiddleware end to end (build-derived manifest for the edge tier; a
-  // real workerd-shaped KV namespace for the worker tier). Node env: the
-  // `cloudflare:workers` virtual import only resolves off the jsdom transform.
+const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationSpec>> = {
+  // packages/cloudflare — sites ['edge','worker']. Both tiers are proved by the
+  // `test:cloudflare` real-host lane (scripts/test-cloudflare-astro.ts): a REAL
+  // @astrojs/cloudflare Workers SSR build + `czap doctor --target cloudflare`,
+  // followed by tests/integration/cloudflare-edge-pipeline.test.ts driving the
+  // production `cloudflareMiddleware` end to end through BOTH the precompiled-
+  // boundary edge tier (no KV traffic) and the compile-escape-hatch worker tier
+  // (content-addressed KV get/put through the env binding). That pipeline suite —
+  // run by `pnpm run test:cloudflare`, NOT the generic vitest pass — is the real
+  // proof; it references `cloudflareMiddleware` directly.
   'cloudflare.workers-kv-boundary': {
-    driverModule: 'tests/support/site-adapter-integration/cloudflare-workers-kv-boundary.ts',
-    environment: 'node',
+    coverage: [
+      {
+        sites: ['edge', 'worker'],
+        coverageRef: 'tests/integration/cloudflare-edge-pipeline.test.ts',
+        lane: 'pnpm run test:cloudflare',
+        referencesNeedle: 'cloudflareMiddleware',
+      },
+    ],
+    gaps: [],
   },
-  // packages/remotion — sites ['node','browser']. Driver drives precomputeFrames
-  // over a real VideoRenderer (node) + the real Provider/useCzapState React hook
-  // through Remotion's context (browser). jsdom env for the React render.
+  // packages/remotion — sites ['node','browser']. The 'node' frame-production
+  // path (precomputeFrames over a real VideoRenderer/Compositor) is proved for
+  // real by tests/unit/remotion/remotion.test.ts, which imports the adapter and
+  // drives precomputeFrames under the production renderer. The 'browser' hook
+  // path (Provider + useCzapState) has NO real-browser lane — only jsdom — so it
+  // is recorded as an honest GAP, not papered over with a simulated host.
   'remotion.video-frame-output': {
-    driverModule: 'tests/support/site-adapter-integration/remotion-video-frame-output.ts',
-    environment: 'jsdom',
+    coverage: [
+      {
+        sites: ['node'],
+        coverageRef: 'tests/unit/remotion/remotion.test.ts',
+        lane: 'pnpm run test:unit',
+        referencesNeedle: 'precomputeFrames',
+      },
+    ],
+    gaps: [
+      {
+        site: 'browser',
+        reason:
+          'no real-browser render lane exercises the adapter Provider + useCzapState hook — ' +
+          'only jsdom (tests/unit/remotion/remotion.test.ts) covers the React-host surface, and ' +
+          'jsdom is a simulated host. A real-browser lane (vitest browser-mode under tests/browser/ ' +
+          'or a Playwright e2e rendering the Remotion <Provider>) is missing.',
+      },
+    ],
   },
 };
 
@@ -716,6 +776,10 @@ async function main(): Promise<void> {
       d.declSource !== undefined;
 
     let harnessCtx: HarnessContext | undefined;
+    // siteAdapter only: the declared-integration host-capability proof, hoisted to
+    // loop scope so it survives the harness-context block and reaches the manifest
+    // entry construction below.
+    let declaredIntegration: ManifestEntry['declaredIntegration'];
     if (
       d.binding !== undefined &&
       (d.factory === undefined || factoryBindable || cachedProjectionBindable)
@@ -815,16 +879,20 @@ async function main(): Promise<void> {
       // ADDITIVE siteAdapter branch — independent of every path above. The
       // siteAdapter harness needs (a) which of the adapter's schemas the pure
       // round-trip samples and the CanonicalCbor / contentAddressOf import
-      // specifiers (UNIT lane), and (b) the per-site host driver or a typed
-      // declared-integration coverage link (INTEGRATION lane). The integration
-      // file lands one level deeper (tests/generated/integration/<slug>.test.ts),
-      // so its imports are resolved relative to THAT dir, not dirname(testPath).
+      // specifiers (UNIT lane), and (b) the `declared-integration` host-capability
+      // proof — real-host coverage links + tracked gaps (INTEGRATION lane). The
+      // integration file lands one level deeper (tests/generated/integration/
+      // <slug>.test.ts), so its imports are resolved relative to THAT dir.
       let siteAdapter: HarnessContext['siteAdapter'];
       if (d.kind === 'siteAdapter') {
         const moduleUrl = pathToFileURL(resolve(d.file)).href;
         const mod = (await import(moduleUrl)) as Record<string, unknown>;
         const cap = mod[d.binding] as
-          | { input?: { ast?: { _tag?: string } }; output?: { ast?: { _tag?: string } } }
+          | {
+              input?: { ast?: { _tag?: string } };
+              output?: { ast?: { _tag?: string } };
+              site?: readonly string[];
+            }
           | undefined;
         const roundTripSchema = cap !== undefined ? resolveRoundTripSchema(cap) : undefined;
         if (roundTripSchema !== undefined) {
@@ -838,22 +906,39 @@ async function main(): Promise<void> {
           const cborAbs = resolve('packages/canonical/src/cbor-decode.ts');
           const cborEncodeAbs = resolve('packages/core/src/cbor.ts');
 
-          const spec = SITE_ADAPTER_DRIVERS[d.resolvedName];
+          // Resolve the declared-integration host-capability proof. A registered
+          // entry names real-host coverage links + tracked gaps; an UNregistered
+          // siteAdapter has NO real-host proof at all, so EVERY declared site is an
+          // honest gap (never a fabricated link).
+          const spec = SITE_ADAPTER_INTEGRATIONS[d.resolvedName];
+          const declaredSites = [...(cap?.site ?? [])];
           const hostCapability: NonNullable<HarnessContext['siteAdapter']>['hostCapability'] =
             spec !== undefined
-              ? {
-                  kind: 'driver' as const,
-                  driverImport: rel(resolve(spec.driverModule)),
-                  environment: spec.environment,
-                }
+              ? { kind: 'declared-integration' as const, coverage: spec.coverage, gaps: spec.gaps }
               : {
                   kind: 'declared-integration' as const,
-                  coverageSuite:
-                    'no named integration suite registered for this siteAdapter — register one in SITE_ADAPTER_DRIVERS',
-                  reason:
-                    `'${d.resolvedName}' has no registered in-process host driver, so the host-capability ` +
-                    `matrix cannot be driven from the generated harness.`,
+                  coverage: [],
+                  gaps: declaredSites.map((site) => ({
+                    site,
+                    reason:
+                      `'${d.resolvedName}' has no real-host coverage registered in ` +
+                      `SITE_ADAPTER_INTEGRATIONS, so this declared site has no real-host lane proving it.`,
+                  })),
                 };
+          // Tracked manifest fact: the declared-integration coverage map (the
+          // waiver-with-teeth recorded as machine-readable data, not just a
+          // generated-test comment). `coverageRef` is the primary real-host suite
+          // (or null when every site is a gap — an honest, visible no-proof state).
+          declaredIntegration = {
+            sites: declaredSites,
+            coverageRef: hostCapability.coverage[0]?.coverageRef ?? null,
+            coverage: hostCapability.coverage.map((c) => ({
+              sites: [...c.sites],
+              coverageRef: c.coverageRef,
+              lane: c.lane,
+            })),
+            gaps: hostCapability.gaps.map((g) => ({ site: g.site, reason: g.reason })),
+          };
 
           siteAdapter = {
             roundTripSchema,
@@ -968,10 +1053,15 @@ async function main(): Promise<void> {
     // The TYPED escape-hatch waiver, recorded as a tracked manifest fact (not
     // just a generated-test comment): a receiptedMutation that declared
     // `receiptKind: 'effect-outcome'` surfaces its reason here.
-    const exemption =
-      harnessCtx?.effectOutcomeReason !== undefined
+    const exemption = {
+      ...(harnessCtx?.effectOutcomeReason !== undefined
         ? { effectOutcomeExemption: harnessCtx.effectOutcomeReason }
-        : {};
+        : {}),
+      // siteAdapter only: the declared-integration host-capability proof — real
+      // coverage links + tracked gaps, recorded as a machine-readable fact (a
+      // waiver with teeth, the gaps the owner must see), not just a test comment.
+      ...(declaredIntegration !== undefined ? { declaredIntegration } : {}),
+    };
     // The generated-artifact triple, with the INTEGRATION file recorded only
     // when the arm emitted one (siteAdapter). Tracking it in the manifest makes
     // the integration lane a first-class, machine-readable fact (verify/audit
