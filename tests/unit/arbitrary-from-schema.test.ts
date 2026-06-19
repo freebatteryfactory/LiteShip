@@ -109,15 +109,18 @@ describe('schemaToArbitrary', () => {
     expectAllDecode(schema, arb);
   });
 
-  it('throws UnsupportedSchemaError for unsupported Declaration nodes', () => {
-    // Schema.instanceOf(Uint8Array) is a Declaration whose probe fails;
-    // walker rejects it.
-    const schema = Schema.instanceOf(Uint8Array);
+  it('throws UnsupportedSchemaError for genuinely-opaque Declaration nodes', () => {
+    // A user class is an opaque Declaration: it carries no constructor
+    // annotation and rejects every recognised sentinel, so the walker
+    // throws rather than blanket-accepting all declarations.
+    class OpaqueThing {}
+    const schema = Schema.instanceOf(OpaqueThing);
     expect(() => schemaToArbitrary(schema)).toThrow(UnsupportedSchemaError);
   });
 
   it('throws UnsupportedSchemaError naming the unsupported node tag', () => {
-    const schema = Schema.instanceOf(Uint8Array);
+    class OpaqueThing {}
+    const schema = Schema.instanceOf(OpaqueThing);
     let caught: unknown;
     try {
       schemaToArbitrary(schema);
@@ -126,6 +129,17 @@ describe('schemaToArbitrary', () => {
     }
     expect(caught).toBeInstanceOf(UnsupportedSchemaError);
     expect((caught as UnsupportedSchemaError).nodeTag).toBe('Declaration');
+  });
+
+  it('handles Schema.instanceOf(Uint8Array) via the sentinel probe', () => {
+    // The un-annotated instanceOf form carries no constructor annotation;
+    // the parser-sentinel probe still recognises it as Uint8Array.
+    const schema = Schema.instanceOf(Uint8Array);
+    const arb = schemaToArbitrary(schema);
+    fc.assert(
+      fc.property(arb, (v) => v instanceof Uint8Array),
+      { numRuns: 10 },
+    );
   });
 
   it('handles NonEmptyString refinement (checks-based)', () => {
@@ -274,5 +288,75 @@ describe('schemaToArbitrary', () => {
       ),
       { numRuns: 20 },
     );
+  });
+
+  // ── Gap 1: Transformation / codec schemas ────────────────────────────
+  // The harness feeds DECODED values straight into a capsule's run/derive
+  // handler, so the arbitrary must yield the codec's decoded (runtime)
+  // type. `Schema.NumberFromString` decodes a string into a number; the
+  // arbitrary must produce values that decode cleanly through the codec.
+  it('handles a codec (NumberFromString) by yielding decoded-side values', () => {
+    const schema = Schema.NumberFromString;
+    const arb = schemaToArbitrary(schema);
+    // Every sample must be the decoded (runtime) type — a number — the
+    // type the capsule handler actually receives. Conformance is checked
+    // against the schema's decoded Type (`Schema.is`) and a clean encode
+    // back to the wire side, NOT `decodeUnknown` (which expects the
+    // encoded string and would reject a decoded number).
+    const isType = Schema.is(schema);
+    const encode = Schema.encodeUnknownEffect(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(typeof s).toBe('number');
+      expect(isType(s)).toBe(true);
+      expect(Effect.runSyncExit(encode(s as unknown))._tag).toBe('Success');
+    }
+  });
+
+  // ── Gap 2: TemplateLiteral ───────────────────────────────────────────
+  it('handles a TemplateLiteral by yielding template-conforming strings', () => {
+    // `/user/${number}` — every sample must be a string starting with the
+    // literal head and decode through the template schema.
+    const schema = Schema.TemplateLiteral(['/user/', Schema.Number]);
+    const arb = schemaToArbitrary(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(typeof s).toBe('string');
+      expect((s as string).startsWith('/user/')).toBe(true);
+      const exit = Effect.runSyncExit(
+        Schema.decodeUnknownEffect(schema)(s as unknown),
+      );
+      expect(exit._tag).toBe('Success');
+    }
+  });
+
+  it('handles a TemplateLiteral with a String span', () => {
+    // `a${string}-${number}` — exercises the alphanumeric String-span
+    // arbitrary so adjacent delimiters stay unambiguous.
+    const schema = Schema.TemplateLiteral([
+      'a',
+      Schema.String,
+      '-',
+      Schema.Number,
+    ]);
+    const arb = schemaToArbitrary(schema);
+    expectAllDecode(schema, arb as fc.Arbitrary<string>, 50);
+  });
+
+  // ── Gap 3: Declaration → Uint8Array ──────────────────────────────────
+  it('handles Schema.Uint8Array by yielding Uint8Array samples', () => {
+    const schema = Schema.Uint8Array;
+    const arb = schemaToArbitrary(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(s).toBeInstanceOf(Uint8Array);
+      const exit = Effect.runSyncExit(
+        Schema.decodeUnknownEffect(schema)(s as unknown),
+      );
+      expect(exit._tag).toBe('Success');
+    }
   });
 });

@@ -7,17 +7,20 @@
  * Null/Undefined/Void, Unknown/Any, ObjectKeyword, Enum, Union, Array
  * (Schema.Array + fixed Tuple + NonEmptyArray-style elements+rest),
  * TypeLiteral (Struct with optional property signatures), Suspend,
- * Declaration (Date specifically; throws for other declarations), and
- * AST-level `checks` (Filter / FilterGroup) which model refinements
- * such as `Schema.NonEmptyString` and `Schema.minLength(n)` — these
- * post-filter the underlying arbitrary by running each Filter's
- * predicate.
+ * Declaration (Date and Uint8Array; throws for genuinely-opaque
+ * user declarations), TemplateLiteral (Schema.TemplateLiteral —
+ * the literal/scalar `parts` are concatenated into a conforming
+ * string), Transformation (Schema.transform / decodeTo chains —
+ * recurse into the decoded `to` side the handler actually receives),
+ * and AST-level `checks` (Filter / FilterGroup) which model
+ * refinements such as `Schema.NonEmptyString` and
+ * `Schema.minLength(n)` — these post-filter the underlying arbitrary
+ * by running each Filter's predicate.
  *
- * KNOWN GAPS — these AST nodes throw `UnsupportedSchemaError` and the
- * harness falls back to `it.skip` rather than a vacuous test:
- *   - Transformation (Schema.transform, Schema.compose chains)
- *   - TemplateLiteral (Schema.TemplateLiteral)
- *   - Declaration for non-Date opaque types (e.g. Uint8Array)
+ * STILL UNSUPPORTED (throw `UnsupportedSchemaError`, honest skip):
+ *   - Objects with index signatures (open record shapes)
+ *   - Declaration for opaque user types that are neither Date nor
+ *     Uint8Array (e.g. `Schema.instanceOf(SomeUserClass)`)
  *
  * @module
  */
@@ -73,39 +76,145 @@ function _applyChecks(ast: SchemaAST.AST, arb: fc.Arbitrary<unknown>): fc.Arbitr
 }
 
 /**
- * Probe a `Declaration` node to determine the JavaScript class it accepts.
- * We attempt to construct a sentinel value and see whether the node's
- * `run` parser accepts it. If yes, return a fast-check arbitrary that
- * produces values of that shape. Otherwise throw.
- *
- * Currently supports `Date`. Add new probes here when production
- * capsules require them.
+ * Read the `typeConstructor` annotation tag Effect attaches to its
+ * built-in `Declaration` schemas (`Schema.Date`, `Schema.Uint8Array`,
+ * …). The annotation shape is `{ typeConstructor: { _tag: string } }`.
+ * Returns the tag string, or `undefined` for declarations Effect did
+ * not annotate — e.g. `Schema.instanceOf(SomeClass)`, which carries no
+ * annotations and so stays opaque (we never blanket-accept).
  */
-function _arbitraryForDeclaration(ast: SchemaAST.Declaration): fc.Arbitrary<unknown> {
-  const parser = ast.run(ast.typeParameters);
-  // Probe with `new Date()` — the most common Declaration in production.
-  const probeDate = new Date();
-  // The parser returns an Effect; we synchronously inspect via the
-  // runtime sync path. If it succeeds, the Declaration accepts Date.
-  // We avoid pulling in the full Effect runtime here — a try/catch
-  // around the parser's first sync step is enough for the probe.
-  let acceptsDate = false;
+function _declarationTypeTag(ast: SchemaAST.Declaration): string | undefined {
+  const annotations = (ast as { annotations?: Record<string, unknown> }).annotations;
+  if (annotations === undefined) return undefined;
+  const tc = annotations['typeConstructor'];
+  if (tc === null || typeof tc !== 'object') return undefined;
+  const tag = (tc as { _tag?: unknown })._tag;
+  return typeof tag === 'string' ? tag : undefined;
+}
+
+/**
+ * Probe a `Declaration` node to determine the JavaScript class it accepts
+ * and return a `fast-check` arbitrary producing values of that shape.
+ *
+ * Two recognised built-ins:
+ *   - `Uint8Array` — matched by its `typeConstructor` annotation tag
+ *     (`Schema.Uint8Array`); produces `fc.uint8Array()` samples.
+ *   - `Date` — matched either by the annotation tag (`Schema.Date`) or,
+ *     for the un-annotated `Schema.instanceOf(Date)` form, by running the
+ *     node's parser against a sentinel `new Date()` and inspecting the
+ *     success/failure tag.
+ *
+ * Genuinely-opaque user declarations (e.g. `Schema.instanceOf(MyClass)`,
+ * which carry no `typeConstructor` annotation and reject the Date probe)
+ * throw `UnsupportedSchemaError` — the harness then emits an honest skip
+ * rather than a vacuous test. We never blanket-accept all declarations.
+ */
+/**
+ * Run a `Declaration` node's parser against a sentinel value and report
+ * whether it is accepted. The parser returns an Effect; we inspect its
+ * synchronous success/failure tag without letting a parse failure throw.
+ * Used to recognise the un-annotated `Schema.instanceOf(Ctor)` forms
+ * (which carry no `typeConstructor` annotation).
+ */
+function _declarationAccepts(ast: SchemaAST.Declaration, sentinel: unknown): boolean {
   try {
-    const out = parser(probeDate, ast, {} as SchemaAST.ParseOptions);
-    // The Effect returned by `out` succeeds synchronously when the
-    // input matches; failure surfaces as an Issue. We use Effect's
-    // `runSyncExit` to inspect the success/failure tag without
-    // throwing on parse failures.
+    const parser = ast.run(ast.typeParameters);
+    const out = parser(sentinel, ast, {} as SchemaAST.ParseOptions);
     const exit = Effect.runSyncExit(out as never);
-    acceptsDate = exit._tag === 'Success';
+    return exit._tag === 'Success';
   } catch {
-    acceptsDate = false;
+    return false;
   }
-  if (acceptsDate) return fc.date();
-  throw new UnsupportedSchemaError('Declaration', 'opaque user-defined type — only Date is currently probed');
+}
+
+function _arbitraryForDeclaration(ast: SchemaAST.Declaration): fc.Arbitrary<unknown> {
+  // Fast path: Effect's built-in codecs annotate the constructor tag
+  // (`Schema.Uint8Array`, `Schema.Date`).
+  const typeTag = _declarationTypeTag(ast);
+  if (typeTag === 'Uint8Array') return fc.uint8Array();
+  if (typeTag === 'Date') return fc.date();
+
+  // Un-annotated forms (`Schema.instanceOf(Uint8Array)`,
+  // `Schema.instanceOf(Date)`) carry no annotation — probe the parser
+  // with a sentinel of each recognised class. A genuinely-opaque user
+  // declaration (`Schema.instanceOf(MyClass)`) rejects both sentinels
+  // and falls through to the throw, so we never blanket-accept.
+  if (_declarationAccepts(ast, new Uint8Array())) return fc.uint8Array();
+  if (_declarationAccepts(ast, new Date())) return fc.date();
+
+  throw new UnsupportedSchemaError(
+    'Declaration',
+    'opaque user-defined type — only Date and Uint8Array are recognised',
+  );
+}
+
+/**
+ * Build a string arbitrary for a `TemplateLiteral` node. In Effect's AST a
+ * template literal is modelled as an ordered `parts: ReadonlyArray<AST>`
+ * where literal segments are `Literal` nodes (their `.literal` is the fixed
+ * text) and interpolations are scalar nodes (`String`, `Number`, `BigInt`).
+ * The decoded runtime value — the one a capsule handler receives — is the
+ * single concatenated string. We generate each part and join them so every
+ * sample matches the template pattern.
+ *
+ * Interpolated `String` parts are drawn from an alphanumeric alphabet rather
+ * than `fc.string()` so that adjacent literal delimiters in the template
+ * remain unambiguous (a raw `fc.string()` could emit a delimiter character
+ * and produce a string the template's own regex rejects).
+ */
+function _arbitraryForTemplateLiteral(ast: SchemaAST.TemplateLiteral): fc.Arbitrary<string> {
+  const partArbs: fc.Arbitrary<string>[] = ast.parts.map((part) => {
+    switch (part._tag) {
+      case 'Literal':
+        return fc.constant(String((part as SchemaAST.Literal).literal));
+      case 'Number':
+        // A decimal-integer string parses back to a number cleanly.
+        return fc.integer().map((n) => String(n));
+      case 'BigInt':
+        return fc.bigInt().map((n) => String(n));
+      case 'String':
+        // Non-empty alphanumeric keeps adjacent literal delimiters
+        // unambiguous and avoids zero-width ambiguity at boundaries.
+        return fc.stringMatching(/^[A-Za-z0-9]+$/);
+      default:
+        throw new UnsupportedSchemaError(
+          'TemplateLiteral',
+          `unsupported interpolation part "${part._tag}"`,
+        );
+    }
+  });
+  if (partArbs.length === 0) return fc.constant('');
+  return fc.tuple(...partArbs).map((segments) => segments.join(''));
+}
+
+/**
+ * A standalone `Transformation` AST node (`Schema.transform`,
+ * `Schema.compose`, and most branded codecs in Effect's classic AST
+ * shape) wraps a `from` (encoded/wire) AST and a `to` (decoded/runtime)
+ * AST. The generated property test feeds DECODED values directly into
+ * the capsule's `run` / `derive` handler — see pure-transform.ts
+ * (`cap.run(sample)`) — so the arbitrary must come from the `to` side.
+ *
+ * In the Effect version this repo pins (4.x), transformations are not a
+ * standalone AST variant: they ride a base type node's `encoding` field
+ * and the node's own `_tag` is already the decoded type (e.g.
+ * `Schema.NumberFromString.ast._tag === 'Number'`), which the switch
+ * below handles directly. This guard therefore stays inert here but
+ * keeps the walker correct against any AST that does surface a
+ * standalone `Transformation` node, recursing into its decoded `to`.
+ */
+function _transformationTo(ast: SchemaAST.AST): SchemaAST.AST | undefined {
+  if ((ast as { _tag: string })._tag !== 'Transformation') return undefined;
+  const to = (ast as unknown as { to?: SchemaAST.AST }).to;
+  if (to === undefined) {
+    throw new UnsupportedSchemaError('Transformation', 'missing `to` (decoded) AST');
+  }
+  return to;
 }
 
 function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
+  const transformedTo = _transformationTo(ast);
+  if (transformedTo !== undefined) return walk(transformedTo);
   let arb: fc.Arbitrary<unknown>;
   switch (ast._tag) {
     case 'String':
@@ -238,6 +347,9 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
     }
     case 'Declaration':
       arb = _arbitraryForDeclaration(ast as SchemaAST.Declaration);
+      break;
+    case 'TemplateLiteral':
+      arb = _arbitraryForTemplateLiteral(ast as SchemaAST.TemplateLiteral);
       break;
     default:
       throw new UnsupportedSchemaError(ast._tag);

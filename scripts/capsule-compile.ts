@@ -21,10 +21,16 @@
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { WallClockTimestamp } from '@czap/core';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
+import * as fc from 'fast-check';
+import {
+  schemaToArbitrary,
+  UnsupportedSchemaError,
+} from '../packages/core/src/harness/arbitrary-from-schema.js';
 
 /**
  * Atomic write via tmp file + rename. Concurrent gauntlet test workers
@@ -109,6 +115,108 @@ function buildStubDef(
     capabilities: { reads: [], writes: [] },
     site: ['node'],
   } as unknown as CapsuleDef<AssemblyKind, unknown, unknown, unknown>;
+}
+
+/**
+ * Result of the compile-time binding probe — whether the harness can emit
+ * a FINAL real test (no `it.skip` placeholder) for this capsule.
+ */
+interface BindingProbe {
+  /** `schemaToArbitrary(cap.input)` resolves a usable arbitrary. */
+  readonly arbitraryDerivable: boolean;
+  /** The kind-specific handler(s) the harness drives are present. */
+  readonly handlersPresent: boolean;
+  /**
+   * Set when the schema IS derivable and handlers ARE present, yet the
+   * generic property test still can't run — the handler rejects
+   * structurally-conformant input because its true domain is narrower than
+   * its input schema declares (e.g. a CBOR decoder typed `instanceOf(
+   * Uint8Array)` whose `run` throws on non-canonical bytes). Carries the
+   * honest reason for the resulting skip.
+   */
+  readonly preconditionMismatch?: string;
+}
+
+/**
+ * Import the REAL capsule binding at compile time and probe it: does its
+ * input schema yield a fast-check arbitrary, and are the kind-specific
+ * handlers present? When both hold, the harness template emits a real
+ * `it(...)` block instead of an `it.skip` placeholder — closing the
+ * built-not-plumbed gap at the source rather than shipping a green skip.
+ *
+ * Probing is best-effort: a non-derivable schema (`UnsupportedSchemaError`)
+ * or a missing handler simply leaves the template on its self-reporting
+ * runtime branch. Any OTHER failure (import error, walker defect) is
+ * re-thrown — silently degrading to a skip would launder a real break.
+ *
+ * Only `pureTransform` and `stateMachine` are probed today: those are the
+ * arms whose generated tests turn on (arbitrary ✕ handler) and that have
+ * wired bindings. Other arms return `undefined` (no probe).
+ */
+async function probeBinding(
+  kind: AssemblyKind,
+  sourceFile: string,
+  bindingName: string,
+): Promise<BindingProbe | undefined> {
+  if (kind !== 'pureTransform' && kind !== 'stateMachine') return undefined;
+  const moduleUrl = pathToFileURL(resolve(sourceFile)).href;
+  const mod = (await import(moduleUrl)) as Record<string, unknown>;
+  const cap = mod[bindingName] as
+    | {
+        input?: { ast?: unknown };
+        run?: ((input: unknown) => unknown) | undefined;
+        step?: ((state: unknown, event: unknown) => unknown) | undefined;
+        initialState?: unknown;
+      }
+    | undefined;
+  if (cap === undefined || cap.input === undefined) return undefined;
+
+  let arb: fc.Arbitrary<unknown> | undefined;
+  try {
+    arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+  } catch (err) {
+    if (!(err instanceof UnsupportedSchemaError)) throw err;
+    arb = undefined;
+  }
+  const arbitraryDerivable = arb !== undefined;
+
+  const handlersPresent =
+    kind === 'pureTransform'
+      ? typeof cap.run === 'function'
+      : typeof cap.step === 'function' && cap.initialState !== undefined;
+
+  // Semantic-precondition guard: a structurally-conformant arbitrary can
+  // still violate a capsule's UNMODELLED precondition — e.g. a CBOR decoder
+  // whose input schema is `Schema.instanceOf(Uint8Array)` (any bytes) but
+  // whose `run` rejects bytes that aren't canonical CBOR. The schema is
+  // derivable, yet the round-trip invariant cannot be exercised by random
+  // bytes, and a generated `run(sample)` would throw a FALSE failure. We
+  // sample the arbitrary and run the handler over a few cases at compile
+  // time: if the handler throws on conformant input, we DON'T emit a real
+  // test (the template stays on its honest self-reporting branch) — the
+  // input schema under-specifies the handler's true domain.
+  let preconditionMismatch: string | undefined;
+  if (arb !== undefined && handlersPresent && kind === 'pureTransform' && typeof cap.run === 'function') {
+    const run = cap.run;
+    try {
+      // Fixed seed → the probe samples (and therefore the realOnly /
+      // mismatch verdict and the generated file) are reproducible across
+      // compiles, not dependent on fast-check's default random seed.
+      for (const sample of fc.sample(arb, { numRuns: 24, seed: 0x5eed })) run(sample);
+    } catch (err) {
+      // The error class is stable across samples; the per-sample message
+      // (byte offset, reason variant) is not — emit only the class name so
+      // the generated file stays byte-deterministic across compiles.
+      const errClass = err instanceof Error ? err.constructor.name : 'Error';
+      preconditionMismatch =
+        `handler rejects schema-conformant input — the input schema ` +
+        `under-specifies the handler's domain (throws ${errClass})`;
+    }
+  }
+
+  return preconditionMismatch !== undefined
+    ? { arbitraryDerivable, handlersPresent, preconditionMismatch }
+    : { arbitraryDerivable, handlersPresent };
 }
 
 /** Dispatch to the correct harness generator based on assembly kind. */
@@ -290,6 +398,11 @@ async function main(): Promise<void> {
         'packages/core/src/harness/arbitrary-from-schema.ts',
       );
       const arbitraryModule = normalizeRepoPath(relative(dirname(testPath), arbitraryAbs)).replace(/\.ts$/, '.js');
+      // Compile-time probe: import the real binding and check whether its
+      // input schema is arbitrary-derivable and its handlers are present.
+      // When both hold the harness emits a FINAL real test rather than an
+      // `it.skip` placeholder (the built-not-plumbed lie).
+      const probe = await probeBinding(d.kind, d.file, d.binding);
       harnessCtx = {
         bindingImport: sourceModule.startsWith('.')
           ? sourceModule
@@ -302,6 +415,15 @@ async function main(): Promise<void> {
         // the cachedProjection harness uses it for fixture-based
         // determinism tests and the real decode bench.
         ...(d.declSource !== undefined ? { fixturePath: normalizeRepoPath(d.declSource) } : {}),
+        ...(probe !== undefined
+          ? {
+              arbitraryDerivable: probe.arbitraryDerivable,
+              handlersPresent: probe.handlersPresent,
+              ...(probe.preconditionMismatch !== undefined
+                ? { preconditionMismatch: probe.preconditionMismatch }
+                : {}),
+            }
+          : {}),
       };
     }
     const { testFile, benchFile } = dispatchHarness(d.kind, stub, harnessCtx);
