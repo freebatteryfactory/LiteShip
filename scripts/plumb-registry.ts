@@ -61,25 +61,24 @@ export const PACKAGE_PLUMB: Readonly<Record<string, PackagePlumbEntry>> = {
   '@czap/cloudflare': { status: 'runtime', reason: 'Cloudflare host adapter — a live edge surface.' },
   '@czap/assets': { status: 'runtime', reason: 'Asset/audio analysis consumed by the build + scene pipeline.' },
 
+  // Live in a consumer site as of 0.4.0: the scene→live bridge (item C) and the
+  // SVG last-mile directive (item E) both import @czap/scene into the astro runtime.
+  '@czap/scene': {
+    status: 'runtime',
+    reason: 'Plumbed live in 0.4.0: @czap/astro imports it via the scene→live bridge (scene-bridge.ts) and the SVG directive (svg.ts → applySvgAttrs).',
+  },
+
   // CLI / build / types — not a live-runtime cast path.
   '@czap/cli': { status: 'tooling', reason: 'The `czap` CLI — a developer tool, not a runtime surface.' },
   '@czap/command': { status: 'tooling', reason: 'CLI command catalog/host — tooling.' },
   '@czap/mcp-server': { status: 'tooling', reason: 'MCP server — a developer-assistant surface, not site runtime.' },
   '@czap/audit': { status: 'tooling', reason: 'The audit engine — build/CI tooling.' },
   '@czap/remotion': { status: 'tooling', reason: 'Remotion offline video integration — build-time render, not live runtime.' },
+  '@czap/stage': {
+    status: 'tooling',
+    reason: 'Dual-export proof (graph→page+video). 0.4.0 (item F) filled the headless node ffmpeg encode, so it is a complete BUILD/CI proof tool — not a live-site runtime surface.',
+  },
   '@czap/_spine': { status: 'tooling', reason: 'The published type spine — declarations only, no runtime.' },
   liteship: { status: 'tooling', reason: 'The umbrella meta-package — re-exports, no runtime of its own.' },
   'create-liteship': { status: 'tooling', reason: 'The scaffolder — a one-shot CLI, not runtime.' },
-
-  // Meant to be runtime-live; NOT yet plumbed into the live cast path (0.4.0 campaign).
-  '@czap/scene': {
-    status: 'deferred',
-    reason: 'The signal-indexed timeline ECS casts to video/offline only; the scene→live-runtime bridge (0.4.0 item 1) is not landed yet.',
-    issue: 'liteship-0.4.0/item-1-scene-live-bridge',
-  },
-  '@czap/stage': {
-    status: 'deferred',
-    reason: 'Dual-export is browser/WebCodecs-gated; the headless node encoder + a live runtime consumer (0.4.0 item 5) are not landed yet.',
-    issue: 'liteship-0.4.0/item-5-stage-headless-encoder',
-  },
 };

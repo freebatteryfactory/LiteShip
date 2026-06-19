@@ -34,10 +34,11 @@ describe('plumb gate', () => {
     }
   });
 
-  it('scene and stage are tracked as deferred until the 0.4.0 bridge/encoder land', () => {
-    // Guard the headline finding: these subsystems are test-only today and must
-    // stay visible on the ledger (flip to `runtime` only when actually plumbed).
-    expect(PACKAGE_PLUMB['@czap/scene']?.status).toBe('deferred');
-    expect(PACKAGE_PLUMB['@czap/stage']?.status).toBe('deferred');
+  it('scene is plumbed live and stage is a complete build tool as of 0.4.0', () => {
+    // The headline subsystems are no longer test-only: @czap/scene is imported by
+    // the astro runtime (scene→live bridge + SVG directive), and @czap/stage's
+    // headless encode is filled (a build/CI proof tool). The ledger reflects it.
+    expect(PACKAGE_PLUMB['@czap/scene']?.status).toBe('runtime');
+    expect(PACKAGE_PLUMB['@czap/stage']?.status).toBe('tooling');
   });
 });

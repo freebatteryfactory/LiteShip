@@ -86,6 +86,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
+  { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];
