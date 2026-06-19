@@ -166,6 +166,15 @@ export function dispatch(def: CompilerDef): CompileResult {
         ),
       };
     case 'AICompiler':
+      // Framework projection target, producer downstream: like the cast/signal
+      // arms, `AICompiler` is the *projection* half of a producer/reader pair —
+      // it compiles a graph→AIContext/tool-schema projection, but the live
+      // producer that authors the source graph (the host's AI authority) lives
+      // downstream, not in LiteShip. It is genuinely distinct from the shader
+      // casts (routing a producer through it would break the topology laws + the
+      // typed `CompilerDef` union + the published surface), so it is annotated —
+      // NOT retired — and audits should read this arm as readers-await-producer
+      // substrate, not dead code.
       return { target: 'ai', result: AIManifestCompiler.compile(def.manifest) };
     case 'ConfigCompiler':
       return { target: 'config', result: ConfigTemplateCompiler.compile(def.config) };

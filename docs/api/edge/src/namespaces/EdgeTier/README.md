@@ -19,7 +19,7 @@ import { EdgeTier } from '@czap/edge';
 
 const result = EdgeTier.detectTier(request.headers);
 const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
-// `<html data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+// `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
 ```
 
 ## Type Aliases

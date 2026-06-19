@@ -313,6 +313,13 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
+    rule: 'default-export',
+    package: '@czap/astro',
+    filePrefix: 'src/runtime/inspector-toolbar-app.ts',
+    reason:
+      "Astro's addDevToolbarApp contract requires a default-exported DevToolbarApp entrypoint — the same unavoidable framework contract as the client directives.",
+  },
+  {
     rule: 'placeholder-content',
     package: '@czap/vite',
     filePrefix: 'src/virtual-modules.ts',

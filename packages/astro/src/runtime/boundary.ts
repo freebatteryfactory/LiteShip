@@ -9,7 +9,8 @@
  *
  * @module
  */
-import { Boundary, BoundaryAttribute, Diagnostics } from '@czap/core';
+import { Boundary, BoundaryAttribute, Diagnostics, inputToSource } from '@czap/core';
+import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
 /**
  * JSON shape produced on the server by `satelliteAttrs()` and read back
@@ -53,6 +54,22 @@ export interface SerializedBoundary {
    * `@wgsl` — optional, so old payloads need no `_version` bump.
    */
   readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Optional emitted GLSL preamble (`GLSLCompileResult.declarations`: state
+   * `#define`s + `uniform <type> u_*;` lines). Joined onto the satellite from the
+   * build manifest's `outputs[].glsl.declarations` — the compiler's OWN uniform
+   * vocabulary, which the `client:gpu` GLSL runtime prepends to the fragment
+   * source before compile. The uniform names the runtime binds and the names the
+   * compiler emits are then two views of one source, never a hand-typed mirror.
+   */
+  readonly glslDeclarations?: string;
+  /**
+   * Optional emitted WGSL preamble (`WGSLCompileResult.declarations`: state
+   * consts + the uniform struct + `@group(0) @binding(0)`). The WGSL analog of
+   * {@link glslDeclarations}, prepended to the shader module before
+   * `createShaderModule`.
+   */
+  readonly wgslDeclarations?: string;
 }
 
 /**
@@ -243,7 +260,7 @@ function attachResizeObserver(callback: () => void): (() => void) | null {
   return () => observer.disconnect();
 }
 
-function attachScrollListener(input: string, callback: () => void): (() => void) | null {
+function attachScrollListener(axis: 'x' | 'y' | 'progress', callback: () => void): (() => void) | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -262,7 +279,7 @@ function attachScrollListener(input: string, callback: () => void): (() => void)
   window.addEventListener('scroll', handler, { passive: true });
   // scroll.progress depends on scrollHeight - innerHeight, so resizes
   // move the value even when scrollY is unchanged.
-  const observeResize = input === 'scroll.progress';
+  const observeResize = axis === 'progress';
   if (observeResize) {
     window.addEventListener('resize', handler, { passive: true });
   }
@@ -287,6 +304,11 @@ function attachScrollListener(input: string, callback: () => void): (() => void)
  * - `scroll.*`   — passive scroll listener, rAF-throttled
  *   (`scroll.progress` also observes resize: its denominator is
  *   viewport-dependent)
+ * - `audio.*`    — rAF observer over the host-published analyser value
+ *
+ * The signal family is derived from the SOURCE OF TRUTH ({@link inputToSource}
+ * in `@czap/core`), never re-parsed here — every reader on the hot path shares
+ * the one parse so the vocabulary cannot drift.
  *
  * Returns a cleanup function, or `null` when no observer was attached
  * (unknown signal family or missing platform support). Callers treat
@@ -294,47 +316,66 @@ function attachScrollListener(input: string, callback: () => void): (() => void)
  * semantics {@link readSignalValue} has for unknown inputs.
  */
 export function attachSignalObserver(input: string, callback: () => void): (() => void) | null {
-  if (input.startsWith('viewport.')) {
-    return attachResizeObserver(callback);
-  }
+  const source = inputToSource(input);
+  if (!source) return null;
 
-  if (input.startsWith('scroll.')) {
-    return attachScrollListener(input, callback);
+  switch (source.type) {
+    case 'viewport':
+      return attachResizeObserver(callback);
+    case 'scroll':
+      return attachScrollListener(source.axis ?? 'y', callback);
+    case 'audio':
+      // Only amplitude/beat have a live producer; sample/normalized are offline
+      // modes that defer to the quantizer (no observer — frozen).
+      return source.mode === 'amplitude' || source.mode === 'beat' ? attachAudioObserver(callback) : null;
+    default:
+      return null;
   }
-
-  return null;
 }
 
 /**
  * Read the current numeric value for a signal `input`. Supported:
- * `viewport.width` / `viewport.height`, `scroll.x` / `scroll.y`, and the
- * derived `scroll.progress` (document scroll position as 0–100).
- * Returns `undefined` for unknown inputs (`audio.*` and `network.*`
- * have no built-in reader — feed those through `@czap/quantizer`'s
- * `live.evaluate()` instead); returns `0` in non-DOM environments so
- * callers can treat SSR and malformed signals uniformly.
+ * `viewport.width` / `viewport.height`, `scroll.x` / `scroll.y`, the derived
+ * `scroll.progress` (document scroll position as **0..1**, see below), and
+ * `audio.amplitude` / `audio.beat` (read from the host analyser producer).
+ *
+ * The axis is derived from the SOURCE OF TRUTH ({@link inputToSource}), never
+ * re-parsed here. Returns `undefined` for inputs outside the vocabulary
+ * (feed those through `@czap/quantizer`'s `live.evaluate()` instead); returns
+ * `0` in non-DOM environments so callers can treat SSR and malformed signals
+ * uniformly.
+ *
+ * CANONICAL `scroll.progress` SCALE: **0..1**. This matches `Signal` (the
+ * `SignalSource` source of truth, `core/src/signal.ts` — `window.scrollY/max`),
+ * which is the scale boundaries are authored against. The prior runtime
+ * returned 0..100, so a boundary authored at `0.5` evaluated wrong; the scale
+ * here and the inspector track max (`inspector.ts`) are pinned to agree by a
+ * drift guard.
  */
 export function readSignalValue(input: string): number | undefined {
   if (typeof window === 'undefined') return 0;
 
-  if (input.startsWith('viewport.')) {
-    const axis = input.slice('viewport.'.length);
-    return axis === 'height' ? window.innerHeight : window.innerWidth;
-  }
+  const source = inputToSource(input);
+  if (!source) return undefined;
 
-  if (input.startsWith('scroll.')) {
-    const axis = input.slice('scroll.'.length);
-    if (axis === 'x') return window.scrollX;
-    if (axis === 'y') return window.scrollY;
-    if (axis === 'progress') {
+  switch (source.type) {
+    case 'viewport':
+      return source.axis === 'height' ? window.innerHeight : window.innerWidth;
+    case 'scroll': {
+      if (source.axis === 'x') return window.scrollX;
+      if (source.axis === 'y') return window.scrollY;
+      // scroll.progress — 0..1, identical formula to Signal's source of truth.
       const max = document.documentElement.scrollHeight - window.innerHeight;
       if (max <= 0) return 0;
-      return Math.min(100, Math.max(0, (window.scrollY / max) * 100));
+      return Math.min(1, Math.max(0, window.scrollY / max));
     }
-    return undefined;
+    case 'audio':
+      // Only amplitude/beat are live; sample/normalized defer to the quantizer
+      // (undefined → frozen), per the hand-off noted above.
+      return source.mode === 'amplitude' || source.mode === 'beat' ? readAudioSignal(source.mode) : undefined;
+    default:
+      return undefined;
   }
-
-  return undefined;
 }
 
 /**

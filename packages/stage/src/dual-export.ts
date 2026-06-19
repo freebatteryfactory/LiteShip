@@ -327,7 +327,7 @@ function videoFrameDigest(frames: readonly VideoFrame[], encodedBytes?: Addresse
         fps: VIDEO_CONFIG.fps,
         width: VIDEO_CONFIG.width,
         height: VIDEO_CONFIG.height,
-        durationMs: 1000,
+        durationMs: VIDEO_CONFIG.durationMs,
       },
       frames: frames.map((frame) => ({
         discrete: frame.composite.discrete,
@@ -408,7 +408,7 @@ export async function exportVideoEncoded(graph: DocumentGraph, encode: FrameEnco
       fps: VIDEO_CONFIG.fps,
       width: VIDEO_CONFIG.width,
       height: VIDEO_CONFIG.height,
-      durationMs: 1000,
+      durationMs: VIDEO_CONFIG.durationMs,
     },
   );
 

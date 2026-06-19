@@ -35,7 +35,7 @@ Logs `tablet` (800 sits between the 768 and 1280 thresholds), then the boundary'
 
 ## Where it sits
 
-This is the foundation layer — every other `@czap/*` package imports its primitives. Its one `@czap` dependency is `@czap/_spine`, the shared type declarations its published types reference. Two things commonly assumed to be here live elsewhere: live evaluation against a changing signal is `@czap/quantizer`, and compiling definitions to CSS text is `@czap/compiler`. See the
+This is the foundation layer — every other `@czap/*` package imports its primitives. Its one `@czap` dependency is `@czap/_spine`, the shared type declarations its published types reference. Two things commonly assumed to be here live elsewhere: live evaluation against a changing signal is `@czap/quantizer`, and compiling definitions to CSS text is `@czap/compiler`. It does own the canonical signal-input vocabulary, though: `SignalSource` ⇄ `SignalInput` via `sourceToInput`/`inputToSource` — the source of truth for input strings like `viewport.width`, `scroll.progress`, `audio.amplitude` that every host reads through rather than re-parsing. See the
 [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 

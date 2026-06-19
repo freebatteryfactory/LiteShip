@@ -220,7 +220,18 @@ function decodeItem(r: Reader): unknown {
           }
         }
         prevKeyBytes = keyBytes;
-        out[key] = decodeItem(r);
+        // SECURITY + round-trip: a `__proto__` map key must become an OWN data
+        // property, never mutate the prototype. Plain `out['__proto__'] = v`
+        // invokes the prototype setter — prototype pollution from untrusted CBOR,
+        // and the key would silently vanish from the decoded object (breaking the
+        // decode∘encode === normalize law). `defineProperty` creates the own
+        // property; every other key takes the fast assignment path.
+        const value = decodeItem(r);
+        if (key === '__proto__') {
+          Object.defineProperty(out, key, { value, enumerable: true, writable: true, configurable: true });
+        } else {
+          out[key] = value;
+        }
       }
       return out;
     }

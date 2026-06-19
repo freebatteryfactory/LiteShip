@@ -44,7 +44,20 @@ let resolvedAria = Astro.props.aria;
 // `outputs[].wgsl.stateBindings` keyed by boundary id.
 let resolvedGlsl = Astro.props.glsl;
 let resolvedWgsl = Astro.props.wgsl;
-if ((!resolvedAria || !resolvedGlsl || !resolvedWgsl) && Astro.props.boundary) {
+// The compiler's emitted shader preamble (`outputs[].glsl.declarations` /
+// `outputs[].wgsl.declarations`) rides the SAME content-addressed join, so the
+// GPU runtime prepends the compiler's own uniform vocabulary — never a
+// hand-typed mirror beside it.
+let resolvedGlslDeclarations = Astro.props.glslDeclarations;
+let resolvedWgslDeclarations = Astro.props.wgslDeclarations;
+if (
+  (!resolvedAria ||
+    !resolvedGlsl ||
+    !resolvedWgsl ||
+    !resolvedGlslDeclarations ||
+    !resolvedWgslDeclarations) &&
+  Astro.props.boundary
+) {
   try {
     const { boundaries } = (await import('virtual:czap/boundaries')) as {
       boundaries: Record<
@@ -53,8 +66,8 @@ if ((!resolvedAria || !resolvedGlsl || !resolvedWgsl) && Astro.props.boundary) {
           id: string;
           outputs: ReadonlyArray<{
             aria?: Record<string, Record<string, string>>;
-            glsl?: { stateUniforms?: Record<string, Record<string, number>> };
-            wgsl?: { stateBindings?: Record<string, Record<string, number>> };
+            glsl?: { stateUniforms?: Record<string, Record<string, number>>; declarations?: string };
+            wgsl?: { stateBindings?: Record<string, Record<string, number>>; declarations?: string };
           }>;
         }
       >;
@@ -63,6 +76,8 @@ if ((!resolvedAria || !resolvedGlsl || !resolvedWgsl) && Astro.props.boundary) {
     resolvedAria ??= entry?.outputs.find((o) => o.aria)?.aria;
     resolvedGlsl ??= entry?.outputs.find((o) => o.glsl?.stateUniforms)?.glsl?.stateUniforms;
     resolvedWgsl ??= entry?.outputs.find((o) => o.wgsl?.stateBindings)?.wgsl?.stateBindings;
+    resolvedGlslDeclarations ??= entry?.outputs.find((o) => o.glsl?.declarations)?.glsl?.declarations;
+    resolvedWgslDeclarations ??= entry?.outputs.find((o) => o.wgsl?.declarations)?.wgsl?.declarations;
   } catch {
     // virtual:czap/boundaries unavailable (e.g. rendered outside the czap
     // integration) — authored ARIA/GLSL can still be supplied via the props.
@@ -74,6 +89,8 @@ const attrs = satelliteAttrs({
   ...(resolvedAria ? { aria: resolvedAria } : {}),
   ...(resolvedGlsl ? { glsl: resolvedGlsl } : {}),
   ...(resolvedWgsl ? { wgsl: resolvedWgsl } : {}),
+  ...(resolvedGlslDeclarations ? { glslDeclarations: resolvedGlslDeclarations } : {}),
+  ...(resolvedWgslDeclarations ? { wgslDeclarations: resolvedWgslDeclarations } : {}),
 });
 ---
 

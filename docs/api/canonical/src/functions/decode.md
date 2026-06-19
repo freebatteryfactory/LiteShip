@@ -8,7 +8,7 @@
 
 > **decode**(`bytes`): `unknown`
 
-Defined in: [canonical/src/cbor-decode.ts:270](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L270)
+Defined in: [canonical/src/cbor-decode.ts:281](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L281)
 
 Decode a canonical CBOR byte sequence produced by [CanonicalCbor.encode](../variables/CanonicalCbor.md#encode).
 

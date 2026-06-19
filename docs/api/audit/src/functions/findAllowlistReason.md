@@ -8,7 +8,7 @@
 
 > **findAllowlistReason**(`finding`, `resolvePackagePath?`): `string` \| `null`
 
-Defined in: [audit/src/policy.ts:439](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L439)
+Defined in: [audit/src/policy.ts:446](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L446)
 
 Match a finding against the allowlist. Entries carrying `package` need
 `resolvePackagePath` to map the finding's repo-relative file to its owning

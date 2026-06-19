@@ -1,6 +1,6 @@
 {
   "name": "@czap/astro",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Astro 6 integration with adaptive directives",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -65,15 +65,20 @@
       "import": "./dist/middleware.js",
       "development": "./src/middleware.ts"
     },
+    "./middleware-entry": {
+      "types": "./dist/middleware-entry.d.ts",
+      "import": "./dist/middleware-entry.js",
+      "development": "./src/middleware-entry.ts"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",
       "development": "./src/runtime/index.ts"
     },
-    "./runtime/inspector-loader": {
-      "types": "./dist/runtime/inspector-loader.d.ts",
-      "import": "./dist/runtime/inspector-loader.js",
-      "development": "./src/runtime/inspector-loader.ts"
+    "./runtime/inspector-toolbar-app": {
+      "types": "./dist/runtime/inspector-toolbar-app.d.ts",
+      "import": "./dist/runtime/inspector-toolbar-app.js",
+      "development": "./src/runtime/inspector-toolbar-app.ts"
     },
     "./Satellite": "./src/Satellite.astro",
     "./Satellite.astro": "./src/Satellite.astro"

@@ -88,6 +88,29 @@ interface GPUCanvasContext {
   getCurrentTexture(): WebGpuTexture;
 }
 
+/**
+ * Detects whether a WGSL source already binds a `@group(0) @binding(0)`
+ * uniform — the same shape {@link parseWgslUniformLayout} keys on. Mirrors that
+ * parser's anchor so the prepend decision and the layout decision agree.
+ */
+function declaresUniformGroup(source: string): boolean {
+  return /@group\s*\(\s*0\s*\)\s*@binding\s*\(\s*0\s*\)\s*var\s*<\s*uniform\s*>/.test(source);
+}
+
+/**
+ * Prepend the compiler's emitted WGSL preamble (state consts + uniform struct +
+ * `@group(0) @binding(0)`) to a shader source so authored WGSL can reference the
+ * compiler's OWN struct rather than hand-typing a mirror that must happen to
+ * match. Skipped when the source already declares a `@group(0) @binding(0)`
+ * uniform (the built-in fallback, or an author who wrote the full struct) — a
+ * second declaration is a hard WGSL error.
+ */
+export function prependWgslDeclarations(source: string, declarations?: string): string {
+  if (!declarations || !declarations.trim()) return source;
+  if (declaresUniformGroup(source)) return source;
+  return `${declarations}\n\n${source}`;
+}
+
 async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
   if (shaderSrc.startsWith('/') || shaderSrc.startsWith('http')) {
     try {
@@ -241,6 +264,7 @@ export async function initWGSLRuntime(
   canvas: HTMLCanvasElement,
   shaderSrc: string,
   element?: HTMLElement,
+  declarations?: string,
 ): Promise<(() => void) | null> {
   const nav = navigator as Navigator & { gpu?: WebGpuNavigator };
   if (!nav.gpu) {
@@ -263,6 +287,12 @@ export async function initWGSLRuntime(
   } catch {
     // fetchShaderSource already logged; keep built-in fallback shader.
   }
+  // Prepend the compiler's emitted preamble (state consts + uniform struct +
+  // `@group(0) @binding(0)`) so the authored WGSL can reference the compiler's
+  // OWN struct without hand-typing it. Skip when the resolved source already
+  // declares a `@group(0) @binding(0)` uniform (an author who wrote the full
+  // struct, or our built-in fallback) — re-prepending would redeclare it.
+  wgslSource = prependWgslDeclarations(wgslSource, declarations);
   // Bind a uniform group only when the shader declares a real `@group(0)
   // @binding(0) var<uniform>` struct (the FULLSCREEN_WGSL fallback and bare
   // shaders don't — unconditionally binding makes WebGPU reject the pass). The

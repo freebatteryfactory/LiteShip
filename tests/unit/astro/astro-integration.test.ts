@@ -472,17 +472,46 @@ describe('integration', () => {
     expect(logs).toContain('Injected GPU probe upgrade');
   });
 
-  test('config:setup injects inspector loader only in dev command', () => {
+  test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', () => {
+    const optedIn = integration({ middleware: true });
+    const wired: Array<{ order: string; entrypoint: string }> = [];
+    optedIn.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: () => undefined,
+      addMiddleware: (m: { order: string; entrypoint: string }) => {
+        wired.push(m);
+      },
+      logger: { info() {} },
+    } as never);
+    expect(wired).toContainEqual({ order: 'pre', entrypoint: '@czap/astro/middleware-entry' });
+
+    // Default (no opt-in): nothing auto-wired.
+    let calledByDefault = false;
+    integration().hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: () => undefined,
+      addMiddleware: () => {
+        calledByDefault = true;
+      },
+      logger: { info() {} },
+    } as never);
+    expect(calledByDefault).toBe(false);
+  });
+
+  test('config:setup registers the inspector toolbar app only in dev command', () => {
     const integ = integration();
-    const devScripts: string[] = [];
-    const buildScripts: string[] = [];
+    const devApps: Array<{ id: string; entrypoint: string }> = [];
+    const buildApps: Array<{ id: string; entrypoint: string }> = [];
 
     integ.hooks['astro:config:setup']({
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
-      injectScript: (_stage: string, content: string) => {
-        devScripts.push(content);
+      addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
+        devApps.push(app);
       },
+      injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
     } as never);
@@ -490,37 +519,44 @@ describe('integration', () => {
     integ.hooks['astro:config:setup']({
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
-      injectScript: (_stage: string, content: string) => {
-        buildScripts.push(content);
+      addDevToolbarApp: (app: { id: string; entrypoint: string }) => {
+        buildApps.push(app);
       },
+      injectScript: () => undefined,
       logger: { info() {} },
       command: 'build',
     } as never);
 
-    expect(devScripts.some((script) => script.includes('installInspectorLoader'))).toBe(true);
-    expect(buildScripts.some((script) => script.includes('installInspectorLoader'))).toBe(false);
+    const inspector = devApps.find((app) => app.id === 'czap-inspector');
+    expect(inspector).toBeDefined();
+    expect(inspector?.entrypoint).toBe('@czap/astro/runtime/inspector-toolbar-app');
+    expect(buildApps.some((app) => app.id === 'czap-inspector')).toBe(false);
   });
 
-  test('config:setup skips inspector loader when inspector: false', () => {
+  test('config:setup skips the inspector toolbar app when inspector: false', () => {
     const integ = integration({ inspector: false });
-    const scripts: string[] = [];
+    const apps: Array<{ id: string }> = [];
 
     integ.hooks['astro:config:setup']({
       updateConfig: () => undefined,
       addClientDirective: () => undefined,
-      injectScript: (_stage: string, content: string) => {
-        scripts.push(content);
+      addDevToolbarApp: (app: { id: string }) => {
+        apps.push(app);
       },
+      injectScript: () => undefined,
       logger: { info() {} },
       command: 'dev',
     } as never);
 
-    expect(scripts.some((script) => script.includes('installInspectorLoader'))).toBe(false);
+    expect(apps.some((app) => app.id === 'czap-inspector')).toBe(false);
   });
 
-  test('config:setup honors worker, wasm, serverIslands, and disabled directives', () => {
+  test('config:setup honors worker, wasm, and disabled directives; serverIslands is a no-op', () => {
     const integ = integration({
       detect: false,
+      // Server Islands is stable in Astro (since v5); there is no experimental
+      // flag to toggle on Astro 6. The option is a documented no-op now — it
+      // must NOT push any `experimental` config update.
       serverIslands: true,
       stream: { enabled: false },
       llm: { enabled: false },
@@ -530,10 +566,10 @@ describe('integration', () => {
     });
     const directives: Array<{ name: string; entrypoint: string }> = [];
     const scripts: string[] = [];
-    const updates: unknown[] = [];
+    const updates: Array<Record<string, unknown>> = [];
 
     integ.hooks['astro:config:setup']({
-      updateConfig: (config: unknown) => {
+      updateConfig: (config: Record<string, unknown>) => {
         updates.push(config);
       },
       addClientDirective: (directive: { name: string; entrypoint: string }) => {
@@ -546,11 +582,8 @@ describe('integration', () => {
     } as never);
 
     expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'worker', 'wasm']);
-    expect(updates).toContainEqual({
-      experimental: {
-        serverIslands: true,
-      },
-    });
+    // serverIslands must NOT produce any experimental config bridge anymore.
+    expect(updates.some((config) => 'experimental' in config)).toBe(false);
     expect(scripts.some((script) => script.includes('__CZAP_DETECT__'))).toBe(false);
     // The wasm bootstrap advertises the URL AND eagerly auto-loads at the
     // document level — without this, enabling wasm in config silently no-ops

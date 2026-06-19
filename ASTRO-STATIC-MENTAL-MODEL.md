@@ -67,9 +67,10 @@ Examples with built-in observers (the Astro runtime reads and watches these for 
 - `viewport.height`
 - `scroll.x`
 - `scroll.y`
-- `scroll.progress` (document scroll position, 0–100)
+- `scroll.progress` (document scroll position, 0–1)
+- `audio.amplitude` / `audio.beat` (wire a live source with `driveAudioFromAnalyser` from `@czap/astro/runtime`; WebAudio needs a user gesture)
 
-Any other numeric signal works too — `audio.level`, buffer occupancy, sensor data — but has no built-in reader: feed measured values through `@czap/quantizer`'s `live.evaluate(value)` yourself (`audio.level`, for instance, needs WebAudio and a user gesture). Non-numeric observations like `network.effectiveType` are not signals at all; they belong to tier detection (see `@czap/detect` and Client Hints), which quantizes them server-side.
+Any other numeric signal works too — buffer occupancy, sensor data — but has no built-in reader: feed measured values through `@czap/quantizer`'s `live.evaluate(value)` yourself. Non-numeric observations like `network.effectiveType` are not signals at all; they belong to tier detection (see `@czap/detect` and Client Hints), which quantizes them server-side. The input strings above are the canonical Signal vocabulary — `SignalSource` in `@czap/core`, with `sourceToInput`/`inputToSource` round-tripping the dot-string form.
 
 Signals are not presentation. They are observations.
 

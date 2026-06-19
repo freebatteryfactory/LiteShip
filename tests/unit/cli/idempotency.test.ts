@@ -92,6 +92,16 @@ describe('cli idempotency helpers', () => {
     expect(h1).not.toBe(h2);
   });
 
+  it('environment fingerprint is part of the identity: different env → different hash, same env → stable', () => {
+    const envA = { node: 'v20.0.0', platform: 'linux', arch: 'x64', pm: 'pnpm/8' };
+    const envB = { node: 'v22.0.0', platform: 'linux', arch: 'x64', pm: 'pnpm/8' };
+    // A receipt cached under node 20 must NOT be served to node 22 (the
+    // cross-environment stale hit the old command+inputs-only slug allowed).
+    expect(hashInputs(baseCtx({ env: envA }))).not.toBe(hashInputs(baseCtx({ env: envB })));
+    // Same command + inputs + env stays stable (re-run idempotency holds).
+    expect(hashInputs(baseCtx({ env: envA }))).toBe(hashInputs(baseCtx({ env: envA })));
+  });
+
   it('manually-placed cache file (no writeCache) is still picked up by tryReadCache', () => {
     const ctx = baseCtx({ inputs: { z: 99 } });
     const path = cachePath(hashInputs(ctx), workDir);

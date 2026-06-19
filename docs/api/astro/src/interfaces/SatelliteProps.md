@@ -86,6 +86,25 @@ updates uniforms live on every crossing — the GLSL analog of `aria`.
 
 ***
 
+### glslDeclarations?
+
+> `readonly` `optional` **glslDeclarations?**: `string`
+
+Defined in: [astro/src/Satellite.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L79)
+
+Emitted GLSL preamble (`GLSLCompileResult.declarations`: `#define STATE_*` +
+`uniform <type> u_*;` lines) for this boundary's `@glsl` cast. The
+`<Satellite>` component supplies it from the build manifest's
+`outputs[].glsl.declarations` via the same content-address join as
+[glsl](#glsl); pass it explicitly when calling `satelliteAttrs` directly.
+Rides the boundary payload (`glslDeclarations`) so the `client:gpu` GLSL
+runtime PREPENDS the compiler's own uniform vocabulary to the fragment
+source before `createProgram` — the author no longer hand-types `u_*`
+declarations that must happen to match the compiler's. The single source of
+truth (the compiler) produces both the declarations and the per-state values.
+
+***
+
 ### initialState?
 
 > `readonly` `optional` **initialState?**: `string`
@@ -109,3 +128,18 @@ satellite from the build manifest by content address. Rides the boundary
 payload (`stateWgsl`) so the `client:gpu` WGSL runtime resolves the live
 uniform-buffer values for the current state on every crossing — never
 SSR-frozen.
+
+***
+
+### wgslDeclarations?
+
+> `readonly` `optional` **wgslDeclarations?**: `string`
+
+Defined in: [astro/src/Satellite.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L88)
+
+Emitted WGSL preamble (`WGSLCompileResult.declarations`: state consts + the
+uniform struct + `@group(0) @binding(0)`) for this boundary's `@wgsl` cast.
+Supplied by `<Satellite>` from the manifest's `outputs[].wgsl.declarations`,
+the WGSL analog of [glslDeclarations](#glsldeclarations). Rides the payload
+(`wgslDeclarations`) so the WGSL `client:gpu` runtime prepends the compiler's
+own struct to the shader module before `createShaderModule`.

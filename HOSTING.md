@@ -1,6 +1,6 @@
 # Hosting LiteShip — first-hour checklist
 
-LiteShip runs inside the host application's security boundary: the host's CSP, the host's Trusted Types policy, the host's runtime endpoints. This page is the **minimum host checklist** to get a v0.1.x install through its first page render without surprises.
+LiteShip runs inside the host application's security boundary: the host's CSP, the host's Trusted Types policy, the host's runtime endpoints. This page is the **minimum host checklist** to get a fresh install through its first page render without surprises.
 
 For the security architecture this checklist enforces, see [SECURITY.md](./SECURITY.md). For an end-to-end tutorial, see [GETTING-STARTED.md](./GETTING-STARTED.md). For Cloudflare Workers, jump to the [Cloudflare Workers](#cloudflare-workers) section below.
 
@@ -175,7 +175,7 @@ For editor types on the virtual module, add to `src/env.d.ts`:
 
 The build also emits `czap-boundary-manifest.json` into the output directory (via the `@czap/astro` integration's `astro:build:done` hook) for hosts that read the manifest from disk instead of importing the virtual module.
 
-**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks the never-stale invariant. A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
+**Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
 
 Bindings are read from `cloudflare:workers` `env` at request time (Astro 6 removed `Astro.locals.runtime`).
 
@@ -202,7 +202,7 @@ Same browser CSP as [Required CSP directives](#required-csp-directives) above. I
 
 ### KV trust boundary
 
-Treat KV as a host-controlled cache — not a secrets store. Boundary compile outputs are content-addressed (the manifest id is `Boundary.make`'s FNV-1a address per ADR-0003); TTL and prefix are configurable on `cloudflareMiddleware`. Deploys that change boundary content mint new content addresses and the old keys are never re-read — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
+Treat KV as a host-controlled cache — not a secrets store. A KV entry is keyed by the boundary's content address (`Boundary.make`'s FNV-1a address per ADR-0003), the device tier, the boundary name, and a fingerprint of the resolved theme — so an entry only serves a request whose inputs match. `ttl` and `prefix` are configurable on `cloudflareMiddleware`; `prefix` doubles as a per-deploy content version, which a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover must bump. Deploys that change boundary content mint new content addresses, stranding the old keys (never re-read) — Workers KV never evicts and bills storage, so set `ttl` (e.g. `2592000` = 30 days) to reclaim them. Requests whose tier is covered by the manifest are served from the bundle without touching KV at all (`cacheStatus: 'precompiled'`); KV only backs the `compile` fallback path.
 
 ## Where to look next
 

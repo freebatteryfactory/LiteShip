@@ -15,14 +15,16 @@ tier combination.
 
 ### getCompiledOutputs()
 
-> **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
+> **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`, `themeFp?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L114)
+Defined in: [edge/src/kv-cache.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L116)
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
 `Boundary.make` definition referenced by two `@quantize` blocks) —
 without it, the first name's compile result would serve every name.
+`themeFp` likewise segregates outputs compiled under different resolved
+themes (a per-request theme is a real input to the cached CSS).
 
 #### Parameters
 
@@ -38,6 +40,10 @@ without it, the first name's compile result would serve every name.
 
 `string`
 
+##### themeFp?
+
+`string`
+
 #### Returns
 
 `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
@@ -46,9 +52,9 @@ without it, the first name's compile result would serve every name.
 
 ### putCompiledOutputs()
 
-> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`): `Promise`\<`void`\>
+> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`, `themeFp?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L120)
+Defined in: [edge/src/kv-cache.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L123)
 
 #### Parameters
 
@@ -65,6 +71,10 @@ Defined in: [edge/src/kv-cache.ts:120](https://github.com/heyoub/LiteShip/blob/m
 [`CompiledOutputs`](CompiledOutputs.md)
 
 ##### qualifier?
+
+`string`
+
+##### themeFp?
 
 `string`
 

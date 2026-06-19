@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L90)
+Defined in: [edge/src/edge-tier.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L103)
 
 Edge tier detection namespace.
 
@@ -59,7 +59,7 @@ Generate HTML data attribute string for injection into the `<html>` element.
 
 ```
 tierDataAttributes(result)
-// => 'data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
+// => 'data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
 ```
 
 ### tierFromParsed
@@ -88,5 +88,5 @@ import { EdgeTier } from '@czap/edge';
 
 const result = EdgeTier.detectTier(request.headers);
 const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
-// `<html data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+// `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
 ```

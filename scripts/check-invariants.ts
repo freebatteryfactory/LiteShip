@@ -6,6 +6,7 @@
  */
 
 import { readdirSync, readFileSync } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -50,9 +51,15 @@ export const INVARIANTS: readonly Invariant[] = [
     pattern: /export default/,
     dirs: ['packages'],
     // client-directives: Astro's addClientDirective contract requires a
-    // default export. create-liteship templates: scaffolder *data*, not
-    // production code — astro.config.ts must default-export defineConfig.
-    exclude: ['packages/astro/src/client-directives/', 'packages/create-liteship/templates/'],
+    // default export. inspector-toolbar-app: Astro's addDevToolbarApp
+    // entrypoint contract likewise requires a default-exported DevToolbarApp.
+    // create-liteship templates: scaffolder *data*, not production code —
+    // astro.config.ts must default-export defineConfig.
+    exclude: [
+      'packages/astro/src/client-directives/',
+      'packages/astro/src/runtime/inspector-toolbar-app.ts',
+      'packages/create-liteship/templates/',
+    ],
     message: 'Named exports only, except Astro client directives.',
   },
   {
@@ -67,11 +74,43 @@ export const INVARIANTS: readonly Invariant[] = [
     ],
     message: 'Use const/let, not var.',
   },
+  {
+    // 0.3.0 signal source-of-truth: the runtime hot path must derive its signal
+    // axis from `inputToSource` (@czap/core, the SignalSource source of truth),
+    // never re-parse the dot-string with `startsWith('scroll.'/'viewport.')`.
+    // The two diagnostic sites below legitimately namespace-check the input to
+    // pick a teaching message (not to read a value), so they are excluded.
+    name: 'NO_SIGNAL_INPUT_REPARSE',
+    pattern: /\.startsWith\(\s*['"](?:scroll|viewport)\./,
+    dirs: ['packages/astro/src/runtime', 'packages/vite/src'],
+    exclude: [
+      // Diagnostic namespace checks (which container message to emit), not axis reads.
+      'packages/vite/src/css-quantize.ts',
+      'packages/astro/src/runtime/inspector.ts',
+    ],
+    message:
+      'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +
+      'If this is a diagnostic namespace check, add the file to the NO_SIGNAL_INPUT_REPARSE exclude.',
+  },
 ] as const;
 
 function walkTsFiles(dir: string): string[] {
   const results: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    // An invariant scoped to a subtree that doesn't exist in the scanned root
+    // contributes zero violations -- not a crash. The first nested-`dirs`
+    // invariant (NO_SIGNAL_INPUT_REPARSE: packages/astro/src/runtime) is the
+    // first to scan a path that can be absent: the satellite-scan fixture root
+    // only materializes packages/core/**, so astro/src/runtime is missing there.
+    // (Top-level `dirs: ['packages']` invariants never hit this; the repo always
+    // has packages/.) Treat a missing scoped dir as empty, cross-platform.
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return results;
+    throw err;
+  }
+  for (const entry of entries) {
     if (entry.name === 'dist' || entry.name === 'node_modules') continue;
     const absolute = join(dir, entry.name);
     if (entry.isDirectory()) {

@@ -23,6 +23,15 @@ export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'med
  * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
  * scroll `axis: 'y'`, audio `mode: 'sample'`. {@link Signal.make} normalizes
  * the source, so the returned signal's `source` always carries explicit values.
+ *
+ * Audio modes:
+ * - `sample` / `normalized` — offline/scrub reads via {@link Signal.audio}
+ *   (raw sample index / 0..1 progress over a known duration).
+ * - `amplitude` / `beat` — LIVE analyser-driven feeds, published by a runtime
+ *   producer (e.g. the Astro `audio.*` rAF observer reading an AnalyserNode).
+ *   `amplitude` is 0..1 RMS loudness; `beat` is a 0/1 onset pulse. These are
+ *   "driven externally" stubs here — `@czap/core` owns the vocabulary and
+ *   initial value; the host publishes the live samples.
  */
 export type SignalSource =
   | { readonly type: 'viewport'; readonly axis?: 'width' | 'height' }
@@ -31,7 +40,7 @@ export type SignalSource =
   | { readonly type: 'scroll'; readonly axis?: 'x' | 'y' | 'progress' }
   | { readonly type: 'media'; readonly query: string }
   | { readonly type: 'custom'; readonly id: string }
-  | { readonly type: 'audio'; readonly mode?: 'sample' | 'normalized' };
+  | { readonly type: 'audio'; readonly mode?: 'sample' | 'normalized' | 'amplitude' | 'beat' };
 
 /** Fill omitted discriminant payloads with their documented defaults. */
 function normalizeSource(source: SignalSource): SignalSource {
@@ -222,8 +231,10 @@ function _make(rawSource: SignalSource): Effect.Effect<SignalShape<number>, neve
           // No browser listener needed — the caller pushes values directly.
           break;
         case 'audio':
-          // Audio signals are driven externally via Signal.audio() / AVBridge.
-          // No browser listener needed — audio analysis pushes values on its own cadence.
+          // Audio signals are driven externally via Signal.audio() / AVBridge
+          // ('sample'/'normalized') or by a host analyser producer that publishes
+          // live values ('amplitude'/'beat', e.g. the Astro audio.* rAF observer).
+          // No browser listener needed — audio analysis pushes on its own cadence.
           break;
       }
     });

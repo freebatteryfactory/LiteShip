@@ -12,7 +12,7 @@ This is about construction, not migration. It assumes the mental model in [ASTRO
 
 For designers, brand directors, and agency PMs reading alongside an engineer. Engineering-fluent readers can skip this section.
 
-- **signal** — a continuously changing value the system watches, such as viewport width, device capability tier, or the OS dark-mode flag.
+- **signal** — a continuously changing value the system watches, such as viewport width, scroll progress, device capability tier, or live audio amplitude/beat. The canonical input vocabulary is `SignalSource` in `@czap/core` (the dot-string forms like `viewport.width`, `audio.amplitude`).
 - **boundary** — a definition that carves a continuous signal into a small set of named states (e.g. `stacked / split / cinematic`), so the rest of the system only ever sees discrete labels, not raw numbers.
 - **hysteresis** — a deliberate gap between the threshold where a state turns on and the threshold where it turns off, like a thermostat's dead-band that prevents the heater from flickering on and off when the temperature hovers near the setpoint.
 - **named state** — a label like `stacked`, `split`, or `cinematic` that the author chooses to stand in for a chunk of the signal range; the rest of the system reads names, not numbers.
@@ -395,7 +395,7 @@ Do not duplicate the state logic for each target. Instead:
 - let the boundary define state
 - let compilers project the state into each target
 
-The projection is content-addressed: the boundary's FNV-1a hash (over the canonical CBOR encoding) is the contract every compiler reads from. CSS, GLSL, and ARIA can't drift because they're emitted from the same canonical definition.
+The projection is content-addressed: the boundary's FNV-1a hash (over the canonical CBOR encoding) is the contract every compiler reads from. CSS, GLSL, and ARIA can't drift because they're emitted from the same canonical definition. For GLSL/WGSL the contract reaches the runtime: the compiler's emitted uniform **declarations** are delivered and prepended to the shader, so you reference `u_*` uniforms by name without hand-writing the matching declarations — the runtime's uniform vocabulary is the compiler's, not a hand-typed mirror.
 
 ---
 

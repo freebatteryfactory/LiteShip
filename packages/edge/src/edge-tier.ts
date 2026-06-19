@@ -6,8 +6,14 @@
  */
 
 import type { CapLevel } from '@czap/core';
-import { tierFromCapabilities, motionTierFromCapabilities, designTierFromCapabilities } from '@czap/detect';
-import type { DesignTier, ExtendedDeviceCapabilities, MotionTier } from '@czap/detect';
+import {
+  tierFromCapabilities,
+  motionTierFromCapabilities,
+  designTierFromCapabilities,
+  CAP_AXES,
+  capAxisAttr,
+} from '@czap/detect';
+import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@czap/detect';
 import { ClientHints } from './client-hints.js';
 import type { ClientHintsHeaders } from './client-hints.js';
 
@@ -60,11 +66,18 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
  * @example
  * ```
  * tierDataAttributes(result)
- * // => 'data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
+ * // => 'data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
  * ```
  */
 function tierDataAttributes(result: EdgeTierResult): string {
-  return `data-czap-cap="${result.capLevel}" data-czap-motion="${result.motionTier}" data-czap-design="${result.designTier}"`;
+  // Iterate the canonical axis registry so the emitted attribute names can
+  // never drift from the locals field names / runtime readers — one source.
+  const value: Record<CapAxis, string> = {
+    tier: result.capLevel,
+    motion: result.motionTier,
+    design: result.designTier,
+  };
+  return CAP_AXES.map((axis) => `${capAxisAttr(axis)}="${value[axis]}"`).join(' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +97,7 @@ function tierDataAttributes(result: EdgeTierResult): string {
  *
  * const result = EdgeTier.detectTier(request.headers);
  * const html = `<html ${EdgeTier.tierDataAttributes(result)}>`;
- * // `<html data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
+ * // `<html data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced">`
  * ```
  */
 export const EdgeTier = {

@@ -33,7 +33,7 @@ describe('EdgeTier', () => {
   test('tierDataAttributes generates valid HTML attributes', () => {
     const result = EdgeTier.detectTier({});
     const attrs = EdgeTier.tierDataAttributes(result);
-    expect(attrs).toContain('data-czap-cap=');
+    expect(attrs).toContain('data-czap-tier=');
     expect(attrs).toContain('data-czap-motion=');
     expect(attrs).toContain('data-czap-design=');
   });
@@ -45,7 +45,7 @@ describe('EdgeTier', () => {
       designTier: 'enhanced' as const,
     };
     const attrs = EdgeTier.tierDataAttributes(result);
-    expect(attrs).toBe('data-czap-cap="reactive" data-czap-motion="animations" data-czap-design="enhanced"');
+    expect(attrs).toBe('data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"');
   });
 
   test('tierFromParsed matches detectTier for the same headers', () => {

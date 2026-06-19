@@ -4,6 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { czapMiddleware } from '@czap/astro';
+import { onRequest as autoWiredOnRequest } from '../../../packages/astro/src/middleware-entry.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -46,7 +47,7 @@ describe('czapMiddleware', () => {
 
     const czap = context.locals.czap as Record<string, unknown>;
     expect(czap).toBeDefined();
-    expect(czap.tier).toBeDefined();
+    expect(czap.tiers).toBeDefined();
     expect(czap.capabilities).toBeDefined();
   });
 
@@ -149,10 +150,10 @@ describe('czapMiddleware', () => {
     await middleware(context, makeNext());
 
     const czap = context.locals.czap as Record<string, unknown>;
-    const tier = czap.tier as Record<string, string>;
-    expect(tier.cap).toBeDefined();
-    expect(tier.motion).toBeDefined();
-    expect(tier.design).toBeDefined();
+    const tiers = czap.tiers as Record<string, string>;
+    expect(tiers.tier).toBeDefined();
+    expect(tiers.motion).toBeDefined();
+    expect(tiers.design).toBeDefined();
   });
 
   test('does not attach edge locals when no edge adapter is configured', async () => {
@@ -215,10 +216,28 @@ describe('czapMiddleware', () => {
     const czap = context.locals.czap as Record<string, unknown>;
     const edge = czap.edge as Record<string, unknown>;
 
-    expect(edge.htmlAttributes).toContain('data-czap-cap=');
+    expect(edge.htmlAttributes).toContain('data-czap-tier=');
     expect((edge.theme as Record<string, string>).css).toContain('--brand-color-primary');
     expect((edge.compiledOutputs as Record<string, string>).css).toContain('.cached');
     expect(edge.cacheStatus).toBe('miss');
+    expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
+  });
+});
+
+describe('auto-wired middleware entrypoint (addMiddleware target)', () => {
+  test('exports a zero-config onRequest that populates Astro.locals.czap', async () => {
+    // The `./middleware-entry` module the integration registers via `addMiddleware`
+    // — `onRequest = czapMiddleware()`. It must behave as the default zero-config
+    // handler: Client Hints in, `locals.czap` populated, response returned.
+    expect(typeof autoWiredOnRequest).toBe('function');
+
+    const context = makeContext({ 'sec-ch-viewport-width': '1440', 'sec-ch-device-memory': '8' });
+    const response = await (autoWiredOnRequest as unknown as (c: typeof context, n: () => Promise<Response>) => Promise<Response>)(
+      context,
+      makeNext(),
+    );
+
+    expect(context.locals.czap).toBeDefined();
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
   });
 });

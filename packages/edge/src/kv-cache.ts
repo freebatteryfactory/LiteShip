@@ -110,11 +110,14 @@ export interface BoundaryCache {
    * `ContentAddress` but carry different compiled CSS (the same
    * `Boundary.make` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
+   * `themeFp` likewise segregates outputs compiled under different resolved
+   * themes (a per-request theme is a real input to the cached CSS).
    */
   getCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
     qualifier?: string,
+    themeFp?: string,
   ): Promise<CompiledOutputs | null>;
 
   putCompiledOutputs(
@@ -122,6 +125,7 @@ export interface BoundaryCache {
     tierResult: EdgeTierResult,
     outputs: CompiledOutputs,
     qualifier?: string,
+    themeFp?: string,
   ): Promise<void>;
 }
 
@@ -132,14 +136,24 @@ export interface BoundaryCache {
 interface CacheOptions {
   /**
    * Cache entry TTL in seconds. This is an eviction/cost knob, not a
-   * freshness knob: entries are content-addressed and never go stale, but
-   * each deploy that changes boundary content mints a new `ContentAddress`,
-   * orphaning the old `boundaryId` x tier keys — and Workers KV never
-   * evicts on its own and bills storage. Set a TTL to garbage-collect
-   * entries for superseded boundary builds and bound KV storage cost.
-   * Omit to cache indefinitely.
+   * freshness knob: an entry is keyed by its boundary content address, tier,
+   * name, and resolved-theme fingerprint, so it never goes stale for a change
+   * in ANY of those. (A `compile` callback whose output ALSO depends on
+   * build-time inputs outside the boundary's own content — e.g. shared layout
+   * CSS — must additionally vary `prefix` per deploy; see {@link CacheOptions.prefix}.)
+   * Each deploy that changes boundary content mints a new `ContentAddress`,
+   * orphaning the old keys — and Workers KV never evicts on its own and bills
+   * storage. Set a TTL to garbage-collect superseded builds. Omit to cache
+   * indefinitely.
    */
   readonly ttl?: number;
+  /**
+   * KV key prefix (default `czap`). Doubles as the per-deploy CONTENT VERSION
+   * for a bundled `compile` callback: when compile's output depends on
+   * build-time content the boundary id does not cover, set `prefix` to a hash
+   * of that compiled output (e.g. `layout-${fnv1a(compileLayoutCss())}`) so a
+   * content change busts the keyspace.
+   */
   readonly prefix?: string;
 }
 
@@ -148,14 +162,20 @@ function buildCacheKey(
   boundaryId: ContentAddress,
   tierResult: EdgeTierResult,
   qualifier?: string,
+  themeFp?: string,
 ): string {
   // Tier portion shares `tierKey` with manifest lookups so the KV keyspace
   // and the precompiled-manifest keyspace can never disagree. The qualifier
   // (boundary NAME in multi-boundary configs) segregates same-id boundaries
-  // whose CSS differs; unqualified single-boundary keys are unchanged.
-  return qualifier === undefined
-    ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
-    : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
+  // whose CSS differs; unqualified single-boundary keys are unchanged. The
+  // theme fingerprint (when a theme feeds compile) segregates outputs baked
+  // with different resolved themes — a per-request theme is a real input to
+  // the cached value, so it belongs IN the key, not standing beside it.
+  const base =
+    qualifier === undefined
+      ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
+      : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
+  return themeFp === undefined ? base : `${base}:t:${themeFp}`;
 }
 
 /**
@@ -261,8 +281,9 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       boundaryId: ContentAddress,
       tierResult: EdgeTierResult,
       qualifier?: string,
+      themeFp?: string,
     ): Promise<CompiledOutputs | null> {
-      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier);
+      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier, themeFp);
       const raw = await kv.get(key);
       if (raw === null) return null;
 
@@ -346,8 +367,9 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       tierResult: EdgeTierResult,
       outputs: CompiledOutputs,
       qualifier?: string,
+      themeFp?: string,
     ): Promise<void> {
-      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier);
+      const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier, themeFp);
       const value = JSON.stringify({
         css: outputs.css,
         propertyRegistrations: outputs.propertyRegistrations,

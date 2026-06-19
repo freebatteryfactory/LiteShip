@@ -142,7 +142,6 @@ const BROWSER_AUTHORITATIVE_FILES: readonly string[] = [
   // never executable in the node (jsdom) pass.
   'packages/astro/src/runtime/directive-boot.ts',
   'packages/astro/src/runtime/inspector.ts',
-  'packages/astro/src/runtime/inspector-loader.ts',
 ];
 
 const isBrowserAuthoritative = (file: string): boolean => {

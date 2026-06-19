@@ -64,6 +64,28 @@ export interface SatelliteProps {
    * SSR-frozen.
    */
   readonly wgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  /**
+   * Emitted GLSL preamble (`GLSLCompileResult.declarations`: `#define STATE_*` +
+   * `uniform <type> u_*;` lines) for this boundary's `@glsl` cast. The
+   * `<Satellite>` component supplies it from the build manifest's
+   * `outputs[].glsl.declarations` via the same content-address join as
+   * {@link glsl}; pass it explicitly when calling `satelliteAttrs` directly.
+   * Rides the boundary payload (`glslDeclarations`) so the `client:gpu` GLSL
+   * runtime PREPENDS the compiler's own uniform vocabulary to the fragment
+   * source before `createProgram` — the author no longer hand-types `u_*`
+   * declarations that must happen to match the compiler's. The single source of
+   * truth (the compiler) produces both the declarations and the per-state values.
+   */
+  readonly glslDeclarations?: string;
+  /**
+   * Emitted WGSL preamble (`WGSLCompileResult.declarations`: state consts + the
+   * uniform struct + `@group(0) @binding(0)`) for this boundary's `@wgsl` cast.
+   * Supplied by `<Satellite>` from the manifest's `outputs[].wgsl.declarations`,
+   * the WGSL analog of {@link glslDeclarations}. Rides the payload
+   * (`wgslDeclarations`) so the WGSL `client:gpu` runtime prepends the compiler's
+   * own struct to the shader module before `createShaderModule`.
+   */
+  readonly wgslDeclarations?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +124,13 @@ export function satelliteAttrs(props: SatelliteProps): Record<string, string> {
       // Authored WGSL uniform binding values ride the payload the same way, so
       // the WGSL `client:gpu` runtime resolves the live uniform buffer per state.
       ...(props.wgsl ? { stateWgsl: props.wgsl } : {}),
+      // The emitted shader preamble (the compiler's `declarations`) rides the
+      // payload so the GPU runtime prepends the compiler's OWN uniform vocabulary
+      // to the fragment/module before compile — the uniform names the runtime
+      // binds and the names the compiler emits are then two views of one source,
+      // not a hand-typed mirror that must happen to agree.
+      ...(props.glslDeclarations ? { glslDeclarations: props.glslDeclarations } : {}),
+      ...(props.wgslDeclarations ? { wgslDeclarations: props.wgslDeclarations } : {}),
     });
     if (props.directive !== false) {
       attrs['data-czap-directive'] = props.directive ?? 'satellite';

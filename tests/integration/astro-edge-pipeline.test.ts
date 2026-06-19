@@ -57,7 +57,7 @@ describe('Astro edge host pipeline integration', () => {
       const czap = context.locals.czap as Record<string, any>;
       return new Response(
         JSON.stringify({
-          tier: czap.tier,
+          tiers: czap.tiers,
           edge: czap.edge,
         }),
         { status: 200 },
@@ -65,11 +65,11 @@ describe('Astro edge host pipeline integration', () => {
     });
 
     const body = JSON.parse(await response.text()) as {
-      readonly tier: { readonly motion: string };
+      readonly tiers: { readonly motion: string };
       readonly edge: { readonly theme: { readonly css: string }; readonly compiledOutputs: { readonly css: string } };
     };
 
-    expect(body.tier.motion).toBe('none');
+    expect(body.tiers.motion).toBe('none');
     expect(body.edge.theme.css).toContain('--brand-color-primary');
     expect(body.edge.compiledOutputs.css).toContain('[data-tier=');
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');

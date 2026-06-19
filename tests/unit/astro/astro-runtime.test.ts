@@ -590,8 +590,9 @@ describe('astro shared runtime adapters', () => {
 
     expect(readSignalValue('scroll.x')).toBe(40);
     expect(readSignalValue('scroll.y')).toBe(150);
-    // (150 / (2000 - 500)) * 100 = 10
-    expect(readSignalValue('scroll.progress')).toBe(10);
+    // CANONICAL 0..1 scale (matches Signal, the SignalSource source of truth):
+    // 150 / (2000 - 500) = 0.1. (Was 0..100 pre-0.3.0 — the scale bug.)
+    expect(readSignalValue('scroll.progress')).toBe(0.1);
 
     // Unscrollable document: denominator <= 0 clamps to 0 instead of NaN/Infinity.
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 400, configurable: true });
@@ -599,7 +600,7 @@ describe('astro shared runtime adapters', () => {
 
     // Unknown axes and signal families without a built-in reader stay undefined.
     expect(readSignalValue('scroll.bogus')).toBeUndefined();
-    expect(readSignalValue('audio.level')).toBeUndefined();
+    expect(readSignalValue('audio.level')).toBeUndefined(); // not a valid audio mode
     expect(readSignalValue('network.effectiveType')).toBeUndefined();
   });
 

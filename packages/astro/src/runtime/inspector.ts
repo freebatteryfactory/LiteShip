@@ -3,12 +3,16 @@
  *
  * Visualizes every `[data-czap-boundary]` element, live signal values,
  * threshold tracks with draggable notches, and copy-back snippets.
- * Mounted in a shadow-root host; toggled via Alt+Shift+C (see
- * {@link installInspectorLoader}).
+ * Rendered into a render target (a shadow root) supplied by the host —
+ * the Astro dev-toolbar app's `init(canvas)` ShadowRoot in production, an
+ * injected `attachShadow` root under test. Toggling is owned by the
+ * toolbar app (`app.onToggled`); this module renders panels into whatever
+ * root it is handed.
  *
  * @module
  */
 
+import { inputToSource } from '@czap/core';
 import {
   boundaryParseFailureMessage,
   parseBoundary,
@@ -16,7 +20,6 @@ import {
   type BoundaryStateDetail,
   type SerializedBoundary,
 } from './boundary.js';
-import { inspectorPositionStorageKey } from './inspector-loader.js';
 import {
   buildGraphPeek,
   castValueRows,
@@ -29,7 +32,6 @@ import {
   type CastTarget,
 } from './inspector-panels.js';
 
-const HOST_TAG = 'czap-inspector';
 const DIRECTIVE_ATTR = 'data-czap-directive';
 const LEGACY_DIRECTIVE_PREFIX = 'client:';
 
@@ -158,14 +160,23 @@ function isDirectiveActive(element: HTMLElement): boolean {
 
 function trackMaxForInput(input: string, thresholds: readonly number[]): number {
   const peak = thresholds.length > 0 ? Math.max(...thresholds) : 0;
-  if (input.startsWith('viewport.')) {
+  // Family is derived from the SOURCE OF TRUTH (inputToSource), not re-parsed.
+  const source = inputToSource(input);
+  if (source?.type === 'viewport') {
     return Math.max(peak * 1.5, typeof window !== 'undefined' ? window.innerWidth : peak, 1200);
   }
-  if (input.startsWith('scroll.')) {
-    if (input === 'scroll.progress') {
-      return 100;
+  if (source?.type === 'scroll') {
+    // scroll.progress is the canonical 0..1 scale (see readSignalValue): the
+    // track runs 0..1 so the cursor/notches map a 0.5-authored boundary to the
+    // middle. A drift guard pins this 1 to readSignalValue's 0..1 range.
+    if (source.axis === 'progress') {
+      return 1;
     }
     return Math.max(peak * 1.5, 2000);
+  }
+  // audio.amplitude / audio.beat are normalized 0..1 feeds.
+  if (source?.type === 'audio') {
+    return 1;
   }
   return Math.max(peak * 1.5, peak + 100, 100);
 }
@@ -174,9 +185,12 @@ interface PanelHandles {
   readonly dispose: () => void;
 }
 
-let overlayHost: HTMLElement | null = null;
-let overlayVisible = false;
-const panelHandles = new WeakMap<HTMLElement, PanelHandles>();
+// A Map, not a WeakMap: the per-boundary handles must be ENUMERABLE so every one
+// can be explicitly disposed. A WeakMap can't be drained, and GC can't reclaim
+// these anyway — a panel's observers/listeners hold a strong ref to their target
+// element, so a removed boundary's handle (and element) leaks until torn down by
+// hand. `refreshPanels` and `dispose` both drain this in full.
+const panelHandles = new Map<HTMLElement, PanelHandles>();
 
 function styles(): string {
   return `
@@ -202,7 +216,6 @@ function styles(): string {
   justify-content: space-between;
   padding: 10px 12px;
   border-bottom: 1px solid #3c4048;
-  cursor: move;
   user-select: none;
 }
 .header h2 { margin: 0; font-size: 13px; font-weight: 600; }
@@ -304,63 +317,39 @@ details.section[open] > summary::before { content: '▾ '; }
 `.trim();
 }
 
-function readStoredPosition(): { x: number; y: number } | null {
-  try {
-    const raw = sessionStorage.getItem(inspectorPositionStorageKey());
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { x?: number; y?: number };
-    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-      return { x: parsed.x, y: parsed.y };
-    }
-  } catch (error) {
-    // Corrupt stored JSON (SyntaxError) and storage denied in sandboxed
-    // embeds (DOMException) both mean "no saved position" by design.
-    if (error instanceof SyntaxError || error instanceof DOMException) {
-      return null;
-    }
-    throw error;
-  }
-  return null;
+/** A mounted inspector: refresh re-scans the page; dispose tears down panel observers. */
+export interface InspectorHandle {
+  /** Re-scan the page and re-render every boundary panel + the graph peek. */
+  readonly refresh: () => void;
+  /** Disconnect every per-boundary observer/listener registered by the last refresh. */
+  readonly dispose: () => void;
 }
 
-function storePosition(x: number, y: number): void {
-  try {
-    sessionStorage.setItem(inspectorPositionStorageKey(), JSON.stringify({ x, y }));
-  } catch {
-    // sessionStorage may be unavailable in some embed contexts
-  }
-}
-
-function ensureHost(): HTMLElement {
-  if (overlayHost && overlayHost.isConnected) {
-    return overlayHost;
-  }
-
-  const host = document.createElement(HOST_TAG);
-  host.style.all = 'initial';
-  const shadow = host.attachShadow({ mode: 'open' });
+/**
+ * Mount the inspector panel into a caller-supplied render target.
+ *
+ * The Astro dev-toolbar app passes its `init(canvas)` ShadowRoot; the
+ * jsdom browser test passes a host's own `attachShadow` root. We render
+ * `<style>` + the panel structure into `root` and return a handle whose
+ * `refresh()` re-scans `[data-czap-boundary]` elements. No global host
+ * element is created and no custom element is registered — the render
+ * target IS the realm boundary, supplied by Astro's toolbar.
+ *
+ * @param root - Shadow root (or any element/fragment) to render into.
+ */
+export function mountInspectorPanel(root: ShadowRoot | DocumentFragment | HTMLElement): InspectorHandle {
   const style = document.createElement('style');
   style.textContent = styles();
-  shadow.appendChild(style);
+  root.appendChild(style);
 
   const panel = document.createElement('div');
   panel.className = 'panel';
-  panel.hidden = true;
 
   const header = document.createElement('div');
   header.className = 'header';
   const title = document.createElement('h2');
   title.textContent = 'czap boundaries';
-  const close = document.createElement('button');
-  close.className = 'close';
-  close.type = 'button';
-  close.setAttribute('aria-label', 'Close inspector');
-  close.textContent = '×';
-  close.addEventListener('click', () => {
-    toggleInspectorOverlay(false);
-  });
   header.appendChild(title);
-  header.appendChild(close);
 
   const body = document.createElement('div');
   body.className = 'body';
@@ -368,48 +357,31 @@ function ensureHost(): HTMLElement {
 
   panel.appendChild(header);
   panel.appendChild(body);
-  shadow.appendChild(panel);
+  root.appendChild(panel);
 
-  const stored = readStoredPosition();
-  if (stored) {
-    panel.style.left = `${stored.x}px`;
-    panel.style.top = `${stored.y}px`;
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
-  }
+  const refresh = (): void => {
+    refreshPanels(body);
+  };
+  refresh();
 
-  let dragStart: { x: number; y: number; left: number; top: number } | null = null;
-  header.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0) return;
-    const rect = panel.getBoundingClientRect();
-    dragStart = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
-    header.setPointerCapture(event.pointerId);
-  });
-  header.addEventListener('pointermove', (event) => {
-    if (!dragStart) return;
-    const dx = event.clientX - dragStart.x;
-    const dy = event.clientY - dragStart.y;
-    panel.style.left = `${dragStart.left + dx}px`;
-    panel.style.top = `${dragStart.top + dy}px`;
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
-  });
-  header.addEventListener('pointerup', (event) => {
-    if (!dragStart) return;
-    const rect = panel.getBoundingClientRect();
-    storePosition(rect.left, rect.top);
-    dragStart = null;
-    header.releasePointerCapture(event.pointerId);
-  });
-
-  document.documentElement.appendChild(host);
-  overlayHost = host;
-  (host as HTMLElement & { __panel?: HTMLDivElement }).__panel = panel;
-  return host;
-}
-
-function panelElement(host: HTMLElement): HTMLDivElement {
-  return (host as HTMLElement & { __panel?: HTMLDivElement }).__panel!;
+  return {
+    refresh,
+    dispose: () => {
+      // Tear down every per-boundary observer/listener the last refresh wired.
+      for (const child of Array.from(body.children)) {
+        child.remove();
+      }
+      // Iterate the handle map itself, not the live DOM: a boundary removed
+      // before dispose is gone from `querySelectorAll('[data-czap-boundary]')`
+      // but its handle (observers/listeners) still sits in `panelHandles` and
+      // would leak across remounts. The map is the source of truth for what was
+      // wired; drain it fully.
+      for (const [element, handle] of Array.from(panelHandles.entries())) {
+        handle.dispose();
+        panelHandles.delete(element);
+      }
+    },
+  };
 }
 
 function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): PanelHandles {
@@ -733,6 +705,15 @@ function refreshPanels(body: HTMLElement): void {
     child.remove();
   }
 
+  // The body is rebuilt wholesale below, so dispose EVERY handle from the prior
+  // refresh — including boundaries removed from the page since (gone from the DOM
+  // query, but their observers/listeners still live in the map). Draining here,
+  // not just per-surviving-element, is what stops the cross-refresh leak.
+  for (const [element, handle] of Array.from(panelHandles.entries())) {
+    handle.dispose();
+    panelHandles.delete(element);
+  }
+
   const elements = document.querySelectorAll<HTMLElement>('[data-czap-boundary]');
   if (elements.length === 0) {
     const empty = document.createElement('div');
@@ -743,8 +724,6 @@ function refreshPanels(body: HTMLElement): void {
   }
 
   elements.forEach((element) => {
-    const prior = panelHandles.get(element);
-    prior?.dispose();
     panelHandles.set(element, renderBoundaryPanel(element, body));
   });
 
@@ -820,23 +799,4 @@ function renderGraphPeek(body: HTMLElement, elements: readonly HTMLElement[]): v
   section.appendChild(disclaimer);
 
   body.appendChild(section);
-}
-
-/** Toggle the inspector overlay. When `visible` is omitted, flips current state. */
-export function toggleInspectorOverlay(visible?: boolean): void {
-  const host = ensureHost();
-  const panel = panelElement(host);
-  overlayVisible = visible ?? !overlayVisible;
-  panel.hidden = !overlayVisible;
-  if (overlayVisible) {
-    const body = panel.querySelector<HTMLElement>('[data-role="inspector-body"]');
-    if (body) {
-      refreshPanels(body);
-    }
-  }
-}
-
-/** Whether the overlay is currently visible. */
-export function isInspectorOverlayVisible(): boolean {
-  return overlayVisible;
 }

@@ -72,6 +72,22 @@ export function parseLLMChunk(event: Pick<MessageEvent, 'data'>): LLMChunk | nul
 }
 
 function mapDeviceTier(): 'none' | 'transitions' | 'animations' | 'physics' | 'compute' {
+  // Source of truth: the probe (and EdgeTier server-side) write the CANONICAL
+  // motion tier to data-czap-motion. Read it directly rather than re-deriving
+  // motion from the capability tier (data-czap-tier), which drifts from
+  // motionTierFromCapabilities.
+  const motion = document.documentElement.getAttribute('data-czap-motion');
+  if (
+    motion === 'none' ||
+    motion === 'transitions' ||
+    motion === 'animations' ||
+    motion === 'physics' ||
+    motion === 'compute'
+  ) {
+    return motion;
+  }
+  // Pre-probe provisional fallback: derive a coarse motion tier from the
+  // capability tier until data-czap-motion is present.
   switch (document.documentElement.getAttribute('data-czap-tier')) {
     case 'static':
       return 'none';

@@ -145,13 +145,17 @@ export declare namespace Boundary {
 // § 4. SIGNALS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom';
+export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
 
 /**
  * Discriminant payloads default to the common case when omitted:
  * viewport `axis: 'width'`, time `mode: 'elapsed'`, pointer `axis: 'x'`,
- * scroll `axis: 'y'`. `Signal.make` normalizes the source, so the returned
- * signal's `source` always carries explicit values.
+ * scroll `axis: 'y'`, audio `mode: 'sample'`. `Signal.make` normalizes the
+ * source, so the returned signal's `source` always carries explicit values.
+ *
+ * Audio modes: `sample`/`normalized` are offline/scrub reads; `amplitude`
+ * (0..1 RMS) / `beat` (0/1 onset pulse) are live analyser-driven feeds
+ * published by a host runtime producer.
  */
 export type SignalSource =
   | { readonly type: 'viewport'; readonly axis?: 'width' | 'height' }
@@ -159,7 +163,8 @@ export type SignalSource =
   | { readonly type: 'pointer'; readonly axis?: 'x' | 'y' | 'pressure' }
   | { readonly type: 'scroll'; readonly axis?: 'x' | 'y' | 'progress' }
   | { readonly type: 'media'; readonly query: string }
-  | { readonly type: 'custom'; readonly id: string };
+  | { readonly type: 'custom'; readonly id: string }
+  | { readonly type: 'audio'; readonly mode?: 'sample' | 'normalized' | 'amplitude' | 'beat' };
 
 export interface Signal<T> {
   readonly source: SignalSource;
@@ -177,6 +182,17 @@ export declare namespace Signal {
   export function make(source: SignalSource): Effect.Effect<Signal<number>, never, Scope.Scope>;
   export function controllable(): Effect.Effect<ControllableSignal<number>, never, Scope.Scope>;
 }
+
+/**
+ * The sanctioned bidirectional bridge between {@link SignalSource} (the typed
+ * union) and {@link SignalInput} (the branded dot-string). `inputToSource`
+ * returns `undefined` for strings outside the vocabulary — it is lenient by
+ * design (the brand is unvalidated free-form). They round-trip on every
+ * recognized source after normalization.
+ */
+export function sourceToInput(source: SignalSource): SignalInput;
+export function inputToSource(input: string): SignalSource | undefined;
+export function inputSourceType(input: string): SignalSourceType | undefined;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 5. ANIMATION

@@ -10,8 +10,8 @@ Defined in: [astro/src/integration.ts:42](https://github.com/heyoub/LiteShip/blo
 
 Options passed to [integration](../functions/integration.md) from `astro.config.mjs`. Every
 field is optional; omitted features fall back to conservative
-defaults (detect enabled, stream/llm/gpu enabled, workers/wasm/server
-islands opt-in).
+defaults (detect enabled, stream/llm/gpu enabled, workers/wasm
+opt-in).
 
 ## Properties
 
@@ -49,7 +49,7 @@ runs everywhere).
 
 > `readonly` `optional` **gpu?**: `object`
 
-Defined in: [astro/src/integration.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L66)
+Defined in: [astro/src/integration.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L72)
 
 GPU runtime configuration.
 
@@ -67,10 +67,11 @@ GPU runtime configuration.
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [astro/src/integration.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L82)
+Defined in: [astro/src/integration.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L89)
 
-Dev-only boundary inspector overlay (default enabled in `astro dev`).
-Pass `false` to opt out of the Alt+Shift+C overlay.
+Dev-only boundary inspector (default enabled in `astro dev`). Registered
+as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
+`false` to skip registering the toolbar app.
 
 ***
 
@@ -78,7 +79,7 @@ Pass `false` to opt out of the Alt+Shift+C overlay.
 
 > `readonly` `optional` **llm?**: `object`
 
-Defined in: [astro/src/integration.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L77)
+Defined in: [astro/src/integration.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L83)
 
 LLM streaming runtime configuration.
 
@@ -88,11 +89,27 @@ LLM streaming runtime configuration.
 
 ***
 
+### middleware?
+
+> `readonly` `optional` **middleware?**: `boolean`
+
+Defined in: [astro/src/integration.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L99)
+
+Opt in (`true`) to auto-register a zero-config capability-detection
+middleware, so a consumer needs no `src/middleware.ts` for the common case;
+it populates `Astro.locals.czap` from Client Hints. The edge boundary cache
+(whose `theme`/`compile` carry functions) always needs a consumer
+`src/middleware.ts` calling `czapMiddleware({ edge })`; when both are present
+this auto entry runs first (`order: 'pre'`) and the consumer middleware
+refines the same locals. Default off (wire middleware yourself).
+
+***
+
 ### security?
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [astro/src/integration.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L84)
+Defined in: [astro/src/integration.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L101)
 
 Security policies applied to runtime fetch/HTML boundaries.
 
@@ -106,13 +123,19 @@ Security policies applied to runtime fetch/HTML boundaries.
 
 ***
 
-### serverIslands?
+### ~~serverIslands?~~
 
 > `readonly` `optional` **serverIslands?**: `boolean`
 
-Defined in: [astro/src/integration.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L62)
+Defined in: [astro/src/integration.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L68)
 
-Turn on Astro's experimental server-islands flag (default `false`).
+#### Deprecated
+
+No-op. Server Islands is stable in Astro (since v5); there is
+no experimental flag to toggle on Astro 6. Using `server:defer` with a
+configured adapter is all that's needed — czap does nothing here. This
+option is retained only so existing configs keep type-checking; it will
+be removed in a future major.
 
 ***
 
@@ -120,7 +143,7 @@ Turn on Astro's experimental server-islands flag (default `false`).
 
 > `readonly` `optional` **stream?**: `object`
 
-Defined in: [astro/src/integration.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L75)
+Defined in: [astro/src/integration.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L81)
 
 SSE streaming runtime configuration.
 
@@ -144,7 +167,7 @@ Overrides passed through to `@czap/vite`'s plugin.
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [astro/src/integration.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L64)
+Defined in: [astro/src/integration.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L70)
 
 WASM runtime configuration.
 
@@ -162,7 +185,7 @@ WASM runtime configuration.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/integration.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L73)
+Defined in: [astro/src/integration.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L79)
 
 Off-thread worker runtime configuration. `coep` selects the
 Cross-Origin-Embedder-Policy value emitted with COOP (default

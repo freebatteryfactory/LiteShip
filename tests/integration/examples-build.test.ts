@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
 
-const INSPECTOR_DIST_MARKERS = ['czap-inspector', 'inspector-loader', 'runtime/inspector.ts'] as const;
+const INSPECTOR_DIST_MARKERS = ['czap-inspector', 'inspector-toolbar-app', 'runtime/inspector.ts'] as const;
 
 function collectFiles(dir: string): string[] {
   const entries = readdirSync(dir);

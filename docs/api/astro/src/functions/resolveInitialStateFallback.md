@@ -8,7 +8,7 @@
 
 > **resolveInitialStateFallback**(`boundary`): `string`
 
-Defined in: [astro/src/Satellite.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L137)
+Defined in: [astro/src/Satellite.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L166)
 
 Resolve initial state from a boundary for SSR.
 

@@ -24,15 +24,18 @@ network connection quality. Maps detected capabilities to the
 
 ## Type Aliases
 
+- [CapAxis](type-aliases/CapAxis.md)
 - [DesignTier](type-aliases/DesignTier.md)
 - [GPUTier](type-aliases/GPUTier.md)
 
 ## Variables
 
+- [CAP\_AXES](variables/CAP_AXES.md)
 - [Detect](variables/Detect.md)
 
 ## Functions
 
+- [capAxisAttr](functions/capAxisAttr.md)
 - [capSetFromCapabilities](functions/capSetFromCapabilities.md)
 - [designTierFromCapabilities](functions/designTierFromCapabilities.md)
 - [detect](functions/detect.md)

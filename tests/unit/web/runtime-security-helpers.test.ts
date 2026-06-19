@@ -477,6 +477,20 @@ describe('runtime security helpers', () => {
     expect(resolveRuntimeUrl('file:///etc/passwd', opts).type).toBe('private-ip-rejected');
   });
 
+  test('resolveRuntimeUrl SSRF-checks protocol-relative URLs (no scheme, still a foreign origin)', () => {
+    const opts = { kind: 'gpu-shader' as const, baseOrigin: 'https://app.example.com' };
+
+    // Protocol-relative URLs (`//host`) have NO scheme, so the previous
+    // isAbsoluteUrl regex skipped the private-IP check — yet they resolve to a
+    // foreign origin. The gate is now cross-origin, not scheme-presence.
+    expect(resolveRuntimeUrl('//169.254.169.254/latest/meta-data', opts).type).toBe('private-ip-rejected');
+    expect(resolveRuntimeUrl('//10.0.0.1/internal', opts).type).toBe('private-ip-rejected');
+    expect(resolveRuntimeUrl('//127.0.0.1:8080/secret', opts).type).toBe('private-ip-rejected');
+
+    // Path-relative URLs inherit the page's own origin → not SSRF vectors.
+    expect(resolveRuntimeUrl('/stream', opts).type).toBe('allowed');
+  });
+
   test('resolveRuntimeUrl rejects hex-mapped IPv6 private and reserved absolute URLs', () => {
     const opts = { kind: 'gpu-shader' as const, baseOrigin: 'https://app.example.com' };
 

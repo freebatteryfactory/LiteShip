@@ -8,7 +8,7 @@
  * @module
  */
 
-import { Diagnostics, type Boundary } from '@czap/core';
+import { Diagnostics, inputToSource, type Boundary } from '@czap/core';
 import { CSSCompiler, type CSSRule, type CSSStateInput } from '@czap/compiler';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import {
@@ -476,9 +476,12 @@ function containerNameOf(boundary: Boundary.Shape): string {
  * that measures them.
  */
 export function viewportQueryAxis(input: string): 'width' | 'height' | null {
-  if (input === 'viewport' || input === 'viewport.width') return 'width';
-  if (input === 'viewport.height') return 'height';
-  return null;
+  // Axis derived from the SOURCE OF TRUTH (inputToSource) — `viewport` and
+  // `viewport.width` both normalize to axis 'width', `viewport.height' to
+  // 'height'; any other input is not a viewport dimension.
+  const source = inputToSource(input);
+  if (source?.type !== 'viewport') return null;
+  return source.axis ?? 'width';
 }
 
 /**
@@ -537,9 +540,12 @@ function containmentRule(block: QuantizeBlock, boundary: Boundary.Shape, sheet?:
   }
 
   if (boundary.input.startsWith('viewport.')) {
-    // An unrecognized viewport axis (e.g. viewport.aspect): container
-    // queries only measure width and height, so auto-containment would
-    // claim a dimension this signal does not have.
+    // An unrecognized viewport axis (e.g. viewport.aspect): NOT a vocabulary
+    // parse — `viewportQueryAxis` already consulted the source of truth and
+    // returned null above. This namespace prefix detects an AUTHORING mistake
+    // inside the viewport family (a non-dimension axis) to teach a better
+    // message; container queries only measure width and height, so
+    // auto-containment would claim a dimension this signal does not have.
     Diagnostics.warn({
       source: 'czap/vite.css-quantize',
       code: 'container-not-declared',

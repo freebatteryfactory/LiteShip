@@ -244,8 +244,9 @@ function malformedResolution(
  *
  * The function never throws; malformed URLs produce a `malformed`
  * variant and cross-origin / policy violations produce correspondingly
- * typed rejections. Relative URLs inherit the base origin and bypass
- * the private-IP SSRF check (they cannot point outside it).
+ * typed rejections. Path-relative URLs (no leading `//`) inherit the base
+ * origin and skip the private-IP SSRF check; any URL that resolves
+ * cross-origin — scheme-absolute OR protocol-relative — is SSRF-checked.
  */
 export function resolveRuntimeUrl(
   rawUrl: string | null | undefined,
@@ -280,11 +281,12 @@ export function resolveRuntimeUrl(
     return { type: 'private-ip-rejected', resolved };
   }
 
-  // For absolute URLs (those containing a scheme), block private/reserved IPs
-  // to prevent SSRF attacks (e.g. http://169.254.169.254, http://10.0.0.1).
-  // Relative paths (e.g. "/stream") inherit the page origin and are not SSRF vectors.
-  const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(rawUrl);
-  if (isAbsoluteUrl && isPrivateOrReservedIP(resolved.hostname)) {
+  // Block private/reserved IPs to prevent SSRF whenever the URL resolves
+  // CROSS-ORIGIN — anything that does not inherit the page's own origin. This
+  // covers scheme-absolute URLs (http://169.254.169.254) AND protocol-relative
+  // ones (//169.254.169.254 — no scheme, yet still a foreign origin). Same-origin
+  // / path-relative URLs (e.g. "/stream") inherit the page origin, so they skip it.
+  if (normalizedResolvedOrigin !== normalizedBaseOrigin && isPrivateOrReservedIP(resolved.hostname)) {
     return { type: 'private-ip-rejected', resolved };
   }
 

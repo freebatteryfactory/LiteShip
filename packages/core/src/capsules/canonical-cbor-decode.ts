@@ -32,7 +32,15 @@ function normalize(value: unknown): unknown {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       if (v === undefined) continue; // mirror encoder: drop undefined props
-      out[k] = normalize(v);
+      // Mirror the decoder: a `__proto__` key is an OWN data property, never a
+      // prototype mutation — so normalize(x) and decode(encode(x)) agree (and
+      // neither pollutes Object.prototype). See cbor-decode.ts map branch.
+      const nv = normalize(v);
+      if (k === '__proto__') {
+        Object.defineProperty(out, k, { value: nv, enumerable: true, writable: true, configurable: true });
+      } else {
+        out[k] = nv;
+      }
     }
     return out;
   }

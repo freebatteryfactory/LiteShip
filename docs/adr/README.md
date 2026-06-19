@@ -25,6 +25,9 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0013](./0013-canonical-package.md) | `@czap/canonical` self-contained bytes kernel | Accepted |
 | [0014](./0014-genui-catalog.md) | `@czap/genui` closed catalog renderer | Accepted |
 | [0015](./0015-document-graph-ir.md) | Document graph IR + AI cast envelope | Accepted |
+| [0016](./0016-signal-vocabulary.md) | Unified signal vocabulary (SignalSource source of truth) | Accepted |
+| [0017](./0017-cache-content-version.md) | Conditional cache: content-version beyond the boundary address | Accepted |
+| [0018](./0018-cap-axes-attribute-contract.md) | CAP_AXES capability-attribute contract | Accepted |
 
 ## Template
 

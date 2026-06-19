@@ -8,6 +8,6 @@
 
 > **Audio** = `AudioSignalShape`
 
-Defined in: [core/src/signal.ts:378](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L378)
+Defined in: [core/src/signal.ts:389](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L389)
 
 Structural shape of an audio-sourced signal backed by an [AVBridge](../../../variables/AVBridge.md).

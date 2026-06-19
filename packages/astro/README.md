@@ -46,6 +46,8 @@ import { viewport } from '../boundaries.js';
 
 Drag the window edge across 768px: the wrapper's `data-czap-state` attribute flips between `stacked` and `split` for your CSS to key on. No `client:*` attribute needed — the integration's injected boot script activates the evaluator.
 
+`czap({ middleware: true })` auto-wires capability detection, so the common case needs no `src/middleware.ts`; it populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` (no cast). Boundaries can also bind live `audio.amplitude` / `audio.beat` signals (`driveAudioFromAnalyser` from `@czap/astro/runtime`), and the dev boundary inspector ships as an Astro dev-toolbar app (toggle from the toolbar icon).
+
 ## Where it sits
 
 The host integration most apps touch: it registers [`@czap/vite`](https://github.com/heyoub/LiteShip/tree/main/packages/vite) (build-time boundary scanning and CSS), injects [`@czap/detect`](https://github.com/heyoub/LiteShip/tree/main/packages/detect)'s device-tier probe, and rigs the client directives backed by [`@czap/web`](https://github.com/heyoub/LiteShip/tree/main/packages/web) (DOM morphing, SSE, LLM streams) and [`@czap/worker`](https://github.com/heyoub/LiteShip/tree/main/packages/worker) (off-thread evaluation), with [`@czap/edge`](https://github.com/heyoub/LiteShip/tree/main/packages/edge) supplying SSR tier detection for the optional middleware. Boundary authoring itself lives in [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core); Cloudflare deploys add [`@czap/cloudflare`](https://github.com/heyoub/LiteShip/tree/main/packages/cloudflare) on top. See the

@@ -92,9 +92,12 @@ tier never touches the network.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L121)
+Defined in: [edge/src/host-adapter.ts:129](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L129)
 
-Optional KV key prefix.
+Optional KV key prefix. Doubles as the per-deploy content version for a
+bundled `compile`: set it to a hash of compile's output (e.g.
+`layout-${fnv1a(compileLayoutCss())}`) when that output depends on
+build-time content outside the boundary's own address.
 
 ***
 
@@ -102,10 +105,13 @@ Optional KV key prefix.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [edge/src/host-adapter.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L119)
+Defined in: [edge/src/host-adapter.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L122)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
-knob. Entries are content-addressed and never go stale; deploys that
-change boundary content mint a new `ContentAddress` and orphan the old
-`boundaryId` x tier keys, which KV stores (and bills) forever unless a
-TTL reclaims them. Omit to cache indefinitely.
+knob. An entry is keyed by boundary content address, tier, name, and
+resolved-theme fingerprint, so it never goes stale for a change in any of
+those. (A `compile` whose output also depends on build-time inputs the
+boundary id does not cover must vary `prefix` per deploy — see `prefix`.)
+Deploys that change boundary content mint a new `ContentAddress` and
+orphan the old keys, which KV stores (and bills) forever unless a TTL
+reclaims them. Omit to cache indefinitely.

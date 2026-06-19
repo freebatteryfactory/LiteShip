@@ -225,6 +225,13 @@ const STANDALONE_FUNCTIONS = [
   // the canonical WGSL identifier (D1-WGSL): bare snake_case field name, shared
   // by compositor/worker/astro-wgpu/compiler — the WGSL twin of `glslIdent`.
   'wgslIdent',
+  // Signal source-of-truth round-trip (0.3.0): the sanctioned bidirectional
+  // SignalSource <-> input-string mapper (dot-string axes + colon-delimited
+  // media:/custom: payloads) + the axis-type reader. One vocabulary shared by the
+  // astro runtime, vite css-quantize, and the inspector — replacing the forks.
+  'sourceToInput',
+  'inputToSource',
+  'inputSourceType',
   // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',

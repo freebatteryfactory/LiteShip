@@ -87,6 +87,9 @@ export type { SlotConfig } from './component.js';
 // Signal
 export { Signal } from './signal.js';
 export type { SignalSourceType, SignalSource } from './signal.js';
+// The sanctioned SignalSource <-> SignalInput bridge (source of truth for the
+// input vocabulary; replaces every hand-rolled `input.startsWith(...)` fork).
+export { sourceToInput, inputToSource, inputSourceType } from './signal-input.js';
 
 // Easing
 export { Easing } from './easing.js';
