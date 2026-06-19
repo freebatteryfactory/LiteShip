@@ -1,0 +1,22 @@
+# LiteShip is maintainer-led. @heyoub owns project direction.
+#
+# This file marks @heyoub as a reviewer on changes; the paths below are the
+# load-bearing ones — the project's contract, not just its code. A change here is
+# a change to the doctrine (the source-of-truth principle, the gates, the docs).
+# (Code-owner review is advisory in the solo ruleset, not a hard merge block.)
+
+* @heyoub
+
+# Doctrine + contract surfaces — the sacred docs and the architecture decisions.
+/*.md @heyoub
+/docs/ @heyoub
+/docs/adr/ @heyoub
+
+# The gates themselves — the audit engine, the plumb ledger, the gauntlet phase list.
+/packages/audit/ @heyoub
+/scripts/plumb-registry.ts @heyoub
+/scripts/plumb-gate.ts @heyoub
+/packages/cli/src/gauntlet-phases.ts @heyoub
+
+# CI + repo governance.
+/.github/ @heyoub
