@@ -45,6 +45,18 @@ describe('plumb gate — mechanism', () => {
     expect(r.skips.map((s) => s.message)).toContain('unwired: needs a real binding');
   });
 
+  it('FAILS on a skip hiding in a .bench.ts (lane-aware: EVERY generated lane is scanned)', () => {
+    // The lane-aware harness routes the per-frame-budget check into .bench.ts.
+    // A placeholder skip there must not escape the gate — same law, every lane.
+    const root = fixtureRoot({
+      generated: { 'probe.bench.ts': `bench.skip('unwired perf measurement', () => {});\n` },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.map((s) => s.message)).toContain('unwired perf measurement');
+    expect(r.skips[0]?.kind).toBe('bench.skip');
+  });
+
   it('FAILS on a computed-message it.skip (the ternary form the harness emits)', () => {
     const root = fixtureRoot({
       generated: {

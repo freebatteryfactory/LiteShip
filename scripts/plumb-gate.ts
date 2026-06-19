@@ -21,7 +21,7 @@ import { PACKAGE_PLUMB } from './plumb-registry.js';
 /** One skipped generated test — a placeholder standing in for unwired work. */
 export interface PlumbSkip {
   readonly file: string;
-  readonly kind: 'it.skip' | 'test.skip' | 'describe.skip';
+  readonly kind: 'it.skip' | 'test.skip' | 'describe.skip' | 'bench.skip';
   readonly message: string;
 }
 
@@ -40,7 +40,7 @@ export interface PlumbGateResult {
 // (the harness writes `it.skip(cond ? 'a' : 'b')` for not-arbitrary-derivable
 // schemas). `.skipIf(` is NOT matched (the `(` must follow `skip` directly), so
 // genuine runtime-conditional skips are excluded.
-const SKIP_CALL_RE = /\b(it|test|describe)\.skip\(/g;
+const SKIP_CALL_RE = /\b(it|test|describe|bench)\.skip\(/g;
 // The first quoted string after the call — the human-readable reason — used for
 // the work-list line (escape-aware; tolerates a leading ternary condition).
 const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
@@ -49,23 +49,28 @@ function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boo
   const dir = resolve(root, 'tests', 'generated');
   if (!existsSync(dir)) return { skips: [], present: false };
   const skips: PlumbSkip[] = [];
-  let sawTest = false;
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.test.ts')) continue;
-    sawTest = true;
-    const src = readFileSync(resolve(dir, entry.name), 'utf8');
+  let sawGenerated = false;
+  // Scan EVERY generated lane, recursively: `.test.ts` (unit), `.bench.ts` (bench),
+  // and any nested lane dir (e.g. `integration/`). The lane-aware harness routes a
+  // check into the lane that fits — so a placeholder skip hiding in a non-unit lane
+  // would be the EXACT blindness this gate exists to kill. No lane is exempt.
+  const rels = readdirSync(dir, { recursive: true }) as string[];
+  for (const rel of rels) {
+    if (!rel.endsWith('.test.ts') && !rel.endsWith('.bench.ts')) continue;
+    sawGenerated = true;
+    const src = readFileSync(resolve(dir, rel), 'utf8');
     for (const m of src.matchAll(SKIP_CALL_RE)) {
       const window = src.slice(m.index + m[0].length, m.index + m[0].length + 400);
       const msg = FIRST_STRING_RE.exec(window);
       skips.push({
-        file: `tests/generated/${entry.name}`,
+        file: `tests/generated/${rel.split(/[\\/]/).join('/')}`,
         kind: `${m[1]}.skip` as PlumbSkip['kind'],
         message: msg ? (msg[2] ?? '') : '(computed reason)',
       });
     }
   }
   skips.sort((a, b) => a.file.localeCompare(b.file) || a.message.localeCompare(b.message));
-  return { skips, present: sawTest };
+  return { skips, present: sawGenerated };
 }
 
 function publishedPackages(root: string): string[] {
