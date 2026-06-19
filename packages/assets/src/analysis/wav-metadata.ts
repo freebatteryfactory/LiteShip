@@ -19,7 +19,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId } from '../contract.js';
+import { assertRegisteredAudioAssetId, AssetBytes } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
 
 /** Tag fields read from a WAV file's LIST/INFO chunks. */
@@ -75,13 +75,20 @@ const WavMetadataSchema = Schema.Struct({
 /** Build a WavMetadataProjection cachedProjection capsule for a named audio asset. */
 export function WavMetadataProjection(
   audioAssetId: string,
-): CapsuleDef<'cachedProjection', unknown, WavMetadata, unknown> {
+): CapsuleDef<'cachedProjection', ArrayBuffer, WavMetadata, unknown> {
   assertRegisteredAudioAssetId(audioAssetId, 'WavMetadataProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:wav-metadata`,
-    input: Schema.Unknown,
+    // The projection derives directly from the asset's raw WAV bytes — its
+    // `derive` is `extractWavMetadata(bytes)`, a deterministic LIST/INFO walk.
+    // A Declaration-tagged `instanceOf(ArrayBuffer)` schema (shared with the
+    // asset decl): the harness honestly reports "not arbitrary-derivable" for
+    // the random-source property test, and exercises the REAL derive over the
+    // canonical `.wav` fixture instead.
+    input: AssetBytes as unknown as Schema.Schema<ArrayBuffer>,
     output: WavMetadataSchema,
+    derive: (bytes: ArrayBuffer): WavMetadata => extractWavMetadata(bytes),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

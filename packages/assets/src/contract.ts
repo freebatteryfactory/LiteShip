@@ -195,7 +195,7 @@ export function builtinDecoderSiteFor(kind: AssetKind): readonly Site[] {
  * harness honestly reports "not arbitrary-derivable" instead of feeding
  * `fc.anything()` garbage into real decoders that only accept ArrayBuffer.
  */
-const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<unknown>;
+export const AssetBytes = Schema.instanceOf(ArrayBuffer) as unknown as Schema.Schema<unknown>;
 
 /**
  * Effective site for a declaration: the explicit `decl.site` override when

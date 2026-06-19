@@ -11,7 +11,8 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId } from '../contract.js';
+import { assertRegisteredAudioAssetId, AssetBytes } from '../contract.js';
+import { audioDecoder } from '../decoders/audio.js';
 import type { BeatMarkerSet as _BeatMarkerSet } from '@czap/_spine';
 
 /**
@@ -80,13 +81,20 @@ const BeatMarkerSetSchema = Schema.Struct({
 /** Build a BeatMarkerProjection cachedProjection capsule for a named audio asset. */
 export function BeatMarkerProjection(
   audioAssetId: string,
-): CapsuleDef<'cachedProjection', unknown, BeatMarkerSet, unknown> {
+): CapsuleDef<'cachedProjection', ArrayBuffer, BeatMarkerSet, unknown> {
   assertRegisteredAudioAssetId(audioAssetId, 'BeatMarkerProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:beats`,
-    input: Schema.Unknown,
+    // Derives from the asset's raw WAV bytes: decode to samples (audioDecoder)
+    // then autocorrelate the energy envelope (detectBeats). Both steps are
+    // pure and deterministic over identical bytes, so the content-addressed
+    // cache-hit / invalidation probes hold. Declaration-tagged byte schema
+    // (shared with the asset decl) — random-source property test self-skips
+    // honestly; the canonical `.wav` fixture drives the real derive.
+    input: AssetBytes as unknown as Schema.Schema<ArrayBuffer>,
     output: BeatMarkerSetSchema,
+    derive: async (bytes: ArrayBuffer): Promise<BeatMarkerSet> => detectBeats(await audioDecoder(bytes)),
     capabilities: { reads: [`asset:${audioAssetId}`], writes: [] },
     invariants: [
       {

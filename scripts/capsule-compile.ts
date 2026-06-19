@@ -261,6 +261,26 @@ async function probeBinding(
     : { arbitraryDerivable, handlersPresent };
 }
 
+/**
+ * Factory wrappers that produce a `cachedProjection` whose `derive(bytes)`
+ * decodes the named source asset's RAW BYTES (BeatMarkerProjection decodes the
+ * WAV then autocorrelates; WavMetadataProjection walks LIST/INFO tags). For
+ * these, the canonical decode fixture is the SOURCE asset's byte file — named
+ * by the asset id passed as the factory's first argument
+ * (`BeatMarkerProjection('intro-bed')`), resolved against the asset decl's
+ * `source` path.
+ *
+ * Source of truth: each listed factory wires `input: AssetBytes` +
+ * `derive: (bytes) => ...` over the named asset (see
+ * `packages/assets/src/analysis/*.ts`). Keep this in sync with those factories
+ * — the same discipline `FACTORY_NAMING` already follows. A factory NOT listed
+ * here stays on the harness's honest self-reporting branch (no fixture wired).
+ */
+const ASSET_BYTE_PROJECTION_FACTORIES = new Set<string>([
+  'BeatMarkerProjection',
+  'WavMetadataProjection',
+]);
+
 /** Dispatch to the correct harness generator based on assembly kind. */
 function dispatchHarness(
   kind: AssemblyKind,
@@ -410,6 +430,19 @@ async function main(): Promise<void> {
     if (!byKey.has(key)) byKey.set(key, { ...d, resolvedName });
   }
 
+  // Static asset id -> byte source map, built from the detected `defineAsset`
+  // declarations (their `name` IS the asset id, `declSource` the byte path).
+  // Used to resolve the canonical decode fixture for projection factories that
+  // name their source asset by id (BeatMarkerProjection('intro-bed')) — fully
+  // static, no runtime module import (the example scene modules import the
+  // unlinked `@czap/assets` bare specifier and aren't importable from here).
+  const assetSourceById = new Map<string, string>();
+  for (const d of byKey.values()) {
+    if (d.factory === 'defineAsset' && d.declSource !== undefined) {
+      assetSourceById.set(d.name, d.declSource);
+    }
+  }
+
   const capsules: ManifestEntry[] = [];
 
   for (const d of byKey.values()) {
@@ -430,22 +463,68 @@ async function main(): Promise<void> {
     // is direct (`defineCapsule`, no factory wrapper) or it is a `defineAsset`
     // call bound to an EXPORTED const (e.g. `export const introBed =
     // defineAsset({...})` in examples/scenes/assets.ts) — the harness can
-    // import that binding and probe the capsule's derive handler. Other
-    // factory wrappers (BeatMarkerProjection, ...) still fall back to skip:
-    // their capsules carry no derive handler to probe yet.
+    // import that binding and probe the capsule's derive handler.
     const factoryBindable = d.factory === 'defineAsset' && d.exported === true;
+
+    // ADDITIVE cachedProjection branch — independent of the receiptedMutation /
+    // pure-transform probe paths above. The analysis projection factories
+    // (BeatMarkerProjection, WavMetadataProjection, ...) are EXPORTED bindings
+    // (`export const introBedBeats = BeatMarkerProjection('intro-bed')`) that
+    // now carry a real `derive(bytes)` handler. They name their source asset by
+    // id, not by path, so the canonical decode fixture is resolved from the
+    // static asset id -> source map (assetSourceById, built from the detected
+    // `defineAsset` decls) rather than from a call-site `source` literal. When
+    // the factory is a known byte-projection AND its fixture resolves, the
+    // cachedProjection harness emits REAL cache-hit / invalidation / determinism
+    // probes over the fixture bytes instead of `it.skip`.
+    const cachedProjectionFactory =
+      d.kind === 'cachedProjection' &&
+      d.factory !== undefined &&
+      ASSET_BYTE_PROJECTION_FACTORIES.has(d.factory) &&
+      d.exported === true &&
+      d.binding !== undefined;
+    // Resolve the source asset id (factory's first string arg) to its byte
+    // source path via the static defineAsset map built above.
+    const cachedProjectionAssetId = cachedProjectionFactory
+      ? d.args?.find((v): v is string => typeof v === 'string')
+      : undefined;
+    const cachedProjectionFixture =
+      cachedProjectionAssetId !== undefined
+        ? assetSourceById.get(cachedProjectionAssetId)
+        : undefined;
+    const cachedProjectionBindable =
+      cachedProjectionFactory && cachedProjectionFixture !== undefined;
+
     let harnessCtx: HarnessContext | undefined;
-    if (d.binding !== undefined && (d.factory === undefined || factoryBindable)) {
+    if (
+      d.binding !== undefined &&
+      (d.factory === undefined || factoryBindable || cachedProjectionBindable)
+    ) {
       const sourceModule = normalizeRepoPath(relative(dirname(testPath), d.file)).replace(/\.ts$/, '.js');
       const arbitraryAbs = resolve(
         'packages/core/src/harness/arbitrary-from-schema.ts',
       );
       const arbitraryModule = normalizeRepoPath(relative(dirname(testPath), arbitraryAbs)).replace(/\.ts$/, '.js');
+      // Canonical content-address kernel — the cachedProjection harness keys
+      // its cache-hit / invalidation probes on contentAddressOf (never a
+      // hand-rolled hash). Resolved as a repo-relative import for the test file.
+      const contentAddressAbs = resolve('packages/core/src/content-address.ts');
+      const contentAddressModule = normalizeRepoPath(
+        relative(dirname(testPath), contentAddressAbs),
+      ).replace(/\.ts$/, '.js');
       // Compile-time probe: import the real binding and check whether its
       // input schema is arbitrary-derivable and its handlers are present.
       // When both hold the harness emits a FINAL real test rather than an
       // `it.skip` placeholder (the built-not-plumbed lie).
       const probe = await probeBinding(d.kind, d.file, d.binding);
+      // Fixture path: asset decls carry it as a call-site `source` literal
+      // (declSource); analysis projection factories name their source asset by
+      // id and resolve it from the registry (cachedProjectionFixture). Either
+      // way it's a repo-relative byte source the harness decodes.
+      const fixturePath =
+        d.declSource !== undefined
+          ? normalizeRepoPath(d.declSource)
+          : cachedProjectionFixture;
       harnessCtx = {
         bindingImport: sourceModule.startsWith('.')
           ? sourceModule
@@ -454,10 +533,18 @@ async function main(): Promise<void> {
         arbitraryImport: arbitraryModule.startsWith('.')
           ? arbitraryModule
           : `./${arbitraryModule}`,
+        contentAddressImport: contentAddressModule.startsWith('.')
+          ? contentAddressModule
+          : `./${contentAddressModule}`,
         // Asset decls name their canonical byte source (repo-relative) —
         // the cachedProjection harness uses it for fixture-based
         // determinism tests and the real decode bench.
-        ...(d.declSource !== undefined ? { fixturePath: normalizeRepoPath(d.declSource) } : {}),
+        ...(fixturePath !== undefined ? { fixturePath } : {}),
+        // Factory-wrapped byte-projection capsule whose `derive` + fixture were
+        // statically resolved (ASSET_BYTE_PROJECTION_FACTORIES + the asset
+        // source map): the harness emits the FINAL real-only cache/determinism
+        // probes — zero `it.skip` literals — over the canonical fixture bytes.
+        ...(cachedProjectionBindable ? { cachedProjectionRealOnly: true } : {}),
         ...(probe !== undefined
           ? {
               arbitraryDerivable: probe.arbitraryDerivable,

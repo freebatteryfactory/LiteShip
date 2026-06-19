@@ -35,6 +35,27 @@ export interface HarnessContext {
   /** Import specifier for `schemaToArbitrary`, default to source path. */
   readonly arbitraryImport?: string;
   /**
+   * Import specifier (with `.js` extension) for the canonical
+   * `contentAddressOf` primitive from `@czap/core`'s content-address kernel.
+   * The `cachedProjection` harness uses it as the cache KEY function for the
+   * content-addressed cache-hit / invalidation probes — never a hand-rolled
+   * hash. Defaults to the repo-relative source path when the driver omits it.
+   */
+  readonly contentAddressImport?: string;
+  /**
+   * COMPILE-TIME resolution for a `cachedProjection` whose binding the driver
+   * has fully resolved: its `derive(bytes)` handler is present AND its
+   * canonical byte fixture path is known to exist. When `true`, the harness
+   * emits the FINAL real-only form — fixture-driven cache-hit / invalidation /
+   * determinism / invariant probes with NO `it.skip` runtime-guard literals.
+   * The random-source property test is OMITTED (not skipped): these capsules
+   * take a Declaration-tagged `instanceOf(ArrayBuffer)` source schema that is
+   * deliberately not arbitrary-derivable, so a random ArrayBuffer probe cannot
+   * apply — the canonical `.wav` fixture is the source of truth instead.
+   * `undefined`/`false` keeps the template on its self-reporting runtime branch.
+   */
+  readonly cachedProjectionRealOnly?: boolean;
+  /**
    * Repo-root-relative path to a canonical source fixture (e.g. an asset
    * decl's `source`: `examples/scenes/intro-bed.wav`). When present,
    * `cachedProjection` harnesses emit fixture-based determinism/invariant

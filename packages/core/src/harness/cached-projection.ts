@@ -22,6 +22,7 @@ import type { CapsuleDef } from '../assembly.js';
 import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
+const DEFAULT_CONTENT_ADDRESS_IMPORT = '../../packages/core/src/content-address.js';
 
 /** Comment-only bench placeholder used when no binding/fixture is wired. */
 function placeholderBench(cap: CapsuleDef<'cachedProjection', unknown, unknown, unknown>): string {
@@ -73,10 +74,103 @@ export function generateCachedProjection(
   ctx: HarnessContext = {},
 ): HarnessOutput {
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  const contentAddressImport = ctx.contentAddressImport ?? DEFAULT_CONTENT_ADDRESS_IMPORT;
   const hasBinding = ctx.bindingImport !== undefined && ctx.bindingName !== undefined;
   const hasFixture = hasBinding && ctx.fixturePath !== undefined;
 
   const benchFile = hasFixture ? fixtureBench(cap, ctx) : placeholderBench(cap);
+
+  // COMPILE-TIME resolved: binding + `derive` + canonical fixture all present.
+  // Emit the FINAL real-only form — fixture-driven cache-hit / invalidation /
+  // determinism / invariant probes with NO `it.skip` token. The random-source
+  // property test is OMITTED (not skipped): the source schema is a
+  // Declaration-tagged `instanceOf(ArrayBuffer)` that is deliberately not
+  // arbitrary-derivable, so the canonical fixture bytes are the source of
+  // truth. A regression (missing fixture / removed derive) throws RED at
+  // setup, which is correct — never a green placeholder.
+  if (ctx.cachedProjectionRealOnly === true && hasFixture) {
+    const testFile = `// GENERATED — do not edit by hand
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { contentAddressOf } from '${contentAddressImport}';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+
+describe('${cap.name}', () => {
+  const cap = ${ctx.bindingName};
+  // capsule:compile resolved: \`derive\` present + canonical fixture exists.
+  const derive = cap.derive!;
+  const fixtureAbs = resolve('${ctx.fixturePath}');
+  const fixtureBytes = (): ArrayBuffer => readFileSync(fixtureAbs).buffer as ArrayBuffer;
+
+  // Content-addressed cache model: a cachedProjection's cache is keyed on the
+  // CONTENT ADDRESS of its source bytes (contentAddressOf — the canonical
+  // @czap/core kernel: canonicalize -> CanonicalCbor -> fnv1a), its value the
+  // derived output. We drive a Map<ContentAddress, Out> through the REAL derive
+  // to prove the two cache laws over real fixture bytes — not a hand-rolled
+  // hash, not a vacuous placeholder.
+  const sourceKey = (bytes: ArrayBuffer): string =>
+    contentAddressOf(new Uint8Array(bytes.slice(0)));
+
+  it('cache hit: identical source yields the same derived output', async () => {
+    const cache = new Map<string, unknown>();
+    const a = fixtureBytes();
+    const b = fixtureBytes();
+    // Identical source content -> identical cache key (a hit on the 2nd read).
+    const keyA = sourceKey(a);
+    const keyB = sourceKey(b);
+    expect(keyB).toBe(keyA);
+
+    cache.set(keyA, await derive(a as never));
+    expect(cache.has(keyB)).toBe(true); // 2nd identical source is a cache HIT
+    const cached = cache.get(keyB);
+    // The derive is deterministic, so the cached value equals a fresh derive.
+    expect(cached).toEqual(await derive(b as never));
+    // And the derived OUTPUTS are content-address-identical (the property a
+    // content-addressed cache relies on to serve a stored value).
+    expect(contentAddressOf(cached)).toBe(contentAddressOf(await derive(b as never)));
+  });
+
+  it('invalidation: source change produces new cache entry', async () => {
+    const cache = new Map<string, unknown>();
+    const original = fixtureBytes();
+    const keyOriginal = sourceKey(original);
+    cache.set(keyOriginal, await derive(original as never));
+
+    // Mutate one source byte deep in the payload — a genuinely different
+    // source. A content-addressed cache MUST treat it as a new entry (cache
+    // miss on the changed key), even when a robust derive happens to map both
+    // sources to the same output: the cache invariant is keyed on the SOURCE.
+    const mutated = new Uint8Array(original.slice(0));
+    const flipAt = Math.max(0, mutated.length - 64);
+    mutated[flipAt] = (mutated[flipAt]! ^ 0xff) & 0xff;
+    const keyMutated = sourceKey(mutated.buffer as ArrayBuffer);
+
+    expect(keyMutated).not.toBe(keyOriginal); // changed source -> new key
+    expect(cache.has(keyMutated)).toBe(false); // -> cache MISS (new entry)
+
+    // Recording the new entry leaves the original entry intact: two distinct
+    // sources, two distinct content-addressed cache entries.
+    cache.set(keyMutated, await derive(mutated.buffer as never));
+    expect(cache.size).toBe(2);
+    expect(cache.has(keyOriginal)).toBe(true);
+  });
+
+  it('determinism: the canonical fixture decodes to a deep-equal output twice', async () => {
+    expect(await derive(fixtureBytes() as never)).toEqual(await derive(fixtureBytes() as never));
+  });
+
+  for (const inv of cap.invariants) {
+    it(\`invariant over canonical fixture: \${inv.name}\`, async () => {
+      const source = fixtureBytes();
+      const output = await derive(source as never);
+      expect(inv.check(source as never, output as never)).toBe(true);
+    });
+  }
+});
+`;
+    return { testFile, benchFile };
+  }
 
   if (!hasBinding) {
     const testFile = `// GENERATED — do not edit by hand
@@ -112,6 +206,60 @@ describe('${cap.name}', () => {
     const derive = cap.derive!;
     const fixtureBytes = (): ArrayBuffer => readFileSync(fixtureAbs).buffer as ArrayBuffer;
 
+    // Content-addressed cache model: a cachedProjection's cache is keyed on
+    // the CONTENT ADDRESS of its source bytes (contentAddressOf — the
+    // canonical @czap/core kernel: canonicalize -> CanonicalCbor -> fnv1a),
+    // its value the derived output. We drive a Map<ContentAddress, Out>
+    // through the REAL derive to prove the two cache laws over real fixture
+    // bytes — not a hand-rolled hash, not a vacuous placeholder.
+    const sourceKey = (bytes: ArrayBuffer): string =>
+      contentAddressOf(new Uint8Array(bytes.slice(0)));
+
+    it('cache hit: identical source yields the same derived output', async () => {
+      const cache = new Map<string, unknown>();
+      const a = fixtureBytes();
+      const b = fixtureBytes();
+      // Identical source content -> identical cache key (a hit on the 2nd read).
+      const keyA = sourceKey(a);
+      const keyB = sourceKey(b);
+      expect(keyB).toBe(keyA);
+
+      cache.set(keyA, await derive(a as never));
+      const hit = cache.has(keyB);
+      expect(hit).toBe(true); // 2nd identical source is a cache HIT
+      const cached = cache.get(keyB);
+      // The derive is deterministic, so the cached value equals a fresh derive.
+      expect(cached).toEqual(await derive(b as never));
+      // And the derived OUTPUTS are content-address-identical (the property a
+      // content-addressed cache relies on to serve a stored value).
+      expect(contentAddressOf(cached)).toBe(contentAddressOf(await derive(b as never)));
+    });
+
+    it('invalidation: source change produces new cache entry', async () => {
+      const cache = new Map<string, unknown>();
+      const original = fixtureBytes();
+      const keyOriginal = sourceKey(original);
+      cache.set(keyOriginal, await derive(original as never));
+
+      // Mutate one source byte deep in the payload — a genuinely different
+      // source. A content-addressed cache MUST treat it as a new entry (cache
+      // miss on the changed key), even when a robust derive happens to map both
+      // sources to the same output: the cache invariant is keyed on the SOURCE.
+      const mutated = new Uint8Array(original.slice(0));
+      const flipAt = Math.max(0, mutated.length - 64);
+      mutated[flipAt] = (mutated[flipAt]! ^ 0xff) & 0xff;
+      const keyMutated = sourceKey(mutated.buffer as ArrayBuffer);
+
+      expect(keyMutated).not.toBe(keyOriginal); // changed source -> new key
+      expect(cache.has(keyMutated)).toBe(false); // -> cache MISS (new entry)
+
+      // Recording the new entry leaves the original entry intact: two distinct
+      // sources, two distinct content-addressed cache entries.
+      cache.set(keyMutated, await derive(mutated.buffer as never));
+      expect(cache.size).toBe(2);
+      expect(cache.has(keyOriginal)).toBe(true);
+    });
+
     it('determinism: the canonical fixture decodes to a deep-equal output twice', async () => {
       expect(await derive(fixtureBytes() as never)).toEqual(await derive(fixtureBytes() as never));
     });
@@ -130,6 +278,7 @@ describe('${cap.name}', () => {
     ? ''
     : `import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { contentAddressOf } from '${contentAddressImport}';
 `;
 
   const testFile = `// GENERATED — do not edit by hand
