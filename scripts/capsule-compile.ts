@@ -70,6 +70,13 @@ interface ManifestEntry {
   readonly kind: string;
   readonly source: string;
   readonly generated: { testFile: string; benchFile: string };
+  /**
+   * `true` when the harness has a real binding to probe (the generated test
+   * exercises the capsule); `false` when it fell back to `it.skip` because the
+   * binding isn't wired yet. The plumb gate reads this so a skip-only capsule
+   * cannot silently ship green — it must be wired or registered.
+   */
+  readonly wired: boolean;
   /** Set when the call site uses a factory wrapper instead of `defineCapsule` directly. */
   readonly factory?: string;
   /** Literal arguments captured at the factory call site. */
@@ -311,6 +318,7 @@ async function main(): Promise<void> {
     const testRel = normalizeRepoPath(relative(cwd, testPath));
     const benchRel = normalizeRepoPath(relative(cwd, benchPath));
 
+    const wired = harnessCtx !== undefined;
     const entry: ManifestEntry =
       d.factory !== undefined
         ? d.args !== undefined && d.args.length > 0
@@ -319,6 +327,7 @@ async function main(): Promise<void> {
               kind: d.kind,
               source: sourceRel,
               generated: { testFile: testRel, benchFile: benchRel },
+              wired,
               factory: d.factory,
               args: d.args,
             }
@@ -327,6 +336,7 @@ async function main(): Promise<void> {
               kind: d.kind,
               source: sourceRel,
               generated: { testFile: testRel, benchFile: benchRel },
+              wired,
               factory: d.factory,
             }
         : {
@@ -334,6 +344,7 @@ async function main(): Promise<void> {
             kind: d.kind,
             source: sourceRel,
             generated: { testFile: testRel, benchFile: benchRel },
+            wired,
           };
     capsules.push(entry);
   }

@@ -1,0 +1,85 @@
+/**
+ * The plumb-completeness ledger.
+ *
+ * Two honest, low-noise signals. (The cheap syntactic alternatives don't gate:
+ * the audit's orphan findings are severity `info` and 350+ of them are type/
+ * inference/test-only NOISE, not plumb debt; package import-reachability is
+ * polluted by dev/CLI/build edges. So neither gates cleanly — and per-primitive
+ * plumb-truth is instead proven by each item's end-to-end acceptance test that
+ * drives it through the live runtime.)
+ *
+ *  1. `PACKAGE_PLUMB` — every published package classified as `runtime` (live in
+ *     a consumer site), `tooling` (CLI/build/types — not a live-runtime cast
+ *     path), or `deferred` (meant to be runtime-live but not yet plumbed; MUST
+ *     carry an `issue`). A published package missing here fails the gate, so a
+ *     new test-only subsystem (the scene/stage class — whole packages a consumer
+ *     never runs) cannot ship unclassified/hidden. This is the headline guard.
+ *
+ *  2. `PLUMB_FLOOR` — the pinned set of capsules whose harness is unwired
+ *     (`capsule:<name>`, only an `it.skip` binding). The gate fails on DRIFT: a
+ *     NEW unwired capsule must be wired or consciously added here; a wired one
+ *     means shrink the floor. Modelled on `AUDIT_WARNING_FLOOR`.
+ *
+ * @module
+ */
+
+export type PackagePlumbStatus = 'runtime' | 'tooling' | 'deferred';
+
+export interface PackagePlumbEntry {
+  readonly status: PackagePlumbStatus;
+  readonly reason: string;
+  /** Tracking issue/ADR — REQUIRED for `deferred` (enforced by the meta-test). */
+  readonly issue?: string;
+}
+
+/**
+ * Pinned inventory of unwired capsules (`capsule:<name>` — only an `it.skip`
+ * binding). SHRINKS as bindings get wired. A NEW unwired capsule drifts the
+ * floor and fails the gate.
+ */
+export const PLUMB_FLOOR: readonly string[] = [
+  // Beat/wav-metadata projections whose derive handler isn't probed by the
+  // generated harness yet (the factory wrapper carries no bindable export).
+  'capsule:intro-bed:beats',
+  'capsule:intro-bed:wav-metadata',
+];
+
+/** Every published package's live-runtime plumb status. */
+export const PACKAGE_PLUMB: Readonly<Record<string, PackagePlumbEntry>> = {
+  // Live in a consumer site (SSR + client runtime / edge / build-plugin cast path).
+  '@czap/astro': { status: 'runtime', reason: 'The Astro integration + client runtime — the primary live cast surface.' },
+  '@czap/core': { status: 'runtime', reason: 'The kernel: signals, boundaries, evaluator, content-addressing, graph IR.' },
+  '@czap/canonical': { status: 'runtime', reason: 'Canonical CBOR/FNV identity — consumed by core on the live path.' },
+  '@czap/detect': { status: 'runtime', reason: 'Capability detection — consumed by the runtime + edge.' },
+  '@czap/quantizer': { status: 'runtime', reason: 'The output evaluator — consumed on the cast path.' },
+  '@czap/compiler': { status: 'runtime', reason: 'CSS/ARIA/GLSL/WGSL dispatch arms — consumed via the boundary manifest.' },
+  '@czap/web': { status: 'runtime', reason: 'Browser-host security/morph/audio primitives consumed by the runtime.' },
+  '@czap/worker': { status: 'runtime', reason: 'Off-thread compositor — consumed by the runtime.' },
+  '@czap/genui': { status: 'runtime', reason: 'GenUI render pipeline — consumed by the astro llm runtime.' },
+  '@czap/edge': { status: 'runtime', reason: 'Edge tier detection + boundary cache — a live host surface.' },
+  '@czap/vite': { status: 'runtime', reason: 'Build-time @quantize compile + the dev cast — part of the shipped pipeline.' },
+  '@czap/cloudflare': { status: 'runtime', reason: 'Cloudflare host adapter — a live edge surface.' },
+  '@czap/assets': { status: 'runtime', reason: 'Asset/audio analysis consumed by the build + scene pipeline.' },
+
+  // CLI / build / types — not a live-runtime cast path.
+  '@czap/cli': { status: 'tooling', reason: 'The `czap` CLI — a developer tool, not a runtime surface.' },
+  '@czap/command': { status: 'tooling', reason: 'CLI command catalog/host — tooling.' },
+  '@czap/mcp-server': { status: 'tooling', reason: 'MCP server — a developer-assistant surface, not site runtime.' },
+  '@czap/audit': { status: 'tooling', reason: 'The audit engine — build/CI tooling.' },
+  '@czap/remotion': { status: 'tooling', reason: 'Remotion offline video integration — build-time render, not live runtime.' },
+  '@czap/_spine': { status: 'tooling', reason: 'The published type spine — declarations only, no runtime.' },
+  liteship: { status: 'tooling', reason: 'The umbrella meta-package — re-exports, no runtime of its own.' },
+  'create-liteship': { status: 'tooling', reason: 'The scaffolder — a one-shot CLI, not runtime.' },
+
+  // Meant to be runtime-live; NOT yet plumbed into the live cast path (0.4.0 campaign).
+  '@czap/scene': {
+    status: 'deferred',
+    reason: 'The signal-indexed timeline ECS casts to video/offline only; the scene→live-runtime bridge (0.4.0 item 1) is not landed yet.',
+    issue: 'liteship-0.4.0/item-1-scene-live-bridge',
+  },
+  '@czap/stage': {
+    status: 'deferred',
+    reason: 'Dual-export is browser/WebCodecs-gated; the headless node encoder + a live runtime consumer (0.4.0 item 5) are not landed yet.',
+    issue: 'liteship-0.4.0/item-5-stage-headless-encoder',
+  },
+};

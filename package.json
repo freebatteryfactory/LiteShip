@@ -41,6 +41,7 @@
     "report:satellite-scan": "pnpm exec tsx scripts/report-satellite-scan.ts",
     "feedback:verify": "pnpm exec tsx scripts/feedback-verify.ts",
     "runtime:gate": "pnpm exec tsx scripts/runtime-gate.ts",
+    "plumb:gate": "pnpm exec tsx scripts/plumb-gate.ts",
     "flex:verify": "pnpm exec tsx scripts/flex-verify.ts",
     "devx:check": "pnpm exec tsx scripts/devx-check.ts",
     "audit": "pnpm run audit:report",
