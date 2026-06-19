@@ -8,7 +8,7 @@
 
 > `const` **isWellFormedNode**: (`value`) => `value is DocumentGraphNode`
 
-Defined in: core/src/document-graph-schema.ts:186
+Defined in: [core/src/document-graph-schema.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph-schema.ts#L186)
 
 Type guard: does this untrusted value conform to ONE of the eight
 `DocumentGraphNode` family schemas (correct `_tag`/`_version`/`family` and the
