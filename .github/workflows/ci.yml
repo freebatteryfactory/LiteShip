@@ -136,7 +136,14 @@ jobs:
       - run: pnpm run build
       - name: Artifact must exist — otherwise the parity suite self-skips
         run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
-      - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts
+      # Run the WASM/TS kernel parity suite AND the float-determinism property
+      # tests against the freshly-built wasm artifact — the blend kernel has no
+      # WASM twin but is accumulation-order-sensitive, so its determinism proof
+      # belongs on the one runner that exercises the real compiled kernels.
+      - run: >-
+          pnpm exec vitest run
+          tests/unit/core/wasm-parity.test.ts
+          tests/property/blend-determinism.prop.test.ts
         env:
           CI: true
       # 0.2.1 shipping path: stage the freshly-built kernel into @czap/core's
