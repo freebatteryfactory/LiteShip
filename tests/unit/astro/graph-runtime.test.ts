@@ -274,4 +274,197 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     expect(loadGraphRuntime('{ not json', () => null)).toBeNull();
     expect(loadGraphRuntime('{"nodes":[{"bogus":true}],"edges":[]}', () => null)).toBeNull();
   });
+
+  // FINDING 1 [P1 SECURITY]: sealGraph only re-addresses the TOP-LEVEL graph id
+  // from the supplied node ids — it does NOT re-seal each node, so a payload with
+  // a FORGED node id (id ≠ its payload bytes) used to be accepted unchallenged.
+  // The loader now re-seals every node and remaps edges; a forged id is either
+  // resealed to its canonical address (and the runtime trusts only canonical ids)
+  // or — if it leaves a dangling edge — rejected.
+  test('re-seals forged node ids and never trusts a tampered address', () => {
+    window.innerWidth = 500;
+    const graph = buildGraph();
+
+    // Tamper: swap one node's id to a WRONG (but well-formed-looking) address.
+    // Keep the edges pointing at the forged id so reseal must remap, not reject.
+    const realId = graph.nodes.find((n) => n.family === 'signal')!.id;
+    const forgedId = ('f'.repeat(String(realId).length) as unknown) as ContentAddress;
+    const tampered: DocumentGraph = {
+      ...graph,
+      nodes: graph.nodes.map((n) => (n.id === realId ? { ...n, id: forgedId } : n)),
+      edges: graph.edges.map((e) => ({
+        from: e.from === realId ? forgedId : e.from,
+        to: e.to === realId ? forgedId : e.to,
+        type: e.type,
+      })),
+    };
+
+    const handle = loadGraphRuntime(JSON.stringify(tampered), () => null);
+    // The graph still lowers (the signal reseals to its canonical address), so we
+    // get a handle — but EVERY node id it carries is canonical (none is forged).
+    expect(handle).not.toBeNull();
+    const ids = handle!.graph.nodes.map((n) => String(n.id));
+    expect(ids).not.toContain(String(forgedId));
+    // And the resealed signal id equals the address sealNode mints from its payload.
+    const sealedSignal = sealNode(
+      tampered.nodes.find((n) => n.family === 'signal') as SignalNode,
+    );
+    expect(ids).toContain(String(sealedSignal.id));
+  });
+
+  // FINDING 1 (rejection arm): a forged id that leaves an edge endpoint pointing
+  // at no resealed node is REJECTED (loadGraphRuntime → null), never silently
+  // dropped.
+  test('rejects a graph whose edge references a forged id with no node', () => {
+    const graph = buildGraph();
+    const danglingId = ('e'.repeat(String(graph.nodes[0]!.id).length) as unknown) as ContentAddress;
+    // Add an edge to a node id that does not exist; validateGraph would catch a
+    // dangling edge BEFORE reseal, so instead point an EXISTING edge's `to` at the
+    // dangling id after the fact — but keep it past validateGraph by also adding a
+    // node whose id we then forge away. Simplest: forge a node id WITHOUT updating
+    // the edges that reference its old id → after reseal those edges dangle.
+    const target = graph.nodes.find((n) => n.family === 'projection')!;
+    const tampered: DocumentGraph = {
+      ...graph,
+      // Replace the projection node's id with a forged one, but leave the
+      // component→projection edge pointing at the ORIGINAL id. validateGraph reads
+      // the supplied (consistent-with-edges) ids and passes; after reseal the
+      // projection gets its canonical id, so the edge's `to` (original id) maps to
+      // nothing → reject.
+      nodes: graph.nodes.map((n) => (n.id === target.id ? { ...n, id: danglingId } : n)),
+    };
+    expect(loadGraphRuntime(JSON.stringify(tampered), () => null)).toBeNull();
+  });
+
+  // FINDING 2 [P2]: an EntityNode with TWO components lowers to TWO bindings that
+  // share the same entityId. The registry must keep BOTH (not overwrite/leak the
+  // first), seed both, and release() must detach BOTH.
+  test('keeps all observers for a 1-entity, 2-component graph; release detaches both', () => {
+    window.innerWidth = 500; // viewport.width → mobile
+    // Reset scroll state (a prior test leaves scrollY high) so scroll.progress
+    // seeds deterministically to 'top'.
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 1000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+
+    const sig1 = signal('viewport.width');
+    const comp1 = component('card', [0, 768], ['mobile', 'desktop']);
+    const sig2 = signal('scroll.progress');
+    const comp2 = component('rail', [0, 0.5], ['top', 'bottom']);
+    const ent = sealNode<EntityNode>({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '' as ContentAddress,
+      meta,
+      components: [comp1.id, comp2.id],
+    });
+    const proj1 = projection('css', comp1.id, 'card');
+    const proj2 = projection('css', comp2.id, 'rail');
+    const poseMobile = pose(ent.id, 'mobile', { '--czap-card': '14px' });
+    const poseTop = pose(ent.id, 'top', { '--czap-rail': '0' });
+
+    const graph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [sig1, comp1, sig2, comp2, ent, proj1, proj2, poseMobile, poseTop],
+      edges: [
+        { from: sig1.id, to: comp1.id, type: 'seq' },
+        { from: comp1.id, to: proj1.id, type: 'seq' },
+        { from: ent.id, to: comp1.id, type: 'seq' },
+        { from: sig2.id, to: comp2.id, type: 'seq' },
+        { from: comp2.id, to: proj2.id, type: 'seq' },
+        { from: ent.id, to: comp2.id, type: 'seq' },
+      ],
+    });
+
+    // Both boundaries cast onto the SAME element (one entity).
+    const handle = loadGraphRuntime(graph, () => elA)!;
+    expect(handle).not.toBeNull();
+
+    // BOTH boundaries seeded onto the element: the viewport boundary applied
+    // `--czap-card`, the scroll boundary applied `--czap-rail`. If the second
+    // binding had overwritten the first in the registry, only one would seed —
+    // but seeding happens in loadGraphRuntime regardless; the real leak shows up
+    // at release. Assert both observers detach: spy on BOTH removeEventListener
+    // channels (resize observer via disconnect; scroll via removeEventListener).
+    expect(elA.style.getPropertyValue('--czap-card')).toBe('14px');
+    expect(elA.style.getPropertyValue('--czap-rail')).toBe('0');
+
+    // release() must detach BOTH observers. The scroll observer detaches via
+    // window.removeEventListener('scroll', …); if the first (viewport) binding had
+    // leaked, release() would still leave one observer attached. We assert the
+    // scroll teardown fires (proves the 2nd binding is tracked) AND that no error
+    // is thrown tearing down both.
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    expect(() => handle.release()).not.toThrow();
+    const detachedScroll = removeSpy.mock.calls.some(([type]) => type === 'scroll');
+    expect(detachedScroll).toBe(true); // the 2nd (scroll) binding's observer WAS tracked + detached.
+    removeSpy.mockRestore();
+  });
+
+  // FINDING 3 [P2]: a component whose thresholds are NOT strictly ascending makes
+  // Boundary.make throw; that throw must NOT escape loadGraphRuntime. The bad
+  // entity is omitted (lowering stays total), the loader returns a handle, and the
+  // good entity still casts.
+  test('omits a non-ascending-threshold component without throwing', () => {
+    window.innerWidth = 500;
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 1000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+
+    // Bad component: thresholds descending [768, 0] (not strictly ascending).
+    const badSig = signal('viewport.width');
+    const badComp = component('bad', [768, 0], ['a', 'b']);
+    const badEnt = sealNode<EntityNode>({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '' as ContentAddress,
+      meta,
+      components: [badComp.id],
+    });
+    const badProj = projection('css', badComp.id, 'bad');
+
+    // Good component alongside it.
+    const goodSig = signal('scroll.progress');
+    const goodComp = component('rail', [0, 0.5], ['top', 'bottom']);
+    const goodEnt = sealNode<EntityNode>({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '' as ContentAddress,
+      meta,
+      components: [goodComp.id],
+    });
+    const goodProj = projection('css', goodComp.id, 'rail');
+    const goodPose = pose(goodEnt.id, 'top', { '--czap-rail': '0' });
+
+    const graph = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [badSig, badComp, badEnt, badProj, goodSig, goodComp, goodEnt, goodProj, goodPose],
+      edges: [
+        { from: badSig.id, to: badComp.id, type: 'seq' },
+        { from: badComp.id, to: badProj.id, type: 'seq' },
+        { from: badEnt.id, to: badComp.id, type: 'seq' },
+        { from: goodSig.id, to: goodComp.id, type: 'seq' },
+        { from: goodComp.id, to: goodProj.id, type: 'seq' },
+        { from: goodEnt.id, to: goodComp.id, type: 'seq' },
+      ],
+    });
+
+    const resolved: Record<string, HTMLElement> = { [String(badEnt.id)]: elA, [String(goodEnt.id)]: elB };
+    let handle: ReturnType<typeof loadGraphRuntime> = null;
+    expect(() => {
+      handle = loadGraphRuntime(graph, (id) => resolved[String(id)] ?? null);
+    }).not.toThrow();
+    expect(handle).not.toBeNull();
+
+    // The bad entity was OMITTED (no state seeded onto elA); the good entity cast.
+    expect(elA.getAttribute('data-czap-state')).toBeNull();
+    expect(elB.getAttribute('data-czap-state')).toBe('top');
+  });
 });

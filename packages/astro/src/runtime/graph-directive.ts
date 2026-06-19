@@ -35,6 +35,10 @@ export function initGraphDirective(load: () => Promise<unknown>, element: HTMLEl
   if (!serialized) return;
 
   let handle: GraphRuntimeHandle | null = loadGraphRuntime(serialized, entityResolver(element));
+  // Malformed payload → loader returned null. Stay fully inert, consistent with
+  // the missing-payload early return above and the "inert on malformed" contract:
+  // do NOT wire dispose or call load() for a graph that never cast.
+  if (!handle) return;
 
   element.addEventListener('czap:dispose', () => {
     handle?.release();

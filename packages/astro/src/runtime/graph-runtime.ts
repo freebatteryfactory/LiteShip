@@ -37,10 +37,13 @@ import {
   Diagnostics,
   GraphPatch,
   sealGraph,
+  sealNode,
   validateGraph,
   isWellFormedNode,
   type ContentAddress,
   type DocumentGraph,
+  type DocumentGraphNode,
+  type DocumentGraphEdge,
 } from '@czap/core';
 import { applyBoundaryState, evaluateBoundary, readSignalValue, attachSignalObserver } from './boundary.js';
 import { lowerGraph, type LoweredBinding } from './graph-lower.js';
@@ -73,18 +76,26 @@ interface ActiveBinding {
  * teardown WITHOUT learning the internal {@link ActiveBinding} shape.
  */
 export interface GraphCastState {
-  /** @internal — the entity → active-binding registry. Treat as opaque. */
-  readonly active: Map<ContentAddress, ActiveBinding>;
+  /**
+   * @internal — the entity → active-bindings registry. Treat as opaque.
+   *
+   * Keyed by entityId, valued by an ARRAY: one {@link EntityNode} with multiple
+   * {@link ComponentNode}s lowers to MULTIPLE bindings that all share the same
+   * entityId, so a single-binding-per-entity map would overwrite (and leak) all
+   * but the last. Every entity's bindings live in its array, and seed / recast /
+   * release iterate the whole array.
+   */
+  readonly active: Map<ContentAddress, ActiveBinding[]>;
 }
 
 /** Create a fresh, empty {@link GraphCastState} for a delta-driven re-cast caller (e.g. the AI seam). */
 export function createCastState(): GraphCastState {
-  return { active: new Map<ContentAddress, ActiveBinding>() };
+  return { active: new Map<ContentAddress, ActiveBinding[]>() };
 }
 
 /** Detach every observer held by a {@link GraphCastState}. Idempotent. */
 export function releaseCastState(state: GraphCastState): void {
-  for (const entry of state.active.values()) entry.cleanup?.();
+  for (const entries of state.active.values()) for (const entry of entries) entry.cleanup?.();
   state.active.clear();
 }
 
@@ -173,34 +184,62 @@ export function castGraphDelta(
   eventName: string = DEFAULT_EVENT_NAME,
 ): void {
   const active = state.active;
-  const prevBindings = new Map(lowerGraph(prev).map((b) => [b.entityId, b] as const));
-  const nextBindings = new Map(lowerGraph(next).map((b) => [b.entityId, b] as const));
+  // One entity can own MULTIPLE bindings (multiple components → multiple
+  // boundaries), so group the lowered bindings by entity and compare the whole
+  // GROUP per entity, not a single binding.
+  const prevBindings = groupByEntity(lowerGraph(prev));
+  const nextBindings = groupByEntity(lowerGraph(next));
 
-  // An entity is "touched" when its lowered binding changed: added, removed, or
-  // its boundary/targets differ. Compare by the lowered boundary value so a pose
-  // or projection edit (which changes the boundary the entity casts) re-casts the
-  // OWNING entity even though the diff'd node id is the pose/projection, not the
-  // entity. Untouched entities are left alone — their observers stay live.
+  // An entity is "touched" when its lowered binding SET changed: a binding added,
+  // removed, or its boundary/targets differ. Compare by the lowered boundary
+  // value so a pose or projection edit (which changes the boundary the entity
+  // casts) re-casts the OWNING entity even though the diff'd node id is the
+  // pose/projection, not the entity. Untouched entities are left alone — all of
+  // their observers stay live.
   const entityIds = new Set<ContentAddress>([...prevBindings.keys(), ...nextBindings.keys()]);
   for (const entityId of entityIds) {
     const before = prevBindings.get(entityId);
     const after = nextBindings.get(entityId);
-    const changed = !before || !after || !bindingsEqual(before, after);
+    const changed = !before || !after || !bindingGroupsEqual(before, after);
     if (!changed) continue;
 
-    // Detach the entity's old observer (if any) before re-casting.
+    // Detach ALL of the entity's old observers (if any) before re-casting.
     const existing = active.get(entityId);
     if (existing) {
-      existing.cleanup?.();
+      for (const entry of existing) entry.cleanup?.();
       active.delete(entityId);
     }
 
-    // Re-cast from the NEW binding (absent → the entity was removed; leave detached).
+    // Re-cast from the NEW bindings (absent → the entity was removed; leave detached).
     if (after) {
-      const recast = castBinding(after, resolve, eventName);
-      if (recast) active.set(entityId, recast);
+      const recast: ActiveBinding[] = [];
+      for (const binding of after) {
+        const cast = castBinding(binding, resolve, eventName);
+        if (cast) recast.push(cast);
+      }
+      if (recast.length > 0) active.set(entityId, recast);
     }
   }
+}
+
+/** Group lowered bindings by their owning entity id (one entity can own several). */
+function groupByEntity(bindings: readonly LoweredBinding[]): Map<ContentAddress, LoweredBinding[]> {
+  const grouped = new Map<ContentAddress, LoweredBinding[]>();
+  for (const binding of bindings) {
+    (grouped.get(binding.entityId) ?? grouped.set(binding.entityId, []).get(binding.entityId)!).push(binding);
+  }
+  return grouped;
+}
+
+/** Structural equality over an entity's WHOLE binding group — drives whether the entity re-casts on a delta. */
+function bindingGroupsEqual(a: readonly LoweredBinding[], b: readonly LoweredBinding[]): boolean {
+  if (a.length !== b.length) return false;
+  // lowerGraph emits bindings in a stable order (topological over content
+  // addresses), so a positional compare is faithful for the same entity.
+  for (let i = 0; i < a.length; i++) {
+    if (!bindingsEqual(a[i] as LoweredBinding, b[i] as LoweredBinding)) return false;
+  }
+  return true;
 }
 
 /** Structural equality over the lowered shape an entity casts — drives which entities re-cast on a delta. */
@@ -268,14 +307,53 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
   });
   if (!structural.ok) return null;
 
-  // RE-ADDRESS: discard any supplied id/digest, mint from the payload bytes.
+  // RE-SEAL EACH NODE: `sealGraph` only re-addresses the TOP-LEVEL graph id from
+  // the SUPPLIED node ids — it does NOT re-address individual nodes, so a payload
+  // with a FORGED node id (id not matching the node's payload bytes) would pass
+  // shape (`isWellFormedNode`) + topology (`validateGraph`) checks unchallenged.
+  // Reseal every node from its own payload bytes, build oldId→newId, and remap
+  // every edge through it so the graph the runtime trusts is canonically
+  // addressed end-to-end. An edge whose endpoint names no node is REJECTED.
+  const suppliedNodes = candidate.nodes as readonly DocumentGraphNode[];
+  const resealed: DocumentGraphNode[] = [];
+  const remap = new Map<ContentAddress, ContentAddress>();
+  try {
+    for (const node of suppliedNodes) {
+      const sealedNode = sealNode(node);
+      remap.set(node.id, sealedNode.id);
+      resealed.push(sealedNode);
+    }
+  } catch (err) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.graph',
+      code: 'graph-reseal-failed',
+      message:
+        `Failed to re-seal a DocumentGraph node (${String(err)}). The graph runtime stays inert. ` +
+        `Fix: ensure each node payload is well-formed before serializing.`,
+    });
+    return null;
+  }
+
+  const suppliedEdges = candidate.edges as readonly DocumentGraphEdge[];
+  const remappedEdges: DocumentGraphEdge[] = [];
+  for (const edge of suppliedEdges) {
+    const from = remap.get(edge.from);
+    const to = remap.get(edge.to);
+    // A dangling edge after reseal means a forged endpoint id that maps to no
+    // node — reject the graph rather than silently drop the edge.
+    if (from === undefined || to === undefined) return null;
+    remappedEdges.push({ ...edge, from, to });
+  }
+
+  // RE-ADDRESS the graph: discard any supplied id/digest, mint from the (now
+  // canonically-addressed) node ids + remapped edges.
   try {
     return sealGraph({
       _tag: 'DocumentGraph',
       _version: 1,
       meta: (candidate as { meta?: DocumentGraph['meta'] }).meta ?? ZERO_META,
-      nodes: candidate.nodes,
-      edges: candidate.edges,
+      nodes: resealed,
+      edges: remappedEdges,
     } as Omit<DocumentGraph, 'id' | 'digest'>);
   } catch (err) {
     Diagnostics.warnOnce({
@@ -356,7 +434,10 @@ export function loadGraphRuntime(
 
   for (const binding of lowerGraph(sealed)) {
     const cast = castBinding(binding, resolve, eventName);
-    if (cast) state.active.set(binding.entityId, cast);
+    // Append, never overwrite: one entity can own several bindings (several
+    // components → several boundaries), each with its own live observer.
+    if (cast)
+      (state.active.get(binding.entityId) ?? state.active.set(binding.entityId, []).get(binding.entityId)!).push(cast);
   }
 
   let current = sealed;

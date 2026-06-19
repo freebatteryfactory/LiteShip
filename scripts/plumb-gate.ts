@@ -14,6 +14,7 @@
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution } from './audit/shared.js';
 import { PACKAGE_PLUMB, PLUMB_FLOOR } from './plumb-registry.js';
@@ -31,7 +32,12 @@ export interface PlumbGateResult {
 
 function collectInventory(root: string): { inventory: string[]; manifestPresent: boolean } {
   const inventory: string[] = [];
-  const manifestPath = resolve(root, 'reports', 'capsule-manifest.json');
+  // Read the SAME path the writer (scripts/capsule-compile.ts) emits to: the
+  // canonical resolver honors the `CZAP_CAPSULE_MANIFEST` override (CUT T1), so a
+  // hardcoded `reports/capsule-manifest.json` here would read the WRONG file
+  // whenever the writer was redirected (e.g. concurrent test workers). `root` is
+  // the cwd both sides resolve a relative manifest against.
+  const manifestPath = getCapsuleManifestPath(root);
   const manifestPresent = existsSync(manifestPath);
   if (manifestPresent) {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {

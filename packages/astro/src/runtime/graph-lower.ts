@@ -231,7 +231,18 @@ export function lowerGraph(graph: DocumentGraph): readonly LoweredBinding[] {
     const first = [thresholds[0] as number, String(states[0])] as const;
     const rest = states.slice(1).map((state, i) => [thresholds[i + 1] as number, String(state)] as const);
     const at = [first, ...rest] as const;
-    const shape = Boundary.make({ input: signal.input, at });
+    // `Boundary.make` THROWS on non-strictly-ascending thresholds / duplicate
+    // state names — both pass the node schema + graph validation, so an UNTRUSTED
+    // graph can reach here with either. Lowering must stay TOTAL (the loader's
+    // contract is to return cleanly, never throw mid-hydration), so a component
+    // that can't form a boundary is SKIPPED — the result simply carries fewer
+    // bindings, exactly like a component with no signal or no thresholds.
+    let shape: Boundary.Shape;
+    try {
+      shape = Boundary.make({ input: signal.input, at });
+    } catch {
+      continue;
+    }
 
     // Per-state channels from the owning entity's poses.
     const { stateCss, stateAttributes, glslStateUniforms, stateWgsl } = poseBindingsToChannels(

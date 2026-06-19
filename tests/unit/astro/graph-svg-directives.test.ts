@@ -133,6 +133,9 @@ describe('client:graph + client:svg directive entrypoints', () => {
     expect(load).not.toHaveBeenCalled();
     root.setAttribute('data-czap-graph', '{bad json');
     expect(() => graphDirective(load, {}, root)).not.toThrow(); // malformed → loader returns null
+    // FINDING 4 [Minor]: a malformed payload (loader → null) must stay fully inert
+    // — consistent with the missing-payload early return, `load()` is NOT called.
+    expect(load).not.toHaveBeenCalled();
   });
 
   test('client:svg activates on an SVG root carrying authored per-state attrs', () => {
