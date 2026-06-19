@@ -12,9 +12,10 @@
  * @module
  */
 
-export { exportAstroPage, exportVideo, exportVideoEncoded, dualExport } from './dual-export.js';
+export { exportAstroPage, exportVideo, exportVideoEncoded, dualExport, dualExportNode } from './dual-export.js';
 export type {
   DualExportResult,
+  DualExportNodeResult,
   EncodedVideoExport,
   EncodedVideo,
   VideoEncodeConfig,

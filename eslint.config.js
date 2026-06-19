@@ -237,6 +237,7 @@ export default tseslint.config(
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes
       'tests/unit/stage/ffmpeg-encoder.test.ts', // reason: execFileSync('ffprobe') validates the encoded MP4 byte stream (sync, no code under test)
+      'tests/unit/stage/dual-export-node.test.ts', // reason: execFileSync('ffprobe') validates the headless dualExportNode MP4 byte stream (sync, no code under test)
       // (4) Spike file scheduled for deletion in Task 21 of subprocess-coverage plan.
       'tests/scratch/spike-subprocess-coverage.test.ts',
     ],
