@@ -6,7 +6,13 @@
  */
 
 import type { CapLevel } from '@czap/core';
-import { tierFromCapabilities, motionTierFromCapabilities, designTierFromCapabilities, CAP_AXES, capAxisAttr } from '@czap/detect';
+import {
+  tierFromCapabilities,
+  motionTierFromCapabilities,
+  designTierFromCapabilities,
+  CAP_AXES,
+  capAxisAttr,
+} from '@czap/detect';
 import type { DesignTier, ExtendedDeviceCapabilities, MotionTier, CapAxis } from '@czap/detect';
 import { ClientHints } from './client-hints.js';
 import type { ClientHintsHeaders } from './client-hints.js';

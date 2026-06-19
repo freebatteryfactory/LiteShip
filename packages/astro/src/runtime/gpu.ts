@@ -22,10 +22,7 @@ const FULLSCREEN_QUAD = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1,
  * Returns `''` when absent or the payload doesn't parse — the directive then
  * keeps its built-in fallback shader.
  */
-function readShaderDeclarations(
-  boundaryJson: string | null,
-  key: 'glslDeclarations' | 'wgslDeclarations',
-): string {
+function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarations' | 'wgslDeclarations'): string {
   if (!boundaryJson) return '';
   try {
     const parsed = JSON.parse(boundaryJson) as Record<string, unknown>;
@@ -58,9 +55,7 @@ export function prependGlslDeclarations(source: string, declarations: string): s
   // declared name keeps `u_state` from colliding with a default fragment that
   // declares its own. `#define`s are idempotent across identical text but a
   // differing value would warn — emit only those the source lacks by name too.
-  const declaredUniforms = new Set(
-    [...source.matchAll(/\buniform\s+\w+\s+(\w+)\s*;/g)].map((m) => m[1]),
-  );
+  const declaredUniforms = new Set([...source.matchAll(/\buniform\s+\w+\s+(\w+)\s*;/g)].map((m) => m[1]));
   const declaredDefines = new Set([...source.matchAll(/#define\s+(\w+)\b/g)].map((m) => m[1]));
   const keptLines = declarations.split('\n').filter((line) => {
     const uni = /\buniform\s+\w+\s+(\w+)\s*;/.exec(line);

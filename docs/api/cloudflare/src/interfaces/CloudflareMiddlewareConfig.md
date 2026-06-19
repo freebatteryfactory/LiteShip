@@ -37,12 +37,13 @@ boundaries on the same page cannot poison each other's cached CSS.
 
 > `readonly` `optional` **boundaryId?**: `ContentAddress`
 
-Defined in: [cloudflare/src/middleware.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L42)
+Defined in: [cloudflare/src/middleware.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L43)
 
 Escape hatch for custom hosts without a manifest: the boundary's
 content address. Must be a real minted id (`Boundary.make(...).id`,
 `fnv1a:xxxxxxxx`) -- the KV keyspace is content-addressed, so a
-fabricated id breaks the never-stale invariant.
+fabricated id breaks content-addressing (the cache could then serve a
+different boundary's compiled CSS).
 
 ***
 
@@ -50,7 +51,7 @@ fabricated id breaks the never-stale invariant.
 
 > `readonly` `optional` **compile?**: (`context`) => `CompiledOutputs` \| `Promise`\<`CompiledOutputs`\>
 
-Defined in: [cloudflare/src/middleware.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L49)
+Defined in: [cloudflare/src/middleware.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L50)
 
 Escape hatch / fallback: compile function invoked when neither the
 manifest nor KV covers the request's tier. With multiple boundaries
@@ -73,7 +74,7 @@ the callback is shared -- branch on `context.boundaryName` /
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [cloudflare/src/middleware.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L64)
+Defined in: [cloudflare/src/middleware.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L68)
 
 Whether to parse Client Hints (default `true`).
 
@@ -83,7 +84,7 @@ Whether to parse Client Hints (default `true`).
 
 > `readonly` `optional` **env?**: [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md) \| (() => [`CloudflareWorkersEnv`](../type-aliases/CloudflareWorkersEnv.md))
 
-Defined in: [cloudflare/src/middleware.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L71)
+Defined in: [cloudflare/src/middleware.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L75)
 
 Override the Workers env source. Default reads `env` from `cloudflare:workers`.
 Pass a getter in tests or when env is injected by the host framework.
@@ -107,7 +108,7 @@ and per-tier precompiled outputs from it, so nothing is hand-typed.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [cloudflare/src/middleware.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L62)
+Defined in: [cloudflare/src/middleware.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L66)
 
 Optional KV key prefix.
 
@@ -117,7 +118,7 @@ Optional KV key prefix.
 
 > `readonly` `optional` **theme?**: `ThemeCompileConfig` \| ((`context`) => `ThemeCompileConfig` \| `null` \| `undefined`)
 
-Defined in: [cloudflare/src/middleware.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L51)
+Defined in: [cloudflare/src/middleware.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L52)
 
 Optional theme config or per-request resolver.
 
@@ -127,10 +128,13 @@ Optional theme config or per-request resolver.
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [cloudflare/src/middleware.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L60)
+Defined in: [cloudflare/src/middleware.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L64)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
-knob. Compiled outputs are content-addressed and never go stale; each
+knob. An entry is keyed by boundary content address, tier, name, and
+resolved-theme fingerprint, so it never goes stale for a change in any of
+those. (A shared `compile` whose output also depends on build-time content
+the boundary id does not cover must vary `prefix` per deploy.) Each
 deploy that changes boundary content mints a new `ContentAddress`,
 orphaning the old `boundaryId` x tier keys. Workers KV has no eviction
 and bills storage, so set a TTL (e.g. `2592000` = 30 days) to reclaim
@@ -142,7 +146,7 @@ keys for superseded builds. Omit to cache indefinitely.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [cloudflare/src/middleware.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L66)
+Defined in: [cloudflare/src/middleware.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L70)
 
 Whether to emit COOP/COEP for `client:worker`.
 

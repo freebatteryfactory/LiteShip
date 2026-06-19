@@ -6,6 +6,7 @@
  */
 
 import { readdirSync, readFileSync } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -95,7 +96,21 @@ export const INVARIANTS: readonly Invariant[] = [
 
 function walkTsFiles(dir: string): string[] {
   const results: string[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    // An invariant scoped to a subtree that doesn't exist in the scanned root
+    // contributes zero violations -- not a crash. The first nested-`dirs`
+    // invariant (NO_SIGNAL_INPUT_REPARSE: packages/astro/src/runtime) is the
+    // first to scan a path that can be absent: the satellite-scan fixture root
+    // only materializes packages/core/**, so astro/src/runtime is missing there.
+    // (Top-level `dirs: ['packages']` invariants never hit this; the repo always
+    // has packages/.) Treat a missing scoped dir as empty, cross-platform.
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return results;
+    throw err;
+  }
+  for (const entry of entries) {
     if (entry.name === 'dist' || entry.name === 'node_modules') continue;
     const absolute = join(dir, entry.name);
     if (entry.isDirectory()) {

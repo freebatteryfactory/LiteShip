@@ -18,7 +18,7 @@ adaptive rendering decisions.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [astro/src/middleware.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L40)
+Defined in: [astro/src/middleware.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L41)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L42)
+Defined in: [astro/src/middleware.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L43)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -58,22 +58,13 @@ Sole boundary's outputs; undefined when multiple boundaries are configured.
 
 ***
 
-### tier
+### tiers
 
-> `readonly` **tier**: `object`
+> `readonly` **tiers**: `Readonly`\<`Record`\<`CapAxis`, `string`\>\>
 
-Defined in: [astro/src/middleware.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L34)
+Defined in: [astro/src/middleware.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L39)
 
-Resolved tiers (capability, motion, design).
-
-#### cap
-
-> `readonly` **cap**: `string`
-
-#### design
-
-> `readonly` **design**: `string`
-
-#### motion
-
-> `readonly` **motion**: `string`
+Resolved capability tiers keyed by axis. Each field projects to the
+matching `data-czap-<axis>` attribute on `<html>` — the field name and the
+attribute name are the same CapAxis key (one source: `CAP_AXES`),
+so they can never disagree.

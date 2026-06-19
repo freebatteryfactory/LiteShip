@@ -283,7 +283,9 @@ const CACHE_STATUS_RANK = { miss: 0, hit: 1, precompiled: 2 } as const;
  * computed from the theme itself, never assumed invariant.
  */
 function themeFingerprint(theme: ThemeCompileResult): string {
-  return contentAddressOf(theme).replace(/^fnv1a:/, '').slice(0, 12);
+  return contentAddressOf(theme)
+    .replace(/^fnv1a:/, '')
+    .slice(0, 12);
 }
 
 async function resolveBoundaryOutputs(
@@ -354,9 +356,9 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         source: 'czap/edge.host-adapter',
         code: 'compile-without-content-version',
         message:
-          'A boundary `compile` callback is configured without a `prefix`. If compile\'s output depends on ' +
+          "A boundary `compile` callback is configured without a `prefix`. If compile's output depends on " +
           'build-time content the boundary id does not cover (e.g. shared layout CSS), the cache can serve ' +
-          'stale outputs across deploys that change it. Fix: set `prefix` to a per-deploy hash of compile\'s ' +
+          "stale outputs across deploys that change it. Fix: set `prefix` to a per-deploy hash of compile's " +
           'output, e.g. `prefix: "layout-" + fnv1a(compileLayoutCss())`.',
       });
     }

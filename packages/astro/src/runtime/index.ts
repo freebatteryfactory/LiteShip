@@ -1,4 +1,10 @@
-export { attachSignalObserver, readSignalValue, parseBoundary, evaluateBoundary, applyBoundaryState } from './boundary.js';
+export {
+  attachSignalObserver,
+  readSignalValue,
+  parseBoundary,
+  evaluateBoundary,
+  applyBoundaryState,
+} from './boundary.js';
 // Live audio producer: wire an AnalyserNode and the audio.* boundary family
 // lights up through the existing source-agnostic carve-path.
 export { driveAudioFromAnalyser, readAudioSignal, attachAudioObserver } from './audio-signal.js';
