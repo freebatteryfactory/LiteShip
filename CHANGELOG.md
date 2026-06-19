@@ -4,6 +4,18 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.3.1] - 2026-06-19
+
+### Fixed
+
+- `@czap/cli` — **`czap ship` now fails closed on unrecognized flags.** The arg
+  parser silently ignored any unknown `-`/`--` flag (including `--help`), so
+  `czap ship --help` — or any typo'd flag — fell through to "no `--filter` →
+  publish EVERY workspace package." `--help`/`-h` now print usage and exit
+  without shipping, and any unrecognized flag is refused (exit 1) before a single
+  package is packed or published. Long-latent (present since ≥0.2.3), auth-gated;
+  hardened here so a flag typo can never trigger a publish.
+
 ## [0.3.0] - 2026-06-19
 
 The **source-of-truth cut**: every identity — a name, a cache key, a guard's

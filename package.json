@@ -1,6 +1,6 @@
 {
   "name": "czap",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Constraint-based adaptive rendering framework — monorepo root",
   "license": "MIT",
@@ -67,7 +67,7 @@
     "test:vite": "pnpm exec tsx scripts/test-vite.ts",
     "test:tailwind": "pnpm exec tsx scripts/test-tailwind.ts",
     "package:smoke": "pnpm run build && pnpm exec tsx scripts/package-smoke.ts",
-    "release:notes": "pnpm exec tsx scripts/extract-changelog-section.ts --version 0.3.0 --out RELEASE_NOTES_v0.3.0.md",
+    "release:notes": "pnpm exec tsx scripts/extract-changelog-section.ts --version 0.3.1 --out RELEASE_NOTES_v0.3.1.md",
     "ship": "node packages/cli/bin/czap.mjs ship",
     "verify": "node packages/cli/bin/czap.mjs verify",
     "gauntlet:full": "tsx scripts/gauntlet.ts",
