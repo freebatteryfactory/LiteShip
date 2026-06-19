@@ -83,6 +83,8 @@ The important idea is:
 
 For static visual sites, this keeps the document legible and intentional before client work begins.
 
+`czap({ middleware: true })` auto-wires this detection middleware (`@czap/astro/middleware-entry`), so the common case needs no hand-written `src/middleware.ts`. It populates a typed `Astro.locals.czap` — `{ tiers: { tier, motion, design }, capabilities, edge? }`, augmented onto `App.Locals` — so `Astro.locals.czap.tiers.tier` reads without a cast. The edge boundary cache (whose `theme`/`compile` carry functions) still wants a consumer `src/middleware.ts` calling `czapMiddleware({ edge })`; it runs after the auto entry and refines the same locals.
+
 ---
 
 ## Initial state
@@ -214,7 +216,7 @@ Use when generative content is part of the presentation system.
 
 ### `gpu`
 
-Use when the visual meaning depends on shader execution, not merely decoration. The directive defers below the GPU perf-tier — but the probe runs async, so a capable device starts on the conservative provisional tier; the directive **re-boots automatically when the probe settles a GPU-admitting tier** (it listens for `czap:detect-ready`), so the common capable-GPU case needs no intervention. `client:gpu={{ force: true }}` (or a `data-czap-gpu-force` attribute) skips the gate entirely — for headless/CI (SwiftShader reports tier 0 yet WebGL2 works) and genuinely-low-but-capable devices that never upgrade. The real WebGL2/WebGPU probe still gates it, so a missing context degrades to CSS, never a crash.
+Use when the visual meaning depends on shader execution, not merely decoration. The directive defers below the GPU perf-tier — but the probe runs async, so a capable device starts on the conservative provisional tier; the directive **re-boots automatically when the probe settles a GPU-admitting tier** (it listens for `czap:detect-ready`), so the common capable-GPU case needs no intervention. `client:gpu={{ force: true }}` (or a `data-czap-gpu-force` attribute) skips the gate entirely — for headless/CI (SwiftShader reports tier 0 yet WebGL2 works) and genuinely-low-but-capable devices that never upgrade. The real WebGL2/WebGPU probe still gates it, so a missing context degrades to CSS, never a crash. Authored `@glsl`/`@wgsl` boundaries get their uniform **declarations delivered automatically** — the compiler's emitted `.declarations` are prepended to the shader at runtime, so you reference `u_*` uniforms without hand-declaring them; the runtime's uniform vocabulary is the compiler's, never a hand-typed mirror.
 
 ### `worker`
 
@@ -255,7 +257,7 @@ This makes the system suitable for static visual websites rather than only for f
 
 ## Capability detection
 
-The integration writes a provisional `data-czap-tier` inline in `<head>`, then an async probe (GPU renderer, WebGPU, cores/memory, reduced-motion) settles the real tier after load. When it finishes — `__CZAP_DETECT__` and the `data-czap-*` attributes final — it fires one `czap:detect-ready` event on `document` carrying `{ tier, gpuTier, webgpu, motionTier }` (or `{ error: true }` if the probe threw). Listen for that one event instead of polling `__CZAP_DETECT__` or racing a `setTimeout` backstop; it is the single signal that detection has settled. The `client:gpu` directive consumes it internally to re-boot after a tier upgrade (above).
+The integration writes a provisional `data-czap-tier` inline in `<head>`, then an async probe (GPU renderer, WebGPU, cores/memory, reduced-motion) settles the real tier after load. When it finishes — `__CZAP_DETECT__` and the `data-czap-*` attributes final — it fires one `czap:detect-ready` event on `document` carrying `{ tier, gpuTier, webgpu, motionTier }` (or `{ error: true }` if the probe threw). Listen for that one event instead of polling `__CZAP_DETECT__` or racing a `setTimeout` backstop; it is the single signal that detection has settled. The `client:gpu` directive consumes it internally to re-boot after a tier upgrade (above). `gpuTier` and `webgpu` are carried only on the `czap:detect-ready` detail and `window.__CZAP_DETECT__` — never as `<html>` attributes (they're engine state, not author-facing CSS keys).
 
 Attribute note: `data-czap-motion` is the motion capability **tier** (`animations`/`transitions`/`physics`/`compute`/`none`) — emitted server-side by `EdgeTier.tierDataAttributes` and written client-side by the async probe when it settles (so it's present on non-edge pages too, and the edge value gets refined by the real GPU probe). The reduced-motion **preference** is a separate `data-czap-reduced-motion` (`reduce`/`no-preference`); the two used to collide on one attribute.
 

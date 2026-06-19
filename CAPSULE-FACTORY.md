@@ -21,7 +21,7 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 
 ## Assets
 
-- `packages/assets/`: `defineAsset` wraps `cachedProjection`, decoders for audio/video/image, analysis projections (`BeatMarkerProjection`, `OnsetProjection`, `WaveformProjection`).
+- `packages/assets/`: `defineAsset` wraps `cachedProjection`, decoders for audio/video/image, analysis projections (`BeatMarkerProjection`, `OnsetProjection`, `WaveformProjection`, `WavMetadataProjection`). These run **offline** at build time; the live `audio.amplitude` / `audio.beat` boundary signals (a main-thread `AnalyserNode` producer in `@czap/astro/runtime`) mirror the same RMS/flux DSP at runtime.
 
 ## CLI + MCP
 
