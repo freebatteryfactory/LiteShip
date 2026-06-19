@@ -13,4 +13,5 @@ export { generateStateMachine } from './state-machine.js';
 export { generateSiteAdapter } from './site-adapter.js';
 export { generatePolicyGate } from './policy-gate.js';
 export { generateCachedProjection } from './cached-projection.js';
-export { generateSceneComposition } from './scene-composition.js';
+export { generateSceneComposition, SCENE_CHECKS } from './scene-composition.js';
+export type { HarnessLane, SceneCheckDisposition, SceneDriver } from './scene-composition.js';

@@ -308,6 +308,43 @@ const ASSET_BYTE_PROJECTION_FACTORIES = new Set<string>([
   'WavMetadataProjection',
 ]);
 
+/**
+ * Scene-driver registry for `sceneComposition` capsules — the sceneComposition
+ * analogue of {@link ASSET_BYTE_PROJECTION_FACTORIES}. A sceneComposition
+ * capsule's binding (e.g. `intro`) is a manifest entry carrying `Schema.Unknown`
+ * I/O — it does NOT itself hold the tickable scene. The driveable scene is a
+ * sibling `() => CompiledScene` export (`compileScene(contract)`) in the SAME
+ * source module. This map names that export per capsule so the harness can
+ * import it and drive the REAL ECS runtime.
+ *
+ * `hasAudio`/`hasVideo` gate the audio↔video sync check. They mirror the
+ * scene's declared tracks (source of truth: the `SceneContract.tracks` literal
+ * in the capsule's module). The generated sync test self-pins this fact: it
+ * asserts `checkedFrames > 0`, so a registry that wrongly claimed `hasAudio`
+ * for an audio-less scene fails RED rather than passing vacuously.
+ *
+ * `p95Ms` mirrors the capsule's declared `budgets.p95Ms` (surfaced into the
+ * bench's perf-contract label). A capsule NOT listed here resolves no driver —
+ * its checks become typed `not-applicable` exemptions (e.g. `scene.beat-binding`
+ * is a pre-runtime beat→spawn transform with no tracks, fps, or frame stream).
+ *
+ * Keep in sync with the scene modules — same discipline `FACTORY_NAMING`
+ * follows. The compile export must live in the capsule's own source file.
+ */
+interface SceneDriverSpec {
+  /** Exported `() => CompiledScene` function name in the capsule's source module. */
+  readonly compileExport: string;
+  /** Scene declares at least one audio track. */
+  readonly hasAudio: boolean;
+  /** Scene declares at least one video track. */
+  readonly hasVideo: boolean;
+}
+const SCENE_DRIVERS: Readonly<Record<string, SceneDriverSpec>> = {
+  // examples/scenes/intro.ts — audio bed ('bed') + video ('hero','outro'),
+  // beats declared, p95Ms = 16. compileIntro() = compileScene(introContract).
+  'examples.intro': { compileExport: 'compileIntro', hasAudio: true, hasVideo: true },
+};
+
 /** Dispatch to the correct harness generator based on assembly kind. */
 function dispatchHarness(
   kind: AssemblyKind,
@@ -346,6 +383,7 @@ function dispatchHarness(
     case 'sceneComposition':
       return generateSceneComposition(
         cap as CapsuleDef<'sceneComposition', unknown, unknown, unknown>,
+        ctx,
       );
     default: {
       const exhaustive: never = kind;
@@ -552,6 +590,47 @@ async function main(): Promise<void> {
         d.declSource !== undefined
           ? normalizeRepoPath(d.declSource)
           : cachedProjectionFixture;
+
+      // ADDITIVE sceneComposition branch — independent of the probe / fixture
+      // paths above. A sceneComposition capsule's binding is a manifest entry
+      // with Schema.Unknown I/O; the driveable scene is a sibling
+      // `() => CompiledScene` export in the SAME module (see SCENE_DRIVERS).
+      // When the capsule has a registry entry, resolve the SceneRuntime +
+      // compile-fn imports so the harness drives the REAL ECS runtime. When it
+      // does NOT (e.g. scene.beat-binding — a pre-runtime beat→spawn transform
+      // with no tracks/fps/frame stream), pass a typed not-applicable reason so
+      // the harness records exemptions, never an it.skip.
+      let sceneDriver: HarnessContext['sceneDriver'];
+      let sceneDriverNotApplicableReason: string | undefined;
+      if (d.kind === 'sceneComposition') {
+        const spec = SCENE_DRIVERS[d.resolvedName];
+        if (spec !== undefined) {
+          const runtimeAbs = resolve('packages/scene/src/runtime.ts');
+          const runtimeModule = normalizeRepoPath(
+            relative(dirname(testPath), runtimeAbs),
+          ).replace(/\.ts$/, '.js');
+          const sceneModule = sourceModule.startsWith('.') ? sourceModule : `./${sourceModule}`;
+          sceneDriver = {
+            compileName: spec.compileExport,
+            // The compile fn lives in the capsule's own source module.
+            compileImport: sceneModule,
+            capsuleName: d.binding,
+            capsuleImport: sceneModule,
+            runtimeImport: runtimeModule.startsWith('.') ? runtimeModule : `./${runtimeModule}`,
+            contentAddressImport: contentAddressModule.startsWith('.')
+              ? contentAddressModule
+              : `./${contentAddressModule}`,
+            hasAudio: spec.hasAudio,
+            hasVideo: spec.hasVideo,
+          };
+        } else {
+          sceneDriverNotApplicableReason =
+            `'${d.resolvedName}' is a sceneComposition-tagged capsule with no registered scene driver — ` +
+            `it declares no compileScene-able scene (no tracks, fps, frame stream, or playback) to tick. ` +
+            `It is a pre-runtime transform, so the frame-stream / sync / playback / per-frame-budget checks have nothing to drive.`;
+        }
+      }
+
       harnessCtx = {
         bindingImport: sourceModule.startsWith('.')
           ? sourceModule
@@ -572,6 +651,13 @@ async function main(): Promise<void> {
         // source map): the harness emits the FINAL real-only cache/determinism
         // probes — zero `it.skip` literals — over the canonical fixture bytes.
         ...(cachedProjectionBindable ? { cachedProjectionRealOnly: true } : {}),
+        // sceneComposition: the resolved scene driver (REAL runtime) or the
+        // typed not-applicable reason. Mutually exclusive — a capsule either has
+        // a tickable scene or it doesn't.
+        ...(sceneDriver !== undefined ? { sceneDriver } : {}),
+        ...(sceneDriverNotApplicableReason !== undefined
+          ? { sceneDriverNotApplicableReason }
+          : {}),
         ...(probe !== undefined
           ? {
               arbitraryDerivable: probe.arbitraryDerivable,

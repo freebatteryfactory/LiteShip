@@ -126,6 +126,37 @@ export interface HarnessContext {
    * instead of the idempotency/audit/fault non-emission notes — never a skip.
    */
   readonly effectOutcomeReason?: string;
+  /**
+   * COMPILE-TIME resolution (sceneComposition): the concrete, `compileScene`-able
+   * scene the harness drives through its ECS runtime, plus the import specifiers
+   * and declared track-kind facts the generated checks need. Resolved by
+   * `scripts/capsule-compile.ts` from its scene-driver registry — the
+   * sceneComposition analogue of the cachedProjection fixture resolution. When
+   * present the harness emits the 3 real UNIT-lane checks + the real BENCH-lane
+   * budget; when absent the capsule has no tickable scene and every check is a
+   * typed `not-applicable` exemption (never an it.skip). Typed as the
+   * structural `SceneDriver` shape (see `scene-composition.ts`); kept as an
+   * inline interface here to avoid a circular import between the harness
+   * modules.
+   */
+  readonly sceneDriver?: {
+    readonly compileName: string;
+    readonly compileImport: string;
+    readonly capsuleName: string;
+    readonly capsuleImport: string;
+    readonly runtimeImport: string;
+    readonly contentAddressImport: string;
+    readonly hasAudio: boolean;
+    readonly hasVideo: boolean;
+  };
+  /**
+   * COMPILE-TIME reason (sceneComposition): when no {@link sceneDriver} was
+   * resolved, the specific reason this capsule has no tickable scene (e.g. it is
+   * a pre-runtime beat transform with no tracks). Surfaced into the generated
+   * file's typed exemption note. When omitted a generic not-applicable reason is
+   * used.
+   */
+  readonly sceneDriverNotApplicableReason?: string;
 }
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
