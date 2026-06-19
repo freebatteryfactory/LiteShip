@@ -4,6 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { czapMiddleware } from '@czap/astro';
+import { onRequest as autoWiredOnRequest } from '../../../packages/astro/src/middleware-entry.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -219,6 +220,24 @@ describe('czapMiddleware', () => {
     expect((edge.theme as Record<string, string>).css).toContain('--brand-color-primary');
     expect((edge.compiledOutputs as Record<string, string>).css).toContain('.cached');
     expect(edge.cacheStatus).toBe('miss');
+    expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
+  });
+});
+
+describe('auto-wired middleware entrypoint (addMiddleware target)', () => {
+  test('exports a zero-config onRequest that populates Astro.locals.czap', async () => {
+    // The `./middleware-entry` module the integration registers via `addMiddleware`
+    // — `onRequest = czapMiddleware()`. It must behave as the default zero-config
+    // handler: Client Hints in, `locals.czap` populated, response returned.
+    expect(typeof autoWiredOnRequest).toBe('function');
+
+    const context = makeContext({ 'sec-ch-viewport-width': '1440', 'sec-ch-device-memory': '8' });
+    const response = await (autoWiredOnRequest as unknown as (c: typeof context, n: () => Promise<Response>) => Promise<Response>)(
+      context,
+      makeNext(),
+    );
+
+    expect(context.locals.czap).toBeDefined();
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
   });
 });
