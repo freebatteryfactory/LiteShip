@@ -81,7 +81,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 35 phases (see `STATUS.md` for the canonical ordered list):
+`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 37 phases (see `STATUS.md` for the canonical ordered list):
 
 - rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
@@ -94,7 +94,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 - node + browser coverage + cross-runtime merge with statementMap dedup
 - runtime-seams report, codebase audit, satellite scan
 - feedback integrity verification (artifact fingerprint chain)
-- runtime gate, capsule verify
+- runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `scripts/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
 - `flex:verify` 10/10 acceptance across 7 rating dimensions
 
 **Bench trend gate (`bench:trend`):** it reads `benchmarks/history.jsonl` (one

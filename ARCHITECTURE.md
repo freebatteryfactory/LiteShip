@@ -17,7 +17,7 @@ Core grammar: `signal -> boundary -> named state -> target output`. `@czap/core`
 
 ## Document graph (the IR)
 
-That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./docs/adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. Full rationale: [ADR-0015](./docs/adr/0015-document-graph-ir.md).
+That "same content-addressed definition" is one data structure: the **document graph**, `@czap/core`'s keystone IR. Authored boundaries, tokens, themes, and styles seal into a graph of typed nodes — eight families (`signal`, `entity`, `component`, `pose`, `transition`, `projection`, `policy`, `export`) — each addressed by the content hash of its canonical bytes (CBOR + FNV-1a, [ADR-0003](./docs/adr/0003-content-addressing.md)). `sealNode` / `sealGraph` mint those addresses; `validateGraph` and `linearizeGraph` check and order them. Every cast target — CSS, GLSL, WGSL, ARIA, AI manifest, video — reads from the same sealed graph, so "computed from a content address of the definition" is literal: change a node, its address changes, and only the casts that depend on it recompute. `GraphPatch` is the typed delta over a graph (propose -> validate -> apply -> re-seal); the editor and the AI cast both mutate through it, never by hand. As of 0.4.0 the sealed graph is a **runtime** surface too, not only a build-time/editor one: `loadGraphRuntime` (`@czap/astro`) lowers a serialized graph onto the live cast pipeline and `castGraphDelta` re-casts only the changed cells on a patch — fed live by the scene→live bridge (`bridgeSceneToGraph`) and the AI-apply seam (`admitGraphPatchProposal`). Full rationale: [ADR-0015](./docs/adr/0015-document-graph-ir.md).
 
 ## AI cast
 
@@ -35,6 +35,7 @@ compiler -> vite -> astro
 detect -> edge -> astro
 edge + astro -> cloudflare
 web + worker -> astro
+scene -> astro                                     (0.4.0: scene->live bridge + the client:svg egress, on the live runtime)
 core + assets -> command -> cli -> mcp-server   (command also -> mcp-server directly)
 @czap/audit                                       (standalone: zero @czap/* deps; consumed by cli + the gauntlet)
 ```

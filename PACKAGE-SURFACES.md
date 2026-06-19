@@ -337,7 +337,11 @@ Host-owned shared runtime surfaces:
 - `@czap/astro/runtime` directive boot scanner (`bootstrapDirectives`, `scanAndBootDirectives`) — activates `data-czap-directive` / legacy `client:*` markers on plain elements and `.astro` output
 - `@czap/astro/runtime` wasm runtime configuration and loading
 - `@czap/astro/runtime` audio-signal producer/readers (`driveAudioFromAnalyser`, `readAudioSignal`, `attachAudioObserver`) — wire a live `AnalyserNode` so `audio.amplitude`/`audio.beat` boundaries carve
-- internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, and `wasm`
+- `@czap/astro/runtime` runtime DocumentGraph loader (`loadGraphRuntime`, `lowerGraph`, `castGraphDelta`) — lower a serialized `DocumentGraph` onto the live cast pipeline and apply a `GraphPatch` delta at runtime; the `client:graph` directive boots it from `data-czap-graph` (0.4.0)
+- `@czap/astro/runtime` scene→live bridge (`bridgeSceneToGraph`) — drive the live graph from a signal-indexed `@czap/scene`: a discrete crossing re-casts, the continuous tween writes a leaf CSS var / GPU uniform and never patches the graph (0.4.0)
+- `@czap/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, re-cast the delta; the model producer is downstream (0.4.0)
+- `@czap/astro/runtime` SVG last-mile (`attachSvgRuntime`, `client:svg`) — resolve `data-czap-entity → SVGElement` and apply `@czap/scene`'s `applySvgAttrs` to the live DOM each frame (0.4.0)
+- internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, `wasm`, `graph`, and `svg`
 
 ---
 
@@ -455,11 +459,12 @@ Reach for it when you need:
 Main surfaces:
 
 - `dualExport`
+- `dualExportNode` (0.4.0) — the headless entry: runs the full proof and a real ffmpeg byte-encode in node, e.g. `dualExportNode(graph, ffmpegFrameEncoder())`
 - `exportAstroPage`
 - `exportVideo` / `exportVideoEncoded`
 - `FrameEncoder` (the injectable seam)
 
-The `encode?` seam keeps `@czap/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@czap/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked.
+The `encode?` seam keeps `@czap/stage` pure; the node-only ffmpeg backend is a thin adapter on the `@czap/stage/ffmpeg` subpath — `exportVideoEncoded(graph, ffmpegFrameEncoder())`. When no encoder is wired, frame digests are still real; the bytes are skipped-with-log, not faked. The video carrier's content address is taken over the produced **frames**; the byte-encode is the injected seam, so it never changes the proof's digest.
 
 ---
 
@@ -480,10 +485,11 @@ Main surfaces:
 - `SceneContract` / `compileScene`
 - `Track` (`Track.video` / `Track.audio` / `Track.transition` / `Track.effect`)
 - `SceneRuntime`
-- `VideoSystem` / `AudioSystem` / `TransitionSystem` / `EffectSystem` (+ the sync + pass-through mixer)
+- `VideoSystem` / `AudioSystem` / `TransitionSystem` / `EffectSystem` / `SVGSystem` (+ the sync + pass-through mixer)
+- `applySvgAttrs` / `collectSvgAttrs` (the SVG egress, applied live by `@czap/astro`'s `client:svg` directive)
 - `bindBeats` (beat-indexed composition from `@czap/assets` projections)
 
-Paired with `@czap/stage` for the video-export branch.
+Paired with `@czap/stage` for the video-export branch — and, as of 0.4.0, a **live** runtime consumer too: `@czap/astro`'s `bridgeSceneToGraph` drives a scene against the live cast pipeline, and the `client:svg` directive applies its SVG egress to the live DOM (scene is no longer offline/video-only).
 
 ---
 

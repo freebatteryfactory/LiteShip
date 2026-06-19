@@ -39,6 +39,10 @@ Layer the **AI cast** on the same graph as a pure envelope: `AICast.castContext`
 - **Apply model output, then validate (or validate inline at call sites).** Rejected: any miss is a mutation that already happened. The envelope makes "validated" a type the mutator demands, not a convention call sites remember.
 - **Export `mintValidated` for host convenience.** Rejected: exposing the mint site lets a consumer forge a `ValidatedProposal` and bypass validation (lesson #12, the `RUNG_TARGETS` subpath leak). Hosts get `applyValidatedPatch` and the validators; never the minter.
 
+## Amendment (0.4.0) — the sealed graph is a runtime surface
+
+The IR shape and addressing are unchanged; 0.4.0 adds a live **consumer**. `@czap/astro`'s `loadGraphRuntime(serialized, resolve)` re-seals an untrusted serialized graph (validate + per-node `isWellFormedNode`, factored into `@czap/core` `document-graph-schema.ts` so the loader and the AI seam share one trust gate), lowers each entity/component into a `RuntimeBoundary`, and drives the existing cast pipeline; a `GraphPatch` re-casts only the changed cells (`castGraphDelta`) so untouched signal observers survive. The AI-apply seam keeps the envelope discipline above on the live path: `admitGraphPatchProposal` routes a candidate through `validateGraphPatchProposal` → `applyValidatedPatch` (never `GraphPatch.apply` directly), so the un-forgeable `ValidatedProposal` is still demanded by the mutator at runtime. See [ADR-0009](./0009-ecs-scene-composition.md)'s 0.4.0 amendment for the scene→graph producer.
+
 ## References
 
 - [ADR-0003](./0003-content-addressing.md) — content addressing via FNV-1a + CBOR.

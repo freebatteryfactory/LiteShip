@@ -30,6 +30,8 @@ These are no longer roadmap aspirations; they are current repo reality:
 - package tarball smoke for publishable packages
 - Linux truth CI plus Windows truth-preserving and browser-matrix lanes
 - production middleware parity for worker-isolation headers
+- live-runtime DocumentGraph (0.4.0): `loadGraphRuntime` + `castGraphDelta`, the scene→live bridge, the AI-apply seam, the `client:svg` last-mile, and headless `dualExportNode` — the cast/signal substrate is now plumbed onto the live runtime, not test-only
+- the plumb-completeness gate (0.4.0): a package-plumb ledger + unwired-capsule floor as gauntlet phase `plumb:gate`, so a built-not-plumbed primitive fails CI instead of shipping green
 
 ## Near-Term Hardening Epics
 

@@ -190,7 +190,7 @@ or read `gauntlet-phases.ts` directly. The per-phase timing table below is a cap
 
 ### Per-phase wall-time ranges
 
-Total across all 35 phases: 15–22 minutes end-to-end; recent local datapoint 14m47s on Linux x64, 8 vCPU (per the README's gauntlet snapshot). Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
+Total across all 37 phases: 15–22 minutes end-to-end; recent local datapoint 14m47s on Linux x64, 8 vCPU (per the README's gauntlet snapshot). Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 
@@ -235,7 +235,7 @@ Phase 23 (`coverage:browser`) is the only phase with a meaningfully bimodal cost
 
 For the canonical, current truth, read `benchmarks/gauntlet-phase-timings.json` after a fresh `pnpm run gauntlet:full`. The snapshot above is a reference anchor, not the live ledger.
 
-**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 35 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
+**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 37 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
 
 ---
 

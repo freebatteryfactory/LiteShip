@@ -226,6 +226,14 @@ Use when off-main-thread coordination is part of the surface's runtime need.
 
 Use when compute cost meaningfully exceeds what the normal runtime should carry. The `czap-compute` kernel ships inside `@czap/core` (0.2.1+) and `@czap/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `czap({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `czap:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
 
+### `graph`
+
+Use when the adaptive surface is authored as a serialized `DocumentGraph` rather than inline `@boundary` annotations — a host hands the runtime a sealed graph and it lowers onto the **same** live cast pipeline the satellite path uses. `loadGraphRuntime(serialized, resolve)` re-seals the graph (never trusting a supplied id), projects each entity/component into a `RuntimeBoundary` (the one evaluator + CSS/ARIA/GPU casts), and wires the signal observers; `data-czap-graph` carries the payload. A mutation rides a `GraphPatch` through `castGraphDelta` — only the changed cells re-lower, so untouched observers survive (no full re-seed flash). The loader is the seam an authoring producer feeds; the producer that serializes/authors the graph is a downstream concern, never named here. Two companions ride the same runtime: `bridgeSceneToGraph(scene, handle, …)` drives the graph from a signal-indexed `@czap/scene` (a discrete state crossing emits a `GraphPatch` → re-cast; the continuous tween writes a leaf CSS var / GPU uniform each frame and **never** patches the graph), and the AI-apply seam (`castGraphContext` casts the live graph OUT to a model-facing context; `admitGraphPatchProposal` admits a candidate IN through the un-bypassable validate→apply token chain, then re-casts the delta).
+
+### `svg`
+
+Use when a `<svg>` entity's presentation (transform, opacity, blend, clip) must track a signal live, not only at first paint. The directive resolves `data-czap-entity → SVGElement` and applies `@czap/scene`'s `applySvgAttrs` each frame — the live last-mile of the SVG cast arm (the same egress the offline scene render uses, now driven on the live DOM).
+
 ---
 
 ## Runtime escalation in Astro
