@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyBenchSource } from '../../../scripts/lib/bench-classify.ts';
+import { classifyBenchSource, benchHonestyError } from '../../../scripts/lib/bench-classify.ts';
 
 // Pins the real-vs-placeholder semantics the capsule:verify receipt is built
 // on. The integration test derives its expected receipt from this classifier,
@@ -50,5 +50,39 @@ describe('classifyBenchSource', () => {
   it('survives nested braces in the body (truncated capture is still non-empty)', () => {
     const src = "bench('n', () => { if (x) { y(); } });";
     expect(classifyBenchSource(src)).toBe('real');
+  });
+});
+
+// The gate the capsule:verify bench lane earns its blocking authority from: a
+// bench is honest iff it is a REAL measurement, or a TYPED not-applicable
+// exemption (marker line + premise-guard body + a matching manifest reason).
+// Everything else — a comment-only placeholder, or marker↔manifest drift — fails.
+describe('benchHonestyError', () => {
+  const NA = '// BENCH-NOT-APPLICABLE: spawns an external test process; no pure core';
+  const NA_REASON = 'spawns an external test process; no pure core';
+  const guardBody = "bench('demo', () => { if (!structuralFact) throw new Error('premise'); });";
+
+  it('REAL bench (real body, no marker, no exemption) is honest → null', () => {
+    expect(benchHonestyError('demo', "bench('demo', () => { cap.derive(bytes); });", undefined)).toBeNull();
+  });
+
+  it('TYPED not-applicable (marker + premise-guard + matching manifest reason) is honest → null', () => {
+    expect(benchHonestyError('demo', `${NA}\n${guardBody}`, { reason: NA_REASON })).toBeNull();
+  });
+
+  it('LAZY placeholder (comment-only, no marker) FAILS', () => {
+    expect(benchHonestyError('demo', "bench('demo', () => { /* nothing */ });", undefined)).toMatch(/measures nothing/);
+  });
+
+  it('a marker with NO manifest record FAILS (silent drift)', () => {
+    expect(benchHonestyError('demo', `${NA}\n${guardBody}`, undefined)).toMatch(/marker but no manifest/);
+  });
+
+  it('a manifest record with NO marker FAILS (silent drift)', () => {
+    expect(benchHonestyError('demo', guardBody, { reason: NA_REASON })).toMatch(/benchExemption but no .*marker/);
+  });
+
+  it('a marker reason disagreeing with the manifest reason FAILS', () => {
+    expect(benchHonestyError('demo', `${NA}\n${guardBody}`, { reason: 'a different reason' })).toMatch(/disagrees/);
   });
 });

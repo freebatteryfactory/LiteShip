@@ -30,7 +30,7 @@ import { readFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { classifyBenchSource } from './lib/bench-classify.js';
+import { classifyBenchSource, benchHonestyError } from './lib/bench-classify.js';
 import { execSync } from 'node:child_process';
 
 interface BenchClassification {
@@ -53,6 +53,8 @@ interface ManifestEntry {
   readonly name: string;
   readonly source: string;
   readonly generated: { testFile: string; benchFile: string };
+  /** Present iff this capsule's bench is a TYPED not-applicable exemption. */
+  readonly benchExemption?: { readonly reason: string };
 }
 
 const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
@@ -165,11 +167,14 @@ function main(): Verdict {
       errors.push(`generated bench missing for ${cap.name}: ${cap.generated.benchFile}`);
     } else {
       benchTotal += 1;
-      if (classifyBenchSource(readFileSync(benchPath, 'utf8')) === 'real') {
-        benchReal += 1;
-      } else {
-        benchPlaceholders.push(cap.name);
-      }
+      const benchSrc = readFileSync(benchPath, 'utf8');
+      // 'real' covers a genuine measurement AND a typed not-applicable bench
+      // (its premise-guard body is non-empty); the honesty check below rejects a
+      // lazy comment-only placeholder and any marker↔manifest drift.
+      if (classifyBenchSource(benchSrc) === 'real') benchReal += 1;
+      else benchPlaceholders.push(cap.name);
+      const honestyError = benchHonestyError(cap.name, benchSrc, cap.benchExemption);
+      if (honestyError !== null) errors.push(honestyError);
     }
     if (existsSync(sourcePath) && existsSync(testPath)) {
       const sourceAge = statSync(sourcePath).mtimeMs;
