@@ -28,9 +28,17 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
     const parsed = JSON.parse(boundaryJson) as Record<string, unknown>;
     const value = parsed[key];
     return typeof value === 'string' ? value : '';
-  } catch {
-    // Malformed payload — the per-element uniform-update handler already warns
-    // (uniform-update-parse-failed); here we silently fall back to no preamble.
+  } catch (err) {
+    // Malformed payload: surface it (init-time) instead of laundering the parse
+    // error into a silent ''. The directive then keeps its built-in fallback
+    // shader (no preamble) — a deliberate degradation, not a swallowed failure.
+    Diagnostics.warnOnce({
+      source: 'czap/astro.gpu',
+      code: 'shader-declarations-parse-failed',
+      message:
+        `Failed to parse boundary JSON while reading ${key} (${String(err)}). ` +
+        `Keeping the built-in fallback shader. Fix: re-serialize with satelliteAttrs({ boundary }) from @czap/astro.`,
+    });
     return '';
   }
 }
