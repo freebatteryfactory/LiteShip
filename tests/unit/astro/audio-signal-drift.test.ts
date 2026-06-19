@@ -2,23 +2,32 @@
  * Drift guard: the LIVE audio producer's DSP (`@czap/astro` audio-signal.ts) is
  * a MIRROR of the OFFLINE reference `detectOnsets` (`@czap/assets` onsets.ts).
  *
- * LAW (no new unpinned mirror): the runtime RMS + spectral-flux beat math must
- * stay equivalent to the reference algorithm. The reference runs offline in
- * node at build time and is the ALGORITHM source only — never the runtime
- * source. If `onsets.ts` changes its envelope/flux/threshold law, this guard
- * fails until the live producer is reconciled.
+ * LAW (no new unpinned mirror): the runtime RMS + spectral-flux DETECTION
+ * FUNCTION must stay equivalent to the reference; the THRESHOLD is the causal
+ * real-time analog (offline normalizes against the global flux peak, the live
+ * detector against a causal EMA baseline). The reference runs offline in node at
+ * build time and is the ALGORITHM source only — never the runtime source. If
+ * `onsets.ts` changes its envelope/flux law, this guard fails until the live
+ * producer is reconciled.
  *
  * What is pinned:
- *  1. RMS envelope formula — `sqrt(mean(x^2))` over a frame — is identical.
+ *  1. RMS envelope formula — `sqrt(mean(x^2))` over a frame — is identical to
+ *     the reference (the shared detection function).
  *  2. The flux definition — `max(0, rms - prevRms)` — is identical.
- *  3. The beat threshold ratio (`* 0.3`) is the same constant the reference
- *     applies to its peak flux.
- *  4. On a synthetic signal, the live streaming beat picks land on the same
- *     onset frames the reference selects.
+ *  3. The live detector's behavioral contract: a steady energy ramp does NOT
+ *     over-fire (the causal baseline + floor), while real onsets still fire.
+ *  4. On a synthetic signal, every reference onset has a nearby live beat (the
+ *     causal detector is a superset-faithful real-time analog of the offline one).
  */
 import { describe, test, expect } from 'vitest';
 import { detectOnsets } from '@czap/assets';
-import { analyseFrame, FLUX_BEAT_RATIO, BEAT_REFRACTORY_SEC } from '../../../packages/astro/src/runtime/audio-signal.js';
+import {
+  analyseFrame,
+  FLUX_BEAT_MULT,
+  FLUX_BEAT_FLOOR,
+  FLUX_BASELINE_ALPHA,
+  BEAT_REFRACTORY_SEC,
+} from '../../../packages/astro/src/runtime/audio-signal.js';
 
 /** Reference envelope cell: RMS over a window, exactly as onsets.ts computes it. */
 function referenceRms(samples: Float32Array, off: number, frameSize: number): number {
@@ -61,14 +70,32 @@ describe('audio-signal DSP ↔ onsets.ts reference', () => {
     const rb = analyseFrame(b, ra, 0);
     expect(rb.flux).toBeCloseTo(Math.max(0, rb.rms - ra), 12);
     // Falling energy yields zero flux, exactly as onsets.ts `max(0, ...)`.
-    const rc = analyseFrame(a, rb.rms, rb.nextMaxFlux);
+    const rc = analyseFrame(a, rb.rms, rb.nextFluxBaseline);
     expect(rc.flux).toBe(0);
   });
 
-  test('beat threshold ratio is the reference 0.3 (the divergence-prone constant)', () => {
-    // onsets.ts uses `const threshold = maxFlux * 0.3` — pin our constant to it.
-    expect(FLUX_BEAT_RATIO).toBe(0.3);
+  test('adaptive-threshold constants are pinned', () => {
+    expect(FLUX_BEAT_MULT).toBe(1.5);
+    expect(FLUX_BEAT_FLOOR).toBe(0.01);
+    expect(FLUX_BASELINE_ALPHA).toBe(0.9);
     expect(BEAT_REFRACTORY_SEC).toBe(0.05);
+  });
+
+  test('a steady energy ramp does NOT over-fire (the causal-threshold fix)', () => {
+    // A gentle linear RMS ramp produces a small constant flux each frame. The old
+    // running-max threshold fired EVERY frame (flux >= max*0.3 holds at any
+    // magnitude); the causal baseline + floor fire on none.
+    let prevRms = 0;
+    let fluxBaseline = 0;
+    let beats = 0;
+    for (let k = 1; k <= 200; k++) {
+      const frame = new Float32Array(256).fill(k * 0.001); // RMS = k*0.001, flux ~= 0.001/frame
+      const r = analyseFrame(frame, prevRms, fluxBaseline);
+      prevRms = r.rms;
+      fluxBaseline = r.nextFluxBaseline;
+      if (r.beat) beats += 1;
+    }
+    expect(beats).toBe(0);
   });
 
   test('streaming beat picks land where the reference detects onsets', () => {
@@ -84,15 +111,15 @@ describe('audio-signal DSP ↔ onsets.ts reference', () => {
     const frameSize = 1024;
     const hop = 256;
     let prevRms = 0;
-    let maxFlux = 0;
+    let fluxBaseline = 0;
     const liveBeatFrames: number[] = [];
     const refractoryFrames = Math.max(1, Math.floor((sampleRate * BEAT_REFRACTORY_SEC) / hop));
     let lastBeat = -refractoryFrames;
     for (let off = 0, frame = 0; off + frameSize <= samples.length; off += hop, frame++) {
       const slice = samples.slice(off, off + frameSize);
-      const r = analyseFrame(slice, prevRms, maxFlux);
+      const r = analyseFrame(slice, prevRms, fluxBaseline);
       prevRms = r.rms;
-      maxFlux = r.nextMaxFlux;
+      fluxBaseline = r.nextFluxBaseline;
       if (r.beat && frame - lastBeat >= refractoryFrames) {
         liveBeatFrames.push(off);
         lastBeat = frame;

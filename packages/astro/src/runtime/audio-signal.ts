@@ -12,21 +12,30 @@
  * Astro deploy. The worklet remains the alternative when SAB headers are
  * guaranteed.
  *
- * MIRROR NOTICE: {@link analyseFrame}'s RMS + spectral-flux beat pick is a NEW
- * runtime MIRROR of the OFFLINE reference `detectOnsets` from `@czap/assets`
- * (`assets/src/analysis/onsets.ts`): RMS = `sqrt(mean(x^2))` over the frame, and
- * a beat is `flux >= maxFlux * FLUX_BEAT_RATIO` where `flux = max(0, rms - prevRms)`,
- * with a refractory window. The drift guard
- * `tests/unit/astro/audio-signal-drift.test.ts` pins this math to the reference
- * (LAW: never open a new mirror without its guard). The reference is the
- * ALGORITHM source only — it runs offline in node at build time and is never
- * the runtime source.
+ * MIRROR NOTICE: {@link analyseFrame}'s RMS + spectral-flux DETECTION FUNCTION
+ * is shared with the OFFLINE reference `detectOnsets` from `@czap/assets`
+ * (`assets/src/analysis/onsets.ts`): RMS = `sqrt(mean(x^2))` over the frame and
+ * `flux = max(0, rms - prevRms)` are identical. The THRESHOLD differs by
+ * necessity — the offline reference normalizes flux against the GLOBAL peak over
+ * the whole buffer (acausal, two-pass); a LIVE detector has no lookahead, so it
+ * thresholds against a CAUSAL adaptive baseline: a beat is flux that exceeds
+ * `FLUX_BEAT_MULT` times the EMA of recent flux, above an absolute floor
+ * (Bello-style adaptive onset thresholding), which is what keeps a steady energy
+ * ramp from firing every frame. The drift guard `tests/unit/astro/audio-signal-drift.test.ts` pins the
+ * shared detection function to the reference AND the live detector's behavioral
+ * contract (isolated onset → one beat; steady ramp → quiet) — LAW: never open a
+ * new mirror without its guard. The reference is the ALGORITHM source only — it
+ * runs offline in node at build time and is never the runtime source.
  *
  * @module
  */
 
-/** Beat threshold as a fraction of the running peak flux — mirrors onsets.ts `* 0.3`. */
-export const FLUX_BEAT_RATIO = 0.3;
+/** A beat must exceed this multiple of the causal flux baseline (EMA of recent flux). */
+export const FLUX_BEAT_MULT = 1.5;
+/** Absolute flux floor so silence / quiet noise never fires a beat. */
+export const FLUX_BEAT_FLOOR = 0.01;
+/** EMA smoothing for the flux baseline — higher keeps a longer memory of recent flux. */
+export const FLUX_BASELINE_ALPHA = 0.9;
 /** Refractory gap between beats, seconds — mirrors onsets.ts `sampleRate * 0.05`. */
 export const BEAT_REFRACTORY_SEC = 0.05;
 
@@ -42,15 +51,16 @@ const state: AudioSignalState = { amplitude: 0, beat: 0 };
  * Pure DSP core shared by the live producer and its drift guard: compute the
  * RMS of a time-domain frame and decide whether this frame is a beat onset.
  *
- * `prevRms` / `maxFlux` thread the running envelope + peak-flux across calls
- * (the streaming analog of onsets.ts's full-buffer arrays). Returns the next
- * carry-state so the caller stays pure.
+ * `prevRms` / `fluxBaseline` thread the running envelope + the causal flux
+ * baseline (EMA of recent flux) across calls — the live, no-lookahead analog of
+ * onsets.ts's full-buffer global-max normalization. Returns the next carry-state
+ * so the caller stays pure.
  */
 export function analyseFrame(
   frame: Float32Array,
   prevRms: number,
-  maxFlux: number,
-): { rms: number; flux: number; beat: boolean; nextMaxFlux: number } {
+  fluxBaseline: number,
+): { rms: number; flux: number; beat: boolean; nextFluxBaseline: number } {
   let sum = 0;
   for (let i = 0; i < frame.length; i++) {
     const v = frame[i] ?? 0;
@@ -58,10 +68,14 @@ export function analyseFrame(
   }
   const rms = frame.length > 0 ? Math.sqrt(sum / frame.length) : 0;
   const flux = Math.max(0, rms - prevRms);
-  const nextMaxFlux = Math.max(maxFlux, flux);
-  // A beat is a positive flux peak above a fraction of the running peak.
-  const beat = nextMaxFlux > 0 && flux >= nextMaxFlux * FLUX_BEAT_RATIO && flux > 0;
-  return { rms, flux, beat, nextMaxFlux };
+  // Causal adaptive threshold: a beat is flux exceeding a multiple of the recent
+  // baseline, above an absolute floor. Test against the PAST baseline, THEN fold
+  // this frame in — so a sharp onset fires before the baseline absorbs it, and a
+  // steady energy ramp (rising baseline) does not fire every frame.
+  const threshold = Math.max(FLUX_BEAT_FLOOR, fluxBaseline * FLUX_BEAT_MULT);
+  const beat = flux > threshold;
+  const nextFluxBaseline = FLUX_BASELINE_ALPHA * fluxBaseline + (1 - FLUX_BASELINE_ALPHA) * flux;
+  return { rms, flux, beat, nextFluxBaseline };
 }
 
 /**
@@ -136,15 +150,15 @@ export function driveAudioFromAnalyser(analyser: AnalyserNode): () => void {
   // Refractory in frames: each rAF reads ~one analyser buffer.
   const refractoryFrames = Math.max(1, Math.round((sampleRate * BEAT_REFRACTORY_SEC) / buffer.length));
   let prevRms = 0;
-  let maxFlux = 0;
+  let fluxBaseline = 0;
   let sinceBeat = refractoryFrames;
   let id: number | null = null;
 
   const tick = (): void => {
     analyser.getFloatTimeDomainData(buffer);
-    const { rms, beat, nextMaxFlux } = analyseFrame(buffer, prevRms, maxFlux);
+    const { rms, beat, nextFluxBaseline } = analyseFrame(buffer, prevRms, fluxBaseline);
     prevRms = rms;
-    maxFlux = nextMaxFlux;
+    fluxBaseline = nextFluxBaseline;
     state.amplitude = Math.min(1, rms);
     sinceBeat += 1;
     if (beat && sinceBeat >= refractoryFrames) {
