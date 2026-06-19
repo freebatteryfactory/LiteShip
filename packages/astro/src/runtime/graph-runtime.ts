@@ -286,6 +286,43 @@ const ZERO_META = {
 } as const;
 
 /**
+ * The internals a handle keeps behind its public surface: the live
+ * {@link GraphCastState}, the host element resolver, the dispatch event name, and a
+ * single `advance` hook that swaps the current graph to `next` AFTER re-casting the
+ * delta against the SAME cast state. Reachable only via {@link graphRuntimeInternals}
+ * (keyed by a module-private symbol), so a SEPARATE in-package seam (the AI apply
+ * step, item D) can drive the EXACT same delta engine `recast` uses — advancing the
+ * graph the handle reports — WITHOUT widening the public `GraphRuntimeHandle` type
+ * and WITHOUT routing through `recast`'s raw `GraphPatch.apply` (the AI path must run
+ * its own validate→applyValidatedPatch first; this only re-casts + advances).
+ */
+export interface GraphRuntimeInternals {
+  readonly state: GraphCastState;
+  readonly resolve: EntityElementResolver;
+  readonly eventName: string;
+  /** Re-cast the delta from the current graph to `next`, then make `next` current. */
+  advance(next: DocumentGraph): void;
+}
+
+/** Module-private key under which a handle stashes its {@link GraphRuntimeInternals}. */
+const RUNTIME_INTERNALS = Symbol('czap.graphRuntimeInternals');
+
+/** A handle carrying its private internals (the shape `loadGraphRuntime` actually returns). */
+interface InternalGraphRuntimeHandle extends GraphRuntimeHandle {
+  readonly [RUNTIME_INTERNALS]: GraphRuntimeInternals;
+}
+
+/**
+ * Read a handle's private {@link GraphRuntimeInternals}, or `null` for a foreign
+ * object that is not a {@link loadGraphRuntime} handle. The symbol key is
+ * module-private, so this accessor is the ONLY way an in-package seam reaches the
+ * live cast state + graph-advance hook (it never leaves `@czap/astro`).
+ */
+export function graphRuntimeInternals(handle: GraphRuntimeHandle): GraphRuntimeInternals | null {
+  return (handle as Partial<InternalGraphRuntimeHandle>)[RUNTIME_INTERNALS] ?? null;
+}
+
+/**
  * Load a serialized {@link DocumentGraph} onto the live cast pipeline. Returns a
  * {@link GraphRuntimeHandle} that reflects the (re-addressed) graph, advances by
  * `recast`, and tears down with `release`; or `null` for a malformed / invalid
@@ -309,7 +346,17 @@ export function loadGraphRuntime(
 
   let current = sealed;
 
-  return {
+  const internals: GraphRuntimeInternals = {
+    state,
+    resolve,
+    eventName,
+    advance(next: DocumentGraph): void {
+      castGraphDelta(current, next, state, resolve, eventName);
+      current = next;
+    },
+  };
+
+  const handle: InternalGraphRuntimeHandle = {
     get graph(): DocumentGraph {
       return current;
     },
@@ -322,5 +369,7 @@ export function loadGraphRuntime(
     release(): void {
       releaseCastState(state);
     },
+    [RUNTIME_INTERNALS]: internals,
   };
+  return handle;
 }
