@@ -74,17 +74,21 @@ export interface BoundaryCache {
    * `ContentAddress` but carry different compiled CSS (the same
    * `Boundary.make` definition referenced by two `@quantize` blocks) —
    * without it, the first name's compile result would serve every name.
+   * `themeFp` likewise segregates outputs compiled under different resolved
+   * themes (a per-request theme is a real input to the cached CSS).
    */
   getCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
     qualifier?: string,
+    themeFp?: string,
   ): Promise<CompiledOutputs | null>;
   putCompiledOutputs(
     boundaryId: ContentAddress,
     tierResult: EdgeTierResult,
     outputs: CompiledOutputs,
     qualifier?: string,
+    themeFp?: string,
   ): Promise<void>;
 }
 

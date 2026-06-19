@@ -185,7 +185,12 @@ interface PanelHandles {
   readonly dispose: () => void;
 }
 
-const panelHandles = new WeakMap<HTMLElement, PanelHandles>();
+// A Map, not a WeakMap: the per-boundary handles must be ENUMERABLE so every one
+// can be explicitly disposed. A WeakMap can't be drained, and GC can't reclaim
+// these anyway — a panel's observers/listeners hold a strong ref to their target
+// element, so a removed boundary's handle (and element) leaks until torn down by
+// hand. `refreshPanels` and `dispose` both drain this in full.
+const panelHandles = new Map<HTMLElement, PanelHandles>();
 
 function styles(): string {
   return `
@@ -366,11 +371,15 @@ export function mountInspectorPanel(root: ShadowRoot | DocumentFragment | HTMLEl
       for (const child of Array.from(body.children)) {
         child.remove();
       }
-      const elements = document.querySelectorAll<HTMLElement>('[data-czap-boundary]');
-      elements.forEach((element) => {
-        panelHandles.get(element)?.dispose();
+      // Iterate the handle map itself, not the live DOM: a boundary removed
+      // before dispose is gone from `querySelectorAll('[data-czap-boundary]')`
+      // but its handle (observers/listeners) still sits in `panelHandles` and
+      // would leak across remounts. The map is the source of truth for what was
+      // wired; drain it fully.
+      for (const [element, handle] of Array.from(panelHandles.entries())) {
+        handle.dispose();
         panelHandles.delete(element);
-      });
+      }
     },
   };
 }
@@ -696,6 +705,15 @@ function refreshPanels(body: HTMLElement): void {
     child.remove();
   }
 
+  // The body is rebuilt wholesale below, so dispose EVERY handle from the prior
+  // refresh — including boundaries removed from the page since (gone from the DOM
+  // query, but their observers/listeners still live in the map). Draining here,
+  // not just per-surviving-element, is what stops the cross-refresh leak.
+  for (const [element, handle] of Array.from(panelHandles.entries())) {
+    handle.dispose();
+    panelHandles.delete(element);
+  }
+
   const elements = document.querySelectorAll<HTMLElement>('[data-czap-boundary]');
   if (elements.length === 0) {
     const empty = document.createElement('div');
@@ -706,8 +724,6 @@ function refreshPanels(body: HTMLElement): void {
   }
 
   elements.forEach((element) => {
-    const prior = panelHandles.get(element);
-    prior?.dispose();
     panelHandles.set(element, renderBoundaryPanel(element, body));
   });
 

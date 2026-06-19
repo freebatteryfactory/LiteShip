@@ -419,7 +419,21 @@ void main() {
             const idx = boundary.states.indexOf(stateName);
             const stateLoc = uniforms.get('u_state');
             if (stateLoc && idx >= 0) {
-              webgl.uniform1f(stateLoc, idx / Math.max(1, boundary.states.length - 1));
+              // u_state's value form follows its DECLARED type (the source of
+              // truth, read back from `getActiveUniform` into `intUniforms`):
+              // the compiler emits `uniform int u_state` and the canonical
+              // `bindUniforms` sets it to the RAW index via uniform1i; the
+              // built-in fallback declares `uniform float u_state` and uses it
+              // as a `mix()` factor, so it wants the NORMALIZED 0..1 ramp. A
+              // single hardcoded `uniform1f` wrote a normalized float into the
+              // compiler's int uniform — INVALID_OPERATION, silently dropped, so
+              // authored-`@glsl` state transitions stopped. Route through the
+              // declared type so neither contract drifts.
+              if (intUniforms.has('u_state')) {
+                webgl.uniform1i(stateLoc, idx);
+              } else {
+                webgl.uniform1f(stateLoc, idx / Math.max(1, boundary.states.length - 1));
+              }
             }
           }
         } catch {

@@ -89,7 +89,6 @@ export function readAudioSignal(mode: 'sample' | 'normalized' | 'amplitude' | 'b
   return 0;
 }
 
-let observers = 0;
 const callbacks = new Set<() => void>();
 let rafId: number | null = null;
 
@@ -99,25 +98,31 @@ let rafId: number | null = null;
  * cleanup that drops the callback and stops the loop once the last observer
  * detaches. Matches the frozen-`null` contract of the other observers when
  * `requestAnimationFrame` is unavailable (SSR).
+ *
+ * The live-set IS the observer count — there is no separate counter beside it
+ * to drift (a duplicate `add` is a Set no-op, so it can't inflate a tally and
+ * keep the loop alive after detach). A throw in one callback must not stall the
+ * loop for the others, so the next frame is always scheduled in `finally`.
  */
 export function attachAudioObserver(callback: () => void): (() => void) | null {
   if (typeof requestAnimationFrame === 'undefined') return null;
 
   callbacks.add(callback);
-  observers += 1;
 
   if (rafId === null) {
     const tick = (): void => {
-      for (const cb of callbacks) cb();
-      rafId = requestAnimationFrame(tick);
+      try {
+        for (const cb of callbacks) cb();
+      } finally {
+        rafId = callbacks.size > 0 ? requestAnimationFrame(tick) : null;
+      }
     };
     rafId = requestAnimationFrame(tick);
   }
 
   return () => {
     if (!callbacks.delete(callback)) return;
-    observers -= 1;
-    if (observers <= 0 && rafId !== null) {
+    if (callbacks.size === 0 && rafId !== null) {
       cancelAnimationFrame(rafId);
       rafId = null;
     }
@@ -146,24 +151,27 @@ export function attachAudioObserver(callback: () => void): (() => void) | null {
  */
 export function driveAudioFromAnalyser(analyser: AnalyserNode): () => void {
   const buffer = new Float32Array(analyser.fftSize);
-  const sampleRate = analyser.context.sampleRate;
-  // Refractory in frames: each rAF reads ~one analyser buffer.
-  const refractoryFrames = Math.max(1, Math.round((sampleRate * BEAT_REFRACTORY_SEC) / buffer.length));
+  // Refractory is enforced in WALL-CLOCK milliseconds off the rAF timestamp, not
+  // a frame count. A frame count is wrong: rAF fires ~every 16ms regardless of
+  // fftSize, and the analyser buffer is a SLIDING window re-read each frame (not
+  // ~46ms of freshly-consumed audio), so `sampleRate * 0.05 / fftSize` rounds to
+  // 1 frame at 2048/44.1kHz and a second transient could fire ~16ms after the
+  // first — collapsing the 50ms gap BEAT_REFRACTORY_SEC promises.
+  const refractoryMs = BEAT_REFRACTORY_SEC * 1000;
   let prevRms = 0;
   let fluxBaseline = 0;
-  let sinceBeat = refractoryFrames;
+  let lastBeatMs = Number.NEGATIVE_INFINITY;
   let id: number | null = null;
 
-  const tick = (): void => {
+  const tick = (now: number): void => {
     analyser.getFloatTimeDomainData(buffer);
     const { rms, beat, nextFluxBaseline } = analyseFrame(buffer, prevRms, fluxBaseline);
     prevRms = rms;
     fluxBaseline = nextFluxBaseline;
     state.amplitude = Math.min(1, rms);
-    sinceBeat += 1;
-    if (beat && sinceBeat >= refractoryFrames) {
+    if (beat && now - lastBeatMs >= refractoryMs) {
       state.beat = 1;
-      sinceBeat = 0;
+      lastBeatMs = now;
     } else {
       state.beat = 0;
     }
@@ -185,7 +193,6 @@ export function __resetAudioSignalForTest(): void {
   state.amplitude = 0;
   state.beat = 0;
   callbacks.clear();
-  observers = 0;
   if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(rafId);
   rafId = null;
 }

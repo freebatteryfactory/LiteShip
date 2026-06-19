@@ -300,4 +300,95 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     expect(uniform1f).toHaveBeenCalledWith('u_blur_radius', 0.5);
     expect(uniform1f).toHaveBeenCalledWith('u_brightness', 1.5);
   });
+
+  test('the discrete u_state write follows the DECLARED type: int → uniform1i(raw index)', () => {
+    // The compiler emits `uniform int u_state` (glsl.ts) and the canonical
+    // `bindUniforms` sets it to the RAW index via uniform1i. When the program
+    // reports u_state as INT, the discrete state path must match that setter +
+    // value — writing a normalized float via uniform1f raises INVALID_OPERATION
+    // and the transition silently stops. (The built-in fallback declares
+    // `uniform float u_state` for `mix()`, the FLOAT branch — covered above.)
+    const INT = 0x1404;
+    const uniform1i = vi.fn();
+    const uniform1f = vi.fn();
+    const gl = {
+      COMPILE_STATUS: 1,
+      LINK_STATUS: 2,
+      ACTIVE_UNIFORMS: 3,
+      TRIANGLES: 4,
+      ARRAY_BUFFER: 5,
+      STATIC_DRAW: 6,
+      FLOAT: 7,
+      VERTEX_SHADER: 8,
+      FRAGMENT_SHADER: 9,
+      INT,
+      BOOL: 0x8b56,
+      createShader: vi.fn(() => ({})),
+      shaderSource: vi.fn(),
+      compileShader: vi.fn(),
+      getShaderParameter: vi.fn(() => true),
+      getShaderInfoLog: vi.fn(() => ''),
+      deleteShader: vi.fn(),
+      createProgram: vi.fn(() => ({})),
+      attachShader: vi.fn(),
+      linkProgram: vi.fn(),
+      getProgramInfoLog: vi.fn(() => ''),
+      deleteProgram: vi.fn(),
+      useProgram: vi.fn(),
+      createVertexArray: vi.fn(() => ({})),
+      bindVertexArray: vi.fn(),
+      createBuffer: vi.fn(() => ({})),
+      bindBuffer: vi.fn(),
+      bufferData: vi.fn(),
+      getAttribLocation: vi.fn(() => 0),
+      enableVertexAttribArray: vi.fn(),
+      vertexAttribPointer: vi.fn(),
+      // The program reports u_state as INT — the compiler's declaration is live.
+      getProgramParameter: vi.fn((_: unknown, key: number) => (key === 3 ? 1 : true)),
+      getActiveUniform: vi.fn().mockReturnValueOnce({ name: 'u_state', type: INT }),
+      getUniformLocation: vi.fn((_: unknown, name: string) => name),
+      uniform1i,
+      uniform1f,
+      uniform2f: vi.fn(),
+      viewport: vi.fn(),
+      drawArrays: vi.fn(),
+    };
+
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 11) as never);
+    vi.stubGlobal('cancelAnimationFrame', vi.fn() as never);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) =>
+      kind === 'webgl2' ? (gl as never) : null,
+    );
+
+    const compiled = GLSLCompiler.compile(boundary, authoredStates);
+    const attrs = satelliteAttrs({
+      boundary,
+      glsl: compiled.stateUniforms,
+      glslDeclarations: compiled.declarations,
+      initialState: 'collapsed',
+    });
+    const canvas = document.createElement('canvas');
+    for (const [k, v] of Object.entries(attrs)) canvas.setAttribute(k, v);
+    canvas.setAttribute(
+      'data-czap-shader-src',
+      '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main() { fragColor = vec4(float(u_state)); }',
+    );
+    document.body.appendChild(canvas);
+    stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
+    stubs.define(canvas, 'clientHeight', { configurable: true, value: 150 });
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+
+    // Cross into 'expanded' (raw state index 1) via the discrete path.
+    const payload = JSON.parse(attrs['data-czap-boundary']!) as { id?: string };
+    canvas.dispatchEvent(
+      new CustomEvent('czap:uniform-update', {
+        detail: { discrete: { [payload.id ?? 'default']: 'expanded' } },
+      }),
+    );
+
+    // The int uniform gets the RAW index via uniform1i — never a normalized float.
+    expect(uniform1i).toHaveBeenCalledWith('u_state', 1);
+    expect(uniform1f).not.toHaveBeenCalledWith('u_state', expect.anything());
+  });
 });
