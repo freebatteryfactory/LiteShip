@@ -25,6 +25,18 @@ export type { LoweredBinding, LoweredTarget } from './graph-lower.js';
 // exposes the seam; the producer that calls a model is downstream / out of scope.
 export { castGraphContext, admitGraphPatchProposal } from './graph-ai-apply.js';
 export type { AdmitPatchResult } from './graph-ai-apply.js';
+// Scene → live-runtime bridge (0.4.0 item C): drive the live graph runtime from a
+// signal-indexed `@czap/scene`, splitting DISCRETE crossings (→ recast) from the
+// CONTINUOUS tween (→ leaf CSS var / GPU uniform). Continuous motion never recasts.
+export { bridgeSceneToGraph } from './scene-bridge.js';
+export type {
+  BridgeableScene,
+  BridgeClock,
+  BridgeOptions,
+  SceneBridgeHandle,
+  SceneWorld,
+  SceneQueryEffect,
+} from './scene-bridge.js';
 export { configureWasmRuntime, loadWasmRuntime, resolveWasmUrl } from './wasm.js';
 export { allowRuntimeEndpointUrl, allowSameOriginRuntimeUrl, isSameOriginRuntimeUrl } from './url-policy.js';
 export {
