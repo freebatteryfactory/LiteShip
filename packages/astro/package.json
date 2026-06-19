@@ -60,6 +60,11 @@
       "import": "./dist/client-directives/wasm.js",
       "development": "./src/client-directives/wasm.ts"
     },
+    "./client-directives/graph": {
+      "types": "./dist/client-directives/graph.d.ts",
+      "import": "./dist/client-directives/graph.js",
+      "development": "./src/client-directives/graph.ts"
+    },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
       "import": "./dist/middleware.js",

@@ -239,6 +239,9 @@ const STANDALONE_FUNCTIONS = [
   'sealGraph',
   'validateGraph',
   'linearizeGraph',
+  // DocumentGraph node well-formedness — the ONE trust gate shared by the AI
+  // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
+  'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
   // CapLevel rung a policy admits on a runtime site.
   'chooseRung',
@@ -290,6 +293,9 @@ const STANDALONE_OBJECTS = [
   // no-bypass (tampered proposal refused at apply), apply-accepts-only-minted-token,
   // validated-proposal determinism, valid-applies-and-re-addresses, rejection-never-mints.
   'aiCastProposalCapsule',
+  // DocumentGraph node schema: the effect/Schema union (the single source of
+  // truth `isWellFormedNode` reads) surfaced so hosts can decode/validate nodes.
+  'DocumentGraphNodeSchema',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────

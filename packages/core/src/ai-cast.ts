@@ -39,10 +39,10 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-graph.js';
+import { isWellFormedNode } from './document-graph-schema.js';
 import { linearizeGraph, sealNode } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
 import type { PatchOp } from './graph-patch.js';
@@ -440,169 +440,18 @@ export type ProposalAcceptance<T> = {
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
 // ---------------------------------------------------------------------------
-// Untrusted-node validation — a declarative schema, the SINGLE source of truth.
+// Untrusted-node validation — FACTORED OUT to `document-graph-schema.ts`.
 //
-// A model-proposed node is untrusted JSON. `sealNode` only recomputes its content
-// address; it does NOT verify the node's shape. Rather than hand-roll a per-family
-// field table (which kept missing families and fields), validate each proposed node
-// against a discriminated `Schema.Union` over ALL EIGHT node families: the union forces
-// every family, each struct forces that family's required fields + types, and the
-// compile-time exhaustiveness check below makes "added a family but not a schema" a
-// BUILD error. Branded string types (ContentAddress / SignalInput / StateName /
-// AddressedDigest) validate as plain `Schema.String` (the brand is a compile-time
-// refinement; address FORMAT is an invariant, not a wire law). `meta` and the
-// structurally-opaque fields (CapSet, the digests, ProjectionKeys, the evaluate cache)
-// are `Schema.Unknown` — presence is the contract; their shape is sealed/derived
-// elsewhere. Optional (`?`) interface fields are `Schema.optional`.
+// A model-proposed node is untrusted JSON, and so is a serialized graph the
+// runtime loader (`@czap/astro`) lowers. The per-family `Schema.Union` that
+// answers "is this a well-formed DocumentGraphNode?" now lives in ONE place so
+// BOTH this AI seam AND the loader share a single trust gate (no second,
+// drifting copy). The schema + its compile-time family-exhaustiveness check
+// moved verbatim; `isWellFormedNode` is re-exported below for back-compat.
 // ---------------------------------------------------------------------------
 
-/** Branded-string fields validate as plain strings (brand + format are compile-time / invariant laws). */
-const Addr = Schema.String;
-/** `meta` + structurally-opaque fields: presence is the contract, internal shape is sealed/derived elsewhere. */
-const Opaque = Schema.Unknown;
-
-const SignalNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphSignalNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('signal'),
-  id: Addr,
-  meta: Opaque,
-  input: Schema.String,
-  range: Schema.optional(Schema.Tuple([Schema.Number, Schema.Number])),
-});
-const EntityNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphEntityNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('entity'),
-  id: Addr,
-  meta: Opaque,
-  components: Schema.Array(Addr),
-});
-const ComponentNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphComponentNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('component'),
-  id: Addr,
-  meta: Opaque,
-  name: Schema.String,
-  boundaryRef: Schema.optional(Addr),
-  thresholds: Schema.optional(Schema.Array(Opaque)),
-  states: Schema.optional(Schema.Array(Schema.String)),
-});
-const PoseNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphPoseNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('pose'),
-  id: Addr,
-  meta: Opaque,
-  entityRef: Addr,
-  state: Schema.String,
-  bindings: Schema.Record(Schema.String, Schema.Union([Schema.Number, Schema.String])),
-  evaluated: Schema.optional(Opaque),
-});
-const TransitionNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphTransitionNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('transition'),
-  id: Addr,
-  meta: Opaque,
-  fromPose: Addr,
-  toPose: Addr,
-  routing: Schema.Union([
-    Schema.Literal('seq'),
-    Schema.Literal('par'),
-    Schema.Literal('choice_then'),
-    Schema.Literal('choice_else'),
-  ]),
-  durationMs: Schema.optional(Schema.Number),
-});
-const ProjectionNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphProjectionNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('projection'),
-  id: Addr,
-  meta: Opaque,
-  target: Schema.Union([
-    Schema.Literal('css'),
-    Schema.Literal('glsl'),
-    Schema.Literal('wgsl'),
-    Schema.Literal('aria'),
-    Schema.Literal('ai'),
-    Schema.Literal('config'),
-    Schema.Literal('svg'),
-  ]),
-  sourceRef: Addr,
-  keys: Opaque,
-  resultDigest: Opaque,
-});
-const PolicyNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphPolicyNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('policy'),
-  id: Addr,
-  meta: Opaque,
-  appliesTo: Schema.Array(Addr),
-  requires: Schema.Union([
-    Schema.Literal('static'),
-    Schema.Literal('styled'),
-    Schema.Literal('reactive'),
-    Schema.Literal('animated'),
-    Schema.Literal('gpu'),
-  ]),
-  grants: Opaque,
-  sites: Schema.Array(
-    Schema.Union([Schema.Literal('node'), Schema.Literal('browser'), Schema.Literal('worker'), Schema.Literal('edge')]),
-  ),
-  budgets: Schema.optional(Opaque),
-});
-const ExportNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphExportNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('export'),
-  id: Addr,
-  meta: Opaque,
-  carrier: Schema.Union([
-    Schema.Literal('astro-page'),
-    Schema.Literal('video'),
-    Schema.Literal('svg'),
-    Schema.Literal('ship-capsule'),
-    Schema.Literal('receipt'),
-  ]),
-  sourceRefs: Schema.Array(Addr),
-  artifactDigest: Opaque,
-  receiptHash: Schema.optional(Schema.String),
-});
-
-/** Per-family schemas, keyed by family. */
-const NODE_FAMILY_SCHEMAS = {
-  signal: SignalNodeSchema,
-  entity: EntityNodeSchema,
-  component: ComponentNodeSchema,
-  pose: PoseNodeSchema,
-  transition: TransitionNodeSchema,
-  projection: ProjectionNodeSchema,
-  policy: PolicyNodeSchema,
-  export: ExportNodeSchema,
-};
-
-// COMPILE-TIME EXHAUSTIVENESS: every NodeFamily MUST have a schema above. Adding a family
-// to document-graph.ts without one here is a build error — this is what closes the
-// "validator missed a family" class for good (no runtime table to forget to update).
-const _familyExhaustiveness: Record<NodeFamily, unknown> = NODE_FAMILY_SCHEMAS;
-void _familyExhaustiveness;
-
-/** The single source of truth for "is this a well-formed DocumentGraph node?" */
-const DocumentGraphNodeSchema = Schema.Union([
-  SignalNodeSchema,
-  EntityNodeSchema,
-  ComponentNodeSchema,
-  PoseNodeSchema,
-  TransitionNodeSchema,
-  ProjectionNodeSchema,
-  PolicyNodeSchema,
-  ExportNodeSchema,
-]);
-const isWellFormedNode = Schema.is(DocumentGraphNodeSchema);
+/** Re-exported from `document-graph-schema.ts` so existing `@czap/core` consumers keep the same import site. */
+export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 
 /**
  * Validate a proposed node op's payload against {@link DocumentGraphNodeSchema} — the one

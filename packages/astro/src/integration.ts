@@ -305,6 +305,10 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   // scanner activates the same set on plain elements / .astro output.
   const enabledDirectives: readonly DirectiveName[] = [
     'satellite',
+    // `graph` is the DocumentGraph-loader counterpart of `satellite`: an
+    // always-on runtime primitive (no escalation tier / config gate), so it
+    // activates wherever a `data-czap-graph` payload is present.
+    'graph',
     ...(streamEnabled ? (['stream'] as const) : []),
     ...(llmEnabled ? (['llm'] as const) : []),
     ...(workersEnabled ? (['worker'] as const) : []),
@@ -352,6 +356,13 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           entrypoint: '@czap/astro/client-directives/satellite',
         });
         logger.info('Registered satellite client directive');
+
+        // `graph` — the DocumentGraph-loader primitive, always-on like satellite.
+        addClientDirective({
+          name: 'graph',
+          entrypoint: '@czap/astro/client-directives/graph',
+        });
+        logger.info('Registered graph client directive');
 
         if (streamEnabled) {
           addClientDirective({

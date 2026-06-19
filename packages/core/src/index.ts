@@ -228,6 +228,10 @@ export type {
 // from the Plan kernel). `addressNode`/`addressDocumentGraph` stay module-local
 // (sealNode/sealGraph wrap them; in-core consumers import them by relative path).
 export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-graph-address.js';
+// The one node well-formedness trust gate, shared by the AI proposal validator
+// (ai-cast.ts) and the runtime graph loader (@czap/astro) — untrusted JSON, one
+// schema. Factored out of ai-cast.ts so neither seam owns a drifting copy.
+export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 // The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
 // shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
 export { contentAddressOf } from './content-address.js';

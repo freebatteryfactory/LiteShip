@@ -1,0 +1,326 @@
+/**
+ * Runtime DocumentGraph LOADER — lower a serialized graph onto the EXISTING live
+ * cast pipeline, with a delta re-cast seam.
+ *
+ * This is a runtime PRIMITIVE (a loader), NOT an editor. The producer that
+ * SERIALIZES a {@link DocumentGraph} is downstream / out of scope; this module
+ * only consumes one and drives the boundary runtime that
+ * `client:satellite` already uses.
+ *
+ * THE FLOW ({@link loadGraphRuntime}):
+ *   parse JSON (if a string)
+ *     → `validateGraph` (structural integrity) + per-node `isWellFormedNode`
+ *       (the SHARED trust gate, same one the AI seam reads — untrusted JSON)
+ *     → `sealGraph` (RE-ADDRESS; never trust the supplied id/digest)
+ *     → `lowerGraph` (graph → ordered {@link LoweredBinding}s)
+ *     → per binding: resolve the element, SEED the initial state
+ *       (`readSignalValue` → `evaluateBoundary` → `applyBoundaryState`), then
+ *       `attachSignalObserver(input, recompute)`.
+ *   Returns `null` on a malformed / invalid graph (the `parseBoundary` posture:
+ *   degrade cleanly, never throw mid-hydration).
+ *
+ * THE DELTA SEAM ({@link castGraphDelta}): `GraphPatch.diff(prev, next)` →
+ * re-lower ONLY the entities the patch touched (detach their old observers,
+ * re-seed, re-attach); untouched entities keep their live observers. `recast` is
+ * the handle method that wraps `GraphPatch.apply` + this delta. The delta helper
+ * is EXPORTED so the AI seam (a separate item) can reuse the exact re-cast path
+ * a validated `GraphPatch` should drive — one delta engine, two callers.
+ *
+ * SSR-safe: observer attachment is guarded (`boundary.ts`'s `attachSignalObserver`
+ * returns `null` off-DOM), and the loader resolves elements through a host
+ * callback, so importing this module on the server is inert.
+ *
+ * @module
+ */
+
+import {
+  GraphPatch,
+  sealGraph,
+  validateGraph,
+  isWellFormedNode,
+  type ContentAddress,
+  type DocumentGraph,
+} from '@czap/core';
+import { applyBoundaryState, evaluateBoundary, readSignalValue, attachSignalObserver } from './boundary.js';
+import { lowerGraph, type LoweredBinding } from './graph-lower.js';
+
+/** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
+const DEFAULT_EVENT_NAME = 'czap:graph-state';
+
+/**
+ * Host callback mapping an entity's content address to its live DOM element. The
+ * loader owns NO element-discovery policy (an entity → element mapping is a host
+ * concern: a `data-czap-entity` attribute, a registry, a ref map…), so the host
+ * injects this. Returning `null`/`undefined` SKIPS that binding (no element yet).
+ */
+export type EntityElementResolver = (entityId: ContentAddress) => HTMLElement | null | undefined;
+
+/** A single bound entity: its element, its lowered boundary, and the live observer cleanup (if any). */
+interface ActiveBinding {
+  readonly binding: LoweredBinding;
+  readonly element: HTMLElement;
+  /** Last applied discrete state — feeds hysteresis on recompute. */
+  state: string;
+  /** Observer cleanup, or null when the signal has no live observer (frozen). */
+  cleanup: (() => void) | null;
+}
+
+/**
+ * The OPAQUE live-cast state a graph runtime keeps: entity address → its active
+ * binding (element + observer). Exported as an opaque handle so the AI seam can
+ * own its own state across {@link castGraphDelta} calls and {@link releaseCastState}
+ * teardown WITHOUT learning the internal {@link ActiveBinding} shape.
+ */
+export interface GraphCastState {
+  /** @internal — the entity → active-binding registry. Treat as opaque. */
+  readonly active: Map<ContentAddress, ActiveBinding>;
+}
+
+/** Create a fresh, empty {@link GraphCastState} for a delta-driven re-cast caller (e.g. the AI seam). */
+export function createCastState(): GraphCastState {
+  return { active: new Map<ContentAddress, ActiveBinding>() };
+}
+
+/** Detach every observer held by a {@link GraphCastState}. Idempotent. */
+export function releaseCastState(state: GraphCastState): void {
+  for (const entry of state.active.values()) entry.cleanup?.();
+  state.active.clear();
+}
+
+/**
+ * Handle over a loaded graph runtime. `graph` is the CURRENT (sealed) graph;
+ * `recast` advances it by a patch through the delta seam; `release` detaches
+ * every live observer.
+ */
+export interface GraphRuntimeHandle {
+  /** The current sealed graph the runtime reflects. */
+  readonly graph: DocumentGraph;
+  /**
+   * Advance the runtime by a {@link GraphPatch}: apply it (re-addressing through
+   * the one kernel), re-cast ONLY the entities the delta touched, and return the
+   * new graph. Untouched entities keep their live observers.
+   */
+  recast(patch: GraphPatch): DocumentGraph;
+  /** Detach every live observer. Idempotent. */
+  release(): void;
+}
+
+/** Apply a discrete state to a binding's element, threading the lowered per-state CSS into `state.css`. */
+function applyBindingState(active: ActiveBinding, state: string, eventName: string): void {
+  const css = active.binding.stateCss?.[state];
+  applyBoundaryState(
+    active.element,
+    active.binding.boundary,
+    { discrete: { [active.binding.boundary.name]: state }, ...(css ? { css } : {}) },
+    eventName,
+  );
+}
+
+/** Seed (or re-seed) a binding's initial state from the live signal value and apply it to the element. */
+function seedBinding(active: ActiveBinding, eventName: string): void {
+  const value = readSignalValue(active.binding.boundary.input);
+  if (value === undefined) return;
+  const state = evaluateBoundary(active.binding.boundary, value);
+  active.state = state;
+  applyBindingState(active, state, eventName);
+}
+
+/** Attach the signal observer for a binding, recomputing + applying state on every change. */
+function observeBinding(active: ActiveBinding, eventName: string): void {
+  active.cleanup = attachSignalObserver(active.binding.boundary.input, () => {
+    const value = readSignalValue(active.binding.boundary.input);
+    if (value === undefined) return;
+    const next = evaluateBoundary(active.binding.boundary, value, active.state || undefined);
+    if (next === active.state) return;
+    active.state = next;
+    applyBindingState(active, next, eventName);
+  });
+}
+
+/** Resolve, seed, and observe one lowered binding; returns the ActiveBinding or null if the element is missing. */
+function castBinding(binding: LoweredBinding, resolve: EntityElementResolver, eventName: string): ActiveBinding | null {
+  const element = resolve(binding.entityId);
+  if (!element) return null;
+  const initialState = element.getAttribute('data-czap-state') ?? '';
+  const active: ActiveBinding = { binding, element, state: initialState, cleanup: null };
+  seedBinding(active, eventName);
+  observeBinding(active, eventName);
+  return active;
+}
+
+/**
+ * THE SHARED DELTA SEAM. Given two graphs, re-cast ONLY the entities whose
+ * bindings differ between them: detach the changed entities' old observers, then
+ * resolve + seed + re-attach fresh observers for their new bindings; untouched
+ * entities keep their live observers entirely.
+ *
+ * It mutates `active` in place (the entityId → ActiveBinding map the runtime
+ * keeps) and is driven off `GraphPatch.diff(prev, next)` ONLY to learn WHICH
+ * entities the patch touched — the actual re-lowering reads the lowered bindings
+ * of both graphs, so a changed pose/projection on an entity re-casts that
+ * entity even when the diff names a different (pose/projection) node id.
+ *
+ * EXPORTED so the AI seam (a separate item) can reuse the exact same delta
+ * engine to re-cast after a validated `GraphPatch` applies — one re-cast path,
+ * two callers (the runtime's `recast` and the AI apply step).
+ */
+export function castGraphDelta(
+  prev: DocumentGraph,
+  next: DocumentGraph,
+  state: GraphCastState,
+  resolve: EntityElementResolver,
+  eventName: string = DEFAULT_EVENT_NAME,
+): void {
+  const active = state.active;
+  const prevBindings = new Map(lowerGraph(prev).map((b) => [b.entityId, b] as const));
+  const nextBindings = new Map(lowerGraph(next).map((b) => [b.entityId, b] as const));
+
+  // An entity is "touched" when its lowered binding changed: added, removed, or
+  // its boundary/targets differ. Compare by the lowered boundary value so a pose
+  // or projection edit (which changes the boundary the entity casts) re-casts the
+  // OWNING entity even though the diff'd node id is the pose/projection, not the
+  // entity. Untouched entities are left alone — their observers stay live.
+  const entityIds = new Set<ContentAddress>([...prevBindings.keys(), ...nextBindings.keys()]);
+  for (const entityId of entityIds) {
+    const before = prevBindings.get(entityId);
+    const after = nextBindings.get(entityId);
+    const changed = !before || !after || !bindingsEqual(before, after);
+    if (!changed) continue;
+
+    // Detach the entity's old observer (if any) before re-casting.
+    const existing = active.get(entityId);
+    if (existing) {
+      existing.cleanup?.();
+      active.delete(entityId);
+    }
+
+    // Re-cast from the NEW binding (absent → the entity was removed; leave detached).
+    if (after) {
+      const recast = castBinding(after, resolve, eventName);
+      if (recast) active.set(entityId, recast);
+    }
+  }
+}
+
+/** Structural equality over the lowered shape an entity casts — drives which entities re-cast on a delta. */
+function bindingsEqual(a: LoweredBinding, b: LoweredBinding): boolean {
+  // The boundary's identity is its serialized shape + the per-state channel maps;
+  // JSON over the comparable parts is a faithful, allocation-cheap structural key
+  // (the Boundary.Shape is a plain value; the channel maps are plain records).
+  const key = (binding: LoweredBinding): string =>
+    JSON.stringify({
+      input: binding.boundary.input,
+      name: binding.boundary.name,
+      boundary: binding.boundary.boundary,
+      stateAttributes: binding.boundary.stateAttributes ?? null,
+      glslStateUniforms: binding.boundary.glslStateUniforms ?? null,
+      stateWgsl: binding.boundary.stateWgsl ?? null,
+      stateCss: binding.stateCss ?? null,
+      targets: [...binding.targets].sort(),
+    });
+  return key(a) === key(b);
+}
+
+/**
+ * Parse + validate an untrusted serialized graph into a SEALED {@link DocumentGraph},
+ * or `null` if it is malformed / structurally invalid / carries a non-conformant
+ * node. Re-addresses through `sealGraph` so the runtime never trusts a supplied
+ * `id`/`digest`.
+ */
+function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | null {
+  let raw: unknown;
+  if (typeof serialized === 'string') {
+    try {
+      raw = JSON.parse(serialized);
+    } catch {
+      return null;
+    }
+  } else {
+    raw = serialized;
+  }
+
+  const candidate = raw as { nodes?: unknown; edges?: unknown } | null;
+  if (
+    candidate === null ||
+    typeof candidate !== 'object' ||
+    !Array.isArray(candidate.nodes) ||
+    !Array.isArray(candidate.edges)
+  ) {
+    return null;
+  }
+
+  // EVERY node must conform to the shared trust gate before we address or lower it.
+  for (const node of candidate.nodes) {
+    if (!isWellFormedNode(node)) return null;
+  }
+
+  const structural = validateGraph({
+    nodes: candidate.nodes as DocumentGraph['nodes'],
+    edges: candidate.edges as DocumentGraph['edges'],
+  });
+  if (!structural.ok) return null;
+
+  // RE-ADDRESS: discard any supplied id/digest, mint from the payload bytes.
+  try {
+    return sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta: (candidate as { meta?: DocumentGraph['meta'] }).meta ?? ZERO_META,
+      nodes: candidate.nodes,
+      edges: candidate.edges,
+    } as Omit<DocumentGraph, 'id' | 'digest'>);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Zero HLC stamp for a loaded graph whose payload omitted `meta`. `sealGraph`
+ * excludes `meta` from the address (it covers only the sorted node ids + edges),
+ * so a fixed meta does not affect identity — it only satisfies the envelope.
+ */
+const ZERO_META = {
+  created: { wall_ms: 0, counter: 0, node_id: 'czap-graph-runtime' },
+  updated: { wall_ms: 0, counter: 0, node_id: 'czap-graph-runtime' },
+  version: 0,
+} as const;
+
+/**
+ * Load a serialized {@link DocumentGraph} onto the live cast pipeline. Returns a
+ * {@link GraphRuntimeHandle} that reflects the (re-addressed) graph, advances by
+ * `recast`, and tears down with `release`; or `null` for a malformed / invalid
+ * graph (the `parseBoundary` degrade-cleanly posture).
+ */
+export function loadGraphRuntime(
+  serialized: string | DocumentGraph,
+  resolve: EntityElementResolver,
+  opts?: { readonly eventName?: string },
+): GraphRuntimeHandle | null {
+  const sealed = parseAndSealGraph(serialized);
+  if (!sealed) return null;
+
+  const eventName = opts?.eventName ?? DEFAULT_EVENT_NAME;
+  const state = createCastState();
+
+  for (const binding of lowerGraph(sealed)) {
+    const cast = castBinding(binding, resolve, eventName);
+    if (cast) state.active.set(binding.entityId, cast);
+  }
+
+  let current = sealed;
+
+  return {
+    get graph(): DocumentGraph {
+      return current;
+    },
+    recast(patch: GraphPatch): DocumentGraph {
+      const next = GraphPatch.apply(current, patch);
+      castGraphDelta(current, next, state, resolve, eventName);
+      current = next;
+      return current;
+    },
+    release(): void {
+      releaseCastState(state);
+    },
+  };
+}

@@ -8,7 +8,7 @@
 
 > **isWire**\<`T`\>(`p`): `p is Shape<T, never>`
 
-Defined in: [core/src/index.ts:353](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L353)
+Defined in: [core/src/index.ts:357](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/index.ts#L357)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Wire](../namespaces/Wire/README.md).
 

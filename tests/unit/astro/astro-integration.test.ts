@@ -434,7 +434,7 @@ describe('integration', () => {
       },
     } as never);
 
-    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'stream', 'llm', 'gpu']);
+    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'graph', 'stream', 'llm', 'gpu']);
     expect(updates[0]).toMatchObject({
       vite: {
         plugins: [expect.objectContaining({ name: '@czap/vite' })],
@@ -581,7 +581,7 @@ describe('integration', () => {
       logger: { info() {} },
     } as never);
 
-    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'worker', 'wasm']);
+    expect(directives.map((directive) => directive.name)).toEqual(['satellite', 'graph', 'worker', 'wasm']);
     // serverIslands must NOT produce any experimental config bridge anymore.
     expect(updates.some((config) => 'experimental' in config)).toBe(false);
     expect(scripts.some((script) => script.includes('__CZAP_DETECT__'))).toBe(false);
