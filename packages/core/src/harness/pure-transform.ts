@@ -73,6 +73,29 @@ export interface HarnessContext {
    * capsule's input schema, not the arbitrary walker.
    */
   readonly preconditionMismatch?: string;
+  /**
+   * COMPILE-TIME probe result (receiptedMutation): both the input AND output
+   * schemas resolve a fast-check arbitrary, so the contract round-trip test
+   * (encode→decode equality over each) can be emitted real. When false the
+   * contract-shape check is non-emitted (a schema the walker can't sample
+   * can't be round-tripped) rather than shipped as a green skip.
+   */
+  readonly contractRoundTrippable?: boolean;
+  /**
+   * COMPILE-TIME probe result (receiptedMutation): the capsule exposes a
+   * typed `mutate` invocation handler. Only then can the harness drive the
+   * idempotency + audit-receipt checks for real; absent it, those two checks
+   * are non-emitted (no runtime channel to invoke — nothing to compare or
+   * inspect), which is justified non-emission, not a skip.
+   */
+  readonly mutatePresent?: boolean;
+  /**
+   * COMPILE-TIME probe result (receiptedMutation): the capsule declares one
+   * or more reachable faults (`faults` table). Only then is the
+   * fault-injection check emitted; a capsule with no declared faults has no
+   * faults to prove reachable, so the check is non-emitted.
+   */
+  readonly faultsDeclared?: boolean;
 }
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';

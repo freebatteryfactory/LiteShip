@@ -1,21 +1,36 @@
 // GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
+import { Schema } from 'effect';
+import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
+import { shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
 
 describe('cli.ship-emit', () => {
-  it.skip('contract shape: input and output decode/encode round-trip', () => {
-    // TODO(harness): wire schema round-trip via cap.input / cap.output.
-  });
-
-  it.skip('is idempotent: two identical inputs produce equivalent receipts', () => {
-    // TODO(harness): receipted mutations need a runtime channel to invoke
-    // — until cap exposes a typed mutate handler, skip rather than fake.
-  });
-
-  it.skip('emits audit receipt with declared capabilities', () => {
-    // TODO(harness): same — needs runtime channel to read emitted receipts.
-  });
-
-  it.skip('fault injection: declared faults are reachable', () => {
-    // TODO(harness): faults table not yet on the capsule contract.
+  const cap = shipEmitCapsule;
+  // Non-emitted checks (documented; deliberately no skipped placeholder):
+//  - idempotent / audit receipt: NOT EMITTED — 'cli.ship-emit' exposes no
+//    typed `mutate` invocation channel. A receipted mutation's real
+//    behavior here is an external side effect (fs write / process spawn /
+//    DOM morph) wired behind a separate runtime callable, not a pure
+//    handler the harness may drive twice. There is nothing to invoke, so
+//    there is no receipt to compare or inspect — non-emission, not a
+//    skip. The receipt CONTRACT is still proven by the round-trip above.
+//  - fault injection: NOT EMITTED — 'cli.ship-emit' declares no `faults`
+//    table, so there are no faults to prove reachable. A fault-injection
+//    test over zero declared faults would be vacuous; non-emission is the
+//    honest disposition (add a `faults` entry to enable the check).
+  it('contract shape: input and output decode/encode round-trip', () => {
+    for (const schema of [cap.input, cap.output]) {
+      const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
+      const encode = Schema.encodeSync(schema as never);
+      const decode = Schema.decodeUnknownSync(schema as never);
+      fc.assert(
+        fc.property(arb, (value) => {
+          expect(decode(encode(value as never))).toEqual(value);
+          return true;
+        }),
+        { numRuns: 100 },
+      );
+    }
   });
 });

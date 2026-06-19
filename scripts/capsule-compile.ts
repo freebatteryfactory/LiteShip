@@ -135,6 +135,15 @@ interface BindingProbe {
    * honest reason for the resulting skip.
    */
   readonly preconditionMismatch?: string;
+  /**
+   * receiptedMutation only: both `cap.input` AND `cap.output` resolve a
+   * fast-check arbitrary, so the contract round-trip test can be emitted real.
+   */
+  readonly contractRoundTrippable?: boolean;
+  /** receiptedMutation only: the capsule exposes a typed `mutate` handler. */
+  readonly mutatePresent?: boolean;
+  /** receiptedMutation only: the capsule declares a non-empty `faults` table. */
+  readonly faultsDeclared?: boolean;
 }
 
 /**
@@ -158,18 +167,51 @@ async function probeBinding(
   sourceFile: string,
   bindingName: string,
 ): Promise<BindingProbe | undefined> {
-  if (kind !== 'pureTransform' && kind !== 'stateMachine') return undefined;
+  if (kind !== 'pureTransform' && kind !== 'stateMachine' && kind !== 'receiptedMutation') {
+    return undefined;
+  }
   const moduleUrl = pathToFileURL(resolve(sourceFile)).href;
   const mod = (await import(moduleUrl)) as Record<string, unknown>;
   const cap = mod[bindingName] as
     | {
         input?: { ast?: unknown };
+        output?: { ast?: unknown };
         run?: ((input: unknown) => unknown) | undefined;
         step?: ((state: unknown, event: unknown) => unknown) | undefined;
         initialState?: unknown;
+        mutate?: ((input: unknown) => unknown) | undefined;
+        faults?: readonly unknown[] | undefined;
       }
     | undefined;
   if (cap === undefined || cap.input === undefined) return undefined;
+
+  // receiptedMutation: probe (input AND output) arbitrary-derivability for the
+  // contract round-trip, plus `mutate` / `faults` presence for the invocation
+  // and fault-injection checks. The harness emits ONLY the checks these flags
+  // unlock — every other check is non-emitted with a written reason, never a
+  // green it.skip.
+  if (kind === 'receiptedMutation') {
+    const derivable = (schema: { ast?: unknown } | undefined): boolean => {
+      if (schema === undefined) return false;
+      try {
+        schemaToArbitrary(schema as never);
+        return true;
+      } catch (err) {
+        if (!(err instanceof UnsupportedSchemaError)) throw err;
+        return false;
+      }
+    };
+    const contractRoundTrippable = derivable(cap.input) && derivable(cap.output);
+    const mutatePresent = typeof cap.mutate === 'function';
+    const faultsDeclared = Array.isArray(cap.faults) && cap.faults.length > 0;
+    return {
+      arbitraryDerivable: contractRoundTrippable,
+      handlersPresent: mutatePresent,
+      contractRoundTrippable,
+      mutatePresent,
+      faultsDeclared,
+    };
+  }
 
   let arb: fc.Arbitrary<unknown> | undefined;
   try {
@@ -234,6 +276,7 @@ function dispatchHarness(
     case 'receiptedMutation':
       return generateReceiptedMutation(
         cap as CapsuleDef<'receiptedMutation', unknown, unknown, unknown>,
+        ctx,
       );
     case 'stateMachine':
       return generateStateMachine(
@@ -421,6 +464,13 @@ async function main(): Promise<void> {
               handlersPresent: probe.handlersPresent,
               ...(probe.preconditionMismatch !== undefined
                 ? { preconditionMismatch: probe.preconditionMismatch }
+                : {}),
+              ...(probe.contractRoundTrippable !== undefined
+                ? { contractRoundTrippable: probe.contractRoundTrippable }
+                : {}),
+              ...(probe.mutatePresent !== undefined ? { mutatePresent: probe.mutatePresent } : {}),
+              ...(probe.faultsDeclared !== undefined
+                ? { faultsDeclared: probe.faultsDeclared }
                 : {}),
             }
           : {}),

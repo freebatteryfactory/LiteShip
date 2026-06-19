@@ -51,6 +51,37 @@ export interface AttributionDecl {
 }
 
 /**
+ * A declared fault a `receiptedMutation` capsule promises is REACHABLE — a
+ * named failure mode plus a `trigger` that drives the capsule's
+ * {@link CapsuleContract.mutate} handler into that fault. The harness invokes
+ * `trigger` and asserts the fault actually surfaces (the handler rejects, or
+ * the receipt carries the declared failure status), proving the declared
+ * fault is not vaporware.
+ *
+ * A capsule that declares NO faults has no faults to prove reachable — the
+ * harness emits no fault-injection check for it (justified non-emission, not
+ * a skip). Only meaningful for `receiptedMutation` arms.
+ */
+export interface FaultDecl<In> {
+  /** Stable identifier for the fault (e.g. `path-not-writable`). */
+  readonly name: string;
+  /**
+   * Produce a decoded input that drives {@link CapsuleContract.mutate} into
+   * this fault. Deterministic — the harness calls it once and asserts the
+   * fault surfaces.
+   */
+  readonly trigger: () => In;
+  /**
+   * How the fault surfaces. `'throws'`: `mutate` rejects/throws on the
+   * triggering input. `'receipt-status'`: `mutate` returns a receipt whose
+   * status field equals {@link FaultDecl.status}.
+   */
+  readonly surfaces: 'throws' | 'receipt-status';
+  /** Required when `surfaces === 'receipt-status'` — the failure status value. */
+  readonly status?: string;
+}
+
+/**
  * The contract shape a capsule declaration must satisfy. The factory
  * uses this to generate tests, benches, docs, and audit receipts.
  *
@@ -99,6 +130,33 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * Promises, so the harness awaits every probe.
    */
   readonly derive?: (source: In) => Out | Promise<Out>;
+  /**
+   * Optional invocation handler for `receiptedMutation` arms: applies the
+   * mutation for a decoded input (`In`) and returns the decoded audit receipt
+   * (`Out`). This is the typed runtime channel the harness drives to make the
+   * idempotency and audit-receipt checks REAL — without it those checks have
+   * nothing to invoke and the harness emits no test for them (justified
+   * non-emission, not a skip).
+   *
+   * MUST be pure and side-effect-free over the declared input domain: the
+   * harness drives it twice with the SAME sampled input and asserts the two
+   * receipts are deep-equal (idempotency). A handler that writes files, spawns
+   * processes, or otherwise mutates external state does NOT belong here — wire
+   * such side effects behind a separate runtime callable and leave `mutate`
+   * undefined (the receipt CONTRACT is still proven via the schema round-trip).
+   * May be async; the harness awaits it. Only meaningful for
+   * `receiptedMutation` arms.
+   */
+  readonly mutate?: (input: In) => Out | Promise<Out>;
+  /**
+   * Optional declared faults for `receiptedMutation` arms — failure modes the
+   * capsule promises are reachable. The harness drives each fault's
+   * {@link FaultDecl.trigger} through {@link CapsuleContract.mutate} and
+   * asserts it surfaces as declared. Requires `mutate`. A capsule that
+   * declares no faults gets no fault-injection check (nothing to prove
+   * reachable). Only meaningful for `receiptedMutation` arms.
+   */
+  readonly faults?: readonly FaultDecl<In>[];
 }
 
 /**
