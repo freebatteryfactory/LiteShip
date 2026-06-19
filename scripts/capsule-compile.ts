@@ -75,7 +75,7 @@ interface ManifestEntry {
   readonly name: string;
   readonly kind: string;
   readonly source: string;
-  readonly generated: { testFile: string; benchFile: string };
+  readonly generated: { testFile: string; benchFile: string; integrationFile?: string };
   /**
    * `true` when the harness has a real binding to probe (the generated test
    * exercises the capsule); `false` when it fell back to `it.skip` because the
@@ -345,6 +345,95 @@ const SCENE_DRIVERS: Readonly<Record<string, SceneDriverSpec>> = {
   'examples.intro': { compileExport: 'compileIntro', hasAudio: true, hasVideo: true },
 };
 
+/**
+ * Host-capability driver registry for `siteAdapter` capsules — the siteAdapter
+ * analogue of {@link SCENE_DRIVERS}. The host-capability-matrix check (INTEGRATION
+ * lane) must drive each declared `site` under a REAL host. Adapter-specific host
+ * logic does NOT live in the generic harness; it lives in a per-capsule
+ * integration driver under `tests/support/site-adapter-integration/<name>.ts`
+ * that exports `siteProbes` (one real host probe per declared site). This map
+ * names that driver + the vitest environment its probes need.
+ *
+ * `environment`: the integration file declares `// @vitest-environment <env>`.
+ * The cloudflare worker-KV path runs under `node` (the `cloudflare:workers`
+ * virtual module resolves only off the jsdom transform); the remotion path needs
+ * `jsdom` for its React/browser hook probe.
+ *
+ * A capsule NOT listed here resolves a `declared-integration` exemption instead —
+ * a typed coverage link (waiver with teeth) pointing at a named existing suite.
+ * The driver module MUST cover exactly the capsule's declared `site` set; the
+ * generated integration test asserts that equality, so a drifted driver fails RED.
+ */
+interface SiteAdapterDriverSpec {
+  /**
+   * Repo-relative path to the integration driver module exporting `siteProbes`
+   * (resolved to a `.js` import specifier relative to the generated test file).
+   */
+  readonly driverModule: string;
+  /** vitest environment the integration file declares. */
+  readonly environment: 'node' | 'jsdom';
+}
+const SITE_ADAPTER_DRIVERS: Readonly<Record<string, SiteAdapterDriverSpec>> = {
+  // packages/cloudflare — sites ['edge','worker']. Driver drives the production
+  // cloudflareMiddleware end to end (build-derived manifest for the edge tier; a
+  // real workerd-shaped KV namespace for the worker tier). Node env: the
+  // `cloudflare:workers` virtual import only resolves off the jsdom transform.
+  'cloudflare.workers-kv-boundary': {
+    driverModule: 'tests/support/site-adapter-integration/cloudflare-workers-kv-boundary.ts',
+    environment: 'node',
+  },
+  // packages/remotion — sites ['node','browser']. Driver drives precomputeFrames
+  // over a real VideoRenderer (node) + the real Provider/useCzapState React hook
+  // through Remotion's context (browser). jsdom env for the React render.
+  'remotion.video-frame-output': {
+    driverModule: 'tests/support/site-adapter-integration/remotion-video-frame-output.ts',
+    environment: 'jsdom',
+  },
+};
+
+/**
+ * Resolve which of a siteAdapter's schemas the pure round-trip samples. Prefer
+ * the `input` schema when it is arbitrary-derivable AND concrete (not the
+ * over-broad `Unknown`/`Any` that would sample `fc.anything()`); else fall back
+ * to the `output` schema; else `undefined` (neither derivable → the round trip
+ * is non-emittable, a typed not-applicable, never a skip). The round trip proves
+ * CanonicalCbor encode/decode preserves the chosen schema's structure.
+ */
+function resolveRoundTripSchema(
+  cap: { input?: { ast?: { _tag?: string } }; output?: { ast?: { _tag?: string } } },
+): 'input' | 'output' | undefined {
+  const isConcreteDerivable = (schema: { ast?: { _tag?: string } } | undefined): boolean => {
+    if (schema === undefined) return false;
+    // Over-broad top-level schemas (`Unknown`/`Any`) are "derivable" but sample
+    // fc.anything(); prefer a concrete sibling schema when one exists.
+    const tag = schema.ast?._tag;
+    if (tag === 'Unknown' || tag === 'AnyKeyword') return false;
+    try {
+      schemaToArbitrary(schema as never);
+      return true;
+    } catch (err) {
+      if (!(err instanceof UnsupportedSchemaError)) throw err;
+      return false;
+    }
+  };
+  const isDerivable = (schema: { ast?: { _tag?: string } } | undefined): boolean => {
+    if (schema === undefined) return false;
+    try {
+      schemaToArbitrary(schema as never);
+      return true;
+    } catch (err) {
+      if (!(err instanceof UnsupportedSchemaError)) throw err;
+      return false;
+    }
+  };
+  if (isConcreteDerivable(cap.input)) return 'input';
+  if (isConcreteDerivable(cap.output)) return 'output';
+  // Last resort: a derivable-but-broad schema still gives a real round trip.
+  if (isDerivable(cap.input)) return 'input';
+  if (isDerivable(cap.output)) return 'output';
+  return undefined;
+}
+
 /** Dispatch to the correct harness generator based on assembly kind. */
 function dispatchHarness(
   kind: AssemblyKind,
@@ -370,6 +459,7 @@ function dispatchHarness(
     case 'siteAdapter':
       return generateSiteAdapter(
         cap as CapsuleDef<'siteAdapter', unknown, unknown, unknown>,
+        ctx,
       );
     case 'policyGate':
       return generatePolicyGate(
@@ -631,6 +721,71 @@ async function main(): Promise<void> {
         }
       }
 
+      // ADDITIVE siteAdapter branch — independent of every path above. The
+      // siteAdapter harness needs (a) which of the adapter's schemas the pure
+      // round-trip samples and the CanonicalCbor / contentAddressOf import
+      // specifiers (UNIT lane), and (b) the per-site host driver or a typed
+      // declared-integration coverage link (INTEGRATION lane). The integration
+      // file lands one level deeper (tests/generated/integration/<slug>.test.ts),
+      // so its imports are resolved relative to THAT dir, not dirname(testPath).
+      let siteAdapter: HarnessContext['siteAdapter'];
+      if (d.kind === 'siteAdapter') {
+        const moduleUrl = pathToFileURL(resolve(d.file)).href;
+        const mod = (await import(moduleUrl)) as Record<string, unknown>;
+        const cap = mod[d.binding] as
+          | { input?: { ast?: { _tag?: string } }; output?: { ast?: { _tag?: string } } }
+          | undefined;
+        const roundTripSchema = cap !== undefined ? resolveRoundTripSchema(cap) : undefined;
+        if (roundTripSchema !== undefined) {
+          // INTEGRATION-lane file dir — one level below tests/generated/.
+          const integrationAbs = resolve(generatedDir, 'integration', `${slug}.test.ts`);
+          const integrationDir = dirname(integrationAbs);
+          const rel = (absPath: string): string => {
+            const spec = normalizeRepoPath(relative(integrationDir, absPath)).replace(/\.ts$/, '.js');
+            return spec.startsWith('.') ? spec : `./${spec}`;
+          };
+          const cborAbs = resolve('packages/canonical/src/cbor-decode.ts');
+          const cborEncodeAbs = resolve('packages/core/src/cbor.ts');
+
+          const spec = SITE_ADAPTER_DRIVERS[d.resolvedName];
+          const hostCapability: NonNullable<HarnessContext['siteAdapter']>['hostCapability'] =
+            spec !== undefined
+              ? {
+                  kind: 'driver' as const,
+                  driverImport: rel(resolve(spec.driverModule)),
+                  environment: spec.environment,
+                }
+              : {
+                  kind: 'declared-integration' as const,
+                  coverageSuite:
+                    'no named integration suite registered for this siteAdapter — register one in SITE_ADAPTER_DRIVERS',
+                  reason:
+                    `'${d.resolvedName}' has no registered in-process host driver, so the host-capability ` +
+                    `matrix cannot be driven from the generated harness.`,
+                };
+
+          siteAdapter = {
+            roundTripSchema,
+            // The binding import for the INTEGRATION file (deeper dir) differs
+            // from the UNIT file's (tests/generated/). Resolve it against the
+            // integration dir so the generated import is correct.
+            bindingImportFromIntegration: rel(resolve(d.file)),
+            // UNIT-lane imports are relative to dirname(testPath) (tests/generated/).
+            arbitraryImport: arbitraryModule.startsWith('.') ? arbitraryModule : `./${arbitraryModule}`,
+            canonicalCborImport: normalizeRepoPath(relative(dirname(testPath), cborEncodeAbs))
+              .replace(/\.ts$/, '.js')
+              .replace(/^(?!\.)/, './'),
+            cborDecodeImport: normalizeRepoPath(relative(dirname(testPath), cborAbs))
+              .replace(/\.ts$/, '.js')
+              .replace(/^(?!\.)/, './'),
+            contentAddressImport: contentAddressModule.startsWith('.')
+              ? contentAddressModule
+              : `./${contentAddressModule}`,
+            hostCapability,
+          };
+        }
+      }
+
       harnessCtx = {
         bindingImport: sourceModule.startsWith('.')
           ? sourceModule
@@ -658,6 +813,11 @@ async function main(): Promise<void> {
         ...(sceneDriverNotApplicableReason !== undefined
           ? { sceneDriverNotApplicableReason }
           : {}),
+        // siteAdapter: the resolved round-trip schema + lane import specifiers and
+        // the per-site host driver (or declared-integration coverage link). Absent
+        // when neither schema is arbitrary-derivable (the round trip is then a typed
+        // not-applicable, surfaced by the harness — never an it.skip).
+        ...(siteAdapter !== undefined ? { siteAdapter } : {}),
         ...(probe !== undefined
           ? {
               arbitraryDerivable: probe.arbitraryDerivable,
@@ -679,7 +839,15 @@ async function main(): Promise<void> {
           : {}),
       };
     }
-    const { testFile, benchFile } = dispatchHarness(d.kind, stub, harnessCtx);
+    const { testFile, benchFile, integrationFile } = dispatchHarness(d.kind, stub, harnessCtx);
+
+    // INTEGRATION-lane file (siteAdapter only): lands under
+    // tests/generated/integration/<slug>.test.ts. The plumb-gate scans
+    // tests/generated/ recursively, so nested integration files ARE gate-scanned.
+    const integrationPath =
+      integrationFile !== undefined
+        ? resolve(generatedDir, 'integration', `${slug}.test.ts`)
+        : undefined;
 
     // Skip the file writes in manifest-only mode; the manifest entry below still
     // records the (committed) testFile/benchFile paths so verify can run them.
@@ -687,11 +855,17 @@ async function main(): Promise<void> {
       mkdirSync(dirname(testPath), { recursive: true });
       atomicWrite(testPath, testFile);
       atomicWrite(benchPath, benchFile);
+      if (integrationFile !== undefined && integrationPath !== undefined) {
+        mkdirSync(dirname(integrationPath), { recursive: true });
+        atomicWrite(integrationPath, integrationFile);
+      }
     }
 
     const sourceRel = normalizeRepoPath(relative(cwd, d.file));
     const testRel = normalizeRepoPath(relative(cwd, testPath));
     const benchRel = normalizeRepoPath(relative(cwd, benchPath));
+    const integrationRel =
+      integrationPath !== undefined ? normalizeRepoPath(relative(cwd, integrationPath)) : undefined;
 
     const wired = harnessCtx !== undefined;
     // The TYPED escape-hatch waiver, recorded as a tracked manifest fact (not
@@ -701,6 +875,15 @@ async function main(): Promise<void> {
       harnessCtx?.effectOutcomeReason !== undefined
         ? { effectOutcomeExemption: harnessCtx.effectOutcomeReason }
         : {};
+    // The generated-artifact triple, with the INTEGRATION file recorded only
+    // when the arm emitted one (siteAdapter). Tracking it in the manifest makes
+    // the integration lane a first-class, machine-readable fact (verify/audit
+    // surfaces see it), not an untracked file on disk.
+    const generated: ManifestEntry['generated'] = {
+      testFile: testRel,
+      benchFile: benchRel,
+      ...(integrationRel !== undefined ? { integrationFile: integrationRel } : {}),
+    };
     const entry: ManifestEntry =
       d.factory !== undefined
         ? d.args !== undefined && d.args.length > 0
@@ -708,7 +891,7 @@ async function main(): Promise<void> {
               name: d.resolvedName,
               kind: d.kind,
               source: sourceRel,
-              generated: { testFile: testRel, benchFile: benchRel },
+              generated,
               wired,
               factory: d.factory,
               args: d.args,
@@ -718,7 +901,7 @@ async function main(): Promise<void> {
               name: d.resolvedName,
               kind: d.kind,
               source: sourceRel,
-              generated: { testFile: testRel, benchFile: benchRel },
+              generated,
               wired,
               factory: d.factory,
               ...exemption,
@@ -727,7 +910,7 @@ async function main(): Promise<void> {
             name: d.resolvedName,
             kind: d.kind,
             source: sourceRel,
-            generated: { testFile: testRel, benchFile: benchRel },
+            generated,
             wired,
             ...exemption,
           };

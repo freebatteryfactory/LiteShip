@@ -19,6 +19,14 @@ import type { CapsuleDef } from '../assembly.js';
 export interface HarnessOutput {
   readonly testFile: string;
   readonly benchFile: string;
+  /**
+   * INTEGRATION-lane file contents (the `tests/generated/integration/<name>.test.ts`
+   * file). Only the `siteAdapter` arm emits this today: the host-capability-matrix
+   * check runs under a REAL host and lands in the integration lane, separate from
+   * the unit-lane `.test.ts`. Absent for every other arm (and for siteAdapters whose
+   * integration check is a not-applicable exemption, which is recorded inline).
+   */
+  readonly integrationFile?: string;
 }
 
 /**
@@ -157,6 +165,59 @@ export interface HarnessContext {
    * used.
    */
   readonly sceneDriverNotApplicableReason?: string;
+  /**
+   * COMPILE-TIME resolution (siteAdapter): everything the two lane-aware checks
+   * need. Resolved by `scripts/capsule-compile.ts` — the siteAdapter analogue of
+   * {@link sceneDriver}. The round-trip half is always real (a pure, schema-driven
+   * `native -> CanonicalCbor -> native` content-address equality); the
+   * host-capability half is either a real integration driver (a per-site host
+   * probe registry) or a typed `declared-integration` coverage link. Typed inline
+   * to avoid a circular import between the harness modules; the structural
+   * `SiteAdapterDriver` shape lives in `site-adapter.ts`.
+   */
+  readonly siteAdapter?: {
+    /**
+     * Which of the adapter's schemas the round-trip samples (`'input'` when its
+     * input schema is arbitrary-derivable and concrete, else `'output'`). The
+     * round trip proves CanonicalCbor encode/decode preserves that schema's
+     * structure via the canonical {@link contentAddressOf}.
+     */
+    readonly roundTripSchema: 'input' | 'output';
+    /**
+     * Import specifier (with `.js`) for the capsule binding, resolved relative to
+     * the INTEGRATION file's directory (`tests/generated/integration/`), which is
+     * one level deeper than the unit file — so its `bindingImport` differs.
+     */
+    readonly bindingImportFromIntegration: string;
+    /** Import specifier (with `.js`) for `schemaToArbitrary`. */
+    readonly arbitraryImport: string;
+    /** Import specifier (with `.js`) for `CanonicalCbor`. */
+    readonly canonicalCborImport: string;
+    /** Import specifier (with `.js`) for the canonical CBOR `decode`. */
+    readonly cborDecodeImport: string;
+    /** Import specifier (with `.js`) for `contentAddressOf`. */
+    readonly contentAddressImport: string;
+    /**
+     * Resolved host-capability driver — a real integration probe module — or the
+     * typed `declared-integration` coverage link when no in-process host driver
+     * exists. Mutually exclusive.
+     */
+    readonly hostCapability:
+      | {
+          readonly kind: 'driver';
+          /** Import specifier (with `.js`) for the integration driver's `siteProbes`. */
+          readonly driverImport: string;
+          /** vitest environment the integration file declares (`node` | `jsdom`). */
+          readonly environment: 'node' | 'jsdom';
+        }
+      | {
+          readonly kind: 'declared-integration';
+          /** Named existing suite that covers the host-capability matrix for real. */
+          readonly coverageSuite: string;
+          /** Why no in-process driver exists (the honest reason for the waiver). */
+          readonly reason: string;
+        };
+  };
 }
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';

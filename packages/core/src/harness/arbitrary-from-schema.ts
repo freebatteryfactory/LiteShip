@@ -142,10 +142,7 @@ function _arbitraryForDeclaration(ast: SchemaAST.Declaration): fc.Arbitrary<unkn
   if (_declarationAccepts(ast, new Uint8Array())) return fc.uint8Array();
   if (_declarationAccepts(ast, new Date())) return fc.date();
 
-  throw new UnsupportedSchemaError(
-    'Declaration',
-    'opaque user-defined type — only Date and Uint8Array are recognised',
-  );
+  throw new UnsupportedSchemaError('Declaration', 'opaque user-defined type — only Date and Uint8Array are recognised');
 }
 
 /**
@@ -177,10 +174,7 @@ function _arbitraryForTemplateLiteral(ast: SchemaAST.TemplateLiteral): fc.Arbitr
         // unambiguous and avoids zero-width ambiguity at boundaries.
         return fc.stringMatching(/^[A-Za-z0-9]+$/);
       default:
-        throw new UnsupportedSchemaError(
-          'TemplateLiteral',
-          `unsupported interpolation part "${part._tag}"`,
-        );
+        throw new UnsupportedSchemaError('TemplateLiteral', `unsupported interpolation part "${part._tag}"`);
     }
   });
   if (partArbs.length === 0) return fc.constant('');
