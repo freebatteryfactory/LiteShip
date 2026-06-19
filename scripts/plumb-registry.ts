@@ -15,10 +15,10 @@
  *     new test-only subsystem (the scene/stage class — whole packages a consumer
  *     never runs) cannot ship unclassified/hidden. This is the headline guard.
  *
- *  2. `PLUMB_FLOOR` — the pinned set of capsules whose harness is unwired
- *     (`capsule:<name>`, only an `it.skip` binding). The gate fails on DRIFT: a
- *     NEW unwired capsule must be wired or consciously added here; a wired one
- *     means shrink the floor. Modelled on `AUDIT_WARNING_FLOOR`.
+ * The capsule-harness side has NO floor: `scripts/plumb-gate.ts` fails on ANY
+ * `it.skip` placeholder in `tests/generated/`. There is no grandfather list — an
+ * unwired capsule binding is blocking work, not a pinned exemption. (A floor here
+ * would launder exactly the incompleteness this gate exists to surface.)
  *
  * @module
  */
@@ -31,18 +31,6 @@ export interface PackagePlumbEntry {
   /** Tracking issue/ADR — REQUIRED for `deferred` (enforced by the meta-test). */
   readonly issue?: string;
 }
-
-/**
- * Pinned inventory of unwired capsules (`capsule:<name>` — only an `it.skip`
- * binding). SHRINKS as bindings get wired. A NEW unwired capsule drifts the
- * floor and fails the gate.
- */
-export const PLUMB_FLOOR: readonly string[] = [
-  // Beat/wav-metadata projections whose derive handler isn't probed by the
-  // generated harness yet (the factory wrapper carries no bindable export).
-  'capsule:intro-bed:beats',
-  'capsule:intro-bed:wav-metadata',
-];
 
 /** Every published package's live-runtime plumb status. */
 export const PACKAGE_PLUMB: Readonly<Record<string, PackagePlumbEntry>> = {

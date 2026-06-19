@@ -1,27 +1,89 @@
 /**
  * Meta-test for the plumb-completeness gate (scripts/plumb-gate.ts).
  *
- * The gate is the regression guard the gauntlet never had: a built-not-plumbed
- * subsystem (the scene/stage class — a whole package a consumer never runs) or a
- * newly-unwired capsule can no longer ship green unclassified. This test pins
- * the ledger's hygiene so the gate itself can't rot.
+ * HARD RULE (no exceptions): a placeholder is BLOCKING. The gate fails on ANY
+ * `it.skip`/`test.skip` in `tests/generated/` (an unwired capsule binding shipping
+ * green) and on any published package missing a PACKAGE_PLUMB classification.
+ *
+ * This pins the gate's MECHANISM via throwaway fixture roots so the gate can't rot.
+ * It deliberately does NOT assert the live repo tree is clean — while capsule
+ * bindings are being wired, the live `plumb:gate` phase is RED by design, and that
+ * redness is the work-list, not a test failure to paper over.
  */
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { runPlumbGate } from '../../../scripts/plumb-gate.js';
-import { PACKAGE_PLUMB, PLUMB_FLOOR } from '../../../scripts/plumb-registry.js';
+import { PACKAGE_PLUMB } from '../../../scripts/plumb-registry.js';
 
-describe('plumb gate', () => {
-  it('passes on the current tree (no drift, every package classified)', () => {
-    const result = runPlumbGate();
-    expect(result.unclassified).toEqual([]);
-    expect(result.added).toEqual([]);
-    expect(result.removed).toEqual([]);
-    expect(result.ok).toBe(true);
+/** Build a throwaway repo root with the given generated test files + packages. */
+function fixtureRoot(opts: {
+  generated?: Record<string, string>;
+  packages?: Record<string, { name?: string; private?: boolean } | null>;
+}): string {
+  const root = mkdtempSync(join(tmpdir(), 'czap-plumb-'));
+  mkdirSync(join(root, 'tests', 'generated'), { recursive: true });
+  for (const [name, src] of Object.entries(opts.generated ?? {})) {
+    writeFileSync(join(root, 'tests', 'generated', name), src, 'utf8');
+  }
+  mkdirSync(join(root, 'packages'), { recursive: true });
+  for (const [dir, pkg] of Object.entries(opts.packages ?? {})) {
+    mkdirSync(join(root, 'packages', dir), { recursive: true });
+    if (pkg) writeFileSync(join(root, 'packages', dir, 'package.json'), JSON.stringify(pkg), 'utf8');
+  }
+  return root;
+}
+
+describe('plumb gate — mechanism', () => {
+  it('FAILS on a string-literal it.skip placeholder in tests/generated/', () => {
+    const root = fixtureRoot({
+      generated: { 'probe.test.ts': `it.skip('unwired: needs a real binding', () => {});\n` },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.map((s) => s.message)).toContain('unwired: needs a real binding');
   });
 
+  it('FAILS on a computed-message it.skip (the ternary form the harness emits)', () => {
+    const root = fixtureRoot({
+      generated: {
+        'probe.test.ts': `it.skip(\n  cond ? 'invariants — schema not arbitrary-derivable' : 'other',\n  () => {},\n);\n`,
+      },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.some((s) => s.message.startsWith('invariants — schema'))).toBe(true);
+  });
+
+  it('does NOT match runtime-conditional .skipIf (an honest conditional, not a placeholder)', () => {
+    const root = fixtureRoot({
+      generated: { 'probe.test.ts': `describe.skipIf(!x)('cond', () => { it('real', () => {}); });\n` },
+    });
+    expect(runPlumbGate(root).skips).toEqual([]);
+  });
+
+  it('passes a clean generated dir (no skips, no unclassified packages)', () => {
+    const root = fixtureRoot({
+      generated: { 'probe.test.ts': `it('real test', () => { expect(1).toBe(1); });\n` },
+    });
+    expect(runPlumbGate(root).ok).toBe(true);
+  });
+
+  it('FAILS on a published package missing a PACKAGE_PLUMB classification', () => {
+    const root = fixtureRoot({ packages: { mystery: { name: '@czap/mystery-unclassified' } } });
+    const r = runPlumbGate(root);
+    expect(r.unclassified).toContain('@czap/mystery-unclassified');
+    expect(r.ok).toBe(false);
+  });
+
+  it('ignores a private package (no classification required)', () => {
+    const root = fixtureRoot({ packages: { priv: { name: '@czap/priv', private: true } } });
+    expect(runPlumbGate(root).unclassified).toEqual([]);
+  });
+});
+
+describe('plumb registry hygiene', () => {
   it('every deferred package carries a tracking issue (no silent deferral)', () => {
     for (const [name, entry] of Object.entries(PACKAGE_PLUMB)) {
       if (entry.status === 'deferred') {
@@ -31,48 +93,7 @@ describe('plumb gate', () => {
     }
   });
 
-  it('the floor holds only capsule entries (orphan noise is not gated here)', () => {
-    for (const entry of PLUMB_FLOOR) {
-      expect(entry.startsWith('capsule:'), `unexpected floor entry: ${entry}`).toBe(true);
-    }
-  });
-
-  // FINDING 5 [Major]: the gate must read the manifest through the CANONICAL
-  // resolver (`getCapsuleManifestPath`, honoring CZAP_CAPSULE_MANIFEST) — the SAME
-  // path the writer (scripts/capsule-compile.ts) emits to — not a hardcoded
-  // `reports/capsule-manifest.json`. Point the resolver at a temp manifest with an
-  // unwired capsule and assert the gate reads IT (proving it follows the override).
-  describe('reads the canonical (CZAP_CAPSULE_MANIFEST) path the writer emits to', () => {
-    const prev = process.env.CZAP_CAPSULE_MANIFEST;
-    afterEach(() => {
-      if (prev === undefined) delete process.env.CZAP_CAPSULE_MANIFEST;
-      else process.env.CZAP_CAPSULE_MANIFEST = prev;
-    });
-
-    it('inventories an unwired capsule from the overridden manifest path', () => {
-      const dir = mkdtempSync(join(tmpdir(), 'czap-plumb-gate-'));
-      const manifestPath = join(dir, 'capsule-manifest.json');
-      // A manifest the hardcoded `reports/...` path would NEVER find — only the
-      // canonical resolver (which honors the env override) reaches it.
-      writeFileSync(
-        manifestPath,
-        JSON.stringify({ capsules: [{ name: 'finding5-probe', wired: false }] }),
-        'utf8',
-      );
-      // The override is ABSOLUTE, so `root` doesn't matter for the manifest read.
-      process.env.CZAP_CAPSULE_MANIFEST = manifestPath;
-      const result = runPlumbGate();
-      // The probe capsule is unwired + not on the floor → it surfaces as `added`,
-      // which proves the gate read the overridden manifest (a hardcoded path would
-      // read the repo's real manifest and never see this probe).
-      expect(result.added).toContain('capsule:finding5-probe');
-    });
-  });
-
   it('scene is plumbed live and stage is a complete build tool as of 0.4.0', () => {
-    // The headline subsystems are no longer test-only: @czap/scene is imported by
-    // the astro runtime (scene→live bridge + SVG directive), and @czap/stage's
-    // headless encode is filled (a build/CI proof tool). The ledger reflects it.
     expect(PACKAGE_PLUMB['@czap/scene']?.status).toBe('runtime');
     expect(PACKAGE_PLUMB['@czap/stage']?.status).toBe('tooling');
   });

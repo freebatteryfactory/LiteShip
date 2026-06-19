@@ -1,53 +1,71 @@
 /**
- * Plumb-completeness gate — the gate the gauntlet never had.
+ * Plumb-completeness gate — fails when the repo would ship incomplete work green.
  *
- * Fails when:
- *  - the unwired-capsule inventory DRIFTS from `PLUMB_FLOOR` (a NEW unwired
- *    capsule appears, or a floor entry got wired and the floor wasn't shrunk), or
- *  - a published package is missing a `PACKAGE_PLUMB` classification.
+ * HARD RULE (no exceptions): a placeholder is BLOCKING. The capsule harness emits
+ * `it.skip`/`test.skip` into `tests/generated/` whenever a capsule binding isn't
+ * wired — a skipped test that ships green is a LIE about coverage. This gate fails
+ * on ANY such skip and prints the full list as the work-list. There is no floor and
+ * no registry: the only way to green is to WIRE the binding so the test is REAL (or
+ * delete a check that genuinely cannot apply to that capsule kind).
  *
- * Per-primitive plumb-truth (a module wired into the live cast path) is proven
- * by each primitive's end-to-end acceptance test, NOT by a noisy reachability
- * heuristic — see scripts/plumb-registry.ts for why.
+ * It also fails when a published package is missing a `PACKAGE_PLUMB` classification.
  *
  * @module
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { repoRoot } from '../vitest.shared.js';
 import { isDirectExecution } from './audit/shared.js';
-import { PACKAGE_PLUMB, PLUMB_FLOOR } from './plumb-registry.js';
+import { PACKAGE_PLUMB } from './plumb-registry.js';
+
+/** One skipped generated test — a placeholder standing in for unwired work. */
+export interface PlumbSkip {
+  readonly file: string;
+  readonly kind: 'it.skip' | 'test.skip' | 'describe.skip';
+  readonly message: string;
+}
 
 export interface PlumbGateResult {
   readonly ok: boolean;
-  /** Inventory entries present now but NOT in PLUMB_FLOOR — new unwired capsules. */
-  readonly added: readonly string[];
-  /** PLUMB_FLOOR entries no longer present — wired (or renamed); shrink the floor. */
-  readonly removed: readonly string[];
+  /** Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking. */
+  readonly skips: readonly PlumbSkip[];
   /** Published packages with no PACKAGE_PLUMB classification. */
   readonly unclassified: readonly string[];
-  readonly inventorySize: number;
+  /** Whether the generated test corpus was present to scan (false ⇒ run capsule:compile). */
+  readonly generatedPresent: boolean;
 }
 
-function collectInventory(root: string): { inventory: string[]; manifestPresent: boolean } {
-  const inventory: string[] = [];
-  // Read the SAME path the writer (scripts/capsule-compile.ts) emits to: the
-  // canonical resolver honors the `CZAP_CAPSULE_MANIFEST` override (CUT T1), so a
-  // hardcoded `reports/capsule-manifest.json` here would read the WRONG file
-  // whenever the writer was redirected (e.g. concurrent test workers). `root` is
-  // the cwd both sides resolve a relative manifest against.
-  const manifestPath = getCapsuleManifestPath(root);
-  const manifestPresent = existsSync(manifestPath);
-  if (manifestPresent) {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      capsules?: readonly { name: string; wired?: boolean }[];
-    };
-    for (const capsule of manifest.capsules ?? []) {
-      if (capsule.wired === false) inventory.push(`capsule:${capsule.name}`);
+// Matches the `.skip(` CALL itself — `it.skip(`, `test.skip(`, `describe.skip(` —
+// regardless of whether the first arg is a string literal or a computed expression
+// (the harness writes `it.skip(cond ? 'a' : 'b')` for not-arbitrary-derivable
+// schemas). `.skipIf(` is NOT matched (the `(` must follow `skip` directly), so
+// genuine runtime-conditional skips are excluded.
+const SKIP_CALL_RE = /\b(it|test|describe)\.skip\(/g;
+// The first quoted string after the call — the human-readable reason — used for
+// the work-list line (escape-aware; tolerates a leading ternary condition).
+const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
+
+function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boolean } {
+  const dir = resolve(root, 'tests', 'generated');
+  if (!existsSync(dir)) return { skips: [], present: false };
+  const skips: PlumbSkip[] = [];
+  let sawTest = false;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.test.ts')) continue;
+    sawTest = true;
+    const src = readFileSync(resolve(dir, entry.name), 'utf8');
+    for (const m of src.matchAll(SKIP_CALL_RE)) {
+      const window = src.slice(m.index + m[0].length, m.index + m[0].length + 400);
+      const msg = FIRST_STRING_RE.exec(window);
+      skips.push({
+        file: `tests/generated/${entry.name}`,
+        kind: `${m[1]}.skip` as PlumbSkip['kind'],
+        message: msg ? (msg[2] ?? '') : '(computed reason)',
+      });
     }
   }
-  return { inventory: inventory.sort(), manifestPresent };
+  skips.sort((a, b) => a.file.localeCompare(b.file) || a.message.localeCompare(b.message));
+  return { skips, present: sawTest };
 }
 
 function publishedPackages(root: string): string[] {
@@ -64,41 +82,26 @@ function publishedPackages(root: string): string[] {
 }
 
 export function runPlumbGate(root = repoRoot): PlumbGateResult {
-  const { inventory, manifestPresent } = collectInventory(root);
-  const floor = new Set(PLUMB_FLOOR);
-  const present = new Set(inventory);
-  const added = inventory.filter((entry) => !floor.has(entry));
-  // The floor is capsule-only and only checkable once `capsule:compile` has
-  // written the manifest (it runs as an early gauntlet phase). Under a bare
-  // `pnpm test` (the smoke jobs) the manifest is absent, so we cannot tell a
-  // wired capsule from an absent manifest — skip the `removed` diff rather than
-  // report a false drift. The gauntlet's plumb:gate phase has the fresh manifest.
-  const removed = manifestPresent ? PLUMB_FLOOR.filter((entry) => !present.has(entry)).sort() : [];
+  const { skips, present } = collectGeneratedSkips(root);
   const unclassified = publishedPackages(root).filter((name) => !(name in PACKAGE_PLUMB));
   return {
-    ok: added.length === 0 && removed.length === 0 && unclassified.length === 0,
-    added,
-    removed,
+    ok: skips.length === 0 && unclassified.length === 0,
+    skips,
     unclassified,
-    inventorySize: inventory.length,
+    generatedPresent: present,
   };
 }
 
 function main(): void {
   const result = runPlumbGate();
   if (!result.ok) {
-    if (result.added.length > 0) {
+    if (result.skips.length > 0) {
       process.stderr.write(
-        'PLUMB GATE FAILED — NEW unwired capsule(s) (wire the binding, or — if genuinely ' +
-          'intentional — add to PLUMB_FLOOR in scripts/plumb-registry.ts):\n',
+        `PLUMB GATE FAILED — ${result.skips.length} placeholder skip(s) in tests/generated/ ` +
+          '(a skipped generated test is unwired work shipping green — WIRE the binding so the ' +
+          'test is REAL, or remove a check that cannot apply to that capsule kind):\n',
       );
-      for (const entry of result.added) process.stderr.write(`  + ${entry}\n`);
-    }
-    if (result.removed.length > 0) {
-      process.stderr.write(
-        'PLUMB GATE — these PLUMB_FLOOR entries are gone (wired/renamed). Remove them from the floor:\n',
-      );
-      for (const entry of result.removed) process.stderr.write(`  - ${entry}\n`);
+      for (const s of result.skips) process.stderr.write(`  ${s.file}  ${s.kind}('${s.message}')\n`);
     }
     if (result.unclassified.length > 0) {
       process.stderr.write(
@@ -111,10 +114,9 @@ function main(): void {
       JSON.stringify({
         status: 'failed',
         command: 'plumb-gate',
-        added: result.added.length,
-        removed: result.removed.length,
+        skips: result.skips.length,
         unclassified: result.unclassified.length,
-        inventorySize: result.inventorySize,
+        generatedPresent: result.generatedPresent,
         timestamp: new Date().toISOString(),
       }) + '\n',
     );
@@ -124,7 +126,8 @@ function main(): void {
     JSON.stringify({
       status: 'ok',
       command: 'plumb-gate',
-      inventorySize: result.inventorySize,
+      skips: 0,
+      generatedPresent: result.generatedPresent,
       timestamp: new Date().toISOString(),
     }) + '\n',
   );
