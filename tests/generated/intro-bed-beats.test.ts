@@ -6,9 +6,21 @@ import { contentAddressOf } from '../../packages/core/src/content-address.js';
 import { introBedBeats } from '../../examples/scenes/assets.js';
 
 describe('intro-bed:beats', () => {
-  const cap = introBedBeats;
+  const cap = introBedBeats as {
+    derive?: (source: unknown) => unknown | Promise<unknown>;
+    invariants: ReadonlyArray<{ name: string; check: (input: unknown, output: unknown) => boolean }>;
+  };
   // capsule:compile resolved: `derive` present + canonical fixture exists.
-  const derive = cap.derive!;
+  // PREMISE GUARD — pins that resolution: a cachedProjection's `derive` comes
+  // from its source of truth (a defineAsset's decoder, or a projection
+  // factory's transform). If the binding ever loses it, this fails RED here
+  // rather than the fixture probes silently passing over a missing handler.
+  if (cap.derive === undefined) {
+    throw new Error(
+      `intro-bed:beats: capsule:compile emitted the real-only fixture form but the binding exposes no \`derive\` handler — the projection lost its transform (a defineAsset decoder or a projection factory's derive); fix the capsule and re-run pnpm run capsule:compile`,
+    );
+  }
+  const derive = cap.derive;
   const fixtureAbs = resolve('examples/scenes/intro-bed.wav');
   const fixtureBytes = (): ArrayBuffer => readFileSync(fixtureAbs).buffer as ArrayBuffer;
 

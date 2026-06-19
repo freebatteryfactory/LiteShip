@@ -17,10 +17,18 @@
  * `Schema.minLength(n)` — these post-filter the underlying arbitrary
  * by running each Filter's predicate.
  *
+ * EXPLICIT OVERRIDE: a schema may carry an author-supplied arbitrary via
+ * {@link ArbitraryAnnotationId} (attach it with {@link withArbitrary}). The
+ * walker honours that thunk ahead of structural derivation — the canonical way
+ * to sample a narrow valid domain a structural walk can't reach (e.g.
+ * "canonical CBOR bytes" is a generated subset of `Uint8Array`, not every byte
+ * string).
+ *
  * STILL UNSUPPORTED (throw `UnsupportedSchemaError`, honest skip):
  *   - Objects with index signatures (open record shapes)
  *   - Declaration for opaque user types that are neither Date nor
- *     Uint8Array (e.g. `Schema.instanceOf(SomeUserClass)`)
+ *     Uint8Array (e.g. `Schema.instanceOf(SomeUserClass)`) AND carry no
+ *     {@link ArbitraryAnnotationId} override
  *
  * @module
  */
@@ -36,6 +44,65 @@ export class UnsupportedSchemaError extends Error {
     super(`arbitrary-from-schema: AST node "${nodeTag}" is not supported${hint ? ` (${hint})` : ''}`);
     this.nodeTag = nodeTag;
   }
+}
+
+/**
+ * Annotation key for an explicit, schema-authored fast-check arbitrary. A
+ * schema whose VALID domain is a generated SUBSET of an opaque carrier type —
+ * e.g. "canonical CBOR bytes" is a subset of `Uint8Array`, not every byte
+ * string — cannot be sampled by structural walking: random `fc.uint8Array()`
+ * bytes are conformant to the carrier (`instanceOf(Uint8Array)`) yet outside
+ * the handler's real domain. The author who KNOWS how to generate valid
+ * values attaches that generator here via {@link withArbitrary}; the walker
+ * honours it ahead of structural derivation. This is the canonical, shared
+ * hook for "the input schema under-specifies the handler's domain" — the fix
+ * lives ON the schema (a branded smart constructor), not in a per-capsule
+ * harness hack.
+ *
+ * The annotated value is a THUNK (`() => fc.Arbitrary<unknown>`) so the
+ * arbitrary is built lazily at walk time, never eagerly at module load.
+ */
+export const ArbitraryAnnotationId: unique symbol = Symbol.for('@czap/core/harness/arbitrary');
+
+/** The thunk shape an {@link ArbitraryAnnotationId} annotation carries. */
+export type ArbitraryAnnotation = () => fc.Arbitrary<unknown>;
+
+/**
+ * Brand a schema with an explicit arbitrary generator (see
+ * {@link ArbitraryAnnotationId}). The result is the SAME schema for parsing /
+ * encoding — only its harness-sampling behaviour changes. Use this to express
+ * a narrow valid domain a structural walk can't reach (e.g.
+ * `withArbitrary(Schema.instanceOf(Uint8Array), () => fc.anything().map(CanonicalCbor.encode))`).
+ */
+export function withArbitrary<S extends Schema.Schema<unknown>>(schema: S, arbitrary: ArbitraryAnnotation): S {
+  // Effect 4's `.annotate({...})` merges a custom annotation onto the AST node;
+  // it survives onto `ast.annotations[ArbitraryAnnotationId]` (probed) and is
+  // read back by `_annotatedArbitrary` below. Routed through `unknown` because
+  // the `annotate` signature's `~rebuild.out` is not provably `S`.
+  const annotate = (
+    schema as unknown as {
+      annotate: (a: Record<symbol, unknown>) => S;
+    }
+  ).annotate;
+  return annotate.call(schema, { [ArbitraryAnnotationId]: arbitrary });
+}
+
+/**
+ * Read an explicit {@link ArbitraryAnnotationId} arbitrary thunk off an AST
+ * node, when present. Returns the BUILT arbitrary (the thunk invoked once), or
+ * `undefined` when the node carries no such annotation — in which case the
+ * walker falls through to structural derivation.
+ */
+function _annotatedArbitrary(ast: SchemaAST.AST): fc.Arbitrary<unknown> | undefined {
+  const annotations = (ast as { annotations?: Record<symbol, unknown> }).annotations;
+  if (annotations === undefined) return undefined;
+  const thunk = annotations[ArbitraryAnnotationId];
+  if (typeof thunk !== 'function') return undefined;
+  const arb = (thunk as ArbitraryAnnotation)();
+  if (arb === undefined || typeof (arb as { generate?: unknown }).generate !== 'function') {
+    throw new UnsupportedSchemaError(ast._tag, 'ArbitraryAnnotationId thunk did not return a fast-check Arbitrary');
+  }
+  return arb;
 }
 
 /**
@@ -207,6 +274,12 @@ function _transformationTo(ast: SchemaAST.AST): SchemaAST.AST | undefined {
 }
 
 function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
+  // An explicit author-supplied arbitrary wins over structural derivation —
+  // it is how a schema declares a narrow valid domain (e.g. canonical CBOR
+  // bytes) the walker could not otherwise reach. Applied checks still run so a
+  // refinement layered atop the annotation is honoured.
+  const annotated = _annotatedArbitrary(ast);
+  if (annotated !== undefined) return _applyChecks(ast, annotated);
   const transformedTo = _transformationTo(ast);
   if (transformedTo !== undefined) return walk(transformedTo);
   let arb: fc.Arbitrary<unknown>;

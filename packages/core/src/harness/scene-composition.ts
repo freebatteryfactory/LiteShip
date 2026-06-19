@@ -195,8 +195,8 @@ function emitUnitFile(name: string, driver: SceneDriver, checks: readonly Resolv
   if (wired.length === 0) {
     return `// GENERATED — do not edit by hand
 // All unit-lane checks for '${name}' are not-applicable for the documented
-// reasons below — deliberately no it.skip placeholder (which would ship unwired
-// work green) and no silent omission.
+// reasons below — deliberately no skipped-test placeholder (which would ship
+// unwired work green) and no silent omission.
 import 'vitest';
 
 // Non-emitted / EXEMPTED checks (documented):
@@ -467,8 +467,8 @@ function notApplicableOutput(
   const testFile = hasBinding
     ? `// GENERATED — do not edit by hand
 // All four sceneComposition checks for '${name}' are not-applicable for the
-// documented reason below — deliberately no it.skip placeholder (which would
-// ship unwired work green) and no silent omission. The exemption is PINNED by a
+// documented reason below — deliberately no skipped-test placeholder (which
+// would ship unwired work green) and no silent omission. The exemption is PINNED by a
 // real premise guard so it cannot silently go stale. Reason:
 //   ${r}
 import { describe, it, expect } from 'vitest';
@@ -494,8 +494,8 @@ ${checkNotes}
 `
     : `// GENERATED — do not edit by hand
 // All checks for '${name}' are not-applicable for the documented reason below —
-// deliberately no it.skip placeholder (which would ship unwired work green) and
-// no silent omission. No capsule binding was importable to pin the premise.
+// deliberately no skipped-test placeholder (which would ship unwired work green)
+// and no silent omission. No capsule binding was importable to pin the premise.
 // Reason:
 //   ${r}
 import 'vitest';

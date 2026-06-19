@@ -18,6 +18,118 @@ import type { HarnessContext, HarnessOutput } from './pure-transform.js';
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
 
+/** Required driver shape for {@link generateRuntimeDriverTest}. */
+type RuntimeDriver = NonNullable<HarnessContext['runtimeDriver']>;
+
+/**
+ * Emit a REAL state-machine traversal for a runtime-backed capsule (its
+ * transition is a BUILDER + `tick` handle, not declared `step`/`initialState`).
+ *
+ * Three real checks, no `it.skip`:
+ *  1. PREMISE GUARD — pins the disposition: the capsule IS a stateMachine yet
+ *     exposes NO `step`/`initialState` (so the field-driven path correctly does
+ *     not apply) AND the builder exposes a `build` + the handle a `tick`. If the
+ *     capsule ever gains `step`/`initialState`, this fails RED and the harness
+ *     must switch to the field-driven traversal.
+ *  2. INVARIANTS — build the handle from the pure compiled descriptor, copy the
+ *     declared output fields off it, and assert every declared invariant holds.
+ *  3. DETERMINISM — tick a fresh handle across a random `dtMs` sequence and
+ *     replay the same sequence on another fresh handle; the per-tick frame
+ *     index trajectory must be identical (the descriptor is pure data, so two
+ *     builds are the canonical "same seed").
+ */
+function generateRuntimeDriverTest(name: string, d: RuntimeDriver): string {
+  const fieldsLiteral = d.outputFields.map((f) => `'${f}'`).join(', ');
+  return `// GENERATED — do not edit by hand
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
+import { ${d.capsuleName} } from '${d.capsuleImport}';
+import { ${d.compileName} } from '${d.compileImport}';
+import { ${d.builderName} } from '${d.builderImport}';
+import { scaledTimeout } from '../../vitest.shared.js';
+
+describe('${name}', () => {
+  const cap = ${d.capsuleName} as {
+    _kind?: unknown;
+    step?: unknown;
+    initialState?: unknown;
+    invariants: ReadonlyArray<{ name: string; check: (input: unknown, output: unknown) => boolean }>;
+  };
+  // This stateMachine realizes its transition in a builder + tick handle, not
+  // in declared step/initialState fields. The OUTPUT fields the declared
+  // invariants read off the built handle.
+  const OUTPUT_FIELDS = [${fieldsLiteral}] as const;
+
+  // The compiled descriptor is PURE data — identical every call — so building a
+  // fresh handle from it twice is the canonical "same seed".
+  const buildHandle = async () => ${d.builderName}.build(${d.compileName}());
+  const handleOutput = (handle: Record<string, () => unknown>): Record<string, unknown> => {
+    const out: Record<string, unknown> = {};
+    for (const f of OUTPUT_FIELDS) {
+      const v = (handle as Record<string, unknown>)[f];
+      out[f] = typeof v === 'function' ? (v as () => unknown)() : v;
+    }
+    return out;
+  };
+
+  it('premise: a runtime-backed stateMachine — no step/initialState, drives via build + tick', async () => {
+    // It IS a stateMachine (so a traversal nominally applies)...
+    expect(cap._kind).toBe('stateMachine');
+    // ...but carries NO field-driven transition — that absence is exactly what
+    // routes it to this builder-driven traversal. If it ever gains these, this
+    // guard fails RED and the harness must use the field-driven path instead.
+    expect(cap.step).toBeUndefined();
+    expect(cap.initialState).toBeUndefined();
+    const handle = await buildHandle();
+    try {
+      expect(typeof handle.tick).toBe('function');
+      expect(typeof handle.currentFrame).toBe('function');
+    } finally {
+      await handle.release();
+    }
+  });
+
+  it('invariants hold over the built runtime output', async () => {
+    const handle = await buildHandle();
+    try {
+      const output = handleOutput(handle as unknown as Record<string, () => unknown>);
+      for (const inv of cap.invariants) {
+        expect(inv.check({ scene: ${d.compileName}() }, output), inv.name).toBe(true);
+      }
+    } finally {
+      await handle.release();
+    }
+  });
+
+  it('deterministic replay: the same dtMs sequence yields the same frame trajectory', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        // Positive frame-scale dt steps (ms) — a realistic forward playback path.
+        fc.array(fc.integer({ min: 1, max: 100 }), { minLength: 1, maxLength: 24 }),
+        async (dts) => {
+          const trajectory = async (): Promise<readonly number[]> => {
+            const handle = await buildHandle();
+            try {
+              const frames: number[] = [];
+              for (const dt of dts) {
+                await handle.tick(dt);
+                frames.push(handle.currentFrame());
+              }
+              return frames;
+            } finally {
+              await handle.release();
+            }
+          };
+          expect(await trajectory()).toEqual(await trajectory());
+        },
+      ),
+      { numRuns: 20 },
+    );
+  }, scaledTimeout(30000));
+});
+`;
+}
+
 /**
  * Generate the test + bench file contents for a `stateMachine` capsule.
  * Without a binding context, emits `it.skip` placeholders naming the
@@ -57,6 +169,21 @@ describe('${cap.name}', () => {
 });
 `;
     return { testFile, benchFile };
+  }
+
+  // ADDITIVE runtime-driver branch — independent of the step/initialState
+  // probe path below. A runtime-backed state machine (e.g. `scene.runtime`)
+  // realizes its transition in a BUILDER + `tick` handle, not in declared
+  // `step`/`initialState` fields, so the probe path would emit a self-reporting
+  // skip. When the compile driver resolved a runtime driver, emit a REAL
+  // traversal instead: build the handle, check every declared invariant over
+  // the built output, tick across a random dtMs sequence, and prove determinism
+  // by rebuild+replay. No `it.skip` token.
+  if (ctx.runtimeDriver !== undefined) {
+    return {
+      testFile: generateRuntimeDriverTest(cap.name, ctx.runtimeDriver),
+      benchFile,
+    };
   }
 
   // COMPILE-TIME probe resolved: the event schema IS arbitrary-derivable

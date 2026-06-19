@@ -158,6 +158,40 @@ export interface HarnessContext {
     readonly hasVideo: boolean;
   };
   /**
+   * COMPILE-TIME resolution (stateMachine): a runtime-backed state machine whose
+   * step semantics live in a BUILDER + tick handle rather than declared
+   * `step`/`initialState` fields. Resolved by `scripts/capsule-compile.ts` from
+   * its state-machine-driver registry — the stateMachine analogue of
+   * {@link sceneDriver}. The builder takes a pure compiled descriptor and
+   * returns a handle exposing `tick(dtMs)` (the transition), `currentFrame()`,
+   * and the build-time output fields the capsule's invariants read
+   * (`systemsRegistered`, `entitySpawnCount`). When present the harness emits a
+   * REAL traversal: it builds the handle, checks every declared invariant over
+   * the built output, ticks it across a random `dtMs` sequence, and proves
+   * determinism by rebuild+replay. A capsule with neither `step`/`initialState`
+   * NOR a registered runtime driver stays on the self-reporting skip branch.
+   */
+  readonly runtimeDriver?: {
+    /** Exported `() => CompiledDescriptor` (pure data) in the capsule's source module. */
+    readonly compileName: string;
+    /** Import specifier (with `.js`) for the compile fn. */
+    readonly compileImport: string;
+    /** Exported builder NAMESPACE name (e.g. `SceneRuntime`) with a `build(descriptor)` method. */
+    readonly builderName: string;
+    /** Import specifier (with `.js`) for the builder namespace. */
+    readonly builderImport: string;
+    /** Capsule binding name (for the invariants + premise guard). */
+    readonly capsuleName: string;
+    /** Import specifier (with `.js`) for the capsule binding. */
+    readonly capsuleImport: string;
+    /**
+     * Names of the numeric handle fields the capsule's invariants read off the
+     * built output — copied off the handle into the `output` the invariants
+     * receive. Source of truth: the capsule's invariant `check(_, output)` body.
+     */
+    readonly outputFields: readonly string[];
+  };
+  /**
    * COMPILE-TIME reason (sceneComposition): when no {@link sceneDriver} was
    * resolved, the specific reason this capsule has no tickable scene (e.g. it is
    * a pre-runtime beat transform with no tracks). Surfaced into the generated

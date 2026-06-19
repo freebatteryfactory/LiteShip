@@ -13,6 +13,8 @@ import * as fc from 'fast-check';
 import {
   schemaToArbitrary,
   UnsupportedSchemaError,
+  withArbitrary,
+  ArbitraryAnnotationId,
 } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 /** Drive an arbitrary into a schema's decoder; assert every sample decodes. */
@@ -358,5 +360,48 @@ describe('schemaToArbitrary', () => {
       );
       expect(exit._tag).toBe('Success');
     }
+  });
+});
+
+describe('withArbitrary / ArbitraryAnnotationId — explicit author-supplied arbitrary', () => {
+  it('honours the annotated thunk ahead of structural derivation', () => {
+    // `instanceOf(Uint8Array)` would structurally yield random bytes; the
+    // annotation narrows the sampled domain to a fixed sentinel value, proving
+    // the override takes precedence over the carrier's structural arbitrary.
+    const sentinel = new Uint8Array([1, 2, 3]);
+    const schema = withArbitrary(
+      Schema.instanceOf(Uint8Array),
+      () => fc.constant(sentinel),
+    );
+    const arb = schemaToArbitrary(schema);
+    for (const s of fc.sample(arb, 20)) expect(s).toBe(sentinel);
+  });
+
+  it('builds the arbitrary lazily — the thunk runs at walk time, not at annotate time', () => {
+    let built = 0;
+    const schema = withArbitrary(Schema.String, () => {
+      built++;
+      return fc.constant('x');
+    });
+    // Annotating must NOT have invoked the thunk yet.
+    expect(built).toBe(0);
+    schemaToArbitrary(schema);
+    expect(built).toBe(1);
+  });
+
+  it('surfaces the annotation under ArbitraryAnnotationId on the AST', () => {
+    const schema = withArbitrary(Schema.Number, () => fc.constant(7));
+    const annotations = (schema.ast as { annotations?: Record<symbol, unknown> }).annotations;
+    expect(annotations).toBeDefined();
+    expect(typeof annotations?.[ArbitraryAnnotationId]).toBe('function');
+  });
+
+  it('throws when the thunk does not return a fast-check arbitrary', () => {
+    const schema = withArbitrary(
+      Schema.String,
+      // Intentionally wrong: returns a non-Arbitrary.
+      (() => 'not-an-arbitrary') as unknown as () => fc.Arbitrary<unknown>,
+    );
+    expect(() => schemaToArbitrary(schema)).toThrow(UnsupportedSchemaError);
   });
 });

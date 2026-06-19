@@ -1,7 +1,7 @@
 // GENERATED — do not edit by hand
 // All four sceneComposition checks for 'scene.beat-binding' are not-applicable for the
-// documented reason below — deliberately no it.skip placeholder (which would
-// ship unwired work green) and no silent omission. The exemption is PINNED by a
+// documented reason below — deliberately no skipped-test placeholder (which
+// would ship unwired work green) and no silent omission. The exemption is PINNED by a
 // real premise guard so it cannot silently go stale. Reason:
 //   'scene.beat-binding' is a sceneComposition-tagged capsule with no registered scene driver — it declares no compileScene-able scene (no tracks, fps, frame stream, or playback) to tick. It is a pre-runtime transform, so the frame-stream / sync / playback / per-frame-budget checks have nothing to drive.
 import { describe, it, expect } from 'vitest';

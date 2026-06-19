@@ -2,61 +2,86 @@
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { sceneRuntimeCapsule } from '../../packages/scene/src/runtime.js';
-import { schemaToArbitrary, UnsupportedSchemaError } from '../../packages/core/src/harness/arbitrary-from-schema.js';
+import { compileIntro } from '../../examples/scenes/intro.js';
+import { SceneRuntime } from '../../packages/scene/src/runtime.js';
+import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('scene.runtime', () => {
-  const cap = sceneRuntimeCapsule;
-  let eventArb: fc.Arbitrary<unknown>;
-  let arbError: unknown;
-  try {
-    eventArb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
-  } catch (err) {
-    arbError = err;
-  }
-  if (arbError !== undefined && !(arbError instanceof UnsupportedSchemaError)) {
-    // Only a non-derivable schema is honest-skip material; anything else
-    // (a defect in the arbitrary builder, a malformed capsule) must fail.
-    throw arbError;
-  }
-  if (cap.step === undefined || cap.initialState === undefined || arbError !== undefined) {
-    it.skip(
-      arbError instanceof UnsupportedSchemaError
-        ? `state machine — input schema not arbitrary-derivable (${arbError.message})`
-        : 'state machine — capsule has no step/initialState handlers',
-      () => {},
-    );
-  } else {
-    const step = cap.step!;
-    // The contract's step(state, event) signature permits implementations
-    // that mutate and return their state object — a shared seed would let
-    // one fast-check case contaminate the next. Clone the seed per fold.
-    const seedState = (): unknown => structuredClone(cap.initialState!);
+  const cap = sceneRuntimeCapsule as {
+    _kind?: unknown;
+    step?: unknown;
+    initialState?: unknown;
+    invariants: ReadonlyArray<{ name: string; check: (input: unknown, output: unknown) => boolean }>;
+  };
+  // This stateMachine realizes its transition in a builder + tick handle, not
+  // in declared step/initialState fields. The OUTPUT fields the declared
+  // invariants read off the built handle.
+  const OUTPUT_FIELDS = ['systemsRegistered', 'entitySpawnCount'] as const;
 
-    it('invariants hold after every step across random event paths', () => {
-      fc.assert(
-        fc.property(fc.array(eventArb, { maxLength: 50 }), (events) => {
-          let state = seedState();
-          for (const event of events) {
-            state = step(state as never, event as never);
-            for (const inv of cap.invariants) {
-              if (!inv.check(event as never, state as never)) return false;
+  // The compiled descriptor is PURE data — identical every call — so building a
+  // fresh handle from it twice is the canonical "same seed".
+  const buildHandle = async () => SceneRuntime.build(compileIntro());
+  const handleOutput = (handle: Record<string, () => unknown>): Record<string, unknown> => {
+    const out: Record<string, unknown> = {};
+    for (const f of OUTPUT_FIELDS) {
+      const v = (handle as Record<string, unknown>)[f];
+      out[f] = typeof v === 'function' ? (v as () => unknown)() : v;
+    }
+    return out;
+  };
+
+  it('premise: a runtime-backed stateMachine — no step/initialState, drives via build + tick', async () => {
+    // It IS a stateMachine (so a traversal nominally applies)...
+    expect(cap._kind).toBe('stateMachine');
+    // ...but carries NO field-driven transition — that absence is exactly what
+    // routes it to this builder-driven traversal. If it ever gains these, this
+    // guard fails RED and the harness must use the field-driven path instead.
+    expect(cap.step).toBeUndefined();
+    expect(cap.initialState).toBeUndefined();
+    const handle = await buildHandle();
+    try {
+      expect(typeof handle.tick).toBe('function');
+      expect(typeof handle.currentFrame).toBe('function');
+    } finally {
+      await handle.release();
+    }
+  });
+
+  it('invariants hold over the built runtime output', async () => {
+    const handle = await buildHandle();
+    try {
+      const output = handleOutput(handle as unknown as Record<string, () => unknown>);
+      for (const inv of cap.invariants) {
+        expect(inv.check({ scene: compileIntro() }, output), inv.name).toBe(true);
+      }
+    } finally {
+      await handle.release();
+    }
+  });
+
+  it('deterministic replay: the same dtMs sequence yields the same frame trajectory', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        // Positive frame-scale dt steps (ms) — a realistic forward playback path.
+        fc.array(fc.integer({ min: 1, max: 100 }), { minLength: 1, maxLength: 24 }),
+        async (dts) => {
+          const trajectory = async (): Promise<readonly number[]> => {
+            const handle = await buildHandle();
+            try {
+              const frames: number[] = [];
+              for (const dt of dts) {
+                await handle.tick(dt);
+                frames.push(handle.currentFrame());
+              }
+              return frames;
+            } finally {
+              await handle.release();
             }
-          }
-          return true;
-        }),
-        { numRuns: 100 },
-      );
-    });
-
-    it('replays deterministically from an event log', () => {
-      fc.assert(
-        fc.property(fc.array(eventArb, { maxLength: 50 }), (events) => {
-          const replay = (): unknown =>
-            events.reduce((state, event) => step(state as never, event as never), seedState());
-          expect(replay()).toEqual(replay());
-        }),
-        { numRuns: 50 },
-      );
-    });
-  }
+          };
+          expect(await trajectory()).toEqual(await trajectory());
+        },
+      ),
+      { numRuns: 20 },
+    );
+  }, scaledTimeout(30000));
 });

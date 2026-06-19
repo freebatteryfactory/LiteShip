@@ -8,8 +8,10 @@
  */
 
 import { Schema } from 'effect';
+import * as fc from 'fast-check';
 import { defineCapsule } from '../assembly.js';
 import { CanonicalCbor, decode } from '../cbor.js';
+import { withArbitrary } from '../harness/arbitrary-from-schema.js';
 
 /**
  * Normalize a value into the encoder's image: the encoder coerces top-level
@@ -89,13 +91,33 @@ function deepEquals(a: unknown, b: unknown): boolean {
 }
 
 /**
+ * Branded input schema for the decoder: NOT "any `Uint8Array`" but the narrow
+ * domain "canonical CBOR bytes". Structurally it is still a `Uint8Array`
+ * (parsing / encoding are unchanged), but it carries an explicit harness
+ * arbitrary that samples a value with `fc.anything()` and runs it through the
+ * canonical encoder — so every generated sample is, by construction, valid
+ * canonical CBOR the decoder accepts.
+ *
+ * This is the source-of-truth fix for the decoder's domain: the previous
+ * `Schema.instanceOf(Uint8Array)` UNDER-SPECIFIED it (random bytes are
+ * `Uint8Array`-conformant but not decodable), which forced the harness onto a
+ * precondition-mismatch skip. `CanonicalCborBytes` states the real domain, and
+ * `decode` is then exercised over exactly the inputs it is the inverse of —
+ * the round-trip invariant (`encode(decode(bytes)) === bytes`) holds because
+ * the canonical encoder is idempotent under `decode`.
+ */
+export const CanonicalCborBytes: Schema.Schema<Uint8Array> = withArbitrary(Schema.instanceOf(Uint8Array), () =>
+  fc.anything().map((value) => CanonicalCbor.encode(value)),
+);
+
+/**
  * Declared capsule for the CanonicalCbor decoder. Registered in the
  * module-level catalog at import time; walked by the factory compiler.
  */
 export const canonicalCborDecodeCapsule = defineCapsule({
   _kind: 'pureTransform',
   name: 'core.canonical-cbor-decode',
-  input: Schema.instanceOf(Uint8Array),
+  input: CanonicalCborBytes,
   output: Schema.Unknown,
   capabilities: { reads: [], writes: [] },
   invariants: [

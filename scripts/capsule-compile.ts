@@ -346,6 +346,51 @@ const SCENE_DRIVERS: Readonly<Record<string, SceneDriverSpec>> = {
 };
 
 /**
+ * Runtime-driver registry for `stateMachine` capsules whose transition is a
+ * BUILDER + tick handle rather than declared `step`/`initialState` fields — the
+ * stateMachine analogue of {@link SCENE_DRIVERS}. The driveable machine is a
+ * pure compile fn (`() => CompiledDescriptor`) plus a builder namespace exposing
+ * `build(descriptor)` (returning a handle with `tick(dtMs)` / `currentFrame()` /
+ * the build-time output fields the invariants read). Both live in the capsule's
+ * own source module, or — for a capsule whose driveable scene is an EXAMPLE —
+ * in a named sibling module.
+ *
+ * `outputFields` names the handle fields the capsule's declared invariants read
+ * off the built output. Source of truth: the capsule's invariant `check(_,
+ * output)` bodies (`output.systemsRegistered`, `output.entitySpawnCount`). The
+ * generated traversal copies exactly these off the handle, so a drifted list
+ * (a field the invariant reads but the handle doesn't expose) fails RED.
+ *
+ * A capsule NOT listed here with no `step`/`initialState` stays on the harness's
+ * self-reporting skip branch. Keep in sync with the capsule modules — same
+ * discipline `FACTORY_NAMING` follows.
+ */
+interface StateMachineDriverSpec {
+  /** Exported `() => CompiledDescriptor` (pure data) function name. */
+  readonly compileExport: string;
+  /** Repo-relative module the compile fn is exported from. */
+  readonly compileModule: string;
+  /** Exported builder namespace name with a `build(descriptor)` method. */
+  readonly builderExport: string;
+  /** Repo-relative module the builder namespace is exported from. */
+  readonly builderModule: string;
+  /** Handle fields the capsule's declared invariants read off the built output. */
+  readonly outputFields: readonly string[];
+}
+const STATE_MACHINE_DRIVERS: Readonly<Record<string, StateMachineDriverSpec>> = {
+  // packages/scene/src/runtime.ts — scene.runtime is a contract-only stateMachine
+  // (no step/initialState); its transition is SceneRuntime.build(compiled).tick(dt).
+  // The driveable compiled scene is the example intro (the only registered scene).
+  'scene.runtime': {
+    compileExport: 'compileIntro',
+    compileModule: 'examples/scenes/intro.ts',
+    builderExport: 'SceneRuntime',
+    builderModule: 'packages/scene/src/runtime.ts',
+    outputFields: ['systemsRegistered', 'entitySpawnCount'],
+  },
+};
+
+/**
  * Host-capability driver registry for `siteAdapter` capsules — the siteAdapter
  * analogue of {@link SCENE_DRIVERS}. The host-capability-matrix check (INTEGRATION
  * lane) must drive each declared `site` under a REAL host. Adapter-specific host
@@ -650,6 +695,26 @@ async function main(): Promise<void> {
     const cachedProjectionBindable =
       cachedProjectionFactory && cachedProjectionFixture !== undefined;
 
+    // ADDITIVE defineAsset real-only branch — the SOURCE-asset analogue of
+    // cachedProjectionBindable (which covers the BeatMarker/WavMetadata
+    // *projection* factories). A `defineAsset` capsule (e.g. `introBed`) is a
+    // cachedProjection whose `derive` is the asset's own decoder
+    // (decl.decoder ?? builtinDecoderFor(kind) — see packages/assets/src/contract.ts)
+    // and whose canonical byte fixture is its call-site `source` literal
+    // (d.declSource). When that fixture resolves, the harness emits the FINAL
+    // real-only form (fixture-driven cache/determinism/invariant probes, random
+    // source test OMITTED because AssetBytes is a deliberately non-derivable
+    // instanceOf(ArrayBuffer)) instead of two runtime-guarded `it.skip` literals.
+    // Derive presence is pinned by a REAL premise guard inside the generated
+    // test (fails RED if an asset ever loses its decoder), so this gate cannot
+    // launder a derive-less asset green.
+    const assetDecodeRealOnly =
+      d.kind === 'cachedProjection' &&
+      d.factory === 'defineAsset' &&
+      d.exported === true &&
+      d.binding !== undefined &&
+      d.declSource !== undefined;
+
     let harnessCtx: HarnessContext | undefined;
     if (
       d.binding !== undefined &&
@@ -718,6 +783,32 @@ async function main(): Promise<void> {
             `'${d.resolvedName}' is a sceneComposition-tagged capsule with no registered scene driver — ` +
             `it declares no compileScene-able scene (no tracks, fps, frame stream, or playback) to tick. ` +
             `It is a pre-runtime transform, so the frame-stream / sync / playback / per-frame-budget checks have nothing to drive.`;
+        }
+      }
+
+      // ADDITIVE stateMachine runtime-driver branch — independent of every path
+      // above. A stateMachine capsule whose transition is a builder + tick
+      // handle (no declared step/initialState) resolves its driver here so the
+      // harness emits a REAL traversal instead of a self-reporting skip. Imports
+      // are resolved relative to dirname(testPath) (tests/generated/).
+      let runtimeDriver: HarnessContext['runtimeDriver'];
+      if (d.kind === 'stateMachine') {
+        const spec = STATE_MACHINE_DRIVERS[d.resolvedName];
+        if (spec !== undefined) {
+          const relSpec = (repoRelModule: string): string => {
+            const abs = resolve(repoRelModule);
+            const m = normalizeRepoPath(relative(dirname(testPath), abs)).replace(/\.ts$/, '.js');
+            return m.startsWith('.') ? m : `./${m}`;
+          };
+          runtimeDriver = {
+            compileName: spec.compileExport,
+            compileImport: relSpec(spec.compileModule),
+            builderName: spec.builderExport,
+            builderImport: relSpec(spec.builderModule),
+            capsuleName: d.binding,
+            capsuleImport: sourceModule.startsWith('.') ? sourceModule : `./${sourceModule}`,
+            outputFields: spec.outputFields,
+          };
         }
       }
 
@@ -805,7 +896,9 @@ async function main(): Promise<void> {
         // statically resolved (ASSET_BYTE_PROJECTION_FACTORIES + the asset
         // source map): the harness emits the FINAL real-only cache/determinism
         // probes — zero `it.skip` literals — over the canonical fixture bytes.
-        ...(cachedProjectionBindable ? { cachedProjectionRealOnly: true } : {}),
+        ...(cachedProjectionBindable || assetDecodeRealOnly
+          ? { cachedProjectionRealOnly: true }
+          : {}),
         // sceneComposition: the resolved scene driver (REAL runtime) or the
         // typed not-applicable reason. Mutually exclusive — a capsule either has
         // a tickable scene or it doesn't.
@@ -813,6 +906,10 @@ async function main(): Promise<void> {
         ...(sceneDriverNotApplicableReason !== undefined
           ? { sceneDriverNotApplicableReason }
           : {}),
+        // stateMachine: the resolved runtime driver (builder + tick handle) for a
+        // contract-only stateMachine. Absent when the capsule has declared
+        // step/initialState (the field-driven path) or no registered driver.
+        ...(runtimeDriver !== undefined ? { runtimeDriver } : {}),
         // siteAdapter: the resolved round-trip schema + lane import specifiers and
         // the per-site host driver (or declared-integration coverage link). Absent
         // when neither schema is arbitrary-derivable (the round trip is then a typed

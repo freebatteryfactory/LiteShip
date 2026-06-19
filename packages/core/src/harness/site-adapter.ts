@@ -265,8 +265,8 @@ function notWiredOutput(name: string, reason: string): HarnessOutput {
   return {
     testFile: `// GENERATED — do not edit by hand
 // Both siteAdapter checks for '${name}' are unwired for the documented reason
-// below — deliberately no it.skip placeholder (which would ship unwired work
-// green) and no silent omission. Reason:
+// below — deliberately no skipped-test placeholder (which would ship unwired
+// work green) and no silent omission. Reason:
 //   ${r}
 import 'vitest';
 `,
