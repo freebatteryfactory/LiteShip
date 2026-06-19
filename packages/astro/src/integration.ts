@@ -314,6 +314,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
     ...(workersEnabled ? (['worker'] as const) : []),
     ...(gpuEnabled ? (['gpu'] as const) : []),
     ...(wasmEnabled ? (['wasm'] as const) : []),
+    'svg',
   ];
 
   let projectRoot: string | null = null;
@@ -403,6 +404,15 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           });
           logger.info('Registered wasm client directive');
         }
+
+        // SVG last-mile: always-on (parity with satellite) — a pure DOM
+        // applicator with no capability gate, so the SVG cast arm reaches the
+        // live DOM wherever a `[data-czap-entity]` SVG element is authored.
+        addClientDirective({
+          name: 'svg',
+          entrypoint: '@czap/astro/client-directives/svg',
+        });
+        logger.info('Registered svg client directive');
 
         // Route scope guard FIRST (head-inline, ahead of every other czap
         // script) so `__CZAP_OFF__` is set before anything reads it. Only when

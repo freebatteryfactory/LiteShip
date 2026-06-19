@@ -36,3 +36,6 @@ export {
 } from './policy.js';
 export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@czap/web';
 export type { RuntimeHtmlPolicy, RuntimeSecurityPolicy, NormalizedRuntimeSecurityPolicy } from './policy.js';
+// SVG last-mile: live DOM applicator around @czap/scene's pure svg-egress.
+export { attachSvgRuntime, initSvgDirective, buildEntityElementResolver, parseSvgStateAttrs } from './svg.js';
+export type { SvgStateAttrs, SvgEntityElementResolver } from './svg.js';

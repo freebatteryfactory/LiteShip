@@ -65,6 +65,11 @@
       "import": "./dist/client-directives/graph.js",
       "development": "./src/client-directives/graph.ts"
     },
+    "./client-directives/svg": {
+      "types": "./dist/client-directives/svg.d.ts",
+      "import": "./dist/client-directives/svg.js",
+      "development": "./src/client-directives/svg.ts"
+    },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
       "import": "./dist/middleware.js",
@@ -103,6 +108,7 @@
     "@czap/detect": "workspace:*",
     "@czap/edge": "workspace:*",
     "@czap/genui": "workspace:*",
+    "@czap/scene": "workspace:*",
     "@czap/web": "workspace:*",
     "@czap/worker": "workspace:*"
   },

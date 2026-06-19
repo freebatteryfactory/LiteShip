@@ -26,7 +26,7 @@ import { Diagnostics } from '@czap/core';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 /** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph';
+export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'svg';
 
 const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
   stream: 'stream',
@@ -46,7 +46,16 @@ function directiveEnableFix(name: DirectiveName): string {
   return `Fix: czap({ ${configKey}: { enabled: true } }).${coepNote}`;
 }
 
-const DIRECTIVE_NAMES: readonly DirectiveName[] = ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm', 'graph'];
+const DIRECTIVE_NAMES: readonly DirectiveName[] = [
+  'satellite',
+  'stream',
+  'llm',
+  'worker',
+  'gpu',
+  'wasm',
+  'graph',
+  'svg',
+];
 
 /** Tracks which directives already initialized an element across re-scans. */
 const BOUND_ATTRIBUTE = 'data-czap-directive-bound';
@@ -63,6 +72,7 @@ const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: Directive
   gpu: () => import('../client-directives/gpu.js'),
   wasm: () => import('../client-directives/wasm.js'),
   graph: () => import('../client-directives/graph.js'),
+  svg: () => import('../client-directives/svg.js'),
 };
 
 function isDirectiveName(value: string): value is DirectiveName {
