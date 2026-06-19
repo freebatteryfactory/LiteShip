@@ -34,6 +34,7 @@
  */
 
 import {
+  Diagnostics,
   GraphPatch,
   sealGraph,
   validateGraph,
@@ -232,7 +233,14 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
   if (typeof serialized === 'string') {
     try {
       raw = JSON.parse(serialized);
-    } catch {
+    } catch (err) {
+      Diagnostics.warnOnce({
+        source: 'czap/astro.graph',
+        code: 'graph-parse-failed',
+        message:
+          `Failed to parse the serialized DocumentGraph as JSON (${String(err)}). ` +
+          `The graph runtime stays inert. Fix: pass a valid serialized DocumentGraph.`,
+      });
       return null;
     }
   } else {
@@ -269,7 +277,14 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
       nodes: candidate.nodes,
       edges: candidate.edges,
     } as Omit<DocumentGraph, 'id' | 'digest'>);
-  } catch {
+  } catch (err) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.graph',
+      code: 'graph-seal-failed',
+      message:
+        `Failed to seal the DocumentGraph (${String(err)}). The graph runtime stays inert. ` +
+        `Fix: ensure the graph's nodes/edges are well-formed before serializing.`,
+    });
     return null;
   }
 }

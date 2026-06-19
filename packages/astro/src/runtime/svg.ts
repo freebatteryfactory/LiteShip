@@ -35,6 +35,7 @@
  * @module
  */
 
+import { Diagnostics } from '@czap/core';
 import { applySvgAttrs } from '@czap/scene';
 import type { SvgAttrs, SvgAttrsFrame, SvgElementResolver } from '@czap/scene';
 import {
@@ -79,7 +80,14 @@ export function parseSvgStateAttrs(json: string | null): SvgStateAttrs | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
-  } catch {
+  } catch (err) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.svg',
+      code: 'svg-attrs-parse-failed',
+      message:
+        `Failed to parse the data-czap-svg per-state attrs as JSON (${String(err)}). ` +
+        `The entity carries no authored SVG attrs. Fix: emit valid JSON for data-czap-svg.`,
+    });
     return null;
   }
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;

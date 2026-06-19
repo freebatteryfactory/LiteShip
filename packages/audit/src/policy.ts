@@ -128,6 +128,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
       '@czap/web',
       '@czap/worker',
       '@czap/genui',
+      // 0.4.0: the SVG last-mile directive + the scene→live bridge reuse the live
+      // SVG egress / scene runtime. Acyclic — @czap/scene depends only on _spine + core.
+      '@czap/scene',
     ],
     kind: 'host-adjacent',
   },
@@ -310,6 +313,18 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     rule: 'default-export',
     package: '@czap/astro',
     filePrefix: 'src/client-directives/wasm.ts',
+    reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
+  },
+  {
+    rule: 'default-export',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/graph.ts',
+    reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
+  },
+  {
+    rule: 'default-export',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/svg.ts',
     reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
   },
   {
