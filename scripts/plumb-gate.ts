@@ -29,10 +29,11 @@ export interface PlumbGateResult {
   readonly inventorySize: number;
 }
 
-function collectInventory(root: string): string[] {
+function collectInventory(root: string): { inventory: string[]; manifestPresent: boolean } {
   const inventory: string[] = [];
   const manifestPath = resolve(root, 'reports', 'capsule-manifest.json');
-  if (existsSync(manifestPath)) {
+  const manifestPresent = existsSync(manifestPath);
+  if (manifestPresent) {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       capsules?: readonly { name: string; wired?: boolean }[];
     };
@@ -40,7 +41,7 @@ function collectInventory(root: string): string[] {
       if (capsule.wired === false) inventory.push(`capsule:${capsule.name}`);
     }
   }
-  return inventory.sort();
+  return { inventory: inventory.sort(), manifestPresent };
 }
 
 function publishedPackages(root: string): string[] {
@@ -57,11 +58,16 @@ function publishedPackages(root: string): string[] {
 }
 
 export function runPlumbGate(root = repoRoot): PlumbGateResult {
-  const inventory = collectInventory(root);
+  const { inventory, manifestPresent } = collectInventory(root);
   const floor = new Set(PLUMB_FLOOR);
   const present = new Set(inventory);
   const added = inventory.filter((entry) => !floor.has(entry));
-  const removed = PLUMB_FLOOR.filter((entry) => !present.has(entry)).sort();
+  // The floor is capsule-only and only checkable once `capsule:compile` has
+  // written the manifest (it runs as an early gauntlet phase). Under a bare
+  // `pnpm test` (the smoke jobs) the manifest is absent, so we cannot tell a
+  // wired capsule from an absent manifest — skip the `removed` diff rather than
+  // report a false drift. The gauntlet's plumb:gate phase has the fresh manifest.
+  const removed = manifestPresent ? PLUMB_FLOOR.filter((entry) => !present.has(entry)).sort() : [];
   const unclassified = publishedPackages(root).filter((name) => !(name in PACKAGE_PLUMB));
   return {
     ok: added.length === 0 && removed.length === 0 && unclassified.length === 0,
