@@ -86,7 +86,27 @@ interface ShipOptions {
   readonly dryRun: boolean;
   readonly otp?: string;
   readonly provenance: boolean;
+  /** `--help`/`-h` was passed: print usage and exit WITHOUT shipping. */
+  readonly help: boolean;
+  /** Unrecognized `-`/`--` flags. A real ship is REFUSED if any are present. */
+  readonly unknownFlags: readonly string[];
 }
+
+const SHIP_USAGE = `czap ship — publish workspace packages (ADR-0011 publisher verb).
+
+Usage:
+  czap ship [--filter <pkg>] [--dry-run] [--provenance] [--otp <code>]
+
+Options:
+  --filter <pkg>   Ship only the named package (path or name). Default: ALL.
+  --dry-run        Pack + mint the capsule, but do NOT publish.
+  --provenance     Publish with npm provenance (CI/OIDC only).
+  --otp <code>     npm one-time password.
+  -h, --help       Show this help and exit (no publish).
+
+With no --filter, ship publishes EVERY workspace package. Unrecognized flags are
+refused (fail-closed) so a typo like \`czap ship --hepl\` can never trigger a
+publish.`;
 
 /**
  * npm/pnpm registry-conflict signatures for "this exact version is already
@@ -189,6 +209,22 @@ const lastNonEmptyLine = (text: string): string => {
 export async function ship(args: readonly string[]): Promise<number> {
   const cwd = process.cwd();
   const opts = parseArgs(args, cwd);
+
+  // FAIL-CLOSED before any side effect: `--help` prints usage and exits, and an
+  // unrecognized flag REFUSES to ship. Without this, `czap ship --help` (or any
+  // typo'd flag) fell through to "no filter → publish EVERY package".
+  if (opts.help) {
+    process.stdout.write(`${SHIP_USAGE}\n`);
+    return 0;
+  }
+  if (opts.unknownFlags.length > 0) {
+    emitError(
+      'ship',
+      `unrecognized flag(s): ${opts.unknownFlags.join(', ')}`,
+      'Run `czap ship --help`. Ship refuses to run with unknown flags so a typo cannot trigger a publish.',
+    );
+    return 1;
+  }
 
   // Git state — never blocks, only records.
   const headRes = await spawnArgvCapture('git', ['rev-parse', 'HEAD'], { cwd });
@@ -470,8 +506,14 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
   let otp: string | undefined;
   let dryRun = false;
   let provenance = false;
+  let help = false;
+  const unknownFlags: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i]!;
+    if (a === '--help' || a === '-h') {
+      help = true;
+      continue;
+    }
     if (a === '--dry-run') {
       dryRun = true;
       continue;
@@ -504,10 +546,17 @@ function parseArgs(args: readonly string[], cwd: string): ShipOptions {
       otp = a.slice('--otp='.length);
       continue;
     }
-    if (!a.startsWith('-') && filter === undefined) {
+    if (a.startsWith('-')) {
+      // An unrecognized flag (e.g. `--help` typo, `--all`, `--yes`). Collect it
+      // so ship() can REFUSE rather than silently fall through to "no filter →
+      // publish everything" — the footgun where `czap ship --help` shipped.
+      unknownFlags.push(a);
+      continue;
+    }
+    if (filter === undefined) {
       // Positional package path/name.
       filter = a;
     }
   }
-  return { filter, dryRun, otp, provenance, cwd };
+  return { filter, dryRun, otp, provenance, help, unknownFlags, cwd };
 }

@@ -35,6 +35,41 @@ describe('ship command (smoke)', () => {
   });
 });
 
+describe('ship arg safety (fail-closed: no flag typo can trigger a publish)', () => {
+  // Regression: `czap ship --help` (and any unrecognized flag) used to fall
+  // through the arg parser to "no --filter → publish EVERY package". A real ship
+  // must NEVER start from an unknown flag.
+  it('--help prints usage to stdout, exits 0, and does NOT ship', async () => {
+    const { exit, stdout, stderr } = await captureCli(() => ship(['--help']));
+    expect(exit).toBe(0);
+    expect(stdout).toContain('czap ship');
+    expect(stdout).toContain('--dry-run');
+    // No ship receipt was emitted (the guard returned before any pack/publish).
+    expect(stderr).not.toContain('"command":"ship"');
+    expect(stdout).not.toContain('"status":"ok"');
+  });
+
+  it('-h behaves like --help (usage, exit 0, no ship)', async () => {
+    const { exit, stdout } = await captureCli(() => ship(['-h']));
+    expect(exit).toBe(0);
+    expect(stdout).toContain('czap ship');
+  });
+
+  it('refuses an unrecognized flag (exit 1, emitError) instead of shipping', async () => {
+    const { exit, stderr } = await captureCli(() => ship(['--hepl']));
+    expect(exit).toBe(1);
+    const event = JSON.parse(stderr.trim().split('\n').pop()!) as { status: string; command: string; error: string };
+    expect(event.status).toBe('failed');
+    expect(event.command).toBe('ship');
+    expect(event.error).toContain('--hepl');
+  });
+
+  it('refuses a plausible-but-wrong flag like --all (no accidental publish-everything)', async () => {
+    const { exit } = await captureCli(() => ship(['--all']));
+    expect(exit).toBe(1);
+  });
+});
+
 describe('isAlreadyPublishedFailure (ship idempotency contract, ROADMAP §4)', () => {
   // The release workflow used to grep publish output for these signatures
   // and translate them to success; ship now owns the decision, so workflow
