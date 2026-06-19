@@ -1,6 +1,6 @@
 {
   "name": "@czap/astro",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Astro 6 integration with adaptive directives",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

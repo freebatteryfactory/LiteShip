@@ -1,6 +1,6 @@
 {
   "name": "@czap/command",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

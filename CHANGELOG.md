@@ -4,7 +4,7 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [Unreleased]
+## [0.3.0] - 2026-06-19
 
 The **source-of-truth cut**: every identity — a name, a cache key, a guard's
 expected value, a content address, a signal scale — is computed from its source,
