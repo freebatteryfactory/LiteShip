@@ -149,14 +149,45 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    */
   readonly mutate?: (input: In) => Out | Promise<Out>;
   /**
-   * Optional declared faults for `receiptedMutation` arms — failure modes the
-   * capsule promises are reachable. The harness drives each fault's
+   * Declared faults for `receiptedMutation` arms — failure modes the capsule
+   * promises are reachable. The harness drives each fault's
    * {@link FaultDecl.trigger} through {@link CapsuleContract.mutate} and
-   * asserts it surfaces as declared. Requires `mutate`. A capsule that
-   * declares no faults gets no fault-injection check (nothing to prove
-   * reachable). Only meaningful for `receiptedMutation` arms.
+   * asserts it surfaces as declared. Requires `mutate`. Under the mandatory
+   * `mutate` requirement (see the kind-level rule below) every receipted
+   * mutation with a pure core declares at least one fault — a capsule with a
+   * genuinely fault-free core may declare an empty table, in which case the
+   * fault-injection check is non-emitted (nothing to prove reachable). Only
+   * meaningful for `receiptedMutation` arms.
    */
   readonly faults?: readonly FaultDecl<In>[];
+  /**
+   * The TYPED escape hatch for the `receiptedMutation` mandatory-`mutate` rule.
+   *
+   * Every receipted mutation MUST EITHER expose a pure {@link mutate} core (so
+   * idempotency + audit-receipt + fault-injection become real, provable tests)
+   * OR explicitly declare `receiptKind: 'effect-outcome'` here. A receipt that
+   * is fundamentally the *outcome of an effect* — a value that only exists
+   * once the side effect runs (a DOM morph's applied/failed status and live
+   * timestamp; the exit code of a spawned process) — cannot be driven purely,
+   * so it declares this exemption WITH a {@link reason}. The exemption is
+   * machine-readable, surfaced in the generated test file, and recorded in the
+   * capsule manifest — a waiver with teeth, never a silent gate-on-absence.
+   *
+   * `defineCapsule` REJECTS a `receiptedMutation` that has NEITHER a `mutate`
+   * handler NOR this exemption (with a non-empty `reason`): the absence of a
+   * pure core must be a declared, justified choice, not an oversight that ships
+   * green. `'pure-core'` is the implicit default when `mutate` is present and
+   * never needs to be written. Only meaningful for `receiptedMutation` arms.
+   */
+  readonly receiptKind?: 'pure-core' | 'effect-outcome';
+  /**
+   * REQUIRED when {@link receiptKind} is `'effect-outcome'` — a human-readable
+   * justification for why this receipt cannot be driven by a pure core (and
+   * therefore why the idempotency / audit / fault-injection checks are recorded
+   * as a declared exemption rather than emitted real). Must be non-empty; the
+   * harness writes it verbatim into the generated test file and the manifest.
+   */
+  readonly reason?: string;
 }
 
 /**

@@ -7,18 +7,18 @@ import { vitestRunnerCapsule } from '../../packages/cli/src/capsules/vitest-runn
 
 describe('cli.vitest-runner', () => {
   const cap = vitestRunnerCapsule;
-  // Non-emitted checks (documented; deliberately no skipped placeholder):
-//  - idempotent / audit receipt: NOT EMITTED — 'cli.vitest-runner' exposes no
-//    typed `mutate` invocation channel. A receipted mutation's real
-//    behavior here is an external side effect (fs write / process spawn /
-//    DOM morph) wired behind a separate runtime callable, not a pure
-//    handler the harness may drive twice. There is nothing to invoke, so
-//    there is no receipt to compare or inspect — non-emission, not a
-//    skip. The receipt CONTRACT is still proven by the round-trip above.
-//  - fault injection: NOT EMITTED — 'cli.vitest-runner' declares no `faults`
-//    table, so there are no faults to prove reachable. A fault-injection
-//    test over zero declared faults would be vacuous; non-emission is the
-//    honest disposition (add a `faults` entry to enable the check).
+  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped placeholder):
+//  - idempotent / audit receipt: EXEMPTED — 'cli.vitest-runner' declares the
+//    TYPED escape hatch `receiptKind: 'effect-outcome'`. Its receipt is
+//    the outcome of an effect with no pure core to drive twice, so these
+//    checks are recorded as a declared, machine-readable EXEMPTION (a
+//    waiver with teeth) rather than emitted real — and deliberately NOT a
+//    skip. Declared reason:
+//      receipt is the outcome of spawning an external test process (pnpm exec vitest run); exitCode and stderrTail only exist after the process runs and cannot be driven by a pure core. The sole pure shaping (echoing testFiles) is pinned by the test-files-echoed invariant.
+//  - fault injection: EXEMPTED — 'cli.vitest-runner' declares the TYPED escape
+//    hatch `receiptKind: 'effect-outcome'`; with no pure `mutate` core to
+//    drive, declared faults cannot be injected here. Recorded as a
+//    declared EXEMPTION (not a skip), reason as above.
   it('contract shape: input and output decode/encode round-trip', () => {
     for (const schema of [cap.input, cap.output]) {
       const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;

@@ -14,10 +14,13 @@
  *  - **idempotent** + **audit receipt** — emitted ONLY when the capsule
  *    exposes a `mutate` handler. The harness drives it twice with the same
  *    sampled input (idempotency) and inspects the declared capabilities
- *    (audit). A receipted mutation with no typed invocation channel has
- *    nothing to invoke — the harness emits NO test for these (justified
- *    non-emission, documented in the generated file), rather than a green
- *    `it.skip`. The receipt CONTRACT is still proven by the round-trip above.
+ *    (audit). A receipted mutation that instead declares the TYPED escape
+ *    hatch `receiptKind: 'effect-outcome'` (its receipt is the outcome of an
+ *    effect with no pure core to drive) records these as a documented,
+ *    machine-readable EXEMPTION carrying the declared `reason` — a waiver with
+ *    teeth, never a green `it.skip`. The receipt CONTRACT is still proven by
+ *    the round-trip above. (Under the mandatory-`mutate` rule a receipted
+ *    mutation must do ONE of these two — `defineCapsule` rejects neither.)
  *  - **fault injection** — emitted ONLY when the capsule declares `faults`.
  *    A capsule that declares no faults has no faults to prove reachable, so
  *    the check is non-emitted (not skipped).
@@ -74,6 +77,18 @@ import 'vitest';
   const imports: string[] = [`import { describe, it, expect } from 'vitest';`];
   const blocks: string[] = [];
   const notes: string[] = [];
+
+  // The TYPED escape hatch: when the capsule declared
+  // `receiptKind: 'effect-outcome'` with a reason, its receipt is an effect
+  // outcome with no pure core to drive. We record ONE explicit, machine-readable
+  // EXEMPTION for the three handler-gated checks (idempotency / audit / fault)
+  // carrying the declared reason — a waiver with teeth, never a silent gate or a
+  // green skip. The reason is sanitized to a single line so it survives in a
+  // `//` comment.
+  const effectOutcomeReason =
+    typeof ctx.effectOutcomeReason === 'string' && ctx.effectOutcomeReason.trim().length > 0
+      ? ctx.effectOutcomeReason.replace(/\s+/g, ' ').trim()
+      : undefined;
 
   // ---- contract round-trip -------------------------------------------------
   // Real when both schemas are arbitrary-derivable. Samples input + output and
@@ -140,6 +155,16 @@ import 'vitest';
     if (ctx.contractRoundTrippable !== true) {
       imports.push(`import { Schema } from 'effect';`);
     }
+  } else if (effectOutcomeReason !== undefined) {
+    notes.push(
+      `//  - idempotent / audit receipt: EXEMPTED — '${cap.name}' declares the\n` +
+        `//    TYPED escape hatch \`receiptKind: 'effect-outcome'\`. Its receipt is\n` +
+        `//    the outcome of an effect with no pure core to drive twice, so these\n` +
+        `//    checks are recorded as a declared, machine-readable EXEMPTION (a\n` +
+        `//    waiver with teeth) rather than emitted real — and deliberately NOT a\n` +
+        `//    skip. Declared reason:\n` +
+        `//      ${effectOutcomeReason}`,
+    );
   } else {
     notes.push(
       `//  - idempotent / audit receipt: NOT EMITTED — '${cap.name}' exposes no\n` +
@@ -175,6 +200,13 @@ import 'vitest';
       }
     }
   });`);
+  } else if (effectOutcomeReason !== undefined) {
+    notes.push(
+      `//  - fault injection: EXEMPTED — '${cap.name}' declares the TYPED escape\n` +
+        `//    hatch \`receiptKind: 'effect-outcome'\`; with no pure \`mutate\` core to\n` +
+        `//    drive, declared faults cannot be injected here. Recorded as a\n` +
+        `//    declared EXEMPTION (not a skip), reason as above.`,
+    );
   } else {
     notes.push(
       `//  - fault injection: NOT EMITTED — '${cap.name}' declares no \`faults\`\n` +
@@ -184,10 +216,11 @@ import 'vitest';
     );
   }
 
-  const noteBlock =
-    notes.length > 0
-      ? `  // Non-emitted checks (documented; deliberately no skipped placeholder):\n${notes.join('\n')}\n`
-      : '';
+  const noteHeader =
+    effectOutcomeReason !== undefined
+      ? `  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped placeholder):`
+      : `  // Non-emitted checks (documented; deliberately no skipped placeholder):`;
+  const noteBlock = notes.length > 0 ? `${noteHeader}\n${notes.join('\n')}\n` : '';
 
   // When at least one real check is emitted we import + alias the binding and
   // run the describe block. When NONE is (every check non-emitted for a

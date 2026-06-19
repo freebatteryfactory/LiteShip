@@ -117,6 +117,15 @@ export interface HarnessContext {
    * faults to prove reachable, so the check is non-emitted.
    */
   readonly faultsDeclared?: boolean;
+  /**
+   * COMPILE-TIME probe result (receiptedMutation): the capsule declared the
+   * TYPED `receiptKind: 'effect-outcome'` escape hatch — its receipt is the
+   * outcome of an effect with no pure core to drive. Carries the capsule's
+   * required `reason`. When set, the harness records this as a documented,
+   * machine-readable EXEMPTION in the generated file (a waiver with teeth)
+   * instead of the idempotency/audit/fault non-emission notes — never a skip.
+   */
+  readonly effectOutcomeReason?: string;
 }
 
 const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';

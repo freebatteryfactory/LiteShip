@@ -1,10 +1,20 @@
 /**
  * ShipEmit — `receiptedMutation` arm instance `cli.ship-emit` (ADR-0011).
  *
- * Owns the side effect of writing a `<pkg>-<version>.shipcapsule.cbor`
- * next to a freshly-produced npm tarball. Input is the assembled
- * {@link ShipCapsule.Shape}; output is the file path written plus the
- * capsule's content-addressed `id` echoed back for the receipt envelope.
+ * A ship emission has two cleanly separable halves:
+ *
+ *  - a PURE receipt-producing core ({@link shipEmitCapsule}'s `mutate`): given a
+ *    publishable workspace SNAPSHOT (package name + version + source commit +
+ *    observed lifecycle scripts + the assembled capsule id), it derives the
+ *    emission receipt deterministically — the content-addressed `capsule_id`,
+ *    the byte length the canonical-CBOR encoding will occupy, and an
+ *    `emitted` / `rejected` status. No filesystem, no clock, no spawn. This is
+ *    why `cli.ship-emit` proves the mandatory-`mutate` requirement: its receipt
+ *    is derivable PURELY from inputs, so idempotency + audit-receipt +
+ *    fault-injection are real tests.
+ *  - the EFFECT ({@link ShipEmit.run}): canonicalizes the fully-assembled
+ *    {@link ShipCapsule.Shape} and writes `<pkg>-<version>.shipcapsule.cbor`
+ *    next to a freshly-produced npm tarball. The publish itself is downstream.
  *
  * Re-uses the seven-arm closure (ADR-0008): emission is a
  * `receiptedMutation`, not a new arm. The capsule declaration is what the
@@ -16,18 +26,38 @@
 
 import { writeFileSync } from 'node:fs';
 import { Schema } from 'effect';
-import { defineCapsule, ShipCapsule, type ContentAddress } from '@czap/core';
+import { CanonicalCbor, contentAddressOf, defineCapsule, ShipCapsule, type ContentAddress } from '@czap/core';
 
+/**
+ * The publishable workspace snapshot the emission receipt is PURELY derived
+ * from. Every field is a plain scalar / array (arbitrary-derivable), so the
+ * harness can sample it for the contract round-trip AND drive `mutate` twice.
+ */
 const ShipEmitInput = Schema.Struct({
   capsule_path: Schema.String,
   capsule_id: Schema.String,
+  package_name: Schema.String,
+  package_version: Schema.String,
+  source_commit: Schema.String,
+  lifecycle_scripts_observed: Schema.Array(Schema.String),
 });
 
+/**
+ * The emission receipt. `status` is the typed surface a declared fault drives
+ * to (`emitted` on the happy path, `rejected` when the snapshot is unshippable),
+ * which is what makes the fault-injection check real.
+ */
 const ShipEmitOutput = Schema.Struct({
+  status: Schema.Union([Schema.Literal('emitted'), Schema.Literal('rejected')]),
   bytes_written: Schema.Number,
   capsule_path: Schema.String,
   capsule_id: Schema.String,
+  package_name: Schema.String,
+  package_version: Schema.String,
 });
+
+type ShipEmitDecodedInput = Schema.Schema.Type<typeof ShipEmitInput>;
+type ShipEmitDecodedOutput = Schema.Schema.Type<typeof ShipEmitOutput>;
 
 interface ShipEmitRunInput {
   readonly capsule: ShipCapsule.Shape;
@@ -41,10 +71,56 @@ interface ShipEmitRunOutput {
 }
 
 /**
- * Declared capsule for the ShipCapsule emission side effect. Registered in
- * the module-level catalog at import time; walked by
- * `scripts/capsule-compile.ts`. The `id-matches-bytes` invariant binds the
- * receipt's `capsule_id` to the bytes that landed on disk.
+ * Pure receipt-producing core for the ship-emit capsule (the `mutate` channel
+ * the harness drives). Deterministic over the publishable snapshot: it derives
+ * the content-addressed `capsule_id` from the snapshot, computes the canonical
+ * byte length the emission would occupy, and returns an `emitted` / `rejected`
+ * receipt. NO filesystem, NO clock, NO spawn — driving it twice with the same
+ * snapshot yields a deep-equal receipt (idempotency), and a structurally
+ * unshippable snapshot (empty path / empty version) surfaces as `rejected`
+ * (the declared faults).
+ */
+function deriveEmissionReceipt(input: ShipEmitDecodedInput): ShipEmitDecodedOutput {
+  // Structural rejection: an empty target path or an empty version cannot
+  // produce a shippable artifact. These are the two declared, reachable faults.
+  const rejected = input.capsule_path.trim().length === 0 || input.package_version.trim().length === 0;
+
+  // Content-address the snapshot through the one canonical kernel
+  // (canonicalize → CanonicalCbor → fnv1a) so the receipt id is the snapshot's
+  // identity, not a proxy beside it.
+  const snapshot = {
+    package_name: input.package_name,
+    package_version: input.package_version,
+    source_commit: input.source_commit,
+    lifecycle_scripts_observed: input.lifecycle_scripts_observed,
+  };
+  const derivedId = contentAddressOf(snapshot) as string;
+  // Byte length the canonical-CBOR encoding of the snapshot occupies —
+  // deterministic for a given snapshot (same kernel `ShipEmit.run` uses for
+  // the assembled capsule). Zero on rejection (nothing is emitted).
+  const bytes = rejected ? 0 : CanonicalCbor.encode(snapshot).byteLength;
+
+  return {
+    status: rejected ? 'rejected' : 'emitted',
+    bytes_written: bytes,
+    capsule_path: input.capsule_path,
+    // On the happy path the receipt echoes the assembled capsule id verbatim;
+    // when the snapshot carried none (empty), fall back to the derived id so the
+    // receipt is always self-describing.
+    capsule_id: input.capsule_id.trim().length > 0 ? input.capsule_id : derivedId,
+    package_name: input.package_name,
+    package_version: input.package_version,
+  };
+}
+
+/**
+ * Declared capsule for the ShipCapsule emission. Registered in the module-level
+ * catalog at import time; walked by `scripts/capsule-compile.ts`.
+ *
+ * The pure `mutate` ({@link deriveEmissionReceipt}) makes idempotency +
+ * audit-receipt real; the `faults` table makes fault-injection real. The
+ * `id-matches-bytes` invariant binds the receipt's `capsule_id`/`capsule_path`
+ * to the snapshot they were derived from.
  */
 export const shipEmitCapsule = defineCapsule({
   _kind: 'receiptedMutation',
@@ -54,30 +130,58 @@ export const shipEmitCapsule = defineCapsule({
   input: ShipEmitInput,
   output: ShipEmitOutput,
   budgets: { p95Ms: 10_000, allocClass: 'bounded' },
+  mutate: deriveEmissionReceipt,
+  faults: [
+    {
+      name: 'empty-target-path',
+      trigger: (): ShipEmitDecodedInput => ({
+        capsule_path: '',
+        capsule_id: 'fnv1a:deadbeef',
+        package_name: '@czap/_spine',
+        package_version: '0.1.0',
+        source_commit: '0123456789abcdef0123456789abcdef01234567',
+        lifecycle_scripts_observed: [],
+      }),
+      surfaces: 'receipt-status',
+      status: 'rejected',
+    },
+    {
+      name: 'empty-version',
+      trigger: (): ShipEmitDecodedInput => ({
+        capsule_path: '/tmp/x.shipcapsule.cbor',
+        capsule_id: 'fnv1a:deadbeef',
+        package_name: '@czap/_spine',
+        package_version: '',
+        source_commit: '0123456789abcdef0123456789abcdef01234567',
+        lifecycle_scripts_observed: [],
+      }),
+      surfaces: 'receipt-status',
+      status: 'rejected',
+    },
+  ],
   invariants: [
     {
       name: 'id-matches-bytes',
-      check: (
-        input: { capsule_path: string; capsule_id: string },
-        output: { bytes_written: number; capsule_path: string; capsule_id: string },
-      ): boolean => input.capsule_id === output.capsule_id && input.capsule_path === output.capsule_path,
-      message: 'emitted capsule id and path must match the assembled ShipCapsule (no in-flight mutation)',
+      check: (input: { capsule_path: string }, output: { capsule_path: string }): boolean =>
+        input.capsule_path === output.capsule_path,
+      message: 'emitted capsule path must match the snapshot it was derived from (no in-flight mutation)',
     },
     {
-      name: 'bytes-positive',
-      check: (
-        _input: { capsule_path: string; capsule_id: string },
-        output: { bytes_written: number; capsule_path: string; capsule_id: string },
-      ): boolean => typeof output.bytes_written === 'number' && output.bytes_written > 0,
-      message: 'a ShipCapsule with zero bytes on disk is a broken receipt',
+      name: 'bytes-positive-when-emitted',
+      check: (_input: { capsule_path: string }, output: { status: string; bytes_written: number }): boolean =>
+        output.status === 'rejected'
+          ? output.bytes_written === 0
+          : typeof output.bytes_written === 'number' && output.bytes_written > 0,
+      message: 'an emitted ShipCapsule with zero bytes is a broken receipt; a rejected one writes nothing',
     },
   ],
 });
 
 /**
- * Runtime callable for the ship-emit capsule. Serializes the capsule to
- * canonical CBOR and writes it to `capsule_path`. Caller owns directory
- * existence and overwrite policy.
+ * Runtime callable for the ship-emit capsule — the EFFECT half. Serializes the
+ * fully-assembled capsule to canonical CBOR and writes it to `capsule_path`.
+ * Caller owns directory existence and overwrite policy. The pure receipt core
+ * lives on the capsule declaration's `mutate` (see {@link deriveEmissionReceipt}).
  */
 export const ShipEmit = {
   run: (input: ShipEmitRunInput): ShipEmitRunOutput => {

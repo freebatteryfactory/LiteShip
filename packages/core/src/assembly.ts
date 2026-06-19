@@ -56,6 +56,44 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
         '`run` function — invariants are type-only without one. Add `run: (input) => ...` to enable runtime validation against your invariants.',
     });
   }
+  // receiptedMutation discriminated requirement (ADR-0011 amendment): a
+  // receipted mutation MUST EITHER expose a pure `mutate` core (driving real
+  // idempotency / audit / fault-injection tests) OR explicitly declare a typed
+  // `receiptKind: 'effect-outcome'` exemption WITH a non-empty `reason`. Having
+  // NEITHER is illegal — the absence of a pure core must be a declared,
+  // justified choice (a waiver with teeth), never a silent gate-on-absence that
+  // ships idempotency/audit/fault as quietly non-emitted. Pre-1.0: no compat
+  // shim — this throws at declaration time.
+  if (decl._kind === 'receiptedMutation') {
+    const hasMutate = typeof decl.mutate === 'function';
+    const exemptsAsEffect = decl.receiptKind === 'effect-outcome';
+    const hasReason = typeof decl.reason === 'string' && decl.reason.trim().length > 0;
+    if (!hasMutate && !exemptsAsEffect) {
+      throw new Error(
+        `receiptedMutation capsule "${decl.name}" declares neither a pure \`mutate\` core nor a ` +
+          `\`receiptKind: 'effect-outcome'\` exemption. A receipted mutation must EITHER expose a ` +
+          `pure receipt-producing \`mutate(input) => receipt\` (so idempotency + audit-receipt + ` +
+          `fault-injection are real, provable tests) OR explicitly declare ` +
+          `\`receiptKind: 'effect-outcome', reason: '...'\` when its receipt is fundamentally the ` +
+          `outcome of an effect that cannot be driven purely. Silent absence is not allowed.`,
+      );
+    }
+    if (exemptsAsEffect && !hasReason) {
+      throw new Error(
+        `receiptedMutation capsule "${decl.name}" declares \`receiptKind: 'effect-outcome'\` without ` +
+          `a non-empty \`reason\`. The exemption must be justified in prose — it is recorded in the ` +
+          `generated test file and the capsule manifest as a tracked, visible waiver, not a silent gate.`,
+      );
+    }
+    if (exemptsAsEffect && hasMutate) {
+      throw new Error(
+        `receiptedMutation capsule "${decl.name}" declares BOTH a \`mutate\` core and a ` +
+          `\`receiptKind: 'effect-outcome'\` exemption. These are mutually exclusive: a capsule with a ` +
+          `pure core needs no exemption. Drop the exemption (the pure core drives the real checks).`,
+      );
+    }
+  }
+
   const id = computeId(decl as Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>);
   const def = { ...decl, id } as CapsuleDef<K, In, Out, R>;
   catalog.push(def as CapsuleDef<AssemblyKind, unknown, unknown, unknown>);

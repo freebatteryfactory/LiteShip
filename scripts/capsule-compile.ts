@@ -87,6 +87,16 @@ interface ManifestEntry {
   readonly factory?: string;
   /** Literal arguments captured at the factory call site. */
   readonly args?: readonly unknown[];
+  /**
+   * receiptedMutation only: the declared `effect-outcome` exemption reason. Set
+   * when a receipted mutation declared the TYPED escape hatch
+   * `receiptKind: 'effect-outcome'` (its receipt is the outcome of an effect
+   * with no pure core to drive idempotently). Recording it here makes the
+   * waiver a tracked, machine-readable manifest fact — visible to any audit
+   * surface — not just a comment in the generated test file. Absent for
+   * capsules with a pure `mutate` core (their real checks are the proof).
+   */
+  readonly effectOutcomeExemption?: string;
 }
 
 /** The shape written to reports/capsule-manifest.json. */
@@ -144,6 +154,12 @@ interface BindingProbe {
   readonly mutatePresent?: boolean;
   /** receiptedMutation only: the capsule declares a non-empty `faults` table. */
   readonly faultsDeclared?: boolean;
+  /**
+   * receiptedMutation only: the capsule declared the TYPED escape hatch
+   * `receiptKind: 'effect-outcome'` with a `reason`. Carries the reason so the
+   * harness records a documented, machine-readable exemption (not a skip).
+   */
+  readonly effectOutcomeReason?: string;
 }
 
 /**
@@ -181,6 +197,8 @@ async function probeBinding(
         initialState?: unknown;
         mutate?: ((input: unknown) => unknown) | undefined;
         faults?: readonly unknown[] | undefined;
+        receiptKind?: unknown;
+        reason?: unknown;
       }
     | undefined;
   if (cap === undefined || cap.input === undefined) return undefined;
@@ -204,12 +222,21 @@ async function probeBinding(
     const contractRoundTrippable = derivable(cap.input) && derivable(cap.output);
     const mutatePresent = typeof cap.mutate === 'function';
     const faultsDeclared = Array.isArray(cap.faults) && cap.faults.length > 0;
+    // The TYPED escape hatch: surface the declared `effect-outcome` reason so
+    // the harness records a documented exemption (a waiver with teeth) rather
+    // than the generic non-emission prose. defineCapsule already enforced that
+    // a non-empty reason accompanies the exemption.
+    const effectOutcomeReason =
+      cap.receiptKind === 'effect-outcome' && typeof cap.reason === 'string'
+        ? cap.reason
+        : undefined;
     return {
       arbitraryDerivable: contractRoundTrippable,
       handlersPresent: mutatePresent,
       contractRoundTrippable,
       mutatePresent,
       faultsDeclared,
+      ...(effectOutcomeReason !== undefined ? { effectOutcomeReason } : {}),
     };
   }
 
@@ -559,6 +586,9 @@ async function main(): Promise<void> {
               ...(probe.faultsDeclared !== undefined
                 ? { faultsDeclared: probe.faultsDeclared }
                 : {}),
+              ...(probe.effectOutcomeReason !== undefined
+                ? { effectOutcomeReason: probe.effectOutcomeReason }
+                : {}),
             }
           : {}),
       };
@@ -578,6 +608,13 @@ async function main(): Promise<void> {
     const benchRel = normalizeRepoPath(relative(cwd, benchPath));
 
     const wired = harnessCtx !== undefined;
+    // The TYPED escape-hatch waiver, recorded as a tracked manifest fact (not
+    // just a generated-test comment): a receiptedMutation that declared
+    // `receiptKind: 'effect-outcome'` surfaces its reason here.
+    const exemption =
+      harnessCtx?.effectOutcomeReason !== undefined
+        ? { effectOutcomeExemption: harnessCtx.effectOutcomeReason }
+        : {};
     const entry: ManifestEntry =
       d.factory !== undefined
         ? d.args !== undefined && d.args.length > 0
@@ -589,6 +626,7 @@ async function main(): Promise<void> {
               wired,
               factory: d.factory,
               args: d.args,
+              ...exemption,
             }
           : {
               name: d.resolvedName,
@@ -597,6 +635,7 @@ async function main(): Promise<void> {
               generated: { testFile: testRel, benchFile: benchRel },
               wired,
               factory: d.factory,
+              ...exemption,
             }
         : {
             name: d.resolvedName,
@@ -604,6 +643,7 @@ async function main(): Promise<void> {
             source: sourceRel,
             generated: { testFile: testRel, benchFile: benchRel },
             wired,
+            ...exemption,
           };
     capsules.push(entry);
   }
