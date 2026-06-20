@@ -28,11 +28,12 @@
  *    by-design wall-clock read (its injection point). The real L3 cure-target is
  *    the runtime subset (astro runtime, web stream, worker, core signal/zap/
  *    gen-frame/speculative/token-buffer, quantizer). Pinning all 58 here is the
- *    HONEST raw snapshot + a regression guard; narrowing it to the true L3 backlog
- *    is the next foundation this gate just proved is load-bearing: per-file
- *    ASSURANCE-LEVEL scoping (a gate runs only at its level) + waivers-with-teeth
- *    for the legit sites. Undifferentiated red is itself a failure — this gate
- *    earns blocking authority only once it is level-scoped.
+ *    HONEST raw snapshot + a regression guard. Narrowing it to the true L3 backlog
+ *    is now DONE: per-file ASSURANCE-LEVEL scoping (a gate runs only at its level,
+ *    via {@link LITESHIP_ASSURANCE_MAP} + {@link runGates}) + waivers-with-teeth
+ *    for the legit sites. The level-scoped test below pins raw 58 → 18 L3 findings
+ *    (the 40-finding gap is the noise the map removes). Undifferentiated red is
+ *    itself a failure — this gate earns blocking authority only once level-scoped.
  *
  *  gauntlet/no-silent-catch (L2): 10 findings — empty `catch { }` blocks (a
  *    comment-only body still counts: the caught error is neither rethrown, logged,
@@ -50,6 +51,8 @@ import {
   noSilentCatchGate,
   verifyGate,
   nodeContext,
+  runGates,
+  LITESHIP_ASSURANCE_MAP,
   type Gate,
 } from '@czap/gauntlet';
 
@@ -156,6 +159,41 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
   ['gauntlet/no-silent-catch', noSilentCatchGate],
 ];
 
+/**
+ * The TRUE L3 nondeterminism backlog — the raw 58 NARROWED through the assurance
+ * map to only L3+ files (the deterministic cast / projection / cache spine).
+ *
+ * The 40 that drop out are all legit, level-appropriate: CLI/command receipt +
+ * report timestamps (L1 tooling), the fast-check arbitrary-from-schema seed and
+ * core/diagnostics (L1), etc. What REMAINS is the real cure-target: core's
+ * signal/zap/gen-frame/speculative/token-buffer/boundary spine + the by-design
+ * HLC wall-clock injection point (L4), quantizer, web stream, worker, astro
+ * runtime. This is the executable L3 debt the gate earns blocking authority over.
+ *
+ * raw 58 (unscoped) → 18 (level-scoped). The 40-finding gap is the noise the
+ * assurance map removes — undifferentiated red was itself the failure.
+ */
+const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
+  'packages/astro/src/runtime/boundary.ts:248',
+  'packages/astro/src/runtime/stream.ts:130',
+  'packages/core/src/boundary.ts:400',
+  'packages/core/src/gen-frame.ts:165',
+  'packages/core/src/hlc.ts:194', // L4 — HLC's by-design wall-clock read (its injection point)
+  'packages/core/src/hlc.ts:207', // L4
+  'packages/core/src/signal.ts:192',
+  'packages/core/src/signal.ts:195',
+  'packages/core/src/signal.ts:202',
+  'packages/core/src/signal.ts:95',
+  'packages/core/src/speculative.ts:106',
+  'packages/core/src/token-buffer.ts:46',
+  'packages/core/src/zap.ts:202',
+  'packages/quantizer/src/animated-quantizer.ts:75',
+  'packages/quantizer/src/quantizer.ts:492',
+  'packages/web/src/stream/resumption.ts:93',
+  'packages/web/src/stream/sse-pure.ts:91',
+  'packages/worker/src/compositor-startup.ts:45',
+];
+
 describe('dogfood — the three hygiene gates over the real packages/*/src tree', () => {
   for (const [id, gate] of GATES) {
     it(`${id} surfaces exactly its pinned backlog (lists any drift)`, () => {
@@ -191,5 +229,37 @@ describe('dogfood — the three hygiene gates over the real packages/*/src tree'
         gate.run(nodeContext(REPO_ROOT, [...GLOBS])).map((f) => locOf(f.location?.file, f.location?.line));
       expect(run()).toEqual(run());
     }
+  });
+
+  it('no-nondeterminism: raw 58 → LEVEL-SCOPED to the true L3 backlog via the assurance map', () => {
+    const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
+    expect(ctx.files().length).toBeGreaterThan(0);
+
+    // RAW (unscoped) — the honest snapshot the existing pin tracks.
+    const raw = noNondeterminismGate.run(ctx);
+    const rawSeen = raw.map((f) => locOf(f.location?.file, f.location?.line)).sort();
+    expect(rawSeen.length, 'raw/unscoped count drifted from the pinned 58').toBe(58);
+
+    // LEVEL-SCOPED — run through the engine WITH the assurance map. The gate is
+    // L3, so it only sees L3+ files; the CLI/command/tooling (L1) drops out. We
+    // read the SCOPED findings off the gate's outcome (post-scope, pre-waiver).
+    const result = runGates([noNondeterminismGate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
+    const outcome = result.outcomes.find((o) => o.gateId === 'gauntlet/no-nondeterminism');
+    expect(outcome, 'the no-nondeterminism gate must have an outcome').toBeDefined();
+    const scopedSeen = (outcome?.findings ?? [])
+      .map((f) => locOf(f.location?.file, f.location?.line))
+      .sort();
+
+    const expected = [...EXPECTED_NONDETERMINISM_L3].sort();
+    const message = [
+      `no-nondeterminism: raw ${rawSeen.length} (unscoped) → ${scopedSeen.length} (L3-scoped). Pinned ${expected.length}.`,
+      'The level-scoped set is the TRUE L3 backlog (the deterministic spine); CLI/command/tooling correctly drop out.',
+      'A NEW L3 finding is a regression; a CURED one is a win (update the pin):',
+      ...scopedSeen.map((s) => `  + ${s}`),
+    ].join('\n');
+
+    expect(scopedSeen, message).toEqual(expected);
+    // The 40-finding gap is the noise the assurance map removes.
+    expect(rawSeen.length - scopedSeen.length).toBe(40);
   });
 });

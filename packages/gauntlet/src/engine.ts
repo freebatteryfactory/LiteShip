@@ -17,23 +17,44 @@
 import type { GateContext, Gate } from './gate.js';
 import type { Finding, Severity } from './finding.js';
 import { verifyGate, earnedAuthority, type Authority, type GateProof } from './authority.js';
+import { atLeast, type AssuranceLevel } from './assurance.js';
+import { levelOf, type LevelRule } from './assurance-map.js';
+import { applyWaivers, type Waiver } from './waiver.js';
 
 /** A gate's outcome within a run: its proof, earned authority, and findings. */
 export interface GateOutcome {
   readonly gateId: string;
   readonly proof: GateProof;
   readonly authority: Authority;
+  /** Findings KEPT (post-waiver), with authority already applied to severity. */
   readonly findings: readonly Finding[];
+  /** Findings a valid waiver suppressed for this gate (audit trail). */
+  readonly waived: readonly Finding[];
+  /** Findings ABOUT this gate's waivers (expired / stale / forbidden). */
+  readonly waiverFindings: readonly Finding[];
 }
 
 /** The result of a gauntlet run. */
 export interface GauntletResult {
-  /** All findings across all gates, with authority already applied to severity. */
+  /** All KEPT findings across all gates, with authority already applied to severity. */
   readonly findings: readonly Finding[];
   /** Per-gate outcomes (proofs = the qualification receipts). */
   readonly outcomes: readonly GateOutcome[];
-  /** True iff any self-proven (blocking) gate emitted an `error` finding. */
+  /** True iff any self-proven (blocking) gate emitted an `error` finding, or a waiver expired/was forbidden. */
   readonly blocked: boolean;
+}
+
+/** Options for {@link runGates} — all optional, all back-compatible. */
+export interface RunGatesOptions {
+  /**
+   * The assurance map used to SCOPE each gate to files at-or-above its level.
+   * Omit to run every gate over ALL files (back-compat — no level scoping).
+   */
+  readonly assuranceMap?: readonly LevelRule[];
+  /** Waivers applied to every gate's findings (matched → suppressed). */
+  readonly waivers?: readonly Waiver[];
+  /** Injected clock for waiver-expiry evaluation. Defaults to the epoch (no expiry) — NEVER `Date.now()`. */
+  readonly now?: Date;
 }
 
 /** Cap a finding's severity to `advisory` (for gates that have not self-proven). */
@@ -42,25 +63,81 @@ function asAdvisory(f: Finding): Finding {
 }
 
 /**
- * Run a set of gates over `context`. Each gate is first verified against its own
- * fixtures; unproven gates run but are demoted to advisory. Returns the merged
- * findings, the proofs, and whether a blocking gate failed.
+ * Derive a {@link GateContext} scoped to files at-or-above `level`, per `map`.
+ *
+ * `readFile` and `repoRoot` are passed through unchanged; only `files()` is
+ * narrowed to those whose {@link levelOf} is `atLeast(level)`. A gate written
+ * against {@link GateContext} thus only ever sees the files its rigor aims at —
+ * an L3 gate run with the map drops the L0/L1 tooling entirely. Pure: no clock,
+ * no I/O, just a filter over the base context's file list.
  */
-export function runGates(gates: readonly Gate[], context: GateContext): GauntletResult {
+export function scopeContextByLevel(
+  context: GateContext,
+  level: AssuranceLevel,
+  map: readonly LevelRule[],
+): GateContext {
+  return {
+    repoRoot: context.repoRoot,
+    readFile: context.readFile,
+    files: (): readonly string[] => context.files().filter((f) => atLeast(levelOf(f, map), level)),
+  };
+}
+
+/** The epoch — the default `now` when none is injected (so no waiver expires by default). */
+const EPOCH = new Date(0);
+
+/**
+ * Run a set of gates over `context`. Each gate is first verified against its own
+ * fixtures; unproven gates run but are demoted to advisory. When `opts.assuranceMap`
+ * is given, each gate sees ONLY files at-or-above its level (rigor scoping — no
+ * more red-drowning); without it every gate sees all files (back-compat). When
+ * `opts.waivers` are given, they are applied to each gate's findings against the
+ * injected `opts.now` (defaults to the epoch — NEVER `Date.now()`): matched
+ * findings are suppressed, and expired/stale/forbidden waivers surface as their
+ * own findings (expired + forbidden BLOCK).
+ *
+ * Returns the merged KEPT findings, the proofs, and whether a blocking gate (or a
+ * blocking waiver finding) failed the run.
+ */
+export function runGates(gates: readonly Gate[], context: GateContext, opts: RunGatesOptions = {}): GauntletResult {
   const outcomes: GateOutcome[] = [];
   const allFindings: Finding[] = [];
+  const now = opts.now ?? EPOCH;
+  const waivers = opts.waivers ?? [];
   let blocked = false;
 
   for (const gate of gates) {
     const proof = verifyGate(gate);
     const authority = earnedAuthority(proof);
-    const raw = gate.run(context);
-    const findings = authority === 'blocking' ? raw : raw.map(asAdvisory);
-    for (const f of findings) {
+
+    // Scope the context to the gate's level when a map is supplied; otherwise the
+    // gate sees everything (back-compat).
+    const scoped =
+      opts.assuranceMap !== undefined ? scopeContextByLevel(context, gate.level, opts.assuranceMap) : context;
+
+    const raw = gate.run(scoped);
+    const authed = authority === 'blocking' ? raw : raw.map(asAdvisory);
+
+    // Apply waivers AFTER authority (a waiver suppresses a kept finding; it does
+    // not resurrect an advisory-demoted one). Waiver findings carry their OWN
+    // severity (expired/forbidden = error → block; stale = warning).
+    const { kept, waived, waiverFindings } = applyWaivers(authed, waivers, now);
+
+    const outcomeFindings = [...kept, ...waiverFindings];
+    for (const f of outcomeFindings) {
       allFindings.push(f);
-      if (authority === 'blocking' && f.severity === 'error') blocked = true;
+      // A blocking gate's `error` blocks; a waiver-expired/forbidden `error`
+      // blocks unconditionally (the waiver mechanism has teeth regardless of the
+      // gate's earned authority).
+      const isWaiverError =
+        f.severity === 'error' &&
+        (f.ruleId === 'gauntlet/waiver-expired' || f.ruleId === 'gauntlet/waiver-forbidden');
+      if ((authority === 'blocking' && f.severity === 'error' && kept.includes(f)) || isWaiverError) {
+        blocked = true;
+      }
     }
-    outcomes.push({ gateId: gate.id, proof, authority, findings });
+
+    outcomes.push({ gateId: gate.id, proof, authority, findings: kept, waived, waiverFindings });
   }
 
   return { findings: allFindings, outcomes, blocked };

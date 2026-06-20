@@ -54,7 +54,28 @@ export {
 
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
-export { type GateOutcome, type GauntletResult, runGates, memoryContext } from './engine.js';
+export {
+  type GateOutcome,
+  type GauntletResult,
+  type RunGatesOptions,
+  runGates,
+  scopeContextByLevel,
+  memoryContext,
+} from './engine.js';
+
+export {
+  type LevelRule,
+  LITESHIP_ASSURANCE_MAP,
+  levelOf,
+  matchesGlob,
+} from './assurance-map.js';
+
+export {
+  type Waiver,
+  type WaiverApplication,
+  ALWAYS_BLOCKING_RULES,
+  applyWaivers,
+} from './waiver.js';
 
 export { nodeContext } from './node-context.js';
 
