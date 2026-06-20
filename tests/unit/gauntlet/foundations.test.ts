@@ -14,6 +14,9 @@ import {
   runGates,
   memoryContext,
   noBareThrowGate,
+  noTsIgnoreGate,
+  noNondeterminismGate,
+  noSilentCatchGate,
   type Gate,
 } from '@czap/gauntlet';
 import { ValidationError } from '@czap/error';
@@ -78,6 +81,17 @@ describe('authority ratchet — a gate earns blocking by self-proving', () => {
     expect(proof.mutationKilled).toBe(true);
     expect(proof.selfProven).toBe(true);
     expect(earnedAuthority(proof)).toBe('blocking');
+  });
+
+  it('every built-in gate self-proves (red caught, green clean, mutation killed → blocking)', () => {
+    for (const gate of [noBareThrowGate, noTsIgnoreGate, noNondeterminismGate, noSilentCatchGate]) {
+      const proof = verifyGate(gate);
+      expect(proof.redCaught, `${gate.id} red`).toBe(true);
+      expect(proof.greenClean, `${gate.id} green`).toBe(true);
+      expect(proof.mutationKilled, `${gate.id} mutation`).toBe(true);
+      expect(proof.selfProven, `${gate.id} selfProven`).toBe(true);
+      expect(earnedAuthority(proof), `${gate.id} authority`).toBe('blocking');
+    }
   });
 
   it('a gate whose fixtures have no teeth is capped at advisory', () => {

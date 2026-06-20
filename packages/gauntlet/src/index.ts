@@ -61,3 +61,6 @@ export { nodeContext } from './node-context.js';
 export { type RunGauntletOnRepoOptions, runGauntletOnRepo } from './runner.js';
 
 export { noBareThrowGate } from './gates/no-bare-throw.js';
+export { noTsIgnoreGate } from './gates/no-ts-ignore.js';
+export { noNondeterminismGate } from './gates/no-nondeterminism.js';
+export { noSilentCatchGate } from './gates/no-silent-catch.js';
