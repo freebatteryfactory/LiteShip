@@ -6,7 +6,7 @@
  *   mcpExposed:true                  ⟹ executionKind:'handler'
  *
  * Plus: every handler's success payload conforms to its declared outputSchema,
- * the 10 MCP tools expose outputSchema in tools/list, and the validator has teeth.
+ * the 9 MCP tools expose outputSchema in tools/list, and the validator has teeth.
  *
  * @module
  */
@@ -47,9 +47,9 @@ describe('D2 — outputSchema registry law', () => {
 });
 
 describe('D2 — tools/list exposes outputSchema for the MCP tools', () => {
-  it('all 10 MCP tools include an object outputSchema', () => {
+  it('all 9 MCP tools include an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(9);
     for (const t of tools) {
       expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe('object');
     }

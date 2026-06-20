@@ -9,11 +9,13 @@
  * The scan engine (`node:fs` source walk + the `git ls-files --eol` line-ending
  * probe + the `INVARIANTS` rule set) is INJECTED via `context.runCheckInvariants`,
  * never imported here, so `@czap/command` stays free of `node:fs`/`child_process`.
- * Like `plumb` (and unlike `audit`, whose `@czap/audit` engine is heavy and
- * CLI-only), `runCheckInvariants` is provisioned in the shared host factory
- * (`createNodeCommandContext`), so the MCP host has it too — the command is
- * `mcpExposed` because it returns a STRUCTURED verdict (per-rule violation groups
- * + line-ending offenders), which is exactly the work-list an agent should read.
+ * Like `audit`/`audit-floor` (and UNLIKE `plumb`), the scan needs `@czap/audit`'s
+ * `normalizeRepoPath` (the one B5b slash-normalize home) and `@czap/command` may
+ * not import `@czap/audit` (it would drag the heavy TS-compiler/glob engine into
+ * `@czap/mcp-server`). So the capability is provisioned ONLY by `@czap/cli`, not
+ * in the shared host factory: the command is CLI-only and NOT `mcpExposed` —
+ * over MCP the capability is absent and the handler degrades to a structured
+ * `capabilityUnavailable` failure.
  *
  * @module
  */
@@ -52,7 +54,9 @@ export const checkInvariantsCommand: HandledCommand = {
         lineEndings: { type: 'array' },
       },
     },
-    annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
+    // NOT mcpExposed: the scan needs @czap/audit's normalizeRepoPath (B5b cage),
+    // so it is CLI-only by design — only @czap/cli injects runCheckInvariants.
+    annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {
     // Direct-invocation guard; the dispatcher already enforces `requires`.

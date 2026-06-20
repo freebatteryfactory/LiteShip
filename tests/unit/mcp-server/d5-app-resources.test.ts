@@ -53,7 +53,10 @@ describe('D5 — D4 static surface stays frozen', () => {
     // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
     // CUT A5: `package-smoke` (the release pack/install smoke, migrated from scripts/)
     // joined COMMAND_CATALOG → the registry/commands UI body changed, re-pinning it.
-    expect(pin).toBe('fnv1a:87806895');
+    // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
+    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
+    expect(pin).toBe('fnv1a:322c88c3');
   });
 });
 
@@ -161,9 +164,9 @@ describe('D5 — D1/D2 non-regression', () => {
     expect(r._meta?.['liteship/result']).toBeDefined();
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema', () => {
+  it('D2: tools/list still emits 9 tools each with an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(9);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
   });
 });

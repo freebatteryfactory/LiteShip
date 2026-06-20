@@ -33,12 +33,13 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
+ * The MCP-exposed subset: the 9 finite, handler-backed compute/verify/gate
  * commands. describe (catalog projection — tools/list already serves it) and
- * gauntlet (terminal-streaming orchestration) were dropped from the legacy 10: an
- * MCP tool must be handler-backed structured execution, never CLI-owned
- * orchestration. `plumb` and `check-invariants` ARE exposed: each returns a
- * structured pass/fail verdict (a violation/skip work-list) — an ideal agent tool.
+ * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
+ * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
+ * agent tool. `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
+ * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
+ * `audit-floor` — it is CLI-only and the capability is absent over MCP.
  */
 const EXPECTED_MCP_NAMES = [
   'asset.analyze',
@@ -46,7 +47,6 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
-  'check-invariants',
   'plumb',
   'scene.compile',
   'scene.render',

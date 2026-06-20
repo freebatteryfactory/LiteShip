@@ -123,9 +123,11 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   // The plumb-completeness gate, migrated out of scripts/ into the command host.
   { glob: 'packages/command/src/commands/plumb.ts', level: 'L3' },
   { glob: 'packages/command/src/host/plumb-scan.ts', level: 'L3' },
-  // The fast-lane invariant gate, migrated out of scripts/ into the command host.
+  // The fast-lane invariant gate, migrated out of scripts/ into the command. The
+  // scan engine stays CLI-only (cli/src/commands/check-invariants.ts in the glob
+  // above) because it imports @czap/audit's normalizeRepoPath (B5b cage); the
+  // descriptor + verdict mapping is the command module.
   { glob: 'packages/command/src/commands/check-invariants.ts', level: 'L3' },
-  { glob: 'packages/command/src/host/check-invariants-scan.ts', level: 'L3' },
   // The audit warning-floor gate, migrated out of scripts/ into the command. The
   // heavy @czap/audit engine stays CLI-only (cli/src/commands/audit-floor.ts in
   // the glob above); the descriptor + verdict mapping is the command module.

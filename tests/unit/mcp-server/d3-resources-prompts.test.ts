@@ -236,9 +236,9 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 10 tools each with an object outputSchema; 16 handlers total', () => {
+  it('D2: tools/list still emits 9 tools each with an object outputSchema; 16 handlers total', () => {
     const tools = listTools();
-    expect(tools.length).toBe(10);
+    expect(tools.length).toBe(9);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
     expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(16);
   });

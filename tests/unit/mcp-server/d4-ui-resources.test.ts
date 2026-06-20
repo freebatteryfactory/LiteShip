@@ -168,6 +168,9 @@ describe('D4 — projection drift pin', () => {
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
     // CUT A5: `package-smoke` (migrated from scripts/package-smoke.ts) joined
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
-    expect(address).toBe('fnv1a:87806895');
+    // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
+    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
+    expect(address).toBe('fnv1a:322c88c3');
   });
 });

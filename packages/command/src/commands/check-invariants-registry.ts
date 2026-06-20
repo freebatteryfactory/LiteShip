@@ -1,9 +1,9 @@
 /**
  * The banned-pattern invariant ledger (relocated from `scripts/check-invariants.ts`
  * when the gate became the `check-invariants` command). Pure data — no Node
- * coupling — so the host scan capability (`runCheckInvariants`, provisioned in
- * `@czap/command/host`) can import it without pulling fs into the pure registry
- * entry, and so `scripts/audit/report.ts` can import the rule set directly.
+ * coupling — so the CLI-only scan capability (`runCheckInvariants`, provisioned
+ * by `@czap/cli`) can import it without pulling fs into the pure registry entry,
+ * and so `scripts/audit/report.ts` can import the rule set directly.
  *
  * `INVARIANTS` is the fast-lane rule set: each entry is a banned source pattern
  * (require / module.exports / `var` / a default export outside the sanctioned
@@ -35,11 +35,11 @@ export interface Invariant {
 const INVARIANT_GATE_FILES: readonly string[] = [
   'packages/command/src/commands/check-invariants-registry.ts',
   'packages/command/src/commands/check-invariants.ts',
-  'packages/command/src/host/check-invariants-scan.ts',
+  'packages/cli/src/commands/check-invariants.ts',
   'packages/command/src/registry.ts',
 ];
 
-/** The fast-lane invariant rule set (repo-local; imported by the host scan + audit report). */
+/** The fast-lane invariant rule set (repo-local; imported by the CLI scan + audit report). */
 export const INVARIANTS: readonly Invariant[] = [
   {
     name: 'NO_REQUIRE',

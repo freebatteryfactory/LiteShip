@@ -5,9 +5,10 @@ import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
 // CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
-// the `@czap/command/host` capability impl (migrated out of scripts/check-invariants.ts).
+// the CLI-only adapter (B5b: it imports @czap/audit's normalizeRepoPath, so it
+// cannot live in @czap/command/@czap/mcp-server — see check-invariants CLI-only).
 import { INVARIANTS } from '@czap/command';
-import { findViolations } from '@czap/command/host';
+import { findViolations } from '../../packages/cli/src/commands/check-invariants.js';
 import {
   criticalityForInventoryPath,
   fileClassForInventoryPath,
