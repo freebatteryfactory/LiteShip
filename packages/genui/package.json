@@ -39,7 +39,8 @@
   },
   "dependencies": {
     "@czap/_spine": "workspace:*",
-    "@czap/canonical": "workspace:*"
+    "@czap/canonical": "workspace:*",
+    "@czap/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.0.0"

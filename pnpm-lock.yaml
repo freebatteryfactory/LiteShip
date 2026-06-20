@@ -497,6 +497,9 @@ importers:
       '@czap/canonical':
         specifier: workspace:*
         version: link:../canonical
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
 
   packages/liteship:
     dependencies:
