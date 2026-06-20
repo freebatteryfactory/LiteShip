@@ -95,11 +95,15 @@ choice is visible):**
 (or a class of waivers); (2) is either a `wallClock` thread through the named scripts or a
 block of measurement-boundary waivers. Either way nothing in the shipped runtime changes.
 
-### Slice B — NOT designed (I deleted my speculative draft — it was litter)
-I wrote a future-shaped repo-IR + 5-oracle set + a `Receipt`-for-Slice-C entity here. That violated the
-law: no entity/field/oracle/package lands for a FUTURE consumer. Deleted. Slice B will be built ONLY as
-complete, exercised organs when a CURRENT gate needs each piece — one capability at a time, produced AND
-consumed in the same change, with red/green fixtures. No reserved fields, no oracle zoo, no new packages.
+### Slice B repo-IR — ON THE PLAN, gets built (NOT a pending decision; not aspirational)
+The repo-IR + triangulated oracles are a planned Slice-B deliverable (see peppy-napping-badger.md). What I
+wrongly did was (a) invent an `@czap/artifacts` package to hold related logic, and (b) DRAFT the IR with
+reserved-for-Slice-C fields (a `Receipt` entity, mutation/MC-DC slots) + a "redline-ready" big-bang oracle
+set — building for FUTURE consumers. Those reserved fields + the package are the litter; deleted. The IR
+itself BUILDS — incrementally, as complete organs: each entity/oracle/field lands the moment a CURRENT
+gate produces AND consumes it, with red/green fixtures, integrated into existing packages. No reserved
+fields, no new packages. (This is a plan-execution detail, not a decision needing owner sign-off — moved
+out of the pending list.)
 
 ### ⚑ placeholder-content FALSE POSITIVES on the anti-placeholder machinery (your max-fury domain — I did NOT touch it)
 **The finding:** the audit `placeholder-content` rule (packages/audit/src/integrity.ts:32, `/\b(TODO|FIXME|DEBUG|placeholder|lorem ipsum)\b/i` over STRING LITERALS) flags 3 sites, drifting AUDIT_WARNING_FLOOR above 0 → 2 red meta-tests (devops/audit-command + audit-profile-seam). ALL THREE ARE FALSE POSITIVES — files that NAME the thing they forbid, with ZERO actual placeholder/incomplete work:
