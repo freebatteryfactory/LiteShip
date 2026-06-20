@@ -40,7 +40,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/error": "workspace:*"
+    "@czap/error": "workspace:*",
+    "fast-glob": "^3.3.3"
   },
   "engines": {
     "node": ">=22.0.0"

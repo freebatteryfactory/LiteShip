@@ -19,6 +19,7 @@
  */
 
 import type { BeatComponent, BeatProjectionResolutionInput } from '@czap/_spine';
+import { ValidationError } from '@czap/error';
 
 /**
  * Resolve a raw beat-marker projection into scene-ready beat components.
@@ -37,8 +38,9 @@ export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutio
   const { projection, sampleRate, anchorTrackId, defaultStrength = 1 } = input;
 
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
-    throw new RangeError(
-      `resolveBeatProjectionToSceneBeats: sampleRate must be a positive, finite number — got ${String(sampleRate)}. Pass the sample rate of the decoded audio asset that produced this BeatMarkerSet (typically 44100 or 48000), e.g. resolveBeatProjectionToSceneBeats({ projection, sampleRate: asset.sampleRate }).`,
+    throw ValidationError(
+      'resolveBeatProjectionToSceneBeats',
+      `sampleRate must be a positive, finite number — got ${String(sampleRate)}. Pass the sample rate of the decoded audio asset that produced this BeatMarkerSet (typically 44100 or 48000), e.g. resolveBeatProjectionToSceneBeats({ projection, sampleRate: asset.sampleRate }).`,
     );
   }
 

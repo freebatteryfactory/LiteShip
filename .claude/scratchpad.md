@@ -192,3 +192,16 @@ Full suite (1st run): 6 files/8 tests failed. Diagnosed + fixed:
 - profile.test equality + vite-runtime: pass ISOLATED → full-suite contention/flake (runStructureAudit scans FS; parallel writes shift file set), NOT migration. Confirm in final run.
 Side-fixes: staged deletion so audit's git-ls-files view is accurate; regenerated docs/api (stale CzapValidationError.md/isValidationError.md removed); moved stale gitignored runtime-seams.json aside; REMOVED 19 stale .claude/worktrees (21GB, fast-glob Map-overflow crash) — branches preserved.
 NEXT: final full suite green → COMMIT migration → fire Phase-A workflows.
+
+### SLICE A — 4 COMMITS SHIPPED (all verified green, branch feat/0.4.0-gauntlet-slice-a)
+1. 57975270 @czap/error algebra (8 variants + assertNever + cause, zero-dep, Effect-interop proven)
+2. 8ff25685 whole-monorepo migration (~99 throws + 6 classes → @czap/error; foundationalPackages topology; full suite 425f/4876 green)
+3. 1905bbb6 brands → validating smart constructors (8 brands, real invariants; SignalInput loosened to non-empty w/ justification; cross-pkg parity property)
+4. 958ff66e @czap/gauntlet package foundations (Finding/AssuranceLevel/Gate/authority-ratchet/engine + noBareThrowGate reference; metacircular self-proof; 12 tests). See [[gauntlet-architecture]].
+Roster discipline learned: a new publishable pkg trips package-smoke + release-roster(×3 incl EXPECTED_PUBLISHABLE) + plumb-registry(unclassified) + policy.ts topology. @czap/error→24, @czap/gauntlet→25. Apply ALL when adding a pkg.
+
+### REMAINING Slice A (then Slice B can fan out as workflows):
+- Traceability ledger: invariants.yaml → testing_ledger.yaml → bridge validator (builds on scripts/check-invariants.ts) + PROVES/CATCHES/SEEDED headers.
+- Waivers with teeth (owner/expiry/blast-radius/debt; NEVER covers a skip) — needed before dogfooding noBareThrowGate on the repo (cli ship.ts:75 defect-fallback is a legit non-migration throw needing a waiver).
+- assertNever switch-routing (make genuinely-non-exhaustive closed-union switches exhaustive = real value; route existing hand-rolled `const _x:never` through shared assertNever = consistency).
+### SLICE B (big, fan-out-able now): repo-IR + triangulated oracles (LSP+AST+module-graph+receipts+schema) + real filesystem GateContext + CLI runner + meta-gauntlet. ⚑ owner: IR schema + oracle set.

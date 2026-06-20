@@ -494,6 +494,9 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
 
   packages/genui:
     dependencies:

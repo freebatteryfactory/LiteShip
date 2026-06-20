@@ -56,4 +56,8 @@ export { type Authority, type GateProof, verifyGate, earnedAuthority } from './a
 
 export { type GateOutcome, type GauntletResult, runGates, memoryContext } from './engine.js';
 
+export { nodeContext } from './node-context.js';
+
+export { type RunGauntletOnRepoOptions, runGauntletOnRepo } from './runner.js';
+
 export { noBareThrowGate } from './gates/no-bare-throw.js';

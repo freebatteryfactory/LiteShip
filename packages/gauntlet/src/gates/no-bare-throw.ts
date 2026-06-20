@@ -16,6 +16,81 @@ import { memoryContext } from '../engine.js';
 
 const BARE_THROW = /\bthrow new (?:Error|RangeError|TypeError)\(/;
 
+/**
+ * Blank out comment and string-literal CONTENTS (replace with spaces, preserving
+ * every newline so line numbers still align), leaving only code. Without this a
+ * line scanner flags its own docstrings and fixture strings — exactly the false
+ * positives this gate must not have (a gate with a dirty green floor is not
+ * qualified). A real per-token oracle arrives with Slice B's LanguageService;
+ * this char-level state machine is the honest Slice-A floor.
+ */
+function codeOnly(src: string): string {
+  let out = '';
+  type State = 'code' | 'line' | 'block' | 'single' | 'double' | 'template';
+  let state: State = 'code';
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]!;
+    const next = src[i + 1];
+    const keep = c === '\n' ? '\n' : ' ';
+    if (state === 'code') {
+      if (c === '/' && next === '/') {
+        state = 'line';
+        out += '  ';
+        i++;
+        continue;
+      }
+      if (c === '/' && next === '*') {
+        state = 'block';
+        out += '  ';
+        i++;
+        continue;
+      }
+      if (c === "'") {
+        state = 'single';
+        out += ' ';
+        continue;
+      }
+      if (c === '"') {
+        state = 'double';
+        out += ' ';
+        continue;
+      }
+      if (c === '`') {
+        state = 'template';
+        out += ' ';
+        continue;
+      }
+      out += c;
+      continue;
+    }
+    if (state === 'line') {
+      if (c === '\n') state = 'code';
+      out += keep;
+      continue;
+    }
+    if (state === 'block') {
+      if (c === '*' && next === '/') {
+        state = 'code';
+        out += '  ';
+        i++;
+        continue;
+      }
+      out += keep;
+      continue;
+    }
+    // string states (single / double / template)
+    if (c === '\\') {
+      out += '  ';
+      i++;
+      continue;
+    } // escape — consume the next char too
+    const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
+    if (c === closer) state = 'code';
+    out += keep;
+  }
+  return out;
+}
+
 /** Scan the context's files for bare throws; one finding per offending line. */
 function scan(context: GateContext): readonly Finding[] {
   const findings: Finding[] = [];
@@ -23,7 +98,8 @@ function scan(context: GateContext): readonly Finding[] {
     if (!file.endsWith('.ts')) continue;
     const text = context.readFile(file);
     if (text === undefined) continue;
-    const lines = text.split('\n');
+    // Scan CODE only — never a throw that lives inside a comment or string.
+    const lines = codeOnly(text).split('\n');
     for (let i = 0; i < lines.length; i++) {
       if (BARE_THROW.test(lines[i] ?? '')) {
         findings.push(
