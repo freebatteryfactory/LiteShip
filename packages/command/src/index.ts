@@ -25,6 +25,9 @@ export type {
   HandledCommand,
   PlumbGateSummary,
   PlumbSkip,
+  CheckInvariantsSummary,
+  InvariantViolation,
+  InvariantViolationGroup,
   RegisteredCommand,
 } from './registry.js';
 export { CommandDispatcher } from './dispatcher.js';
@@ -50,6 +53,10 @@ export { plumbCommand } from './commands/plumb.js';
 export type { PlumbPayload } from './commands/plumb.js';
 export { PACKAGE_PLUMB } from './commands/plumb-registry.js';
 export type { PackagePlumbEntry, PackagePlumbStatus } from './commands/plumb-registry.js';
+export { checkInvariantsCommand } from './commands/check-invariants.js';
+export type { CheckInvariantsPayload } from './commands/check-invariants.js';
+export { INVARIANTS } from './commands/check-invariants-registry.js';
+export type { Invariant } from './commands/check-invariants-registry.js';
 export {
   packageSlug,
   selectTargets,

@@ -19,5 +19,5 @@ echo "[pre-commit] Running quick verification..."
 pnpm run build
 pnpm run typecheck
 pnpm run lint
-pnpm exec tsx scripts/check-invariants.ts
+pnpm exec tsx packages/cli/src/bin.ts check-invariants
 echo "[pre-commit] All checks passed."

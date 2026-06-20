@@ -79,6 +79,18 @@ export interface CommandContext {
    * the MCP host — an agent can call `plumb` over MCP and read the work-list.
    */
   readonly runPlumb?: () => Promise<PlumbGateSummary>;
+  /**
+   * Run the fast-lane invariant gate over the repo at `cwd`: scan `packages/**`
+   * source for banned patterns (require / module.exports / `var` / non-sanctioned
+   * default export / hand-parsed signal axis) and check every committed text file
+   * matches the `.gitattributes` eol policy. Returns a structured verdict — no
+   * process.exit, no stdout. Backed by `node:fs` + a `git ls-files --eol` probe,
+   * so like `runPlumb` (and unlike the heavy `@czap/audit` `runAudit` engine) it is
+   * provisioned in the shared host factory (`createNodeCommandContext`) and is
+   * therefore available to BOTH the CLI and the MCP host — an agent can call
+   * `check-invariants` over MCP and read the grouped violation list.
+   */
+  readonly runCheckInvariants?: () => Promise<CheckInvariantsSummary>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
   /**
@@ -214,6 +226,39 @@ export interface PlumbGateSummary {
   readonly unclassified: readonly string[];
   /** Whether the generated test corpus was present to scan. */
   readonly generatedPresent: boolean;
+}
+
+/**
+ * One banned-pattern hit: a repo-relative `file`, 1-based `line`, and the trimmed
+ * source `content`. A structural mirror of the host scan's result item, declared
+ * here so the `check-invariants` command's contract lives in `@czap/command`
+ * without a host import.
+ */
+export interface InvariantViolation {
+  readonly file: string;
+  readonly line: number;
+  readonly content: string;
+}
+
+/** Every violation of one named invariant rule, with its human teaching `message`. */
+export interface InvariantViolationGroup {
+  readonly name: string;
+  readonly message: string;
+  readonly violations: readonly InvariantViolation[];
+}
+
+/**
+ * Structured verdict returned by the injected {@link CommandContext.runCheckInvariants}
+ * capability. `ok` ⟺ no banned-pattern violation in any rule AND no line-ending
+ * policy violation. `groups` carries the per-rule violation lists; `lineEndings`
+ * carries the `.gitattributes` eol offenders.
+ */
+export interface CheckInvariantsSummary {
+  readonly ok: boolean;
+  /** Banned-pattern violations, grouped by the rule that flagged them. */
+  readonly groups: readonly InvariantViolationGroup[];
+  /** Committed text files whose line endings violate the `.gitattributes` policy. */
+  readonly lineEndings: readonly string[];
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */

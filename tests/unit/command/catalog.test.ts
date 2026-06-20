@@ -12,6 +12,7 @@ const EXPECTED_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check-invariants',
   'completion',
   'describe',
   'doctor',
@@ -30,12 +31,12 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 9 finite, handler-backed compute/verify/gate
+ * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
  * commands. describe (catalog projection — tools/list already serves it) and
  * gauntlet (terminal-streaming orchestration) were dropped from the legacy 10: an
  * MCP tool must be handler-backed structured execution, never CLI-owned
- * orchestration. `plumb` IS exposed: it returns a structured pass/fail verdict
- * (skip-list + unclassified list) — an ideal agent work-list.
+ * orchestration. `plumb` and `check-invariants` ARE exposed: each returns a
+ * structured pass/fail verdict (a violation/skip work-list) — an ideal agent tool.
  */
 const EXPECTED_MCP_NAMES = [
   'asset.analyze',
@@ -43,6 +44,7 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check-invariants',
   'plumb',
   'scene.compile',
   'scene.render',

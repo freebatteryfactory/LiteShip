@@ -17,6 +17,9 @@
 /packages/command/src/commands/plumb.ts @heyoub
 /packages/command/src/commands/plumb-registry.ts @heyoub
 /packages/command/src/host/plumb-scan.ts @heyoub
+/packages/command/src/commands/check-invariants.ts @heyoub
+/packages/command/src/commands/check-invariants-registry.ts @heyoub
+/packages/command/src/host/check-invariants-scan.ts @heyoub
 /packages/cli/src/gauntlet-phases.ts @heyoub
 
 # CI + repo governance.

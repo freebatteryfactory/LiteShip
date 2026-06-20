@@ -24,6 +24,7 @@ import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
 import { runPlumbScan } from './plumb-scan.js';
+import { runCheckInvariantsScan } from './check-invariants-scan.js';
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -71,6 +72,12 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
     // working tree the host was pointed at. Pure fs walk, so it lives in the
     // shared host factory and the MCP host gets it for free.
     runPlumb: async () => runPlumbScan(cwd),
+    // The invariant gate scans the working tree at `cwd` (NOT a script-relative
+    // root): the banned-pattern source set + the `.gitattributes`/git-index eol
+    // facts are both about the tree the host was pointed at. Pure fs + a
+    // `git ls-files --eol` probe, so — like runPlumb — it lives in the shared
+    // host factory and the MCP host gets it for free.
+    runCheckInvariants: async () => runCheckInvariantsScan(cwd),
     loadAssetBytes,
     runAudioProjection: async (bytes, projection, assetId) => {
       // The asset's OWN decoder (AssetDecl.decoder override or the kind

@@ -23,7 +23,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
-  { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
   { label: 'test (unit + component + property + integration)', command: 'pnpm test' },
   { label: 'test:vite', command: 'pnpm run test:vite' },

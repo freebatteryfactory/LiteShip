@@ -43,7 +43,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
-  { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
 
   // ── Phase 2: Unit tests ────────────────────────────────────────────

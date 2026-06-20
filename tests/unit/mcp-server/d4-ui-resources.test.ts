@@ -162,6 +162,8 @@ describe('D4 — projection drift pin', () => {
     // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
     // CUT A2: `plumb` (migrated from scripts/plumb-gate.ts) joined COMMAND_CATALOG,
     // so the registry/commands UI body changed, re-pinning the digest.
-    expect(address).toBe('fnv1a:bd2c7f0b');
+    // CUT A3: `check-invariants` (migrated from scripts/check-invariants.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    expect(address).toBe('fnv1a:ad442f96');
   });
 });

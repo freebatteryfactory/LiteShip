@@ -173,7 +173,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx scripts/check-invariants.ts
+      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro
@@ -204,7 +204,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx scripts/check-invariants.ts
+      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro

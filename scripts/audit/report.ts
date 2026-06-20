@@ -4,7 +4,10 @@ import type { WallClockTimestamp } from '@czap/core';
 import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
-import { INVARIANTS, findViolations } from '../check-invariants.js';
+// CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
+// the `@czap/command/host` capability impl (migrated out of scripts/check-invariants.ts).
+import { INVARIANTS } from '@czap/command';
+import { findViolations } from '@czap/command/host';
 import {
   criticalityForInventoryPath,
   fileClassForInventoryPath,

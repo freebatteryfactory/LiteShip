@@ -1,98 +1,44 @@
 /**
- * Build-time invariant checker for czap.
+ * The invariant-checker scan engine (migrated from `scripts/check-invariants.ts`).
+ * A pure `node:fs` source walk over a repo root — no process.exit, no stdout —
+ * that backs the `runCheckInvariants` capability in {@link createNodeCommandContext}.
+ * Kept as a host module (alongside spawn / vitest-runner / plumb-scan) so the pure
+ * `@czap/command` registry never takes an fs/child_process edge, and so the scan
+ * is unit testable in isolation.
  *
- * Scans source files for banned patterns in production code. This stays in
- * pure Node so it behaves the same in PowerShell, bash, and CI.
+ * The banned-pattern rule set lives in the pure `check-invariants-registry.ts`
+ * data module; this host module supplies the scan over a working tree:
+ *   - {@link findViolations}: banned-pattern violations for one rule.
+ *   - line-ending policy (`.gitattributes` vs the git index, via `git ls-files --eol`).
+ *   - {@link runCheckInvariantsScan}: the full verdict the command projects.
+ *
+ * @module
  */
-
 import { readdirSync, readFileSync } from 'node:fs';
 import type { Dirent } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { join, relative, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+import { IoError } from '@czap/error';
+import { spawnArgvCapture } from './spawn.js';
+import { INVARIANTS, type Invariant } from '../commands/check-invariants-registry.js';
+import type {
+  CheckInvariantsSummary,
+  InvariantViolationGroup,
+  InvariantViolation,
+} from '../registry.js';
 
-export interface Invariant {
-  name: string;
-  pattern: RegExp;
-  dirs: readonly string[];
-  exclude?: readonly string[];
-  message: string;
-}
-
-interface Violation {
-  readonly file: string;
-  readonly line: number;
-  readonly content: string;
+/**
+ * Pure repo-path slash normalization (Windows `\` → `/`). Inlined here rather
+ * than imported from `@czap/audit` so the light `node:fs` scan never drags the
+ * heavy TypeScript-compiler/glob audit engine into `@czap/command`/`@czap/mcp-server`.
+ */
+function normalizeRepoPath(value: string): string {
+  return value.replace(/\\/g, '/');
 }
 
 interface LineEndingRule {
   readonly pattern: string;
   readonly eol: 'lf' | 'crlf' | 'binary';
 }
-
-const repoRoot = resolve(import.meta.dirname, '..');
-
-export const INVARIANTS: readonly Invariant[] = [
-  {
-    name: 'NO_REQUIRE',
-    pattern: /\brequire\s*\(/,
-    dirs: ['packages'],
-    message: 'Use ESM imports, not require().',
-  },
-  {
-    name: 'NO_MODULE_EXPORTS',
-    pattern: /module\.exports/,
-    dirs: ['packages'],
-    message: 'Use ESM exports, not module.exports.',
-  },
-  {
-    name: 'NO_DEFAULT_EXPORT',
-    pattern: /export default/,
-    dirs: ['packages'],
-    // client-directives: Astro's addClientDirective contract requires a
-    // default export. inspector-toolbar-app: Astro's addDevToolbarApp
-    // entrypoint contract likewise requires a default-exported DevToolbarApp.
-    // create-liteship templates: scaffolder *data*, not production code —
-    // astro.config.ts must default-export defineConfig.
-    exclude: [
-      'packages/astro/src/client-directives/',
-      'packages/astro/src/runtime/inspector-toolbar-app.ts',
-      'packages/create-liteship/templates/',
-    ],
-    message: 'Named exports only, except Astro client directives.',
-  },
-  {
-    name: 'NO_VAR',
-    pattern: /\bvar\s+\w/,
-    dirs: ['packages'],
-    exclude: [
-      'packages/astro/src/integration.ts',
-      'packages/remotion/src/hooks.ts',
-      'packages/astro/src/detect-upgrade.ts',
-      'packages/astro/src/client-directives/worker.ts',
-    ],
-    message: 'Use const/let, not var.',
-  },
-  {
-    // 0.3.0 signal source-of-truth: the runtime hot path must derive its signal
-    // axis from `inputToSource` (@czap/core, the SignalSource source of truth),
-    // never re-parse the dot-string with `startsWith('scroll.'/'viewport.')`.
-    // The two diagnostic sites below legitimately namespace-check the input to
-    // pick a teaching message (not to read a value), so they are excluded.
-    name: 'NO_SIGNAL_INPUT_REPARSE',
-    pattern: /\.startsWith\(\s*['"](?:scroll|viewport)\./,
-    dirs: ['packages/astro/src/runtime', 'packages/vite/src'],
-    exclude: [
-      // Diagnostic namespace checks (which container message to emit), not axis reads.
-      'packages/vite/src/css-quantize.ts',
-      'packages/astro/src/runtime/inspector.ts',
-    ],
-    message:
-      'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +
-      'If this is a diagnostic namespace check, add the file to the NO_SIGNAL_INPUT_REPARSE exclude.',
-  },
-] as const;
 
 function walkTsFiles(dir: string): string[] {
   const results: string[] = [];
@@ -130,13 +76,17 @@ function isExcluded(relativePath: string, excludes: readonly string[] | undefine
   return excludes.some((prefix) => normalized.includes(prefix));
 }
 
-export function findViolations(invariant: Invariant, root = repoRoot): Violation[] {
-  const violations: Violation[] = [];
+/**
+ * Every banned-pattern violation of `invariant` under `root`. A repo-relative,
+ * slash-normalized `file` + 1-based `line` + trimmed `content` per hit.
+ */
+export function findViolations(invariant: Invariant, root: string): InvariantViolation[] {
+  const violations: InvariantViolation[] = [];
 
   for (const dir of invariant.dirs) {
     for (const file of walkTsFiles(resolve(root, dir))) {
       // relative-then-normalize (a relativeToRoot composition); the slash step is
-      // normalizeRepoPath applied to a repo-relative path (CUT B5b).
+      // normalizeRepoPath applied to a repo-relative path.
       const rel = normalizeRepoPath(relative(root, file));
       if (isExcluded(rel, invariant.exclude)) continue;
 
@@ -161,6 +111,7 @@ function globToRegExp(glob: string): RegExp {
   return new RegExp(`^${escaped}$`);
 }
 
+/** Parse `.gitattributes` eol rules in declaration order. */
 export function parseLineEndingRules(gitattributesContent: string): readonly LineEndingRule[] {
   const rules: LineEndingRule[] = [];
 
@@ -189,7 +140,11 @@ export function parseLineEndingRules(gitattributesContent: string): readonly Lin
   return rules;
 }
 
-export function expectedLineEnding(relativePath: string, rules: readonly LineEndingRule[]): LineEndingRule['eol'] | null {
+/** The expected eol for `relativePath` under `rules` (last matching rule wins), or null. */
+export function expectedLineEnding(
+  relativePath: string,
+  rules: readonly LineEndingRule[],
+): LineEndingRule['eol'] | null {
   const normalized = normalizeRepoPath(relativePath);
 
   for (let index = rules.length - 1; index >= 0; index--) {
@@ -202,14 +157,24 @@ export function expectedLineEnding(relativePath: string, rules: readonly LineEnd
   return null;
 }
 
-export function findLineEndingViolations(root = repoRoot): readonly string[] {
+/** Files whose committed line endings violate the `.gitattributes` eol policy under `root`. */
+export async function findLineEndingViolations(root: string): Promise<readonly string[]> {
   const rules = parseLineEndingRules(readFileSync(resolve(root, '.gitattributes'), 'utf8'));
   const violations: string[] = [];
 
-  const report = execFileSync('git', ['ls-files', '--eol'], {
+  // Route the `git ls-files --eol` probe through the canonical spawn helper (the
+  // host bans raw node:child_process). captureBytes is bumped well past the 1 MiB
+  // default — the per-file eol report scales with the whole tracked tree.
+  const probe = await spawnArgvCapture('git', ['ls-files', '--eol'], {
     cwd: root,
-    encoding: 'utf8',
+    captureBytes: 64 * 1024 * 1024,
   });
+  if (probe.exitCode !== 0) {
+    throw IoError('check-invariants.git-ls-files', `git ls-files --eol failed (exit ${probe.exitCode})`, {
+      path: root,
+    });
+  }
+  const report = probe.stdout;
 
   for (const line of report.split(/\r?\n/)) {
     if (!line.trim()) {
@@ -222,6 +187,11 @@ export function findLineEndingViolations(root = repoRoot): readonly string[] {
     }
 
     const [, indexEol, , attr, file] = match;
+    // The 4-group regex matched, so every captured group is present; the guard
+    // narrows `string | undefined` for the strict `@czap/command` compile.
+    if (indexEol === undefined || attr === undefined || file === undefined) {
+      continue;
+    }
     const rel = normalizeRepoPath(file);
     if (rel.endsWith('.map')) {
       continue;
@@ -257,43 +227,25 @@ export function findLineEndingViolations(root = repoRoot): readonly string[] {
   return violations;
 }
 
-function main(): void {
-  let failed = false;
-
+/**
+ * Run the fast-lane invariant gate over `root` (the host's `cwd`). Pure scan:
+ * `ok` ⟺ no banned-pattern violation in any `INVARIANTS` rule AND every committed
+ * text file matches the `.gitattributes` eol policy. Returns a structured verdict
+ * — no process.exit, no stdout.
+ */
+export async function runCheckInvariantsScan(root: string): Promise<CheckInvariantsSummary> {
+  const groups: InvariantViolationGroup[] = [];
   for (const invariant of INVARIANTS) {
-    const violations = findViolations(invariant);
+    const violations = findViolations(invariant, root);
     if (violations.length === 0) continue;
-
-    failed = true;
-    console.error(`\n[INVARIANT VIOLATION] ${invariant.name}: ${invariant.message}`);
-    for (const violation of violations) {
-      console.error(`${violation.file}:${violation.line}: ${violation.content}`);
-    }
+    groups.push({ name: invariant.name, message: invariant.message, violations });
   }
 
-  const lineEndingViolations = findLineEndingViolations();
-  if (lineEndingViolations.length > 0) {
-    failed = true;
-    console.error('\n[INVARIANT VIOLATION] LINE_ENDINGS: Text files must match .gitattributes eol policy.');
-    for (const violation of lineEndingViolations) {
-      console.error(violation);
-    }
-  }
+  const lineEndings = await findLineEndingViolations(root);
 
-  if (failed) {
-    console.error('\nInvariant check failed.');
-    process.exit(1);
-  }
-
-  console.log('All invariants passed.');
-}
-
-function isDirectExecution(moduleUrl: string): boolean {
-  const entry = process.argv[1];
-  if (!entry) return false;
-  return moduleUrl === pathToFileURL(entry).href;
-}
-
-if (isDirectExecution(import.meta.url)) {
-  main();
+  return {
+    ok: groups.length === 0 && lineEndings.length === 0,
+    groups,
+    lineEndings,
+  };
 }

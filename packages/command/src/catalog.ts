@@ -21,6 +21,7 @@ import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './c
 import { verifyCommand } from './commands/verify.js';
 import { auditCommand } from './commands/audit.js';
 import { plumbCommand } from './commands/plumb.js';
+import { checkInvariantsCommand } from './commands/check-invariants.js';
 
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal
@@ -113,6 +114,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   verifyCommand,
   auditCommand,
   plumbCommand,
+  checkInvariantsCommand,
 ];
 
 /**

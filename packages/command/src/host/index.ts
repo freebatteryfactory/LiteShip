@@ -31,3 +31,10 @@ export { tryReadCache, writeCache, hashInputs, cachePath } from './idempotency.j
 export type { IdempotencyCtx } from './idempotency.js';
 export { getCapsuleManifestPath } from './manifest-path.js';
 export { runPlumbScan } from './plumb-scan.js';
+export {
+  runCheckInvariantsScan,
+  findViolations,
+  parseLineEndingRules,
+  expectedLineEnding,
+  findLineEndingViolations,
+} from './check-invariants-scan.js';

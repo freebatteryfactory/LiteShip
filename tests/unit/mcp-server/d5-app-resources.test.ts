@@ -47,7 +47,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
     // CUT A2: `plumb` (the plumb-gate, migrated from scripts/) joined COMMAND_CATALOG
     // → the registry/commands UI body changed, re-pinning the digest.
-    expect(pin).toBe('fnv1a:bd2c7f0b');
+    // CUT A3: `check-invariants` (the invariant gate, migrated from scripts/) joined
+    // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
+    expect(pin).toBe('fnv1a:ad442f96');
   });
 });
 
@@ -155,9 +157,9 @@ describe('D5 — D1/D2 non-regression', () => {
     expect(r._meta?.['liteship/result']).toBeDefined();
   });
 
-  it('D2: tools/list still emits 9 tools each with an object outputSchema', () => {
+  it('D2: tools/list still emits 10 tools each with an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(9);
+    expect(tools.length).toBe(10);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
   });
 });

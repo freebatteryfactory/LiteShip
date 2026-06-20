@@ -27,7 +27,7 @@ A signal axis now has exactly one numeric contract: `scroll.progress` is `0..1` 
 - `packages/core/src/signal-input.ts` — `sourceToInput` / `inputToSource` / `inputSourceType`.
 - `packages/core/src/signal.ts` — the `SignalSource` union + audio modes.
 - `packages/astro/src/runtime/boundary.ts` — `readSignalValue` / `attachSignalObserver` route through `inputToSource`.
-- `scripts/check-invariants.ts` — the `NO_SIGNAL_INPUT_REPARSE` rule.
+- `packages/command/src/commands/check-invariants-registry.ts` — the `NO_SIGNAL_INPUT_REPARSE` rule (the `check-invariants` command's rule set).
 - `tests/property/signal-input-roundtrip.prop.test.ts`, `tests/unit/astro/scroll-progress-scale.test.ts`, `tests/unit/astro/audio-signal-drift.test.ts`.
 
 ## Rejected alternatives

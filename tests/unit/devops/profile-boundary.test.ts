@@ -78,9 +78,10 @@ describe('D7b — repo-local contracts stay local (not threaded through the prof
     expect(offenders).toEqual([]);
   });
 
-  it('invariants are a repo-local rule set in scripts/check-invariants.ts', () => {
-    expect(existsSync(resolve(REPO, 'scripts/check-invariants.ts'))).toBe(true);
-    expect(read('scripts/check-invariants.ts')).toMatch(/INVARIANTS/);
+  it('invariants are a repo-local rule set in @czap/command (CUT A3: migrated off scripts/)', () => {
+    const home = 'packages/command/src/commands/check-invariants-registry.ts';
+    expect(existsSync(resolve(REPO, home))).toBe(true);
+    expect(read(home)).toMatch(/INVARIANTS/);
   });
 
   it('coverage thresholds/globs are repo-local consts in vitest.shared.ts', () => {

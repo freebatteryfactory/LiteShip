@@ -12,7 +12,7 @@ D9b published `@czap/audit` as a downstream-installable engine (`czap audit
 --profile`), making the profile a genuine reusable surface.
 
 That raised a recurring question for every other devops engine in the repo —
-invariants (`check-invariants.ts`), coverage (`vitest.shared.ts` + `merge-coverage.ts`),
+invariants (the `check-invariants` command), coverage (`vitest.shared.ts` + `merge-coverage.ts`),
 bench (`scripts/bench/*` + `bench-gate.ts`), and the artifact/report paths
 (`reports/*`, `coverage/*`, `benchmarks/*`): should they also be threaded through
 `DevopsProfile` so downstream projects can configure them?
@@ -79,8 +79,10 @@ checkout-root machinery) are local.
   (verified by grep) — the reusable surface does not leak the local contracts.
 - `scripts/bench/directive-suite.ts:3-9` — value-imports `@czap/core|edge|web|worker`
   + astro/worker runtime: it executes the framework (product-shaped).
-- `scripts/check-invariants.ts` — `INVARIANTS` rule set (repo-local; imported by
-  `scripts/audit/report.ts`, never by `@czap/audit`).
+- `packages/command/src/commands/check-invariants-registry.ts` — `INVARIANTS` rule
+  set (repo-local `@czap/command` data; imported by `scripts/audit/report.ts`, never
+  by `@czap/audit`). The scan engine is the `check-invariants` command's host
+  capability (`@czap/command/host`), migrated out of `scripts/check-invariants.ts`.
 - `vitest.shared.ts:20-22` — `coverageInclude`/`coverageExclude` local consts (pinned
   by the pre-existing `tests/unit/meta/coverage-config.test.ts`).
 - `scripts/audit/policy.ts` — `reportPaths` repo-local (D9b-1).

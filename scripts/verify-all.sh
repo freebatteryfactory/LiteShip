@@ -58,7 +58,7 @@ echo ""
 
 # ── Gate 5: invariant checks ──────────────────────────────────────
 echo "--- Gate 5: invariant checks ---"
-pnpm exec tsx scripts/check-invariants.ts 2>&1
+pnpm exec tsx packages/cli/src/bin.ts check-invariants 2>&1
 echo "    PASS"
 echo ""
 

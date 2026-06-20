@@ -1,11 +1,18 @@
+import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
+// CUT A3 — the line-ending policy fns moved out of scripts/check-invariants.ts into
+// the `check-invariants` command's host scan engine.
 import {
   expectedLineEnding,
   findLineEndingViolations,
   parseLineEndingRules,
-} from '../../../scripts/check-invariants.ts';
+} from '@czap/command/host';
 
-describe('check-invariants script', () => {
+/** Repo root: this test lives at tests/unit/meta/, three levels under the root. */
+const REPO_ROOT = resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..');
+
+describe('check-invariants command (host scan)', () => {
   test('parses .gitattributes eol rules in declaration order', () => {
     const rules = parseLineEndingRules('* text=auto eol=lf\n*.ps1 text eol=crlf\n*.png binary\n');
 
@@ -23,7 +30,7 @@ describe('check-invariants script', () => {
     expect(expectedLineEnding('scripts/dev.ps1', rules)).toBe('crlf');
   });
 
-  test('repo currently satisfies the declared line-ending policy', () => {
-    expect(findLineEndingViolations()).toEqual([]);
+  test('repo currently satisfies the declared line-ending policy', async () => {
+    expect(await findLineEndingViolations(REPO_ROOT)).toEqual([]);
   });
 });
