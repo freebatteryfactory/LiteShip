@@ -8,7 +8,7 @@
 
 > **Result**\<`T`\> = `Effect.Effect`\<`T`, `Schema.SchemaError`\>
 
-Defined in: [core/src/capsule.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L116)
+Defined in: [core/src/capsule.ts:205](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L205)
 
 Effect returned by [TypeValidator.validate](../../../variables/TypeValidator.md#validate) on a successful decode.
 
