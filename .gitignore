@@ -44,9 +44,8 @@ tests/smoke/.out-*.mp4
 # czap capsule factory scratch (generated MCP manifests, content-addressed cache)
 .czap/
 
-# Local Claude tooling state (per-machine, contains absolute paths)
-.claude/settings.local.json
-.claude/scheduled_tasks.lock
+# Local Claude tooling state (per-machine working notes — NEVER in the repo)
+.claude/
 
 # IDE workspace files (per-developer)
 *.code-workspace
