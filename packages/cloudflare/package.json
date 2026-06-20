@@ -49,7 +49,8 @@
   "dependencies": {
     "@czap/core": "workspace:*",
     "@czap/edge": "workspace:*",
-    "@czap/astro": "workspace:*"
+    "@czap/astro": "workspace:*",
+    "@czap/error": "workspace:*"
   },
   "peerDependencies": {
     "effect": ">=4.0.0-beta.0"

@@ -7,6 +7,7 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
 import { walkRiff } from './riff.js';
 
 /**
@@ -39,14 +40,16 @@ export async function audioDecoder(bytes: ArrayBuffer): Promise<DecodedAudio> {
     else if (chunk.id === 'data' && 'data' in chunk) data = chunk.data;
   }
   if (!fmt) {
-    throw new Error(
+    throw ValidationError(
+      'audio.decode',
       `audioDecoder: no 'fmt ' chunk found — this buffer is RIFF but not a playable WAV ` +
         `(chunks present: ${chunkIds.join(', ') || '(none)'}). ` +
         `If this file came from an export tool, re-export as PCM WAV: ffmpeg -i input -c:a pcm_s16le output.wav`,
     );
   }
   if (!data) {
-    throw new Error(
+    throw ValidationError(
+      'audio.decode',
       `audioDecoder: no data chunk — found chunk ids [${chunkIds.join(', ') || '(none)'}]. ` +
         `Re-export as PCM WAV: ffmpeg -i input -c:a pcm_s16le output.wav`,
     );
@@ -114,7 +117,8 @@ function decodeSamples(data: DataView, format: number, bitsPerSample: number): I
     }
     return out;
   }
-  throw new Error(
+  throw ValidationError(
+    'audio.decode',
     `audioDecoder: unsupported-format — found audioFormat=${formatAudioFormatName(format)} ` +
       `bitsPerSample=${bitsPerSample}. Supported: PCM (format 1) at 8/16/24/32 bits, ` +
       `IEEE float (format 3) at 32 bits. Re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,

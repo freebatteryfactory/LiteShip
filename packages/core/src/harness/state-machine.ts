@@ -350,7 +350,7 @@ describe('${cap.name}', () => {
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
-import { schemaToArbitrary, UnsupportedSchemaError } from '${arbitraryImport}';
+import { schemaToArbitrary, hasTag } from '${arbitraryImport}';
 
 describe('${cap.name}', () => {
   const cap = ${ctx.bindingName};
@@ -361,14 +361,14 @@ describe('${cap.name}', () => {
   } catch (err) {
     arbError = err;
   }
-  if (arbError !== undefined && !(arbError instanceof UnsupportedSchemaError)) {
+  if (arbError !== undefined && !hasTag(arbError, 'UnsupportedError')) {
     // Only a non-derivable schema is honest-skip material; anything else
     // (a defect in the arbitrary builder, a malformed capsule) must fail.
     throw arbError;
   }
   if (cap.step === undefined || cap.initialState === undefined || arbError !== undefined) {
     it.skip(
-      arbError instanceof UnsupportedSchemaError
+      hasTag(arbError, 'UnsupportedError')
         ? \`state machine — input schema not arbitrary-derivable (\${arbError.message})\`
         : 'state machine — capsule has no step/initialState handlers',
       () => {},

@@ -8,7 +8,7 @@
  */
 
 import { EASING_SPRING_STEPS, SPRING_DEFAULT_STIFFNESS, SPRING_DEFAULT_DAMPING } from './defaults.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 type EasingFnShape = (t: number) => number;
 
@@ -228,13 +228,13 @@ function _resolveSpringConfig(config: SpringConfigShape): { stiffness: number; d
   const damping = config.damping ?? SPRING_DEFAULT_DAMPING;
   const mass = config.mass ?? 1;
   if (stiffness <= 0 || !Number.isFinite(stiffness)) {
-    throw new CzapValidationError('Easing.spring', `stiffness must be a positive finite number, got ${stiffness}`);
+    throw ValidationError('Easing.spring', `stiffness must be a positive finite number, got ${stiffness}`);
   }
   if (damping < 0 || !Number.isFinite(damping)) {
-    throw new CzapValidationError('Easing.spring', `damping must be a non-negative finite number, got ${damping}`);
+    throw ValidationError('Easing.spring', `damping must be a non-negative finite number, got ${damping}`);
   }
   if (mass <= 0 || !Number.isFinite(mass)) {
-    throw new CzapValidationError('Easing.spring', `mass must be a positive finite number, got ${mass}`);
+    throw ValidationError('Easing.spring', `mass must be a positive finite number, got ${mass}`);
   }
   return { stiffness, damping, mass };
 }

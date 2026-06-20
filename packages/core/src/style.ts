@@ -14,7 +14,7 @@ import type { StateUnion } from './type-utils.js';
 import { CanonicalCbor } from './cbor.js';
 import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 /** Single `box-shadow` layer — compiled into a space-separated CSS value by {@link Style.tap}. */
 export interface ShadowLayer {
@@ -242,7 +242,7 @@ export const Style: StyleFactory & {
       const stateKeys = Object.keys(config.states);
       for (const key of stateKeys) {
         if (!boundaryStates.includes(key)) {
-          throw new CzapValidationError(
+          throw ValidationError(
             'Style.make',
             `state "${key}" does not match boundary states [${boundaryStates.join(', ')}]`,
           );

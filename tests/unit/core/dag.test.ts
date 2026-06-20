@@ -555,7 +555,7 @@ describe('DAG', () => {
         Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash),
       );
 
-      expect(() => DAG.merge(dag, [forkEnvelope])).toThrow(/Anti-fork violation/);
+      expect(() => DAG.merge(dag, [forkEnvelope])).toThrow(/dag\.anti-fork|attempted to fork/);
     });
 
     test('merge reports a fork when a remote history adds a competing head without violating anti-fork', async () => {

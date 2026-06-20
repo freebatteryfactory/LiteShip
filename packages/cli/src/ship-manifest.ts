@@ -16,6 +16,7 @@
 import { gunzipSync } from 'node:zlib';
 import { Effect } from 'effect';
 import { AddressedDigest, CanonicalCbor, type AddressedDigest as AddressedDigestType } from '@czap/core';
+import { IoError, NotFoundError } from '@czap/error';
 
 const bytesToHex = (bytes: Uint8Array): string => {
   let out = '';
@@ -31,7 +32,10 @@ const sha256HexRaw = (bytes: Uint8Array): Effect.Effect<string> =>
       const buffer = await crypto.subtle.digest('SHA-256', bytes as BufferSource);
       return bytesToHex(new Uint8Array(buffer));
     },
-    catch: (error) => new Error(`SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`),
+    catch: (error) =>
+      IoError('sha256', `SHA-256 hash failed: ${error instanceof Error ? error.message : String(error)}`, {
+        cause: error,
+      }),
   }).pipe(Effect.orDie);
 
 interface TarEntry {
@@ -118,12 +122,14 @@ const parseTar = (bytes: Uint8Array): TarEntry[] => {
  * Raw `.tgz` bytes are non-deterministic across publish runs (gzip mtime); the
  * manifest is.
  */
-export const tarballManifestAddress = (tarballBytes: Uint8Array): Effect.Effect<AddressedDigestType, Error> =>
+export const tarballManifestAddress = (tarballBytes: Uint8Array): Effect.Effect<AddressedDigestType, IoError> =>
   Effect.gen(function* () {
     const unzipped = yield* Effect.try({
       try: () => new Uint8Array(gunzipSync(tarballBytes)),
       catch: (error) =>
-        new Error(`Failed to gunzip tarball: ${error instanceof Error ? error.message : String(error)}`),
+        IoError('gunzip', `Failed to gunzip tarball: ${error instanceof Error ? error.message : String(error)}`, {
+          cause: error,
+        }),
     });
     const entries = parseTar(unzipped);
     const manifest: { path: string; size: number; sha256: string }[] = [];
@@ -153,7 +159,7 @@ export function findWorkspaceSpecLeaks(tarballBytes: Uint8Array): readonly strin
   const unzipped = new Uint8Array(gunzipSync(tarballBytes));
   const entry = parseTar(unzipped).find((candidate) => candidate.path === 'package/package.json');
   if (!entry) {
-    throw new Error('tarball has no package/package.json entry');
+    throw NotFoundError('package.json', 'package/package.json', 'tarball has no package/package.json entry');
   }
   const manifest = JSON.parse(new TextDecoder().decode(entry.bytes)) as Record<
     string,

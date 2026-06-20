@@ -8,6 +8,6 @@
 
 > **Config** = [`EdgeHostAdapterConfig`](../../../interfaces/EdgeHostAdapterConfig.md)
 
-Defined in: [edge/src/host-adapter.ts:445](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L445)
+Defined in: [edge/src/host-adapter.ts:451](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L451)
 
 Alias for [EdgeHostAdapterConfig](../../../interfaces/EdgeHostAdapterConfig.md).

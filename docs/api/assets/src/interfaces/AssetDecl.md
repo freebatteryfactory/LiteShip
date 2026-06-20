@@ -6,7 +6,7 @@
 
 # Interface: AssetDecl\<K\>
 
-Defined in: [assets/src/contract.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L41)
+Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L42)
 
 Asset declaration shape consumed by `defineAsset`.
 
@@ -22,7 +22,7 @@ Asset declaration shape consumed by `defineAsset`.
 
 > `readonly` `optional` **attribution?**: `AttributionDecl`
 
-Defined in: [assets/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L68)
+Defined in: [assets/src/contract.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L69)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [assets/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **budgets?**: `object`
 
-Defined in: [assets/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L66)
+Defined in: [assets/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L67)
 
 #### decodeP95Ms?
 
@@ -46,7 +46,7 @@ Defined in: [assets/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **decoder?**: (`bytes`) => `Promise`\<[`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>\>
 
-Defined in: [assets/src/contract.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L52)
+Defined in: [assets/src/contract.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L53)
 
 Optional per-asset decode override. When omitted, media kinds fall
 back to the built-in decoder for `kind` (audio → audioDecoder,
@@ -70,7 +70,7 @@ over [DecodedAudio](DecodedAudio.md)) keep working.
 
 > `readonly` **id**: `string`
 
-Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L42)
+Defined in: [assets/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L43)
 
 ***
 
@@ -78,7 +78,7 @@ Defined in: [assets/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **invariants?**: readonly `Invariant`\<`unknown`, `unknown`\>[]
 
-Defined in: [assets/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L67)
+Defined in: [assets/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L68)
 
 ***
 
@@ -86,7 +86,7 @@ Defined in: [assets/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **kind**: `K`
 
-Defined in: [assets/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L44)
+Defined in: [assets/src/contract.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L45)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [assets/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **site?**: readonly `Site`[]
 
-Defined in: [assets/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L65)
+Defined in: [assets/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L66)
 
 Optional explicit site override. When omitted, the capsule's site is
 derived from decoder presence: a custom `decoder` keeps the permissive
@@ -113,4 +113,4 @@ video) are rejected at decl time; an empty array is always rejected.
 
 > `readonly` **source**: `string`
 
-Defined in: [assets/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L43)
+Defined in: [assets/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L44)

@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryResolution
 
-Defined in: [edge/src/host-adapter.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L158)
+Defined in: [edge/src/host-adapter.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L159)
 
 Per-boundary resolution outcome, reported in
 [EdgeHostResolution.boundaries](EdgeHostResolution.md#boundaries) when the cache is configured with
@@ -18,7 +18,7 @@ the multi-boundary form.
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L160)
+Defined in: [edge/src/host-adapter.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L161)
 
 Content address the outputs were resolved (and cached) under.
 
@@ -28,7 +28,7 @@ Content address the outputs were resolved (and cached) under.
 
 > `readonly` **cacheStatus**: `"precompiled"` \| `"hit"` \| `"miss"`
 
-Defined in: [edge/src/host-adapter.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L164)
+Defined in: [edge/src/host-adapter.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L165)
 
 Where this boundary's outputs came from (`'disabled'` cannot occur per boundary).
 
@@ -38,6 +38,6 @@ Where this boundary's outputs came from (`'disabled'` cannot occur per boundary)
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L162)
+Defined in: [edge/src/host-adapter.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L163)
 
 Compiled per-state outputs; absent on an uncovered tier with no `compile`.

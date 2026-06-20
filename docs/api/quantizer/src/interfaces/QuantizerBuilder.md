@@ -6,7 +6,7 @@
 
 # Interface: QuantizerBuilder\<B\>
 
-Defined in: [quantizer/src/quantizer.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L246)
+Defined in: [quantizer/src/quantizer.ts:240](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L240)
 
 Fluent builder returned by [Q.from](../variables/Q.md#from).
 
@@ -27,7 +27,7 @@ signals at the `none` tier for testing).
 
 > **force**(...`targets`): `QuantizerBuilder`\<`B`\>
 
-Defined in: [quantizer/src/quantizer.ts:250](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L250)
+Defined in: [quantizer/src/quantizer.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L244)
 
 Force-enable specific targets regardless of the current tier's gating set.
 
@@ -47,7 +47,7 @@ Force-enable specific targets regardless of the current tier's gating set.
 
 > **outputs**\<`O`\>(`outputs`): [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:248](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L248)
+Defined in: [quantizer/src/quantizer.ts:242](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L242)
 
 Attach per-target output tables and produce a [QuantizerConfig](QuantizerConfig.md).
 

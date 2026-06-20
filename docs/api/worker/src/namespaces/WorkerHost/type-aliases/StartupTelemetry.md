@@ -8,6 +8,6 @@
 
 > **StartupTelemetry** = `CompositorWorkerStartupTelemetry`
 
-Defined in: [worker/src/host.ts:251](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L251)
+Defined in: [worker/src/host.ts:255](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L255)
 
 Telemetry sink forwarded to the inner compositor worker.

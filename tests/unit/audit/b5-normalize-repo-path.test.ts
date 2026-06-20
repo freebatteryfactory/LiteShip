@@ -92,8 +92,15 @@ describe('B5b — no package-graph poisoning', () => {
     expect(importers.map(rel)).toEqual([]);
   });
 
-  it('@czap/audit keeps zero @czap edges (D9b standalone law)', () => {
-    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) => /from\s+['"]@czap\//.test(readFileSync(f, 'utf8')));
+  it('@czap/audit keeps zero NON-FOUNDATIONAL @czap edges (D9b standalone law)', () => {
+    // D9b: the audit engine stays downstream-installable — it must not pull the
+    // heavy monorepo runtime. The ONE blessed edge is @czap/error: a published,
+    // zero-dependency foundational leaf (the error-algebra analogue of @czap/_spine)
+    // that installs standalone from npm exactly like a third-party dep. Any OTHER
+    // @czap import would poison the package graph and is forbidden.
+    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) =>
+      /from\s+['"]@czap\/(?!error['"])/.test(readFileSync(f, 'utf8')),
+    );
     expect(importers.map(rel)).toEqual([]);
   });
 });

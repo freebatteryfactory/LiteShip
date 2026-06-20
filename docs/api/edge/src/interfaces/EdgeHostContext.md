@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostContext
 
-Defined in: [edge/src/host-adapter.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L31)
+Defined in: [edge/src/host-adapter.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L32)
 
 Detected device context available to host callbacks before compile.
 
@@ -25,7 +25,7 @@ decision without re-parsing headers.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [edge/src/host-adapter.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L33)
+Defined in: [edge/src/host-adapter.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
 
 Capabilities parsed from Client Hints.
 
@@ -35,6 +35,6 @@ Capabilities parsed from Client Hints.
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [edge/src/host-adapter.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L35)
+Defined in: [edge/src/host-adapter.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L36)
 
 Derived tier triple (cap, motion, design).

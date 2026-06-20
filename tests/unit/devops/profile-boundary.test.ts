@@ -35,14 +35,24 @@ const auditEngineSources = (): string[] => {
   return out;
 };
 
-const APPROVED_FIELDS = ['repoRoot', 'internalPackagePrefix', 'packageTopology', 'dynamicImportExemptions', 'surfacePolicy'];
+// foundationalPackages (the runtime analogue of @czap/_spine — packages every
+// package may import unlisted) is a CONSUMED field: structure.ts reads it to
+// bless foundational edges. So it is an approved profile field, not aspirational.
+const APPROVED_FIELDS = [
+  'repoRoot',
+  'internalPackagePrefix',
+  'packageTopology',
+  'foundationalPackages',
+  'dynamicImportExemptions',
+  'surfacePolicy',
+];
 
 describe('D7b — DevopsProfile has exactly the approved fields (no aspirational drift)', () => {
-  it('the default profile carries exactly the 5 approved fields', () => {
+  it('the default profile carries exactly the 6 approved fields', () => {
     expect(Object.keys(liteshipDevopsProfile).sort()).toEqual([...APPROVED_FIELDS].sort());
   });
 
-  it('the DevopsProfile interface declares the 5 approved fields and NO devops-junk-drawer field', () => {
+  it('the DevopsProfile interface declares the 6 approved fields and NO devops-junk-drawer field', () => {
     const src = read('packages/audit/src/devops-profile.ts');
     const body = src.match(/export interface DevopsProfile \{([\s\S]*?)\n\}/)?.[1];
     expect(body, 'DevopsProfile interface must be findable').toBeTruthy();

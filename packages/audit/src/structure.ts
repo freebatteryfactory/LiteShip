@@ -445,7 +445,8 @@ export function runStructureAudit(
             if (
               resolved.targetPackage !== packageInfo.name &&
               policy &&
-              !policy.allowedInternalImports.includes(resolved.targetPackage)
+              !policy.allowedInternalImports.includes(resolved.targetPackage) &&
+              !(profile.foundationalPackages ?? []).includes(resolved.targetPackage)
             ) {
               rawFindings.push({
                 id: `structure/layer-violation/${record.relativePath}:${line}:${column}`,

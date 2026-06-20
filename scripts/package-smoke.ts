@@ -41,6 +41,9 @@ const PACKAGES: readonly PackageSpec[] = [
   // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it
   // during `pnpm install`. No runtime `import()` smoke needed.
   { dir: 'packages/_spine', name: '@czap/_spine', imports: [] },
+  // @czap/error is the foundational zero-dep error algebra — every package's
+  // runtime dep; packed first so consumers resolve the declared workspace edge.
+  { dir: 'packages/error', name: '@czap/error', imports: ['@czap/error'] },
   { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
   { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
   { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },

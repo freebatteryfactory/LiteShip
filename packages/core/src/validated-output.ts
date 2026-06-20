@@ -25,6 +25,7 @@
  * @module
  */
 
+import { InvariantViolationError } from '@czap/error';
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { ReceiptSubject } from './receipt.js';
@@ -142,20 +143,23 @@ export function assertTokenBinds<T>(proposal: ValidatedProposal<T>): T {
   // reflection-forged token (symbol copied off a real token onto a new object) is
   // NOT a member, so it is refused here even though it carries the witness symbol.
   if (!mintedTokens.has(proposal.token)) {
-    throw new Error(
+    throw InvariantViolationError(
+      'validated-output.token',
       `ValidatedProposal token is not validator-minted (target=${proposal.target}); ` +
         'refusing to surface it for apply.',
     );
   }
   if (proposal.token.target !== proposal.target) {
-    throw new Error(
+    throw InvariantViolationError(
+      'validated-output.token',
       `ValidatedProposal target mismatch (proposal=${proposal.target}, token=${proposal.token.target}); ` +
         'refusing to surface it for apply.',
     );
   }
   const rederived = contentAddressOf({ target: proposal.target, payload: proposal.payload });
   if (rederived !== proposal.subject || proposal.token.subject !== proposal.subject) {
-    throw new Error(
+    throw InvariantViolationError(
+      'validated-output.token',
       `ValidatedProposal token does not bind to its payload (target=${proposal.target}). ` +
         'The proposal was altered after validation; refusing to surface it for apply.',
     );

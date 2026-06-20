@@ -6,7 +6,7 @@
 
 # Interface: CapsuleDef\<K, In, Out, R\>
 
-Defined in: [core/src/assembly.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L16)
+Defined in: [core/src/assembly.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L17)
 
 A capsule declaration plus its content-addressed id.
 
@@ -137,7 +137,7 @@ meaningful for `receiptedMutation` arms.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/assembly.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L17)
+Defined in: [core/src/assembly.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L18)
 
 #### Overrides
 

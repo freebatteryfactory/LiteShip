@@ -10,6 +10,7 @@ import type {
   CapsuleCommandResult,
   ContentAddress,
 } from '@czap/core';
+import { ValidationError } from '@czap/error';
 
 /**
  * Injected I/O surface for command handlers. Handlers receive their Node-coupled
@@ -250,8 +251,9 @@ function make(commands: readonly RegisteredCommand[]): CommandRegistryShape {
   for (const command of commands) {
     const { name } = command.descriptor;
     if (byName.has(name)) {
-      throw new Error(
-        `@czap/command: duplicate command name "${name}" — two RegisteredCommand entries share descriptor.name; check HANDLER_COMMANDS / CLI_OWNED_DESCRIPTORS in catalog.ts`,
+      throw ValidationError(
+        'command.registry',
+        `duplicate command name "${name}" — two RegisteredCommand entries share descriptor.name; check HANDLER_COMMANDS / CLI_OWNED_DESCRIPTORS in catalog.ts`,
       );
     }
     byName.set(name, command);

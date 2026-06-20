@@ -7,6 +7,7 @@
  */
 
 import { Effect } from 'effect';
+import { ParseError } from '@czap/error';
 import type { HLC } from './brands.js';
 import { TypedRef as TypedRefModule, type TypedRef } from './typed-ref.js';
 import { HLC as HLCOps } from './hlc.js';
@@ -395,12 +396,12 @@ export const macEnvelope = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.E
  * // valid === true if signature matches
  * ```
  */
-export const verifyMAC = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.Effect<boolean, Error> =>
+export const verifyMAC = (envelope: ReceiptEnvelope, key: CryptoKey): Effect.Effect<boolean, ParseError | Error> =>
   Effect.gen(function* () {
     if (!envelope.signature) return false;
     const signatureHex = envelope.signature;
     if (!/^[0-9a-fA-F]+$/.test(signatureHex) || signatureHex.length % 2 !== 0) {
-      return yield* Effect.fail(new Error('Invalid signature hex: expected even-length hex string'));
+      return yield* Effect.fail(ParseError('signature-hex', 'expected even-length hex string', { code: 'malformed' }));
     }
     const signatureArray = new Uint8Array(signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
     const data = new TextEncoder().encode(envelope.hash);

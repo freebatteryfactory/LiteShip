@@ -35,6 +35,11 @@ export interface PackagePlumbEntry {
 /** Every published package's live-runtime plumb status. */
 export const PACKAGE_PLUMB: Readonly<Record<string, PackagePlumbEntry>> = {
   // Live in a consumer site (SSR + client runtime / edge / build-plugin cast path).
+  '@czap/error': {
+    status: 'runtime',
+    reason:
+      'The foundational error algebra — every live failure path (runtime, edge, worker) throws/returns a @czap/error variant. Zero-dep; consumed by every package.',
+  },
   '@czap/astro': { status: 'runtime', reason: 'The Astro integration + client runtime — the primary live cast surface.' },
   '@czap/core': { status: 'runtime', reason: 'The kernel: signals, boundaries, evaluator, content-addressing, graph IR.' },
   '@czap/canonical': { status: 'runtime', reason: 'Canonical CBOR/FNV identity — consumed by core on the live path.' },

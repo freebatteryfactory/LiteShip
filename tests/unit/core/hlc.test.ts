@@ -177,7 +177,7 @@ describe('HLC', () => {
     });
 
     test('decode throws on invalid format', () => {
-      expect(() => HLC.decode('invalid')).toThrow('Invalid HLC format');
+      expect(() => HLC.decode('invalid')).toThrow(/colon-separated parts/);
     });
 
     test('decode throws on invalid wall_ms hex', () => {

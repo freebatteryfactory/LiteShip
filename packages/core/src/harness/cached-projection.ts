@@ -41,6 +41,7 @@ function fixtureBench(cap: CapsuleDef<'cachedProjection', unknown, unknown, unkn
 import { bench } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { IoError, ValidationError } from '@czap/error';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 
 const cap = ${ctx.bindingName};
@@ -49,13 +50,16 @@ const fixtureBytes = existsSync(fixtureAbs) ? (readFileSync(fixtureAbs).buffer a
 
 bench(\`${cap.name} — decode throughput (budget p95 \${String(cap.budgets.p95Ms ?? 'n/a')}ms)\`, async () => {
   if (fixtureBytes === undefined) {
-    throw new Error(
-      '${cap.name}: canonical fixture missing at ' + fixtureAbs + ' — restore ${ctx.fixturePath} (or fix the asset decl source) and re-run pnpm run capsule:compile',
+    throw IoError(
+      '${cap.name}.fixture',
+      'canonical fixture missing at ' + fixtureAbs + ' — restore ${ctx.fixturePath} (or fix the asset decl source) and re-run pnpm run capsule:compile',
+      { path: fixtureAbs },
     );
   }
   if (cap.derive === undefined) {
-    throw new Error(
-      '${cap.name}: capsule has no derive handler — defineAsset should resolve decl.decoder ?? builtinDecoderFor(kind); check packages/assets/src/contract.ts and re-run pnpm run capsule:compile',
+    throw ValidationError(
+      '${cap.name}.derive',
+      'capsule has no derive handler — defineAsset should resolve decl.decoder ?? builtinDecoderFor(kind); check packages/assets/src/contract.ts and re-run pnpm run capsule:compile',
     );
   }
   await cap.derive(fixtureBytes as never);
@@ -93,6 +97,7 @@ export function generateCachedProjection(
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { ValidationError } from '@czap/error';
 import { contentAddressOf } from '${contentAddressImport}';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
 
@@ -107,8 +112,9 @@ describe('${cap.name}', () => {
   // factory's transform). If the binding ever loses it, this fails RED here
   // rather than the fixture probes silently passing over a missing handler.
   if (cap.derive === undefined) {
-    throw new Error(
-      \`${cap.name}: capsule:compile emitted the real-only fixture form but the binding exposes no \\\`derive\\\` handler — the projection lost its transform (a defineAsset decoder or a projection factory's derive); fix the capsule and re-run pnpm run capsule:compile\`,
+    throw ValidationError(
+      '${cap.name}.derive',
+      \`capsule:compile emitted the real-only fixture form but the binding exposes no \\\`derive\\\` handler — the projection lost its transform (a defineAsset decoder or a projection factory's derive); fix the capsule and re-run pnpm run capsule:compile\`,
     );
   }
   const derive = cap.derive;
@@ -297,7 +303,7 @@ import { contentAddressOf } from '${contentAddressImport}';
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 ${fsImports}import { ${ctx.bindingName} } from '${ctx.bindingImport}';
-import { schemaToArbitrary, UnsupportedSchemaError } from '${arbitraryImport}';
+import { schemaToArbitrary, hasTag } from '${arbitraryImport}';
 
 describe('${cap.name}', () => {
   const cap = ${ctx.bindingName};
@@ -308,14 +314,14 @@ describe('${cap.name}', () => {
   } catch (err) {
     arbError = err;
   }
-  if (arbError !== undefined && !(arbError instanceof UnsupportedSchemaError)) {
+  if (arbError !== undefined && !hasTag(arbError, 'UnsupportedError')) {
     // Only a non-derivable schema is honest-skip material; anything else
     // (a defect in the arbitrary builder, a malformed capsule) must fail.
     throw arbError;
   }
   if (cap.derive === undefined || arbError !== undefined) {
     it.skip(
-      arbError instanceof UnsupportedSchemaError
+      hasTag(arbError, 'UnsupportedError')
         ? \`projection — input schema not arbitrary-derivable (\${arbError.message})\`
         : 'projection — capsule has no derive handler',
       () => {},

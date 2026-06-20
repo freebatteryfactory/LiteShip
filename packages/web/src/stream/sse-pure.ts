@@ -7,6 +7,7 @@
  */
 
 import { Millis } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import type { SSEMessage, ReconnectConfig } from '../types.js';
 
 const ARTIFACT_ID_PATTERN = /^[A-Za-z0-9:_-]+$/;
@@ -96,7 +97,8 @@ export const calculateDelay = (attempt: number, config: ReconnectConfig): number
  */
 export const validateArtifactId = (artifactId: string): string => {
   if (!ARTIFACT_ID_PATTERN.test(artifactId)) {
-    throw new Error(
+    throw ValidationError(
+      'sse.artifactId',
       `Invalid artifactId "${artifactId}". Allowed characters: letters, digits, ':', '_', '-' (it becomes a URL path segment), e.g. 'doc-123' or 'page:home'.`,
     );
   }

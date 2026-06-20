@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { ResourceNotFoundError } from './errors.js';
+import { NotFoundError } from '@czap/error';
 import { renderCapsuleInspectWidget } from './app-render.js';
 import type { McpUiResource, McpUiResourceContents, McpUiResourceMeta } from './ui-resources.js';
 
@@ -47,9 +47,9 @@ export function listAppResources(): readonly McpUiResource[] {
   return REGISTRY.map((entry) => entry.resource);
 }
 
-/** Read one app resource by exact `ui://liteship/app/…` URI. Unknown → {@link ResourceNotFoundError} (→ -32002). */
+/** Read one app resource by exact `ui://liteship/app/…` URI. Unknown → `NotFoundError` (→ -32002). */
 export function readAppResource(uri: string): McpUiResourceContents {
   const entry = BY_URI.get(uri);
-  if (!entry) throw new ResourceNotFoundError(uri);
+  if (!entry) throw NotFoundError('resource', uri);
   return { contents: [{ uri, mimeType: entry.resource.mimeType, text: entry.render(), _meta: entry.resource._meta }] };
 }

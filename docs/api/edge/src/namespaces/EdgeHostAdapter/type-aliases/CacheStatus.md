@@ -8,6 +8,6 @@
 
 > **CacheStatus** = [`EdgeHostCacheStatus`](../../../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [edge/src/host-adapter.ts:449](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L449)
+Defined in: [edge/src/host-adapter.ts:455](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L455)
 
 Alias for [EdgeHostCacheStatus](../../../type-aliases/EdgeHostCacheStatus.md).

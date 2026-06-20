@@ -45,6 +45,7 @@ import {
   HLC,
 } from '@czap/core';
 import { Effect } from 'effect';
+import { ValidationError } from '@czap/error';
 import { CSSCompiler } from '@czap/compiler';
 import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
@@ -125,8 +126,9 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
   // Boundary.make requires a non-empty tuple — validate before the cast lies,
   // so an empty ComponentNode fails with a clear message, not a cryptic one.
   if (at.length === 0) {
-    throw new Error(
-      `dual-export: ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
+    throw ValidationError(
+      'dual-export',
+      `ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
     );
   }
   return Boundary.make({

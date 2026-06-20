@@ -6,7 +6,7 @@
 
 # Interface: SurfacePolicyShape
 
-Defined in: [audit/src/devops-profile.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L21)
+Defined in: [audit/src/devops-profile.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L28)
 
 Structural shape of the surface policy the audit reads. Every field is
 OPTIONAL: an absent surface is a surface the profile never declared, so its
@@ -20,7 +20,7 @@ the fully-populated reference.
 
 > `readonly` `optional` **astroClientDirectives?**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L24)
+Defined in: [audit/src/devops-profile.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L31)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [audit/src/devops-profile.ts:24](https://github.com/heyoub/LiteShip/
 
 > `readonly` `optional` **astroPackage?**: `string`
 
-Defined in: [audit/src/devops-profile.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L23)
+Defined in: [audit/src/devops-profile.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L30)
 
 Astro host package name. Absent/empty — no Astro host, no astro checks.
 
@@ -38,7 +38,7 @@ Astro host package name. Absent/empty — no Astro host, no astro checks.
 
 > `readonly` `optional` **astroRuntimeFiles?**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L31)
+Defined in: [audit/src/devops-profile.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L38)
 
 Shared runtime adapter files, relative to the astro PACKAGE root (e.g.
 `'src/runtime/boundary.ts'`). Entries starting with `packages/` are
@@ -51,7 +51,7 @@ profiles.
 
 > `readonly` `optional` **knownCapabilityNotes?**: readonly `object`[]
 
-Defined in: [audit/src/devops-profile.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L41)
+Defined in: [audit/src/devops-profile.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L48)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [audit/src/devops-profile.ts:41](https://github.com/heyoub/LiteShip/
 
 > `readonly` `optional` **vitePackage?**: `string`
 
-Defined in: [audit/src/devops-profile.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L38)
+Defined in: [audit/src/devops-profile.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L45)
 
 Package owning the Vite virtual-module inventory (e.g. `'@czap/vite'`).
 When absent, the legacy repo-root-relative `packages/vite/...` location
@@ -71,7 +71,7 @@ is used so existing profiles keep working.
 
 > `readonly` `optional` **viteVirtualModules?**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L32)
+Defined in: [audit/src/devops-profile.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L39)
 
 ***
 
@@ -79,6 +79,6 @@ Defined in: [audit/src/devops-profile.ts:32](https://github.com/heyoub/LiteShip/
 
 > `readonly` `optional` **viteVirtualModulesFile?**: `string`
 
-Defined in: [audit/src/devops-profile.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L40)
+Defined in: [audit/src/devops-profile.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L47)
 
 Virtual-module inventory file, relative to `vitePackage`'s root.

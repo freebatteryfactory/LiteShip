@@ -12,6 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
+import { IoError } from '@czap/error';
 import fg from 'fast-glob';
 import ts from 'typescript';
 import { auditIgnoreGlobs, auditSourceGlobs, findAllowlistReason, normalizeRepoPath } from './policy.js';
@@ -47,9 +48,11 @@ export function readJsonFile<T>(filePath: string): T {
   try {
     return JSON.parse(readFileSync(filePath, 'utf8')) as T;
   } catch (cause) {
-    throw new Error(`Could not read ${filePath} as JSON: ${cause instanceof Error ? cause.message : String(cause)}`, {
-      cause,
-    });
+    throw IoError(
+      'readJsonFile',
+      `Could not read ${filePath} as JSON: ${cause instanceof Error ? cause.message : String(cause)}`,
+      { path: filePath, cause },
+    );
   }
 }
 

@@ -285,7 +285,7 @@ describe('Receipt', () => {
       const envelope = { ...chain[0]!, signature: 'ab cd ef' };
       const err = await Effect.runPromise(Receipt.verifyMAC(envelope, key).pipe(Effect.flip));
       expect(err).toBeInstanceOf(Error);
-      expect(err.message).toContain('Invalid signature hex');
+      expect(err.message).toContain('expected even-length hex string');
     });
 
     test('verifyMAC with odd-length hex fails', async () => {
@@ -294,7 +294,7 @@ describe('Receipt', () => {
       const envelope = { ...chain[0]!, signature: 'abc' };
       const err = await Effect.runPromise(Receipt.verifyMAC(envelope, key).pipe(Effect.flip));
       expect(err).toBeInstanceOf(Error);
-      expect(err.message).toContain('Invalid signature hex');
+      expect(err.message).toContain('expected even-length hex string');
     });
 
     test('verifyMAC with valid hex proceeds normally', async () => {

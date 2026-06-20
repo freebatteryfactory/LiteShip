@@ -8,6 +8,7 @@
  * @module
  */
 import type { ShipCapsule } from '@czap/core';
+import { UnsupportedError } from '@czap/error';
 
 const LIFECYCLE_KEYS = ['prepack', 'prepare', 'prepublishOnly', 'prepublish'] as const;
 
@@ -80,10 +81,10 @@ export function deriveBuildEnv(input: {
 }): ShipCapsule.BuildEnv {
   const { os, arch, nodeVersion, pmVersion } = input;
   if (os !== 'linux' && os !== 'darwin' && os !== 'win32') {
-    throw new Error(`czap ship: unsupported platform ${os} (ShipCapsule.BuildEnv only models linux/darwin/win32)`);
+    throw UnsupportedError('platform', `czap ship: ${os} (ShipCapsule.BuildEnv only models linux/darwin/win32)`);
   }
   if (arch !== 'x64' && arch !== 'arm64') {
-    throw new Error(`czap ship: unsupported arch ${arch} (ShipCapsule.BuildEnv only models x64/arm64)`);
+    throw UnsupportedError('arch', `czap ship: ${arch} (ShipCapsule.BuildEnv only models x64/arm64)`);
   }
   return { node_version: nodeVersion, pnpm_version: pmVersion, os, arch };
 }

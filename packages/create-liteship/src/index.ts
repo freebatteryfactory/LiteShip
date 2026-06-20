@@ -7,11 +7,11 @@
 
 import { createInterface } from 'node:readline/promises';
 import { relative } from 'node:path';
-import { scaffold, ScaffoldError } from './scaffold.js';
+import { hasTag } from '@czap/error';
+import { scaffold } from './scaffold.js';
 
 export {
   scaffold,
-  ScaffoldError,
   defaultTemplateDir,
   projectNameFromDir,
   type ScaffoldOptions,
@@ -93,7 +93,7 @@ export async function run(argv: readonly string[], io: RunIo = defaultIo): Promi
     );
     return 0;
   } catch (error) {
-    if (error instanceof ScaffoldError) {
+    if (hasTag(error, 'ValidationError')) {
       io.err(`${error.message}\n`);
       return 1;
     }

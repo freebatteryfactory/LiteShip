@@ -39,6 +39,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@czap/error": "workspace:*",
     "@noble/hashes": "^1.8.0"
   },
   "engines": {

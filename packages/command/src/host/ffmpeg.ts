@@ -9,6 +9,7 @@
 import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
 import type { VideoFrameOutput } from '@czap/core';
+import { HostCapabilityError, IoError } from '@czap/error';
 import { probeFfmpegRender } from './ffmpeg-probe.js';
 
 /** Options for `renderWithFfmpeg`. */
@@ -73,8 +74,9 @@ export async function renderWithFfmpeg(
       const diagnosis = probe.ok
         ? 'the encode probe passes, so inspect the ffmpeg stderr tail below'
         : `${probe.detail}${probe.hint ? ` — ${probe.hint}` : ''}`;
-      throw new Error(
-        `ffmpeg stdin closed before render finished: ${diagnosis}. ffmpeg stderr tail: ${stderrBuf.slice(-500) || message}`,
+      throw IoError(
+        'ffmpeg.render',
+        `stdin closed before render finished: ${diagnosis}. ffmpeg stderr tail: ${stderrBuf.slice(-500) || message}`,
         { cause: err },
       );
     }
@@ -92,7 +94,7 @@ export async function renderWithFfmpeg(
   await new Promise<void>((resolveExit, rejectExit) => {
     proc.on('close', (code) => {
       if (code === 0) resolveExit();
-      else rejectExit(new Error(`ffmpeg exited with code ${code}: ${stderrBuf.slice(0, 500)}`));
+      else rejectExit(IoError('ffmpeg.encode', `ffmpeg exited with code ${code}: ${stderrBuf.slice(0, 500)}`));
     });
     proc.on('error', (err) => rejectExit(err));
   });
@@ -102,13 +104,17 @@ export async function renderWithFfmpeg(
   try {
     size = statSync(opts.output).size;
   } catch (err) {
-    throw new Error(
-      `ffmpeg exited 0 but no output file at ${opts.output}: ${(err as Error).message}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+    throw IoError(
+      'ffmpeg.encode',
+      `ffmpeg exited 0 but no output file: ${(err as Error).message}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+      { path: opts.output, cause: err },
     );
   }
   if (size === 0) {
-    throw new Error(
-      `ffmpeg exited 0 but wrote a 0-byte file at ${opts.output}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+    throw IoError(
+      'ffmpeg.encode',
+      `ffmpeg exited 0 but wrote a 0-byte file\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+      { path: opts.output },
     );
   }
 
@@ -118,10 +124,9 @@ export async function renderWithFfmpeg(
 function assertFfmpegAvailable(): void {
   const probe = probeFfmpegRender();
   if (!probe.ok) {
-    throw new Error(
-      probe.hint
-        ? `ffmpeg scene rendering unavailable: ${probe.detail}. ${probe.hint}`
-        : `ffmpeg scene rendering unavailable: ${probe.detail}`,
+    throw HostCapabilityError(
+      'ffmpeg',
+      probe.hint ? `scene rendering: ${probe.detail}. ${probe.hint}` : `scene rendering: ${probe.detail}`,
     );
   }
 }

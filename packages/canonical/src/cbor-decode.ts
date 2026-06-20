@@ -3,8 +3,9 @@
  *
  * Reads ONLY the RFC 8949 §4.2.1 deterministic subset that the sibling
  * encoder (`./cbor.ts`) emits, and rejects everything else with a typed
- * {@link CborDecodeError}. This is the reader the encoder's bytes have
- * lacked: a persisted DocumentGraph (content-addressed via the encoder)
+ * {@link ParseError} (source `'cbor'`, `code` = the reason discriminant,
+ * `offset` = the byte position). This is the reader the encoder's bytes
+ * have lacked: a persisted DocumentGraph (content-addressed via the encoder)
  * can now be re-read without a third-party CBOR library that would accept
  * non-canonical encodings.
  *
@@ -17,7 +18,7 @@
  *   (encoded-byte) order → plain object.
  * - major 7: simple 20/21/22 → `false`/`true`/`null`; simple 27 → float64.
  *
- * Rejected (typed `CborDecodeError`):
+ * Rejected (typed `ParseError`, `code` carries the reason):
  * - non-shortest integer/length encodings (`'non_canonical'`).
  * - float16 (ai=25) and float32 (ai=26) in major 7 (`'non_canonical'`).
  * - indefinite-length items (ai=31) (`'non_canonical'`).
@@ -29,20 +30,17 @@
  * @module
  */
 
-/** Reason a {@link CborDecodeError} was raised. */
-export type CborDecodeErrorReason = 'non_canonical' | 'malformed' | 'unexpected_eof';
+import { ParseError } from '@czap/error';
 
-/** Typed error for any input outside the canonical subset. */
-export class CborDecodeError extends Error {
-  readonly reason: CborDecodeErrorReason;
-  /** Byte offset where decoding failed (best effort). */
-  readonly offset: number;
-  constructor(reason: CborDecodeErrorReason, message: string, offset: number) {
-    super(`CborDecodeError[${reason}] @${offset}: ${message}`);
-    this.name = 'CborDecodeError';
-    this.reason = reason;
-    this.offset = offset;
-  }
+/**
+ * The reason a canonical-CBOR {@link ParseError} was raised. Carried in the
+ * error's `code` field; kept local to constrain the value at every throw site.
+ */
+type CborDecodeErrorReason = 'non_canonical' | 'malformed' | 'unexpected_eof';
+
+/** Raise a canonical-CBOR {@link ParseError}: `code` = reason, `offset` = byte position. */
+function fail(reason: CborDecodeErrorReason, message: string, offset: number): never {
+  throw ParseError('cbor', message, { code: reason, offset });
 }
 
 const textDecoder = new TextDecoder('utf-8', { fatal: true });
@@ -67,11 +65,7 @@ class Reader {
 
   private need(n: number): void {
     if (this.pos + n > this.bytes.length) {
-      throw new CborDecodeError(
-        'unexpected_eof',
-        `need ${n} byte(s) but only ${this.bytes.length - this.pos} remain`,
-        this.pos,
-      );
+      fail('unexpected_eof', `need ${n} byte(s) but only ${this.bytes.length - this.pos} remain`, this.pos);
     }
   }
 
@@ -102,7 +96,7 @@ function readArgument(r: Reader, ai: number, headOffset: number): number {
     const v = r.u8();
     // Shortest form: values < 24 must use the single-byte head.
     if (v < 24) {
-      throw new CborDecodeError('non_canonical', `1-byte argument ${v} should be inlined`, headOffset);
+      fail('non_canonical', `1-byte argument ${v} should be inlined`, headOffset);
     }
     return v;
   }
@@ -111,7 +105,7 @@ function readArgument(r: Reader, ai: number, headOffset: number): number {
     const b1 = r.u8();
     const v = (b0 << 8) | b1;
     if (v < 0x100) {
-      throw new CborDecodeError('non_canonical', `2-byte argument ${v} should use a shorter head`, headOffset);
+      fail('non_canonical', `2-byte argument ${v} should use a shorter head`, headOffset);
     }
     return v;
   }
@@ -122,7 +116,7 @@ function readArgument(r: Reader, ai: number, headOffset: number): number {
     const b3 = r.u8();
     const v = (b0 * 0x1000000 + (b1 << 16) + (b2 << 8) + b3) >>> 0;
     if (v < 0x10000) {
-      throw new CborDecodeError('non_canonical', `4-byte argument ${v} should use a shorter head`, headOffset);
+      fail('non_canonical', `4-byte argument ${v} should use a shorter head`, headOffset);
     }
     return v;
   }
@@ -131,18 +125,18 @@ function readArgument(r: Reader, ai: number, headOffset: number): number {
     const lo = (r.u8() * 0x1000000 + (r.u8() << 16) + (r.u8() << 8) + r.u8()) >>> 0;
     const v = hi * 0x100000000 + lo;
     if (hi === 0 && lo < 0x100000000) {
-      throw new CborDecodeError('non_canonical', `8-byte argument ${v} should use a shorter head`, headOffset);
+      fail('non_canonical', `8-byte argument ${v} should use a shorter head`, headOffset);
     }
     if (!Number.isSafeInteger(v)) {
-      throw new CborDecodeError('malformed', `integer ${v} exceeds the encoder's safe-integer range`, headOffset);
+      fail('malformed', `integer ${v} exceeds the encoder's safe-integer range`, headOffset);
     }
     return v;
   }
   // ai 28, 29, 30 are reserved; ai 31 is indefinite length.
   if (ai === 31) {
-    throw new CborDecodeError('non_canonical', 'indefinite-length items are not canonical', headOffset);
+    fail('non_canonical', 'indefinite-length items are not canonical', headOffset);
   }
-  throw new CborDecodeError('malformed', `reserved additional-info value ${ai}`, headOffset);
+  fail('malformed', `reserved additional-info value ${ai}`, headOffset);
 }
 
 function decodeFloat64(r: Reader): number {
@@ -166,7 +160,7 @@ function decodeItem(r: Reader): unknown {
       const arg = readArgument(r, ai, headOffset);
       const v = -1 - arg;
       if (!Number.isSafeInteger(v)) {
-        throw new CborDecodeError('malformed', `negative integer ${v} out of safe range`, headOffset);
+        fail('malformed', `negative integer ${v} out of safe range`, headOffset);
       }
       return v;
     }
@@ -183,7 +177,7 @@ function decodeItem(r: Reader): unknown {
       try {
         return textDecoder.decode(raw);
       } catch {
-        throw new CborDecodeError('malformed', 'invalid UTF-8 in text string', headOffset);
+        fail('malformed', 'invalid UTF-8 in text string', headOffset);
       }
     }
     case 4: {
@@ -205,7 +199,7 @@ function decodeItem(r: Reader): unknown {
         const keyHead = r.bytes[r.pos];
         // The encoder only ever emits string keys (major 3). Enforce that.
         if (keyHead === undefined || keyHead >> 5 !== 3) {
-          throw new CborDecodeError('malformed', 'map keys must be text strings', keyOffset);
+          fail('malformed', 'map keys must be text strings', keyOffset);
         }
         const keyStart = r.pos;
         const key = decodeItem(r) as string;
@@ -213,10 +207,10 @@ function decodeItem(r: Reader): unknown {
         if (prevKeyBytes !== null) {
           const cmp = compareBytes(prevKeyBytes, keyBytes);
           if (cmp > 0) {
-            throw new CborDecodeError('non_canonical', 'map keys are not in canonical byte order', keyOffset);
+            fail('non_canonical', 'map keys are not in canonical byte order', keyOffset);
           }
           if (cmp === 0) {
-            throw new CborDecodeError('non_canonical', 'duplicate map key', keyOffset);
+            fail('non_canonical', 'duplicate map key', keyOffset);
           }
         }
         prevKeyBytes = keyBytes;
@@ -245,27 +239,23 @@ function decodeItem(r: Reader): unknown {
         case 22:
           return null;
         case 25:
-          throw new CborDecodeError('non_canonical', 'float16 is not in the canonical subset', headOffset);
+          return fail('non_canonical', 'float16 is not in the canonical subset', headOffset);
         case 26:
-          throw new CborDecodeError('non_canonical', 'float32 is not in the canonical subset', headOffset);
+          return fail('non_canonical', 'float32 is not in the canonical subset', headOffset);
         case 27:
           return decodeFloat64(r);
         case 31:
-          throw new CborDecodeError('non_canonical', 'indefinite-length break is not canonical', headOffset);
+          return fail('non_canonical', 'indefinite-length break is not canonical', headOffset);
         case 23:
           // `undefined` (simple 23) is never emitted — encoder coerces it to null.
-          throw new CborDecodeError(
-            'non_canonical',
-            'simple value `undefined` is not in the canonical subset',
-            headOffset,
-          );
+          return fail('non_canonical', 'simple value `undefined` is not in the canonical subset', headOffset);
         default:
-          throw new CborDecodeError('malformed', `unsupported simple/float value (ai=${ai})`, headOffset);
+          return fail('malformed', `unsupported simple/float value (ai=${ai})`, headOffset);
       }
     }
     default:
       // Major 6 (tags) is not part of the encoder's output.
-      throw new CborDecodeError('malformed', `unsupported major type ${major}`, headOffset);
+      return fail('malformed', `unsupported major type ${major}`, headOffset);
   }
 }
 
@@ -274,18 +264,19 @@ function decodeItem(r: Reader): unknown {
  *
  * Strict: any deviation from the RFC 8949 §4.2.1 deterministic subset the
  * encoder emits (non-shortest forms, float16/32, indefinite lengths,
- * out-of-order map keys, trailing bytes) raises a typed {@link CborDecodeError}.
+ * out-of-order map keys, trailing bytes) raises a typed {@link ParseError}
+ * (source `'cbor'`, `code` = the reason discriminant).
  *
- * @throws {CborDecodeError}
+ * @throws A `@czap/error` {@link ParseError} (`source` `'cbor'`).
  */
 export function decode(bytes: Uint8Array): unknown {
   if (!(bytes instanceof Uint8Array)) {
-    throw new CborDecodeError('malformed', 'input must be a Uint8Array', 0);
+    fail('malformed', 'input must be a Uint8Array', 0);
   }
   const r = new Reader(bytes);
   const value = decodeItem(r);
   if (r.pos !== bytes.length) {
-    throw new CborDecodeError('malformed', `trailing ${bytes.length - r.pos} byte(s) after top-level item`, r.pos);
+    fail('malformed', `trailing ${bytes.length - r.pos} byte(s) after top-level item`, r.pos);
   }
   return value;
 }

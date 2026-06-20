@@ -10,6 +10,8 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -75,7 +77,8 @@ function normalizePrefix(prefix: string): string {
   const normalized = prefix.toLowerCase();
   if (!SAFE_PREFIX_PATTERN.test(normalized)) {
     const suggestion = prefix.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    throw new Error(
+    throw ValidationError(
+      'theme.compile',
       `Invalid theme prefix "${prefix}". Why: prefixes become --<prefix>-* CSS custom property names and must contain only lowercase letters, digits, and hyphens. Fix: use "${suggestion}" instead.`,
     );
   }
@@ -90,7 +93,8 @@ function normalizePrefix(prefix: string): string {
 function formatValue(value: string | number, tokenName: string): string {
   const formatted = typeof value === 'number' ? String(value) : value;
   if (UNSAFE_CSS_VALUE_PATTERN.test(formatted)) {
-    throw new Error(
+    throw ValidationError(
+      'theme.compile',
       `Unsafe theme token "${tokenName}" value "${formatted}" contains forbidden characters (;, {, }, <, >) and cannot be serialized into CSS safely. Fix: remove those characters from the token value.`,
     );
   }

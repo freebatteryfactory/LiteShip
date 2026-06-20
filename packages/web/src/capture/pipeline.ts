@@ -11,6 +11,7 @@
  */
 
 import type { VideoRenderer, FrameCapture, CaptureResult } from '@czap/core';
+import { HostCapabilityError } from '@czap/error';
 import { renderToCanvas, type Canvas2DTarget, type RenderFn } from './render.js';
 
 function createRenderCanvas(width: number, height: number): Canvas2DTarget {
@@ -25,7 +26,10 @@ function createRenderCanvas(width: number, height: number): Canvas2DTarget {
     return canvas;
   }
 
-  throw new Error('captureVideo requires OffscreenCanvas or HTMLCanvasElement support.');
+  throw HostCapabilityError(
+    'OffscreenCanvas/HTMLCanvasElement',
+    'captureVideo requires OffscreenCanvas or HTMLCanvasElement support.',
+  );
 }
 
 async function toCaptureBitmap(canvas: Canvas2DTarget): Promise<ImageBitmap | OffscreenCanvas> {
@@ -37,7 +41,10 @@ async function toCaptureBitmap(canvas: Canvas2DTarget): Promise<ImageBitmap | Of
     return createImageBitmap(canvas);
   }
 
-  throw new Error('captureVideo requires createImageBitmap when OffscreenCanvas is unavailable.');
+  throw HostCapabilityError(
+    'createImageBitmap',
+    'captureVideo requires createImageBitmap when OffscreenCanvas is unavailable.',
+  );
 }
 
 /**

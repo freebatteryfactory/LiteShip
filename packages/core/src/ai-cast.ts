@@ -48,6 +48,7 @@ import { GraphPatch } from './graph-patch.js';
 import type { PatchOp } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
 import { mintValidated, assertTokenBinds } from './validated-output.js';
+import { InvariantViolationError, ValidationError } from '@czap/error';
 
 // genui types are re-anchored from the shared spine (the same source `@czap/genui`
 // uses) — TYPES ONLY, no genui runtime import, so the cast stays pure and core
@@ -405,8 +406,9 @@ export function castContext(graph: DocumentGraph, options: CastContextOptions = 
       proposalSchemas.push(graphPatchProposalSchema(graph.id));
     } else if (target === 'generated-ui') {
       if (!options.catalog) {
-        throw new Error(
-          "castContext: target 'generated-ui' requires a host component catalog (options.catalog). " +
+        throw ValidationError(
+          'AICast.castContext',
+          "target 'generated-ui' requires a host component catalog (options.catalog). " +
             'The advertised UI schema must enumerate the catalog the host can render.',
         );
       }
@@ -708,7 +710,8 @@ export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedPro
   // generated-ui proposal could otherwise be handed here and its UI-tree payload fed to
   // the graph mutator. Pin the target before anything else.
   if (proposal.target !== 'graph-patch') {
-    throw new Error(
+    throw InvariantViolationError(
+      'ai-cast.apply-contract',
       `applyValidatedPatch: expected a 'graph-patch' proposal but got '${proposal.target}'; refusing to apply.`,
     );
   }
@@ -721,7 +724,8 @@ export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedPro
   assertTokenBinds(proposal);
   // Bind the proposal to the graph it was validated against (its pinned `base`).
   if (proposal.payload.base !== graph.id) {
-    throw new Error(
+    throw InvariantViolationError(
+      'ai-cast.apply-contract',
       `applyValidatedPatch: proposal was validated against graph ${proposal.payload.base} but is being applied to ${graph.id}. ` +
         'The graph advanced after validation; refusing to apply. Re-validate the proposal against the current graph.',
     );

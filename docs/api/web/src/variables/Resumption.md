@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:386](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L386)
+Defined in: [web/src/stream/resumption.ts:403](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L403)
 
 SSE resumption protocol namespace.
 
@@ -140,7 +140,7 @@ Legacy: numeric ("123"), prefixed ("evt-123"), dash-decimal resumption ids.
 
 ### resume
 
-> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `Error`\>
+> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
 
 Resume from a disconnection, choosing between event replay (small gap)
 and full snapshot (large gap or no prior state).
@@ -167,7 +167,7 @@ Optional partial config overriding defaults
 
 #### Returns
 
-`Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `Error`\>
+`Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
 
 An Effect yielding a [ResumeResponse](../type-aliases/ResumeResponse.md)
 

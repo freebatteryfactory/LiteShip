@@ -6,7 +6,7 @@
 
 # Interface: BoundaryManifestEntry
 
-Defined in: [edge/src/manifest.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L102)
+Defined in: [edge/src/manifest.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L103)
 
 One boundary's manifest entry: its minted `ContentAddress` (always
 `Boundary.make`'s id -- never hand-typed) plus precompiled
@@ -30,7 +30,7 @@ derive cache configuration from it.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [edge/src/manifest.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L104)
+Defined in: [edge/src/manifest.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L105)
 
 Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
@@ -40,7 +40,7 @@ Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
 > `readonly` **outputs**: readonly [`CompiledOutputs`](CompiledOutputs.md)[]
 
-Defined in: [edge/src/manifest.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L106)
+Defined in: [edge/src/manifest.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L107)
 
 Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into it.
 
@@ -50,6 +50,6 @@ Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into
 
 > `readonly` **outputsByTier**: `Readonly`\<`Partial`\<`Record`\<[`TierKey`](../type-aliases/TierKey.md), `number`\>\>\>
 
-Defined in: [edge/src/manifest.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L108)
+Defined in: [edge/src/manifest.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L109)
 
 Pool index per [TierKey](../type-aliases/TierKey.md); missing keys mean that tier was never compiled.

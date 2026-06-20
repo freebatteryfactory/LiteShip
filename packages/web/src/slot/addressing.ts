@@ -4,6 +4,7 @@
  * Slots are forward-slash prefixed paths that address DOM regions.
  */
 
+import { ValidationError } from '@czap/error';
 import { SlotPath } from '../types.js';
 export { SlotPath } from '../types.js';
 
@@ -18,7 +19,8 @@ const ROOT: SlotPath = SlotPath('/');
  */
 export const parse = (path: string): SlotPath => {
   if (!isValid(path)) {
-    throw new Error(
+    throw ValidationError(
+      'slot.addressing',
       `Invalid slot path: ${path}. Must start with "/" and contain only alphanumeric, hyphens, underscores, e.g. "/hero" or "/sidebar/nav".`,
     );
   }

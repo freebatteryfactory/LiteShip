@@ -7,7 +7,8 @@
 
 import { describe, test, expect } from 'vitest';
 import { Effect, Schema } from 'effect';
-import { Boundary, Composable, ComposableWorld, CzapValidationError, Part, Style, Token, World } from '@czap/core';
+import { Boundary, Composable, ComposableWorld, Part, Style, Token, World } from '@czap/core';
+import { hasTag } from '@czap/error';
 
 const boundary = Boundary.make({
   input: 'viewport.width',
@@ -235,7 +236,12 @@ describe('ECS Composable Infrastructure', () => {
     expect(Array.from(store.view())).toEqual([10, 25, 30]);
     expect(store.entities()).toEqual([idA, idB, idC]);
 
-    expect(() => store.set(idD, 40)).toThrow(CzapValidationError);
+    try {
+      store.set(idD, 40);
+      expect.unreachable('expected set to throw at capacity');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+    }
     expect(store.delete(idB)).toBe(true);
     expect(store.count).toBe(2);
     expect(store.get(idB)).toBeUndefined();

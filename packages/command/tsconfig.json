@@ -14,9 +14,12 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@czap/error": ["../error/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../assets" }]
+  "references": [{ "path": "../core" }, { "path": "../assets" }, { "path": "../error" }]
 }

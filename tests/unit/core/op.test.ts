@@ -174,8 +174,8 @@ describe('Op.timeout', () => {
         }),
     );
 
-    await expect(Effect.runPromise(Op.timeout(slow, Millis(1)).run())).rejects.toEqual(
-      new Error('Op timed out after 1ms'),
+    await expect(Effect.runPromise(Op.timeout(slow, Millis(1)).run())).rejects.toThrow(
+      'Op timed out after 1ms',
     );
   });
 });

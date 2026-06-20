@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
+    "@czap/error": "workspace:*",
     "@czap/genui": "workspace:*",
     "mediabunny": "^1.39.2"
   },

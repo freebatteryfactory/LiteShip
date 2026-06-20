@@ -153,7 +153,7 @@ describe('ffmpeg EPIPE failure re-runs the probe for a platform diagnosis', () =
       () => undefined,
       (err: Error) => err.message,
     );
-    expect(rejection).toContain('ffmpeg stdin closed before render finished');
+    expect(rejection).toContain('stdin closed before render finished');
     // On a render-capable machine the probe passes, so the message directs
     // the reader to the stderr tail instead of guessing about libx264.
     expect(rejection).toContain('ffmpeg stderr tail');

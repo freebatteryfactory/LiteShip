@@ -8,6 +8,7 @@
 
 import type { Effect } from 'effect';
 import { Ref } from 'effect';
+import { InvariantViolationError, ParseError } from '@czap/error';
 
 // Hybrid Logical Clock: physical wall-clock + logical counter for causal ordering. DagPosition encodes (timestamp, counter, nodeId) for DAG vertex identity.
 
@@ -76,7 +77,8 @@ const _increment = (hlc: HLCShape, now: number = 0): HLCShape => {
   if (newWallMs === hlc.wall_ms) {
     const next = hlc.counter + 1;
     if (next > MAX_COUNTER)
-      throw new Error(
+      throw InvariantViolationError(
+        'hlc.counter',
         `HLC counter overflow: exceeded ${MAX_COUNTER} (>65535 events in 1ms — consider batching or increasing clock resolution)`,
       );
     return { wall_ms: newWallMs, counter: next, node_id: hlc.node_id };
@@ -114,7 +116,8 @@ const _merge = (local: HLCShape, remote: HLCShape, now: number = 0): HLCShape =>
     newCounter = 0;
   }
   if (newCounter > MAX_COUNTER)
-    throw new Error(
+    throw InvariantViolationError(
+      'hlc.counter',
       `HLC counter overflow: exceeded ${MAX_COUNTER} (>65535 events in 1ms — consider batching or increasing clock resolution)`,
     );
   return { wall_ms: newWallMs, counter: newCounter, node_id: local.node_id };
@@ -152,12 +155,13 @@ const _encode = (hlc: HLCShape): string => {
  */
 const _decode = (s: string): HLCShape => {
   const parts = s.split(':');
-  if (parts.length < 3) throw new Error(`Invalid HLC format: expected at least 3 colon-separated parts, got "${s}"`);
+  if (parts.length < 3)
+    throw ParseError('hlc', `expected at least 3 colon-separated parts, got "${s}"`, { code: 'malformed' });
   const wall_ms = parseInt(parts[0]!, 16);
   const counter = parseInt(parts[1]!, 16);
   const node_id = parts.slice(2).join(':');
-  if (isNaN(wall_ms)) throw new Error(`Invalid HLC format: wall_ms is not valid hex in "${s}"`);
-  if (isNaN(counter)) throw new Error(`Invalid HLC format: counter is not valid hex in "${s}"`);
+  if (isNaN(wall_ms)) throw ParseError('hlc', `wall_ms is not valid hex in "${s}"`, { code: 'malformed' });
+  if (isNaN(counter)) throw ParseError('hlc', `counter is not valid hex in "${s}"`, { code: 'malformed' });
   return { wall_ms, counter, node_id };
 };
 

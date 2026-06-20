@@ -51,7 +51,8 @@
   "dependencies": {
     "@czap/core": "workspace:*",
     "@czap/compiler": "workspace:*",
-    "@czap/edge": "workspace:*"
+    "@czap/edge": "workspace:*",
+    "@czap/error": "workspace:*"
   },
   "peerDependencies": {
     "vite": ">=8.0.0"

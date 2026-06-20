@@ -8,6 +8,6 @@
 
 > **BoundaryConfig** = [`EdgeHostBoundaryConfig`](../../../interfaces/EdgeHostBoundaryConfig.md)
 
-Defined in: [edge/src/host-adapter.ts:455](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L455)
+Defined in: [edge/src/host-adapter.ts:461](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L461)
 
 Alias for [EdgeHostBoundaryConfig](../../../interfaces/EdgeHostBoundaryConfig.md).

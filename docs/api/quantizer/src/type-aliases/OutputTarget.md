@@ -8,7 +8,7 @@
 
 > **OutputTarget** = `"css"` \| `"glsl"` \| `"wgsl"` \| `"aria"` \| `"ai"`
 
-Defined in: [quantizer/src/quantizer.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L62)
+Defined in: [quantizer/src/quantizer.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L56)
 
 Compilation target for quantizer per-state outputs.
 

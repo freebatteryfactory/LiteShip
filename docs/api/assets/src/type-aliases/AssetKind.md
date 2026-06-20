@@ -8,6 +8,6 @@
 
 > **AssetKind** = `"audio"` \| `"video"` \| `"image"` \| `"beat-markers"` \| `"onsets"` \| `"waveform"`
 
-Defined in: [assets/src/contract.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L24)
+Defined in: [assets/src/contract.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L25)
 
 Supported asset kinds.

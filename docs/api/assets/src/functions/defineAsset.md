@@ -8,7 +8,7 @@
 
 > **defineAsset**\<`K`\>(`decl`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>, `unknown`\>
 
-Defined in: [assets/src/contract.ts:247](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L247)
+Defined in: [assets/src/contract.ts:252](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L252)
 
 Declare an asset as a cachedProjection capsule + register in the
 module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`

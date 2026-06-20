@@ -8,7 +8,7 @@
 
 > **readSourceFileRecords**(`root?`): readonly [`SourceFileRecord`](../interfaces/SourceFileRecord.md)[]
 
-Defined in: [audit/src/shared.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L153)
+Defined in: [audit/src/shared.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L156)
 
 ## Parameters
 

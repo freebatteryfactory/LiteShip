@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin } from 'vite';
 import type { Boundary, Token, Theme, Style } from '@czap/core';
 import type { BoundaryManifest } from '@czap/edge';
+import { ValidationError } from '@czap/error';
 import { collectBoundaryManifest } from './boundary-manifest.js';
 import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
@@ -97,7 +98,8 @@ function resolveEnvironmentNames(configured?: readonly string[]): readonly CzapE
   if (configured === undefined) return DEFAULT_ENVIRONMENTS;
   const unknown = configured.filter((name) => !VALID_ENVIRONMENTS.includes(name as CzapEnvironmentName));
   if (unknown.length > 0) {
-    throw new Error(
+    throw ValidationError(
+      'vite-plugin',
       `[@czap/vite] Unknown environment ${unknown.map((n) => `"${n}"`).join(', ')} in czap({ environments }). ` +
         `Supported environments are: ${VALID_ENVIRONMENTS.map((n) => `'${n}'`).join(', ')}. ` +
         `Omit the option to default to ['browser'].`,

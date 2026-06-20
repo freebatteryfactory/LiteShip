@@ -10,9 +10,9 @@
 import { describe, expect, it } from 'vitest';
 import { Effect, Schema } from 'effect';
 import * as fc from 'fast-check';
+import { hasTag } from '@czap/error';
 import {
   schemaToArbitrary,
-  UnsupportedSchemaError,
   withArbitrary,
   ArbitraryAnnotationId,
 } from '../../packages/core/src/harness/arbitrary-from-schema.js';
@@ -111,16 +111,10 @@ describe('schemaToArbitrary', () => {
     expectAllDecode(schema, arb);
   });
 
-  it('throws UnsupportedSchemaError for genuinely-opaque Declaration nodes', () => {
+  it('throws UnsupportedError for genuinely-opaque Declaration nodes', () => {
     // A user class is an opaque Declaration: it carries no constructor
     // annotation and rejects every recognised sentinel, so the walker
     // throws rather than blanket-accepting all declarations.
-    class OpaqueThing {}
-    const schema = Schema.instanceOf(OpaqueThing);
-    expect(() => schemaToArbitrary(schema)).toThrow(UnsupportedSchemaError);
-  });
-
-  it('throws UnsupportedSchemaError naming the unsupported node tag', () => {
     class OpaqueThing {}
     const schema = Schema.instanceOf(OpaqueThing);
     let caught: unknown;
@@ -129,8 +123,20 @@ describe('schemaToArbitrary', () => {
     } catch (err) {
       caught = err;
     }
-    expect(caught).toBeInstanceOf(UnsupportedSchemaError);
-    expect((caught as UnsupportedSchemaError).nodeTag).toBe('Declaration');
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
+  });
+
+  it('throws UnsupportedError naming the unsupported node tag', () => {
+    class OpaqueThing {}
+    const schema = Schema.instanceOf(OpaqueThing);
+    let caught: unknown;
+    try {
+      schemaToArbitrary(schema);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
+    expect(hasTag(caught, 'UnsupportedError') && caught.subject).toBe('Declaration');
   });
 
   it('handles Schema.instanceOf(Uint8Array) via the sentinel probe', () => {
@@ -224,12 +230,16 @@ describe('schemaToArbitrary', () => {
     );
   });
 
-  it('throws UnsupportedSchemaError for unhandled AST tags (Schema.Never)', () => {
+  it('throws UnsupportedError for unhandled AST tags (Schema.Never)', () => {
     // Schema.Never has _tag 'Never' which the walker does not handle —
     // exercises the switch's default-case throw.
-    expect(() => schemaToArbitrary(Schema.Never)).toThrow(
-      UnsupportedSchemaError,
-    );
+    let caught: unknown;
+    try {
+      schemaToArbitrary(Schema.Never);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
   });
 
   it('handles Schema.Enum', () => {
@@ -402,6 +412,12 @@ describe('withArbitrary / ArbitraryAnnotationId — explicit author-supplied arb
       // Intentionally wrong: returns a non-Arbitrary.
       (() => 'not-an-arbitrary') as unknown as () => fc.Arbitrary<unknown>,
     );
-    expect(() => schemaToArbitrary(schema)).toThrow(UnsupportedSchemaError);
+    let caught: unknown;
+    try {
+      schemaToArbitrary(schema);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
   });
 });

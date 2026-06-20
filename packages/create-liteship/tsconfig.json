@@ -15,8 +15,12 @@
     "rootDir": "./src",
     "composite": true,
     "noUncheckedIndexedAccess": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@czap/error": ["../error/src/index.ts"]
+    }
   },
+  "references": [{ "path": "../error" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "templates"]
 }

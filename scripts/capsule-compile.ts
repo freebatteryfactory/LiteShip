@@ -27,10 +27,8 @@ import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 import * as fc from 'fast-check';
-import {
-  schemaToArbitrary,
-  UnsupportedSchemaError,
-} from '../packages/core/src/harness/arbitrary-from-schema.js';
+import { hasTag } from '@czap/error';
+import { schemaToArbitrary } from '../packages/core/src/harness/arbitrary-from-schema.js';
 
 /**
  * Atomic write via tmp file + rename. Concurrent gauntlet test workers
@@ -209,7 +207,7 @@ interface BindingProbe {
  * `it(...)` block instead of an `it.skip` placeholder — closing the
  * built-not-plumbed gap at the source rather than shipping a green skip.
  *
- * Probing is best-effort: a non-derivable schema (`UnsupportedSchemaError`)
+ * Probing is best-effort: a non-derivable schema (a tagged `UnsupportedError`)
  * or a missing handler simply leaves the template on its self-reporting
  * runtime branch. Any OTHER failure (import error, walker defect) is
  * re-thrown — silently degrading to a skip would launder a real break.
@@ -255,7 +253,7 @@ async function probeBinding(
         schemaToArbitrary(schema as never);
         return true;
       } catch (err) {
-        if (!(err instanceof UnsupportedSchemaError)) throw err;
+        if (!hasTag(err, 'UnsupportedError')) throw err;
         return false;
       }
     };
@@ -284,7 +282,7 @@ async function probeBinding(
   try {
     arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
   } catch (err) {
-    if (!(err instanceof UnsupportedSchemaError)) throw err;
+    if (!hasTag(err, 'UnsupportedError')) throw err;
     arb = undefined;
   }
   const arbitraryDerivable = arb !== undefined;
@@ -532,7 +530,7 @@ function resolveRoundTripSchema(
       schemaToArbitrary(schema as never);
       return true;
     } catch (err) {
-      if (!(err instanceof UnsupportedSchemaError)) throw err;
+      if (!hasTag(err, 'UnsupportedError')) throw err;
       return false;
     }
   };
@@ -542,7 +540,7 @@ function resolveRoundTripSchema(
       schemaToArbitrary(schema as never);
       return true;
     } catch (err) {
-      if (!(err instanceof UnsupportedSchemaError)) throw err;
+      if (!hasTag(err, 'UnsupportedError')) throw err;
       return false;
     }
   };

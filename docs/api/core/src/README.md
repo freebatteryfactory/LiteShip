@@ -60,10 +60,6 @@ plan graph, ECS, capsule factory).
 - [World](namespaces/World/README.md)
 - [Zap](namespaces/Zap/README.md)
 
-## Classes
-
-- [CzapValidationError](classes/CzapValidationError.md)
-
 ## Interfaces
 
 - [AIContext](interfaces/AIContext.md)
@@ -304,7 +300,6 @@ plan graph, ECS, capsule factory).
 - [inputToSource](functions/inputToSource.md)
 - [isCell](functions/isCell.md)
 - [isDerived](functions/isDerived.md)
-- [isValidationError](functions/isValidationError.md)
 - [isWire](functions/isWire.md)
 - [isZap](functions/isZap.md)
 - [linearizeGraph](functions/linearizeGraph.md)

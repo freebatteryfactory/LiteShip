@@ -8,7 +8,7 @@
 
 > **getCapsuleCatalog**(): readonly [`CapsuleDef`](../interfaces/CapsuleDef.md)\<[`AssemblyKind`](../type-aliases/AssemblyKind.md), `unknown`, `unknown`, `unknown`\>[]
 
-Defined in: [core/src/assembly.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L104)
+Defined in: [core/src/assembly.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L108)
 
 Read-only snapshot of all registered capsules.
 

@@ -16,10 +16,17 @@
     "composite": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"]
+      "@czap/_spine": ["../_spine/index.d.ts"],
+      "@czap/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../core" }, { "path": "../command" }, { "path": "../compiler" }, { "path": "../genui" }]
+  "references": [
+    { "path": "../core" },
+    { "path": "../command" },
+    { "path": "../compiler" },
+    { "path": "../genui" },
+    { "path": "../error" }
+  ]
 }

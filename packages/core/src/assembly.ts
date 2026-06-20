@@ -6,6 +6,7 @@
  * @module
  */
 
+import { InvariantViolationError } from '@czap/error';
 import type { CapsuleContract, AssemblyKind } from './capsule.js';
 import type { ContentAddress } from './brands.js';
 import { fnv1aBytes } from './fnv.js';
@@ -69,7 +70,8 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
     const exemptsAsEffect = decl.receiptKind === 'effect-outcome';
     const hasReason = typeof decl.reason === 'string' && decl.reason.trim().length > 0;
     if (!hasMutate && !exemptsAsEffect) {
-      throw new Error(
+      throw InvariantViolationError(
+        'assembly.contract',
         `receiptedMutation capsule "${decl.name}" declares neither a pure \`mutate\` core nor a ` +
           `\`receiptKind: 'effect-outcome'\` exemption. A receipted mutation must EITHER expose a ` +
           `pure receipt-producing \`mutate(input) => receipt\` (so idempotency + audit-receipt + ` +
@@ -79,14 +81,16 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
       );
     }
     if (exemptsAsEffect && !hasReason) {
-      throw new Error(
+      throw InvariantViolationError(
+        'assembly.contract',
         `receiptedMutation capsule "${decl.name}" declares \`receiptKind: 'effect-outcome'\` without ` +
           `a non-empty \`reason\`. The exemption must be justified in prose — it is recorded in the ` +
           `generated test file and the capsule manifest as a tracked, visible waiver, not a silent gate.`,
       );
     }
     if (exemptsAsEffect && hasMutate) {
-      throw new Error(
+      throw InvariantViolationError(
+        'assembly.contract',
         `receiptedMutation capsule "${decl.name}" declares BOTH a \`mutate\` core and a ` +
           `\`receiptKind: 'effect-outcome'\` exemption. These are mutually exclusive: a capsule with a ` +
           `pure core needs no exemption. Drop the exemption (the pure core drives the real checks).`,

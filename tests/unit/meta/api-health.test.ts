@@ -212,7 +212,9 @@ const STANDALONE_FUNCTIONS = [
   'isWire',
   'fnv1a',
   'fnv1aBytes',
-  'isValidationError',
+  // `isValidationError` removed from the main entry — core migrated to the
+  // `@czap/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
+  // `@czap/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
@@ -267,7 +269,10 @@ const STANDALONE_FUNCTIONS = [
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
-const ERROR_CLASSES = ['CzapValidationError'];
+// Empty: core migrated to the `@czap/error` algebra. `CzapValidationError`
+// (the old ad-hoc class) was deleted — validation failures are now the tagged
+// `ValidationError` value from `@czap/error`, never re-exported from core.
+const ERROR_CLASSES: string[] = [];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
 const STANDALONE_OBJECTS = [
@@ -412,6 +417,16 @@ describe('API health canary', () => {
         expect(typeof val).toBe('function');
       });
     }
+
+    // Footgun gate: the old ad-hoc error classes were deleted when core moved
+    // to the `@czap/error` algebra. They must NOT reappear on the surface —
+    // validation/guard helpers now live in `@czap/error` (`ValidationError`,
+    // `hasTag(e, 'ValidationError')`), never re-exported here.
+    test('the deleted ad-hoc error classes are NOT on the main entry', () => {
+      const core = Core as Record<string, unknown>;
+      expect(core.CzapValidationError).toBeUndefined();
+      expect(core.isValidationError).toBeUndefined();
+    });
   });
 
   describe('registry completeness', () => {

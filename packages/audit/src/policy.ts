@@ -58,7 +58,9 @@ export const auditIgnoreGlobs = [
 
 export const packageTopology: Record<string, PackagePolicy> = {
   '@czap/canonical': {
-    // Self-contained bytes kernel (ADR-0013): sole dep @noble/hashes; no internal @czap imports.
+    // Self-contained bytes kernel (ADR-0013): sole third-party dep @noble/hashes.
+    // Imports the foundational @czap/error algebra (layering-exempt — see
+    // foundationalPackages below); no other internal @czap imports.
     allowedInternalImports: [],
     kind: 'standalone',
   },
@@ -212,13 +214,28 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
   '@czap/audit': {
     // CUT D9b-1: the packageable, downstream-installable audit engine. Operates
-    // on a repo as a file/AST corpus (typescript + fast-glob) and imports NO
-    // internal @czap package — a standalone leaf consumed by @czap/cli (D9b-2)
-    // and by downstream projects directly.
+    // on a repo as a file/AST corpus (typescript + fast-glob). Imports only the
+    // foundational @czap/error algebra (layering-exempt, see foundationalPackages);
+    // otherwise a standalone leaf consumed by @czap/cli (D9b-2) and downstream.
     allowedInternalImports: [],
     kind: 'standalone',
   },
 };
+
+/**
+ * Foundational packages every internal package may import WITHOUT an explicit
+ * `allowedInternalImports` entry — the runtime analogue of how `@czap/_spine`
+ * is the universal type source. `@czap/error` is the one zero-dependency error
+ * algebra the whole monorepo (and downstream consumers) builds failure paths
+ * on; threading it through every package's allow-list would be noise that every
+ * NEW package must then remember to repeat. Listed here once, the topology
+ * check (structure.ts) treats an edge to any of these as always-blessed.
+ *
+ * Kept deliberately tiny: a package qualifies only if it is a zero-`@czap`-dep
+ * root that is genuinely universal. Adding to this list widens what every
+ * package may import unchecked, so it is a conscious architectural decision.
+ */
+export const foundationalPackages: readonly string[] = ['@czap/error'];
 
 /**
  * Dynamic package imports — `import('@czap/...')` — that are deliberately

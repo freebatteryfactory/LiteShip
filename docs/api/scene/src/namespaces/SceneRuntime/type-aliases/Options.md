@@ -8,6 +8,6 @@
 
 > **Options** = [`SceneRuntimeOptions`](../../../interfaces/SceneRuntimeOptions.md)
 
-Defined in: [scene/src/runtime.ts:311](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L311)
+Defined in: [scene/src/runtime.ts:313](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L313)
 
 Build-time options — see [SceneRuntimeOptions](../../../interfaces/SceneRuntimeOptions.md).

@@ -13,6 +13,7 @@
  */
 
 import { Schema } from 'effect';
+import { NotFoundError, ValidationError } from '@czap/error';
 import { defineCapsule } from '@czap/core';
 import type { AttributionDecl, Invariant, CapsuleDef, Site } from '@czap/core';
 import { mkAssetRefId, type AssetRefId } from './brands.js';
@@ -136,12 +137,14 @@ function suggestId(id: string, ids: readonly string[]): string | undefined {
   return best !== undefined && bestDist <= threshold ? best : undefined;
 }
 
-function registryMissError(subject: string, id: string): Error {
+function registryMissError(subject: string, id: string): NotFoundError {
   const ids = sortedRegisteredAssetIds();
   const listed = ids.length > 0 ? ids.join(', ') : '(none)';
   const suggestion = suggestId(id, ids);
   const didYouMean = suggestion !== undefined ? `Did you mean '${suggestion}'? ` : '';
-  return new Error(
+  return NotFoundError(
+    'asset',
+    id,
     `${subject}: registry-miss — '${id}' is not registered. ` +
       `Registered ids: ${listed}. ` +
       didYouMean +
@@ -208,7 +211,8 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
     return decl.decoder !== undefined ? ['node', 'browser'] : builtinDecoderSiteFor(decl.kind);
   }
   if (decl.site.length === 0) {
-    throw new Error(
+    throw ValidationError(
+      'defineAsset',
       `defineAsset('${decl.id}') declares \`site: []\` — a capsule must run on at least one site. ` +
         `List the sites this asset decodes on (e.g. site: ['node']) or drop the override to keep the derived default.`,
     );
@@ -217,7 +221,8 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
     const honest = builtinDecoderSiteFor(decl.kind);
     const impossible = decl.site.filter((s) => !honest.includes(s));
     if (impossible.length > 0) {
-      throw new Error(
+      throw ValidationError(
+        'defineAsset',
         `defineAsset('${decl.id}') declares site [${decl.site.join(', ')}] but relies on the built-in ${decl.kind} decoder, ` +
           `which only runs on [${honest.join(', ')}] — advertising ${impossible.join('/')} would lie to bundlers and site routers. ` +
           `Provide a custom \`decoder\` that runs on ${impossible.join('/')}, or drop ${impossible.join('/')} from \`site\`.`,

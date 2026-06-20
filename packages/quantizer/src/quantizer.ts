@@ -22,14 +22,8 @@ import type {
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import {
-  StateName as mkStateName,
-  CanonicalCbor,
-  CzapValidationError,
-  Diagnostics,
-  Easing,
-  fnv1aBytes,
-} from '@czap/core';
+import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -429,7 +423,7 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
   // Failing open on an invalid tier would disable gating entirely and allow
   // every target (including ai/wgsl) — the inverse of what gating is for.
   if (tier !== undefined && !(tier in TIER_TARGETS)) {
-    throw new CzapValidationError(
+    throw ValidationError(
       'Q.from',
       `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
     );

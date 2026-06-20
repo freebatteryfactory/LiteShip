@@ -8,7 +8,7 @@
 
 > `const` **Op**: `object`
 
-Defined in: [core/src/op.ts:218](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/op.ts#L218)
+Defined in: [core/src/op.ts:219](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/op.ts#L219)
 
 Op -- Effect.Effect wrapper providing named factories and combinators
 for async operations with retry, timeout, race, and parallel execution.
@@ -300,7 +300,7 @@ const result = Effect.runSync(op.run()); // { name: 'dark', contrast: 0.9 }
 
 ### timeout
 
-> **timeout**: \<`A`, `E`, `R`\>(`task`, `ms`) => `OpShape`\<`A`, `Error` \| `E`, `R`\> = `_timeout`
+> **timeout**: \<`A`, `E`, `R`\>(`task`, `ms`) => `OpShape`\<`A`, `IoError` \| `E`, `R`\> = `_timeout`
 
 Wraps an Op with a timeout, failing with an Error if it exceeds the given duration.
 
@@ -330,7 +330,7 @@ Wraps an Op with a timeout, failing with an Error if it exceeds the given durati
 
 #### Returns
 
-`OpShape`\<`A`, `Error` \| `E`, `R`\>
+`OpShape`\<`A`, `IoError` \| `E`, `R`\>
 
 #### Example
 

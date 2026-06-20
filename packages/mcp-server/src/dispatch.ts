@@ -28,7 +28,9 @@ import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
 import { listManifestResources, readManifestResource } from './manifest-resource.js';
 import { listPrompts, getPrompt } from './prompts.js';
-import { InvalidParamsError, ResourceNotFoundError, RESOURCE_NOT_FOUND } from './errors.js';
+import type { NotFoundError } from '@czap/error';
+import { ValidationError, hasTag } from '@czap/error';
+import { RESOURCE_NOT_FOUND } from './errors.js';
 import {
   type JsonRpcNotification,
   type JsonRpcRequest,
@@ -90,14 +92,19 @@ export async function dispatch(msg: JsonRpcRequest | JsonRpcNotification): Promi
       const notificationAck: null = null;
       return notificationAck;
     }
-    if (err instanceof InvalidParamsError) {
-      return errorResponse(id, InvalidParams, err.message, err.detail);
+    if (hasTag(err, 'ValidationError')) {
+      // §5.1: malformed params → -32602. The ValidationError detail is the
+      // human message; the rejecting module (the RPC method / prompt) rides
+      // under `data` as diagnostic context.
+      const ve = err as ValidationError;
+      return errorResponse(id, InvalidParams, ve.detail, { module: ve.module });
     }
-    if (err instanceof ResourceNotFoundError) {
+    if (hasTag(err, 'NotFoundError')) {
       // MCP resource-not-found is -32002 (resource-specific), NOT -32601 (which means
-      // the resources/read METHOD is missing — it is not).
+      // the resources/read METHOD is missing — it is not). The missed URI is `error.id`.
+      const nf = err as NotFoundError;
       return errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', {
-        uri: err.uri,
+        uri: nf.id,
         hint: 'resources/list enumerates every readable URI (liteship://… JSON, ui://liteship/… UI).',
       });
     }
@@ -124,7 +131,7 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
       // sub-methods (templates/list, subscribe) still return honest method-not-found.
       const params = msg.params as { protocolVersion?: unknown } | undefined;
       if (!params || typeof params.protocolVersion !== 'string') {
-        throw new InvalidParamsError('initialize requires { protocolVersion: string }', { received: params });
+        throw ValidationError('initialize', 'initialize requires { protocolVersion: string }');
       }
       return ok({
         protocolVersion: PROTOCOL_VERSION,
@@ -141,9 +148,9 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     case 'tools/call': {
       const params = msg.params as { name: string; arguments?: Record<string, unknown> } | undefined;
       if (!params || typeof params.name !== 'string') {
-        // Per §5.1, malformed params → -32602. InvalidParamsError sentinel
+        // Per §5.1, malformed params → -32602. The ValidationError tag
         // is mapped to InvalidParams in dispatch's catch block.
-        throw new InvalidParamsError('tools/call requires { name: string, arguments?: object }', { received: params });
+        throw ValidationError('tools/call', 'tools/call requires { name: string, arguments?: object }');
       }
       // MCP marks `arguments` optional — default to {} like prompts/get and ui/call-tool.
       const result = await dispatchToolCall({ name: params.name, arguments: params.arguments ?? {} });
@@ -159,7 +166,7 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     case 'resources/read': {
       const params = msg.params as { uri?: unknown } | undefined;
       if (!params || typeof params.uri !== 'string') {
-        throw new InvalidParamsError('resources/read requires { uri: string }', { received: params });
+        throw ValidationError('resources/read', 'resources/read requires { uri: string }');
       }
       // ui://liteship/app/ → D5 live app; other ui:// → D4 static UI; liteship://mcp-app/
       // → D6 manifest; other liteship:// → D3 JSON. Unknown in any registry → -32002 (catch).
@@ -178,18 +185,16 @@ async function invoke(msg: JsonRpcRequest | JsonRpcNotification): Promise<Invoke
     case 'prompts/get': {
       const params = msg.params as { name?: unknown; arguments?: unknown } | undefined;
       if (!params || typeof params.name !== 'string') {
-        throw new InvalidParamsError('prompts/get requires { name: string, arguments?: object }', { received: params });
+        throw ValidationError('prompts/get', 'prompts/get requires { name: string, arguments?: object }');
       }
       const args = (params.arguments ?? {}) as Record<string, unknown>;
-      // Unknown prompt name / missing / invalid argument → InvalidParamsError → -32602.
+      // Unknown prompt name / missing / invalid argument → ValidationError → -32602.
       return ok(getPrompt(params.name, args));
     }
     case 'ui/call-tool': {
       const params = msg.params as { name?: unknown; arguments?: unknown } | undefined;
       if (!params || typeof params.name !== 'string') {
-        throw new InvalidParamsError('ui/call-tool requires { name: string, arguments?: object }', {
-          received: params,
-        });
+        throw ValidationError('ui/call-tool', 'ui/call-tool requires { name: string, arguments?: object }');
       }
       const args = (params.arguments ?? {}) as Record<string, unknown>;
       const result = await dispatchToolCall({ name: params.name, arguments: args });

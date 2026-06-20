@@ -7,7 +7,7 @@
 
 export { generatePureTransform } from './pure-transform.js';
 export type { HarnessOutput, HarnessContext } from './pure-transform.js';
-export { ArbitraryFromSchema, schemaToArbitrary, UnsupportedSchemaError } from './arbitrary-from-schema.js';
+export { ArbitraryFromSchema, schemaToArbitrary } from './arbitrary-from-schema.js';
 export { generateReceiptedMutation } from './receipted-mutation.js';
 export { generateStateMachine } from './state-machine.js';
 export { generateSiteAdapter, SITE_ADAPTER_CHECKS } from './site-adapter.js';

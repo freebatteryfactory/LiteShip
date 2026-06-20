@@ -8,7 +8,7 @@
 
 > **assertTokenBinds**\<`T`\>(`proposal`): `T`
 
-Defined in: [core/src/validated-output.ts:140](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts#L140)
+Defined in: [core/src/validated-output.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts#L141)
 
 Host-side guard: re-derive the payload's content address and assert it matches
 the token's bound subject. A host's admission layer calls this immediately

@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
+    "@czap/error": "workspace:*",
     "@czap/command": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/genui": "workspace:*"

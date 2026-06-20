@@ -48,6 +48,7 @@
     "@czap/astro": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/core": "workspace:*",
+    "@czap/error": "workspace:*",
     "@czap/web": "workspace:*"
   },
   "peerDependencies": {

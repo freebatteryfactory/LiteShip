@@ -8,7 +8,7 @@
 
 > **isSimpleDefaultExpression**(`node`): `boolean`
 
-Defined in: [audit/src/shared.ts:290](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L290)
+Defined in: [audit/src/shared.ts:293](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L293)
 
 ## Parameters
 

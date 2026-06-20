@@ -25,7 +25,8 @@
  * @module
  */
 
-import { CzapValidationError, Diagnostics } from '@czap/core';
+import { Diagnostics } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import type { ResolvedSceneContract, SceneContract, Track, TrackId, TrackKind } from './contract.js';
 import type { BeatBinding } from './capsules/beat-binding.js';
 import { resolveFrameMark } from './sugar/beat.js';
@@ -82,7 +83,7 @@ export interface CompiledScene {
  * normalized contract before any compilation work happens. A check that
  * returns `false` — or throws — counts as a violation. ALL violations
  * are collected, then reported together in a single
- * {@link CzapValidationError} (module `'compileScene'`) listing each
+ * {@link ValidationError} (module `'compileScene'`) listing each
  * violated invariant's name and message, so one compile run surfaces
  * every problem instead of stopping at the first.
  *
@@ -101,7 +102,7 @@ export interface CompiledScene {
  * as a `track-past-duration` Diagnostics warning — truncation is legal
  * when intended — rather than failing the compile.
  *
- * @throws CzapValidationError when structural checks or declared scene
+ * @throws ValidationError when structural checks or declared scene
  * invariants fail — all problems are collected into one error.
  */
 export function compileScene(scene: SceneContract): CompiledScene {
@@ -192,7 +193,7 @@ export function compileScene(scene: SceneContract): CompiledScene {
         `violated ${violations.length} invariant${violations.length === 1 ? '' : 's'}: ${violations.join('; ')}`,
       );
     }
-    throw new CzapValidationError(
+    throw ValidationError(
       'compileScene',
       `scene "${resolved.name}" ${parts.join('; and ')}. Fix each listed problem (or the failing check), then compile again.`,
     );

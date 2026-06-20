@@ -325,9 +325,6 @@ export {
   VIEWPORT,
 } from './defaults.js';
 
-// Validation error
-export { CzapValidationError, isValidationError } from './validation-error.js';
-
 // Diagnostics
 export { Diagnostics } from './diagnostics.js';
 export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSink } from './diagnostics.js';

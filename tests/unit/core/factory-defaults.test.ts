@@ -10,7 +10,8 @@
 
 import { describe, expect, test } from 'vitest';
 import { Effect } from 'effect';
-import { AVBridge, Component, Easing, Signal, Style, Token, isValidationError } from '@czap/core';
+import { AVBridge, Component, Easing, Signal, Style, Token } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 // ---------------------------------------------------------------------------
@@ -30,7 +31,7 @@ describe('Token.make defaults', () => {
       Token.make({ name: 'primary', category: 'color', values: { light: '#000' } });
       expect.unreachable('expected Token.make to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/values\.default/);
     }
   });
@@ -66,7 +67,7 @@ describe('Token.make value-key validation', () => {
       });
       expect.unreachable('expected Token.make to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/segment/);
       expect(String(error)).toMatch(/<contrast>:<theme>/);
     }
@@ -204,14 +205,14 @@ describe('Style.make transition duration', () => {
 // ---------------------------------------------------------------------------
 
 describe('Signal.audio normalized-mode validation', () => {
-  test('throws a CzapValidationError when totalDurationSec is missing or non-positive', () => {
+  test('throws a ValidationError when totalDurationSec is missing or non-positive', () => {
     const bridge = AVBridge.make({ sampleRate: 48_000, fps: 60 });
 
     try {
       Signal.audio(bridge, 'normalized');
       expect.unreachable('expected Signal.audio to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/totalDurationSec > 0/);
     }
     expect(() => Signal.audio(bridge, 'normalized', 0)).toThrow(/totalDurationSec/);

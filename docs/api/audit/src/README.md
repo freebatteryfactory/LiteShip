@@ -51,6 +51,7 @@ package — it stays repo-local and composes these passes.
 - [auditIgnoreGlobs](variables/auditIgnoreGlobs.md)
 - [auditSourceGlobs](variables/auditSourceGlobs.md)
 - [dynamicImportExemptions](variables/dynamicImportExemptions.md)
+- [foundationalPackages](variables/foundationalPackages.md)
 - [liteshipDevopsProfile](variables/liteshipDevopsProfile.md)
 - [packageTopology](variables/packageTopology.md)
 - [surfacePolicy](variables/surfacePolicy.md)

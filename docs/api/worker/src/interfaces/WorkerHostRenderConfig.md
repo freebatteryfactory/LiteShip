@@ -6,7 +6,7 @@
 
 # Interface: WorkerHostRenderConfig
 
-Defined in: [worker/src/host.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L46)
+Defined in: [worker/src/host.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L47)
 
 Render configuration accepted by [WorkerHostShape.startRender](WorkerHostShape.md#startrender).
 Only `durationMs` is genuinely the caller's decision; the rest default
@@ -18,7 +18,7 @@ from context the host already has.
 
 > `readonly` **durationMs**: `number` \| `Millis`
 
-Defined in: [worker/src/host.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L48)
+Defined in: [worker/src/host.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L49)
 
 Total render duration in milliseconds — a plain number is branded internally.
 
@@ -28,7 +28,7 @@ Total render duration in milliseconds — a plain number is branded internally.
 
 > `readonly` `optional` **fps?**: `number`
 
-Defined in: [worker/src/host.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L53)
+Defined in: [worker/src/host.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L54)
 
 Content frame rate (frame count and per-frame timestamps).
 
@@ -44,7 +44,7 @@ Content frame rate (frame count and per-frame timestamps).
 
 > `readonly` `optional` **height?**: `number`
 
-Defined in: [worker/src/host.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L63)
+Defined in: [worker/src/host.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L64)
 
 Output height in pixels.
 
@@ -60,7 +60,7 @@ the attached canvas's height at attachCanvas() time
 
 > `readonly` `optional` **width?**: `number`
 
-Defined in: [worker/src/host.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L58)
+Defined in: [worker/src/host.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L59)
 
 Output width in pixels.
 

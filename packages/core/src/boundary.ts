@@ -16,7 +16,7 @@ import { WASMDispatch } from './wasm-dispatch.js';
 import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from './diagnostics.js';
 import type { EvaluateResult } from './type-utils.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 /** The core primitive. Source of truth for quantization boundaries. */
 interface BoundaryDef<
@@ -324,7 +324,7 @@ export const Boundary: BoundaryFactory & {
         // Build the copy-pasteable fix from the user's own pairs, sorted.
         const sorted = [...(pairs as readonly (readonly [number, string])[])].sort((a, b) => a[0] - b[0]);
         const suggestion = sorted.map(([t, s]) => `[${t}, '${s}']`).join(', ');
-        throw new CzapValidationError(
+        throw ValidationError(
           'Boundary.make',
           `thresholds must be strictly ascending. Got ${pairs[i - 1]![0]} before ${pairs[i]![0]} at index ${i}. Reorder your \`at:\` pairs so thresholds increase: at: [${suggestion}].`,
         );
@@ -334,7 +334,7 @@ export const Boundary: BoundaryFactory & {
     const seen = new Set<string>();
     for (const name of stateNames) {
       if (seen.has(name)) {
-        throw new CzapValidationError(
+        throw ValidationError(
           'Boundary.make',
           `duplicate state name "${name}" (used by two thresholds). Each threshold needs its own state — rename one, e.g. at: [[0, 'small'], [768, 'medium']]. If this throws mid-render, the boundary was constructed inside a render function; hoist it to module scope.`,
         );

@@ -6,7 +6,7 @@
 
 # Interface: TransferableCanvas
 
-Defined in: [worker/src/host.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L33)
+Defined in: [worker/src/host.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L34)
 
 The canvas surface [WorkerHostShape.attachCanvas](WorkerHostShape.md#attachcanvas) actually needs:
 one transferable handoff. Structural rather than `HTMLCanvasElement` so
@@ -19,7 +19,7 @@ to THIS type, and non-DOM canvas implementations work unchanged.
 
 > `readonly` **height**: `number`
 
-Defined in: [worker/src/host.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L37)
+Defined in: [worker/src/host.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L38)
 
 Pixel height, captured at transfer time as the default render height.
 
@@ -29,7 +29,7 @@ Pixel height, captured at transfer time as the default render height.
 
 > `readonly` **width**: `number`
 
-Defined in: [worker/src/host.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L35)
+Defined in: [worker/src/host.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L36)
 
 Pixel width, captured at transfer time as the default render width.
 
@@ -39,7 +39,7 @@ Pixel width, captured at transfer time as the default render width.
 
 > **transferControlToOffscreen**(): `OffscreenCanvas`
 
-Defined in: [worker/src/host.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L38)
+Defined in: [worker/src/host.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L39)
 
 #### Returns
 

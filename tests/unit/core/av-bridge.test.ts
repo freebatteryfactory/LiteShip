@@ -3,7 +3,8 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { AVBridge, CzapValidationError } from '@czap/core';
+import { AVBridge } from '@czap/core';
+import { hasTag } from '@czap/error';
 
 describe('AVBridge construction', () => {
   test('creates a bridge with correct sampleRate and fps', () => {
@@ -201,27 +202,36 @@ describe('AVBridge shared buffer', () => {
 });
 
 describe('AVBridge input validation', () => {
-  test('throws CzapValidationError when sampleRate is 0', () => {
-    expect(() => AVBridge.make({ sampleRate: 0, fps: 60 })).toThrow(CzapValidationError);
+  function expectValidationError(fn: () => unknown): void {
+    try {
+      fn();
+      expect.unreachable('expected a ValidationError to be thrown');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+    }
+  }
+
+  test('throws ValidationError when sampleRate is 0', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: 0, fps: 60 }));
   });
 
-  test('throws CzapValidationError when sampleRate is negative', () => {
-    expect(() => AVBridge.make({ sampleRate: -1, fps: 60 })).toThrow(CzapValidationError);
+  test('throws ValidationError when sampleRate is negative', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: -1, fps: 60 }));
   });
 
-  test('throws CzapValidationError when sampleRate is Infinity', () => {
-    expect(() => AVBridge.make({ sampleRate: Infinity, fps: 60 })).toThrow(CzapValidationError);
+  test('throws ValidationError when sampleRate is Infinity', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: Infinity, fps: 60 }));
   });
 
-  test('throws CzapValidationError when fps is 0', () => {
-    expect(() => AVBridge.make({ sampleRate: 48000, fps: 0 })).toThrow(CzapValidationError);
+  test('throws ValidationError when fps is 0', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: 48000, fps: 0 }));
   });
 
-  test('throws CzapValidationError when fps is negative', () => {
-    expect(() => AVBridge.make({ sampleRate: 48000, fps: -30 })).toThrow(CzapValidationError);
+  test('throws ValidationError when fps is negative', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: 48000, fps: -30 }));
   });
 
-  test('throws CzapValidationError when fps is Infinity', () => {
-    expect(() => AVBridge.make({ sampleRate: 48000, fps: Infinity })).toThrow(CzapValidationError);
+  test('throws ValidationError when fps is Infinity', () => {
+    expectValidationError(() => AVBridge.make({ sampleRate: 48000, fps: Infinity }));
   });
 });

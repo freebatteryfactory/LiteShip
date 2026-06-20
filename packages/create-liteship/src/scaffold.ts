@@ -13,6 +13,7 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ValidationError } from '@czap/error';
 
 /** Files stored under a neutral name in the template, restored on copy. */
 const TEMPLATE_RENAMES: Readonly<Record<string, string>> = {
@@ -35,14 +36,6 @@ export interface ScaffoldOptions {
   readonly cwd?: string;
   /** Override the template directory (tests point this at fixtures). */
   readonly templateDir?: string;
-}
-
-/**
- * Error thrown when the target directory cannot be scaffolded into.
- * The message is the full teaching text — callers print it verbatim.
- */
-export class ScaffoldError extends Error {
-  override readonly name = 'ScaffoldError';
 }
 
 /** Absolute path of the embedded default template (works from src/ and dist/). */
@@ -82,7 +75,7 @@ function walkFiles(dir: string, prefix = ''): string[] {
 /**
  * Scaffold the default template into `targetDir`.
  *
- * Refuses (with a teaching {@link ScaffoldError}) when the target exists
+ * Refuses (with a teaching {@link ValidationError}) when the target exists
  * and is a non-empty directory or a non-directory — scaffolding never
  * overwrites your files. An existing *empty* directory is fine.
  */
@@ -94,14 +87,16 @@ export function scaffold(targetDir: string, options: ScaffoldOptions = {}): Scaf
   if (existsSync(projectDir)) {
     const stats = statSync(projectDir);
     if (!stats.isDirectory()) {
-      throw new ScaffoldError(
+      throw ValidationError(
+        'scaffold',
         `create-liteship: "${projectDir}" already exists and is a file, not a directory.\n` +
           `  Scaffolding never overwrites your data. Pick a different name:\n` +
           `    npm create liteship my-liteship-app`,
       );
     }
     if (readdirSync(projectDir).length > 0) {
-      throw new ScaffoldError(
+      throw ValidationError(
+        'scaffold',
         `create-liteship: "${projectDir}" already exists and is not empty.\n` +
           `  Scaffolding never overwrites your files — that is how half-merged\n` +
           `  starters eat an afternoon. Either:\n` +

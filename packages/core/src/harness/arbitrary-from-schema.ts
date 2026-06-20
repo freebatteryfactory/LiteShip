@@ -24,7 +24,7 @@
  * "canonical CBOR bytes" is a generated subset of `Uint8Array`, not every byte
  * string).
  *
- * STILL UNSUPPORTED (throw `UnsupportedSchemaError`, honest skip):
+ * STILL UNSUPPORTED (throw `UnsupportedError`, honest skip):
  *   - Objects with index signatures (open record shapes)
  *   - Declaration for opaque user types that are neither Date nor
  *     Uint8Array (e.g. `Schema.instanceOf(SomeUserClass)`) AND carry no
@@ -35,15 +35,23 @@
 import { Effect } from 'effect';
 import type { Schema, SchemaAST } from 'effect';
 import * as fc from 'fast-check';
+import { UnsupportedError } from '@czap/error';
 
-/** Error thrown when an AST node has no supported arbitrary mapping. */
-export class UnsupportedSchemaError extends Error {
-  readonly _tag = 'UnsupportedSchemaError';
-  readonly nodeTag: string;
-  constructor(nodeTag: string, hint?: string) {
-    super(`arbitrary-from-schema: AST node "${nodeTag}" is not supported${hint ? ` (${hint})` : ''}`);
-    this.nodeTag = nodeTag;
-  }
+// Re-exported so the GENERATED test templates (which import their helpers from
+// this module via `${arbitraryImport}`) can `hasTag(err, 'UnsupportedError')`
+// on a caught derivation failure without a second import specifier.
+export { hasTag } from '@czap/error';
+
+/**
+ * Build the tagged `UnsupportedError` thrown when an AST node has no supported
+ * arbitrary mapping. `subject` is the AST node tag (the old `nodeTag`); the
+ * detail mirrors the previous message so honest-skip reporting is unchanged.
+ */
+function unsupportedSchema(nodeTag: string, hint?: string): UnsupportedError {
+  return UnsupportedError(
+    nodeTag,
+    `arbitrary-from-schema: AST node "${nodeTag}" is not supported${hint ? ` (${hint})` : ''}`,
+  );
 }
 
 /**
@@ -100,7 +108,7 @@ function _annotatedArbitrary(ast: SchemaAST.AST): fc.Arbitrary<unknown> | undefi
   if (typeof thunk !== 'function') return undefined;
   const arb = (thunk as ArbitraryAnnotation)();
   if (arb === undefined || typeof (arb as { generate?: unknown }).generate !== 'function') {
-    throw new UnsupportedSchemaError(ast._tag, 'ArbitraryAnnotationId thunk did not return a fast-check Arbitrary');
+    throw unsupportedSchema(ast._tag, 'ArbitraryAnnotationId thunk did not return a fast-check Arbitrary');
   }
   return arb;
 }
@@ -173,7 +181,7 @@ function _declarationTypeTag(ast: SchemaAST.Declaration): string | undefined {
  *
  * Genuinely-opaque user declarations (e.g. `Schema.instanceOf(MyClass)`,
  * which carry no `typeConstructor` annotation and reject the Date probe)
- * throw `UnsupportedSchemaError` — the harness then emits an honest skip
+ * throw `UnsupportedError` — the harness then emits an honest skip
  * rather than a vacuous test. We never blanket-accept all declarations.
  */
 /**
@@ -209,7 +217,7 @@ function _arbitraryForDeclaration(ast: SchemaAST.Declaration): fc.Arbitrary<unkn
   if (_declarationAccepts(ast, new Uint8Array())) return fc.uint8Array();
   if (_declarationAccepts(ast, new Date())) return fc.date();
 
-  throw new UnsupportedSchemaError('Declaration', 'opaque user-defined type — only Date and Uint8Array are recognised');
+  throw unsupportedSchema('Declaration', 'opaque user-defined type — only Date and Uint8Array are recognised');
 }
 
 /**
@@ -241,7 +249,7 @@ function _arbitraryForTemplateLiteral(ast: SchemaAST.TemplateLiteral): fc.Arbitr
         // unambiguous and avoids zero-width ambiguity at boundaries.
         return fc.stringMatching(/^[A-Za-z0-9]+$/);
       default:
-        throw new UnsupportedSchemaError('TemplateLiteral', `unsupported interpolation part "${part._tag}"`);
+        throw unsupportedSchema('TemplateLiteral', `unsupported interpolation part "${part._tag}"`);
     }
   });
   if (partArbs.length === 0) return fc.constant('');
@@ -268,7 +276,7 @@ function _transformationTo(ast: SchemaAST.AST): SchemaAST.AST | undefined {
   if ((ast as { _tag: string })._tag !== 'Transformation') return undefined;
   const to = (ast as unknown as { to?: SchemaAST.AST }).to;
   if (to === undefined) {
-    throw new UnsupportedSchemaError('Transformation', 'missing `to` (decoded) AST');
+    throw unsupportedSchema('Transformation', 'missing `to` (decoded) AST');
   }
   return to;
 }
@@ -319,7 +327,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
     case 'Enum': {
       const enums = (ast as SchemaAST.Enum).enums;
       if (enums.length === 0) {
-        throw new UnsupportedSchemaError('Enum', 'empty enum');
+        throw unsupportedSchema('Enum', 'empty enum');
       }
       arb = fc.constantFrom(...enums.map(([, v]) => v));
       break;
@@ -327,7 +335,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
     case 'Union': {
       const u = ast as SchemaAST.Union;
       if (u.types.length === 0) {
-        throw new UnsupportedSchemaError('Union', 'empty union');
+        throw unsupportedSchema('Union', 'empty union');
       }
       const arbs = u.types.map(walk);
       // fc.oneof accepts an arbitraries-array as variadic args
@@ -340,7 +348,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
       if (a.elements.length === 0 && a.rest.length === 1) {
         const elem = a.rest[0];
         if (elem === undefined) {
-          throw new UnsupportedSchemaError('Arrays', 'rest[0] missing');
+          throw unsupportedSchema('Arrays', 'rest[0] missing');
         }
         arb = fc.array(walk(elem), { maxLength: 8 });
         break;
@@ -358,13 +366,13 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
         const headArbs = a.elements.map(walk);
         const tailElem = a.rest[0];
         if (tailElem === undefined) {
-          throw new UnsupportedSchemaError('Arrays', 'rest[0] missing');
+          throw unsupportedSchema('Arrays', 'rest[0] missing');
         }
         const tailArb = fc.array(walk(tailElem), { maxLength: 7 });
         arb = fc.tuple(fc.tuple(...headArbs), tailArb).map(([head, tail]) => [...head, ...tail]);
         break;
       }
-      throw new UnsupportedSchemaError(
+      throw unsupportedSchema(
         'Arrays',
         `unsupported tuple+rest shape (elements=${a.elements.length}, rest=${a.rest.length})`,
       );
@@ -372,7 +380,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
     case 'Objects': {
       const o = ast as SchemaAST.Objects;
       if (o.indexSignatures.length > 0) {
-        throw new UnsupportedSchemaError('Objects', 'index signatures');
+        throw unsupportedSchema('Objects', 'index signatures');
       }
       const required: Record<string, fc.Arbitrary<unknown>> = {};
       const optional: Record<string, fc.Arbitrary<unknown>> = {};
@@ -419,7 +427,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
       arb = _arbitraryForTemplateLiteral(ast as SchemaAST.TemplateLiteral);
       break;
     default:
-      throw new UnsupportedSchemaError(ast._tag);
+      throw unsupportedSchema(ast._tag);
   }
   return _applyChecks(ast, arb);
 }
@@ -427,7 +435,7 @@ function walk(ast: SchemaAST.AST): fc.Arbitrary<unknown> {
 /**
  * Walk a `Schema` AST and return a `fc.Arbitrary` that produces values
  * structurally conforming to the schema. Throws
- * {@link UnsupportedSchemaError} on AST nodes with no supported mapping.
+ * `UnsupportedError` on AST nodes with no supported mapping.
  *
  * Accepts any `Schema.Schema<T>` (or `Codec`) — only `.ast` is read.
  */

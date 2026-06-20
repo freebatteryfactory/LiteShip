@@ -9,8 +9,9 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import { Effect, Stream } from 'effect';
-import { Boundary, Diagnostics, isValidationError } from '@czap/core';
+import { Boundary, Diagnostics } from '@czap/core';
 import type { MotionTier, Quantizer } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { AnimatedQuantizer, Q, evaluate } from '@czap/quantizer';
 import { captureDiagnostics, captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
@@ -48,14 +49,14 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('Q.from tier validation', () => {
-  test('an unknown MotionTier throws a CzapValidationError naming the valid tiers', () => {
+  test('an unknown MotionTier throws a ValidationError naming the valid tiers', () => {
     expect(() => Q.from(viewport(), { tier: 'fancy' as MotionTier })).toThrowError(
       "Q.from: unknown MotionTier 'fancy'. Valid tiers: none, transitions, animations, physics, compute. Omit `tier` to allow all targets.",
     );
     try {
       Q.from(viewport(), { tier: 'fancy' as MotionTier });
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
     }
   });
 

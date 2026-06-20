@@ -22,6 +22,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { CompositeState } from '@czap/core';
+import { HostCapabilityError, IoError, ValidationError } from '@czap/error';
 import type { EncodedVideo, FrameEncoder, VideoEncodeConfig } from './dual-export.js';
 
 // ---------------------------------------------------------------------------
@@ -197,14 +198,10 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
   return async (frames: readonly CompositeState[], config: VideoEncodeConfig): Promise<EncodedVideo> => {
     const probe = probeFfmpegEncode(bin);
     if (!probe.ok) {
-      throw new Error(
-        probe.hint
-          ? `ffmpeg headless encode unavailable: ${probe.detail}. ${probe.hint}`
-          : `ffmpeg headless encode unavailable: ${probe.detail}`,
-      );
+      throw HostCapabilityError('ffmpeg', probe.hint ? `${probe.detail}. ${probe.hint}` : probe.detail);
     }
     if (frames.length === 0) {
-      throw new Error('ffmpegFrameEncoder: no frames to encode');
+      throw ValidationError('ffmpeg.encode', 'no frames to encode');
     }
 
     const dir = mkdtempSync(join(tmpdir(), 'czap-stage-encode-'));
@@ -245,17 +242,27 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
       await new Promise<void>((resolve, reject) => {
         proc.on('close', (code) => {
           if (code === 0) resolve();
-          else reject(new Error(`ffmpeg exited with code ${code}: ${stderrBuf.slice(-500)}`));
+          else reject(IoError('ffmpeg.encode', `ffmpeg exited with code ${code}: ${stderrBuf.slice(-500)}`));
         });
         proc.on('error', (err) => reject(err));
       });
 
       if (!existsSync(output)) {
-        throw new Error(`ffmpeg exited 0 but wrote no file at ${output}. stderr tail: ${stderrBuf.slice(-500)}`);
+        throw IoError(
+          'ffmpeg.writeOutput',
+          `ffmpeg exited 0 but wrote no file. stderr tail: ${stderrBuf.slice(-500)}`,
+          {
+            path: output,
+          },
+        );
       }
       const bytes = new Uint8Array(readFileSync(output));
       if (bytes.byteLength === 0) {
-        throw new Error(`ffmpeg exited 0 but wrote a 0-byte file. stderr tail: ${stderrBuf.slice(-500)}`);
+        throw IoError(
+          'ffmpeg.writeOutput',
+          `ffmpeg exited 0 but wrote a 0-byte file. stderr tail: ${stderrBuf.slice(-500)}`,
+          { path: output },
+        );
       }
 
       return { bytes, codec: 'h264', container: 'video/mp4' };

@@ -138,20 +138,20 @@ describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and At
     expect(() => producer.pop(data)).toThrow('pop() is consumer-only');
   });
 
-  test('push and pop throw RangeError when slot size does not match', () => {
+  test('push and pop throw when slot size does not match', () => {
     const { producer, consumer } = SPSCRing.createPair(4, 3);
 
-    expect(() => producer.push(new Float64Array(2))).toThrow(RangeError);
-    expect(() => producer.push(new Float64Array(4))).toThrow(RangeError);
-    expect(() => consumer.pop(new Float64Array(1))).toThrow(RangeError);
+    expect(() => producer.push(new Float64Array(2))).toThrow(/ring was created with slotSize/);
+    expect(() => producer.push(new Float64Array(4))).toThrow(/ring was created with slotSize/);
+    expect(() => consumer.pop(new Float64Array(1))).toThrow(/ring was created with slotSize/);
   });
 
   test('createPair throws on invalid slotCount or slotSize', () => {
-    expect(() => SPSCRing.createPair(0, 1)).toThrow(RangeError);
-    expect(() => SPSCRing.createPair(-1, 1)).toThrow(RangeError);
-    expect(() => SPSCRing.createPair(1.5, 1)).toThrow(RangeError);
-    expect(() => SPSCRing.createPair(4, 0)).toThrow(RangeError);
-    expect(() => SPSCRing.createPair(4, -2)).toThrow(RangeError);
+    expect(() => SPSCRing.createPair(0, 1)).toThrow(/must be a positive integer/);
+    expect(() => SPSCRing.createPair(-1, 1)).toThrow(/must be a positive integer/);
+    expect(() => SPSCRing.createPair(1.5, 1)).toThrow(/must be a positive integer/);
+    expect(() => SPSCRing.createPair(4, 0)).toThrow(/must be a positive integer/);
+    expect(() => SPSCRing.createPair(4, -2)).toThrow(/must be a positive integer/);
   });
 
   test('attachProducer and attachConsumer share the same SharedArrayBuffer', () => {

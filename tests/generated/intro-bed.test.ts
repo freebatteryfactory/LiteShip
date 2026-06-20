@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { ValidationError } from '@czap/error';
 import { contentAddressOf } from '../../packages/core/src/content-address.js';
 import { introBed } from '../../examples/scenes/assets.js';
 
@@ -16,8 +17,9 @@ describe('intro-bed', () => {
   // factory's transform). If the binding ever loses it, this fails RED here
   // rather than the fixture probes silently passing over a missing handler.
   if (cap.derive === undefined) {
-    throw new Error(
-      `intro-bed: capsule:compile emitted the real-only fixture form but the binding exposes no \`derive\` handler — the projection lost its transform (a defineAsset decoder or a projection factory's derive); fix the capsule and re-run pnpm run capsule:compile`,
+    throw ValidationError(
+      'intro-bed.derive',
+      `capsule:compile emitted the real-only fixture form but the binding exposes no \`derive\` handler — the projection lost its transform (a defineAsset decoder or a projection factory's derive); fix the capsule and re-run pnpm run capsule:compile`,
     );
   }
   const derive = cap.derive;

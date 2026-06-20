@@ -375,7 +375,7 @@ describe('${cap.name}', () => {
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
-import { schemaToArbitrary, UnsupportedSchemaError } from '${arbitraryImport}';
+import { schemaToArbitrary, hasTag } from '${arbitraryImport}';
 import { scaledTimeout } from '../../vitest.shared.js';
 
 describe('${cap.name}', () => {
@@ -387,14 +387,14 @@ describe('${cap.name}', () => {
   } catch (err) {
     arbError = err;
   }
-  if (arbError !== undefined && !(arbError instanceof UnsupportedSchemaError)) {
+  if (arbError !== undefined && !hasTag(arbError, 'UnsupportedError')) {
     // Only a non-derivable schema is honest-skip material; anything else
     // (a defect in the arbitrary builder, a malformed capsule) must fail.
     throw arbError;
   }
   if (cap.run === undefined || arbError !== undefined) {
     it.skip(
-      arbError instanceof UnsupportedSchemaError
+      hasTag(arbError, 'UnsupportedError')
         ? \`invariants — input schema not arbitrary-derivable (\${arbError.message})\`
         : 'invariants — capsule has no run handler',
       () => {},

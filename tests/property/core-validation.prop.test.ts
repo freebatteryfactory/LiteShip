@@ -6,7 +6,7 @@
 
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
-import { CzapValidationError, isValidationError } from '@czap/core';
+import { ValidationError, hasTag } from '@czap/error';
 // `brand` is the generic brand factory used by `@czap/core` itself to
 // define the sanctioned brand constructors. It is intentionally not on
 // the public package surface; tests that exercise its zero-cost identity
@@ -22,9 +22,9 @@ describe('Core validation properties', () => {
         fc.integer(),
         fc.boolean(),
         fc.array(fc.string()),
-        fc.constant(new CzapValidationError('test-module', 'test-detail'))
+        fc.constant(ValidationError('test-module', 'test-detail'))
       ), (input) => {
-        const result = isValidationError(input);
+        const result = hasTag(input, 'ValidationError');
         return typeof result === 'boolean';
       }),
     );
@@ -33,8 +33,8 @@ describe('Core validation properties', () => {
   test('ValidationError type guard correctly identifies instances', () => {
     fc.assert(
       fc.property(fc.string({ minLength: 1, maxLength: 10 }), fc.string({ minLength: 1, maxLength: 20 }), (module, detail) => {
-        const error = new CzapValidationError(module, detail);
-        return isValidationError(error) === true;
+        const error = ValidationError(module, detail);
+        return hasTag(error, 'ValidationError') === true;
       }),
     );
   });
@@ -47,7 +47,7 @@ describe('Core validation properties', () => {
         fc.integer(),
         fc.boolean()
       ), (input) => {
-        return isValidationError(input) === false;
+        return hasTag(input, 'ValidationError') === false;
       }),
     );
   });

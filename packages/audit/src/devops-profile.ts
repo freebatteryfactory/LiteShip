@@ -7,7 +7,14 @@
  *
  * @module
  */
-import { packageTopology, surfacePolicy, dynamicImportExemptions, normalizeRepoPath } from './policy.js';
+import { ValidationError } from '@czap/error';
+import {
+  packageTopology,
+  surfacePolicy,
+  dynamicImportExemptions,
+  foundationalPackages,
+  normalizeRepoPath,
+} from './policy.js';
 import type { PackagePolicy } from './policy.js';
 import { listProfilePackageManifests } from './shared.js';
 
@@ -52,6 +59,13 @@ export interface DevopsProfile {
   readonly internalPackagePrefix: string;
   /** Package layering law: package → { allowedInternalImports, kind }. */
   readonly packageTopology: Record<string, PackagePolicy>;
+  /**
+   * Foundational packages every package may import without an explicit
+   * `allowedInternalImports` entry (the runtime analogue of `@czap/_spine`).
+   * Optional: absent ⇒ no foundational exemptions (every internal edge must be
+   * listed). Downstream profiles may set their own.
+   */
+  readonly foundationalPackages?: readonly string[];
   /** Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`). */
   readonly dynamicImportExemptions: ReadonlySet<string>;
   /** Known public-surface files (orphan-detection seed). */
@@ -76,6 +90,7 @@ export const liteshipDevopsProfile: DevopsProfile = {
   repoRoot: normalizeRepoPath(process.cwd()),
   internalPackagePrefix: '@czap/',
   packageTopology,
+  foundationalPackages,
   dynamicImportExemptions,
   surfacePolicy,
 };
@@ -106,7 +121,8 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
     scopes.length === 0
       ? `no scoped (@scope/name) package manifests were discovered under ${profile.repoRoot}`
       : `the discovered manifests span multiple scopes [${scopes.join(', ')}]`;
-  throw new Error(
+  throw ValidationError(
+    'devops-profile',
     `resolveDevopsProfile: internalPackagePrefix was omitted and cannot be derived — ${observed}. ` +
       `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }).`,
   );
@@ -135,6 +151,7 @@ export function resolveDevopsProfile(partial: Partial<DevopsProfile>): DevopsPro
     packageTopology: partial.packageTopology ?? {},
     dynamicImportExemptions: partial.dynamicImportExemptions ?? new Set<string>(),
     surfacePolicy: partial.surfacePolicy ?? {},
+    ...(partial.foundationalPackages !== undefined ? { foundationalPackages: partial.foundationalPackages } : {}),
     ...(partial.packageRoots !== undefined ? { packageRoots: partial.packageRoots } : {}),
   };
   if (partial.internalPackagePrefix !== undefined) return candidate;

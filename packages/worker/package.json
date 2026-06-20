@@ -41,7 +41,8 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@czap/core": "workspace:*"
+    "@czap/core": "workspace:*",
+    "@czap/error": "workspace:*"
   },
   "engines": {
     "node": ">=22.0.0"

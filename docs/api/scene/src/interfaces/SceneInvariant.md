@@ -11,7 +11,7 @@ Defined in: [scene/src/contract.ts:130](https://github.com/heyoub/LiteShip/blob/
 Scene invariant — evaluated against the contract at compile time.
 `compileScene` runs every declared check; a check returning `false`
 (or throwing) is a violation, and all violations are reported in one
-`CzapValidationError` carrying each invariant's name and message.
+`ValidationError` carrying each invariant's name and message.
 
 The check receives the [ResolvedSceneContract](../type-aliases/ResolvedSceneContract.md) — track `from` /
 `to` are plain frame numbers because `compileScene` resolves every

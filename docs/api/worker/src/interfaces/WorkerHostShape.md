@@ -6,7 +6,7 @@
 
 # Interface: WorkerHostShape
 
-Defined in: [worker/src/host.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L71)
+Defined in: [worker/src/host.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L72)
 
 Host-facing surface of a worker host. Owns a compositor worker and,
 optionally, a render worker created on demand via
@@ -18,7 +18,7 @@ optionally, a render worker created on demand via
 
 > `readonly` **compositor**: [`CompositorWorkerShape`](CompositorWorkerShape.md)
 
-Defined in: [worker/src/host.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L73)
+Defined in: [worker/src/host.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L74)
 
 The compositor worker instance.
 
@@ -28,7 +28,7 @@ The compositor worker instance.
 
 > `readonly` **renderer**: [`RenderWorkerShape`](RenderWorkerShape.md) \| `null`
 
-Defined in: [worker/src/host.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L76)
+Defined in: [worker/src/host.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L77)
 
 The render worker instance, or null if no canvas has been attached.
 
@@ -38,7 +38,7 @@ The render worker instance, or null if no canvas has been attached.
 
 > **attachCanvas**(`canvas`): `void`
 
-Defined in: [worker/src/host.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L88)
+Defined in: [worker/src/host.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L89)
 
 Attach an HTMLCanvasElement for off-thread rendering.
 
@@ -65,7 +65,7 @@ does not allow transferring control multiple times.
 
 > **dispose**(): `void`
 
-Defined in: [worker/src/host.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L107)
+Defined in: [worker/src/host.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L108)
 
 Dispose both workers and release all resources.
 
@@ -79,7 +79,7 @@ Dispose both workers and release all resources.
 
 > **onState**(`callback`): () => `void`
 
-Defined in: [worker/src/host.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L104)
+Defined in: [worker/src/host.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L105)
 
 Subscribe to CompositeState updates from the compositor worker.
 Returns an unsubscribe function.
@@ -100,7 +100,7 @@ Returns an unsubscribe function.
 
 > **startRender**(`config`): `void`
 
-Defined in: [worker/src/host.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L95)
+Defined in: [worker/src/host.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L96)
 
 Start off-thread video rendering. Width/height default to the
 attached canvas's dimensions and fps to 60 — only `durationMs`
@@ -122,7 +122,7 @@ is required (see [WorkerHostRenderConfig](WorkerHostRenderConfig.md)).
 
 > **stopRender**(): `void`
 
-Defined in: [worker/src/host.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L98)
+Defined in: [worker/src/host.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/host.ts#L99)
 
 Stop an in-progress off-thread render.
 

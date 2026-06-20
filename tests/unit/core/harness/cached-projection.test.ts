@@ -52,7 +52,7 @@ describe('generateCachedProjection', () => {
     // capsule without the handler must self-report as a skip there.
     expect(testFile).toContain('cap.derive === undefined');
     expect(testFile).toContain('it.skip');
-    // Non-UnsupportedSchemaError derivation failures must fail, not skip.
+    // Non-UnsupportedError derivation failures must fail, not skip.
     expect(testFile).toContain('throw arbError');
     expect(testFile).toContain('determinism: identical source derives a deep-equal output');
     // derive may be async (asset decoders are) — every probe is awaited.

@@ -1,6 +1,6 @@
 /**
  * compileScene built-in structural validation and the scene error
- * contract: broken scenes throw one collected CzapValidationError that
+ * contract: broken scenes throw one collected ValidationError that
  * names each problem and its fix; truncation (a track past an explicitly
  * declared duration) warns through Diagnostics instead of failing.
  */
@@ -8,22 +8,23 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { Effect } from 'effect';
 import { Track, compileScene, SceneRuntime, SyncSystem, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract } from '@czap/scene';
-import { Diagnostics, isValidationError } from '@czap/core';
-import type { CzapValidationError } from '@czap/core';
+import { Diagnostics } from '@czap/core';
+import { hasTag } from '@czap/error';
+import type { ValidationError } from '@czap/error';
 
 afterEach(() => {
   Diagnostics.reset();
 });
 
-const compileError = (scene: SceneContract): CzapValidationError => {
+const compileError = (scene: SceneContract): ValidationError => {
   let caught: unknown;
   try {
     compileScene(scene);
   } catch (error) {
     caught = error;
   }
-  expect(isValidationError(caught)).toBe(true);
-  return caught as CzapValidationError;
+  expect(hasTag(caught, 'ValidationError')).toBe(true);
+  return caught as ValidationError;
 };
 
 describe('compileScene structural validation', () => {

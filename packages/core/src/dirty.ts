@@ -8,7 +8,7 @@
  */
 
 import { DIRTY_FLAGS_MAX } from './defaults.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 interface DirtyFlagsShape<K extends string = string> {
   mark(key: K): void;
@@ -37,7 +37,7 @@ interface DirtyFlagsShape<K extends string = string> {
  */
 function _make<K extends string>(keys: readonly K[]): DirtyFlagsShape<K> {
   if (keys.length > DIRTY_FLAGS_MAX) {
-    throw new CzapValidationError('DirtyFlags.make', `supports at most ${DIRTY_FLAGS_MAX} keys, got ${keys.length}`);
+    throw ValidationError('DirtyFlags.make', `supports at most ${DIRTY_FLAGS_MAX} keys, got ${keys.length}`);
   }
 
   const bitMap = new Map<K, number>();

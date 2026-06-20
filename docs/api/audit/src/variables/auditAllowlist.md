@@ -8,4 +8,4 @@
 
 > `const` **auditAllowlist**: readonly [`AuditAllowlistEntry`](../interfaces/AuditAllowlistEntry.md)[]
 
-Defined in: [audit/src/policy.ts:281](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L281)
+Defined in: [audit/src/policy.ts:298](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L298)

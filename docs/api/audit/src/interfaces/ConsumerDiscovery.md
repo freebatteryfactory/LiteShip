@@ -6,7 +6,7 @@
 
 # Interface: ConsumerDiscovery
 
-Defined in: [audit/src/consumer.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L24)
+Defined in: [audit/src/consumer.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L25)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/consumer.ts:24](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **missing**: readonly `string`[]
 
-Defined in: [audit/src/consumer.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L28)
+Defined in: [audit/src/consumer.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L29)
 
 Topology packages not installed in this repo — informational, not an error.
 
@@ -24,6 +24,6 @@ Topology packages not installed in this repo — informational, not an error.
 
 > `readonly` **packageRoots**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [audit/src/consumer.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L26)
+Defined in: [audit/src/consumer.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/consumer.ts#L27)
 
 Package name → absolute (realpath'd, normalized) package root.

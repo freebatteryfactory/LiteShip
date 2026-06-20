@@ -119,7 +119,7 @@ export type Track<M extends FrameMark = FrameMark> =
  * Scene invariant — evaluated against the contract at compile time.
  * `compileScene` runs every declared check; a check returning `false`
  * (or throwing) is a violation, and all violations are reported in one
- * `CzapValidationError` carrying each invariant's name and message.
+ * `ValidationError` carrying each invariant's name and message.
  *
  * The check receives the {@link ResolvedSceneContract} — track `from` /
  * `to` are plain frame numbers because `compileScene` resolves every

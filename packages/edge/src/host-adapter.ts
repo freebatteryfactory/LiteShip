@@ -7,6 +7,7 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
 import { Diagnostics, contentAddressOf } from '@czap/core';
 import type { ContentAddress } from '@czap/core';
 import type { ExtendedDeviceCapabilities } from '@czap/detect';
@@ -232,7 +233,8 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     cache.boundaryId !== undefined || cache.precompiled !== undefined || cache.compile !== undefined;
   if (cache.boundaries) {
     if (hasSingleFields) {
-      throw new Error(
+      throw ValidationError(
+        'host-adapter',
         'EdgeHostCacheConfig mixes the multi-boundary `boundaries` record with the single-boundary ' +
           '`boundaryId`/`precompiled`/`compile` fields, so the adapter cannot tell which form is intended. ' +
           'Fix: move the top-level boundary fields into their own `boundaries` entry, or drop `boundaries`.',
@@ -240,7 +242,8 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     }
     const entries = Object.entries(cache.boundaries);
     if (entries.length === 0) {
-      throw new Error(
+      throw ValidationError(
+        'host-adapter',
         'EdgeHostCacheConfig got an empty `boundaries` record, so there is nothing to cache. ' +
           'Fix: add one entry per boundary (`{ [name]: { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry) } }`), ' +
           'or use the single-boundary `boundaryId` form.',
@@ -248,7 +251,8 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     }
     for (const [name, source] of entries) {
       if (!source.precompiled && !source.compile) {
-        throw new Error(
+        throw ValidationError(
+          'host-adapter',
           `EdgeHostCacheConfig boundary "${name}" has neither \`precompiled\` nor \`compile\`, so its outputs can never resolve. ` +
             'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
             'or supply a `compile` callback to build outputs on KV cache miss.',
@@ -258,13 +262,15 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     return entries;
   }
   if (cache.boundaryId === undefined) {
-    throw new Error(
+    throw ValidationError(
+      'host-adapter',
       'EdgeHostCacheConfig identifies no boundary: neither `boundaryId` (single form) nor `boundaries` (multi form) was provided. ' +
         'Fix: pass `boundaryId: Boundary.make(...).id` with `precompiled`/`compile`, or a `boundaries` record keyed by name.',
     );
   }
   if (!cache.precompiled && !cache.compile) {
-    throw new Error(
+    throw ValidationError(
+      'host-adapter',
       'EdgeHostCacheConfig needs a source of compiled outputs, but neither `precompiled` nor `compile` was provided. ' +
         'Fix: pass `precompiled: resolveOutputsByTier(manifestEntry)` (entry from `virtual:czap/boundaries` or czap-boundary-manifest.json), ' +
         'or supply a `compile` callback to build outputs on KV cache miss.',
