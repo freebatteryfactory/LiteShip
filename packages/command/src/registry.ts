@@ -68,6 +68,17 @@ export interface CommandContext {
     readonly consumer?: boolean;
     readonly includeFindings?: boolean;
   }) => Promise<AuditEngineSummary>;
+  /**
+   * Run the plumb-completeness gate over the repo at `cwd`: scan
+   * `tests/generated/` for `*.skip` placeholders (each is a blocking lie about
+   * coverage) and check every published package carries a `PACKAGE_PLUMB`
+   * classification. Returns a structured verdict — no process.exit, no stdout.
+   * Backed by `node:fs` directory scanning, so unlike `runAudit` (the heavy
+   * `@czap/audit` engine) it is provisioned in the shared host factory
+   * (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
+   * the MCP host — an agent can call `plumb` over MCP and read the work-list.
+   */
+  readonly runPlumb?: () => Promise<PlumbGateSummary>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
   /**
@@ -177,6 +188,32 @@ export interface AuditEngineSummary {
   readonly profileSource: 'default' | 'file' | 'consumer';
   /** Present only when the caller asked for findings (`--findings`). */
   readonly findings?: readonly AuditEngineFinding[];
+}
+
+/**
+ * One skipped generated test — a placeholder standing in for unwired work. A
+ * structural mirror of the host scan's result item, declared here so the
+ * `plumb` command's contract lives in `@czap/command` without a host import.
+ */
+export interface PlumbSkip {
+  readonly file: string;
+  readonly kind: 'it.skip' | 'test.skip' | 'describe.skip' | 'bench.skip';
+  readonly message: string;
+}
+
+/**
+ * Structured verdict returned by the injected {@link CommandContext.runPlumb}
+ * capability. `ok` ⟺ no skips AND no unclassified packages. `generatedPresent`
+ * is false when `tests/generated/` had no corpus to scan (⇒ run capsule:compile).
+ */
+export interface PlumbGateSummary {
+  readonly ok: boolean;
+  /** Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking. */
+  readonly skips: readonly PlumbSkip[];
+  /** Published packages with no PACKAGE_PLUMB classification. */
+  readonly unclassified: readonly string[];
+  /** Whether the generated test corpus was present to scan. */
+  readonly generatedPresent: boolean;
 }
 
 /** Idempotency key: command + structured inputs + force-bypass flag. */

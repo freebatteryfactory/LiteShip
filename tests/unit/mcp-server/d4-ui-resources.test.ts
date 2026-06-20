@@ -160,6 +160,8 @@ describe('D4 — projection drift pin', () => {
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
     // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
-    expect(address).toBe('fnv1a:8be0662b');
+    // CUT A2: `plumb` (migrated from scripts/plumb-gate.ts) joined COMMAND_CATALOG,
+    // so the registry/commands UI body changed, re-pinning the digest.
+    expect(address).toBe('fnv1a:bd2c7f0b');
   });
 });

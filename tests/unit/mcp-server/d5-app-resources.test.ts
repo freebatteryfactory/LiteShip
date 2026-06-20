@@ -45,7 +45,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
     // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
-    expect(pin).toBe('fnv1a:8be0662b');
+    // CUT A2: `plumb` (the plumb-gate, migrated from scripts/) joined COMMAND_CATALOG
+    // → the registry/commands UI body changed, re-pinning the digest.
+    expect(pin).toBe('fnv1a:bd2c7f0b');
   });
 });
 
@@ -153,9 +155,9 @@ describe('D5 — D1/D2 non-regression', () => {
     expect(r._meta?.['liteship/result']).toBeDefined();
   });
 
-  it('D2: tools/list still emits 8 tools each with an object outputSchema', () => {
+  it('D2: tools/list still emits 9 tools each with an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(8);
+    expect(tools.length).toBe(9);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
   });
 });

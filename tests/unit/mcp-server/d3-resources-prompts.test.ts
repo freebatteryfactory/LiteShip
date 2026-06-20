@@ -97,7 +97,7 @@ describe('D3 resources/list — projection of the registry + glossary', () => {
 });
 
 describe('D3 resources/read — real projected JSON', () => {
-  it('liteship://registry/commands is the full COMMAND_CATALOG (20-descriptor superset of tools/list)', async () => {
+  it('liteship://registry/commands is the full COMMAND_CATALOG (21-descriptor superset of tools/list)', async () => {
     const r = await result<{ contents: Array<{ uri: string; mimeType: string; text: string }> }>('resources/read', { uri: 'liteship://registry/commands' });
     expect(r.contents[0]!.mimeType).toBe('application/json');
     expect(JSON.parse(r.contents[0]!.text)).toEqual(COMMAND_CATALOG);
@@ -236,11 +236,11 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 8 tools each with an object outputSchema; 12 handlers total', () => {
+  it('D2: tools/list still emits 9 tools each with an object outputSchema; 13 handlers total', () => {
     const tools = listTools();
-    expect(tools.length).toBe(8);
+    expect(tools.length).toBe(9);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
-    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(12);
+    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(13);
   });
 });
 

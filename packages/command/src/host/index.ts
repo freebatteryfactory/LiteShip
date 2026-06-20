@@ -30,3 +30,4 @@ export type { FfmpegRenderProbe } from './ffmpeg-probe.js';
 export { tryReadCache, writeCache, hashInputs, cachePath } from './idempotency.js';
 export type { IdempotencyCtx } from './idempotency.js';
 export { getCapsuleManifestPath } from './manifest-path.js';
+export { runPlumbScan } from './plumb-scan.js';

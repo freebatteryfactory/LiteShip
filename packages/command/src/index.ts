@@ -23,6 +23,8 @@ export type {
   CommandCapability,
   CommandContext,
   HandledCommand,
+  PlumbGateSummary,
+  PlumbSkip,
   RegisteredCommand,
 } from './registry.js';
 export { CommandDispatcher } from './dispatcher.js';
@@ -44,6 +46,10 @@ export { verifyCommand } from './commands/verify.js';
 export type { VerifyPayload } from './commands/verify.js';
 export { auditCommand } from './commands/audit.js';
 export type { AuditPayload } from './commands/audit.js';
+export { plumbCommand } from './commands/plumb.js';
+export type { PlumbPayload } from './commands/plumb.js';
+export { PACKAGE_PLUMB } from './commands/plumb-registry.js';
+export type { PackagePlumbEntry, PackagePlumbStatus } from './commands/plumb-registry.js';
 export {
   packageSlug,
   selectTargets,

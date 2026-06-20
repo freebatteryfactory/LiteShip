@@ -16,6 +16,7 @@ import { sceneDev } from './commands/scene-dev.js';
 import { sceneRender } from './commands/scene-render.js';
 import { sceneVerify } from './commands/scene-verify.js';
 import { audit } from './commands/audit.js';
+import { plumb } from './commands/plumb.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
@@ -165,6 +166,9 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(consumer ? { consumer } : {}),
         ...(findings ? { findings } : {}),
       });
+    }
+    case 'plumb': {
+      return plumb();
     }
     case 'gauntlet': {
       return gauntlet(rest);

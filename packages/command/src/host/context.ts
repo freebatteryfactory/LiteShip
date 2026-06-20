@@ -23,6 +23,7 @@ import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
+import { runPlumbScan } from './plumb-scan.js';
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -65,6 +66,11 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
       return existsSync(abs) ? new Uint8Array(readFileSync(abs)) : null;
     },
     runVitest: (testFiles) => VitestRunner.run({ testFiles: [...testFiles] }),
+    // The plumb gate scans the repo at `cwd` (NOT a script-relative root): the
+    // generated-test corpus + the published-package set are both facts about the
+    // working tree the host was pointed at. Pure fs walk, so it lives in the
+    // shared host factory and the MCP host gets it for free.
+    runPlumb: async () => runPlumbScan(cwd),
     loadAssetBytes,
     runAudioProjection: async (bytes, projection, assetId) => {
       // The asset's OWN decoder (AssetDecl.decoder override or the kind

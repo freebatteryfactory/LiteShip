@@ -1,5 +1,8 @@
 /**
- * Meta-test for the plumb-completeness gate (scripts/plumb-gate.ts).
+ * Meta-test for the plumb-completeness gate — now the `czap plumb` command
+ * (migrated out of `scripts/plumb-gate.ts`). The scan engine is `runPlumbScan`
+ * from `@czap/command/host`; the `PACKAGE_PLUMB` ledger is re-exported from
+ * `@czap/command`.
  *
  * HARD RULE (no exceptions): a placeholder is BLOCKING. The gate fails on ANY
  * `it.skip`/`test.skip` in `tests/generated/` (an unwired capsule binding shipping
@@ -14,8 +17,11 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { runPlumbGate } from '../../../scripts/plumb-gate.js';
-import { PACKAGE_PLUMB } from '../../../scripts/plumb-registry.js';
+import { runPlumbScan } from '@czap/command/host';
+import { PACKAGE_PLUMB } from '@czap/command';
+
+/** Alias preserving the meta-test's call sites: the gate runs over a repo root. */
+const runPlumbGate = runPlumbScan;
 
 /** Build a throwaway repo root with the given generated test files + packages. */
 function fixtureRoot(opts: {

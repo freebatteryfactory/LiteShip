@@ -6,7 +6,7 @@
  *   mcpExposed:true                  ⟹ executionKind:'handler'
  *
  * Plus: every handler's success payload conforms to its declared outputSchema,
- * the 8 MCP tools expose outputSchema in tools/list, and the validator has teeth.
+ * the 9 MCP tools expose outputSchema in tools/list, and the validator has teeth.
  *
  * @module
  */
@@ -25,9 +25,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 12 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 13 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(12);
+    expect(handlers.length).toBe(13);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -47,9 +47,9 @@ describe('D2 — outputSchema registry law', () => {
 });
 
 describe('D2 — tools/list exposes outputSchema for the MCP tools', () => {
-  it('all 8 MCP tools include an object outputSchema', () => {
+  it('all 9 MCP tools include an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(8);
+    expect(tools.length).toBe(9);
     for (const t of tools) {
       expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe('object');
     }
@@ -72,6 +72,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     'scene.verify': { sceneId: 'intro', generatedTests: 2 },
     verify: { tarball: 't.tgz', capsule_id: null, checks: { tarball_manifest: 'skipped' }, mismatches: [] },
     audit: { errorCount: 0, warningCount: 6, infoCount: 282, findingCount: 288, suppressedCount: 15, passFindingCounts: { structure: 1, integrity: 2, surface: 0 }, repoRoot: '/repo', profileSource: 'default' },
+    plumb: { ok: false, skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }], unclassified: ['@czap/mystery'], generatedPresent: true },
   };
 
   it('each handler outputSchema accepts its documented success payload', () => {

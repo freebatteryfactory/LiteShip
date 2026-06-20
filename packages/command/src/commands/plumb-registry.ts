@@ -1,21 +1,17 @@
 /**
- * The plumb-completeness ledger.
+ * The plumb-completeness ledger (relocated from `scripts/plumb-registry.ts` when
+ * the gate became the `plumb` command). Pure data — no Node coupling — so the
+ * host scan capability (`runPlumb`, provisioned in `@czap/command/host`) can
+ * import it without pulling fs into the pure registry entry.
  *
- * Two honest, low-noise signals. (The cheap syntactic alternatives don't gate:
- * the audit's orphan findings are severity `info` and 350+ of them are type/
- * inference/test-only NOISE, not plumb debt; package import-reachability is
- * polluted by dev/CLI/build edges. So neither gates cleanly — and per-primitive
- * plumb-truth is instead proven by each item's end-to-end acceptance test that
- * drives it through the live runtime.)
+ * `PACKAGE_PLUMB` classifies every published package as `runtime` (live in a
+ * consumer site), `tooling` (CLI/build/types — not a live-runtime cast path), or
+ * `deferred` (meant to be runtime-live but not yet plumbed; MUST carry an
+ * `issue`). A published package missing here fails the gate, so a new test-only
+ * subsystem (whole packages a consumer never runs) cannot ship unclassified.
+ * This is the headline guard.
  *
- *  1. `PACKAGE_PLUMB` — every published package classified as `runtime` (live in
- *     a consumer site), `tooling` (CLI/build/types — not a live-runtime cast
- *     path), or `deferred` (meant to be runtime-live but not yet plumbed; MUST
- *     carry an `issue`). A published package missing here fails the gate, so a
- *     new test-only subsystem (the scene/stage class — whole packages a consumer
- *     never runs) cannot ship unclassified/hidden. This is the headline guard.
- *
- * The capsule-harness side has NO floor: `scripts/plumb-gate.ts` fails on ANY
+ * The capsule-harness side has NO floor: the `plumb` command fails on ANY
  * `it.skip` placeholder in `tests/generated/`. There is no grandfather list — an
  * unwired capsule binding is blocking work, not a pinned exemption. (A floor here
  * would launder exactly the incompleteness this gate exists to surface.)

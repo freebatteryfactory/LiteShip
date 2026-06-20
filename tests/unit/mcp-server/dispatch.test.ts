@@ -98,7 +98,7 @@ describe('dispatchToolCall — structuredContent (no stdout capture, no buildArg
 });
 
 describe('listTools — registry-projected catalog', () => {
-  it('lists exactly the 8 handler-backed compute/verify tools, each with an inputSchema', () => {
+  it('lists exactly the 9 handler-backed compute/verify/gate tools, each with an inputSchema', () => {
     const names = listTools().map((t) => t.name).sort();
     expect(names).toEqual([
       'asset.analyze',
@@ -106,6 +106,7 @@ describe('listTools — registry-projected catalog', () => {
       'capsule.inspect',
       'capsule.list',
       'capsule.verify',
+      'plumb',
       'scene.compile',
       'scene.render',
       'scene.verify',
