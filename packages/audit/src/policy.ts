@@ -421,6 +421,20 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       'readFailedPhase enriches a gauntlet failure from an optional timings artifact; a corrupt artifact degrades to the bare exit status by design — the failure itself is never swallowed.',
   },
   {
+    // 0.4.0 — _declarationAccepts is a boolean acceptance PROBE: it runs an
+    // Effect schema parser against a sentinel value to detect un-annotated
+    // `Schema.instanceOf(Ctor)` forms (which carry no typeConstructor annotation).
+    // A parser that THROWS is exactly the rejection signal — the caught error
+    // carries no information beyond accepted=false, which is the function's whole
+    // contract. There is nothing to surface; consuming the binding would be noise.
+    rule: 'fallback-laundering',
+    package: '@czap/core',
+    filePrefix: 'src/harness/arbitrary-from-schema.ts',
+    summaryIncludes: 'returns false',
+    reason:
+      'Declaration acceptance probe (_declarationAccepts): a throwing schema parser IS the rejection result (accepted=false); the caught error carries no information beyond the boolean the function returns, so nothing is laundered — the probe result is the contract.',
+  },
+  {
     // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumers
     // are the astro directive test suites (tests/unit/astro/astro-directives.test.ts,
     // astro-directive-branches.test.ts), which the audit does not scan, so

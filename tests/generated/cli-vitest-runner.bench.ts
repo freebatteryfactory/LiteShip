@@ -4,7 +4,7 @@ import { bench, expect } from 'vitest';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
 // capsule's `benchExemption` manifest record). 'cli.vitest-runner' has no pure, perf-sensitive
-// receipt core to time, so instead of a comment-only placeholder this bench is a
+// receipt core to time, so instead of a comment-only stand-in this bench is a
 // real PREMISE GUARD asserting the not-applicable disposition.
 bench('cli.vitest-runner — bench not-applicable (premise guard)', () => {
   expect(typeof 'cli.vitest-runner').toBe('string');

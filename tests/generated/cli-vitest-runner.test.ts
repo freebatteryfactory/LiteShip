@@ -7,7 +7,7 @@ import { vitestRunnerCapsule } from '../../packages/cli/src/capsules/vitest-runn
 
 describe('cli.vitest-runner', () => {
   const cap = vitestRunnerCapsule;
-  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped placeholder):
+  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped stand-in):
 //  - idempotent / audit receipt: EXEMPTED — 'cli.vitest-runner' declares the
 //    TYPED escape hatch `receiptKind: 'effect-outcome'`. Its receipt is
 //    the outcome of an effect with no pure core to drive twice, so these

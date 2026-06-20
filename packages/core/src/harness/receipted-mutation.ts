@@ -4,7 +4,7 @@
  * A receipted mutation declares an `input`/`output` schema pair (the receipt
  * CONTRACT) and optionally a typed `mutate` invocation handler plus a `faults`
  * table. The harness emits ONLY checks it can make real against what the
- * capsule actually exposes — never an `it.skip` placeholder:
+ * capsule actually exposes — never an `it.skip` stand-in:
  *
  *  - **contract round-trip** — emitted when both schemas are
  *    arbitrary-derivable (probed at compile time). Samples the input and
@@ -25,7 +25,7 @@
  *    A capsule that declares no faults has no faults to prove reachable, so
  *    the check is non-emitted (not skipped).
  *
- * Per memory: "no vanity tests" — a `() => true` placeholder pretending to
+ * Per memory: "no vanity tests" — a `() => true` stand-in pretending to
  * verify behavior, and a green `it.skip` shipping unwired work, are BOTH
  * banned. Every check here is either a real probe or an absent one with a
  * written reason.
@@ -67,7 +67,7 @@ export function generateReceiptedMutation(
 // No capsule binding import was wired by capsule-compile for '${cap.name}'
 // (the call site is not an exported const this harness can import), so there
 // is nothing to exercise. No checks are emitted — and deliberately no skipped
-// placeholder, which would ship unwired work green. Bind the capsule via an
+// stand-in, which would ship unwired work green. Bind the capsule via an
 // exported const to enable the contract round-trip + mutation probes.
 import 'vitest';
 `,
@@ -222,8 +222,8 @@ import 'vitest';
 
   const noteHeader =
     effectOutcomeReason !== undefined
-      ? `  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped placeholder):`
-      : `  // Non-emitted checks (documented; deliberately no skipped placeholder):`;
+      ? `  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped stand-in):`
+      : `  // Non-emitted checks (documented; deliberately no skipped stand-in):`;
   const noteBlock = notes.length > 0 ? `${noteHeader}\n${notes.join('\n')}\n` : '';
 
   // When at least one real check is emitted we import + alias the binding and
@@ -234,7 +234,7 @@ import 'vitest';
     return {
       testFile: `// GENERATED — do not edit by hand
 // All checks for '${cap.name}' are non-emitted for documented reasons below —
-// deliberately no skipped placeholder (which would ship unwired work green).
+// deliberately no skipped stand-in (which would ship unwired work green).
 import 'vitest';
 
 ${noteBlock}`,
@@ -340,7 +340,7 @@ import { bench, expect } from 'vitest';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
 // capsule's \`benchExemption\` manifest record). '${name}' has no pure, perf-sensitive
-// receipt core to time, so instead of a comment-only placeholder this bench is a
+// receipt core to time, so instead of a comment-only stand-in this bench is a
 // real PREMISE GUARD asserting the not-applicable disposition.
 bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
   expect(typeof '${escapeBacktick(name)}').toBe('string');
