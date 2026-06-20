@@ -15,8 +15,8 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { repoRoot } from '../../../scripts/audit/shared.js';
 import { packageTopology, surfacePolicy, dynamicImportExemptions } from '../../../scripts/audit/policy.js';
-import { liteshipDevopsProfile } from '../../../scripts/config/devops-profile.js';
-import type { DevopsProfile } from '../../../scripts/config/devops-profile.js';
+import { liteshipDevopsProfile } from '@czap/audit';
+import type { DevopsProfile } from '@czap/audit';
 
 const fixtures: string[] = [];
 afterEach(() => {

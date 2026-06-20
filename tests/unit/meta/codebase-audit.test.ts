@@ -15,7 +15,7 @@ import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
 import { buildRuntimeSeamsReport } from '../../../scripts/report-runtime-seams.js';
-import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
+import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
 
 // CUT D9a — the audit target is `profile.repoRoot`, not a positional `root`.
 // These fixtures use @czap/ package names, so the LiteShip default profile

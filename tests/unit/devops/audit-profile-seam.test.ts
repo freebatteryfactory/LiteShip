@@ -26,8 +26,8 @@ import {
   diffInventories,
 } from '../../../scripts/lib/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
-import type { DevopsProfile } from '../../../scripts/config/devops-profile.js';
+import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
+import type { DevopsProfile } from '@czap/audit';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 

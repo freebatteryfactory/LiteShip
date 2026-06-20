@@ -32,8 +32,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
-import { liteshipDevopsProfile } from '../config/devops-profile.js';
-import type { DevopsProfile } from '../config/devops-profile.js';
+import { liteshipDevopsProfile } from '@czap/audit';
+import type { DevopsProfile } from '@czap/audit';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,

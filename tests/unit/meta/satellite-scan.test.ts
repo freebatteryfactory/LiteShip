@@ -10,7 +10,7 @@ import {
   type BenchArtifact,
 } from '../../../scripts/artifact-integrity.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
-import { liteshipDevopsProfile, withRepoRoot } from '../../../scripts/config/devops-profile.js';
+import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
 import { buildDirectiveBenchConfig } from '../../../scripts/bench/directive-suite.js';
 import { buildStartupRealityArtifact } from '../../../scripts/bench-reality.js';
 import {
