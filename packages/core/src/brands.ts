@@ -143,7 +143,10 @@ export const ThresholdValue = (value: number): ThresholdValue => {
  */
 export const StateName = <S extends string>(value: S): StateName<S> => {
   if (value.length === 0 || /\s/.test(value)) {
-    throw ValidationError('StateName', `state name must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`);
+    throw ValidationError(
+      'StateName',
+      `state name must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`,
+    );
   }
   return value as StateName<S>;
 };
@@ -165,7 +168,10 @@ export const ContentAddress = (value: string): ContentAddress => {
  */
 export const IntegrityDigest = (value: string): IntegrityDigest => {
   if (!isIntegrityDigest(value)) {
-    throw ValidationError('IntegrityDigest', `expected (sha256|blake3):<64 lowercase hex>, got ${JSON.stringify(value)}`);
+    throw ValidationError(
+      'IntegrityDigest',
+      `expected (sha256|blake3):<64 lowercase hex>, got ${JSON.stringify(value)}`,
+    );
   }
   return value as IntegrityDigest;
 };
@@ -181,7 +187,10 @@ export const IntegrityDigest = (value: string): IntegrityDigest => {
  */
 export const TokenRef = <N extends string>(value: N): TokenRef<N> => {
   if (value.length === 0 || /\s/.test(value)) {
-    throw ValidationError('TokenRef', `token ref must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`);
+    throw ValidationError(
+      'TokenRef',
+      `token ref must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`,
+    );
   }
   return value as TokenRef<N>;
 };

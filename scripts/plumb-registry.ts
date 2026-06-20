@@ -66,6 +66,7 @@ export const PACKAGE_PLUMB: Readonly<Record<string, PackagePlumbEntry>> = {
   '@czap/command': { status: 'tooling', reason: 'CLI command catalog/host — tooling.' },
   '@czap/mcp-server': { status: 'tooling', reason: 'MCP server — a developer-assistant surface, not site runtime.' },
   '@czap/audit': { status: 'tooling', reason: 'The audit engine — build/CI tooling.' },
+  '@czap/gauntlet': { status: 'tooling', reason: 'The rigor engine — gates/findings/assurance/authority-ratchet; build/CI tooling, not site runtime.' },
   '@czap/remotion': { status: 'tooling', reason: 'Remotion offline video integration — build-time render, not live runtime.' },
   '@czap/stage': {
     status: 'tooling',

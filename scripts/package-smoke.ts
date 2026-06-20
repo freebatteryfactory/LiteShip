@@ -44,6 +44,7 @@ const PACKAGES: readonly PackageSpec[] = [
   // @czap/error is the foundational zero-dep error algebra — every package's
   // runtime dep; packed first so consumers resolve the declared workspace edge.
   { dir: 'packages/error', name: '@czap/error', imports: ['@czap/error'] },
+  { dir: 'packages/gauntlet', name: '@czap/gauntlet', imports: ['@czap/gauntlet'] },
   { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
   { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
   { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },

@@ -18,7 +18,7 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "build": "tsc --build packages/error packages/canonical packages/genui packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/stage packages/cloudflare packages/remotion packages/scene packages/assets packages/audit packages/command packages/cli packages/mcp-server packages/liteship packages/create-liteship",
+    "build": "tsc --build packages/error packages/gauntlet packages/canonical packages/genui packages/core packages/quantizer packages/compiler packages/web packages/detect packages/edge packages/worker packages/vite packages/astro packages/stage packages/cloudflare packages/remotion packages/scene packages/assets packages/audit packages/command packages/cli packages/mcp-server packages/liteship packages/create-liteship",
     "build:wasm": "pnpm exec tsx scripts/build-wasm.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && pnpm run typecheck:scripts && pnpm run typecheck:tests",
     "typecheck:scripts": "tsc --project tsconfig.scripts.json",

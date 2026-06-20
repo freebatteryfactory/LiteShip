@@ -220,6 +220,13 @@ export const packageTopology: Record<string, PackagePolicy> = {
     allowedInternalImports: [],
     kind: 'standalone',
   },
+  '@czap/gauntlet': {
+    // The rigor engine (Slice A foundations). A standalone, downstream-installable
+    // leaf: Findings + assurance levels + the gate plugin contract + authority
+    // ratchet. Imports only the foundational @czap/error algebra (layering-exempt).
+    allowedInternalImports: [],
+    kind: 'standalone',
+  },
 };
 
 /**

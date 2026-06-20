@@ -125,7 +125,7 @@ publisher per package, form values below.
 
 ### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
-For each of the 24 publishable packages (22 `@czap/*` scopes — including `@czap/stage`, public as of 0.2.0, and `@czap/error`, the foundational error algebra added in 0.4.0 — plus `create-liteship` + `liteship`), open
+For each of the 25 publishable packages (23 `@czap/*` scopes — including `@czap/stage`, public as of 0.2.0, and the 0.4.0 additions `@czap/error` (the foundational error algebra) and `@czap/gauntlet` (the rigor engine) — plus `create-liteship` + `liteship`), open
 `https://www.npmjs.com/package/<name>/access` (e.g.
 `https://www.npmjs.com/package/@czap/core/access`,
 `https://www.npmjs.com/package/liteship/access`) and add a trusted publisher

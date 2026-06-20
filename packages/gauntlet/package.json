@@ -1,0 +1,51 @@
+{
+  "name": "@czap/gauntlet",
+  "version": "0.4.0",
+  "description": "The avionics-grade, self-proving, extendable rigor engine — gates, findings, assurance levels, authority ratchet",
+  "license": "MIT",
+  "author": "Eassa Ayoub <eassa@heyoub.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heyoub/LiteShip",
+    "directory": "packages/gauntlet"
+  },
+  "bugs": "https://github.com/heyoub/LiteShip/issues",
+  "homepage": "https://github.com/heyoub/LiteShip#readme",
+  "keywords": [
+    "czap",
+    "rigor",
+    "audit",
+    "fitness-function",
+    "assurance",
+    "typescript"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "development": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "@czap/error": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

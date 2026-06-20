@@ -23,7 +23,10 @@ export const isAssetRefId = (s: string): s is AssetRefId => s.length > 0 && !/\s
  */
 export const mkAssetRefId = (value: string): AssetRefId => {
   if (!isAssetRefId(value)) {
-    throw ValidationError('mkAssetRefId', `asset id must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`);
+    throw ValidationError(
+      'mkAssetRefId',
+      `asset id must be a non-empty token with no whitespace, got ${JSON.stringify(value)}`,
+    );
   }
   return value;
 };

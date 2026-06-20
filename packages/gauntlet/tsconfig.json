@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@czap/error": ["../error/src/index.ts"]
+    }
+  },
+  "references": [{ "path": "../error" }],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

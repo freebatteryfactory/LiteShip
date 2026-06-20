@@ -19,6 +19,7 @@
   "files": [],
   "references": [
     { "path": "./packages/error" },
+    { "path": "./packages/gauntlet" },
     { "path": "./packages/_spine" },
     { "path": "./packages/canonical" },
     { "path": "./packages/genui" },

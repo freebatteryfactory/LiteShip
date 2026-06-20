@@ -12,6 +12,8 @@ export const alias: Record<string, string> = {
   // @czap/error is the zero-dep root error algebra — outside the design-layer
   // alias set, so map it to source explicitly (every package imports it).
   '@czap/error': resolve(repoRoot, 'packages/error/src/index.ts'),
+  // @czap/gauntlet is the rigor engine — outside the design-layer alias set.
+  '@czap/gauntlet': resolve(repoRoot, 'packages/gauntlet/src/index.ts'),
   // CUT A1: @czap/command is outside the design-layer alias set, so map it to
   // source explicitly (the CLI and MCP adapter tests import it by name). The
   // /host subpath (Node host execution) is aliased separately; the longer key

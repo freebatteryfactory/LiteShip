@@ -489,6 +489,12 @@ importers:
 
   packages/error: {}
 
+  packages/gauntlet:
+    dependencies:
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+
   packages/genui:
     dependencies:
       '@czap/_spine':
