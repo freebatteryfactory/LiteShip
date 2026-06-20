@@ -74,11 +74,31 @@ export function taggedError<const Tag extends string, Fields extends object>(
     options !== undefined && options.cause !== undefined
       ? new Error(message, { cause: options.cause })
       : new Error(message);
-  // Compose structured fields first, then stamp the identity LAST so a field
-  // can never spoof the discriminant or message (a `fields._tag` is ignored).
-  // `name` drives the default `toString()`/console rendering, so a thrown
-  // tagged error prints as `ParseError: …` rather than the generic `Error: …`.
-  return Object.assign(error, fields, {
+  // Copy the caller's structured fields as OWN DATA properties via
+  // `defineProperty` — NOT `Object.assign`. `Object.assign` copies via [[Set]],
+  // so a `fields` with a `__proto__` key (the computed form `{ ['__proto__']: {} }`)
+  // would invoke the prototype setter and DETACH the value from `Error.prototype`
+  // — the result would no longer be `instanceof Error`. That is a real
+  // prototype-pollution trap (a fast-check counterexample exposed it; same class
+  // as the cbor-decode `__proto__` CVE). `defineProperty` installs a plain own
+  // data property named `__proto__`, leaving the [[Prototype]] intact.
+  for (const key of Object.keys(fields)) {
+    Object.defineProperty(error, key, {
+      value: (fields as Record<string, unknown>)[key],
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  // Stamp the identity LAST so a field can never spoof the discriminant or
+  // message (a `fields._tag` is overwritten here). The identity keys are literal
+  // and known-safe, so a plain assign is fine. `name` drives the default
+  // `toString()`/console rendering, so a thrown tagged error prints as
+  // `ParseError: …` rather than the generic `Error: …`.
+  // `error` now carries the caller's fields at runtime (installed above via
+  // defineProperty, which TS can't see); assert them back at the type level so
+  // the final cast is sound without an `unknown` hop.
+  return Object.assign(error as Error & Readonly<Fields>, {
     _tag: tag,
     name: tag,
     message,

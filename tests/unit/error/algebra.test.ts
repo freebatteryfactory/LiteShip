@@ -88,6 +88,20 @@ describe('taggedError — the composer', () => {
       ),
     );
   });
+
+  it('LAW: a caller field named __proto__ cannot detach the Error prototype (proto-pollution safe)', () => {
+    // A fast-check counterexample (`{ ['__proto__']: {} }`) exposed an Object.assign
+    // [[Set]] trap that detached the value from Error.prototype, so it was no longer
+    // `instanceof Error`. Pin the fix deterministically (same class as the cbor `__proto__` CVE).
+    const e = taggedError('ValidationError', 'msg', { ['__proto__']: { polluted: true } } as object);
+    expect(e).toBeInstanceOf(Error);
+    expect(Object.getPrototypeOf(e)).toBe(Error.prototype);
+    expect(e._tag).toBe('ValidationError');
+    expect(e.message).toBe('msg');
+    expect(isTaggedError(e)).toBe(true);
+    // The malicious key is a harmless OWN data property; nothing global is polluted.
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
 });
 
 describe('built-in variants', () => {
