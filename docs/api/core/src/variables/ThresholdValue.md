@@ -8,9 +8,14 @@
 
 > **ThresholdValue**: (`value`) => `ThresholdValue`
 
-Defined in: [core/src/brands.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L32)
+Defined in: [core/src/brands.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L33)
 
-Wrap a plain number as a ThresholdValue — the one sanctioned cast site for this brand.
+Wrap a plain number as a ThresholdValue.
+
+A threshold is compared against a continuous signal value; `NaN`/`Infinity`
+break the ordered comparison the boundary evaluator relies on (every
+comparison with `NaN` is false). The range is signal-specific, so finiteness
+is the real generic invariant.
 
 ## Parameters
 
@@ -21,3 +26,7 @@ Wrap a plain number as a ThresholdValue — the one sanctioned cast site for thi
 ## Returns
 
 `ThresholdValue`
+
+## Throws
+
+ValidationError when `value` is not finite.

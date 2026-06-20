@@ -8,14 +8,14 @@
 
 > **dispatch**(`def`): [`CompileResult`](../type-aliases/CompileResult.md)
 
-Defined in: [compiler/src/dispatch.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L150)
+Defined in: [compiler/src/dispatch.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L154)
 
 Dispatch a [CompilerDef](../type-aliases/CompilerDef.md) to the matching compiler and return a
 tagged [CompileResult](../type-aliases/CompileResult.md).
 
 This is the single public entry point for multi-target compilation.
-The switch has no default case; adding a new arm to [CompilerDef](../type-aliases/CompilerDef.md)
-will produce a type error at dispatch.
+The switch ends in an `assertNever` exhaustiveness guard; adding a new arm
+to [CompilerDef](../type-aliases/CompilerDef.md) without a matching case produces a type error here.
 
 ## Parameters
 

@@ -8,9 +8,13 @@
 
 > **TokenRef**: \<`N`\>(`value`) => [`TokenRef`](../type-aliases/TokenRef.md)\<`N`\>
 
-Defined in: [core/src/brands.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L53)
+Defined in: [core/src/brands.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L54)
 
-Wrap a plain string as a TokenRef — the one sanctioned cast site for this brand.
+Wrap a plain string as a TokenRef.
+
+A token ref names a design token and is emitted into a CSS custom-property
+name, so it must be a non-empty token with no whitespace (e.g. `primary`,
+`color-surface`, `font-size-lg`).
 
 ## Type Parameters
 
@@ -27,3 +31,7 @@ Wrap a plain string as a TokenRef — the one sanctioned cast site for this bran
 ## Returns
 
 [`TokenRef`](../type-aliases/TokenRef.md)\<`N`\>
+
+## Throws
+
+ValidationError when `value` is empty or contains whitespace.

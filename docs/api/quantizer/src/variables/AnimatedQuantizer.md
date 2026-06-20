@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:319](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L319)
+Defined in: [quantizer/src/animated-quantizer.ts:317](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L317)
 
 Animated quantizer namespace.
 

@@ -8,6 +8,6 @@
 
 > **Level** = [`DiagnosticLevel`](../../../type-aliases/DiagnosticLevel.md)
 
-Defined in: [core/src/diagnostics.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L185)
+Defined in: [core/src/diagnostics.ts:215](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L215)
 
 Alias for [DiagnosticLevel](../../../type-aliases/DiagnosticLevel.md).

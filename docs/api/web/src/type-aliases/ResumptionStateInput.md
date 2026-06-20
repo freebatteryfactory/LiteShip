@@ -11,8 +11,8 @@
 Defined in: [web/src/types.ts:307](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L307)
 
 Input accepted by `Resumption.saveState`. The stored shape keeps
-`timestamp` required; on input it defaults to `Date.now()` — only the
-engine reads it.
+`timestamp` required; on input it defaults to the save clock's `now()`
+(`systemClock` unless one is injected) — only the engine reads it.
 
 ## Type Declaration
 

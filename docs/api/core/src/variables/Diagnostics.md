@@ -8,7 +8,7 @@
 
 > `const` **Diagnostics**: `object`
 
-Defined in: [core/src/diagnostics.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L160)
+Defined in: [core/src/diagnostics.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L182)
 
 Diagnostics facade — runtime boundaries call [Diagnostics.warn](#warn) / [Diagnostics.error](#error)
 instead of `console.*` so hosts can redirect or capture every diagnostic via [Diagnostics.setSink](#setsink).
@@ -69,6 +69,16 @@ Convenience for `resetSink()` + `clearOnce()` — mostly for test teardown.
 
 `void`
 
+### resetClock
+
+> **resetClock**: () => `void`
+
+Restore the default [wallClock](wallClock.md) timestamp source.
+
+#### Returns
+
+`void`
+
 ### resetSink
 
 > **resetSink**: () => `void`
@@ -78,6 +88,24 @@ Restore the default sink that writes through `console`.
 #### Returns
 
 `void`
+
+### setClock
+
+> **setClock**: (`clock`) => [`Clock`](../interfaces/Clock.md)
+
+Replace the clock the emission `timestamp` (a wall-clock TIMESTAMP) is read
+from; returns the previous clock. Pass a `fixedClock`/`manualClock` for
+deterministic, replayable diagnostic timestamps.
+
+#### Parameters
+
+##### clock
+
+[`Clock`](../interfaces/Clock.md)
+
+#### Returns
+
+[`Clock`](../interfaces/Clock.md)
 
 ### setSink
 

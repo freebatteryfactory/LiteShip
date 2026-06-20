@@ -8,9 +8,9 @@
 
 > **IntegrityDigest**: (`value`) => [`IntegrityDigest`](../type-aliases/IntegrityDigest.md)
 
-Defined in: [canonical/src/brands.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L15)
+Defined in: [canonical/src/brands.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L22)
 
-Wrap a plain string as an IntegrityDigest.
+Parse a plain string into an IntegrityDigest.
 
 ## Parameters
 
@@ -21,3 +21,7 @@ Wrap a plain string as an IntegrityDigest.
 ## Returns
 
 [`IntegrityDigest`](../type-aliases/IntegrityDigest.md)
+
+## Throws
+
+ValidationError when `value` is not `sha256:`/`blake3:` + 64 lowercase hex.

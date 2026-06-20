@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:403](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L403)
+Defined in: [web/src/stream/resumption.ts:407](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L407)
 
 SSE resumption protocol namespace.
 
@@ -185,7 +185,7 @@ const response = Effect.runPromise(
 
 ### saveState
 
-> **saveState**: (`state`) => `Effect`\<`void`\>
+> **saveState**: (`state`, `clock`) => `Effect`\<`void`\>
 
 Save resumption state to sessionStorage.
 
@@ -195,7 +195,16 @@ Save resumption state to sessionStorage.
 
 [`ResumptionStateInput`](../type-aliases/ResumptionStateInput.md)
 
-The resumption state to persist; `timestamp` defaults to `Date.now()`
+The resumption state to persist; `timestamp` defaults to the clock's `now()`
+
+##### clock?
+
+`Clock` = `wallClock`
+
+Time source for the default timestamp; defaults to `wallClock`
+               (epoch ms — the persisted timestamp is a real point in time, read
+               back as epoch, not the monotonic systemClock). Pass a
+               `fixedClock`/`manualClock` to make the persisted artifact deterministic.
 
 #### Returns
 
@@ -222,7 +231,7 @@ Effect.runSync(Resumption.saveState({
 import { Resumption } from '@czap/web';
 import { Effect } from 'effect';
 
-// Save state on each SSE message (timestamp defaults to Date.now())
+// Save state on each SSE message (timestamp defaults to systemClock.now())
 Effect.runSync(Resumption.saveState({
   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
 }));

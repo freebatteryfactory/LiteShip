@@ -38,7 +38,7 @@ A capsule declaration plus its content-addressed id.
 
 > `readonly` **\_kind**: `K`
 
-Defined in: [core/src/capsule.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L95)
+Defined in: [core/src/capsule.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L134)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [core/src/capsule.ts:95](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **attribution?**: [`AttributionDecl`](AttributionDecl.md)
 
-Defined in: [core/src/capsule.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L104)
+Defined in: [core/src/capsule.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L143)
 
 #### Inherited from
 
@@ -62,7 +62,7 @@ Defined in: [core/src/capsule.ts:104](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **budgets**: [`BudgetDecl`](BudgetDecl.md)
 
-Defined in: [core/src/capsule.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L102)
+Defined in: [core/src/capsule.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L141)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [core/src/capsule.ts:102](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **capabilities**: [`CapabilityDecl`](CapabilityDecl.md)\<`R`\>
 
-Defined in: [core/src/capsule.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L100)
+Defined in: [core/src/capsule.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L139)
 
 #### Inherited from
 
@@ -82,11 +82,52 @@ Defined in: [core/src/capsule.ts:100](https://github.com/heyoub/LiteShip/blob/ma
 
 ***
 
+### decide?
+
+> `readonly` `optional` **decide?**: (`subject`) => [`Decision`](Decision.md)
+
+Defined in: [core/src/capsule.ts:250](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L250)
+
+The decision channel for `policyGate` arms: resolve an `allow`/`deny`
+[Decision](Decision.md) (verdict + reason chain) against a decoded subject (`In`).
+This is the typed runtime channel the harness drives to make the allow/deny
+coverage, reason-chain integrity, and determinism checks REAL — without it a
+`policyGate` has no decision to drive and the harness FAILS LOUD (a
+`policyGate` MUST expose a `decide` core, enforced by `defineCapsule`).
+
+MUST be PURE and TOTAL over the declared subject domain (the same discipline
+as `mutate`): the harness drives it twice with the SAME sampled subject and
+asserts the two verdicts are deep-equal (determinism). A handler that calls a
+provider, reads a clock, mutates state, or otherwise enforces the verdict does
+NOT belong here — a policyGate returns a verdict, it never enforces it. Wire
+side-effecting admission behind a separate downstream producer (ADR-0014 "no
+built-in authority") and keep `decide` a pure verdict function.
+
+`Out` is the verdict shape: a `policyGate` declares `output` as the
+[Decision](Decision.md) schema, so the generated reason-chain check decodes each
+reason against it. Only meaningful for `policyGate` arms.
+
+#### Parameters
+
+##### subject
+
+`In`
+
+#### Returns
+
+[`Decision`](Decision.md)
+
+#### Inherited from
+
+[`CapsuleContract`](CapsuleContract.md).[`decide`](CapsuleContract.md#decide)
+
+***
+
 ### derive?
 
 > `readonly` `optional` **derive?**: (`source`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L132)
+Defined in: [core/src/capsule.ts:171](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L171)
 
 Optional projection handler for `cachedProjection` arms: derives the
 decoded output from a decoded source. The harness checks determinism
@@ -115,7 +156,7 @@ Promises, so the harness awaits every probe.
 
 > `readonly` `optional` **faults?**: readonly `FaultDecl`\<`In`\>[]
 
-Defined in: [core/src/capsule.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L162)
+Defined in: [core/src/capsule.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L201)
 
 Declared faults for `receiptedMutation` arms — failure modes the capsule
 promises are reachable. The harness drives each fault's
@@ -149,7 +190,7 @@ Defined in: [core/src/assembly.ts:18](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **initialState?**: `Out`
 
-Defined in: [core/src/capsule.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L123)
+Defined in: [core/src/capsule.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L162)
 
 Optional initial state for `stateMachine` arms — the fold seed for
 [CapsuleContract.step](CapsuleContract.md#step)-driven harness tests.
@@ -164,7 +205,7 @@ Optional initial state for `stateMachine` arms — the fold seed for
 
 > `readonly` **input**: `Schema`\<`In`\>
 
-Defined in: [core/src/capsule.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L98)
+Defined in: [core/src/capsule.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L137)
 
 #### Inherited from
 
@@ -176,7 +217,7 @@ Defined in: [core/src/capsule.ts:98](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **invariants**: readonly [`Invariant`](Invariant.md)\<`In`, `Out`\>[]
 
-Defined in: [core/src/capsule.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L101)
+Defined in: [core/src/capsule.ts:140](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L140)
 
 #### Inherited from
 
@@ -188,7 +229,7 @@ Defined in: [core/src/capsule.ts:101](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **mutate?**: (`input`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L150)
+Defined in: [core/src/capsule.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L189)
 
 Optional invocation handler for `receiptedMutation` arms: applies the
 mutation for a decoded input (`In`) and returns the decoded audit receipt
@@ -226,7 +267,7 @@ May be async; the harness awaits it. Only meaningful for
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/capsule.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L97)
+Defined in: [core/src/capsule.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L136)
 
 #### Inherited from
 
@@ -238,7 +279,7 @@ Defined in: [core/src/capsule.ts:97](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **output**: `Schema`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L99)
+Defined in: [core/src/capsule.ts:138](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L138)
 
 #### Inherited from
 
@@ -250,7 +291,7 @@ Defined in: [core/src/capsule.ts:99](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **reason?**: `string`
 
-Defined in: [core/src/capsule.ts:190](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L190)
+Defined in: [core/src/capsule.ts:229](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L229)
 
 REQUIRED when [receiptKind](CapsuleContract.md#receiptkind) is `'effect-outcome'` — a human-readable
 justification for why this receipt cannot be driven by a pure core (and
@@ -268,7 +309,7 @@ harness writes it verbatim into the generated test file and the manifest.
 
 > `readonly` `optional` **receiptKind?**: `"pure-core"` \| `"effect-outcome"`
 
-Defined in: [core/src/capsule.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L182)
+Defined in: [core/src/capsule.ts:221](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L221)
 
 The TYPED escape hatch for the `receiptedMutation` mandatory-`mutate` rule.
 
@@ -298,7 +339,7 @@ never needs to be written. Only meaningful for `receiptedMutation` arms.
 
 > `readonly` `optional` **run?**: (`input`) => `Out`
 
-Defined in: [core/src/capsule.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L110)
+Defined in: [core/src/capsule.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L149)
 
 Optional pure-transform handler: takes a decoded input and returns a
 decoded output. Used by the harness to drive generated property tests
@@ -324,7 +365,7 @@ end-to-end. Only meaningful for `pureTransform` arms today.
 
 > `readonly` **site**: readonly [`Site`](../type-aliases/Site.md)[]
 
-Defined in: [core/src/capsule.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L103)
+Defined in: [core/src/capsule.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L142)
 
 #### Inherited from
 
@@ -336,7 +377,7 @@ Defined in: [core/src/capsule.ts:103](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **step?**: (`state`, `event`) => `Out`
 
-Defined in: [core/src/capsule.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L118)
+Defined in: [core/src/capsule.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L157)
 
 Optional state-machine step handler: folds one decoded event (`In`)
 into a decoded state (`Out`). With [CapsuleContract.initialState](CapsuleContract.md#initialstate)

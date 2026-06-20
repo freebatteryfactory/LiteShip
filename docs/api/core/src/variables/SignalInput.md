@@ -8,9 +8,15 @@
 
 > **SignalInput**: \<`I`\>(`value`) => [`SignalInput`](../type-aliases/SignalInput.md)\<`I`\>
 
-Defined in: [core/src/brands.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L29)
+Defined in: [core/src/brands.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L30)
 
-Wrap a plain string as a SignalInput — the one sanctioned cast site for this brand.
+Wrap a plain string as a SignalInput.
+
+The brand is DELIBERATELY lenient free-form (see `signal-input.ts`): real
+values include colon payloads carrying spaces and parens, e.g.
+`media:(min-width: 600px)` and `custom:my.signal.id`, so any
+character-grammar would reject genuine inputs. The one real invariant is
+that a signal must NAME something — the empty string addresses no signal.
 
 ## Type Parameters
 
@@ -27,3 +33,7 @@ Wrap a plain string as a SignalInput — the one sanctioned cast site for this b
 ## Returns
 
 [`SignalInput`](../type-aliases/SignalInput.md)\<`I`\>
+
+## Throws
+
+ValidationError when `value` is the empty string.

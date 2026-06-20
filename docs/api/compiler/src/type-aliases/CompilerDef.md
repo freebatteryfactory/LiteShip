@@ -8,13 +8,13 @@
 
 > **CompilerDef** = \{ `_tag`: `"CSSCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `selector?`: `string`; `states`: [`CSSStates`](CSSStates.md); \} \| \{ `_tag`: `"GLSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`GLSLStates`](GLSLStates.md); \} \| \{ `_tag`: `"WGSLCompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`WGSLStates`](WGSLStates.md); \} \| \{ `_tag`: `"ARIACompiler"`; `boundary`: [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md); `states`: [`ARIAStates`](../interfaces/ARIAStates.md); \} \| \{ `_tag`: `"AICompiler"`; `manifest`: [`AIManifestInput`](../interfaces/AIManifestInput.md); \} \| \{ `_tag`: `"ConfigCompiler"`; `config`: `Config.Shape`; \}
 
-Defined in: [compiler/src/dispatch.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L84)
+Defined in: [compiler/src/dispatch.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L88)
 
 Tagged discriminated union describing a single compilation request.
 
 Every arm carries exactly the inputs its target needs; [dispatch](../functions/dispatch.md)
-switches on `_tag` with no default case, so TypeScript guarantees
-exhaustiveness and no runtime `unknown`/`as` casts are required.
+switches on `_tag` and closes with an `assertNever` guard, so TypeScript
+guarantees exhaustiveness and no runtime `unknown`/`as` casts are required.
 
 Arms:
 - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.

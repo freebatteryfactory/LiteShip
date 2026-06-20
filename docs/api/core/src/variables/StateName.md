@@ -8,9 +8,13 @@
 
 > **StateName**: \<`S`\>(`value`) => [`StateName`](../type-aliases/StateName.md)\<`S`\>
 
-Defined in: [core/src/brands.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L35)
+Defined in: [core/src/brands.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L36)
 
-Wrap a plain string as a StateName — the one sanctioned cast site for this brand.
+Wrap a plain string as a StateName.
+
+A state name is serialized into the `data-czap` state token and used as a
+CSS/selector-addressable label, so it must be a non-empty token with no
+whitespace (e.g. `mobile`, `sm`, `desktop`).
 
 ## Type Parameters
 
@@ -27,3 +31,7 @@ Wrap a plain string as a StateName — the one sanctioned cast site for this bra
 ## Returns
 
 [`StateName`](../type-aliases/StateName.md)\<`S`\>
+
+## Throws
+
+ValidationError when `value` is empty or contains whitespace.

@@ -8,6 +8,6 @@
 
 > **WGSLStates** = `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
 
-Defined in: [compiler/src/dispatch.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L33)
+Defined in: [compiler/src/dispatch.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L37)
 
 Per-state WGSL uniform values keyed by state name (numeric only).

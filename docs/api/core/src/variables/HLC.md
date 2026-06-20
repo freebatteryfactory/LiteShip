@@ -8,7 +8,7 @@
 
 > `const` **HLC**: `object`
 
-Defined in: [core/src/hlc.ts:227](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/hlc.ts#L227)
+Defined in: [core/src/hlc.ts:232](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/hlc.ts#L232)
 
 HLC namespace -- Hybrid Logical Clock.
 

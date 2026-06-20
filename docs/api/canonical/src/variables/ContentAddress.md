@@ -8,9 +8,9 @@
 
 > **ContentAddress**: (`value`) => `` `fnv1a:${string}` ``
 
-Defined in: [canonical/src/brands.ts:12](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L12)
+Defined in: [canonical/src/brands.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L19)
 
-Wrap a plain string as a ContentAddress.
+Parse a plain string into a ContentAddress.
 
 ## Parameters
 
@@ -21,3 +21,7 @@ Wrap a plain string as a ContentAddress.
 ## Returns
 
 `` `fnv1a:${string}` ``
+
+## Throws
+
+ValidationError when `value` is not `fnv1a:` + 8 lowercase hex.
