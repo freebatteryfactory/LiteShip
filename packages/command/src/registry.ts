@@ -8,6 +8,7 @@ import type {
   CapsuleCommandDescriptor,
   CapsuleCommandInvocation,
   CapsuleCommandResult,
+  Clock,
   ContentAddress,
 } from '@czap/core';
 import { ValidationError } from '@czap/error';
@@ -20,6 +21,14 @@ import { ValidationError } from '@czap/error';
 export interface CommandContext {
   /** Working directory for path resolution; defaults to `process.cwd()` at the adapter. */
   readonly cwd?: string;
+  /**
+   * MONOTONIC clock for measuring command DURATIONS (e.g. compile `durationMs`).
+   * Defaults to `@czap/core`'s `systemClock` (`performance.now`) at the call site.
+   * Injected so a deterministic replay/test can thread a `manualClock`. This is a
+   * DURATION boundary — never feed its reading into a `new Date()` / ISO stamp /
+   * HLC (those are TIMESTAMPS and use the wall clock).
+   */
+  readonly clock?: Clock;
   /**
    * Capture a subprocess's stdout + exit code. Adapters back this with their
    * own spawn helper (e.g. @czap/cli's `spawnArgvCapture`); handlers stay free

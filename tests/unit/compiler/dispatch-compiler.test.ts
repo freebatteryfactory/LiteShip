@@ -7,6 +7,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { Boundary, Config } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { dispatch } from '@czap/compiler';
 import type { AIManifest, CompilerDef } from '@czap/compiler';
 
@@ -135,6 +136,29 @@ describe('dispatch() arm defaults', () => {
         actions: {},
         constraints: [],
       });
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Exhaustiveness guard (assertNever)
+// ---------------------------------------------------------------------------
+
+describe('dispatch() exhaustiveness guard', () => {
+  test('an out-of-type _tag (bad data the types forbid) fails as a typed InvariantViolationError', () => {
+    // Forge a value outside the CompilerDef union — the static type guarantees
+    // this is unreachable, so the only way to hit the `default: assertNever`
+    // arm is to defeat the types with a cast. Reaching it must NOT silently
+    // return undefined; it must throw the algebra's InvariantViolationError
+    // naming the broken contract, never a bare Error.
+    const forged = { _tag: 'NotACompiler' } as unknown as CompilerDef;
+    try {
+      dispatch(forged);
+      throw new Error('expected dispatch to throw on an out-of-type _tag');
+    } catch (e) {
+      expect(hasTag(e, 'InvariantViolationError')).toBe(true);
+      expect((e as { invariant: string }).invariant).toBe('CompilerDef._tag');
+      expect((e as { message: string }).message).toContain('unhandled variant');
     }
   });
 });

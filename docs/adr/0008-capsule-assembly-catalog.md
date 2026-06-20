@@ -80,3 +80,54 @@ back to the syntax-only behavior.
 
 This closes the "factory-wrapped capsule" gap: the `cachedProjection`
 arm now records real instances instead of an empty list.
+
+### policyGate gains a `decide` channel + its first instance (2026-06-20 amendment)
+
+ADR-0008 closed the catalog at seven arms, with `policyGate` (#5) named
+"permission / authz check." `policyGate` shipped as a closed-catalog
+member with **zero instances** and a harness that threw `UnsupportedError`:
+the `CapsuleContract` had no channel to drive a verdict, so the one real
+permission decision in the tree — `chooseRung`, the reader of `PolicyNode`
+(`packages/core/src/escalation.ts`) — was filed under `pureTransform` to
+be harnessable at all. The arm was reserved for a decision it had no way
+to express. This amendment closes that gap.
+
+1. **Contract.** `CapsuleContract` gains an optional
+   `decide?: (subject: In) => Decision`, meaningful only for `policyGate`,
+   where `Decision = { effect: 'allow' | 'deny'; reasons: readonly Reason[] }`
+   and `Reason = { code: string; message: string }`. `decide` MUST be
+   **pure and total** over the subject domain (the same discipline as
+   `mutate`), and `Out` is the verdict shape — a `policyGate` declares
+   `output` as the `Decision` schema. A `policyGate` **returns** a verdict;
+   it never enforces it — side-effecting admission stays in the downstream
+   producer (ADR-0014 "no built-in authority").
+
+2. **Mandatory `decide`.** `defineCapsule` REJECTS a `policyGate` with no
+   `decide` core (loud `InvariantViolationError`), exactly as a
+   `receiptedMutation` must expose a `mutate` core or a typed exemption.
+   There is **no policyGate exemption**: a gate that cannot decide is not
+   a gate.
+
+3. **Harness.** `generatePolicyGate` emits a real traversal — allow/deny
+   coverage (reasons non-empty *exactly* when `deny`), reason-chain
+   integrity (each reason's `code`/`message` non-empty; the verdict
+   round-trips through the declared `Decision` schema), determinism (same
+   subject → deep-equal verdict twice), every declared invariant
+   `check(subject, verdict)`, and a real `decide()` bench — or fails the
+   compile loud (wire-or-fail). The reason chain justifies a **rejection**:
+   a `deny` names why; an `allow` is a bare admission with an empty chain.
+
+4. **First instance (closure rule satisfied).** `core.escalation.choose-rung`
+   (`packages/core/src/capsules/escalation-choose-rung.ts`) is reclassified
+   from `pureTransform` to `policyGate`. Its `decide` seals a real
+   `PolicyNode` from the subject and calls `chooseRung`; allow ⇒
+   `{ effect: 'allow', reasons: [] }`, deny ⇒
+   `{ effect: 'deny', reasons: [{ code, message }] }` where `message` is the
+   chooser's own error string verbatim. This is the canonical
+   permission/authz check ADR-0008 #5 reserved the arm for.
+
+**The catalog stays at seven.** No arm is added or removed; `policyGate` is
+unchanged as a member. This amendment only gives it the contract channel
+and the concrete instance its closure rule always required. With all seven
+arms now shipping real instances, the `flex:verify` capsule-factory
+dimension gates every arm (`scripts/flex-verify.ts` `requiredArms`).

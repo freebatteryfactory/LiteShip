@@ -37,6 +37,12 @@ export type {
   SceneWorld,
   SceneQueryEffect,
 } from './scene-bridge.js';
+// Scene-stage REFERENCE CONSUMER: the in-repo caller that drives a REAL compiled
+// `@czap/scene` runtime through `bridgeSceneToGraph` onto a live graph (item C),
+// and composes `castGraphContext` → `admitGraphPatchProposal` for the AI seam
+// (item D). This is the real producer→consumer wiring the seams' exports stop at.
+export { driveSceneStage, castStageContext, applyGraphSuggestion, sceneStageRunQuery } from './scene-stage.js';
+export type { SceneStageOptions } from './scene-stage.js';
 export { configureWasmRuntime, loadWasmRuntime, resolveWasmUrl } from './wasm.js';
 export { allowRuntimeEndpointUrl, allowSameOriginRuntimeUrl, isSameOriginRuntimeUrl } from './url-policy.js';
 export {

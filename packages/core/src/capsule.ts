@@ -43,6 +43,45 @@ export interface Invariant<In, Out> {
   readonly message: string;
 }
 
+/**
+ * One link in a {@link Decision}'s reason chain — a typed justification for the
+ * verdict. `code` is a stable, machine-readable discriminant (e.g.
+ * `'site-not-admitted'`); `message` is the human-readable explanation. A `deny`
+ * carries at least one reason naming WHY the subject was rejected; an `allow`
+ * may carry an informational reason naming what was admitted.
+ *
+ * Only meaningful for `policyGate` arms (the verdict of {@link CapsuleContract.decide}).
+ */
+export interface Reason {
+  /** Stable, machine-readable reason discriminant (e.g. `'no-rung-admits'`). */
+  readonly code: string;
+  /** Human-readable explanation of this reason. */
+  readonly message: string;
+}
+
+/**
+ * The typed verdict a `policyGate` capsule's {@link CapsuleContract.decide}
+ * resolves against a subject: an `allow`/`deny` effect plus a reason chain.
+ *
+ * Discipline (the policyGate analogue of the receipt byte law): a `deny` MUST
+ * carry a NON-EMPTY `reasons` chain naming why the subject was rejected — a
+ * denial with no reason is a silent gate, the very thing this arm exists to
+ * forbid. An `allow` MAY carry informational reasons (what was admitted) or an
+ * empty chain. The harness pins exactly this: `reasons` non-empty iff `deny`.
+ *
+ * The decision is the WHOLE authority a policyGate primitive holds — it returns
+ * a verdict, it never enforces it. Side-effecting admission (refusing a request,
+ * minting a token, mutating state) lives in the downstream PRODUCER that consumes
+ * this verdict, never in the capsule primitive (ADR-0014 "no built-in authority",
+ * consistent with the AI cast-primitive boundary).
+ */
+export interface Decision {
+  /** Whether the subject is admitted (`allow`) or rejected (`deny`). */
+  readonly effect: 'allow' | 'deny';
+  /** The reason chain. Non-empty exactly when `effect === 'deny'`. */
+  readonly reasons: readonly Reason[];
+}
+
 /** License and authorship metadata carried for audit receipts. */
 export interface AttributionDecl {
   readonly license: string;
@@ -188,6 +227,27 @@ export interface CapsuleContract<K extends AssemblyKind, In, Out, R> {
    * harness writes it verbatim into the generated test file and the manifest.
    */
   readonly reason?: string;
+  /**
+   * The decision channel for `policyGate` arms: resolve an `allow`/`deny`
+   * {@link Decision} (verdict + reason chain) against a decoded subject (`In`).
+   * This is the typed runtime channel the harness drives to make the allow/deny
+   * coverage, reason-chain integrity, and determinism checks REAL — without it a
+   * `policyGate` has no decision to drive and the harness FAILS LOUD (a
+   * `policyGate` MUST expose a `decide` core, enforced by `defineCapsule`).
+   *
+   * MUST be PURE and TOTAL over the declared subject domain (the same discipline
+   * as `mutate`): the harness drives it twice with the SAME sampled subject and
+   * asserts the two verdicts are deep-equal (determinism). A handler that calls a
+   * provider, reads a clock, mutates state, or otherwise enforces the verdict does
+   * NOT belong here — a policyGate returns a verdict, it never enforces it. Wire
+   * side-effecting admission behind a separate downstream producer (ADR-0014 "no
+   * built-in authority") and keep `decide` a pure verdict function.
+   *
+   * `Out` is the verdict shape: a `policyGate` declares `output` as the
+   * {@link Decision} schema, so the generated reason-chain check decodes each
+   * reason against it. Only meaningful for `policyGate` arms.
+   */
+  readonly decide?: (subject: In) => Decision;
 }
 
 /**

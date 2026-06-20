@@ -56,16 +56,20 @@ export interface Waiver {
  * suppress is still kept). This is the "you cannot waive a lie" floor: a
  * placeholder / skipped test / TODO is never shippable and never waivable.
  *
- * Seeded with the skip/placeholder rule ids (the gates that emit these land in a
- * later slice; their ids are reserved here NOW so the forbidden floor exists
- * before the gate does — a waiver can never get ahead of the rule). Easy to
- * extend: append the rule id of any future always-blocking gate. Kept as a
- * `readonly string[]` so downstream can compose its own forbidden set by
- * spreading this one: `[...ALWAYS_BLOCKING_RULES, 'my/never-waivable']`.
+ * These two ids are exactly the rules the always-blocking gates emit —
+ * `noPlaceholderGate` (`gauntlet/no-placeholder`) and `noSkippedTestGate`
+ * (`gauntlet/no-skipped-test`). The floor is therefore NOT inert surface: a real
+ * gate emits each rule, so a waiver that tries to cover a placeholder or a skipped
+ * test is void against a finding that actually exists. Easy to extend: append the
+ * rule id of any future always-blocking gate. Kept as a `readonly string[]` so
+ * downstream can compose its own forbidden set by spreading this one:
+ * `[...ALWAYS_BLOCKING_RULES, 'my/never-waivable']`.
  */
 export const ALWAYS_BLOCKING_RULES: readonly string[] = [
-  'gauntlet/no-placeholder', // TODO / FIXME / pseudocode / "implement me" stubs
-  'gauntlet/no-skipped-test', // it.skip / describe.skip / xit / test.todo
+  // Emitted by noPlaceholderGate — placeholder directive comments + unimplemented stubs.
+  'gauntlet/no-placeholder',
+  // Emitted by noSkippedTestGate — skipped tests (the dot-skip / dot-todo / x-prefixed forms).
+  'gauntlet/no-skipped-test',
 ];
 
 /** The partition {@link applyWaivers} returns. */

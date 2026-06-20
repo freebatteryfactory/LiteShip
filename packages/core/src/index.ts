@@ -136,7 +136,7 @@ export { GenFrame } from './gen-frame.js';
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from './gen-frame.js';
 
 // Video
-export { VideoRenderer } from './video.js';
+export { VideoRenderer, compositeStateToRgba } from './video.js';
 export type { VideoConfig, VideoFrameOutput } from './video.js';
 
 // Capture
@@ -374,6 +374,8 @@ export type {
   Invariant,
   AttributionDecl,
   CapsuleContract,
+  Reason,
+  Decision,
 } from './capsule.js';
 
 export { TypeValidator } from './capsule.js';

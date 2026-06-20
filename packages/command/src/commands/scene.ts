@@ -8,6 +8,7 @@
  * @module
  */
 import type { CapsuleCommandResult } from '@czap/core';
+import { systemClock } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -123,7 +124,11 @@ export const sceneCompileCommand: HandledCommand = {
     const contract = mod ? findContract(mod) : undefined;
     if (!cap || !contract) return failed('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
 
-    const start = Date.now();
+    // `durationMs` is an ELAPSED interval → MONOTONIC systemClock (a wall-clock
+    // NTP/DST jump must never corrupt it). The receipt `timestamp` below is a
+    // TIMESTAMP → wall clock (`new Date().toISOString()`), the right boundary there.
+    const clock = context.clock ?? systemClock;
+    const start = clock.now();
     try {
       if (context.runSceneCompile) await context.runSceneCompile(mod!);
     } catch (err) {
@@ -136,7 +141,7 @@ export const sceneCompileCommand: HandledCommand = {
       payload: {
         sceneId: cap.id,
         trackCount: (contract.tracks as readonly unknown[]).length,
-        durationMs: Date.now() - start,
+        durationMs: clock.now() - start,
       },
     };
   },

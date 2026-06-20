@@ -1,10 +1,19 @@
 /**
- * The convenience runner — run a set of gates over a real repo in one call.
+ * The real-repo runner — the ONE live entrypoint that runs the gauntlet over the
+ * actual tree, with the committed assurance map and the committed waivers applied.
  *
- * `runGauntletOnRepo` is sugar over {@link runGates} + {@link nodeContext}: it
- * globs the repo into a {@link GateContext} and runs the gates through the same
- * authority ratchet the in-memory path uses. The filesystem touch is confined to
- * {@link nodeContext}; this module just composes.
+ * `runGauntletOnRepo` is the production composition of {@link runGates} +
+ * {@link nodeContext}: it globs the repo into a {@link GateContext} and runs the
+ * gates through the same authority ratchet the in-memory path uses. The
+ * filesystem touch is confined to {@link nodeContext}; this module just composes.
+ *
+ * Crucially, this is NOT dead convenience sugar — {@link litelaunchGauntlet}
+ * binds the real built-in gate set, the committed {@link LITESHIP_ASSURANCE_MAP},
+ * and the committed {@link LITESHIP_WAIVERS} into one call. The dogfood tests
+ * exercise THIS function over `packages/&#42;/src`, so the waivers in `waivers.ts`
+ * actually govern a real run (a waiver that suppresses nothing on the real repo
+ * has no teeth; here they do — an active boundary waiver suppresses its finding,
+ * an expired one re-reds and blocks).
  *
  * @module
  */
@@ -12,6 +21,31 @@
 import type { Gate } from './gate.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import { nodeContext } from './node-context.js';
+import { LITESHIP_ASSURANCE_MAP } from './assurance-map.js';
+import { LITESHIP_WAIVERS } from './waivers.js';
+import { noBareThrowGate } from './gates/no-bare-throw.js';
+import { noTsIgnoreGate } from './gates/no-ts-ignore.js';
+import { noNondeterminismGate } from './gates/no-nondeterminism.js';
+import { noSilentCatchGate } from './gates/no-silent-catch.js';
+import { noSkippedTestGate } from './gates/no-skipped-test.js';
+import { noPlaceholderGate } from './gates/no-placeholder.js';
+
+/**
+ * LiteShip's built-in gate set — the gates the repo runs against itself. The two
+ * always-blocking gates ({@link noSkippedTestGate} / {@link noPlaceholderGate})
+ * are listed alongside the four hygiene gates: their rule ids are exactly the ones
+ * {@link ALWAYS_BLOCKING_RULES} reserves, so the forbidden floor now guards rules a
+ * REAL gate emits (no inert surface). A downstream project composes its own gates
+ * onto this set.
+ */
+export const LITESHIP_GATES: readonly Gate[] = [
+  noBareThrowGate,
+  noTsIgnoreGate,
+  noNondeterminismGate,
+  noSilentCatchGate,
+  noSkippedTestGate,
+  noPlaceholderGate,
+];
 
 /** Options for {@link runGauntletOnRepo}. */
 export interface RunGauntletOnRepoOptions {
@@ -35,4 +69,39 @@ export function runGauntletOnRepo(
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
   return runGates(gates, nodeContext(opts.repoRoot, opts.globs), runOpts);
+}
+
+/** The default scope: every package's TypeScript source. */
+export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.ts'];
+
+/**
+ * The PRODUCTION gauntlet run — the live composition the dogfood path calls.
+ *
+ * Binds the real built-in {@link LITESHIP_GATES}, the committed
+ * {@link LITESHIP_ASSURANCE_MAP} (so each gate is aimed at its level), and the
+ * committed {@link LITESHIP_WAIVERS} (so the declared boundaries are suppressed
+ * and a stale/expired waiver re-reds) into ONE call over the real repo. `now` is
+ * injected — never `Date.now()` — so the waiver-expiry verdict is deterministic
+ * and a test can drive the clock past a boundary review to prove the teeth fire.
+ *
+ * This is what makes the committed waivers actually GOVERN: the waivers in
+ * `waivers.ts` are evaluated against the real findings this run surfaces, scoped
+ * per-gate by ruleId in {@link runGates}. A boundary waiver that matches nothing
+ * goes stale (warning); one whose `expires` is past `now` re-reds and blocks.
+ *
+ * @param repoRoot Absolute root the gates resolve against.
+ * @param now      The injected clock for waiver-expiry evaluation (REQUIRED — the
+ *                 caller owns the date so the verdict is reproducible).
+ * @param globs    The file scope (defaults to every package's source).
+ */
+export function litelaunchGauntlet(
+  repoRoot: string,
+  now: Date,
+  globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
+): GauntletResult {
+  return runGauntletOnRepo(
+    LITESHIP_GATES,
+    { repoRoot, globs },
+    { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
+  );
 }

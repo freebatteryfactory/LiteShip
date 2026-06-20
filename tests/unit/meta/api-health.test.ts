@@ -273,6 +273,10 @@ const STANDALONE_FUNCTIONS = [
   'fixedClock',
   'manualClock',
   'seededRng',
+  // The deterministic frame-state -> RGBA painter (0.4.0 stage/render): the single
+  // source of truth both ffmpeg backends composite through, so a given CompositeState
+  // always yields byte-identical, content-addressable pixels. Pure function.
+  'compositeStateToRgba',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
@@ -300,8 +304,9 @@ const STANDALONE_OBJECTS = [
   // GraphPatch round-trip identity capsule (F): proves encode→decode→diff→patch
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
-  // Escalation chooser capsule: locks chooseRung's minimal-downgrade / site-gate /
-  // determinism / fresh-Set laws as a standing pureTransform contract.
+  // Escalation chooser capsule: the FIRST policyGate instance (ADR-0008). Locks
+  // chooseRung's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
+  // a standing policyGate contract — the canonical permission/authz check.
   'escalationChooseRungCapsule',
   // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
   // fnv1a format / order-independence (CUT B1 code-unit guard).

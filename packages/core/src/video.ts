@@ -46,6 +46,72 @@ interface VideoRendererShape {
 }
 
 // ---------------------------------------------------------------------------
+// CompositeState → RGBA — the ONE deterministic frame painter both backends use
+// ---------------------------------------------------------------------------
+
+/** FNV-1a offset basis / prime — the canonical 32-bit content-mix constants. */
+const FNV_OFFSET = 0x811c9dc5;
+const FNV_PRIME = 0x01000193;
+
+/**
+ * Paint one {@link CompositeState} into a solid `width*height*4` RGBA buffer
+ * whose color is a DETERMINISTIC function of the frame's discrete state + css
+ * outputs.
+ *
+ * This is the SINGLE source of truth for "frame state → pixels" shared by BOTH
+ * headless byte-encoders — the `@czap/command` ffmpeg render backend that the
+ * shipping `scene render` CLI drives, and the `@czap/stage` ffmpeg `FrameEncoder`.
+ * Neither owns its own painter, so
+ * the same `CompositeState` always yields byte-identical pixels regardless of
+ * which path encoded it. It is HONEST, not a black stub: distinct frames (the
+ * graph's poses crossing states over the timeline) yield distinct pixels, so the
+ * encoded video genuinely VARIES with the graph state; re-encoding the same
+ * frames yields byte-identical RGBA, so it is content-addressable and replayable.
+ *
+ * The mix is a small FNV-1a over the canonical-ish (key, value) pairs of the
+ * state's `discrete` map and its compiled `css` outputs — the two fields that
+ * carry the per-frame pose. (A richer renderer can paint geometry later; the
+ * `(state, w, h) → RGBA` seam shape is unchanged, so both backends move
+ * together.)
+ *
+ * @param state - the per-frame compositor snapshot (the real pose at this tick).
+ * @param width - frame width in pixels.
+ * @param height - frame height in pixels.
+ * @returns a `width*height*4` RGBA byte buffer (alpha fully opaque).
+ */
+export function compositeStateToRgba(state: CompositeState, width: number, height: number): Uint8Array {
+  let hash = FNV_OFFSET;
+  const mix = (s: string): void => {
+    for (let i = 0; i < s.length; i++) {
+      hash ^= s.charCodeAt(i);
+      hash = Math.imul(hash, FNV_PRIME) >>> 0;
+    }
+  };
+  // Sort keys so the painted color is independent of object-insertion order —
+  // a true content function of the state, not of how the map was built.
+  for (const k of Object.keys(state.discrete).sort()) {
+    mix(k);
+    mix(String(state.discrete[k]));
+  }
+  for (const k of Object.keys(state.outputs.css).sort()) {
+    mix(k);
+    mix(String(state.outputs.css[k]));
+  }
+  const r = hash & 0xff;
+  const g = (hash >>> 8) & 0xff;
+  const b = (hash >>> 16) & 0xff;
+
+  const bytes = new Uint8Array(width * height * 4);
+  for (let i = 0; i < bytes.length; i += 4) {
+    bytes[i] = r;
+    bytes[i + 1] = g;
+    bytes[i + 2] = b;
+    bytes[i + 3] = 255;
+  }
+  return bytes;
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 

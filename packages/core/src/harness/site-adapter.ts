@@ -315,9 +315,15 @@ bench(\`${escapeSingle(name)} — native -> czap -> native round trip\`, () => {
 }
 
 /**
- * TYPED not-applicable bench for an unwired siteAdapter (no round-trip schema
- * resolved): the marker line + a real premise-guard body. Never a comment-only
- * stub, never a `bench.skip`.
+ * TYPED not-applicable bench for an unwired siteAdapter (no importable binding /
+ * no arbitrary-derivable round-trip schema resolved): the marker line + a real
+ * premise-guard body. Never a comment-only stub, never a `bench.skip`.
+ *
+ * This is reached ONLY from {@link notWiredOutput} — i.e. when no siteAdapter
+ * binding was importable at all (so there is nothing structural to import and
+ * assert against). The honest teeth here is to pin the recorded exemption reason:
+ * a non-empty reason backing the marker, so the marker can never rot into an
+ * empty placeholder that a gate would mistake for a real measurement.
  */
 function notApplicableBench(name: string, reason: string): string {
   return `// GENERATED — do not edit by hand
@@ -325,11 +331,13 @@ ${benchNotApplicableMarker(reason)}
 import { bench, expect } from 'vitest';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
-// capsule's \`benchExemption\` manifest record). No arbitrary-derivable round-trip
-// schema resolved for '${name}', so there is no pure path to time — this bench is a
-// real PREMISE GUARD, never a comment-only placeholder.
+// capsule's \`benchExemption\` manifest record). No importable binding / no
+// arbitrary-derivable round-trip schema resolved for '${name}', so there is no
+// structural binding to assert against and no pure path to time — this PREMISE
+// GUARD pins the recorded exemption reason so the marker can't rot into an empty
+// placeholder.
 bench('${escapeSingle(name)} — bench not-applicable (premise guard)', () => {
-  expect(typeof '${escapeSingle(name)}').toBe('string');
+  expect('${escapeSingle(reason)}'.length).toBeGreaterThan(0);
 }, { time: 50 });
 `;
 }

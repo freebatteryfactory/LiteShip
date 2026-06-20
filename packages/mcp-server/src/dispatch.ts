@@ -28,10 +28,11 @@ import { listUiResources, readUiResource } from './ui-resources.js';
 import { listAppResources, readAppResource } from './app-resources.js';
 import { listManifestResources, readManifestResource } from './manifest-resource.js';
 import { listPrompts, getPrompt } from './prompts.js';
-import type { NotFoundError } from '@czap/error';
-import { ValidationError, hasTag } from '@czap/error';
+import type { LiteShipError } from '@czap/error';
+import { ValidationError, isTaggedError, matchTagOr } from '@czap/error';
 import { RESOURCE_NOT_FOUND } from './errors.js';
 import {
+  type JsonRpcId,
   type JsonRpcNotification,
   type JsonRpcRequest,
   type JsonRpcResponse,
@@ -40,6 +41,7 @@ import {
   MethodNotFound,
   InvalidParams,
   InternalError,
+  ParseError as JsonRpcParseError,
 } from './jsonrpc.js';
 
 /** Product-owned `_meta` key under which the LiteShip result receipt rides (no maintainer identity; never an MCP-reserved prefix). */
@@ -92,24 +94,109 @@ export async function dispatch(msg: JsonRpcRequest | JsonRpcNotification): Promi
       const notificationAck: null = null;
       return notificationAck;
     }
-    if (hasTag(err, 'ValidationError')) {
-      // §5.1: malformed params → -32602. The ValidationError detail is the
-      // human message; the rejecting module (the RPC method / prompt) rides
-      // under `data` as diagnostic context.
-      const ve = err as ValidationError;
-      return errorResponse(id, InvalidParams, ve.detail, { module: ve.module });
-    }
-    if (hasTag(err, 'NotFoundError')) {
-      // MCP resource-not-found is -32002 (resource-specific), NOT -32601 (which means
-      // the resources/read METHOD is missing — it is not). The missed URI is `error.id`.
-      const nf = err as NotFoundError;
-      return errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', {
-        uri: nf.id,
-        hint: 'resources/list enumerates every readable URI (liteship://… JSON, ui://liteship/… UI).',
-      });
+    // Every LiteShip tagged variant gets a TAG-DISCRIMINATING JSON-RPC mapping
+    // here — this is the single protocol boundary where the algebra is consumed.
+    // Tagged errors thrown by any RPC handler OR by the shared command
+    // dispatcher's handlers (which `dispatcher.dispatch` does not wrap — a
+    // capsule command's IoError/ParseError/InvariantViolationError propagates
+    // straight out) are matched by `_tag`; anything non-tagged falls to -32603.
+    if (isTaggedError(err)) {
+      return errorFromTagged(id, err as LiteShipError);
     }
     return errorResponse(id, InternalError, 'Internal error', { detail: String(err) });
   }
+}
+
+/**
+ * Map a LiteShip {@link LiteShipError} to its JSON-RPC error response.
+ *
+ * `matchTagOr` makes consumption of the algebra real and total: each of the
+ * eight built-in variants has a dedicated arm that branches on its structured
+ * fields (so the diagnostic `data` is variant-specific, not a stringified
+ * blob), and `orElse` covers any downstream-composed variant that widened the
+ * union. Adding a variant to the closed LiteShip set surfaces here as a missed
+ * arm to revisit — the `orElse` keeps it correct (mapped to -32603) until then.
+ *
+ * Code mapping rationale:
+ * - `ValidationError` / `UnsupportedError` → -32602 InvalidParams: the input
+ *   was caller-supplied and rejected (bad value, or outside the supported set).
+ * - `ParseError` → -32700 Parse error: external bytes/text failed to decode.
+ * - `NotFoundError` → -32002 (MCP resource-not-found, NOT -32601 method-missing).
+ * - `IoError` / `HostCapabilityError` / `InvariantViolationError` /
+ *   `IntegrityError` → -32603 Internal error: a server-side execution failure,
+ *   surfaced with its structured fields under `data` (operation/path, missing
+ *   capability, broken invariant, integrity subject+code+expected/actual) so
+ *   the branch is diagnostically meaningful rather than an opaque `String(err)`.
+ *
+ * Exported so the per-variant mapping is unit-testable without forcing a real
+ * command handler to throw each variant through the dispatcher.
+ */
+export function errorFromTagged(id: JsonRpcId, err: LiteShipError): JsonRpcResponse {
+  return matchTagOr(
+    err,
+    {
+      ValidationError: (e) =>
+        // §5.1: malformed params → -32602. `detail` is the human message; the
+        // rejecting module (the RPC method / prompt) rides under `data`.
+        errorResponse(id, InvalidParams, e.detail, { module: e.module }),
+      UnsupportedError: (e) =>
+        // A known-but-unhandled value the caller supplied (unsupported target,
+        // platform, schema node) — a params problem, not a server fault.
+        errorResponse(id, InvalidParams, e.detail, { subject: e.subject }),
+      ParseError: (e) =>
+        // External input (a file, manifest, or wire payload) failed to decode.
+        errorResponse(id, JsonRpcParseError, 'Parse error', {
+          source: e.source,
+          detail: e.detail,
+          ...(e.code !== undefined ? { code: e.code } : {}),
+          ...(e.offset !== undefined ? { offset: e.offset } : {}),
+        }),
+      NotFoundError: (e) =>
+        // MCP resource-not-found is -32002 (resource-specific), NOT -32601
+        // (which means the resources/read METHOD is missing — it is not).
+        errorResponse(id, RESOURCE_NOT_FOUND, 'Resource not found', {
+          uri: e.id,
+          hint: 'resources/list enumerates every readable URI (liteship://… JSON, ui://liteship/… UI).',
+        }),
+      IoError: (e) =>
+        // A file/process/network op the host refused or errored — server-side.
+        errorResponse(id, InternalError, 'Internal error', {
+          reason: 'io',
+          operation: e.operation,
+          detail: e.detail,
+          ...(e.path !== undefined ? { path: e.path } : {}),
+        }),
+      HostCapabilityError: (e) =>
+        // A required runtime capability is absent on the server host.
+        errorResponse(id, InternalError, 'Internal error', {
+          reason: 'host-capability',
+          capability: e.capability,
+          detail: e.detail,
+        }),
+      InvariantViolationError: (e) =>
+        // The server's own logic reached a state it claims impossible — a bug,
+        // surfaced with the broken invariant rather than swallowed.
+        errorResponse(id, InternalError, 'Internal error', {
+          reason: 'invariant',
+          invariant: e.invariant,
+          detail: e.detail,
+        }),
+      IntegrityError: (e) =>
+        // Content-addressed/ordered/signed data failed verification on the
+        // server — corruption, tampering, or version skew.
+        errorResponse(id, InternalError, 'Internal error', {
+          reason: 'integrity',
+          subject: e.subject,
+          detail: e.detail,
+          ...(e.code !== undefined ? { code: e.code } : {}),
+          ...(e.expected !== undefined ? { expected: e.expected } : {}),
+          ...(e.actual !== undefined ? { actual: e.actual } : {}),
+        }),
+    },
+    // A downstream-composed variant that widened the union — keep it correct
+    // (server fault, opaque diagnostic) until it earns its own arm above.
+    (e) => errorResponse(id, InternalError, 'Internal error', { detail: String(e) }),
+  );
 }
 
 /** Internal: dispatch result shape. */

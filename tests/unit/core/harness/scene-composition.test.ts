@@ -124,6 +124,13 @@ describe('generateSceneComposition (lane-aware)', () => {
     expect(benchFile.toLowerCase()).toContain('not-applicable');
     expect(benchFile).toContain('bench(');
     expect(benchFile).not.toContain('bench.skip');
+    // The premise guard has TEETH: it imports the binding and asserts the
+    // STRUCTURAL absence (no tracks / fps) — NOT a vacuous typeof-string vanity.
+    expect(benchFile).toContain('demoCapsule');
+    expect(benchFile).toContain("expect(cap._kind).toBe('sceneComposition')");
+    expect(benchFile).toContain('expect(cap.tracks).toBeUndefined()');
+    expect(benchFile).toContain('expect(cap.fps).toBeUndefined()');
+    expect(benchFile).not.toContain(".toBe('string')");
   });
 
   it('exposes the lane model: SCENE_CHECKS tags each check with its lane', () => {

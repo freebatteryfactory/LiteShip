@@ -4,18 +4,17 @@ import * as fc from 'fast-check';
 import { escalationChooseRungCapsule } from '../../packages/core/src/capsules/escalation-choose-rung.js';
 import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
-// REAL bench: drive the capsule's `run` over presampled inputs — the SAME
+// REAL bench: drive the capsule's `decide` over presampled subjects — the SAME
 // binding + arbitrary the generated test drives. capsule:compile resolved this
-// input as arbitrary-derivable + `run` present, so the samples are by
-// construction inputs `run` accepts. The samples are drawn ONCE at module load
-// (fixed seed → reproducible) so the timed loop measures `run`, never fast-check.
+// subject schema as arbitrary-derivable + `decide` present, so the samples are by
+// construction subjects `decide` accepts. Samples are drawn ONCE at module load
+// (fixed seed → reproducible) so the timed loop measures `decide`, never fast-check.
 const cap = escalationChooseRungCapsule;
-const run = cap.run!;
+const decide = cap.decide!;
 const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
-const samples = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
+const subjects = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
 let i = 0;
 
-bench(`core.escalation.choose-rung — run() over canonical samples`, () => {
-  // Cycle through the presampled batch; one real handler invocation per iteration.
-  run(samples[i++ % samples.length] as never);
+bench(`core.escalation.choose-rung — decide() over canonical subjects`, () => {
+  decide(subjects[i++ % subjects.length] as never);
 }, { time: 500 });

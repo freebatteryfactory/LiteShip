@@ -416,22 +416,17 @@ const checks: Check[] = [
         // to a real instance gate. The type-directed AST walker (Task 2) made
         // factory-wrapped capsules detectable; pre-Spec-1.1 the cachedProjection
         // arm in particular always reported zero instances and the dimension
-        // silently passed. The five required arms below ship real instances
-        // by Spec 1.1 close:
+        // silently passed. As of the ADR-0008 policyGate amendment, ALL SEVEN
+        // arms ship real instances, so every arm is gated — a missing instance
+        // for any arm fails flex:verify:
         //   pureTransform     — CanonicalCbor, BoundaryEvaluate, JsonRpcServer
         //   receiptedMutation — VitestRunner, web.stream.receipt
         //   stateMachine      — SceneRuntime, core.token-buffer
         //   cachedProjection  — defineAsset / BeatMarkerProjection / WavMetadataProjection
         //   sceneComposition  — examples.intro, scene.beat-binding
-        // siteAdapter and policyGate stay reportable but ungated — siteAdapter
-        // siteAdapter ships two instances (Remotion + Cloudflare); policyGate has no Spec 1.1 surface yet.
-        const requiredArms = [
-          'pureTransform',
-          'receiptedMutation',
-          'stateMachine',
-          'cachedProjection',
-          'sceneComposition',
-        ];
+        //   siteAdapter       — Remotion + Cloudflare host adapters
+        //   policyGate        — core.escalation.choose-rung (the permission/authz check)
+        const requiredArms = allArms;
         const missing = requiredArms.filter((a) => !kinds.has(a));
         if (missing.length > 0) {
           return {

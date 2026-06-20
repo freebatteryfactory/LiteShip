@@ -6,15 +6,15 @@
  * invokes the capsule's `run` handler against each sample, and asserts
  * the invariant `check(input, output)` holds.
  *
- * If the capsule does not export a `run` handler the test is emitted as
- * `it.skip` with a TODO comment — vacuous `() => true` placeholders are
- * banned (per memory: "no vanity tests, real APIs, deterministic
- * assertions").
+ * If the capsule cannot be fully harnessed (no `run` handler, no importable
+ * binding, or an input schema the arbitrary walker rejects) the generator
+ * THROWS a tagged `UnsupportedError` so `capsule:compile` fails loud — it never
+ * emits an `it.skip` or a vacuous `() => true` placeholder (wire-or-fail).
  *
  * @module
  */
+import { UnsupportedError } from '@czap/error';
 import type { CapsuleDef } from '../assembly.js';
-import { benchNotApplicableMarker } from './bench-marker.js';
 
 /** Emitted file contents for a capsule harness (test + bench pair). */
 export interface HarnessOutput {
@@ -33,8 +33,8 @@ export interface HarnessOutput {
 /**
  * Optional metadata the compile-time driver passes to harness templates so
  * the generated test file can `import` the real capsule binding from its
- * source file. When `bindingImport` is undefined, the harness emits an
- * `it.skip` placeholder rather than a vacuous test.
+ * source file. When `bindingImport` is undefined, the generator THROWS a tagged
+ * `UnsupportedError` (wire-or-fail) rather than emitting a placeholder.
  */
 export interface HarnessContext {
   /** ESM-style import specifier (with `.js` extension) for the test file. */
@@ -135,6 +135,14 @@ export interface HarnessContext {
    * instead of the idempotency/audit/fault non-emission notes — never a skip.
    */
   readonly effectOutcomeReason?: string;
+  /**
+   * COMPILE-TIME probe result (policyGate): the capsule exposes a typed `decide`
+   * verdict handler. Paired with {@link arbitraryDerivable} (the SUBJECT schema)
+   * this lets the policyGate harness emit a REAL allow/deny + reason-chain +
+   * determinism traversal over sampled subjects; absent it the harness FAILS LOUD
+   * (wire-or-fail) — a policyGate with no decision has nothing to drive.
+   */
+  readonly decidePresent?: boolean;
   /**
    * COMPILE-TIME resolution (sceneComposition): the concrete, `compileScene`-able
    * scene the harness drives through its ECS runtime, plus the import specifiers
@@ -293,55 +301,46 @@ export function generatePureTransform(
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
 
   if (ctx.bindingImport === undefined || ctx.bindingName === undefined) {
-    // No real binding wired — emit honest skip per task constraint.
-    const testFile = `// GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
-
-describe('${cap.name}', () => {
-  it.skip('invariants under random input (no binding wired)', () => {
-    // TODO(harness): no capsule binding import wired by capsule-compile.
-    // Add bindingImport + bindingName to the manifest entry to enable.
-  });
-});
-`;
-    return { testFile, benchFile: realBench(cap.name, ctx) };
+    // Wire-or-fail: a generator emits a real test or throws — never a skip.
+    throw UnsupportedError(
+      'pureTransform harness',
+      `cannot harness pureTransform capsule '${cap.name}': capsule:compile resolved no importable binding ` +
+        `(bindingImport + bindingName). A factory-wrapped capsule with no exported binding cannot be probed — ` +
+        `export the binding (or remove the capsule) and re-run pnpm run capsule:compile.`,
+    );
   }
 
   // Derivable + handler present, but the handler rejects schema-conformant
-  // samples (its true domain is narrower than the input schema). Emit ONE
-  // honest skip naming the non-schema cause — never a false-RED test driven
-  // by inputs the handler cannot accept.
+  // samples (its true domain is narrower than the input schema). Wire-or-fail:
+  // a narrower input schema is the only honest fix, so fail the compile loud
+  // rather than ship a skip that claims coverage it does not have.
   if (ctx.preconditionMismatch !== undefined) {
-    // The reason is interpolated into a single-quoted `it.skip('...')`
-    // literal: escape backslashes and single quotes, and strip newlines so
-    // the emitted file always parses.
-    const reason = ctx.preconditionMismatch
-      .replace(/\\/g, '\\\\')
-      .replace(/'/g, "\\'")
-      .replace(/[\r\n]+/g, ' ');
-    const testFile = `// GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
-
-describe('${cap.name}', () => {
-  // capsule:compile probed the real binding: the input schema is
-  // arbitrary-derivable and \`run\` exists, but \`run\` rejects
-  // structurally-conformant samples. The fix is a narrower input schema on
-  // the capsule, NOT the arbitrary walker. Honest skip until then.
-  it.skip('invariants — ${reason}', () => {});
-});
-`;
-    return { testFile, benchFile: realBench(cap.name, ctx) };
+    throw UnsupportedError(
+      'pureTransform harness',
+      `cannot harness pureTransform capsule '${cap.name}': its run handler rejects structurally-conformant ` +
+        `samples (${ctx.preconditionMismatch.replace(/[\r\n]+/g, ' ')}). The input schema is broader than ` +
+        `run's true domain — narrow the capsule's input schema so the arbitrary only generates acceptable ` +
+        `inputs, then re-run pnpm run capsule:compile.`,
+    );
   }
 
-  // COMPILE-TIME probe resolved: the binding's input schema IS
-  // arbitrary-derivable AND its `run` handler exists. Emit the FINAL,
-  // real-only test — no `it.skip` token, so the generated file never
-  // ships a green placeholder. A regression in the arbitrary walker would
-  // throw at `schemaToArbitrary` and fail the suite RED, which is correct.
-  const realOnly = ctx.arbitraryDerivable === true && ctx.handlersPresent === true;
+  // COMPILE-TIME probe must have resolved the binding's input schema as
+  // arbitrary-derivable AND its `run` handler present. Wire-or-fail: any
+  // lesser disposition throws above and below — here we emit ONLY the FINAL,
+  // real-only test, never an `it.skip` token. A regression in the arbitrary
+  // walker would throw at `schemaToArbitrary` and fail the suite RED, which
+  // is correct.
+  if (ctx.arbitraryDerivable !== true || ctx.handlersPresent !== true) {
+    throw UnsupportedError(
+      'pureTransform harness',
+      `cannot harness pureTransform capsule '${cap.name}': capsule:compile did not resolve it as ` +
+        `arbitrary-derivable (got ${String(ctx.arbitraryDerivable)}) with a run handler present ` +
+        `(got ${String(ctx.handlersPresent)}). Both must probe true to emit a real property test — ` +
+        `fix the binding/schema and re-run pnpm run capsule:compile.`,
+    );
+  }
 
-  const testFile = realOnly
-    ? `// GENERATED — do not edit by hand
+  const testFile = `// GENERATED — do not edit by hand
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
 import { ${ctx.bindingName} } from '${ctx.bindingImport}';
@@ -368,53 +367,6 @@ describe('${cap.name}', () => {
       // CI runner (esp. Windows) — give headroom rather than reduce coverage.
       // scaledTimeout keeps the repo's central CI-scaling policy (no raw literals).
     }, scaledTimeout(30000));
-  }
-});
-`
-    : `// GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
-import * as fc from 'fast-check';
-import { ${ctx.bindingName} } from '${ctx.bindingImport}';
-import { schemaToArbitrary, hasTag } from '${arbitraryImport}';
-import { scaledTimeout } from '../../vitest.shared.js';
-
-describe('${cap.name}', () => {
-  const cap = ${ctx.bindingName};
-  let arb: fc.Arbitrary<unknown>;
-  let arbError: unknown;
-  try {
-    arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
-  } catch (err) {
-    arbError = err;
-  }
-  if (arbError !== undefined && !hasTag(arbError, 'UnsupportedError')) {
-    // Only a non-derivable schema is honest-skip material; anything else
-    // (a defect in the arbitrary builder, a malformed capsule) must fail.
-    throw arbError;
-  }
-  if (cap.run === undefined || arbError !== undefined) {
-    it.skip(
-      hasTag(arbError, 'UnsupportedError')
-        ? \`invariants — input schema not arbitrary-derivable (\${arbError.message})\`
-        : 'invariants — capsule has no run handler',
-      () => {},
-    );
-  } else {
-    for (const inv of cap.invariants) {
-      it(\`invariant: \${inv.name}\`, () => {
-        fc.assert(
-          fc.property(arb, (input) => {
-            const output = cap.run!(input as never);
-            return inv.check(input as never, output as never);
-          }),
-          { numRuns: 100 },
-        );
-        // Generous per-invariant timeout: 100 property runs over a heavier capsule
-        // (e.g. the cast compilers) can exceed vitest's 10s default on a slow/loaded
-        // CI runner (esp. Windows) — give headroom rather than reduce coverage.
-        // scaledTimeout keeps the repo's central CI-scaling policy (no raw literals).
-      }, scaledTimeout(30000));
-    }
   }
 });
 `;
@@ -446,23 +398,9 @@ const BENCH_SAMPLE_COUNT = 64;
  *    a matching `benchExemption` in the manifest.
  */
 function realBench(name: string, ctx: HarnessContext): string {
-  const realOnly =
-    ctx.bindingImport !== undefined &&
-    ctx.bindingName !== undefined &&
-    ctx.arbitraryDerivable === true &&
-    ctx.handlersPresent === true &&
-    ctx.preconditionMismatch === undefined;
-
-  if (!realOnly) {
-    const reason =
-      ctx.preconditionMismatch !== undefined
-        ? `'${name}': the input schema is not drivable as a pure bench — ${ctx.preconditionMismatch}. ` +
-          `The fix is a narrower input schema on the capsule, not a fabricated benchmark.`
-        : `'${name}': capsule:compile wired no real binding (arbitrary-derivable input ✕ run handler), ` +
-          `so there is no pure hot path to time here.`;
-    return notApplicableBench(name, reason);
-  }
-
+  // generatePureTransform only reaches here for a fully real-drivable capsule
+  // (binding + arbitrary-derivable input + run handler present); any lesser
+  // disposition threw an UnsupportedError above, so the bench is always real.
   const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
   return `// GENERATED — do not edit by hand
 import { bench } from 'vitest';
@@ -485,32 +423,6 @@ bench(\`${escapeBacktick(name)} — run() over canonical samples\`, () => {
   // Cycle through the presampled batch; one real handler invocation per iteration.
   run(samples[i++ % samples.length] as never);
 }, { time: 500 });
-`;
-}
-
-/**
- * Emit a TYPED not-applicable bench: the machine-readable marker line (FIRST
- * line after the generated banner) plus a real PREMISE-GUARD body. The guard
- * asserts the structural fact that makes the operation not-benchmarkable, so the
- * exemption fails RED if the premise ever stops holding — never a silent stub,
- * never a `bench.skip`.
- */
-function notApplicableBench(name: string, reason: string): string {
-  return `// GENERATED — do not edit by hand
-${benchNotApplicableMarker(reason)}
-import { bench, expect } from 'vitest';
-
-// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
-// capsule's \`benchExemption\` manifest record). There is no pure, perf-sensitive
-// hot path to time for '${name}', so instead of a comment-only placeholder (which
-// would ship a benchmark measuring NOTHING green — the it.skip sin one lane over)
-// this bench is a real PREMISE GUARD: it asserts the not-applicable disposition.
-bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
-  // The premise: this generated bench file declares its own not-applicability via
-  // the BENCH-NOT-APPLICABLE marker. A bench that reached here measures only that
-  // the exemption is real (the reason is recorded), never a fabricated hot path.
-  expect(typeof '${escapeBacktick(name)}').toBe('string');
-}, { time: 50 });
 `;
 }
 

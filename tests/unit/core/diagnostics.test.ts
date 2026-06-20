@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics, fixedClock } from '@czap/core';
 
 afterEach(() => {
   Diagnostics.reset();
@@ -41,6 +41,23 @@ describe('Diagnostics', () => {
         cause: expect.any(Error),
       }),
     ]);
+  });
+
+  test('event timestamp reads from the injected (wall) clock — deterministic via fixedClock', () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    // The timestamp is a wall-clock TIMESTAMP; pinning the clock makes it stable.
+    const previous = Diagnostics.setClock(fixedClock(1_700_000_000_000));
+    expect(typeof previous.now).toBe('function');
+
+    Diagnostics.warn({ source: 'czap/test', code: 'ts', message: 'stamped' });
+    expect(events).toHaveLength(1);
+    expect(events[0]?.timestamp).toBe(1_700_000_000_000);
+
+    // resetClock() restores the default wall clock (a real, non-fixed timestamp).
+    Diagnostics.resetClock();
+    const after = Diagnostics.warn({ source: 'czap/test', code: 'ts2', message: 'real' });
+    expect(after.timestamp).not.toBe(1_700_000_000_000);
   });
 
   test('deduplicates warnOnce until the once cache is cleared', () => {

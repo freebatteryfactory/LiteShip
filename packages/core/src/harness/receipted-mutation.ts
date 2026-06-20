@@ -326,24 +326,64 @@ bench(\`${escapeBacktick(name)} — mutate() over canonical samples\`, async () 
         `external effect with no pure core to time. Declared reason: ${effectOutcomeReason}`
       : `'${name}': capsule:compile wired no pure \`mutate\` core (mutatePresent ✕ contractRoundTrippable), ` +
         `so there is no pure receipt path to time.`;
-  return notApplicableBench(name, reason);
+  // The premise guard imports the binding ONLY when one is wired AND the capsule
+  // genuinely declares the effect-outcome escape hatch — that absence-of-a-pure-
+  // -core is the structural fact the guard asserts with teeth. An unwired capsule
+  // has no binding to import; there the guard pins the recorded reason instead.
+  const pinEffectOutcome =
+    ctx.bindingImport !== undefined && ctx.bindingName !== undefined && effectOutcomeReason !== undefined;
+  return notApplicableBench(name, reason, pinEffectOutcome ? ctx.bindingImport : undefined, pinEffectOutcome ? ctx.bindingName : undefined);
 }
 
 /**
  * TYPED not-applicable bench: the marker line + a real premise-guard body. Never
  * a comment-only stub, never a `bench.skip`.
+ *
+ * When the capsule declared the TYPED `effect-outcome` escape hatch AND a binding
+ * is wired, the guard has TEETH: it imports the binding and asserts the
+ * STRUCTURAL absence of a pure `mutate` core (and that it IS a receiptedMutation
+ * declaring `receiptKind: 'effect-outcome'`) — exactly what makes a `mutate`
+ * bench not-applicable. If the capsule ever gains a pure core, the guard fails
+ * RED, forcing a real `mutate()` bench. For an unwired capsule (no binding) the
+ * guard pins the recorded exemption reason so the marker can't rot into an empty
+ * placeholder.
  */
-function notApplicableBench(name: string, reason: string): string {
+function notApplicableBench(
+  name: string,
+  reason: string,
+  bindingImport: string | undefined,
+  bindingName: string | undefined,
+): string {
+  if (bindingImport !== undefined && bindingName !== undefined) {
+    return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+import { ${bindingName} } from '${bindingImport}';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). '${name}' declares the
+// \`effect-outcome\` escape hatch — its receipt is the outcome of an external
+// effect with no pure core to time. This is a real PREMISE GUARD with TEETH: it
+// asserts the STRUCTURAL absence of a pure \`mutate\` core. If the capsule ever
+// gains one, the guard fails RED, forcing a real \`mutate()\` bench.
+bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
+  const cap = ${bindingName} as { _kind?: unknown; mutate?: unknown; receiptKind?: unknown };
+  expect(cap._kind).toBe('receiptedMutation');
+  expect(cap.mutate).toBeUndefined();
+  expect(cap.receiptKind).toBe('effect-outcome');
+}, { time: 50 });
+`;
+  }
   return `// GENERATED — do not edit by hand
 ${benchNotApplicableMarker(reason)}
 import { bench, expect } from 'vitest';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
-// capsule's \`benchExemption\` manifest record). '${name}' has no pure, perf-sensitive
-// receipt core to time, so instead of a comment-only stand-in this bench is a
-// real PREMISE GUARD asserting the not-applicable disposition.
+// capsule's \`benchExemption\` manifest record). No pure \`mutate\` core was wired
+// and no binding is importable, so this guard pins the recorded exemption reason
+// — the marker can't rot into an empty placeholder.
 bench('${escapeBacktick(name)} — bench not-applicable (premise guard)', () => {
-  expect(typeof '${escapeBacktick(name)}').toBe('string');
+  expect(\`${escapeBacktick(reason)}\`.length).toBeGreaterThan(0);
 }, { time: 50 });
 `;
 }

@@ -1,12 +1,25 @@
 /**
- * Gate: no ambient nondeterminism (`Date.now(` / `Math.random(` / argless `new Date()`).
+ * Gate: no ambient nondeterminism (`Date.now(` / `performance.now(` /
+ * `Math.random(` / argless `new Date()`).
  *
  * The gauntlet's L3 contract is determinism: a deterministic runtime / projection
- * / cache path must yield the same output for the same input, run-to-run. Three
- * ambient sources break that the moment they appear in such a path —
- * `Date.now()`, `Math.random()`, and `new Date()` with no argument (which reads
- * the wall clock). Each must instead come from an INJECTED source (a passed-in
- * clock / RNG / seed) so the path is reproducible and testable.
+ * / cache path must yield the same output for the same input, run-to-run. FOUR
+ * ambient sources break that the moment they appear in such a path:
+ * - `Date.now()` — the EPOCH wall clock (drives timestamps / HLC);
+ * - `performance.now()` — the MONOTONIC clock (drives durations / frame budgets);
+ * - `Math.random()` — unseeded randomness;
+ * - `new Date()` with no argument (reads the wall clock).
+ *
+ * `performance.now()` is included deliberately: it is monotonic, not epoch, so it
+ * is easy to assume it is "safe" — but a duration read straight off the ambient
+ * monotonic clock is exactly as non-reproducible as a `Date.now()` timestamp, and
+ * (per the clock-substrate law) funnelling it into the wrong boundary is the
+ * monotonic-into-timestamp laundering bug. Each ambient read must instead come
+ * from an INJECTED source (the `@czap/core` `systemClock` / `wallClock` /
+ * `systemRng` substrate, threaded as a `Clock` / `Rng`) so the path is
+ * reproducible and testable. A legitimately-declared boundary (the single
+ * sanctioned read every other path routes through) is sanctioned by a WAIVER in
+ * `waivers.ts`, never by a hole in this gate.
  *
  * The targets are real calls, so this gate uses the shared {@link codeOnly}
  * stripper: a `Date.now()` written inside a docstring or a string literal is not
@@ -21,10 +34,14 @@ import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { codeOnly } from './code-only.js';
 
-// `Date.now(` and `Math.random(` (the open-paren pins it to a CALL, not a mere
-// reference), plus `new Date()` with EMPTY args (argless = reads the wall clock;
-// `new Date(ms)` / `new Date(iso)` are deterministic and intentionally allowed).
-const NONDETERMINISM = /\bDate\.now\(|\bMath\.random\(|\bnew Date\(\s*\)/;
+// `Date.now(` / `performance.now(` / `Math.random(` (the open-paren pins each to a
+// CALL, not a mere reference), plus `new Date()` with EMPTY args (argless = reads
+// the wall clock; `new Date(ms)` / `new Date(iso)` are deterministic and
+// intentionally allowed). `performance.now(` is included so the MONOTONIC ambient
+// read is caught too — a duration off the ambient monotonic clock is as
+// non-reproducible as a `Date.now()` timestamp, and threads through the SAME
+// injected-boundary / waiver mechanism as the others.
+const NONDETERMINISM = /\bDate\.now\(|\bperformance\.now\(|\bMath\.random\(|\bnew Date\(\s*\)/;
 
 /** Scan CODE only (never a clock written in a comment/string); one finding per line. */
 function scan(context: GateContext): readonly Finding[] {
@@ -42,8 +59,8 @@ function scan(context: GateContext): readonly Finding[] {
             ruleId: 'gauntlet/no-nondeterminism',
             severity: 'error',
             level: 'L3',
-            title: 'Ambient nondeterminism (Date.now / Math.random / argless new Date)',
-            detail: `${file}:${i + 1} reads an ambient nondeterministic source. The L3 contract is determinism — the same input must yield the same output run-to-run — and a wall-clock read or an unseeded random breaks it. The value must come from an injected clock / RNG instead.`,
+            title: 'Ambient nondeterminism (Date.now / performance.now / Math.random / argless new Date)',
+            detail: `${file}:${i + 1} reads an ambient nondeterministic source. The L3 contract is determinism — the same input must yield the same output run-to-run — and a wall-clock read (Date.now / new Date), a monotonic-clock read (performance.now), or an unseeded random breaks it. The value must come from an injected clock / RNG (the @czap/core systemClock / wallClock / systemRng substrate) instead — or, if this IS the single declared boundary, be sanctioned by an owner waiver.`,
             location: { file, line: i + 1 },
             remediation: {
               kind: 'instruction',
@@ -70,13 +87,22 @@ export const noNondeterminismGate: Gate = defineGate({
   run: scan,
   fixtures: {
     red: {
-      name: 'a file reading the wall clock',
-      context: memoryContext({ 'bad.ts': 'export function stamp() {\n  const t = Date.now();\n  return t;\n}\n' }),
+      // Exercises BOTH the wall-clock (Date.now) AND the monotonic-clock
+      // (performance.now) branches — proving the gate catches the ambient
+      // monotonic read, not just the epoch one.
+      name: 'a file reading the wall clock and the monotonic clock',
+      context: memoryContext({
+        'bad.ts':
+          'export function stamp() {\n  const t = Date.now();\n  const d = performance.now();\n  return t + d;\n}\n',
+      }),
     },
     green: {
-      name: 'a file using an injected clock',
+      // An injected clock for BOTH the timestamp and the duration — neither the
+      // ambient `Date.now()` nor the ambient `performance.now()` appears.
+      name: 'a file using an injected clock for both timestamp and duration',
       context: memoryContext({
-        'good.ts': 'export function stamp(clock: { now(): number }) {\n  const t = clock.now();\n  return t;\n}\n',
+        'good.ts':
+          'export function stamp(clock: { now(): number }) {\n  const t = clock.now();\n  const d = clock.now();\n  return t + d;\n}\n',
       }),
     },
     mutation: {

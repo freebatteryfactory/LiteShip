@@ -359,37 +359,11 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       "Astro's addDevToolbarApp contract requires a default-exported DevToolbarApp entrypoint — the same unavoidable framework contract as the client directives.",
   },
   {
-    rule: 'placeholder-content',
-    package: '@czap/vite',
-    filePrefix: 'src/virtual-modules.ts',
-    reason: 'Virtual module placeholders are documented stubs for bundler/type-checker compatibility.',
-  },
-  {
     rule: 'missing-runtime-capability',
     package: '@czap/astro',
     filePrefix: 'src/client-directives/gpu.ts',
     summaryIncludes: 'WebGPU',
     reason: 'GPU/WebGPU is an explicitly documented partial capability surface in the first wave.',
-  },
-  {
-    // CUT D9b-1 — the audit engine now lives in a scanned package, so the
-    // integrity detector reads its OWN pattern/summary strings (e.g. the
-    // "placeholder/debug marker" message it emits). Those are detector copy, not
-    // runtime placeholders.
-    rule: 'placeholder-content',
-    package: '@czap/audit',
-    filePrefix: 'src/integrity.ts',
-    reason:
-      "The integrity detector's own placeholder/debug summary strings — detector copy, not a runtime placeholder.",
-  },
-  {
-    // The audit policy's documented-stub allowlist reason + the vite virtual-module
-    // capability note both contain the word "placeholder" describing OTHER files.
-    rule: 'placeholder-content',
-    package: '@czap/audit',
-    filePrefix: 'src/policy.ts',
-    reason:
-      "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
   },
   {
     // html-trust's Trusted Types policy creation can fail under restrictive

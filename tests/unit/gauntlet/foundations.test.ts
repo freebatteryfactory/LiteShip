@@ -17,6 +17,8 @@ import {
   noTsIgnoreGate,
   noNondeterminismGate,
   noSilentCatchGate,
+  noSkippedTestGate,
+  noPlaceholderGate,
   type Gate,
 } from '@czap/gauntlet';
 import { ValidationError } from '@czap/error';
@@ -84,7 +86,14 @@ describe('authority ratchet — a gate earns blocking by self-proving', () => {
   });
 
   it('every built-in gate self-proves (red caught, green clean, mutation killed → blocking)', () => {
-    for (const gate of [noBareThrowGate, noTsIgnoreGate, noNondeterminismGate, noSilentCatchGate]) {
+    for (const gate of [
+      noBareThrowGate,
+      noTsIgnoreGate,
+      noNondeterminismGate,
+      noSilentCatchGate,
+      noSkippedTestGate,
+      noPlaceholderGate,
+    ]) {
       const proof = verifyGate(gate);
       expect(proof.redCaught, `${gate.id} red`).toBe(true);
       expect(proof.greenClean, `${gate.id} green`).toBe(true);

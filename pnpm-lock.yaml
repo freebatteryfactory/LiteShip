@@ -432,6 +432,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32

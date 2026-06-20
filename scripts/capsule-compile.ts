@@ -198,6 +198,12 @@ interface BindingProbe {
    * harness records a documented, machine-readable exemption (not a skip).
    */
   readonly effectOutcomeReason?: string;
+  /**
+   * policyGate only: the capsule exposes a typed `decide` verdict handler. Paired
+   * with `arbitraryDerivable` (the subject schema) this unlocks the real allow/deny
+   * + reason-chain + determinism traversal; absent it the harness fails loud.
+   */
+  readonly decidePresent?: boolean;
 }
 
 /**
@@ -221,11 +227,30 @@ async function probeBinding(
   sourceFile: string,
   bindingName: string,
 ): Promise<BindingProbe | undefined> {
-  if (kind !== 'pureTransform' && kind !== 'stateMachine' && kind !== 'receiptedMutation') {
+  if (
+    kind !== 'pureTransform' &&
+    kind !== 'stateMachine' &&
+    kind !== 'receiptedMutation' &&
+    kind !== 'cachedProjection' &&
+    kind !== 'policyGate'
+  ) {
     return undefined;
   }
   const moduleUrl = pathToFileURL(resolve(sourceFile)).href;
-  const mod = (await import(moduleUrl)) as Record<string, unknown>;
+  let mod: Record<string, unknown>;
+  try {
+    mod = (await import(moduleUrl)) as Record<string, unknown>;
+  } catch (err) {
+    // cachedProjection only: its REAL-ONLY fixture form is resolved STATICALLY
+    // (the factory + asset-source map, no module import needed), so a module that
+    // can't be imported from the compile script (e.g. an example scene module
+    // importing the unlinked `@czap/assets` bare specifier) just leaves the
+    // arbitrary-derivability probe unresolved — the static cachedProjectionRealOnly
+    // flag still drives the corpus. For every other probed kind an import failure
+    // is a real defect and must surface, never be laundered into a skip.
+    if (kind === 'cachedProjection') return undefined;
+    throw err;
+  }
   const cap = mod[bindingName] as
     | {
         input?: { ast?: unknown };
@@ -234,12 +259,58 @@ async function probeBinding(
         step?: ((state: unknown, event: unknown) => unknown) | undefined;
         initialState?: unknown;
         mutate?: ((input: unknown) => unknown) | undefined;
+        derive?: ((source: unknown) => unknown) | undefined;
+        decide?: ((subject: unknown) => unknown) | undefined;
         faults?: readonly unknown[] | undefined;
         receiptKind?: unknown;
         reason?: unknown;
       }
     | undefined;
   if (cap === undefined || cap.input === undefined) return undefined;
+
+  // cachedProjection: probe whether the SOURCE schema (`cap.input`) is
+  // arbitrary-derivable and `derive` is present. The harness resolves disposition
+  // at compile time (the same pattern pureTransform/stateMachine use): a derivable
+  // source + derive yields the real property form; a non-derivable source relies
+  // on the canonical byte fixture (the real-only fixture form, gated separately by
+  // cachedProjectionRealOnly + fixturePath). A binding with NEITHER fails the
+  // compile loud in the harness — never a green skip.
+  if (kind === 'cachedProjection') {
+    let derivable = false;
+    try {
+      schemaToArbitrary(cap.input as never);
+      derivable = true;
+    } catch (err) {
+      if (!hasTag(err, 'UnsupportedError')) throw err;
+      derivable = false;
+    }
+    return {
+      arbitraryDerivable: derivable,
+      handlersPresent: typeof cap.derive === 'function',
+    };
+  }
+
+  // policyGate: probe whether the SUBJECT schema (`cap.input`) is arbitrary-
+  // derivable and `decide` is present. Both unlock the real allow/deny + reason-
+  // chain + determinism traversal (the same compile-time disposition pattern
+  // pureTransform/cachedProjection use). A binding missing either fails the
+  // compile loud in the harness — never a green skip.
+  if (kind === 'policyGate') {
+    let derivable = false;
+    try {
+      schemaToArbitrary(cap.input as never);
+      derivable = true;
+    } catch (err) {
+      if (!hasTag(err, 'UnsupportedError')) throw err;
+      derivable = false;
+    }
+    const decidePresent = typeof cap.decide === 'function';
+    return {
+      arbitraryDerivable: derivable,
+      handlersPresent: decidePresent,
+      decidePresent,
+    };
+  }
 
   // receiptedMutation: probe (input AND output) arbitrary-derivability for the
   // contract round-trip, plus `mutate` / `faults` presence for the invocation
@@ -582,6 +653,7 @@ function dispatchHarness(
     case 'policyGate':
       return generatePolicyGate(
         cap as CapsuleDef<'policyGate', unknown, unknown, unknown>,
+        ctx,
       );
     case 'cachedProjection':
       return generateCachedProjection(
@@ -1030,6 +1102,7 @@ async function main(): Promise<void> {
               ...(probe.effectOutcomeReason !== undefined
                 ? { effectOutcomeReason: probe.effectOutcomeReason }
                 : {}),
+              ...(probe.decidePresent !== undefined ? { decidePresent: probe.decidePresent } : {}),
             }
           : {}),
       };

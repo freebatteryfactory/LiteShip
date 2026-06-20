@@ -7,6 +7,7 @@
  */
 
 import { Schema } from 'effect';
+import { assertNever } from '@czap/error';
 import { defineCapsule } from '../assembly.js';
 import { TokenBuffer } from '../token-buffer.js';
 
@@ -60,6 +61,14 @@ function stepTokenBuffer(state: BufferState, event: TokenEvent): BufferState {
     case 'reset':
       buffer.reset();
       break;
+    default:
+      // Exhaustiveness guard over the TokenEvent union: every `_tag` is
+      // handled, so `event` is `never` here and this compiles. Add a fourth
+      // event variant to TokenEventSchema without a case and tsc rejects this
+      // (TS2345). At runtime — reachable only if a decoded event escapes the
+      // schema's type — it fails as a typed InvariantViolationError rather
+      // than silently no-op'ing the fold.
+      return assertNever(event, 'TokenEvent._tag');
   }
 
   const tokens = buffer.drain();

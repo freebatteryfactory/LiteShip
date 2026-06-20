@@ -132,6 +132,122 @@ describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKe
   });
 });
 
-describe.skipIf(wasmPresent)('WASM/TS kernel parity (artifact absent)', () => {
-  it.skip('parity suite — czap_compute.wasm not built (run cargo build --release --target wasm32-unknown-unknown)', () => {});
+describe.skipIf(wasmPresent)('WASM/TS kernel parity (artifact absent — fallbackKernels is what ships here)', () => {
+  // When the wasm32 artifact is absent (local machines without a Rust toolchain),
+  // `WASMDispatch` never upgrades, so `fallbackKernels` — the pure-TS path — IS the
+  // production compute path. There is nothing to compare it AGAINST, so instead of
+  // an empty skip we assert the fallback kernels satisfy the SAME mathematical
+  // properties the parity suite holds the wasm to: the f32 reverse-scan tie rule,
+  // spring endpoint pinning, blend normalization, determinism, and bounded output.
+  // An independent inline oracle (naive f32 linear scan) checks batchBoundaryEval so
+  // the assertion is a real contract check, not a tautology against the same impl.
+
+  /** Independent reference: largest i with thresholds[i] <= value (f32), else 0. */
+  const refIndex = (thresholds: ArrayLike<number>, value: number): number => {
+    const v = Math.fround(value);
+    let idx = 0;
+    for (let i = 0; i < thresholds.length; i++) {
+      if (Math.fround(thresholds[i] as number) <= v) idx = i;
+    }
+    return thresholds.length === 0 ? 0 : idx;
+  };
+
+  it('is the live compute path: WASMDispatch hands back fallbackKernels when no wasm is loaded', () => {
+    expect(WASMDispatch.isLoaded()).toBe(false);
+    expect(WASMDispatch.kernels()).toBe(fallbackKernels);
+  });
+
+  it('batchBoundaryEval: agrees with an independent f32 reverse-scan oracle + is deterministic', () => {
+    fc.assert(
+      fc.property(
+        fc.array(f32({ min: -10_000, max: 10_000 }), { maxLength: 64 }).map((t) => t.sort((a, b) => a - b)),
+        fc.array(f32({ min: -20_000, max: 20_000 }), { maxLength: 256 }),
+        (thresholds, values) => {
+          const t = new Float64Array(thresholds);
+          const v = new Float64Array(values);
+          const out = fallbackKernels.batchBoundaryEval(t, v);
+          // Every selected index matches the independent oracle and is in range.
+          for (let i = 0; i < v.length; i++) {
+            expect(out[i]).toBe(refIndex(thresholds, values[i]!));
+            expect(out[i]!).toBeLessThan(Math.max(1, thresholds.length));
+          }
+          // Determinism: same inputs → same output, every time.
+          expect(Array.from(fallbackKernels.batchBoundaryEval(t, v))).toEqual(Array.from(out));
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+
+  it('batchBoundaryEval: exact-threshold and duplicate-threshold ties resolve to the highest index', () => {
+    // The reverse-scan tie rule (highest matching index wins) — the same golden
+    // vector the wasm-present suite pins both sides against.
+    const thresholds = new Float64Array([0, 20, 20, 50]);
+    const values = new Float64Array([-1, 0, 19.5, 20, 49, 50, 51]);
+    expect(Array.from(fallbackKernels.batchBoundaryEval(thresholds, values))).toEqual([0, 0, 0, 2, 2, 3, 3]);
+  });
+
+  it('springCurve: pins endpoints 0 and 1, returns samples+1 length, and stays bounded + deterministic', () => {
+    fc.assert(
+      fc.property(
+        f32({ min: 1, max: 500 }), // stiffness
+        f32({ min: 0, max: 100 }), // damping — under/critical/overdamped
+        f32({ min: 0.1, max: 10 }), // mass
+        fc.integer({ min: 1, max: 255 }), // samples
+        (stiffness, damping, mass, samples) => {
+          const out = fallbackKernels.springCurve(stiffness, damping, mass, samples);
+          expect(out.length).toBe(samples + 1);
+          // Endpoints are pinned exactly on the production path.
+          expect(out[0]).toBe(0);
+          expect(out[samples]).toBe(1);
+          // No NaN/Inf escapes for any damping regime.
+          for (let i = 0; i < out.length; i++) {
+            expect(Number.isFinite(out[i]!)).toBe(true);
+          }
+          // Determinism.
+          expect(Array.from(fallbackKernels.springCurve(stiffness, damping, mass, samples))).toEqual(Array.from(out));
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it('springCurve: a critically-damped curve rises monotonically toward 1 with no overshoot', () => {
+    // zeta == 1 (damping = 2*sqrt(stiffness*mass)) is the closed-form no-oscillation
+    // regime: the curve must be non-decreasing and never exceed 1.
+    const stiffness = 100;
+    const mass = 1;
+    const damping = 2 * Math.sqrt(stiffness * mass); // critical
+    const out = fallbackKernels.springCurve(stiffness, damping, mass, 64);
+    for (let i = 0; i < out.length; i++) {
+      expect(out[i]!).toBeGreaterThanOrEqual(0);
+      expect(out[i]!).toBeLessThanOrEqual(1);
+      if (i > 0) expect(out[i]!).toBeGreaterThanOrEqual(out[i - 1]!);
+    }
+  });
+
+  it('blendNormalize: positive weights sum to 1, negatives clamp to 0, all-zero stays zero', () => {
+    fc.assert(
+      fc.property(fc.array(f32({ min: -1000, max: 1000 }), { maxLength: 64 }), (weights) => {
+        const out = fallbackKernels.blendNormalize(new Float32Array(weights));
+        let sum = 0;
+        for (let i = 0; i < out.length; i++) {
+          expect(out[i]!).toBeGreaterThanOrEqual(0); // negatives clamped to 0
+          sum += out[i]!;
+        }
+        const hadPositive = weights.some((w) => w > 0);
+        if (hadPositive) {
+          expect(sum).toBeCloseTo(1, 5);
+        } else {
+          expect(sum).toBe(0); // no positive mass → nothing to normalize
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('blendNormalize: a single subnormal weight normalizes to exactly 1.0', () => {
+    const subnormal = 1.401298464324817e-45;
+    expect(Array.from(fallbackKernels.blendNormalize(new Float32Array([subnormal])))).toEqual([1]);
+  });
 });

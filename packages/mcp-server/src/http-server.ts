@@ -14,10 +14,20 @@
  */
 
 import { createServer } from 'node:http';
+import { ValidationError } from '@czap/error';
 import { handleRequest } from './http.js';
 
-function invalidBind(bind: number | string): Error {
-  return new Error(
+/**
+ * Build the tagged variant for a rejected `--http` bind. The bind is a
+ * caller-supplied argument that is structurally a string/number but
+ * semantically invalid (not a port/`:PORT`/`HOST:PORT`, or out of the 0-65535
+ * range) — exactly {@link ValidationError}'s domain, not a bare `Error`. Thrown
+ * at every check site so the failure is a first-class algebra value (carries
+ * `module`/`detail`, narrows via `hasTag`).
+ */
+function invalidBind(bind: number | string): ValidationError {
+  return ValidationError(
+    'parseHttpBind',
     `invalid --http bind "${bind}": expected ":PORT", "PORT", or "HOST:PORT" with PORT in 0-65535 (e.g. --http :3838)`,
   );
 }

@@ -140,6 +140,10 @@ describe('generateReceiptedMutation', () => {
     expect(benchFile).toContain('demo.unbound');
     expect(benchFile).toContain('bench(');
     expect(benchFile).not.toContain('bench.skip');
+    // No binding to import → the guard pins the recorded reason length, never a
+    // vacuous typeof-string vanity that is always true.
+    expect(benchFile).toContain('.length).toBeGreaterThan(0)');
+    expect(benchFile).not.toContain(".toBe('string')");
   });
 
   it('emits a REAL mutate() bench when a pure mutate core + round-trippable input are resolved', () => {
@@ -177,6 +181,13 @@ describe('generateReceiptedMutation', () => {
     expect(benchFile).toContain('spawning a process');
     expect(benchFile).toContain('bench(');
     expect(benchFile).not.toContain('bench.skip');
+    // TEETH: the premise guard imports the binding and asserts the STRUCTURAL
+    // absence of a pure mutate core — NOT a vacuous typeof-string vanity.
+    expect(benchFile).toContain('effCapsule');
+    expect(benchFile).toContain("expect(cap._kind).toBe('receiptedMutation')");
+    expect(benchFile).toContain('expect(cap.mutate).toBeUndefined()');
+    expect(benchFile).toContain("expect(cap.receiptKind).toBe('effect-outcome')");
+    expect(benchFile).not.toContain(".toBe('string')");
   });
 
   it('defineCapsule REJECTS a receiptedMutation with neither a mutate core nor an exemption', () => {

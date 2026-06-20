@@ -333,7 +333,7 @@ describe('consumer mode — allowlist entries follow the package, not the monore
     expect(suppressed[0]!.finding.location?.file).toContain('node_modules/@czap/astro/src/client-directives/satellite.ts');
   });
 
-  it('suppresses the audit policy placeholder self-match in an installed @czap/audit (report finding 2)', () => {
+  it('does NOT flag the audit policy prose self-mention in an installed @czap/audit — precise detector, no allowlist entry needed (report finding 2)', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/@czap/audit/package.json': PKG('@czap/audit'),
@@ -342,8 +342,13 @@ describe('consumer mode — allowlist entries follow the package, not the monore
         "export const stubReason = 'documented placeholder stubs populated by the transform pipeline';\n",
     });
     const result = runIntegrityAudit(consumerDevopsProfile(root, czapBase({ '@czap/audit': STANDALONE })));
+    // The string literal merely NAMES the forbidden word; it is not a placeholder.
+    // The precise detector (form-based: directive comments + lorem-ipsum, never a
+    // marker word inside a string) flags it nowhere AND needs no allowlist
+    // suppression — the laundering entry was deleted. So findings AND suppressed
+    // are both 0: the detector is correct by FORM, not by grandfathering.
     expect(result.findings.filter((f) => f.rule === 'placeholder-content')).toHaveLength(0);
-    expect(result.suppressed.filter((s) => s.rule === 'placeholder-content')).toHaveLength(1);
+    expect(result.suppressed.filter((s) => s.rule === 'placeholder-content')).toHaveLength(0);
   });
 
   it('suppresses the workspace-guard fail-closed fallback in an installed @czap/cli (report finding 3)', () => {

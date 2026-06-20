@@ -1,44 +1,31 @@
 /**
- * Dogfood — the three Slice-A hygiene gates, run on the REAL repo.
+ * Dogfood — the built-in hygiene gates, run on the REAL repo.
  *
  * Like {@link ../gauntlet/dogfood.test.ts} for `noBareThrowGate`, this points each
- * new gate at the live `packages/&#42;/src` tree through {@link nodeContext} and PINS
- * the exact current finding set (sorted `file:line`). Unlike the bare-throw gate,
- * these three are NOT yet at a zero floor — they surface a real curing backlog,
- * and pinning it makes that backlog executable: any NEW violation (a regression)
- * breaks the pin and lists every finding so the drift is immediately visible, and
- * any CURED violation also breaks the pin (a healthy push — update the pin down).
+ * gate at the live `packages/&#42;/src` tree through {@link nodeContext} and asserts
+ * its value on the actual repo. Two kinds of pin live here, and the choice of pin
+ * is itself the discipline:
  *
- * Curing the surfaced findings is the OWNER's call; this file only surfaces + pins.
- * Each gate self-proves separately (see foundations / gates self-proof test); here
- * we assert their value on the actual repo.
+ *  ZERO-FLOOR gates (`no-ts-ignore`, `no-skipped-test`, `no-placeholder`) — these
+ *    are clean on product source, so the pin is ZERO. A single regression reds the
+ *    test and lists the offending `file:line`. `no-skipped-test` + `no-placeholder`
+ *    are the two ALWAYS-BLOCKING rules (their ids are reserved in
+ *    ALWAYS_BLOCKING_RULES): a skip or a placeholder directive can NEVER be waived,
+ *    so a zero floor is the only acceptable state.
  *
- * Current backlog (the executable curing list), per gate:
+ *  LAW-PINNED gates (`no-nondeterminism`, `no-silent-catch`) — these carry a real,
+ *    actively-cured L1/L2 backlog (command-surface receipt timestamps; best-effort
+ *    catches) that OTHER slices are paying down. Pinning the brittle raw line list
+ *    would flap on every unrelated cure, so instead we pin the LAW: the
+ *    LEVEL-SCOPED set (computed through the engine with the assurance map), which is
+ *    what actually decides blocking authority. After the clock/rng substrate cure
+ *    the L3 no-nondeterminism set is EXACTLY the three declared entropy boundaries
+ *    (`systemClock` monotonic / `wallClock` epoch / `systemRng`, each waived), and
+ *    the L3 no-silent-catch set is EXACTLY the four declared-benign catches (each
+ *    waived). That collapse is the proof the cure landed.
  *
- *  gauntlet/no-ts-ignore (L1): 0 findings — ZERO real @ts-ignore / @ts-nocheck in
- *    product code (a clean floor; the only textual mentions are this gate family's
- *    own prose, which the strings-blanked + directive-form scan correctly ignores).
- *
- *  gauntlet/no-nondeterminism (L3): 36 RAW findings — every Date.now() /
- *    Math.random() / argless `new Date()` in packages/&#42;/src, UNSCOPED by
- *    assurance level. The deterministic RUNTIME spine that used to dominate this
- *    list is now CURED: core signal/zap/gen-frame/speculative/token-buffer/boundary/
- *    hlc, quantizer, web stream, worker, astro runtime, and the cli/command
- *    dispatch+ship+gauntlet receipts all thread the @czap/core clock/rng substrate
- *    (`systemClock` monotonic / `wallClock` epoch / `systemRng`). What REMAINS raw
- *    is (a) the 3 declared substrate BOUNDARIES (the single sanctioned reads,
- *    waived) and (b) ~33 L1/L2 command-surface receipt timestamps + the fast-check
- *    seed + core/diagnostics — all below the L3 determinism floor. Pinning all 36
- *    here is the HONEST raw snapshot + a regression guard. The level-scoped test
- *    below pins raw 36 → 3 L3 findings (the 33-finding gap is the noise the map
- *    removes), and the 3 are exactly the substrate boundaries — the proof the cure
- *    landed. This gate earns blocking authority only once level-scoped.
- *
- *  gauntlet/no-silent-catch (L2): 10 findings — empty `catch { }` blocks (a
- *    comment-only body still counts: the caught error is neither rethrown, logged,
- *    nor used). Concentrated in command/host/spawn.ts (×4 process-kill / cleanup
- *    swallows), plus cli doctor + ship, astro wgpu, vite wasm-resolve, mcp
- *    server-info, web resumption-pure. The exact set is the pin below.
+ * A dedicated `it` also guards the gate-extension: the no-nondeterminism gate must
+ * detect ambient `performance.now()` (the monotonic-clock read), not just Date.now.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -48,10 +35,13 @@ import {
   noTsIgnoreGate,
   noNondeterminismGate,
   noSilentCatchGate,
+  noSkippedTestGate,
+  noPlaceholderGate,
   verifyGate,
   nodeContext,
   runGates,
   LITESHIP_ASSURANCE_MAP,
+  memoryContext,
   type Gate,
 } from '@czap/gauntlet';
 
@@ -68,123 +58,84 @@ function locOf(file: string | undefined, line: number | undefined): string {
   return `${file ?? '<no-file>'}:${line ?? 0}`;
 }
 
-/** The pinned, sorted `file:line` backlog each gate currently surfaces on the repo. */
-const EXPECTED: Readonly<Record<string, readonly string[]>> = {
+/**
+ * The pinned, sorted `file:line` backlog each gate surfaces on the repo —
+ * ZERO-floor gates only. A zero-floor gate has a STABLE pin (zero is zero); a gate
+ * with a non-empty, actively-being-cured raw backlog (no-nondeterminism,
+ * no-silent-catch) is pinned by its LAW (the level-scoped set), not by a brittle
+ * raw line list that drifts every time another slice cures one (see the dedicated
+ * `it`s below). Hardcoding a volatile raw list would make this test flap on every
+ * unrelated cure — the source of truth is the LEVEL-SCOPED set, computed through
+ * the engine, which is what actually decides blocking authority.
+ */
+const ZERO_FLOOR_GATES: ReadonlyArray<readonly [string, Gate]> = [
   // ZERO real @ts-ignore / @ts-nocheck directives in product code (a clean floor).
-  'gauntlet/no-ts-ignore': [],
-  // 36 RAW ambient-nondeterminism sources, UNSCOPED by assurance level (see the
-  // module doc) — the honest snapshot + regression guard. The deterministic
-  // RUNTIME spine that used to dominate this list (core signal/zap/gen-frame/
-  // speculative/token-buffer/boundary/hlc, quantizer, web stream, worker, astro
-  // runtime, + the cli/command dispatch/ship/gauntlet receipts) is CURED — every
-  // read threads the @czap/core clock/rng substrate. What REMAINS raw is: (a) the
-  // 3 declared substrate BOUNDARIES (clock×2 + rng — the single sanctioned reads,
-  // waived), and (b) ~30 L1/L2 command-surface receipt timestamps (incl. the 4
-  // migrated-gate command DESCRIPTORS plumb/check-invariants/audit-floor/package-
-  // smoke — L2 surfaces, their provenance timestamp is not a hazard) + the
-  // fast-check seed + core/diagnostics — all BELOW the L3 determinism floor, so
-  // level-scoping drops them (they never reach the gate's blocking authority).
-  'gauntlet/no-nondeterminism': [
-    'packages/cli/src/gauntlet-argv.ts:39',
-    'packages/cli/src/receipts.ts:116',
-    'packages/command/src/commands/asset.ts:122',
-    'packages/command/src/commands/asset.ts:137',
-    'packages/command/src/commands/asset.ts:25',
-    'packages/command/src/commands/asset.ts:67',
-    'packages/command/src/commands/asset.ts:90',
-    'packages/command/src/commands/audit-floor.ts:73',
-    'packages/command/src/commands/audit.ts:91',
-    'packages/command/src/commands/capsule.ts:103',
-    'packages/command/src/commands/capsule.ts:14',
-    'packages/command/src/commands/capsule.ts:42',
-    'packages/command/src/commands/capsule.ts:70',
-    'packages/command/src/commands/check-invariants.ts:70',
-    'packages/command/src/commands/glossary.ts:244',
-    'packages/command/src/commands/manifest.ts:63',
-    'packages/command/src/commands/package-smoke.ts:76',
-    'packages/command/src/commands/plumb.ts:67',
-    'packages/command/src/commands/scene.ts:126',
-    'packages/command/src/commands/scene.ts:135',
-    'packages/command/src/commands/scene.ts:139',
-    'packages/command/src/commands/scene.ts:15',
-    'packages/command/src/commands/scene.ts:199',
-    'packages/command/src/commands/scene.ts:246',
-    'packages/command/src/commands/scene.ts:97',
-    'packages/command/src/commands/verify.ts:41',
-    'packages/command/src/commands/verify.ts:49',
-    'packages/command/src/commands/version.ts:43',
-    'packages/command/src/host/ffmpeg.ts:121',
-    'packages/command/src/host/ffmpeg.ts:35',
-    'packages/command/src/registry.ts:359',
-    'packages/core/src/clock.ts:61', // substrate boundary — systemClock fallback (waived)
-    'packages/core/src/clock.ts:78', // substrate boundary — wallClock epoch read (waived)
-    'packages/core/src/diagnostics.ts:93',
-    'packages/core/src/harness/arbitrary-from-schema.ts:218',
-    'packages/core/src/rng.ts:39', // substrate boundary — systemRng (waived)
-  ],
-  // 10 silent catches (an empty catch body — comment-only counts, the error is
-  // still swallowed) — the L2 swallowed-fault backlog.
-  'gauntlet/no-silent-catch': [
-    'packages/astro/src/runtime/wgpu.ts:287',
-    'packages/cli/src/commands/doctor.ts:390',
-    'packages/cli/src/commands/ship.ts:169',
-    'packages/command/src/host/spawn.ts:248',
-    'packages/command/src/host/spawn.ts:255',
-    'packages/command/src/host/spawn.ts:369',
-    'packages/command/src/host/spawn.ts:397',
-    'packages/mcp-server/src/server-info.ts:28',
-    'packages/vite/src/wasm-package-resolve.ts:39',
-    'packages/web/src/stream/resumption-pure.ts:29',
-  ],
-};
+  ['gauntlet/no-ts-ignore', noTsIgnoreGate],
+  // ZERO real skipped tests (.skip / .todo / x-prefixed CALLS) in packages/*/src —
+  // every test runs; the only textual mentions are the harness's own anti-skip
+  // prose, which the codeOnly scan correctly ignores. Always-blocking, so a single
+  // skip slipping into product source must red this immediately.
+  ['gauntlet/no-skipped-test', noSkippedTestGate],
+  // ZERO placeholder DIRECTIVE comments (leading TODO/FIXME/XXX/HACK) in
+  // packages/*/src — mid-sentence prose mentions are correctly not flagged.
+  // Always-blocking.
+  ['gauntlet/no-placeholder', noPlaceholderGate],
+];
 
+/**
+ * The five built-in gates this file covers — for the self-proof + determinism
+ * assertions. (`no-bare-throw` has its own dedicated dogfood at
+ * {@link ../gauntlet/dogfood.test.ts}.)
+ */
 const GATES: ReadonlyArray<readonly [string, Gate]> = [
   ['gauntlet/no-ts-ignore', noTsIgnoreGate],
   ['gauntlet/no-nondeterminism', noNondeterminismGate],
   ['gauntlet/no-silent-catch', noSilentCatchGate],
+  ['gauntlet/no-skipped-test', noSkippedTestGate],
+  ['gauntlet/no-placeholder', noPlaceholderGate],
 ];
 
 /**
- * The TRUE L3 nondeterminism backlog — the raw 36 NARROWED through the assurance
- * map to only L3+ files. After the determinism cure this collapses to exactly the
- * THREE declared entropy boundaries of the @czap/core clock/rng substrate: the
- * `systemClock` Date.now fallback + the `wallClock` epoch read + the `systemRng`
- * Math.random. Every other runtime read now threads an injected clock/rng
- * defaulting to these, so the spine is deterministic-under-test; these three are
- * the sole sanctioned ambient reads, each WAIVED in `waivers.ts`.
+ * The TRUE L3 nondeterminism backlog — the raw unscoped set NARROWED through the
+ * assurance map to only L3+ files. After the determinism cure this collapses to
+ * exactly the THREE declared entropy boundaries of the @czap/core clock/rng
+ * substrate: the `systemClock` monotonic read (performance.now, with the flagged
+ * Date.now fallback) + the `wallClock` epoch read + the `systemRng` Math.random.
+ * Every other runtime read now threads an injected clock/rng defaulting to these,
+ * so the spine is deterministic-under-test; these three are the sole sanctioned
+ * ambient reads, each WAIVED in `waivers.ts`.
  *
- * The 33 that drop out are all L1/L2 command-surface receipt timestamps + the
- * fast-check seed + core/diagnostics — below the L3 determinism floor.
- *
- * raw 36 (unscoped) → 3 (level-scoped). That the L3 backlog is now ONLY the
+ * What drops out under level-scoping is all the L1/L2 command-surface receipt
+ * timestamps + the fast-check seed — below the L3 determinism floor. The raw count
+ * is NOT pinned (it is an actively-cured L1/L2 backlog); the L3 set IS, because it
+ * is the LAW that decides blocking authority. That the L3 backlog is now ONLY the
  * substrate boundaries is the proof the cure landed: undifferentiated red is gone.
  */
 const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
-  'packages/core/src/clock.ts:61', // systemClock — monotonic boundary (Date.now fallback)
+  'packages/core/src/clock.ts:61', // systemClock — monotonic boundary (performance.now / Date.now fallback)
   'packages/core/src/clock.ts:78', // wallClock — epoch boundary
   'packages/core/src/rng.ts:39', // systemRng — randomness boundary
 ];
 
-describe('dogfood — the three hygiene gates over the real packages/*/src tree', () => {
-  for (const [id, gate] of GATES) {
-    it(`${id} surfaces exactly its pinned backlog (lists any drift)`, () => {
+describe('dogfood — the hygiene gates over the real packages/*/src tree', () => {
+  for (const [id, gate] of ZERO_FLOOR_GATES) {
+    it(`${id} is at a ZERO floor on packages/*/src (lists any regression)`, () => {
       const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
 
       // Sanity: the glob actually matched real source (a zero-file context would
-      // make any pin a hollow pass).
+      // make "zero findings" a hollow pass).
       expect(ctx.files().length).toBeGreaterThan(0);
 
       const findings = gate.run(ctx);
       const seen = findings.map((f) => locOf(f.location?.file, f.location?.line)).sort();
-      const expected = [...(EXPECTED[id] ?? [])].sort();
 
       const message = [
-        `${id} over ${GLOBS.join(', ')} found ${findings.length} finding(s) — pinned ${expected.length}.`,
-        'A NEW finding is a regression to cure; a MISSING one is a cure to celebrate (update the pin):',
+        `${id} over ${GLOBS.join(', ')} found ${findings.length} finding(s) — the floor is ZERO.`,
+        'Each line below is a regression to cure (or honestly remove):',
         ...seen.map((s) => `  + ${s}`),
       ].join('\n');
 
-      expect(seen, message).toEqual(expected);
+      expect(seen, message).toEqual([]);
     });
   }
 
@@ -202,35 +153,72 @@ describe('dogfood — the three hygiene gates over the real packages/*/src tree'
     }
   });
 
-  it('no-nondeterminism: raw 36 → LEVEL-SCOPED to the true L3 backlog via the assurance map', () => {
+  it('no-nondeterminism: the L3-scoped backlog is EXACTLY the three substrate boundaries', () => {
     const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
     expect(ctx.files().length).toBeGreaterThan(0);
 
-    // RAW (unscoped) — the honest snapshot the existing pin tracks.
-    const raw = noNondeterminismGate.run(ctx);
-    const rawSeen = raw.map((f) => locOf(f.location?.file, f.location?.line)).sort();
-    expect(rawSeen.length, 'raw/unscoped count drifted from the pinned 36').toBe(36);
-
-    // LEVEL-SCOPED — run through the engine WITH the assurance map. The gate is
-    // L3, so it only sees L3+ files; the CLI/command/tooling (L1) drops out. We
-    // read the SCOPED findings off the gate's outcome (post-scope, pre-waiver).
+    // The LAW (not a brittle raw-line pin): run through the engine WITH the
+    // assurance map so the gate (L3) sees only L3+ files; the L1/L2 command-surface
+    // receipt timestamps drop out. After the determinism cure the L3 set collapses
+    // to exactly the THREE declared entropy boundaries — every other deterministic
+    // read threads the @czap/core clock/rng substrate. This is what decides the
+    // gate's blocking authority, so it is the set worth pinning. The raw/unscoped
+    // count is deliberately NOT pinned here: it is an L1/L2 backlog other slices
+    // are actively curing, and pinning it would flap on every unrelated cure.
     const result = runGates([noNondeterminismGate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
     const outcome = result.outcomes.find((o) => o.gateId === 'gauntlet/no-nondeterminism');
     expect(outcome, 'the no-nondeterminism gate must have an outcome').toBeDefined();
-    const scopedSeen = (outcome?.findings ?? [])
-      .map((f) => locOf(f.location?.file, f.location?.line))
-      .sort();
+    const scopedSeen = (outcome?.findings ?? []).map((f) => locOf(f.location?.file, f.location?.line)).sort();
 
     const expected = [...EXPECTED_NONDETERMINISM_L3].sort();
     const message = [
-      `no-nondeterminism: raw ${rawSeen.length} (unscoped) → ${scopedSeen.length} (L3-scoped). Pinned ${expected.length}.`,
-      'The level-scoped set is the TRUE L3 backlog (the deterministic spine); CLI/command/tooling correctly drop out.',
-      'A NEW L3 finding is a regression; a CURED one is a win (update the pin):',
+      `no-nondeterminism L3-scoped found ${scopedSeen.length} finding(s); pinned ${expected.length} (the substrate boundaries).`,
+      'A NEW L3 finding is a determinism regression; a CURED boundary is a win (update the pin):',
       ...scopedSeen.map((s) => `  + ${s}`),
     ].join('\n');
-
     expect(scopedSeen, message).toEqual(expected);
-    // The 33-finding gap is the L1/L2 tooling noise the assurance map removes.
-    expect(rawSeen.length - scopedSeen.length).toBe(33);
+
+    // And the raw/unscoped run still SEES more than the L3 set (the level-scoping
+    // is doing real work — it is not a no-op that happens to equal the raw set).
+    const rawSeen = noNondeterminismGate.run(ctx).map((f) => locOf(f.location?.file, f.location?.line));
+    expect(rawSeen.length).toBeGreaterThan(scopedSeen.length);
+  });
+
+  it('no-nondeterminism: DETECTS ambient `performance.now()` (the monotonic-clock read), not just Date.now', () => {
+    // Drift guard for the gate-extension: the monotonic ambient read is as
+    // non-reproducible as a Date.now timestamp and MUST be caught. Source of truth
+    // is the gate itself over a known-bad in-memory file — never the repo (which is
+    // cured of ambient performance.now via the clock substrate, so the repo cannot
+    // prove the branch). A regex that silently drops the performance.now alternative
+    // would let a monotonic-into-duration regression slip past green; this reds it.
+    const perfRed = memoryContext({
+      'bad.ts': 'export function elapsed() {\n  return performance.now();\n}\n',
+    });
+    const hits = noNondeterminismGate.run(perfRed).map((f) => f.location?.line);
+    expect(hits, 'the gate must flag an ambient performance.now() call').toEqual([2]);
+
+    // And the injected-clock form is clean (no false positive on `clock.now()`).
+    const perfGreen = memoryContext({
+      'good.ts': 'export function elapsed(clock: { now(): number }) {\n  return clock.now();\n}\n',
+    });
+    expect(noNondeterminismGate.run(perfGreen)).toEqual([]);
+  });
+
+  it('no-silent-catch: the L3-scoped backlog is EXACTLY the four declared-benign catches (all waived)', () => {
+    // The LAW: under level-scoping the L2 silent-catch gate sees only L2+ files, so
+    // the L1 best-effort catches (spawn/server-info/vite) drop out, leaving exactly
+    // the four L3-scoped catches — each of which has a committed waiver in
+    // waivers.ts. Computed through the engine (source of truth), not a hardcoded
+    // raw list that drifts as L1 catches are cured elsewhere.
+    const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
+    const result = runGates([noSilentCatchGate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
+    const outcome = result.outcomes.find((o) => o.gateId === 'gauntlet/no-silent-catch');
+    const scopedSeen = (outcome?.findings ?? []).map((f) => locOf(f.location?.file, f.location?.line)).sort();
+    expect(scopedSeen).toEqual([
+      'packages/astro/src/runtime/wgpu.ts:287',
+      'packages/cli/src/commands/doctor.ts:390',
+      'packages/cli/src/commands/ship.ts:169',
+      'packages/web/src/stream/resumption-pure.ts:29',
+    ]);
   });
 });

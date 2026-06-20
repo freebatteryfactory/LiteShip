@@ -36,6 +36,7 @@
  * @module
  */
 
+import { InvariantViolationError } from '@czap/error';
 import type { CapsuleDef } from '../assembly.js';
 import type { HarnessOutput, HarnessContext } from './pure-transform.js';
 import { benchNotApplicableMarker } from './bench-marker.js';
@@ -388,14 +389,26 @@ function invariantBlock(title: string): string {
 // ---------------------------------------------------------------------------
 
 function emitBenchFile(name: string, driver: SceneDriver, benchCheck: ResolvedCheck | undefined): string {
-  // The per-frame budget is a real timing contract: tick the scene and let the
-  // bench runner measure per-tick frame time against the declared p95 budget.
-  if (benchCheck !== undefined && benchCheck.disposition.status === 'wired') {
-    // The declared budget is read at runtime from the capsule binding itself
-    // (`cap.budgets.p95Ms`) — the source of truth — not a static literal that
-    // could drift from the capsule. Surfaced in the bench label so the perf
-    // contract is visible alongside the p95 the reporter measures.
-    return `// GENERATED — do not edit by hand
+  // A resolved scene driver always makes the per-frame budget a WIRED check
+  // (resolveDispositions returns `wired` for `per-frame-budget` for any tickable
+  // scene), so this is always the real timing contract: tick the scene and let
+  // the bench runner measure per-tick frame time against the declared p95 budget.
+  // The not-applicable budget case has no driver and is handled by
+  // notApplicableOutput, not here.
+  if (benchCheck === undefined || benchCheck.disposition.status !== 'wired') {
+    // Impossible-state tripwire: a driver was resolved yet the budget check did
+    // not resolve `wired`. Fail loud rather than silently emit a fake bench.
+    throw InvariantViolationError(
+      'scene-composition.per-frame-budget',
+      `'${name}': a scene driver was resolved but the per-frame-budget check did ` +
+        `not resolve 'wired' — resolveDispositions must wire the budget for any tickable scene.`,
+    );
+  }
+  // The declared budget is read at runtime from the capsule binding itself
+  // (`cap.budgets.p95Ms`) — the source of truth — not a static literal that
+  // could drift from the capsule. Surfaced in the bench label so the perf
+  // contract is visible alongside the p95 the reporter measures.
+  return `// GENERATED — do not edit by hand
 import { bench } from 'vitest';
 import { ${driver.compileName} } from '${driver.compileImport}';
 import { ${driver.capsuleName} } from '${driver.capsuleImport}';
@@ -425,15 +438,6 @@ bench(
   },
 );
 `;
-  }
-
-  // Budget check not-applicable (no tickable scene): typed not-applicable bench
-  // (marker + premise guard), never a comment-only stub.
-  const reason =
-    benchCheck !== undefined && benchCheck.disposition.status === 'not-applicable'
-      ? sanitize(benchCheck.disposition.reason)
-      : 'no compileScene-able scene to tick';
-  return notApplicableBench(name, reason);
 }
 
 // ---------------------------------------------------------------------------
@@ -503,7 +507,7 @@ ${checkNotes}
 
   return {
     testFile,
-    benchFile: notApplicableBench(name, r),
+    benchFile: notApplicableBench(name, r, bindingImport, bindingName),
   };
 }
 
@@ -558,18 +562,53 @@ function escapeSingle(s: string): string {
  * comment-only `import 'vitest'` stub (which classifies as a lazy placeholder),
  * never a `bench.skip`. The driver records a matching `benchExemption` in the
  * manifest.
+ *
+ * The premise guard has TEETH: it imports the capsule binding and asserts the
+ * STRUCTURAL fact that makes the bench not-applicable — it is a
+ * sceneComposition-tagged capsule that exposes NO tickable scene (no `tracks` /
+ * `fps` contract surface). If the capsule ever gains a driveable scene, the
+ * guard fails RED, forcing the driver to WIRE a real per-frame bench rather than
+ * let a stale exemption ship green. No binding is importable only for an
+ * unreachable code path (the current sceneComposition capsules are all exported
+ * consts); there we assert the recorded exemption reason is non-empty so the
+ * marker can't rot into an empty placeholder.
  */
-function notApplicableBench(name: string, reason: string): string {
+function notApplicableBench(
+  name: string,
+  reason: string,
+  bindingImport: string | undefined,
+  bindingName: string | undefined,
+): string {
+  if (bindingImport !== undefined && bindingName !== undefined) {
+    return `// GENERATED — do not edit by hand
+${benchNotApplicableMarker(reason)}
+import { bench, expect } from 'vitest';
+import { ${bindingName} } from '${bindingImport}';
+
+// TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
+// capsule's \`benchExemption\` manifest record). '${name}' has no compileScene-able
+// scene to tick — no frame stream / per-frame loop to time. This is a real
+// PREMISE GUARD with TEETH: it asserts the STRUCTURAL absence that makes a
+// per-frame bench not-applicable. If this capsule ever gains a driveable scene
+// (tracks / fps), the guard fails RED, forcing a real per-frame bench.
+bench('${escapeSingle(name)} — bench not-applicable (premise guard)', () => {
+  const cap = ${bindingName} as { _kind?: unknown; tracks?: unknown; fps?: unknown };
+  expect(cap._kind).toBe('sceneComposition');
+  expect(cap.tracks).toBeUndefined();
+  expect(cap.fps).toBeUndefined();
+}, { time: 50 });
+`;
+  }
   return `// GENERATED — do not edit by hand
 ${benchNotApplicableMarker(reason)}
 import { bench, expect } from 'vitest';
 
 // TYPED NOT-APPLICABLE bench (see the BENCH-NOT-APPLICABLE marker above + the
-// capsule's \`benchExemption\` manifest record). '${name}' has no compileScene-able
-// scene to tick — no frame stream / per-frame loop to time — so instead of a
-// comment-only placeholder this bench is a real PREMISE GUARD.
+// capsule's \`benchExemption\` manifest record). No capsule binding was importable
+// to pin the structural premise, so this guard asserts the recorded exemption
+// reason is non-empty — the marker can't rot into an empty placeholder.
 bench('${escapeSingle(name)} — bench not-applicable (premise guard)', () => {
-  expect(typeof '${escapeSingle(name)}').toBe('string');
+  expect('${escapeSingle(reason)}'.length).toBeGreaterThan(0);
 }, { time: 50 });
 `;
 }

@@ -1,51 +1,195 @@
 /**
  * Harness template for the `policyGate` assembly arm.
  *
- * Policy gates resolve allow/deny against typed subjects. Without a
- * `decide(subject)` channel on the capsule contract the harness can't
- * exercise allow/deny branches or check reason chains, so each case is
- * emitted as `it.skip` rather than a vacuous placeholder.
+ * A policyGate resolves an `allow`/`deny` {@link Decision} (verdict + reason
+ * chain) against a typed subject via its pure `decide(subject)` core. Disposition
+ * is resolved at COMPILE TIME by `scripts/capsule-compile.ts` (the same probe
+ * pattern `pureTransform`/`stateMachine`/`cachedProjection` use): the harness
+ * emits ONE clean, real test, or THROWS a tagged `UnsupportedError` so
+ * `capsule:compile` fails loud (wire-or-fail). It never emits an `it.skip`, never
+ * a `() => true` placeholder.
+ *
+ * The generated test drives the REAL `decide` over subjects sampled from the
+ * capsule's input (subject) schema and pins the policyGate laws:
+ *
+ *  - **allow/deny coverage** — every verdict is a well-formed `Decision`
+ *    (`effect ∈ {allow, deny}`, `reasons` an array of `{code, message}`), and the
+ *    reason-chain law holds: `reasons` is non-empty EXACTLY when `effect` is
+ *    `deny` (a denial names why; a silent gate is the thing this arm forbids).
+ *  - **reason-chain integrity** — every reason's `code` and `message` are
+ *    non-empty strings, and each decodes against the capsule's `output`
+ *    (`Decision`) schema (the verdict shape is the contract, proved by round-trip).
+ *  - **determinism** — the SAME subject yields a deep-equal verdict twice (the
+ *    `decide` core is pure, exactly the discipline `mutate` follows).
+ *  - **every declared invariant** `check(subject, verdict)` over random subjects.
+ *
+ * The bench drives `decide` over presampled subjects — the capsule's real hot
+ * path — never re-sampling inside the timed loop.
  *
  * @module
  */
 
+import { UnsupportedError } from '@czap/error';
 import type { CapsuleDef } from '../assembly.js';
-import type { HarnessOutput } from './pure-transform.js';
+import type { HarnessContext, HarnessOutput } from './pure-transform.js';
+
+const DEFAULT_ARBITRARY_IMPORT = '../../packages/core/src/harness/arbitrary-from-schema.js';
+
+/** Escape backtick + dollar-brace sequences for a template-literal interpolation site. */
+function escapeBacktick(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+}
+
+/** REAL bench: drive `decide` over presampled subjects (the capsule's hot path). */
+function realBench(cap: CapsuleDef<'policyGate', unknown, unknown, unknown>, ctx: HarnessContext): string {
+  const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+  return `// GENERATED — do not edit by hand
+import { bench } from 'vitest';
+import * as fc from 'fast-check';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+import { schemaToArbitrary } from '${arbitraryImport}';
+
+// REAL bench: drive the capsule's \`decide\` over presampled subjects — the SAME
+// binding + arbitrary the generated test drives. capsule:compile resolved this
+// subject schema as arbitrary-derivable + \`decide\` present, so the samples are by
+// construction subjects \`decide\` accepts. Samples are drawn ONCE at module load
+// (fixed seed → reproducible) so the timed loop measures \`decide\`, never fast-check.
+const cap = ${ctx.bindingName};
+const decide = cap.decide!;
+const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+const subjects = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
+let i = 0;
+
+bench(\`${escapeBacktick(cap.name)} — decide() over canonical subjects\`, () => {
+  decide(subjects[i++ % subjects.length] as never);
+}, { time: 500 });
+`;
+}
 
 /**
  * Generate the test + bench file contents for a `policyGate` capsule.
- * Emits `it.skip` placeholders for allow / deny / reason-chain coverage.
+ *
+ * Disposition is resolved at COMPILE TIME (see the module docstring). This
+ * generator emits ONE clean real test, or THROWS a tagged `UnsupportedError`
+ * so `capsule:compile` fails loud (wire-or-fail) — never an `it.skip`.
  */
-export function generatePolicyGate(cap: CapsuleDef<'policyGate', unknown, unknown, unknown>): HarnessOutput {
+export function generatePolicyGate(
+  cap: CapsuleDef<'policyGate', unknown, unknown, unknown>,
+  ctx: HarnessContext = {},
+): HarnessOutput {
+  const arbitraryImport = ctx.arbitraryImport ?? DEFAULT_ARBITRARY_IMPORT;
+
+  if (ctx.bindingImport === undefined || ctx.bindingName === undefined) {
+    // Wire-or-fail: a generator emits a real test or throws — never a skip.
+    throw UnsupportedError(
+      'policyGate harness',
+      `cannot harness policyGate capsule '${cap.name}': capsule:compile resolved no importable binding ` +
+        `(bindingImport + bindingName). A policyGate without an exported binding cannot be probed — export ` +
+        `the binding (or remove the capsule) and re-run pnpm run capsule:compile.`,
+    );
+  }
+
+  // COMPILE-TIME probe must have resolved the binding's SUBJECT schema as
+  // arbitrary-derivable AND its `decide` verdict handler present. Wire-or-fail:
+  // any lesser disposition throws here — a policyGate with no sampleable subject
+  // or no decision core has nothing to drive, and a silent skip would launder
+  // that gap green.
+  if (ctx.arbitraryDerivable !== true || ctx.decidePresent !== true) {
+    throw UnsupportedError(
+      'policyGate harness',
+      `cannot harness policyGate capsule '${cap.name}': capsule:compile did not resolve it as ` +
+        `arbitrary-derivable (got ${String(ctx.arbitraryDerivable)}) with a decide handler present ` +
+        `(got ${String(ctx.decidePresent)}). Both must probe true to emit a real allow/deny + reason-chain ` +
+        `+ determinism traversal — narrow the subject schema so it is sampleable and add a pure ` +
+        `\`decide(subject)\` core, then re-run pnpm run capsule:compile.`,
+    );
+  }
+
   const testFile = `// GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
+import { Schema } from 'effect';
+import { ${ctx.bindingName} } from '${ctx.bindingImport}';
+import { schemaToArbitrary } from '${arbitraryImport}';
 
 describe('${cap.name}', () => {
-  it.skip('allow branch: a subject meeting the policy resolves to allow', () => {
-    // TODO(harness): needs cap.decide handler to drive subject -> outcome.
+  const cap = ${ctx.bindingName} as {
+    input: Schema.Schema<unknown>;
+    output: Schema.Schema<unknown>;
+    decide?: (subject: unknown) => { effect: 'allow' | 'deny'; reasons: ReadonlyArray<{ code: string; message: string }> };
+    invariants: ReadonlyArray<{ name: string; check: (subject: unknown, verdict: unknown) => boolean }>;
+  };
+  // capsule:compile resolved the subject schema as arbitrary-derivable + \`decide\`
+  // present, so we sample the subject via the canonical walker and drive the REAL
+  // decide. A regression in the walker throws at schemaToArbitrary and fails the
+  // suite RED — correct, never a green skip.
+  const subjectArb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+  const decide = cap.decide!;
+  // The verdict shape IS the contract: \`output\` is the Decision schema, so each
+  // verdict round-trips through it (the policyGate analogue of the receipt byte law).
+  const decodeVerdict = Schema.decodeUnknownSync(cap.output as never);
+
+  it('allow/deny coverage: every verdict is a well-formed Decision (reasons non-empty iff deny)', () => {
+    fc.assert(
+      fc.property(subjectArb, (subject) => {
+        const verdict = decide(subject as never);
+        expect(verdict.effect === 'allow' || verdict.effect === 'deny').toBe(true);
+        expect(Array.isArray(verdict.reasons)).toBe(true);
+        // The reason-chain law: a denial MUST name why (non-empty chain); an allow
+        // carries an empty-or-informational chain. Non-empty EXACTLY when deny.
+        if (verdict.effect === 'deny') {
+          expect(verdict.reasons.length).toBeGreaterThan(0);
+        } else {
+          expect(verdict.reasons.length).toBe(0);
+        }
+        return true;
+      }),
+      { numRuns: 100 },
+    );
   });
 
-  it.skip('deny branch: a subject failing the policy resolves to deny', () => {
-    // TODO(harness): same — needs cap.decide.
+  it('reason-chain integrity: every reason has non-empty {code, message} and decodes against the verdict schema', () => {
+    fc.assert(
+      fc.property(subjectArb, (subject) => {
+        const verdict = decide(subject as never);
+        for (const reason of verdict.reasons) {
+          expect(typeof reason.code).toBe('string');
+          expect(reason.code.length).toBeGreaterThan(0);
+          expect(typeof reason.message).toBe('string');
+          expect(reason.message.length).toBeGreaterThan(0);
+        }
+        // The whole verdict round-trips through the declared Decision schema — the
+        // reasons decode as typed reasons, not arbitrary objects.
+        expect(decodeVerdict(verdict as never)).toEqual(verdict);
+        return true;
+      }),
+      { numRuns: 100 },
+    );
   });
 
-  it.skip('reason chain present on every decision', () => {
-    // TODO(harness): same — needs cap.decide and a typed reasons schema.
+  it('determinism: the same subject yields a deep-equal verdict twice (pure decide core)', () => {
+    fc.assert(
+      fc.property(subjectArb, (subject) => {
+        expect(decide(subject as never)).toEqual(decide(subject as never));
+        return true;
+      }),
+      { numRuns: 100 },
+    );
   });
 
-  it.skip('no silent deny: every deny has a typed reason code', () => {
-    // TODO(harness): same — needs reasons enum on the contract.
-  });
+  for (const inv of cap.invariants) {
+    it(\`invariant: \${inv.name}\`, () => {
+      fc.assert(
+        fc.property(subjectArb, (subject) => {
+          const verdict = decide(subject as never);
+          return inv.check(subject as never, verdict as never);
+        }),
+        { numRuns: 100 },
+      );
+    });
+  }
 });
 `;
 
-  const benchFile = `// GENERATED — do not edit by hand
-import { bench } from 'vitest';
-
-bench('${cap.name}', () => {
-  // policy decision with a canonical fixture
-}, { time: 500 });
-`;
-
-  return { testFile, benchFile };
+  return { testFile, benchFile: realBench(cap, ctx) };
 }

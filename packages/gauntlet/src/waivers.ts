@@ -13,10 +13,13 @@
  * or a skipped test (those are in {@link ALWAYS_BLOCKING_RULES} and any waiver
  * targeting them is void). Each entry says exactly why the site is sanctioned.
  *
- * Today the registry holds only the declared entropy boundaries the determinism
- * cure deliberately leaves — the single `systemClock` / `systemRng` reads that ALL
- * other runtime time/randomness funnels through — and one proven-benign teardown.
- * Everything else the gauntlet surfaces is CURED, not waived.
+ * This registry is the committed list `litelaunchGauntlet` applies over the
+ * production scan scope (`packages/&#42;/src`). It holds the declared entropy
+ * boundaries the determinism cure deliberately leaves — the single `systemClock` /
+ * `systemRng` reads that ALL other runtime time/randomness funnels through — plus
+ * a handful of proven-benign best-effort catches in that scope (each suppressing a
+ * REAL finding the run surfaces, so each waiver actually has teeth). Everything
+ * else the gauntlet surfaces is CURED, not waived.
  *
  * @module
  */
@@ -74,23 +77,14 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
     debtScore: 1,
   },
 
-  // ── Proven-benign best-effort teardown ───────────────────────────────────────
-  // Owner-sanctioned per the redline: a teardown catch is waiveable "only if ...
-  // proven best-effort cleanup where failure is non-observable and non-corrupting."
-  // Killing an already-dead process group (ESRCH) is exactly that: the only failure
-  // mode is "the process is already gone", which is the desired post-state anyway.
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'scripts/gauntlet.ts',
-    line: 49,
-    owner: 'heyoub',
-    reason:
-      'Best-effort process-group kill in the gauntlet runner teardown. The catch swallows only the already-dead/ESRCH case — non-observable (no caller depends on the kill succeeding) and non-corrupting (the desired post-state, a dead process group, is reached either way). The catch is documented, not empty.',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'If the kill fails for a reason OTHER than already-dead, a stray child process could linger — but that surfaces as a hung CI step, not silent corruption.',
-    debtScore: 1,
-  },
+  // ── Proven-benign best-effort silent catches in packages/*/src (the scan scope) ─
+  // Owner-sanctioned per the redline: a catch is waiveable "only if ... proven
+  // best-effort cleanup where failure is non-observable and non-corrupting." Each
+  // entry below targets a file the production run (litelaunchGauntlet, scoped to
+  // packages/*/src) actually scans, so the waiver has teeth: it suppresses a REAL
+  // finding the run surfaces. (The gauntlet's own scripts/* teardown catches are a
+  // scripts-scoped concern, not part of this packages/*/src registry — a waiver for
+  // an unscanned file is itself stale weight the mechanism would flag.)
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/astro/src/runtime/wgpu.ts',

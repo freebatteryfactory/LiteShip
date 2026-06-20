@@ -98,6 +98,24 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
     }
   }
 
+  // policyGate mandatory-`decide` requirement (ADR-0008 amendment): a policyGate
+  // is a permission/authz check — its whole job is to resolve a verdict against a
+  // subject. A policyGate with NO `decide` core has no decision to drive, so the
+  // allow/deny coverage, reason-chain integrity, and determinism checks would have
+  // nothing to invoke. Per the harness law (emit a REAL test or FAIL LOUD), this is
+  // illegal at declaration time — exactly as a receiptedMutation must EITHER expose
+  // a pure `mutate` core OR declare a typed exemption. There is no `policyGate`
+  // exemption: a gate that cannot decide is not a gate. Pre-1.0: this throws.
+  if (decl._kind === 'policyGate' && typeof decl.decide !== 'function') {
+    throw InvariantViolationError(
+      'assembly.contract',
+      `policyGate capsule "${decl.name}" declares no \`decide\` core. A policyGate is a permission/authz ` +
+        `check: it MUST expose a pure \`decide(subject) => { effect, reasons }\` verdict so the harness can ` +
+        `drive its allow/deny coverage, reason-chain integrity, and determinism for real. A gate that cannot ` +
+        `decide is not a gate — add a \`decide\` handler (or remove the capsule). Silent absence is not allowed.`,
+    );
+  }
+
   const id = computeId(decl as Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>);
   const def = { ...decl, id } as CapsuleDef<K, In, Out, R>;
   catalog.push(def as CapsuleDef<AssemblyKind, unknown, unknown, unknown>);

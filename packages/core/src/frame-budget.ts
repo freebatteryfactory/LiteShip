@@ -14,6 +14,7 @@
 import type { Scope } from 'effect';
 import { Effect } from 'effect';
 import { DEFAULT_TARGET_FPS, MS_PER_SEC } from './defaults.js';
+import { type Clock, systemClock } from './clock.js';
 import { ValidationError } from '@czap/error';
 
 /**
@@ -57,17 +58,27 @@ interface FrameBudgetShape {
  * }));
  * ```
  */
-function _make(config?: { targetFps?: number }): Effect.Effect<FrameBudgetShape, never, Scope.Scope> {
+function _make(config?: { targetFps?: number; clock?: Clock }): Effect.Effect<FrameBudgetShape, never, Scope.Scope> {
   const targetFps = config?.targetFps ?? DEFAULT_TARGET_FPS;
   if (targetFps <= 0 || !Number.isFinite(targetFps)) {
     throw ValidationError('FrameBudget.make', `targetFps must be a positive finite number, got ${targetFps}`);
   }
   const frameBudgetMs = MS_PER_SEC / targetFps;
+  // Monotonic DURATION clock for the rAF hot path (frame pacing / remaining-budget
+  // deltas). Defaults to systemClock (`performance.now`); injected so a replay/test
+  // can thread a deterministic `manualClock`. The rAF callback's own `now` argument
+  // is itself a monotonic DOMHighResTimeStamp, so both readings are the same boundary.
+  const clock = config?.clock ?? systemClock;
+  // Whether a real elapsed-time source exists: an explicitly injected clock always
+  // counts; otherwise the default systemClock only measures when `performance` is
+  // present. Without one, `remaining()` reports the FULL budget (the SSR posture)
+  // rather than decaying against a stale init reading.
+  const hasTimeSource = config?.clock !== undefined || typeof performance !== 'undefined';
 
   return Effect.gen(function* () {
-    let frameStart = typeof performance !== 'undefined' ? performance.now() : 0;
+    let frameStart = clock.now();
     let currentFps = targetFps;
-    let lastFrameTime = typeof performance !== 'undefined' ? performance.now() : 0;
+    let lastFrameTime = clock.now();
     let frameCount = 0;
     let fpsAccum = 0;
 
@@ -90,8 +101,8 @@ function _make(config?: { targetFps?: number }): Effect.Effect<FrameBudgetShape,
 
     const budget: FrameBudgetShape = {
       remaining(): number {
-        if (typeof performance === 'undefined') return frameBudgetMs;
-        return Math.max(0, frameBudgetMs - (performance.now() - frameStart));
+        if (!hasTimeSource) return frameBudgetMs;
+        return Math.max(0, frameBudgetMs - (clock.now() - frameStart));
       },
 
       canRun(priority: Priority): boolean {
