@@ -25,9 +25,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 14 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 15 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(14);
+    expect(handlers.length).toBe(15);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -72,6 +72,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     'scene.verify': { sceneId: 'intro', generatedTests: 2 },
     verify: { tarball: 't.tgz', capsule_id: null, checks: { tarball_manifest: 'skipped' }, mismatches: [] },
     audit: { errorCount: 0, warningCount: 6, infoCount: 282, findingCount: 288, suppressedCount: 15, passFindingCounts: { structure: 1, integrity: 2, surface: 0 }, repoRoot: '/repo', profileSource: 'default' },
+    'audit-floor': { ok: false, expectedWarnings: 0, actualWarnings: 1, errorCount: 0, delta: { added: ['new-rule@packages/x/src/y.ts'], removed: [] }, inventory: ['new-rule@packages/x/src/y.ts'] },
     plumb: { ok: false, skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }], unclassified: ['@czap/mystery'], generatedPresent: true },
     'check-invariants': { ok: false, groups: [{ name: 'NO_VAR', message: 'Use const/let, not var.', violations: [{ file: 'packages/x/src/y.ts', line: 3, content: 'var x = 1;' }] }], lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'] },
   };

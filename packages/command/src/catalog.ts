@@ -20,6 +20,7 @@ import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 import { verifyCommand } from './commands/verify.js';
 import { auditCommand } from './commands/audit.js';
+import { auditFloorCommand } from './commands/audit-floor.js';
 import { plumbCommand } from './commands/plumb.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 
@@ -113,6 +114,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   sceneRenderCommand,
   verifyCommand,
   auditCommand,
+  auditFloorCommand,
   plumbCommand,
   checkInvariantsCommand,
 ];

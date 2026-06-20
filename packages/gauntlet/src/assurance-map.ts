@@ -117,7 +117,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/command/src/dispatcher.ts', level: 'L3' },
   { glob: 'packages/cli/src/dispatch.ts', level: 'L3' },
   {
-    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants}.ts',
+    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants}.ts',
     level: 'L3',
   },
   // The plumb-completeness gate, migrated out of scripts/ into the command host.
@@ -126,9 +126,13 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   // The fast-lane invariant gate, migrated out of scripts/ into the command host.
   { glob: 'packages/command/src/commands/check-invariants.ts', level: 'L3' },
   { glob: 'packages/command/src/host/check-invariants-scan.ts', level: 'L3' },
+  // The audit warning-floor gate, migrated out of scripts/ into the command. The
+  // heavy @czap/audit engine stays CLI-only (cli/src/commands/audit-floor.ts in
+  // the glob above); the descriptor + verdict mapping is the command module.
+  { glob: 'packages/command/src/commands/audit-floor.ts', level: 'L3' },
   // Authority-bearing scripts: gate (exit-nonzero), ratchet, generate, verify.
   {
-    glob: 'scripts/{gauntlet,audit-floor,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,package-smoke,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts',
+    glob: 'scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,package-smoke,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts',
     level: 'L3',
   },
 

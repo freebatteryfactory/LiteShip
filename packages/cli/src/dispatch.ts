@@ -16,6 +16,7 @@ import { sceneDev } from './commands/scene-dev.js';
 import { sceneRender } from './commands/scene-render.js';
 import { sceneVerify } from './commands/scene-verify.js';
 import { audit } from './commands/audit.js';
+import { auditFloor } from './commands/audit-floor.js';
 import { plumb } from './commands/plumb.js';
 import { checkInvariants } from './commands/check-invariants.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
@@ -167,6 +168,9 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(consumer ? { consumer } : {}),
         ...(findings ? { findings } : {}),
       });
+    }
+    case 'audit-floor': {
+      return auditFloor();
     }
     case 'plumb': {
       return plumb();

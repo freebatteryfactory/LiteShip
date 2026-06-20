@@ -1,11 +1,17 @@
 /**
- * Audit floor inventory — artifact-independent three-pass engine floor.
+ * The audit-floor ledger (relocated from `scripts/lib/audit-floor.ts` when the
+ * gate became the `audit-floor` command). PURE — no Node, no `@czap/audit` — so
+ * it lives in the pure registry entry. The HEAVY half (`collectWarningInventory`,
+ * which runs the `@czap/audit` three-pass engine) stays on the CLI adapter where
+ * `runAuditFloor` is provisioned; only the floor data + the diff are pure and
+ * belong here.
+ *
+ * `AUDIT_WARNING_FLOOR` is the sorted multiset of `rule@file` keys for pinned
+ * advisory warnings; `diffInventories` reports drift against it. A new warning is
+ * a regression against the floor (zero since the 0.1.5 advisory-cleanup wave).
  *
  * @module
  */
-
-import { runStructureAudit, runIntegrityAudit, runSurfaceAudit } from '@czap/audit';
-import type { AuditFinding } from '@czap/audit';
 
 /**
  * Sorted multiset of `rule@file` keys for pinned advisory warnings.
@@ -20,20 +26,7 @@ import type { AuditFinding } from '@czap/audit';
  */
 export const AUDIT_WARNING_FLOOR: readonly string[] = [];
 
-/** Collect warning inventory keys from the three engine passes. */
-export function collectWarningInventory(): readonly string[] {
-  const all: AuditFinding[] = [
-    ...runStructureAudit().findings,
-    ...runIntegrityAudit().findings,
-    ...runSurfaceAudit().findings,
-  ];
-  return all
-    .filter((f) => f.severity === 'warning')
-    .map((f) => `${f.rule}@${f.location?.file ?? 'unknown'}`)
-    .sort();
-}
-
-/** Diff two sorted multisets. */
+/** Diff two sorted multisets — `added` are in `actual` only, `removed` in `expected` only. */
 export function diffInventories(
   expected: readonly string[],
   actual: readonly string[],

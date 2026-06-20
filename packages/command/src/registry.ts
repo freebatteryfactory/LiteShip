@@ -69,6 +69,17 @@ export interface CommandContext {
     readonly includeFindings?: boolean;
   }) => Promise<AuditEngineSummary>;
   /**
+   * Run the audit-floor gate over the repo at `cwd`: run the artifact-independent
+   * three-pass audit engine, collect the `rule@file` warning inventory, and diff
+   * it against the pinned `AUDIT_WARNING_FLOOR`. Drift (added/removed warnings or
+   * ANY error) fails the gate. Returns a structured verdict — no process.exit, no
+   * stdout. Like {@link runAudit}, it is backed by the heavy `@czap/audit` engine,
+   * so it is NOT provisioned in the shared host factory: only `@czap/cli` injects
+   * it. `audit-floor` is therefore not MCP-exposed — over MCP the capability is
+   * absent and the handler degrades to a structured failure (capabilityUnavailable).
+   */
+  readonly runAuditFloor?: () => Promise<AuditFloorSummary>;
+  /**
    * Run the plumb-completeness gate over the repo at `cwd`: scan
    * `tests/generated/` for `*.skip` placeholders (each is a blocking lie about
    * coverage) and check every published package carries a `PACKAGE_PLUMB`
@@ -200,6 +211,27 @@ export interface AuditEngineSummary {
   readonly profileSource: 'default' | 'file' | 'consumer';
   /** Present only when the caller asked for findings (`--findings`). */
   readonly findings?: readonly AuditEngineFinding[];
+}
+
+/**
+ * Structured verdict returned by the injected {@link CommandContext.runAuditFloor}
+ * capability — the artifact-independent three-pass warning floor, diffed against
+ * the pinned `AUDIT_WARNING_FLOOR`. `ok` ⟺ no warning drift (no added/removed
+ * inventory keys) AND no errors. Declared here so the `audit-floor` command's
+ * contract lives in `@czap/command` without an import of the heavy engine.
+ */
+export interface AuditFloorSummary {
+  readonly ok: boolean;
+  /** Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`). */
+  readonly expectedWarnings: number;
+  /** Number of `rule@file` warning keys the engine actually surfaced. */
+  readonly actualWarnings: number;
+  /** Error-severity findings across all three passes — any error fails the gate. */
+  readonly errorCount: number;
+  /** Warning-inventory drift against the floor: `added` are new, `removed` are gone. */
+  readonly delta: { readonly added: readonly string[]; readonly removed: readonly string[] };
+  /** The sorted `rule@file` warning inventory the engine surfaced. */
+  readonly inventory: readonly string[];
 }
 
 /**

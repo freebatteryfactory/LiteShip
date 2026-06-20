@@ -49,7 +49,7 @@
     "audit:integrity": "pnpm exec tsx scripts/audit/integrity.ts",
     "audit:surface": "pnpm exec tsx scripts/audit/surface.ts",
     "audit:report": "pnpm exec tsx scripts/audit/report.ts",
-    "audit:floor": "pnpm exec tsx scripts/audit-floor.ts",
+    "audit:floor": "pnpm exec tsx packages/cli/src/bin.ts audit-floor",
     "coverage:unit": "vitest run --config vitest.config.ts --coverage tests/unit/",
     "coverage:smoke": "vitest run --config vitest.config.ts --coverage tests/smoke/",
     "bench:gate": "pnpm run build && tsx scripts/bench-gate.ts",

@@ -49,7 +49,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // → the registry/commands UI body changed, re-pinning the digest.
     // CUT A3: `check-invariants` (the invariant gate, migrated from scripts/) joined
     // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
-    expect(pin).toBe('fnv1a:ad442f96');
+    // CUT A4: `audit-floor` (the warning-floor gate, migrated from scripts/) joined
+    // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
+    expect(pin).toBe('fnv1a:3e448bce');
   });
 });
 

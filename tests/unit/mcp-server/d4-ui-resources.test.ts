@@ -164,6 +164,8 @@ describe('D4 — projection drift pin', () => {
     // so the registry/commands UI body changed, re-pinning the digest.
     // CUT A3: `check-invariants` (migrated from scripts/check-invariants.ts) joined
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
-    expect(address).toBe('fnv1a:ad442f96');
+    // CUT A4: `audit-floor` (migrated from scripts/audit-floor.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    expect(address).toBe('fnv1a:3e448bce');
   });
 });

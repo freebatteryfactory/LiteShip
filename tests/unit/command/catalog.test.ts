@@ -9,6 +9,7 @@ const EXPECTED_NAMES = [
   'asset.analyze',
   'asset.verify',
   'audit',
+  'audit-floor',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',

@@ -19,6 +19,7 @@ export type {
 export { CommandRegistry, capabilityUnavailable } from './registry.js';
 export type {
   AuditEngineSummary,
+  AuditFloorSummary,
   CapsuleCommandHandler,
   CommandCapability,
   CommandContext,
@@ -49,6 +50,9 @@ export { verifyCommand } from './commands/verify.js';
 export type { VerifyPayload } from './commands/verify.js';
 export { auditCommand } from './commands/audit.js';
 export type { AuditPayload } from './commands/audit.js';
+export { auditFloorCommand } from './commands/audit-floor.js';
+export type { AuditFloorPayload } from './commands/audit-floor.js';
+export { AUDIT_WARNING_FLOOR, diffInventories } from './commands/audit-floor-registry.js';
 export { plumbCommand } from './commands/plumb.js';
 export type { PlumbPayload } from './commands/plumb.js';
 export { PACKAGE_PLUMB } from './commands/plumb-registry.js';

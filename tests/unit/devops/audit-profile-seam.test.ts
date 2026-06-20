@@ -20,11 +20,8 @@ import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { runIntegrityAudit } from '../../../scripts/audit/integrity.js';
 import { runSurfaceAudit } from '../../../scripts/audit/surface.js';
-import {
-  AUDIT_WARNING_FLOOR,
-  collectWarningInventory,
-  diffInventories,
-} from '../../../scripts/lib/audit-floor.js';
+import { AUDIT_WARNING_FLOOR, diffInventories } from '@czap/command';
+import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 import { buildCodebaseAuditReport } from '../../../scripts/audit/report.js';
 import { liteshipDevopsProfile, withRepoRoot } from '@czap/audit';
 import type { DevopsProfile } from '@czap/audit';
