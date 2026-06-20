@@ -54,6 +54,14 @@ export { tupleMap } from './tuple.js';
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
+
+// The determinism substrate: the one injectable shape time + randomness are read
+// through, so the ONLY ambient wall-clock / Math.random read in the runtime lives
+// in `systemClock` / `systemRng` (the single declared entropy boundary). Every
+// other runtime path threads an injected clock/rng defaulting to the system one.
+export { type Clock, type ManualClock, systemClock, wallClock, fixedClock, manualClock } from './clock.js';
+export { type Rng, systemRng, seededRng } from './rng.js';
+
 // The single f32-canonical state-index kernel and its worker-blob twin string.
 // `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
 // startup path (@czap/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`

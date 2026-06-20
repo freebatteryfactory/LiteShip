@@ -6,7 +6,7 @@
  * @module
  */
 
-import { Millis } from '@czap/core';
+import { Millis, systemRng, type Rng } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import type { SSEMessage, ReconnectConfig } from '../types.js';
 
@@ -85,10 +85,14 @@ export const parseMessage = (event: MessageEvent): SSEMessage | null => {
 
 /**
  * Calculate reconnection delay using exponential backoff with jitter.
+ *
+ * The jitter source is injectable: pass a seeded {@link Rng} to make
+ * reconnection-backoff deterministic in tests; it defaults to `systemRng`
+ * (live `Math.random`) in production.
  */
-export const calculateDelay = (attempt: number, config: ReconnectConfig): number => {
+export const calculateDelay = (attempt: number, config: ReconnectConfig, rng: Rng = systemRng): number => {
   const delay = config.initialDelay * Math.pow(config.factor, attempt);
-  const jitter = delay * 0.25 * (Math.random() * 2 - 1);
+  const jitter = delay * 0.25 * (rng.next() * 2 - 1);
   return Math.min(delay + jitter, config.maxDelay);
 };
 

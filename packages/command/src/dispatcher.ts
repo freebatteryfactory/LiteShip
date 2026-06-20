@@ -6,7 +6,7 @@
  *
  * @module
  */
-import type { CapsuleCommandInvocation, CapsuleCommandResult } from '@czap/core';
+import { wallClock, type CapsuleCommandInvocation, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -55,7 +55,7 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
         return {
           status: 'failed',
           command: invocation.name,
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(wallClock.now()).toISOString(),
           exitCode: 1,
           payload: {
             error: 'unknown_command',
@@ -75,7 +75,7 @@ function make(registry: CommandRegistry.Shape): CommandDispatcherShape {
         return {
           status: 'failed',
           command: invocation.name,
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(wallClock.now()).toISOString(),
           exitCode: 1,
           payload: {
             error: 'no_registry_handler',

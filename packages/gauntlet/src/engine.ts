@@ -121,7 +121,14 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
     // Apply waivers AFTER authority (a waiver suppresses a kept finding; it does
     // not resurrect an advisory-demoted one). Waiver findings carry their OWN
     // severity (expired/forbidden = error → block; stale = warning).
-    const { kept, waived, waiverFindings } = applyWaivers(authed, waivers, now);
+    //
+    // SCOPE the waivers to THIS gate by ruleId: a waiver targets one rule, and a
+    // gate only emits its own rule's findings, so a no-silent-catch waiver must
+    // not be evaluated against the no-bare-throw gate — otherwise it would look
+    // "stale" (matches nothing) at every OTHER gate. Staleness is only meaningful
+    // among the waivers for the rule the gate actually runs.
+    const gateWaivers = waivers.filter((w) => w.ruleId === gate.id);
+    const { kept, waived, waiverFindings } = applyWaivers(authed, gateWaivers, now);
 
     const outcomeFindings = [...kept, ...waiverFindings];
     for (const f of outcomeFindings) {

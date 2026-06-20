@@ -1,4 +1,4 @@
-import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent } from '@czap/core';
+import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@czap/core';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
@@ -385,7 +385,11 @@ void main() {
       else webgl.uniform1f(loc, num);
     };
 
-    const startTime = performance.now();
+    // Animation epoch for the `u_time` uniform. The live render loop is an
+    // inherently real-time boundary with no injection seam, so both the epoch
+    // and the per-frame read route through `systemClock` (the single declared
+    // entropy boundary) — `u_time` is their monotonic elapsed-seconds delta.
+    const startTime = systemClock.now();
     let animFrame = 0;
 
     function render(): void {
@@ -399,7 +403,7 @@ void main() {
 
       const timeLoc = uniforms.get('u_time');
       if (timeLoc) {
-        webgl.uniform1f(timeLoc, (performance.now() - startTime) / 1000);
+        webgl.uniform1f(timeLoc, (systemClock.now() - startTime) / 1000);
       }
 
       const resLoc = uniforms.get('u_resolution');

@@ -9,7 +9,7 @@
  *
  * @module
  */
-import { Boundary, BoundaryAttribute, Diagnostics, inputToSource } from '@czap/core';
+import { Boundary, BoundaryAttribute, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
 /**
@@ -226,8 +226,15 @@ export function parseBoundary(boundaryJson: string | null): RuntimeBoundary | nu
   };
 }
 
-/** Build activation context for {@link Boundary.isActive} from the live document. */
-export function buildBoundaryActivationContext(): {
+/**
+ * Build activation context for {@link Boundary.isActive} from the live document.
+ *
+ * `nowMs` feeds the `timeRange` activation gate, whose bounds are EPOCH ms, so it
+ * routes through an injected `clock` defaulting to {@link wallClock} (the epoch
+ * entropy boundary — NOT the monotonic systemClock, which would compare ~30 against
+ * epoch bounds) — a test passes a {@link fixedClock} to pin time-range crossings.
+ */
+export function buildBoundaryActivationContext(clock: Clock = wallClock): {
   capabilities: Record<string, unknown>;
   nowMs: number;
   activeExperiments: readonly string[];
@@ -245,7 +252,7 @@ export function buildBoundaryActivationContext(): {
       webgpu: typeof navigator !== 'undefined' && 'gpu' in navigator,
       webgl2: typeof document !== 'undefined' && !!document.createElement('canvas').getContext('webgl2'),
     },
-    nowMs: Date.now(),
+    nowMs: clock.now(),
     activeExperiments,
   };
 }
@@ -382,15 +389,25 @@ export function readSignalValue(input: string): number | undefined {
  * Evaluate a {@link RuntimeBoundary} against a signal value, applying
  * hysteresis when `previousState` is provided and the boundary has a
  * hysteresis band.
+ *
+ * The optional `clock` (default {@link wallClock}, epoch ms) only matters for
+ * boundaries with a `timeRange` spec — it sources the `nowMs` the activation gate
+ * compares against the spec's epoch bounds, so a test passes a {@link fixedClock}
+ * to make time-range crossings reproducible. Spec-less boundaries never read it.
  */
-export function evaluateBoundary(boundary: RuntimeBoundary, value: number, previousState?: string): string {
+export function evaluateBoundary(
+  boundary: RuntimeBoundary,
+  value: number,
+  previousState?: string,
+  clock: Clock = wallClock,
+): string {
   // Activation gating only matters when the boundary carries a spec
   // (time-range / experiment / device filter). For the common spec-less
   // case `isActive` is unconditionally true, so building the activation
   // context here — which allocates and, in a browser, creates a canvas +
   // WebGL2 context on every call — is pure hot-path waste. Skip it.
   if (boundary.boundary.spec) {
-    const context = buildBoundaryActivationContext();
+    const context = buildBoundaryActivationContext(clock);
     if (!Boundary.isActive(boundary.boundary, context)) {
       return previousState ?? boundary.boundary.states[0]!;
     }

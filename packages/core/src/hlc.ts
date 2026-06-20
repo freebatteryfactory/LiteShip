@@ -6,8 +6,7 @@
  * @module
  */
 
-import type { Effect } from 'effect';
-import { Ref } from 'effect';
+import { Effect, Ref, Clock } from 'effect';
 import { InvariantViolationError, ParseError } from '@czap/error';
 
 // Hybrid Logical Clock: physical wall-clock + logical counter for causal ordering. DagPosition encodes (timestamp, counter, nodeId) for DAG vertex identity.
@@ -191,7 +190,11 @@ export const makeClock = (nodeId: string): Effect.Effect<Ref.Ref<HLCShape>> => R
  * ```
  */
 export const tick = (clock: Ref.Ref<HLCShape>): Effect.Effect<HLCShape> =>
-  Ref.updateAndGet(clock, (current) => _increment(current, Date.now()));
+  // Wall time via Effect's Clock service (live by default, TestClock under test)
+  // so the managed clock advances deterministically without an ambient Date.now().
+  Clock.currentTimeMillis.pipe(
+    Effect.flatMap((wallMs) => Ref.updateAndGet(clock, (current) => _increment(current, wallMs))),
+  );
 
 /**
  * Receive a remote HLC timestamp and merge it into the managed clock.
@@ -204,7 +207,9 @@ export const tick = (clock: Ref.Ref<HLCShape>): Effect.Effect<HLCShape> =>
  * ```
  */
 export const receive = (clock: Ref.Ref<HLCShape>, remote: HLCShape): Effect.Effect<HLCShape> =>
-  Ref.updateAndGet(clock, (current) => _merge(current, remote, Date.now()));
+  Clock.currentTimeMillis.pipe(
+    Effect.flatMap((wallMs) => Ref.updateAndGet(clock, (current) => _merge(current, remote, wallMs))),
+  );
 
 /**
  * HLC namespace -- Hybrid Logical Clock.

@@ -50,35 +50,41 @@ describe('matchesGlob — the small dialect (** / * / {a,b})', () => {
 describe('levelOf — first matching rule wins, default L1', () => {
   // One representative path per encoded rule, plus the default.
   const cases: ReadonlyArray<readonly [path: string, level: string]> = [
-    // L4 — the trust spine
+    // L4 — the trust spine: identity/integrity + the grader's own judgment core
     ['packages/canonical/src/whatever.ts', 'L4'],
     ['packages/canonical/src/deep/nested.ts', 'L4'],
     ['packages/core/src/receipt.ts', 'L4'],
     ['packages/core/src/hlc.ts', 'L4'],
-    ['packages/core/src/ai-cast.ts', 'L4'],
     ['packages/core/src/brands.ts', 'L4'],
+    ['packages/assets/src/brands.ts', 'L4'], // identity brand (AssetRefId)
+    ['packages/genui/src/brands.ts', 'L4'], // identity brand (ContentAddress kernel)
     // L3 — the deterministic runtime / projection / cache paths
     ['packages/core/src/signal.ts', 'L3'],
     ['packages/core/src/zap.ts', 'L3'],
     ['packages/core/src/gen-frame.ts', 'L3'],
     ['packages/core/src/token-buffer.ts', 'L3'],
     ['packages/core/src/boundary.ts', 'L3'],
+    ['packages/core/src/clock.ts', 'L3'], // the determinism substrate, visible to the gate
+    ['packages/core/src/rng.ts', 'L3'],
+    ['packages/core/src/ai-cast.ts', 'L3'], // moved L4→L3: deterministic proposer, not a trusted-artifact emitter
     ['packages/quantizer/src/quantizer.ts', 'L3'],
     ['packages/web/src/capture/probe.ts', 'L3'],
     ['packages/web/src/stream/sse-pure.ts', 'L3'],
     ['packages/worker/src/compositor-startup.ts', 'L3'],
     ['packages/astro/src/runtime/boundary.ts', 'L3'],
-    // L2 — public API + serialized contracts
+    ['packages/stage/src/dual-export.ts', 'L3'], // artifact-producing core
+    // L2 — public API + serialized contracts + typed external boundaries
     ['packages/scene/src/index.ts', 'L2'],
     ['packages/edge/src/contract.ts', 'L2'],
     ['packages/edge/src/capsule.ts', 'L2'],
     ['packages/scene/src/contract.ts', 'L2'],
     ['packages/edge/src/manifest.ts', 'L2'],
-    // L0/L1 — tooling, where ambient nondeterminism is legit
-    ['packages/cli/src/commands/ship.ts', 'L1'],
-    ['packages/command/src/commands/scene.ts', 'L1'],
-    ['packages/gauntlet/src/engine.ts', 'L1'],
-    ['packages/mcp-server/src/server-info.ts', 'L1'],
+    ['packages/command/src/commands/scene.ts', 'L2'], // command surface (was L1)
+    ['packages/mcp-server/src/jsonrpc.ts', 'L2'], // protocol kernel
+    // L0/L1 — COSMETIC tooling only, where ambient nondeterminism is legit
+    ['packages/mcp-server/src/server-info.ts', 'L1'], // version helper
+    ['packages/cli/src/lib/ansi.ts', 'L1'], // formatting
+    ['scripts/report-satellite-scan.ts', 'L1'], // a report
     ['scripts/anything.mjs', 'L1'],
     // default
     ['packages/core/src/diagnostics.ts', 'L1'],

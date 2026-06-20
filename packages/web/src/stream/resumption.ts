@@ -6,7 +6,7 @@
  */
 
 import { Effect } from 'effect';
-import { Millis } from '@czap/core';
+import { Millis, wallClock, type Clock } from '@czap/core';
 import { IoError, ParseError, ValidationError, type LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
@@ -83,14 +83,18 @@ const storageKey = (artifactId: string): string => `czap:resumption:${artifactId
  * }));
  * ```
  *
- * @param state - The resumption state to persist; `timestamp` defaults to `Date.now()`
+ * @param state - The resumption state to persist; `timestamp` defaults to the clock's `now()`
+ * @param clock - Time source for the default timestamp; defaults to `wallClock`
+ *                (epoch ms — the persisted timestamp is a real point in time, read
+ *                back as epoch, not the monotonic systemClock). Pass a
+ *                `fixedClock`/`manualClock` to make the persisted artifact deterministic.
  * @returns An Effect that saves the state
  */
-export const saveState = (state: ResumptionStateInput): Effect.Effect<void> =>
+export const saveState = (state: ResumptionStateInput, clock: Clock = wallClock): Effect.Effect<void> =>
   Effect.sync(() => {
     const key = storageKey(validateArtifactId(state.artifactId));
     // Stored shape keeps timestamp required; isResumptionState validates it on load.
-    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? Date.now() };
+    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? clock.now() };
     sessionStorage.setItem(key, JSON.stringify(stored));
   });
 
@@ -390,7 +394,7 @@ const requestReplay = (
  * import { Resumption } from '@czap/web';
  * import { Effect } from 'effect';
  *
- * // Save state on each SSE message (timestamp defaults to Date.now())
+ * // Save state on each SSE message (timestamp defaults to systemClock.now())
  * Effect.runSync(Resumption.saveState({
  *   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
  * }));

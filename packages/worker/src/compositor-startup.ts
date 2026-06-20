@@ -5,7 +5,7 @@
  * @module
  */
 
-import { RuntimeCoordinator, StateName, rawIndexF32 } from '@czap/core';
+import { RuntimeCoordinator, StateName, rawIndexF32, systemClock } from '@czap/core';
 import type {
   ToWorkerMessage,
   WorkerUpdate,
@@ -38,12 +38,15 @@ let standbyCompositorLease: StandbyCompositorLease | null = null;
 /**
  * Return the current high-resolution wall-clock time in nanoseconds.
  *
- * Uses `performance.now()` when available; falls back to `Date.now()`
- * in environments without the performance timeline.
+ * Reads through `@czap/core`'s `systemClock` -- the single audited entropy
+ * boundary -- which itself prefers `performance.now()` and falls back to
+ * `Date.now()` where the performance timeline is absent. This is an
+ * inherently-live observability read (it only feeds telemetry stage deltas,
+ * never a reproducible artifact), so there is no caller-injected clock to
+ * thread through: the boundary is the honest place to read the wall clock.
  */
 export function currentTimeNs(): number {
-  const currentTimeMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
-  return currentTimeMs * 1e6;
+  return systemClock.now() * 1e6;
 }
 
 /**

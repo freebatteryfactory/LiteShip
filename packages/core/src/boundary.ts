@@ -15,6 +15,7 @@ import { rawIndexF32 } from './boundary-f32.js';
 import { WASMDispatch } from './wasm-dispatch.js';
 import { WASM_BATCH_MAX } from './defaults.js';
 import { Diagnostics } from './diagnostics.js';
+import { wallClock } from './clock.js';
 import type { EvaluateResult } from './type-utils.js';
 import { ValidationError } from '@czap/error';
 
@@ -397,7 +398,7 @@ function _isSpecActive(
     if (!spec.deviceFilter(context.capabilities)) return false;
   }
   if (spec.timeRange) {
-    const now = context?.nowMs ?? Date.now();
+    const now = context?.nowMs ?? wallClock.now();
     if (spec.timeRange.from !== undefined && now < spec.timeRange.from) return false;
     if (spec.timeRange.until !== undefined && now > spec.timeRange.until) return false;
   }

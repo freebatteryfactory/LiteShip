@@ -9,6 +9,8 @@
  * @module
  */
 
+import { type Clock, systemClock } from './clock.js';
+
 interface TokenBufferShape<T = string> {
   push(token: T): void;
   drain(maxCount?: number): T[];
@@ -24,11 +26,18 @@ interface TokenBufferShape<T = string> {
 interface TokenBufferConfig {
   readonly capacity?: number;
   readonly emaAlpha?: number;
+  /**
+   * Injected time source for rate estimation. Defaults to {@link systemClock}
+   * (the declared entropy boundary); a test passes a {@link manualClock} so the
+   * EMA rates become a deterministic function of the advances it makes.
+   */
+  readonly clock?: Clock;
 }
 
 function _make<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
   const capacity = config?.capacity ?? 256;
   const alpha = config?.emaAlpha ?? 0.1;
+  const clock = config?.clock ?? systemClock;
 
   // Ring buffer backing store
   const buffer: (T | undefined)[] = new Array(capacity);
@@ -43,7 +52,7 @@ function _make<T = string>(config?: TokenBufferConfig): TokenBufferShape<T> {
   let lastDrainTime = 0;
 
   function now(): number {
-    return typeof performance !== 'undefined' ? performance.now() : Date.now();
+    return clock.now();
   }
 
   return {

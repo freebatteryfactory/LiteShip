@@ -8,6 +8,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { systemClock, wallClock } from '@czap/core';
 import { emit, emitError } from '../receipts.js';
 import { gauntletPhaseLabels } from '../gauntlet-phases.js';
 import { formatUnexpectedArgvReceipt, parseGauntletArgv } from '../gauntlet-argv.js';
@@ -48,7 +49,7 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
     emit({
       status: 'ok',
       command: 'gauntlet',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       phases: PHASES,
       dryRun: true,
       argvPolicy: 'reject-unknown',
@@ -63,9 +64,10 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
     emitError('gauntlet', 'gauntlet is a LiteShip-workspace verb; run it from the czap repo root');
     return 1;
   }
-  const start = Date.now();
+  // Monotonic — this is an elapsed-time delta, not a timestamp.
+  const start = systemClock.now();
   const r = spawnSync('pnpm', ['run', 'gauntlet:full'], { stdio: 'inherit', shell: true, cwd });
-  const elapsedMs = Date.now() - start;
+  const elapsedMs = systemClock.now() - start;
   if (r.status !== 0) {
     const failedPhase = readFailedPhase(cwd);
     emitError(
@@ -80,7 +82,7 @@ export async function gauntlet(rest: readonly string[], opts: { readonly cwd?: s
   emit({
     status: 'ok',
     command: 'gauntlet',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     phases: PHASES,
     elapsedMs,
     dryRun: false,

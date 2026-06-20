@@ -77,6 +77,8 @@ export {
   applyWaivers,
 } from './waiver.js';
 
+export { LITESHIP_WAIVERS } from './waivers.js';
+
 export { nodeContext } from './node-context.js';
 
 export { type RunGauntletOnRepoOptions, runGauntletOnRepo } from './runner.js';

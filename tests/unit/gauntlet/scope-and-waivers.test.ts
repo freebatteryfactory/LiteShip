@@ -32,7 +32,7 @@ describe('scopeContextByLevel', () => {
     'packages/core/src/signal.ts': 'L3 file', // L3
     'packages/canonical/src/x.ts': 'L4 file', // L4
     'packages/edge/src/manifest.ts': 'L2 file', // L2
-    'packages/cli/src/commands/ship.ts': 'L1 file', // L1
+    'packages/cli/src/lib/ansi.ts': 'L1 file', // L1
   });
 
   it('an L3 scope keeps L3 and L4 files, drops L2 and L1', () => {
@@ -58,7 +58,7 @@ describe('scopeContextByLevel', () => {
     expect(scoped.repoRoot).toBe(ctx.repoRoot);
     expect(scoped.readFile('packages/core/src/signal.ts')).toBe('L3 file');
     // readFile is NOT scoped — only the file list is.
-    expect(scoped.readFile('packages/cli/src/commands/ship.ts')).toBe('L1 file');
+    expect(scoped.readFile('packages/cli/src/lib/ansi.ts')).toBe('L1 file');
   });
 
   it('runGates without a map sees ALL files (back-compat)', () => {
@@ -83,7 +83,7 @@ describe('scopeContextByLevel', () => {
     const real = seen.filter((f) => f.startsWith('packages/'));
     expect(real.sort()).toEqual([
       'packages/canonical/src/x.ts',
-      'packages/cli/src/commands/ship.ts',
+      'packages/cli/src/lib/ansi.ts',
       'packages/core/src/signal.ts',
       'packages/edge/src/manifest.ts',
     ]);
@@ -109,6 +109,61 @@ describe('scopeContextByLevel', () => {
     // Filter out the red/green fixture files (bad.ts/good.ts) verifyGate ran over.
     const real = seen.filter((f) => f.startsWith('packages/'));
     expect(real.sort()).toEqual(['packages/canonical/src/x.ts', 'packages/core/src/signal.ts']);
+  });
+});
+
+// ── waivers are scoped to their gate (no cross-gate false-staleness) ──────────
+
+describe('runGates — a waiver is evaluated only at the gate whose rule it targets', () => {
+  // Two gates with different rule ids, each flagging its one file.
+  const ctx: GateContext = memoryContext({ 'a.ts': 'flag-a', 'b.ts': 'flag-b' });
+  const mkProbe = (id: string, token: string): Gate =>
+    defineGate({
+      id,
+      level: 'L1',
+      describe: `flags files containing ${token}`,
+      run: (c): readonly Finding[] =>
+        c
+          .files()
+          .filter((f) => (c.readFile(f) ?? '').includes(token))
+          .map((f) => finding({ ruleId: id, severity: 'error', level: 'L1', title: id, detail: f, location: { file: f, line: 1 } })),
+      fixtures: {
+        red: { name: 'red', context: memoryContext({ 'bad.ts': token }) },
+        green: { name: 'green', context: memoryContext({ 'good.ts': '' }) },
+        mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
+      },
+    });
+  const gateA = mkProbe('test/rule-a', 'flag-a');
+  const gateB = mkProbe('test/rule-b', 'flag-b');
+
+  it('a waiver for gate B does NOT register as stale when gate A also runs', () => {
+    // One waiver, targeting rule-b's finding only.
+    const waivers: readonly Waiver[] = [
+      {
+        ruleId: 'test/rule-b',
+        file: 'b.ts',
+        line: 1,
+        owner: 'tester',
+        reason: 'b is fine',
+        expires: '2999-01-01',
+        blastRadius: 'none',
+        debtScore: 0,
+      },
+    ];
+    const result = runGates([gateA, gateB], ctx, { waivers, now: NOW });
+
+    const outA = result.outcomes.find((o) => o.gateId === 'test/rule-a')!;
+    const outB = result.outcomes.find((o) => o.gateId === 'test/rule-b')!;
+
+    // Gate A: its finding is KEPT; the rule-b waiver is NOT evaluated here, so it
+    // produces NO stale-waiver noise at gate A (the bug this guards against).
+    expect(outA.findings.map((f) => f.location?.file)).toEqual(['a.ts']);
+    expect(outA.waiverFindings).toEqual([]);
+
+    // Gate B: the matching waiver suppresses its finding cleanly — no stale, no kept.
+    expect(outB.findings).toEqual([]);
+    expect(outB.waived.map((f) => f.location?.file)).toEqual(['b.ts']);
+    expect(outB.waiverFindings).toEqual([]);
   });
 });
 

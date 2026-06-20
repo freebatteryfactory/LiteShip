@@ -22,7 +22,7 @@ import type {
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier } from '@czap/core';
-import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes } from '@czap/core';
+import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes, wallClock } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
@@ -489,7 +489,10 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
                 const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
 
                 if (result.crossed) {
-                  quantizerHlc = HLC.increment(quantizerHlc, Date.now());
+                  // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
+                  // defines it as ≈ Date.now()), so route through wallClock — the
+                  // epoch entropy boundary — not the monotonic systemClock.
+                  quantizerHlc = HLC.increment(quantizerHlc, wallClock.now());
                   const crossing: BoundaryCrossing<StateUnion<B> & string> = {
                     from: mkStateName<StateUnion<B> & string>(previousState),
                     to: mkStateName(result.state),

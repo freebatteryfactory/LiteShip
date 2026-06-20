@@ -1,5 +1,5 @@
 import { Effect } from 'effect';
-import { Millis, SSE_RECONNECT_INITIAL_MS, SSE_RECONNECT_MAX_MS } from '@czap/core';
+import { Millis, SSE_RECONNECT_INITIAL_MS, SSE_RECONNECT_MAX_MS, wallClock } from '@czap/core';
 import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
 import type { ResumeResponse, SSEMessage } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
@@ -127,7 +127,10 @@ function saveResumptionState(artifactId: string | undefined, lastEventId: string
       artifactId,
       lastEventId,
       lastSequence: parsed.sequence,
-      timestamp: Date.now(),
+      // Epoch wall-clock stamp for the resumption record — routed through
+      // `wallClock` (the epoch entropy boundary), not the monotonic systemClock,
+      // since the timestamp is a real point in time consumers read as epoch ms.
+      timestamp: wallClock.now(),
     }),
   );
 }

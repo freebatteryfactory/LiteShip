@@ -27,7 +27,7 @@ import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 import * as fc from 'fast-check';
-import { hasTag } from '@czap/error';
+import { hasTag, assertNever } from '@czap/error';
 import { schemaToArbitrary } from '../packages/core/src/harness/arbitrary-from-schema.js';
 
 /**
@@ -593,10 +593,10 @@ function dispatchHarness(
         cap as CapsuleDef<'sceneComposition', unknown, unknown, unknown>,
         ctx,
       );
-    default: {
-      const exhaustive: never = kind;
-      throw new Error(`[capsule-compile] Unknown assembly kind: ${String(exhaustive)}`);
-    }
+    default:
+      // Exhaustiveness: every AssemblyKind is handled above. A new kind reaching
+      // here is an impossible state — routed through the typed InvariantViolation.
+      return assertNever(kind, '[capsule-compile] assembly kind');
   }
 }
 

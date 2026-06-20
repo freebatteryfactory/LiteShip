@@ -7,7 +7,7 @@
 import type { Scope } from 'effect';
 import { Effect, Stream, SubscriptionRef, Queue, Fiber, Ref, Duration } from 'effect';
 import type { Boundary, StateUnion, BoundaryCrossing, Quantizer, Easing } from '@czap/core';
-import { Diagnostics } from '@czap/core';
+import { Diagnostics, systemClock } from '@czap/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -67,12 +67,10 @@ function lerpOutputs(
 }
 
 function nowMs(): number {
-  // performance.now() is standard in browsers and Node ≥ 16.
-  // Optional chaining guards against stripped worker/SSR environments.
-  if (typeof globalThis.performance?.now === 'function') {
-    return globalThis.performance.now();
-  }
-  return Date.now();
+  // Animation timing rides the one audited wall-clock boundary; systemClock
+  // already prefers performance.now() and falls back to Date.now() under the
+  // hood, so the worker/SSR guard lives there rather than being re-hand-rolled.
+  return systemClock.now();
 }
 
 // ---------------------------------------------------------------------------
