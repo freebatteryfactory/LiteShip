@@ -266,6 +266,13 @@ const STANDALONE_FUNCTIONS = [
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
   // normalizeDryRunOutput) live in @czap/cli per ADR-0011 — they import
   // node:zlib and must stay out of the browser-bundleable @czap/core.
+  // The determinism substrate (0.4.0) — the FUNCTION half: deterministic clock/rng
+  // factories. `fixedClock`/`manualClock` build injectable test clocks; `seededRng`
+  // a replayable RNG. (The singleton boundaries systemClock/wallClock/systemRng are
+  // value-objects → STANDALONE_OBJECTS.)
+  'fixedClock',
+  'manualClock',
+  'seededRng',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
@@ -276,6 +283,14 @@ const ERROR_CLASSES: string[] = [];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
 const STANDALONE_OBJECTS = [
+  // The determinism substrate (0.4.0) — the SINGLETON boundaries: the only two
+  // sanctioned ambient time reads (`systemClock` monotonic perf.now for durations,
+  // `wallClock` epoch Date.now for timestamps/HLC) + the sanctioned Math.random
+  // read (`systemRng`). Every other runtime path threads an injected clock/rng
+  // defaulting to these. Value-objects ({now}/{next}), not functions.
+  'systemClock',
+  'wallClock',
+  'systemRng',
   'fallbackKernels',
   'VIEWPORT',
   'boundaryEvaluateCapsule',
