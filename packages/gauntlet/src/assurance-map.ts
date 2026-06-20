@@ -120,22 +120,13 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
     glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
     level: 'L3',
   },
-  // The plumb-completeness gate, migrated out of scripts/ into the command host.
-  { glob: 'packages/command/src/commands/plumb.ts', level: 'L3' },
+  // The migrated gates' authority ENGINE. The command DESCRIPTORS for the migrated
+  // gates (plumb/check-invariants/audit-floor/package-smoke in command/src/commands/)
+  // are L2 command SURFACES (the general rule below) — a descriptor is a thin handler
+  // assembling a receipt (its provenance `timestamp` is the same L2-provenance every
+  // other command emits, NOT a determinism hazard). The L3 AUTHORITY is the scan
+  // engine: plumb-scan here, and the CLI adapters in the cli/commands glob above.
   { glob: 'packages/command/src/host/plumb-scan.ts', level: 'L3' },
-  // The fast-lane invariant gate, migrated out of scripts/ into the command. The
-  // scan engine stays CLI-only (cli/src/commands/check-invariants.ts in the glob
-  // above) because it imports @czap/audit's normalizeRepoPath (B5b cage); the
-  // descriptor + verdict mapping is the command module.
-  { glob: 'packages/command/src/commands/check-invariants.ts', level: 'L3' },
-  // The audit warning-floor gate, migrated out of scripts/ into the command. The
-  // heavy @czap/audit engine stays CLI-only (cli/src/commands/audit-floor.ts in
-  // the glob above); the descriptor + verdict mapping is the command module.
-  { glob: 'packages/command/src/commands/audit-floor.ts', level: 'L3' },
-  // The release-grade package-smoke gate, migrated out of scripts/ into the command.
-  // The subprocess pack/install/import engine stays CLI-only (cli/src/commands/
-  // package-smoke.ts in the glob above); the descriptor + verdict mapping is here.
-  { glob: 'packages/command/src/commands/package-smoke.ts', level: 'L3' },
   // Authority-bearing scripts: gate (exit-nonzero), ratchet, generate, verify.
   {
     glob: 'scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts',

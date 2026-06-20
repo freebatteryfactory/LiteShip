@@ -19,7 +19,7 @@
  *    product code (a clean floor; the only textual mentions are this gate family's
  *    own prose, which the strings-blanked + directive-form scan correctly ignores).
  *
- *  gauntlet/no-nondeterminism (L3): 32 RAW findings — every Date.now() /
+ *  gauntlet/no-nondeterminism (L3): 36 RAW findings — every Date.now() /
  *    Math.random() / argless `new Date()` in packages/&#42;/src, UNSCOPED by
  *    assurance level. The deterministic RUNTIME spine that used to dominate this
  *    list is now CURED: core signal/zap/gen-frame/speculative/token-buffer/boundary/
@@ -27,10 +27,10 @@
  *    dispatch+ship+gauntlet receipts all thread the @czap/core clock/rng substrate
  *    (`systemClock` monotonic / `wallClock` epoch / `systemRng`). What REMAINS raw
  *    is (a) the 3 declared substrate BOUNDARIES (the single sanctioned reads,
- *    waived) and (b) ~29 L1/L2 command-surface receipt timestamps + the fast-check
- *    seed + core/diagnostics — all below the L3 determinism floor. Pinning all 32
+ *    waived) and (b) ~33 L1/L2 command-surface receipt timestamps + the fast-check
+ *    seed + core/diagnostics — all below the L3 determinism floor. Pinning all 36
  *    here is the HONEST raw snapshot + a regression guard. The level-scoped test
- *    below pins raw 32 → 3 L3 findings (the 29-finding gap is the noise the map
+ *    below pins raw 36 → 3 L3 findings (the 33-finding gap is the noise the map
  *    removes), and the 3 are exactly the substrate boundaries — the proof the cure
  *    landed. This gate earns blocking authority only once level-scoped.
  *
@@ -72,14 +72,16 @@ function locOf(file: string | undefined, line: number | undefined): string {
 const EXPECTED: Readonly<Record<string, readonly string[]>> = {
   // ZERO real @ts-ignore / @ts-nocheck directives in product code (a clean floor).
   'gauntlet/no-ts-ignore': [],
-  // 32 RAW ambient-nondeterminism sources, UNSCOPED by assurance level (see the
+  // 36 RAW ambient-nondeterminism sources, UNSCOPED by assurance level (see the
   // module doc) — the honest snapshot + regression guard. The deterministic
   // RUNTIME spine that used to dominate this list (core signal/zap/gen-frame/
   // speculative/token-buffer/boundary/hlc, quantizer, web stream, worker, astro
-  // runtime, + the cli/command dispatch/ship/gauntlet receipts) is now CURED —
-  // every read threads the @czap/core clock/rng substrate. What REMAINS raw is:
-  // (a) the 3 declared substrate BOUNDARIES (clock×2 + rng — the single sanctioned
-  // reads, waived), and (b) ~26 L1/L2 command-surface receipt timestamps + the
+  // runtime, + the cli/command dispatch/ship/gauntlet receipts) is CURED — every
+  // read threads the @czap/core clock/rng substrate. What REMAINS raw is: (a) the
+  // 3 declared substrate BOUNDARIES (clock×2 + rng — the single sanctioned reads,
+  // waived), and (b) ~30 L1/L2 command-surface receipt timestamps (incl. the 4
+  // migrated-gate command DESCRIPTORS plumb/check-invariants/audit-floor/package-
+  // smoke — L2 surfaces, their provenance timestamp is not a hazard) + the
   // fast-check seed + core/diagnostics — all BELOW the L3 determinism floor, so
   // level-scoping drops them (they never reach the gate's blocking authority).
   'gauntlet/no-nondeterminism': [
@@ -90,13 +92,17 @@ const EXPECTED: Readonly<Record<string, readonly string[]>> = {
     'packages/command/src/commands/asset.ts:25',
     'packages/command/src/commands/asset.ts:67',
     'packages/command/src/commands/asset.ts:90',
+    'packages/command/src/commands/audit-floor.ts:73',
     'packages/command/src/commands/audit.ts:91',
     'packages/command/src/commands/capsule.ts:103',
     'packages/command/src/commands/capsule.ts:14',
     'packages/command/src/commands/capsule.ts:42',
     'packages/command/src/commands/capsule.ts:70',
+    'packages/command/src/commands/check-invariants.ts:70',
     'packages/command/src/commands/glossary.ts:244',
     'packages/command/src/commands/manifest.ts:63',
+    'packages/command/src/commands/package-smoke.ts:76',
+    'packages/command/src/commands/plumb.ts:67',
     'packages/command/src/commands/scene.ts:126',
     'packages/command/src/commands/scene.ts:135',
     'packages/command/src/commands/scene.ts:139',
@@ -109,7 +115,7 @@ const EXPECTED: Readonly<Record<string, readonly string[]>> = {
     'packages/command/src/commands/version.ts:43',
     'packages/command/src/host/ffmpeg.ts:121',
     'packages/command/src/host/ffmpeg.ts:35',
-    'packages/command/src/registry.ts:209',
+    'packages/command/src/registry.ts:359',
     'packages/core/src/clock.ts:61', // substrate boundary — systemClock fallback (waived)
     'packages/core/src/clock.ts:78', // substrate boundary — wallClock epoch read (waived)
     'packages/core/src/diagnostics.ts:93',
@@ -139,7 +145,7 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
 ];
 
 /**
- * The TRUE L3 nondeterminism backlog — the raw 32 NARROWED through the assurance
+ * The TRUE L3 nondeterminism backlog — the raw 36 NARROWED through the assurance
  * map to only L3+ files. After the determinism cure this collapses to exactly the
  * THREE declared entropy boundaries of the @czap/core clock/rng substrate: the
  * `systemClock` Date.now fallback + the `wallClock` epoch read + the `systemRng`
@@ -147,10 +153,10 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
  * defaulting to these, so the spine is deterministic-under-test; these three are
  * the sole sanctioned ambient reads, each WAIVED in `waivers.ts`.
  *
- * The 29 that drop out are all L1/L2 command-surface receipt timestamps + the
+ * The 33 that drop out are all L1/L2 command-surface receipt timestamps + the
  * fast-check seed + core/diagnostics — below the L3 determinism floor.
  *
- * raw 32 (unscoped) → 3 (level-scoped). That the L3 backlog is now ONLY the
+ * raw 36 (unscoped) → 3 (level-scoped). That the L3 backlog is now ONLY the
  * substrate boundaries is the proof the cure landed: undifferentiated red is gone.
  */
 const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
@@ -196,14 +202,14 @@ describe('dogfood — the three hygiene gates over the real packages/*/src tree'
     }
   });
 
-  it('no-nondeterminism: raw 32 → LEVEL-SCOPED to the true L3 backlog via the assurance map', () => {
+  it('no-nondeterminism: raw 36 → LEVEL-SCOPED to the true L3 backlog via the assurance map', () => {
     const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
     expect(ctx.files().length).toBeGreaterThan(0);
 
     // RAW (unscoped) — the honest snapshot the existing pin tracks.
     const raw = noNondeterminismGate.run(ctx);
     const rawSeen = raw.map((f) => locOf(f.location?.file, f.location?.line)).sort();
-    expect(rawSeen.length, 'raw/unscoped count drifted from the pinned 32').toBe(32);
+    expect(rawSeen.length, 'raw/unscoped count drifted from the pinned 36').toBe(36);
 
     // LEVEL-SCOPED — run through the engine WITH the assurance map. The gate is
     // L3, so it only sees L3+ files; the CLI/command/tooling (L1) drops out. We
@@ -224,7 +230,7 @@ describe('dogfood — the three hygiene gates over the real packages/*/src tree'
     ].join('\n');
 
     expect(scopedSeen, message).toEqual(expected);
-    // The 29-finding gap is the L1/L2 tooling noise the assurance map removes.
-    expect(rawSeen.length - scopedSeen.length).toBe(29);
+    // The 33-finding gap is the L1/L2 tooling noise the assurance map removes.
+    expect(rawSeen.length - scopedSeen.length).toBe(33);
   });
 });

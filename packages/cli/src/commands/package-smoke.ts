@@ -26,6 +26,7 @@ import {
   type PackageSmokeSpec,
 } from '@czap/command';
 import type { CommandContext } from '@czap/command';
+import { IntegrityError, InvariantViolationError } from '@czap/error';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `czap package-smoke`. */
@@ -159,7 +160,8 @@ function findConsumerDependencyRoot(consumerDir: string, packageName: string): s
 
 function assertConsumerDependencyInstalled(consumerDir: string, packageName: string): void {
   if (!findConsumerDependencyRoot(consumerDir, packageName)) {
-    throw new Error(
+    throw IntegrityError(
+      'package-smoke',
       `${packageName} missing from ${join(consumerDir, 'node_modules')} after install — import-smoke cannot resolve it.`,
     );
   }
@@ -215,7 +217,8 @@ function ensureNoWorkspaceProtocolsInTarball(tarballPath: string, packageName: s
     const entries = Object.entries(pkg[field] ?? {});
     for (const [dependency, version] of entries) {
       if (version.startsWith('workspace:')) {
-        throw new Error(
+        throw IntegrityError(
+          'package-smoke',
           `${packageName} packed metadata still contains workspace protocol for ${dependency}: ${version}`,
         );
       }
@@ -229,7 +232,7 @@ async function packPackage(cwd: string, tarballDir: string): Promise<string> {
   const after = await readdir(tarballDir);
   const created = after.filter((entry) => !before.has(entry) && entry.endsWith('.tgz'));
   if (created.length !== 1) {
-    throw new Error(`Expected exactly one tarball from ${cwd}, found ${created.length}.`);
+    throw InvariantViolationError('package-smoke pack output', `Expected exactly one tarball from ${cwd}, found ${created.length}.`);
   }
   return join(tarballDir, created[0]!);
 }
