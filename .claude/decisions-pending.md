@@ -95,4 +95,38 @@ choice is visible):**
 (or a class of waivers); (2) is either a `wallClock` thread through the named scripts or a
 block of measurement-boundary waivers. Either way nothing in the shipped runtime changes.
 
+### ⚑ Slice B — repo-IR schema + oracle set (redline-ready default; drafted while WF1 ran)
+**The fork:** Slice B widens `GateContext` (today: `{repoRoot, readFile, files}`) into a normalized
+repo-IR that all gates fold over, sourced from ≥2 cross-checked oracles (disagreement = a finding).
+WHICH facts the IR holds + WHICH oracles produce them is architectural — your call. Defaults below.
+
+**Proposed IR (ECS-shaped, data-oriented, built once per content-hash, banana-split-fused — one
+traversal, N gates):**
+- **Entities:** File, Symbol (decl), Import/Export edge, Call edge, Type, Package, TestCase, Receipt.
+- **Components (per entity, sparse):** `assuranceLevel` (from the map we shipped), `contentHash`,
+  `loc`, `exportedSurface`, `tags` (`_tag` unions seen), `deps` (resolved module graph), `diagnostics`.
+- **Indexes:** by-file, by-symbol, by-package, by-level — so a gate asks "all L4 symbols with no test"
+  in O(1) lookups, not a re-walk. The IR is the ONE thing Slice-C gates (mutation/MC-DC) also read.
+
+**Proposed oracle set (triangulated — no single source of truth):**
+1. **TS `LanguageService`** (fresh program, content-addressed) — symbols/types/refs/diagnostics/quick-fixes.
+2. **Raw AST facts** (ts.SourceFile walk) — syntactic truth the type-checker may smooth over.
+3. **Module/dependency graph** (the audit's resolver) — import reality.
+4. **Runtime receipts** — what actually executed/serialized (ties IR to behavior).
+5. **Schema facts** (capsule/contract JSON-Schemas) — declared shape.
+Cross-check rule: a fact asserted by one oracle and contradicted/absent in another that SHOULD see it
+is itself a `Finding` (`gauntlet/oracle-divergence`) — exactly how the GPU-tier hand-copy drift hid.
+
+**Cake-and-eat-it already banked:** the LanguageService + ts.Program already live in
+`scripts/capsule-compile.ts` + `scripts/lib/capsule-detector.ts` (and the dep-graph in `@czap/audit`),
+so the oracles are HARVESTED from existing code, not built fresh. (And after WF1's collapse, that
+detector logic wants a real package home — the IR is its natural consumer.)
+
+**Default I'd ship for redline:** the 5 oracles above, the entity/component set above, IR built lazily
++ content-hash-cached, `oracle-divergence` as a blocking gate once self-proven. **Open knobs for you:**
+(a) is the receipts oracle in Slice B or deferred to Slice C? (b) does the IR live in `@czap/gauntlet`
+(pure, but then who feeds it the TS program?) or does the CLI/devkit build the IR and hand it in via a
+widened GateContext capability (my lean — keeps the engine pure, injects the heavy LSP like every other
+capability)? (c) MC/DC + mutation read the SAME IR — confirm we build the IR to serve Slice C too, now.
+
 <!-- entries appended here as they arise -->
