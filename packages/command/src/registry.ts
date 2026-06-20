@@ -80,6 +80,21 @@ export interface CommandContext {
    */
   readonly runAuditFloor?: () => Promise<AuditFloorSummary>;
   /**
+   * Run the package-smoke release gate over the repo at `cwd`: `pnpm pack` every
+   * publishable `@czap/*` scope, install the tarballs into an isolated consumer
+   * fixture, assert no `workspace:` protocol leaked into the packed manifests, and
+   * import-smoke every declared module specifier (plus the `czap` binstub).
+   * Returns a structured pass/fail verdict — no process.exit, no stdout. Unlike
+   * the `node:fs` scan gates (`runPlumb` / `runCheckInvariants`, host-provisioned
+   * and MCP-exposed), this gate is a terminal-streaming SUBPROCESS orchestrator —
+   * it spawns `pnpm pack` per package, `pnpm install`, `tar`, and `node` (minutes
+   * of runtime, mutating a scratch tree under `os.tmpdir()`), in the same category
+   * as `gauntlet`/`ship`. So like `runAuditFloor` it is NOT provisioned in the
+   * shared host factory: only `@czap/cli` injects it, and the command is NOT
+   * MCP-exposed — over MCP it degrades to a structured `capabilityUnavailable`.
+   */
+  readonly runPackageSmoke?: () => Promise<PackageSmokeSummary>;
+  /**
    * Run the plumb-completeness gate over the repo at `cwd`: scan
    * `tests/generated/` for `*.skip` placeholders (each is a blocking lie about
    * coverage) and check every published package carries a `PACKAGE_PLUMB`
@@ -232,6 +247,27 @@ export interface AuditFloorSummary {
   readonly delta: { readonly added: readonly string[]; readonly removed: readonly string[] };
   /** The sorted `rule@file` warning inventory the engine surfaced. */
   readonly inventory: readonly string[];
+}
+
+/**
+ * Structured verdict returned by the injected {@link CommandContext.runPackageSmoke}
+ * capability — the release-grade pack/install/import smoke. `ok` ⟺ every package
+ * packed, installed, carried no `workspace:` leak, and every declared module
+ * specifier (plus the `czap` binstub) resolved. `failedStep` + `failure` carry the
+ * bracketed step label and message of the first failure (so a CI log identifies it
+ * without artifact download). Declared here so the `package-smoke` command's
+ * contract lives in `@czap/command` without an import of the heavy CLI engine.
+ */
+export interface PackageSmokeSummary {
+  readonly ok: boolean;
+  /** Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`. */
+  readonly packagesPacked: number;
+  /** Number of module specifiers the import-smoke resolved (0 when it never ran). */
+  readonly importsSmoked: number;
+  /** The bracketed step label of the first failure, or null on success. */
+  readonly failedStep: string | null;
+  /** The failure message of the first failure, or null on success. */
+  readonly failure: string | null;
 }
 
 /**

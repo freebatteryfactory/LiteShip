@@ -21,6 +21,7 @@ const EXPECTED_NAMES = [
   'glossary',
   'help',
   'mcp',
+  'package-smoke',
   'plumb',
   'scene.compile',
   'scene.dev',

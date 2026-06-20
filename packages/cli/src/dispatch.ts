@@ -18,6 +18,7 @@ import { sceneVerify } from './commands/scene-verify.js';
 import { audit } from './commands/audit.js';
 import { auditFloor } from './commands/audit-floor.js';
 import { plumb } from './commands/plumb.js';
+import { packageSmoke } from './commands/package-smoke.js';
 import { checkInvariants } from './commands/check-invariants.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
@@ -177,6 +178,9 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'check-invariants': {
       return checkInvariants();
+    }
+    case 'package-smoke': {
+      return packageSmoke();
     }
     case 'gauntlet': {
       return gauntlet(rest);

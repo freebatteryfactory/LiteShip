@@ -117,7 +117,7 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   { glob: 'packages/command/src/dispatcher.ts', level: 'L3' },
   { glob: 'packages/cli/src/dispatch.ts', level: 'L3' },
   {
-    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants}.ts',
+    glob: 'packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts',
     level: 'L3',
   },
   // The plumb-completeness gate, migrated out of scripts/ into the command host.
@@ -130,9 +130,13 @@ export const LITESHIP_ASSURANCE_MAP: readonly LevelRule[] = [
   // heavy @czap/audit engine stays CLI-only (cli/src/commands/audit-floor.ts in
   // the glob above); the descriptor + verdict mapping is the command module.
   { glob: 'packages/command/src/commands/audit-floor.ts', level: 'L3' },
+  // The release-grade package-smoke gate, migrated out of scripts/ into the command.
+  // The subprocess pack/install/import engine stays CLI-only (cli/src/commands/
+  // package-smoke.ts in the glob above); the descriptor + verdict mapping is here.
+  { glob: 'packages/command/src/commands/package-smoke.ts', level: 'L3' },
   // Authority-bearing scripts: gate (exit-nonzero), ratchet, generate, verify.
   {
-    glob: 'scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,package-smoke,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts',
+    glob: 'scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts',
     level: 'L3',
   },
 

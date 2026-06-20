@@ -166,6 +166,8 @@ describe('D4 — projection drift pin', () => {
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
     // CUT A4: `audit-floor` (migrated from scripts/audit-floor.ts) joined
     // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
-    expect(address).toBe('fnv1a:3e448bce');
+    // CUT A5: `package-smoke` (migrated from scripts/package-smoke.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    expect(address).toBe('fnv1a:87806895');
   });
 });

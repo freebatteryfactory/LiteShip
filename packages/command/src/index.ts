@@ -20,6 +20,7 @@ export { CommandRegistry, capabilityUnavailable } from './registry.js';
 export type {
   AuditEngineSummary,
   AuditFloorSummary,
+  PackageSmokeSummary,
   CapsuleCommandHandler,
   CommandCapability,
   CommandContext,
@@ -57,6 +58,10 @@ export { plumbCommand } from './commands/plumb.js';
 export type { PlumbPayload } from './commands/plumb.js';
 export { PACKAGE_PLUMB } from './commands/plumb-registry.js';
 export type { PackagePlumbEntry, PackagePlumbStatus } from './commands/plumb-registry.js';
+export { packageSmokeCommand } from './commands/package-smoke.js';
+export type { PackageSmokePayload } from './commands/package-smoke.js';
+export { PACKAGES, PEER_INSTALLS } from './commands/package-smoke-registry.js';
+export type { PackageSmokeSpec } from './commands/package-smoke-registry.js';
 export { checkInvariantsCommand } from './commands/check-invariants.js';
 export type { CheckInvariantsPayload } from './commands/check-invariants.js';
 export { INVARIANTS } from './commands/check-invariants-registry.js';

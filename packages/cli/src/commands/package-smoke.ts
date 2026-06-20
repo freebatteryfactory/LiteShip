@@ -1,17 +1,39 @@
+/**
+ * package-smoke (CLI adapter, CUT A5) — thin projection over `@czap/command`'s
+ * package-smoke handler (the release-grade pack/install/import smoke, migrated
+ * from `scripts/package-smoke.ts`). The pass/fail decision lives in
+ * `@czap/command`; the CLI is the ONLY adapter that wires the heavy
+ * `runPackageSmoke` capability: it spawns `pnpm pack` per publishable scope,
+ * installs the tarballs into an isolated consumer fixture, asserts no `workspace:`
+ * leak, and import-smokes every declared specifier (plus the `czap` binstub).
+ * `@czap/command` and `@czap/mcp-server` never see the subprocess engine. Exit 0
+ * ok, 1 gate failed.
+ *
+ * @module
+ */
 import { cpSync, existsSync, mkdirSync, readdirSync, realpathSync, symlinkSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import {
+  packageSmokeCommand,
+  type PackageSmokePayload,
+  type PackageSmokeSummary,
+  PACKAGES,
+  PEER_INSTALLS,
+  type PackageSmokeSpec,
+} from '@czap/command';
+import type { CommandContext } from '@czap/command';
+import { emit, type WallClockTimestamp } from '../receipts.js';
 
-type PackageSpec = {
-  readonly dir: string;
-  readonly name: string;
-  readonly imports: readonly string[];
-};
-
-const ROOT = process.cwd();
+/** Receipt emitted by `czap package-smoke`. */
+export interface PackageSmokeReceipt extends PackageSmokePayload {
+  readonly status: 'ok' | 'failed';
+  readonly command: 'package-smoke';
+  readonly timestamp: WallClockTimestamp;
+}
 
 /** Tarball path → `file://` URL for pnpm `dependencies` / `pnpm.overrides`. */
 function tarballFileUrl(absolutePath: string): string {
@@ -26,83 +48,14 @@ function tarballFileUrl(absolutePath: string): string {
  * depend on `%TEMP%` short paths; POSIX keeps `os.tmpdir()` to avoid writing under
  * the workspace on dev machines.
  */
-async function createScratchDir(): Promise<string> {
+async function createScratchDir(root: string): Promise<string> {
   if (process.platform === 'win32') {
-    const base = join(ROOT, 'node_modules', '.cache', 'package-smoke');
+    const base = join(root, 'node_modules', '.cache', 'package-smoke');
     await mkdir(base, { recursive: true });
     return mkdtemp(join(base, 'run-'));
   }
   return mkdtemp(join(tmpdir(), 'czap-package-smoke-'));
 }
-
-/** Mirrors every publishable `@czap/*` scope under `packages/*` (see `pnpm-workspace.yaml`). */
-const PACKAGES: readonly PackageSpec[] = [
-  // _spine is type-only (no runtime); packed and overridden so consumers
-  // can resolve `@czap/core`'s and `@czap/scene`'s declared dep on it
-  // during `pnpm install`. No runtime `import()` smoke needed.
-  { dir: 'packages/_spine', name: '@czap/_spine', imports: [] },
-  // @czap/error is the foundational zero-dep error algebra — every package's
-  // runtime dep; packed first so consumers resolve the declared workspace edge.
-  { dir: 'packages/error', name: '@czap/error', imports: ['@czap/error'] },
-  { dir: 'packages/gauntlet', name: '@czap/gauntlet', imports: ['@czap/gauntlet'] },
-  { dir: 'packages/canonical', name: '@czap/canonical', imports: ['@czap/canonical'] },
-  { dir: 'packages/genui', name: '@czap/genui', imports: ['@czap/genui'] },
-  { dir: 'packages/core', name: '@czap/core', imports: ['@czap/core', '@czap/core/testing', '@czap/core/harness'] },
-  { dir: 'packages/quantizer', name: '@czap/quantizer', imports: ['@czap/quantizer', '@czap/quantizer/testing'] },
-  { dir: 'packages/compiler', name: '@czap/compiler', imports: ['@czap/compiler'] },
-  { dir: 'packages/web', name: '@czap/web', imports: ['@czap/web', '@czap/web/lite'] },
-  { dir: 'packages/detect', name: '@czap/detect', imports: ['@czap/detect'] },
-  { dir: 'packages/edge', name: '@czap/edge', imports: ['@czap/edge'] },
-  { dir: 'packages/cloudflare', name: '@czap/cloudflare', imports: ['@czap/cloudflare', '@czap/cloudflare/testing'] },
-  { dir: 'packages/worker', name: '@czap/worker', imports: ['@czap/worker'] },
-  { dir: 'packages/vite', name: '@czap/vite', imports: ['@czap/vite', '@czap/vite/html-transform'] },
-  {
-    dir: 'packages/astro',
-    name: '@czap/astro',
-    imports: [
-      '@czap/astro',
-      '@czap/astro/client-directives/satellite',
-      '@czap/astro/client-directives/stream',
-      '@czap/astro/client-directives/llm',
-      '@czap/astro/client-directives/worker',
-      '@czap/astro/client-directives/gpu',
-      '@czap/astro/client-directives/wasm',
-      '@czap/astro/middleware',
-      '@czap/astro/runtime',
-    ],
-  },
-  { dir: 'packages/remotion', name: '@czap/remotion', imports: ['@czap/remotion'] },
-  { dir: 'packages/scene', name: '@czap/scene', imports: ['@czap/scene', '@czap/scene/dev'] },
-  // The verb / orchestration layer (P4). `.` is the pure graph-walk core;
-  // `./ffmpeg` is the node-only headless byte-encode backend (child_process).
-  { dir: 'packages/stage', name: '@czap/stage', imports: ['@czap/stage', '@czap/stage/ffmpeg'] },
-  { dir: 'packages/assets', name: '@czap/assets', imports: ['@czap/assets', '@czap/assets/testing'] },
-  { dir: 'packages/audit', name: '@czap/audit', imports: ['@czap/audit'] },
-  // Shared command registry (CUT A1) — the dispatch layer @czap/cli and
-  // @czap/mcp-server both consume. `./host` carries the Node-only manifest helpers.
-  { dir: 'packages/command', name: '@czap/command', imports: ['@czap/command', '@czap/command/host'] },
-  { dir: 'packages/cli', name: '@czap/cli', imports: ['@czap/cli'] },
-  { dir: 'packages/mcp-server', name: '@czap/mcp-server', imports: ['@czap/mcp-server'] },
-  // The unscoped scaffolder — consumed via `npm create liteship` (bin), but
-  // its main entry exports the scaffold function; smoke verifies it resolves.
-  { dir: 'packages/create-liteship', name: 'create-liteship', imports: ['create-liteship'] },
-  // The unscoped umbrella — manifest-level deps on every @czap/* scope,
-  // zero source imports; smoke verifies its own entrypoint resolves.
-  { dir: 'packages/liteship', name: 'liteship', imports: ['liteship'] },
-];
-
-const PEER_INSTALLS = [
-  'effect@4.0.0-beta.32',
-  'vite@8.0.0',
-  'astro@6.0.0',
-  'react@19.2.0',
-  'react-dom@19.2.0',
-  'remotion@4.0.440',
-  'fast-check@4.7.0',
-  // @czap/audit's runtime deps — the engine parses + globs the target repo.
-  'typescript@5.9.3',
-  'fast-glob@3.3.3',
-] as const;
 
 function resolveExecutable(command: string): string {
   if (command === 'pnpm' && process.env['npm_execpath']) {
@@ -116,7 +69,8 @@ function resolveExecutable(command: string): string {
 
 function run(command: string, args: readonly string[], cwd: string): string {
   const executable = resolveExecutable(command);
-  const commandArgs = command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
+  const commandArgs =
+    command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
   return execFileSync(executable, commandArgs, {
     cwd,
     encoding: 'utf8',
@@ -280,8 +234,16 @@ async function packPackage(cwd: string, tarballDir: string): Promise<string> {
   return join(tarballDir, created[0]!);
 }
 
-async function main(): Promise<void> {
-  const scratch = await createScratchDir();
+/**
+ * The CLI-only `runPackageSmoke` capability: pack/install/import-smoke every
+ * publishable scope over the repo at `root`. Ported verbatim from the deleted
+ * `scripts/package-smoke.ts` `main()`, but returns a structured verdict instead
+ * of self-executing on `process.exit`: any thrown failure is captured into
+ * `{ ok:false, failedStep, failure }` keyed by the bracketed step label that was
+ * running when it threw. The scratch tree is always removed in `finally`.
+ */
+export async function runPackageSmokeScan(root: string): Promise<PackageSmokeSummary> {
+  const scratch = await createScratchDir(root);
   const tarballDir = join(scratch, 'tarballs');
   const consumerDir = join(scratch, 'consumer');
 
@@ -291,23 +253,28 @@ async function main(): Promise<void> {
   // Bracketed step prints so the failing step is identifiable from the CI log
   // alone when artifact download or auth-gated logs aren't reachable. Each
   // step gets a STEP/STEP-OK pair; the failing step's STEP-OK never prints.
+  // `currentStep` is captured for the structured verdict on failure.
+  let currentStep = 'init';
   const step = (label: string): void => {
-    console.log(`[package:smoke] ▸ ${label} (platform=${process.platform}, arch=${process.arch})`);
+    currentStep = label;
+    process.stderr.write(`[package:smoke] > ${label} (platform=${process.platform}, arch=${process.arch})\n`);
   };
   const stepOk = (label: string): void => {
-    console.log(`[package:smoke] ✓ ${label}`);
+    process.stderr.write(`[package:smoke] ok ${label}\n`);
   };
 
+  let packagesPacked = 0;
+  let importsSmoked = 0;
+
   try {
-    const tarballs: string[] = [];
     const tarballByPackage = new Map<string, string>();
 
     step(`pack ${PACKAGES.length} packages via pnpm pack`);
     for (const pkg of PACKAGES) {
-      const cwd = resolve(ROOT, pkg.dir);
+      const cwd = resolve(root, pkg.dir);
       const tarball = await packPackage(cwd, tarballDir);
-      tarballs.push(tarball);
       tarballByPackage.set(pkg.name, tarball);
+      packagesPacked += 1;
     }
     stepOk(`packed ${PACKAGES.length} tarballs into ${tarballDir}`);
 
@@ -388,8 +355,9 @@ async function main(): Promise<void> {
           2,
         ),
       );
-      const sampleDep = dependencies[PACKAGES[0]!.name];
-      stepOk(`consumer package.json written (sample dep: ${PACKAGES[0]!.name} → ${sampleDep})`);
+      const firstPkg: PackageSmokeSpec = PACKAGES[0]!;
+      const sampleDep = dependencies[firstPkg.name];
+      stepOk(`consumer package.json written (sample dep: ${firstPkg.name} → ${sampleDep})`);
 
       step(`pnpm install in consumer dir (${consumerDir})`);
       run('pnpm', ['install'], consumerDir);
@@ -402,13 +370,10 @@ async function main(): Promise<void> {
     }
     stepOk('no workspace: protocols found in packed manifests');
 
-    step(`import-smoke ${PACKAGES.flatMap((pkg) => pkg.imports).length} module specifiers via node smoke.mjs`);
+    const allImports = PACKAGES.flatMap((pkg) => pkg.imports);
+    step(`import-smoke ${allImports.length} module specifiers via node smoke.mjs`);
     const smokeModule = `
-const imports = ${JSON.stringify(
-      PACKAGES.flatMap((pkg) => pkg.imports),
-      null,
-      2,
-    )};
+const imports = ${JSON.stringify(allImports, null, 2)};
 for (const specifier of imports) {
   const mod = await import(specifier);
   if (!mod || typeof mod !== 'object') {
@@ -418,6 +383,7 @@ for (const specifier of imports) {
 `;
     await writeFile(join(consumerDir, 'smoke.mjs'), smokeModule);
     run('node', ['smoke.mjs'], consumerDir);
+    importsSmoked = allImports.length;
     stepOk('all imports resolved');
 
     step('czap describe --format=json (binstub resolution check)');
@@ -430,13 +396,45 @@ for (const specifier of imports) {
     }
     stepOk('czap binstub resolved and produced a describe receipt');
 
-    console.log(`Package smoke passed for ${PACKAGES.length} packages.`);
+    process.stderr.write(`[package:smoke] ok Package smoke passed for ${PACKAGES.length} packages.\n`);
+    return { ok: true, packagesPacked, importsSmoked, failedStep: null, failure: null };
+  } catch (error) {
+    return {
+      ok: false,
+      packagesPacked,
+      importsSmoked,
+      failedStep: currentStep,
+      failure: error instanceof Error ? error.message : String(error),
+    };
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
 }
 
-void main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+/** Execute `czap package-smoke` — pack/install/import-smoke every publishable scope; emit a verdict. */
+export async function packageSmoke(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+  const cwd = opts.cwd ?? process.cwd();
+
+  const context: CommandContext = { cwd, runPackageSmoke: async () => runPackageSmokeScan(cwd) };
+
+  const result = await packageSmokeCommand.handler({ name: 'package-smoke', args: {} }, context);
+  const payload = result.payload as PackageSmokePayload;
+
+  const receipt: PackageSmokeReceipt = {
+    status: result.status === 'ok' ? 'ok' : 'failed',
+    command: 'package-smoke',
+    timestamp: result.timestamp,
+    ...payload,
+  };
+  emit(receipt);
+
+  // Human failure line on stderr (preserves the deleted script's diagnostic output).
+  const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
+  if (!payload.ok && wantPretty) {
+    process.stderr.write(
+      `PACKAGE-SMOKE GATE FAILED — at step "${payload.failedStep ?? 'unknown'}": ${payload.failure ?? 'unknown failure'}\n`,
+    );
+  }
+
+  return typeof result.exitCode === 'number' ? result.exitCode : payload.ok ? 0 : 1;
+}

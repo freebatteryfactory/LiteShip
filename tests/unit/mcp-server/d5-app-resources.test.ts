@@ -51,7 +51,9 @@ describe('D5 — D4 static surface stays frozen', () => {
     // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
     // CUT A4: `audit-floor` (the warning-floor gate, migrated from scripts/) joined
     // COMMAND_CATALOG → the registry/commands UI body changed, re-pinning the digest.
-    expect(pin).toBe('fnv1a:3e448bce');
+    // CUT A5: `package-smoke` (the release pack/install smoke, migrated from scripts/)
+    // joined COMMAND_CATALOG → the registry/commands UI body changed, re-pinning it.
+    expect(pin).toBe('fnv1a:87806895');
   });
 });
 

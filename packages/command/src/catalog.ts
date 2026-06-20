@@ -22,6 +22,7 @@ import { verifyCommand } from './commands/verify.js';
 import { auditCommand } from './commands/audit.js';
 import { auditFloorCommand } from './commands/audit-floor.js';
 import { plumbCommand } from './commands/plumb.js';
+import { packageSmokeCommand } from './commands/package-smoke.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 
 /**
@@ -116,6 +117,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   auditCommand,
   auditFloorCommand,
   plumbCommand,
+  packageSmokeCommand,
   checkInvariantsCommand,
 ];
 
