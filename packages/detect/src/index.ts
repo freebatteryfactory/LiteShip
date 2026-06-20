@@ -28,3 +28,6 @@ export {
 } from './tiers.js';
 export { CAP_AXES, capAxisAttr } from './cap-axes.js';
 export type { CapAxis } from './cap-axes.js';
+export { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
+export { emitDetectUpgradeScript, headProbeCapLevel, headProbeMotionTier } from './head-probe.js';
+export type { HeadProbeCaps } from './head-probe.js';

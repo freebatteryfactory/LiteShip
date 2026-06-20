@@ -25,9 +25,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 16 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 17 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(16);
+    expect(handlers.length).toBe(17);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -76,6 +76,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     'package-smoke': { ok: false, packagesPacked: 3, importsSmoked: 0, failedStep: 'pnpm install in consumer dir', failure: '@czap/web missing from node_modules after install' },
     plumb: { ok: false, skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }], unclassified: ['@czap/mystery'], generatedPresent: true },
     'check-invariants': { ok: false, groups: [{ name: 'NO_VAR', message: 'Use const/let, not var.', violations: [{ file: 'packages/x/src/y.ts', line: 3, content: 'var x = 1;' }] }], lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'] },
+    'capsule-verify': { status: 'stale', errors: ['generated bench missing for core.x: tests/generated/core.x.bench.ts'], capsuleCount: 42, benches: { total: 41, real: 30, placeholder: ['core.x'] } },
   };
 
   it('each handler outputSchema accepts its documented success payload', () => {

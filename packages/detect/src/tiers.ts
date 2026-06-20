@@ -13,6 +13,7 @@
 
 import type { CapLevel, CapSet, MotionTier } from '@czap/core';
 import type { DeviceCapabilities, ExtendedDeviceCapabilities } from './detect.js';
+import { headProbeCapLevel, headProbeMotionTier } from './head-probe.js';
 
 const CAP_LEVEL_ORDER: readonly CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'] as const;
 
@@ -25,33 +26,14 @@ const CAP_LEVEL_ORDER: readonly CapLevel[] = ['static', 'styled', 'reactive', 'a
  * from a `detect()` sweep (capsule/edge consumers).
  */
 // GPU tier mapping: 0=no GPU/software, 1=integrated (Intel UHD), 2=mid-range, 3=discrete high-end
+//
+// Delegates to headProbeCapLevel (head-probe.ts) — the SINGLE source of truth
+// for this ladder. The Astro head-inline probe emits that same function body
+// verbatim, so the runtime sweep and the head probe can never be hand-copies
+// that drift. `DeviceCapabilities` is a structural superset of the primitive
+// `HeadProbeCaps` the ladder reads, so the value passes through directly.
 export function tierFromCapabilities(caps: DeviceCapabilities): CapLevel {
-  if (caps.prefersReducedMotion && caps.gpu <= 1) {
-    return 'static';
-  }
-
-  if (caps.gpu === 0) {
-    return 'styled';
-  }
-
-  if (caps.gpu === 1) {
-    if (caps.cores >= 4 && caps.memory >= 4) return 'reactive';
-    return 'styled';
-  }
-
-  if (caps.gpu === 2) {
-    if (caps.prefersReducedMotion) return 'reactive';
-    if (caps.cores >= 4 && caps.memory >= 4) return 'animated';
-    return 'reactive';
-  }
-
-  // gpu === 3
-  if (caps.webgpu && caps.cores >= 4 && caps.memory >= 4) {
-    return caps.prefersReducedMotion ? 'animated' : 'gpu';
-  }
-
-  if (caps.prefersReducedMotion) return 'reactive';
-  return 'animated';
+  return headProbeCapLevel(caps);
 }
 
 /**
@@ -113,10 +95,10 @@ export function designTierFromCapabilities(caps: ExtendedDeviceCapabilities): De
  * this directly only when you hold an {@link ExtendedDeviceCapabilities}
  * that did not come from a `detect()` sweep (capsule/edge consumers).
  */
+//
+// Delegates to headProbeMotionTier (head-probe.ts) — the SINGLE source of truth
+// for the motion ladder, emitted verbatim into the Astro head probe. One body,
+// two consumers; they cannot drift.
 export function motionTierFromCapabilities(caps: ExtendedDeviceCapabilities): MotionTier {
-  if (caps.prefersReducedMotion) return 'none';
-  if (caps.gpu === 0) return 'transitions';
-  if (caps.gpu === 1) return caps.cores >= 4 ? 'animations' : 'transitions';
-  if (caps.gpu === 2) return caps.cores >= 4 ? 'physics' : 'animations';
-  return caps.webgpu ? 'compute' : 'physics';
+  return headProbeMotionTier(caps);
 }

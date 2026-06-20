@@ -57,7 +57,7 @@
     "bench:reality": "pnpm run build && tsx scripts/bench-reality.ts",
     "bench": "pnpm run build && tsx tests/bench/core.bench.ts && tsx tests/bench/compiler.bench.ts && tsx tests/bench/video.bench.ts && tsx tests/bench/self-measure.bench.ts && tsx tests/bench/directive.bench.ts",
     "capsule:compile": "pnpm exec tsx scripts/capsule-compile.ts",
-    "capsule:verify": "tsx scripts/capsule-verify.ts",
+    "capsule:verify": "pnpm exec tsx packages/cli/src/bin.ts capsule-verify",
     "check": "pnpm run lint && pnpm run typecheck",
     "test:e2e": "pnpm exec playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:stress": "pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/capture.e2e.ts --workers 1 --repeat-each 10",

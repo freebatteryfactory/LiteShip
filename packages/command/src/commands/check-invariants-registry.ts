@@ -80,7 +80,6 @@ export const INVARIANTS: readonly Invariant[] = [
     exclude: [
       'packages/astro/src/integration.ts',
       'packages/remotion/src/hooks.ts',
-      'packages/astro/src/detect-upgrade.ts',
       'packages/astro/src/client-directives/worker.ts',
     ],
     message: 'Use const/let, not var.',

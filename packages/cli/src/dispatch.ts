@@ -20,6 +20,7 @@ import { auditFloor } from './commands/audit-floor.js';
 import { plumb } from './commands/plumb.js';
 import { packageSmoke } from './commands/package-smoke.js';
 import { checkInvariants } from './commands/check-invariants.js';
+import { capsuleVerify as capsuleVerifyGate } from './commands/capsule-verify.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
@@ -181,6 +182,9 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'package-smoke': {
       return packageSmoke();
+    }
+    case 'capsule-verify': {
+      return capsuleVerifyGate();
     }
     case 'gauntlet': {
       return gauntlet(rest);

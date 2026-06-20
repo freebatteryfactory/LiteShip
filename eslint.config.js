@@ -222,12 +222,12 @@ export default tseslint.config(
       'scripts/gauntlet.ts', // reason: gauntlet phase orchestration (predates this work, has its own drift guards)
       // (2) Sync-spawn CI/script callers — execFileSync / spawnSync / execSync.
       'scripts/audit/shared.ts', // reason: execFileSync('git', ['ls-files']) — sync, no code under test
-      'scripts/capsule-verify.ts', // reason: execSync('pnpm exec vitest run tests/generated/') — CI script
       'scripts/check-invariants.ts', // reason: execFileSync('git', ['ls-files', '--eol']) — sync
       'scripts/docs-check.ts', // reason: spawnSync for typedoc + git diff — sync CI gate
       'scripts/flex-verify.ts', // reason: spawnSync with shell:true for arbitrary verifier commands
       'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@czap/command dist)
       'packages/cli/src/commands/package-smoke.ts', // reason: execFileSync (sync packaging smoke test) — migrated from scripts/package-smoke.ts (CUT A5); the runPackageSmoke engine is CLI-only, spawns sync pnpm pack/install/tar/node with no code under test
+      'packages/cli/src/commands/capsule-verify.ts', // reason: execSync('pnpm run capsule:compile' / 'pnpm exec vitest run tests/generated/') — migrated from scripts/capsule-verify.ts; the runCapsuleGate engine is CLI-only, spawns the freshness-confirm compile + the generated-suite run, no code under test
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)

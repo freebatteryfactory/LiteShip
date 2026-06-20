@@ -27,6 +27,8 @@ export type {
   HandledCommand,
   PlumbGateSummary,
   PlumbSkip,
+  CapsuleGateSummary,
+  CapsuleBenchClassification,
   CheckInvariantsSummary,
   InvariantViolation,
   InvariantViolationGroup,
@@ -64,6 +66,8 @@ export { PACKAGES, PEER_INSTALLS } from './commands/package-smoke-registry.js';
 export type { PackageSmokeSpec } from './commands/package-smoke-registry.js';
 export { checkInvariantsCommand } from './commands/check-invariants.js';
 export type { CheckInvariantsPayload } from './commands/check-invariants.js';
+export { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
+export type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
 export { INVARIANTS } from './commands/check-invariants-registry.js';
 export type { Invariant } from './commands/check-invariants-registry.js';
 export {

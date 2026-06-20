@@ -43,6 +43,7 @@ import {
   motionTierFromCapabilities,
 } from './tiers.js';
 import type { DesignTier, MotionTier } from './tiers.js';
+import { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -201,68 +202,25 @@ function hasProbeValue<T>(result: ProbeResult<T>): result is Extract<ProbeResult
 // GPU Tier Heuristics
 // ---------------------------------------------------------------------------
 
-const GPU_TIER_0_PATTERNS = [
-  /swiftshader/i,
-  /llvmpipe/i,
-  /software/i,
-  /virtualbox/i,
-  /vmware/i,
-  /microsoft basic/i,
-] as const;
-
-const GPU_TIER_1_PATTERNS = [
-  /intel.*hd/i,
-  /intel.*uhd/i,
-  /intel.*iris/i,
-  /mali-[gt][0-9]/i,
-  /adreno.*[0-3][0-9]{2}/i,
-  /powervr/i,
-  /apple gpu/i,
-] as const;
-
-const GPU_TIER_2_PATTERNS = [
-  /adreno.*[4-5][0-9]{2}/i,
-  /mali-g[0-9]{2}/i,
-  /geforce.*[0-9]{3}m/i,
-  /geforce.*mx/i,
-  /radeon.*rx\s*[0-5][0-9]{2}/i,
-  /radeon.*vega/i,
-  /intel.*arc/i,
-  /apple.*m[12]/i,
-] as const;
-
-const GPU_TIER_3_PATTERNS = [
-  /geforce.*rtx/i,
-  /radeon.*rx\s*[6-9][0-9]{2,}/i,
-  /radeon.*rx\s*7[0-9]{3}/i,
-  /apple.*m[3-9]/i,
-  /adreno.*[6-9][0-9]{2}/i,
-  /mali-g[7-9][0-9]/i,
-  /nvidia.*a[0-9]{3,}/i,
-] as const;
-
 /**
  * Classify an unmasked WebGL renderer string into a {@link GPUTier} (0–3).
  * Pure and side-effect-free apart from a one-time diagnostic on an unrecognized
- * string (which still classifies conservatively as tier 1). Exported as the
- * single source of truth the Astro head-inline probe mirrors — guarded by a
- * drift test so the inline copy can't diverge.
+ * string (which still classifies conservatively as tier 1).
+ *
+ * Both this runtime classifier AND the `@czap/astro` head-inline probe derive
+ * from the SAME {@link GPU_TIER_PATTERNS} datum — the probe's script is
+ * generated from it by `emitDetectUpgradeScript` — so the two can never be
+ * hand-copies that drift. There is one list of patterns, consumed here and
+ * folded into the emitted alternation regexes; never a second text to mistype.
  *
  * @param renderer - The `UNMASKED_RENDERER_WEBGL` string from a WebGL context.
  * @returns The GPU tier: `0` software · `1` integrated · `2` mid · `3` high-end.
  */
 export function classifyGPURenderer(renderer: string): GPUTier {
-  for (const pattern of GPU_TIER_0_PATTERNS) {
-    if (pattern.test(renderer)) return 0;
-  }
-  for (const pattern of GPU_TIER_3_PATTERNS) {
-    if (pattern.test(renderer)) return 3;
-  }
-  for (const pattern of GPU_TIER_2_PATTERNS) {
-    if (pattern.test(renderer)) return 2;
-  }
-  for (const pattern of GPU_TIER_1_PATTERNS) {
-    if (pattern.test(renderer)) return 1;
+  for (const tier of GPU_TIER_PRECEDENCE) {
+    for (const pattern of GPU_TIER_PATTERNS[tier]!) {
+      if (pattern.test(renderer)) return tier;
+    }
   }
   // Unmatched renderers (e.g. next year's GPU) classify conservatively, but
   // silently: confidence still gets the renderer bonus, so make it audible.
@@ -272,7 +230,7 @@ export function classifyGPURenderer(renderer: string): GPUTier {
     message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/heyoub/LiteShip/issues so a pattern can be added.`,
     detail: { renderer },
   });
-  return 1;
+  return GPU_TIER_DEFAULT;
 }
 
 // ---------------------------------------------------------------------------

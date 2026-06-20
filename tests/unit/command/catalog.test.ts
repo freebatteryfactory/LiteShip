@@ -10,6 +10,7 @@ const EXPECTED_NAMES = [
   'asset.verify',
   'audit',
   'audit-floor',
+  'capsule-verify',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
@@ -40,6 +41,9 @@ const EXPECTED_NAMES = [
  * agent tool. `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
  * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
  * `audit-floor` — it is CLI-only and the capability is absent over MCP.
+ * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
+ * CLI-injected subprocess orchestrator (it spawns `capsule:compile` + `vitest`),
+ * so the capability is absent over MCP.
  */
 const EXPECTED_MCP_NAMES = [
   'asset.analyze',

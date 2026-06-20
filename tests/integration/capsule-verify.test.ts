@@ -3,7 +3,7 @@ import { readFileSync, statSync, utimesSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
-import { classifyBenchSource } from '../../scripts/lib/bench-classify.js';
+import { classifyBenchSource } from '@czap/core/harness';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
 
 describe('capsule-verify', () => {

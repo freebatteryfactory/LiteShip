@@ -1,15 +1,25 @@
 /**
- * bench-classify — shared classifier for generated bench files.
+ * bench-classify — the shared classifier for generated `.bench.ts` files, the
+ * sibling of {@link BENCH_NOT_APPLICABLE_RE}'s marker convention. It answers two
+ * questions a bench-honesty gate (`capsule-verify`) must ask of EVERY generated
+ * bench, and is the ONE definition of those answers so the gate and its tests
+ * never drift:
  *
- * Lives in scripts/lib (not inline in capsule-verify) so the receipt writer
- * and its tests share ONE definition of "real vs placeholder": the
- * capsule-verify receipt classifies with it, the integration test derives
- * its expected classification from the manifest with it, and the unit test
- * pins the classification semantics independently of any generated file.
+ *  - {@link classifyBenchSource}: does at least one `bench(...)` closure contain
+ *    executable code ('real'), or is every body empty/comment-only ('placeholder')?
+ *  - {@link benchHonestyError}: is this bench HONEST — a real measurement, or a
+ *    typed not-applicable exemption (marker line + premise-guard body + a matching
+ *    manifest `benchExemption`) — or a banned lazy placeholder / marker↔manifest
+ *    drift?
+ *
+ * It lives in `@czap/core/harness` (next to `bench-marker.ts`, whose
+ * `BENCH_NOT_APPLICABLE_RE` it consumes) rather than in a loose script, so the
+ * capsule-verify gate, its unit test, and its integration test all share one
+ * source of "real vs placeholder vs typed-N/A".
  *
  * @module
  */
-import { BENCH_NOT_APPLICABLE_RE } from '@czap/core/harness';
+import { BENCH_NOT_APPLICABLE_RE } from './bench-marker.js';
 
 /**
  * Classify a generated bench file: 'real' if at least one `bench(...)`

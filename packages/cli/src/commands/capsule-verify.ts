@@ -1,52 +1,35 @@
-#!/usr/bin/env tsx
 /**
- * capsule-verify — reads `reports/capsule-manifest.json`, verifies each
- * capsule's generated files exist and are fresh, runs the generated test
- * suite, emits a JSON verdict to stdout.
- *
- * Freshness: source-mtime-newer-than-test-mtime is only the FAST-PATH
- * suspicion — git does not preserve mtimes, so a pull touching a capsule's
- * source whose regenerated output is byte-identical (e.g. a placeholder
- * test that doesn't change) leaves "source newer" forever and would
- * false-flag every incremental checkout. Suspects are confirmed by
- * regenerating into a TEMP dir (never the shared tests/generated — CUT T1)
- * and byte-comparing: stale means "capsule:compile would change the
- * committed file", nothing weaker.
- *
- * Bench honesty: most harness generators still emit comment-only bench
- * closures (real handler invocations land with the harness-handlers epic);
- * asset capsules with a known fixture (e.g. intro-bed) already get a REAL
- * decode bench. A comment-only closure would "pass" a vitest bench run while
- * timing nothing, so the verdict classifies each generated bench as 'real'
- * or 'placeholder' instead of existence-only checking — a green receipt with
- * `benches.placeholder` entries means those operations are NOT measured yet.
- *
- * Exit codes: 0 ok, 1 stale/missing, 2 generated tests failed.
+ * capsule-verify (CLI adapter, script collapse) — thin projection over
+ * `@czap/command`'s capsule-verify gate (the capsule-corpus freshness +
+ * bench-honesty + green-suite gate, migrated from `scripts/capsule-verify.ts`).
+ * The pass/fail decision lives in `@czap/command`; the CLI is the ONLY adapter
+ * that wires the heavy `runCapsuleGate` capability: it reads the manifest,
+ * existence/mtime-checks every generated artifact, classifies bench honesty
+ * (via `@czap/core/harness`), confirms mtime-suspect capsules are NOT stale by
+ * regenerating into a temp dir (spawning `capsule:compile`), and runs the whole
+ * `tests/generated/` suite (spawning `vitest`). `@czap/command` and
+ * `@czap/mcp-server` never see the subprocess engine. Exit 0 ok, 1 stale/failed.
  *
  * @module
  */
-
 import { readFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
-import { classifyBenchSource, benchHonestyError } from './lib/bench-classify.js';
 import { execSync } from 'node:child_process';
+import { classifyBenchSource, benchHonestyError } from '@czap/core/harness';
+import {
+  capsuleVerifyGateCommand,
+  type CapsuleVerifyPayload,
+  type CapsuleGateSummary,
+  type CapsuleBenchClassification,
+} from '@czap/command';
+import type { CommandContext } from '@czap/command';
+import { emit, getCapsuleManifestPath, type WallClockTimestamp } from '../receipts.js';
 
-interface BenchClassification {
-  /** Number of generated bench files found. */
-  readonly total: number;
-  /** Benches with executable closure bodies — actually measuring something. */
-  readonly real: number;
-  /** Capsule names whose bench closure is empty/comment-only (no measurement). */
-  readonly placeholder: readonly string[];
-}
-
-interface Verdict {
-  readonly status: 'ok' | 'stale' | 'failed';
-  readonly errors: readonly string[];
-  readonly capsuleCount: number;
-  readonly benches: BenchClassification;
+/** Receipt emitted by `czap capsule-verify`. */
+export interface CapsuleVerifyReceipt extends CapsuleVerifyPayload {
+  readonly command: 'capsule-verify';
+  readonly timestamp: WallClockTimestamp;
 }
 
 interface ManifestEntry {
@@ -57,7 +40,7 @@ interface ManifestEntry {
   readonly benchExemption?: { readonly reason: string };
 }
 
-const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
+const NO_BENCHES: CapsuleBenchClassification = { total: 0, real: 0, placeholder: [] };
 
 /**
  * Confirm mtime-suspect capsules by regeneration: compile into a temp
@@ -77,14 +60,16 @@ const NO_BENCHES: BenchClassification = { total: 0, real: 0, placeholder: [] };
  * no manifest artifact can leak into the repo.
  */
 function confirmStaleByRegeneration(
+  root: string,
   suspects: readonly ManifestEntry[],
   committedNames: ReadonlySet<string>,
 ): string[] {
-  const tmp = mkdtempSync(join(process.cwd(), 'tests', '.czap-verify-fresh-'));
+  const tmp = mkdtempSync(join(root, 'tests', '.czap-verify-fresh-'));
   const tmpManifest = join(mkdtempSync(join(tmpdir(), 'czap-verify-manifest-')), 'capsule-manifest.json');
   try {
     try {
       execSync('pnpm run capsule:compile', {
+        cwd: root,
         stdio: ['ignore', process.stderr, process.stderr],
         env: {
           ...process.env,
@@ -97,9 +82,11 @@ function confirmStaleByRegeneration(
         },
       });
     } catch {
-      // Fail CLOSED with the receipt contract intact: an unconfirmable
-      // suspect stays stale rather than crashing without a JSON verdict.
-      return suspects.map((cap) => `${cap.name} (regeneration compile failed — run \`pnpm run capsule:compile\` to see why)`);
+      // Fail CLOSED with the verdict contract intact: an unconfirmable
+      // suspect stays stale rather than crashing without a structured result.
+      return suspects.map(
+        (cap) => `${cap.name} (regeneration compile failed — run \`pnpm run capsule:compile\` to see why)`,
+      );
     }
     const regenerated = JSON.parse(readFileSync(tmpManifest, 'utf8')) as { capsules: ManifestEntry[] };
 
@@ -124,12 +111,14 @@ function confirmStaleByRegeneration(
         [cap.generated.benchFile, fresh.generated.benchFile],
       ];
       const differs = pairs.some(([committed, regen]) => {
-        const committedPath = resolve(committed);
-        const regenPath = resolve(regen);
+        const committedPath = resolve(root, committed);
+        const regenPath = resolve(root, regen);
         if (!existsSync(committedPath) || !existsSync(regenPath)) return true;
         return readFileSync(committedPath, 'utf8') !== readFileSync(regenPath, 'utf8');
       });
-      if (differs) confirmed.push(`${cap.name} (source changed and regeneration differs from the committed generated files)`);
+      if (differs) {
+        confirmed.push(`${cap.name} (source changed and regeneration differs from the committed generated files)`);
+      }
     }
     return confirmed;
   } finally {
@@ -138,9 +127,16 @@ function confirmStaleByRegeneration(
   }
 }
 
-function main(): Verdict {
+/**
+ * The CLI-only `runCapsuleGate` capability: the capsule-corpus gate over the repo
+ * at `root`. Ported from the deleted `scripts/capsule-verify.ts` `main()`, but
+ * returns a structured {@link CapsuleGateSummary} instead of self-executing on
+ * `process.exit`. Status: `ok` when fresh + honest + green; `stale` on a
+ * missing/stale/dishonest artifact; `failed` when the generated suite ran red.
+ */
+export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSummary> {
   const errors: string[] = [];
-  const manifestPath = getCapsuleManifestPath();
+  const manifestPath = getCapsuleManifestPath(root);
 
   if (!existsSync(manifestPath)) {
     return {
@@ -158,9 +154,9 @@ function main(): Verdict {
   const mtimeSuspects: ManifestEntry[] = [];
 
   for (const cap of manifest.capsules) {
-    const testPath = resolve(cap.generated.testFile);
-    const benchPath = resolve(cap.generated.benchFile);
-    const sourcePath = resolve(cap.source);
+    const testPath = resolve(root, cap.generated.testFile);
+    const benchPath = resolve(root, cap.generated.benchFile);
+    const sourcePath = resolve(root, cap.source);
 
     if (!existsSync(testPath)) errors.push(`generated test missing for ${cap.name}: ${cap.generated.testFile}`);
     if (!existsSync(benchPath)) {
@@ -188,12 +184,12 @@ function main(): Verdict {
   // changing its generated output.
   if (mtimeSuspects.length > 0) {
     const committedNames = new Set(manifest.capsules.map((c) => c.name));
-    for (const detail of confirmStaleByRegeneration(mtimeSuspects, committedNames)) {
+    for (const detail of confirmStaleByRegeneration(root, mtimeSuspects, committedNames)) {
       errors.push(`stale: ${detail}; run \`pnpm run capsule:compile\` and commit the resulting changes`);
     }
   }
 
-  const benches: BenchClassification = { total: benchTotal, real: benchReal, placeholder: benchPlaceholders };
+  const benches: CapsuleBenchClassification = { total: benchTotal, real: benchReal, placeholder: benchPlaceholders };
 
   if (errors.length > 0) {
     return { status: 'stale', errors, capsuleCount: manifest.capsules.length, benches };
@@ -202,19 +198,19 @@ function main(): Verdict {
   // Only run vitest if there are generated tests present.
   if (manifest.capsules.length > 0) {
     try {
-      // Route nested vitest stdout to *our* stderr so this script's stdout
-      // stays a single-line JSON receipt. Without this, vitest reporter
-      // output interleaves on stdout and the receipt is no longer the last
-      // line — which broke the capsule-verify integration test under nested
-      // pnpm test → flex:verify spawn chains (last line was vitest summary
-      // text, JSON.parse exploded with "Unexpected token '...'").
+      // Route nested vitest stdout to *our* stderr so a downstream JSON consumer
+      // never sees reporter output interleaved on this command's stdout.
       execSync('pnpm exec vitest run tests/generated/', {
+        cwd: root,
         stdio: ['ignore', process.stderr, process.stderr],
       });
-    } catch {
+    } catch (err) {
+      // Surface the real failure context (consume the binding) — the nested
+      // vitest reporter already streamed to stderr; ride its error through
+      // rather than laundering it into a bare generic string.
       return {
         status: 'failed',
-        errors: ['generated tests failed'],
+        errors: [`generated tests failed: ${err instanceof Error ? err.message : String(err)}`],
         capsuleCount: manifest.capsules.length,
         benches,
       };
@@ -224,6 +220,28 @@ function main(): Verdict {
   return { status: 'ok', errors: [], capsuleCount: manifest.capsules.length, benches };
 }
 
-const verdict = main();
-console.log(JSON.stringify(verdict));
-process.exit(verdict.status === 'ok' ? 0 : 1);
+/** Execute `czap capsule-verify` — gate the committed capsule corpus; emit a verdict. */
+export async function capsuleVerify(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
+  const cwd = opts.cwd ?? process.cwd();
+
+  const context: CommandContext = { cwd, runCapsuleGate: async () => runCapsuleGateScan(cwd) };
+
+  const result = await capsuleVerifyGateCommand.handler({ name: 'capsule-verify', args: {} }, context);
+  const payload = result.payload as CapsuleVerifyPayload;
+
+  const receipt: CapsuleVerifyReceipt = {
+    command: 'capsule-verify',
+    timestamp: result.timestamp,
+    ...payload,
+  };
+  emit(receipt);
+
+  // Human work-list on stderr (preserves the deleted script's diagnostic output).
+  const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
+  if (payload.status !== 'ok' && wantPretty) {
+    process.stderr.write(`CAPSULE-VERIFY GATE FAILED (${payload.status}):\n`);
+    for (const err of payload.errors) process.stderr.write(`  ${err}\n`);
+  }
+
+  return typeof result.exitCode === 'number' ? result.exitCode : payload.status === 'ok' ? 0 : 1;
+}

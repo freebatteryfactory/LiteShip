@@ -104,6 +104,21 @@ export interface CommandContext {
    */
   readonly runPackageSmoke?: () => Promise<PackageSmokeSummary>;
   /**
+   * Run the capsule-corpus gate over the repo at `cwd`: read the capsule
+   * manifest, assert every capsule's generated test+bench files exist, classify
+   * each generated bench's honesty (real | placeholder | typed-not-applicable),
+   * confirm mtime-suspect capsules are NOT stale by regenerating into a temp dir
+   * and byte-comparing, then run the whole `tests/generated/` suite. Returns a
+   * structured verdict — no process.exit, no stdout. Like {@link runPackageSmoke}
+   * (and unlike the pure `node:fs` scans `runPlumb` / `runCheckInvariants`), the
+   * freshness confirmation spawns `capsule:compile` and the final pass spawns
+   * `vitest` — a terminal-streaming SUBPROCESS orchestrator. So it is NOT
+   * provisioned in the shared host factory: only `@czap/cli` injects it, and the
+   * command is NOT MCP-exposed — over MCP it degrades to a structured
+   * `capabilityUnavailable`.
+   */
+  readonly runCapsuleGate?: () => Promise<CapsuleGateSummary>;
+  /**
    * Run the plumb-completeness gate over the repo at `cwd`: scan
    * `tests/generated/` for `*.skip` placeholders (each is a blocking lie about
    * coverage) and check every published package carries a `PACKAGE_PLUMB`
@@ -277,6 +292,43 @@ export interface PackageSmokeSummary {
   readonly failedStep: string | null;
   /** The failure message of the first failure, or null on success. */
   readonly failure: string | null;
+}
+
+/**
+ * Bench-honesty classification across a capsule corpus — a structural mirror of
+ * the gate engine's result, declared here so the `capsule-verify` command's
+ * contract lives in `@czap/command` without a host import. `real` counts genuine
+ * measurements AND typed not-applicable benches (a premise-guard body); every
+ * name in `placeholder` is a comment-only bench measuring nothing (the bench
+ * analogue of `it.skip` — green but covering nothing).
+ */
+export interface CapsuleBenchClassification {
+  /** Number of generated bench files found. */
+  readonly total: number;
+  /** Benches with executable closure bodies — actually measuring something. */
+  readonly real: number;
+  /** Capsule names whose bench closure is empty/comment-only (no measurement). */
+  readonly placeholder: readonly string[];
+}
+
+/**
+ * Structured verdict returned by the injected {@link CommandContext.runCapsuleGate}
+ * capability — the capsule-corpus freshness + bench-honesty + green-suite gate.
+ * `status` is `ok` only when every generated test+bench exists, no committed file
+ * is stale against a fresh regeneration, no bench is a lazy placeholder/drift, and
+ * the whole generated suite passes; `stale` means a missing/stale/dishonest
+ * artifact (run `capsule:compile`); `failed` means the generated tests ran red.
+ * `errors` is the human work-list (empty on success). Declared here so the
+ * `capsule-verify` command's contract lives in `@czap/command` without a host import.
+ */
+export interface CapsuleGateSummary {
+  readonly status: 'ok' | 'stale' | 'failed';
+  /** Human work-list: each blocking reason (missing/stale/dishonest/red). Empty on `ok`. */
+  readonly errors: readonly string[];
+  /** Number of capsules in the manifest the gate read. */
+  readonly capsuleCount: number;
+  /** Per-corpus bench-honesty classification. */
+  readonly benches: CapsuleBenchClassification;
 }
 
 /**

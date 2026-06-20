@@ -236,11 +236,14 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 9 tools each with an object outputSchema; 16 handlers total', () => {
+  it('D2: tools/list still emits 9 tools each with an object outputSchema; 17 handlers total', () => {
     const tools = listTools();
     expect(tools.length).toBe(9);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
-    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(16);
+    // 17 handlers: the capsule-verify gate (migrated from scripts/capsule-verify.ts)
+    // joined the registry as a CLI-only handler — it is NOT MCP-exposed, so the
+    // tools count stays 9 while the total handler count grew by one.
+    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(17);
   });
 });
 

@@ -171,6 +171,8 @@ describe('D4 — projection drift pin', () => {
     // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
     // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
     // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
-    expect(address).toBe('fnv1a:322c88c3');
+    // Re-pinned again when the capsule-verify handler command (CLI-only) joined
+    // the registry, growing the commands UI projection by one entry.
+    expect(address).toBe('fnv1a:f00246d0');
   });
 });
