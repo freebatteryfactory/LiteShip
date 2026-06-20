@@ -6,7 +6,7 @@
 
 # Interface: DetectionResult
 
-Defined in: [detect/src/detect.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L107)
+Defined in: [detect/src/detect.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L108)
 
 Result of a single detection sweep.
 
@@ -24,7 +24,7 @@ many probes returned real values (vs. defaults).
 
 > `readonly` **capabilities**: [`DeviceCapabilities`](DeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L109)
+Defined in: [detect/src/detect.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L110)
 
 The probed capabilities.
 
@@ -34,7 +34,7 @@ The probed capabilities.
 
 > `readonly` **capSet**: [`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
+Defined in: [detect/src/detect.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
 
 Monotone set of every [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) at or below `tier`.
 
@@ -44,7 +44,7 @@ Monotone set of every [CapLevel](https://github.com/heyoub/LiteShip/blob/main/do
 
 > `readonly` **confidence**: `number`
 
-Defined in: [detect/src/detect.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
+Defined in: [detect/src/detect.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L116)
 
 Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
@@ -54,6 +54,6 @@ Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
 > `readonly` **tier**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
 
-Defined in: [detect/src/detect.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
+Defined in: [detect/src/detect.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
 
 Highest [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) the device qualifies for.

@@ -8,7 +8,7 @@
 
 > **detect**(): `Effect`\<[`ExtendedDetectionResult`](../interfaces/ExtendedDetectionResult.md)\>
 
-Defined in: [detect/src/detect.ts:673](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L673)
+Defined in: [detect/src/detect.ts:631](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L631)
 
 Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully

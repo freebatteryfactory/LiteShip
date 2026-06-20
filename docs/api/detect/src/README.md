@@ -20,6 +20,7 @@ network connection quality. Maps detected capabilities to the
 - [DeviceCapabilities](interfaces/DeviceCapabilities.md)
 - [ExtendedDetectionResult](interfaces/ExtendedDetectionResult.md)
 - [ExtendedDeviceCapabilities](interfaces/ExtendedDeviceCapabilities.md)
+- [HeadProbeCaps](interfaces/HeadProbeCaps.md)
 - [NavigatorConnectionInfo](interfaces/NavigatorConnectionInfo.md)
 
 ## Type Aliases
@@ -32,6 +33,9 @@ network connection quality. Maps detected capabilities to the
 
 - [CAP\_AXES](variables/CAP_AXES.md)
 - [Detect](variables/Detect.md)
+- [GPU\_TIER\_DEFAULT](variables/GPU_TIER_DEFAULT.md)
+- [GPU\_TIER\_PATTERNS](variables/GPU_TIER_PATTERNS.md)
+- [GPU\_TIER\_PRECEDENCE](variables/GPU_TIER_PRECEDENCE.md)
 
 ## Functions
 
@@ -40,6 +44,9 @@ network connection quality. Maps detected capabilities to the
 - [designTierFromCapabilities](functions/designTierFromCapabilities.md)
 - [detect](functions/detect.md)
 - [detectGPUTier](functions/detectGPUTier.md)
+- [emitDetectUpgradeScript](functions/emitDetectUpgradeScript.md)
+- [headProbeCapLevel](functions/headProbeCapLevel.md)
+- [headProbeMotionTier](functions/headProbeMotionTier.md)
 - [motionTierFromCapabilities](functions/motionTierFromCapabilities.md)
 - [resetDetectionCaches](functions/resetDetectionCaches.md)
 - [tierFromCapabilities](functions/tierFromCapabilities.md)
