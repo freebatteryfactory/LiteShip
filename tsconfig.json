@@ -18,6 +18,7 @@
   "exclude": ["tests", "node_modules", "examples", "scripts"],
   "files": [],
   "references": [
+    { "path": "./packages/error" },
     { "path": "./packages/_spine" },
     { "path": "./packages/canonical" },
     { "path": "./packages/genui" },

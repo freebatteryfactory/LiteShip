@@ -459,6 +459,8 @@ importers:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
 
+  packages/error: {}
+
   packages/genui:
     dependencies:
       '@czap/_spine':

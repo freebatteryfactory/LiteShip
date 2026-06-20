@@ -8,6 +8,7 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
+      "@czap/error": ["./packages/error/src/index.ts"],
       "@czap/canonical": ["./packages/canonical/src/index.ts"],
       "@czap/genui": ["./packages/genui/src/index.ts"],
       "@czap/core": ["./packages/core/src/index.ts"],
