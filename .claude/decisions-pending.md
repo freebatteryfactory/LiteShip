@@ -129,4 +129,17 @@ detector logic wants a real package home — the IR is its natural consumer.)
 widened GateContext capability (my lean — keeps the engine pure, injects the heavy LSP like every other
 capability)? (c) MC/DC + mutation read the SAME IR — confirm we build the IR to serve Slice C too, now.
 
+### ⚑ placeholder-content FALSE POSITIVES on the anti-placeholder machinery (your max-fury domain — I did NOT touch it)
+**The finding:** the audit `placeholder-content` rule (packages/audit/src/integrity.ts:32, `/\b(TODO|FIXME|DEBUG|placeholder|lorem ipsum)\b/i` over STRING LITERALS) flags 3 sites, drifting AUDIT_WARNING_FLOOR above 0 → 2 red meta-tests (devops/audit-command + audit-profile-seam). ALL THREE ARE FALSE POSITIVES — files that NAME the thing they forbid, with ZERO actual placeholder/incomplete work:
+- packages/gauntlet/src/waiver.ts ×2 (from my a89aa991 — pre-existing, never surfaced; the hook doesn't run meta-tests): the rule-id string `'gauntlet/no-placeholder'` + error messages like "the skip/placeholder family … never waivable".
+- packages/command/src/commands/plumb.ts ×1 (from WF1 96aaa1d5): the skip-placeholder-detector's own detail strings.
+
+**Why I parked it (not fixed it):** this touches the placeholder allowlist/floor — the exact mechanism MEMORY.md says overrides my autonomy at max fury ("a floor/allowlist that grandfathers incomplete work is LAUNDERING"). These are NOT incomplete work (complete, shipped, tested machinery), so suppression here would be HONEST false-positive handling, not laundering — but it is YOUR call to make, not mine to make unilaterally on this topic.
+
+**Two honest fixes (your pick):**
+(a) RECOMMENDED — teach the detector precision: don't match `placeholder` inside a hyphenated identifier (`no-placeholder`, `placeholder-content`) or the anti-placeholder vocabulary. Makes the gate CORRECT (not weaker) — the detector flagging the machinery that forbids placeholders is a detector bug. No floor change.
+(b) Use the audit's EXISTING sanctioned allowlist (policy.ts already has a `placeholder-content` exemption for virtual-module stubs at ~line 362) — add waiver.ts + plumb.ts with the TRUE reason "anti-placeholder machinery; the word appears in rule ids / error text, not as content." Documented, honest, but it IS a floor entry — your fury domain.
+
+**State:** HEAD builds + typechecks + lints green; gauntlet/determinism/migration/b5/api-health all green; ONLY these 2 audit-floor meta-tests red on the 3 false-positives. Characterized, not hidden.
+
 <!-- entries appended here as they arise -->
