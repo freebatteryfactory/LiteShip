@@ -95,39 +95,11 @@ choice is visible):**
 (or a class of waivers); (2) is either a `wallClock` thread through the named scripts or a
 block of measurement-boundary waivers. Either way nothing in the shipped runtime changes.
 
-### ⚑ Slice B — repo-IR schema + oracle set (redline-ready default; drafted while WF1 ran)
-**The fork:** Slice B widens `GateContext` (today: `{repoRoot, readFile, files}`) into a normalized
-repo-IR that all gates fold over, sourced from ≥2 cross-checked oracles (disagreement = a finding).
-WHICH facts the IR holds + WHICH oracles produce them is architectural — your call. Defaults below.
-
-**Proposed IR (ECS-shaped, data-oriented, built once per content-hash, banana-split-fused — one
-traversal, N gates):**
-- **Entities:** File, Symbol (decl), Import/Export edge, Call edge, Type, Package, TestCase, Receipt.
-- **Components (per entity, sparse):** `assuranceLevel` (from the map we shipped), `contentHash`,
-  `loc`, `exportedSurface`, `tags` (`_tag` unions seen), `deps` (resolved module graph), `diagnostics`.
-- **Indexes:** by-file, by-symbol, by-package, by-level — so a gate asks "all L4 symbols with no test"
-  in O(1) lookups, not a re-walk. The IR is the ONE thing Slice-C gates (mutation/MC-DC) also read.
-
-**Proposed oracle set (triangulated — no single source of truth):**
-1. **TS `LanguageService`** (fresh program, content-addressed) — symbols/types/refs/diagnostics/quick-fixes.
-2. **Raw AST facts** (ts.SourceFile walk) — syntactic truth the type-checker may smooth over.
-3. **Module/dependency graph** (the audit's resolver) — import reality.
-4. **Runtime receipts** — what actually executed/serialized (ties IR to behavior).
-5. **Schema facts** (capsule/contract JSON-Schemas) — declared shape.
-Cross-check rule: a fact asserted by one oracle and contradicted/absent in another that SHOULD see it
-is itself a `Finding` (`gauntlet/oracle-divergence`) — exactly how the GPU-tier hand-copy drift hid.
-
-**Cake-and-eat-it already banked:** the LanguageService + ts.Program already live in
-`scripts/capsule-compile.ts` + `scripts/lib/capsule-detector.ts` (and the dep-graph in `@czap/audit`),
-so the oracles are HARVESTED from existing code, not built fresh. (And after WF1's collapse, that
-detector logic wants a real package home — the IR is its natural consumer.)
-
-**Default I'd ship for redline:** the 5 oracles above, the entity/component set above, IR built lazily
-+ content-hash-cached, `oracle-divergence` as a blocking gate once self-proven. **Open knobs for you:**
-(a) is the receipts oracle in Slice B or deferred to Slice C? (b) does the IR live in `@czap/gauntlet`
-(pure, but then who feeds it the TS program?) or does the CLI/devkit build the IR and hand it in via a
-widened GateContext capability (my lean — keeps the engine pure, injects the heavy LSP like every other
-capability)? (c) MC/DC + mutation read the SAME IR — confirm we build the IR to serve Slice C too, now.
+### Slice B — NOT designed (I deleted my speculative draft — it was litter)
+I wrote a future-shaped repo-IR + 5-oracle set + a `Receipt`-for-Slice-C entity here. That violated the
+law: no entity/field/oracle/package lands for a FUTURE consumer. Deleted. Slice B will be built ONLY as
+complete, exercised organs when a CURRENT gate needs each piece — one capability at a time, produced AND
+consumed in the same change, with red/green fixtures. No reserved fields, no oracle zoo, no new packages.
 
 ### ⚑ placeholder-content FALSE POSITIVES on the anti-placeholder machinery (your max-fury domain — I did NOT touch it)
 **The finding:** the audit `placeholder-content` rule (packages/audit/src/integrity.ts:32, `/\b(TODO|FIXME|DEBUG|placeholder|lorem ipsum)\b/i` over STRING LITERALS) flags 3 sites, drifting AUDIT_WARNING_FLOOR above 0 → 2 red meta-tests (devops/audit-command + audit-profile-seam). ALL THREE ARE FALSE POSITIVES — files that NAME the thing they forbid, with ZERO actual placeholder/incomplete work:
@@ -136,9 +108,13 @@ capability)? (c) MC/DC + mutation read the SAME IR — confirm we build the IR t
 
 **Why I parked it (not fixed it):** this touches the placeholder allowlist/floor — the exact mechanism MEMORY.md says overrides my autonomy at max fury ("a floor/allowlist that grandfathers incomplete work is LAUNDERING"). These are NOT incomplete work (complete, shipped, tested machinery), so suppression here would be HONEST false-positive handling, not laundering — but it is YOUR call to make, not mine to make unilaterally on this topic.
 
-**Two honest fixes (your pick):**
-(a) RECOMMENDED — teach the detector precision: don't match `placeholder` inside a hyphenated identifier (`no-placeholder`, `placeholder-content`) or the anti-placeholder vocabulary. Makes the gate CORRECT (not weaker) — the detector flagging the machinery that forbids placeholders is a detector bug. No floor change.
-(b) Use the audit's EXISTING sanctioned allowlist (policy.ts already has a `placeholder-content` exemption for virtual-module stubs at ~line 362) — add waiver.ts + plumb.ts with the TRUE reason "anti-placeholder machinery; the word appears in rule ids / error text, not as content." Documented, honest, but it IS a floor entry — your fury domain.
+**The fix (ONE honest path — NO allowlist, NO floor bump; I struck the allowlist option I'd floated):**
+the detector is BUGGED — it matches the bare word in a string literal. Make it semantic-context precise:
+it must NOT match `placeholder` when the string is typed rule metadata (a rule id / diagnostic message
+of the anti-placeholder rule itself), AND it MUST still fail a real placeholder string in ordinary
+content. That lands ONLY with a red fixture (a genuine placeholder still caught) + a green fixture (the
+machinery's rule-id string passes) — or it doesn't land. Your call on the exact predicate; it's the audit
+detector (your domain), so I did not touch it.
 
 **State:** HEAD builds + typechecks + lints green; gauntlet/determinism/migration/b5/api-health all green; ONLY these 2 audit-floor meta-tests red on the 3 false-positives. Characterized, not hidden.
 
