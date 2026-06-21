@@ -8,7 +8,7 @@
 
 > **headProbeMotionTier**(`caps`): `MotionTier`
 
-Defined in: [detect/src/head-probe.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L79)
+Defined in: [detect/src/head-probe.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L80)
 
 Resolve the [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md) for a device — the SINGLE source of truth for
 the GPU/cores/reduced-motion → motion ladder.

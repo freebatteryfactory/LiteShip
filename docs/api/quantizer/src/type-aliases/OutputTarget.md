@@ -8,7 +8,7 @@
 
 > **OutputTarget** = `LadderTarget`
 
-Defined in: [quantizer/src/quantizer.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L60)
+Defined in: [quantizer/src/quantizer.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L61)
 
 Compilation target for quantizer per-state outputs.
 

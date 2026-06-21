@@ -8,7 +8,7 @@
 
 > **plugin**(`config?`): `Plugin`
 
-Defined in: [vite/src/plugin.ts:207](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L207)
+Defined in: [vite/src/plugin.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L118)
 
 Create the czap Vite plugin.
 

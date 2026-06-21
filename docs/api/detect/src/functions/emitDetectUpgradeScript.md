@@ -8,7 +8,7 @@
 
 > **emitDetectUpgradeScript**(): `string`
 
-Defined in: [detect/src/head-probe.ts:231](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L231)
+Defined in: [detect/src/head-probe.ts:232](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L232)
 
 Build the head-inline GPU-probe IIFE — the script `@czap/astro` injects via
 `injectScript('page', ...)`. EVERY classification rule in the returned string

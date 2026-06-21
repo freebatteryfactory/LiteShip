@@ -8,7 +8,7 @@
 
 > **headProbeCapTier**(`caps`): `CapTier`
 
-Defined in: [detect/src/head-probe.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L53)
+Defined in: [detect/src/head-probe.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L54)
 
 Resolve the CapTier for a device — the SINGLE source of truth for
 the GPU/cores/memory/reduced-motion → cap-level ladder.

@@ -6,7 +6,7 @@
 
 # Interface: QuantizerFromOptions
 
-Defined in: [quantizer/src/quantizer.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L143)
+Defined in: [quantizer/src/quantizer.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L144)
 
 Options accepted by [Q.from](../variables/Q.md#from).
 
@@ -20,7 +20,7 @@ Options accepted by [Q.from](../variables/Q.md#from).
 
 > `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
 
-Defined in: [quantizer/src/quantizer.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L163)
+Defined in: [quantizer/src/quantizer.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L164)
 
 Spring config that drives CSS easing generation for CSS outputs.
 
@@ -30,7 +30,7 @@ Spring config that drives CSS easing generation for CSS outputs.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L161)
+Defined in: [quantizer/src/quantizer.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L162)
 
 MotionTier for output gating; omit to allow all targets.
 

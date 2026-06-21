@@ -9,6 +9,7 @@
 ## Interfaces
 
 - [AssetDecl](interfaces/AssetDecl.md)
+- [AssetRegistry](interfaces/AssetRegistry.md)
 - [DecodedAudio](interfaces/DecodedAudio.md)
 - [DecodedImage](interfaces/DecodedImage.md)
 - [DecodedVideo](interfaces/DecodedVideo.md)
@@ -16,6 +17,7 @@
 
 ## Type Aliases
 
+- [AssetCapsule](type-aliases/AssetCapsule.md)
 - [AssetDecoder](type-aliases/AssetDecoder.md)
 - [AssetKind](type-aliases/AssetKind.md)
 - [AssetRefId](type-aliases/AssetRefId.md)
@@ -24,10 +26,12 @@
 - [FourCC](type-aliases/FourCC.md)
 - [WavChunk](type-aliases/WavChunk.md)
 
+## Variables
+
+- [AssetRegistry](variables/AssetRegistry.md)
+
 ## Functions
 
-- [assertRegisteredAudioAssetId](functions/assertRegisteredAudioAssetId.md)
-- [AssetRef](functions/AssetRef.md)
 - [audioDecoder](functions/audioDecoder.md)
 - [BeatMarkerProjection](functions/BeatMarkerProjection.md)
 - [builtinDecoderFor](functions/builtinDecoderFor.md)
@@ -38,10 +42,8 @@
 - [detectBeats](functions/detectBeats.md)
 - [detectOnsets](functions/detectOnsets.md)
 - [extractWavMetadata](functions/extractWavMetadata.md)
-- [getAssetRegistry](functions/getAssetRegistry.md)
 - [imageDecoder](functions/imageDecoder.md)
 - [OnsetProjection](functions/OnsetProjection.md)
-- [resolveAssetDecoder](functions/resolveAssetDecoder.md)
 - [videoDecoder](functions/videoDecoder.md)
 - [walkRiff](functions/walkRiff.md)
 - [WaveformProjection](functions/WaveformProjection.md)

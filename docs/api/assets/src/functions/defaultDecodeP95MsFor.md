@@ -8,7 +8,7 @@
 
 > **defaultDecodeP95MsFor**(`kind`): `number`
 
-Defined in: [assets/src/contract.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L80)
+Defined in: [assets/src/contract.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L85)
 
 Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides.
 

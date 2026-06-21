@@ -8,7 +8,7 @@
 
 > **DecodedAsset**\<`K`\> = `K` *extends* `"audio"` ? [`DecodedAudio`](../interfaces/DecodedAudio.md) : `K` *extends* `"video"` ? [`DecodedVideo`](../interfaces/DecodedVideo.md) : `K` *extends* `"image"` ? [`DecodedImage`](../interfaces/DecodedImage.md) : `unknown`
 
-Defined in: [assets/src/contract.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L33)
+Defined in: [assets/src/contract.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L39)
 
 Decoded output for each media [AssetKind](AssetKind.md). Analysis kinds
 (beat-markers / onsets / waveform) have no built-in decoder — their

@@ -8,10 +8,12 @@
 
 > **defineAsset**\<`K`\>(`decl`): `CapsuleDef`\<`"cachedProjection"`, `ArrayBuffer`, [`DecodedAsset`](../type-aliases/DecodedAsset.md)\<`K`\>, `unknown`\>
 
-Defined in: [assets/src/contract.ts:252](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L252)
+Defined in: [assets/src/contract.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L244)
 
-Declare an asset as a cachedProjection capsule + register in the
-module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+Declare an asset as a cachedProjection capsule. PURE — returns the capsule
+with NO side effect; assemble the returned capsules into an
+[AssetRegistry](../variables/AssetRegistry.md) via [AssetRegistry.make](../variables/AssetRegistry.md#make) to make them
+resolvable. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
 and wires it as the capsule's `derive` handler (the harness decode
 bench + determinism probes and the host commands run through it).
 

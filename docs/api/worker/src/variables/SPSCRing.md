@@ -8,7 +8,7 @@
 
 > `const` **SPSCRing**: `object`
 
-Defined in: [worker/src/spsc-ring.ts:388](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L388)
+Defined in: [worker/src/spsc-ring.ts:404](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L404)
 
 SPSC ring buffer namespace.
 
@@ -114,7 +114,7 @@ self.onmessage = (e) => {
 
 ### createPair
 
-> `readonly` **createPair**: (`slotCount`, `slotSize`) => `object` = `_createPair`
+> `readonly` **createPair**: (`slotCount`, `slotSize`) => [`SPSCRingPair`](../interfaces/SPSCRingPair.md) = `_createPair`
 
 Create a matched producer/consumer pair sharing the same SharedArrayBuffer.
 
@@ -130,31 +130,19 @@ shuttled through the message protocol.
 
 `number`
 
-Number of slots in the ring (power of 2 recommended)
+Ring depth: number of slots (power of 2 recommended)
 
 ##### slotSize
 
 `number`
 
-Number of Float64 values per slot
+Entry width: number of Float64 values per slot
 
 #### Returns
 
-`object`
+[`SPSCRingPair`](../interfaces/SPSCRingPair.md)
 
-An object with the shared buffer and producer/consumer ring handles
-
-##### buffer
-
-> **buffer**: `SharedArrayBuffer`
-
-##### consumer
-
-> **consumer**: [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md)
-
-##### producer
-
-> **producer**: [`SPSCRingBufferShape`](../interfaces/SPSCRingBufferShape.md)
+A [SPSCRingPair](../interfaces/SPSCRingPair.md): the shared buffer + producer/consumer handles
 
 #### Example
 
@@ -167,6 +155,15 @@ const { buffer, producer, consumer } = SPSCRing.createPair(64, 4);
 // Transfer buffer to a Worker via postMessage
 worker.postMessage({ buffer });
 ```
+
+The two arguments are both bare positive integers and are NOT
+interchangeable: `slotCount` is the ring depth (how many entries),
+`slotSize` the entry width (Float64 lanes per entry). Transposing them
+silently produces a different geometry rather than an error, so the
+order is `(depth, width)` — same order as the memory-layout header
+above (`[2]: slotCount`, `[3]: slotSize`). Each is guarded as a positive
+integer (\_makeRing throws otherwise), so `0`/negative/fractional
+values fail loudly.
 
 ## Example
 
