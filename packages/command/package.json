@@ -38,6 +38,11 @@
       "types": "./dist/host-browser/index.d.ts",
       "import": "./dist/host-browser/index.js",
       "development": "./src/host-browser/index.ts"
+    },
+    "./invariants": {
+      "types": "./dist/commands/check-invariants-registry.d.ts",
+      "import": "./dist/commands/check-invariants-registry.js",
+      "development": "./src/commands/check-invariants-registry.ts"
     }
   },
   "files": [

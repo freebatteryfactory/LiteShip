@@ -59,8 +59,11 @@ export {
   type RepoIR,
   type RepoIRParts,
   COVERAGE_CLASSES,
+  COVERAGE_CLASS_SEVERITY,
   PLACEHOLDER_DIGEST,
   makeRepoIR,
+  coverageClassSeverity,
+  strongerCoverageClass,
 } from './repo-ir.js';
 
 export {
@@ -116,3 +119,13 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
+
+// The IR-fold gates (Slice B, B1) — these REQUIRE the injected repo-IR, so they
+// run only on the host path (the CLI builds + injects the IR). They are NOT in
+// the lean LITESHIP_GATES default; the IR-injected CLI run composes them on.
+export { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
+export { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
+
+// The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
+// IR-fold gates). See `LITESHIP_IR_GATES`.
+export { LITESHIP_IR_GATES, litelaunchGauntletWithIR } from './runner.js';

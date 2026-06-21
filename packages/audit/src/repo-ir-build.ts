@@ -22,10 +22,26 @@
  *     pass uses (one resolver, no divergent fork).
  *   • PackageNode per package — `manifestDeps` from the discovered manifests.
  *   • refs — the reverse-reference index (file-proxy-only edges).
- *   • FACTS — for B1, the AST-precise `is-default-export` oracle (oracleId
- *     `ts-ast`, coverageClass `file-proxy-only`): one of the two sources the
- *     no-default-export cross-check (Step 3) triangulates. Emission is routed
- *     through {@link emitFileProxyFact}, an extensible per-oracle helper.
+ *   • FACTS — the triangulation substrate (B1):
+ *       - `is-default-export` from the AST-precise `ts-ast` oracle
+ *         (`file-proxy-only`, via {@link emitFileProxyFact}). This is the STRUCTURAL
+ *         oracle every TS repo has — it is NOT LiteShip config. A SECOND,
+ *         host-injected `invariant-regex` (`text-only`) oracle for the same
+ *         property is supplied by the CLI host through {@link buildRepoIR}'s
+ *         `extraFactOracles` hook (the LiteShip-local `NO_DEFAULT_EXPORT` regex
+ *         rule lives with the host, which deps `@czap/command`; the audit engine
+ *         stays LiteShip-agnostic — ADR-0012). Where the two disagree at a
+ *         `(file, line)` the Step-3 divergence gate reports it (the text oracle
+ *         fired on a comment the AST correctly ignores).
+ *       - `bare-throw` from the AST oracle (`ts-ast`, `file-proxy-only`): the
+ *         precise version of the `no-bare-throw` regex gate, folded by the Step-3
+ *         `noBareThrowIRGate` (parity-tested against the regex gate).
+ *
+ * The {@link FactOracle} injection hook keeps the engine boundary clean: audit
+ * runs its OWN structural AST oracle, then invokes any host-supplied oracles and
+ * merges their Facts into the single IR — knowing NOTHING about what they check.
+ * Any repo-local rule set (LiteShip's `INVARIANTS`, a downstream's own) is
+ * INJECTED by the host, never baked into the published audit engine.
  *
  * Determinism: the source corpus is read sorted; symbols, edges, and facts are
  * sorted before assembly; `contentDigest` is over file bytes only (no mtime, no
@@ -47,6 +63,8 @@ import {
   type PackageNode,
   type RefSite,
   type SymbolId,
+  type FileId,
+  type PkgName,
   type Fact,
   type CoverageClass,
 } from '@czap/gauntlet';
@@ -63,6 +81,45 @@ import { createTypeDirectedProgram } from './ts-program.js';
 
 /** UTF-8 encoder reused across files (stateless, deterministic). */
 const UTF8 = new TextEncoder();
+
+/**
+ * A host-supplied fact oracle — the injection hook that keeps `@czap/audit`
+ * LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
+ * {@link buildRepoIR}: given one source file's raw text + path + owning package,
+ * it returns the {@link Fact}s it observes. `buildRepoIR` invokes each injected
+ * oracle per file and merges the returned facts into the single IR, knowing
+ * NOTHING about what they check.
+ *
+ * This is where a repo-LOCAL rule set enters the IR WITHOUT the engine importing
+ * it. The canonical example is the host's `invariant-regex` oracle: the CLI (which
+ * deps `@czap/command`) constructs an oracle that runs LiteShip's
+ * `NO_DEFAULT_EXPORT` rule over the file text and emits `is-default-export`
+ * `text-only` facts — the audit engine never sees `@czap/command`. The generic
+ * structural facts (`is-default-export` via AST, `bare-throw`) STAY in audit
+ * because they are facts EVERY TS repo has, not LiteShip config.
+ *
+ * Text-only oracles work off `text` + `file`; an oracle that needs the parsed
+ * tree is given the canonical `sourceFile` (the very `ts.SourceFile` audit
+ * walked). The contract is: emit Facts whose `file` IS the passed `file` (so the
+ * fact lands on a real IR node) — `buildRepoIR` rejects a dangling fact via
+ * `makeRepoIR`, exactly as for its own facts.
+ */
+export type FactOracle = (input: {
+  readonly file: FileId;
+  readonly text: string;
+  readonly packageName: PkgName | null;
+  readonly sourceFile: ts.SourceFile;
+}) => readonly Fact[];
+
+/** Options for {@link buildRepoIR} — the host-injection surface. */
+export interface BuildRepoIROptions {
+  /**
+   * Host-supplied extra oracles (e.g. the LiteShip `invariant-regex` oracle the
+   * CLI injects). Each is invoked per source file and its facts merged into the
+   * IR. Empty/omitted → audit emits ONLY its own structural AST facts.
+   */
+  readonly extraFactOracles?: readonly FactOracle[];
+}
 
 /**
  * The blake3 content digest of a file's bytes, as the opaque display string the
@@ -188,10 +245,10 @@ function extractSymbols(node: ts.Node): readonly ExtractedSymbol[] {
 }
 
 /**
- * Emit a `file-proxy-only` {@link Fact} (the AST-precise oracle class). The ONE
- * per-oracle emit helper for B1's AST facts — a later step adds sibling helpers
- * for the `ts-program` (symbol-evidenced) and regex (text-only) oracles without
- * touching this one. Extensible by construction: pass the `property`/`value`.
+ * Emit a `file-proxy-only` {@link Fact} (the AST-precise oracle class). One of the
+ * per-oracle emit helpers — its sibling {@link emitTextOnlyFact} emits the
+ * known-imprecise regex oracle's facts (a later step adds the `ts-program`
+ * symbol-evidenced helper). Extensible by construction: pass the `property`/`value`.
  */
 function emitFileProxyFact(
   facts: Fact[],
@@ -203,6 +260,22 @@ function emitFileProxyFact(
   coverageClass: CoverageClass,
 ): void {
   facts.push({ file, line, property, value, oracleId, coverageClass });
+}
+
+/**
+ * Is `node` a bare native-error throw — `throw new (Error|RangeError|TypeError)(…)`
+ * — the AST-precise version of the `no-bare-throw` gate's regex? This is the
+ * file-proxy oracle for the `bare-throw` property: it sees the real throw
+ * statement, so (unlike the regex) it never fires on the token inside a comment
+ * or string. The Step-3 parity test proves the IR fold reproduces the gate's real
+ * findings AND is a strict refinement of the text scan.
+ */
+function isBareNativeThrow(node: ts.Node): node is ts.ThrowStatement {
+  if (!ts.isThrowStatement(node)) return false;
+  const expr = node.expression;
+  if (!ts.isNewExpression(expr) || !ts.isIdentifier(expr.expression)) return false;
+  const callee = expr.expression.text;
+  return callee === 'Error' || callee === 'RangeError' || callee === 'TypeError';
 }
 
 /** The composed flat tables before {@link makeRepoIR} indexes + freezes them. */
@@ -221,8 +294,16 @@ interface Tables {
  *
  * @param profile The audit profile (`profile.repoRoot` is the authoritative
  *   target). Defaults to the LiteShip reference profile.
+ * @param options Host-injection surface. `extraFactOracles` are the host-supplied
+ *   {@link FactOracle}s (e.g. the CLI's LiteShip `invariant-regex` oracle) whose
+ *   facts merge into the IR alongside audit's own structural AST facts. The audit
+ *   engine itself imports no repo-local rule set — the boundary is the hook.
  */
-export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile): RepoIR {
+export function buildRepoIR(
+  profile: DevopsProfile = liteshipDevopsProfile,
+  options: BuildRepoIROptions = {},
+): RepoIR {
+  const extraFactOracles = options.extraFactOracles ?? [];
   const records = readProfileSourceFileRecords(profile);
   const packageInfos = listProfilePackageManifests(profile);
   const packageExportTargets = buildPackageExportTargets(packageInfos);
@@ -254,6 +335,25 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile): Rep
     });
 
     const sourceFile = record.sourceFile;
+
+    // ── Host-injected oracles ─────────────────────────────────────────────
+    // Invoke every host-supplied FactOracle on this file and merge its facts.
+    // The audit engine knows NOTHING about what they check — this is the clean
+    // ADR-0012 boundary: a repo-LOCAL rule set (LiteShip's NO_DEFAULT_EXPORT
+    // invariant-regex oracle, injected by the CLI host) enters the IR here
+    // WITHOUT the engine importing it. makeRepoIR rejects a dangling fact, so an
+    // oracle that mis-targets its `file` fails loudly, exactly like audit's own.
+    for (const oracle of extraFactOracles) {
+      for (const fact of oracle({
+        file: record.relativePath,
+        text: record.text,
+        packageName: record.packageName,
+        sourceFile,
+      })) {
+        tables.facts.push(fact);
+      }
+    }
+
     walk(sourceFile);
 
     function walk(node: ts.Node): void {
@@ -319,6 +419,25 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile): Rep
         }
       }
 
+      // ── The bare-throw fact (AST-precise) — the file-proxy oracle for the
+      // no-bare-throw gate. A `throw new (Error|RangeError|TypeError)(…)` real
+      // throw statement (NEVER the token inside a comment/string, which the
+      // codeOnly-stripping regex gate can mishandle): the AST sees the statement,
+      // so it is a strict refinement of the text scan. The `noBareThrowIRGate`
+      // (Step 3) folds these facts and the parity test proves it reproduces the
+      // regex gate's real findings.
+      if (isBareNativeThrow(node)) {
+        emitFileProxyFact(
+          tables.facts,
+          record.relativePath,
+          lineOf(sourceFile, node),
+          'bare-throw',
+          true,
+          'ts-ast',
+          'file-proxy-only',
+        );
+      }
+
       ts.forEachChild(node, walk);
     }
   }
@@ -363,7 +482,23 @@ export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile): Rep
   // makeRepoIR would (correctly) reject it; the records loop guarantees the file
   // is present, so this is belt-and-braces consistency, not a silent skip path.
   const fileIds = new Set(tables.files.map((f) => f.id));
-  const symbols = tables.symbols.filter((s) => fileIds.has(s.file));
+  // De-duplicate by SymbolId: TypeScript DECLARATION MERGING (an `interface` + a
+  // same-named `const`/`namespace` in one file — e.g. `AssetRegistry` the value +
+  // `AssetRegistry` the interface — or overloaded function declarations) yields
+  // several exported declaration nodes that share `<file>#<name>`. They are ONE
+  // logical exported symbol in the IR's symbol table, so collapse them to the
+  // first (the tables are already id-sorted → deterministic). This is NOT a silent
+  // skip: the symbol IS recorded (the first declaration locates it); merging is the
+  // correct model for the symbol graph (the is-default-export / bare-throw FACTS
+  // are emitted independently per node, so the dedup never drops a fact).
+  const seenSymbolIds = new Set<string>();
+  const symbols = tables.symbols
+    .filter((s) => fileIds.has(s.file))
+    .filter((s) => {
+      if (seenSymbolIds.has(s.id)) return false;
+      seenSymbolIds.add(s.id);
+      return true;
+    });
 
   return makeRepoIR({
     files: tables.files,

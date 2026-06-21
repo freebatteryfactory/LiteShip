@@ -30,6 +30,8 @@ import { noNondeterminismGate } from './gates/no-nondeterminism.js';
 import { noSilentCatchGate } from './gates/no-silent-catch.js';
 import { noSkippedTestGate } from './gates/no-skipped-test.js';
 import { noPlaceholderGate } from './gates/no-placeholder.js';
+import { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
+import { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -46,6 +48,30 @@ export const LITESHIP_GATES: readonly Gate[] = [
   noSilentCatchGate,
   noSkippedTestGate,
   noPlaceholderGate,
+];
+
+/**
+ * The HOST gate set — what the CLI runs WHEN it has built + injected the repo-IR
+ * (Slice B, B1, step 3). It is {@link LITESHIP_GATES} with the regex
+ * {@link noBareThrowGate} RE-EXPRESSED as the IR-fold {@link noBareThrowIRGate}
+ * (same ruleId — the faithful substrate swap, NOT a second gate double-counting
+ * the same rule; the parity test proves the fold reproduces the regex gate's real
+ * findings and is strictly more precise), PLUS the {@link noDefaultExportDivergenceGate}
+ * — the live triangulated cross-check over the two `is-default-export` oracles.
+ *
+ * These two gates {@link requireIR}, so they CANNOT run on the lean MCP/command
+ * path (no IR) — they appear ONLY here, the IR-present composition. The lean
+ * {@link LITESHIP_GATES} default is unchanged: `czap check` / MCP still runs the
+ * six regex gates IR-free.
+ */
+export const LITESHIP_IR_GATES: readonly Gate[] = [
+  noBareThrowIRGate,
+  noTsIgnoreGate,
+  noNondeterminismGate,
+  noSilentCatchGate,
+  noSkippedTestGate,
+  noPlaceholderGate,
+  noDefaultExportDivergenceGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */
@@ -119,6 +145,32 @@ export function litelaunchGauntlet(
   return runGauntletOnRepo(
     LITESHIP_GATES,
     { repoRoot, globs, ...(ir !== undefined ? { ir } : {}) },
+    { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
+  );
+}
+
+/**
+ * The HOST gauntlet run (Slice B, B1, step 3) — the IR-INJECTED composition the
+ * CLI calls once it has built the repo-IR via `@czap/audit`. Binds
+ * {@link LITESHIP_IR_GATES} (the lean set with no-bare-throw re-expressed as an IR
+ * fold + the oracle-divergence gate) and threads the REQUIRED `ir` onto every
+ * gate's context, with the same committed assurance map + waivers + injected
+ * clock as {@link litelaunchGauntlet}.
+ *
+ * The `ir` is mandatory here (the IR-fold gates {@link requireIR}); the lean path
+ * keeps calling {@link litelaunchGauntlet} with no IR and runs the six regex gates
+ * unchanged. This is the ONE place the IR-fold gates run — so the engine stays
+ * lean (no `typescript`) and the lean MCP/command path is unaffected.
+ */
+export function litelaunchGauntletWithIR(
+  repoRoot: string,
+  now: Date,
+  ir: RepoIR,
+  globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
+): GauntletResult {
+  return runGauntletOnRepo(
+    LITESHIP_IR_GATES,
+    { repoRoot, globs, ir },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
   );
 }

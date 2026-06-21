@@ -20,6 +20,10 @@ export const alias: Record<string, string> = {
   // is listed first so it takes precedence.
   '@czap/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
   '@czap/command/host-browser': resolve(repoRoot, 'packages/command/src/host-browser/index.ts'),
+  // Slice B (B1, step 3): the PURE invariants subpath (check-invariants-registry,
+  // zero imports) — @czap/audit's repo-IR invariant-regex oracle references the
+  // CANONICAL NO_DEFAULT_EXPORT rule through it without pulling the command runtime.
+  '@czap/command/invariants': resolve(repoRoot, 'packages/command/src/commands/check-invariants-registry.ts'),
   '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 

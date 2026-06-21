@@ -230,6 +230,12 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // -address kernel for per-file digests). Both are standalone leaves, so the
     // audit → gauntlet / audit → canonical edges are acyclic (gauntlet deps only
     // @czap/error + fast-glob; canonical deps only @czap/error + @noble/hashes).
+    // Slice B (B1): audit references NO LiteShip-local contract (ADR-0012 — it is
+    // downstream-installable). Its repo-IR builder emits only STRUCTURAL facts
+    // (the AST `is-default-export` / `bare-throw` any TS repo has) and exposes a
+    // `FactOracle` injection hook; LiteShip's repo-LOCAL `NO_DEFAULT_EXPORT`
+    // invariant-regex oracle is built + injected by the CLI HOST (which deps
+    // @czap/command). The audit engine must NOT depend on @czap/command.
     allowedInternalImports: ['@czap/canonical', '@czap/gauntlet'],
     kind: 'standalone',
   },

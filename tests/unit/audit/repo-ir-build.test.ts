@@ -26,6 +26,7 @@ import {
   withRepoRoot,
   liteshipDevopsProfile,
   resolveDevopsProfile,
+  type FactOracle,
 } from '@czap/audit';
 import {
   PLACEHOLDER_DIGEST,
@@ -142,8 +143,11 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
 
   it('emits the is-default-export / ts-ast fact at each real default-export site', () => {
     const ir = buildRepoIR(acmeProfile(fixtureRepo()));
-    const defFacts = ir.facts.filter((f) => f.property === 'is-default-export');
-    // Two default-ish sites: app/index `export default` + core/legacy `export =`.
+    // The audit engine emits ONLY its own STRUCTURAL AST oracle facts — the
+    // LiteShip-local invariant-regex oracle is HOST-injected (ADR-0012: the engine
+    // references no LiteShip-local contract), so scope by oracle for clarity.
+    const defFacts = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'ts-ast');
+    // Two default-ish sites: app/index keyword-form default + core/legacy `export =`.
     expect(defFacts).toHaveLength(2);
     for (const f of defFacts) {
       expect(f.oracleId).toBe('ts-ast');
@@ -156,6 +160,39 @@ describe('buildRepoIR — faithful materialization over a real tmp corpus', () =
     // The legacy `export =` is on line 2 (const, then export=).
     const legacyFact = defFacts.find((f) => f.file === 'packages/core/src/legacy.ts');
     expect(legacyFact?.line).toBe(2);
+  });
+
+  it('emits NO LiteShip-local invariant-regex fact from the engine (ADR-0012 boundary)', () => {
+    // The audit engine references no LiteShip-local contract: it imports no
+    // @czap/command rule set and emits NO `invariant-regex` facts of its own. That
+    // oracle is the HOST's job (the CLI injects it via extraFactOracles, proven by
+    // the seam test below + the CLI-host composition tests).
+    const ir = buildRepoIR(acmeProfile(fixtureRepo()));
+    expect(ir.facts.filter((f) => f.oracleId === 'invariant-regex')).toHaveLength(0);
+  });
+
+  it('merges a HOST-INJECTED FactOracle into the IR (the ADR-0012 injection seam)', () => {
+    // An in-test oracle standing in for the CLI's liteshipRegexOracle: it emits one
+    // text-only is-default-export fact per file whose RAW text contains the
+    // keyword-pair form. The engine invokes it knowing nothing about what it checks,
+    // and merges its facts — proof the host-injected oracle reaches the IR.
+    const keywordForm = ['export', 'default'].join(' ');
+    const probeOracle: FactOracle = ({ file, text }) =>
+      text.includes(keywordForm)
+        ? [{ file, line: 1, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' }]
+        : [];
+
+    const ir = buildRepoIR(acmeProfile(fixtureRepo()), { extraFactOracles: [probeOracle] });
+    const injected = ir.facts.filter((f) => f.oracleId === 'invariant-regex');
+    // The keyword form appears ONLY in app/index (`export default function main()`);
+    // the `export =` legacy form does not contain it.
+    expect(injected).toHaveLength(1);
+    expect(injected[0]?.coverageClass).toBe('text-only');
+    expect(injected[0]?.file).toBe('packages/app/src/index.ts');
+    // The IR now carries BOTH oracles' is-default-export facts (the triangulation
+    // substrate): the engine's structural ts-ast facts AND the injected text-only.
+    const both = new Set(ir.facts.filter((f) => f.property === 'is-default-export').map((f) => f.oracleId));
+    expect([...both].sort()).toEqual(['invariant-regex', 'ts-ast']);
   });
 
   it('builds a reverse-reference index (coreThing referenced by helper)', () => {
