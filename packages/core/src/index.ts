@@ -250,7 +250,11 @@ export type {
 // The DocumentGraph kernel — seal (mint ids), validate, and linearize (reused
 // from the Plan kernel). `addressNode`/`addressDocumentGraph` stay module-local
 // (sealNode/sealGraph wrap them; in-core consumers import them by relative path).
-export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-graph-address.js';
+// `decodeDocumentGraph` is the VERSION-AWARE, FAIL-CLOSED reader for an untrusted
+// graph value (persisted JSON / wire payload): it gates `_tag`/`_version` + per-node
+// well-formedness, rejecting a future-version or malformed graph with ONE tagged
+// ParseError instead of silently misparsing it into a v1 shape.
+export { sealNode, sealGraph, validateGraph, linearizeGraph, decodeDocumentGraph } from './document-graph-address.js';
 // The one node well-formedness trust gate, shared by the AI proposal validator
 // (ai-cast.ts) and the runtime graph loader (@czap/astro) — untrusted JSON, one
 // schema. Factored out of ai-cast.ts so neither seam owns a drifting copy.

@@ -28,6 +28,7 @@
  */
 
 import { Effect } from 'effect';
+import { ParseError } from '@czap/error';
 import type { ContentAddress, HLC } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import { sealGraph, validateGraph } from './document-graph-address.js';
@@ -285,6 +286,47 @@ export function forkOf(local: DAG.Graph, patchReceipts: readonly ReceiptEnvelope
 }
 
 /**
+ * The ONE `_version` this build's GraphPatch reader understands. A patch stamped
+ * with a different `_version` is rejected fail-closed by {@link decode}.
+ */
+const SUPPORTED_PATCH_VERSION = 1 as const;
+
+/**
+ * VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED GraphPatch value (a patch
+ * lowered from persisted JSON / a model proposal). {@link apply} trusts its
+ * `patch` argument's `_version`; a host that reconstructs a patch from outside
+ * the program must run it through THIS gate first, so a future-version
+ * (`_version: 2`) patch is rejected with ONE canonical tagged {@link ParseError}
+ * — never silently misparsed and replayed as a v1 delta. Scope is intentionally
+ * the `_tag`/`_version` ENVELOPE only (the deeper op-shape validation lives in
+ * {@link validate}, which re-runs structural integrity on the apply result).
+ *
+ * @throws {@link ParseError} (`source: 'GraphPatch'`) when the value is not a
+ *   record, carries the wrong `_tag`, or an unsupported `_version`.
+ */
+export function decode(value: unknown): GraphPatch {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw ParseError('GraphPatch', `expected an object, got ${value === null ? 'null' : typeof value}`, {
+      code: 'not_an_object',
+    });
+  }
+  const record = value as Record<string, unknown>;
+  if (record._tag !== 'GraphPatch') {
+    throw ParseError('GraphPatch', `expected _tag "GraphPatch", got ${JSON.stringify(record._tag)}`, {
+      code: 'wrong_tag',
+    });
+  }
+  if (record._version !== SUPPORTED_PATCH_VERSION) {
+    throw ParseError(
+      'GraphPatch',
+      `unsupported _version ${JSON.stringify(record._version)} — this build understands _version ${SUPPORTED_PATCH_VERSION} only`,
+      { code: 'unsupported_version' },
+    );
+  }
+  return value as GraphPatch;
+}
+
+/**
  * GraphPatch namespace — the tagged-delta mutation surface over
  * {@link DocumentGraph}. Propose a delta, apply/preview it (re-addressing through
  * the one kernel), validate the would-be result, diff two graphs, and mint a
@@ -306,6 +348,7 @@ export const GraphPatch = {
   preview,
   validate,
   diff,
+  decode,
   patchId,
   receipt,
   forkOf,

@@ -37,6 +37,7 @@ import { noDefaultExportDivergenceGate } from './gates/no-default-export-diverge
 import { noVarDivergenceGate } from './gates/no-var-divergence.js';
 import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
+import { crdtLawsGate } from './gates/crdt-laws.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -85,6 +86,7 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   noVarDivergenceGate,
   noRequireDivergenceGate,
   symbolOrphanDivergenceGate,
+  crdtLawsGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */

@@ -142,7 +142,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Codec: { methods: ['make'] },
   Plan: { methods: ['make', 'validate', 'topoSort'] },
   // GraphPatch — typed graph mutation + structural differ (P5b).
-  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'patchId', 'receipt', 'forkOf'] },
+  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'decode', 'patchId', 'receipt', 'forkOf'] },
   RuntimeCoordinator: { methods: ['create'] },
   Diagnostics: {
     methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
@@ -251,6 +251,11 @@ const STANDALONE_FUNCTIONS = [
   'sealGraph',
   'validateGraph',
   'linearizeGraph',
+  // Version-aware, fail-closed reader for an untrusted DocumentGraph value
+  // (Slice C artifact-migration): gates `_tag`/`_version` + per-node
+  // well-formedness, rejecting a future-version/malformed graph with one tagged
+  // ParseError instead of silently misparsing it into a v1 shape.
+  'decodeDocumentGraph',
   // DocumentGraph node well-formedness — the ONE trust gate shared by the AI
   // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
   'isWellFormedNode',

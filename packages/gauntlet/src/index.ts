@@ -143,6 +143,7 @@ export { noDefaultExportDivergenceGate } from './gates/no-default-export-diverge
 export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
+export { crdtLawsGate } from './gates/crdt-laws.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

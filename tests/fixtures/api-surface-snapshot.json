@@ -1,0 +1,2746 @@
+{
+  "snapshotFormat": 1,
+  "packages": {
+    "@czap/assets": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AssetRegistry",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "BeatMarkerProjection",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "OnsetProjection",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "WavMetadataProjection",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "WaveformProjection",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "audioDecoder",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "builtinDecoderFor",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "builtinDecoderSiteFor",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "computeWaveform",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defaultDecodeP95MsFor",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineAsset",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "detectBeats",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "detectOnsets",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "extractWavMetadata",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "imageDecoder",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "videoDecoder",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "walkRiff",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/astro": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "czap",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "czapMiddleware",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "integration",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveInitialState",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveInitialStateFallback",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "satelliteAttrs",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/audit": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "LANGUAGE_SERVICE_ORACLE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "SYMBOL_ORPHAN_PROPERTY",
+          "kind": "const"
+        },
+        {
+          "name": "SYMBOL_REFERENCE_COUNT_PROPERTY",
+          "kind": "const"
+        },
+        {
+          "name": "WORKSPACE_ALIASES",
+          "kind": "const"
+        },
+        {
+          "name": "asOrphanValue",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "auditAllowlist",
+          "kind": "const"
+        },
+        {
+          "name": "auditIgnoreGlobs",
+          "kind": "const"
+        },
+        {
+          "name": "auditSourceGlobs",
+          "kind": "const"
+        },
+        {
+          "name": "buildPackageExportTargets",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "buildRepoIR",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "compareSeverity",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "consumerDevopsProfile",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "createCounts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createPackagePathResolver",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createTypeDirectedProgram",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defaultRoot",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "discoverInstalledPackageRoots",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "dynamicImportExemptions",
+          "kind": "const"
+        },
+        {
+          "name": "exportedNamesFromNode",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "findAllowlistReason",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "foundationalPackages",
+          "kind": "const"
+        },
+        {
+          "name": "hasModifier",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "isSimpleDefaultExpression",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "lineAndColumn",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "listPackageManifests",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listProfilePackageManifests",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "liteshipDevopsProfile",
+          "kind": "const"
+        },
+        {
+          "name": "nodeText",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "normalizeRepoPath",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "packageTopology",
+          "kind": "const"
+        },
+        {
+          "name": "partitionAllowlistedFindings",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "readJsonFile",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "readProfileSourceFileRecords",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "readSourceFileRecords",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "relativeToRoot",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveAstroPackageFile",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "resolveDevopsProfile",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveImport",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "runAuditPasses",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "runIntegrityAudit",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "runStructureAudit",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "runSurfaceAudit",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "sortFindings",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "sortSuppressions",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "surfacePolicy",
+          "kind": "const"
+        },
+        {
+          "name": "symbolIdOfOrphanFact",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "symbolReferenceOracle",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "typeDirectedCompilerOptions",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "walkAuditSourceFiles",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "withRepoRoot",
+          "kind": "function",
+          "signature": "(2)"
+        }
+      ]
+    },
+    "@czap/canonical": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AddressedDigest",
+          "kind": "namespace",
+          "signature": "of:function"
+        },
+        {
+          "name": "CanonicalCbor",
+          "kind": "namespace",
+          "signature": "encode:function"
+        },
+        {
+          "name": "ContentAddress",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "IntegrityDigest",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "addressedDigestOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decode",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "fnv1a",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "fnv1aBytes",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/cli": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "run",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/cloudflare": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "cloudflareAdapterCapsule",
+          "kind": "const"
+        },
+        {
+          "name": "cloudflareMiddleware",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createCloudflareEdgeCache",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "resolveKvBinding",
+          "kind": "function",
+          "signature": "(2)"
+        }
+      ]
+    },
+    "@czap/command": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AUDIT_WARNING_FLOOR",
+          "kind": "const"
+        },
+        {
+          "name": "AssetAnalyzePayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "AuditFloorPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "AuditPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "COMMAND_CATALOG",
+          "kind": "const"
+        },
+        {
+          "name": "CapsuleVerifyPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "CheckInvariantsPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "CheckPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "CommandDispatcher",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "CommandRegistry",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "GLOSSARY_ENTRIES",
+          "kind": "const"
+        },
+        {
+          "name": "GlossaryPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "INVARIANTS",
+          "kind": "const"
+        },
+        {
+          "name": "PACKAGES",
+          "kind": "const"
+        },
+        {
+          "name": "PACKAGE_PLUMB",
+          "kind": "const"
+        },
+        {
+          "name": "PEER_INSTALLS",
+          "kind": "const"
+        },
+        {
+          "name": "PackageSmokePayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "PlumbPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "VerifyPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "VersionPayloadSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "assetAnalyzeCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "assetVerifyCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "auditCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "auditFloorCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "capabilityUnavailable",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "capsuleInspectCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "capsuleListCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "capsuleVerifyCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "capsuleVerifyGateCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "checkCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "checkInvariantsCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "commandRegistry",
+          "kind": "namespace",
+          "signature": "get:function,list:function"
+        },
+        {
+          "name": "deriveBuildEnv",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "diffInventories",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "glossaryCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "matchGlossaryEntries",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "mcpExposedDescriptors",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "observedLifecycleScripts",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "packageSlug",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "packageSmokeCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "plumbCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "readPackageManagerVersion",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "sceneCompileCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "sceneRenderCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "sceneVerifyCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "selectTargets",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "verifyCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        },
+        {
+          "name": "versionCommand",
+          "kind": "namespace",
+          "signature": "descriptor:const,handler:function"
+        }
+      ]
+    },
+    "@czap/compiler": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AIManifestCompiler",
+          "kind": "namespace",
+          "signature": "compile:function,generateSystemPrompt:function,generateToolDefinitions:function,validateAIOutput:function"
+        },
+        {
+          "name": "ARIACompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "CSSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function,generatePropertyRegistrations:function,serialize:function"
+        },
+        {
+          "name": "ComponentCSSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "GLSLCompiler",
+          "kind": "namespace",
+          "signature": "compile:function,serialize:function"
+        },
+        {
+          "name": "StyleCSSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "ThemeCSSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "TokenCSSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "TokenJSCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "TokenTailwindCompiler",
+          "kind": "namespace",
+          "signature": "compile:function"
+        },
+        {
+          "name": "WGSLCompiler",
+          "kind": "namespace",
+          "signature": "compile:function,serialize:function"
+        },
+        {
+          "name": "ariaCompileCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "compileMcpAppManifest",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "dispatch",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "generatePropertyRegistrations",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "glslCompileCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "wgslCompileCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        }
+      ]
+    },
+    "@czap/core": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AICast",
+          "kind": "namespace",
+          "signature": "applyValidatedPatch:function,castContext:function,generatedUIProposalSchema:function,graphPatchProposalSchema:function,summarizeGraph:function,validateGeneratedUIProposal:function,validateGraphPatchProposal:function"
+        },
+        {
+          "name": "AVBridge",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "AVRenderer",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "AddressedDigest",
+          "kind": "namespace",
+          "signature": "of:function"
+        },
+        {
+          "name": "Animation",
+          "kind": "namespace",
+          "signature": "interpolate:function,run:function"
+        },
+        {
+          "name": "BlendTree",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Boundary",
+          "kind": "namespace",
+          "signature": "evaluate:function,evaluateBatch:function,evaluateResult:function,evaluateWithHysteresis:function,isActive:function,make:function"
+        },
+        {
+          "name": "BoundaryAttribute",
+          "kind": "namespace",
+          "signature": "isAllowedKey:function"
+        },
+        {
+          "name": "BoundarySpec",
+          "kind": "namespace",
+          "signature": "isActive:function"
+        },
+        {
+          "name": "CANVAS_FALLBACK_HEIGHT",
+          "kind": "const"
+        },
+        {
+          "name": "CANVAS_FALLBACK_WIDTH",
+          "kind": "const"
+        },
+        {
+          "name": "CAPTURE_KEYFRAME_INTERVAL",
+          "kind": "const"
+        },
+        {
+          "name": "COMPOSITOR_POOL_CAP",
+          "kind": "const"
+        },
+        {
+          "name": "CanonicalCbor",
+          "kind": "namespace",
+          "signature": "encode:function"
+        },
+        {
+          "name": "Cap",
+          "kind": "namespace",
+          "signature": "atLeast:function,empty:function,from:function,grant:function,has:function,intersection:function,ordinal:function,revoke:function,superset:function,union:function"
+        },
+        {
+          "name": "Cell",
+          "kind": "namespace",
+          "signature": "all:function,fromStream:function,make:function,map:function"
+        },
+        {
+          "name": "Codec",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Component",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Composable",
+          "kind": "namespace",
+          "signature": "compose:function,make:function,merge:function"
+        },
+        {
+          "name": "ComposableWorld",
+          "kind": "namespace",
+          "signature": "dense:function,make:function"
+        },
+        {
+          "name": "Compositor",
+          "kind": "namespace",
+          "signature": "create:function"
+        },
+        {
+          "name": "CompositorStatePool",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Config",
+          "kind": "namespace",
+          "signature": "make:function,toAstroConfig:function,toTestAliases:function,toViteConfig:function"
+        },
+        {
+          "name": "ContentAddress",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "DAG",
+          "kind": "namespace",
+          "signature": "ancestors:function,canonicalHead:function,checkForkRule:function,commonAncestor:function,empty:function,fromReceipts:function,getHeads:function,ingest:function,ingestAll:function,isAncestor:function,isFork:function,linearize:function,linearizeFrom:function,merge:function,size:function"
+        },
+        {
+          "name": "DEFAULT_TARGET_FPS",
+          "kind": "const"
+        },
+        {
+          "name": "DIRTY_FLAGS_MAX",
+          "kind": "const"
+        },
+        {
+          "name": "Derived",
+          "kind": "namespace",
+          "signature": "combine:function,flatten:function,make:function,map:function"
+        },
+        {
+          "name": "Diagnostics",
+          "kind": "namespace",
+          "signature": "clearOnce:function,createBufferSink:function,error:function,reset:function,resetClock:function,resetSink:function,setClock:function,setSink:function,warn:function,warnOnce:function"
+        },
+        {
+          "name": "DirtyFlags",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "DocumentGraphNodeSchema",
+          "kind": "namespace",
+          "signature": "ast:const,makeOption:function,makeUnsafe:function,mapMembers:function,members:const,rebuild:function"
+        },
+        {
+          "name": "EASING_SPRING_STEPS",
+          "kind": "const"
+        },
+        {
+          "name": "EVALUATE_THRESHOLDS_SOURCE",
+          "kind": "const"
+        },
+        {
+          "name": "Easing",
+          "kind": "namespace",
+          "signature": "cubicBezier:function,ease:function,easeIn:function,easeInCubic:function,easeInOut:function,easeInOutCubic:function,easeOut:function,easeOutBack:function,easeOutBounce:function,easeOutCubic:function,easeOutElastic:function,easeOutExpo:function,linear:function,spring:function,springNaturalDuration:function,springToLinearCSS:function"
+        },
+        {
+          "name": "EntityId",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "FrameBudget",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "GenFrame",
+          "kind": "namespace",
+          "signature": "make:function,resolveGap:function"
+        },
+        {
+          "name": "GraphPatch",
+          "kind": "namespace",
+          "signature": "apply:function,decode:function,diff:function,forkOf:function,patchId:function,preview:function,propose:function,receipt:function,validate:function"
+        },
+        {
+          "name": "HLC",
+          "kind": "namespace",
+          "signature": "compare:function,create:function,decode:function,encode:function,increment:function,makeClock:function,merge:function,receive:function,tick:function"
+        },
+        {
+          "name": "IntegrityDigest",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "LADDER_RUNGS",
+          "kind": "const"
+        },
+        {
+          "name": "LADDER_TARGETS",
+          "kind": "const"
+        },
+        {
+          "name": "LiveCell",
+          "kind": "namespace",
+          "signature": "make:function,makeBoundary:function"
+        },
+        {
+          "name": "MS_PER_SEC",
+          "kind": "const"
+        },
+        {
+          "name": "Millis",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Op",
+          "kind": "namespace",
+          "signature": "all:function,allSettled:function,fail:function,fromPromise:function,make:function,race:function,retry:function,succeed:function,timeout:function"
+        },
+        {
+          "name": "PROJECTION_KEYS_SOURCE",
+          "kind": "const"
+        },
+        {
+          "name": "Part",
+          "kind": "namespace",
+          "signature": "dense:function"
+        },
+        {
+          "name": "Plan",
+          "kind": "namespace",
+          "signature": "make:function,topoSort:function,validate:function"
+        },
+        {
+          "name": "Receipt",
+          "kind": "namespace",
+          "signature": "GENESIS:const,append:function,buildChain:function,createEnvelope:function,findByHash:function,findByKind:function,generateMACKey:function,hashEnvelope:function,head:function,isGenesis:function,macEnvelope:function,tail:function,validateChain:function,validateChainDetailed:function,verifyMAC:function"
+        },
+        {
+          "name": "RuntimeCoordinator",
+          "kind": "namespace",
+          "signature": "create:function"
+        },
+        {
+          "name": "SSE_BUFFER_SIZE",
+          "kind": "const"
+        },
+        {
+          "name": "SSE_HEARTBEAT_MS",
+          "kind": "const"
+        },
+        {
+          "name": "SSE_RECONNECT_INITIAL_MS",
+          "kind": "const"
+        },
+        {
+          "name": "SSE_RECONNECT_MAX_MS",
+          "kind": "const"
+        },
+        {
+          "name": "Scheduler",
+          "kind": "namespace",
+          "signature": "audioSync:function,fixedStep:function,noop:function,raf:function"
+        },
+        {
+          "name": "ShipCapsule",
+          "kind": "namespace",
+          "signature": "canonicalize:function,computeId:function,decode:function,make:function"
+        },
+        {
+          "name": "Signal",
+          "kind": "namespace",
+          "signature": "audio:function,controllable:function,make:function"
+        },
+        {
+          "name": "SignalInput",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "SpeculativeEvaluator",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "StateName",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Store",
+          "kind": "namespace",
+          "signature": "make:function,makeWithEffect:function"
+        },
+        {
+          "name": "Style",
+          "kind": "namespace",
+          "signature": "make:function,mergeLayers:function,tap:function"
+        },
+        {
+          "name": "THEME_TRANSITION_DURATION_MS",
+          "kind": "const"
+        },
+        {
+          "name": "THEME_TRANSITION_EASING",
+          "kind": "const"
+        },
+        {
+          "name": "Theme",
+          "kind": "namespace",
+          "signature": "make:function,tap:function"
+        },
+        {
+          "name": "ThresholdValue",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Timeline",
+          "kind": "namespace",
+          "signature": "from:function"
+        },
+        {
+          "name": "Token",
+          "kind": "namespace",
+          "signature": "cssVar:function,make:function,tap:function"
+        },
+        {
+          "name": "TokenBuffer",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "TokenRef",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "TypeValidator",
+          "kind": "namespace",
+          "signature": "validate:function"
+        },
+        {
+          "name": "TypedRef",
+          "kind": "namespace",
+          "signature": "canonicalize:function,create:function,equals:function,hash:function"
+        },
+        {
+          "name": "UIQuality",
+          "kind": "namespace",
+          "signature": "boundary:const,make:function"
+        },
+        {
+          "name": "VIEWPORT",
+          "kind": "const"
+        },
+        {
+          "name": "VectorClock",
+          "kind": "namespace",
+          "signature": "compare:function,concurrent:function,equals:function,from:function,get:function,happensBefore:function,make:function,merge:function,peers:function,size:function,tick:function,toObject:function"
+        },
+        {
+          "name": "VideoRenderer",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "WASMDispatch",
+          "kind": "namespace",
+          "signature": "detect:function,isLoaded:function,kernels:function,load:function,unload:function"
+        },
+        {
+          "name": "WASM_BATCH_MAX",
+          "kind": "const"
+        },
+        {
+          "name": "WASM_SCRATCH_BASE",
+          "kind": "const"
+        },
+        {
+          "name": "Wire",
+          "kind": "namespace",
+          "signature": "from:function,fromAsyncIterable:function,fromSSE:function,fromWebSocket:function,merge:function,runCollect:function,runForEach:function,zip:function"
+        },
+        {
+          "name": "World",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Zap",
+          "kind": "namespace",
+          "signature": "debounce:function,filter:function,fromDOMEvent:function,make:function,map:function,merge:function,throttle:function"
+        },
+        {
+          "name": "aiCastProposalCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "aiCastSummarizeCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "assertTokenBinds",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "boundaryEvaluateCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "canonicalAddressBytes",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "canonicalCborCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "canonicalCborDecodeCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "chooseRung",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "compositeStateToRgba",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "contentAddressOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decodeDocumentGraph",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineCapsule",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineConfig",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "documentGraphAddressCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "escalationChooseRungCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,decide:function,id:const,input:namespace,invariants:const,name:const,output:namespace,site:const"
+        },
+        {
+          "name": "fallbackKernels",
+          "kind": "namespace",
+          "signature": "batchBoundaryEval:function,blendNormalize:function,springCurve:function"
+        },
+        {
+          "name": "fixedClock",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "fnv1a",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "fnv1aBytes",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "getCapsuleCatalog",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "glslIdent",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "graphPatchIdentityCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "inputSourceType",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "inputToSource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isCell",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isDerived",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isWellFormedNode",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isWire",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isZap",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "linearizeGraph",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "manualClock",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "projectLadder",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "projectionKeys",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "proposalReceiptSubject",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "proposalSubject",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "rawIndexF32",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "schemaToJsonSchema",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "sealGraph",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "sealNode",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "seededRng",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "sourceToInput",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "systemClock",
+          "kind": "namespace",
+          "signature": "now:function"
+        },
+        {
+          "name": "systemRng",
+          "kind": "namespace",
+          "signature": "next:function"
+        },
+        {
+          "name": "tokenBufferCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,initialState:const,input:namespace,invariants:const,name:const,output:namespace,site:const,step:function"
+        },
+        {
+          "name": "tupleMap",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "unwrapValidated",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "validateGraph",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "wallClock",
+          "kind": "namespace",
+          "signature": "now:function"
+        },
+        {
+          "name": "wgslIdent",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/detect": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "CAP_AXES",
+          "kind": "const"
+        },
+        {
+          "name": "DETECT_READY_EVENT",
+          "kind": "const"
+        },
+        {
+          "name": "Detect",
+          "kind": "namespace",
+          "signature": "detect:function,detectGPUTier:function,resetDetectionCaches:function,watchCapabilities:function"
+        },
+        {
+          "name": "GPU_TIER_DEFAULT",
+          "kind": "const"
+        },
+        {
+          "name": "GPU_TIER_PATTERNS",
+          "kind": "const"
+        },
+        {
+          "name": "GPU_TIER_PRECEDENCE",
+          "kind": "const"
+        },
+        {
+          "name": "capAxisAttr",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "capSetFromCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "capTierFromCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "designTierFromCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "detect",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "detectGPUTier",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "emitDetectUpgradeScript",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "emitProvisionalDetectScript",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "headProbeCapTier",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "headProbeMotionTier",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "motionTierFromCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "onDetectReady",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resetDetectionCaches",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "watchCapabilities",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/edge": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "ClientHints",
+          "kind": "namespace",
+          "signature": "acceptCHHeader:function,criticalCHHeader:function,parseClientHints:function"
+        },
+        {
+          "name": "DESIGN_TIERS",
+          "kind": "const"
+        },
+        {
+          "name": "EdgeHostAdapter",
+          "kind": "namespace",
+          "signature": "create:function"
+        },
+        {
+          "name": "EdgeTier",
+          "kind": "namespace",
+          "signature": "detectTier:function,tierDataAttributes:function,tierFromParsed:function"
+        },
+        {
+          "name": "KVCache",
+          "kind": "namespace",
+          "signature": "createBoundaryCache:function"
+        },
+        {
+          "name": "MOTION_TIERS",
+          "kind": "const"
+        },
+        {
+          "name": "compileTheme",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "createBoundaryCache",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createEdgeHostAdapter",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "dedupeOutputsByTier",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "enumerateTierKeys",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "resolveOutputsByTier",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "tierKey",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/error": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "HostCapabilityError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "IntegrityError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "InvariantViolationError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "IoError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "LITESHIP_ERROR_TAGS",
+          "kind": "const"
+        },
+        {
+          "name": "NotFoundError",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "ParseError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "UnsupportedError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "ValidationError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "assertNever",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "getTag",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "hasTag",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "isTaggedError",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "matchTag",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "matchTagOr",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "raise",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "taggedError",
+          "kind": "function",
+          "signature": "(4)"
+        }
+      ]
+    },
+    "@czap/gauntlet": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "ALWAYS_BLOCKING_RULES",
+          "kind": "const"
+        },
+        {
+          "name": "ASSURANCE",
+          "kind": "const"
+        },
+        {
+          "name": "ASSURANCE_LEVELS",
+          "kind": "const"
+        },
+        {
+          "name": "COVERAGE_CLASSES",
+          "kind": "const"
+        },
+        {
+          "name": "COVERAGE_CLASS_SEVERITY",
+          "kind": "const"
+        },
+        {
+          "name": "DEFAULT_GAUNTLET_GLOBS",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_ASSURANCE_MAP",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_GATES",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_IR_GATES",
+          "kind": "const"
+        },
+        {
+          "name": "LITESHIP_WAIVERS",
+          "kind": "const"
+        },
+        {
+          "name": "MISSING_DIGEST_SENTINEL",
+          "kind": "const"
+        },
+        {
+          "name": "PLACEHOLDER_DIGEST",
+          "kind": "const"
+        },
+        {
+          "name": "SEVERITIES",
+          "kind": "const"
+        },
+        {
+          "name": "allFileIds",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "applyWaivers",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "atLeast",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "coverageClassSeverity",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "coverageDigestOf",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "crdtLawsGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "defineGate",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "earnedAuthority",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "finding",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "fromError",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "gateVerdictKey",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isFinding",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isProjectableError",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "levelOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "litelaunchGauntlet",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "litelaunchGauntletWithIR",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "makeOracleDivergenceGate",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "makeRepoIR",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "matchesGlob",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "maxLevel",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "memoryContext",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "noBareThrowGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noBareThrowIRGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noDefaultExportDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noNondeterminismGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noPlaceholderGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noRequireDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noSilentCatchGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noSkippedTestGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noTsIgnoreGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "noVarDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "nodeContext",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "propagateAssuranceLevels",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "rankOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "requireIR",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "runGates",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "runGauntletOnRepo",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "scopeContextByLevel",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "strongerCoverageClass",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "symbolOrphanDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "tallyBySeverity",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "verifyGate",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/genui": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "ContentAddress",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "DEMO_COMPONENT_CATALOG",
+          "kind": "const"
+        },
+        {
+          "name": "catalogHash",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "defineComponentCatalog",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "renderFromCatalog",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "renderHash",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "tryParseGeneratedUIChunk",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "validateGeneratedUITree",
+          "kind": "function",
+          "signature": "(2)"
+        }
+      ]
+    },
+    "@czap/mcp-server": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "APPLY_PATCH_COMMAND",
+          "kind": "const"
+        },
+        {
+          "name": "CZAP_CHECK_METHOD",
+          "kind": "const"
+        },
+        {
+          "name": "CodeActionKind",
+          "kind": "const"
+        },
+        {
+          "name": "DIAGNOSTIC_SOURCE",
+          "kind": "const"
+        },
+        {
+          "name": "DiagnosticSeverity",
+          "kind": "const"
+        },
+        {
+          "name": "InternalError",
+          "kind": "const"
+        },
+        {
+          "name": "InvalidParams",
+          "kind": "const"
+        },
+        {
+          "name": "InvalidRequest",
+          "kind": "const"
+        },
+        {
+          "name": "JsonRpcServer",
+          "kind": "namespace",
+          "signature": "errorResponse:function,parse:function,successResponse:function"
+        },
+        {
+          "name": "LSP_SERVER_CAPABILITIES",
+          "kind": "const"
+        },
+        {
+          "name": "MethodNotFound",
+          "kind": "const"
+        },
+        {
+          "name": "ParseError",
+          "kind": "const"
+        },
+        {
+          "name": "SHOW_INSTRUCTION_COMMAND",
+          "kind": "const"
+        },
+        {
+          "name": "dispatch",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "dispatchToolCall",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "encodeFrame",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "errorResponse",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "fileToUri",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "getPrompt",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "groupDiagnosticsByUri",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "handleLspMessage",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "initialLspState",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "jsonRpcServerCapsule",
+          "kind": "namespace",
+          "signature": "_kind:const,budgets:const,capabilities:const,id:const,input:namespace,invariants:const,name:const,output:namespace,run:function,site:const"
+        },
+        {
+          "name": "listAppResources",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listManifestResources",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listPrompts",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listResources",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listTools",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "listUiResources",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "makeFrameReader",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "mcpAppManifest",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "parse",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "projectFinding",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "projectRemediation",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "readAppResource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "readManifestResource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "readResource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "readUiResource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "runHttp",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "runLspStdio",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "runStdio",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "severityToDiagnostic",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "start",
+          "kind": "function",
+          "signature": "(0)"
+        },
+        {
+          "name": "successResponse",
+          "kind": "function",
+          "signature": "(2)"
+        }
+      ]
+    },
+    "@czap/quantizer": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AnimatedQuantizer",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "Evaluate",
+          "kind": "namespace",
+          "signature": "evaluate:function"
+        },
+        {
+          "name": "OutputTargetSchema",
+          "kind": "namespace",
+          "signature": "ast:const,makeOption:function,makeUnsafe:function,mapMembers:function,members:const,rebuild:function"
+        },
+        {
+          "name": "Q",
+          "kind": "namespace",
+          "signature": "from:function"
+        },
+        {
+          "name": "QuantizerOutputsSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "Transition",
+          "kind": "namespace",
+          "signature": "for:function"
+        },
+        {
+          "name": "TransitionConfigSchema",
+          "kind": "namespace",
+          "signature": "ast:const,fields:const,makeOption:function,makeUnsafe:function,mapFields:function,rebuild:function"
+        },
+        {
+          "name": "TransitionMapSchema",
+          "kind": "namespace",
+          "signature": "ast:const,key:namespace,makeOption:function,makeUnsafe:function,rebuild:function,value:namespace"
+        },
+        {
+          "name": "evaluate",
+          "kind": "function",
+          "signature": "(3)"
+        }
+      ]
+    },
+    "@czap/remotion": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "Provider",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "cssVarsFromState",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "precomputeFrames",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "remotionAdapterCapsule",
+          "kind": "const"
+        },
+        {
+          "name": "rendererFromRemotionConfig",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "stateAtFrame",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "useCompositeState",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "useCzapState",
+          "kind": "function",
+          "signature": "(0)"
+        }
+      ]
+    },
+    "@czap/scene": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "AudioSystem",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "Beat",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "BeatBinding",
+          "kind": "namespace",
+          "signature": "bind:function"
+        },
+        {
+          "name": "EffectSystem",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Layout",
+          "kind": "namespace",
+          "signature": "grid:function,stack:function"
+        },
+        {
+          "name": "PassThroughMixer",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "SVGSystem",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Scene",
+          "kind": "namespace",
+          "signature": "include:function,runtime:function,subscene:function"
+        },
+        {
+          "name": "SceneRuntime",
+          "kind": "namespace",
+          "signature": "build:function,systemCount:const"
+        },
+        {
+          "name": "SyncSystem",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "Track",
+          "kind": "namespace",
+          "signature": "audio:function,audioId:function,effect:function,effectId:function,transition:function,transitionId:function,video:function,videoId:function"
+        },
+        {
+          "name": "TransitionSystem",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "VideoSystem",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "addFrameMarks",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "applySvgAttrs",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "beatBindingCapsule",
+          "kind": "const"
+        },
+        {
+          "name": "bindBeats",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "collectSvgAttrs",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "compileScene",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "ease",
+          "kind": "namespace",
+          "signature": "bounce:function,cubic:function,spring:function,stepped:function"
+        },
+        {
+          "name": "easeFnFor",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "envelopeFactor",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "fade",
+          "kind": "namespace",
+          "signature": "in:function,out:function"
+        },
+        {
+          "name": "inheritContext",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "pulse",
+          "kind": "namespace",
+          "signature": "every:function"
+        },
+        {
+          "name": "resolveBeat",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "resolveBeatProjectionToSceneBeats",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveEnvelope",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "resolveFrameMark",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sceneRuntimeCapsule",
+          "kind": "const"
+        },
+        {
+          "name": "syncTo",
+          "kind": "namespace",
+          "signature": "beat:function,onset:function,peak:function"
+        },
+        {
+          "name": "trackRefId",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/stage": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "dualExport",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "dualExportNode",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "exportAstroPage",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "exportVideo",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "exportVideoEncoded",
+          "kind": "function",
+          "signature": "(2)"
+        }
+      ]
+    },
+    "@czap/vite": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "collectBoundaryManifest",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "collectThemeManifest",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "collectTokenManifest",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "compileCollectedTokensCss",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "compileQuantizeBlock",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "compileStyleBlock",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "compileThemeBlock",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "compileTokenBlock",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "czap",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "handleHMR",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isVirtualId",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "loadVirtualModule",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "parseQuantizeBlocks",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "parseStyleBlocks",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "parseThemeBlocks",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "parseTokenBlocks",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "plugin",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "primitiveSearchPatterns",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "resolvePrimitive",
+          "kind": "function",
+          "signature": "(5)"
+        },
+        {
+          "name": "resolveVirtualId",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "resolveWASM",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "transformHTML",
+          "kind": "function",
+          "signature": "(4)"
+        },
+        {
+          "name": "viewportContainmentRule",
+          "kind": "function",
+          "signature": "(1)"
+        }
+      ]
+    },
+    "@czap/web": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "Hints",
+          "kind": "namespace",
+          "signature": "empty:function,fromElement:function,merge:function,preserveFocus:function,preserveIds:function,preserveScroll:function,withIdMap:function,withSemanticIds:function"
+        },
+        {
+          "name": "LLMAdapter",
+          "kind": "namespace",
+          "signature": "collect:function,create:function"
+        },
+        {
+          "name": "LLMChunkNormalization",
+          "kind": "namespace",
+          "signature": "normalize:function,parseAccumulatedToolArgs:function"
+        },
+        {
+          "name": "Morph",
+          "kind": "namespace",
+          "signature": "defaultConfig:const,morph:function,morphWithState:function,parseHTML:function"
+        },
+        {
+          "name": "Physical",
+          "kind": "namespace",
+          "signature": "capture:function,restore:function"
+        },
+        {
+          "name": "Resumption",
+          "kind": "namespace",
+          "signature": "canResume:function,clearState:function,loadState:function,parseEventId:function,resume:function,saveState:function"
+        },
+        {
+          "name": "SSE",
+          "kind": "namespace",
+          "signature": "buildUrl:function,calculateDelay:function,create:function,parseMessage:function"
+        },
+        {
+          "name": "SemanticId",
+          "kind": "namespace",
+          "signature": "ATTR:const,buildIndex:function,find:function,findBestMatch:function,generate:function,get:function,matchNodes:function,matches:function,set:function"
+        },
+        {
+          "name": "SlotAddressing",
+          "kind": "namespace",
+          "signature": "ancestors:function,basename:function,brand:function,isDescendant:function,isValid:function,join:function,parent:function,parse:function,toSelector:function"
+        },
+        {
+          "name": "SlotRegistry",
+          "kind": "namespace",
+          "signature": "create:function,findElement:function,getPath:function,observe:function,scanDOM:function"
+        },
+        {
+          "name": "WebCodecsCapture",
+          "kind": "namespace",
+          "signature": "make:function"
+        },
+        {
+          "name": "captureVideo",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "createAudioProcessor",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "createHtmlFragment",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "isPrivateOrReservedIP",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "renderToCanvas",
+          "kind": "function",
+          "signature": "(3)"
+        },
+        {
+          "name": "resolveHtmlString",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "resolveRuntimeUrl",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "sanitizeHTML",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "streamReceiptCapsule",
+          "kind": "const"
+        }
+      ]
+    },
+    "@czap/worker": {
+      "version": "0.4.0",
+      "exports": [
+        {
+          "name": "CompositorWorker",
+          "kind": "namespace",
+          "signature": "create:function"
+        },
+        {
+          "name": "Messages",
+          "kind": "namespace",
+          "signature": "isFromWorker:function,isToWorker:function"
+        },
+        {
+          "name": "RenderWorker",
+          "kind": "namespace",
+          "signature": "create:function"
+        },
+        {
+          "name": "SPSCRing",
+          "kind": "namespace",
+          "signature": "attachConsumer:function,attachProducer:function,createPair:function"
+        },
+        {
+          "name": "WorkerHost",
+          "kind": "namespace",
+          "signature": "create:function"
+        }
+      ]
+    }
+  }
+}
