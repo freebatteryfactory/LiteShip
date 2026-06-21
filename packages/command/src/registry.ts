@@ -11,6 +11,7 @@ import type {
   Clock,
   ContentAddress,
 } from '@czap/core';
+import { wallClock } from '@czap/core';
 import type { GauntletResult } from '@czap/gauntlet';
 import { ValidationError } from '@czap/error';
 
@@ -437,7 +438,7 @@ export function capabilityUnavailable(command: string, missing: readonly Command
   return {
     status: 'failed',
     command,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     exitCode: 2,
     payload: {
       error: 'capability_unavailable',

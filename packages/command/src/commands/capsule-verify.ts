@@ -21,7 +21,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -81,7 +81,7 @@ export const capsuleVerifyGateCommand: HandledCommand = {
     return {
       status: summary.status === 'ok' ? 'ok' : 'failed',
       command: 'capsule-verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       exitCode: summary.status === 'ok' ? 0 : 1,
       payload: {
         status: summary.status,

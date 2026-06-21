@@ -178,10 +178,29 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     ].join('\n');
     expect(scopedSeen, message).toEqual(expected);
 
-    // And the raw/unscoped run still SEES more than the L3 set (the level-scoping
-    // is doing real work — it is not a no-op that happens to equal the raw set).
+    // The raw/unscoped run over the REAL repo no longer EXCEEDS the L3 set — and
+    // that is a WIN, not a regression: the B3.4 determinism cure routed every
+    // L1/L2 receipt timestamp through the @czap/core wallClock boundary, so the
+    // whole tree's nondeterminism reads are now exactly the three substrate
+    // boundaries. raw == scoped is the cured, cleaner state (the L1/L2 backlog this
+    // used to filter is gone). Scoping never ADDS, so the floor invariant holds:
     const rawSeen = noNondeterminismGate.run(ctx).map((f) => locOf(f.location?.file, f.location?.line));
-    expect(rawSeen.length).toBeGreaterThan(scopedSeen.length);
+    expect(rawSeen.length).toBeGreaterThanOrEqual(scopedSeen.length);
+
+    // The level-scoping STILL does real work — proven over a FIXTURE so it holds
+    // regardless of how clean the real repo is: a non-L3 file's nondeterminism read
+    // is filtered out of the L3 gate's scope; an L3 file's is kept.
+    const fixtureCtx = memoryContext({
+      'packages/quantizer/src/scope-fixture.ts': 'export const t = new Date();\n', // L3 glob → kept
+      'packages/command/src/commands/scope-fixture.ts': 'export const t = new Date();\n', // default L1 → dropped
+    });
+    const fixtureRaw = noNondeterminismGate.run(fixtureCtx).length;
+    const fixtureScoped =
+      runGates([noNondeterminismGate], fixtureCtx, { assuranceMap: LITESHIP_ASSURANCE_MAP }).outcomes.find(
+        (o) => o.gateId === 'gauntlet/no-nondeterminism',
+      )?.findings.length ?? -1;
+    expect(fixtureRaw, 'both fixture files carry an ambient new Date()').toBe(2);
+    expect(fixtureScoped, 'only the L3-globbed file survives the L3 scope').toBe(1);
   });
 
   it('no-nondeterminism: DETECTS ambient `performance.now()` (the monotonic-clock read), not just Date.now', () => {

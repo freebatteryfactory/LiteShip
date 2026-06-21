@@ -20,7 +20,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -70,7 +70,7 @@ export const packageSmokeCommand: HandledCommand = {
     return {
       status: summary.ok ? 'ok' : 'failed',
       command: 'package-smoke',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       exitCode: summary.ok ? 0 : 1,
       payload: {
         ok: summary.ok,

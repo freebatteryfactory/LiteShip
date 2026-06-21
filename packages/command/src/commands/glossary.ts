@@ -6,7 +6,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import type { HandledCommand } from '../registry.js';
 
 /**
@@ -257,7 +257,7 @@ export const glossaryCommand: HandledCommand = {
     const raw = invocation.args.term;
     const term = typeof raw === 'string' && raw.length > 0 ? raw : null;
     const entries = matchGlossaryEntries(term);
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date(wallClock.now()).toISOString();
     if (entries.length === 0) {
       return { status: 'failed', command: 'glossary', timestamp, exitCode: 1, payload: { term, entries: [] } };
     }

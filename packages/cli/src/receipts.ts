@@ -6,7 +6,7 @@
  * @module
  */
 
-import type { ContentAddress, WallClockTimestamp } from '@czap/core';
+import { wallClock, type ContentAddress, type WallClockTimestamp } from '@czap/core';
 
 /** Re-exported so CLI receipt structs share one wall-clock-timestamp vocabulary (CUT B2). */
 export type { WallClockTimestamp } from '@czap/core';
@@ -113,7 +113,7 @@ export function emitError(command: string, message: string, hint?: string): void
       command,
       error: message,
       ...(hint !== undefined ? { hint } : {}),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
     }) + '\n',
   );
 }

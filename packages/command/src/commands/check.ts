@@ -19,7 +19,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import type { Finding } from '@czap/gauntlet';
 import {
   capabilityUnavailable,
@@ -131,7 +131,7 @@ export const checkCommand: HandledCommand = {
     return {
       status: result.blocked ? 'failed' : 'ok',
       command: 'check',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       exitCode: result.blocked ? 1 : 0,
       payload: {
         ok: !result.blocked,

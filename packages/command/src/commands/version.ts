@@ -7,7 +7,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import type { CommandContext, HandledCommand } from '../registry.js';
 
 /**
@@ -43,7 +43,7 @@ export const versionCommand: HandledCommand = {
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({
     status: 'ok',
     command: 'version',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     payload: {
       czap: context.hostVersion?.() ?? '0.0.0-unknown',
       node: process.versions.node,

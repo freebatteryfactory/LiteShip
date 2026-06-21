@@ -4,6 +4,8 @@
  * @module
  */
 
+import { wallClock } from '@czap/core';
+
 /** Parsed gauntlet CLI argv. */
 export interface GauntletArgv {
   readonly dryRun: boolean;
@@ -36,7 +38,7 @@ export function formatUnexpectedArgvReceipt(argv: readonly string[]): string {
       command: 'gauntlet',
       error: 'unexpected_argv',
       argv,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       hint: 'Gauntlet takes no positional bearings. Paste one command per line.',
     }) + '\n'
   );

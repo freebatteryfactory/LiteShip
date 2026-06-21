@@ -7,12 +7,12 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
+  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
 }
 
 /** `<verb> <id>` args — the single source of the inspect/verify `inputSchema`. */
@@ -58,7 +58,7 @@ export const capsuleInspectCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'capsule.inspect',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { capsule: entry },
     };
   },
@@ -82,7 +82,7 @@ export const capsuleListCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'capsule.list',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { capsules, kind: kind ?? null },
     };
   },
@@ -115,7 +115,7 @@ export const capsuleVerifyCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'capsule.verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { capsuleId: entry.name },
     };
   },

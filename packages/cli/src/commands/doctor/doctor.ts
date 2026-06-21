@@ -12,6 +12,7 @@
  * @module
  */
 
+import { wallClock } from '@czap/core';
 import { color, colorEnabled } from '../../lib/ansi.js';
 import { emit } from '../../receipts.js';
 import { findWorkspaceRoot } from './manifest.js';
@@ -63,7 +64,7 @@ export async function doctor(
   const receipt: DoctorReceipt = {
     status,
     command: 'doctor',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     verdict,
     checks,
     ...(fixes && fixes.length > 0 ? { fixed: fixes } : {}),

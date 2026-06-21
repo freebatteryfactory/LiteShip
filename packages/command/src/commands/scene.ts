@@ -8,7 +8,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, systemClock, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, systemClock, wallClock, type CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -43,7 +43,7 @@ const SceneRenderPayloadSchema = Schema.Struct({
 });
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
+  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
 }
 
 interface SceneCapsule {
@@ -121,7 +121,7 @@ export const sceneVerifyCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'scene.verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { sceneId: cap.id, generatedTests: 2 },
     };
   },
@@ -148,7 +148,9 @@ export const sceneCompileCommand: HandledCommand = {
 
     // `durationMs` is an ELAPSED interval → MONOTONIC systemClock (a wall-clock
     // NTP/DST jump must never corrupt it). The receipt `timestamp` below is a
-    // TIMESTAMP → wall clock (`new Date().toISOString()`), the right boundary there.
+    // TIMESTAMP → the sanctioned epoch boundary wallClock (`new Date(wallClock.now())`),
+    // never a raw argless Date read — the two-clock law keeps the full receipt
+    // byte-reproducible under a fixed clock.
     const clock = context.clock ?? systemClock;
     const start = clock.now();
     try {
@@ -159,7 +161,7 @@ export const sceneCompileCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'scene.compile',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: {
         sceneId: cap.id,
         trackCount: (contract.tracks as readonly unknown[]).length,
@@ -209,7 +211,7 @@ export const sceneRenderCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'scene.render',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...cached, cached: true },
       };
     }
@@ -256,7 +258,7 @@ export const sceneRenderCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'scene.render',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...payload, cached: false },
       };
     } catch (err) {

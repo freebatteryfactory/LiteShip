@@ -8,7 +8,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult, type ContentAddress } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult, type ContentAddress } from '@czap/core';
 import type { CommandContext, HandledCommand } from '../registry.js';
 
 type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
@@ -64,7 +64,7 @@ function verdictResult(
   return {
     status: verdict === 'Verified' ? 'ok' : 'failed',
     command: 'verify',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     verdict,
     exitCode,
     payload,
@@ -72,7 +72,7 @@ function verdictResult(
 }
 
 function plainError(error: string): CapsuleCommandResult {
-  return { status: 'failed', command: 'verify', timestamp: new Date().toISOString(), exitCode: 1, payload: { error } };
+  return { status: 'failed', command: 'verify', timestamp: new Date(wallClock.now()).toISOString(), exitCode: 1, payload: { error } };
 }
 
 /** `verify <tarball> [--capsule <file>]` — emit one of four verdicts. */

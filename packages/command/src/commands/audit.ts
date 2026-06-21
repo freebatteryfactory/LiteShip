@@ -8,7 +8,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type AuditEngineFinding,
@@ -113,7 +113,7 @@ export const auditCommand: HandledCommand = {
     return {
       status: summary.errorCount > 0 ? 'failed' : 'ok',
       command: 'audit',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       exitCode: summary.errorCount > 0 ? 1 : 0,
       payload: {
         errorCount: summary.errorCount,

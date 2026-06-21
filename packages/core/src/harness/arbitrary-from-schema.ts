@@ -214,8 +214,13 @@ function _arbitraryForDeclaration(ast: SchemaAST.Declaration): fc.Arbitrary<unkn
   // with a sentinel of each recognised class. A genuinely-opaque user
   // declaration (`Schema.instanceOf(MyClass)`) rejects both sentinels
   // and falls through to the throw, so we never blanket-accept.
+  //
+  // The Date sentinel is a fixed-epoch instance (`new Date(0)`), NOT an argless
+  // `new Date()`: only its Date-instance-ness is probed, never its value, so a
+  // deterministic epoch keeps this builder pure (no ambient wall-clock read). It
+  // is a type sentinel, not a timestamp — wallClock would be the wrong boundary.
   if (_declarationAccepts(ast, new Uint8Array())) return fc.uint8Array();
-  if (_declarationAccepts(ast, new Date())) return fc.date();
+  if (_declarationAccepts(ast, new Date(0))) return fc.date();
 
   throw unsupportedSchema('Declaration', 'opaque user-defined type — only Date and Uint8Array are recognised');
 }

@@ -8,7 +8,7 @@
  * @module
  */
 import { Schema } from 'effect';
-import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
@@ -41,7 +41,7 @@ const AssetVerifyPayloadSchema = Schema.Struct({
 });
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
+  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
 }
 
 /** `asset analyze <id> --projection=<beat|onset|waveform>`. */
@@ -70,7 +70,7 @@ export const assetAnalyzeCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'asset.analyze',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...cached, cached: true } satisfies AssetAnalyzePayload,
       };
     }
@@ -93,7 +93,7 @@ export const assetAnalyzeCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'asset.analyze',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { ...computed, cached: false } satisfies AssetAnalyzePayload,
     };
   },
@@ -121,7 +121,7 @@ export const assetVerifyCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'asset.verify',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { assetId, invariantsChecked: 0 },
       };
     }
@@ -136,7 +136,7 @@ export const assetVerifyCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'asset.verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { assetId, invariantsChecked: 1 },
     };
   },

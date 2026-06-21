@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { IoError } from '@czap/error';
 
 /** Server identity advertised in the MCP initialize response. */
 export interface ServerInfo {
@@ -25,8 +26,18 @@ function readServerVersion(cwd: string = process.cwd()): string {
     // dist/server-info.js → ../package.json ; src/server-info.ts → ../package.json
     const moduleDir = dirname(fileURLToPath(import.meta.url));
     candidates.push(resolve(moduleDir, '../package.json'));
-  } catch {
-    // import.meta.url unavailable in odd contexts — fall through to cwd candidates.
+  } catch (err) {
+    // The ONLY designed failure here is `import.meta.url` not being a `file:`
+    // URL (a non-ESM-URL host context) — `fileURLToPath` rejects it with a
+    // TypeError / `ERR_INVALID_URL_SCHEME`. That is fully recoverable: the cwd
+    // candidates below find the manifest. The binding is CONSUMED by checking
+    // the error shape; any OTHER error type is a real fault we surface loud
+    // rather than mask behind the fallthrough.
+    const code = (err as NodeJS.ErrnoException).code;
+    const recoverable = err instanceof TypeError || code === 'ERR_INVALID_URL_SCHEME' || code === 'ERR_INVALID_URL';
+    if (!recoverable) {
+      throw IoError('mcp.serverInfo', 'failed to resolve module directory for version read', { cause: err });
+    }
   }
   candidates.push(resolve(cwd, 'packages/mcp-server/package.json'));
   candidates.push(resolve(cwd, 'package.json'));
