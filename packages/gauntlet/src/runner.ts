@@ -19,6 +19,7 @@
  */
 
 import type { Gate } from './gate.js';
+import type { RepoIR } from './repo-ir.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import { nodeContext } from './node-context.js';
 import { LITESHIP_ASSURANCE_MAP } from './assurance-map.js';
@@ -53,6 +54,14 @@ export interface RunGauntletOnRepoOptions {
   readonly repoRoot: string;
   /** Repo-relative glob patterns selecting the files the gates consider. */
   readonly globs: readonly string[];
+  /**
+   * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
+   * and never builds an IR; a host (the CLI, via `@czap/audit`'s `ts.Program`)
+   * builds it and threads it here, where it lands on the {@link GateContext} for
+   * an IR-fold gate to read. Omit it (the lean path: `czap check` / MCP) and the
+   * regex gates run unchanged.
+   */
+  readonly ir?: RepoIR;
 }
 
 /**
@@ -68,7 +77,7 @@ export function runGauntletOnRepo(
   opts: RunGauntletOnRepoOptions,
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
-  return runGates(gates, nodeContext(opts.repoRoot, opts.globs), runOpts);
+  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir), runOpts);
 }
 
 /** The default scope: every package's TypeScript source. */
@@ -89,19 +98,27 @@ export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.t
  * per-gate by ruleId in {@link runGates}. A boundary waiver that matches nothing
  * goes stale (warning); one whose `expires` is past `now` re-reds and blocks.
  *
+ * The optional `ir` is the INJECTED repo-IR (Slice B). The LEAN path (`czap
+ * check` / MCP — `@czap/command/host`) calls this with NO `ir`: the regex gates
+ * run unchanged and an IR-fold gate (Step 3) folds only when an IR is present.
+ * The HOST path (the CLI/scripts, where `@czap/audit` is available) builds the
+ * IR via `buildRepoIR` and threads it here, landing it on every gate's context.
+ *
  * @param repoRoot Absolute root the gates resolve against.
  * @param now      The injected clock for waiver-expiry evaluation (REQUIRED — the
  *                 caller owns the date so the verdict is reproducible).
  * @param globs    The file scope (defaults to every package's source).
+ * @param ir       Optional pre-built repo-IR to inject (the host path).
  */
 export function litelaunchGauntlet(
   repoRoot: string,
   now: Date,
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
+  ir?: RepoIR,
 ): GauntletResult {
   return runGauntletOnRepo(
     LITESHIP_GATES,
-    { repoRoot, globs },
+    { repoRoot, globs, ...(ir !== undefined ? { ir } : {}) },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
   );
 }

@@ -40,7 +40,9 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@czap/canonical": "workspace:*",
     "@czap/error": "workspace:*",
+    "@czap/gauntlet": "workspace:*",
     "fast-glob": "^3.3.3",
     "typescript": "^5.9.3"
   },

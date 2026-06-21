@@ -92,15 +92,24 @@ describe('B5b — no package-graph poisoning', () => {
     expect(importers.map(rel)).toEqual([]);
   });
 
-  it('@czap/audit keeps zero NON-FOUNDATIONAL @czap edges (D9b standalone law)', () => {
+  it('@czap/audit imports only the blessed standalone leaves (D9b + Slice B law)', () => {
     // D9b: the audit engine stays downstream-installable — it must not pull the
-    // heavy monorepo runtime. The ONE blessed edge is @czap/error: a published,
-    // zero-dependency foundational leaf (the error-algebra analogue of @czap/_spine)
-    // that installs standalone from npm exactly like a third-party dep. Any OTHER
-    // @czap import would poison the package graph and is forbidden.
-    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) =>
-      /from\s+['"]@czap\/(?!error['"])/.test(readFileSync(f, 'utf8')),
-    );
+    // heavy monorepo runtime. The blessed edges are STANDALONE leaves that each
+    // install from npm exactly like a third-party dep, so they do not poison the
+    // package graph:
+    //   • @czap/error    — the zero-dep error algebra (the @czap/_spine analogue);
+    //   • @czap/gauntlet — Slice B (B1): the lean rigor engine DEFINES the RepoIR
+    //     interface; audit is the HOST that BUILDS it (buildRepoIR). Gauntlet deps
+    //     only @czap/error + fast-glob, so audit → gauntlet is acyclic;
+    //   • @czap/canonical — the blake3 content-address kernel for per-file digests
+    //     (deps only @czap/error + @noble/hashes), acyclic.
+    // Any OTHER @czap import would poison the package graph and is forbidden.
+    const ALLOWED = /from\s+['"]@czap\/(?:error|gauntlet|canonical)['"]/;
+    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) => {
+      const text = readFileSync(f, 'utf8');
+      const lines = text.split('\n').filter((l) => /from\s+['"]@czap\//.test(l));
+      return lines.some((l) => !ALLOWED.test(l));
+    });
     expect(importers.map(rel)).toEqual([]);
   });
 });

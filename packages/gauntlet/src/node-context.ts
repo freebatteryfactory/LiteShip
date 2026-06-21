@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import type { GateContext } from './gate.js';
+import type { RepoIR } from './repo-ir.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -33,10 +34,17 @@ import type { GateContext } from './gate.js';
  *   the file is absent (ENOENT only — any other error rethrows; no silent catch).
  * - `repoRoot` is returned verbatim.
  *
+ * The optional `ir` is the INJECTED repo-IR capability (Slice B): a host (the
+ * CLI, via `@czap/audit`'s `ts.Program`) builds it and threads it through so an
+ * IR-fold gate can read `context.ir`. The gauntlet stays lean — it RECEIVES the
+ * IR, never builds one. When omitted, `ir` is absent and regex gates run
+ * unchanged (back-compat).
+ *
  * @param repoRoot Absolute root the gate's paths resolve against.
  * @param globs Repo-relative glob patterns selecting the gate's file scope.
+ * @param ir Optional pre-built repo-IR to inject onto the context.
  */
-export function nodeContext(repoRoot: string, globs: readonly string[]): GateContext {
+export function nodeContext(repoRoot: string, globs: readonly string[], ir?: RepoIR): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
   // count as repo source.
@@ -60,5 +68,8 @@ export function nodeContext(repoRoot: string, globs: readonly string[]): GateCon
         throw error;
       }
     },
+    // Thread the injected IR through; omit the key entirely when none was
+    // supplied so the context shape stays minimal (an IR-free run is identical).
+    ...(ir !== undefined ? { ir } : {}),
   };
 }

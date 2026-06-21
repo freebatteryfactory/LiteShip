@@ -351,9 +351,15 @@ importers:
 
   packages/audit:
     dependencies:
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@czap/error':
         specifier: workspace:*
         version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -387,6 +393,9 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       '@czap/scene':
         specifier: workspace:*
         version: link:../scene

@@ -174,7 +174,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // registry, assets (asset-analyze), and @czap/audit (CUT D9b-2: the CLI is
     // the sole adapter that wires the runAudit capability for `czap audit`). The
     // cli <-> mcp-server relationship is a dynamic import not tracked here.
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit'],
+    // Slice B (B1): @czap/gauntlet — the CLI is the HOST that builds the repo-IR
+    // (via @czap/audit) and injects it into litelaunchGauntlet, keeping the lean
+    // @czap/command/MCP check path IR-free. A direct edge to the standalone
+    // gauntlet leaf (no cycle).
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit', '@czap/gauntlet'],
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {
@@ -218,10 +222,15 @@ export const packageTopology: Record<string, PackagePolicy> = {
   },
   '@czap/audit': {
     // CUT D9b-1: the packageable, downstream-installable audit engine. Operates
-    // on a repo as a file/AST corpus (typescript + fast-glob). Imports only the
-    // foundational @czap/error algebra (layering-exempt, see foundationalPackages);
-    // otherwise a standalone leaf consumed by @czap/cli (D9b-2) and downstream.
-    allowedInternalImports: [],
+    // on a repo as a file/AST corpus (typescript + fast-glob). Imports the
+    // foundational @czap/error algebra (layering-exempt, see foundationalPackages).
+    // Slice B (B1): audit is the HOST that materializes the gauntlet's RepoIR
+    // (buildRepoIR) — it imports @czap/gauntlet (the lean engine DEFINES the
+    // RepoIR interface; audit BUILDS it) and @czap/canonical (the blake3 content
+    // -address kernel for per-file digests). Both are standalone leaves, so the
+    // audit → gauntlet / audit → canonical edges are acyclic (gauntlet deps only
+    // @czap/error + fast-glob; canonical deps only @czap/error + @noble/hashes).
+    allowedInternalImports: ['@czap/canonical', '@czap/gauntlet'],
     kind: 'standalone',
   },
   '@czap/gauntlet': {

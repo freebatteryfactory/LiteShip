@@ -12,47 +12,14 @@
 
 import ts from 'typescript';
 import { resolve } from 'node:path';
-import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+// CUT B5b — one slash-normalize home. Slice B — the type-directed `ts.Program`
+// config (WORKSPACE_ALIASES + CompilerOptions) is now sourced from @czap/audit
+// so there is ONE config shared by the capsule detector and the repo-IR builder,
+// never a divergent fork. WORKSPACE_ALIASES is re-exported below so the existing
+// drift test (tests/unit/capsule-detector.test.ts) keeps pinning it.
+import { normalizeRepoPath, WORKSPACE_ALIASES, createTypeDirectedProgram } from '@czap/audit';
 
-/**
- * Workspace `@czap/*` -> source-tree path map. Mirrors
- * Config.toTestAliases so the type checker resolves cross-package
- * imports to source `.ts` files, not built `.d.ts` files. Without this,
- * factory return types like `CapsuleDef<'cachedProjection', ...>` collapse
- * to `any` (because `dist/index.d.ts` re-imports `@czap/core` and the
- * checker has no resolver for that bare specifier).
- */
-export const WORKSPACE_ALIASES: Readonly<Record<string, readonly string[]>> = {
-  '@czap/canonical': ['packages/canonical/src/index.ts'],
-  '@czap/genui': ['packages/genui/src/index.ts'],
-  '@czap/core/testing': ['packages/core/src/testing.ts'],
-  '@czap/core/harness': ['packages/core/src/harness/index.ts'],
-  '@czap/core': ['packages/core/src/index.ts'],
-  '@czap/quantizer/testing': ['packages/quantizer/src/testing.ts'],
-  '@czap/quantizer': ['packages/quantizer/src/index.ts'],
-  '@czap/compiler': ['packages/compiler/src/index.ts'],
-  '@czap/web/lite': ['packages/web/src/lite.ts'],
-  '@czap/web': ['packages/web/src/index.ts'],
-  '@czap/detect': ['packages/detect/src/index.ts'],
-  '@czap/vite/html-transform': ['packages/vite/src/html-transform.ts'],
-  '@czap/vite': ['packages/vite/src/index.ts'],
-  '@czap/astro/runtime': ['packages/astro/src/runtime/index.ts'],
-  '@czap/astro': ['packages/astro/src/index.ts'],
-  '@czap/stage/ffmpeg': ['packages/stage/src/ffmpeg.ts'],
-  '@czap/stage': ['packages/stage/src/index.ts'],
-  '@czap/remotion': ['packages/remotion/src/index.ts'],
-  '@czap/scene/dev': ['packages/scene/src/dev/server.ts'],
-  '@czap/scene': ['packages/scene/src/index.ts'],
-  '@czap/assets': ['packages/assets/src/index.ts'],
-  '@czap/audit': ['packages/audit/src/index.ts'],
-  '@czap/cli': ['packages/cli/src/index.ts'],
-  '@czap/mcp-server': ['packages/mcp-server/src/index.ts'],
-  '@czap/edge': ['packages/edge/src/index.ts'],
-  '@czap/cloudflare/testing': ['packages/cloudflare/src/testing.ts'],
-  '@czap/cloudflare': ['packages/cloudflare/src/index.ts'],
-  '@czap/worker': ['packages/worker/src/index.ts'],
-  '@czap/_spine': ['packages/_spine/index.ts'],
-};
+export { WORKSPACE_ALIASES };
 
 /** A single resolved capsule call site. */
 export interface DetectedCall {
@@ -110,38 +77,11 @@ const CAPSULE_TYPE_NAMES = new Set(['CapsuleContract', 'CapsuleDef']);
 
 /**
  * Build a TypeScript program covering enough of the repo to resolve
- * capsule contract return types across factory wrappers.
+ * capsule contract return types across factory wrappers. Delegates to the
+ * shared `@czap/audit` config (the ONE type-directed program substrate).
  */
 function createProgram(files: readonly string[]): ts.Program {
-  const baseUrl = process.cwd();
-  // Materialize relative-path alias map for the TS resolver.
-  const paths: Record<string, string[]> = {};
-  for (const [k, vs] of Object.entries(WORKSPACE_ALIASES)) {
-    paths[k] = vs.map((v) => `./${v}`);
-  }
-  const options: ts.CompilerOptions = {
-    target: ts.ScriptTarget.ES2022,
-    module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
-    lib: ['lib.es2022.d.ts', 'lib.dom.d.ts', 'lib.dom.iterable.d.ts'],
-    strict: true,
-    skipLibCheck: true,
-    skipDefaultLibCheck: true,
-    esModuleInterop: true,
-    isolatedModules: true,
-    noEmit: true,
-    allowJs: false,
-    resolveJsonModule: true,
-    noUncheckedIndexedAccess: true,
-    types: ['node'],
-    baseUrl,
-    paths,
-  };
-  // createProgram resolves transitively imported files automatically.
-  return ts.createProgram({
-    rootNames: files.map((f) => resolve(f)),
-    options,
-  });
+  return createTypeDirectedProgram(files, process.cwd());
 }
 
 /**
