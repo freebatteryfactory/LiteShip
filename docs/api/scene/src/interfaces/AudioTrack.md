@@ -18,6 +18,14 @@ Audio track — plays an asset with optional mix metadata.
 
 ## Properties
 
+### \_tag
+
+> `readonly` **\_tag**: `"audio"`
+
+Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
+
+***
+
 ### envelope?
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
@@ -41,14 +49,6 @@ Defined in: [scene/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/m
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
 
 Defined in: [scene/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L66)
-
-***
-
-### kind
-
-> `readonly` **kind**: `"audio"`
-
-Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
 
 ***
 

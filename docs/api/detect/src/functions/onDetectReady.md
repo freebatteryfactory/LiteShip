@@ -8,7 +8,7 @@
 
 > **onDetectReady**(`callback`): [`Disposer`](../type-aliases/Disposer.md)
 
-Defined in: detect/src/detect-ready.ts:54
+Defined in: [detect/src/detect-ready.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect-ready.ts#L54)
 
 Subscribe to the `czap:detect-ready` event on `document`, returning a
 [Disposer](../type-aliases/Disposer.md) that removes the listener.

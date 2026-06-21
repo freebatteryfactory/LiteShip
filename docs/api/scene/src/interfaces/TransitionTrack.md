@@ -18,6 +18,14 @@ Transition track — blends two video tracks across a frame window.
 
 ## Properties
 
+### \_tag
+
+> `readonly` **\_tag**: `"transition"`
+
+Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L88)
+
+***
+
 ### between
 
 > `readonly` **between**: readonly \[[`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>, [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>\]
@@ -49,14 +57,6 @@ Defined in: [scene/src/contract.ts:90](https://github.com/heyoub/LiteShip/blob/m
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"transition"`\>
 
 Defined in: [scene/src/contract.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L89)
-
-***
-
-### kind
-
-> `readonly` **kind**: `"transition"`
-
-Defined in: [scene/src/contract.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L88)
 
 ***
 

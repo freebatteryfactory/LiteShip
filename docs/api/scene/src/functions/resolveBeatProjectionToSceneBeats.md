@@ -14,7 +14,7 @@ Resolve a raw beat-marker projection into scene-ready beat components.
 
 Each sample index becomes a millisecond timestamp via
 `timeMs = sampleIndex / sampleRate * 1000`. Order and count are preserved
-(one component per input beat), every marker is tagged `kind: 'beat'`, and
+(one component per input beat), every marker is tagged `_tag: 'beat'`, and
 `strength` is stamped deterministically (defaults to 1). When `anchorTrackId`
 is supplied it is carried onto every marker; otherwise the field is omitted.
 

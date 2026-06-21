@@ -18,6 +18,14 @@ Video track — renders a quantizer-driven source for its frame range.
 
 ## Properties
 
+### \_tag
+
+> `readonly` **\_tag**: `"video"`
+
+Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L43)
+
+***
+
 ### envelope?
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
@@ -41,14 +49,6 @@ Defined in: [scene/src/contract.ts:45](https://github.com/heyoub/LiteShip/blob/m
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
 
 Defined in: [scene/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L44)
-
-***
-
-### kind
-
-> `readonly` **kind**: `"video"`
-
-Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L43)
 
 ***
 
