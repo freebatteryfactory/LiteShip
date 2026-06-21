@@ -14,7 +14,7 @@
  */
 
 /** One banned-pattern rule: a regex scoped to `dirs`, minus `exclude` prefixes. */
-export interface Invariant {
+export interface CheckInvariantEntry {
   readonly name: string;
   readonly pattern: RegExp;
   readonly dirs: readonly string[];
@@ -40,7 +40,7 @@ const INVARIANT_GATE_FILES: readonly string[] = [
 ];
 
 /** The fast-lane invariant rule set (repo-local; imported by the CLI scan + audit report). */
-export const INVARIANTS: readonly Invariant[] = [
+export const INVARIANTS: readonly CheckInvariantEntry[] = [
   {
     name: 'NO_REQUIRE',
     pattern: /\brequire\s*\(/,

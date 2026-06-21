@@ -48,7 +48,20 @@ export type ThresholdValue = number & { readonly [ThresholdValueBrand]: true };
 /** Branded state name -- e.g. 'mobile', 'tablet', 'desktop' */
 export type StateName<S extends string = string> = S & { readonly [StateNameBrand]: S };
 
-/** Content-addressed hash (FNV-1a, fnv1a:hex format) */
+/**
+ * Content-addressed hash (FNV-1a, fnv1a:hex format).
+ *
+ * APEX of THREE intentional homes (ADR-0012) — do NOT merge them. This spine
+ * type is the strictest: a symbol-brand, so a raw `fnv1a:...` string cannot be
+ * typed as ContentAddress without a validating constructor. `@czap/core` and
+ * `@czap/genui` re-anchor this brand (`type ContentAddress = _ContentAddress`)
+ * with validating constructors; `@czap/canonical` is intentionally zero-dep
+ * (only `@czap/error`) and uses a `` `fnv1a:${string}` `` template-literal brand
+ * instead. Merging the homes would either break canonical's zero-dep property or
+ * weaken this symbol-brand to a template literal. The three are parity-guarded at
+ * runtime by tests/unit/core/brand-validators.test.ts ("ContentAddress three-home
+ * parity drift-guard").
+ */
 export type ContentAddress = string & { readonly [ContentAddressBrand]: true };
 
 /**

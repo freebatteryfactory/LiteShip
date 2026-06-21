@@ -29,7 +29,7 @@ import {
   type CheckInvariantsPayload,
   type CheckInvariantsSummary,
   type CommandContext,
-  type Invariant,
+  type CheckInvariantEntry,
   type InvariantViolation,
   type InvariantViolationGroup,
 } from '@czap/command';
@@ -88,7 +88,7 @@ function isExcluded(relativePath: string, excludes: readonly string[] | undefine
  * Every banned-pattern violation of `invariant` under `root`. A repo-relative,
  * slash-normalized `file` + 1-based `line` + trimmed `content` per hit.
  */
-export function findViolations(invariant: Invariant, root: string): InvariantViolation[] {
+export function findViolations(invariant: CheckInvariantEntry, root: string): InvariantViolation[] {
   const violations: InvariantViolation[] = [];
 
   for (const dir of invariant.dirs) {

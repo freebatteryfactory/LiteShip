@@ -9,9 +9,13 @@
  * and numeric guards may change, but a value that genuinely lives in the brand's
  * domain must always be accepted and one outside it must always throw.
  *
- * ContentAddress / IntegrityDigest are duplicated across `@czap/core`,
- * `@czap/canonical`, and `@czap/genui` (each validates locally to avoid a
- * dependency cycle); the parity tests below pin that the three agree.
+ * ContentAddress / IntegrityDigest live in THREE intentional homes across
+ * `@czap/core`, `@czap/canonical`, and `@czap/genui` — a deliberate layering
+ * (ADR-0012), NOT accidental duplication. The three-home parity drift-guard
+ * below pins that they agree at runtime so the divergence can't be naively
+ * "unified" away; see the long comment above that `describe` block for the
+ * rationale (spine = strict symbol-brand apex; core/genui re-anchor; canonical
+ * = zero-dep template literal) before touching it.
  */
 
 import { describe, test, expect } from 'vitest';
@@ -25,12 +29,19 @@ import {
   IntegrityDigest,
   TokenRef,
   Millis,
+  fnv1a as coreFnv1a,
+  fnv1aBytes as coreFnv1aBytes,
 } from '@czap/core';
 import {
   isContentAddress as coreIsContentAddress,
   isIntegrityDigest as coreIsIntegrityDigest,
 } from '../../../packages/core/src/brands.js';
-import { ContentAddress as CanonAddr, IntegrityDigest as CanonDigest } from '@czap/canonical';
+import {
+  ContentAddress as CanonAddr,
+  IntegrityDigest as CanonDigest,
+  fnv1a as canonFnv1a,
+  fnv1aBytes as canonFnv1aBytes,
+} from '@czap/canonical';
 import { ContentAddress as GenuiAddr } from '@czap/genui';
 
 /** Assert that running `fn` throws a `ValidationError` from `@czap/error`. */
@@ -118,51 +129,180 @@ describe('IntegrityDigest', () => {
 });
 
 // ===========================================================================
-// Cross-package parity: the duplicated checks must agree on every input.
+// Cross-package parity drift-guard — THE THREE-HOME INVARIANT (ADR-0012).
+//
+// `ContentAddress` has THREE intentional homes that must NOT be merged:
+//   • `@czap/_spine` — the APEX brand: `string & { [ContentAddressBrand]: true }`
+//     (symbol-branded; strictest — a raw `fnv1a:...` string cannot be typed as
+//     ContentAddress without going through a validating constructor).
+//   • `@czap/core` / `@czap/genui` — RE-ANCHOR the spine brand
+//     (`export type ContentAddress = _ContentAddress`) with validating
+//     constructors (isContentAddress, then a checked cast).
+//   • `@czap/canonical` — intentionally ZERO-DEP (only `@czap/error`); uses a
+//     `` `fnv1a:${string}` `` template-literal brand whose constructor returns the
+//     validated string cast-free.
+//
+// The divergence is DELIBERATE: merging the homes would either break canonical's
+// zero-dep property (the bytes kernel must carry no spine peer-dependency) or
+// weaken the apex symbol-brand down to a template literal. They are kept honest
+// SOLELY by this drift-guard, which pins three LAWS at RUNTIME — do NOT "unify"
+// the homes to silence it.
+//   (a) ACCEPT parity   — all three accept every valid fnv1a:<8 hex> and return
+//                         the BYTE-IDENTICAL string.
+//   (b) REJECT parity   — all three reject every malformed input identically
+//                         (generator covers the near-miss malformed space).
+//   (c) PRODUCER parity — core's fnv1a/fnv1aBytes (which WRAP canonical's) return
+//                         byte-identical addresses to canonical's, pinning the
+//                         wrap stays faithful; golden vectors are pinned in
+//                         tests/unit/canonical/golden-vectors.test.ts (referenced,
+//                         not re-owned here).
 // ===========================================================================
-describe('ContentAddress/IntegrityDigest cross-package parity', () => {
-  test('core, canonical, genui ContentAddress agree (accept + reject)', () => {
+
+/** The three ContentAddress smart-constructors under parity (core / canonical / genui). */
+const contentAddressHomes = [ContentAddress, CanonAddr, GenuiAddr] as const;
+
+/**
+ * Malformed-ContentAddress generator. `fc.string()` almost never produces the
+ * NEAR-MISS shapes that actually exercise the validators (uppercase hex, 7/9-hex
+ * widths, wrong prefix), so we hand-build the malformed space and union it with
+ * arbitrary strings as a backstop. Every branch here is NOT `fnv1a:<8 lowercase
+ * hex>`, so every home must reject it.
+ */
+const malformedAddress: fc.Arbitrary<string> = fc.oneof(
+  // wrong prefix, otherwise-valid 8 hex body
+  fc.tuple(fc.constantFrom('sha256', 'blake3', 'fnv1', 'fnv1a2', '', 'FNV1A'), hex8).map(
+    ([p, h]) => `${p}:${h}`,
+  ),
+  // right prefix, wrong hex width (anything but 8)
+  fc
+    .tuple(fc.integer({ min: 0, max: 16 }).filter((n) => n !== 8), fc.constantFrom('0', 'a', 'f'))
+    .map(([n, c]) => `fnv1a:${c.repeat(n)}`),
+  // right prefix + width, but uppercase / non-hex characters in the body
+  fc.stringMatching(/^[0-9A-Fg-z]{8}$/).filter((s) => /[A-Fg-z]/.test(s)).map((b) => `fnv1a:${b}`),
+  // structural degenerates
+  fc.constantFrom('', 'fnv1a:', 'fnv1a', 'fnv1a:deadbeef ', ' fnv1a:deadbeef', 'deadbeef'),
+  // arbitrary-string backstop (filtered so a fluke valid address can't sneak in)
+  fc.string().filter((s) => !/^fnv1a:[0-9a-f]{8}$/.test(s)),
+);
+
+/** Run `ctor` on `v`; report whether it accepted (and what it returned) or threw. */
+function verdictOf(
+  ctor: (v: string) => string,
+  v: string,
+): { kind: 'ok'; value: string } | { kind: 'throw' } {
+  try {
+    return { kind: 'ok', value: ctor(v) };
+  } catch {
+    return { kind: 'throw' };
+  }
+}
+
+describe('ContentAddress three-home parity drift-guard (ADR-0012)', () => {
+  test('(a) ACCEPT parity: all three accept fnv1a:<8 hex> and return byte-identical strings', () => {
     fc.assert(
-      fc.property(fc.oneof(hex8.map((h) => `fnv1a:${h}`), fc.string()), (v) => {
-        const results = [
-          () => ContentAddress(v),
-          () => CanonAddr(v),
-          () => GenuiAddr(v),
-        ].map((f) => {
-          try {
-            f();
-            return 'ok';
-          } catch {
-            return 'throw';
-          }
-        });
-        expect(new Set(results).size).toBe(1);
+      fc.property(hex8, (h) => {
+        const input = `fnv1a:${h}`;
+        const outputs = contentAddressHomes.map((home) => home(input));
+        // Every home returns, and returns the exact same string bytes as the input.
+        for (const out of outputs) expect(out).toBe(input);
+        // Byte-identical across homes (redundant with the above, but pins the LAW directly).
+        expect(new Set(outputs).size).toBe(1);
       }),
     );
   });
 
-  test('core and canonical IntegrityDigest agree (accept + reject)', () => {
+  test('(b) REJECT parity: all three reject every malformed input identically', () => {
+    fc.assert(
+      fc.property(malformedAddress, (bad) => {
+        const verdicts = contentAddressHomes.map((home) => verdictOf(home, bad));
+        // All three must throw on malformed input — no home may be more permissive.
+        for (const verdict of verdicts) {
+          expect(verdict.kind).toBe('throw');
+        }
+      }),
+    );
+  });
+
+  test('(b′) ACCEPT/REJECT verdict parity over the whole input space (valid ∪ malformed)', () => {
+    fc.assert(
+      fc.property(fc.oneof(hex8.map((h) => `fnv1a:${h}`), malformedAddress), (v) => {
+        const verdicts = contentAddressHomes.map((home) => verdictOf(home, v));
+        // Identical accept/reject verdict...
+        const kinds = new Set(verdicts.map((r) => r.kind));
+        expect(kinds.size).toBe(1);
+        // ...and when accepted, identical returned bytes.
+        const accepted = verdicts.filter(
+          (r): r is { kind: 'ok'; value: string } => r.kind === 'ok',
+        );
+        if (accepted.length > 0) {
+          expect(new Set(accepted.map((r) => r.value)).size).toBe(1);
+        }
+      }),
+    );
+  });
+
+  test('(c) PRODUCER parity: core fnv1a/fnv1aBytes wrap canonical faithfully (byte-identical)', () => {
+    // String producer.
+    fc.assert(
+      fc.property(fc.string(), (s) => {
+        const core = coreFnv1a(s);
+        const canon = canonFnv1a(s);
+        expect(core).toBe(canon);
+        // The producer output must itself satisfy every home's constructor.
+        for (const home of contentAddressHomes) expect(home(core)).toBe(core);
+      }),
+    );
+    // Bytes producer.
+    fc.assert(
+      fc.property(fc.uint8Array(), (bytes) => {
+        const core = coreFnv1aBytes(bytes);
+        const canon = canonFnv1aBytes(bytes);
+        expect(core).toBe(canon);
+        for (const home of contentAddressHomes) expect(home(core)).toBe(core);
+      }),
+    );
+  });
+});
+
+// ===========================================================================
+// IntegrityDigest cross-package parity (core ↔ canonical re-anchor agreement).
+// ===========================================================================
+describe('IntegrityDigest cross-package parity', () => {
+  /**
+   * Malformed-IntegrityDigest generator (near-miss space): unsanctioned algos,
+   * wrong hex width, uppercase. Every branch is NOT `(sha256|blake3):<64 hex>`.
+   */
+  const malformedDigest: fc.Arbitrary<string> = fc.oneof(
+    fc.tuple(fc.constantFrom('sha512', 'sha1', 'md5', 'blake2', '', 'SHA256'), hex64).map(
+      ([algo, h]) => `${algo}:${h}`,
+    ),
+    fc
+      .tuple(
+        fc.constantFrom('sha256', 'blake3'),
+        fc.integer({ min: 0, max: 80 }).filter((n) => n !== 64),
+      )
+      .map(([algo, n]) => `${algo}:${'a'.repeat(n)}`),
+    fc.stringMatching(/^[0-9A-F]{64}$/).map((b) => `sha256:${b}`),
+    fc.constantFrom('', 'sha256:', 'fnv1a:deadbeef'),
+    fc.string().filter((s) => !/^(?:sha256|blake3):[0-9a-f]{64}$/.test(s)),
+  );
+
+  test('core and canonical IntegrityDigest agree (accept + reject + identical bytes)', () => {
     fc.assert(
       fc.property(
-        fc.oneof(hex64.map((h) => `sha256:${h}`), fc.string()),
+        fc.oneof(
+          hex64.map((h) => `sha256:${h}`),
+          hex64.map((h) => `blake3:${h}`),
+          malformedDigest,
+        ),
         (v) => {
-          const a = (() => {
-            try {
-              IntegrityDigest(v);
-              return 'ok';
-            } catch {
-              return 'throw';
-            }
-          })();
-          const b = (() => {
-            try {
-              CanonDigest(v);
-              return 'ok';
-            } catch {
-              return 'throw';
-            }
-          })();
-          expect(a).toBe(b);
+          const a = verdictOf(IntegrityDigest as (s: string) => string, v);
+          const b = verdictOf(CanonDigest as (s: string) => string, v);
+          expect(a.kind).toBe(b.kind);
+          if (a.kind === 'ok' && b.kind === 'ok') {
+            expect(a.value).toBe(b.value);
+            expect(a.value).toBe(v);
+          }
         },
       ),
     );

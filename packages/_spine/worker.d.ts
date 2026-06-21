@@ -24,16 +24,27 @@ interface AddQuantizerMessage {
   readonly name: string;
   readonly boundaryId: ContentAddress;
   readonly states: readonly StateName[];
-  readonly thresholds: readonly number[];
+  readonly thresholds: Float64Array | readonly number[];
 }
 
 interface BootstrapQuantizerRegistration {
   readonly name: string;
   readonly boundaryId: ContentAddress;
   readonly states: readonly StateName[];
-  readonly thresholds: readonly number[];
+  readonly thresholds: Float64Array | readonly number[];
   readonly initialState?: StateName;
   readonly blendWeights?: Record<string, number>;
+}
+
+/**
+ * A single resolved discrete-state entry in a bootstrap/apply message.
+ * `generation` increases monotonically so receivers can discard stale
+ * out-of-order deliveries.
+ */
+interface ResolvedStateEntry {
+  readonly name: string;
+  readonly state: StateName;
+  readonly generation: number;
 }
 
 interface StartupComputePacket {
@@ -50,6 +61,18 @@ interface BootstrapQuantizersMessage {
 interface StartupComputeMessage {
   readonly type: 'startup-compute';
   readonly packet: StartupComputePacket;
+}
+
+interface BootstrapResolvedStateMessage {
+  readonly type: 'bootstrap-resolved-state';
+  readonly states: readonly ResolvedStateEntry[];
+  readonly ack?: boolean;
+}
+
+interface ApplyResolvedStateMessage {
+  readonly type: 'apply-resolved-state';
+  readonly states: readonly ResolvedStateEntry[];
+  readonly ack?: boolean;
 }
 
 interface RemoveQuantizerMessage {
@@ -124,6 +147,8 @@ export type ToWorkerMessage =
   | AddQuantizerMessage
   | BootstrapQuantizersMessage
   | StartupComputeMessage
+  | BootstrapResolvedStateMessage
+  | ApplyResolvedStateMessage
   | ApplyUpdatesMessage
   | RemoveQuantizerMessage
   | EvaluateMessage
@@ -142,6 +167,17 @@ interface ReadyMessage {
 interface StateMessage {
   readonly type: 'state';
   readonly state: CompositeState;
+  readonly resolvedStateGenerations?: Record<string, number>;
+}
+
+interface ResolvedStateAckMessage {
+  readonly type: 'resolved-state-ack';
+  readonly generation: number;
+  readonly states: readonly {
+    readonly name: string;
+    readonly state: StateName;
+  }[];
+  readonly additionalOutputsChanged: boolean;
 }
 
 interface FrameMessage {
@@ -176,9 +212,18 @@ interface MetricsMessage {
   readonly budgetUsed: number;
 }
 
+/**
+ * The performance sample delivered to {@link CompositorWorkerShape.onMetrics}
+ * listeners — a single record reusing the wire {@link MetricsMessage} shape
+ * (not positional `(fps, budgetUsed)` arguments), so a future metric can be
+ * added without changing the callback's arity (F1).
+ */
+export type WorkerMetrics = MetricsMessage;
+
 export type FromWorkerMessage =
   | ReadyMessage
   | StateMessage
+  | ResolvedStateAckMessage
   | FrameMessage
   | RenderCompleteMessage
   | ErrorMessage
@@ -196,6 +241,7 @@ export declare namespace Messages {
   export type Update = WorkerUpdate;
   export type BootstrapRegistration = BootstrapQuantizerRegistration;
   export type StartupPacket = StartupComputePacket;
+  export type ResolvedState = ResolvedStateEntry;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -205,17 +251,28 @@ export declare namespace Messages {
 export interface SPSCRingBufferShape {
   push(data: Float64Array): boolean;
   pop(out: Float64Array): boolean;
+  /** Number of slots in the ring buffer. */
+  readonly capacity: number;
+  /** Current number of occupied slots. */
+  readonly count: number;
+}
+
+/**
+ * A matched producer/consumer pair sharing one `SharedArrayBuffer`,
+ * returned by {@link SPSCRing.createPair}. Named (rather than an inline
+ * anonymous object) so the pair shape is a single referenceable type.
+ */
+export interface SPSCRingPair {
+  /** The shared buffer carrying the control header + data slots. Transfer this to the Worker. */
+  readonly buffer: SharedArrayBuffer;
+  /** Producer-side handle (push-only). */
+  readonly producer: SPSCRingBufferShape;
+  /** Consumer-side handle (pop-only). */
+  readonly consumer: SPSCRingBufferShape;
 }
 
 export declare const SPSCRing: {
-  createPair(
-    slotCount: number,
-    slotSize: number,
-  ): {
-    readonly buffer: SharedArrayBuffer;
-    producer: SPSCRingBufferShape;
-    consumer: SPSCRingBufferShape;
-  };
+  createPair(slotCount: number, slotSize: number): SPSCRingPair;
   /** Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws). */
   attachProducer(sab: SharedArrayBuffer, slotCount?: number, slotSize?: number): SPSCRingBufferShape;
   /** Ring geometry rides in the buffer header; explicit slotCount/slotSize are validated against it (a mismatch throws). */
@@ -224,6 +281,7 @@ export declare const SPSCRing: {
 
 export declare namespace SPSCRing {
   export type Shape = SPSCRingBufferShape;
+  export type Pair = SPSCRingPair;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -237,6 +295,33 @@ export type CompositorWorkerStartupStage =
 
 export interface CompositorWorkerStartupTelemetry {
   recordStage(stage: CompositorWorkerStartupStage, durationNs: number): void;
+  /** Fired when the worker acknowledges the resolved-state bootstrap. */
+  onResolvedStateSettled?(states: readonly ResolvedStateEntry[]): void;
+}
+
+/**
+ * A `CompositeState` snapshot emitted by the compositor worker, optionally
+ * annotated with per-quantizer generation counters so receivers can drop
+ * stale out-of-order messages.
+ */
+export type CompositorWorkerState = CompositeState & {
+  readonly resolvedStateGenerations?: Record<string, number>;
+};
+
+/**
+ * Acknowledgement payload emitted by the worker after it applies a
+ * resolved-state update from the main thread.
+ */
+export interface ResolvedStateAckPayload {
+  /** Generation counter the worker acknowledges. */
+  readonly generation: number;
+  /** The state transitions the worker actually observed. */
+  readonly states: readonly {
+    readonly name: string;
+    readonly state: StateName;
+  }[];
+  /** Whether non-discrete outputs (blend, CSS, etc.) changed in this round. */
+  readonly additionalOutputsChanged: boolean;
 }
 
 /**
@@ -262,16 +347,29 @@ export interface CompositorWorkerShape {
     name: string,
     boundary: {
       readonly id: ContentAddress;
-      readonly states: readonly StateName[];
+      /** Plain strings — branded to StateName internally; both overloads share the unbranded surface (F2). */
+      readonly states: readonly string[];
       readonly thresholds: readonly number[];
     },
   ): void;
   removeQuantizer(name: string): void;
   evaluate(name: string, value: number): void;
   setBlendWeights(name: string, weights: Record<string, number>): void;
+  /** Seed resolved quantizer state into the worker without raw threshold evaluation. */
+  bootstrapResolvedState(states: readonly ResolvedStateEntry[]): void;
+  /** Mirror resolved quantizer state updates into the worker without raw threshold evaluation. */
+  applyResolvedState(states: readonly ResolvedStateEntry[]): void;
   requestCompute(): void;
-  onState(callback: (state: CompositeState) => void): () => void;
-  onMetrics(callback: (fps: number, budgetUsed: number) => void): () => void;
+  onState(callback: (state: CompositorWorkerState) => void): () => void;
+  /** Subscribe to resolved-state acknowledgement updates. Returns an unsubscribe function. */
+  onResolvedStateAck(callback: (ack: ResolvedStateAckPayload) => void): () => void;
+  /**
+   * Subscribe to metrics updates. The callback receives a single
+   * {@link WorkerMetrics} record (not positional `fps`/`budgetUsed`
+   * arguments), so a future metric can be added without breaking
+   * existing callbacks (F1).
+   */
+  onMetrics(callback: (metrics: WorkerMetrics) => void): () => void;
   dispose(): void;
 }
 
@@ -281,6 +379,10 @@ export declare const CompositorWorker: {
 
 export declare namespace CompositorWorker {
   export type Shape = CompositorWorkerShape;
+  export type State = CompositorWorkerState;
+  export type Metrics = WorkerMetrics;
+  export type BoundarySource = QuantizerBoundarySource;
+  export type ResolvedStateAck = ResolvedStateAckPayload;
   export type StartupStage = CompositorWorkerStartupStage;
   export type StartupTelemetry = CompositorWorkerStartupTelemetry;
 }

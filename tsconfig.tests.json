@@ -50,6 +50,10 @@
     // property is only enforced if THIS project typechecks the directive.
     "tests/unit/core/ai-cast.test.ts",
     "tests/unit/_spine/beat-contract.test.ts",
+    // The worker spine mirror (worker.d.ts) had no drift guard and silently
+    // diverged; this pins it via bidirectional spine⇔runtime assignability so a
+    // future divergence fails the typecheck (see the file's module doc).
+    "tests/unit/_spine/worker-contract.test.ts",
     "tests/helpers/mock-websocket.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",

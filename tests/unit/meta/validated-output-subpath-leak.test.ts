@@ -9,17 +9,25 @@
  * DELIBERATELY not re-exported from the package index, so no consumer can forge a
  * proposal and bypass validation.
  *
- * THE SCAR: `@czap/core`'s `package.json` `exports` carries a `"./*"` wildcard, which
- * — absent an explicit deny — would make EVERY `src/*.ts` module importable as a
- * subpath (`@czap/core/validated-output`), re-exposing `mintValidated` to any consumer
- * and defeating the whole envelope. The fix is a `"./validated-output": null` deny
- * ENTRY ordered BEFORE the wildcard (Node honors `null` to deny a subpath; internal
- * relative imports `./validated-output.js` are unaffected).
+ * THE ORIGINAL SCAR: `@czap/core`'s `package.json` `exports` once carried a `"./*"`
+ * wildcard, which — absent an explicit deny — made EVERY `src/*.ts` module importable
+ * as a subpath (`@czap/core/validated-output`), re-exposing `mintValidated` to any
+ * consumer and defeating the whole envelope.
  *
- * This guard pins BOTH halves so the leak cannot silently return:
- *  1. the package-manifest deny entry exists and precedes the `"./*"` wildcard;
- *  2. `mintValidated` is absent from the public `@czap/core` surface;
- *  3. the index re-exports the SAFE consumer symbols (the envelope is usable without
+ * THE LAYOUT-LOCK: the wildcard is now GONE. The `exports` map is a CLOSED allowlist —
+ * only `.`, `./testing`, and `./harness` are importable; no internal module leaks as a
+ * public subpath, so the layout can be refactored freely. The `"./validated-output":
+ * null` deny is retained as belt-and-suspenders (Node honors `null` to deny a subpath;
+ * internal relative imports `./validated-output.js` are unaffected).
+ *
+ * This guard pins EVERY half so the leak cannot silently return:
+ *  1. the `exports` map carries NO wildcard key (nothing containing `*`);
+ *  2. the ONLY deep-subpath exports are the sanctioned allowlist (`./testing`,
+ *     `./harness`) — a new internal subpath cannot be added without a reviewer
+ *     amending this LAW;
+ *  3. the package-manifest deny entry for `./validated-output` survives;
+ *  4. `mintValidated` is absent from the public `@czap/core` surface;
+ *  5. the index re-exports the SAFE consumer symbols (the envelope is usable without
  *     the minter).
  *
  * @module
@@ -36,21 +44,42 @@ const repoRoot = resolve(here, '../../..');
 const corePkgPath = resolve(repoRoot, 'packages/core/package.json');
 
 describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => {
-  test('package.json denies the ./validated-output subpath BEFORE the ./* wildcard', () => {
+  test('package.json exports map carries NO wildcard key (the layout is locked)', () => {
     const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
       exports: Record<string, unknown>;
     };
     const keys = Object.keys(pkg.exports);
 
-    // The sensitive internal must be explicitly denied (Node honors `null`).
-    expect(pkg.exports['./validated-output']).toBeNull();
+    // A `"./*"` (or any `*`-bearing) key would re-expose EVERY `src/*.ts` module as a
+    // public subpath, leaking the internal layout and re-arming the mintValidated leak.
+    const wildcardKeys = keys.filter((k) => k.includes('*'));
+    expect(wildcardKeys).toEqual([]);
+  });
 
-    // Order matters: a deny entry AFTER the wildcard would never be reached.
-    const denyIdx = keys.indexOf('./validated-output');
-    const wildcardIdx = keys.indexOf('./*');
-    expect(denyIdx).toBeGreaterThanOrEqual(0);
-    expect(wildcardIdx).toBeGreaterThanOrEqual(0);
-    expect(denyIdx).toBeLessThan(wildcardIdx);
+  test('the ONLY deep-subpath exports are the sanctioned allowlist (./testing, ./harness)', () => {
+    const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
+      exports: Record<string, unknown>;
+    };
+    const keys = Object.keys(pkg.exports);
+
+    // Every importable deep subpath (a key past the bare `.` root) must be on the
+    // allowlist. `./validated-output` maps to `null` — a DENY, not an export — so it is
+    // not importable and is excluded. Adding a new internal subpath must require a
+    // reviewer to amend THIS list, which is the layout-lock LAW.
+    const ALLOWED_SUBPATHS = ['./testing', './harness'];
+    const importableSubpaths = keys.filter(
+      (k) => k !== '.' && pkg.exports[k] !== null,
+    );
+    expect(importableSubpaths.sort()).toEqual([...ALLOWED_SUBPATHS].sort());
+  });
+
+  test('package.json retains the ./validated-output deny (belt-and-suspenders)', () => {
+    const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
+      exports: Record<string, unknown>;
+    };
+    // The sensitive internal stays explicitly denied (Node honors `null`) even though
+    // the wildcard is gone — defense in depth against a future wildcard re-introduction.
+    expect(pkg.exports['./validated-output']).toBeNull();
   });
 
   test('mintValidated is NOT on the public @czap/core surface (the sole mint site stays private)', () => {
