@@ -61,14 +61,14 @@ describe('scene.beat-binding capsule (declaration)', () => {
 
   it('bindBeats produces one spawn descriptor per input beat', () => {
     const beats: readonly BeatComponent[] = [
-      { kind: 'beat', timeMs: 0, strength: 1 },
-      { kind: 'beat', timeMs: 500, strength: 0.8 },
-      { kind: 'beat', timeMs: 1000, strength: 1 },
+      { _tag: 'beat', timeMs: 0, strength: 1 },
+      { _tag: 'beat', timeMs: 500, strength: 0.8 },
+      { _tag: 'beat', timeMs: 1000, strength: 1 },
     ];
     const spawns = bindBeats(beats);
     expect(spawns.length).toBe(beats.length);
     for (let i = 0; i < beats.length; i++) {
-      expect(spawns[i]?.components.kind).toBe('beat');
+      expect(spawns[i]?.components._tag).toBe('beat');
       expect(spawns[i]?.components.timeMs).toBe(beats[i]?.timeMs);
       expect(spawns[i]?.components.strength).toBe(beats[i]?.strength);
     }
@@ -83,8 +83,8 @@ describe('scene.beat-binding capsule (declaration)', () => {
 describe('beat-binding integration with SceneRuntime', () => {
   it('compileScene propagates declared beats onto the CompiledScene', () => {
     const beats: readonly BeatComponent[] = [
-      { kind: 'beat', timeMs: 250, strength: 1 },
-      { kind: 'beat', timeMs: 500, strength: 1 },
+      { _tag: 'beat', timeMs: 250, strength: 1 },
+      { _tag: 'beat', timeMs: 500, strength: 1 },
     ];
     const compiled = compileScene(buildSceneWithBeats(beats));
     expect(compiled.beats.length).toBe(2);
@@ -99,9 +99,9 @@ describe('beat-binding integration with SceneRuntime', () => {
 
   it('SceneRuntime.build spawns one Beat-tagged entity per beat', async () => {
     const beats: readonly BeatComponent[] = [
-      { kind: 'beat', timeMs: 250, strength: 1 },
-      { kind: 'beat', timeMs: 500, strength: 1 },
-      { kind: 'beat', timeMs: 750, strength: 1 },
+      { _tag: 'beat', timeMs: 250, strength: 1 },
+      { _tag: 'beat', timeMs: 500, strength: 1 },
+      { _tag: 'beat', timeMs: 750, strength: 1 },
     ];
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
@@ -120,7 +120,7 @@ describe('beat-binding integration with SceneRuntime', () => {
   it('SyncSystem reads spawned Beat entities and writes intensity on tick', async () => {
     // Beat at t=500ms; tick to t=500ms (frame 30 at 60fps) so the most
     // recent beat is exactly now → exp(0) = 1.
-    const beats: readonly BeatComponent[] = [{ kind: 'beat', timeMs: 500, strength: 1 }];
+    const beats: readonly BeatComponent[] = [{ _tag: 'beat', timeMs: 500, strength: 1 }];
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
@@ -140,7 +140,7 @@ describe('beat-binding integration with SceneRuntime', () => {
   });
 
   it('SyncSystem decays intensity for ticks after the beat', async () => {
-    const beats: readonly BeatComponent[] = [{ kind: 'beat', timeMs: 0, strength: 1 }];
+    const beats: readonly BeatComponent[] = [{ _tag: 'beat', timeMs: 0, strength: 1 }];
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
     try {
@@ -160,7 +160,7 @@ describe('beat-binding integration with SceneRuntime', () => {
 
   it('writes intensity = 0 when no beats have occurred yet', async () => {
     // The only beat is in the future relative to the tick time.
-    const beats: readonly BeatComponent[] = [{ kind: 'beat', timeMs: 5000, strength: 1 }];
+    const beats: readonly BeatComponent[] = [{ _tag: 'beat', timeMs: 5000, strength: 1 }];
     const compiled = compileScene(buildSceneWithBeats(beats));
     const handle = await SceneRuntime.build(compiled);
     try {

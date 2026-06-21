@@ -14,6 +14,7 @@ const EXPECTED_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check',
   'check-invariants',
   'completion',
   'describe',
@@ -34,11 +35,14 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 9 finite, handler-backed compute/verify/gate
+ * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
  * commands. describe (catalog projection — tools/list already serves it) and
  * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
  * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
- * agent tool. `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
+ * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
+ * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
+ * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
+ * `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
  * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
  * `audit-floor` — it is CLI-only and the capability is absent over MCP.
  * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
@@ -51,6 +55,7 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check',
   'plumb',
   'scene.compile',
   'scene.render',

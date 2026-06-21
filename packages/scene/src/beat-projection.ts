@@ -26,7 +26,7 @@ import { ValidationError } from '@czap/error';
  *
  * Each sample index becomes a millisecond timestamp via
  * `timeMs = sampleIndex / sampleRate * 1000`. Order and count are preserved
- * (one component per input beat), every marker is tagged `kind: 'beat'`, and
+ * (one component per input beat), every marker is tagged `_tag: 'beat'`, and
  * `strength` is stamped deterministically (defaults to 1). When `anchorTrackId`
  * is supplied it is carried onto every marker; otherwise the field is omitted.
  *
@@ -46,7 +46,7 @@ export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutio
 
   return projection.beats.map((sampleIndex) => {
     const marker: BeatComponent = {
-      kind: 'beat',
+      _tag: 'beat',
       timeMs: (sampleIndex / sampleRate) * 1000,
       strength: defaultStrength,
       ...(anchorTrackId !== undefined ? { anchorTrackId } : {}),

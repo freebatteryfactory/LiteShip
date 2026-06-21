@@ -11,6 +11,7 @@ import type {
   Clock,
   ContentAddress,
 } from '@czap/core';
+import type { GauntletResult } from '@czap/gauntlet';
 import { ValidationError } from '@czap/error';
 
 /**
@@ -141,6 +142,25 @@ export interface CommandContext {
    * `check-invariants` over MCP and read the grouped violation list.
    */
   readonly runCheckInvariants?: () => Promise<CheckInvariantsSummary>;
+  /**
+   * Run the PURE gauntlet engine fold (`litelaunchGauntlet`) over the repo at
+   * `cwd`, IN-PROCESS — no subprocess, no terminal streaming. Binds the built-in
+   * LiteShip gates, the committed assurance map, and the committed waivers, runs
+   * the authority ratchet, and returns the structured {@link GauntletResult}
+   * (findings + per-gate outcomes + a single blocking verdict). This is the
+   * tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
+   * FOLD, whereas the CLI-owned `gauntlet` command spawns the 28-phase
+   * `gauntlet:full` orchestrator. Backed by `@czap/gauntlet`'s `node:fs` glob,
+   * so — like `runPlumb` / `runCheckInvariants`, and unlike the heavy `@czap/audit`
+   * engine — it is provisioned in the shared host factory
+   * (`createNodeCommandContext`) and is therefore available to BOTH the CLI and
+   * the MCP host: an agent can call `check` over MCP and read the Finding[] work-list.
+   *
+   * `globs` scopes the file set (defaults to every package's source). The
+   * adapter owns the waiver-expiry `now` — a WALL-CLOCK epoch Date, never a
+   * monotonic reading — because waiver expiry is a calendar-date comparison.
+   */
+  readonly runGauntlet?: (globs?: readonly string[]) => Promise<GauntletResult>;
   /** Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`. */
   readonly fileExists?: (path: string) => boolean;
   /**

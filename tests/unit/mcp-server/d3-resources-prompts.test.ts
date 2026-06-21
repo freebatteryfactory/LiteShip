@@ -236,14 +236,14 @@ describe('D3 non-regression — D1 envelope + D2 outputSchema law untouched', ()
     expect(receipt.resultId).toMatch(/^fnv1a:[0-9a-f]{8}$/);
   });
 
-  it('D2: tools/list still emits 9 tools each with an object outputSchema; 17 handlers total', () => {
+  it('D2: tools/list still emits 10 tools each with an object outputSchema; 18 handlers total', () => {
     const tools = listTools();
-    expect(tools.length).toBe(9);
+    expect(tools.length).toBe(10);
     for (const t of tools) expect((t.outputSchema as { type?: string }).type).toBe('object');
-    // 17 handlers: the capsule-verify gate (migrated from scripts/capsule-verify.ts)
-    // joined the registry as a CLI-only handler — it is NOT MCP-exposed, so the
-    // tools count stays 9 while the total handler count grew by one.
-    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(17);
+    // 18 handlers: the `check` command (the PURE gauntlet gate fold,
+    // litelaunchGauntlet) joined the registry as a handler-backed, MCP-exposed
+    // command — so both the tools count (9 → 10) and the handler count grew by one.
+    expect(commandRegistry.list().filter((d) => d.executionKind === 'handler').length).toBe(18);
   });
 });
 

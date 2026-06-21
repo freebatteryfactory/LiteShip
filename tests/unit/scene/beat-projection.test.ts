@@ -32,10 +32,10 @@ describe('resolveBeatProjectionToSceneBeats', () => {
     }
   });
 
-  it("tags every marker with kind: 'beat'", () => {
+  it("tags every marker with _tag: 'beat'", () => {
     const projection: BeatMarkerSet = { bpm: 120, beats: [0, 100] };
     const beats = resolveBeatProjectionToSceneBeats({ projection, sampleRate: 1000 });
-    expect(beats.every((b) => b.kind === 'beat')).toBe(true);
+    expect(beats.every((b) => b._tag === 'beat')).toBe(true);
   });
 
   it('defaults strength deterministically to 1 when no default given', () => {

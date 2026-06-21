@@ -34,7 +34,7 @@ export type BeatComponent = _BeatComponent;
 export type BeatSpawn = _BeatSpawn;
 
 const BeatComponentSchema = Schema.Struct({
-  kind: Schema.Literal('beat'),
+  _tag: Schema.Literal('beat'),
   timeMs: Schema.Number,
   strength: Schema.Number,
   anchorTrackId: Schema.optional(Schema.String),
@@ -78,8 +78,8 @@ export const beatBindingCapsule = defineCapsule({
     {
       name: 'all-spawns-are-beat-components',
       check: (_input, output) =>
-        (output as { spawns: readonly { components: { kind: string } }[] }).spawns.every(
-          (s) => s.components.kind === 'beat',
+        (output as { spawns: readonly { components: { _tag: string } }[] }).spawns.every(
+          (s) => s.components._tag === 'beat',
         ),
       message: 'every spawn must carry a Beat-tagged component',
     },

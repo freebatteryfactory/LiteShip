@@ -22,7 +22,7 @@ describe('Scene.include', () => {
     // frame 0 + Beat(8) renormalizes to a pure beat handle; frame 30 +
     // Beat(8) is genuinely mixed and stays a mark-sum.
     expect(included[0]?.from).toEqual(Beat(8));
-    expect(included[0]?.to).toEqual({ _t: 'mark-sum', frames: 30, beats: 8 });
+    expect(included[0]?.to).toEqual({ _tag: 'mark-sum', frames: 30, beats: 8 });
   });
 
   it('a Beat() offset over a beat-authored sub-scene stays in pure beat space', () => {
@@ -48,7 +48,7 @@ describe('Scene.include', () => {
     const out = Scene.include(audioSub, { offset: 100 });
     expect(out).toHaveLength(1);
     const t = out[0]!;
-    expect(t.kind).toBe('audio');
+    expect(t._tag).toBe('audio');
     expect(t.id).toBe('sub/bed');
     expect(t.from).toBe(105);
     expect(t.to).toBe(125);
@@ -66,11 +66,11 @@ describe('Scene.include', () => {
       ],
     };
     const out = Scene.include(transSub, { offset: 50 });
-    const trans = out.find((t) => t.kind === 'transition')!;
+    const trans = out.find((t) => t._tag === 'transition')!;
     expect(trans.id).toBe('sub/xfade');
     expect(trans.from).toBe(60);
     expect(trans.to).toBe(70);
-    if (trans.kind === 'transition') {
+    if (trans._tag === 'transition') {
       expect(trans.between[0]).toBe('sub/a');
       expect(trans.between[1]).toBe('sub/b');
     }
@@ -91,11 +91,11 @@ describe('Scene.include', () => {
       ],
     };
     const out = Scene.include(effectSub, { offset: 200 });
-    const fx = out.find((t) => t.kind === 'effect')!;
+    const fx = out.find((t) => t._tag === 'effect')!;
     expect(fx.id).toBe('sub/glow');
     expect(fx.from).toBe(205);
     expect(fx.to).toBe(225);
-    if (fx.kind === 'effect') {
+    if (fx._tag === 'effect') {
       expect(fx.target).toBe('sub/hero');
       expect(fx.syncTo?.anchor).toBe('sub/bed');
     }
@@ -111,8 +111,8 @@ describe('Scene.include', () => {
       ],
     };
     const out = Scene.include(fxSub, { offset: 10 });
-    const fx = out.find((t) => t.kind === 'effect')!;
-    if (fx.kind === 'effect') {
+    const fx = out.find((t) => t._tag === 'effect')!;
+    if (fx._tag === 'effect') {
       expect(fx.syncTo).toBeUndefined();
       expect(fx.target).toBe('sub/hero');
     }

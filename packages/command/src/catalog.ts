@@ -25,6 +25,7 @@ import { plumbCommand } from './commands/plumb.js';
 import { packageSmokeCommand } from './commands/package-smoke.js';
 import { checkInvariantsCommand } from './commands/check-invariants.js';
 import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
+import { checkCommand } from './commands/check.js';
 
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal
@@ -121,6 +122,7 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   packageSmokeCommand,
   checkInvariantsCommand,
   capsuleVerifyGateCommand,
+  checkCommand,
 ];
 
 /**

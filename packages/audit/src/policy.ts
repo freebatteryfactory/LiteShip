@@ -209,7 +209,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // imports @czap/assets for the audio-projection DSP the asset.analyze handler
     // runs. Host execution (spawn/ffmpeg/vitest) lives here so CLI and MCP share
     // one factory and mcp-server never imports cli.
-    allowedInternalImports: ['@czap/core', '@czap/assets'],
+    // The `check` command wraps the PURE gauntlet engine fold
+    // (litelaunchGauntlet), so the host surface also imports @czap/gauntlet —
+    // a one-way edge to a standalone leaf (the gauntlet imports only
+    // @czap/error, so no cycle), blessed here.
+    allowedInternalImports: ['@czap/core', '@czap/assets', '@czap/gauntlet'],
     kind: 'layered',
   },
   '@czap/audit': {

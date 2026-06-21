@@ -64,7 +64,7 @@ export const Scene = {
 const prefixed = <K extends TrackKind>(prefix: string, id: TrackId<K>): TrackId<K> => `${prefix}/${id}` as TrackId<K>;
 
 function shift(t: Track, prefix: string, offset: FrameMark): Track {
-  if (t.kind === 'transition') {
+  if (t._tag === 'transition') {
     return {
       ...t,
       id: prefixed(prefix, t.id),
@@ -73,7 +73,7 @@ function shift(t: Track, prefix: string, offset: FrameMark): Track {
       between: [prefixed(prefix, t.between[0]), prefixed(prefix, t.between[1])] as const,
     };
   }
-  if (t.kind === 'effect') {
+  if (t._tag === 'effect') {
     return {
       ...t,
       id: prefixed(prefix, t.id),
@@ -83,7 +83,7 @@ function shift(t: Track, prefix: string, offset: FrameMark): Track {
       syncTo: t.syncTo !== undefined ? { ...t.syncTo, anchor: prefixed(prefix, t.syncTo.anchor) } : undefined,
     };
   }
-  if (t.kind === 'audio') {
+  if (t._tag === 'audio') {
     return { ...t, id: prefixed(prefix, t.id), from: addFrameMarks(t.from, offset), to: addFrameMarks(t.to, offset) };
   }
   return { ...t, id: prefixed(prefix, t.id), from: addFrameMarks(t.from, offset), to: addFrameMarks(t.to, offset) };

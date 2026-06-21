@@ -40,7 +40,7 @@ export type FrameMark = _FrameMark;
 
 /** Video track — renders a quantizer-driven source for its frame range. */
 export interface VideoTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'video';
+  readonly _tag: 'video';
   readonly id: TrackId<'video'>;
   readonly from: M;
   readonly to: M;
@@ -62,7 +62,7 @@ export interface VideoTrack<M extends FrameMark = FrameMark> {
 
 /** Audio track — plays an asset with optional mix metadata. */
 export interface AudioTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'audio';
+  readonly _tag: 'audio';
   readonly id: TrackId<'audio'>;
   readonly from: M;
   readonly to: M;
@@ -85,7 +85,7 @@ export interface AudioTrack<M extends FrameMark = FrameMark> {
 
 /** Transition track — blends two video tracks across a frame window. */
 export interface TransitionTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'transition';
+  readonly _tag: 'transition';
   readonly id: TrackId<'transition'>;
   readonly from: M;
   readonly to: M;
@@ -97,7 +97,7 @@ export interface TransitionTrack<M extends FrameMark = FrameMark> {
 
 /** Effect track — applies an intensity curve to a target video track, optionally synced to audio. */
 export interface EffectTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'effect';
+  readonly _tag: 'effect';
   readonly id: TrackId<'effect'>;
   readonly from: M;
   readonly to: M;

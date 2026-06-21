@@ -173,6 +173,9 @@ describe('D4 — projection drift pin', () => {
     // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
     // Re-pinned again when the capsule-verify handler command (CLI-only) joined
     // the registry, growing the commands UI projection by one entry.
-    expect(address).toBe('fnv1a:f00246d0');
+    // Re-pinned again when `check` (the PURE gauntlet gate fold, litelaunchGauntlet)
+    // joined COMMAND_CATALOG as a handler-backed, MCP-exposed command — the
+    // registry/commands UI body grew by one entry, re-pinning the digest.
+    expect(address).toBe('fnv1a:d8bad381');
   });
 });

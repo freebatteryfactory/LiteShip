@@ -129,14 +129,14 @@ export function compileScene(scene: SceneContract): CompiledScene {
       `scene fps must be a positive, finite number — got ${resolved.fps}; set fps to the intended output frame rate (e.g. 30 or 60)`,
     );
   }
-  const videoIds = resolved.tracks.filter((t) => t.kind === 'video').map((t) => t.id as string);
+  const videoIds = resolved.tracks.filter((t) => t._tag === 'video').map((t) => t.id as string);
   for (const track of resolved.tracks) {
     if (track.from > track.to) {
       structural.push(
         `track "${track.id}" resolves to from ${track.from} > to ${track.to} — swap the marks or fix the Beat() arithmetic so the range runs forward`,
       );
     }
-    if (track.kind === 'transition') {
+    if (track._tag === 'transition') {
       for (const ref of track.between) {
         if (!videoIds.includes(ref)) {
           structural.push(
@@ -268,7 +268,7 @@ function resolveTrackMarks(track: Track, ctx: { bpm: number; fps: number }): Tra
 }
 
 function componentsFromTrack(track: Track<number>, ctx: { bpm: number; fps: number }): Record<string, unknown> {
-  switch (track.kind) {
+  switch (track._tag) {
     case 'video':
       return {
         VideoSource: track.source,

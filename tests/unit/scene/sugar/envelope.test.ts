@@ -4,7 +4,7 @@ import { fade, pulse, Beat, resolveEnvelope, envelopeFactor } from '@czap/scene'
 describe('envelope helpers', () => {
   it('fade.in returns a linear-in curve over the given span', () => {
     const env = fade.in(Beat(2));
-    expect(env._t).toBe('envelope');
+    expect(env._tag).toBe('envelope');
     expect(env.curve).toBe('linear-in');
     expect(env.span).toEqual(Beat(2));
   });
@@ -14,7 +14,7 @@ describe('envelope helpers', () => {
   });
   it('pulse.every returns a periodic envelope with amplitude', () => {
     const env = pulse.every(Beat(0.5), { amplitude: 0.3 });
-    expect(env._t).toBe('envelope');
+    expect(env._tag).toBe('envelope');
     expect(env.curve).toBe('pulse');
     expect(env.amplitude).toBe(0.3);
     expect(env.period).toEqual(Beat(0.5));

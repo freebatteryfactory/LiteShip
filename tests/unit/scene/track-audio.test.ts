@@ -4,7 +4,7 @@ import { Track } from '@czap/scene';
 describe('Track.audio', () => {
   it('builds an AudioTrack with default mix at unity linear gain', () => {
     const t = Track.audio('bed', { from: 0, to: 120, source: 'intro-bed' });
-    expect(t.kind).toBe('audio');
+    expect(t._tag).toBe('audio');
     expect(t.source).toBe('intro-bed');
     // volume is linear gain: 1 = unity, so an undeclared mix is audible.
     expect(t.mix).toEqual({ volume: 1, pan: 0 });

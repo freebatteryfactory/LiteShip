@@ -10,7 +10,7 @@ describe('Track.effect', () => {
       from: 0, to: 60, kind: 'pulse', target: hero,
       syncTo: { anchor: bed, mode: 'beat' },
     });
-    expect(t.kind).toBe('effect');
+    expect(t._tag).toBe('effect');
     expect(t.effectKind).toBe('pulse');
     expect(t.target).toBe('hero');
     expect(t.syncTo?.mode).toBe('beat');

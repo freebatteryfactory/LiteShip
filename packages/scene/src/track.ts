@@ -56,7 +56,7 @@ const video = (
     envelope?: VideoTrack['envelope'];
   },
 ): VideoTrack => ({
-  kind: 'video',
+  _tag: 'video',
   id: videoId(id),
   from: opts.from,
   to: opts.to,
@@ -83,7 +83,7 @@ const audio = (
     ...(opts.mix?.sync !== undefined ? { sync: opts.mix.sync } : {}),
   };
   return {
-    kind: 'audio',
+    _tag: 'audio',
     id: audioId(id),
     from: opts.from,
     to: opts.to,
@@ -104,7 +104,7 @@ const transition = (
     ease?: TransitionTrack['ease'];
   },
 ): TransitionTrack => ({
-  kind: 'transition',
+  _tag: 'transition',
   id: transitionId(id),
   from: opts.from,
   to: opts.to,
@@ -125,7 +125,7 @@ const effect = (
     envelope?: EffectTrack['envelope'];
   },
 ): EffectTrack => ({
-  kind: 'effect',
+  _tag: 'effect',
   id: effectId(id),
   from: opts.from,
   to: opts.to,

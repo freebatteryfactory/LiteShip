@@ -25,9 +25,9 @@ describe('D2 — outputSchema registry law', () => {
     }
   });
 
-  it('all 17 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
+  it('all 18 handler-backed descriptors carry outputSchema (scope = all handlers, not just MCP)', () => {
     const handlers = commandRegistry.list().filter((d) => d.executionKind === 'handler');
-    expect(handlers.length).toBe(17);
+    expect(handlers.length).toBe(18);
     expect(handlers.every((d) => d.outputSchema !== undefined)).toBe(true);
   });
 
@@ -47,9 +47,9 @@ describe('D2 — outputSchema registry law', () => {
 });
 
 describe('D2 — tools/list exposes outputSchema for the MCP tools', () => {
-  it('all 9 MCP tools include an object outputSchema', () => {
+  it('all 10 MCP tools include an object outputSchema', () => {
     const tools = listTools();
-    expect(tools.length).toBe(9);
+    expect(tools.length).toBe(10);
     for (const t of tools) {
       expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe('object');
     }
@@ -77,6 +77,7 @@ describe('D2 — payload conformance + validator teeth', () => {
     plumb: { ok: false, skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }], unclassified: ['@czap/mystery'], generatedPresent: true },
     'check-invariants': { ok: false, groups: [{ name: 'NO_VAR', message: 'Use const/let, not var.', violations: [{ file: 'packages/x/src/y.ts', line: 3, content: 'var x = 1;' }] }], lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'] },
     'capsule-verify': { status: 'stale', errors: ['generated bench missing for core.x: tests/generated/core.x.bench.ts'], capsuleCount: 42, benches: { total: 41, real: 30, placeholder: ['core.x'] } },
+    check: { ok: false, blocked: true, findingCount: 1, findings: [{ ruleId: 'gauntlet/no-bare-throw', severity: 'error', level: 'L3', title: 'bare throw', detail: 'throw a tagged @czap/error, not a bare value', location: { file: 'packages/x/src/y.ts', line: 12 } }] },
   };
 
   it('each handler outputSchema accepts its documented success payload', () => {

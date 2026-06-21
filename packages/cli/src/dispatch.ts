@@ -18,6 +18,7 @@ import { sceneVerify } from './commands/scene-verify.js';
 import { audit } from './commands/audit.js';
 import { auditFloor } from './commands/audit-floor.js';
 import { plumb } from './commands/plumb.js';
+import { check } from './commands/check.js';
 import { packageSmoke } from './commands/package-smoke.js';
 import { checkInvariants } from './commands/check-invariants.js';
 import { capsuleVerify as capsuleVerifyGate } from './commands/capsule-verify.js';
@@ -175,6 +176,9 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'plumb': {
       return plumb();
+    }
+    case 'check': {
+      return check();
     }
     case 'check-invariants': {
       return checkInvariants();

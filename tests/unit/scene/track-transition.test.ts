@@ -7,7 +7,7 @@ describe('Track.transition', () => {
 
   it('builds a TransitionTrack', () => {
     const t = Track.transition('fade', { from: 0, to: 10, kind: 'crossfade', between: [a, b] });
-    expect(t.kind).toBe('transition');
+    expect(t._tag).toBe('transition');
     expect(t.transitionKind).toBe('crossfade');
     expect(t.between).toEqual(['a', 'b']);
   });

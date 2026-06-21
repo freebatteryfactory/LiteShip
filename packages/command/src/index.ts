@@ -68,6 +68,8 @@ export { checkInvariantsCommand } from './commands/check-invariants.js';
 export type { CheckInvariantsPayload } from './commands/check-invariants.js';
 export { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
 export type { CapsuleVerifyPayload } from './commands/capsule-verify.js';
+export { checkCommand } from './commands/check.js';
+export type { CheckPayload } from './commands/check.js';
 export { INVARIANTS } from './commands/check-invariants-registry.js';
 export type { CheckInvariantEntry } from './commands/check-invariants-registry.js';
 export {

@@ -423,6 +423,9 @@ importers:
       '@czap/error':
         specifier: workspace:*
         version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
