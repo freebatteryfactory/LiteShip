@@ -178,6 +178,89 @@ describe('noDefaultExportDivergenceGate — the meta-gauntlet (oracle-divergence
   });
 });
 
+describe('exclude-vs-miss — a sanctioned POLICY EXCLUDE is not a divergence (B3 refinement)', () => {
+  const EXCLUDED_FILE = 'packages/astro/src/client-directives/example.ts';
+
+  /** The host's policy-exclude marker fact (the exclude-vs-miss seam). */
+  function excludedMarker(file: string): Fact {
+    return {
+      file,
+      line: 1,
+      property: 'default-export-check-excluded',
+      value: 'NO_DEFAULT_EXPORT',
+      oracleId: 'invariant-regex',
+      coverageClass: 'text-only',
+    };
+  }
+
+  function excludedFileNode() {
+    return { id: EXCLUDED_FILE, contentDigest: PLACEHOLDER, packageName: '@czap/astro' };
+  }
+
+  it('emits NO divergence when the AST sees a default export but the file is POLICY-EXCLUDED (the ~9 → 0)', () => {
+    // The exact real-repo shape: the AST oracle saw a sanctioned default export, the
+    // regex is silent BECAUSE the file is in the rule's exclude list (the live
+    // marker records WHY). Both oracles AGREE — the regex's silence is by design.
+    const ir = makeRepoIR({
+      files: [excludedFileNode()],
+      facts: [
+        { file: EXCLUDED_FILE, line: 3, property: 'is-default-export', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
+        excludedMarker(EXCLUDED_FILE),
+      ],
+    });
+    expect(noDefaultExportDivergenceGate.run(irContext(ir))).toEqual([]);
+  });
+
+  it('STILL emits the advisory divergence for a GENUINE coverage gap (AST present, regex absent, NOT excluded)', () => {
+    // No exclude marker here — the regex looked and MISSED a real default export the
+    // AST caught. The gate did NOT go blind: this is a real divergence.
+    const ir = makeRepoIR({
+      files: [fileNode()],
+      facts: [defFact(3, 'ts-ast', 'file-proxy-only')],
+    });
+    const findings = noDefaultExportDivergenceGate.run(irContext(ir));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.severity).toBe('advisory');
+    expect(findings[0]?.detail).toContain('the AST oracle saw a real default-export form');
+  });
+
+  it('a regex-PRESENT/AST-absent site on an excluded file IS still a divergence (the regex should not have fired)', () => {
+    // The exclude only sanctions the AST-present/regex-absent direction (a real
+    // sanctioned default export). If the regex FIRES on an excluded file (it
+    // shouldn't — it was told to skip it), that is still a real anomaly.
+    const ir = makeRepoIR({
+      files: [excludedFileNode()],
+      facts: [
+        { file: EXCLUDED_FILE, line: 9, property: 'is-default-export', value: true, oracleId: 'invariant-regex', coverageClass: 'text-only' },
+        excludedMarker(EXCLUDED_FILE),
+      ],
+    });
+    const findings = noDefaultExportDivergenceGate.run(irContext(ir));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.location?.line).toBe(9);
+  });
+
+  it('the exclude is read from the LIVE marker fact — drop the marker and the same site becomes a divergence (head-probe LAW)', () => {
+    // With the marker → no divergence (policy exclude). WITHOUT it → a divergence
+    // (coverage miss). The gate hardcodes no path list; it reads the fact.
+    const astFact: Fact = { file: EXCLUDED_FILE, line: 3, property: 'is-default-export', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' };
+    const withMarker = makeRepoIR({ files: [excludedFileNode()], facts: [astFact, excludedMarker(EXCLUDED_FILE)] });
+    const withoutMarker = makeRepoIR({ files: [excludedFileNode()], facts: [astFact] });
+    expect(noDefaultExportDivergenceGate.run(irContext(withMarker))).toEqual([]);
+    expect(noDefaultExportDivergenceGate.run(irContext(withoutMarker))).toHaveLength(1);
+  });
+
+  it('the exclude-IGNORING mutant (re-flags excluded files) is killed by green', () => {
+    // The gate's own mutation: a mutant that ignores the policy-exclude marker
+    // re-flags the sanctioned excluded file in green → green dirty → mutant killed.
+    // This is the ~9-false-advisories regression, proven dead by the ratchet.
+    const proof = verifyGate(noDefaultExportDivergenceGate);
+    expect(proof.mutationKilled).toBe(true);
+    expect(proof.greenClean).toBe(true);
+    expect(proof.redCaught).toBe(true);
+  });
+});
+
 describe('requireIR — the IR-fold gates fail loud without an IR', () => {
   it('returns the IR when present', () => {
     const ir = makeRepoIR({ files: [fileNode()] });

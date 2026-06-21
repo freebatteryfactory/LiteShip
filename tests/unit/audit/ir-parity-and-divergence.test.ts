@@ -231,47 +231,44 @@ describe('B1 close — the LIVE triangulated cross-check over THIS very repo', (
     });
   }
 
-  it('the divergence gate fires over the real repo, and every divergence is advisory + traceable', () => {
-    // The headline B1 deliverable: a live cross-check over the repo, over the real
-    // IR the host path builds.
+  it('emits ZERO divergences over the real repo — every AST default export is a SANCTIONED policy exclude (the ~9 → 0 exclude-vs-miss proof)', () => {
+    // The headline B3 deliverable (exclude-vs-miss): the divergence gate over the
+    // real IR the host path builds. BEFORE the refinement this surfaced ~9 ADVISORY
+    // divergences for the Astro client-directives + the dev-toolbar-app — every one
+    // of them a SANCTIONED default export the NO_DEFAULT_EXPORT rule deliberately
+    // EXCLUDES, NOT a coverage miss. The host regex oracle now emits a live
+    // `default-export-check-excluded` marker for each excluded file, and the gate
+    // reads it: a policy exclude is NOT a divergence (the two oracles AGREE there is
+    // a sanctioned default export; the regex's silence is by design). So the count
+    // is ZERO.
     const ir = realIR;
     const findings = runOnRealRepo();
+    expect(findings).toEqual([]);
 
-    // There ARE divergences (the cross-check is doing real work, not a no-op).
-    expect(findings.length).toBeGreaterThan(0);
-
-    // Every real-repo divergence is ADVISORY (cross-class: ts-ast file-proxy-only
-    // vs invariant-regex text-only) — the quiet retire-the-weak-oracle tier, never
-    // a loud same-class contradiction. This is the watch-item the design pins: the
-    // coverage-gap divergences must stay quiet so they never drown real ones.
-    for (const f of findings) {
-      expect(f.severity, `${f.location?.file}:${f.location?.line} should be advisory`).toBe('advisory');
-      // Self-explaining + traceable: names both oracles + coverage classes + loc.
-      expect(f.detail).toContain('ts-ast');
-      expect(f.detail).toContain('invariant-regex');
-      expect(f.detail).toContain('picks no winner');
-      expect(f.coverageClass).toBe('file-proxy-only');
-    }
-
-    // The LAW (head-probe): the divergence set is computed from the LIVE oracle
-    // facts. On THIS repo every divergence is the AST oracle catching a SANCTIONED
-    // default export the invariant-regex rule intentionally EXCLUDES (the Astro
-    // client-directive contract + the dev-toolbar-app entrypoint). The repo's own
-    // source carefully phrases AROUND the keyword pair in prose, so there are no
-    // comment-occurrence (regex-present / AST-absent) divergences here — the
-    // FIXTURE dogfood above proves that direction. The pin is the LAW (all sites
-    // are excluded-default-export files), not a brittle path list: assert every
-    // divergence falls in a file the canonical NO_DEFAULT_EXPORT rule excludes.
-    const ast = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'ts-ast');
-    const regex = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'invariant-regex');
-    // The AST oracle saw real default exports; the regex oracle saw NONE of them on
-    // these files (they are all excluded), so the divergence count equals the AST
-    // facts on excluded files — computed, not hardcoded.
-    const divergedFiles = new Set(findings.map((f) => f.location?.file));
-    // Every diverged file has an AST fact and NO regex fact (the exclude in action).
-    for (const file of divergedFiles) {
-      expect(ast.some((f) => f.file === file)).toBe(true);
-      expect(regex.some((f) => f.file === file)).toBe(false);
+    // PROVE the gate did not just go blind — the substrate it WOULD have flagged is
+    // still THERE, computed from the live facts: the AST oracle DID see real default
+    // exports, the regex oracle saw NONE of them (the exclude), and EVERY such file
+    // carries a live policy-exclude marker. The ~9 are all sanctioned, not missed.
+    const astDefaults = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'ts-ast');
+    const regexDefaults = ir.facts.filter((f) => f.property === 'is-default-export' && f.oracleId === 'invariant-regex');
+    const excludedFiles = new Set(
+      ir.facts
+        .filter((f) => f.property === 'default-export-check-excluded' && f.oracleId === 'invariant-regex')
+        .map((f) => f.file),
+    );
+    // There ARE real default exports the AST caught (the cross-check is not a no-op).
+    expect(astDefaults.length).toBeGreaterThan(0);
+    // Every file the AST flagged a default export on, where the regex is silent, is a
+    // POLICY-EXCLUDED file (the marker says so) — the pin is the LAW (every silent
+    // site is a sanctioned exclude), not a brittle path list.
+    for (const f of astDefaults) {
+      const regexOnFile = regexDefaults.some((r) => r.file === f.file);
+      if (!regexOnFile) {
+        expect(
+          excludedFiles.has(f.file),
+          `${f.file} (AST default export, regex silent) must carry a policy-exclude marker`,
+        ).toBe(true);
+      }
     }
   });
 

@@ -75,6 +75,23 @@ function ruleExcludes(rule: CheckInvariantEntry, relativePath: string): boolean 
 }
 
 /**
+ * The `property` the policy-exclude marker fact carries (the exclude-vs-miss seam).
+ * A file IN the `NO_DEFAULT_EXPORT` rule's `exclude` list emits a fact under THIS
+ * property; the divergence gate reads it to tell a sanctioned policy-exclude (the
+ * regex was TOLD to ignore this file) from a coverage MISS (the regex looked and
+ * missed). It is the HOST's data — the gate hardcodes no exclude list (the
+ * head-probe LAW: the exclude is read from a live fact, never a constant).
+ */
+export const DEFAULT_EXPORT_CHECK_EXCLUDED = 'default-export-check-excluded' as const;
+
+/**
+ * The `value` the {@link DEFAULT_EXPORT_CHECK_EXCLUDED} marker carries — the NAME
+ * of the rule whose `exclude` list sanctioned this file, so the marker is
+ * self-describing (it names WHICH policy excluded the file, never a bare boolean).
+ */
+const NO_DEFAULT_EXPORT_RULE_NAME = NO_DEFAULT_EXPORT_RULE.name;
+
+/**
  * The LiteShip-LOCAL `invariant-regex` (`text-only`) oracle for `is-default-export`,
  * constructed in the HOST (the audit engine stays LiteShip-agnostic — ADR-0012).
  * Runs the CANONICAL `NO_DEFAULT_EXPORT` rule over each file's RAW lines (the
@@ -82,12 +99,34 @@ function ruleExcludes(rule: CheckInvariantEntry, relativePath: string): boolean 
  * oracle the Slice-B cross-check triangulates against audit's AST oracle: it is
  * comment-blind (a textual scan), so where it fires on a comment-occurrence of the
  * keyword pair the AST oracle correctly stays silent — the divergence that proves
- * the text-only oracle should be retired. Excluded files (the sanctioned Astro
- * contract default exports, the rule's own home) emit no regex facts, exactly as
- * the real gate skips them.
+ * the text-only oracle should be retired.
+ *
+ * Excluded files (the sanctioned Astro contract default exports, the rule's own
+ * home) emit no `is-default-export` regex facts, exactly as the real gate skips
+ * them — BUT they DO emit a distinct {@link DEFAULT_EXPORT_CHECK_EXCLUDED} marker
+ * fact recording the POLICY EXCLUDE (the exclude-vs-miss seam). The oracle already
+ * KNOWS the exclude list (it uses it to skip the regex scan); now it also emits the
+ * marker so the divergence layer can see WHY the regex is silent — a sanctioned
+ * exclude (both oracles AGREE there is a default export, the regex's silence is by
+ * DESIGN), not a coverage miss. The marker is a FILE-level fact (line 1) — it
+ * concerns the whole file's exclusion, not a single site.
  */
 export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[] => {
-  if (ruleExcludes(NO_DEFAULT_EXPORT_RULE, file)) return [];
+  if (ruleExcludes(NO_DEFAULT_EXPORT_RULE, file)) {
+    // A policy exclude — the regex is silent BY DESIGN here. Emit the marker (the
+    // exclude-vs-miss seam) instead of an is-default-export fact, so the divergence
+    // gate reads the policy exclude from a LIVE fact (never a hardcoded path list).
+    return [
+      {
+        file,
+        line: 1,
+        property: DEFAULT_EXPORT_CHECK_EXCLUDED,
+        value: NO_DEFAULT_EXPORT_RULE_NAME,
+        oracleId: 'invariant-regex',
+        coverageClass: 'text-only',
+      },
+    ];
+  }
   const facts: Fact[] = [];
   const rawLines = text.split(/\r?\n/);
   for (let i = 0; i < rawLines.length; i++) {

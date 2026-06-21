@@ -39,7 +39,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { isFinding, type Finding, type GateVerdictCache } from '@czap/gauntlet';
 import { currentEnvFingerprint } from '@czap/command/host';
@@ -182,18 +182,22 @@ function relTo(root: string, abs: string): string {
  *   the idempotency layer folds, so a verdict cached under one runtime is never
  *   served to another).
  *
- * The gauntlet's dist directory is located via `createRequire(import.meta.url)`
- * resolving `@czap/gauntlet`'s entry, then walking up to its `dist`. If the dist
- * cannot be found or read, this THROWS a tagged {@link IoError} (a build-resolver
- * must never throw on the happy path, but here a MISSING built gauntlet is a real
- * misconfiguration the caller must see — caching against a digest we could not
- * compute would be unsound, so we fail loud rather than degrade to a constant).
+ * The gauntlet's dist directory is located via `import.meta.resolve`
+ * (the ESM resolver), then walking up to its `dist`. `import.meta.resolve` — NOT
+ * `createRequire(...).resolve` — because `@czap/gauntlet`'s `exports` are
+ * import-only (no `require`/`default` condition), so the CJS resolver throws
+ * `ERR_PACKAGE_PATH_NOT_EXPORTED` even when the package is correctly built and
+ * installed (the same ESM-only-exports trap the vite wasm resolver already documents
+ * — `wasm-package-resolve.ts`). If the dist cannot be found or read, this THROWS a
+ * tagged {@link IoError} (a build-resolver must never throw on the happy path, but
+ * here a MISSING built gauntlet is a real misconfiguration the caller must see —
+ * caching against a digest we could not compute would be unsound, so we fail loud
+ * rather than degrade to a constant).
  */
 export function gauntletToolchainDigest(env: Readonly<Record<string, string>> = currentEnvFingerprint()): string {
-  const require = createRequire(import.meta.url);
   let entry: string;
   try {
-    entry = require.resolve('@czap/gauntlet');
+    entry = fileURLToPath(import.meta.resolve('@czap/gauntlet'));
   } catch (cause) {
     throw IoError(
       'gauntletToolchainDigest',

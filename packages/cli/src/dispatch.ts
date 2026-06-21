@@ -178,7 +178,16 @@ export async function run(argv: readonly string[]): Promise<number> {
       return plumb();
     }
     case 'check': {
-      return check();
+      // `--ir` opts into the CLI-ONLY IR-enriched path (the triangulated
+      // oracle-divergence cross-check + the B2 verdict cache via @czap/audit);
+      // `--no-cache` bypasses that cache. WITHOUT `--ir`, `czap check` stays the
+      // lean, IR-free, MCP-safe six-regex fold (the MCP server exposes only that
+      // lean handler — `--ir` never crosses into @czap/command / @czap/mcp-server).
+      const ir = rest.includes('--ir');
+      const noCache = rest.includes('--no-cache');
+      // `--no-cache` is only meaningful on the IR path (the lean path has no cache).
+      // A bare `--no-cache` is a no-op there, never a silent wrong run.
+      return check({ ...(ir ? { ir } : {}), ...(noCache ? { noCache } : {}) });
     }
     case 'check-invariants': {
       return checkInvariants();
