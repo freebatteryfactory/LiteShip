@@ -19,7 +19,8 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -27,18 +28,24 @@ import {
   type HandledCommand,
 } from '../registry.js';
 
-/** Structured payload returned by `package-smoke`. */
-export interface PackageSmokePayload {
-  readonly ok: boolean;
+/**
+ * Structured payload returned by `package-smoke` — ONE Effect Schema is the
+ * source of both {@link PackageSmokePayload} and the descriptor's `outputSchema`.
+ */
+export const PackageSmokePayloadSchema = Schema.Struct({
+  ok: Schema.Boolean,
   /** Number of `@czap/*` (+ unscoped) scopes packed via `pnpm pack`. */
-  readonly packagesPacked: number;
+  packagesPacked: Schema.Number,
   /** Number of module specifiers the import-smoke resolved (0 when it never ran). */
-  readonly importsSmoked: number;
+  importsSmoked: Schema.Number,
   /** The bracketed step label of the first failure, or null on success. */
-  readonly failedStep: string | null;
+  failedStep: Schema.NullOr(Schema.String),
   /** The failure message of the first failure, or null on success. */
-  readonly failure: string | null;
-}
+  failure: Schema.NullOr(Schema.String),
+});
+
+/** Structured payload returned by `package-smoke`. */
+export type PackageSmokePayload = Schema.Schema.Type<typeof PackageSmokePayloadSchema>;
 
 /** `package-smoke` — pack/install/import-smoke every publishable scope; emit a structured pass/fail verdict. */
 export const packageSmokeCommand: HandledCommand = {
@@ -47,18 +54,8 @@ export const packageSmokeCommand: HandledCommand = {
     summary:
       'Release gate: pack every publishable @czap/* scope, install into an isolated consumer, and import-smoke every module specifier (+ czap binstub).',
     requires: ['runPackageSmoke'] satisfies readonly CommandCapability[],
-    inputSchema: { type: 'object', properties: {} },
-    outputSchema: {
-      type: 'object',
-      required: ['ok', 'packagesPacked', 'importsSmoked', 'failedStep', 'failure'],
-      properties: {
-        ok: { type: 'boolean' },
-        packagesPacked: { type: 'number' },
-        importsSmoked: { type: 'number' },
-        failedStep: { type: ['string', 'null'] },
-        failure: { type: ['string', 'null'] },
-      },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({})),
+    outputSchema: schemaToJsonSchema(PackageSmokePayloadSchema),
     // NOT mcpExposed: the engine is a CLI-injected subprocess orchestrator
     // (runPackageSmoke spawns pnpm pack/install/tar/node, mutating a scratch tree);
     // terminal-streaming, like gauntlet/ship, so cli-only by design.

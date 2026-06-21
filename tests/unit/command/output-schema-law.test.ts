@@ -11,7 +11,22 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { commandRegistry, mcpExposedDescriptors } from '@czap/command';
+import {
+  commandRegistry,
+  mcpExposedDescriptors,
+  GlossaryPayloadSchema,
+  VersionPayloadSchema,
+  PlumbPayloadSchema,
+  AssetAnalyzePayloadSchema,
+  VerifyPayloadSchema,
+  AuditPayloadSchema,
+  AuditFloorPayloadSchema,
+  PackageSmokePayloadSchema,
+  CheckInvariantsPayloadSchema,
+  CapsuleVerifyPayloadSchema,
+  CheckPayloadSchema,
+} from '@czap/command';
+import { schemaToJsonSchema } from '@czap/core';
 import { dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
 
@@ -70,7 +85,21 @@ describe('D2 — payload conformance + validator teeth', () => {
     'scene.compile': { sceneId: 'intro', trackCount: 6, durationMs: 4000 },
     'scene.render': { sceneId: 'intro', output: 'out.mp4', frameCount: 240, elapsedMs: 1200, cached: false },
     'scene.verify': { sceneId: 'intro', generatedTests: 2 },
-    verify: { tarball: 't.tgz', capsule_id: null, checks: { tarball_manifest: 'skipped' }, mismatches: [] },
+    verify: {
+      tarball: 't.tgz',
+      capsule_id: null,
+      // The real payload always carries all four checks (the handler spreads
+      // SKIPPED_BASE); the derived schema is tighter than the old bare
+      // {type:'object'} and recurses into the checks struct, so the sample must
+      // be a complete VerifyChecks value, not an incomplete one.
+      checks: {
+        tarball_manifest: 'skipped',
+        lockfile: 'skipped',
+        workspace_manifest: 'skipped',
+        chain_link: 'skipped',
+      },
+      mismatches: [],
+    },
     audit: { errorCount: 0, warningCount: 6, infoCount: 282, findingCount: 288, suppressedCount: 15, passFindingCounts: { structure: 1, integrity: 2, surface: 0 }, repoRoot: '/repo', profileSource: 'default' },
     'audit-floor': { ok: false, expectedWarnings: 0, actualWarnings: 1, errorCount: 0, delta: { added: ['new-rule@packages/x/src/y.ts'], removed: [] }, inventory: ['new-rule@packages/x/src/y.ts'] },
     'package-smoke': { ok: false, packagesPacked: 3, importsSmoked: 0, failedStep: 'pnpm install in consumer dir', failure: '@czap/web missing from node_modules after install' },
@@ -94,6 +123,37 @@ describe('D2 — payload conformance + validator teeth', () => {
     const result = await dispatchToolCall({ name: 'glossary', arguments: { term: 'boundary' } });
     const schema = commandRegistry.get('glossary')!.descriptor.outputSchema as StructuralSchema;
     expect(validateStructural(schema, result.structuredContent)).toEqual([]);
+  });
+
+  // Source-of-truth law: each migrated handler's descriptor.outputSchema is
+  // PROVABLY the JSON-Schema of its ONE payload Effect Schema — the same source
+  // the exported `Schema.Type` is derived from. A hand-edited outputSchema (the
+  // drift this migration killed) would diverge here. The CLI-only commands whose
+  // payload schema is module-private (capsule.*, scene.*) are guaranteed by
+  // construction (the descriptor literally calls `schemaToJsonSchema(X)`); this
+  // pins every EXPORTED payload schema as the single source.
+  const SINGLE_SOURCE_SCHEMAS = {
+    glossary: GlossaryPayloadSchema,
+    version: VersionPayloadSchema,
+    plumb: PlumbPayloadSchema,
+    'asset.analyze': AssetAnalyzePayloadSchema,
+    verify: VerifyPayloadSchema,
+    audit: AuditPayloadSchema,
+    'audit-floor': AuditFloorPayloadSchema,
+    'package-smoke': PackageSmokePayloadSchema,
+    'check-invariants': CheckInvariantsPayloadSchema,
+    'capsule-verify': CapsuleVerifyPayloadSchema,
+    check: CheckPayloadSchema,
+  } as const;
+
+  it('every handler outputSchema deep-equals the derivation of its ONE payload schema (no proxy beside the type)', () => {
+    for (const [name, schema] of Object.entries(SINGLE_SOURCE_SCHEMAS)) {
+      const descriptor = commandRegistry.get(name)?.descriptor;
+      expect(descriptor, `no descriptor for '${name}'`).toBeDefined();
+      expect(descriptor!.outputSchema, `'${name}' outputSchema is not the derived single source`).toEqual(
+        schemaToJsonSchema(schema),
+      );
+    }
   });
 
   it('the validator has teeth: a missing required field and a wrong type both fail', () => {

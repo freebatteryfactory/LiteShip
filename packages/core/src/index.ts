@@ -31,6 +31,14 @@ export type {
 // FNV-1a hash utility
 export { fnv1a, fnv1aBytes } from './fnv.js';
 
+// JSON-Schema deriver (single-source-of-truth migration): derive a command
+// descriptor's JSON-Schema (`inputSchema`/`outputSchema`) from ONE Effect Schema,
+// killing the hand-maintained-JSON-Schema-beside-the-TS-type drift. PRODUCTION
+// module (NOT under harness/) so @czap/command can import it without pulling
+// fast-check into its runtime — it depends only on `effect` + `@czap/error`.
+export { schemaToJsonSchema } from './json-schema-from-schema.js';
+export type { JsonSchemaObject, JsonSchemaFragment } from './json-schema-from-schema.js';
+
 // Canonical CBOR encoder (RFC 8949 §4.2.1) — content-address kernel
 export { CanonicalCbor } from './cbor.js';
 

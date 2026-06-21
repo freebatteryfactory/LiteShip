@@ -15,25 +15,49 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
-  type PlumbSkip,
 } from '../registry.js';
 
-/** Structured payload returned by `plumb`. */
-export interface PlumbPayload {
-  readonly ok: boolean;
+/**
+ * One skipped generated test, modelled for the single-source derivation. The
+ * `kind` literal-union faithfully mirrors {@link PlumbSkip} so the engine's
+ * `PlumbSkip[]` is assignable to the derived element type and the `skips` array's
+ * `items` schema is the real element shape (tighter than a bare `{type:'array'}`).
+ */
+const PlumbSkipSchema = Schema.Struct({
+  file: Schema.String,
+  kind: Schema.Union([
+    Schema.Literal('it.skip'),
+    Schema.Literal('test.skip'),
+    Schema.Literal('describe.skip'),
+    Schema.Literal('bench.skip'),
+  ]),
+  message: Schema.String,
+});
+
+/**
+ * Structured payload returned by `plumb` — ONE Effect Schema is the source of
+ * both {@link PlumbPayload} and the descriptor's `outputSchema`.
+ */
+export const PlumbPayloadSchema = Schema.Struct({
+  /** Whether the gate passed (no skips, no unclassified packages). */
+  ok: Schema.Boolean,
   /** Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking. */
-  readonly skips: readonly PlumbSkip[];
+  skips: Schema.Array(PlumbSkipSchema),
   /** Published packages with no PACKAGE_PLUMB classification. */
-  readonly unclassified: readonly string[];
+  unclassified: Schema.Array(Schema.String),
   /** Whether the generated test corpus was present to scan (false ⇒ run capsule:compile). */
-  readonly generatedPresent: boolean;
-}
+  generatedPresent: Schema.Boolean,
+});
+
+/** Structured payload returned by `plumb`. */
+export type PlumbPayload = Schema.Schema.Type<typeof PlumbPayloadSchema>;
 
 /** `plumb` — scan for placeholder skips + unclassified packages; emit a structured pass/fail verdict. */
 export const plumbCommand: HandledCommand = {
@@ -42,17 +66,8 @@ export const plumbCommand: HandledCommand = {
     summary:
       'Plumb-completeness gate: fail on any tests/generated/ placeholder skip or unclassified published package.',
     requires: ['runPlumb'] satisfies readonly CommandCapability[],
-    inputSchema: { type: 'object', properties: {} },
-    outputSchema: {
-      type: 'object',
-      required: ['ok', 'skips', 'unclassified', 'generatedPresent'],
-      properties: {
-        ok: { type: 'boolean' },
-        skips: { type: 'array' },
-        unclassified: { type: 'array' },
-        generatedPresent: { type: 'boolean' },
-      },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({})),
+    outputSchema: schemaToJsonSchema(PlumbPayloadSchema),
     annotations: { readOnly: true, mcpExposed: true, group: 'castoff' },
   },
   handler: async (_invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

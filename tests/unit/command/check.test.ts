@@ -15,9 +15,33 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
+import type { Schema } from 'effect';
 import { checkCommand, commandRegistry, mcpExposedDescriptors } from '@czap/command';
-import type { CheckPayload, CommandContext } from '@czap/command';
+import type { CheckPayload, CheckPayloadSchema, CommandContext } from '@czap/command';
 import type { Finding, GauntletResult } from '@czap/gauntlet';
+
+// ── Single-source drift-guard ────────────────────────────────────────────────
+// The check `outputSchema` is derived from CheckPayloadSchema, whose findings are
+// modelled MINUS `remediation` (a heterogeneous union the JSON-Schema dialect can't
+// express). The CheckPayload TYPE keeps the canonical gauntlet `Finding` (remediation
+// included) so no capability is narrowed away. These never-executed type assertions
+// pin the schema's modelled finding fields BIDIRECTIONALLY against the canonical
+// `Finding` minus remediation — if the gauntlet `Finding` renames/adds/drops a
+// modelled field, or the schema drifts, this stops compiling (tsc -p tsconfig.tests).
+type SchemaFinding = Schema.Schema.Type<typeof CheckPayloadSchema>['findings'][number];
+type CanonicalFindingSansRemediation = Omit<Finding, 'remediation'>;
+function __checkFindingContract(s: SchemaFinding, c: CanonicalFindingSansRemediation): void {
+  const _toCanonical: CanonicalFindingSansRemediation = s;
+  const _toSchema: SchemaFinding = c;
+  void _toCanonical;
+  void _toSchema;
+}
+// CheckPayload.findings keeps the FULL canonical Finding (remediation preserved).
+function __checkPayloadKeepsRemediation(p: CheckPayload): Finding['remediation'] {
+  return p.findings[0]?.remediation;
+}
+void __checkFindingContract;
+void __checkPayloadKeepsRemediation;
 
 /** A known blocking finding — the WELD-2 record we expect to ride straight through the payload. */
 const BARE_THROW: Finding = {

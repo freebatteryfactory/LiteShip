@@ -7,28 +7,54 @@
  *
  * @module
  */
-import type { CapsuleCommandResult, ContentAddress } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, type CapsuleCommandResult, type ContentAddress } from '@czap/core';
 import type { CommandContext, HandledCommand } from '../registry.js';
 
 type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
 
-/** The four forward-compat checks; only tarball_manifest is exercised in v0.1.0. */
-interface VerifyChecks {
-  readonly tarball_manifest: 'match' | 'mismatch' | 'skipped';
-  readonly lockfile: 'skipped';
-  readonly workspace_manifest: 'skipped';
-  readonly chain_link: 'skipped';
-}
+/**
+ * The four forward-compat checks; only tarball_manifest is exercised in v0.1.0.
+ * Modelled as a nested struct so the derived `outputSchema` carries the real
+ * per-check enums (the structural validator recurses into nested objects), not a
+ * bare `{type:'object'}`. The `checks` field of {@link VerifyPayload} is the
+ * derived `Schema.Type` of this struct.
+ */
+const VerifyChecksSchema = Schema.Struct({
+  tarball_manifest: Schema.Union([
+    Schema.Literal('match'),
+    Schema.Literal('mismatch'),
+    Schema.Literal('skipped'),
+  ]),
+  lockfile: Schema.Literal('skipped'),
+  workspace_manifest: Schema.Literal('skipped'),
+  chain_link: Schema.Literal('skipped'),
+});
 
 const SKIPPED_BASE = { lockfile: 'skipped', workspace_manifest: 'skipped', chain_link: 'skipped' } as const;
 
+/**
+ * Structured payload returned alongside a verdict — ONE Effect Schema is the
+ * source of both {@link VerifyPayload} and the descriptor's `outputSchema`.
+ *
+ * `capsule_id` is modelled as a nullable string (its on-the-wire shape — a
+ * `ContentAddress` is a branded string, and the brand is a phantom with no
+ * JSON-Schema image), then the exported {@link VerifyPayload} re-tightens that
+ * single field to the `ContentAddress | null` brand consumers expect. There is
+ * still exactly ONE schema; only the static type of the one branded field
+ * narrows — no hand-written JSON-Schema lives beside it.
+ */
+export const VerifyPayloadSchema = Schema.Struct({
+  tarball: Schema.String,
+  capsule_id: Schema.NullOr(Schema.String),
+  checks: VerifyChecksSchema,
+  mismatches: Schema.Array(Schema.String),
+});
+
 /** Structured payload returned alongside a verdict. */
-export interface VerifyPayload {
-  readonly tarball: string;
+export type VerifyPayload = Omit<Schema.Schema.Type<typeof VerifyPayloadSchema>, 'capsule_id'> & {
   readonly capsule_id: ContentAddress | null;
-  readonly checks: VerifyChecks;
-  readonly mismatches: readonly string[];
-}
+};
 
 function verdictResult(
   verdict: Verdict,
@@ -54,21 +80,10 @@ export const verifyCommand: HandledCommand = {
   descriptor: {
     name: 'verify',
     summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
-    inputSchema: {
-      type: 'object',
-      required: ['tarball'],
-      properties: { tarball: { type: 'string' }, capsule: { type: 'string' } },
-    },
-    outputSchema: {
-      type: 'object',
-      required: ['tarball', 'capsule_id', 'checks', 'mismatches'],
-      properties: {
-        tarball: { type: 'string' },
-        capsule_id: { type: ['string', 'null'] },
-        checks: { type: 'object' },
-        mismatches: { type: 'array' },
-      },
-    },
+    inputSchema: schemaToJsonSchema(
+      Schema.Struct({ tarball: Schema.String, capsule: Schema.optional(Schema.String) }),
+    ),
+    outputSchema: schemaToJsonSchema(VerifyPayloadSchema),
     annotations: { readOnly: true, group: 'ship' },
   },
   handler: async (invocation, context: CommandContext): Promise<CapsuleCommandResult> => {

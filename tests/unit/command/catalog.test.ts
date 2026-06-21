@@ -123,19 +123,23 @@ describe('@czap/command canonical catalog', () => {
     expect(mcpExposedDescriptors().map((d) => d.name)).toEqual([...EXPECTED_MCP_NAMES]);
   });
 
-  it('preserves the legacy MCP inputSchemas byte-for-byte (listTools compatibility)', () => {
+  it('preserves the MCP inputSchemas (now single-source-derived from one Effect Schema)', () => {
     const byName = new Map(commandRegistry.list().map((d) => [d.name, d.inputSchema]));
     // 0.2.0 widening: `output` is no longer required — when omitted, the
     // handler derives `<sceneBasename>.mp4` beside the scene file.
+    // Source-of-truth cut: these inputSchemas are now DERIVED from the command's
+    // args Effect Schema (schemaToJsonSchema), so a literal-set field surfaces as
+    // a bare `{ enum: [...] }` (the dialect's literal-set form) rather than the
+    // old hand-written `{ type:'string', enum:[...] }` — tighter, same constraint.
     expect(byName.get('scene.render')).toEqual({
       type: 'object',
-      required: ['scene'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
+      required: ['scene'],
     });
     expect(byName.get('asset.analyze')).toEqual({
       type: 'object',
+      properties: { asset: { type: 'string' }, projection: { enum: ['beat', 'onset', 'waveform'] } },
       required: ['asset', 'projection'],
-      properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
     });
     expect(byName.get('gauntlet')).toEqual({
       type: 'object',

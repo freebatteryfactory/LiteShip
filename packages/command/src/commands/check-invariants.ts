@@ -19,23 +19,48 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
   type CommandContext,
   type HandledCommand,
-  type InvariantViolationGroup,
 } from '../registry.js';
 
-/** Structured payload returned by `check-invariants`. */
-export interface CheckInvariantsPayload {
-  readonly ok: boolean;
+/**
+ * One banned-pattern hit — faithfully mirrors {@link InvariantViolation} so the
+ * engine's groups are assignable and the derived `groups` items schema carries
+ * the real element shape.
+ */
+const InvariantViolationSchema = Schema.Struct({
+  file: Schema.String,
+  line: Schema.Number,
+  content: Schema.String,
+});
+
+/** Every violation of one named invariant rule — mirrors {@link InvariantViolationGroup}. */
+const InvariantViolationGroupSchema = Schema.Struct({
+  name: Schema.String,
+  message: Schema.String,
+  violations: Schema.Array(InvariantViolationSchema),
+});
+
+/**
+ * Structured payload returned by `check-invariants` — ONE Effect Schema is the
+ * source of both {@link CheckInvariantsPayload} and the descriptor's
+ * `outputSchema`.
+ */
+export const CheckInvariantsPayloadSchema = Schema.Struct({
+  ok: Schema.Boolean,
   /** Banned-pattern violations, grouped by the rule that flagged them. */
-  readonly groups: readonly InvariantViolationGroup[];
+  groups: Schema.Array(InvariantViolationGroupSchema),
   /** Committed text files whose line endings violate the `.gitattributes` policy. */
-  readonly lineEndings: readonly string[];
-}
+  lineEndings: Schema.Array(Schema.String),
+});
+
+/** Structured payload returned by `check-invariants`. */
+export type CheckInvariantsPayload = Schema.Schema.Type<typeof CheckInvariantsPayloadSchema>;
 
 /** `check-invariants` — scan source for banned patterns + line-ending policy; emit a structured verdict. */
 export const checkInvariantsCommand: HandledCommand = {
@@ -44,16 +69,8 @@ export const checkInvariantsCommand: HandledCommand = {
     summary:
       'Fast-lane invariant gate: fail on any banned source pattern (require/module.exports/var/ESM violation) or line-ending policy breach.',
     requires: ['runCheckInvariants'] satisfies readonly CommandCapability[],
-    inputSchema: { type: 'object', properties: {} },
-    outputSchema: {
-      type: 'object',
-      required: ['ok', 'groups', 'lineEndings'],
-      properties: {
-        ok: { type: 'boolean' },
-        groups: { type: 'array' },
-        lineEndings: { type: 'array' },
-      },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({})),
+    outputSchema: schemaToJsonSchema(CheckInvariantsPayloadSchema),
     // NOT mcpExposed: the scan needs @czap/audit's normalizeRepoPath (B5b cage),
     // so it is CLI-only by design — only @czap/cli injects runCheckInvariants.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },

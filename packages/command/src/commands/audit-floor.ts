@@ -15,7 +15,8 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, type CapsuleCommandResult } from '@czap/core';
 import {
   capabilityUnavailable,
   type CommandCapability,
@@ -23,20 +24,28 @@ import {
   type HandledCommand,
 } from '../registry.js';
 
-/** Structured payload returned by `audit-floor`. */
-export interface AuditFloorPayload {
-  readonly ok: boolean;
+/**
+ * Structured payload returned by `audit-floor` — ONE Effect Schema is the source
+ * of both {@link AuditFloorPayload} and the descriptor's `outputSchema`. `delta`
+ * is now a modelled nested struct (the validator recurses into it), tighter than
+ * the old bare `{type:'object'}`.
+ */
+export const AuditFloorPayloadSchema = Schema.Struct({
+  ok: Schema.Boolean,
   /** Number of pinned floor warnings (`AUDIT_WARNING_FLOOR.length`). */
-  readonly expectedWarnings: number;
+  expectedWarnings: Schema.Number,
   /** Number of `rule@file` warning keys the engine actually surfaced. */
-  readonly actualWarnings: number;
+  actualWarnings: Schema.Number,
   /** Error-severity findings across all three passes — any error fails the gate. */
-  readonly errorCount: number;
+  errorCount: Schema.Number,
   /** Warning-inventory drift against the floor: `added` are new, `removed` are gone. */
-  readonly delta: { readonly added: readonly string[]; readonly removed: readonly string[] };
+  delta: Schema.Struct({ added: Schema.Array(Schema.String), removed: Schema.Array(Schema.String) }),
   /** The sorted `rule@file` warning inventory the engine surfaced. */
-  readonly inventory: readonly string[];
-}
+  inventory: Schema.Array(Schema.String),
+});
+
+/** Structured payload returned by `audit-floor`. */
+export type AuditFloorPayload = Schema.Schema.Type<typeof AuditFloorPayloadSchema>;
 
 /** `audit-floor` — run the three-pass engine, diff the warning inventory against the floor; emit a verdict. */
 export const auditFloorCommand: HandledCommand = {
@@ -45,19 +54,8 @@ export const auditFloorCommand: HandledCommand = {
     summary:
       'Audit warning-floor gate: fail when the artifact-independent three-pass warning inventory drifts from AUDIT_WARNING_FLOOR or any error is present.',
     requires: ['runAuditFloor'] satisfies readonly CommandCapability[],
-    inputSchema: { type: 'object', properties: {} },
-    outputSchema: {
-      type: 'object',
-      required: ['ok', 'expectedWarnings', 'actualWarnings', 'errorCount', 'delta', 'inventory'],
-      properties: {
-        ok: { type: 'boolean' },
-        expectedWarnings: { type: 'number' },
-        actualWarnings: { type: 'number' },
-        errorCount: { type: 'number' },
-        delta: { type: 'object' },
-        inventory: { type: 'array' },
-      },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({})),
+    outputSchema: schemaToJsonSchema(AuditFloorPayloadSchema),
     // NOT mcpExposed: the engine is the heavy CLI-injected `@czap/audit` (runAuditFloor); cli-only by design.
     annotations: { readOnly: true, cliOnly: true, group: 'castoff' },
   },
