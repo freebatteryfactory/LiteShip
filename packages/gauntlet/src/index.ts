@@ -103,6 +103,8 @@ export {
   matchesGlob,
 } from './assurance-map.js';
 
+export { propagateAssuranceLevels } from './assurance-propagation.js';
+
 export {
   type Waiver,
   type WaiverApplication,

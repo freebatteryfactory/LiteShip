@@ -1,0 +1,178 @@
+/**
+ * The --ir effective-level integration (Slice B, B3.4) — the propagated levels,
+ * once computed, drive BOTH the engine's level-SCOPING (a file pulled into an L4
+ * path is in an L4 gate's band even though its glob would exclude it) AND the
+ * finding-level ELEVATION (a finding on such a file is reported at L4). And the
+ * load-bearing back-compat proof: WITHOUT `effectiveLevels` the engine is
+ * byte-identical to before B3.4 (the lean `czap check` / MCP path is untouched).
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+  scopeContextByLevel,
+  runGates,
+  memoryContext,
+  finding,
+  defineGate,
+  LITESHIP_ASSURANCE_MAP,
+  type AssuranceLevel,
+  type FileId,
+  type Finding,
+  type Gate,
+  type GateContext,
+} from '@czap/gauntlet';
+
+// A file that the GLOB map scores L1 (cosmetic CLI lib) but that — on the --ir
+// path — was pulled into an L4 path by an import edge.
+const PULLED_FILE = 'packages/cli/src/lib/ansi.ts'; // glob → L1
+const TRUE_L4_FILE = 'packages/canonical/src/x.ts'; // glob → L4
+const PLAIN_L1_FILE = 'packages/cli/src/lib/other.ts'; // glob → L1, NOT pulled
+
+const ctx: GateContext = memoryContext({
+  [PULLED_FILE]: 'pulled-into-L4',
+  [TRUE_L4_FILE]: 'true-L4',
+  [PLAIN_L1_FILE]: 'plain-L1',
+});
+
+// The propagated map: PULLED_FILE elevated to L4; TRUE_L4 stays L4; PLAIN stays L1.
+const effectiveLevels: ReadonlyMap<FileId, AssuranceLevel> = new Map<FileId, AssuranceLevel>([
+  [PULLED_FILE, 'L4'],
+  [TRUE_L4_FILE, 'L4'],
+  [PLAIN_L1_FILE, 'L1'],
+]);
+
+// ── scopeContextByLevel with effective levels ────────────────────────────────
+
+describe('scopeContextByLevel — effective levels override the glob for scoping', () => {
+  it('an L4 scope WITH effective levels keeps the pulled-in file (glob would drop it)', () => {
+    const scoped = scopeContextByLevel(ctx, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
+    expect([...scoped.files()].sort()).toEqual([PULLED_FILE, TRUE_L4_FILE].sort());
+  });
+
+  it('an L4 scope WITHOUT effective levels uses the glob (drops the L1-glob file)', () => {
+    const scoped = scopeContextByLevel(ctx, 'L4', LITESHIP_ASSURANCE_MAP);
+    expect([...scoped.files()]).toEqual([TRUE_L4_FILE]);
+  });
+
+  it('a file absent from the effective map falls back to its glob level (no crash)', () => {
+    const partial = new Map<FileId, AssuranceLevel>([[PULLED_FILE, 'L4']]); // others absent
+    const scoped = scopeContextByLevel(ctx, 'L4', LITESHIP_ASSURANCE_MAP, partial);
+    // PULLED → L4 (in map); TRUE_L4 → glob L4 (absent, fallback); PLAIN → glob L1 (dropped).
+    expect([...scoped.files()].sort()).toEqual([PULLED_FILE, TRUE_L4_FILE].sort());
+  });
+});
+
+// ── runGates: a gate scoped by effective levels sees the pulled-in file ───────
+
+/** A probe gate at `level` that records the files it is handed and flags each. */
+function probeGate(id: string, level: AssuranceLevel): Gate {
+  return defineGate({
+    id,
+    level,
+    describe: 'flags every file it sees',
+    run: (c: GateContext): readonly Finding[] =>
+      c
+        .files()
+        .filter((f) => f.startsWith('packages/'))
+        .map((f) => finding({ ruleId: id, severity: 'error', level, title: id, detail: f, location: { file: f, line: 1 } })),
+    fixtures: {
+      red: { name: 'red', context: memoryContext({ 'packages/x/src/bad.ts': 'x' }) },
+      green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
+      mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
+    },
+  });
+}
+
+describe('runGates — effectiveLevels scope an L4 gate onto a pulled-in file', () => {
+  const gate = probeGate('test/l4-probe', 'L4');
+
+  it('WITH effectiveLevels the L4 gate flags the pulled-in (glob-L1) file', () => {
+    const result = runGates([gate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP, effectiveLevels });
+    const files = result.findings.map((f) => f.location?.file).sort();
+    expect(files).toEqual([PULLED_FILE, TRUE_L4_FILE].sort()); // PLAIN_L1 still excluded
+  });
+
+  it('WITHOUT effectiveLevels the same L4 gate sees only the true-L4 file (glob scoping)', () => {
+    const result = runGates([gate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
+    const files = result.findings.map((f) => f.location?.file);
+    expect(files).toEqual([TRUE_L4_FILE]);
+  });
+});
+
+// ── finding-level elevation ──────────────────────────────────────────────────
+
+describe('runGates — a finding on a pulled-in file is elevated to its effective level', () => {
+  // A LOW-level gate (L1) that flags the pulled-in file. On the --ir path the
+  // finding's level must be ELEVATED to L4 (the file's real assurance), even though
+  // the gate emitted it at L1.
+  function l1FlagGate(): Gate {
+    return defineGate({
+      id: 'test/l1-flagger',
+      level: 'L1',
+      describe: 'flags the pulled-in file at L1',
+      run: (c: GateContext): readonly Finding[] =>
+        c
+          .files()
+          .filter((f) => f === PULLED_FILE)
+          .map((f) => finding({ ruleId: 'test/l1-flagger', severity: 'error', level: 'L1', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+      fixtures: {
+        red: { name: 'red', context: memoryContext({ [PULLED_FILE]: 'x' }) },
+        green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
+        mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
+      },
+    });
+  }
+
+  it('the finding is reported at L4 (the file effective level), not the gate L1', () => {
+    const result = runGates([l1FlagGate()], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP, effectiveLevels });
+    const f = result.findings.find((x) => x.ruleId === 'test/l1-flagger');
+    expect(f?.level).toBe('L4'); // elevated from L1 to the file's effective L4
+    expect(f?.location?.file).toBe(PULLED_FILE);
+  });
+
+  it('WITHOUT effectiveLevels the finding stays at the gate level L1 (lean path)', () => {
+    const result = runGates([l1FlagGate()], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
+    const f = result.findings.find((x) => x.ruleId === 'test/l1-flagger');
+    expect(f?.level).toBe('L1'); // unchanged
+  });
+
+  it('elevation NEVER lowers — an L4 finding on a glob-L1 effective file stays L4', () => {
+    // A gate emitting at L4 a finding on a file whose effective level is L1.
+    const gate = defineGate({
+      id: 'test/l4-emit',
+      level: 'L1',
+      describe: 'emits an L4 finding on the plain-L1 file',
+      run: (c: GateContext): readonly Finding[] =>
+        c
+          .files()
+          .filter((f) => f === PLAIN_L1_FILE)
+          .map((f) => finding({ ruleId: 'test/l4-emit', severity: 'error', level: 'L4', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+      fixtures: {
+        red: { name: 'red', context: memoryContext({ [PLAIN_L1_FILE]: 'x' }) },
+        green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
+        mutation: { describe: 'noop', mutate: (g): Gate => ({ ...g, run: (): readonly Finding[] => [] }) },
+      },
+    });
+    const result = runGates([gate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP, effectiveLevels });
+    const f = result.findings.find((x) => x.ruleId === 'test/l4-emit');
+    expect(f?.level).toBe('L4'); // effective is L1 but finding L4 > L1 → unchanged (max)
+  });
+});
+
+// ── back-compat: the lean path is byte-identical to before B3.4 ──────────────
+
+describe('runGates — the lean path (no effectiveLevels) is byte-identical to before B3.4', () => {
+  it('omitting effectiveLevels yields a result deep-equal to the same run with no B3.4 option', () => {
+    const gate = probeGate('test/l1-all', 'L1');
+    // Two runs: one with NO B3.4 option present at all, one passing effectiveLevels:
+    // undefined explicitly. Both must be the lean (glob-only) behaviour, identical.
+    const baseline = runGates([gate], ctx, { assuranceMap: LITESHIP_ASSURANCE_MAP });
+    const explicitUndefined = runGates([gate], ctx, {
+      assuranceMap: LITESHIP_ASSURANCE_MAP,
+      effectiveLevels: undefined,
+    });
+    expect(explicitUndefined).toEqual(baseline);
+    // And the findings carry their ORIGINAL gate-emitted level (no elevation).
+    for (const f of baseline.findings) expect(f.level).toBe('L1');
+  });
+});

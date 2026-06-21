@@ -17,8 +17,9 @@
 import type { GateContext, Gate } from './gate.js';
 import type { Finding, Severity } from './finding.js';
 import { verifyGate, earnedAuthority, type Authority, type GateProof } from './authority.js';
-import { atLeast, type AssuranceLevel } from './assurance.js';
+import { atLeast, rankOf, type AssuranceLevel } from './assurance.js';
 import { levelOf, type LevelRule } from './assurance-map.js';
+import type { FileId } from './repo-ir.js';
 import { applyWaivers, type Waiver } from './waiver.js';
 import {
   type GateVerdictCache,
@@ -57,6 +58,21 @@ export interface RunGatesOptions {
    * Omit to run every gate over ALL files (back-compat — no level scoping).
    */
   readonly assuranceMap?: readonly LevelRule[];
+  /**
+   * The PROPAGATED effective assurance levels (Slice B, B3.4) — a file's level
+   * after import-graph propagation (`propagateAssuranceLevels`), so a file PULLED
+   * INTO an L4 path is scoped + reported as L4 regardless of its folder ("AUTHORITY
+   * decides assurance, not folder names"). Present ONLY on the IR-present (`--ir`)
+   * path, where the host has the import graph to compute it.
+   *
+   * When present it is the SOURCE OF TRUTH for level-scoping (a file's effective
+   * level instead of recomputing the glob-only {@link levelOf}) AND it ELEVATES a
+   * finding's level to the effective level of its location when that is higher (so
+   * a divergence on a file pulled into L4 is reported AT L4, not just the gate's
+   * base level). When ABSENT (the lean path) behaviour is UNCHANGED — glob levels
+   * via {@link assuranceMap}, no finding elevation. Never lowers a level (max only).
+   */
+  readonly effectiveLevels?: ReadonlyMap<FileId, AssuranceLevel>;
   /** Waivers applied to every gate's findings (matched → suppressed). */
   readonly waivers?: readonly Waiver[];
   /** Injected clock for waiver-expiry evaluation. Defaults to the epoch (no expiry) — NEVER `Date.now()`. */
@@ -95,28 +111,80 @@ function asAdvisory(f: Finding): Finding {
 }
 
 /**
+ * The level a file is SCOPED + REPORTED at: its PROPAGATED effective level when
+ * `effectiveLevels` is supplied AND carries an entry for the file (the `--ir`
+ * path — "AUTHORITY decides assurance, not folder names"), else the glob-only
+ * {@link levelOf} over `map` (the lean path — UNCHANGED). The effective map only
+ * ever RAISES a file above its glob floor, so consulting it never lowers a level.
+ * A file absent from the effective map (e.g. a fixture file not in the IR) falls
+ * back to the glob level — never a crash.
+ */
+function effectiveLevelOf(
+  file: string,
+  map: readonly LevelRule[],
+  effectiveLevels?: ReadonlyMap<FileId, AssuranceLevel>,
+): AssuranceLevel {
+  const propagated = effectiveLevels?.get(file);
+  return propagated ?? levelOf(file, map);
+}
+
+/**
  * Derive a {@link GateContext} scoped to files at-or-above `level`, per `map`.
  *
  * `readFile` and `repoRoot` are passed through unchanged; only `files()` is
- * narrowed to those whose {@link levelOf} is `atLeast(level)`. A gate written
- * against {@link GateContext} thus only ever sees the files its rigor aims at —
- * an L3 gate run with the map drops the L0/L1 tooling entirely. Pure: no clock,
- * no I/O, just a filter over the base context's file list.
+ * narrowed to those whose level is `atLeast(level)`. A gate written against
+ * {@link GateContext} thus only ever sees the files its rigor aims at — an L3 gate
+ * run with the map drops the L0/L1 tooling entirely. Pure: no clock, no I/O, just
+ * a filter over the base context's file list.
+ *
+ * When `effectiveLevels` is supplied (the `--ir` path), a file's PROPAGATED level
+ * (import-graph propagation) is the scoping level — a file pulled into an L4 path
+ * is now in an L4 gate's band even though its GLOB would have excluded it. When it
+ * is OMITTED (the lean path) the glob-only {@link levelOf} is used — byte-identical
+ * to before B3.4.
  */
 export function scopeContextByLevel(
   context: GateContext,
   level: AssuranceLevel,
   map: readonly LevelRule[],
+  effectiveLevels?: ReadonlyMap<FileId, AssuranceLevel>,
 ): GateContext {
   return {
     repoRoot: context.repoRoot,
     readFile: context.readFile,
-    files: (): readonly string[] => context.files().filter((f) => atLeast(levelOf(f, map), level)),
+    files: (): readonly string[] =>
+      context.files().filter((f) => atLeast(effectiveLevelOf(f, map, effectiveLevels), level)),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.
     ...(context.ir !== undefined ? { ir: context.ir } : {}),
   };
+}
+
+/**
+ * Elevate a finding's `level` to the PROPAGATED effective level of its location
+ * when that is HIGHER (Slice B, B3.4) — so a divergence on a file pulled into an
+ * L4 path is reported AT L4, not just the emitting gate's base level. Criticality
+ * thus tracks the file's REAL assurance, not the gate's. This does NOT change
+ * blocking (authority + severity decide that); it makes a finding on a
+ * high-assurance file correctly LOUD in the report.
+ *
+ * No-ops when `effectiveLevels` is absent (the lean path — UNCHANGED), when the
+ * finding has no location, when the location is not in the effective map, or when
+ * the effective level is not higher than the finding's current level (max only,
+ * never lowers). Returns the SAME finding object when nothing changes (stable
+ * structural equality on the lean path).
+ */
+function elevateFindingLevel(
+  f: Finding,
+  effectiveLevels: ReadonlyMap<FileId, AssuranceLevel> | undefined,
+): Finding {
+  if (effectiveLevels === undefined) return f;
+  const file = f.location?.file;
+  if (file === undefined) return f;
+  const effective = effectiveLevels.get(file);
+  if (effective === undefined || rankOf(effective) <= rankOf(f.level)) return f;
+  return { ...f, level: effective };
 }
 
 /** The epoch — the default `now` when none is injected (so no waiver expires by default). */
@@ -213,16 +281,27 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
     const authority = earnedAuthority(proof);
 
     // Scope the context to the gate's level when a map is supplied; otherwise the
-    // gate sees everything (back-compat).
+    // gate sees everything (back-compat). On the --ir path the PROPAGATED effective
+    // levels (when present) drive scoping, so a file pulled into the gate's band by
+    // an import edge is in scope even when its glob would have excluded it.
     const scoped =
-      opts.assuranceMap !== undefined ? scopeContextByLevel(context, gate.level, opts.assuranceMap) : context;
+      opts.assuranceMap !== undefined
+        ? scopeContextByLevel(context, gate.level, opts.assuranceMap, opts.effectiveLevels)
+        : context;
 
     // Compute the RAW gate.run findings — from the verdict cache when it HITS,
     // else by running the gate (the expensive part) and writing the result back.
     // verifyGate / earnedAuthority / applyWaivers below still run EVERY time on
     // these raw findings; only `gate.run` is ever skipped. The cache is a pure
     // speedup — `runRawCached` returns EXACTLY what `gate.run(scoped)` would.
-    const raw = armedCache !== undefined ? runRawCached(gate, scoped, armedCache) : gate.run(scoped);
+    const rawUnelevated = armedCache !== undefined ? runRawCached(gate, scoped, armedCache) : gate.run(scoped);
+    // ELEVATE each finding's level to the propagated effective level of its
+    // location when that is higher (--ir path only) — a finding on a file pulled
+    // into an L4 path is reported AT L4, so criticality tracks the file's REAL
+    // assurance, not just the gate's. Cap-to-advisory below is independent (level
+    // is criticality tagging; severity decides blocking). On the lean path
+    // (no effectiveLevels) this is the identity map — findings are unchanged.
+    const raw = rawUnelevated.map((f) => elevateFindingLevel(f, opts.effectiveLevels));
     const authed = authority === 'blocking' ? raw : raw.map(asAdvisory);
 
     // Apply waivers AFTER authority (a waiver suppresses a kept finding; it does

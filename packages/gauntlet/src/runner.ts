@@ -23,7 +23,8 @@ import type { RepoIR } from './repo-ir.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
-import { LITESHIP_ASSURANCE_MAP } from './assurance-map.js';
+import { LITESHIP_ASSURANCE_MAP, levelOf } from './assurance-map.js';
+import { propagateAssuranceLevels } from './assurance-propagation.js';
 import { LITESHIP_WAIVERS } from './waivers.js';
 import { noBareThrowGate } from './gates/no-bare-throw.js';
 import { noTsIgnoreGate } from './gates/no-ts-ignore.js';
@@ -173,6 +174,16 @@ export function litelaunchGauntlet(
  * keeps calling {@link litelaunchGauntlet} with no IR and runs the six regex gates
  * unchanged. This is the ONE place the IR-fold gates run — so the engine stays
  * lean (no `typescript`) and the lean MCP/command path is unaffected.
+ *
+ * B3.4 — ASSURANCE-LEVEL EDGE PROPAGATION: because the IR is present, this run
+ * PROPAGATES assurance levels along the import graph ("AUTHORITY decides
+ * assurance, not folder names"): a file (transitively) imported by an L4 file
+ * inherits at least L4. The propagated effective levels (floored by the glob map,
+ * raised along import edges via {@link propagateAssuranceLevels}) are threaded into
+ * the engine as `effectiveLevels`, where they drive BOTH level-scoping (a file
+ * pulled into an L4 path is in an L4 gate's band) AND finding-level elevation (a
+ * finding on such a file is reported at L4). The lean {@link litelaunchGauntlet}
+ * path has no IR and so no propagation — its glob-only levels are unchanged.
  */
 export function litelaunchGauntletWithIR(
   repoRoot: string,
@@ -181,11 +192,17 @@ export function litelaunchGauntletWithIR(
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
   cacheOpts: LitelaunchCacheOptions = {},
 ): GauntletResult {
+  // Propagate the committed glob map's levels along the IR's import edges: a file
+  // pulled into an L4 path inherits >= L4. The base (floor) of every file is its
+  // glob level via the committed LITESHIP_ASSURANCE_MAP; the propagation only ever
+  // raises it. Deterministic, cycle-safe, bounded (levels L0..L4 only rise).
+  const effectiveLevels = propagateAssuranceLevels(ir, (file) => levelOf(file, LITESHIP_ASSURANCE_MAP));
   return runGauntletOnRepo(
     LITESHIP_IR_GATES,
     { repoRoot, globs, ir },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
+      effectiveLevels,
       waivers: LITESHIP_WAIVERS,
       now,
       // The cache is ARMED only when the host supplies BOTH a store and a
