@@ -6,7 +6,7 @@
 
 # Interface: HeadProbeCaps
 
-Defined in: detect/src/head-probe.ts:34
+Defined in: [detect/src/head-probe.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L34)
 
 The minimal primitive capability shape the cap-level / motion ladders read.
 
@@ -21,7 +21,7 @@ verbatim into the browser head script via `.toString()`.
 
 > `readonly` **cores**: `number`
 
-Defined in: detect/src/head-probe.ts:36
+Defined in: [detect/src/head-probe.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L36)
 
 ***
 
@@ -29,7 +29,7 @@ Defined in: detect/src/head-probe.ts:36
 
 > `readonly` **gpu**: [`GPUTier`](../type-aliases/GPUTier.md)
 
-Defined in: detect/src/head-probe.ts:35
+Defined in: [detect/src/head-probe.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L35)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: detect/src/head-probe.ts:35
 
 > `readonly` **memory**: `number`
 
-Defined in: detect/src/head-probe.ts:37
+Defined in: [detect/src/head-probe.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L37)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: detect/src/head-probe.ts:37
 
 > `readonly` **prefersReducedMotion**: `boolean`
 
-Defined in: detect/src/head-probe.ts:39
+Defined in: [detect/src/head-probe.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L39)
 
 ***
 
@@ -53,4 +53,4 @@ Defined in: detect/src/head-probe.ts:39
 
 > `readonly` **webgpu**: `boolean`
 
-Defined in: detect/src/head-probe.ts:38
+Defined in: [detect/src/head-probe.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L38)

@@ -8,7 +8,7 @@
 
 > `const` **Q**: `object`
 
-Defined in: [quantizer/src/quantizer.ts:572](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L572)
+Defined in: [quantizer/src/quantizer.ts:580](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L580)
 
 Quantizer builder namespace.
 

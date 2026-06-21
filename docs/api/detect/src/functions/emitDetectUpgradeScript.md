@@ -8,14 +8,14 @@
 
 > **emitDetectUpgradeScript**(): `string`
 
-Defined in: detect/src/head-probe.ts:135
+Defined in: [detect/src/head-probe.ts:231](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L231)
 
 Build the head-inline GPU-probe IIFE — the script `@czap/astro` injects via
 `injectScript('page', ...)`. EVERY classification rule in the returned string
 is generated from canonical `@czap/detect`:
 
   - the renderer→tier classifier is folded from [GPU\_TIER\_PATTERNS](../variables/GPU_TIER_PATTERNS.md);
-  - the cap-level ladder is [headProbeCapLevel](headProbeCapLevel.md), emitted via `.toString()`;
+  - the cap-level ladder is [headProbeCapTier](headProbeCapTier.md), emitted via `.toString()`;
   - the motion ladder is [headProbeMotionTier](headProbeMotionTier.md), emitted via `.toString()`.
 
 Nothing here is hand-typed twice, so the inline probe cannot drift from the

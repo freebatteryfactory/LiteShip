@@ -10,7 +10,7 @@ Edge tier detection namespace.
 
 Pairs [ClientHints.parseClientHints](../../variables/ClientHints.md#parseclienthints) with the pure tier-mapping
 functions from `@czap/detect` so the edge and the browser produce the
-same `capLevel`/`motionTier`/`designTier` triple for a given device.
+same `capTier`/`motionTier`/`designTier` triple for a given device.
 
 ## Example
 

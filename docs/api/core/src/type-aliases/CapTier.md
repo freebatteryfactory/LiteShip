@@ -2,11 +2,11 @@
 
 ***
 
-[LiteShip](../../../modules.md) / [core/src](../README.md) / CapLevel
+[LiteShip](../../../modules.md) / [core/src](../README.md) / CapTier
 
-# Type Alias: CapLevel
+# Type Alias: CapTier
 
-> **CapLevel** = `"static"` \| `"styled"` \| `"reactive"` \| `"animated"` \| `"gpu"`
+> **CapTier** = `"static"` \| `"styled"` \| `"reactive"` \| `"animated"` \| `"gpu"`
 
 Defined in: [core/src/caps.ts:13](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/caps.ts#L13)
 

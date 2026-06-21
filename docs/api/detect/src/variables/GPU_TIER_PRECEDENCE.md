@@ -8,7 +8,7 @@
 
 > `const` **GPU\_TIER\_PRECEDENCE**: readonly [`GPUTier`](../type-aliases/GPUTier.md)[]
 
-Defined in: detect/src/gpu-patterns.ts:70
+Defined in: [detect/src/gpu-patterns.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/gpu-patterns.ts#L70)
 
 The order tiers are tested in, highest-fidelity-overlap first. A renderer
 can match multiple groups (e.g. an "RTX" string also contains "geforce");

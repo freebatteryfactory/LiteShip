@@ -10,7 +10,7 @@ Defined in: [core/src/document-graph.ts:115](https://github.com/heyoub/LiteShip/
 
 7. Policy — NET-NEW. A pre-projection capability/constraint gate read by the
 escalation chooser (P5c). Constrains which projection targets are admissible
-given the runtime site, the required [CapLevel](../type-aliases/CapLevel.md), and optional budgets.
+given the runtime site, the required [CapTier](../type-aliases/CapTier.md), and optional budgets.
 
 ## Extends
 
@@ -120,7 +120,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 ### requires
 
-> `readonly` **requires**: [`CapLevel`](../type-aliases/CapLevel.md)
+> `readonly` **requires**: [`CapTier`](../type-aliases/CapTier.md)
 
 Defined in: [core/src/document-graph.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L117)
 

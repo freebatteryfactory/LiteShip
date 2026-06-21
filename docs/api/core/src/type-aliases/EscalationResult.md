@@ -8,6 +8,6 @@
 
 > **EscalationResult** = [`RungChoice`](../interfaces/RungChoice.md) \| \{ `error`: `string`; \}
 
-Defined in: [core/src/escalation.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L122)
+Defined in: [core/src/escalation.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L126)
 
 The chooser result: a verdict or an unsatisfiability reason.

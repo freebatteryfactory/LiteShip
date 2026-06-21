@@ -27,7 +27,7 @@ import { Effect } from 'effect';
 
 const result = Effect.runSync(Detect.detect());
 console.log(result.capabilities.gpu);       // 0-3
-console.log(result.tier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
 console.log(result.confidence);             // 0.5 - 1.0

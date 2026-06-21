@@ -7,12 +7,12 @@
 # detect/src
 
 `@czap/detect` — **LiteShip** capability probes: device signals mapped to
-the `CapLevel` lattice and motion/design tiers in `@czap/core`.
+the `CapTier` lattice and motion/design tiers in `@czap/core`.
 
 Probes browser APIs for GPU tier, CPU cores, memory, input modality,
 motion preferences, color scheme, viewport dimensions, DPR, and
 network connection quality. Maps detected capabilities to the
-`CapLevel` lattice from `@czap/core`.
+`CapTier` lattice from `@czap/core`.
 
 ## Interfaces
 
@@ -41,15 +41,16 @@ network connection quality. Maps detected capabilities to the
 
 - [capAxisAttr](functions/capAxisAttr.md)
 - [capSetFromCapabilities](functions/capSetFromCapabilities.md)
+- [capTierFromCapabilities](functions/capTierFromCapabilities.md)
 - [designTierFromCapabilities](functions/designTierFromCapabilities.md)
 - [detect](functions/detect.md)
 - [detectGPUTier](functions/detectGPUTier.md)
 - [emitDetectUpgradeScript](functions/emitDetectUpgradeScript.md)
-- [headProbeCapLevel](functions/headProbeCapLevel.md)
+- [emitProvisionalDetectScript](functions/emitProvisionalDetectScript.md)
+- [headProbeCapTier](functions/headProbeCapTier.md)
 - [headProbeMotionTier](functions/headProbeMotionTier.md)
 - [motionTierFromCapabilities](functions/motionTierFromCapabilities.md)
 - [resetDetectionCaches](functions/resetDetectionCaches.md)
-- [tierFromCapabilities](functions/tierFromCapabilities.md)
 - [watchCapabilities](functions/watchCapabilities.md)
 
 ## References

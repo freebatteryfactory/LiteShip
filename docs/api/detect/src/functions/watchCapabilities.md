@@ -43,7 +43,7 @@ import { Effect } from 'effect';
 
 const program = Effect.scoped(
   Detect.watchCapabilities((result) => {
-    console.log('Capabilities changed:', result.tier);
+    console.log('Capabilities changed:', result.capTier);
   }),
 );
 ```
