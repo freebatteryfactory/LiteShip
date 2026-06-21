@@ -88,6 +88,15 @@ export {
 } from './engine.js';
 
 export {
+  type GateVerdictCache,
+  type GateVerdictKeyParts,
+  MISSING_DIGEST_SENTINEL,
+  gateVerdictKey,
+  coverageDigestOf,
+  allFileIds,
+} from './verdict-cache.js';
+
+export {
   type LevelRule,
   LITESHIP_ASSURANCE_MAP,
   levelOf,
@@ -128,4 +137,4 @@ export { noDefaultExportDivergenceGate } from './gates/no-default-export-diverge
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.
-export { LITESHIP_IR_GATES, litelaunchGauntletWithIR } from './runner.js';
+export { type LitelaunchCacheOptions, LITESHIP_IR_GATES, litelaunchGauntletWithIR } from './runner.js';

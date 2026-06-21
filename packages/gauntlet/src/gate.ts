@@ -17,7 +17,7 @@
 import { ValidationError, HostCapabilityError } from '@czap/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { Finding } from './finding.js';
-import type { RepoIR } from './repo-ir.js';
+import type { FileId, RepoIR } from './repo-ir.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -88,6 +88,25 @@ export interface Gate {
   readonly describe: string;
   /** The fold: produce findings for `context`. Pure w.r.t. the context. */
   readonly run: (context: GateContext) => readonly Finding[];
+  /**
+   * OPTIONAL coverage declaration (Slice B, B2 — the content-addressed cache).
+   * Returns the {@link FileId}s whose CONTENT this gate's verdict depends on, so
+   * the verdict cache can content-key the gate against exactly those files.
+   *
+   * SOUNDNESS RAIL: when ABSENT, the cache conservatively assumes the gate covers
+   * ALL files in the IR (the safe floor — any repo byte change invalidates the
+   * cached verdict). Declaring `coverage` is an OPT-IN narrowing that is sound ONLY
+   * when the gate GENUINELY reads only the returned files: an INACCURATE
+   * (too-narrow) coverage is a SOUNDNESS BUG — it would serve a stale cached
+   * verdict when an uncovered dependency changed. Narrow only when the gate folds
+   * over a provably-closed subset (e.g. only files carrying a given fact). The
+   * default-to-all floor never has that hazard; prefer it unless the narrowing is
+   * demonstrably exact.
+   *
+   * Pure: derives the FileId set from the IR alone (no I/O, no clock). Only
+   * consulted on the cache path; a run with no cache never calls it.
+   */
+  readonly coverage?: (ir: RepoIR) => readonly FileId[];
   /** The self-proof evidence — required, by construction. */
   readonly fixtures: GateFixtures;
 }

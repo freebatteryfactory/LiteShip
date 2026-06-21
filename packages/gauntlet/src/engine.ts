@@ -20,6 +20,12 @@ import { verifyGate, earnedAuthority, type Authority, type GateProof } from './a
 import { atLeast, type AssuranceLevel } from './assurance.js';
 import { levelOf, type LevelRule } from './assurance-map.js';
 import { applyWaivers, type Waiver } from './waiver.js';
+import {
+  type GateVerdictCache,
+  allFileIds,
+  coverageDigestOf,
+  gateVerdictKey,
+} from './verdict-cache.js';
 
 /** A gate's outcome within a run: its proof, earned authority, and findings. */
 export interface GateOutcome {
@@ -55,6 +61,32 @@ export interface RunGatesOptions {
   readonly waivers?: readonly Waiver[];
   /** Injected clock for waiver-expiry evaluation. Defaults to the epoch (no expiry) — NEVER `Date.now()`. */
   readonly now?: Date;
+  /**
+   * The INJECTED content-addressed verdict cache (Slice B, B2). When present
+   * ALONGSIDE {@link toolchainDigest}, each gate's RAW `gate.run` output is cached
+   * against the content digest of its covered files; an unchanged digest serves
+   * the cached raw findings and SKIPS the expensive `gate.run`. Omit it (the lean
+   * `czap check` / MCP path, or any caller that wants a full run) and the engine
+   * behaves EXACTLY as before — a full run, no caching. The cache NEVER changes a
+   * verdict; it only avoids recomputing a provably-identical one. See
+   * {@link GateVerdictCache} for the soundness model.
+   */
+  readonly cache?: GateVerdictCache;
+  /**
+   * The host's TOOLCHAIN DIGEST — a hash that CHANGES when the gauntlet's gate
+   * logic changes (a gate edit → rebuilt dist → new digest). REQUIRED for caching
+   * (passing {@link cache} without it is treated as no cache): it is the anti-lie
+   * keystone that invalidates every cached verdict when gate LOGIC changes, even
+   * when the covered files are byte-identical. Host-computed (the CLI), never here.
+   */
+  readonly toolchainDigest?: string;
+  /**
+   * The environment fingerprint folded into every cache key (node / platform /
+   * arch / pm), so a verdict cached under one toolchain is never served to
+   * another. Defaults to an empty fingerprint (the host supplies the real one);
+   * only consulted on the cache path.
+   */
+  readonly env?: Readonly<Record<string, string>>;
 }
 
 /** Cap a finding's severity to `advisory` (for gates that have not self-proven). */
@@ -91,6 +123,64 @@ export function scopeContextByLevel(
 const EPOCH = new Date(0);
 
 /**
+ * The armed verdict cache — the store + the toolchain digest + the env, captured
+ * together AFTER the both-present check so the cache path needs no narrowing cast.
+ * Present iff `runGates` was given BOTH a `cache` and a `toolchainDigest`.
+ */
+interface ArmedCache {
+  readonly store: GateVerdictCache;
+  readonly toolchainDigest: string;
+  readonly env: Readonly<Record<string, string>>;
+}
+
+/**
+ * Compute a gate's RAW `gate.run` findings through the verdict cache (Slice B,
+ * B2). Returns EXACTLY what `gate.run(scoped)` would — the cache is a pure
+ * speedup that never changes the verdict, only avoids recomputing a
+ * provably-identical one.
+ *
+ * The SOUNDNESS contract (every uncertain case MISSES — re-runs — never serves):
+ *
+ * 1. NO IR present — a gate (e.g. a text-only regex gate) running with no injected
+ *    `ir` CANNOT be content-keyed (there are no `contentDigest`s to key on). The
+ *    cache MISSES UNCONDITIONALLY: we run the gate and do NOT write (there is no
+ *    sound key to write under). This is the no-IR soundness rail: you cannot cache
+ *    what you cannot content-address.
+ * 2. IR present — the gate's covered FileIds are `gate.coverage?.(ir)` (the OPT-IN
+ *    narrowing) or {@link allFileIds} (the conservative default: every file). The
+ *    coverage digest folds those files' `(FileId, contentDigest)` pairs; the key
+ *    binds it to the gateId, the toolchainDigest, and the env. `cache.read(key)`
+ *    HITS → return the cached raw findings (skip `gate.run`); MISSES → run the
+ *    gate and `cache.write(key, raw)`.
+ *
+ * Because the key includes the toolchainDigest, a gate-LOGIC change (rebuilt dist
+ * → new digest) flips the key for unchanged files too — the anti-lie keystone.
+ */
+function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): readonly Finding[] {
+  const ir = scoped.ir;
+  if (ir === undefined) {
+    // No IR ⇒ nothing to content-address ⇒ the cache MUST MISS (never serve a
+    // verdict we cannot tie to content). Run, but do not write.
+    return gate.run(scoped);
+  }
+  const covered = gate.coverage !== undefined ? gate.coverage(ir) : allFileIds(ir);
+  const coverageDigest = coverageDigestOf(covered, ir);
+  const key = gateVerdictKey({
+    toolchainDigest: cache.toolchainDigest,
+    gateId: gate.id,
+    coverageDigest,
+    env: cache.env,
+  });
+
+  const hit = cache.store.read(key);
+  if (hit !== null) return hit;
+
+  const raw = gate.run(scoped);
+  cache.store.write(key, raw);
+  return raw;
+}
+
+/**
  * Run a set of gates over `context`. Each gate is first verified against its own
  * fixtures; unproven gates run but are demoted to advisory. When `opts.assuranceMap`
  * is given, each gate sees ONLY files at-or-above its level (rigor scoping — no
@@ -108,6 +198,14 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
   const allFindings: Finding[] = [];
   const now = opts.now ?? EPOCH;
   const waivers = opts.waivers ?? [];
+  // The cache is ARMED only when BOTH a store and a toolchainDigest are supplied:
+  // without the toolchainDigest a gate-logic change could not invalidate a cached
+  // verdict (the lie). A cache without a digest is therefore treated as no cache.
+  // Capture the narrowed pair in one value so the per-gate path needs no cast.
+  const armedCache: ArmedCache | undefined =
+    opts.cache !== undefined && opts.toolchainDigest !== undefined
+      ? { store: opts.cache, toolchainDigest: opts.toolchainDigest, env: opts.env ?? {} }
+      : undefined;
   let blocked = false;
 
   for (const gate of gates) {
@@ -119,7 +217,12 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
     const scoped =
       opts.assuranceMap !== undefined ? scopeContextByLevel(context, gate.level, opts.assuranceMap) : context;
 
-    const raw = gate.run(scoped);
+    // Compute the RAW gate.run findings — from the verdict cache when it HITS,
+    // else by running the gate (the expensive part) and writing the result back.
+    // verifyGate / earnedAuthority / applyWaivers below still run EVERY time on
+    // these raw findings; only `gate.run` is ever skipped. The cache is a pure
+    // speedup — `runRawCached` returns EXACTLY what `gate.run(scoped)` would.
+    const raw = armedCache !== undefined ? runRawCached(gate, scoped, armedCache) : gate.run(scoped);
     const authed = authority === 'blocking' ? raw : raw.map(asAdvisory);
 
     // Apply waivers AFTER authority (a waiver suppresses a kept finding; it does

@@ -21,6 +21,7 @@
 import type { Gate } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
+import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
 import { LITESHIP_ASSURANCE_MAP } from './assurance-map.js';
 import { LITESHIP_WAIVERS } from './waivers.js';
@@ -167,10 +168,38 @@ export function litelaunchGauntletWithIR(
   now: Date,
   ir: RepoIR,
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
+  cacheOpts: LitelaunchCacheOptions = {},
 ): GauntletResult {
   return runGauntletOnRepo(
     LITESHIP_IR_GATES,
     { repoRoot, globs, ir },
-    { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
+    {
+      assuranceMap: LITESHIP_ASSURANCE_MAP,
+      waivers: LITESHIP_WAIVERS,
+      now,
+      // The cache is ARMED only when the host supplies BOTH a store and a
+      // toolchainDigest (the engine treats a store without a digest as no cache
+      // anyway). Threaded straight through to runGates — the gauntlet stays lean
+      // (the store + the digest are host-built; the engine just consumes them).
+      ...(cacheOpts.cache !== undefined ? { cache: cacheOpts.cache } : {}),
+      ...(cacheOpts.toolchainDigest !== undefined ? { toolchainDigest: cacheOpts.toolchainDigest } : {}),
+      ...(cacheOpts.env !== undefined ? { env: cacheOpts.env } : {}),
+    },
   );
+}
+
+/**
+ * The INJECTED verdict-cache options the host threads into
+ * {@link litelaunchGauntletWithIR} (Slice B, B2). All optional — omit them and the
+ * run is a full, uncached run (back-compat). The {@link GateVerdictCache} store
+ * and the `toolchainDigest` are HOST-built (the CLI owns `fs` + crypto); the lean
+ * engine only consumes them.
+ */
+export interface LitelaunchCacheOptions {
+  /** The injected verdict store (fs-backed in the CLI host). */
+  readonly cache?: GateVerdictCache;
+  /** The host's toolchain digest (gauntlet dist + version + env) — the anti-lie keystone. */
+  readonly toolchainDigest?: string;
+  /** The environment fingerprint folded into every key. */
+  readonly env?: Readonly<Record<string, string>>;
 }

@@ -31,8 +31,16 @@ import {
   type FactOracle,
 } from '@czap/audit';
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
+import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
-import { litelaunchGauntletWithIR, type Fact, type GauntletResult, type RepoIR } from '@czap/gauntlet';
+import {
+  litelaunchGauntletWithIR,
+  type Fact,
+  type GauntletResult,
+  type LitelaunchCacheOptions,
+  type RepoIR,
+} from '@czap/gauntlet';
+import { gauntletToolchainDigest, makeFsVerdictCache } from './gauntlet-verdict-cache.js';
 
 /**
  * The CANONICAL `NO_DEFAULT_EXPORT` invariant rule — looked up from the committed
@@ -129,9 +137,45 @@ export function runGauntletWithRepoIR(
   repoRoot: string,
   now: Date,
   globs?: readonly string[],
+  cacheOpts: RepoIRGauntletCacheOptions = {},
 ): GauntletResult {
   const ir = buildRepoIRForRepo(repoRoot);
-  return globs !== undefined
-    ? litelaunchGauntletWithIR(repoRoot, now, ir, globs)
-    : litelaunchGauntletWithIR(repoRoot, now, ir);
+  const cache = resolveVerdictCache(repoRoot, cacheOpts);
+  const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
+  return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
+    ? litelaunchGauntletWithIR(repoRoot, now, ir, undefined, cache)
+    : litelaunchGauntletWithIR(repoRoot, now, ir, effectiveGlobs, cache);
+}
+
+/** Sentinel marking "no explicit globs" so we forward the engine's own default. */
+const DEFAULT_GAUNTLET_GLOBS_SENTINEL = Symbol('default-globs');
+
+/** The cache-control knobs the CLI command threads into a repo-IR gauntlet run. */
+export interface RepoIRGauntletCacheOptions {
+  /**
+   * Force a full, uncached run (the `--no-cache` path — mirrors the idempotency
+   * `force` flag). When `true`, NO verdict cache is wired: every gate's `run`
+   * executes and nothing is read from or written to `.czap/cache/gauntlet`.
+   */
+  readonly noCache?: boolean;
+  /** Cache root override (defaults to `repoRoot`) — pinned in tests. */
+  readonly cacheCwd?: string;
+}
+
+/**
+ * Resolve the {@link LitelaunchCacheOptions} for a run: an ARMED fs cache (store +
+ * the toolchain digest + the env fingerprint) UNLESS `--no-cache` is set, in which
+ * case an empty options object disarms caching entirely (a full run). The cache is
+ * thus defeatable, exactly like the idempotency `force` bypass.
+ */
+function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions): LitelaunchCacheOptions {
+  if (opts.noCache === true) return {};
+  const env = currentEnvFingerprint();
+  return {
+    cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),
+    // The anti-lie keystone: a gate-logic edit rebuilds the gauntlet dist → a new
+    // toolchain digest → every cached verdict invalidated. Computed once per run.
+    toolchainDigest: gauntletToolchainDigest(env),
+    env,
+  };
 }
