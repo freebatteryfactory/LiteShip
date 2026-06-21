@@ -97,13 +97,20 @@ describe('timeout policy — explicit test timeouts use scaledTimeout', () => {
 });
 
 describe('scaledTimeout semantics', () => {
-  it('returns the base budget untouched outside coverage at scale 1', async () => {
+  // The env/clamp arms pin deterministic budgets, so they DISABLE the live
+  // auto-contention scale (CZAP_TEST_TIMEOUT_AUTOSCALE=0) — otherwise the host's
+  // real load average would multiply the expected value. The auto-contention law
+  // itself is pinned separately (the pure contentionScaleFor below).
+  it('returns the base budget untouched outside coverage at scale 1 (autoscale off)', async () => {
     const { scaledTimeout } = await import('../../../vitest.shared.js');
-    // Test workers receive CZAP_COVERAGE from test.env; pin both arms by
-    // saving and forcing the env rather than assuming which lane runs us.
-    const saved = { coverage: process.env['CZAP_COVERAGE'], scale: process.env['CZAP_TEST_TIMEOUT_SCALE'] };
+    const saved = {
+      coverage: process.env['CZAP_COVERAGE'],
+      scale: process.env['CZAP_TEST_TIMEOUT_SCALE'],
+      auto: process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'],
+    };
     try {
       process.env['CZAP_COVERAGE'] = '0';
+      process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] = '0';
       delete process.env['CZAP_TEST_TIMEOUT_SCALE'];
       expect(scaledTimeout(15_000)).toBe(15_000);
       process.env['CZAP_TEST_TIMEOUT_SCALE'] = '3';
@@ -111,24 +118,72 @@ describe('scaledTimeout semantics', () => {
       process.env['CZAP_TEST_TIMEOUT_SCALE'] = 'garbage';
       expect(scaledTimeout(15_000)).toBe(15_000);
     } finally {
-      if (saved.coverage === undefined) delete process.env['CZAP_COVERAGE'];
-      else process.env['CZAP_COVERAGE'] = saved.coverage;
-      if (saved.scale === undefined) delete process.env['CZAP_TEST_TIMEOUT_SCALE'];
-      else process.env['CZAP_TEST_TIMEOUT_SCALE'] = saved.scale;
+      restoreEnv('CZAP_COVERAGE', saved.coverage);
+      restoreEnv('CZAP_TEST_TIMEOUT_SCALE', saved.scale);
+      restoreEnv('CZAP_TEST_TIMEOUT_AUTOSCALE', saved.auto);
     }
   });
 
-  it('clamps every explicit budget to the coverage floor when coverage is on', async () => {
+  it('clamps every explicit budget to the coverage floor when coverage is on (autoscale off)', async () => {
     const { scaledTimeout, COVERAGE_TIMEOUT_FLOOR_MS } = await import('../../../vitest.shared.js');
-    const saved = process.env['CZAP_COVERAGE'];
+    const saved = { coverage: process.env['CZAP_COVERAGE'], auto: process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] };
     try {
       process.env['CZAP_COVERAGE'] = '1';
+      process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] = '0';
       // The 0.1.5 flake shape: an explicit 60s budget must NOT undercut the floor.
       expect(scaledTimeout(60_000)).toBe(COVERAGE_TIMEOUT_FLOOR_MS);
       expect(scaledTimeout(COVERAGE_TIMEOUT_FLOOR_MS + 1)).toBe(COVERAGE_TIMEOUT_FLOOR_MS + 1);
     } finally {
-      if (saved === undefined) delete process.env['CZAP_COVERAGE'];
-      else process.env['CZAP_COVERAGE'] = saved;
+      restoreEnv('CZAP_COVERAGE', saved.coverage);
+      restoreEnv('CZAP_TEST_TIMEOUT_AUTOSCALE', saved.auto);
+    }
+  });
+
+  it('contentionScaleFor scales the budget by host oversubscription (load ÷ cores), clamped', async () => {
+    const { contentionScaleFor, MAX_AUTO_TIMEOUT_SCALE } = await import('../../../vitest.shared.js');
+    // Idle / spare capacity → never shrinks below 1 (a true hang still fails fast).
+    expect(contentionScaleFor(0, 8)).toBe(1);
+    expect(contentionScaleFor(2, 8)).toBe(1); // load below cores
+    expect(contentionScaleFor(8, 8)).toBe(1); // exactly saturated
+    // Oversubscribed → proportional headroom.
+    expect(contentionScaleFor(16, 8)).toBe(2);
+    expect(contentionScaleFor(12, 4)).toBe(3);
+    // Pathological load is capped so it can never mask a real hang.
+    expect(contentionScaleFor(10_000, 4)).toBe(MAX_AUTO_TIMEOUT_SCALE);
+    // No real load average (Windows reports 0) or a garbage reading → 1.
+    expect(contentionScaleFor(Number.NaN, 4)).toBe(1);
+    expect(contentionScaleFor(-1, 4)).toBe(1);
+  });
+
+  it('the auto-contention scale is a FLOOR under the manual env scale (whichever is larger wins)', async () => {
+    const { scaledTimeout, contentionScaleFor } = await import('../../../vitest.shared.js');
+    const os = await import('node:os');
+    const saved = {
+      coverage: process.env['CZAP_COVERAGE'],
+      scale: process.env['CZAP_TEST_TIMEOUT_SCALE'],
+      auto: process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'],
+    };
+    try {
+      process.env['CZAP_COVERAGE'] = '0';
+      delete process.env['CZAP_TEST_TIMEOUT_AUTOSCALE']; // auto ON — read the live host
+      const live = contentionScaleFor(os.loadavg()[0] ?? 0, os.cpus().length);
+      // With no manual scale, the budget is the base × the live auto scale (>= base).
+      delete process.env['CZAP_TEST_TIMEOUT_SCALE'];
+      expect(scaledTimeout(10_000)).toBe(10_000 * live);
+      expect(scaledTimeout(10_000)).toBeGreaterThanOrEqual(10_000);
+      // A manual scale ABOVE the live auto wins; one BELOW is floored by auto.
+      process.env['CZAP_TEST_TIMEOUT_SCALE'] = String(Math.ceil(live) + 5);
+      expect(scaledTimeout(10_000)).toBe(10_000 * (Math.ceil(live) + 5));
+    } finally {
+      restoreEnv('CZAP_COVERAGE', saved.coverage);
+      restoreEnv('CZAP_TEST_TIMEOUT_SCALE', saved.scale);
+      restoreEnv('CZAP_TEST_TIMEOUT_AUTOSCALE', saved.auto);
     }
   });
 });
+
+/** Restore an env var to a saved value (delete when it was previously unset). */
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[key];
+  else process.env[key] = value;
+}

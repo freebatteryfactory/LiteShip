@@ -1,3 +1,4 @@
+import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Config } from './packages/core/src/config.js';
@@ -122,9 +123,55 @@ export const coverageExclude = [
  */
 export const COVERAGE_TIMEOUT_FLOOR_MS = 240_000;
 
+/**
+ * The largest factor the AUTOMATIC contention scale may reach. Capped so a
+ * pathological load average can never inflate a budget enough to let a REAL hang
+ * wait minutes before failing — the budget tracks pressure, it does not abdicate.
+ */
+export const MAX_AUTO_TIMEOUT_SCALE = 4;
+
+/**
+ * The contention scale for a given 1-minute load average + core count — PURE, so
+ * the policy can pin it deterministically. The ratio `load / cores` is how
+ * oversubscribed the host is: < 1 means spare capacity (idle) → scale 1 (keep the
+ * tight budget that fast-fails a true hang); > 1 means more runnable work than
+ * cores (a busy dev box, sibling agents, or the full suite saturating its own
+ * worker pool) → scale up proportionally, which is exactly when a subprocess-
+ * spawning test runs starved and a fixed budget flakes. Clamped to
+ * {@link MAX_AUTO_TIMEOUT_SCALE}; a non-finite / non-positive load (e.g. Windows,
+ * which has no real load average) yields 1.
+ */
+export function contentionScaleFor(load: number, cores: number): number {
+  const safeCores = Math.max(1, cores);
+  if (!Number.isFinite(load) || load <= 0) return 1;
+  return Math.min(MAX_AUTO_TIMEOUT_SCALE, Math.max(1, load / safeCores));
+}
+
+/**
+ * The live contention scale from the host's 1-minute load average ÷ core count.
+ * Set `CZAP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic budgets
+ * — e.g. when pinning the policy, or on a dedicated CI runner that wants the tight
+ * limit). Otherwise it is read fresh each call.
+ */
+const contentionScale = (): number => {
+  if (process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] === '0') return 1;
+  return contentionScaleFor(loadavg()[0] ?? 0, cpus().length);
+};
+
+/**
+ * The timeout multiplier — the MAX of the manual override and the automatic
+ * contention scale, so the budget tracks real resource pressure WITHOUT anyone
+ * having to set an env var. An idle host keeps the tight budget that fast-fails a
+ * true hang; an oversubscribed one gets proportionally more room (an honest slow
+ * run is not a test failure). `CZAP_TEST_TIMEOUT_SCALE=<n>` still forces a floor
+ * for known-slow hardware; `CZAP_TEST_TIMEOUT_AUTOSCALE=0` disables the auto scale.
+ * CI on a dedicated (near-idle) runner sees scale 1, so gate semantics there are
+ * unchanged; a contended runner self-corrects instead of flaking.
+ */
 const timeoutScale = (): number => {
   const parsed = Number(process.env['CZAP_TEST_TIMEOUT_SCALE'] ?? '1');
-  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  const envScale = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  return Math.max(envScale, contentionScale());
 };
 
 // CZAP_COVERAGE is authoritative when present: test workers always receive it
