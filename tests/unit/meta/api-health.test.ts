@@ -245,8 +245,13 @@ const STANDALONE_FUNCTIONS = [
   // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
   'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
-  // CapLevel rung a policy admits on a runtime site.
+  // CapTier rung a policy admits on a runtime site.
   'chooseRung',
+  // Capability-admissibility ladder projector (cap-axes rename): projects the
+  // single index-keyed `LADDER_TARGETS` ladder onto a vocabulary's rung order.
+  // The core escalation `RUNG_TARGETS` (CapTier) and the quantizer's
+  // `TIER_TARGETS` (MotionTier) both derive from it, so the two cannot drift.
+  'projectLadder',
   // AI cast validated-output envelope (the shared discipline for GraphPatch AND
   // genui GeneratedUITree proposals). `mintValidated` (the sole token mint site)
   // is intentionally NOT exported, so the envelope stays un-forgeable. These are
@@ -345,6 +350,11 @@ const DEFAULT_CONSTANTS = [
   'EVALUATE_THRESHOLDS_SOURCE',
   // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
   'PROJECTION_KEYS_SOURCE',
+  // The single index-keyed capability-admissibility ladder + its rung count, the
+  // shared source `RUNG_TARGETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
+  // project from via `projectLadder` (cap-axes rename).
+  'LADDER_TARGETS',
+  'LADDER_RUNGS',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────

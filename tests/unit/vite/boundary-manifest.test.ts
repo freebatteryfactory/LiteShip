@@ -152,7 +152,7 @@ describe('collectBoundaryManifest', () => {
     };
     const cache = createBoundaryCache(kv);
     const tierResult = {
-      capLevel: 'reactive' as const,
+      capTier: 'reactive' as const,
       motionTier: 'animations' as const,
       designTier: 'enhanced' as const,
     };

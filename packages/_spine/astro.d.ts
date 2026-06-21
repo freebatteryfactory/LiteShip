@@ -2,7 +2,7 @@
  * @czap/astro type spine -- Astro 6 integration + <Quantize> component.
  */
 
-import type { Boundary, Quantizer, CapLevel } from './core.d.ts';
+import type { Boundary, Quantizer, CapTier } from './core.d.ts';
 import type { PluginConfig } from './vite.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -39,7 +39,7 @@ export interface QuantizeProps<B extends Boundary.Shape = Boundary.Shape> {
 export interface ServerIslandContext {
   readonly userAgent?: string;
   readonly clientHints?: Record<string, string>;
-  readonly detectedTier?: CapLevel;
+  readonly detectedCapTier?: CapTier;
 }
 
 export declare function resolveInitialState<B extends Boundary.Shape>(

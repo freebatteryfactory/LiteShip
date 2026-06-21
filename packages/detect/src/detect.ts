@@ -9,7 +9,7 @@
 
 import type { Scope } from 'effect';
 import { Effect } from 'effect';
-import type { CapLevel, CapSet } from '@czap/core';
+import type { CapTier, CapSet } from '@czap/core';
 import { Diagnostics } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ export interface NavigatorConnectionInfo {
   readonly saveData: boolean;
 }
 import {
-  tierFromCapabilities,
+  capTierFromCapabilities,
   capSetFromCapabilities,
   designTierFromCapabilities,
   motionTierFromCapabilities,
@@ -101,16 +101,16 @@ export interface DeviceCapabilities {
 /**
  * Result of a single detection sweep.
  *
- * Bundles the probed capabilities together with the derived {@link CapLevel}
+ * Bundles the probed capabilities together with the derived {@link CapTier}
  * tier, its monotone {@link CapSet}, and a confidence score reflecting how
  * many probes returned real values (vs. defaults).
  */
 export interface DetectionResult {
   /** The probed capabilities. */
   readonly capabilities: DeviceCapabilities;
-  /** Highest {@link CapLevel} the device qualifies for. */
-  readonly tier: CapLevel;
-  /** Monotone set of every {@link CapLevel} at or below `tier`. */
+  /** Highest {@link CapTier} the device qualifies for. */
+  readonly capTier: CapTier;
+  /** Monotone set of every {@link CapTier} at or below `capTier`. */
   readonly capSet: CapSet;
   /** Heuristic confidence in `[0.5, 1]` based on how many probes succeeded. */
   readonly confidence: number;
@@ -591,7 +591,7 @@ function reportDegradedProbes(probes: DetectionProbes, confidence: number): void
 function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
   const capabilities = buildCapabilitiesFromProbes(probes);
 
-  const tier = tierFromCapabilities(capabilities);
+  const capTier = capTierFromCapabilities(capabilities);
   const capSet = capSetFromCapabilities(capabilities);
   const designTier = designTierFromCapabilities(capabilities);
   const motionTier = motionTierFromCapabilities(capabilities);
@@ -599,7 +599,7 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
 
   reportDegradedProbes(probes, confidence);
 
-  return { capabilities, tier, capSet, confidence, designTier, motionTier };
+  return { capabilities, capTier, capSet, confidence, designTier, motionTier };
 }
 
 /**
@@ -620,7 +620,7 @@ function runDetection(probes: DetectionProbes): ExtendedDetectionResult {
  *
  * const result = Effect.runSync(Detect.detect());
  * console.log(result.capabilities.gpu);       // 0-3
- * console.log(result.tier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+ * console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
  * console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
  * console.log(result.motionTier);             // 'none' | 'transitions' | ...
  * console.log(result.confidence);             // 0.5 - 1.0
@@ -637,7 +637,7 @@ export function detect(): Effect.Effect<ExtendedDetectionResult> {
  *
  * Probes browser APIs for GPU tier, CPU cores, memory, input modality,
  * user preferences, and network info. Maps detected capabilities to
- * {@link CapLevel}, {@link CapSet}, {@link DesignTier}, and {@link MotionTier}.
+ * {@link CapTier}, {@link CapSet}, {@link DesignTier}, and {@link MotionTier}.
  * Supports live watching for preference and viewport changes.
  *
  * You usually never call these yourself — the `@czap/astro` boundary runs
@@ -655,7 +655,7 @@ export function detect(): Effect.Effect<ExtendedDetectionResult> {
  *
  * // Watch for changes
  * const watch = Effect.scoped(
- *   Detect.watchCapabilities((r) => console.log('tier:', r.tier)),
+ *   Detect.watchCapabilities((r) => console.log('capTier:', r.capTier)),
  * );
  * ```
  */
@@ -685,7 +685,7 @@ export const Detect = {
  *
  * const program = Effect.scoped(
  *   Detect.watchCapabilities((result) => {
- *     console.log('Capabilities changed:', result.tier);
+ *     console.log('Capabilities changed:', result.capTier);
  *   }),
  * );
  * ```

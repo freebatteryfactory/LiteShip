@@ -1,5 +1,5 @@
 /**
- * Branded capability tier mapping -- `DeviceCapabilities` to `CapLevel` + `CapSet`.
+ * Branded capability tier mapping -- `DeviceCapabilities` to `CapTier` + `CapSet`.
  *
  * Heuristic mapping:
  *   - low GPU + reduced motion &rarr; `static`
@@ -11,29 +11,29 @@
  * @module
  */
 
-import type { CapLevel, CapSet, MotionTier } from '@czap/core';
+import type { CapTier, CapSet, MotionTier } from '@czap/core';
 import type { DeviceCapabilities, ExtendedDeviceCapabilities } from './detect.js';
-import { headProbeCapLevel, headProbeMotionTier } from './head-probe.js';
+import { headProbeCapTier, headProbeMotionTier } from './head-probe.js';
 
-const CAP_LEVEL_ORDER: readonly CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'] as const;
+const CAP_TIER_ORDER: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'] as const;
 
 /**
  * Determine the highest capability level the device can support based on
  * its detected hardware and preference characteristics.
  *
- * Advanced — `detect()` already returns this as `result.tier`; call this
+ * Advanced — `detect()` already returns this as `result.capTier`; call this
  * directly only when you hold a {@link DeviceCapabilities} that did not come
  * from a `detect()` sweep (capsule/edge consumers).
  */
 // GPU tier mapping: 0=no GPU/software, 1=integrated (Intel UHD), 2=mid-range, 3=discrete high-end
 //
-// Delegates to headProbeCapLevel (head-probe.ts) — the SINGLE source of truth
+// Delegates to headProbeCapTier (head-probe.ts) — the SINGLE source of truth
 // for this ladder. The Astro head-inline probe emits that same function body
 // verbatim, so the runtime sweep and the head probe can never be hand-copies
 // that drift. `DeviceCapabilities` is a structural superset of the primitive
 // `HeadProbeCaps` the ladder reads, so the value passes through directly.
-export function tierFromCapabilities(caps: DeviceCapabilities): CapLevel {
-  return headProbeCapLevel(caps);
+export function capTierFromCapabilities(caps: DeviceCapabilities): CapTier {
+  return headProbeCapTier(caps);
 }
 
 /**
@@ -45,13 +45,13 @@ export function tierFromCapabilities(caps: DeviceCapabilities): CapLevel {
  * from a `detect()` sweep (capsule/edge consumers).
  */
 export function capSetFromCapabilities(caps: DeviceCapabilities): CapSet {
-  const tier = tierFromCapabilities(caps);
-  const tierIndex = CAP_LEVEL_ORDER.indexOf(tier);
-  const granted = CAP_LEVEL_ORDER.slice(0, tierIndex + 1);
+  const tier = capTierFromCapabilities(caps);
+  const tierIndex = CAP_TIER_ORDER.indexOf(tier);
+  const granted = CAP_TIER_ORDER.slice(0, tierIndex + 1);
 
   return {
     _tag: 'CapSet' as const,
-    levels: new Set(granted) as ReadonlySet<CapLevel>,
+    levels: new Set(granted) as ReadonlySet<CapTier>,
   };
 }
 

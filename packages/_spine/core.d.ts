@@ -647,24 +647,24 @@ export declare namespace LiveCell {
 // § 16. CAPABILITY LATTICE (re-parameterized from @kit: pure<read<...<system -> static<styled<...<gpu)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type CapLevel = 'static' | 'styled' | 'reactive' | 'animated' | 'gpu';
+export type CapTier = 'static' | 'styled' | 'reactive' | 'animated' | 'gpu';
 
 export interface CapSet {
   readonly _tag: 'CapSet';
-  readonly levels: ReadonlySet<CapLevel>;
+  readonly levels: ReadonlySet<CapTier>;
 }
 
 export declare const Cap: {
   empty(): CapSet;
-  from(levels: ReadonlyArray<CapLevel>): CapSet;
-  grant(caps: CapSet, level: CapLevel): CapSet;
-  revoke(caps: CapSet, level: CapLevel): CapSet;
-  has(caps: CapSet, level: CapLevel): boolean;
+  from(levels: ReadonlyArray<CapTier>): CapSet;
+  grant(caps: CapSet, level: CapTier): CapSet;
+  revoke(caps: CapSet, level: CapTier): CapSet;
+  has(caps: CapSet, level: CapTier): boolean;
   superset(a: CapSet, b: CapSet): boolean;
   union(a: CapSet, b: CapSet): CapSet;
   intersection(a: CapSet, b: CapSet): CapSet;
-  atLeast(a: CapLevel, b: CapLevel): boolean;
-  ordinal(level: CapLevel): number;
+  atLeast(a: CapTier, b: CapTier): boolean;
+  ordinal(level: CapTier): number;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

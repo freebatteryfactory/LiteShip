@@ -4,7 +4,7 @@
  * - **Active casts** — derive which projection targets a boundary element is
  *   live on (css / glsl / wgsl / aria / svg) from its attributes + payload, and
  *   format the CURRENT emitted values carried by `czap:uniform-update` `detail`.
- * - **Escalation** — derive the minimal required {@link CapLevel} from the
+ * - **Escalation** — derive the minimal required {@link CapTier} from the
  *   active targets and run the REAL `@czap/core` `chooseRung` against the live
  *   runtime site, surfacing the chosen rung + admitted targets + reason.
  * - **DocumentGraph peek** — build a read-only, content-addressed graph summary
@@ -31,7 +31,7 @@ import {
   chooseRung,
   projectionKeys,
   sealNode,
-  type CapLevel,
+  type CapTier,
   type ComponentNode,
   type DocumentGraphNode,
   type PolicyNode,
@@ -240,15 +240,16 @@ export function castValueRows(target: CastTarget, detail: BoundaryStateDetail | 
 // ---------------------------------------------------------------------------
 
 /**
- * The minimal {@link CapLevel} that admits every one of `targets`. Mirrors the
- * escalation chooser's local `RUNG_TARGETS` admissibility ladder (encoded in
- * `@czap/core/escalation`): aria→static, css→styled, glsl→animated, wgsl→gpu.
+ * The minimal {@link CapTier} that admits every one of `targets`. Mirrors the
+ * escalation chooser's `RUNG_TARGETS` admissibility ladder (projected from the
+ * shared `cap-ladder.ts` datum in `@czap/core`): aria→static, css→styled,
+ * glsl→animated, wgsl→gpu.
  * `svg` has no rung in the chooser's table; it is treated as `styled` (a CSS-
  * class peer) for the purpose of the required floor.
  */
-export function requiredRungForTargets(targets: readonly CastTarget[]): CapLevel {
-  let rung: CapLevel = 'static';
-  const raise = (next: CapLevel): void => {
+export function requiredRungForTargets(targets: readonly CastTarget[]): CapTier {
+  let rung: CapTier = 'static';
+  const raise = (next: CapTier): void => {
     if (Cap.ordinal(next) > Cap.ordinal(rung)) rung = next;
   };
   for (const target of targets) {
@@ -263,9 +264,9 @@ export function requiredRungForTargets(targets: readonly CastTarget[]): CapLevel
 /** The escalation verdict for one boundary, ready to render. */
 export interface EscalationView {
   /** The minimal rung required by the active targets (the derived `requires`). */
-  readonly requiredRung: CapLevel;
+  readonly requiredRung: CapTier;
   /** The chosen rung, or `null` when the policy is unsatisfiable on the site. */
-  readonly chosenRung: CapLevel | null;
+  readonly chosenRung: CapTier | null;
   /** The targets the chosen rung admits (sorted), or `[]` on error. */
   readonly admittedTargets: readonly string[];
   /** A one-line reason: the chooser's verdict or its error. */

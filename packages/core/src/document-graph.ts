@@ -25,9 +25,9 @@ import type { CellMeta } from './protocol.js';
 import type { EdgeType } from './plan.js';
 import type { ProjectionKeys } from './projection.js';
 import type { EvaluateResult } from './type-utils.js';
-import type { CapLevel, CapSet } from './caps.js';
+import type { CapTier, CapSet } from './caps.js';
 
-/** The runtime sites a node may be admitted on (distinct from the CapLevel lattice). */
+/** The runtime sites a node may be admitted on (distinct from the CapTier lattice). */
 export type RuntimeSite = 'node' | 'browser' | 'worker' | 'edge';
 
 /**
@@ -110,11 +110,11 @@ export interface ProjectionNode extends NodeBase<'projection'> {
 /**
  * 7. Policy — NET-NEW. A pre-projection capability/constraint gate read by the
  * escalation chooser (P5c). Constrains which projection targets are admissible
- * given the runtime site, the required {@link CapLevel}, and optional budgets.
+ * given the runtime site, the required {@link CapTier}, and optional budgets.
  */
 export interface PolicyNode extends NodeBase<'policy'> {
   readonly appliesTo: readonly ContentAddress[];
-  readonly requires: CapLevel;
+  readonly requires: CapTier;
   readonly grants: CapSet;
   readonly sites: readonly RuntimeSite[];
   readonly budgets?: {

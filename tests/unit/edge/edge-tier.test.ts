@@ -8,7 +8,7 @@ import { EdgeTier, ClientHints } from '@czap/edge';
 describe('EdgeTier', () => {
   test('detectTier returns all three tier axes', () => {
     const result = EdgeTier.detectTier({});
-    expect(result).toHaveProperty('capLevel');
+    expect(result).toHaveProperty('capTier');
     expect(result).toHaveProperty('motionTier');
     expect(result).toHaveProperty('designTier');
   });
@@ -40,7 +40,7 @@ describe('EdgeTier', () => {
 
   test('tierDataAttributes includes actual tier values', () => {
     const result = {
-      capLevel: 'reactive' as const,
+      capTier: 'reactive' as const,
       motionTier: 'animations' as const,
       designTier: 'enhanced' as const,
     };

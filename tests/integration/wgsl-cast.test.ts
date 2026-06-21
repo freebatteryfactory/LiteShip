@@ -23,7 +23,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode, projectionKeys, wgslIdent, PROJECTION_KEYS_SOURCE } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapLevel, CapSet, CellMeta, ContentAddress } from '@czap/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta, ContentAddress } from '@czap/core';
 import { satelliteAttrs } from '@czap/astro';
 import { Effect } from 'effect';
 import { applyBoundaryState, parseBoundary } from '../../packages/astro/src/runtime/boundary.js';
@@ -62,13 +62,13 @@ const META: CellMeta = {
 };
 
 /** Grant every rung up to and including `top` so `requires` is always reachable. */
-const grantUpTo = (top: CapLevel): CapSet => {
-  const ALL: readonly CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+const grantUpTo = (top: CapTier): CapSet => {
+  const ALL: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
   return Cap.from(ALL.filter((l) => Cap.ordinal(l) <= Cap.ordinal(top)));
 };
 
 function policy(opts: {
-  requires: CapLevel;
+  requires: CapTier;
   grants: CapSet;
   sites: readonly RuntimeSite[];
   budgets?: PolicyNode['budgets'];

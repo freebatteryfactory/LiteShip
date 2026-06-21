@@ -5,9 +5,9 @@
  * @module
  */
 
-import type { CapLevel } from '@czap/core';
+import type { CapTier } from '@czap/core';
 import {
-  tierFromCapabilities,
+  capTierFromCapabilities,
   motionTierFromCapabilities,
   designTierFromCapabilities,
   CAP_AXES,
@@ -29,8 +29,8 @@ import type { ClientHintsHeaders } from './client-hints.js';
  * code paths from `@czap/detect`.
  */
 export interface EdgeTierResult {
-  /** Highest {@link CapLevel} the device qualifies for. */
-  readonly capLevel: CapLevel;
+  /** Highest {@link CapTier} the device qualifies for. */
+  readonly capTier: CapTier;
   /** Motion complexity tier permitted for this device. */
   readonly motionTier: MotionTier;
   /** Visual fidelity tier permitted for this device. */
@@ -46,10 +46,10 @@ export interface EdgeTierResult {
  * using the same pure functions as the client runtime.
  */
 function tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult {
-  const capLevel = tierFromCapabilities(caps);
+  const capTier = capTierFromCapabilities(caps);
   const motionTier = motionTierFromCapabilities(caps);
   const designTier = designTierFromCapabilities(caps);
-  return { capLevel, motionTier, designTier };
+  return { capTier, motionTier, designTier };
 }
 
 /**
@@ -73,7 +73,7 @@ function tierDataAttributes(result: EdgeTierResult): string {
   // Iterate the canonical axis registry so the emitted attribute names can
   // never drift from the locals field names / runtime readers — one source.
   const value: Record<CapAxis, string> = {
-    tier: result.capLevel,
+    tier: result.capTier,
     motion: result.motionTier,
     design: result.designTier,
   };
@@ -89,7 +89,7 @@ function tierDataAttributes(result: EdgeTierResult): string {
  *
  * Pairs {@link ClientHints.parseClientHints} with the pure tier-mapping
  * functions from `@czap/detect` so the edge and the browser produce the
- * same `capLevel`/`motionTier`/`designTier` triple for a given device.
+ * same `capTier`/`motionTier`/`designTier` triple for a given device.
  *
  * @example
  * ```ts

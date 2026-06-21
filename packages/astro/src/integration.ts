@@ -18,6 +18,7 @@ import type { BoundaryManifestFile } from '@czap/edge';
 import { collectBoundaryManifest, plugin } from '@czap/vite';
 import type { PluginConfig } from '@czap/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
+import { DETECT_INLINE_SCRIPT } from './detect-provisional.js';
 import { getCzapHeaderEntries } from './headers.js';
 import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
@@ -149,67 +150,13 @@ function scopeGuardScript(exclude: readonly string[]): string {
 // ---------------------------------------------------------------------------
 // Detect Script
 // ---------------------------------------------------------------------------
-
-/**
- * Inline script that runs device detection on page load and stores
- * the result as CSS custom properties on the <html> element and
- * as a global for runtime access.
- */
-const DETECT_INLINE_SCRIPT = `
-(function(){
-  if (window.__CZAP_OFF__) return;
-  function writeDetectState(next) {
-    var safe = Object.freeze(Object.assign({}, next));
-    try {
-      Object.defineProperty(window, '__CZAP_DETECT__', {
-        value: safe,
-        configurable: true,
-        enumerable: false,
-        writable: false
-      });
-    } catch (_) {
-      try {
-        window.__CZAP_DETECT__ = safe;
-      } catch (_) {}
-    }
-  }
-
-  try {
-    var h = document.documentElement;
-    var w = window.innerWidth || 0;
-    var cores = navigator.hardwareConcurrency || 2;
-    var mem = navigator.deviceMemory || 4;
-    var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var dpr = window.devicePixelRatio || 1;
-
-    h.style.setProperty('--czap-vw', w + 'px');
-    h.style.setProperty('--czap-cores', String(cores));
-    h.style.setProperty('--czap-dpr', String(dpr));
-    h.setAttribute('data-czap-touch', String(touch));
-    // The reduced-motion PREFERENCE — distinct from data-czap-motion, which is the
-    // motion capability TIER (animations/transitions/.../none) emitted by
-    // EdgeTier.tierDataAttributes server-side. They previously collided on
-    // data-czap-motion; this keeps the cap/motion/design tier triple coherent.
-    h.setAttribute('data-czap-reduced-motion', motion ? 'reduce' : 'no-preference');
-    h.setAttribute('data-czap-scheme', dark ? 'dark' : 'light');
-
-    // Provisional tier -- conservative, no GPU probe available inline.
-    // Full detect package overrides on hydration via data-czap-tier attribute.
-    var tier = 'reactive';
-    if (motion) tier = 'static';
-    else if (cores <= 2 || mem <= 2) tier = 'styled';
-    h.setAttribute('data-czap-tier', tier);
-    h.setAttribute('data-czap-tier-provisional', 'true');
-
-    writeDetectState({
-      tier: tier,
-      provisional: true
-    });
-  } catch(e) {}
-})();
-`.trim();
+//
+// The provisional head-inline detect script (`DETECT_INLINE_SCRIPT`) is
+// GENERATED from canonical `@czap/detect` in `./detect-provisional.js` — it
+// emits the same `headProbeCapTier` cap-tier ladder the deferred GPU-probe
+// upgrade uses, so the provisional `data-czap-tier` can never be a divergent
+// hand-copy (the 0.2.3/0.3.0 detect-ladder drift bug-class). The hand-rolled
+// inline ladder that used to live here was the last surviving copy; it is gone.
 
 function serializeInlineRuntimePolicy(policy: RuntimeSecurityPolicy): string {
   return JSON.stringify(policy).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');

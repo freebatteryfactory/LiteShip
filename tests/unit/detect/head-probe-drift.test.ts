@@ -9,11 +9,11 @@
  * The cure makes drift structurally impossible: `emitDetectUpgradeScript`
  * GENERATES the probe script from canonical `@czap/detect` — folding the
  * classifier from the one `GPU_TIER_PATTERNS` datum and emitting the canonical
- * `headProbeCapLevel` / `headProbeMotionTier` ladders verbatim. This guard is
+ * `headProbeCapTier` / `headProbeMotionTier` ladders verbatim. This guard is
  * defence in depth: it executes the REAL emitted script and asserts it
  * classifies IDENTICALLY to the canonical pipeline across an exhaustive and a
  * property-generated input space. Every `expected` is computed from canonical
- * (`classifyGPURenderer` / `tierFromCapabilities` / `motionTierFromCapabilities`),
+ * (`classifyGPURenderer` / `capTierFromCapabilities` / `motionTierFromCapabilities`),
  * NEVER hardcoded — so if canonical changes and the emitted script doesn't track
  * it, this fails RED (the lesson the 0.2.3 first-guard missed).
  *
@@ -22,10 +22,10 @@
 import { afterEach, describe, expect, test } from 'vitest';
 import * as fc from 'fast-check';
 import {
-  tierFromCapabilities,
+  capTierFromCapabilities,
   motionTierFromCapabilities,
   emitDetectUpgradeScript,
-  headProbeCapLevel,
+  headProbeCapTier,
   headProbeMotionTier,
   GPU_TIER_PATTERNS,
   GPU_TIER_PRECEDENCE,
@@ -145,7 +145,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
           // witness (precedence may bump it above `tier` — that's canonical's
           // call, and the emitted probe must agree).
           const canonicalGpu = classifyGPURenderer(witness);
-          const expected = tierFromCapabilities({
+          const expected = capTierFromCapabilities({
             gpu: canonicalGpu,
             cores: 8,
             memory: 8,
@@ -166,7 +166,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
   });
 
   // ── The emitted ladders are the SAME functions, byte-for-byte behaviour ──
-  // headProbeCapLevel / headProbeMotionTier are the single source; tiers.ts
+  // headProbeCapTier / headProbeMotionTier are the single source; tiers.ts
   // delegates to them and the script emits them via .toString(). Prove the
   // canonical delegation holds across the full primitive matrix.
   test('tiers.ts delegates to the head-probe ladders (single body)', () => {
@@ -176,7 +176,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
           for (const webgpu of [true, false]) {
             for (const prefersReducedMotion of [true, false]) {
               const caps = { gpu, cores, memory, webgpu, prefersReducedMotion } as HeadProbeCaps;
-              expect(tierFromCapabilities(caps)).toBe(headProbeCapLevel(caps));
+              expect(capTierFromCapabilities(caps)).toBe(headProbeCapTier(caps));
               // motionTierFromCapabilities reads a superset shape; the primitive
               // fields are all the ladder consumes.
               expect(motionTierFromCapabilities(caps as never)).toBe(headProbeMotionTier(caps));
@@ -234,7 +234,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
             webgpu,
             prefersReducedMotion: reducedMotion,
           } as HeadProbeCaps;
-          const expectedTier = tierFromCapabilities(caps);
+          const expectedTier = capTierFromCapabilities(caps);
           const expectedMotion = motionTierFromCapabilities(caps as never);
           const got = runEmittedProbe({ renderer, cores, memory, webgpu, reducedMotion });
           expect(got.tier).toBe(expectedTier);
@@ -248,7 +248,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
   // ── The emitted classifier's raw output equals classifyGPURenderer ──
   // Folding the precedence (0→3→2→1, default) into the emitted script must not
   // perturb the tier classifyGPURenderer returns. Compares the classifier in
-  // isolation (capLevel ladder factored out) so a precedence/default regression
+  // isolation (capTier ladder factored out) so a precedence/default regression
   // is pinpointed here.
   test('emitted classifier tier ≡ classifyGPURenderer, with canonical precedence + default', () => {
     expect(GPU_TIER_PRECEDENCE).toEqual([0, 3, 2, 1]);
@@ -267,7 +267,7 @@ describe('head-probe is a derived artifact of canonical @czap/detect', () => {
       // discriminating capability tuple (cores/mem high, no reduced motion):
       // this tuple maps each distinct gpu tier to a distinct cap level, so an
       // emitted-classifier tier mismatch shows as a cap-level mismatch.
-      const expected = tierFromCapabilities({
+      const expected = capTierFromCapabilities({
         gpu: canonicalGpu,
         cores: 8,
         memory: 8,

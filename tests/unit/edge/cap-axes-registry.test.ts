@@ -20,9 +20,9 @@ describe('CAP_AXES — one source for the data-czap-* capability vocabulary', ()
     expect([...CAP_AXES]).toEqual(['tier', 'motion', 'design']);
   });
 
-  test('edge tierDataAttributes emits exactly the registry attributes (capLevel→tier)', () => {
+  test('edge tierDataAttributes emits exactly the registry attributes (capTier→tier)', () => {
     const attrs = EdgeTier.tierDataAttributes({
-      capLevel: 'reactive',
+      capTier: 'reactive',
       motionTier: 'animations',
       designTier: 'enhanced',
     });

@@ -183,13 +183,20 @@ export type { WireSocket } from './wire.js';
 export { Op } from './op.js';
 
 // Cap
-export type { CapLevel, CapSet } from './caps.js';
+export type { CapTier, CapSet } from './caps.js';
 export { Cap } from './caps.js';
 
+// Capability-admissibility ladder — the SINGLE index-keyed source both the core
+// escalation chooser's `RUNG_TARGETS` (CapTier-keyed) and the quantizer's
+// `TIER_TARGETS` (MotionTier-keyed) project from, so the two cannot drift.
+export { LADDER_TARGETS, LADDER_RUNGS, projectLadder } from './cap-ladder.js';
+export type { LadderTarget } from './cap-ladder.js';
+
 // Escalation chooser (P5c) — the READER of PolicyNode (P2). Picks the minimal
-// CapLevel rung a policy admits on a runtime site, gated by site/budgets/grants
-// and the locally-encoded CapLevel↔target admissibility table (no quantizer
-// import — that would close a core→quantizer cycle).
+// CapTier rung a policy admits on a runtime site, gated by site/budgets/grants
+// and the CapTier↔target admissibility table projected from the shared
+// `cap-ladder.ts` ladder (no quantizer import — that would close a
+// core→quantizer cycle; both project the same ladder instead).
 export { chooseRung } from './escalation.js';
 export type { RungChoice, EscalationResult } from './escalation.js';
 

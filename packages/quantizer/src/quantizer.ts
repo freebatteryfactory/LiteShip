@@ -21,8 +21,8 @@ import type {
   HLCBrand,
 } from '@czap/core';
 import { HLC } from '@czap/core';
-import type { MotionTier } from '@czap/core';
-import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes, wallClock } from '@czap/core';
+import type { MotionTier, LadderTarget } from '@czap/core';
+import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes, wallClock, projectLadder } from '@czap/core';
 import { ValidationError } from '@czap/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
@@ -52,8 +52,12 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * `aria` emits accessibility attributes, `ai` emits model-facing signals.
  * MotionTier gates which targets a device is permitted to receive; see
  * {@link QuantizerFromOptions.tier} for the tier → targets table.
+ *
+ * Aliases `@czap/core`'s {@link LadderTarget} — the shared codomain of the
+ * capability-admissibility ladder both this gate and the core escalation gate
+ * project from — so the target vocabulary itself has a single source too.
  */
-export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
+export type OutputTarget = LadderTarget;
 
 // ---------------------------------------------------------------------------
 // MotionTier gating (canonical type from @czap/core)
@@ -62,19 +66,23 @@ export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
 export type { MotionTier } from '@czap/core';
 
 /**
- * MotionTier → allowed {@link OutputTarget} set.
+ * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@czap/core`'s
+ * shared capability-admissibility ladder (`cap-ladder.ts`) onto the `MotionTier`
+ * rung order. The core escalation chooser's `RUNG_TARGETS` projects the SAME
+ * ladder onto the `CapTier` order; the two are therefore congruent by
+ * construction (a drift guard pins them, computing `expected` from the ladder).
  *
  * Higher tiers include lower-tier targets. `none` only allows ARIA; `compute`
  * unlocks every target including WGSL and AI signal routing. `force()` can
  * override this gating per-target for prototype and test scenarios.
  */
-export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = {
-  none: new Set(['aria']),
-  transitions: new Set(['css', 'aria']),
-  animations: new Set(['css', 'aria']),
-  physics: new Set(['css', 'glsl', 'aria']),
-  compute: new Set(['css', 'glsl', 'wgsl', 'aria', 'ai']),
-};
+export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectLadder<MotionTier>([
+  'none',
+  'transitions',
+  'animations',
+  'physics',
+  'compute',
+]);
 
 // ---------------------------------------------------------------------------
 // Quantizer outputs shape

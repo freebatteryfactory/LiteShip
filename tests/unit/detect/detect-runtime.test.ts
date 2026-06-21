@@ -12,7 +12,7 @@ import {
   capSetFromCapabilities,
   designTierFromCapabilities,
   motionTierFromCapabilities,
-  tierFromCapabilities,
+  capTierFromCapabilities,
 } from '../../../packages/detect/src/tiers.js';
 import { Diagnostics } from '@czap/core';
 
@@ -186,7 +186,7 @@ describe('device detection runtime', () => {
       downlink: 12,
       saveData: false,
     });
-    expect(result.tier).toBe('gpu');
+    expect(result.capTier).toBe('gpu');
     expect(result.capSet.levels.has('gpu')).toBe(true);
     expect(result.designTier).toBe('rich');
     expect(result.motionTier).toBe('compute');
@@ -381,7 +381,7 @@ describe('device detection runtime', () => {
 
   test('maps tiers, cap sets, design tiers, and motion tiers across edge cases', () => {
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 0,
         cores: 2,
         memory: 2,
@@ -396,7 +396,7 @@ describe('device detection runtime', () => {
     ).toBe('static');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 1,
         cores: 4,
         memory: 8,
@@ -411,7 +411,7 @@ describe('device detection runtime', () => {
     ).toBe('reactive');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 0,
         cores: 4,
         memory: 8,
@@ -426,7 +426,7 @@ describe('device detection runtime', () => {
     ).toBe('styled');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 3,
         cores: 8,
         memory: 16,
@@ -539,7 +539,7 @@ describe('device detection runtime', () => {
     ).toBe('compute');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 3,
         cores: 8,
         memory: 16,
@@ -556,7 +556,7 @@ describe('device detection runtime', () => {
 
   test('covers reduced-motion and low-resource tier fallbacks across the mapping helpers', () => {
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 1,
         cores: 2,
         memory: 2,
@@ -571,7 +571,7 @@ describe('device detection runtime', () => {
     ).toBe('static');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 0,
         cores: 2,
         memory: 2,
@@ -586,7 +586,7 @@ describe('device detection runtime', () => {
     ).toBe('styled');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 2,
         cores: 2,
         memory: 2,
@@ -601,7 +601,7 @@ describe('device detection runtime', () => {
     ).toBe('reactive');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 3,
         cores: 8,
         memory: 8,
@@ -734,7 +734,7 @@ describe('device detection runtime', () => {
     );
 
     expect(onChange).toHaveBeenCalled();
-    expect(onChange.mock.calls[0]?.[0].tier).toBeDefined();
+    expect(onChange.mock.calls[0]?.[0].capTier).toBeDefined();
   });
 
   test('watchCapabilities coalesces event bursts into one re-detection per frame', async () => {
@@ -945,7 +945,7 @@ describe('device detection runtime', () => {
 
   test('tier helpers cover low, mid, and reduced-motion branch splits', () => {
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 0,
         cores: 2,
         memory: 2,
@@ -960,7 +960,7 @@ describe('device detection runtime', () => {
     ).toBe('static');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 1,
         cores: 2,
         memory: 2,
@@ -975,7 +975,7 @@ describe('device detection runtime', () => {
     ).toBe('styled');
 
     expect(
-      tierFromCapabilities({
+      capTierFromCapabilities({
         gpu: 2,
         cores: 2,
         memory: 2,

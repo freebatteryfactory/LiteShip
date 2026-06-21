@@ -45,7 +45,7 @@ import { chooseRung, rungTargets, _resetEscalationMemo } from '../escalation.js'
 import type { EscalationResult, RungChoice } from '../escalation.js';
 
 /** The five rungs, as a schema literal union the arbitrary fully supports. */
-const CapLevelSchema = Schema.Union([
+const CapTierSchema = Schema.Union([
   Schema.Literal('static'),
   Schema.Literal('styled'),
   Schema.Literal('reactive'),
@@ -71,10 +71,10 @@ const AllocClassSchema = Schema.Union([Schema.Literal('zero'), Schema.Literal('b
  * SUBJECT — the typed thing the verdict is resolved against.
  */
 const EscalationSubject = Schema.Struct({
-  /** The required {@link CapLevel} — the rung ceiling the chooser starts at and only DOWNGRADES from. */
-  requires: CapLevelSchema,
+  /** The required {@link CapTier} — the rung ceiling the chooser starts at and only DOWNGRADES from. */
+  requires: CapTierSchema,
   /** The granted rungs — a rung the chooser would pick must be granted here. */
-  grants: Schema.Array(CapLevelSchema),
+  grants: Schema.Array(CapTierSchema),
   /** The runtime sites the policy admits. */
   sites: Schema.Array(RuntimeSiteSchema),
   /** The site the chooser decides on — may or may not be in `sites` (the deny path). */

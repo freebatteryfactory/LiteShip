@@ -4,7 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { Cap } from '@czap/core';
-import type { CapLevel } from '@czap/core';
+import type { CapTier } from '@czap/core';
 
 describe('Cap', () => {
   describe('construction', () => {
@@ -70,7 +70,7 @@ describe('Cap', () => {
   });
 
   describe('atLeast', () => {
-    const levels: CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+    const levels: CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
 
     test('atLeast returns true for same level', () => {
       for (const level of levels) {
@@ -172,7 +172,7 @@ describe('Cap', () => {
     });
 
     test('ordinal values are non-negative integers', () => {
-      const levels: CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+      const levels: CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
       for (const level of levels) {
         const ord = Cap.ordinal(level);
         expect(ord).toBeGreaterThanOrEqual(0);
@@ -181,7 +181,7 @@ describe('Cap', () => {
     });
 
     test('ordinal is consistent with atLeast', () => {
-      const levels: CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+      const levels: CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
       for (const a of levels) {
         for (const b of levels) {
           expect(Cap.atLeast(a, b)).toBe(Cap.ordinal(a) >= Cap.ordinal(b));

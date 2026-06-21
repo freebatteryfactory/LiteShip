@@ -191,7 +191,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0',
       clientHints: { 'Sec-CH-Viewport-Width': '1400' },
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     expect(result).toBe('desktop');
@@ -201,7 +201,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0',
       clientHints: { 'Sec-CH-Viewport-Width': '320' },
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     expect(result).toBe('compact');
@@ -211,7 +211,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0',
       clientHints: { 'Sec-CH-Viewport-Width': '800' },
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     expect(result).toBe('tablet');
@@ -221,7 +221,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
       clientHints: {},
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     // iPhone UA estimates 375px viewport, which falls in compact (0-767)
@@ -232,7 +232,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)',
       clientHints: {},
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     // iPad UA estimates 768px viewport, which falls in tablet (768-1199)
@@ -243,7 +243,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
       clientHints: {},
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     // Desktop UA estimates 1280px viewport, which falls in desktop (>= 1200)
@@ -254,7 +254,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: '',
       clientHints: {},
-      detectedTier: 'static',
+      detectedCapTier: 'static',
     });
 
     // static tier -> ordinal 0 -> synthetic value 320
@@ -269,7 +269,7 @@ describe('resolveInitialState', () => {
         'Sec-CH-Viewport-Width': '1400',
         'Sec-CH-Prefers-Reduced-Motion': 'reduce',
       },
-      detectedTier: 'styled', // ordinal 1 <= 1
+      detectedCapTier: 'styled', // ordinal 1 <= 1
     });
 
     // Reduced motion + low tier -> first state
@@ -283,7 +283,7 @@ describe('resolveInitialState', () => {
         'Sec-CH-Viewport-Width': '1400',
         'Sec-CH-Prefers-Reduced-Motion': 'reduce',
       },
-      detectedTier: 'animated', // ordinal 3 > 1
+      detectedCapTier: 'animated', // ordinal 3 > 1
     });
 
     // High tier overrides reduced motion bias, uses viewport hint
@@ -296,7 +296,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(singleBoundary, {
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
       clientHints: { 'Sec-CH-Viewport-Width': '2000' },
-      detectedTier: 'gpu',
+      detectedCapTier: 'gpu',
     });
 
     expect(result).toBe('only');
@@ -306,7 +306,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(boundary, {
       userAgent: '',
       clientHints: { 'sec-ch-viewport-width': '900' },
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     expect(result).toBe('tablet');
@@ -321,7 +321,7 @@ describe('resolveInitialState', () => {
     const result = resolveInitialState(offsetBoundary, {
       userAgent: '',
       clientHints: { 'Sec-CH-Viewport-Width': '100' },
-      detectedTier: 'reactive',
+      detectedCapTier: 'reactive',
     });
 
     expect(result).toBe('compact');
@@ -331,7 +331,7 @@ describe('resolveInitialState', () => {
     const invalidHintResult = resolveInitialState(boundary, {
       userAgent: '',
       clientHints: { 'Sec-CH-Viewport-Width': 'not-a-number' },
-      detectedTier: 'styled',
+      detectedCapTier: 'styled',
     });
     expect(invalidHintResult).toBe('compact');
 
@@ -340,7 +340,7 @@ describe('resolveInitialState', () => {
       states: [],
       thresholds: [],
     };
-    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedTier: 'gpu' })).toBe(
+    expect(resolveInitialState(emptyBoundary as never, { userAgent: '', clientHints: {}, detectedCapTier: 'gpu' })).toBe(
       '',
     );
   });
@@ -464,7 +464,12 @@ describe('integration', () => {
     // capability TIER (EdgeTier.tierDataAttributes). The two must not share an attr.
     expect(detectScript?.content).toContain('data-czap-reduced-motion');
     expect(detectScript?.content).not.toContain("setAttribute('data-czap-motion'");
-    expect(detectScript?.content).not.toContain('memory:');
+    // The runtime SNAPSHOT (writeDetectState payload) stays minimal — just the
+    // provisional tier + flag, never the full probe payload. The cap-tier ladder
+    // is now DERIVED from canonical headProbeCapTier, so its body legitimately
+    // references `memory`/`webgpu` as ladder inputs; assert the snapshot shape
+    // (the thing this guard actually protects), not a blanket substring ban.
+    expect(detectScript?.content).toMatch(/writeDetectState\(\{\s*tier:\s*capTier,\s*provisional:\s*true\s*\}\)/);
     expect(detectScript?.content).not.toContain('colorScheme:');
     expect(detectScript?.content).not.toContain('eval(');
     expect(detectScript?.content).not.toContain('new Function');

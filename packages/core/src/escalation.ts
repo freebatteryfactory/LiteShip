@@ -3,45 +3,49 @@
  *
  * P2 landed `PolicyNode` as written-data; this module is its reader: given a
  * policy and the runtime site a node will be admitted on, it chooses the
- * MINIMAL capability rung ({@link CapLevel}, lowest `Cap.ordinal`) that
+ * MINIMAL capability rung ({@link CapTier}, lowest `Cap.ordinal`) that
  * satisfies the policy's `requires`, fits its `budgets`, lies inside its
  * `grants`, and still admits the projection targets the rung gates.
  *
  * Determinism: minimal-rung by `Cap.ordinal` ascending; ties (which the total
- * `CapLevel` order makes impossible, but we keep the rule explicit so the
+ * `CapTier` order makes impossible, but we keep the rule explicit so the
  * contract survives future lattice changes) break by the Astro directive
  * escalation order `satellite < stream < llm < worker < gpu < wasm`. `@czap/core`
  * cannot import `@czap/astro`, so that order is encoded locally below.
  *
- * Cycle discipline: the CapLevel-to-target admissibility table is encoded HERE,
- * inline. We deliberately do NOT import `TIER_TARGETS` from `@czap/quantizer`:
- * the quantizer depends on core, so core importing the quantizer would close a
- * dependency cycle. The table mirrors the quantizer's `TIER_TARGETS`
- * escalation (more capability admits strictly more targets).
+ * Cycle discipline: the CapTier-to-target admissibility table PROJECTS from the
+ * shared {@link LADDER_TARGETS} datum (`cap-ladder.ts`). We deliberately do NOT
+ * import `TIER_TARGETS` from `@czap/quantizer`: the quantizer depends on core,
+ * so core importing the quantizer would close a dependency cycle. Instead both
+ * `RUNG_TARGETS` here and the quantizer's `TIER_TARGETS` are projections of the
+ * SAME index-keyed ladder — one source, no drift (see `cap-ladder.ts`).
  *
  * @module
  */
 
 import type { PolicyNode, RuntimeSite } from './document-graph.js';
-import type { CapLevel } from './caps.js';
+import type { CapTier } from './caps.js';
 import { Cap } from './caps.js';
+import { projectLadder } from './cap-ladder.js';
+import type { LadderTarget } from './cap-ladder.js';
 
 /** A projection target the escalation gate may admit (subset of `ProjectionNode.target`). */
-type ProjectionTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
+type ProjectionTarget = LadderTarget;
 
 /**
- * CapLevel to admissible projection targets. Encoded locally to avoid a
- * core-to-quantizer dependency cycle (see module note). Each rung is a strict
- * superset of the one below, mirroring `@czap/quantizer`'s `TIER_TARGETS`
- * escalation (`none` within `transitions` within `physics` within `compute`).
+ * CapTier to admissible projection targets — a PROJECTION of the shared
+ * {@link LADDER_TARGETS} ladder onto the `CapTier` rung order (`cap-ladder.ts`).
+ * The quantizer's `TIER_TARGETS` projects the same ladder onto the `MotionTier`
+ * order; a congruence guard pins them congruent. Each rung is a non-strict
+ * superset of the one below (`styled` == `reactive` admit the same targets).
  */
-const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
-  static: new Set<ProjectionTarget>(['aria']),
-  styled: new Set<ProjectionTarget>(['css', 'aria']),
-  reactive: new Set<ProjectionTarget>(['css', 'aria']),
-  animated: new Set<ProjectionTarget>(['css', 'glsl', 'aria']),
-  gpu: new Set<ProjectionTarget>(['css', 'glsl', 'wgsl', 'aria', 'ai']),
-};
+const RUNG_TARGETS: Record<CapTier, ReadonlySet<ProjectionTarget>> = projectLadder<CapTier>([
+  'static',
+  'styled',
+  'reactive',
+  'animated',
+  'gpu',
+]);
 
 /**
  * Immutable view of a rung's admissible targets. The raw `RUNG_TARGETS` table is
@@ -50,32 +54,32 @@ const RUNG_TARGETS: Record<CapLevel, ReadonlySet<ProjectionTarget>> = {
  * `@czap/core/escalation` and `.clear()`/`.add()` the escalation lattice
  * process-wide. This returns a fresh copy each call.
  */
-export function rungTargets(rung: CapLevel): ReadonlySet<ProjectionTarget> {
+export function rungTargets(rung: CapTier): ReadonlySet<ProjectionTarget> {
   return new Set(RUNG_TARGETS[rung]);
 }
 
 /**
  * The Astro directive escalation order, encoded locally (core cannot import
  * `@czap/astro`). Used ONLY as the deterministic tiebreak after `Cap.ordinal`.
- * Each `CapLevel` is mapped to the directive whose capability ceiling it
+ * Each `CapTier` is mapped to the directive whose capability ceiling it
  * matches, so the tiebreak stays a single total order.
  */
 const DIRECTIVE_ORDER: readonly string[] = ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'];
-const RUNG_DIRECTIVE: Record<CapLevel, string> = {
+const RUNG_DIRECTIVE: Record<CapTier, string> = {
   static: 'satellite',
   styled: 'stream',
   reactive: 'llm',
   animated: 'worker',
   gpu: 'gpu',
 };
-const directiveRank = (rung: CapLevel): number => DIRECTIVE_ORDER.indexOf(RUNG_DIRECTIVE[rung]);
+const directiveRank = (rung: CapTier): number => DIRECTIVE_ORDER.indexOf(RUNG_DIRECTIVE[rung]);
 
 /**
  * Minimal p95 latency budget (ms) each rung needs to run. A policy `budgets.p95Ms`
  * below a rung's floor forces a downgrade to a cheaper rung. Higher rungs cost
  * strictly more, so the floors are monotone in `Cap.ordinal`.
  */
-const RUNG_P95_FLOOR_MS: Record<CapLevel, number> = {
+const RUNG_P95_FLOOR_MS: Record<CapTier, number> = {
   static: 0,
   styled: 1,
   reactive: 4,
@@ -87,7 +91,7 @@ const RUNG_P95_FLOOR_MS: Record<CapLevel, number> = {
  * Minimal working-set budget (MB) each rung needs. A policy `budgets.memoryMb`
  * below a rung's floor forces a downgrade. Monotone in `Cap.ordinal`.
  */
-const RUNG_MEMORY_FLOOR_MB: Record<CapLevel, number> = {
+const RUNG_MEMORY_FLOOR_MB: Record<CapTier, number> = {
   static: 0,
   styled: 1,
   reactive: 2,
@@ -96,12 +100,12 @@ const RUNG_MEMORY_FLOOR_MB: Record<CapLevel, number> = {
 };
 
 /** All rungs, ascending by `Cap.ordinal` then directive order -- the canonical search axis. */
-const RUNGS_ASCENDING: readonly CapLevel[] = (['static', 'styled', 'reactive', 'animated', 'gpu'] as const)
+const RUNGS_ASCENDING: readonly CapTier[] = (['static', 'styled', 'reactive', 'animated', 'gpu'] as const)
   .slice()
   .sort((a, b) => Cap.ordinal(a) - Cap.ordinal(b) || directiveRank(a) - directiveRank(b));
 
 /** A budget candidate rung fits if it clears every declared budget floor. */
-function budgetAdmits(rung: CapLevel, budgets: PolicyNode['budgets']): boolean {
+function budgetAdmits(rung: CapTier, budgets: PolicyNode['budgets']): boolean {
   if (budgets === undefined) return true;
   if (budgets.p95Ms !== undefined && budgets.p95Ms < RUNG_P95_FLOOR_MS[rung]) return false;
   if (budgets.memoryMb !== undefined && budgets.memoryMb < RUNG_MEMORY_FLOOR_MB[rung]) return false;
@@ -112,8 +116,8 @@ function budgetAdmits(rung: CapLevel, budgets: PolicyNode['budgets']): boolean {
 
 /** The successful chooser verdict. */
 export interface RungChoice {
-  /** The minimal {@link CapLevel} satisfying site, budget, grants, and admissibility. */
-  readonly rung: CapLevel;
+  /** The minimal {@link CapTier} satisfying site, budget, grants, and admissibility. */
+  readonly rung: CapTier;
   /** The projection targets that rung admits, intersected with the rung's table. */
   readonly admittedTargets: ReadonlySet<string>;
 }
@@ -167,14 +171,14 @@ function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult
   // (2) Start AT `policy.requires` -- the required rung is the candidate, not a
   // ceiling to search far below. The chooser only DOWNGRADES from here, and only
   // as far as the budgets/grants force; it never escalates above `requires`.
-  // "Minimal CapLevel satisfying all" is therefore the highest rung at or below
+  // "Minimal CapTier satisfying all" is therefore the highest rung at or below
   // `requires` that every gate admits -- equivalently, `requires` downgraded the
   // least. We walk rungs DESCENDING from `requires` and take the FIRST that
   // clears budgets, grants, and admissibility.
   const ceiling = Cap.ordinal(policy.requires);
 
   // Candidates: at or below `requires`, descending (closest-to-requires first),
-  // tiebroken by the directive order (a no-op under the total CapLevel order,
+  // tiebroken by the directive order (a no-op under the total CapTier order,
   // kept explicit so the contract survives future lattice changes).
   const candidates = RUNGS_ASCENDING.filter((rung) => Cap.ordinal(rung) <= ceiling)
     .slice()
@@ -189,7 +193,7 @@ function compute(policy: PolicyNode, runtimeSite: RuntimeSite): EscalationResult
 
     // (5) Admissibility -- confirm the rung admits at least one projection target
     // (an empty admissible set gates nothing, so it is not a real verdict).
-    // `RUNG_TARGETS` is the locally-encoded CapLevel<->target map (no quantizer
+    // `RUNG_TARGETS` is the locally-encoded CapTier<->target map (no quantizer
     // import -- see module note).
     const rungTargets = RUNG_TARGETS[rung];
     if (rungTargets.size === 0) continue;
