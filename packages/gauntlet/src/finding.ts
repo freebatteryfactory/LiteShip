@@ -17,6 +17,7 @@
 
 import { isTaggedError, type TaggedError } from '@czap/error';
 import type { AssuranceLevel } from './assurance.js';
+import type { CoverageClass } from './repo-ir.js';
 
 /**
  * How loud a finding is. `advisory` is the authority ratchet's pre-blocking
@@ -65,6 +66,13 @@ export interface Finding {
   readonly location?: SourceLocation;
   /** The actionable fix — a machine-applicable patch or a precise work-list. */
   readonly remediation?: Remediation;
+  /**
+   * How the evidence behind this finding was classified (Slice B). A
+   * triangulation/divergence finding carries it — it is the explanation of WHY
+   * two oracles can disagree (`text-only` regex vs `symbol-evidenced` checker).
+   * Existing regex gates omit it (additive, non-breaking). See {@link CoverageClass}.
+   */
+  readonly coverageClass?: CoverageClass;
 }
 
 /** Fields a caller supplies to {@link finding} (everything but defaults). */
@@ -76,6 +84,7 @@ export interface FindingInput {
   readonly detail: string;
   readonly location?: SourceLocation;
   readonly remediation?: Remediation;
+  readonly coverageClass?: CoverageClass;
 }
 
 /**
@@ -92,6 +101,7 @@ export function finding(input: FindingInput): Finding {
     detail: input.detail,
     ...(input.location !== undefined ? { location: input.location } : {}),
     ...(input.remediation !== undefined ? { remediation: input.remediation } : {}),
+    ...(input.coverageClass !== undefined ? { coverageClass: input.coverageClass } : {}),
   };
 }
 

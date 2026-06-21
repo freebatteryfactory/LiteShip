@@ -80,6 +80,10 @@ export function scopeContextByLevel(
     repoRoot: context.repoRoot,
     readFile: context.readFile,
     files: (): readonly string[] => context.files().filter((f) => atLeast(levelOf(f, map), level)),
+    // Pass the injected IR through unchanged — scoping narrows `files()`, not the
+    // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
+    // the key entirely when no IR was injected, so the shape stays minimal.
+    ...(context.ir !== undefined ? { ir: context.ir } : {}),
   };
 }
 

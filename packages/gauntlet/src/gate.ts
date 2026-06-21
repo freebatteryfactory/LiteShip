@@ -14,9 +14,10 @@
  * @module
  */
 
-import { ValidationError } from '@czap/error';
+import { ValidationError, HostCapabilityError } from '@czap/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { Finding } from './finding.js';
+import type { RepoIR } from './repo-ir.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -31,6 +32,17 @@ export interface GateContext {
   readFile(relativePath: string): string | undefined;
   /** Repo-relative paths the gate may consider (already filtered to its scope). */
   files(): readonly string[];
+  /**
+   * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
+   * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
+   * a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never
+   * carries the heavy `typescript` dep. An existing regex gate ignores it
+   * entirely; a new IR-fold gate that REQUIRES it must guard `ir === undefined`
+   * (or use {@link requireIR}, which throws a clear tagged error when no IR was
+   * injected). In-memory fixtures and the filesystem context leave it `undefined`
+   * until a host supplies one. See {@link RepoIR}.
+   */
+  readonly ir?: RepoIR;
 }
 
 /**
@@ -103,4 +115,21 @@ export function defineGate(spec: Gate): Gate {
     throw ValidationError('defineGate', `gate "${spec.id}" mutation fixture must supply a mutate(gate) operator`);
   }
   return spec;
+}
+
+/**
+ * Read the injected {@link RepoIR} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} when none was injected — the guard an IR-fold gate
+ * uses so the lean engine's optional `ir` fails LOUD (never silently no-ops a
+ * gate whose whole job is the IR). `gateId` is woven into the error for
+ * traceability.
+ */
+export function requireIR(context: GateContext, gateId: string): RepoIR {
+  if (context.ir === undefined) {
+    throw HostCapabilityError(
+      'repo-IR',
+      `gate "${gateId}" requires the injected repo-IR, but none was supplied on the GateContext — a host (the CLI) must build it via @czap/audit's ts.Program and inject it as context.ir`,
+    );
+  }
+  return context.ir;
 }

@@ -44,12 +44,33 @@ export {
 } from './finding.js';
 
 export {
+  type FileId,
+  type SymbolId,
+  type PkgName,
+  type CoverageClass,
+  type SymbolKind,
+  type ImportKind,
+  type FileNode,
+  type SymbolNode,
+  type ImportEdge,
+  type PackageNode,
+  type RefSite,
+  type Fact,
+  type RepoIR,
+  type RepoIRParts,
+  COVERAGE_CLASSES,
+  PLACEHOLDER_DIGEST,
+  makeRepoIR,
+} from './repo-ir.js';
+
+export {
   type GateContext,
   type GateFixture,
   type GateFixtures,
   type GateMutation,
   type Gate,
   defineGate,
+  requireIR,
 } from './gate.js';
 
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
