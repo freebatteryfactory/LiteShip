@@ -36,6 +36,7 @@ import { InvariantViolationError } from '@czap/error';
 import {
   litelaunchGauntletWithIR,
   type Fact,
+  type FileId,
   type GauntletResult,
   type LitelaunchCacheOptions,
   type RepoIR,
@@ -43,24 +44,63 @@ import {
 import { gauntletToolchainDigest, makeFsVerdictCache } from './gauntlet-verdict-cache.js';
 
 /**
- * The CANONICAL `NO_DEFAULT_EXPORT` invariant rule — looked up from the committed
- * `INVARIANTS` ledger (`@czap/command`), never hand-copied. The host's
- * `invariant-regex` oracle runs THIS rule's `pattern` + honours THIS rule's
- * `exclude` list, so the text-only oracle is, by construction, the same check the
- * `check-invariants` gate runs — referencing the source of truth, not a fork.
- * Throws a tagged error if the ledger ever drops the rule (a real regression, not
- * a silent skip).
+ * The PARAMETRIC binding between a canonical `INVARIANTS` rule and the IR property
+ * its text-only oracle observes (B3.2). One row drives the generic
+ * {@link liteshipRegexOracle} for each of the three triangulated check-invariants:
+ *   - `ruleName`: the canonical rule looked up in `INVARIANTS` (never hand-copied).
+ *   - `property`: the IR property the regex oracle emits facts under — the SAME
+ *     property the audit AST oracle emits, so the divergence gate triangulates.
+ *   - `excludedMarkerProperty`: the marker property a policy-EXCLUDED file emits
+ *     (the exclude-vs-miss seam) — read by the matching divergence gate.
+ * The three rows share ONE oracle code path — the parametric proof.
  */
-const NO_DEFAULT_EXPORT_RULE: CheckInvariantEntry = (() => {
-  const rule = INVARIANTS.find((r) => r.name === 'NO_DEFAULT_EXPORT');
+interface OracleRuleBinding {
+  readonly ruleName: string;
+  readonly property: string;
+  readonly excludedMarkerProperty: string;
+}
+
+/**
+ * The marker property `NO_DEFAULT_EXPORT`-excluded files emit — exported because
+ * the headline divergence gate's tests reference it (the exclude-vs-miss seam).
+ */
+export const DEFAULT_EXPORT_CHECK_EXCLUDED = 'default-export-check-excluded' as const;
+
+/**
+ * The three triangulated check-invariants and the IR property each maps to. All
+ * three text-only oracles run through one generic code path (the parametric
+ * layer): NO_DEFAULT_EXPORT (B3.1) + NO_VAR + NO_REQUIRE (B3.2). Each property
+ * here is also emitted by the audit AST oracle (`repo-ir-build.ts`), so each is a
+ * live cross-check.
+ */
+const ORACLE_RULE_BINDINGS: readonly OracleRuleBinding[] = [
+  { ruleName: 'NO_DEFAULT_EXPORT', property: 'is-default-export', excludedMarkerProperty: DEFAULT_EXPORT_CHECK_EXCLUDED },
+  { ruleName: 'NO_VAR', property: 'var-declaration', excludedMarkerProperty: 'var-check-excluded' },
+  { ruleName: 'NO_REQUIRE', property: 'require-call', excludedMarkerProperty: 'require-check-excluded' },
+];
+
+/**
+ * Look up a canonical rule from the committed `INVARIANTS` ledger (`@czap/command`),
+ * never hand-copied. The host's `invariant-regex` oracle runs THIS rule's `pattern`
+ * + honours THIS rule's `exclude` list, so the text-only oracle is, by
+ * construction, the same check the `check-invariants` gate runs — referencing the
+ * source of truth, not a fork. Throws a tagged error if the ledger ever drops the
+ * rule (a real regression, not a silent skip).
+ */
+function canonicalRule(ruleName: string): CheckInvariantEntry {
+  const rule = INVARIANTS.find((r) => r.name === ruleName);
   if (rule === undefined) {
     throw InvariantViolationError(
       'repo-ir-gauntlet',
-      'the canonical NO_DEFAULT_EXPORT invariant rule is missing from @czap/command INVARIANTS — the host invariant-regex oracle cannot reference its source of truth',
+      `the canonical ${ruleName} invariant rule is missing from @czap/command INVARIANTS — the host invariant-regex oracle cannot reference its source of truth`,
     );
   }
   return rule;
-})();
+}
+
+/** The resolved canonical rule for each binding (eager — a missing rule fails fast). */
+const RESOLVED_RULES: readonly { binding: OracleRuleBinding; rule: CheckInvariantEntry }[] =
+  ORACLE_RULE_BINDINGS.map((binding) => ({ binding, rule: canonicalRule(binding.ruleName) }));
 
 /**
  * Does `relativePath` fall under one of the rule's `exclude` prefixes? Mirrors the
@@ -75,53 +115,26 @@ function ruleExcludes(rule: CheckInvariantEntry, relativePath: string): boolean 
 }
 
 /**
- * The `property` the policy-exclude marker fact carries (the exclude-vs-miss seam).
- * A file IN the `NO_DEFAULT_EXPORT` rule's `exclude` list emits a fact under THIS
- * property; the divergence gate reads it to tell a sanctioned policy-exclude (the
- * regex was TOLD to ignore this file) from a coverage MISS (the regex looked and
- * missed). It is the HOST's data — the gate hardcodes no exclude list (the
- * head-probe LAW: the exclude is read from a live fact, never a constant).
- */
-export const DEFAULT_EXPORT_CHECK_EXCLUDED = 'default-export-check-excluded' as const;
-
-/**
- * The `value` the {@link DEFAULT_EXPORT_CHECK_EXCLUDED} marker carries — the NAME
- * of the rule whose `exclude` list sanctioned this file, so the marker is
- * self-describing (it names WHICH policy excluded the file, never a bare boolean).
- */
-const NO_DEFAULT_EXPORT_RULE_NAME = NO_DEFAULT_EXPORT_RULE.name;
-
-/**
- * The LiteShip-LOCAL `invariant-regex` (`text-only`) oracle for `is-default-export`,
- * constructed in the HOST (the audit engine stays LiteShip-agnostic — ADR-0012).
- * Runs the CANONICAL `NO_DEFAULT_EXPORT` rule over each file's RAW lines (the
- * committed `pattern`, honouring the committed `exclude`). This is the SECOND
- * oracle the Slice-B cross-check triangulates against audit's AST oracle: it is
- * comment-blind (a textual scan), so where it fires on a comment-occurrence of the
- * keyword pair the AST oracle correctly stays silent — the divergence that proves
- * the text-only oracle should be retired.
+ * Run ONE canonical rule's text-only scan over a file's raw lines, emitting either
+ * the per-line property facts (the regex fired) OR a single file-level
+ * policy-EXCLUDE marker (the file is in the rule's `exclude` list — the regex is
+ * silent BY DESIGN). The generic per-rule core the three bindings share.
  *
- * Excluded files (the sanctioned Astro contract default exports, the rule's own
- * home) emit no `is-default-export` regex facts, exactly as the real gate skips
- * them — BUT they DO emit a distinct {@link DEFAULT_EXPORT_CHECK_EXCLUDED} marker
- * fact recording the POLICY EXCLUDE (the exclude-vs-miss seam). The oracle already
- * KNOWS the exclude list (it uses it to skip the regex scan); now it also emits the
- * marker so the divergence layer can see WHY the regex is silent — a sanctioned
- * exclude (both oracles AGREE there is a default export, the regex's silence is by
- * DESIGN), not a coverage miss. The marker is a FILE-level fact (line 1) — it
- * concerns the whole file's exclusion, not a single site.
+ * The marker (the exclude-vs-miss seam) lets the divergence layer tell a sanctioned
+ * exclude (both oracles AGREE; the regex's silence is by design) from a coverage
+ * miss. The marker's value names WHICH rule excluded the file (self-describing,
+ * never a bare boolean). The oracle already KNOWS the exclude list (it uses it to
+ * skip the scan); it ALSO emits the marker so the gate reads the policy exclude
+ * from a LIVE fact, never a hardcoded path list (the head-probe LAW).
  */
-export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[] => {
-  if (ruleExcludes(NO_DEFAULT_EXPORT_RULE, file)) {
-    // A policy exclude — the regex is silent BY DESIGN here. Emit the marker (the
-    // exclude-vs-miss seam) instead of an is-default-export fact, so the divergence
-    // gate reads the policy exclude from a LIVE fact (never a hardcoded path list).
+function scanRule(binding: OracleRuleBinding, rule: CheckInvariantEntry, file: FileId, text: string): readonly Fact[] {
+  if (ruleExcludes(rule, file)) {
     return [
       {
         file,
         line: 1,
-        property: DEFAULT_EXPORT_CHECK_EXCLUDED,
-        value: NO_DEFAULT_EXPORT_RULE_NAME,
+        property: binding.excludedMarkerProperty,
+        value: rule.name,
         oracleId: 'invariant-regex',
         coverageClass: 'text-only',
       },
@@ -130,16 +143,39 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
   const facts: Fact[] = [];
   const rawLines = text.split(/\r?\n/);
   for (let i = 0; i < rawLines.length; i++) {
-    if (NO_DEFAULT_EXPORT_RULE.pattern.test(rawLines[i] ?? '')) {
+    if (rule.pattern.test(rawLines[i] ?? '')) {
       facts.push({
         file,
         line: i + 1,
-        property: 'is-default-export',
+        property: binding.property,
         value: true,
         oracleId: 'invariant-regex',
         coverageClass: 'text-only',
       });
     }
+  }
+  return facts;
+}
+
+/**
+ * The LiteShip-LOCAL `invariant-regex` (`text-only`) oracle, constructed in the
+ * HOST (the audit engine stays LiteShip-agnostic — ADR-0012). It runs ALL THREE
+ * canonical triangulated rules — NO_DEFAULT_EXPORT, NO_VAR, NO_REQUIRE — over each
+ * file's RAW lines (each rule's committed `pattern`, honouring its committed
+ * `exclude`), through ONE generic per-rule code path (the parametric proof). It is
+ * the SECOND oracle every Slice-B cross-check triangulates against audit's AST
+ * oracle: it is comment-blind (a textual scan), so where it fires on a comment- or
+ * string-occurrence of a banned keyword the AST oracle correctly stays silent — the
+ * divergence that proves the text-only oracle should be retired.
+ *
+ * For each rule, an excluded file emits no property facts but DOES emit that rule's
+ * distinct policy-EXCLUDE marker (the exclude-vs-miss seam), so the divergence
+ * layer can tell a sanctioned exclude from a coverage miss.
+ */
+export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[] => {
+  const facts: Fact[] = [];
+  for (const { binding, rule } of RESOLVED_RULES) {
+    for (const fact of scanRule(binding, rule, file, text)) facts.push(fact);
   }
   return facts;
 };
@@ -152,9 +188,10 @@ export const liteshipRegexOracle: FactOracle = ({ file, text }): readonly Fact[]
  * facts (`ts-ast`, file-proxy-only) AND the host regex oracle's (`invariant-regex`,
  * text-only) — the triangulation substrate the divergence gate folds.
  */
-export function buildRepoIRForRepo(repoRoot: string): RepoIR {
+export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = false): RepoIR {
   return buildRepoIR(withRepoRoot(liteshipDevopsProfile, repoRoot), {
     extraFactOracles: [liteshipRegexOracle],
+    withSymbolReferences,
   });
 }
 
@@ -178,7 +215,8 @@ export function runGauntletWithRepoIR(
   globs?: readonly string[],
   cacheOpts: RepoIRGauntletCacheOptions = {},
 ): GauntletResult {
-  const ir = buildRepoIRForRepo(repoRoot);
+  const withSymbols = cacheOpts.withSymbolReferences === true;
+  const ir = buildRepoIRForRepo(repoRoot, withSymbols);
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
@@ -199,6 +237,13 @@ export interface RepoIRGauntletCacheOptions {
   readonly noCache?: boolean;
   /** Cache root override (defaults to `repoRoot`) — pinned in tests. */
   readonly cacheCwd?: string;
+  /**
+   * Run the heavy symbol-evidenced LanguageService oracle (B3.3 — `czap check
+   * --ir --symbols`). It changes the IR's facts (the symbol-orphan gate's input),
+   * so the verdict cache is NAMESPACED by this mode (see {@link resolveVerdictCache}):
+   * a symbols-on verdict can never be served to a symbols-off run, or vice versa.
+   */
+  readonly withSymbolReferences?: boolean;
 }
 
 /**
@@ -209,7 +254,15 @@ export interface RepoIRGauntletCacheOptions {
  */
 function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions): LitelaunchCacheOptions {
   if (opts.noCache === true) return {};
-  const env = currentEnvFingerprint();
+  // The IR-build MODE is part of the cache key: --symbols changes the IR's facts
+  // (and so the symbol-orphan gate's verdict) WITHOUT changing any file's content
+  // digest, so it must namespace the key — otherwise a symbols-off verdict could be
+  // served to a symbols-on run (a stale-serve LIE). Folding it into `env` (which the
+  // engine's gateVerdictKey already incorporates) is the minimal sound fix.
+  const env = {
+    ...currentEnvFingerprint(),
+    ...(opts.withSymbolReferences === true ? { irMode: 'symbols' } : {}),
+  };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),
     // The anti-lie keystone: a gate-logic edit rebuilds the gauntlet dist → a new

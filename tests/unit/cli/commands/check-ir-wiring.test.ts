@@ -68,10 +68,10 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const { result, stdout } = await captureStdout(() => run(['check', '--ir']));
     expect(result).toBe(0);
     expect(runGauntletWithRepoIRMock).toHaveBeenCalledTimes(1);
-    // (repoRoot, now: Date, globs, { noCache })
+    // (repoRoot, now: Date, globs, { noCache, withSymbolReferences })
     const [, now, , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(now).toBeInstanceOf(Date);
-    expect(cacheOpts).toEqual({ noCache: false });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false });
     // The lean handler is NEVER touched on the IR path.
     expect(handlerMock).not.toHaveBeenCalled();
     // The receipt carries the SAME CheckPayload shape (ok/blocked/findingCount/findings).
@@ -84,7 +84,15 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--no-cache']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: true });
+    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false });
+  });
+
+  it('--ir --symbols threads the symbol-evidenced oracle opt-in through to runGauntletWithRepoIR', async () => {
+    runGauntletWithRepoIRMock.mockReturnValue(okResult);
+    const code = await captureStdout(() => run(['check', '--ir', '--symbols']));
+    expect(code.result).toBe(0);
+    const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true });
   });
 
   it('a blocked IR run exits 1 and the receipt mirrors the engine verdict', async () => {

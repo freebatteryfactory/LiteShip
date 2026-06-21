@@ -46,13 +46,20 @@ export interface CheckOptions {
   readonly ir?: boolean;
   /** `--no-cache`: bypass the B2 verdict cache (only meaningful with `--ir`). */
   readonly noCache?: boolean;
+  /**
+   * `--symbols`: also run the heavy symbol-evidenced LanguageService oracle (B3.3)
+   * — true cross-file references cross-checked against the file-proxy graph. Only
+   * meaningful with `--ir`; ~2 min cold, amortized by the (mode-namespaced) cache.
+   */
+  readonly symbols?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
 export async function check(opts: CheckOptions = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const payload = opts.ir === true ? runIrPath(cwd, opts.noCache === true) : await runLeanPath(cwd);
+  const payload =
+    opts.ir === true ? runIrPath(cwd, opts.noCache === true, opts.symbols === true) : await runLeanPath(cwd);
 
   const receipt: CheckReceipt = {
     status: payload.blocked ? 'failed' : 'ok',
@@ -95,9 +102,9 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
  * (TWO-CLOCK LAW: a wallClock boundary, NEVER systemClock). Returns the SAME
  * `CheckPayload` shape the lean path emits, so the receipt is consistent.
  */
-function runIrPath(cwd: string, noCache: boolean): CheckPayload {
+function runIrPath(cwd: string, noCache: boolean, symbols: boolean): CheckPayload {
   const now = new Date(wallClock.now());
-  const result = runGauntletWithRepoIR(cwd, now, undefined, { noCache });
+  const result = runGauntletWithRepoIR(cwd, now, undefined, { noCache, withSymbolReferences: symbols });
   const findings = result.findings;
   return {
     ok: !result.blocked,

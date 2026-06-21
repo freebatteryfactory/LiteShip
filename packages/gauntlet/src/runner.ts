@@ -33,6 +33,9 @@ import { noSkippedTestGate } from './gates/no-skipped-test.js';
 import { noPlaceholderGate } from './gates/no-placeholder.js';
 import { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
 import { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
+import { noVarDivergenceGate } from './gates/no-var-divergence.js';
+import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
+import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -58,12 +61,17 @@ export const LITESHIP_GATES: readonly Gate[] = [
  * (same ruleId — the faithful substrate swap, NOT a second gate double-counting
  * the same rule; the parity test proves the fold reproduces the regex gate's real
  * findings and is strictly more precise), PLUS the {@link noDefaultExportDivergenceGate}
- * — the live triangulated cross-check over the two `is-default-export` oracles.
+ * — the live triangulated cross-check over the two `is-default-export` oracles —
+ * PLUS the B3.2 sibling cross-checks {@link noVarDivergenceGate} (the
+ * `var-declaration` property) and {@link noRequireDivergenceGate} (the
+ * `require-call` property). All three are instances of the same parametric
+ * `makeOracleDivergenceGate` factory — the proof the triangulated-oracle layer is
+ * a reusable LAYER, not a one-off.
  *
- * These two gates {@link requireIR}, so they CANNOT run on the lean MCP/command
- * path (no IR) — they appear ONLY here, the IR-present composition. The lean
- * {@link LITESHIP_GATES} default is unchanged: `czap check` / MCP still runs the
- * six regex gates IR-free.
+ * These IR-fold gates {@link requireIR}, so they CANNOT run on the lean
+ * MCP/command path (no IR) — they appear ONLY here, the IR-present composition. The
+ * lean {@link LITESHIP_GATES} default is unchanged: `czap check` / MCP still runs
+ * the six regex gates IR-free.
  */
 export const LITESHIP_IR_GATES: readonly Gate[] = [
   noBareThrowIRGate,
@@ -73,6 +81,9 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   noSkippedTestGate,
   noPlaceholderGate,
   noDefaultExportDivergenceGate,
+  noVarDivergenceGate,
+  noRequireDivergenceGate,
+  symbolOrphanDivergenceGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */

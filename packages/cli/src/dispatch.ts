@@ -185,9 +185,16 @@ export async function run(argv: readonly string[]): Promise<number> {
       // lean handler — `--ir` never crosses into @czap/command / @czap/mcp-server).
       const ir = rest.includes('--ir');
       const noCache = rest.includes('--no-cache');
-      // `--no-cache` is only meaningful on the IR path (the lean path has no cache).
-      // A bare `--no-cache` is a no-op there, never a silent wrong run.
-      return check({ ...(ir ? { ir } : {}), ...(noCache ? { noCache } : {}) });
+      // `--symbols` adds the heavy symbol-evidenced LanguageService oracle (B3.3) —
+      // only meaningful with `--ir`; the cache key is namespaced by this mode.
+      const symbols = rest.includes('--symbols');
+      // `--no-cache` / `--symbols` are only meaningful on the IR path (the lean path
+      // has no cache + no IR). A bare flag there is a no-op, never a silent wrong run.
+      return check({
+        ...(ir ? { ir } : {}),
+        ...(noCache ? { noCache } : {}),
+        ...(symbols ? { symbols } : {}),
+      });
     }
     case 'check-invariants': {
       return checkInvariants();

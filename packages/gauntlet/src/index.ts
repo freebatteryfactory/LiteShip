@@ -133,7 +133,14 @@ export { noPlaceholderGate } from './gates/no-placeholder.js';
 // run only on the host path (the CLI builds + injects the IR). They are NOT in
 // the lean LITESHIP_GATES default; the IR-injected CLI run composes them on.
 export { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
+export {
+  type OracleDivergenceSpec,
+  makeOracleDivergenceGate,
+} from './gates/make-oracle-divergence-gate.js';
 export { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
+export { noVarDivergenceGate } from './gates/no-var-divergence.js';
+export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
+export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

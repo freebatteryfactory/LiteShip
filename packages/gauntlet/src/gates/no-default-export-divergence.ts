@@ -1,28 +1,28 @@
 /**
- * The FIRST oracle-divergence gate (Slice B, B1 — the headline) + the
- * meta-gauntlet self-proof.
+ * The FIRST oracle-divergence gate (Slice B, B1 — the headline), NOW an instance
+ * of the parametric {@link makeOracleDivergenceGate} factory (Slice B, B3.2).
  *
  * Two oracles observe the `is-default-export` property over the repo-IR: the
  * AST-precise `ts-ast` (`file-proxy-only`) and the comment-blind `invariant-regex`
- * (`text-only`, running the canonical NO_DEFAULT_EXPORT rule over raw text). This
- * gate folds `ctx.ir.facts`, groups the `is-default-export` facts by
- * `(file, line)`, and for each line where the two oracles DISAGREE — one has the
- * fact, the other does not — emits a SELF-EXPLAINING, fully-traceable divergence
- * {@link Finding} per the ratified REPORT-not-DECIDE model.
+ * (`text-only`, running the canonical NO_DEFAULT_EXPORT rule over raw text). The
+ * gate folds `ctx.ir.facts`, groups by `(file, line)`, and reports each site where
+ * the two oracles DISAGREE — UNLESS the regex's silence is a sanctioned policy
+ * exclude (read from a live `default-export-check-excluded` marker fact). The
+ * shared fold, the exclude-vs-miss refinement, the head-probe LAW, and the
+ * self-proving red/green/mutation fixtures now live in the factory; THIS module
+ * supplies only the descriptor.
  *
  * The classic disagreement, and the live dogfood: the `invariant-regex` oracle
- * fires on a line where the keyword pair appears INSIDE A COMMENT (a doc comment
- * that mentions the keyword form by name), while the `ts-ast` oracle correctly
- * stays silent (it is not a real declaration). That is the exact false-positive
- * that bit THIS slice's own development repeatedly — and the gate reports it as an
- * advisory divergence, the live proof the text-only oracle is imprecise and should
- * be retired in favour of the AST oracle.
+ * fires on a line where the keyword pair appears INSIDE A COMMENT, while the
+ * `ts-ast` oracle correctly stays silent. That false-positive bit THIS slice's own
+ * development repeatedly — the gate reports it as an advisory cross-class
+ * divergence, the live proof the text-only oracle is imprecise and should be
+ * retired in favour of the AST oracle.
  *
  * THE LAW (the 0.2.3 head-probe scar, as an engine invariant): the comparison is
- * computed from the LIVE oracle facts in the IR — never a hardcoded constant,
- * never a proxy. The engine picks NO winner; it names both oracles, both values,
- * both coverage classes, and the location, and the reader (human via LSP/CLI,
- * agent via MCP) decides.
+ * computed from the LIVE oracle facts in the IR — never a hardcoded constant. The
+ * engine picks NO winner; it names both oracles, both values, both coverage
+ * classes, and the location, and the reader decides.
  *
  * It REQUIRES the injected IR, so it runs only on the host path (the CLI builds +
  * injects the IR); the lean MCP/command path does not run it.
@@ -30,289 +30,26 @@
  * @module
  */
 
-import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
-import { finding, type Finding } from '../finding.js';
-import { memoryContext } from '../engine.js';
-import {
-  makeRepoIR,
-  coverageClassSeverity,
-  strongerCoverageClass,
-  type Fact,
-  type CoverageClass,
-  type RepoIR,
-} from '../repo-ir.js';
-
-/** The shared rule id this gate's findings trace to. */
-const RULE_ID = 'gauntlet/no-default-export-divergence';
-
-/** The property the two oracles cross-check. */
-const PROPERTY = 'is-default-export';
+import type { Gate } from '../gate.js';
+import { makeOracleDivergenceGate } from './make-oracle-divergence-gate.js';
 
 /**
- * The property a host oracle emits to record a POLICY EXCLUDE (the exclude-vs-miss
- * seam). When the `invariant-regex` oracle's NO_DEFAULT_EXPORT rule deliberately
- * IGNORES a file (a sanctioned default export the rule's `exclude` list names), the
- * oracle emits a `default-export-check-excluded` fact for that file instead of
- * staying merely silent. This gate reads that LIVE fact to tell a sanctioned policy
- * exclude (the regex was TOLD to ignore the file — both oracles AGREE there is a
- * default export, the regex's silence is by design) from a genuine coverage MISS
- * (the regex looked and missed). The exclude is ALWAYS read from the fact — the gate
- * hardcodes no exclude list (the head-probe LAW).
+ * The oracle-divergence gate for `is-default-export` — the meta-gauntlet
+ * self-proof, expressed through the shared factory. Its red/green/mutation
+ * fixtures are the factory's in-memory {@link RepoIR}s where the two oracles agree
+ * or disagree, and they ARE the proof the gate catches an injected divergence.
+ * Earns blocking authority via the existing ratchet — no engine change.
  */
-const EXCLUDED_PROPERTY = 'default-export-check-excluded';
-
-/** The two oracle ids that observe {@link PROPERTY} — the triangulation pair. */
-const AST_ORACLE = 'ts-ast';
-const REGEX_ORACLE = 'invariant-regex';
-
-/** A `(file, line)` key for grouping facts about the same source site. */
-function siteKey(file: string, line: number | undefined): string {
-  return `${file}${line ?? 0}`;
-}
-
-/** One oracle's observation at a site — the coverage class + which oracle saw it. */
-interface OracleObservation {
-  readonly oracleId: string;
-  readonly coverageClass: CoverageClass;
-}
-
-/** The two oracles' presence/absence at one `(file, line)` site. */
-interface SiteObservations {
-  readonly file: string;
-  readonly line: number | undefined;
-  /** The AST oracle's observation, if it saw the property here. */
-  readonly ast?: OracleObservation;
-  /** The regex oracle's observation, if it saw the property here. */
-  readonly regex?: OracleObservation;
-}
-
-/**
- * Group the IR's {@link PROPERTY} facts by `(file, line)`, recording which of the
- * two oracles observed each site. Computed entirely from the LIVE facts (the
- * head-probe LAW — never a hardcoded expectation).
- */
-function groupBySite(facts: readonly Fact[]): readonly SiteObservations[] {
-  const byKey = new Map<string, { file: string; line: number | undefined; ast?: OracleObservation; regex?: OracleObservation }>();
-  for (const fact of facts) {
-    if (fact.property !== PROPERTY) continue;
-    const key = siteKey(fact.file, fact.line);
-    const entry = byKey.get(key) ?? { file: fact.file, line: fact.line };
-    const obs: OracleObservation = { oracleId: fact.oracleId, coverageClass: fact.coverageClass };
-    if (fact.oracleId === AST_ORACLE) entry.ast = obs;
-    else if (fact.oracleId === REGEX_ORACLE) entry.regex = obs;
-    byKey.set(key, entry);
-  }
-  // Stable order for determinism: file then line.
-  return [...byKey.values()].sort((a, b) => a.file.localeCompare(b.file) || (a.line ?? 0) - (b.line ?? 0));
-}
-
-/**
- * Build the self-explaining divergence finding for a site where exactly ONE
- * oracle observed the property. Names BOTH oracles, their values (present vs
- * absent), their coverage classes, and the location — the reader decides; the
- * engine picks no winner. Severity is calibrated from the coverage-class pair via
- * the redlinable {@link coverageClassSeverity} matrix.
- */
-function divergenceFinding(site: SiteObservations): Finding {
-  // Exactly one is present at a divergence. The present oracle's class is the
-  // higher-confidence evidence the finding carries; severity is calibrated from
-  // the PAIR (present-class, absent-class).
-  const present = site.ast ?? site.regex!;
-  const absentOracle = site.ast !== undefined ? REGEX_ORACLE : AST_ORACLE;
-  // The absent oracle's class is structural (each oracle has a fixed class): the
-  // AST oracle is file-proxy-only, the regex oracle is text-only.
-  const absentClass: CoverageClass = absentOracle === AST_ORACLE ? 'file-proxy-only' : 'text-only';
-  const severity = coverageClassSeverity(present.coverageClass, absentClass);
-  const carriedClass = strongerCoverageClass(present.coverageClass, absentClass);
-
-  const loc = `${site.file}:${site.line ?? 0}`;
-  const presentDesc = `\`${present.oracleId}\` (${present.coverageClass})`;
-  const absentDesc = `\`${absentOracle}\` (${absentClass})`;
-  // The whole point of cross-class quiet: when the text-only oracle is the one
-  // that fired and the AST did not, the explanation IS the coverage class.
-  const why =
-    present.oracleId === REGEX_ORACLE
-      ? 'the text-only oracle cannot tell comment from code, so it likely fired on a comment/string occurrence the AST oracle correctly ignores — this is the signal to RETIRE the text-only oracle in favour of the AST oracle'
-      : 'the AST oracle saw a real default-export form the text-only regex missed (e.g. `export =` or a `{ x as default }` re-export the keyword-pair regex cannot match)';
-
-  return finding({
-    ruleId: RULE_ID,
-    severity,
-    level: 'L1',
-    title: `Oracle divergence on ${PROPERTY} at ${loc}`,
-    detail: `${presentDesc} flags ${PROPERTY} at ${loc}; ${absentDesc} does not. ${why}. The engine picks no winner — the reader decides. (severity ${severity}: ${present.coverageClass === absentClass ? 'same-class contradiction' : 'cross-class coverage gap'}.)`,
-    location: { file: site.file, ...(site.line !== undefined ? { line: site.line } : {}) },
-    coverageClass: carriedClass,
-    remediation: {
-      kind: 'instruction',
-      description: 'Resolve the oracle divergence — the engine reports, you decide.',
-      steps: [
-        `Open ${loc} and confirm whether it is a real default-export declaration.`,
-        present.oracleId === REGEX_ORACLE
-          ? 'If the keyword pair is inside a comment/string (the regex false-positive), this divergence is the evidence to retire the text-only invariant-regex oracle in favour of the AST oracle — no source change needed.'
-          : 'If the AST oracle caught a real `export =` / `{ x as default }` form, the text-only regex is blind to it — prefer the AST oracle for this property.',
-      ],
-    },
-  });
-}
-
-/**
- * The set of files the `invariant-regex` oracle was TOLD to exclude from the
- * default-export check — read from the LIVE `default-export-check-excluded` marker
- * facts (the exclude-vs-miss seam), NEVER a hardcoded path list (the head-probe
- * LAW). A file in this set is a sanctioned POLICY EXCLUDE: the regex's silence
- * there is by design (the two oracles AGREE there is a default export), not a
- * coverage miss — so an AST-present/regex-absent site on such a file is NOT a
- * divergence. The set is computed entirely from the IR's facts.
- */
-function policyExcludedFiles(facts: readonly Fact[]): ReadonlySet<string> {
-  const excluded = new Set<string>();
-  for (const fact of facts) {
-    if (fact.property === EXCLUDED_PROPERTY && fact.oracleId === REGEX_ORACLE) {
-      excluded.add(fact.file);
-    }
-  }
-  return excluded;
-}
-
-/**
- * Fold the IR's facts into divergence findings — one per `(file, line)` where the
- * two `is-default-export` oracles GENUINELY disagree. Agreement (both present, or
- * both absent) emits NOTHING — AND a sanctioned POLICY EXCLUDE emits NOTHING: when
- * the AST oracle saw a default export but the regex is silent BECAUSE the file is
- * in the rule's `exclude` list (a live `default-export-check-excluded` marker
- * fact), the two oracles AGREE there is a sanctioned default export — the regex's
- * silence is by design, not disagreement. Only a regex silence that is NOT a policy
- * exclude (the regex looked and missed, or fired where the AST did not) is a real
- * divergence. The exclude is read from the LIVE fact (the head-probe LAW), never
- * hardcoded in the gate.
- */
-function fold(context: GateContext): readonly Finding[] {
-  const ir = requireIR(context, RULE_ID);
-  const excluded = policyExcludedFiles(ir.facts);
-  const findings: Finding[] = [];
-  for (const site of groupBySite(ir.facts)) {
-    const astSaw = site.ast !== undefined;
-    const regexSaw = site.regex !== undefined;
-    // Disagreement ⟺ exactly one oracle observed the property here.
-    if (astSaw === regexSaw) continue;
-    // The exclude-vs-miss refinement: an AST-present/regex-absent site on a
-    // POLICY-EXCLUDED file is NOT a divergence — the regex was told to ignore this
-    // file (a sanctioned default export), so the two oracles AGREE; the regex's
-    // silence is by design, not a coverage miss. A regex-PRESENT/AST-absent site
-    // (the comment-occurrence false-positive) is still a real divergence even on an
-    // excluded file (the regex shouldn't have fired at all there).
-    if (astSaw && !regexSaw && excluded.has(site.file)) continue;
-    findings.push(divergenceFinding(site));
-  }
-  return findings;
-}
-
-/** A {@link GateContext} carrying ONLY an in-memory IR — for the fixtures. */
-function irContext(ir: RepoIR): GateContext {
-  return { ...memoryContext({}), ir };
-}
-
-/** A `(file, line)` `is-default-export` fact from `oracleId` with `coverageClass`. */
-function fact(file: string, line: number, oracleId: string, coverageClass: CoverageClass): Fact {
-  return { file, line, property: PROPERTY, value: true, oracleId, coverageClass };
-}
-
-/**
- * The host's POLICY-EXCLUDE marker fact for `file` — the live evidence the regex
- * oracle was TOLD to ignore this file (the exclude-vs-miss seam). A file-level
- * fact (line 1) under {@link EXCLUDED_PROPERTY}, emitted by the regex oracle.
- */
-function excludedMarker(file: string): Fact {
-  return { file, line: 1, property: EXCLUDED_PROPERTY, value: 'NO_DEFAULT_EXPORT', oracleId: REGEX_ORACLE, coverageClass: 'text-only' };
-}
-
-const FILE = 'packages/x/src/a.ts';
-
-/**
- * The sanctioned policy-EXCLUDED file in the green fixture: the AST oracle saw a
- * real default export here, the regex is silent BY DESIGN (the rule excludes it),
- * and a `default-export-check-excluded` marker records WHY. The correct gate emits
- * NOTHING for it; a mutant that ignores the marker re-flags it (killed by green).
- */
-const EXCLUDED_FILE = 'packages/astro/src/client-directives/example.ts';
-
-/**
- * The oracle-divergence gate — the meta-gauntlet self-proof. Its red/green/mutation
- * fixtures are in-memory {@link RepoIR}s where the two oracles agree or disagree,
- * and they ARE the proof the gate catches an injected divergence. Earns blocking
- * authority via the existing ratchet — no engine change.
- */
-export const noDefaultExportDivergenceGate: Gate = defineGate({
-  id: RULE_ID,
+export const noDefaultExportDivergenceGate: Gate = makeOracleDivergenceGate({
+  gateId: 'gauntlet/no-default-export-divergence',
+  property: 'is-default-export',
+  excludedMarkerProperty: 'default-export-check-excluded',
   level: 'L1',
+  subject: 'default export',
   describe:
     'Reports a divergence when the AST (file-proxy) and invariant-regex (text-only) oracles disagree on is-default-export at a (file, line) — the regex fired on a comment the AST ignores. Reports, never decides.',
-  run: fold,
-  fixtures: {
-    // RED: the two oracles DISAGREE — the regex flags a line the AST does not
-    // (the comment-occurrence false-positive). The gate MUST emit ≥1 divergence.
-    red: {
-      name: 'an IR where invariant-regex flags a line the AST does not',
-      context: irContext(
-        makeRepoIR({
-          files: [{ id: FILE, contentDigest: 'placeholder:no-content-address', packageName: null }],
-          // Only the text-only regex saw line 42 (a comment-occurrence of the
-          // keyword pair); the AST oracle did not. A genuine divergence.
-          facts: [fact(FILE, 42, REGEX_ORACLE, 'text-only')],
-        }),
-      ),
-    },
-    // GREEN: the false-positive FLOOR, carrying BOTH no-divergence cases the gate
-    // must pass clean. (1) Both oracles AGREE on a real default-export site. (2) The
-    // exclude-vs-miss case: on the policy-EXCLUDED file the AST saw a real default
-    // export, the regex is silent BY DESIGN (a `default-export-check-excluded`
-    // marker records the policy exclude) — NOT a divergence. The correct gate emits
-    // 0 findings; the exclude-ignoring mutant re-flags the excluded file (killed by
-    // this green).
-    green: {
-      name: 'an IR with an agreement site AND a sanctioned policy-excluded default export (neither is a divergence)',
-      context: irContext(
-        makeRepoIR({
-          files: [
-            { id: FILE, contentDigest: 'placeholder:no-content-address', packageName: null },
-            { id: EXCLUDED_FILE, contentDigest: 'placeholder:no-content-address', packageName: '@czap/astro' },
-          ],
-          facts: [
-            // (1) Agreement on a real site — both oracles present.
-            fact(FILE, 7, AST_ORACLE, 'file-proxy-only'),
-            fact(FILE, 7, REGEX_ORACLE, 'text-only'),
-            // (2) The policy-excluded file: AST saw the sanctioned default export,
-            // the regex is silent + the live exclude marker says WHY. Not a miss.
-            fact(EXCLUDED_FILE, 3, AST_ORACLE, 'file-proxy-only'),
-            excludedMarker(EXCLUDED_FILE),
-          ],
-        }),
-      ),
-    },
-    // MUTATION: a mutant that IGNORES the policy-exclude marker — it treats every
-    // AST-present/regex-absent site as a divergence, blind to the
-    // `default-export-check-excluded` fact. On the green fixture's sanctioned
-    // excluded file it re-flags the (non-)divergence the ~9 false advisories were —
-    // so green is no longer clean and the mutant is KILLED by green. This is the
-    // exact regression the exclude-vs-miss refinement cures, proven with teeth.
-    mutation: {
-      describe:
-        'A mutant that ignores the default-export-check-excluded marker re-flags the sanctioned policy-excluded default export in the green fixture (the ~9 false advisories) — green is then no longer clean and the mutant is killed.',
-      mutate: (gate: Gate): Gate => ({
-        ...gate,
-        run: (context: GateContext): readonly Finding[] => {
-          const ir = requireIR(context, RULE_ID);
-          // Mutant: the PRE-refinement logic — flag every disagreement, NEVER
-          // consulting the policy-exclude marker. The sanctioned excluded file in
-          // green (AST present, regex absent) is wrongly flagged → green dirty → killed.
-          const findings: Finding[] = [];
-          for (const site of groupBySite(ir.facts)) {
-            if ((site.ast !== undefined) !== (site.regex !== undefined)) findings.push(divergenceFinding(site));
-          }
-          return findings;
-        },
-      }),
-    },
-  },
+  astSawWhy:
+    'the AST oracle saw a real default-export form the text-only regex missed (e.g. `export =` or a `{ x as default }` re-export the keyword-pair regex cannot match)',
+  astSawStep:
+    'If the AST oracle caught a real `export =` / `{ x as default }` form, the text-only regex is blind to it — prefer the AST oracle for this property.',
 });

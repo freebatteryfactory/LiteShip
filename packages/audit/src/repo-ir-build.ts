@@ -78,6 +78,7 @@ import {
   resolveImport,
 } from './structure.js';
 import { createTypeDirectedProgram } from './ts-program.js';
+import { symbolReferenceOracle } from './repo-ir-language-service.js';
 
 /** UTF-8 encoder reused across files (stateless, deterministic). */
 const UTF8 = new TextEncoder();
@@ -119,6 +120,16 @@ export interface BuildRepoIROptions {
    * IR. Empty/omitted → audit emits ONLY its own structural AST facts.
    */
   readonly extraFactOracles?: readonly FactOracle[];
+  /**
+   * Run the SYMBOL-EVIDENCED LanguageService oracle (B3.3) — true cross-file
+   * symbol references via a `ts.LanguageService`, cross-checked against the
+   * file-proxy-only `refs` graph by the symbol-orphan divergence gate. OFF by
+   * default: it is the heaviest oracle in the set (a whole-repo LanguageService +
+   * a reference query per exported symbol), so it is opt-in (`czap check --ir
+   * --symbols`) and amortized by the B2 verdict cache. Without it, the gate finds
+   * nothing (no symbol-evidenced facts) — harmless.
+   */
+  readonly withSymbolReferences?: boolean;
 }
 
 /**
@@ -276,6 +287,31 @@ function isBareNativeThrow(node: ts.Node): node is ts.ThrowStatement {
   if (!ts.isNewExpression(expr) || !ts.isIdentifier(expr.expression)) return false;
   const callee = expr.expression.text;
   return callee === 'Error' || callee === 'RangeError' || callee === 'TypeError';
+}
+
+/**
+ * Is `node` a REAL legacy variable statement — a `ts.VariableStatement` whose
+ * declaration list carries neither the Const nor the Let NodeFlag (i.e. the
+ * legacy binding form the NO_VAR invariant bans)? This is the AST-precise oracle
+ * for the `var-declaration` property: it sees the real statement, so (unlike the
+ * comment-blind regex) it never fires on the keyword inside a comment or string.
+ * The B3.2 cross-check triangulates this against the canonical NO_VAR regex.
+ */
+function isLegacyVarStatement(node: ts.Node): node is ts.VariableStatement {
+  if (!ts.isVariableStatement(node)) return false;
+  const flags = node.declarationList.flags;
+  return (flags & ts.NodeFlags.Const) === 0 && (flags & ts.NodeFlags.Let) === 0;
+}
+
+/**
+ * Is `node` a real CommonJS-loader call — a `ts.CallExpression` whose callee is
+ * the bare `require` identifier? This is the AST-precise oracle for the
+ * `require-call` property: it sees the real call, so (unlike the comment-blind
+ * regex) it never fires on the loader name inside a comment or string. The B3.2
+ * cross-check triangulates this against the canonical NO_REQUIRE regex.
+ */
+function isRequireCall(node: ts.Node): node is ts.CallExpression {
+  return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require';
 }
 
 /** The composed flat tables before {@link makeRepoIR} indexes + freezes them. */
@@ -438,8 +474,50 @@ export function buildRepoIR(
         );
       }
 
+      // ── The var-declaration fact (AST-precise) — the file-proxy oracle for the
+      // NO_VAR invariant (B3.2). A real legacy variable statement (NodeFlags lack
+      // Const + Let): the AST sees the statement, never the keyword inside a
+      // comment/string the comment-blind regex can mishandle. The
+      // noVarDivergenceGate (host-injected regex oracle) triangulates these.
+      if (isLegacyVarStatement(node)) {
+        emitFileProxyFact(
+          tables.facts,
+          record.relativePath,
+          lineOf(sourceFile, node),
+          'var-declaration',
+          true,
+          'ts-ast',
+          'file-proxy-only',
+        );
+      }
+
+      // ── The require-call fact (AST-precise) — the file-proxy oracle for the
+      // NO_REQUIRE invariant (B3.2). A real CommonJS-loader call (callee is the
+      // bare `require` identifier): the AST sees the call, never the loader name
+      // inside a comment/string. The noRequireDivergenceGate triangulates these.
+      if (isRequireCall(node)) {
+        emitFileProxyFact(
+          tables.facts,
+          record.relativePath,
+          lineOf(sourceFile, node),
+          'require-call',
+          true,
+          'ts-ast',
+          'file-proxy-only',
+        );
+      }
+
       ts.forEachChild(node, walk);
     }
+  }
+
+  // ── The symbol-evidenced LanguageService oracle (B3.3, opt-in) ───────────
+  // A WHOLE-CORPUS oracle (a ts.LanguageService, not a per-file FactOracle), so it
+  // runs once here after the per-file loop. Its symbol-evidenced facts merge into
+  // the same table; the symbol-orphan divergence gate cross-checks them against the
+  // file-proxy-only `refs` graph. Heaviest oracle → opt-in (default off).
+  if (options.withSymbolReferences === true) {
+    for (const fact of symbolReferenceOracle({ profile })) tables.facts.push(fact);
   }
 
   // Deterministic ordering — sort every table so the IR is byte-stable.
