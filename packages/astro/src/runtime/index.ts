@@ -8,9 +8,13 @@ export {
 // Live audio producer: wire an AnalyserNode and the audio.* boundary family
 // lights up through the existing source-agnostic carve-path.
 export { driveAudioFromAnalyser, readAudioSignal, attachAudioObserver } from './audio-signal.js';
-export { bootstrapSlots, getSlotRegistry, installSwapReinit, reinitializeDirectives, rescanSlots } from './slots.js';
+export { bootstrapSlots, getSlotRegistry, reinitializeDirectives, teardownDirectives, rescanSlots } from './slots.js';
 export { bootstrapDirectives, scanAndBootDirectives } from './directive-boot.js';
 export type { DirectiveName } from './directive-boot.js';
+// The single ordered `astro:after-swap` pipeline (F-1): one listener runs
+// [rescanSlots, bootDirectives, reinitDirectives] in a guaranteed order.
+export { installSwapPipeline, runSwapPipeline, SWAP_STEPS } from './swap-pipeline.js';
+export type { SwapStep } from './swap-pipeline.js';
 // DocumentGraph runtime loader (0.4.0 item B): lower a serialized graph onto the
 // live cast pipeline + the delta re-cast seam (`castGraphDelta`, reused by the AI
 // seam). `lowerGraph` is the pure, SSR-safe graph→bindings projection.
@@ -51,9 +55,16 @@ export {
   readRuntimeEndpointPolicy,
   readRuntimeHtmlPolicy,
   readRuntimePolicy,
+  readRuntimePolicyWithSource,
 } from './policy.js';
 export type { RuntimeEndpointKind, RuntimeEndpointPolicy, HtmlPolicy } from '@czap/web';
-export type { RuntimeHtmlPolicy, RuntimeSecurityPolicy, NormalizedRuntimeSecurityPolicy } from './policy.js';
+export type {
+  RuntimeHtmlPolicy,
+  RuntimeSecurityPolicy,
+  NormalizedRuntimeSecurityPolicy,
+  RuntimePolicySource,
+  RuntimePolicyReadout,
+} from './policy.js';
 // SVG last-mile: live DOM applicator around @czap/scene's pure svg-egress.
 export { attachSvgRuntime, initSvgDirective, buildEntityElementResolver, parseSvgStateAttrs } from './svg.js';
 export type { SvgStateAttrs, SvgEntityElementResolver } from './svg.js';

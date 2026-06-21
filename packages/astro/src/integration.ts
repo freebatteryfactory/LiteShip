@@ -170,12 +170,14 @@ function runtimeBootstrapScript(policy: RuntimeSecurityPolicy, directives: reado
   // exclusion savings (the GPU probe, detect, wasm, inspector) are guarded at
   // their own scripts; this machinery is invisible where nothing uses it.
   return `
-import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapReinit } from '@czap/astro/runtime';
+import { bootstrapSlots, bootstrapDirectives, configureRuntimePolicy, installSwapPipeline } from '@czap/astro/runtime';
 
 configureRuntimePolicy(${serializeInlineRuntimePolicy(policy)});
 bootstrapSlots();
 bootstrapDirectives(${JSON.stringify(directives)});
-installSwapReinit();
+// One ordered after-swap pipeline: rescan slots → boot fresh directives → reinit
+// persisted ones, in that guaranteed order (F-1) — not three racing listeners.
+installSwapPipeline(${JSON.stringify(directives)});
 `.trim();
 }
 

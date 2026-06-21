@@ -183,16 +183,16 @@ export async function scanAndBootDirectives(
 }
 
 /**
- * One-shot page bootstrap: scan for directive markers on
- * `DOMContentLoaded` (or immediately if the document is already ready)
- * and re-scan after every Astro View Transitions `after-swap`. Swapped-in
- * DOM is fresh server HTML -- it never carries the bound attribute -- so
- * new elements activate while `transition:persist` elements are skipped
- * (their directives re-read attributes via the existing `czap:reinit`
- * path installed by `installSwapReinit()`).
- *
+ * One-shot INITIAL page bootstrap: scan for directive markers on
+ * `DOMContentLoaded` (or immediately if the document is already ready).
  * Idempotent across repeated module loads via a window global, matching
  * `bootstrapSlots()`.
+ *
+ * The post-swap re-scan is NOT registered here: it is the second step of the
+ * single ordered swap pipeline (`./swap-pipeline.ts`, F-1). On a swap, fresh
+ * server HTML never carries the bound attribute, so new elements activate while
+ * `transition:persist` elements are skipped (their directives re-read attributes
+ * via the `czap:reinit` step of the same pipeline).
  */
 export function bootstrapDirectives(enabled: readonly DirectiveName[]): void {
   if (typeof window === 'undefined') {
@@ -213,6 +213,4 @@ export function bootstrapDirectives(enabled: readonly DirectiveName[]): void {
   } else {
     scan();
   }
-
-  document.addEventListener('astro:after-swap', scan);
 }

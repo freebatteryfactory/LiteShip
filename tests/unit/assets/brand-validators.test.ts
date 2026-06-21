@@ -4,7 +4,7 @@
  * `mkAssetRefId` is parse-don't-validate: it returns the id when it is a
  * non-empty token with no whitespace (the id is a registry `Map` KEY and is
  * serialized into asset references) and throws `ValidationError` otherwise.
- * Registration existence is enforced separately by `AssetRef`.
+ * Registration existence is enforced separately by `AssetRegistry`'s `ref`.
  *
  * Imported via the package src path: the brand module is an internal seam, not
  * part of the package's public `.` surface.

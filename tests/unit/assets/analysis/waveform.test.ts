@@ -1,17 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { computeWaveform, WaveformProjection } from '@czap/assets';
-import { defineAsset } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
+import { describe, it, expect } from 'vitest';
+import { computeWaveform, WaveformProjection, defineAsset, AssetRegistry } from '@czap/assets';
 
-function registerIntroBed(): void {
-  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
-}
+const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
 describe('WaveformProjection', () => {
-  beforeEach(() => {
-    resetAssetRegistry();
-    registerIntroBed();
-  });
   it('computeWaveform returns a normalized downsampled array', () => {
     const sampleRate = 48000;
     const samples = new Float32Array(sampleRate);
@@ -49,7 +41,7 @@ describe('WaveformProjection', () => {
   });
 
   it('WaveformProjection defaults to 512 bins when opts omitted', () => {
-    const cap = WaveformProjection('intro-bed');
+    const cap = WaveformProjection(registry, 'intro-bed');
     expect(cap.name).toBe('intro-bed:waveform:512');
   });
 
@@ -61,13 +53,13 @@ describe('WaveformProjection', () => {
   });
 
   it('WaveformProjection is a cachedProjection capsule with bin suffix in name', () => {
-    const cap = WaveformProjection('intro-bed', { bins: 512 });
+    const cap = WaveformProjection(registry, 'intro-bed', { bins: 512 });
     expect(cap._kind).toBe('cachedProjection');
     expect(cap.name).toBe('intro-bed:waveform:512');
   });
 
   it('WaveformProjection invariants reject malformed output', () => {
-    const cap = WaveformProjection('intro-bed', { bins: 4 });
+    const cap = WaveformProjection(registry, 'intro-bed', { bins: 4 });
     const binInv = cap.invariants.find((i) => i.name === 'bin-count-matches');
     const normInv = cap.invariants.find((i) => i.name === 'values-normalized');
     expect(binInv).toBeDefined();

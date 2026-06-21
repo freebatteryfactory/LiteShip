@@ -96,7 +96,9 @@ export const INVARIANTS: readonly Invariant[] = [
     exclude: [
       // Diagnostic namespace checks (which container message to emit), not axis reads.
       'packages/vite/src/css-quantize.ts',
-      'packages/astro/src/runtime/inspector.ts',
+      // The inspector dev-tool's diagnostic teaching messages — the god-file split
+      // relocated them from inspector.ts into the inspector/ modules (dom-probes.ts).
+      'packages/astro/src/runtime/inspector/',
     ],
     message:
       'Derive the signal axis from inputToSource(@czap/core), not a startsWith re-parse. ' +

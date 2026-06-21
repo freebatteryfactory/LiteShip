@@ -123,14 +123,26 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   },
   {
     ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/cli/src/commands/doctor.ts',
-    line: 390,
+    file: 'packages/cli/src/commands/doctor/probes-workspace.ts',
+    line: 250,
     owner: 'heyoub',
     reason:
-      'Best-effort capability probe in the doctor diagnostic: an unreadable playwright-browsers cache dir is treated as "no chromium installed" — the conservative, non-corrupting interpretation, and the doctor then reports chromium as missing (so the failure IS surfaced to the user, just as the normal doctor output). Documented, not empty.',
+      'Best-effort capability probe in the doctor diagnostic: an unreadable playwright-browsers cache dir is treated as "no chromium installed" — the conservative, non-corrupting interpretation, and the doctor then reports chromium as missing (so the failure IS surfaced to the user, just as the normal doctor output). Documented, not empty. (Relocated from doctor.ts:390 by the doctor god-file split into doctor/probes-workspace.ts.)',
     expires: BOUNDARY_REVIEW,
     blastRadius:
       'A transiently-unreadable cache dir would make doctor under-report an installed chromium — a false "missing", which is the safe direction (prompts a reinstall, never hides a real break).',
+    debtScore: 1,
+  },
+  {
+    ruleId: 'gauntlet/no-silent-catch',
+    file: 'packages/cli/src/commands/version.ts',
+    line: 47,
+    owner: 'heyoub',
+    reason:
+      'Best-effort CLI-version resolution: import.meta.url may be unavailable in odd bundling/loader contexts, so readCliVersion skips the module-relative package.json candidate and falls through to the cwd-relative one. Non-corrupting (a real version is still resolved from the workspace) and conservative. Documented, not empty. (Surfaced into its own file when readCliVersion was relocated out of doctor.ts by the split.)',
+    expires: BOUNDARY_REVIEW,
+    blastRadius:
+      'With no import.meta.url, the version read falls back to the cwd package.json — at worst a wrong version string when run from an unrelated cwd, never a crash or corrupted state.',
     debtScore: 1,
   },
 ];

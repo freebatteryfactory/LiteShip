@@ -20,7 +20,7 @@ export type { AnimatedQuantizerShape } from './animated-quantizer.js';
 
 export { TransitionConfigSchema, TransitionMapSchema, OutputTargetSchema, QuantizerOutputsSchema } from './schemas.js';
 
-export type { MotionTier, SpringConfig, QuantizerFromOptions } from './quantizer.js';
+export type { MotionTier, SpringConfig, QuantizerFromOptions, QuantizerRuntime } from './quantizer.js';
 // `MemoCache` and `TIER_TARGETS` ship via `@czap/quantizer/testing` —
 // implementation primitives that power the public `Q.from()` builder
 // internally but are not consumer-facing API.

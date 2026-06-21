@@ -19,6 +19,7 @@ import type {
   Quantizer,
   OutputsFor,
   HLCBrand,
+  Clock,
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier, LadderTarget } from '@czap/core';
@@ -164,6 +165,35 @@ export interface QuantizerFromOptions {
 }
 
 // ---------------------------------------------------------------------------
+// Per-instantiation runtime injection (clock boundary — NOT config identity)
+// ---------------------------------------------------------------------------
+
+/**
+ * Runtime injection for {@link QuantizerConfig.create}.
+ *
+ * The crossing `timestamp` is an HLC whose `wall_ms` is epoch ms, so the
+ * monotonic clock is the {@link Clock} WALL boundary (`@czap/core`'s
+ * `wallClock`), NOT the monotonic `systemClock`. It is injected here — at
+ * instantiation, NOT in {@link QuantizerFromOptions} — so it never enters the
+ * content address (a clock is a volatile boundary, not part of a config's
+ * identity; folding it into the address would also be unserializable). Each
+ * `create()` call therefore owns a fresh monotonic HLC seeded from `node` and
+ * advanced by `clock`: same input + a {@link Clock} of fixed time → identical
+ * timestamps regardless of how many other quantizers evaluated first. There is
+ * no process-wide HLC.
+ */
+export interface QuantizerRuntime {
+  /**
+   * Wall-clock boundary advancing this instance's HLC; defaults to
+   * `@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
+   * deterministic, replayable crossing timestamps.
+   */
+  readonly clock?: Clock;
+  /** HLC node id seeding this instance's clock; defaults to `'quantizer'`. */
+  readonly node?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Quantizer config (immutable, content-addressed)
 // ---------------------------------------------------------------------------
 
@@ -186,8 +216,15 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
   readonly tier?: MotionTier;
   /** Spring config driving CSS easing injection. */
   readonly spring?: SpringConfig;
-  /** Instantiate a reactive {@link LiveQuantizer} scoped to an Effect fiber. */
-  create(): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
+  /**
+   * Instantiate a reactive {@link LiveQuantizer} scoped to an Effect fiber.
+   *
+   * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that
+   * advances this instance's monotonic crossing HLC; omit it to default to
+   * `@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
+   * the cached config's identity.
+   */
+  create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
 }
 
 // ---------------------------------------------------------------------------
@@ -370,12 +407,6 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
 }
 
 // ---------------------------------------------------------------------------
-// Monotonic HLC for sync evaluate() — HLC.increment, not ad-hoc counter++
-// ---------------------------------------------------------------------------
-
-let quantizerHlc = HLC.create('quantizer');
-
-// ---------------------------------------------------------------------------
 // Spring CSS computation with caching
 // ---------------------------------------------------------------------------
 
@@ -470,7 +501,13 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
         id,
         tier,
         spring,
-        create(): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope> {
+        create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope> {
+          // Per-instantiation monotonic clock: this live quantizer OWNS its HLC,
+          // so its crossing timestamps depend only on its own evaluate() calls
+          // and the injected wall-clock boundary — never on how many other
+          // quantizers evaluated first in this process. No module global.
+          const tickClock: Clock = runtime?.clock ?? wallClock;
+          let hlc = HLC.create(runtime?.node ?? 'quantizer');
           return Effect.gen(function* () {
             // Boundary.make guarantees non-empty states; head access widens to StateUnion<B>.
             const initialState: StateUnion<B> = firstState(boundary);
@@ -498,13 +535,16 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
 
                 if (result.crossed) {
                   // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
-                  // defines it as ≈ Date.now()), so route through wallClock — the
-                  // epoch entropy boundary — not the monotonic systemClock.
-                  quantizerHlc = HLC.increment(quantizerHlc, wallClock.now());
+                  // defines it as ≈ Date.now()), so advance through the injected
+                  // wall-clock boundary (`tickClock`, defaulting to wallClock) —
+                  // the epoch entropy boundary — not the monotonic systemClock.
+                  // `hlc` is this instance's own clock, so the stamp is a
+                  // function of this quantizer's crossings alone.
+                  hlc = HLC.increment(hlc, tickClock.now());
                   const crossing: BoundaryCrossing<StateUnion<B> & string> = {
                     from: mkStateName<StateUnion<B> & string>(previousState),
                     to: mkStateName(result.state),
-                    timestamp: quantizerHlc satisfies HLCBrand,
+                    timestamp: hlc satisfies HLCBrand,
                     value,
                   };
                   previousState = result.state;

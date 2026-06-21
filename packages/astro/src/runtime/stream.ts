@@ -147,8 +147,8 @@ function hasCustomEndpointPolicy(policy: ReturnType<typeof readRuntimeEndpointPo
  * Entry point for the `client:stream` directive. Opens an SSE client
  * to the `data-czap-stream-url` endpoint, funnels incoming HTML
  * patches through a {@link createStreamScheduler}, and triggers slot
- * rescans when necessary. Honors `czap:reinit` / `czap:dispose` to
- * survive Astro view transitions.
+ * rescans when necessary. Honors `czap:reinit` (re-read) / `czap:teardown`
+ * (final tear-down) to survive Astro view transitions.
  */
 export function initStreamDirective(load: () => Promise<unknown>, element: HTMLElement): void {
   bootstrapSlots();
@@ -402,7 +402,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
   bindReinit(target);
   connect();
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     cleanup();
     patchScheduler.dispose();
   });

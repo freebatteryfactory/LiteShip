@@ -8,7 +8,7 @@ import {
   bootstrapSlots,
   configureWasmRuntime,
   getSlotRegistry,
-  installSwapReinit,
+  installSwapPipeline,
   loadWasmRuntime,
   reinitializeDirectives,
   rescanSlots,
@@ -39,7 +39,8 @@ import { parseLLMChunk } from '../../../packages/astro/src/runtime/llm.js';
 type RuntimeWindow = Window & {
   __CZAP_SLOT_REGISTRY__?: unknown;
   __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_SWAP_REINIT__?: boolean;
+  __CZAP_DIRECTIVE_BOOTSTRAPPED__?: boolean;
+  __CZAP_SWAP_PIPELINE__?: boolean;
   __CZAP_SLOTS__?: unknown;
 };
 
@@ -47,7 +48,8 @@ function resetRuntimeWindow(): void {
   const runtimeWindow = window as RuntimeWindow;
   delete runtimeWindow.__CZAP_SLOT_REGISTRY__;
   delete runtimeWindow.__CZAP_SLOT_BOOTSTRAPPED__;
-  delete runtimeWindow.__CZAP_SWAP_REINIT__;
+  delete runtimeWindow.__CZAP_DIRECTIVE_BOOTSTRAPPED__;
+  delete runtimeWindow.__CZAP_SWAP_PIPELINE__;
   delete runtimeWindow.__CZAP_SLOTS__;
 }
 
@@ -103,7 +105,8 @@ describe('astro shared runtime adapters', () => {
       reinitCount += 1;
     });
 
-    installSwapReinit();
+    // The single ordered swap pipeline: rescan slots → boot directives → reinit.
+    installSwapPipeline(['satellite']);
 
     const nextSlot = document.createElement('section');
     nextSlot.setAttribute('data-czap-slot', '/next');
@@ -116,7 +119,7 @@ describe('astro shared runtime adapters', () => {
     expect(reinitCount).toBe(1);
   });
 
-  test('rescans slots through the document root and installs swap reinit only once', () => {
+  test('rescans slots through the document root and installs the swap pipeline only once', () => {
     document.body.innerHTML = `
       <section data-czap-slot="/hero" data-czap-mode="replace"></section>
       <div id="widget" data-czap-boundary='{"id":"hero","input":"viewport.width","thresholds":[0],"states":["compact"]}'></div>
@@ -133,12 +136,12 @@ describe('astro shared runtime adapters', () => {
     expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SLOTS__')).toBe(false);
 
     const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
-    installSwapReinit();
-    installSwapReinit();
+    installSwapPipeline(['satellite']);
+    installSwapPipeline(['satellite']);
 
     expect(addEventListenerSpy.mock.calls.filter(([type]) => type === 'astro:after-swap')).toHaveLength(1);
-    expect(runtimeWindow.__CZAP_SWAP_REINIT__).toBe(true);
-    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SWAP_REINIT__')).toBe(false);
+    expect(runtimeWindow.__CZAP_SWAP_PIPELINE__).toBe(true);
+    expect(Object.prototype.propertyIsEnumerable.call(runtimeWindow, '__CZAP_SWAP_PIPELINE__')).toBe(false);
   });
 
   test('bootstrapSlots is idempotent and keeps a single shared registry instance', () => {

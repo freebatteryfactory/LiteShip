@@ -91,6 +91,20 @@ export interface SPSCRingBufferShape {
   readonly count: number;
 }
 
+/**
+ * A matched producer/consumer pair sharing one `SharedArrayBuffer`,
+ * returned by {@link SPSCRing.createPair}. Named (rather than an inline
+ * anonymous object) so the pair shape is a single referenceable type.
+ */
+export interface SPSCRingPair {
+  /** The shared buffer carrying the control header + data slots. Transfer this to the Worker. */
+  readonly buffer: SharedArrayBuffer;
+  /** Producer-side handle (push-only). */
+  readonly producer: SPSCRingBufferShape;
+  /** Consumer-side handle (pop-only). */
+  readonly consumer: SPSCRingBufferShape;
+}
+
 // ---------------------------------------------------------------------------
 // Implementation
 // ---------------------------------------------------------------------------
@@ -266,18 +280,20 @@ function _makeRing(
  * worker.postMessage({ buffer });
  * ```
  *
- * @param slotCount - Number of slots in the ring (power of 2 recommended)
- * @param slotSize  - Number of Float64 values per slot
- * @returns An object with the shared buffer and producer/consumer ring handles
+ * The two arguments are both bare positive integers and are NOT
+ * interchangeable: `slotCount` is the ring depth (how many entries),
+ * `slotSize` the entry width (Float64 lanes per entry). Transposing them
+ * silently produces a different geometry rather than an error, so the
+ * order is `(depth, width)` — same order as the memory-layout header
+ * above (`[2]: slotCount`, `[3]: slotSize`). Each is guarded as a positive
+ * integer ({@link _makeRing} throws otherwise), so `0`/negative/fractional
+ * values fail loudly.
+ *
+ * @param slotCount - Ring depth: number of slots (power of 2 recommended)
+ * @param slotSize  - Entry width: number of Float64 values per slot
+ * @returns A {@link SPSCRingPair}: the shared buffer + producer/consumer handles
  */
-function _createPair(
-  slotCount: number,
-  slotSize: number,
-): {
-  buffer: SharedArrayBuffer;
-  producer: SPSCRingBufferShape;
-  consumer: SPSCRingBufferShape;
-} {
+function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
   // Preflight the environment so the failure teaches the COOP/COEP
   // requirement instead of surfacing the browser's bare ReferenceError /
   // constructor TypeError. The crossOriginIsolated probe only applies

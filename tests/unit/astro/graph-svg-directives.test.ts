@@ -4,7 +4,7 @@
  * wrappers + the init that reads the payload off the element and drives the
  * runtime). Items B/E test the runtime functions directly; this drives the
  * directive boot path the wrappers own — discover the payload, lower/apply it,
- * wire `czap:dispose`.
+ * wire `czap:teardown`.
  */
 import { describe, test, expect, vi, beforeAll } from 'vitest';
 import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, projectionKeys, HLC } from '@czap/core';
@@ -122,7 +122,7 @@ describe('client:graph + client:svg directive entrypoints', () => {
     expect(state === 'mobile' || state === 'desktop').toBe(true);
     expect(load).toHaveBeenCalled();
     // Dispose releases the runtime without throwing.
-    expect(() => root.dispatchEvent(new CustomEvent('czap:dispose'))).not.toThrow();
+    expect(() => root.dispatchEvent(new CustomEvent('czap:teardown'))).not.toThrow();
     document.body.innerHTML = '';
   });
 
@@ -148,7 +148,7 @@ describe('client:graph + client:svg directive entrypoints', () => {
     const load = vi.fn(async () => {});
 
     expect(() => svgDirective(load, {}, svg as unknown as HTMLElement)).not.toThrow();
-    expect(() => svg.dispatchEvent(new CustomEvent('czap:dispose'))).not.toThrow();
+    expect(() => svg.dispatchEvent(new CustomEvent('czap:teardown'))).not.toThrow();
     document.body.innerHTML = '';
   });
 });

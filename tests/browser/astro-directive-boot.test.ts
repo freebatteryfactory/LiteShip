@@ -55,7 +55,7 @@ describe('directive boot scanner', () => {
 
   afterEach(() => {
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:dispose'));
+      element.dispatchEvent(new CustomEvent('czap:teardown'));
     });
     delete (window as Window & { __CZAP_DIRECTIVE_BOOTSTRAPPED__?: boolean }).__CZAP_DIRECTIVE_BOOTSTRAPPED__;
     vi.restoreAllMocks();

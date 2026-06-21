@@ -10,11 +10,16 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { resolveAssetDecoder, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
+import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
 import { assetAnalyzeCommand, type AssetAnalyzePayload } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { emit, emitError, getCapsuleManifestPath } from '../receipts.js';
 import { tryReadCache, writeCache } from '../idempotency.js';
+
+// Audio decode resolves by asset id, falling back to the built-in audio decoder
+// for any id not in a registry. An EMPTY immutable registry preserves the prior
+// global `resolveAssetDecoder` behavior without the order-dependent module-global.
+const ASSET_REGISTRY = AssetRegistry.make([]);
 
 type Projection = 'beat' | 'onset' | 'waveform';
 
@@ -36,7 +41,7 @@ function loadAssetBytes(assetId: string, source?: string): ArrayBuffer | null {
  * AssetDecl.decoder for kind 'audio').
  */
 async function runAudioProjection(bytes: ArrayBuffer, projection: Projection, assetId?: string): Promise<number> {
-  const decoded = (await resolveAssetDecoder(assetId ?? '')(bytes)) as DecodedAudio;
+  const decoded = (await ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
   if (projection === 'beat') return detectBeats(decoded).beats.length;
   if (projection === 'onset') return detectOnsets(decoded).length;
   return computeWaveform(decoded, { bins: 512 }).length;

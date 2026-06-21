@@ -477,7 +477,7 @@ describe('integration', () => {
     expect(gpuUpgradeScript?.content).toContain('writable: false');
     expect(gpuUpgradeScript?.content).not.toContain('window.__CZAP_DETECT__ || {}');
     expect(scripts.some((script) => script.stage === 'page' && script.content.includes('bootstrapSlots'))).toBe(true);
-    expect(scripts.some((script) => script.stage === 'page' && script.content.includes('installSwapReinit'))).toBe(
+    expect(scripts.some((script) => script.stage === 'page' && script.content.includes('installSwapPipeline'))).toBe(
       true,
     );
     expect(logs).toContain('Registered gpu client directive');

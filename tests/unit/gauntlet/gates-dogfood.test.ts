@@ -207,7 +207,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
   it('no-silent-catch: the L3-scoped backlog is EXACTLY the four declared-benign catches (all waived)', () => {
     // The LAW: under level-scoping the L2 silent-catch gate sees only L2+ files, so
     // the L1 best-effort catches (spawn/server-info/vite) drop out, leaving exactly
-    // the four L3-scoped catches — each of which has a committed waiver in
+    // the five L3-scoped catches — each of which has a committed waiver in
     // waivers.ts. Computed through the engine (source of truth), not a hardcoded
     // raw list that drifts as L1 catches are cured elsewhere.
     const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
@@ -216,8 +216,9 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     const scopedSeen = (outcome?.findings ?? []).map((f) => locOf(f.location?.file, f.location?.line)).sort();
     expect(scopedSeen).toEqual([
       'packages/astro/src/runtime/wgpu.ts:287',
-      'packages/cli/src/commands/doctor.ts:390',
+      'packages/cli/src/commands/doctor/probes-workspace.ts:250',
       'packages/cli/src/commands/ship.ts:169',
+      'packages/cli/src/commands/version.ts:47',
       'packages/web/src/stream/resumption-pure.ts:29',
     ]);
   });

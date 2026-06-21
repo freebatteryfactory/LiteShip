@@ -11,7 +11,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId, AssetBytes } from '../contract.js';
+import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { audioDecoder } from '../decoders/audio.js';
 import type { BeatMarkerSet as _BeatMarkerSet } from '@czap/_spine';
 
@@ -78,11 +78,16 @@ const BeatMarkerSetSchema = Schema.Struct({
   beats: Schema.Array(Schema.Number),
 });
 
-/** Build a BeatMarkerProjection cachedProjection capsule for a named audio asset. */
+/**
+ * Build a BeatMarkerProjection cachedProjection capsule for a named audio
+ * asset, validated against the explicit {@link AssetRegistry} the caller
+ * assembled (no module-global lookup).
+ */
 export function BeatMarkerProjection(
+  registry: AssetRegistry,
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', ArrayBuffer, BeatMarkerSet, unknown> {
-  assertRegisteredAudioAssetId(audioAssetId, 'BeatMarkerProjection');
+  registry.assertAudioRegistered(audioAssetId, 'BeatMarkerProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:beats`,

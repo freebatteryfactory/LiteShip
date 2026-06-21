@@ -1,17 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { detectOnsets, OnsetProjection } from '@czap/assets';
-import { defineAsset } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
+import { describe, it, expect } from 'vitest';
+import { detectOnsets, OnsetProjection, defineAsset, AssetRegistry } from '@czap/assets';
 
-function registerIntroBed(): void {
-  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
-}
+const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
 describe('OnsetProjection', () => {
-  beforeEach(() => {
-    resetAssetRegistry();
-    registerIntroBed();
-  });
   it('detectOnsets returns sample indices where energy rises sharply', () => {
     const sampleRate = 48000;
     const samples = new Float32Array(sampleRate);
@@ -50,13 +42,13 @@ describe('OnsetProjection', () => {
   });
 
   it('OnsetProjection is a cachedProjection capsule', () => {
-    const cap = OnsetProjection('intro-bed');
+    const cap = OnsetProjection(registry, 'intro-bed');
     expect(cap._kind).toBe('cachedProjection');
     expect(cap.name).toBe('intro-bed:onsets');
   });
 
   it('OnsetProjection invariant rejects unordered output', () => {
-    const cap = OnsetProjection('intro-bed');
+    const cap = OnsetProjection(registry, 'intro-bed');
     const inv = cap.invariants.find((i) => i.name === 'onsets-ordered');
     expect(inv).toBeDefined();
     expect(inv!.check(undefined, [10, 20, 15])).toBe(false);

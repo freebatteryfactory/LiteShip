@@ -356,7 +356,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     connect();
   });
 
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     cleanup();
   });
 

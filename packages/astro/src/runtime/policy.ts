@@ -192,6 +192,38 @@ export function configureRuntimePolicy(policy?: RuntimeSecurityPolicy): Normaliz
 }
 
 /**
+ * Which of the two policy sources a read resolved from. `'store'` is the
+ * canonical module-private closure; `'window'` is the cross-bundle broadcast
+ * (read only when this module-graph never configured a policy of its own, e.g. a
+ * separately-bundled consumer); `'default'` is the conservative fallback when
+ * neither has been set.
+ */
+export type RuntimePolicySource = 'store' | 'window' | 'default';
+
+/** The active runtime policy paired with WHERE it resolved from. */
+export interface RuntimePolicyReadout {
+  readonly policy: NormalizedRuntimeSecurityPolicy;
+  readonly source: RuntimePolicySource;
+}
+
+/**
+ * Read the active runtime policy AND surface which source it came from.
+ *
+ * The module-private store and the `window` broadcast can legitimately DIVERGE:
+ * the broadcast is published once per realm with `configurable: false`, so a
+ * later `configureRuntimePolicy` (HMR, tests) updates the store but cannot
+ * re-broadcast. This readout makes that two-source reality a TYPED result instead
+ * of an invisible fallback — without touching the security lock or the precedence
+ * (store first, always). {@link readRuntimePolicy} stays the hot-path accessor.
+ */
+export function readRuntimePolicyWithSource(): RuntimePolicyReadout {
+  if (_currentPolicy) return { policy: _currentPolicy, source: 'store' };
+  const broadcast = readRuntimeGlobal('__CZAP_RUNTIME_POLICY__', isNormalizedRuntimeSecurityPolicy);
+  if (broadcast) return { policy: broadcast, source: 'window' };
+  return { policy: normalizeRuntimeSecurityPolicy(), source: 'default' };
+}
+
+/**
  * Read the active runtime policy. Prefers the module-private store
  * (the canonical source of truth), falls back to the cross-bundle
  * window broadcast for consumers loaded as a separate bundle, and
@@ -200,10 +232,7 @@ export function configureRuntimePolicy(policy?: RuntimeSecurityPolicy): Normaliz
  * `configureRuntimePolicy` yet).
  */
 export function readRuntimePolicy(): NormalizedRuntimeSecurityPolicy {
-  if (_currentPolicy) return _currentPolicy;
-  return (
-    readRuntimeGlobal('__CZAP_RUNTIME_POLICY__', isNormalizedRuntimeSecurityPolicy) ?? normalizeRuntimeSecurityPolicy()
-  );
+  return readRuntimePolicyWithSource().policy;
 }
 
 /**

@@ -1,17 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { detectBeats, BeatMarkerProjection } from '@czap/assets';
-import { defineAsset } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
+import { describe, it, expect } from 'vitest';
+import { detectBeats, BeatMarkerProjection, defineAsset, AssetRegistry } from '@czap/assets';
 
-function registerIntroBed(): void {
-  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
-}
+const registry = AssetRegistry.make([defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' })]);
 
 describe('BeatMarkerProjection', () => {
-  beforeEach(() => {
-    resetAssetRegistry();
-    registerIntroBed();
-  });
   it('detectBeats returns ordered beats for a synthetic 120bpm pulse', () => {
     const sampleRate = 48000;
     const duration = 4;
@@ -47,13 +39,13 @@ describe('BeatMarkerProjection', () => {
   });
 
   it('BeatMarkerProjection is a cachedProjection capsule', () => {
-    const cap = BeatMarkerProjection('intro-bed');
+    const cap = BeatMarkerProjection(registry, 'intro-bed');
     expect(cap._kind).toBe('cachedProjection');
     expect(cap.name).toBe('intro-bed:beats');
   });
 
   it('BeatMarkerProjection invariants reject out-of-order or out-of-range output', () => {
-    const cap = BeatMarkerProjection('intro-bed');
+    const cap = BeatMarkerProjection(registry, 'intro-bed');
     const orderedInv = cap.invariants.find((i) => i.name === 'beats-ordered');
     const bpmInv = cap.invariants.find((i) => i.name === 'bpm-in-range');
     expect(orderedInv).toBeDefined();

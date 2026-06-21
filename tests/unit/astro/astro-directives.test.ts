@@ -18,7 +18,7 @@ function makeEl(tag: string, attrs: Record<string, string> = {}): HTMLElement {
 
 function disposeTree(): void {
   document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:dispose'));
+    element.dispatchEvent(new CustomEvent('czap:teardown'));
   });
 }
 

@@ -21,6 +21,7 @@
 
 import type { CapTier, MotionTier } from '@czap/core';
 import { GPU_TIER_PATTERNS, GPU_TIER_PRECEDENCE, GPU_TIER_DEFAULT } from './gpu-patterns.js';
+import { DETECT_READY_EVENT } from './detect-ready.js';
 import type { GPUTier } from './detect.js';
 
 /**
@@ -321,7 +322,7 @@ ${emitClassifierSource()}
       // racing setTimeout backstops. The detail carries the final payload so a
       // late listener can read it straight off the event.
       try {
-        document.dispatchEvent(new CustomEvent('czap:detect-ready', {
+        document.dispatchEvent(new CustomEvent('${DETECT_READY_EVENT}', {
           detail: { tier: capTier, gpuTier: tier, webgpu: webgpu, motionTier: motionTier }
         }));
       } catch(_) {}
@@ -330,7 +331,7 @@ ${emitClassifierSource()}
       // Still fire detect-ready (flagged) so listeners awaiting the probe never
       // hang on a thrown probe — the provisional tier stands.
       try {
-        document.dispatchEvent(new CustomEvent('czap:detect-ready', { detail: { error: true } }));
+        document.dispatchEvent(new CustomEvent('${DETECT_READY_EVENT}', { detail: { error: true } }));
       } catch(_) {}
     }
   }

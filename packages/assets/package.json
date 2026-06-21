@@ -30,11 +30,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "development": "./src/index.ts"
-    },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js",
-      "development": "./src/testing.ts"
     }
   },
   "files": [

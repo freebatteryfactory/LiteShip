@@ -24,11 +24,10 @@ import { capsuleVerify as capsuleVerifyGate } from './commands/capsule-verify.js
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
-import { readCliVersion } from './commands/doctor.js';
 import { gauntlet } from './commands/gauntlet.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
-import { version } from './commands/version.js';
+import { readCliVersion, version } from './commands/version.js';
 import { emitError } from './receipts.js';
 
 /** Run the CLI with the given argv slice. Returns a process exit code. */

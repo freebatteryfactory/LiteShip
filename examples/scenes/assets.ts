@@ -5,7 +5,7 @@
  * @module
  */
 
-import { defineAsset, BeatMarkerProjection, WavMetadataProjection } from '@czap/assets';
+import { defineAsset, AssetRegistry, BeatMarkerProjection, WavMetadataProjection } from '@czap/assets';
 
 /** Intro audio bed — silent 1-second fixture for testing. */
 export const introBed = defineAsset({
@@ -20,8 +20,15 @@ export const introBed = defineAsset({
   },
 });
 
-/** Beat-marker projection derived from introBed. */
-export const introBedBeats = BeatMarkerProjection('intro-bed');
+/**
+ * Immutable registry assembled from the scene's asset capsules. The
+ * projection factories and `intro.ts`'s `ref('intro-bed')` validate against
+ * THIS registry — there is no module-global lookup or import-order dependence.
+ */
+export const assetRegistry = AssetRegistry.make([introBed]);
+
+/** Beat-marker projection derived from introBed, validated against the registry. */
+export const introBedBeats = BeatMarkerProjection(assetRegistry, 'intro-bed');
 
 /** WAV LIST/INFO metadata projection derived from introBed. */
-export const introBedMetadata = WavMetadataProjection('intro-bed');
+export const introBedMetadata = WavMetadataProjection(assetRegistry, 'intro-bed');

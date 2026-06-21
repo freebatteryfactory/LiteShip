@@ -36,3 +36,5 @@ export {
   headProbeMotionTier,
 } from './head-probe.js';
 export type { HeadProbeCaps } from './head-probe.js';
+export { DETECT_READY_EVENT, onDetectReady } from './detect-ready.js';
+export type { DetectReadyDetail, Disposer } from './detect-ready.js';

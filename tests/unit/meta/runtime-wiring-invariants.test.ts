@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { integration } from '@czap/astro';
-import { bootstrapSlots, installSwapReinit, loadWasmRuntime } from '@czap/astro/runtime';
+import { bootstrapSlots, installSwapPipeline, loadWasmRuntime } from '@czap/astro/runtime';
 import { Compositor, RuntimeCoordinator } from '@czap/core';
 import { CompositorWorker } from '@czap/worker';
 import { createEdgeHostAdapter } from '@czap/edge';
@@ -73,15 +73,15 @@ describe('cross-package runtime wiring invariants', () => {
   // ---------------------------------------------------------------------------
   // 3. Astro integration bootstraps slots through the shared runtime layer
   //
-  // bootstrapSlots and installSwapReinit are exported from @czap/astro/runtime
+  // bootstrapSlots and installSwapPipeline are exported from @czap/astro/runtime
   // and are referenced in the integration's injected bootstrap script.
   // ---------------------------------------------------------------------------
   test('astro integration bootstraps slots through the shared runtime layer', () => {
     expect(bootstrapSlots).toBeDefined();
     expect(typeof bootstrapSlots).toBe('function');
 
-    expect(installSwapReinit).toBeDefined();
-    expect(typeof installSwapReinit).toBe('function');
+    expect(installSwapPipeline).toBeDefined();
+    expect(typeof installSwapPipeline).toBe('function');
   });
 
   // ---------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId } from '../contract.js';
+import type { AssetRegistry } from '../contract.js';
 
 /** Compute a normalized RMS-per-bin waveform. */
 export function computeWaveform(
@@ -38,12 +38,16 @@ export function computeWaveform(
   return out;
 }
 
-/** Build a WaveformProjection cachedProjection capsule for a named audio asset. */
+/**
+ * Build a WaveformProjection cachedProjection capsule for a named audio asset,
+ * validated against the explicit {@link AssetRegistry} the caller assembled.
+ */
 export function WaveformProjection(
+  registry: AssetRegistry,
   audioAssetId: string,
   opts: { bins?: number } = {},
 ): CapsuleDef<'cachedProjection', unknown, readonly number[], unknown> {
-  assertRegisteredAudioAssetId(audioAssetId, 'WaveformProjection');
+  registry.assertAudioRegistered(audioAssetId, 'WaveformProjection');
   const bins = opts.bins ?? 512;
   return defineCapsule({
     _kind: 'cachedProjection',

@@ -693,6 +693,16 @@ function isAssemblyKind(k: string): k is AssemblyKind {
  * mirror it here so the manifest's surface name matches what the runtime
  * registers. Keep this in sync with the factories in
  * `packages/assets/src/analysis/*.ts`.
+ *
+ * INDEXING NOTE: the projection factories now take a leading `registry`
+ * argument — `BeatMarkerProjection(registry, audioAssetId)` — but the detector
+ * (`scripts/lib/capsule-detector.ts`) captures only DIRECTLY-SERIALIZABLE
+ * literal arguments: a non-literal like the `registry` variable yields
+ * `undefined` from `literalValue` and is SKIPPED, never pushed. So `args` is
+ * the COMPACTED list of literal call-site arguments — `['intro-bed']`, not
+ * `[undefined, 'intro-bed']`. The audioAssetId is therefore still `args[0]`,
+ * and a bare numeric `bins` (if ever passed positionally) is still `args[1]`.
+ * Do NOT bump these indices for the registry arg — it was never captured.
  */
 const FACTORY_NAMING: Readonly<Record<string, (args: readonly unknown[]) => string | undefined>> = {
   BeatMarkerProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:beats` : undefined),

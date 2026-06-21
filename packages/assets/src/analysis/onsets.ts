@@ -9,7 +9,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId } from '../contract.js';
+import type { AssetRegistry } from '../contract.js';
 
 /** Detect note-attack onsets as an ordered array of sample indices. */
 export function detectOnsets(audio: { sampleRate: number; samples: Float32Array | Int16Array }): readonly number[] {
@@ -50,11 +50,15 @@ export function detectOnsets(audio: { sampleRate: number; samples: Float32Array 
   return onsets;
 }
 
-/** Build an OnsetProjection cachedProjection capsule for a named audio asset. */
+/**
+ * Build an OnsetProjection cachedProjection capsule for a named audio asset,
+ * validated against the explicit {@link AssetRegistry} the caller assembled.
+ */
 export function OnsetProjection(
+  registry: AssetRegistry,
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', unknown, readonly number[], unknown> {
-  assertRegisteredAudioAssetId(audioAssetId, 'OnsetProjection');
+  registry.assertAudioRegistered(audioAssetId, 'OnsetProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:onsets`,

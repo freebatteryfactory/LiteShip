@@ -10,7 +10,16 @@ import type {
   BootstrapQuantizerRegistration,
   StartupComputePacket,
   ResolvedStateEntry,
+  MetricsMessage,
 } from './messages.js';
+
+/**
+ * The performance sample delivered to {@link CompositorWorkerShape.onMetrics}
+ * listeners — a single record (reusing the wire {@link MetricsMessage}
+ * shape) rather than positional `(fps, budgetUsed)` arguments, so a future
+ * metric can be added without changing the callback's arity.
+ */
+export type WorkerMetrics = MetricsMessage;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,12 +84,20 @@ export interface CompositorWorkerShape {
    * thresholds are derived; the quantizer name defaults to `boundary.input`.
    */
   addQuantizer(boundary: QuantizerBoundarySource): void;
-  /** Register a quantizer in the worker under an explicit name. */
+  /**
+   * Register a quantizer in the worker under an explicit name.
+   *
+   * `states` is `readonly string[]` to match the single-arg
+   * {@link QuantizerBoundarySource} form — the labels are branded to
+   * `StateName` internally, so callers may pass plain strings or already
+   * branded `StateName`s interchangeably (both overloads now speak the
+   * same unbranded surface; F2).
+   */
   addQuantizer(
     name: string,
     boundary: {
       readonly id: ContentAddress;
-      readonly states: readonly StateName[];
+      readonly states: readonly string[];
       readonly thresholds: readonly number[];
     },
   ): void;
@@ -109,8 +126,14 @@ export interface CompositorWorkerShape {
   /** Subscribe to resolved-state acknowledgement updates. Returns an unsubscribe function. */
   onResolvedStateAck(callback: (ack: ResolvedStateAckPayload) => void): () => void;
 
-  /** Subscribe to metrics updates. Returns an unsubscribe function. */
-  onMetrics(callback: (fps: number, budgetUsed: number) => void): () => void;
+  /**
+   * Subscribe to metrics updates. Returns an unsubscribe function.
+   *
+   * The callback receives a single {@link WorkerMetrics} record (not
+   * positional `fps`/`budgetUsed` arguments), so a future metric can be
+   * added without breaking existing callbacks (F1).
+   */
+  onMetrics(callback: (metrics: WorkerMetrics) => void): () => void;
 
   /** Terminate the worker and clean up resources. */
   dispose(): void;
@@ -172,6 +195,19 @@ export interface StandbyCompositorLease {
 }
 
 /**
+ * Minimal `{ name, states }` projection of a bootstrap registration —
+ * exactly what {@link RuntimeCoordinator} needs to seed its quantizer
+ * registry. Named (rather than an inline anonymous shape) so the runtime
+ * seed contract is a single referenceable type across the startup pipeline.
+ */
+export interface RuntimeSeedEntry {
+  /** Quantizer name. */
+  readonly name: string;
+  /** Ordered discrete state labels. */
+  readonly states: readonly string[];
+}
+
+/**
  * Mutable scratch state used while coalescing startup messages into a
  * single {@link StartupComputePacket}. Internal to the startup pipeline;
  * exported for tests and host-side diagnostic inspectors.
@@ -184,12 +220,7 @@ export interface StartupPacketState {
   /** Cached ordered registration list (invalidated when the map mutates). */
   registrationList: readonly BootstrapQuantizerRegistration[] | null;
   /** Cached runtime seed list derived from registrations. */
-  runtimeSeedList:
-    | readonly {
-        readonly name: string;
-        readonly states: readonly string[];
-      }[]
-    | null;
+  runtimeSeedList: readonly RuntimeSeedEntry[] | null;
   /** Pending updates to replay after bootstrap. */
   updates: WorkerUpdate[];
   /** Whether `runtimeSeedList` needs to be recomputed. */

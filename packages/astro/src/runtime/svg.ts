@@ -237,8 +237,9 @@ export function attachSvgRuntime(
 
 /**
  * Entry point used by the `client:svg` directive. Wires {@link attachSvgRuntime}
- * over the document and honors `czap:reinit` / `czap:dispose` so a View-Transition
- * re-render or teardown re-reads / detaches without remounting. SSR-safe.
+ * over the document and honors `czap:reinit` (re-read) / `czap:teardown` (final
+ * tear-down) so a View-Transition re-render or teardown re-reads / detaches
+ * without remounting. SSR-safe.
  *
  * @param load - Dynamic-import factory the directive passes in (parity with the
  *   other directive entries; the SVG runtime does its work synchronously).
@@ -262,7 +263,7 @@ export function initSvgDirective(load: () => Promise<unknown>, element: HTMLElem
     dispose();
     cleanup = attachSvgRuntime(document);
   });
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     dispose();
   });
 

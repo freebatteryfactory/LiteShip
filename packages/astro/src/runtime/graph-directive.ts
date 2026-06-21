@@ -6,7 +6,7 @@
  *
  * The directive owns only the default DOM element-discovery policy (entities are
  * marked with `data-czap-entity`); programmatic hosts call `loadGraphRuntime`
- * directly with their own resolver. Honors `czap:dispose` to release observers.
+ * directly with their own resolver. Honors `czap:teardown` to release observers.
  *
  * @module
  */
@@ -40,7 +40,7 @@ export function initGraphDirective(load: () => Promise<unknown>, element: HTMLEl
   // do NOT wire dispose or call load() for a graph that never cast.
   if (!handle) return;
 
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     handle?.release();
     handle = null;
   });

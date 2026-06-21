@@ -4,7 +4,6 @@ import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 interface RuntimeWindow extends Window {
   __CZAP_SLOT_REGISTRY__?: SlotRegistry.Shape;
   __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_SWAP_REINIT__?: boolean;
   __CZAP_SLOTS__?: {
     readonly registry: SlotRegistry.Shape;
     readonly entries: Record<string, { path: string; mode: string }>;
@@ -76,10 +75,14 @@ export function rescanSlots(root: ParentNode = document): SlotRegistry.Shape {
 }
 
 /**
- * One-shot bootstrap: arm a slot-registry scan on
- * `DOMContentLoaded` (or immediately if the document is already
- * ready) and re-scan after every Astro View Transitions `after-swap`
- * event. Idempotent -- subsequent calls return the same registry.
+ * One-shot INITIAL bootstrap: arm a slot-registry scan on
+ * `DOMContentLoaded` (or immediately if the document is already ready).
+ * Idempotent -- subsequent calls return the same registry.
+ *
+ * The post-swap re-scan is NOT registered here: it is the first step of the
+ * single ordered swap pipeline (`./swap-pipeline.ts`, F-1), so slot-rescan,
+ * directive-boot, and reinit run in a guaranteed order rather than racing on
+ * listener-registration luck.
  */
 export function bootstrapSlots(): SlotRegistry.Shape {
   const win = runtimeWindow();
@@ -99,39 +102,37 @@ export function bootstrapSlots(): SlotRegistry.Shape {
     } else {
       scan();
     }
-
-    document.addEventListener('astro:after-swap', scan);
   }
 
   return getSlotRegistry();
 }
 
 /**
- * Dispatch `czap:dispose` + `czap:reinit` on every known directive
- * root. Used after Astro View Transitions `after-swap` so directives
- * can re-read fresh `data-czap-*` attributes without remounting.
+ * Dispatch `czap:reinit` on every known directive root so directives can RE-READ
+ * fresh `data-czap-*` attributes without remounting. The reinit handlers
+ * self-clean (each directive's `czap:reinit` listener disposes its prior wiring
+ * before re-initializing), so this no longer broadcasts `czap:teardown` — that
+ * event is reserved for FINAL teardown ({@link teardownDirectives}). Conflating
+ * the two (the old single `czap:dispose`) forced gpu.ts to special-case "dispose
+ * during a live reinit"; splitting them removes that hazard (F-2).
+ *
+ * Used after Astro View Transitions `after-swap` (the third step of the swap
+ * pipeline).
  */
 export function reinitializeDirectives(): void {
   document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:dispose', { bubbles: true }));
     element.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
   });
 }
 
 /**
- * Install a one-time listener that fires
- * {@link reinitializeDirectives} on every Astro `after-swap`.
- * Guarded by `window.__CZAP_SWAP_REINIT__` so repeated module loads
- * do not stack listeners.
+ * Dispatch `czap:teardown` on every known directive root — the FINAL teardown
+ * signal (the page/element is going away for good). Directives release every
+ * observer/listener and do NOT re-initialize. Distinct from
+ * {@link reinitializeDirectives} (re-read attrs, stay live).
  */
-export function installSwapReinit(): void {
-  const win = runtimeWindow();
-  if (!win || readRuntimeGlobal('__CZAP_SWAP_REINIT__', isBoolean)) {
-    return;
-  }
-
-  writeRuntimeGlobal('__CZAP_SWAP_REINIT__', true);
-  document.addEventListener('astro:after-swap', () => {
-    reinitializeDirectives();
+export function teardownDirectives(): void {
+  document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
+    element.dispatchEvent(new CustomEvent('czap:teardown', { bubbles: true }));
   });
 }

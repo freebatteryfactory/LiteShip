@@ -1,4 +1,5 @@
 import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@czap/core';
+import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
@@ -212,23 +213,23 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   };
   if (!forced && !tierAdmitsGpu()) {
     load();
-    // Re-boot once the async probe settles a GPU-admitting tier. detect-ready is
-    // guaranteed to fire (success AND error paths dispatch it), so { once: true }
-    // self-removes — no leak even if it lands after a swap. The el.isConnected
-    // guard is the safety net: a detached host (replaced by a VT swap, torn
-    // down) never re-inits into orphan GPU resources. We deliberately do NOT
-    // drop this on czap:dispose — slots.ts fires dispose on LIVE reinit too
-    // (still-connected roots, before czap:reinit), and the bail path returns
-    // before the main czap:reinit re-registration, so removing here would
-    // strand a persisted host that upgrades right after a swap. Surviving the
-    // reinit is correct: tierAdmitsGpu re-reads the fresh data-czap-tier.
-    const onDetectReady = (): void => {
+    // Re-boot once the async probe settles a GPU-admitting tier. `onDetectReady`
+    // (owned by @czap/detect) wraps the event-name + the dual-dispatch invariant:
+    // detect-ready fires on BOTH the success AND error paths, so the one-shot
+    // subscription self-removes — no leak even if it lands after a swap. The
+    // el.isConnected guard is the safety net: a detached host (replaced by a VT
+    // swap, torn down) never re-inits into orphan GPU resources. We deliberately
+    // do NOT drop this on czap:reinit — slots.ts fires reinit on LIVE re-init too
+    // (still-connected roots), and the bail path returns before the main
+    // czap:reinit teardown registration, so removing here would strand a persisted
+    // host that upgrades right after a swap. Surviving the reinit is correct:
+    // tierAdmitsGpu re-reads the fresh data-czap-tier.
+    onDetectReady(() => {
       if (!el.isConnected) return;
       if (tierAdmitsGpu()) {
         initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
       }
-    };
-    document.addEventListener('czap:detect-ready', onDetectReady, { once: true });
+    });
     return;
   }
 
@@ -245,6 +246,22 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       el.appendChild(canvas);
     }
 
+    // F-3: arm the reinit teardown SYNCHRONOUSLY, before the first await, through
+    // a mutable Disposer cell. `initWGSLRuntime` is async, so a `czap:reinit` that
+    // lands DURING its await would otherwise find no listener and strand the WGSL
+    // runtime allocated right after. The listener invokes whatever the cell holds
+    // — a no-op until the runtime exists — AND flips a `disposed` flag so a reinit
+    // that fired mid-await makes the resolved runtime tear ITSELF down instead of
+    // leaking. One settle either way: the listener self-removes after firing.
+    let wgslDisposer: () => void = () => {};
+    let wgslDisposed = false;
+    const onWgslReinit = (): void => {
+      el.removeEventListener('czap:reinit', onWgslReinit);
+      wgslDisposed = true;
+      wgslDisposer();
+    };
+    el.addEventListener('czap:reinit', onWgslReinit);
+
     void (async () => {
       // Pass `el` (the satellite) so the runtime subscribes to its
       // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
@@ -260,9 +277,13 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
             message: 'WebGPU unavailable; WGSL directive fell back to WebGL2 default shader.',
           });
         }
+      } else if (wgslDisposed) {
+        // A reinit already landed during the await and ran the no-op cell; the
+        // runtime that just resolved is orphaned, so tear it down immediately.
+        dispose();
       } else {
         el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
-        el.addEventListener('czap:reinit', dispose, { once: true });
+        wgslDisposer = dispose;
       }
     })();
     load();
@@ -293,6 +314,23 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   }
 
   const webgl = gl;
+
+  // F-3: arm the reinit teardown SYNCHRONOUSLY, before `initShader` runs any
+  // await (the shader `fetch`). The teardown used to be registered at the END of
+  // initShader, so a `czap:reinit` landing DURING the fetch found no listener and
+  // orphaned the GL program + render loop created right after. The cell holds a
+  // no-op until the program exists; the listener invokes whatever it currently
+  // holds and flips `disposed` so a reinit that fired mid-fetch makes the resolved
+  // shader tear ITSELF down. The listener self-removes after firing (gpu treats
+  // reinit as a one-shot teardown — directive-boot re-activates only fresh nodes).
+  let glDisposer: () => void = () => {};
+  let glDisposed = false;
+  const onGlReinit = (): void => {
+    el.removeEventListener('czap:reinit', onGlReinit);
+    glDisposed = true;
+    glDisposer();
+  };
+  el.addEventListener('czap:reinit', onGlReinit);
 
   async function initShader(): Promise<void> {
     let fragSource: string;
@@ -500,18 +538,28 @@ void main() {
       }
     };
 
+    const teardown = (): void => {
+      cancelAnimationFrame(animFrame);
+      el.removeEventListener('czap:uniform-update', onElementUniformUpdate);
+      document.removeEventListener('czap:uniform-update', onDocumentUniformUpdate);
+      webgl.deleteProgram(program);
+    };
+
+    // A reinit that ALREADY fired during the shader fetch ran the no-op cell and
+    // self-removed; the program just compiled is orphaned, so tear it down now
+    // (and never subscribe to uniform updates or start the render loop).
+    if (glDisposed) {
+      webgl.deleteProgram(program);
+      return;
+    }
+
     el.addEventListener('czap:uniform-update', onElementUniformUpdate);
     document.addEventListener('czap:uniform-update', onDocumentUniformUpdate);
 
     el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
     render();
 
-    el.addEventListener('czap:reinit', () => {
-      cancelAnimationFrame(animFrame);
-      el.removeEventListener('czap:uniform-update', onElementUniformUpdate);
-      document.removeEventListener('czap:uniform-update', onDocumentUniformUpdate);
-      webgl.deleteProgram(program);
-    });
+    glDisposer = teardown;
   }
 
   void initShader();

@@ -19,7 +19,7 @@
 import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import type { CapsuleDef } from '@czap/core';
-import { assertRegisteredAudioAssetId, AssetBytes } from '../contract.js';
+import { AssetBytes, type AssetRegistry } from '../contract.js';
 import { walkRiff } from '../decoders/riff.js';
 
 /** Tag fields read from a WAV file's LIST/INFO chunks. */
@@ -72,11 +72,16 @@ const WavMetadataSchema = Schema.Struct({
   bpm: Schema.optional(Schema.Number),
 });
 
-/** Build a WavMetadataProjection cachedProjection capsule for a named audio asset. */
+/**
+ * Build a WavMetadataProjection cachedProjection capsule for a named audio
+ * asset, validated against the explicit {@link AssetRegistry} the caller
+ * assembled.
+ */
 export function WavMetadataProjection(
+  registry: AssetRegistry,
   audioAssetId: string,
 ): CapsuleDef<'cachedProjection', ArrayBuffer, WavMetadata, unknown> {
-  assertRegisteredAudioAssetId(audioAssetId, 'WavMetadataProjection');
+  registry.assertAudioRegistered(audioAssetId, 'WavMetadataProjection');
   return defineCapsule({
     _kind: 'cachedProjection',
     name: `${audioAssetId}:wav-metadata`,

@@ -233,7 +233,7 @@ async function measureLLMStartupPath(
   const firstTokenAt = await tokenAt;
   await waitForMicrotasks();
 
-  host.dispatchEvent(new CustomEvent('czap:dispose'));
+  host.dispatchEvent(new CustomEvent('czap:teardown'));
   host.remove();
 
   return {

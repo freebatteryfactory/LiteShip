@@ -11,8 +11,8 @@ import {
  * serialised boundary off `element`, attaches a viewport observer
  * (when the signal is viewport-backed), and recomputes
  * `data-czap-state` plus CSS variables whenever the signal crosses a
- * threshold. Honors `czap:reinit` and `czap:dispose` custom events to
- * re-read / tear down without remounting the island.
+ * threshold. Honors `czap:reinit` (re-read) and `czap:teardown` (final
+ * tear-down) custom events without remounting the island.
  *
  * @param load - Dynamic-import factory the directive passes in.
  * @param element - Satellite root carrying `data-czap-boundary`.
@@ -71,7 +71,7 @@ export function initSatelliteDirective(load: () => Promise<unknown>, element: HT
     init();
   });
 
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     cleanup();
   });
 

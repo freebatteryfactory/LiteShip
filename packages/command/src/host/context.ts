@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Effect } from 'effect';
 import { Compositor, VideoRenderer, type Millis } from '@czap/core';
-import { resolveAssetDecoder, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
+import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
@@ -24,6 +24,12 @@ import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
 import { runPlumbScan } from './plumb-scan.js';
+
+// Host audio decode resolves by asset id, falling back to the built-in audio
+// decoder for any id not in a registry. An EMPTY immutable registry preserves
+// the prior global `resolveAssetDecoder` behavior (no scene is imported in the
+// host, so nothing was ever registered) without the order-dependent global.
+const HOST_ASSET_REGISTRY = AssetRegistry.make([]);
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -85,7 +91,7 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
       // registered in this process. The three projections are audio
       // analyses, so the decoded shape must be DecodedAudio (enforced on
       // AssetDecl.decoder for kind 'audio').
-      const decoded = (await resolveAssetDecoder(assetId ?? '')(bytes)) as DecodedAudio;
+      const decoded = (await HOST_ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
       if (projection === 'beat') return detectBeats(decoded).beats.length;
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;

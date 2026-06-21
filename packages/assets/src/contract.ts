@@ -2,12 +2,18 @@
  * Asset capsule — first concrete cachedProjection instance pattern.
  * Each asset declares source path + kind + decoder budget; the factory
  * emits decode benches + loader property tests from it. Scenes
- * reference assets by id via AssetRef().
+ * reference assets by id via an {@link AssetRegistry}'s `ref()`.
  *
- * `defineAsset` resolves the asset's decode function — the declared
- * `decoder` override, or the built-in for the media kind — and threads
- * it onto the capsule as its `derive` handler, so the harness and the
- * host commands consume the asset's OWN decoder.
+ * `defineAsset` is PURE: it resolves the asset's decode function — the
+ * declared `decoder` override, or the built-in for the media kind — and
+ * threads it onto the capsule as its `derive` handler, then returns the
+ * capsule with NO side effect. Registration is explicit and immutable:
+ * assemble an {@link AssetRegistry} via {@link AssetRegistry.make} over the
+ * capsules you defined, then thread it to the consumers (`ref`,
+ * `resolveDecoder`, the projection factories) that need to validate or
+ * resolve an id. There is no module-global registry and no import-order
+ * dependence — asset resolution is a function of the registry you built,
+ * not of which modules happened to load.
  *
  * @module
  */
@@ -69,12 +75,11 @@ export interface AssetDecl<K extends AssetKind> {
   readonly attribution?: AttributionDecl;
 }
 
-type AnyAssetCapsule = CapsuleDef<'cachedProjection', unknown, unknown, unknown>;
+/** Any asset capsule, regardless of its decoded shape. The unit an {@link AssetRegistry} indexes. */
+export type AssetCapsule = CapsuleDef<'cachedProjection', unknown, unknown, unknown>;
 
 /** Decode function shape shared by AssetDecl.decoder and the built-ins. */
 export type AssetDecoder = (bytes: ArrayBuffer) => Promise<unknown>;
-
-const registry = new Map<string, AnyAssetCapsule>();
 
 /** Per-kind decode p95 budget defaults (ms). Explicit `decl.budgets.decodeP95Ms` overrides. */
 export function defaultDecodeP95MsFor(kind: AssetKind): number {
@@ -92,10 +97,6 @@ export function defaultDecodeP95MsFor(kind: AssetKind): number {
     default:
       return 50;
   }
-}
-
-function sortedRegisteredAssetIds(): readonly string[] {
-  return [...registry.keys()].sort();
 }
 
 /** Levenshtein edit distance — small inputs (asset ids), so the O(n·m) table is fine. */
@@ -137,8 +138,7 @@ function suggestId(id: string, ids: readonly string[]): string | undefined {
   return best !== undefined && bestDist <= threshold ? best : undefined;
 }
 
-function registryMissError(subject: string, id: string): NotFoundError {
-  const ids = sortedRegisteredAssetIds();
+function registryMissError(subject: string, id: string, ids: readonly string[]): NotFoundError {
   const listed = ids.length > 0 ? ids.join(', ') : '(none)';
   const suggestion = suggestId(id, ids);
   const didYouMean = suggestion !== undefined ? `Did you mean '${suggestion}'? ` : '';
@@ -148,18 +148,8 @@ function registryMissError(subject: string, id: string): NotFoundError {
     `${subject}: registry-miss — '${id}' is not registered. ` +
       `Registered ids: ${listed}. ` +
       didYouMean +
-      `Import the module that calls defineAsset('${id}', ...) before referencing it (registration runs at module load).`,
+      `Add the defineAsset('${id}', ...) capsule to AssetRegistry.make([...]) before referencing it.`,
   );
-}
-
-/**
- * Validate that an audio asset id is registered before constructing a
- * projection factory. Throws a registry-miss teaching error when missing.
- */
-export function assertRegisteredAudioAssetId(audioAssetId: string, factory: string): void {
-  if (!registry.has(audioAssetId)) {
-    throw registryMissError(`${factory}('${audioAssetId}')`, audioAssetId);
-  }
 }
 
 /**
@@ -236,8 +226,10 @@ function resolveDeclSite<K extends AssetKind>(decl: AssetDecl<K>): readonly Site
 }
 
 /**
- * Declare an asset as a cachedProjection capsule + register in the
- * module-level asset registry. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
+ * Declare an asset as a cachedProjection capsule. PURE — returns the capsule
+ * with NO side effect; assemble the returned capsules into an
+ * {@link AssetRegistry} via {@link AssetRegistry.make} to make them
+ * resolvable. Resolves `decl.decoder ?? builtinDecoderFor(decl.kind)`
  * and wires it as the capsule's `derive` handler (the harness decode
  * bench + determinism probes and the host commands run through it).
  *
@@ -255,7 +247,7 @@ export function defineAsset<K extends AssetKind>(
   const decode: AssetDecoder | undefined = decl.decoder ?? builtinDecoderFor(decl.kind);
   const site: readonly Site[] = resolveDeclSite(decl);
   const decodeP95Ms = decl.budgets?.decodeP95Ms ?? defaultDecodeP95MsFor(decl.kind);
-  const cap = defineCapsule({
+  const capsule = defineCapsule({
     _kind: 'cachedProjection',
     name: decl.id,
     input: decode !== undefined ? AssetBytes : Schema.Unknown,
@@ -274,41 +266,100 @@ export function defineAsset<K extends AssetKind>(
         }
       : {}),
   });
-  registry.set(decl.id, cap as AnyAssetCapsule);
-  return cap as CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown>;
+  return capsule as CapsuleDef<'cachedProjection', ArrayBuffer, DecodedAsset<K>, unknown>;
 }
 
-/** Resolve an asset id to a branded {@link AssetRefId} after confirming it's registered. Throws on unknown ids. */
-export function AssetRef(id: string): AssetRefId {
-  if (!registry.has(id)) {
-    throw registryMissError(`AssetRef('${id}')`, id);
+// ---------------------------------------------------------------------------
+// AssetRegistry — immutable, explicitly assembled. No module global, no reset.
+// ---------------------------------------------------------------------------
+
+/**
+ * An immutable, explicitly-assembled index of asset capsules. Replaces the
+ * old mutable module-global registry: there is no import-time mutation, so
+ * resolution no longer depends on which modules happened to load first, and
+ * no test-only reset hook is needed (build a fresh registry per scope).
+ *
+ * Construct one with {@link AssetRegistry.make} over the capsules you got
+ * from {@link defineAsset}, then thread it to the consumers that validate or
+ * resolve an id (`ref`, `resolveDecoder`, the projection factories).
+ */
+export interface AssetRegistry {
+  /** True when `id` names a capsule in this registry. */
+  has(id: string): boolean;
+  /** Sorted ids of every capsule in this registry (for teaching errors / listing). */
+  ids(): readonly string[];
+  /** The capsule registered under `id`, or `undefined`. */
+  capsule(id: string): AssetCapsule | undefined;
+  /**
+   * Validate `id` is registered and return it as a branded {@link AssetRefId}.
+   * Throws a registry-miss teaching error (with did-you-mean) on an unknown id.
+   */
+  ref(id: string): AssetRefId;
+  /**
+   * Validate that an audio asset id is registered before constructing a
+   * projection capsule for it. Throws a registry-miss teaching error naming
+   * `factory` when missing.
+   */
+  assertAudioRegistered(audioAssetId: string, factory: string): void;
+  /**
+   * Resolve the decode function for an asset id: the registered capsule's
+   * `derive` handler (which carries the asset's own decoder, custom or
+   * built-in) when present, else the audio built-in — host processes that
+   * build a registry without the scene's asset module (e.g. the CLI reading
+   * only the compiled manifest) keep the audio-decode fallback. The audio
+   * fallback matches the only consumers (beat/onset/waveform are audio
+   * projections).
+   */
+  resolveDecoder(assetId: string): AssetDecoder;
+}
+
+function makeAssetRegistry(capsules: readonly AssetCapsule[]): AssetRegistry {
+  const index = new Map<string, AssetCapsule>();
+  for (const capsule of capsules) {
+    if (index.has(capsule.name)) {
+      throw ValidationError(
+        'AssetRegistry.make',
+        `duplicate asset id '${capsule.name}' — two capsules cannot share an id in one registry. ` +
+          `Each defineAsset({ id }) must be unique within the registry you assemble.`,
+      );
+    }
+    index.set(capsule.name, capsule);
   }
-  return mkAssetRefId(id);
-}
-
-/** Read-only snapshot of the asset registry. */
-export function getAssetRegistry(): ReadonlyMap<string, AnyAssetCapsule> {
-  return registry;
+  const sortedIds = (): readonly string[] => [...index.keys()].sort();
+  return Object.freeze({
+    has: (id: string): boolean => index.has(id),
+    ids: sortedIds,
+    capsule: (id: string): AssetCapsule | undefined => index.get(id),
+    ref: (id: string): AssetRefId => {
+      if (!index.has(id)) throw registryMissError(`AssetRef('${id}')`, id, sortedIds());
+      return mkAssetRefId(id);
+    },
+    assertAudioRegistered: (audioAssetId: string, factory: string): void => {
+      if (!index.has(audioAssetId)) {
+        throw registryMissError(`${factory}('${audioAssetId}')`, audioAssetId, sortedIds());
+      }
+    },
+    resolveDecoder: (assetId: string): AssetDecoder => {
+      const derive = index.get(assetId)?.derive;
+      if (derive !== undefined) return async (bytes: ArrayBuffer) => derive(bytes);
+      return audioDecoder;
+    },
+  });
 }
 
 /**
- * Resolve the decode function for an asset id: the registered capsule's
- * `derive` handler (which carries the asset's own decoder, custom or
- * built-in) when the asset was registered in this process, else the
- * audio built-in — host processes that never import the scene's asset
- * module (e.g. the CLI reading only the compiled manifest) keep today's
- * audio-decode behavior. The audio fallback matches the only consumers
- * (beat/onset/waveform are audio projections).
+ * Assemble an immutable {@link AssetRegistry} from the capsules returned by
+ * {@link defineAsset}. Duplicate ids throw at assembly time. This is the ONE
+ * registration seam — no module-global Map, no import-order dependence.
+ *
+ * @example
+ * ```ts
+ * const introBed = defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+ * const registry = AssetRegistry.make([introBed]);
+ * registry.ref('intro-bed');                 // branded id, validated
+ * const decode = registry.resolveDecoder('intro-bed');
+ * ```
  */
-export function resolveAssetDecoder(assetId: string): AssetDecoder {
-  const derive = registry.get(assetId)?.derive;
-  if (derive !== undefined) {
-    return async (bytes: ArrayBuffer) => derive(bytes);
-  }
-  return audioDecoder;
-}
-
-/** Clear the registry. Intended for tests only. */
-export function resetAssetRegistry(): void {
-  registry.clear();
-}
+export const AssetRegistry = {
+  make: makeAssetRegistry,
+} as const;
