@@ -54,6 +54,12 @@
     // diverged; this pins it via bidirectional spine⇔runtime assignability so a
     // future divergence fails the typecheck (see the file's module doc).
     "tests/unit/_spine/worker-contract.test.ts",
+    // The @czap/core spine conformance guard: its type-level assignments
+    // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
+    // bidirectional pins) only bite if THIS project typechecks them. Listed here so
+    // a future divergence between core.d.ts and the @czap/core runtime fails the
+    // typecheck rather than living as a dead assertion.
+    "tests/unit/spine-conformance.test.ts",
     "tests/helpers/mock-websocket.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",

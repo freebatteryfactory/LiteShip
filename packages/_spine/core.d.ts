@@ -128,21 +128,51 @@ export type BoundaryCrossing<S extends string = string> = {
 // § 3. BOUNDARY
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Optional per-boundary activation filter: gate a boundary on device
+ * capabilities, an epoch-ms time window, or experiment participation. When a
+ * spec is present and `BoundarySpec.isActive` returns false for the current
+ * context, the boundary is skipped during evaluation.
+ */
+export interface BoundarySpec {
+  /** Only evaluate this boundary when the device filter returns true. */
+  readonly deviceFilter?: (capabilities: Record<string, unknown>) => boolean;
+  /** Only evaluate this boundary within this time range (epoch ms). */
+  readonly timeRange?: { readonly from?: number; readonly until?: number };
+  /** Only evaluate this boundary for participants in this experiment. */
+  readonly experimentId?: string;
+}
+
 export declare namespace Boundary {
-  /** The core primitive. Source of truth for quantization boundaries. */
-  export interface Shape<I extends string = string, S extends readonly string[] = readonly string[]> {
+  /**
+   * The core primitive. Source of truth for quantization boundaries.
+   *
+   * `S` is a non-empty state tuple (`readonly [string, ...string[]]`) — a
+   * boundary always names at least one state. `_version` pins the structural
+   * schema generation; `spec` is the optional activation filter.
+   */
+  export interface Shape<
+    I extends string = string,
+    S extends readonly [string, ...string[]] = readonly [string, ...string[]],
+  > {
     readonly _tag: 'BoundaryDef';
+    readonly _version: 1;
     readonly id: ContentAddress;
     readonly input: SignalInput<I>;
     readonly thresholds: readonly ThresholdValue[];
     readonly states: S;
     readonly hysteresis?: number;
+    readonly spec?: BoundarySpec;
   }
+
+  /** Alias for {@link BoundarySpec}. */
+  export type Spec = BoundarySpec;
 
   export function make<I extends string, const S extends readonly [string, ...string[]]>(config: {
     readonly input: I;
     readonly at: { readonly [K in keyof S]: readonly [number, S[K]] };
     readonly hysteresis?: number;
+    readonly spec?: BoundarySpec;
   }): Shape<I, S>;
 
   export function evaluate<B extends Shape>(boundary: B, value: number): StateUnion<B>;
@@ -291,6 +321,7 @@ export interface CompositeState {
   readonly outputs: {
     readonly css: Record<string, number | string>;
     readonly glsl: Record<string, number>;
+    readonly wgsl: Record<string, number>;
     readonly aria: Record<string, string>;
   };
 }
@@ -948,7 +979,7 @@ export interface VideoConfig {
   readonly fps: number;
   readonly width: number;
   readonly height: number;
-  readonly durationMs: number;
+  readonly durationMs: Millis;
 }
 
 export interface VideoFrameOutput {
@@ -996,5 +1027,5 @@ export interface CaptureResult {
   readonly blob: Blob;
   readonly codec: string;
   readonly frames: number;
-  readonly durationMs: number;
+  readonly durationMs: Millis;
 }

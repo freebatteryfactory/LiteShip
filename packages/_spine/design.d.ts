@@ -6,7 +6,7 @@
  * and Tailwind v4 @theme blocks.
  */
 
-import type { Boundary, StateUnion, ContentAddress, SignalInput, StateName } from './core.d.ts';
+import type { Boundary, StateUnion, ContentAddress, Millis, SignalInput, StateName } from './core.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 1. BRANDS
@@ -31,6 +31,7 @@ export type CSSTime = `${number}ms` | `${number}s`;
 export declare namespace Token {
   export interface Shape<N extends string = string, Axes extends readonly string[] = readonly string[]> {
     readonly _tag: 'TokenDef';
+    readonly _version: 1;
     readonly id: ContentAddress;
     readonly name: N;
     readonly category: 'color' | 'spacing' | 'typography' | 'shadow' | 'radius' | 'animation' | 'effect';
@@ -84,15 +85,23 @@ export interface StyleLayer {
   readonly boxShadow?: readonly ShadowLayer[];
 }
 
+/** `Style.make` transition input — plain `number` durations are branded with {@link Millis} internally. */
+export interface TransitionConfig {
+  readonly duration: number;
+  readonly easing?: string;
+  readonly properties?: readonly string[];
+}
+
 export declare namespace Style {
   export interface Shape<B extends Boundary.Shape = Boundary.Shape> {
     readonly _tag: 'StyleDef';
+    readonly _version: 1;
     readonly id: ContentAddress;
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
     readonly transition?: {
-      readonly duration: number;
+      readonly duration: Millis;
       readonly easing?: string;
       readonly properties?: readonly string[];
     };
@@ -102,7 +111,7 @@ export declare namespace Style {
     readonly boundary?: B;
     readonly base: StyleLayer;
     readonly states?: { readonly [S in StateUnion<B> & string]?: StyleLayer };
-    readonly transition?: Shape<B>['transition'];
+    readonly transition?: TransitionConfig;
   }): Shape<B>;
 
   export function tap<B extends Boundary.Shape>(style: Shape<B>, state?: StateUnion<B>): Record<string, string>;
@@ -117,6 +126,7 @@ export declare namespace Style {
 export declare namespace Theme {
   export interface Shape<V extends readonly string[] = readonly string[]> {
     readonly _tag: 'ThemeDef';
+    readonly _version: 1;
     readonly id: ContentAddress;
     readonly name: string;
     readonly variants: V;
