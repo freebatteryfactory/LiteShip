@@ -176,6 +176,8 @@ describe('D4 — projection drift pin', () => {
     // Re-pinned again when `check` (the PURE gauntlet gate fold, litelaunchGauntlet)
     // joined COMMAND_CATALOG as a handler-backed, MCP-exposed command — the
     // registry/commands UI body grew by one entry, re-pinning the digest.
-    expect(address).toBe('fnv1a:d8bad381');
+    // Re-pinned again when `lsp` (the LSP rigor skin launcher, B3) joined
+    // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
+    expect(address).toBe('fnv1a:e9900b8f');
   });
 });

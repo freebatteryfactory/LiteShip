@@ -257,7 +257,7 @@ export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-g
 export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 // The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
 // shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
-export { contentAddressOf } from './content-address.js';
+export { contentAddressOf, canonicalAddressBytes } from './content-address.js';
 
 // ── GraphPatch — typed graph mutation + structural differ (P5b) ─────────────
 // Tagged-delta over DocumentGraph: propose/apply (re-address via sealGraph) /

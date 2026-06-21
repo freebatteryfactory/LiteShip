@@ -243,6 +243,10 @@ const STANDALONE_FUNCTIONS = [
   // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',
+  // The canonical-CBOR byte serializer behind `contentAddressOf` — surfaced so the
+  // capsule generator-provenance digests (@czap/command) hash the SAME canonical
+  // bytes the content-address kernel does (one canonicalization, no fork).
+  'canonicalAddressBytes',
   'sealNode',
   'sealGraph',
   'validateGraph',

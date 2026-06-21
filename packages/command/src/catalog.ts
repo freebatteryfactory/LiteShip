@@ -101,6 +101,13 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     inputSchema: { type: 'object', properties: { http: { type: 'string' } } },
     annotations: { longRunning: true, cliOnly: true, group: 'servers' },
   },
+  {
+    name: 'lsp',
+    summary:
+      'Start the gauntlet LSP server over stdio — publishes Findings as live diagnostics + code actions (--ir for the IR-enriched fold).',
+    inputSchema: { type: 'object', properties: { ir: { type: 'boolean' } } },
+    annotations: { longRunning: true, cliOnly: true, group: 'servers' },
+  },
 ];
 
 /** Finite, structured, handler-backed commands. Each is tagged `executionKind: 'handler'`. */

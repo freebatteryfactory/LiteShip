@@ -4,15 +4,18 @@
  * bench-honesty + green-suite gate, migrated from `scripts/capsule-verify.ts`).
  * The pass/fail decision lives in `@czap/command`; the CLI is the ONLY adapter
  * that wires the heavy `runCapsuleGate` capability: it reads the manifest,
- * existence/mtime-checks every generated artifact, classifies bench honesty
- * (via `@czap/core/harness`), confirms mtime-suspect capsules are NOT stale by
- * regenerating into a temp dir (spawning `capsule:compile`), and runs the whole
+ * existence-checks every generated artifact, classifies bench honesty
+ * (via `@czap/core/harness`), suspects staleness by CONTENT-HASH provenance (the
+ * recorded `sourceDigest`/`generatorVersion` vs the live source/generator digests
+ * — deterministic, mtime-independent, replacing the former `sourceAge > testAge`
+ * mtime heuristic), confirms suspects are NOT stale by regenerating into a temp
+ * dir (spawning `capsule:compile`) and byte-comparing, and runs the whole
  * `tests/generated/` suite (spawning `vitest`). `@czap/command` and
  * `@czap/mcp-server` never see the subprocess engine. Exit 0 ok, 1 stale/failed.
  *
  * @module
  */
-import { readFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execSync } from 'node:child_process';
@@ -23,6 +26,7 @@ import {
   type CapsuleGateSummary,
   type CapsuleBenchClassification,
 } from '@czap/command';
+import { sourceProvenanceDigest, generatorVersionDigest } from '@czap/command/host';
 import type { CommandContext } from '@czap/command';
 import { emit, getCapsuleManifestPath, type WallClockTimestamp } from '../receipts.js';
 
@@ -38,12 +42,29 @@ interface ManifestEntry {
   readonly generated: { testFile: string; benchFile: string };
   /** Present iff this capsule's bench is a TYPED not-applicable exemption. */
   readonly benchExemption?: { readonly reason: string };
+  /**
+   * Content-hash generator-provenance (B3): the blake3 digest of the source the
+   * artifact derived from, recorded at compile time. A capsule is stale-by-content
+   * iff its recorded `sourceDigest` no longer matches the LIVE source's digest — a
+   * deterministic, mtime-independent signal that replaces the `sourceAge > testAge`
+   * suspicion. Optional in the TYPE only for forward/backward tolerance: a manifest
+   * predating provenance is treated as a (provenance-missing) suspect so it can't
+   * pass un-reverified. A fresh compile always writes it.
+   */
+  readonly provenance?: { readonly sourceDigest: string };
+}
+
+/** The committed manifest shape `capsule:verify` reads. */
+interface CapsuleManifestShape {
+  /** Generator-LOGIC content-hash recorded by the compiler (B3). */
+  readonly generatorVersion?: string;
+  readonly capsules: ManifestEntry[];
 }
 
 const NO_BENCHES: CapsuleBenchClassification = { total: 0, real: 0, placeholder: [] };
 
 /**
- * Confirm mtime-suspect capsules by regeneration: compile into a temp
+ * Confirm content-hash-suspect capsules by regeneration: compile into a temp
  * generated dir + temp manifest (the shared tests/generated is NEVER
  * written — parent vitest runs may be executing it, CUT T1), then
  * byte-compare each suspect's regenerated test+bench against the
@@ -147,11 +168,26 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
     };
   }
 
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { capsules: ManifestEntry[] };
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as CapsuleManifestShape;
   let benchTotal = 0;
   let benchReal = 0;
   const benchPlaceholders: string[] = [];
-  const mtimeSuspects: ManifestEntry[] = [];
+  // Content-hash staleness SUSPECTS (B3): a capsule whose recorded source digest
+  // no longer matches the LIVE source's digest — a deterministic, mtime-independent
+  // signal that REPLACES the former `sourceAge > testAge` mtime suspicion. The
+  // mtime path had a real bug: git checkouts don't preserve mtimes, and a
+  // skip-if-unchanged compile once let a source mtime land between two runs and
+  // falsely trip staleness (the `atomicWrite` scar). The content-hash is immune —
+  // identical source bytes ⇒ identical digest, regardless of mtime ordering.
+  const digestSuspects: ManifestEntry[] = [];
+
+  // Generator-LOGIC content-hash: if the live generator's source set no longer
+  // matches the version recorded in the manifest, the generator LOGIC changed and
+  // the WHOLE corpus is suspect — even when every capsule source is byte-identical
+  // (the toolchain-digest analogue). A manifest predating provenance (no recorded
+  // generatorVersion) is treated as generator-stale so it can't pass un-reverified.
+  const liveGeneratorVersion = generatorVersionDigest(root);
+  const generatorStale = manifest.generatorVersion !== liveGeneratorVersion;
 
   for (const cap of manifest.capsules) {
     const testPath = resolve(root, cap.generated.testFile);
@@ -173,18 +209,26 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
       if (honestyError !== null) errors.push(honestyError);
     }
     if (existsSync(sourcePath) && existsSync(testPath)) {
-      const sourceAge = statSync(sourcePath).mtimeMs;
-      const testAge = statSync(testPath).mtimeMs;
-      if (sourceAge > testAge) mtimeSuspects.push(cap);
+      // Content-hash suspicion: recompute the live source digest and compare to
+      // the recorded one. A mismatch (or a missing recorded digest, or a
+      // generator-version change) makes this capsule a suspect — confirmed below
+      // by regeneration byte-compare (suspicion is fast; regeneration is proof).
+      const liveSourceDigest = sourceProvenanceDigest(root, cap.source);
+      const recordedSourceDigest = cap.provenance?.sourceDigest;
+      if (generatorStale || recordedSourceDigest !== liveSourceDigest) {
+        digestSuspects.push(cap);
+      }
     }
   }
 
-  // Confirm mtime suspicion by regeneration — git checkouts make raw
-  // mtime comparison false-positive whenever a source changes without
-  // changing its generated output.
-  if (mtimeSuspects.length > 0) {
+  // Confirm content-hash suspicion by regeneration — a content-hash mismatch is
+  // the fast, deterministic suspicion; regeneration byte-compare is the PROOF (a
+  // source edit can change the digest without changing the generated output, e.g.
+  // a comment-only edit, so the digest alone must never fail the gate — exactly as
+  // the cache's correctness property pairs a key with re-verification).
+  if (digestSuspects.length > 0) {
     const committedNames = new Set(manifest.capsules.map((c) => c.name));
-    for (const detail of confirmStaleByRegeneration(root, mtimeSuspects, committedNames)) {
+    for (const detail of confirmStaleByRegeneration(root, digestSuspects, committedNames)) {
       errors.push(`stale: ${detail}; run \`pnpm run capsule:compile\` and commit the resulting changes`);
     }
   }

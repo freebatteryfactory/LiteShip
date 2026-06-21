@@ -26,6 +26,7 @@ import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
 import { gauntlet } from './commands/gauntlet.js';
+import { lsp } from './commands/lsp.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
 import { readCliVersion, version } from './commands/version.js';
@@ -240,6 +241,13 @@ export async function run(argv: readonly string[]): Promise<number> {
       const httpFlag = parseFlag(rest, '--http');
       await mcpServer.start(httpFlag !== undefined ? { http: httpFlag } : {});
       return 0;
+    }
+    case 'lsp': {
+      // The THIRD JSON-RPC skin: launch the gauntlet LSP rigor server over stdio
+      // (the editor spawns `czap lsp` as its language server). The runner is built
+      // in the CLI host and injected, so @czap/mcp-server stays lean — see
+      // commands/lsp.ts. `--ir` selects the IR-enriched fold.
+      return lsp({ ir: rest.includes('--ir') });
     }
     default: {
       // No command + no flags: friendly help on stdout, exit 0.

@@ -44,10 +44,18 @@ describe('A1-T8 — cli↔mcp cycle + stdout-capture seam are deleted', () => {
     expect(dispatch).toContain('structuredContent');
   });
 
-  it('the surviving cli→mcp shim is minimal (only declares start)', () => {
+  it('the surviving cli→mcp shim is minimal (two server-launch entry points: start + runLspStdio)', () => {
     const shim = readFileSync(resolve(REPO, 'packages/cli/src/mcp-server.d.ts'), 'utf8');
+    // The cli launches BOTH server faces over the SAME minimal ambient shim:
+    //   • `start`       — the MCP server (`czap mcp`, optionally over HTTP);
+    //   • `runLspStdio` — the LSP rigor skin (`czap lsp`, over stdio with a
+    //     CLI-host-built gauntlet runner injected).
+    // Both are legitimate one-way dynamic-launch entry points; the seam stays
+    // minimal (it just launches two servers now), not a re-declaration of the cli
+    // surface. The only sanctioned `export function`s are these two launchers.
     expect(shim).toContain('export function start');
-    // No re-declaration of cli surface; it's just the one-way dynamic-start type.
-    expect(shim).not.toContain('export function run');
+    expect(shim).toContain('export function runLspStdio');
+    const exportedFns = [...shim.matchAll(/export function (\w+)/g)].map((m) => m[1]).sort();
+    expect(exportedFns).toEqual(['runLspStdio', 'start']);
   });
 });

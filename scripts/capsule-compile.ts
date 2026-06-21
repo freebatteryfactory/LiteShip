@@ -25,6 +25,18 @@ import { pathToFileURL } from 'node:url';
 import type { WallClockTimestamp } from '@czap/core';
 import { getCapsuleManifestPath } from '../packages/cli/src/receipts.js';
 import { normalizeRepoPath } from '@czap/audit'; // CUT B5b — one slash-normalize home
+// Relative import (not the bare `@czap/command/host` specifier): this script is
+// run from the repo root via tsx, where `@czap/command` is not a root-level
+// workspace dependency — the same reason the harness + receipts imports here are
+// relative. `capsule:verify` (inside @czap/cli, which DOES depend on command)
+// imports the identical functions via the published `@czap/command/host` surface;
+// both resolve to this one module, so the compiler and verifier compute provenance
+// from one source of truth.
+import {
+  sourceProvenanceDigest,
+  generatorVersionDigest,
+  type ProvenanceDigest,
+} from '../packages/command/src/host/capsule-provenance.js';
 import { getCapsuleGeneratedDir } from './lib/capsule-paths.js';
 import * as fc from 'fast-check';
 import { hasTag, assertNever } from '@czap/error';
@@ -135,11 +147,33 @@ interface ManifestEntry {
    * real measurement.
    */
   readonly benchExemption?: { readonly reason: string };
+  /**
+   * Generator-provenance by CONTENT-HASH (B3): binds this generated artifact to
+   * the exact SOURCE it derived from. `sourceDigest` is the blake3 digest of the
+   * source call-site file's bytes (paired with its repo-relative path) — a
+   * deterministic, mtime-independent fingerprint. `capsule:verify` recomputes it
+   * from the live source and flags staleness on a mismatch (replacing the fragile
+   * `sourceAge > testAge` mtime suspicion); regeneration byte-compare confirms.
+   * Volatile fields (mtime, the manifest's `generatedAt`) are NEVER digest inputs.
+   * The generator-LOGIC half lives at the manifest top level
+   * ({@link CapsuleManifest.generatorVersion}) — one token for the whole compile.
+   */
+  readonly provenance: { readonly sourceDigest: ProvenanceDigest };
 }
 
 /** The shape written to reports/capsule-manifest.json. */
 interface CapsuleManifest {
   readonly generatedAt: WallClockTimestamp;
+  /**
+   * Generator-LOGIC content-hash (B3): the blake3 digest over the generator's own
+   * source set (the compile driver + harness generators + detector — see
+   * `GENERATOR_SOURCE_FILES`). A generator-logic edit (a harness template change)
+   * yields a new token even when every capsule source is byte-identical, so the
+   * whole corpus is flagged stale — the content-hash analogue of the gauntlet
+   * toolchain-digest. `capsule:verify` recomputes it from the live generator
+   * source and flags staleness on a mismatch. Deterministic; no volatile input.
+   */
+  readonly generatorVersion: ProvenanceDigest;
   readonly capsules: readonly ManifestEntry[];
 }
 
@@ -1148,6 +1182,13 @@ async function main(): Promise<void> {
     }
 
     const sourceRel = normalizeRepoPath(relative(cwd, d.file));
+    // Content-hash provenance (B3): bind this generated artifact to its SOURCE by
+    // a deterministic, mtime-independent blake3 digest of the source file's bytes.
+    // capsule:verify recomputes this from the live source and flags staleness on a
+    // mismatch (replacing the fragile mtime suspicion). The generator-LOGIC half is
+    // the top-level generatorVersion. No volatile field (mtime/generatedAt) enters
+    // either digest.
+    const provenance = { sourceDigest: sourceProvenanceDigest(cwd, sourceRel) };
     const testRel = normalizeRepoPath(relative(cwd, testPath));
     const benchRel = normalizeRepoPath(relative(cwd, benchPath));
     const integrationRel =
@@ -1189,6 +1230,7 @@ async function main(): Promise<void> {
               source: sourceRel,
               generated,
               wired,
+              provenance,
               factory: d.factory,
               args: d.args,
               ...exemption,
@@ -1199,6 +1241,7 @@ async function main(): Promise<void> {
               source: sourceRel,
               generated,
               wired,
+              provenance,
               factory: d.factory,
               ...exemption,
             }
@@ -1208,6 +1251,7 @@ async function main(): Promise<void> {
             source: sourceRel,
             generated,
             wired,
+            provenance,
             ...exemption,
           };
     capsules.push(entry);
@@ -1220,8 +1264,16 @@ async function main(): Promise<void> {
     return a.name.localeCompare(b.name);
   });
 
+  // Generator-LOGIC content-hash: a single token over the generator's own source
+  // set (compile driver + harness generators + detector). A change to HOW
+  // artifacts are generated invalidates the whole corpus even when every capsule
+  // source is byte-identical — the content-hash analogue of the gauntlet
+  // toolchain-digest. Deterministic; computed from live files, no volatile input.
+  const generatorVersion = generatorVersionDigest(cwd);
+
   const manifest: CapsuleManifest = {
     generatedAt: new Date().toISOString(),
+    generatorVersion,
     capsules,
   };
 

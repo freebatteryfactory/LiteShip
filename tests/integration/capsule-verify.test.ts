@@ -1,10 +1,29 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { readFileSync, statSync, utimesSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, utimesSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { withSpawned } from '../../scripts/lib/spawn.js';
 import { classifyBenchSource } from '@czap/core/harness';
 import { compileManifestOnly, type IsolatedCapsules } from '../setup/isolated-capsules.js';
+
+/** Spawn `czap capsule-verify` and return its parsed JSON receipt. */
+async function runVerifyReceipt(): Promise<{ status: string; errors?: string[] }> {
+  const lines: string[] = [];
+  await withSpawned(
+    'pnpm',
+    ['run', 'capsule:verify'],
+    async (handle) => {
+      for await (const line of handle.readline()) lines.push(line);
+    },
+    { stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const receiptLine = lines
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('{') && line.endsWith('}'))
+    .pop();
+  expect(receiptLine, `no JSON receipt in stdout. lines=${JSON.stringify(lines)}`).toBeDefined();
+  return JSON.parse(receiptLine!) as { status: string; errors?: string[] };
+}
 
 describe('capsule-verify', () => {
   // CUT T1: manifest-only compile to a temp manifest whose entries point at the
@@ -121,6 +140,78 @@ describe('capsule-verify', () => {
       for (const s of suspects) {
         utimesSync(s.sourcePath, s.original.atime, s.original.mtime);
       }
+    }
+  }, scaledTimeout(180_000));
+
+  it('content-hash drives suspicion: a future-mtimed but byte-identical source needs NO regeneration', async () => {
+    // The mtime test above proved a future-mtimed source whose REGENERATION is
+    // byte-identical is not stale (mtime suspicion → regen → clean). This proves
+    // the STRONGER B3 property: the content-hash provenance means such a source is
+    // not even a SUSPECT — its recorded sourceDigest still matches the live source
+    // (bytes unchanged), so no regeneration spawns. The mtime path would have
+    // false-suspected it (and paid the regen cost); the content-hash is immune to
+    // the mtime ordering that bit the inner-gauntlet compile (the atomicWrite scar).
+    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
+      capsules: { name: string; source: string; provenance?: { sourceDigest: string } }[];
+    };
+    // Every committed entry carries content-hash provenance — the staleness signal
+    // is the digest, not the mtime.
+    expect(manifest.capsules.every((c) => typeof c.provenance?.sourceDigest === 'string')).toBe(true);
+
+    const target = manifest.capsules.find((c) => c.name === 'core.token-buffer');
+    expect(target, 'core.token-buffer').toBeDefined();
+    const sourcePath = resolve(target!.source);
+    const original = statSync(sourcePath);
+    try {
+      // Future-date the source WITHOUT changing a byte: mtime says "newer", the
+      // content-hash says "identical". Verify must stay ok.
+      utimesSync(sourcePath, original.atime, new Date(Date.now() + 5_000));
+      const receipt = await runVerifyReceipt();
+      expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('ok');
+    } finally {
+      utimesSync(sourcePath, original.atime, original.mtime);
+    }
+  }, scaledTimeout(180_000));
+
+  it('content-hash detects staleness: a real source-byte change is flagged stale by digest, then confirmed by regeneration', async () => {
+    // The end-to-end staleness proof: change a capsule source's RELEVANT bytes so
+    // the regenerated output differs, and assert capsule:verify flags it stale via
+    // the content-hash suspicion path (recorded sourceDigest != live sourceDigest),
+    // confirmed by the regeneration byte-compare. Mutating the capsule's NAME
+    // changes the generated slug + the embedded binding name, so regeneration
+    // genuinely differs from the committed files (honest staleness, not a digest-
+    // only nuisance). Fully restored in finally.
+    const manifest = JSON.parse(readFileSync(iso.manifestPath, 'utf8')) as {
+      capsules: { name: string; source: string }[];
+    };
+    const target = manifest.capsules.find((c) => c.name === 'core.token-buffer');
+    expect(target, 'core.token-buffer').toBeDefined();
+    const sourcePath = resolve(target!.source);
+    const originalSrc = readFileSync(sourcePath, 'utf8');
+    const originalStat = statSync(sourcePath);
+    expect(
+      originalSrc.includes("name: 'core.token-buffer'"),
+      'expected the capsule name literal in the source',
+    ).toBe(true);
+    try {
+      // A relevant byte change: rename the capsule. This shifts the generated
+      // artifact's identity, so a fresh compile no longer matches the committed
+      // files keyed under the OLD name → honest staleness the digest suspects and
+      // regeneration confirms.
+      writeFileSync(
+        sourcePath,
+        originalSrc.replace("name: 'core.token-buffer'", "name: 'core.token-buffer-mutated'"),
+        'utf8',
+      );
+      const receipt = await runVerifyReceipt();
+      expect(receipt.status, `receipt: ${JSON.stringify(receipt)}`).toBe('stale');
+      expect(
+        (receipt.errors ?? []).some((e) => e.includes('stale')),
+        `errors: ${JSON.stringify(receipt.errors)}`,
+      ).toBe(true);
+    } finally {
+      writeFileSync(sourcePath, originalSrc, 'utf8');
+      utimesSync(sourcePath, originalStat.atime, originalStat.mtime);
     }
   }, scaledTimeout(180_000));
 });

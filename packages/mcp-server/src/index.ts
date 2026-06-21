@@ -23,6 +23,52 @@ export { mcpAppManifest, listManifestResources, readManifestResource } from './m
 export { runStdio } from './stdio.js';
 export { runHttp } from './http.js';
 
+// LSP rigor skin (Slice B/B3) — the THIRD JSON-RPC face over the one gauntlet
+// fold: gauntlet Findings projected to live LSP Diagnostics + their remediations
+// to CodeActions. The gauntlet runner is INJECTED (the heavy audit engine stays
+// in the CLI host), so this package keeps its lean dependency set — it takes the
+// engine edge nowhere, not even in prose (D9b-2 pins the boundary by literal).
+export {
+  runLspStdio,
+  handle as handleLspMessage,
+  initialLspState,
+  projectFinding,
+  groupDiagnosticsByUri,
+  projectRemediation,
+  severityToDiagnostic,
+  fileToUri,
+  makeFrameReader,
+  encodeFrame,
+  CZAP_CHECK_METHOD,
+  LSP_SERVER_CAPABILITIES,
+  DiagnosticSeverity,
+  CodeActionKind,
+  APPLY_PATCH_COMMAND,
+  SHOW_INSTRUCTION_COMMAND,
+  DIAGNOSTIC_SOURCE,
+} from './lsp/index.js';
+export type {
+  LspGauntletRunner,
+  LspServerState,
+  LspHandleResult,
+  LspNotification,
+  FrameReader,
+  FindingLike,
+  FindingSeverity,
+  FindingLevel,
+  FindingLocationLike,
+  FindingRemediationLike,
+  LspPosition,
+  LspRange,
+  LspDiagnostic,
+  LspDiagnosticSeverity,
+  PublishDiagnosticsParams,
+  LspTextEdit,
+  LspWorkspaceEdit,
+  LspCommand,
+  LspCodeAction,
+} from './lsp/index.js';
+
 // JSON-RPC 2.0 kernel — reusable beyond MCP.
 export {
   JsonRpcServer,

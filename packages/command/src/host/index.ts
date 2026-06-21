@@ -31,3 +31,9 @@ export { tryReadCache, writeCache, hashInputs, cachePath, currentEnvFingerprint 
 export type { IdempotencyCtx } from './idempotency.js';
 export { getCapsuleManifestPath } from './manifest-path.js';
 export { runPlumbScan } from './plumb-scan.js';
+export {
+  GENERATOR_SOURCE_FILES,
+  sourceProvenanceDigest,
+  generatorVersionDigest,
+} from './capsule-provenance.js';
+export type { ProvenanceDigest, CapsuleProvenance } from './capsule-provenance.js';
