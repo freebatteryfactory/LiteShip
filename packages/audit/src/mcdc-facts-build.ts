@@ -27,11 +27,7 @@ import ts from 'typescript';
 import { InvariantViolationError } from '@czap/error';
 import { CanonicalCbor, addressedDigestOf } from '@czap/canonical';
 import type { McdcFacts, McdcConditionOutcome, McdcPinVerdict } from '@czap/gauntlet';
-import {
-  generateConditionMutants,
-  type ConditionMutant,
-  type ConditionForce,
-} from './mcdc-engine.js';
+import { generateConditionMutants, type ConditionMutant, type ConditionForce } from './mcdc-engine.js';
 import {
   evaluateMutant,
   type CoverageMap,
@@ -90,7 +86,10 @@ function groupKey(m: ConditionMutant): string {
  * verdict state (the MC/DC builder injects no equivalent-mutant registry), so it is a
  * tagged invariant violation, never a silent coercion.
  */
-function pinVerdict(tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent', mutant: ConditionMutant): McdcPinVerdict {
+function pinVerdict(
+  tag: 'killed' | 'survived' | 'no-coverage' | 'equivalent',
+  mutant: ConditionMutant,
+): McdcPinVerdict {
   if (tag === 'killed' || tag === 'survived' || tag === 'no-coverage') return tag;
   throw InvariantViolationError(
     'buildMcdcFacts',
@@ -138,16 +137,14 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
 
       const key = groupKey(mutant);
       const existing = byCondition.get(key);
-      const partial: Partial =
-        existing ??
-        {
-          file: mutant.file,
-          line: mutant.line,
-          column: mutant.column,
-          decision: mutant.decision,
-          condition: mutant.condition,
-          conditionId: conditionId(mutant.file, mutant.line, mutant.column, mutant.condition),
-        };
+      const partial: Partial = existing ?? {
+        file: mutant.file,
+        line: mutant.line,
+        column: mutant.column,
+        decision: mutant.decision,
+        condition: mutant.condition,
+        conditionId: conditionId(mutant.file, mutant.line, mutant.column, mutant.condition),
+      };
       assignPin(partial, mutant.force, tag);
       byCondition.set(key, partial);
     }
@@ -176,10 +173,7 @@ export function buildMcdcFacts(files: readonly McdcTargetFile[], options: McdcBu
   // Deterministic order — same input → byte-identical facts.
   conditions.sort(
     (a, b) =>
-      a.file.localeCompare(b.file) ||
-      a.line - b.line ||
-      a.column - b.column ||
-      a.condition.localeCompare(b.condition),
+      a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
   return { conditions };
 }

@@ -192,7 +192,12 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
   const edges: DocumentGraphEdge[] = [];
   for (let i = 0; i < value.edges.length; i++) {
     const edge: unknown = value.edges[i];
-    if (!isRecord(edge) || typeof edge.from !== 'string' || typeof edge.to !== 'string' || typeof edge.type !== 'string') {
+    if (
+      !isRecord(edge) ||
+      typeof edge.from !== 'string' ||
+      typeof edge.to !== 'string' ||
+      typeof edge.type !== 'string'
+    ) {
       throw ParseError('DocumentGraph', `edge at index ${i} is not a well-formed { from, to, type } triple`, {
         code: 'malformed_edge',
       });

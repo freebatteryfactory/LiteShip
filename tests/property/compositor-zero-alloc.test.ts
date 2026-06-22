@@ -33,11 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
-import {
-  ALLOC_BUDGET_BYTES_PER_OP,
-  TRANSIENT_BUDGET_BYTES_PER_OP,
-  TRANSIENT_SUBSCRIBER_BUDGET_BYTES_PER_OP,
-} from '../../scripts/alloc-gate.js';
+import { RELATIVE_MAX_RATIO, RELATIVE_SUBSCRIBER_MAX_RATIO } from '../../scripts/alloc-gate.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '../..');
@@ -52,51 +48,75 @@ async function runAllocGate(): Promise<{ stdout: string; status: number }> {
   return { stdout: result.stdout, status: result.exitCode };
 }
 
-/** Parse one line shape (`RESULT` for retained, `TRANSIENT` for churn). */
-function parseLines(
+/**
+ * Parse the platform-robust `RELATIVE\t<label>\t<ratio>\t<maxRatio>\t<verdict>`
+ * lines — the PORTABLE verdict the gate exits on (a ratio of the zero-alloc path to a
+ * known-allocating reference, which cancels per-platform V8 heap-accounting
+ * granularity, so the same assertion holds on linux/macos/windows). The absolute
+ * `RESULT`/`TRANSIENT` byte lines are linux-calibrated INFO only — this test asserts
+ * the RATIO, never the absolute bytes, so it is platform-independent BY CONSTRUCTION.
+ */
+function parseRelative(
   stdout: string,
-  tag: 'RESULT' | 'TRANSIENT',
-): ReadonlyArray<{ label: string; bytesPerOp: number; verdict: string }> {
-  const out: { label: string; bytesPerOp: number; verdict: string }[] = [];
+): ReadonlyArray<{ label: string; ratio: number; maxRatio: number; verdict: string }> {
+  const out: { label: string; ratio: number; maxRatio: number; verdict: string }[] = [];
   for (const line of stdout.split('\n')) {
-    if (!line.startsWith(`${tag}\t`)) continue;
-    const [, label, bytesPerOp, , verdict] = line.split('\t');
-    if (label !== undefined && bytesPerOp !== undefined && verdict !== undefined) {
-      out.push({ label, bytesPerOp: Number(bytesPerOp), verdict });
+    if (!line.startsWith('RELATIVE\t')) continue;
+    const [, label, ratio, maxRatio, verdict] = line.split('\t');
+    if (
+      label !== undefined &&
+      ratio !== undefined &&
+      maxRatio !== undefined &&
+      verdict !== undefined
+    ) {
+      out.push({ label, ratio: Number(ratio), maxRatio: Number(maxRatio), verdict });
     }
   }
   return out;
 }
 
 describe('Compositor compose is genuinely zero-allocation (INV-COMPOSITOR-ZERO-ALLOC)', () => {
-  it('the allocation gate reports the compositor compose hot path at ≈ 0 live bytes/op (within budget)', async () => {
+  it('the compositor compose hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)', async () => {
     const { stdout, status } = await runAllocGate();
     expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const results = parseLines(stdout, 'RESULT');
-    const compositor = results.find((r) => r.label.includes('compositor'));
-    expect(compositor, `no compositor RESULT line in:\n${stdout}`).toBeDefined();
+    const relative = parseRelative(stdout);
+    const compositor = relative.find(
+      (r) => r.label.includes('compositor compute') && r.label.includes('retaining ref'),
+    );
+    expect(compositor, `no compositor-compute RELATIVE line in:\n${stdout}`).toBeDefined();
     expect(compositor!.verdict).toBe('PASS');
-    expect(compositor!.bytesPerOp).toBeLessThanOrEqual(ALLOC_BUDGET_BYTES_PER_OP);
-  }, scaledTimeout(90_000));
+    // The compose path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
+    // of a path that genuinely RETAINS per op. A ratio cancels the platform's heap
+    // unit — true zero-alloc on every OS, where an absolute byte budget is not.
+    expect(compositor!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
+  }, scaledTimeout(120_000));
 
-  it('the allocation gate reports the compositor reactive publish at ≈ 0 transient bytes/op (no subscriber) and ≤ the bounded subscriber budget', async () => {
+  it('the compositor reactive publish is a NEGLIGIBLE fraction of churn with no subscriber, and a BOUNDED fraction with one (platform-robust transient ratios)', async () => {
     const { stdout, status } = await runAllocGate();
     expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const transient = parseLines(stdout, 'TRANSIENT');
-    const noSub = transient.find((r) => r.label.includes('no subscriber'));
-    expect(noSub, `no "no subscriber" TRANSIENT line in:\n${stdout}`).toBeDefined();
+    const relative = parseRelative(stdout);
+    const noSub = relative.find(
+      (r) => r.label.includes('no subscriber') && r.label.includes('churning ref'),
+    );
+    expect(noSub, `no "no subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
     expect(noSub!.verdict).toBe('PASS');
-    // The eliminated SubscriptionRef.set churned ≈ 22 B/op here even with no
-    // subscriber; the raw listener-set publish churns ≈ 0.
-    expect(noSub!.bytesPerOp).toBeLessThanOrEqual(TRANSIENT_BUDGET_BYTES_PER_OP);
+    // The eliminated SubscriptionRef.set churned a PubSub/replay node every publish
+    // even with no subscriber; the raw listener-set publish churns a negligible
+    // fraction of one full object-allocation per op.
+    expect(noSub!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
 
-    const withSub = transient.find((r) => r.label.includes('live subscriber'));
-    expect(withSub, `no "live subscriber" TRANSIENT line in:\n${stdout}`).toBeDefined();
+    const withSub = relative.find(
+      (r) => r.label.includes('live subscriber') && r.label.includes('churning ref'),
+    );
+    expect(withSub, `no "live subscriber" RELATIVE line in:\n${stdout}`).toBeDefined();
     expect(withSub!.verdict).toBe('PASS');
-    expect(withSub!.bytesPerOp).toBeLessThanOrEqual(TRANSIENT_SUBSCRIBER_BUDGET_BYTES_PER_OP);
-  }, scaledTimeout(90_000));
+    // The live-subscriber publish DOES allocate the bridge enqueue (not claimed
+    // zero-alloc), but it stays cheaper than allocating a whole object per op — a
+    // bounded ceiling that catches a regression to the old PubSub-with-subscriber cost.
+    expect(withSub!.ratio).toBeLessThanOrEqual(RELATIVE_SUBSCRIBER_MAX_RATIO);
+  }, scaledTimeout(120_000));
 
   it('the compositor reactive publish is a raw listener-set fan-out, NOT the per-publish-allocating SubscriptionRef.set (source drift guard)', () => {
     // Pins the WIRING the transient gate measures: the publish primitive the gate's

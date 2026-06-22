@@ -58,8 +58,7 @@ function toCycloneHash(integrity: string): { alg: string; content: string } | nu
   if (dash <= 0) return null;
   const algRaw = integrity.slice(0, dash);
   const content = integrity.slice(dash + 1);
-  const alg =
-    algRaw === 'sha512' ? 'SHA-512' : algRaw === 'sha256' ? 'SHA-256' : algRaw === 'sha1' ? 'SHA-1' : null;
+  const alg = algRaw === 'sha512' ? 'SHA-512' : algRaw === 'sha256' ? 'SHA-256' : algRaw === 'sha1' ? 'SHA-1' : null;
   if (alg === null) return null;
   return { alg, content };
 }

@@ -19,5 +19,9 @@ echo "[pre-commit] Running quick verification..."
 pnpm run build
 pnpm run typecheck
 pnpm run lint
+# format:check closes the gap that let 75 prettier-dirty files reach CI: the local
+# hook ran eslint but never prettier, so formatting drift was invisible until the CI
+# `prettier --check` lane. Same fail-closed contract as the other gates.
+pnpm run format:check
 pnpm exec tsx packages/cli/src/bin.ts check-invariants
 echo "[pre-commit] All checks passed."

@@ -152,7 +152,9 @@ function readInvariantBackedFiles(repoRoot: string, ir: RepoIR, tests: readonly 
   const deepSpecifierOf = (file: FileId): string => normalizeRepoPath(file).replace(/\.ts$/, '.js');
   for (const test of tests) {
     // Does this test carry a PROVES header for an enrolled invariant?
-    const proves = [...test.text.matchAll(/PROVES:\s*(INV-[A-Z0-9-]+)/g)].some((mm) => mm[1] !== undefined && enrolledIds.has(mm[1]));
+    const proves = [...test.text.matchAll(/PROVES:\s*(INV-[A-Z0-9-]+)/g)].some(
+      (mm) => mm[1] !== undefined && enrolledIds.has(mm[1]),
+    );
     if (!proves) continue;
     // It proves an enrolled invariant — every IR file it deep-imports is invariant-backed.
     for (const file of ir.files.keys()) {

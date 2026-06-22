@@ -33,6 +33,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:packages/edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:packages/error
       '@czap/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer

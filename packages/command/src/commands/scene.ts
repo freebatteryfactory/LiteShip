@@ -43,7 +43,13 @@ const SceneRenderPayloadSchema = Schema.Struct({
 });
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload: { error },
+  };
 }
 
 interface SceneCapsule {
@@ -185,9 +191,7 @@ export const sceneRenderCommand: HandledCommand = {
   descriptor: {
     name: 'scene.render',
     summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
-    inputSchema: schemaToJsonSchema(
-      Schema.Struct({ scene: Schema.String, output: Schema.optional(Schema.String) }),
-    ),
+    inputSchema: schemaToJsonSchema(Schema.Struct({ scene: Schema.String, output: Schema.optional(Schema.String) })),
     requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
     outputSchema: schemaToJsonSchema(SceneRenderPayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },

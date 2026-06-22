@@ -286,9 +286,7 @@ export async function checkInvariants(opts: { cwd?: string; pretty?: boolean } =
       for (const v of group.violations) process.stderr.write(`${v.file}:${v.line}: ${v.content}\n`);
     }
     if (payload.lineEndings.length > 0) {
-      process.stderr.write(
-        '\n[INVARIANT VIOLATION] LINE_ENDINGS: Text files must match .gitattributes eol policy.\n',
-      );
+      process.stderr.write('\n[INVARIANT VIOLATION] LINE_ENDINGS: Text files must match .gitattributes eol policy.\n');
       for (const v of payload.lineEndings) process.stderr.write(`${v}\n`);
     }
     process.stderr.write('\nInvariant check failed.\n');

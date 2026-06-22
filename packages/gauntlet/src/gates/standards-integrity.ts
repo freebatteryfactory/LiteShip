@@ -66,7 +66,11 @@ function unsignedFinding(change: StandardsChange): Finding {
 }
 
 /** Project a FORBIDDEN sign-off (tried to authorize an always-blocking weakening) into a BLOCKING Finding. */
-function forbiddenFinding(entry: { readonly elementKey: string; readonly owner: string; readonly detail: string }): Finding {
+function forbiddenFinding(entry: {
+  readonly elementKey: string;
+  readonly owner: string;
+  readonly detail: string;
+}): Finding {
   return finding({
     ruleId: `${RULE_NS}/signoff-forbidden`,
     severity: 'error',
@@ -86,7 +90,11 @@ function forbiddenFinding(entry: { readonly elementKey: string; readonly owner: 
 }
 
 /** Project an EXPIRED sign-off into a BLOCKING Finding (the deferral came due). */
-function expiredFinding(entry: { readonly elementKey: string; readonly owner: string; readonly expiry: string }): Finding {
+function expiredFinding(entry: {
+  readonly elementKey: string;
+  readonly owner: string;
+  readonly expiry: string;
+}): Finding {
   return finding({
     ruleId: `${RULE_NS}/signoff-expired`,
     severity: 'error',
@@ -129,7 +137,9 @@ function strengthenFinding(change: StandardsChange): Finding {
     remediation: {
       kind: 'instruction',
       description: `Regenerate the committed standards snapshot.`,
-      steps: [`Run CZAP_UPDATE_STANDARDS_SNAPSHOT=1 <the standards-integrity meta-check> and commit the updated traceability/standards-snapshot.json.`],
+      steps: [
+        `Run CZAP_UPDATE_STANDARDS_SNAPSHOT=1 <the standards-integrity meta-check> and commit the updated traceability/standards-snapshot.json.`,
+      ],
     },
   });
 }
@@ -190,7 +200,11 @@ const DIRTY_FACTS: StandardsIntegrityFacts = {
     },
   ],
   expiredSignoffs: [
-    { elementKey: 'floor::mutation-score::packages/canonical/src/fnv.ts', owner: 'fixture-owner', expiry: '2000-01-01' },
+    {
+      elementKey: 'floor::mutation-score::packages/canonical/src/fnv.ts',
+      owner: 'fixture-owner',
+      expiry: '2000-01-01',
+    },
   ],
   committedAddress: 'fnv1a:committed0',
   liveAddress: 'fnv1a:weakened0',
@@ -201,7 +215,7 @@ export const standardsIntegrityGate: Gate = defineGate({
   id: RULE_NS,
   level: 'L4',
   describe:
-    "Avionics-tier UNCONDITIONAL COMMIT BACKSTOP (the raccoon rule): folds the host-diffed standards surface vs its committed content-addressed snapshot — an UNSIGNED weakening (removed gate, reduced fixtures, lowered floor/level, new/extended waiver, removed/lowered invariant) is a BLOCKING Finding; a forbidden or expired sign-off blocks; a signed weakening is allowed + recorded; a stale strengthen is a regenerate warning.",
+    'Avionics-tier UNCONDITIONAL COMMIT BACKSTOP (the raccoon rule): folds the host-diffed standards surface vs its committed content-addressed snapshot — an UNSIGNED weakening (removed gate, reduced fixtures, lowered floor/level, new/extended waiver, removed/lowered invariant) is a BLOCKING Finding; a forbidden or expired sign-off blocks; a signed weakening is allowed + recorded; a stale strengthen is a regenerate warning.',
   run: fold,
   fixtures: {
     red: {
@@ -214,7 +228,7 @@ export const standardsIntegrityGate: Gate = defineGate({
     },
     mutation: {
       describe:
-        'A gate that ignores the unsigned weakenings (folds only the benign strengthens) leaves the red fixture\'s unsigned weakening + forbidden + expired sign-offs unflagged — the mutant must then fail the red.',
+        "A gate that ignores the unsigned weakenings (folds only the benign strengthens) leaves the red fixture's unsigned weakening + forbidden + expired sign-offs unflagged — the mutant must then fail the red.",
       mutate: (gate: Gate): Gate => ({
         ...gate,
         // Mutant: fold ONLY the (benign) un-regenerated strengthens — the toothless

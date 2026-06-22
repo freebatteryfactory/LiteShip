@@ -120,8 +120,7 @@ function readDistributions(context: GateContext): readonly BenchDistributionReco
     throw ValidationError(PERFORMANCE_CONTRACTS_RULE_ID, `${DISTRIBUTIONS_PATH} is missing a distributions array`);
   }
   return parsed.distributions.filter(
-    (d): d is BenchDistributionRecord =>
-      isRecord(d) && typeof d.name === 'string' && typeof d.file === 'string',
+    (d): d is BenchDistributionRecord => isRecord(d) && typeof d.name === 'string' && typeof d.file === 'string',
   );
 }
 
@@ -263,7 +262,9 @@ function checkComplexityMap(entries: readonly ComplexityMapEntryRecord[] | null)
         remediation: {
           kind: 'instruction',
           description: 'Generate the committed complexity map.',
-          steps: ['Run `tsx scripts/bench-contracts.ts` to fit the hot-path complexity curves and write benchmarks/complexity-map.json.'],
+          steps: [
+            'Run `tsx scripts/bench-contracts.ts` to fit the hot-path complexity curves and write benchmarks/complexity-map.json.',
+          ],
         },
       }),
     ];
@@ -359,7 +360,9 @@ function scan(context: GateContext): readonly Finding[] {
         remediation: {
           kind: 'instruction',
           description: 'Author the declared-distribution registry.',
-          steps: ['Create benchmarks/distributions.json declaring every governed bench in tests/bench/*.bench.ts (name, file, inputSize, shape, replicates).'],
+          steps: [
+            'Create benchmarks/distributions.json declaring every governed bench in tests/bench/*.bench.ts (name, file, inputSize, shape, replicates).',
+          ],
         },
       }),
       ...checkComplexityMap(readComplexityEntries(context)),
@@ -377,10 +380,17 @@ function scan(context: GateContext): readonly Finding[] {
 const GREEN_DISTRIBUTIONS = JSON.stringify({
   schemaVersion: 1,
   distributions: [
-    { name: 'Boundary.evaluate -- 3 thresholds', file: 'tests/bench/core.bench.ts', inputSize: 3, shape: 'boundary-thresholds', replicates: 1 },
+    {
+      name: 'Boundary.evaluate -- 3 thresholds',
+      file: 'tests/bench/core.bench.ts',
+      inputSize: 3,
+      shape: 'boundary-thresholds',
+      replicates: 1,
+    },
   ],
 });
-const GREEN_BENCH_FILE = "import { Bench } from 'tinybench';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\n";
+const GREEN_BENCH_FILE =
+  "import { Bench } from 'tinybench';\nconst bench = new Bench();\nbench.add('Boundary.evaluate -- 3 thresholds', () => {});\n";
 const GREEN_COMPLEXITY_MAP = JSON.stringify({
   schemaVersion: 1,
   entries: [

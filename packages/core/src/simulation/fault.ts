@@ -71,9 +71,7 @@ export type FaultTable = readonly Fault[];
  * fires, `fired` is `false` and the step proceeds normally — the no-fault path is
  * indistinguishable from a world with no faults at all.
  */
-export type FaultDecision =
-  | { readonly fired: false }
-  | { readonly fired: true; readonly fault: Fault };
+export type FaultDecision = { readonly fired: false } | { readonly fired: true; readonly fault: Fault };
 
 /**
  * Consult the fault table at `point`, deciding deterministically (from the world's

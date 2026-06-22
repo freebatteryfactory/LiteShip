@@ -57,11 +57,7 @@ export const AuditPayloadSchema = Schema.Struct({
     surface: Schema.Number,
   }),
   repoRoot: Schema.String,
-  profileSource: Schema.Union([
-    Schema.Literal('default'),
-    Schema.Literal('file'),
-    Schema.Literal('consumer'),
-  ]),
+  profileSource: Schema.Union([Schema.Literal('default'), Schema.Literal('file'), Schema.Literal('consumer')]),
   /** Present only when `--findings` was requested — receipt shape is stable by default. */
   findings: Schema.optional(Schema.Array(AuditFindingSchema)),
 });

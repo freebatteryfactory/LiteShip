@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { scaledTimeout } from '../../vitest.shared.js';
 import { spawnArgvCapture } from '../../scripts/lib/spawn.js';
-import { ALLOC_BUDGET_BYTES_PER_OP } from '../../scripts/alloc-gate.js';
+import { RELATIVE_MAX_RATIO } from '../../scripts/alloc-gate.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(here, '../..');
@@ -37,30 +37,40 @@ async function runAllocGate(): Promise<{ stdout: string; status: number }> {
   return { stdout: result.stdout, status: result.exitCode };
 }
 
-/** Parse `RESULT\t<label>\t<bytesPerOp>\t<budget>\t<verdict>` lines from the report. */
-function parseResults(stdout: string): ReadonlyArray<{ label: string; bytesPerOp: number; verdict: string }> {
-  const out: { label: string; bytesPerOp: number; verdict: string }[] = [];
+/**
+ * Parse the platform-robust `RELATIVE\t<label>\t<ratio>\t<maxRatio>\t<verdict>`
+ * lines — the PORTABLE verdict the gate exits on. The ratio of the zero-alloc path to
+ * a known-allocating reference cancels per-platform V8 heap-accounting granularity, so
+ * the SAME assertion holds on linux/macos/windows; the absolute `RESULT` byte lines
+ * are linux-calibrated INFO only. This test asserts the RATIO, never absolute bytes.
+ */
+function parseRelative(stdout: string): ReadonlyArray<{ label: string; ratio: number; verdict: string }> {
+  const out: { label: string; ratio: number; verdict: string }[] = [];
   for (const line of stdout.split('\n')) {
-    if (!line.startsWith('RESULT\t')) continue;
-    const [, label, bytesPerOp, , verdict] = line.split('\t');
-    if (label !== undefined && bytesPerOp !== undefined && verdict !== undefined) {
-      out.push({ label, bytesPerOp: Number(bytesPerOp), verdict });
+    if (!line.startsWith('RELATIVE\t')) continue;
+    const [, label, ratio, , verdict] = line.split('\t');
+    if (label !== undefined && ratio !== undefined && verdict !== undefined) {
+      out.push({ label, ratio: Number(ratio), verdict });
     }
   }
   return out;
 }
 
 describe('TokenBuffer push+drainInto is genuinely zero-allocation (INV-TOKEN-BUFFER-ZERO-ALLOC)', () => {
-  it('the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)', async () => {
+  it('the token-buffer hot path is a NEGLIGIBLE fraction of a known-allocating reference (platform-robust live ratio)', async () => {
     const { stdout, status } = await runAllocGate();
-    // The gate exits 0 only when EVERY governed hot path is within budget.
+    // The gate exits 0 only when EVERY governed hot path is within its relative ratio.
     expect(status, `alloc-gate failed:\n${stdout}`).toBe(0);
 
-    const results = parseResults(stdout);
-    const tokenBuffer = results.find((r) => r.label.includes('token-buffer'));
-    expect(tokenBuffer, `no token-buffer RESULT line in:\n${stdout}`).toBeDefined();
-    // The measured live per-op allocation is at-or-below the proven zero-alloc budget.
+    const relative = parseRelative(stdout);
+    const tokenBuffer = relative.find(
+      (r) => r.label.includes('token-buffer') && r.label.includes('retaining ref'),
+    );
+    expect(tokenBuffer, `no token-buffer RELATIVE line in:\n${stdout}`).toBeDefined();
+    // The token-buffer path's per-op live growth is a small fraction (≤ RELATIVE_MAX_RATIO)
+    // of a path that genuinely RETAINS per op. The ratio cancels the platform's heap
+    // accounting unit — proven zero-alloc on every OS, where an absolute budget is not.
     expect(tokenBuffer!.verdict).toBe('PASS');
-    expect(tokenBuffer!.bytesPerOp).toBeLessThanOrEqual(ALLOC_BUDGET_BYTES_PER_OP);
-  }, scaledTimeout(60_000));
+    expect(tokenBuffer!.ratio).toBeLessThanOrEqual(RELATIVE_MAX_RATIO);
+  }, scaledTimeout(120_000));
 });

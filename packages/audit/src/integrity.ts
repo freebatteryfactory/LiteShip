@@ -89,10 +89,7 @@ function collectComments(text: string): ReadonlyArray<{ readonly text: string; r
   const comments: Array<{ readonly text: string; readonly pos: number }> = [];
   let token = scanner.scan();
   while (token !== ts.SyntaxKind.EndOfFileToken) {
-    if (
-      token === ts.SyntaxKind.SingleLineCommentTrivia ||
-      token === ts.SyntaxKind.MultiLineCommentTrivia
-    ) {
+    if (token === ts.SyntaxKind.SingleLineCommentTrivia || token === ts.SyntaxKind.MultiLineCommentTrivia) {
       comments.push({ text: scanner.getTokenText(), pos: scanner.getTokenStart() });
     }
     token = scanner.scan();

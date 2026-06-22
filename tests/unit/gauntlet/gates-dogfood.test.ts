@@ -112,8 +112,8 @@ const GATES: ReadonlyArray<readonly [string, Gate]> = [
  * substrate boundaries is the proof the cure landed: undifferentiated red is gone.
  */
 const EXPECTED_NONDETERMINISM_L3: readonly string[] = [
-  'packages/core/src/clock.ts:61', // systemClock — monotonic boundary (performance.now / Date.now fallback)
-  'packages/core/src/clock.ts:78', // wallClock — epoch boundary
+  'packages/core/src/clock.ts:60', // systemClock — monotonic boundary (performance.now / Date.now fallback)
+  'packages/core/src/clock.ts:77', // wallClock — epoch boundary
   'packages/core/src/rng.ts:39', // systemRng — randomness boundary
 ];
 

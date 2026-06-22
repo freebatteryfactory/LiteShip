@@ -47,11 +47,7 @@ import {
  */
 const FindingSchema = Schema.Struct({
   ruleId: Schema.String,
-  severity: Schema.Union([
-    Schema.Literal('advisory'),
-    Schema.Literal('warning'),
-    Schema.Literal('error'),
-  ]),
+  severity: Schema.Union([Schema.Literal('advisory'), Schema.Literal('warning'), Schema.Literal('error')]),
   level: Schema.Union([
     Schema.Literal('L0'),
     Schema.Literal('L1'),

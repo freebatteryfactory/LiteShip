@@ -70,7 +70,8 @@ function violationFinding(fact: DecoderFuzzFact): Finding {
     location: { file: fact.decoderId },
     remediation: {
       kind: 'instruction',
-      description: 'Make the decoder fail closed on the offending input — return a typed value or throw ONE tagged @czap/error.',
+      description:
+        'Make the decoder fail closed on the offending input — return a typed value or throw ONE tagged @czap/error.',
       steps: [
         `Reproduce: replay the source \`${source}\` through the \`tests/fuzz\` harness against "${fact.decoderId}" (the fuzz is deterministic — the seed/seed-id reproduces the input byte-exact).`,
         cls === 'polluted'

@@ -72,11 +72,7 @@ import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { listProfilePackageManifests, readProfileSourceFileRecords } from './shared.js';
 import type { SourceFileRecord } from './shared.js';
-import {
-  buildPackageExportTargets,
-  hasModifier,
-  resolveImport,
-} from './structure.js';
+import { buildPackageExportTargets, hasModifier, resolveImport } from './structure.js';
 import { createTypeDirectedProgram } from './ts-program.js';
 import { symbolReferenceOracle } from './repo-ir-language-service.js';
 
@@ -335,10 +331,7 @@ interface Tables {
  *   facts merge into the IR alongside audit's own structural AST facts. The audit
  *   engine itself imports no repo-local rule set — the boundary is the hook.
  */
-export function buildRepoIR(
-  profile: DevopsProfile = liteshipDevopsProfile,
-  options: BuildRepoIROptions = {},
-): RepoIR {
+export function buildRepoIR(profile: DevopsProfile = liteshipDevopsProfile, options: BuildRepoIROptions = {}): RepoIR {
   const extraFactOracles = options.extraFactOracles ?? [];
   const records = readProfileSourceFileRecords(profile);
   const packageInfos = listProfilePackageManifests(profile);
@@ -357,9 +350,7 @@ export function buildRepoIR(
 
   // resolved targetFile (repo-relative) → its SourceFileRecord, so import edges
   // only carry a targetFile that is actually IN the IR's file table.
-  const recordByAbsTarget = new Map<string, SourceFileRecord>(
-    records.map((r) => [r.absolutePath, r] as const),
-  );
+  const recordByAbsTarget = new Map<string, SourceFileRecord>(records.map((r) => [r.absolutePath, r] as const));
 
   const tables: Tables = { files: [], symbols: [], imports: [], facts: [], refs: new Map() };
 
@@ -407,9 +398,25 @@ export function buildRepoIR(
         // `{ x as default }`) AND the keyword form — every real default-export
         // site emits the AST-precise fact the Step-3 cross-check triangulates.
         if (sym.kind === 'default-export' || sym.kind === 'export-assignment') {
-          emitFileProxyFact(tables.facts, record.relativePath, line, 'is-default-export', true, 'ts-ast', 'file-proxy-only');
+          emitFileProxyFact(
+            tables.facts,
+            record.relativePath,
+            line,
+            'is-default-export',
+            true,
+            'ts-ast',
+            'file-proxy-only',
+          );
         } else if (sym.kind === 're-export' && sym.name === 'default') {
-          emitFileProxyFact(tables.facts, record.relativePath, line, 'is-default-export', true, 'ts-ast', 'file-proxy-only');
+          emitFileProxyFact(
+            tables.facts,
+            record.relativePath,
+            line,
+            'is-default-export',
+            true,
+            'ts-ast',
+            'file-proxy-only',
+          );
         }
       }
 
@@ -426,8 +433,7 @@ export function buildRepoIR(
           packageExportTargets,
           profile.internalPackagePrefix,
         );
-        const targetRecord =
-          resolved.targetFile !== null ? recordByAbsTarget.get(resolved.targetFile) : undefined;
+        const targetRecord = resolved.targetFile !== null ? recordByAbsTarget.get(resolved.targetFile) : undefined;
 
         const edge: ImportEdge = {
           fromFile: record.relativePath,

@@ -23,10 +23,7 @@
  */
 import ts from 'typescript';
 import type { MutationFacts, MutantOutcome } from '@czap/gauntlet';
-import {
-  generateMutants,
-  type GenerateMutantsOptions,
-} from './mutation-engine.js';
+import { generateMutants, type GenerateMutantsOptions } from './mutation-engine.js';
 import {
   evaluateMutant,
   type CoverageMap,

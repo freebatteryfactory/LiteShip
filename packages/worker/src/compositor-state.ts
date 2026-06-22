@@ -18,11 +18,7 @@
 
 import type { RuntimeCoordinator, ContentAddress } from '@czap/core';
 import { StateName as mkStateName } from '@czap/core';
-import type {
-  WorkerUpdate,
-  BootstrapQuantizerRegistration,
-  ResolvedStateEntry,
-} from './messages.js';
+import type { WorkerUpdate, BootstrapQuantizerRegistration, ResolvedStateEntry } from './messages.js';
 import { makeResolvedStateEnvelope } from './messages.js';
 import type {
   CompositorWorkerState,
@@ -126,10 +122,7 @@ export function createCompositorWorkerState(params: {
     activeRegistrations: new Map(),
     confirmedSnapshotNames: new Set(),
     preparedRegistrationCache: new Map(),
-    startupPacket: createStartupPacketState(
-      bootstrapSnapshot.length > 0 ? 'warm-snapshot' : 'cold',
-      bootstrapSnapshot,
-    ),
+    startupPacket: createStartupPacketState(bootstrapSnapshot.length > 0 ? 'warm-snapshot' : 'cold', bootstrapSnapshot),
     steadyStatePendingUpdates: [],
     flushScheduled: false,
     mode: initialMode(),
@@ -453,10 +446,7 @@ export function bootstrapResolvedState(
 }
 
 /** Mirror resolved quantizer state updates into the worker without raw threshold evaluation. */
-export function applyResolvedState(
-  state: CompositorWorkerRuntimeState,
-  states: readonly ResolvedStateEntry[],
-): void {
+export function applyResolvedState(state: CompositorWorkerRuntimeState, states: readonly ResolvedStateEntry[]): void {
   sendResolvedStateMessage(state, 'apply-resolved-state', states);
 }
 
@@ -536,10 +526,7 @@ export function requestCompute(state: CompositorWorkerRuntimeState): void {
 // ---------------------------------------------------------------------------
 
 /** Subscribe to state updates. Returns an unsubscribe function. */
-export function onState(
-  state: CompositorWorkerRuntimeState,
-  callback: (s: CompositorWorkerState) => void,
-): () => void {
+export function onState(state: CompositorWorkerRuntimeState, callback: (s: CompositorWorkerState) => void): () => void {
   state.stateListeners.add(callback);
   return () => {
     state.stateListeners.delete(callback);
@@ -558,10 +545,7 @@ export function onResolvedStateAck(
 }
 
 /** Subscribe to metrics updates. Returns an unsubscribe function. */
-export function onMetrics(
-  state: CompositorWorkerRuntimeState,
-  callback: (metrics: WorkerMetrics) => void,
-): () => void {
+export function onMetrics(state: CompositorWorkerRuntimeState, callback: (metrics: WorkerMetrics) => void): () => void {
   state.metricsListeners.add(callback);
   return () => {
     state.metricsListeners.delete(callback);

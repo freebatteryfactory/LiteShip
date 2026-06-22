@@ -13,11 +13,7 @@
  */
 
 import { StateName } from '@czap/core';
-import type {
-  WorkerUpdate,
-  BootstrapQuantizerRegistration,
-  StartupComputePacket,
-} from './messages.js';
+import type { WorkerUpdate, BootstrapQuantizerRegistration, StartupComputePacket } from './messages.js';
 import type { StartupPacketState, RuntimeSeedEntry } from './compositor-types.js';
 
 // ---------------------------------------------------------------------------

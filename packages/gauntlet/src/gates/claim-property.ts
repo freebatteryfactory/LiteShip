@@ -414,7 +414,8 @@ function ambientEntropyInDeclaration(text: string, claimLine: number): number | 
  * NOT a boundary, so a `pure` function with an inner helper still has its whole body in
  * span. Mirrors {@link DECLARATION} but anchored to the line start.
  */
-const TOP_LEVEL_DECLARATION = /^(?:export\s+)?(?:default\s+)?(?:function|const|let|var|class|interface|type|enum|namespace)\s/;
+const TOP_LEVEL_DECLARATION =
+  /^(?:export\s+)?(?:default\s+)?(?:function|const|let|var|class|interface|type|enum|namespace)\s/;
 
 function scan(context: GateContext): readonly Finding[] {
   const determinism = determinismConfirmers(context);
@@ -558,7 +559,8 @@ const RED_CONTENT = 'export function canonicalize(x: number): number {\n  return
 const GREEN_DETERMINISTIC = 'export function deterministicFold(): number {\n  return 1;\n}\n';
 const GREEN_DETERMINISTIC_TEST =
   "import { it } from 'vitest';\nit('deterministicFold replays byte-identical', () => {\n  // a determinism/replay proof\n});\n";
-const GREEN_PURE = '/** A pure projection. */\nexport function project(clock: { now(): number }): number {\n  return clock.now();\n}\n';
+const GREEN_PURE =
+  '/** A pure projection. */\nexport function project(clock: { now(): number }): number {\n  return clock.now();\n}\n';
 const GREEN_CONTENT = 'export function canonicalize(x: number): number {\n  return x;\n}\n';
 const GREEN_CONTENT_TEST =
   "import { it } from 'vitest';\nimport { addressedDigestOf } from '@czap/canonical';\nit('canonicalize round-trips: equal value, equal address', () => {\n  void addressedDigestOf;\n});\n";
@@ -591,7 +593,7 @@ export const claimPropertyGate: Gate = defineGate({
     },
     mutation: {
       describe:
-        'A scanner that treats every claim as confirmed (the confirmer always returns ok) catches nothing — the red fixture\'s three unconfirmed claims then go unflagged, so the mutant must DIFFER from the original on the red fixture.',
+        "A scanner that treats every claim as confirmed (the confirmer always returns ok) catches nothing — the red fixture's three unconfirmed claims then go unflagged, so the mutant must DIFFER from the original on the red fixture.",
       mutate: (gate: Gate): Gate => ({
         ...gate,
         run: (context: GateContext): readonly Finding[] => {

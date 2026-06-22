@@ -55,7 +55,10 @@ import { applyMutant } from './mutation-engine.js';
  * it to a temp file and run the suite) and the covering test ids (so it runs only
  * the relevant subset).
  */
-export type MutantTestRunner = (mutatedSource: string, coveringTests: readonly string[]) => { readonly failed: boolean };
+export type MutantTestRunner = (
+  mutatedSource: string,
+  coveringTests: readonly string[],
+) => { readonly failed: boolean };
 
 /**
  * The deterministic covering-tests mapping — `(file, line)` → the sorted, unique
@@ -74,7 +77,9 @@ export interface CoverageMap {
  * of the relation's input order. The host supplies the relation from its coverage
  * tool; this composer makes it deterministic.
  */
-export function makeCoverageMap(relation: readonly { readonly file: string; readonly line: number; readonly testId: string }[]): CoverageMap {
+export function makeCoverageMap(
+  relation: readonly { readonly file: string; readonly line: number; readonly testId: string }[],
+): CoverageMap {
   const byKey = new Map<string, Set<string>>();
   for (const { file, line, testId } of relation) {
     const key = `${file}${line}`;
@@ -83,7 +88,11 @@ export function makeCoverageMap(relation: readonly { readonly file: string; read
     byKey.set(key, set);
   }
   const resolved = new Map<string, readonly string[]>();
-  for (const [key, set] of byKey) resolved.set(key, [...set].sort((a, b) => a.localeCompare(b)));
+  for (const [key, set] of byKey)
+    resolved.set(
+      key,
+      [...set].sort((a, b) => a.localeCompare(b)),
+    );
   return {
     covering(file: string, line: number): readonly string[] {
       return resolved.get(`${file}${line}`) ?? [];
@@ -224,7 +233,11 @@ const RECORD = '';
  * over the SORTED test ids (so insertion order never forks the key), routed through
  * the same `addressedDigestOf` content-addressing the engine uses.
  */
-export function mutantVerdictKey(mutant: MutantCore, coveringTests: readonly string[], toolchainDigest: string): string {
+export function mutantVerdictKey(
+  mutant: MutantCore,
+  coveringTests: readonly string[],
+  toolchainDigest: string,
+): string {
   const coveringDigest = addressedDigestOf(
     CanonicalCbor.encode([...coveringTests].sort((a, b) => a.localeCompare(b))),
     'blake3',
@@ -244,7 +257,10 @@ export function mutantVerdictKey(mutant: MutantCore, coveringTests: readonly str
  * cache stores only the verdict TAG (the mutant + covering tests are re-resolved
  * from the inputs, so the cache is a pure speedup, never the source of truth).
  */
-export function evaluateMutant<M extends MutantCore = Mutant>(mutant: M, options: EvaluateMutantOptions): MutantVerdict<M> {
+export function evaluateMutant<M extends MutantCore = Mutant>(
+  mutant: M,
+  options: EvaluateMutantOptions,
+): MutantVerdict<M> {
   // The EQUIVALENT registry is consulted FIRST — a registered-equivalent mutant is
   // behaviour-identical regardless of coverage, so neither the coverage map nor the
   // runner has anything to decide. The match is on the mutant's content address (the
@@ -290,7 +306,11 @@ export function evaluateMutant<M extends MutantCore = Mutant>(mutant: M, options
  * digest supplied). Armed iff a toolchain digest is present — never a key without
  * the anti-lie keystone.
  */
-function cacheKeyFor(mutant: MutantCore, coveringTests: readonly string[], options: EvaluateMutantOptions): string | null {
+function cacheKeyFor(
+  mutant: MutantCore,
+  coveringTests: readonly string[],
+  options: EvaluateMutantOptions,
+): string | null {
   if (options.toolchainDigest === undefined) return null;
   return mutantVerdictKey(mutant, coveringTests, options.toolchainDigest);
 }
@@ -302,7 +322,11 @@ function cacheKeyFor(mutant: MutantCore, coveringTests: readonly string[], optio
  * even resolved, so EITHER of those tags here is an impossible cache state — a tagged
  * invariant violation, never a silent coercion.
  */
-function rehydrate<M extends MutantCore>(tag: MutantVerdict['_tag'], mutant: M, coveringTests: readonly string[]): MutantVerdict<M> {
+function rehydrate<M extends MutantCore>(
+  tag: MutantVerdict['_tag'],
+  mutant: M,
+  coveringTests: readonly string[],
+): MutantVerdict<M> {
   if (tag === 'killed') return { _tag: 'killed', mutant, coveringTests };
   if (tag === 'survived') return { _tag: 'survived', mutant, coveringTests };
   throw InvariantViolationError(

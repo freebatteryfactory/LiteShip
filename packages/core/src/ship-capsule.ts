@@ -158,7 +158,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * required to be PRESENT and a finite number (a string/absent version is a shape
  * failure, not a version failure).
  */
-const isWellShaped = (value: unknown): value is Omit<ShipCapsuleShape, 'schema_version'> & { schema_version: number } => {
+const isWellShaped = (
+  value: unknown,
+): value is Omit<ShipCapsuleShape, 'schema_version'> & { schema_version: number } => {
   if (!isRecord(value)) return false;
   for (const k of REQUIRED_KEYS) {
     if (!(k in value)) return false;

@@ -319,7 +319,11 @@ export interface StandardsIntegrityFacts {
    * always-blocking weakening (the skip/placeholder floor). VOID: it errors AND the
    * weakening it tried to cover stays in {@link unsignedWeakenings}.
    */
-  readonly forbiddenSignoffs: readonly { readonly elementKey: string; readonly owner: string; readonly detail: string }[];
+  readonly forbiddenSignoffs: readonly {
+    readonly elementKey: string;
+    readonly owner: string;
+    readonly detail: string;
+  }[];
   /** EXPIRED sign-offs — a sign-off whose expiry is past the injected date (the weakening re-reds). */
   readonly expiredSignoffs: readonly { readonly elementKey: string; readonly owner: string; readonly expiry: string }[];
   /** The committed snapshot's address + the live surface's address (the drift keystone, carried for the report). */

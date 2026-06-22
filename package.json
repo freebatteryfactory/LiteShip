@@ -94,6 +94,7 @@
   "devDependencies": {
     "@czap/astro": "workspace:*",
     "@czap/audit": "workspace:*",
+    "@czap/error": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/core": "workspace:*",
     "@czap/detect": "workspace:*",

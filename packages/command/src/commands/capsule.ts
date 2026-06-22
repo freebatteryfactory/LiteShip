@@ -12,7 +12,13 @@ import { capabilityUnavailable, type CommandCapability, type HandledCommand } fr
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload: { error },
+  };
 }
 
 /** `<verb> <id>` args — the single source of the inspect/verify `inputSchema`. */

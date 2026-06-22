@@ -256,7 +256,10 @@ function orphanFact(name: string, isOrphan: boolean, externalReferenceCount: num
 }
 
 /** The SymbolNode for `name` in `DECL_FILE` (so the `refs` key is a known SymbolId). */
-function declSymbol(name: string, line: number): {
+function declSymbol(
+  name: string,
+  line: number,
+): {
   id: SymbolId;
   name: string;
   kind: 'const';

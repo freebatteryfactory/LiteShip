@@ -118,10 +118,7 @@ function scriptSnapshot(text: string): ts.IScriptSnapshot {
  * {@link typeDirectedCompilerOptions}'s `paths`, so cross-package references
  * resolve to source.
  */
-function makeLanguageServiceHost(
-  records: readonly SourceFileRecord[],
-  baseUrl: string,
-): ts.LanguageServiceHost {
+function makeLanguageServiceHost(records: readonly SourceFileRecord[], baseUrl: string): ts.LanguageServiceHost {
   // The script set is the absolute paths of the corpus, plus the lib files the
   // resolver pulls in transitively. The default compiler host supplies lib reads.
   const options = typeDirectedCompilerOptions(baseUrl);
@@ -191,9 +188,7 @@ function collectExportSites(record: SourceFileRecord): readonly ExportSite[] {
       ts.isExportAssignment(node);
     if (
       isExportable &&
-      (hasModifier(node, ts.SyntaxKind.ExportKeyword) ||
-        ts.isExportDeclaration(node) ||
-        ts.isExportAssignment(node))
+      (hasModifier(node, ts.SyntaxKind.ExportKeyword) || ts.isExportDeclaration(node) || ts.isExportAssignment(node))
     ) {
       for (const symbol of exportedNamesFromNode(node)) {
         const { line } = sourceFile.getLineAndCharacterOfPosition(symbol.pos);
@@ -221,11 +216,7 @@ function collectExportSites(record: SourceFileRecord): readonly ExportSite[] {
  * symbol with zero external references is an orphan (no in-repo cross-file
  * consumer resolves to it).
  */
-function countExternalReferences(
-  service: ts.LanguageService,
-  site: ExportSite,
-  declAbsolute: string,
-): number {
+function countExternalReferences(service: ts.LanguageService, site: ExportSite, declAbsolute: string): number {
   const references = service.getReferencesAtPosition(site.absolutePath, site.pos);
   if (references === undefined) return 0;
   let external = 0;
@@ -314,10 +305,7 @@ export function symbolReferenceOracle(input: SymbolReferenceOracleInput = {}): r
   // Deterministic ordering: file, then line, then property (so the two facts per
   // symbol sit together in a stable order). Mirrors buildRepoIR's fact sort.
   facts.sort(
-    (a, b) =>
-      a.file.localeCompare(b.file) ||
-      (a.line ?? 0) - (b.line ?? 0) ||
-      a.property.localeCompare(b.property),
+    (a, b) => a.file.localeCompare(b.file) || (a.line ?? 0) - (b.line ?? 0) || a.property.localeCompare(b.property),
   );
   return facts;
 }
@@ -347,7 +335,11 @@ export function asOrphanValue(value: unknown): OrphanValue | undefined {
     typeof candidate.isOrphan === 'boolean' &&
     typeof candidate.externalReferenceCount === 'number'
   ) {
-    return { name: candidate.name, isOrphan: candidate.isOrphan, externalReferenceCount: candidate.externalReferenceCount };
+    return {
+      name: candidate.name,
+      isOrphan: candidate.isOrphan,
+      externalReferenceCount: candidate.externalReferenceCount,
+    };
   }
   return undefined;
 }

@@ -43,7 +43,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-nondeterminism',
     file: 'packages/core/src/clock.ts',
-    line: 61,
+    line: 60,
     owner: 'heyoub',
     reason:
       'systemClock — the declared MONOTONIC entropy boundary (performance.now, with a Date.now fallback for perf-stripped workers/SSR; this flagged line IS that fallback). The sole sanctioned monotonic time read for durations; every elapsed-time path threads an injected Clock defaulting here, so duration logic is deterministic under a manualClock. Centralizing the read is the cure.',
@@ -55,7 +55,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-nondeterminism',
     file: 'packages/core/src/clock.ts',
-    line: 78,
+    line: 77,
     owner: 'heyoub',
     reason:
       'wallClock — the declared EPOCH wall-clock entropy boundary (Date.now). The sole sanctioned epoch read for timestamps/HLC wall_ms/time-range checks; every timestamp path threads an injected Clock defaulting here, so timestamps and HLC ordering are deterministic under a fixedClock. Splitting epoch (wallClock) from monotonic (systemClock) is what prevents the perf.now-as-timestamp laundering bug. Centralizing the read is the cure.',

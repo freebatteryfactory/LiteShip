@@ -76,7 +76,8 @@ function scan(context: GateContext): readonly Finding[] {
 export const noSkippedTestGate: Gate = defineGate({
   id: 'gauntlet/no-skipped-test',
   level: 'L2',
-  describe: 'Flags skipped tests (`it.skip(` / `test.skip(` / `.todo(` / `xit(`) — a skip ships green while proving nothing.',
+  describe:
+    'Flags skipped tests (`it.skip(` / `test.skip(` / `.todo(` / `xit(`) — a skip ships green while proving nothing.',
   run: scan,
   fixtures: {
     red: {

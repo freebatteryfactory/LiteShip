@@ -13,6 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { bootstrapDirectives, scanAndBootDirectives } from '../../packages/astro/src/runtime/directive-boot.js';
+import { installSwapPipeline } from '../../packages/astro/src/runtime/swap-pipeline.js';
 
 // Failure-path stand-in: the llm directive throws on init so the scanner's
 // transient-failure handling (unmark + diagnostic) is testable.
@@ -58,6 +59,7 @@ describe('directive boot scanner', () => {
       element.dispatchEvent(new CustomEvent('czap:teardown'));
     });
     delete (window as Window & { __CZAP_DIRECTIVE_BOOTSTRAPPED__?: boolean }).__CZAP_DIRECTIVE_BOOTSTRAPPED__;
+    delete (window as Window & { __CZAP_SWAP_PIPELINE__?: boolean }).__CZAP_SWAP_PIPELINE__;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     document.body.innerHTML = '';
@@ -127,11 +129,19 @@ describe('directive boot scanner', () => {
     expect(el.getAttribute('data-czap-state')).toBeNull();
   });
 
-  test('bootstrapDirectives re-scans swapped-in DOM on astro:after-swap', async () => {
+  test('the swap pipeline re-scans swapped-in DOM on astro:after-swap (the View-Transitions survival contract)', async () => {
     vi.stubGlobal('innerWidth', 500);
+    // The production boot script (integration.ts) wires BOTH the initial scan
+    // (bootstrapDirectives) AND the single ordered after-swap pipeline
+    // (installSwapPipeline). The post-swap re-scan is step 2 of that pipeline
+    // (rescanSlots → bootDirectives → reinitDirectives), NOT a listener that
+    // bootstrapDirectives registers itself. Mirror the real wiring here.
     bootstrapDirectives(['satellite']);
+    installSwapPipeline(['satellite']);
 
-    // Fresh server HTML arrives via View Transitions: no bound attribute.
+    // Fresh server HTML arrives via View Transitions: no bound attribute. Astro
+    // does NOT re-execute page scripts on a swap, so the pipeline's after-swap
+    // listener is the only thing that boots these freshly swapped-in directives.
     document.body.innerHTML = '';
     const swapped = makeMarkedElement({ 'data-czap-boundary': boundary, 'data-czap-directive': 'satellite' });
     document.dispatchEvent(new Event('astro:after-swap'));

@@ -213,7 +213,13 @@ function irContext(ir: RepoIR): GateContext {
 }
 
 /** A `(file, line)` `property` fact from `oracleId` with `coverageClass`. */
-function propFact(spec: OracleDivergenceSpec, file: string, line: number, oracleId: string, coverageClass: CoverageClass): Fact {
+function propFact(
+  spec: OracleDivergenceSpec,
+  file: string,
+  line: number,
+  oracleId: string,
+  coverageClass: CoverageClass,
+): Fact {
   return { file, line, property: spec.property, value: true, oracleId, coverageClass };
 }
 
@@ -224,7 +230,14 @@ function propFact(spec: OracleDivergenceSpec, file: string, line: number, oracle
  * oracle, its value naming the rule.
  */
 function excludedMarker(spec: OracleDivergenceSpec, file: string, ruleName: string): Fact {
-  return { file, line: 1, property: spec.excludedMarkerProperty, value: ruleName, oracleId: REGEX_ORACLE, coverageClass: REGEX_CLASS };
+  return {
+    file,
+    line: 1,
+    property: spec.excludedMarkerProperty,
+    value: ruleName,
+    oracleId: REGEX_ORACLE,
+    coverageClass: REGEX_CLASS,
+  };
 }
 
 /** A fixtures-only file id under `packages/x/src/`. */

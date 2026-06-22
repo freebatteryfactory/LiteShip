@@ -61,9 +61,7 @@ export const LADDER_RUNGS = LADDER_TARGETS.length;
  * @throws if `order.length !== LADDER_RUNGS` — a vocabulary with the wrong rung
  * count cannot be a faithful projection of the ladder, so the mismatch is loud.
  */
-export function projectLadder<Label extends string>(
-  order: readonly Label[],
-): Record<Label, ReadonlySet<LadderTarget>> {
+export function projectLadder<Label extends string>(order: readonly Label[]): Record<Label, ReadonlySet<LadderTarget>> {
   if (order.length !== LADDER_RUNGS) {
     throw InvariantViolationError(
       'cap-ladder.projectLadder',

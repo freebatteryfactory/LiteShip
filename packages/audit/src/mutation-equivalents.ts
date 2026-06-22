@@ -144,7 +144,9 @@ function requireInt(value: unknown, field: string, index: number): number {
 /** Validate one raw entry into an {@link EquivalentMutantEntry}. */
 function parseEntry(raw: unknown, index: number): EquivalentMutantEntry {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    throw ParseError('mutation-equivalents', `equivalent-mutant entry #${index} must be an object`, { code: 'malformed' });
+    throw ParseError('mutation-equivalents', `equivalent-mutant entry #${index} must be an object`, {
+      code: 'malformed',
+    });
   }
   const r = raw as Record<string, unknown>;
   return {

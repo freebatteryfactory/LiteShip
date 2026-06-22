@@ -154,10 +154,7 @@ function survivorFinding(outcome: MutantOutcome, level: AssuranceLevel): Finding
  * skipped here (its first measurement establishes the baseline; it is not a
  * regression).
  */
-function ratchetFindings(
-  facts: MutationFacts,
-  levels: ReadonlyMap<string, AssuranceLevel>,
-): readonly Finding[] {
+function ratchetFindings(facts: MutationFacts, levels: ReadonlyMap<string, AssuranceLevel>): readonly Finding[] {
   const measured = measuredScores(facts.outcomes);
   const findings: Finding[] = [];
   for (const file of [...measured.keys()].sort((a, b) => a.localeCompare(b))) {
@@ -318,7 +315,7 @@ const FIXTURES = {
   },
   mutation: {
     describe:
-      'A mutant gate that ignores the verdict and reports EVERY mutant as a survivor fires on the green fixture\'s killed mutant — green is no longer clean and the mutant is killed.',
+      "A mutant gate that ignores the verdict and reports EVERY mutant as a survivor fires on the green fixture's killed mutant — green is no longer clean and the mutant is killed.",
     mutate: (gate: Gate): Gate => ({
       ...gate,
       run: (context: GateContext): readonly Finding[] => {
@@ -343,7 +340,7 @@ export const mutationDivergenceGate: Gate = defineGate({
   id: GATE_ID,
   level: 'L4',
   describe:
-    'Reports each surviving or no-coverage mutant as a coverage divergence at the file\'s propagated assurance level (kill-floor by level decides blocking), plus a per-file mutation-score-ratchet regression. Folds host-injected MutationFacts. Reports, never decides.',
+    "Reports each surviving or no-coverage mutant as a coverage divergence at the file's propagated assurance level (kill-floor by level decides blocking), plus a per-file mutation-score-ratchet regression. Folds host-injected MutationFacts. Reports, never decides.",
   run: foldMutation,
   fixtures: FIXTURES,
 });

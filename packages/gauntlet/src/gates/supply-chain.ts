@@ -32,10 +32,7 @@
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
-import type {
-  SupplyChainFacts,
-  SupplyChainViolation,
-} from '../supply-chain-facts.js';
+import type { SupplyChainFacts, SupplyChainViolation } from '../supply-chain-facts.js';
 
 const RULE_NS = 'gauntlet/supply-chain';
 
@@ -171,7 +168,8 @@ const DIRTY_FACTS: SupplyChainFacts = {
       {
         code: 'lockfile-address-drift',
         subject: '@czap/example',
-        detail: "the ShipCapsule's recorded lockfile_address does not equal the live pnpm-lock.yaml address — the release was built from a drifted tree.",
+        detail:
+          "the ShipCapsule's recorded lockfile_address does not equal the live pnpm-lock.yaml address — the release was built from a drifted tree.",
       },
     ],
   },
@@ -181,7 +179,8 @@ const DIRTY_FACTS: SupplyChainFacts = {
       {
         code: 'ambient-publish-token',
         subject: '.github/workflows/release.yml',
-        detail: 'references a long-lived NPM_TOKEN secret — ambient publish authority; the OIDC trusted-publishing invariant requires the short-lived id-token only.',
+        detail:
+          'references a long-lived NPM_TOKEN secret — ambient publish authority; the OIDC trusted-publishing invariant requires the short-lived id-token only.',
       },
     ],
   },

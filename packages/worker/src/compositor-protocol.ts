@@ -161,8 +161,7 @@ export function reduceWorkerMessage(
       }
 
       const effects: ProtocolEffect[] = [];
-      const dispatchCompletedNs =
-        state.mode._tag === 'steady' ? state.mode.resolvedStateDispatchCompletedNs! : 0;
+      const dispatchCompletedNs = state.mode._tag === 'steady' ? state.mode.resolvedStateDispatchCompletedNs! : 0;
       const eventStartNs = currentTimeNs();
       effects.push({
         _tag: 'diagnostic-stage',
@@ -230,10 +229,7 @@ export function reduceWorkerMessage(
 // ---------------------------------------------------------------------------
 
 /** Perform the host-facing IO described by a list of {@link ProtocolEffect}s. */
-export function applyProtocolEffects(
-  state: CompositorWorkerRuntimeState,
-  effects: readonly ProtocolEffect[],
-): void {
+export function applyProtocolEffects(state: CompositorWorkerRuntimeState, effects: readonly ProtocolEffect[]): void {
   for (const effect of effects) {
     switch (effect._tag) {
       case 'diagnostic-stage':

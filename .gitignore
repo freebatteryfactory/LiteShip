@@ -45,6 +45,14 @@ benchmarks/*
 # mutationDivergenceGate folds it to flag a regression). A committed contract, not
 # a regenerated artifact — tracked so the ratchet can only ever rise.
 !benchmarks/mutation-score.json
+# …and the equivalent-mutant registry (the hand-authored, owner-redlinable,
+# content-addressed justifications for the few RUNTIME mutants no test can kill —
+# the ONLY honest way to exclude an equivalent mutant). A source-of-truth contract,
+# not a regenerated artifact: the engine + the meta-proof test read these committed
+# bytes, so it must be present on EVERY CI lane (it was previously ignored, so a
+# fresh macos/windows checkout lacked it and the meta-proof's committed-registry
+# assertion failed with ENOENT — only the linux lane regenerated it pre-test).
+!benchmarks/mutation-equivalents.json
 reports/
 .vitest-attachments/
 lint-report.json

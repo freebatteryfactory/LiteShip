@@ -251,7 +251,7 @@ const FIXTURES = {
   },
   mutation: {
     describe:
-      'A gate that ignores the pin verdicts and reports EVERY condition as uncovered fires on the green fixture\'s fully-covered condition — green is no longer clean and the mutant is killed.',
+      "A gate that ignores the pin verdicts and reports EVERY condition as uncovered fires on the green fixture's fully-covered condition — green is no longer clean and the mutant is killed.",
     mutate: (gate: Gate): Gate => ({
       ...gate,
       run: (context: GateContext): readonly Finding[] => {
@@ -277,7 +277,7 @@ export const mcdcCoverageGate: Gate = defineGate({
   id: GATE_ID,
   level: 'L4',
   describe:
-    'Reports each atomic condition whose independent effect is NOT MC/DC-observed (a surviving force-true/force-false condition-mutant) as a coverage gap at the file\'s propagated assurance level (MC/DC floor by level decides blocking; L4 requires full MC/DC — DO-178B Level A). Folds host-injected McdcFacts. Reports, never decides.',
+    "Reports each atomic condition whose independent effect is NOT MC/DC-observed (a surviving force-true/force-false condition-mutant) as a coverage gap at the file's propagated assurance level (MC/DC floor by level decides blocking; L4 requires full MC/DC — DO-178B Level A). Folds host-injected McdcFacts. Reports, never decides.",
   run: foldMcdc,
   fixtures: FIXTURES,
 });

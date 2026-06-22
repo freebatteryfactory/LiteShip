@@ -70,8 +70,7 @@ function resolveExecutable(command: string): string {
 
 function run(command: string, args: readonly string[], cwd: string): string {
   const executable = resolveExecutable(command);
-  const commandArgs =
-    command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
+  const commandArgs = command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
   return execFileSync(executable, commandArgs, {
     cwd,
     encoding: 'utf8',
@@ -232,7 +231,10 @@ async function packPackage(cwd: string, tarballDir: string): Promise<string> {
   const after = await readdir(tarballDir);
   const created = after.filter((entry) => !before.has(entry) && entry.endsWith('.tgz'));
   if (created.length !== 1) {
-    throw InvariantViolationError('package-smoke pack output', `Expected exactly one tarball from ${cwd}, found ${created.length}.`);
+    throw InvariantViolationError(
+      'package-smoke pack output',
+      `Expected exactly one tarball from ${cwd}, found ${created.length}.`,
+    );
   }
   return join(tarballDir, created[0]!);
 }

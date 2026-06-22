@@ -286,7 +286,9 @@ export function computeHeatmap(inputs: HeatmapInputs): AmbitionProofHeatmap {
 
   // Rank hottest first; ties break by file id — a TOTAL, stable order so the artifact
   // is byte-identical across runs (the determinism rail).
-  hotSpots.sort((a, b) => (b.hotness !== a.hotness ? b.hotness - a.hotness : a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
+  hotSpots.sort((a, b) =>
+    b.hotness !== a.hotness ? b.hotness - a.hotness : a.file < b.file ? -1 : a.file > b.file ? 1 : 0,
+  );
 
   return { format: HEATMAP_FORMAT, advisory: true, hotSpots };
 }

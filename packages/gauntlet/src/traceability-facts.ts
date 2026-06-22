@@ -43,11 +43,7 @@ import type { AssuranceLevel } from './assurance.js';
  * - `expired`: a waiver covered it but its expiry is past the injected wall-clock
  *   date — the debt came due. → a finding (the waiver lost its teeth).
  */
-export type InvariantState =
-  | InvariantProven
-  | InvariantUntraced
-  | InvariantWaived
-  | InvariantExpired;
+export type InvariantState = InvariantProven | InvariantUntraced | InvariantWaived | InvariantExpired;
 
 /** PROVEN — a claimed test exists and carries the matching `PROVES` header. */
 export interface InvariantProven {

@@ -239,22 +239,23 @@ function _deriveArrays(ast: SchemaAST.Arrays): JsonSchemaFragment {
  */
 function _deriveObject(ast: SchemaAST.Objects): JsonSchemaObject {
   if (ast.indexSignatures.length > 0) {
-    throw unsupported('Objects', 'index signatures have no structural-dialect representation (no additionalProperties)');
+    throw unsupported(
+      'Objects',
+      'index signatures have no structural-dialect representation (no additionalProperties)',
+    );
   }
   const properties: Record<string, JsonSchemaFragment> = {};
   const required: string[] = [];
   for (const ps of ast.propertySignatures) {
     const key = String(ps.name);
     const isOptional = ps.type.context?.isOptional === true;
-    const fieldAst = isOptional ? _optionalInner(ps.type) ?? ps.type : ps.type;
+    const fieldAst = isOptional ? (_optionalInner(ps.type) ?? ps.type) : ps.type;
     properties[key] = _derive(fieldAst);
     if (!isOptional) required.push(key);
   }
   // Stable, source-order properties; `required` only when non-empty (matches the
   // hand-written command outputSchemas, which omit `required` when all-optional).
-  return required.length > 0
-    ? { type: 'object', properties, required }
-    : { type: 'object', properties };
+  return required.length > 0 ? { type: 'object', properties, required } : { type: 'object', properties };
 }
 
 /** Recursive AST → JSON-Schema-fragment walk. Throws `UnsupportedError` on any
@@ -314,10 +315,7 @@ function _derive(ast: SchemaAST.AST): JsonSchemaFragment {
 export function schemaToJsonSchema<T>(schema: Schema.Schema<T>): JsonSchemaObject {
   const ast = schema.ast;
   if (ast._tag !== 'Objects') {
-    throw unsupported(
-      ast._tag,
-      'a command I/O schema must be a Schema.Struct (object) at the top level',
-    );
+    throw unsupported(ast._tag, 'a command I/O schema must be a Schema.Struct (object) at the top level');
   }
   return _deriveObject(ast as SchemaAST.Objects);
 }

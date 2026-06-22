@@ -89,13 +89,7 @@
 import ts from 'typescript';
 import { resolve } from 'node:path';
 import { InvariantViolationError } from '@czap/error';
-import type {
-  TaintFacts,
-  TaintFlow,
-  TaintEndpoint,
-  SanitizerSite,
-  TaintPathStep,
-} from '@czap/gauntlet';
+import type { TaintFacts, TaintFlow, TaintEndpoint, SanitizerSite, TaintPathStep } from '@czap/gauntlet';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import { readProfileSourceFileRecords } from './shared.js';
@@ -298,12 +292,7 @@ function asSanitizer(ctx: TraceCtx, call: ts.CallExpression): SanitizerSite | nu
  * records a SANITIZER break. Returns {@link CLEAN} for anything it cannot tie to a
  * source (never a false "tainted").
  */
-function traceExpression(
-  ctx: TraceCtx,
-  expr: ts.Expression,
-  hopsLeft: number,
-  state: TraceState,
-): TaintResult {
+function traceExpression(ctx: TraceCtx, expr: ts.Expression, hopsLeft: number, state: TraceState): TaintResult {
   const node = unwrap(expr);
 
   // ── A direct SOURCE call: `fetch(u)`, `readFileSync(p)` ──────────────────
@@ -419,12 +408,7 @@ function traceExpression(
  * reassignment (a binding's initializer AND any `x = …` assignment are possible
  * sources): sound for FINDING a flow, never a missed-because-of-order false clean.
  */
-function traceIdentifier(
-  ctx: TraceCtx,
-  id: ts.Identifier,
-  hopsLeft: number,
-  state: TraceState,
-): TaintResult {
+function traceIdentifier(ctx: TraceCtx, id: ts.Identifier, hopsLeft: number, state: TraceState): TaintResult {
   const symbol = ctx.checker.getSymbolAtLocation(id);
   if (symbol === undefined) return CLEAN;
   const decls = symbol.declarations ?? [];
@@ -575,12 +559,7 @@ function traceAssignmentsTo(
  * the declaration is a function/arrow/method in the corpus, traces each `return`
  * expression. Returns the first tainted/sanitized return; CLEAN otherwise.
  */
-function hopIntoCallee(
-  ctx: TraceCtx,
-  call: ts.CallExpression,
-  hopsLeft: number,
-  state: TraceState,
-): TaintResult {
+function hopIntoCallee(ctx: TraceCtx, call: ts.CallExpression, hopsLeft: number, state: TraceState): TaintResult {
   const symbol = ctx.checker.getSymbolAtLocation(call.expression);
   if (symbol === undefined) return CLEAN;
   const decls = symbol.declarations ?? [];
@@ -750,10 +729,7 @@ function buildCallerIndex(
  * @param registry The host-injected source/sink/sanitizer classification.
  * @param options  The profile seam + the interprocedural depth bound.
  */
-export function buildRepoIRTaint(
-  registry: TaintRegistry,
-  options: BuildRepoIRTaintOptions = {},
-): TaintFacts {
+export function buildRepoIRTaint(registry: TaintRegistry, options: BuildRepoIRTaintOptions = {}): TaintFacts {
   const profile = options.profile ?? liteshipDevopsProfile;
   const maxHops = options.interproceduralDepth ?? DEFAULT_TAINT_INTERPROCEDURAL_DEPTH;
   if (!Number.isInteger(maxHops) || maxHops < 0) {

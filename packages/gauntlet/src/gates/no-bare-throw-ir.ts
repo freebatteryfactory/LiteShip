@@ -84,7 +84,8 @@ function irWithBareThrow(file: string, line: number): RepoIR {
 export const noBareThrowIRGate: Gate = defineGate({
   id: RULE_ID,
   level: 'L1',
-  describe: 'Flags bare `throw new Error(...)` by folding the IR\'s AST-precise `bare-throw` facts (the IR-fold twin of no-bare-throw).',
+  describe:
+    "Flags bare `throw new Error(...)` by folding the IR's AST-precise `bare-throw` facts (the IR-fold twin of no-bare-throw).",
   run: fold,
   fixtures: {
     red: {
@@ -98,14 +99,21 @@ export const noBareThrowIRGate: Gate = defineGate({
           files: [{ id: 'good.ts', contentDigest: 'placeholder:no-content-address', packageName: null }],
           // A non-bare-throw fact (a different property) must NOT be folded.
           facts: [
-            { file: 'good.ts', line: 1, property: 'is-default-export', value: true, oracleId: 'ts-ast', coverageClass: 'file-proxy-only' },
+            {
+              file: 'good.ts',
+              line: 1,
+              property: 'is-default-export',
+              value: true,
+              oracleId: 'ts-ast',
+              coverageClass: 'file-proxy-only',
+            },
           ],
         }),
       ),
     },
     mutation: {
       describe:
-        'A mutant that folds facts WITHOUT checking the property (counts every fact as a bare-throw) flags the green IR\'s is-default-export fact — the green fixture must then go red and kill it.',
+        "A mutant that folds facts WITHOUT checking the property (counts every fact as a bare-throw) flags the green IR's is-default-export fact — the green fixture must then go red and kill it.",
       mutate: (gate: Gate): Gate => ({
         ...gate,
         run: (context: GateContext): readonly Finding[] => {

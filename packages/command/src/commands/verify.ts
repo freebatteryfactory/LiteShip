@@ -21,11 +21,7 @@ type Verdict = 'Verified' | 'Mismatch' | 'Incomplete' | 'Unknown';
  * derived `Schema.Type` of this struct.
  */
 const VerifyChecksSchema = Schema.Struct({
-  tarball_manifest: Schema.Union([
-    Schema.Literal('match'),
-    Schema.Literal('mismatch'),
-    Schema.Literal('skipped'),
-  ]),
+  tarball_manifest: Schema.Union([Schema.Literal('match'), Schema.Literal('mismatch'), Schema.Literal('skipped')]),
   lockfile: Schema.Literal('skipped'),
   workspace_manifest: Schema.Literal('skipped'),
   chain_link: Schema.Literal('skipped'),
@@ -72,7 +68,13 @@ function verdictResult(
 }
 
 function plainError(error: string): CapsuleCommandResult {
-  return { status: 'failed', command: 'verify', timestamp: new Date(wallClock.now()).toISOString(), exitCode: 1, payload: { error } };
+  return {
+    status: 'failed',
+    command: 'verify',
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode: 1,
+    payload: { error },
+  };
 }
 
 /** `verify <tarball> [--capsule <file>]` — emit one of four verdicts. */
@@ -80,9 +82,7 @@ export const verifyCommand: HandledCommand = {
   descriptor: {
     name: 'verify',
     summary: 'Locally verify a tarball against its ShipCapsule (ADR-0011; no network).',
-    inputSchema: schemaToJsonSchema(
-      Schema.Struct({ tarball: Schema.String, capsule: Schema.optional(Schema.String) }),
-    ),
+    inputSchema: schemaToJsonSchema(Schema.Struct({ tarball: Schema.String, capsule: Schema.optional(Schema.String) })),
     outputSchema: schemaToJsonSchema(VerifyPayloadSchema),
     annotations: { readOnly: true, group: 'ship' },
   },

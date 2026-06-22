@@ -13,11 +13,7 @@ import { capabilityUnavailable, type CommandCapability, type HandledCommand } fr
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
 /** The audio projection literal-set — single source of the `projection` enum. */
-const ProjectionSchema = Schema.Union([
-  Schema.Literal('beat'),
-  Schema.Literal('onset'),
-  Schema.Literal('waveform'),
-]);
+const ProjectionSchema = Schema.Union([Schema.Literal('beat'), Schema.Literal('onset'), Schema.Literal('waveform')]);
 type Projection = Schema.Schema.Type<typeof ProjectionSchema>;
 
 /**
@@ -41,7 +37,13 @@ const AssetVerifyPayloadSchema = Schema.Struct({
 });
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date(wallClock.now()).toISOString(), exitCode, payload: { error } };
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload: { error },
+  };
 }
 
 /** `asset analyze <id> --projection=<beat|onset|waveform>`. */

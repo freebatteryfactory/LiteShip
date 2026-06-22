@@ -110,14 +110,16 @@ const DOC_CLAIM = new RegExp(`\\b(?:${DOC_KEYWORD_ALTERNATION})\\b`, 'i');
  * distinct words and `hotpath` never aligns.
  */
 function identifierWords(name: string): readonly string[] {
-  return name
-    // insert a break between a lower/digit and an upper (camelCase), and between
-    // an acronym run and a TitleCase word (e.g. `HTMLParser` → `HTML`,`Parser`).
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .split(/[\s_$-]+/)
-    .map((w) => w.toLowerCase())
-    .filter((w) => w.length > 0);
+  return (
+    name
+      // insert a break between a lower/digit and an upper (camelCase), and between
+      // an acronym run and a TitleCase word (e.g. `HTMLParser` → `HTML`,`Parser`).
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+      .split(/[\s_$-]+/)
+      .map((w) => w.toLowerCase())
+      .filter((w) => w.length > 0)
+  );
 }
 
 /**
@@ -403,14 +405,18 @@ function scan(context: GateContext): readonly Finding[] {
 // Fixtures — the authority ratchet's evidence. All in-memory; no filesystem.
 // ---------------------------------------------------------------------------
 
-const RED_SOURCE =
-  '/** A lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
-const GREEN_SOURCE =
-  '/** A benched lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
+const RED_SOURCE = '/** A lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
+const GREEN_SOURCE = '/** A benched lookup. */\nexport function fastPath(): number {\n  return 1;\n}\n';
 const GREEN_DISTRIBUTIONS = JSON.stringify({
   schemaVersion: 1,
   distributions: [
-    { name: 'fastPath -- single call', file: 'tests/bench/widget.bench.ts', inputSize: 1, shape: 'single-call', replicates: 1 },
+    {
+      name: 'fastPath -- single call',
+      file: 'tests/bench/widget.bench.ts',
+      inputSize: 1,
+      shape: 'single-call',
+      replicates: 1,
+    },
   ],
 });
 

@@ -36,13 +36,7 @@ import {
   type LockfilePolicy,
   type PublishedImporters,
 } from './supply-chain-policy.js';
-import {
-  generateSbom,
-  serializeSbom,
-  sbomAddress,
-  type Sbom,
-  type WorkspaceComponentInput,
-} from './sbom.js';
+import { generateSbom, serializeSbom, sbomAddress, type Sbom, type WorkspaceComponentInput } from './sbom.js';
 
 /** A workspace package the analyzer was handed (name + version + private flag + importer path). */
 export interface WorkspacePkg {
@@ -157,10 +151,7 @@ const SHA1_RE = /^[0-9a-f]{40}$/;
  * kernel `czap ship`'s `lockfileAddress` uses, so a match is a real byte-identity
  * proof, never a re-implemented mirror.
  */
-export function validateProvenance(
-  capsule: ShipCapsule.Shape,
-  liveLockfileBytes: Uint8Array,
-): ProvenanceFacts {
+export function validateProvenance(capsule: ShipCapsule.Shape, liveLockfileBytes: Uint8Array): ProvenanceFacts {
   const violations: SupplyChainViolation[] = [];
 
   const liveLockfileAddress: AddressedDigestType = AddressedDigest.of(liveLockfileBytes);
@@ -180,14 +171,12 @@ export function validateProvenance(
     });
   }
 
-  if (
-    capsule.build_env.node_version === '' ||
-    capsule.build_env.pnpm_version === ''
-  ) {
+  if (capsule.build_env.node_version === '' || capsule.build_env.pnpm_version === '') {
     violations.push({
       code: 'absent-build-env',
       subject: capsule.package_name,
-      detail: 'the ShipCapsule build_env is incomplete (node_version or pnpm_version empty) — the build environment provenance is unattested.',
+      detail:
+        'the ShipCapsule build_env is incomplete (node_version or pnpm_version empty) — the build environment provenance is unattested.',
     });
   }
 
@@ -317,9 +306,7 @@ export function analyzeSupplyChain(input: AnalyzeInput): { facts: SupplyChainFac
     lockfile: lockfileFacts,
     sbom: sbomFacts,
     ci: ciFacts,
-    ...(input.capsule !== undefined
-      ? { provenance: validateProvenance(input.capsule, input.liveLockfileBytes) }
-      : {}),
+    ...(input.capsule !== undefined ? { provenance: validateProvenance(input.capsule, input.liveLockfileBytes) } : {}),
   };
   return { facts, sbomJson: serialized };
 }

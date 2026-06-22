@@ -27,38 +27,42 @@ import type { GPUTier } from './detect.js';
  * head-probe emitter can safely fold a group into a single `a|b|c` alternation
  * with identical match semantics to testing each pattern in turn.
  */
-export const GPU_TIER_PATTERNS: readonly [
-  readonly RegExp[],
-  readonly RegExp[],
-  readonly RegExp[],
-  readonly RegExp[],
-] = [
-  // Tier 0 — software / virtualized.
-  [/swiftshader/i, /llvmpipe/i, /software/i, /virtualbox/i, /vmware/i, /microsoft basic/i],
-  // Tier 1 — integrated.
-  [/intel.*hd/i, /intel.*uhd/i, /intel.*iris/i, /mali-[gt][0-9]/i, /adreno.*[0-3][0-9]{2}/i, /powervr/i, /apple gpu/i],
-  // Tier 2 — mid-range.
+export const GPU_TIER_PATTERNS: readonly [readonly RegExp[], readonly RegExp[], readonly RegExp[], readonly RegExp[]] =
   [
-    /adreno.*[4-5][0-9]{2}/i,
-    /mali-g[0-9]{2}/i,
-    /geforce.*[0-9]{3}m/i,
-    /geforce.*mx/i,
-    /radeon.*rx\s*[0-5][0-9]{2}/i,
-    /radeon.*vega/i,
-    /intel.*arc/i,
-    /apple.*m[12]/i,
-  ],
-  // Tier 3 — discrete high-end.
-  [
-    /geforce.*rtx/i,
-    /radeon.*rx\s*[6-9][0-9]{2,}/i,
-    /radeon.*rx\s*7[0-9]{3}/i,
-    /apple.*m[3-9]/i,
-    /adreno.*[6-9][0-9]{2}/i,
-    /mali-g[7-9][0-9]/i,
-    /nvidia.*a[0-9]{3,}/i,
-  ],
-] as const;
+    // Tier 0 — software / virtualized.
+    [/swiftshader/i, /llvmpipe/i, /software/i, /virtualbox/i, /vmware/i, /microsoft basic/i],
+    // Tier 1 — integrated.
+    [
+      /intel.*hd/i,
+      /intel.*uhd/i,
+      /intel.*iris/i,
+      /mali-[gt][0-9]/i,
+      /adreno.*[0-3][0-9]{2}/i,
+      /powervr/i,
+      /apple gpu/i,
+    ],
+    // Tier 2 — mid-range.
+    [
+      /adreno.*[4-5][0-9]{2}/i,
+      /mali-g[0-9]{2}/i,
+      /geforce.*[0-9]{3}m/i,
+      /geforce.*mx/i,
+      /radeon.*rx\s*[0-5][0-9]{2}/i,
+      /radeon.*vega/i,
+      /intel.*arc/i,
+      /apple.*m[12]/i,
+    ],
+    // Tier 3 — discrete high-end.
+    [
+      /geforce.*rtx/i,
+      /radeon.*rx\s*[6-9][0-9]{2,}/i,
+      /radeon.*rx\s*7[0-9]{3}/i,
+      /apple.*m[3-9]/i,
+      /adreno.*[6-9][0-9]{2}/i,
+      /mali-g[7-9][0-9]/i,
+      /nvidia.*a[0-9]{3,}/i,
+    ],
+  ] as const;
 
 /**
  * The order tiers are tested in, highest-fidelity-overlap first. A renderer

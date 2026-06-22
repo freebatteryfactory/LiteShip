@@ -361,7 +361,12 @@ export function buildSeamCoverageMap(
       for (const test of candidate.barrelImporters) {
         // Empty ranges → the relation's top-level fallback maps the barrel importer to
         // EVERY line: exactly the original sound-but-broad barrel closure.
-        executions.push({ testId: test.id, seamFile: candidate.seamFile, deepImporter: false, coveredFunctionRanges: [] });
+        executions.push({
+          testId: test.id,
+          seamFile: candidate.seamFile,
+          deepImporter: false,
+          coveredFunctionRanges: [],
+        });
       }
     }
   }
@@ -373,7 +378,10 @@ export function buildSeamCoverageMap(
   for (const seam of seams) {
     const set = new Set<string>();
     for (const r of relation) if (r.file === seam.file) set.add(r.testId);
-    coveringBySeam.set(seam.file, [...set].sort((a, b) => a.localeCompare(b)));
+    coveringBySeam.set(
+      seam.file,
+      [...set].sort((a, b) => a.localeCompare(b)),
+    );
   }
 
   return { coverage: makeCoverageMap(relation), coveringBySeam };

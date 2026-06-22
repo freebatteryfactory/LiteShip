@@ -221,7 +221,8 @@ function weakLinkFinding(
     location: { file },
     remediation: {
       kind: 'instruction',
-      description: 'Restore the module\'s global proof above its level floor by strengthening the weak dependency (or reassessing the level).',
+      description:
+        "Restore the module's global proof above its level floor by strengthening the weak dependency (or reassessing the level).",
       steps: [
         `The weak link is \`${weakLink}\` (proof signals: ${signalsLine(weakLinkProof)}).`,
         unmeasured
@@ -287,7 +288,15 @@ function foldProofPropagation(context: GateContext): readonly Finding[] {
     const path = weakestLinkPath(ir, file, effective, localProofOf);
     const weakLink = path[path.length - 1];
     findings.push(
-      weakLinkFinding(file, level, localProof, effectiveProof, floor, path, weakLink !== undefined ? byFile.get(weakLink) : undefined),
+      weakLinkFinding(
+        file,
+        level,
+        localProof,
+        effectiveProof,
+        floor,
+        path,
+        weakLink !== undefined ? byFile.get(weakLink) : undefined,
+      ),
     );
   }
   return findings;

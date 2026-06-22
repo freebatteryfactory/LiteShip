@@ -209,7 +209,7 @@ export const escalationChooseRungCapsule = defineCapsule({
         // LAW: the reason chain justifies a REJECTION — a deny names why (non-empty
         // chain, no silent denial), an allow is a bare admission (empty chain). The
         // chain is non-empty EXACTLY when the verdict is `deny`.
-        return (v.effect === 'deny') === (v.reasons.length > 0);
+        return (v.effect === 'deny') === v.reasons.length > 0;
       },
       message: 'reason chain is non-empty exactly when the verdict is deny',
     },

@@ -36,11 +36,7 @@ import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { rankOf, type AssuranceLevel } from '../assurance.js';
 import { memoryContext } from '../engine.js';
-import type {
-  TraceabilityFacts,
-  ResolvedInvariant,
-  TraceabilityDivergence,
-} from '../traceability-facts.js';
+import type { TraceabilityFacts, ResolvedInvariant, TraceabilityDivergence } from '../traceability-facts.js';
 
 const RULE_NS = 'gauntlet/traceability';
 
@@ -226,7 +222,7 @@ export const traceabilityBridgeGate: Gate = defineGate({
   id: RULE_NS,
   level: 'L4',
   describe:
-    'Avionics-tier fold over the host-supplied requirements-traceability facts: every system INVARIANT (a LAW) is traced to a proving test or a waiver-with-teeth; an untraced invariant, an expired waiver, or a ledger⇔header divergence is a self-explaining Finding at the invariant\'s level (the bidirectional-trace / test-honesty rail).',
+    "Avionics-tier fold over the host-supplied requirements-traceability facts: every system INVARIANT (a LAW) is traced to a proving test or a waiver-with-teeth; an untraced invariant, an expired waiver, or a ledger⇔header divergence is a self-explaining Finding at the invariant's level (the bidirectional-trace / test-honesty rail).",
   run: fold,
   fixtures: {
     red: {
@@ -239,7 +235,7 @@ export const traceabilityBridgeGate: Gate = defineGate({
     },
     mutation: {
       describe:
-        'A gate that treats every resolved state as fine (folds nothing) leaves the red fixture\'s untraced invariant + expired waiver + divergence unflagged — the mutant must then fail the red.',
+        "A gate that treats every resolved state as fine (folds nothing) leaves the red fixture's untraced invariant + expired waiver + divergence unflagged — the mutant must then fail the red.",
       mutate: (gate: Gate): Gate => ({
         ...gate,
         // Mutant: ignore the resolved states entirely (a toothless fold). The red

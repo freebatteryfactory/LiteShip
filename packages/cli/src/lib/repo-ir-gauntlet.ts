@@ -25,13 +25,7 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  buildRepoIR,
-  withRepoRoot,
-  liteshipDevopsProfile,
-  normalizeRepoPath,
-  type FactOracle,
-} from '@czap/audit';
+import { buildRepoIR, withRepoRoot, liteshipDevopsProfile, normalizeRepoPath, type FactOracle } from '@czap/audit';
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
@@ -76,17 +70,10 @@ import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
 import { buildStandardsIntegrityFacts } from './standards-surface.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
-import {
-  gauntletToolchainDigest,
-  makeFsVerdictCache,
-  makeFsMutantVerdictCache,
-} from './gauntlet-verdict-cache.js';
+import { gauntletToolchainDigest, makeFsVerdictCache, makeFsMutantVerdictCache } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
 import { l4SeamTargets, buildSeamCoverageMap } from './mutation-targets.js';
-import {
-  makeFsSeamCoverageProbeCache,
-  type SeamExecutionCoverageOptions,
-} from './seam-execution-coverage.js';
+import { makeFsSeamCoverageProbeCache, type SeamExecutionCoverageOptions } from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
 
@@ -121,7 +108,11 @@ export const DEFAULT_EXPORT_CHECK_EXCLUDED = 'default-export-check-excluded' as 
  * live cross-check.
  */
 const ORACLE_RULE_BINDINGS: readonly OracleRuleBinding[] = [
-  { ruleName: 'NO_DEFAULT_EXPORT', property: 'is-default-export', excludedMarkerProperty: DEFAULT_EXPORT_CHECK_EXCLUDED },
+  {
+    ruleName: 'NO_DEFAULT_EXPORT',
+    property: 'is-default-export',
+    excludedMarkerProperty: DEFAULT_EXPORT_CHECK_EXCLUDED,
+  },
   { ruleName: 'NO_VAR', property: 'var-declaration', excludedMarkerProperty: 'var-check-excluded' },
   { ruleName: 'NO_REQUIRE', property: 'require-call', excludedMarkerProperty: 'require-check-excluded' },
 ];
@@ -146,8 +137,9 @@ function canonicalRule(ruleName: string): CheckInvariantEntry {
 }
 
 /** The resolved canonical rule for each binding (eager — a missing rule fails fast). */
-const RESOLVED_RULES: readonly { binding: OracleRuleBinding; rule: CheckInvariantEntry }[] =
-  ORACLE_RULE_BINDINGS.map((binding) => ({ binding, rule: canonicalRule(binding.ruleName) }));
+const RESOLVED_RULES: readonly { binding: OracleRuleBinding; rule: CheckInvariantEntry }[] = ORACLE_RULE_BINDINGS.map(
+  (binding) => ({ binding, rule: canonicalRule(binding.ruleName) }),
+);
 
 /**
  * Does `relativePath` fall under one of the rule's `exclude` prefixes? Mirrors the
@@ -569,10 +561,7 @@ function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: strin
   // uses) so the facts are byte-stable regardless of the per-file iteration.
   const sorted = [...conditions].sort(
     (a, b) =>
-      a.file.localeCompare(b.file) ||
-      a.line - b.line ||
-      a.column - b.column ||
-      a.condition.localeCompare(b.condition),
+      a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column || a.condition.localeCompare(b.condition),
   );
   return { conditions: sorted };
 }

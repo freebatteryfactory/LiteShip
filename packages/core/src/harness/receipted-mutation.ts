@@ -332,7 +332,12 @@ bench(\`${escapeBacktick(name)} — mutate() over canonical samples\`, async () 
   // has no binding to import; there the guard pins the recorded reason instead.
   const pinEffectOutcome =
     ctx.bindingImport !== undefined && ctx.bindingName !== undefined && effectOutcomeReason !== undefined;
-  return notApplicableBench(name, reason, pinEffectOutcome ? ctx.bindingImport : undefined, pinEffectOutcome ? ctx.bindingName : undefined);
+  return notApplicableBench(
+    name,
+    reason,
+    pinEffectOutcome ? ctx.bindingImport : undefined,
+    pinEffectOutcome ? ctx.bindingName : undefined,
+  );
 }
 
 /**

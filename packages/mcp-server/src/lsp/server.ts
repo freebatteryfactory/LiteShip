@@ -190,7 +190,11 @@ export async function handle(
     }
     return {
       state,
-      result: { response: errorResponse(id, InternalError, 'Internal error', { detail: String(err) }), notifications: [], exit: false },
+      result: {
+        response: errorResponse(id, InternalError, 'Internal error', { detail: String(err) }),
+        notifications: [],
+        exit: false,
+      },
     };
   }
 }
@@ -317,10 +321,7 @@ function resolveCodeActions(params: unknown, findings: readonly FindingLike[]): 
 }
 
 /** Whether a diagnostic's range overlaps the requested code-action range (line-inclusive). */
-function rangeOverlaps(
-  diagnostic: LspDiagnostic,
-  range: { start: { line: number }; end: { line: number } },
-): boolean {
+function rangeOverlaps(diagnostic: LspDiagnostic, range: { start: { line: number }; end: { line: number } }): boolean {
   const diagStart = diagnostic.range.start.line;
   const diagEnd = diagnostic.range.end.line;
   return diagStart <= range.end.line && diagEnd >= range.start.line;

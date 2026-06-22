@@ -30,9 +30,7 @@ function frameResponse(response: JsonRpcResponse): string {
 
 /** Serialize a server→client notification (jsonrpc 2.0, no id) to its framed wire string. */
 function frameNotification(notification: LspNotification): string {
-  return encodeFrame(
-    JSON.stringify({ jsonrpc: '2.0', method: notification.method, params: notification.params }),
-  );
+  return encodeFrame(JSON.stringify({ jsonrpc: '2.0', method: notification.method, params: notification.params }));
 }
 
 /**

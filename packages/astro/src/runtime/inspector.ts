@@ -30,8 +30,4 @@ export {
   rewriteBoundaryThreshold,
   trackMaxForInput,
 } from './inspector/boundary-edit.js';
-export {
-  containerNotDeclaredMessage,
-  hasContainerNameDeclared,
-  isDirectiveActive,
-} from './inspector/dom-probes.js';
+export { containerNotDeclaredMessage, hasContainerNameDeclared, isDirectiveActive } from './inspector/dom-probes.js';

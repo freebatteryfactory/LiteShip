@@ -57,8 +57,7 @@ export interface Clock {
  * injected {@link Clock} defaulting here.
  */
 export const systemClock: Clock = {
-  now: (): number =>
-    typeof globalThis.performance?.now === 'function' ? globalThis.performance.now() : Date.now(),
+  now: (): number => (typeof globalThis.performance?.now === 'function' ? globalThis.performance.now() : Date.now()),
 };
 
 /**

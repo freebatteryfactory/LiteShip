@@ -134,7 +134,7 @@ export const declaredFixProtocolGate: Gate = defineGate({
   id: RULE_NS,
   level: 'L4',
   describe:
-    "Avionics-tier agent-fix ADMISSION gate (the raccoon rule, phases B+C): folds the host-supplied declared-fix verdict — a fix REJECTED for scope-creep, size-exceeded, an unsigned/forbidden standards weakening (reusing phase A), or a forged/missing receipt is a BLOCKING Finding per reason; an ADMITTED (in-scope, sized, non-weakening, receipted) fix is clean; no declared fix present (a normal commit) is silent (phase A guards that path).",
+    'Avionics-tier agent-fix ADMISSION gate (the raccoon rule, phases B+C): folds the host-supplied declared-fix verdict — a fix REJECTED for scope-creep, size-exceeded, an unsigned/forbidden standards weakening (reusing phase A), or a forged/missing receipt is a BLOCKING Finding per reason; an ADMITTED (in-scope, sized, non-weakening, receipted) fix is clean; no declared fix present (a normal commit) is silent (phase A guards that path).',
   run: fold,
   fixtures: {
     red: {

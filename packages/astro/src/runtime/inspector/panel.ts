@@ -11,12 +11,7 @@
  * @module
  */
 
-import {
-  boundaryParseFailureMessage,
-  parseBoundary,
-  readSignalValue,
-  type BoundaryStateDetail,
-} from '../boundary.js';
+import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type BoundaryStateDetail } from '../boundary.js';
 import {
   castValueRows,
   deriveActiveTargets,

@@ -114,7 +114,10 @@ function fold(context: GateContext): readonly Finding[] {
           remediation: {
             kind: 'instruction',
             description: `Add the missing law(s) to ${family.file}.`,
-            steps: missing.map((m) => `Pin the ${m} law as a deterministic fast-check property (or its honest, investigated contract if the naive form does not hold).`),
+            steps: missing.map(
+              (m) =>
+                `Pin the ${m} law as a deterministic fast-check property (or its honest, investigated contract if the naive form does not hold).`,
+            ),
           },
         }),
       );
@@ -137,10 +140,8 @@ function fileContext(files: Readonly<Record<string, string>>): GateContext {
 }
 
 /** A file body that pins EVERY marker of both families (the known-GOOD world). */
-const GREEN_HLC =
-  'IDEMPOTENCE COMMUTATIVITY ASSOCIATIVITY TRANSITIVITY TOTALITY HLC.merge — all pinned';
-const GREEN_GRAPH_PATCH =
-  'IDEMPOTENCE COMMUTATIVITY CONVERGENCE CONFLICT forkOf — all pinned';
+const GREEN_HLC = 'IDEMPOTENCE COMMUTATIVITY ASSOCIATIVITY TRANSITIVITY TOTALITY HLC.merge — all pinned';
+const GREEN_GRAPH_PATCH = 'IDEMPOTENCE COMMUTATIVITY CONVERGENCE CONFLICT forkOf — all pinned';
 
 /**
  * The CRDT-law-coverage gate — self-proves via the authority ratchet. RED: a repo
@@ -190,7 +191,13 @@ export const crdtLawsGate: Gate = defineGate({
             const text = context.readFile(family.file);
             if (text === undefined || text.trim() === '') {
               findings.push(
-                finding({ ruleId: RULE_ID, severity: 'error', level: 'L4', title: 'mutant: absent', detail: family.file }),
+                finding({
+                  ruleId: RULE_ID,
+                  severity: 'error',
+                  level: 'L4',
+                  title: 'mutant: absent',
+                  detail: family.file,
+                }),
               );
             }
           }

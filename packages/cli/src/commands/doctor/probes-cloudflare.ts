@@ -13,13 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnArgvCapture } from '../../lib/spawn.js';
-import {
-  findAstroConfig,
-  hasDep,
-  readCwdPackageJson,
-  readInstalledVersion,
-  readWranglerConfig,
-} from './manifest.js';
+import { findAstroConfig, hasDep, readCwdPackageJson, readInstalledVersion, readWranglerConfig } from './manifest.js';
 import { DOCTOR_PROBE_TIMEOUT_MS, type DoctorCheck, parseMajor } from './types.js';
 
 /**

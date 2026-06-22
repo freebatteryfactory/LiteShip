@@ -119,11 +119,7 @@ function isForbidden(waiver: Waiver): boolean {
  *
  * `now` is injected — there is NO `Date.now()` here.
  */
-export function applyWaivers(
-  findings: readonly Finding[],
-  waivers: readonly Waiver[],
-  now: Date,
-): WaiverApplication {
+export function applyWaivers(findings: readonly Finding[], waivers: readonly Waiver[], now: Date): WaiverApplication {
   const waiverFindings: Finding[] = [];
 
   // Partition the waivers up front: only ACTIVE (non-expired, non-forbidden)

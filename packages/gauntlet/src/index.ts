@@ -79,21 +79,12 @@ export {
   requireTaint,
 } from './gate.js';
 
-export {
-  type MutationFacts,
-  type MutantOutcome,
-  type MutantVerdictTag,
-} from './mutation-facts.js';
+export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
 
 // The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
 // `min`-fold over the dep DAG (the dual of assurance propagation), and the
 // composition-coverage facts (untested interaction edges).
-export {
-  type ProofFacts,
-  type ModuleProof,
-  type ProofSignals,
-  UNMEASURED_PROOF,
-} from './proof-facts.js';
+export { type ProofFacts, type ModuleProof, type ProofSignals, UNMEASURED_PROOF } from './proof-facts.js';
 export { propagateProofStrength, weakestLinkPath } from './proof-propagation.js';
 export {
   type CompositionFacts,
@@ -102,12 +93,7 @@ export {
   COVERAGE_EVIDENCE_STRENGTH,
 } from './composition-facts.js';
 
-export {
-  type McdcFacts,
-  type McdcConditionOutcome,
-  type McdcPinVerdict,
-  isMcdcCovered,
-} from './mcdc-facts.js';
+export { type McdcFacts, type McdcConditionOutcome, type McdcPinVerdict, isMcdcCovered } from './mcdc-facts.js';
 
 export {
   type SupplyChainFacts,
@@ -118,11 +104,7 @@ export {
   type CiAuthorityFacts,
 } from './supply-chain-facts.js';
 
-export {
-  type SimulationFacts,
-  type ScenarioReplayFact,
-  type ReplayDivergence,
-} from './simulation-facts.js';
+export { type SimulationFacts, type ScenarioReplayFact, type ReplayDivergence } from './simulation-facts.js';
 
 export {
   type FuzzCorpusFacts,
@@ -170,21 +152,11 @@ export {
   allFileIds,
 } from './verdict-cache.js';
 
-export {
-  type LevelRule,
-  LITESHIP_ASSURANCE_MAP,
-  levelOf,
-  matchesGlob,
-} from './assurance-map.js';
+export { type LevelRule, LITESHIP_ASSURANCE_MAP, levelOf, matchesGlob } from './assurance-map.js';
 
 export { propagateAssuranceLevels } from './assurance-propagation.js';
 
-export {
-  type Waiver,
-  type WaiverApplication,
-  ALWAYS_BLOCKING_RULES,
-  applyWaivers,
-} from './waiver.js';
+export { type Waiver, type WaiverApplication, ALWAYS_BLOCKING_RULES, applyWaivers } from './waiver.js';
 
 export { LITESHIP_WAIVERS } from './waivers.js';
 
@@ -264,10 +236,7 @@ export { noPlaceholderGate } from './gates/no-placeholder.js';
 // run only on the host path (the CLI builds + injects the IR). They are NOT in
 // the lean LITESHIP_GATES default; the IR-injected CLI run composes them on.
 export { noBareThrowIRGate } from './gates/no-bare-throw-ir.js';
-export {
-  type OracleDivergenceSpec,
-  makeOracleDivergenceGate,
-} from './gates/make-oracle-divergence-gate.js';
+export { type OracleDivergenceSpec, makeOracleDivergenceGate } from './gates/make-oracle-divergence-gate.js';
 export { noDefaultExportDivergenceGate } from './gates/no-default-export-divergence.js';
 export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
@@ -354,11 +323,7 @@ export {
 // MC/DC is OPT-IN (`czap check --ir --mcdc`) — running a suite per pin (two per condition)
 // is too heavy for a default run. The integrator composes it on like mutationDivergenceGate
 // (a ~3-line wiring). See the MCDC_SEVERITY_BY_LEVEL / MCDC_FLOOR_BY_LEVEL redlinable data.
-export {
-  mcdcCoverageGate,
-  MCDC_SEVERITY_BY_LEVEL,
-  MCDC_FLOOR_BY_LEVEL,
-} from './gates/mcdc-coverage.js';
+export { mcdcCoverageGate, MCDC_SEVERITY_BY_LEVEL, MCDC_FLOOR_BY_LEVEL } from './gates/mcdc-coverage.js';
 
 // The avionics-tier simulation-determinism (DST) gate (Slice C). It folds the
 // host-supplied SimulationFacts — a replay-divergence (two replays of one seed
@@ -467,10 +432,7 @@ export {
 // it runs on the facts-injected, opt-in `--composition` host path only (a ~3-line wiring
 // like supplyChainGate). When the facts are absent it advisories "not-evidenced". See the
 // COMPOSITION_SEVERITY_BY_LEVEL redlinable data.
-export {
-  compositionCoverageGate,
-  COMPOSITION_SEVERITY_BY_LEVEL,
-} from './gates/composition-coverage.js';
+export { compositionCoverageGate, COMPOSITION_SEVERITY_BY_LEVEL } from './gates/composition-coverage.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

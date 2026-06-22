@@ -297,7 +297,6 @@ export interface SeamCandidates {
   readonly barrelImporters: readonly CandidateTest[];
 }
 
-
 /** The field/record separators for the probe-cache key (US/RS control bytes). */
 const UNIT = '';
 const RECORD = '';
@@ -310,9 +309,16 @@ const RECORD = '';
  * armed (no toolchain digest), so the caller never builds a key without the anti-lie
  * keystone.
  */
-function cacheKeyFor(options: SeamExecutionCoverageOptions, candidate: SeamCandidates, test: CandidateTest): string | null {
+function cacheKeyFor(
+  options: SeamExecutionCoverageOptions,
+  candidate: SeamCandidates,
+  test: CandidateTest,
+): string | null {
   if (options.toolchainDigest === undefined) return null;
-  const seamDigest = AddressedDigest.of(CanonicalCbor.encode([candidate.seamFile, candidate.seamText]), 'blake3').integrity_digest;
+  const seamDigest = AddressedDigest.of(
+    CanonicalCbor.encode([candidate.seamFile, candidate.seamText]),
+    'blake3',
+  ).integrity_digest;
   const testDigest = AddressedDigest.of(CanonicalCbor.encode([test.id, test.text]), 'blake3').integrity_digest;
   return [`seam${UNIT}${seamDigest}`, `test${UNIT}${testDigest}`, `tc${UNIT}${options.toolchainDigest}`].join(RECORD);
 }
@@ -516,7 +522,11 @@ export function parseBatchedCoveredFunctionRanges(
 ): ReadonlyMap<string, readonly LineRange[]> {
   const parsed: unknown = JSON.parse(reportJson);
   if (typeof parsed !== 'object' || parsed === null) {
-    throw IoError('parseBatchedCoveredFunctionRanges', 'the coverage report is not a JSON object — refusing to read a malformed report', {});
+    throw IoError(
+      'parseBatchedCoveredFunctionRanges',
+      'the coverage report is not a JSON object — refusing to read a malformed report',
+      {},
+    );
   }
   const entries = Object.entries(parsed as Record<string, unknown>);
   const out = new Map<string, readonly LineRange[]>();
@@ -542,7 +552,11 @@ export function parseBatchedCoveredFunctionRanges(
 export function parseCoveredFunctionRanges(reportJson: string, seamFile: string): readonly LineRange[] | null {
   const parsed: unknown = JSON.parse(reportJson);
   if (typeof parsed !== 'object' || parsed === null) {
-    throw IoError('parseCoveredFunctionRanges', 'the coverage report is not a JSON object — refusing to read a malformed report', {});
+    throw IoError(
+      'parseCoveredFunctionRanges',
+      'the coverage report is not a JSON object — refusing to read a malformed report',
+      {},
+    );
   }
   const wantSuffix = normalizeRepoPath(seamFile);
   for (const [absFile, entryUnknown] of Object.entries(parsed as Record<string, unknown>)) {
@@ -682,7 +696,10 @@ export function makeFsSeamCoverageProbeCache(cwd: string = process.cwd()): SeamC
       } catch (err) {
         const code = (err as NodeJS.ErrnoException).code;
         if (code === 'ENOENT' || code === 'EACCES' || code === 'EISDIR' || code === 'EPERM') return null;
-        throw IoError('seam-coverage-probe-cache.read', `unreadable cache entry (${String(code ?? 'unknown')})`, { path, cause: err });
+        throw IoError('seam-coverage-probe-cache.read', `unreadable cache entry (${String(code ?? 'unknown')})`, {
+          path,
+          cause: err,
+        });
       }
       return parseProbeRanges(raw);
     },
@@ -703,7 +720,9 @@ function probePath(dir: string, key: string): string {
 
 /** Hash the probe KEY into a short filesystem-safe slug (the same fold style as B2). */
 function slug(key: string): string {
-  return AddressedDigest.of(new TextEncoder().encode(key), 'blake3').display_id.replace(/[^a-z0-9]/gi, '').slice(0, 32);
+  return AddressedDigest.of(new TextEncoder().encode(key), 'blake3')
+    .display_id.replace(/[^a-z0-9]/gi, '')
+    .slice(0, 32);
 }
 
 /**

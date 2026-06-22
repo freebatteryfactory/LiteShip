@@ -501,12 +501,20 @@ function binaryOperatorMutation(
 }
 
 /** `true`↔`false` literal flip — the precise keyword span. */
-function booleanLiteralMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: MutationOperatorId): readonly Mutation[] {
+function booleanLiteralMutation(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  operator: MutationOperatorId,
+): readonly Mutation[] {
   if (node.kind === ts.SyntaxKind.TrueKeyword) {
-    return [{ operator, start: node.getStart(sourceFile), end: node.getEnd(), originalText: 'true', mutatedText: 'false' }];
+    return [
+      { operator, start: node.getStart(sourceFile), end: node.getEnd(), originalText: 'true', mutatedText: 'false' },
+    ];
   }
   if (node.kind === ts.SyntaxKind.FalseKeyword) {
-    return [{ operator, start: node.getStart(sourceFile), end: node.getEnd(), originalText: 'false', mutatedText: 'true' }];
+    return [
+      { operator, start: node.getStart(sourceFile), end: node.getEnd(), originalText: 'false', mutatedText: 'true' },
+    ];
   }
   return [];
 }
@@ -519,7 +527,11 @@ function booleanLiteralMutation(node: ts.Node, sourceFile: ts.SourceFile, operat
  * is skipped (no behaviour change → not a mutant). Only the `<expr>` span is
  * spliced, never the `return` keyword.
  */
-function returnValueMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: MutationOperatorId): readonly Mutation[] {
+function returnValueMutation(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  operator: MutationOperatorId,
+): readonly Mutation[] {
   if (!ts.isReturnStatement(node) || node.expression === undefined) return [];
   const expr = node.expression;
   const originalText = nodeText(expr, sourceFile);
@@ -557,9 +569,21 @@ function unaryNotMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: Mu
  * are deliberately NOT mutated here (their substitutions would need re-balancing) —
  * the operator stays unambiguous.
  */
-function stringLiteralMutation(node: ts.Node, sourceFile: ts.SourceFile, operator: MutationOperatorId): readonly Mutation[] {
+function stringLiteralMutation(
+  node: ts.Node,
+  sourceFile: ts.SourceFile,
+  operator: MutationOperatorId,
+): readonly Mutation[] {
   if (!ts.isStringLiteral(node) || node.text === '') return [];
   const raw = nodeText(node, sourceFile);
   const quote = raw.charAt(0);
-  return [{ operator, start: node.getStart(sourceFile), end: node.getEnd(), originalText: raw, mutatedText: `${quote}${quote}` }];
+  return [
+    {
+      operator,
+      start: node.getStart(sourceFile),
+      end: node.getEnd(),
+      originalText: raw,
+      mutatedText: `${quote}${quote}`,
+    },
+  ];
 }

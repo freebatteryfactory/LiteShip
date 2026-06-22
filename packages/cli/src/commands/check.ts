@@ -167,7 +167,9 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
     const banner = `${payload.blocked ? 'CHECK BLOCKED' : 'CHECK (advisory)'} — ${payload.findingCount} finding(s) from the gauntlet gate fold${opts.ir === true ? ' (IR-enriched)' : ''}:\n`;
     process.stderr.write(banner);
     for (const f of payload.findings) {
-      const where = f.location ? ` (${f.location.file}${f.location.line !== undefined ? `:${f.location.line}` : ''})` : '';
+      const where = f.location
+        ? ` (${f.location.file}${f.location.line !== undefined ? `:${f.location.line}` : ''})`
+        : '';
       process.stderr.write(`  [${f.severity}] ${f.ruleId}: ${f.title}${where}\n`);
     }
   }

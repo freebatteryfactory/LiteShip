@@ -63,11 +63,7 @@ export interface LockfileSpecifier {
   readonly section: DependencySection;
 }
 
-export type DependencySection =
-  | 'dependencies'
-  | 'devDependencies'
-  | 'optionalDependencies'
-  | 'peerDependencies';
+export type DependencySection = 'dependencies' | 'devDependencies' | 'optionalDependencies' | 'peerDependencies';
 
 /** The parsed lockfile — only the blocks the supply chain reasons over. */
 export interface ParsedLockfile {
@@ -246,9 +242,13 @@ export function parseLockfile(text: string): ParsedLockfile {
         if (trimmed.startsWith('version:')) {
           const version = unquote(trimmed.slice('version:'.length));
           if (pendingSpecifier === null) {
-            throw ParseError('pnpm-lock.yaml', `importer dependency ${pendingDepName} has a version without a specifier`, {
-              offset: i + 1,
-            });
+            throw ParseError(
+              'pnpm-lock.yaml',
+              `importer dependency ${pendingDepName} has a version without a specifier`,
+              {
+                offset: i + 1,
+              },
+            );
           }
           curImporterSpecs.push({
             name: pendingDepName,

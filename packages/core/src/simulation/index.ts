@@ -20,21 +20,9 @@
  * @module
  */
 
-export {
-  type Scheduler,
-  type SchedulerWorld,
-  type SimStep,
-  type StepOutcome,
-  realLoopScheduler,
-} from './scheduler.js';
+export { type Scheduler, type SchedulerWorld, type SimStep, type StepOutcome, realLoopScheduler } from './scheduler.js';
 
-export {
-  type Fault,
-  type FaultKind,
-  type FaultTable,
-  type FaultDecision,
-  consultFault,
-} from './fault.js';
+export { type Fault, type FaultKind, type FaultTable, type FaultDecision, consultFault } from './fault.js';
 
 export {
   type SimWorld,
@@ -45,13 +33,7 @@ export {
   observeClocks,
 } from './world.js';
 
-export {
-  type TraceEntry,
-  type SimTrace,
-  buildTrace,
-  traceDigest,
-  tracesAgree,
-} from './trace.js';
+export { type TraceEntry, type SimTrace, buildTrace, traceDigest, tracesAgree } from './trace.js';
 
 export {
   type SimScenario,

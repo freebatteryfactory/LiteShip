@@ -122,7 +122,8 @@ function uncoveredEdgeFinding(edge: InteractionEdge, level: AssuranceLevel): Fin
     location: { file: edge.fromFile },
     remediation: {
       kind: 'instruction',
-      description: 'Cover the composition edge with an integration test that drives the calling unit through into the called unit.',
+      description:
+        'Cover the composition edge with an integration test that drives the calling unit through into the called unit.',
       steps: [
         `Write a test that exercises ${edge.fromFile}'s path which CALLS \`${edge.viaSymbol}\` in ${edge.toFile} (not a unit test of either in isolation).`,
         `Assert the COMPOSED behaviour (the result that depends on both ${edge.fromFile} and ${edge.toFile} being correct TOGETHER), so a regression in either endpoint's interaction with the other is caught.`,
@@ -170,9 +171,7 @@ function foldComposition(context: GateContext): readonly Finding[] {
     findings.push(uncoveredEdgeFinding(edge, edgeLevel(edge, levels)));
   }
   findings.sort(
-    (a, b) =>
-      (a.location?.file ?? '').localeCompare(b.location?.file ?? '') ||
-      a.title.localeCompare(b.title),
+    (a, b) => (a.location?.file ?? '').localeCompare(b.location?.file ?? '') || a.title.localeCompare(b.title),
   );
   return findings;
 }
@@ -253,7 +252,7 @@ export const compositionCoverageGate: Gate = defineGate({
   id: GATE_ID,
   level: 'L4',
   describe:
-    'Reports each uncovered composition edge (A calls B, both individually tested, no integration test exercises them together) at the edge\'s propagated level. A structural over-approximation of integration coverage, honestly stated. Folds host-injected CompositionFacts. Reports, never decides.',
+    "Reports each uncovered composition edge (A calls B, both individually tested, no integration test exercises them together) at the edge's propagated level. A structural over-approximation of integration coverage, honestly stated. Folds host-injected CompositionFacts. Reports, never decides.",
   run: foldComposition,
   fixtures: FIXTURES,
 });

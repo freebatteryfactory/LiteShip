@@ -136,7 +136,8 @@ export function evaluateLockfilePolicy(
       violations.push({
         code: 'floating-resolution',
         subject: pkg.key,
-        detail: 'resolved without an integrity hash — a floating/unverifiable unit; every dependency must be integrity-pinned in the lockfile.',
+        detail:
+          'resolved without an integrity hash — a floating/unverifiable unit; every dependency must be integrity-pinned in the lockfile.',
       });
     }
   }

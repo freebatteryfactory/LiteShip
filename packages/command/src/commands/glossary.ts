@@ -16,11 +16,7 @@ import type { HandledCommand } from '../registry.js';
  */
 export const GlossaryEntrySchema = Schema.Struct({
   term: Schema.String,
-  category: Schema.Union([
-    Schema.Literal('naming'),
-    Schema.Literal('primitive'),
-    Schema.Literal('translator-note'),
-  ]),
+  category: Schema.Union([Schema.Literal('naming'), Schema.Literal('primitive'), Schema.Literal('translator-note')]),
   definition: Schema.String,
   seeAlso: Schema.optional(Schema.Array(Schema.String)),
 });

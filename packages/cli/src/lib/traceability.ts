@@ -39,12 +39,7 @@ import { join, relative } from 'node:path';
 import { contentAddressOf } from '@czap/core';
 import { normalizeRepoPath } from '@czap/audit';
 import { ParseError, InvariantViolationError } from '@czap/error';
-import type {
-  TraceabilityFacts,
-  ResolvedInvariant,
-  InvariantState,
-  TraceabilityDivergence,
-} from '@czap/gauntlet';
+import type { TraceabilityFacts, ResolvedInvariant, InvariantState, TraceabilityDivergence } from '@czap/gauntlet';
 
 /** Repo-relative location of the requirements register. */
 const INVARIANTS_PATH = 'traceability/invariants.yaml';
@@ -151,10 +146,7 @@ interface RawItem {
   readonly lineNo: number;
 }
 
-function parseSequenceOfMappings(
-  body: { line: string; lineNo: number }[],
-  path: string,
-): readonly RawItem[] {
+function parseSequenceOfMappings(body: { line: string; lineNo: number }[], path: string): readonly RawItem[] {
   const items: RawItem[] = [];
   let fields: Map<string, string> | null = null;
   let lists: Map<string, readonly string[]> | null = null;
@@ -324,11 +316,9 @@ function parseTestingLedger(text: string): readonly TraceEntry[] {
     const justification = wm.get('justification');
     const expiry = wm.get('expiry');
     if (owner === undefined || justification === undefined || expiry === undefined) {
-      throw ParseError(
-        TESTING_LEDGER_PATH,
-        `waiver for ${id} must carry owner + justification + expiry`,
-        { offset: item.lineNo },
-      );
+      throw ParseError(TESTING_LEDGER_PATH, `waiver for ${id} must carry owner + justification + expiry`, {
+        offset: item.lineNo,
+      });
     }
     out.push({ id, waiver: { owner, justification, expiry } });
   }
@@ -464,7 +454,8 @@ function resolveState(
   }
   return {
     _tag: 'untraced',
-    reason: 'its claimed proving test(s) do not carry a matching `// PROVES:` header (a ledger⇔header divergence — see the divergence findings).',
+    reason:
+      'its claimed proving test(s) do not carry a matching `// PROVES:` header (a ledger⇔header divergence — see the divergence findings).',
   };
 }
 
@@ -525,9 +516,7 @@ function detectDivergences(
 
   return out.sort(
     (a, b) =>
-      a.kind.localeCompare(b.kind) ||
-      a.invariantId.localeCompare(b.invariantId) ||
-      a.subject.localeCompare(b.subject),
+      a.kind.localeCompare(b.kind) || a.invariantId.localeCompare(b.invariantId) || a.subject.localeCompare(b.subject),
   );
 }
 
@@ -566,9 +555,7 @@ export function buildTraceabilityFacts(repoRoot: string, now: Date): Traceabilit
   const traceById = new Map(traces.map((t) => [t.id, t]));
 
   const claims = scanProofClaims(repoRoot);
-  const provesByFile = new Map<string, ReadonlySet<string>>(
-    claims.map((c) => [c.file, new Set(c.invariantIds)]),
-  );
+  const provesByFile = new Map<string, ReadonlySet<string>>(claims.map((c) => [c.file, new Set(c.invariantIds)]));
   const corpusFiles = new Set<string>(claims.map((c) => c.file));
   // Also include EVERY test ref's file in the corpus set so a present-but-headerless
   // test is detected as `unbacked-claim`, not falsely as `missing-test`.

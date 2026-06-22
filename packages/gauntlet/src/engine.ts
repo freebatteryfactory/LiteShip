@@ -21,12 +21,7 @@ import { atLeast, rankOf, type AssuranceLevel } from './assurance.js';
 import { levelOf, type LevelRule } from './assurance-map.js';
 import type { FileId } from './repo-ir.js';
 import { applyWaivers, type Waiver } from './waiver.js';
-import {
-  type GateVerdictCache,
-  allFileIds,
-  coverageDigestOf,
-  gateVerdictKey,
-} from './verdict-cache.js';
+import { type GateVerdictCache, allFileIds, coverageDigestOf, gateVerdictKey } from './verdict-cache.js';
 
 /** A gate's outcome within a run: its proof, earned authority, and findings. */
 export interface GateOutcome {
@@ -239,10 +234,7 @@ export function scopeContextByLevel(
  * never lowers). Returns the SAME finding object when nothing changes (stable
  * structural equality on the lean path).
  */
-function elevateFindingLevel(
-  f: Finding,
-  effectiveLevels: ReadonlyMap<FileId, AssuranceLevel> | undefined,
-): Finding {
+function elevateFindingLevel(f: Finding, effectiveLevels: ReadonlyMap<FileId, AssuranceLevel> | undefined): Finding {
   if (effectiveLevels === undefined) return f;
   const file = f.location?.file;
   if (file === undefined) return f;
@@ -387,8 +379,7 @@ export function runGates(gates: readonly Gate[], context: GateContext, opts: Run
       // blocks unconditionally (the waiver mechanism has teeth regardless of the
       // gate's earned authority).
       const isWaiverError =
-        f.severity === 'error' &&
-        (f.ruleId === 'gauntlet/waiver-expired' || f.ruleId === 'gauntlet/waiver-forbidden');
+        f.severity === 'error' && (f.ruleId === 'gauntlet/waiver-expired' || f.ruleId === 'gauntlet/waiver-forbidden');
       if ((authority === 'blocking' && f.severity === 'error' && kept.includes(f)) || isWaiverError) {
         blocked = true;
       }

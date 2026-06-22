@@ -23,7 +23,15 @@ import type {
 } from '@czap/core';
 import { HLC } from '@czap/core';
 import type { MotionTier, LadderTarget } from '@czap/core';
-import { StateName as mkStateName, CanonicalCbor, Diagnostics, Easing, fnv1aBytes, wallClock, projectLadder } from '@czap/core';
+import {
+  StateName as mkStateName,
+  CanonicalCbor,
+  Diagnostics,
+  Easing,
+  fnv1aBytes,
+  wallClock,
+  projectLadder,
+} from '@czap/core';
 import { ValidationError } from '@czap/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';

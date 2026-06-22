@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:78bf29c6",
+  "address": "fnv1a:bfdfd834",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -581,13 +581,13 @@
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|61",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|60",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
     {
       "_tag": "waiver",
-      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|78",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|77",
       "ruleId": "gauntlet/no-nondeterminism",
       "expiry": "2027-06-20"
     },
