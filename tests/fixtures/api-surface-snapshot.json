@@ -134,6 +134,10 @@
           "kind": "const"
         },
         {
+          "name": "MUTATION_OPERATORS",
+          "kind": "const"
+        },
+        {
           "name": "SYMBOL_ORPHAN_PROPERTY",
           "kind": "const"
         },
@@ -144,6 +148,11 @@
         {
           "name": "WORKSPACE_ALIASES",
           "kind": "const"
+        },
+        {
+          "name": "applyMutant",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "asOrphanValue",
@@ -161,6 +170,11 @@
         {
           "name": "auditSourceGlobs",
           "kind": "const"
+        },
+        {
+          "name": "buildMutationFacts",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "buildPackageExportTargets",
@@ -212,6 +226,11 @@
           "kind": "const"
         },
         {
+          "name": "evaluateMutant",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "exportedNamesFromNode",
           "kind": "function",
           "signature": "(1)"
@@ -224,6 +243,11 @@
         {
           "name": "foundationalPackages",
           "kind": "const"
+        },
+        {
+          "name": "generateMutants",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "hasModifier",
@@ -253,6 +277,16 @@
         {
           "name": "liteshipDevopsProfile",
           "kind": "const"
+        },
+        {
+          "name": "makeCoverageMap",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "mutantVerdictKey",
+          "kind": "function",
+          "signature": "(3)"
         },
         {
           "name": "nodeText",
@@ -327,6 +361,11 @@
           "name": "runSurfaceAudit",
           "kind": "function",
           "signature": "(0)"
+        },
+        {
+          "name": "scoreVerdicts",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "sortFindings",
@@ -1705,6 +1744,10 @@
           "kind": "const"
         },
         {
+          "name": "KILL_FLOOR_BY_LEVEL",
+          "kind": "const"
+        },
+        {
           "name": "LITESHIP_ASSURANCE_MAP",
           "kind": "const"
         },
@@ -1730,6 +1773,10 @@
         },
         {
           "name": "SEVERITIES",
+          "kind": "const"
+        },
+        {
+          "name": "SURVIVOR_SEVERITY_BY_LEVEL",
           "kind": "const"
         },
         {
@@ -1848,6 +1895,11 @@
           "signature": "(1)"
         },
         {
+          "name": "mutationDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "noBareThrowGate",
           "kind": "namespace",
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
@@ -1923,6 +1975,11 @@
           "signature": "(2)"
         },
         {
+          "name": "requireMutation",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "runGates",
           "kind": "function",
           "signature": "(2)"
@@ -1936,6 +1993,11 @@
           "name": "scopeContextByLevel",
           "kind": "function",
           "signature": "(4)"
+        },
+        {
+          "name": "simulationDeterminismGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "stringsBlanked",

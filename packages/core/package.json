@@ -25,7 +25,7 @@
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, `./testing`, and `./harness` are importable. There is DELIBERATELY no `\"./*\"` wildcard: a wildcard would expose every `src/*.ts` module as a public subpath, leaking the internal layout and preventing safe refactoring. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the RUNG_TARGETS subpath leak). Internal relative imports `./validated-output.js` are unaffected. Both halves (no-wildcard + the deny) are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
+  "//exports-allowlist": "SECURITY + LAYOUT-LOCK: the `exports` map is a CLOSED allowlist — only `.`, `./testing`, `./harness`, and `./simulation` are importable. There is DELIBERATELY no `\"./*\"` wildcard: a wildcard would expose every `src/*.ts` module as a public subpath, leaking the internal layout and preventing safe refactoring. The retained `\"./validated-output\": null` deny is belt-and-suspenders: validated-output.ts holds `mintValidated`, the sole mint site for the un-forgeable apply token, and exposing it as a public subpath would let a consumer forge a ValidatedProposal and bypass validation (lesson #12 — the RUNG_TARGETS subpath leak). Internal relative imports `./validated-output.js` are unaffected. Both halves (no-wildcard + the deny) are guarded by tests/unit/meta/validated-output-subpath-leak.test.ts.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -41,6 +41,11 @@
       "types": "./dist/harness/index.d.ts",
       "import": "./dist/harness/index.js",
       "development": "./src/harness/index.ts"
+    },
+    "./simulation": {
+      "types": "./dist/simulation/index.d.ts",
+      "import": "./dist/simulation/index.js",
+      "development": "./src/simulation/index.ts"
     },
     "./validated-output": null
   },

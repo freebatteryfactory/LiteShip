@@ -23,8 +23,8 @@
  * This guard pins EVERY half so the leak cannot silently return:
  *  1. the `exports` map carries NO wildcard key (nothing containing `*`);
  *  2. the ONLY deep-subpath exports are the sanctioned allowlist (`./testing`,
- *     `./harness`) — a new internal subpath cannot be added without a reviewer
- *     amending this LAW;
+ *     `./harness`, `./simulation`) — a new internal subpath cannot be added without
+ *     a reviewer amending this LAW;
  *  3. the package-manifest deny entry for `./validated-output` survives;
  *  4. `mintValidated` is absent from the public `@czap/core` surface;
  *  5. the index re-exports the SAFE consumer symbols (the envelope is usable without
@@ -56,7 +56,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     expect(wildcardKeys).toEqual([]);
   });
 
-  test('the ONLY deep-subpath exports are the sanctioned allowlist (./testing, ./harness)', () => {
+  test('the ONLY deep-subpath exports are the sanctioned allowlist (./testing, ./harness, ./simulation)', () => {
     const pkg = JSON.parse(readFileSync(corePkgPath, 'utf8')) as {
       exports: Record<string, unknown>;
     };
@@ -66,7 +66,7 @@ describe('REGRESSION GUARD: the mintValidated subpath leak (lesson #12)', () => 
     // allowlist. `./validated-output` maps to `null` — a DENY, not an export — so it is
     // not importable and is excluded. Adding a new internal subpath must require a
     // reviewer to amend THIS list, which is the layout-lock LAW.
-    const ALLOWED_SUBPATHS = ['./testing', './harness'];
+    const ALLOWED_SUBPATHS = ['./testing', './harness', './simulation'];
     const importableSubpaths = keys.filter(
       (k) => k !== '.' && pkg.exports[k] !== null,
     );

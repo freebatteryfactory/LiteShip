@@ -74,7 +74,14 @@ export {
   type Gate,
   defineGate,
   requireIR,
+  requireMutation,
 } from './gate.js';
+
+export {
+  type MutationFacts,
+  type MutantOutcome,
+  type MutantVerdictTag,
+} from './mutation-facts.js';
 
 export {
   type SupplyChainFacts,
@@ -84,6 +91,12 @@ export {
   type ProvenanceFacts,
   type CiAuthorityFacts,
 } from './supply-chain-facts.js';
+
+export {
+  type SimulationFacts,
+  type ScenarioReplayFact,
+  type ReplayDivergence,
+} from './simulation-facts.js';
 
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
@@ -171,6 +184,33 @@ export { performanceContractsGate } from './gates/performance-contracts.js';
 // LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path
 // only. See the integrator note in the Slice-C report (a ~3-line wiring like B3.3).
 export { supplyChainGate } from './gates/supply-chain.js';
+
+// The avionics-tier mutation-divergence gate (Slice C — mutation-as-divergence).
+// It folds the host-supplied MutationFacts (each mutant's kill/survive verdict +
+// the committed score baseline): a SURVIVED/NO-COVERAGE mutant becomes a Finding at
+// the file's PROPAGATED assurance level, the kill-floor by level deciding blocking,
+// and a per-file score drop is a ratchet regression. The heavy AST mutation + the
+// per-mutant vitest runs live in @czap/audit + the @czap/cli host. Exported but
+// DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: mutation is OPT-IN
+// (`czap check --ir --mutate`) — running a suite per mutant is too heavy for a
+// default run. The integrator composes it on like supplyChainGate (a ~3-line
+// wiring). See the SURVIVOR_SEVERITY_BY_LEVEL / KILL_FLOOR_BY_LEVEL redlinable data.
+export {
+  mutationDivergenceGate,
+  SURVIVOR_SEVERITY_BY_LEVEL,
+  KILL_FLOOR_BY_LEVEL,
+} from './gates/mutation-divergence.js';
+
+// The avionics-tier simulation-determinism (DST) gate (Slice C). It folds the
+// host-supplied SimulationFacts — a replay-divergence (two replays of one seed
+// produce different byte-exact trace digests) is a self-explaining L4 Finding
+// carrying the seed. The heavy work (minting a seeded world, running the scenario
+// corpus, replaying, content-addressing traces) lives in @czap/core/simulation,
+// driven by the @czap/cli host (`czap check --ir --simulate`). Exported but
+// DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the
+// facts-injected, opt-in `--simulate` host path only (a ~3-line wiring like
+// supplyChainGate — the integrator composes it on, the gate ships qualified).
+export { simulationDeterminismGate } from './gates/simulation-determinism.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.
