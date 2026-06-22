@@ -60,6 +60,15 @@
     // a future divergence between core.d.ts and the @czap/core runtime fails the
     // typecheck rather than living as a dead assertion.
     "tests/unit/spine-conformance.test.ts",
+    // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
+    // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
+    // alloc-gate budget import, the gate surface) bite rather than rot.
+    "tests/property/verdict-cache-determinism.prop.test.ts",
+    "tests/property/repo-ir-determinism.prop.test.ts",
+    "tests/property/compositor-zero-alloc.test.ts",
+    "tests/property/token-buffer-zero-alloc.test.ts",
+    "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
+    "tests/bench/allocation.bench.ts",
     "tests/helpers/mock-websocket.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",

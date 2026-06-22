@@ -9,9 +9,20 @@
  * (zero-allocation), FrameBudget (priority scheduling), microtask batching,
  * and RuntimeCoordinator (Plan + ECS-backed runtime bookkeeping).
  *
- * Hot path (computeStateSync) is plain JS — no Effect overhead.
- * Effect is used only for resource lifecycle (create/scope) and
- * reactive stream (SubscriptionRef.changes).
+ * ZERO-ALLOCATION HOT PATH. The per-frame compose body (`computeStateSync`) is
+ * plain JS that mutates a POOLED {@link CompositeState} in place: it acquires a
+ * recycled state from {@link CompositorStatePool}, refills a REUSED dirty-name
+ * scratch array (never `Array.from`/`getDirty` — those minted an array per
+ * tick), and walks the phases with index loops + no per-tick closures. The
+ * result is no RETAINED per-op allocation: the live heap (the growth that
+ * survives a forced GC) stays flat at ≈ 0 bytes/op — proven by the allocation
+ * gate (`tests/property/compositor-zero-alloc.test.ts`).
+ *
+ * The ONE Effect touch on the path is the reactive publish
+ * `SubscriptionRef.set(stateRef, state)` that feeds the `changes` stream. It
+ * produces TRANSIENT Effect garbage (immediately GC-collected, never retained),
+ * a structural floor of the reactive seam — NOT live allocation. Everything else
+ * (create/scope) is off the hot path.
  *
  * @module
  */
@@ -235,6 +246,31 @@ export const Compositor: CompositorFactory = {
       // at the top of `computeStateSync` makes `runtime.markDirty` a real recompute
       // trigger while preserving the freeze-when-nothing-was-marked law.
       const seenEpoch = new Map<string, number>();
+
+      // Zero-allocation scratch for the per-tick dirty-name list. Refilled IN
+      // PLACE every tick (length tracked separately) so the hot path never
+      // allocates a fresh array — the old `Array.from(qMap.keys())` /
+      // `dirtyFlags.getDirty()` both minted one array per compute(). The array
+      // only ever GROWS (when more quantizers attach than it has held before), so
+      // it reaches a steady size and then allocates nothing.
+      const dirtyNamesScratch: string[] = [];
+      let dirtyCount = 0;
+      /**
+       * Refill {@link dirtyNamesScratch} with the names to (re)compute this tick:
+       * EVERY quantizer when in the recompute-all / no-flags path, else exactly the
+       * marked names. Writes in place and sets {@link dirtyCount}; allocates nothing
+       * once the scratch has reached its high-water size.
+       */
+      function refillDirtyNames(recomputeEverything: boolean, flags: DirtyFlags.Shape<string> | null): void {
+        dirtyCount = 0;
+        for (const name of qMap.keys()) {
+          if (recomputeEverything || flags === null || flags.isDirty(name)) {
+            dirtyNamesScratch[dirtyCount] = name;
+            dirtyCount++;
+          }
+        }
+      }
+
       function reconcileRuntimeDirty(): void {
         if (dirty === null) return; // recomputeAll path already recomputes everything
         for (const name of qMap.keys()) {
@@ -267,15 +303,17 @@ export const Compositor: CompositorFactory = {
         // new state instead of the frozen carry-forward.
         reconcileRuntimeDirty();
         const dirtyFlags = dirty;
-        const dirtyNames = recomputeAll || dirtyFlags === null ? Array.from(qMap.keys()) : dirtyFlags.getDirty();
-        const shouldRecompute =
-          recomputeAll || dirtyFlags === null ? () => true : (name: string) => dirtyFlags.isDirty(name);
+        const recomputeEverything = recomputeAll || dirtyFlags === null;
+        // Refill the reused scratch in place — no per-tick array allocation.
+        refillDirtyNames(recomputeEverything, dirtyFlags);
 
         const state = pool.acquire();
         const { discrete, blend, css, glsl, wgsl, aria } = accessCompositeState(state);
 
         for (const [name] of qMap) {
-          if (shouldRecompute(name)) {
+          // shouldRecompute(name): everything recomputes in the no-flags path, else
+          // only the marked names. Inlined (was a per-tick closure allocation).
+          if (recomputeEverything || (dirtyFlags !== null && dirtyFlags.isDirty(name))) {
             continue;
           }
 
@@ -315,7 +353,8 @@ export const Compositor: CompositorFactory = {
         for (const phase of runtime.phases) {
           switch (phase) {
             case 'compute-discrete':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const quantizer = qMap.get(name)!;
 
                 const prefetched = prefetchedStates.get(name);
@@ -328,7 +367,8 @@ export const Compositor: CompositorFactory = {
               break;
 
             case 'compute-blend':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const meta = metaMap.get(name)!;
 
                 const override = overrides.get(name);
@@ -342,7 +382,8 @@ export const Compositor: CompositorFactory = {
               break;
 
             case 'emit-css':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const meta = metaMap.get(name);
                 const stateStr = discrete[name];
                 // Escalation gate: skip projections whose policy does not admit `css`.
@@ -354,7 +395,8 @@ export const Compositor: CompositorFactory = {
 
             case 'emit-glsl':
               if (!frameBudget || frameBudget.canRun('high')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   // Escalation gate: skip projections whose policy does not admit `glsl`.
                   if (admits(meta, 'glsl')) {
@@ -371,7 +413,8 @@ export const Compositor: CompositorFactory = {
               // per-quantizer field key (those ride the payload). WGSL is the
               // heaviest (gpu-rung) target, so it shares glsl's `high` budget gate.
               if (!frameBudget || frameBudget.canRun('high')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   // Escalation gate: skip projections whose policy does not admit `wgsl`.
                   // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
@@ -384,7 +427,8 @@ export const Compositor: CompositorFactory = {
 
             case 'emit-aria':
               if (!frameBudget || frameBudget.canRun('low')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   const stateStr = discrete[name];
                   // Escalation gate: skip projections whose policy does not admit `aria`.

@@ -94,7 +94,7 @@ function decodeSamples(data: DataView, format: number, bitsPerSample: number): I
     }
     return out;
   }
-  // IEEE float32 -> Float32Array. Prefer a zero-copy view; fall back to a
+  // IEEE float32 -> Float32Array. Prefer a `zero-copy` view; fall back to a
   // copying decode when data.byteOffset isn't 4-byte aligned (RIFF only
   // guarantees 2-byte alignment, so a preceding LIST/JUNK chunk with
   // size % 4 === 2 can leave us at offset % 4 === 2, which Float32Array

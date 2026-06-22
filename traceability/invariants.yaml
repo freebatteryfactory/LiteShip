@@ -103,6 +103,30 @@ invariants:
     level: L4
     category: mutation
 
+  # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
+  - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
+    law: "gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot."
+    level: L4
+    category: determinism
+  - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
+    law: "A change in ANY verdict-cache soundness input (a covered file's contentDigest, the toolchainDigest, the gateId, or the env fingerprint) yields a DIFFERENT key — a cache MISS, a re-run. A stale 'green' can never be served (the B2 anti-lie keystone)."
+    level: L4
+    category: determinism
+  - id: INV-REPO-IR-DETERMINISTIC
+    law: "buildRepoIR is idempotent: building the IR twice over the same source corpus yields byte-identical per-file contentDigests and an identical canonical fold (no mtime/run-id/Map-order leak), and a single edited byte flips that file's digest — the byte-stable identity the verdict cache stands on."
+    level: L4
+    category: determinism
+
+  # ── Zero-allocation hot paths — MEASURED, not asserted (the perf-claim spine) ─
+  - id: INV-COMPOSITOR-ZERO-ALLOC
+    law: "The Compositor per-frame compose hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — no retained per-op allocation."
+    level: L3
+    category: determinism
+  - id: INV-TOKEN-BUFFER-ZERO-ALLOC
+    law: "The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing."
+    level: L3
+    category: determinism
+
   # ── Meta — the coverage rail that keeps the spine from rotting ──────────────
   - id: INV-CRDT-LAWS-PINNED
     law: "The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth)."

@@ -7,7 +7,7 @@
  * bench (a `bench()` measuring nothing — the bench analogue of `it.skip`), a
  * marker↔manifest drift, or a generated test that runs red.
  *
- * The engine (manifest read, mtime fast-path, regeneration confirmation via a
+ * The engine (manifest read, mtime `fast-path`, regeneration confirmation via a
  * `capsule:compile` spawn, the bench classifier, and the final `vitest run` over
  * `tests/generated/`) is INJECTED via `context.runCapsuleGate`, never imported
  * here, so `@czap/command` (and the MCP server that re-uses it) stays free of the

@@ -214,7 +214,7 @@ export interface RuntimePolicyReadout {
  * later `configureRuntimePolicy` (HMR, tests) updates the store but cannot
  * re-broadcast. This readout makes that two-source reality a TYPED result instead
  * of an invisible fallback — without touching the security lock or the precedence
- * (store first, always). {@link readRuntimePolicy} stays the hot-path accessor.
+ * (store first, always). {@link readRuntimePolicy} stays the `hot-path` accessor.
  */
 export function readRuntimePolicyWithSource(): RuntimePolicyReadout {
   if (_currentPolicy) return { policy: _currentPolicy, source: 'store' };

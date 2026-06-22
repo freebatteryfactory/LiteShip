@@ -47,6 +47,7 @@ import {
   mutationDivergenceGate,
   simulationDeterminismGate,
   traceabilityBridgeGate,
+  standardsIntegrityGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -58,8 +59,10 @@ import {
   type SimulationFacts,
   type SupplyChainFacts,
   type TraceabilityFacts,
+  type StandardsIntegrityFacts,
 } from '@czap/gauntlet';
 import { buildTraceabilityFacts } from './traceability.js';
+import { buildStandardsIntegrityFacts } from './standards-surface.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
 import {
   gauntletToolchainDigest,
@@ -272,6 +275,20 @@ export async function runGauntletWithRepoIR(
   gateSet.push(traceabilityBridgeGate);
   const traceabilityFacts: TraceabilityFacts = buildTraceabilityFacts(repoRoot, now);
 
+  // The AGENT-SAFETY META-GAUNTLET (the "raccoon rule", phase A) is ALSO ALWAYS-ON on
+  // the `--ir` path: the host reads the LIVE standards surface (the gauntlet's own rigor
+  // config off its exports + the committed benchmarks/traceability artifacts),
+  // content-addresses it, diffs it against the committed snapshot, applies the owner
+  // sign-offs against the injected wall-clock `now` (the two-clock law), and injects the
+  // decided facts for `standardsIntegrityGate` to fold. An UNSIGNED weakening of the
+  // standards (a removed gate, reduced fixtures, lowered floor/level, a new/extended
+  // waiver, a removed/lowered invariant) BLOCKS — the UNCONDITIONAL COMMIT BACKSTOP that
+  // catches a silent erosion regardless of who/how it landed. It is cheap to fold (a
+  // content-address + a diff, no test runs), so it rides the always-on path with
+  // traceability.
+  gateSet.push(standardsIntegrityGate);
+  const standardsFacts: StandardsIntegrityFacts = buildStandardsIntegrityFacts(repoRoot, now);
+
   // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
   // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
   if (cacheOpts.withSupplyChain === true) {
@@ -314,6 +331,7 @@ export async function runGauntletWithRepoIR(
     // used by the lean `litelaunchGauntletWithIR` callers that pass no gate override.)
     gates: gateSet,
     traceability: traceabilityFacts,
+    standards: standardsFacts,
     ...(supplyChainFacts !== undefined ? { supplyChain: supplyChainFacts } : {}),
     ...(mutationFacts !== undefined ? { mutation: mutationFacts } : {}),
     ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),

@@ -10,7 +10,7 @@
  *    + a {@link HarnessContext.fixturePath}) — the source schema is a
  *    Declaration-tagged `instanceOf(ArrayBuffer)` that is deliberately not
  *    arbitrary-derivable, so the canonical fixture bytes are the source of
- *    truth. Emits fixture-driven cache-hit / invalidation / determinism /
+ *    truth. Emits fixture-driven `cache-hit` / invalidation / determinism /
  *    invariant probes over the REAL `derive`, plus a REAL decode-throughput bench.
  *  - **real property form** ({@link HarnessContext.arbitraryDerivable}) — the
  *    source schema IS arbitrary-derivable, so the harness samples it via the

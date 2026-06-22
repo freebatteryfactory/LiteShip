@@ -152,7 +152,7 @@ export const MISSING_DIGEST_SENTINEL = 'missing:not-in-ir' as const;
  * is assumed to depend on every file, so ANY repo byte change invalidates its
  * cached verdict. Narrowing this (a gate declaring `coverage`) is an OPT-IN
  * optimization that is sound ONLY if the gate genuinely reads only those files; an
- * INACCURATE (too-narrow) coverage is a SOUNDNESS BUG (it would cache-hit when an
+ * INACCURATE (too-narrow) coverage is a SOUNDNESS BUG (it would `cache-hit` when an
  * uncovered dependency changed). The default-to-all floor never has that hazard.
  */
 export function allFileIds(ir: RepoIR): readonly FileId[] {

@@ -47,7 +47,7 @@ export interface HarnessContext {
    * Import specifier (with `.js` extension) for the canonical
    * `contentAddressOf` primitive from `@czap/core`'s content-address kernel.
    * The `cachedProjection` harness uses it as the cache KEY function for the
-   * content-addressed cache-hit / invalidation probes — never a hand-rolled
+   * content-addressed `cache-hit` / invalidation probes — never a hand-rolled
    * hash. Defaults to the repo-relative source path when the driver omits it.
    */
   readonly contentAddressImport?: string;
@@ -55,7 +55,7 @@ export interface HarnessContext {
    * COMPILE-TIME resolution for a `cachedProjection` whose binding the driver
    * has fully resolved: its `derive(bytes)` handler is present AND its
    * canonical byte fixture path is known to exist. When `true`, the harness
-   * emits the FINAL real-only form — fixture-driven cache-hit / invalidation /
+   * emits the FINAL real-only form — fixture-driven `cache-hit` / invalidation /
    * determinism / invariant probes with NO `it.skip` runtime-guard literals.
    * The random-source property test is OMITTED (not skipped): these capsules
    * take a Declaration-tagged `instanceOf(ArrayBuffer)` source schema that is

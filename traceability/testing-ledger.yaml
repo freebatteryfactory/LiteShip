@@ -86,6 +86,29 @@ traces:
     tests:
       - "tests/unit/audit/mutation-facts-build.test.ts::is deterministic — same source + runner → byte-identical facts"
 
+  # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
+  - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
+    tests:
+      - "tests/property/verdict-cache-determinism.prop.test.ts::SAME inputs ⇒ BYTE-IDENTICAL key, regardless of env insertion order"
+      - "tests/property/verdict-cache-determinism.prop.test.ts::coverageDigestOf is order- and multiplicity-independent (sorted, de-duped fold)"
+  - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
+    tests:
+      - "tests/property/verdict-cache-determinism.prop.test.ts::a different toolchainDigest moves the key (a gate-logic edit invalidates every cached verdict)"
+      - "tests/property/verdict-cache-determinism.prop.test.ts::a different gateId / coverageDigest / env value each move the key (no stale serve across any input)"
+      - "tests/property/verdict-cache-determinism.prop.test.ts::a TAMPERED covered-file digest flips the coverage digest ⇒ flips the key (the cache would catch it)"
+  - id: INV-REPO-IR-DETERMINISTIC
+    tests:
+      - "tests/property/repo-ir-determinism.prop.test.ts::builds a BYTE-IDENTICAL IR twice over the same corpus — per-file digests + the full fold"
+      - "tests/property/repo-ir-determinism.prop.test.ts::a single edited byte CHANGES that file digest (the digest tracks content, the cache-miss trigger)"
+
+  # ── Zero-allocation hot paths — the allocation gate (node --expose-gc) ───────
+  - id: INV-COMPOSITOR-ZERO-ALLOC
+    tests:
+      - "tests/property/compositor-zero-alloc.test.ts::the allocation gate reports the compositor compose hot path at ≈ 0 live bytes/op (within budget)"
+  - id: INV-TOKEN-BUFFER-ZERO-ALLOC
+    tests:
+      - "tests/property/token-buffer-zero-alloc.test.ts::the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)"
+
   # ── Meta (crdt-laws coverage rail) — tests/property/crdt-laws-gate.test.ts ──
   - id: INV-CRDT-LAWS-PINNED
     tests:

@@ -187,6 +187,15 @@ export function scopeContextByLevel(
     // injected the resolved ledger — exactly the scoped-context drop the
     // supplyChain/mutation/simulation pass-throughs above already fix.
     ...(context.traceability !== undefined ? { traceability: context.traceability } : {}),
+    // Likewise the injected standards-integrity facts (the raccoon-rule backstop):
+    // each StandardsChange carries its own elementKey (the gate folds it as an L4
+    // verdict; the element key is the location, not a src file), so file-scoping never
+    // narrows them — they pass through unchanged. Omit the key when absent. WITHOUT
+    // this pass-through the standardsIntegrityGate (an L4 gate, so always scoped) would
+    // see no facts and silently fold NOTHING even though the host injected the diffed
+    // surface — exactly the scoped-context drop the supplyChain/mutation/simulation/
+    // traceability pass-throughs above already fix.
+    ...(context.standards !== undefined ? { standards: context.standards } : {}),
   };
 }
 

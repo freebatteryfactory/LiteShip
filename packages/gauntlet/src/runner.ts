@@ -24,6 +24,7 @@ import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
+import type { StandardsIntegrityFacts } from './standards-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -43,6 +44,7 @@ import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 import { crdtLawsGate } from './gates/crdt-laws.js';
 import { performanceContractsGate } from './gates/performance-contracts.js';
+import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -97,6 +99,10 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   // does NOT requireIR, but it belongs in the IR-host set alongside the other Slice
   // B/C gates (the IR-present composition), NOT the lean cut LITESHIP_GATES.
   performanceContractsGate,
+  // The claim-vs-reality perf-claim gate — a perf claim (`zero-alloc` / `fast-path` /
+  // `O(1)` …) in published src that no bench measures is a finding. Same lean
+  // byte-fold shape as the performance-contracts gate; rides the IR-host set.
+  perfClaimBenchGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */
@@ -153,6 +159,17 @@ export interface RunGauntletOnRepoOptions {
    * no corpus scan, no cost.
    */
   readonly traceability?: TraceabilityFacts;
+  /**
+   * The INJECTED standards-integrity facts (the AGENT-SAFETY META-GAUNTLET, the
+   * "raccoon rule") — OPTIONAL. A host (the CLI's
+   * `packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+   * surface, content-addresses it, diffs it against the committed snapshot, applies the
+   * owner sign-offs against the injected wall-clock date, and threads the decided
+   * {@link StandardsIntegrityFacts} here, where they land on the {@link GateContext} for
+   * `standardsIntegrityGate` to fold. Omit them (the lean path) and the gate is simply
+   * not in the set — no surface read, no addressing cost.
+   */
+  readonly standards?: StandardsIntegrityFacts;
 }
 
 /**
@@ -178,6 +195,7 @@ export function runGauntletOnRepo(
       opts.mutation,
       opts.simulation,
       opts.traceability,
+      opts.standards,
     ),
     runOpts,
   );
@@ -287,6 +305,11 @@ export function litelaunchGauntletWithIR(
       // set at all. The CLI composes the gate + injects these always-on on the `--ir`
       // path (the committed ledger is cheap to fold).
       ...(cacheOpts.traceability !== undefined ? { traceability: cacheOpts.traceability } : {}),
+      // Inject the host-computed standards-integrity facts when supplied —
+      // `standardsIntegrityGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
+      // set at all. The CLI composes the gate + injects these ALWAYS-ON on the `--ir`
+      // path (the committed snapshot diff is cheap to fold), the raccoon-rule backstop.
+      ...(cacheOpts.standards !== undefined ? { standards: cacheOpts.standards } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -357,4 +380,14 @@ export interface LitelaunchCacheOptions {
    * no separate cache mode (the env fingerprint + toolchain digest already key it).
    */
   readonly traceability?: TraceabilityFacts;
+  /**
+   * OPTIONAL host-computed standards-integrity facts (the AGENT-SAFETY META-GAUNTLET,
+   * the "raccoon rule") threaded onto the {@link GateContext} for
+   * `standardsIntegrityGate` to fold. Supplied alongside a `gates` override that
+   * includes the gate. The CLI runs this ALWAYS-ON on the `--ir` path (the committed
+   * snapshot diff is cheap to fold), so its verdict varies only with the live standards
+   * surface + the committed snapshot + the sign-offs + the date — it carries no separate
+   * cache mode (the env fingerprint + toolchain digest already key it).
+   */
+  readonly standards?: StandardsIntegrityFacts;
 }

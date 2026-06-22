@@ -1778,6 +1778,14 @@
           "kind": "const"
         },
         {
+          "name": "NEVER_SIGNABLE_WEAKENINGS",
+          "kind": "const"
+        },
+        {
+          "name": "PERF_CLAIM_BENCH_RULE_ID",
+          "kind": "const"
+        },
+        {
           "name": "PLACEHOLDER_DIGEST",
           "kind": "const"
         },
@@ -1793,6 +1801,11 @@
           "name": "allFileIds",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "applyStandardsWaivers",
+          "kind": "function",
+          "signature": "(4)"
         },
         {
           "name": "applyWaivers",
@@ -1833,6 +1846,11 @@
           "name": "defineGate",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "diffStandardsSurface",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "earnedAuthority",
@@ -1962,7 +1980,12 @@
         {
           "name": "nodeContext",
           "kind": "function",
-          "signature": "(7)"
+          "signature": "(8)"
+        },
+        {
+          "name": "perfClaimBenchGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "performanceContractsGate",
@@ -2010,6 +2033,16 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "sortSurfaceElements",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "standardsIntegrityGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "stringsBlanked",
           "kind": "function",
           "signature": "(1)"
@@ -2023,6 +2056,11 @@
           "name": "supplyChainGate",
           "kind": "namespace",
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "surfaceElementKey",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "symbolOrphanDivergenceGate",

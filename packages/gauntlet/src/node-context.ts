@@ -26,6 +26,7 @@ import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
+import type { StandardsIntegrityFacts } from './standards-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -86,6 +87,17 @@ import type { TraceabilityFacts } from './traceability-facts.js';
  * gauntlet RECEIVES the facts, never parses YAML or reads a clock. Omitted ⇒ absent.
  *
  * @param traceability Optional pre-computed requirements-traceability facts to inject.
+ *
+ * The optional `standards` is the INJECTED standards-integrity facts capability (the
+ * AGENT-SAFETY META-GAUNTLET, the "raccoon rule"): a host (the CLI's
+ * `packages/cli/src/lib/standards-surface.ts` extractor) reads the live standards
+ * surface, content-addresses it, diffs it against the committed snapshot, applies the
+ * owner sign-offs against the injected wall-clock date, and folds the verdicts into
+ * {@link StandardsIntegrityFacts}, then threads them through so the
+ * `standardsIntegrityGate` can fold them. Same lean-engine pattern as the others — the
+ * gauntlet RECEIVES the facts, never reads config or content-addresses. Omitted ⇒ absent.
+ *
+ * @param standards Optional pre-computed standards-integrity facts to inject.
  */
 export function nodeContext(
   repoRoot: string,
@@ -95,6 +107,7 @@ export function nodeContext(
   mutation?: MutationFacts,
   simulation?: SimulationFacts,
   traceability?: TraceabilityFacts,
+  standards?: StandardsIntegrityFacts,
 ): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
@@ -132,5 +145,8 @@ export function nodeContext(
     // Thread the injected requirements-traceability facts through (the avionics-tier
     // ledger); omit when absent (the lean path, where the host computes no facts).
     ...(traceability !== undefined ? { traceability } : {}),
+    // Thread the injected standards-integrity facts through (the raccoon-rule
+    // backstop); omit when absent (the lean path, where the host runs no extractor).
+    ...(standards !== undefined ? { standards } : {}),
   };
 }

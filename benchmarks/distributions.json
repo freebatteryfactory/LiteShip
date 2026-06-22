@@ -413,6 +413,20 @@
       "inputSize": 1,
       "shape": "single-call",
       "replicates": 1
+    },
+    {
+      "name": "alloc -- compositor compute (selective recompute)",
+      "file": "tests/bench/allocation.bench.ts",
+      "inputSize": 250000,
+      "shape": "alloc-batches-x-ops-forced-gc",
+      "replicates": 50
+    },
+    {
+      "name": "alloc -- token-buffer push+drainInto",
+      "file": "tests/bench/allocation.bench.ts",
+      "inputSize": 250000,
+      "shape": "alloc-batches-x-ops-forced-gc",
+      "replicates": 50
     }
   ]
 }

@@ -1,0 +1,4 @@
+{
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void). Empty by default: nothing is signed, so any weakening blocks.",
+  "signoffs": []
+}

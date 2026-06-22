@@ -53,6 +53,7 @@
     "coverage:unit": "vitest run --config vitest.config.ts --coverage tests/unit/",
     "coverage:smoke": "vitest run --config vitest.config.ts --coverage tests/smoke/",
     "bench:gate": "pnpm run build && tsx scripts/bench-gate.ts",
+    "bench:alloc": "pnpm run build && node --expose-gc --import tsx scripts/alloc-gate.ts",
     "bench:trend": "tsx scripts/bench-trend.ts",
     "bench:reality": "pnpm run build && tsx scripts/bench-reality.ts",
     "bench": "pnpm run build && tsx tests/bench/core.bench.ts && tsx tests/bench/compiler.bench.ts && tsx tests/bench/video.bench.ts && tsx tests/bench/self-measure.bench.ts && tsx tests/bench/directive.bench.ts",

@@ -22,6 +22,7 @@ import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
+import type { StandardsIntegrityFacts } from './standards-facts.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -105,6 +106,24 @@ export interface GateContext {
    * self-explaining Finding at the invariant's level. See {@link TraceabilityFacts}.
    */
   readonly traceability?: TraceabilityFacts;
+  /**
+   * Pre-computed STANDARDS-INTEGRITY evidence — an INJECTED capability (the
+   * AGENT-SAFETY META-GAUNTLET, the "raccoon rule"), the same lean-engine pattern as
+   * {@link ir}, {@link supplyChain}, {@link mutation}, {@link simulation}, and
+   * {@link traceability}. OPTIONAL: the heavy work (reading the live standards surface
+   * off the gauntlet's own exports + the committed `benchmarks/`/`traceability/`
+   * artifacts, content-addressing the surface via the ONE `contentAddressOf` kernel,
+   * diffing it against the committed snapshot, applying the owner sign-offs against the
+   * injected wall-clock date) all lives in a HOST (the CLI's
+   * `packages/cli/src/lib/standards-surface.ts` extractor), which folds the decided
+   * verdicts into flat {@link StandardsIntegrityFacts} (the unsigned/signed/forbidden/
+   * expired weakenings + the stale strengthens) and lands them here. The
+   * {@link standardsIntegrityGate} reads ONLY through this; in-memory fixtures supply a
+   * literal facts record (no fs, no clock, no addressing). When ABSENT the gate is
+   * simply not exercised. An UNSIGNED weakening folds to a BLOCKING L4 Finding — the
+   * raccoon caught. See {@link StandardsIntegrityFacts}.
+   */
+  readonly standards?: StandardsIntegrityFacts;
 }
 
 /**

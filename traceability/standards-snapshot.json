@@ -1,0 +1,607 @@
+{
+  "snapshotFormat": 1,
+  "address": "fnv1a:5d8ee838",
+  "elements": [
+    {
+      "_tag": "always-blocking",
+      "ruleId": "gauntlet/no-placeholder"
+    },
+    {
+      "_tag": "always-blocking",
+      "ruleId": "gauntlet/no-skipped-test"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/*/src/index.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/*/src/{contract,capsule}.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/astro/src/runtime/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/audit/src/{structure,policy,devops-profile,integrity}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/canonical/src/**",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/commands/**",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/commands/{ship,gauntlet,audit,audit-floor,doctor,scene-dev,scene-render,scene-compile,scene-verify,ship-verify,asset-analyze,asset-verify,capsule,plumb,check-invariants,package-smoke}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/cli/src/dispatch.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/command/src/commands/**",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/command/src/dispatcher.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/command/src/host/plumb-scan.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/command/src/{catalog,registry}.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/{boundary,signal,zap,evaluate,gen-frame,speculative,token-buffer,blend,animation,ai-cast,clock,rng}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/core/src/{receipt,hlc,plan,dag,validated-output,assembly,brands}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/edge/src/manifest.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/gauntlet/src/gates/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/gauntlet/src/{engine,authority,waiver,gate,assurance-map,finding,assurance}.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/gauntlet/src/{runner,node-context}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/mcp-server/src/{capabilities,jsonrpc,errors,prompts,resources,manifest-resource,app-resources,ui-resources}.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/mcp-server/src/{http,stdio,dispatch}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/quantizer/src/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/remotion/src/composition.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/scene/src/contract.ts",
+      "level": "L2"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/stage/src/{dual-export,ffmpeg-encoder}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/web/src/capture/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/web/src/stream/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/worker/src/**",
+      "level": "L3"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/{assets,genui}/src/brands.ts",
+      "level": "L4"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "packages/{cli,command,mcp-server,audit,remotion,stage}/src/**",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "scripts/**",
+      "level": "L1"
+    },
+    {
+      "_tag": "assurance",
+      "glob": "scripts/{gauntlet,bench-gate,runtime-gate,capsule-verify,capsule-compile,feedback-verify,flex-verify,merge-coverage,merge-subprocess-v8,docs-check,artifact-integrity,devx-check}.ts",
+      "level": "L3"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::boundary.evaluateBatch",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "complexity-class::contentAddress.of",
+      "value": 2,
+      "direction": "lower-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/canonical/src/addressed-digest.ts",
+      "value": 1,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "floor",
+      "name": "mutation-score::packages/canonical/src/fnv.ts",
+      "value": 1,
+      "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/mutation-divergence",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/simulation-determinism",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/standards-integrity",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/supply-chain",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/traceability",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-bare-throw",
+      "set": "LITESHIP_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-nondeterminism",
+      "set": "LITESHIP_GATES",
+      "level": "L3",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-placeholder",
+      "set": "LITESHIP_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-silent-catch",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-skipped-test",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-ts-ignore",
+      "set": "LITESHIP_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/crdt-laws-pinned",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-bare-throw",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-default-export-divergence",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-nondeterminism",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L3",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-placeholder",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-require-divergence",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-silent-catch",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-skipped-test",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-ts-ignore",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-var-divergence",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/perf-claim-without-bench",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L3",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/performance-contracts",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L3",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/symbol-orphan-divergence",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ASSURANCE-PROPAGATION-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-ASSURANCE-PROPAGATION-MONOTONIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-COMPOSITOR-ZERO-ALLOC",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CONTENT-ADDRESS-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-CRDT-LAWS-PINNED",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-DST-NO-AMBIENT-ENTROPY",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-DST-TRACE-CONTENT-ADDRESSED",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-GRAPHPATCH-COMMUTATIVE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-GRAPHPATCH-CONFLICT-BOUNDARY",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-GRAPHPATCH-CONVERGENCE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-GRAPHPATCH-IDEMPOTENT",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-JOIN-ASSOCIATIVE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-JOIN-COMMUTATIVE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-JOIN-IDEMPOTENT",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-MERGE-DOMINANCE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-ORDER-TOTAL",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-HLC-ORDER-TRANSITIVE",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-MUTATION-FACTS-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-REPO-IR-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-SUPPLY-CHAIN-HERMETIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-SUPPLY-CHAIN-NO-AMBIENT-CI",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-TOKEN-BUFFER-ZERO-ALLOC",
+      "level": "L3",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-TOOLCHAIN-DIGEST-INVALIDATES",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-VECTOR-CLOCK-MONOTONIC",
+      "level": "L4",
+      "proofKind": "waiver"
+    },
+    {
+      "_tag": "invariant",
+      "id": "INV-VERDICT-CACHE-KEY-DETERMINISTIC",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|61",
+      "ruleId": "gauntlet/no-nondeterminism",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/clock.ts|78",
+      "ruleId": "gauntlet/no-nondeterminism",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-nondeterminism|packages/core/src/rng.ts|39",
+      "ruleId": "gauntlet/no-nondeterminism",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-silent-catch|packages/astro/src/runtime/wgpu.ts|287",
+      "ruleId": "gauntlet/no-silent-catch",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/doctor/probes-workspace.ts|250",
+      "ruleId": "gauntlet/no-silent-catch",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/ship.ts|169",
+      "ruleId": "gauntlet/no-silent-catch",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-silent-catch|packages/cli/src/commands/version.ts|47",
+      "ruleId": "gauntlet/no-silent-catch",
+      "expiry": "2027-06-20"
+    },
+    {
+      "_tag": "waiver",
+      "key": "gauntlet/no-silent-catch|packages/web/src/stream/resumption-pure.ts|29",
+      "ruleId": "gauntlet/no-silent-catch",
+      "expiry": "2027-06-20"
+    }
+  ]
+}

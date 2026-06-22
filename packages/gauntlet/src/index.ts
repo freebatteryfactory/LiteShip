@@ -147,6 +147,33 @@ export {
 
 export { LITESHIP_WAIVERS } from './waivers.js';
 
+// The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") — the lean standards-surface
+// model + the PURE weakening-diff + the owner-sign-off application. The HOST extractor
+// (`packages/cli/src/lib/standards-surface.ts`) reads the live surface, content-
+// addresses it, diffs it vs the committed snapshot, and folds the decided verdicts into
+// the StandardsIntegrityFacts the `standardsIntegrityGate` reports.
+export {
+  type GateSurface,
+  type WaiverSurface,
+  type AlwaysBlockingSurface,
+  type AssuranceSurface,
+  type InvariantSurface,
+  type FloorSurface,
+  type FloorDirection,
+  type StandardsElement,
+  type StandardsSurface,
+  type StandardsWaiver,
+  type ChangeClass,
+  type WeakeningClass,
+  type StandardsChange,
+  type StandardsIntegrityFacts,
+  NEVER_SIGNABLE_WEAKENINGS,
+  surfaceElementKey,
+  sortSurfaceElements,
+  diffStandardsSurface,
+  applyStandardsWaivers,
+} from './standards-facts.js';
+
 export { nodeContext } from './node-context.js';
 
 export {
@@ -188,6 +215,14 @@ export { crdtLawsGate } from './gates/crdt-laws.js';
 // complexity-class map). It does NOT requireIR, but it ships in LITESHIP_IR_GATES
 // (the IR-host composition), not the lean cut LITESHIP_GATES.
 export { performanceContractsGate } from './gates/performance-contracts.js';
+
+// The claim-vs-reality perf-claim gate (Slice C) — scans published `packages/*/src`
+// for MEASURABLE performance claims (`zero-alloc` / `fast-path` / `O(1)` …) in symbol
+// names or doc-comments that NO bench measures. A pure fold over GateContext bytes
+// (no IR), it ships in LITESHIP_IR_GATES alongside the other claim-vs-reality gates,
+// not the lean cut LITESHIP_GATES. This is the gate that would have caught a
+// "zero-allocation hot path" claim shipped without an allocation bench.
+export { perfClaimBenchGate, PERF_CLAIM_BENCH_RULE_ID } from './gates/perf-claim-bench.js';
 
 // The avionics-tier supply-chain gate (Slice C). It folds the host-supplied
 // SupplyChainFacts (lockfile policy / SBOM / provenance / CI authority) — the
@@ -234,6 +269,16 @@ export { simulationDeterminismGate } from './gates/simulation-determinism.js';
 // The CLI composes it ALWAYS-ON on the `--ir` path (the committed ledger is cheap to
 // fold), the same ~3-line wiring as supplyChainGate. See the integrator note.
 export { traceabilityBridgeGate } from './gates/traceability-bridge.js';
+
+// The AGENT-SAFETY META-GAUNTLET gate (the "raccoon rule", phase A) — the
+// UNCONDITIONAL COMMIT BACKSTOP. It folds the host-supplied StandardsIntegrityFacts (the
+// live standards surface diffed against its committed content-addressed snapshot, the
+// owner sign-offs already applied): an UNSIGNED weakening is a BLOCKING L4 Finding — the
+// gauntlet guarding its OWN rigor standards from silent erosion. Exported but
+// DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected
+// host path only. The CLI composes it ALWAYS-ON on the `--ir` path (the committed
+// snapshot diff is cheap to fold), the same ~3-line wiring as traceabilityBridgeGate.
+export { standardsIntegrityGate } from './gates/standards-integrity.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.
