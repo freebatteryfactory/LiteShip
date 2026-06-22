@@ -3,8 +3,9 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Effect } from 'effect';
+import { Deferred, Effect, Fiber, Stream } from 'effect';
 import { Boundary, Compositor, DIRTY_FLAGS_MAX } from '@czap/core';
+import type { CompositeState } from '@czap/core';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 const widthBoundary = Boundary.make({
@@ -257,6 +258,125 @@ describe('Compositor', () => {
       expect(state.discrete['theme']).toBe('light');
       expect(state.outputs.css['--czap-layout']).toBe('tablet');
       expect(state.outputs.css['--czap-theme']).toBe('light');
+    });
+  });
+
+  describe('changes stream (reactive contract preserved after the zero-alloc publish)', () => {
+    // The reactive publish was changed from `SubscriptionRef.set` to a raw
+    // listener-set fan-out (zero-transient). These pin that the `changes`
+    // Stream<CompositeState> contract is UNCHANGED: replay-current-on-subscribe,
+    // ordered delivery of every subsequent compose, and per-subscriber fan-out.
+    //
+    // NOTE on payload: `changes` delivers the POOLED CompositeState reference (which
+    // the two-slot rotation recycles a tick later), so an ASYNC consumer reads it
+    // after recycle and sees the cleared object — a PRE-EXISTING property of the
+    // pool-backed publish, identical under the old `SubscriptionRef.set` (verified
+    // against the original). These tests therefore assert the NOTIFICATION contract
+    // (delivery count, ordering, well-formed shape, fan-out) — the publish-mechanism
+    // change — not the pooled payload (unchanged + out of scope).
+    // Race-free handshake: a forked subscriber resolves `registered` the moment its
+    // FIRST element (the on-attach replay) arrives — which can only happen after the
+    // `Stream.callback` listener is in the set. The driver awaits `registered` before
+    // composing, so no compose is ever published before the subscriber can see it. No
+    // sleep, no timing assumption (the old `Effect.sleep` raced under load).
+    test('a subscriber replays the current state on attach, then receives each subsequent compose', async () => {
+      const received = await Effect.runPromise(
+        Effect.scoped(
+          Effect.gen(function* () {
+            const compositor = yield* Compositor.create();
+            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+            // `add` composed once; the current live state is now published.
+
+            const registered = yield* Deferred.make<void>();
+            const collected: CompositeState[] = [];
+            const fiber = yield* Effect.forkChild(
+              compositor.changes.pipe(
+                Stream.take(3), // replay + two composes
+                Stream.runForEach((state) =>
+                  Effect.gen(function* () {
+                    collected.push(state);
+                    if (collected.length === 1) yield* Deferred.succeed(registered, undefined);
+                  }),
+                ),
+              ),
+            );
+
+            // Block until the subscriber is registered + has replayed the current state.
+            yield* Deferred.await(registered);
+
+            // Now drive two more composes — guaranteed observed by the subscriber.
+            yield* compositor.remove('layout');
+            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'tablet'));
+            compositor.runtime.markDirty('layout');
+            yield* compositor.compute();
+
+            yield* Fiber.join(fiber);
+            return collected;
+          }),
+        ),
+      );
+
+      // Replay (1) + two composes (2) = 3 ordered emissions, each a well-formed
+      // CompositeState — the notification contract the publish change preserves.
+      expect(received.length).toBe(3);
+      for (const s of received) {
+        expect(s).toBeDefined();
+        expect(s.discrete).toBeDefined();
+        expect(s.outputs.css).toBeDefined();
+        expect(s.outputs.glsl).toBeDefined();
+        expect(s.outputs.aria).toBeDefined();
+      }
+    });
+
+    test('two subscribers each receive the same number of composes (fan-out)', async () => {
+      const [a, b] = await Effect.runPromise(
+        Effect.scoped(
+          Effect.gen(function* () {
+            const compositor = yield* Compositor.create();
+            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'mobile'));
+
+            // Each subscriber signals registration on its own replay; the driver waits
+            // for BOTH before composing (race-free fan-out, no sleep).
+            const subscriber = (registered: Deferred.Deferred<void>) => {
+              const collected: CompositeState[] = [];
+              return Effect.forkChild(
+                compositor.changes.pipe(
+                  Stream.take(2), // replay + one compose
+                  Stream.runForEach((state) =>
+                    Effect.gen(function* () {
+                      collected.push(state);
+                      if (collected.length === 1) yield* Deferred.succeed(registered, undefined);
+                    }),
+                  ),
+                ),
+              ).pipe(Effect.map((fiber) => ({ fiber, collected })));
+            };
+
+            const ra = yield* Deferred.make<void>();
+            const rb = yield* Deferred.make<void>();
+            const a = yield* subscriber(ra);
+            const b = yield* subscriber(rb);
+            yield* Deferred.await(ra);
+            yield* Deferred.await(rb);
+
+            yield* compositor.remove('layout');
+            yield* compositor.add('layout', makeQuantizer(widthBoundary, 'desktop')); // one more compose
+
+            yield* Fiber.join(a.fiber);
+            yield* Fiber.join(b.fiber);
+            return [a.collected, b.collected] as const;
+          }),
+        ),
+      );
+
+      // Both subscribers independently see replay + the one compose = 2 emissions
+      // each — the per-subscriber fan-out the listener-set publish preserves.
+      expect(a.length).toBe(2);
+      expect(b.length).toBe(2);
+      for (const s of [...a, ...b]) {
+        expect(s.discrete).toBeDefined();
+        expect(s.outputs.css).toBeDefined();
+      }
     });
   });
 });

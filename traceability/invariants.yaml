@@ -119,7 +119,7 @@ invariants:
 
   # ── Zero-allocation hot paths — MEASURED, not asserted (the perf-claim spine) ─
   - id: INV-COMPOSITOR-ZERO-ALLOC
-    law: "The Compositor per-frame compose hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — no retained per-op allocation."
+    law: "The Compositor per-frame compose hot path is genuinely zero-allocation in BOTH senses, measured + enforced by the allocation gate: (1) RETAINED — its LIVE per-op heap growth surviving a forced GC stays at or below the proven near-zero budget (no retained per-op allocation); and (2) TRANSIENT — its reactive publish (a raw listener-set fan-out over a stable live reference, replacing the per-publish-allocating SubscriptionRef.set) CHURNS nothing per op with no `changes` subscriber (near-zero B/op), and only the bounded Stream.callback bridge enqueue cost with one. Safe because the compositor is the single synchronous writer of the live state, so the bypassed semaphore's atomicity guarantee is moot."
     level: L3
     category: determinism
   - id: INV-TOKEN-BUFFER-ZERO-ALLOC
