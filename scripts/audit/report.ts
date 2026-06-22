@@ -7,7 +7,11 @@ import { ensureArtifactContext } from '../artifact-context.js';
 // CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
 // the CLI-only adapter (B5b: it imports @czap/audit's normalizeRepoPath, so it
 // cannot live in @czap/command/@czap/mcp-server — see check-invariants CLI-only).
-import { INVARIANTS } from '@czap/command';
+// Imported via the source path (not the `@czap/command` package name): this script
+// runs under tsx, which resolves through node_modules, and @czap/command is NOT a
+// root devDep / linked there (app-layer, like @czap/cli on the next line) — only the
+// vitest alias resolves the package name, which a plain tsx script does not have.
+import { INVARIANTS } from '../../packages/command/src/commands/check-invariants-registry.js';
 import { findViolations } from '../../packages/cli/src/commands/check-invariants.js';
 import {
   criticalityForInventoryPath,
