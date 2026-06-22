@@ -17,6 +17,14 @@ describe('canonical golden vectors', () => {
     expect(fnv1aBytes(new Uint8Array(0))).toBe('fnv1a:811c9dc5');
   });
 
+  it('fnv1aBytes pins a NON-EMPTY input — exercises the loop body (the MC/DC bytes-guard law)', () => {
+    // The empty-input vector alone leaves `fnv1aBytes`'s `i < bytes.length` loop guard
+    // MC/DC-uncovered (the loop body never runs): force-false (skip the loop) and
+    // force-true (never exit → hang) are only distinguished when a test actually iterates.
+    // This non-empty known-answer vector enters the loop, so both condition pins are killed.
+    expect(fnv1aBytes(new Uint8Array([1, 2, 3, 4, 5]))).toBe('fnv1a:bfe534e8');
+  });
+
   it('fnv1a (string) pins known-answer vectors — the FNV-1a loop-bound law', () => {
     // KNOWN-ANSWER pins for the string FNV-1a. The full-string fold MUST visit
     // exactly str[0..length-1]; the committed hexes are the real algorithm output.
