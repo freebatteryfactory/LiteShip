@@ -74,6 +74,18 @@ export interface CheckOptions {
    * run). MUST run in isolation — it mutates real source files in place.
    */
   readonly mutate?: boolean;
+  /**
+   * `--simulate`: also run the avionics-tier `simulationDeterminismGate` (L4 — the
+   * determinism spine, DST). The host drives the committed scenario corpus — real L4
+   * trust-spine SUTs (content-address / HLC / graph-patch / boundary-evaluator) —
+   * through the seeded `@czap/core/simulation` world, replaying each seed TWICE and
+   * comparing the two byte-exact trace digests. A deterministic pair CERTIFIES
+   * byte-exact reproducibility; a divergence is a REAL nondeterminism bug surfaced as
+   * an L4 finding carrying the seed (never fake-passed). Only meaningful with `--ir`;
+   * opt-in (no `not-evidenced` advisory on the default `--ir` run). The cache key is
+   * namespaced by this mode (a simulation verdict never serves a non-simulation run).
+   */
+  readonly simulate?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -82,7 +94,14 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
 
   const payload =
     opts.ir === true
-      ? runIrPath(cwd, opts.noCache === true, opts.symbols === true, opts.supplyChain === true, opts.mutate === true)
+      ? await runIrPath(
+          cwd,
+          opts.noCache === true,
+          opts.symbols === true,
+          opts.supplyChain === true,
+          opts.mutate === true,
+          opts.simulate === true,
+        )
       : await runLeanPath(cwd);
 
   const receipt: CheckReceipt = {
@@ -126,24 +145,30 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
  * supplyChainGate on + injects the host-computed facts; `mutate` (`--mutate`) composes
  * the mutationDivergenceGate on + runs the per-mutant vitest runner over the live
  * effective-L4 seams (HEAVY — must run in isolation, it mutates real source files in
- * place). The wall-clock `now` is the
+ * place). `simulate` (`--simulate`) composes the simulationDeterminismGate on +
+ * drives the committed scenario corpus through the `@czap/core/simulation` seeded
+ * world (replaying each seed twice, folding the byte-exact-replay verdicts). The
+ * wall-clock `now` is the
  * waiver-expiry calendar comparison
- * (TWO-CLOCK LAW: a wallClock boundary, NEVER systemClock). Returns the SAME
- * `CheckPayload` shape the lean path emits, so the receipt is consistent.
+ * (TWO-CLOCK LAW: a wallClock boundary, NEVER systemClock). Async because the
+ * `--simulate` corpus drives the harness through the scheduler seam (async). Returns
+ * the SAME `CheckPayload` shape the lean path emits, so the receipt is consistent.
  */
-function runIrPath(
+async function runIrPath(
   cwd: string,
   noCache: boolean,
   symbols: boolean,
   supplyChain: boolean,
   mutate: boolean,
-): CheckPayload {
+  simulate: boolean,
+): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
-  const result = runGauntletWithRepoIR(cwd, now, undefined, {
+  const result = await runGauntletWithRepoIR(cwd, now, undefined, {
     noCache,
     withSymbolReferences: symbols,
     withSupplyChain: supplyChain,
     withMutate: mutate,
+    withSimulate: simulate,
   });
   const findings = result.findings;
   return {

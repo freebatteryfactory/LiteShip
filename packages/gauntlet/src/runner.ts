@@ -22,6 +22,7 @@ import type { Gate } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { SimulationFacts } from './simulation-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -129,6 +130,17 @@ export interface RunGauntletOnRepoOptions {
    * is simply not in the set — no mutants generated, no suite-runs, no cost.
    */
   readonly mutation?: MutationFacts;
+  /**
+   * The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
+   * determinism spine) — OPTIONAL. A host (the CLI's `czap check --ir --simulate`
+   * path) drives the scenario corpus through the `@czap/core/simulation` harness
+   * (replaying each seed twice, content-addressing the two byte-exact traces) and
+   * threads the decided {@link SimulationFacts} here, where they land on the
+   * {@link GateContext} for `simulationDeterminismGate` to fold. Omit them (the
+   * default `--ir` run) and the gate is simply not in the set — no world minted, no
+   * scenario run, no cost.
+   */
+  readonly simulation?: SimulationFacts;
 }
 
 /**
@@ -144,7 +156,11 @@ export function runGauntletOnRepo(
   opts: RunGauntletOnRepoOptions,
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
-  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain, opts.mutation), runOpts);
+  return runGates(
+    gates,
+    nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain, opts.mutation, opts.simulation),
+    runOpts,
+  );
 }
 
 /** The default scope: every package's TypeScript source. */
@@ -242,6 +258,10 @@ export function litelaunchGauntletWithIR(
       // `mutationDivergenceGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (mutation is opt-in: `--mutate`).
       ...(cacheOpts.mutation !== undefined ? { mutation: cacheOpts.mutation } : {}),
+      // Inject the host-computed DST (simulation) facts when supplied —
+      // `simulationDeterminismGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
+      // the set at all on the default `--ir` run (simulation is opt-in: `--simulate`).
+      ...(cacheOpts.simulation !== undefined ? { simulation: cacheOpts.simulation } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -294,4 +314,13 @@ export interface LitelaunchCacheOptions {
    * verdict can never be served to a non-mutation run, or vice versa).
    */
   readonly mutation?: MutationFacts;
+  /**
+   * OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
+   * spine) threaded onto the {@link GateContext} for `simulationDeterminismGate` to
+   * fold. Supplied ONLY on the `czap check --ir --simulate` run, alongside a `gates`
+   * override that includes the gate. The cache key is namespaced by the simulation
+   * mode (a simulation-run verdict can never be served to a non-simulation run, or
+   * vice versa).
+   */
+  readonly simulation?: SimulationFacts;
 }

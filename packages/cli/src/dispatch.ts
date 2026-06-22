@@ -202,15 +202,23 @@ export async function run(argv: readonly string[]): Promise<number> {
       // mutant is HEAVY); the cache key is namespaced by this mode. It mutates real
       // source files IN PLACE (verified-restored), so it must run in ISOLATION.
       const mutate = rest.includes('--mutate');
-      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` are only meaningful
-      // on the IR path (the lean path has no cache + no IR). A bare flag there is a
-      // no-op, never a silent wrong run.
+      // `--simulate` composes the avionics-tier simulationDeterminismGate (L4 — the
+      // determinism spine, DST) on + drives the committed scenario corpus through the
+      // `@czap/core/simulation` seeded world (each scenario replayed twice; a
+      // byte-exact divergence is a real nondeterminism bug surfaced as an L4 finding
+      // carrying the seed). Only meaningful with `--ir`; opt-in (no not-evidenced
+      // advisory on the default `--ir` run); the cache key is namespaced by this mode.
+      const simulate = rest.includes('--simulate');
+      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` are
+      // only meaningful on the IR path (the lean path has no cache + no IR). A bare
+      // flag there is a no-op, never a silent wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
         ...(symbols ? { symbols } : {}),
         ...(supplyChain ? { supplyChain } : {}),
         ...(mutate ? { mutate } : {}),
+        ...(simulate ? { simulate } : {}),
       });
     }
     case 'check-invariants': {

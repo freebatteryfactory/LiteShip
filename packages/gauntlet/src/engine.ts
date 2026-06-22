@@ -169,6 +169,15 @@ export function scopeContextByLevel(
     // mutationDivergenceGate (an L4 gate, so always scoped) would see no facts and
     // throw `mutation-facts unavailable` even though the host injected them.
     ...(context.mutation !== undefined ? { mutation: context.mutation } : {}),
+    // Likewise the injected DST (simulation) facts (the determinism spine): each
+    // ScenarioReplayFact carries its own scenarioId (the gate folds it as an L4
+    // verdict; the scenario id is the location, not a src file), so file-scoping never
+    // narrows them — they pass through unchanged. Omit the key when absent. WITHOUT
+    // this pass-through the simulationDeterminismGate (an L4 gate, so always scoped)
+    // would see no facts and report `not-evidenced` even though the host injected the
+    // corpus verdicts — exactly the scoped-context drop the supplyChain/mutation
+    // pass-throughs above already fix.
+    ...(context.simulation !== undefined ? { simulation: context.simulation } : {}),
   };
 }
 

@@ -68,7 +68,7 @@ export async function lsp(opts: LspOptions = {}): Promise<number> {
   const runGauntlet = async (globs?: readonly string[]): Promise<RunnerResult> => {
     const now = new Date(wallClock.now());
     if (useIr) {
-      const result = runGauntletWithRepoIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
+      const result = await runGauntletWithRepoIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
       return { findings: result.findings, blocked: result.blocked };
     }
     const result = litelaunchGauntlet(cwd, now, globs);

@@ -40,6 +40,7 @@ import {
   litelaunchGauntletWithIR,
   supplyChainGate,
   mutationDivergenceGate,
+  simulationDeterminismGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -48,8 +49,10 @@ import {
   type LitelaunchCacheOptions,
   type MutationFacts,
   type RepoIR,
+  type SimulationFacts,
   type SupplyChainFacts,
 } from '@czap/gauntlet';
+import { runSimulationCorpus } from './simulation-corpus.js';
 import {
   gauntletToolchainDigest,
   makeFsVerdictCache,
@@ -226,12 +229,12 @@ export function buildRepoIRForRepo(repoRoot: string, withSymbolReferences = fals
  * `litelaunchGauntlet` and runs the six regex gates IR-free — the IR-fold gates
  * appear ONLY here, the IR-present composition.
  */
-export function runGauntletWithRepoIR(
+export async function runGauntletWithRepoIR(
   repoRoot: string,
   now: Date,
   globs?: readonly string[],
   cacheOpts: RepoIRGauntletCacheOptions = {},
-): GauntletResult {
+): Promise<GauntletResult> {
   const withSymbols = cacheOpts.withSymbolReferences === true;
   const ir = buildRepoIRForRepo(repoRoot, withSymbols);
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
@@ -239,11 +242,12 @@ export function runGauntletWithRepoIR(
   // Each avionics opt-in composes its gate onto the IR-host set + injects its facts
   // for THIS run only. WITHOUT an opt-in the gate is not in the set (no facts cost,
   // no `not-evidenced`/mutation noise on the default `--ir` run). The gate set
-  // ACCUMULATES (both `--supply-chain` and `--mutate` may be on at once), starting
-  // from the lean IR-host set; the facts are folded onto the launch options.
+  // ACCUMULATES (`--supply-chain`, `--mutate`, and `--simulate` may be on at once),
+  // starting from the lean IR-host set; the facts are folded onto the launch options.
   const gateSet: Gate[] = [...LITESHIP_IR_GATES];
   let supplyChainFacts: SupplyChainFacts | undefined;
   let mutationFacts: MutationFacts | undefined;
+  let simulationFacts: SimulationFacts | undefined;
 
   // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
   // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
@@ -265,6 +269,20 @@ export function runGauntletWithRepoIR(
     mutationFacts = buildRepoMutationFacts(repoRoot, ir, cache.toolchainDigest);
   }
 
+  // The `--simulate` opt-in (the determinism spine, DST going LIVE): drive the
+  // committed scenario corpus — REAL L4 trust-spine SUTs (content-address / HLC /
+  // graph-patch / boundary-evaluator) — through the seeded `@czap/core/simulation`
+  // world, replaying each seed TWICE and comparing the two byte-exact trace digests.
+  // A deterministic pair CERTIFIES byte-exact reproducibility (the positive result);
+  // a divergence is a REAL nondeterminism bug surfaced honestly (never fake-passed).
+  // The verdicts fold into the injected facts; compose `simulationDeterminismGate`.
+  // The simulation cache mode is namespaced in the toolchain digest (see
+  // resolveVerdictCache) so a simulation verdict never serves a non-simulation run.
+  if (cacheOpts.withSimulate === true) {
+    gateSet.push(simulationDeterminismGate);
+    simulationFacts = await runSimulationCorpus();
+  }
+
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
     // Only override the gate set when an opt-in actually added a gate (a bare `--ir`
@@ -272,6 +290,7 @@ export function runGauntletWithRepoIR(
     ...(gateSet.length > LITESHIP_IR_GATES.length ? { gates: gateSet } : {}),
     ...(supplyChainFacts !== undefined ? { supplyChain: supplyChainFacts } : {}),
     ...(mutationFacts !== undefined ? { mutation: mutationFacts } : {}),
+    ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),
   };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
@@ -459,6 +478,20 @@ export interface RepoIRGauntletCacheOptions {
    * cache-soundness lesson. HEAVY (a covering-test suite run per mutant) — opt-in.
    */
   readonly withMutate?: boolean;
+  /**
+   * Compose the avionics-tier `simulationDeterminismGate` (L4 — the determinism
+   * spine) onto the run and inject the host-computed {@link SimulationFacts}
+   * (`czap check --ir --simulate`). The host drives the committed scenario corpus
+   * (real L4 trust-spine SUTs) through the `@czap/core/simulation` seeded world,
+   * replaying each seed twice and folding the byte-exact-replay verdicts. It changes
+   * BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED
+   * by this mode (see {@link resolveVerdictCache}): a simulation-run verdict can never
+   * be served to a non-simulation run, or vice versa — exactly the `--symbols` /
+   * `--supply-chain` / `--mutate` cache-soundness lesson. The corpus SUTs are pure,
+   * so this is light (no subprocess) — opt-in so the default `--ir` run carries no
+   * `not-evidenced` advisory.
+   */
+  readonly withSimulate?: boolean;
 }
 
 /**
@@ -489,6 +522,11 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // This `mtMode` also flows into the mutant-verdict cache key via the toolchain
     // digest, so a mutant verdict minted under one mode never serves another.
     ...(opts.withMutate === true ? { mtMode: 'mutate' } : {}),
+    // The simulation MODE changes BOTH the gate set (simulationDeterminismGate
+    // composed on) AND the injected facts WITHOUT changing any file's content digest,
+    // so it must namespace the key — else a simulation-run verdict could be served to
+    // a non-simulation run (the same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withSimulate === true ? { simMode: 'simulate' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),

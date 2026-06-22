@@ -24,6 +24,7 @@ import type { GateContext } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { SimulationFacts } from './simulation-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -59,9 +60,20 @@ import type { MutationFacts } from './mutation-facts.js';
  * `supplyChain` — the gauntlet RECEIVES the facts, never computes them. Omitted ⇒
  * absent (the default `--ir` run, where mutation is opt-in via `--mutate`).
  *
+ * The optional `simulation` is the INJECTED DST (deterministic-simulation) facts
+ * capability (the avionics tier — the determinism spine): a host (the CLI's
+ * `czap check --ir --simulate` path) drives the scenario corpus through the
+ * `@czap/core/simulation` harness (replaying each seed twice, content-addressing the
+ * two byte-exact traces) and folds the verdicts into {@link SimulationFacts}, then
+ * threads them through so the `simulationDeterminismGate` can fold them. Same
+ * lean-engine pattern as `ir` / `supplyChain` / `mutation` — the gauntlet RECEIVES
+ * the facts, never mints a world or runs a scenario. Omitted ⇒ absent (the default
+ * `--ir` run, where simulation is opt-in via `--simulate`).
+ *
  * @param ir Optional pre-built repo-IR to inject onto the context.
  * @param supplyChain Optional pre-computed supply-chain facts to inject.
  * @param mutation Optional pre-computed mutation facts to inject.
+ * @param simulation Optional pre-computed DST (simulation) facts to inject.
  */
 export function nodeContext(
   repoRoot: string,
@@ -69,6 +81,7 @@ export function nodeContext(
   ir?: RepoIR,
   supplyChain?: SupplyChainFacts,
   mutation?: MutationFacts,
+  simulation?: SimulationFacts,
 ): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
@@ -100,5 +113,8 @@ export function nodeContext(
     ...(supplyChain !== undefined ? { supplyChain } : {}),
     // Thread the injected mutation facts through (Slice C); omit when absent.
     ...(mutation !== undefined ? { mutation } : {}),
+    // Thread the injected DST (simulation) facts through (the determinism spine);
+    // omit when absent (the default `--ir` run — simulation is opt-in via `--simulate`).
+    ...(simulation !== undefined ? { simulation } : {}),
   };
 }
