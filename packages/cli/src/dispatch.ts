@@ -227,9 +227,24 @@ export async function run(argv: readonly string[]): Promise<number> {
       // with `--ir`; opt-in (a whole-corpus ts.Program + checker trace is HEAVY); the
       // cache key is namespaced by this mode.
       const taint = rest.includes('--taint');
+      // `--proof` composes the proofPropagationGate (the LOCAL-VS-GLOBAL correctness
+      // family — the lax-functor, L4) on + reads the proof signals (mutation/coverage/
+      // property/invariant), blends a per-module scalar, and propagates it along the dep
+      // DAG (the min-fixpoint): a trust-spine module whose GLOBAL proof drops below its
+      // floor via a weak dependency is a finding. Only meaningful with `--ir`; opt-in
+      // (LIGHT — artifact reads + a corpus scan); the cache key is namespaced by this mode.
+      const proof = rest.includes('--proof');
+      // `--composition` composes the compositionCoverageGate (the LOCAL-VS-GLOBAL family —
+      // "locally green, globally untested interaction", L4) on + derives the interaction
+      // edges from the IR call graph (both endpoints individually tested) and classifies
+      // each integration-covered/uncovered (the sound static-reference proxy): an UNCOVERED
+      // trust-spine interaction edge is a finding. Only meaningful with `--ir`; opt-in
+      // (LIGHT — a corpus scan); the cache key is namespaced by this mode.
+      const composition = rest.includes('--composition');
       // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
-      // `--taint` are only meaningful on the IR path (the lean path has no cache + no
-      // IR). A bare flag there is a no-op, never a silent wrong run.
+      // `--taint` / `--proof` / `--composition` are only meaningful on the IR path (the
+      // lean path has no cache + no IR). A bare flag there is a no-op, never a silent
+      // wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
@@ -239,6 +254,8 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(mcdc ? { mcdc } : {}),
         ...(simulate ? { simulate } : {}),
         ...(taint ? { taint } : {}),
+        ...(proof ? { proof } : {}),
+        ...(composition ? { composition } : {}),
       });
     }
     case 'check-invariants': {

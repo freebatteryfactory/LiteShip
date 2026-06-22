@@ -1779,6 +1779,14 @@
           "kind": "const"
         },
         {
+          "name": "CLAIM_PROPERTY_RULE_ID",
+          "kind": "const"
+        },
+        {
+          "name": "COMPOSITION_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
           "name": "COVERAGE_CLASSES",
           "kind": "const"
         },
@@ -1787,7 +1795,15 @@
           "kind": "const"
         },
         {
+          "name": "COVERAGE_EVIDENCE_STRENGTH",
+          "kind": "const"
+        },
+        {
           "name": "DEFAULT_GAUNTLET_GLOBS",
+          "kind": "const"
+        },
+        {
+          "name": "HEATMAP_FORMAT",
           "kind": "const"
         },
         {
@@ -1835,11 +1851,27 @@
           "kind": "const"
         },
         {
+          "name": "PROOF_FLOOR_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "PROOF_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
           "name": "SEVERITIES",
           "kind": "const"
         },
         {
           "name": "SURVIVOR_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "UNMEASURED_PROOF",
+          "kind": "const"
+        },
+        {
+          "name": "UNMEASURED_WEAK_LINK_SEVERITY",
           "kind": "const"
         },
         {
@@ -1863,12 +1895,27 @@
           "signature": "(2)"
         },
         {
+          "name": "claimPropertyGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "codeOnly",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "commentsBlanked",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "compositionCoverageGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "computeHeatmap",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1888,6 +1935,11 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "declaredFixProtocolGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "defineGate",
           "kind": "function",
           "signature": "(1)"
@@ -1901,6 +1953,11 @@
           "name": "earnedAuthority",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "fileMatchesGlob",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "finding",
@@ -2053,7 +2110,17 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "proofPropagationGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "propagateAssuranceLevels",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "propagateProofStrength",
           "kind": "function",
           "signature": "(2)"
         },
@@ -2153,9 +2220,19 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "verifyDeclaredFix",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "verifyGate",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "weakestLinkPath",
+          "kind": "function",
+          "signature": "(4)"
         }
       ]
     },

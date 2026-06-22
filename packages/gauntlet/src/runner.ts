@@ -27,6 +27,8 @@ import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
+import type { ProofFacts } from './proof-facts.js';
+import type { CompositionFacts } from './composition-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -47,6 +49,7 @@ import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js'
 import { crdtLawsGate } from './gates/crdt-laws.js';
 import { performanceContractsGate } from './gates/performance-contracts.js';
 import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
+import { claimPropertyGate } from './gates/claim-property.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -105,6 +108,12 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   // `O(1)` …) in published src that no bench measures is a finding. Same lean
   // byte-fold shape as the performance-contracts gate; rides the IR-host set.
   perfClaimBenchGate,
+  // The claim-vs-reality SEMANTIC-claim gate — a property claim (`deterministic` /
+  // `pure` / `content-addressed` / `canonical`) in published src that no MEASURABLE
+  // confirmer backs (a determinism test / an in-file ambient-entropy check / a
+  // content-address round-trip test) is a finding. Same lean byte-fold shape as the
+  // perf-claim gate (no IR); rides the IR-host set alongside it, never the lean cut.
+  claimPropertyGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */
@@ -193,6 +202,26 @@ export interface RunGauntletOnRepoOptions {
    * the gate is simply not in the set — no fuzzer run, no cost.
    */
   readonly fuzzCorpus?: FuzzCorpusFacts;
+  /**
+   * The INJECTED proof-strength facts (the LOCAL-VS-GLOBAL correctness family — the
+   * lax-functor) — OPTIONAL. A host (the CLI's `czap check --ir --proof` path) reads
+   * the proof signals (mutation score / coverage / property tests / enrolled
+   * invariants), blends them into per-module scalars, and threads the decided
+   * {@link ProofFacts} here, where they land on the {@link GateContext} for
+   * `proofPropagationGate` to propagate along the dep DAG. Omit them (the default
+   * `--ir` run) and the gate is simply not in the set — no signal reads, no cost.
+   */
+  readonly proof?: ProofFacts;
+  /**
+   * The INJECTED composition-coverage facts (the LOCAL-VS-GLOBAL correctness family —
+   * "locally green, globally untested interaction") — OPTIONAL. A host (the CLI's
+   * `czap check --ir --composition` path) derives the interaction edges from the IR
+   * call graph and classifies each integration-covered/uncovered, then threads the
+   * decided {@link CompositionFacts} here, where they land on the {@link GateContext}
+   * for `compositionCoverageGate` to fold. Omit them (the default `--ir` run) and the
+   * gate is simply not in the set — no corpus scan, no cost.
+   */
+  readonly composition?: CompositionFacts;
 }
 
 /**
@@ -208,22 +237,31 @@ export function runGauntletOnRepo(
   opts: RunGauntletOnRepoOptions,
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
-  return runGates(
-    gates,
-    nodeContext(
-      opts.repoRoot,
-      opts.globs,
-      opts.ir,
-      opts.supplyChain,
-      opts.mutation,
-      opts.simulation,
-      opts.traceability,
-      opts.standards,
-      opts.mcdc,
-      opts.fuzzCorpus,
-    ),
-    runOpts,
+  // The base context carries the positional facts; the LOCAL-VS-GLOBAL family's
+  // proof/composition facts are spread on additively (so the brittle positional
+  // nodeContext signature is not widened for every new fact family). Omit each key
+  // when absent so an opt-in-free run's context shape is unchanged.
+  const baseContext = nodeContext(
+    opts.repoRoot,
+    opts.globs,
+    opts.ir,
+    opts.supplyChain,
+    opts.mutation,
+    opts.simulation,
+    opts.traceability,
+    opts.standards,
+    opts.mcdc,
+    opts.fuzzCorpus,
   );
+  const context =
+    opts.proof !== undefined || opts.composition !== undefined
+      ? {
+          ...baseContext,
+          ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
+          ...(opts.composition !== undefined ? { composition: opts.composition } : {}),
+        }
+      : baseContext;
+  return runGates(gates, context, runOpts);
 }
 
 /** The default scope: every package's TypeScript source. */
@@ -339,6 +377,14 @@ export function litelaunchGauntletWithIR(
       // set at all. The CLI composes the gate + injects these ALWAYS-ON on the `--ir`
       // path (the committed snapshot diff is cheap to fold), the raccoon-rule backstop.
       ...(cacheOpts.standards !== undefined ? { standards: cacheOpts.standards } : {}),
+      // Inject the host-computed proof-strength facts (the LOCAL-VS-GLOBAL lax-functor)
+      // when supplied — `proofPropagationGate` propagates them along the dep DAG.
+      // Omitted ⇒ absent ⇒ the gate is not in the set (proof is opt-in: `--proof`).
+      ...(cacheOpts.proof !== undefined ? { proof: cacheOpts.proof } : {}),
+      // Inject the host-computed composition-coverage facts (the untested-interaction
+      // analysis) when supplied — `compositionCoverageGate` folds them. Omitted ⇒
+      // absent ⇒ the gate is not in the set (composition is opt-in: `--composition`).
+      ...(cacheOpts.composition !== undefined ? { composition: cacheOpts.composition } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -428,4 +474,21 @@ export interface LitelaunchCacheOptions {
    * cache mode (the env fingerprint + toolchain digest already key it).
    */
   readonly standards?: StandardsIntegrityFacts;
+  /**
+   * OPTIONAL host-computed proof-strength facts (the LOCAL-VS-GLOBAL correctness family
+   * — the lax-functor) threaded onto the {@link GateContext} for `proofPropagationGate`
+   * to propagate along the dep DAG. Supplied ONLY on the `czap check --ir --proof` run,
+   * alongside a `gates` override that includes the gate. The proof MODE namespaces the
+   * verdict cache key (a proof-run verdict can never be served to a non-proof run, or
+   * vice versa) — the same `--mutate` cache-soundness lesson.
+   */
+  readonly proof?: ProofFacts;
+  /**
+   * OPTIONAL host-computed composition-coverage facts (the LOCAL-VS-GLOBAL correctness
+   * family — "locally green, globally untested interaction") threaded onto the
+   * {@link GateContext} for `compositionCoverageGate` to fold. Supplied ONLY on the
+   * `czap check --ir --composition` run, alongside a `gates` override that includes the
+   * gate. The composition MODE namespaces the verdict cache key.
+   */
+  readonly composition?: CompositionFacts;
 }

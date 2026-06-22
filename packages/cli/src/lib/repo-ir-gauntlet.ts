@@ -53,6 +53,8 @@ import {
   traceabilityBridgeGate,
   standardsIntegrityGate,
   taintFlowGate,
+  proofPropagationGate,
+  compositionCoverageGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -67,7 +69,10 @@ import {
   type TaintFacts,
   type TraceabilityFacts,
   type StandardsIntegrityFacts,
+  type ProofFacts,
+  type CompositionFacts,
 } from '@czap/gauntlet';
+import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
 import { buildStandardsIntegrityFacts } from './standards-surface.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
@@ -272,6 +277,8 @@ export async function runGauntletWithRepoIR(
   let mcdcFacts: McdcFacts | undefined;
   let simulationFacts: SimulationFacts | undefined;
   let taintFacts: TaintFacts | undefined;
+  let proofFacts: ProofFacts | undefined;
+  let compositionFacts: CompositionFacts | undefined;
 
   // The requirements-traceability ledger (the avionics-tier bidirectional trace) is
   // ALWAYS-ON on the `--ir` path: the committed `traceability/*.yaml` is cheap to fold
@@ -364,6 +371,34 @@ export async function runGauntletWithRepoIR(
     taintFacts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile: withRepoRoot(liteshipDevopsProfile, repoRoot) });
   }
 
+  // The `--proof` opt-in (the LOCAL-VS-GLOBAL correctness family — the lax-functor):
+  // read the proof SIGNALS (the committed mutation-score ratchet, the coverage report,
+  // per-file property-test presence, the enrolled-invariant ledger), blend them into a
+  // per-module proof scalar in the HOST, and inject the facts; compose
+  // `proofPropagationGate`. The gate propagates the scalar along the IR's dep DAG (the
+  // `min`-fixpoint dual of assurance propagation) and reports each trust-spine module
+  // whose GLOBAL proof drops below its level floor BECAUSE of a weak dependency. The
+  // proof cache mode is namespaced (see resolveVerdictCache) so a proof-run verdict
+  // never serves a non-proof run. LIGHT (a few artifact reads + a corpus scan — no test
+  // runs), but opt-in so the default `--ir` run carries no `not-evidenced` advisory.
+  if (cacheOpts.withProof === true) {
+    gateSet.push(proofPropagationGate);
+    proofFacts = buildProofFacts(repoRoot, ir);
+  }
+
+  // The `--composition` opt-in (the LOCAL-VS-GLOBAL correctness family — "locally green,
+  // globally untested interaction"): derive the interaction edges from the IR call/import
+  // graph (a file→file dependency where BOTH endpoints are individually tested), classify
+  // each integration-covered iff a single test references both (the SOUND static-reference
+  // over-approximation, the honest limit the gate carries), and inject the facts; compose
+  // `compositionCoverageGate`. An UNCOVERED L4 interaction edge is the finding. The
+  // composition cache mode is namespaced (see resolveVerdictCache). LIGHT (a corpus scan
+  // over the IR edges — no test runs), opt-in so the default run carries no advisory.
+  if (cacheOpts.withComposition === true) {
+    gateSet.push(compositionCoverageGate);
+    compositionFacts = buildCompositionFacts(repoRoot, ir);
+  }
+
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
@@ -378,6 +413,8 @@ export async function runGauntletWithRepoIR(
     ...(mcdcFacts !== undefined ? { mcdc: mcdcFacts } : {}),
     ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),
     ...(taintFacts !== undefined ? { taint: taintFacts } : {}),
+    ...(proofFacts !== undefined ? { proof: proofFacts } : {}),
+    ...(compositionFacts !== undefined ? { composition: compositionFacts } : {}),
   };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
@@ -703,6 +740,31 @@ export interface RepoIRGauntletCacheOptions {
    * so the default `--ir` run carries no taint cost.
    */
   readonly withTaint?: boolean;
+  /**
+   * Compose the `proofPropagationGate` (the LOCAL-VS-GLOBAL correctness family — the
+   * lax-functor, L4) onto the run and inject the host-computed {@link ProofFacts}
+   * (`czap check --ir --proof`). The host reads the proof signals (mutation score /
+   * coverage / property tests / enrolled invariants) and blends them into a per-module
+   * scalar; the gate propagates it along the dep DAG (the `min`-fixpoint) and reports
+   * each trust-spine module whose global proof drops below its floor via a weak
+   * dependency. It changes BOTH which gates run AND the injected facts, so the verdict
+   * cache is NAMESPACED by this mode (see {@link resolveVerdictCache}) — exactly the
+   * `--mutate` cache-soundness lesson. LIGHT (artifact reads + a corpus scan, no test
+   * runs) — opt-in so the default `--ir` run carries no `not-evidenced` advisory.
+   */
+  readonly withProof?: boolean;
+  /**
+   * Compose the `compositionCoverageGate` (the LOCAL-VS-GLOBAL correctness family —
+   * "locally green, globally untested interaction", L4) onto the run and inject the
+   * host-computed {@link CompositionFacts} (`czap check --ir --composition`). The host
+   * derives the interaction edges from the IR call graph (both endpoints individually
+   * tested) and classifies each integration-covered/uncovered (the sound
+   * static-reference proxy); the gate reports each uncovered edge at its propagated
+   * level. It changes BOTH which gates run AND the injected facts, so the verdict cache
+   * is NAMESPACED by this mode (see {@link resolveVerdictCache}). LIGHT (a corpus scan
+   * over the IR edges, no test runs) — opt-in.
+   */
+  readonly withComposition?: boolean;
 }
 
 /**
@@ -751,6 +813,16 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // the key — else a taint-run verdict could be served to a non-taint run (the same
     // stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withTaint === true ? { taintMode: 'taint' } : {}),
+    // The proof MODE changes BOTH the gate set (proofPropagationGate composed on) AND
+    // the injected facts WITHOUT changing any file's content digest, so it must
+    // namespace the key — else a proof-run verdict could be served to a non-proof run
+    // (the same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withProof === true ? { proofMode: 'proof' } : {}),
+    // The composition MODE changes BOTH the gate set (compositionCoverageGate composed
+    // on) AND the injected facts WITHOUT changing any file's content digest, so it must
+    // namespace the key — else a composition-run verdict could be served to a
+    // non-composition run (the same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withComposition === true ? { compositionMode: 'composition' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),

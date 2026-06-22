@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:78662358",
+  "address": "fnv1a:78bf29c6",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -293,6 +293,15 @@
       "ruleId": "gauntlet/no-ts-ignore",
       "set": "LITESHIP_GATES",
       "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/claim-without-confirmer",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L3",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1

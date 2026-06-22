@@ -110,6 +110,27 @@ export interface CheckOptions {
    * never serves a non-taint run).
    */
   readonly taint?: boolean;
+  /**
+   * `--proof`: also run the `proofPropagationGate` (the LOCAL-VS-GLOBAL correctness
+   * family — the lax-functor, L4). The host reads the proof signals (mutation score /
+   * coverage / property tests / enrolled invariants), blends them into a per-module
+   * scalar, and the gate propagates it along the IR's dep DAG (the `min`-fixpoint): a
+   * trust-spine module whose GLOBAL proof drops below its level floor because of a weak
+   * dependency is a finding naming the weak-link path. Only meaningful with `--ir`;
+   * opt-in. The cache key is namespaced by this mode (a proof verdict never serves a
+   * non-proof run).
+   */
+  readonly proof?: boolean;
+  /**
+   * `--composition`: also run the `compositionCoverageGate` (the LOCAL-VS-GLOBAL
+   * correctness family — "locally green, globally untested interaction", L4). The host
+   * derives the interaction edges from the IR call graph (both endpoints individually
+   * tested) and classifies each integration-covered/uncovered (the sound
+   * static-reference proxy): an UNCOVERED interaction edge on the trust spine is a
+   * finding. Only meaningful with `--ir`; opt-in. The cache key is namespaced by this
+   * mode (a composition verdict never serves a non-composition run).
+   */
+  readonly composition?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -127,6 +148,8 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
           opts.mcdc === true,
           opts.simulate === true,
           opts.taint === true,
+          opts.proof === true,
+          opts.composition === true,
         )
       : await runLeanPath(cwd);
 
@@ -189,6 +212,8 @@ async function runIrPath(
   mcdc: boolean,
   simulate: boolean,
   taint: boolean,
+  proof: boolean,
+  composition: boolean,
 ): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
   const result = await runGauntletWithRepoIR(cwd, now, undefined, {
@@ -199,6 +224,8 @@ async function runIrPath(
     withMcdc: mcdc,
     withSimulate: simulate,
     withTaint: taint,
+    withProof: proof,
+    withComposition: composition,
   });
   const findings = result.findings;
   return {

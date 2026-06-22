@@ -204,6 +204,15 @@ export function scopeContextByLevel(
     // surface — exactly the scoped-context drop the supplyChain/mutation/simulation/
     // traceability pass-throughs above already fix.
     ...(context.standards !== undefined ? { standards: context.standards } : {}),
+    // Likewise the injected declared-fix facts (the raccoon-rule agent-fix admission,
+    // phases B+C): the verdict describes the WHOLE fix (its declared scope, size, and
+    // the standards before/after), not any one src file, so file-scoping never narrows
+    // it — it passes through unchanged. Omit the key when absent. WITHOUT this
+    // pass-through the declaredFixProtocolGate (an L4 gate, so always scoped) would see
+    // no facts and silently fold NOTHING even though the host injected a rejected
+    // verdict — exactly the scoped-context drop the standards/traceability pass-throughs
+    // above already fix.
+    ...(context.declaredFix !== undefined ? { declaredFix: context.declaredFix } : {}),
     // Likewise the injected decode-fuzz facts (the untrusted-byte decode-surface
     // hardening): each DecoderFuzzFact carries its own decoderId (the gate folds it
     // as an L4 verdict; the decoder id is the location, not a src file), so

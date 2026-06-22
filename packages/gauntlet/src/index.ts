@@ -85,6 +85,23 @@ export {
   type MutantVerdictTag,
 } from './mutation-facts.js';
 
+// The LOCAL-VS-GLOBAL correctness family — proof-strength facts + the lax-functor
+// `min`-fold over the dep DAG (the dual of assurance propagation), and the
+// composition-coverage facts (untested interaction edges).
+export {
+  type ProofFacts,
+  type ModuleProof,
+  type ProofSignals,
+  UNMEASURED_PROOF,
+} from './proof-facts.js';
+export { propagateProofStrength, weakestLinkPath } from './proof-propagation.js';
+export {
+  type CompositionFacts,
+  type InteractionEdge,
+  type CoverageEvidence,
+  COVERAGE_EVIDENCE_STRENGTH,
+} from './composition-facts.js';
+
 export {
   type McdcFacts,
   type McdcConditionOutcome,
@@ -198,6 +215,29 @@ export {
   applyStandardsWaivers,
 } from './standards-facts.js';
 
+// The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") phases B+C — the DECLARED-FIX
+// PROTOCOL: the lean DeclaredFix record (intent + scope + size-cap + before/after
+// receipts) + the PURE `verifyDeclaredFix` admission verifier (scope ⊆ declared, size
+// ≤ cap, no unsigned weakening REUSING phase A, receipt-consistency). The SAME verifier
+// runs at the runtime apply moment (phase B) and as the commit gate (phase C) — one
+// engine. The HOST measures the actual change + mints the receipts via `@czap/core`'s
+// `contentAddressOf`, then folds the verdict into the DeclaredFixFacts the
+// `declaredFixProtocolGate` reports.
+export {
+  type FixReceipt,
+  type DeclaredFix,
+  type FixScope,
+  type FixSizeCap,
+  type ActualChange,
+  type FixRejectionClass,
+  type FixRejection,
+  type FixVerdict,
+  type MeasuredFixReality,
+  type DeclaredFixFacts,
+  fileMatchesGlob,
+  verifyDeclaredFix,
+} from './declared-fix.js';
+
 export { nodeContext } from './node-context.js';
 
 export {
@@ -247,6 +287,38 @@ export { performanceContractsGate } from './gates/performance-contracts.js';
 // not the lean cut LITESHIP_GATES. This is the gate that would have caught a
 // "zero-allocation hot path" claim shipped without an allocation bench.
 export { perfClaimBenchGate, PERF_CLAIM_BENCH_RULE_ID } from './gates/perf-claim-bench.js';
+
+// The claim-vs-reality SEMANTIC-claim gate (Slice C — the family beyond perf). It
+// scans published `packages/*/src` for a SEMANTIC PROPERTY claim (`deterministic` /
+// `pure` / `content-addressed` / `canonical`) in a symbol name or doc-comment that NO
+// MEASURABLE confirmer backs: a determinism/DST/property test for the claimed symbol
+// (deterministic), an in-file ambient-entropy check (pure — a `pure` fn co-located
+// with a `Date.now()`/`Math.random()` read is the strongest contradiction), or a
+// round-trip identity test through the content-address kernel (content-addressed /
+// canonical). A pure byte-fold over GateContext (no IR), it ships red/green/mutation
+// fixtures and rides in LITESHIP_IR_GATES alongside the perf-claim gate, never the
+// lean cut LITESHIP_GATES. The Rice boundary: only MEASURABLE confirmers are HARD here
+// — the undecidable "does it ACTUALLY compute a canonical form?" is the ambition÷proof
+// HEATMAP's advisory triage, never a blocking verdict.
+export { claimPropertyGate, CLAIM_PROPERTY_RULE_ID } from './gates/claim-property.js';
+
+// The AMBITION÷PROOF HEATMAP (the claim-vs-reality family's ADVISORY half) — a PURE,
+// deterministic fold (committed benchmark/coverage data + the injected RepoIR) ranking
+// each substantive `packages/*/src` module by AMBITION (size + complexity + claim-
+// keyword density + effective assurance) ÷ PROOF (has-a-test + property-test + mutation
+// score + bench + enrolled invariant + non-test call-sites). Pure TRIAGE: it is NEVER a
+// gate, has NO authority, NEVER blocks — it surfaces the high-ambition/low-proof hot
+// spots a human investigates. The heavy IR build is host-side (ADR-0012); this module
+// is the pure fold the host calls with already-loaded data. See {@link computeHeatmap}.
+export {
+  type HeatmapInputs,
+  type ModuleAmbition,
+  type ModuleProofSignals,
+  type ModuleHotSpot,
+  type AmbitionProofHeatmap,
+  HEATMAP_FORMAT,
+  computeHeatmap,
+} from './ambition-proof.js';
 
 // The avionics-tier supply-chain gate (Slice C). It folds the host-supplied
 // SupplyChainFacts (lockfile policy / SBOM / provenance / CI authority) — the
@@ -348,6 +420,57 @@ export { traceabilityBridgeGate } from './gates/traceability-bridge.js';
 // host path only. The CLI composes it ALWAYS-ON on the `--ir` path (the committed
 // snapshot diff is cheap to fold), the same ~3-line wiring as traceabilityBridgeGate.
 export { standardsIntegrityGate } from './gates/standards-integrity.js';
+
+// The AGENT-SAFETY META-GAUNTLET gate (the "raccoon rule", phases B+C) — the agent-fix
+// ADMISSION gate. It folds the host-supplied DeclaredFixFacts (the host already ran
+// `verifyDeclaredFix` at the apply moment and/or freshly at commit time): a REJECTED
+// fix (scope-creep, size-exceeded, an unsigned/forbidden standards weakening reusing
+// phase A, or a forged/missing receipt) is a BLOCKING L4 Finding per reason — the
+// raccoon caught on the APPLY path (phase A's `standardsIntegrityGate` guards the raw
+// commit path). When NO declared-fix facts are present (a normal commit) the gate is
+// SILENT. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs
+// on the facts-injected AGENT-FIX admission path only — the integrator composes it on
+// ONLY when an agent-fix is being validated (a ~3-line wiring like supplyChainGate:
+// push the gate + inject the verified DeclaredFixFacts as context.declaredFix). See the
+// integrator note in the Slice-B/C report.
+export { declaredFixProtocolGate } from './gates/declared-fix-protocol.js';
+
+// The LOCAL-VS-GLOBAL correctness family — PROOF-PROPAGATION gate (the lax-functor).
+// It propagates a per-module proof scalar along the IR's dep DAG (the `min`-fixpoint
+// dual of assurance propagation) and folds the host-supplied ProofFacts: a trust-spine
+// (L4/L3) module whose EFFECTIVE/global proof drops below its level floor BECAUSE of a
+// weak dependency is a self-explaining Finding naming the weak-link path. The heavy work
+// (reading the proof signals — mutation score / coverage / property tests / enrolled
+// invariants — and blending the per-module scalar) lives in the @czap/cli host (`czap
+// check --ir --proof`). Exported but DELIBERATELY NOT in LITESHIP_GATES /
+// LITESHIP_IR_GATES: it runs on the facts-injected, opt-in `--proof` host path only (a
+// ~3-line wiring like supplyChainGate — push the gate + inject ProofFacts). When the
+// facts are absent it advisories "not-evidenced" rather than passing silent. See the
+// PROOF_FLOOR_BY_LEVEL / PROOF_SEVERITY_BY_LEVEL redlinable data.
+export {
+  proofPropagationGate,
+  PROOF_FLOOR_BY_LEVEL,
+  PROOF_SEVERITY_BY_LEVEL,
+  UNMEASURED_WEAK_LINK_SEVERITY,
+} from './gates/proof-propagation.js';
+
+// The LOCAL-VS-GLOBAL correctness family — COMPOSITION-COVERAGE gate ("locally green,
+// globally untested interaction"). It folds the host-supplied CompositionFacts (the
+// interaction edges between individually-tested units, each classified covered/uncovered
+// by a per-test execution probe or the sound static-reference proxy): an UNCOVERED edge
+// (A calls B, both tested, no integration test exercises them together) is a
+// self-explaining Finding at the edge's propagated level, honestly stating which
+// evidence class decided it (a structural over-approximation of integration coverage).
+// The heavy work (deriving the call-graph edges + the individually-tested set + the
+// integration-coverage probe) lives in the @czap/cli host (`czap check --ir
+// --composition`). Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
+// it runs on the facts-injected, opt-in `--composition` host path only (a ~3-line wiring
+// like supplyChainGate). When the facts are absent it advisories "not-evidenced". See the
+// COMPOSITION_SEVERITY_BY_LEVEL redlinable data.
+export {
+  compositionCoverageGate,
+  COMPOSITION_SEVERITY_BY_LEVEL,
+} from './gates/composition-coverage.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

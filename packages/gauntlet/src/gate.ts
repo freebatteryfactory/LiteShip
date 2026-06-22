@@ -24,8 +24,11 @@ import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
+import type { DeclaredFixFacts } from './declared-fix.js';
 import type { TaintFacts } from './taint-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
+import type { ProofFacts } from './proof-facts.js';
+import type { CompositionFacts } from './composition-facts.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -143,6 +146,26 @@ export interface GateContext {
    */
   readonly standards?: StandardsIntegrityFacts;
   /**
+   * Pre-computed DECLARED-FIX evidence — an INJECTED capability (the AGENT-SAFETY
+   * META-GAUNTLET, the "raccoon rule", phases B+C — the agent-fix admission control),
+   * the same lean-engine pattern as {@link standards}. OPTIONAL by design: it is
+   * present ONLY when an agent's AUTO-FIX is being validated (the `--fix` / apply
+   * path). The heavy work (measuring the actual change off the working tree, reading
+   * the live standards surface BEFORE + AFTER the fix, content-addressing each via the
+   * ONE `contentAddressOf` kernel, then running `verifyDeclaredFix` against the
+   * declaration) all lives in a HOST (the CLI's agent-fix admission entry point); it
+   * folds the decided {@link DeclaredFixFacts} (the verifier's verdict + the declared
+   * intent) and lands them here. The {@link declaredFixProtocolGate} reads ONLY through
+   * this; in-memory fixtures supply a literal facts record (no fs, no clock, no
+   * addressing). When ABSENT (a normal commit, NOT an agent-fix) the gate is SILENT —
+   * phase A's commit backstop ({@link standards}) already guards that path. A REJECTED
+   * fix (scope-creep / size-exceeded / unsigned or forbidden weakening / forged
+   * receipt) folds to a BLOCKING L4 Finding per reason — the raccoon caught on the
+   * apply path. The SAME `verifyDeclaredFix` runs at the apply moment (phase B) and
+   * here at the commit gate (phase C) — one engine. See {@link DeclaredFixFacts}.
+   */
+  readonly declaredFix?: DeclaredFixFacts;
+  /**
    * Pre-computed TAINT-DATAFLOW evidence — an INJECTED capability (the
    * TAINT-ANALYSIS family), the same lean-engine pattern as {@link ir},
    * {@link supplyChain}, {@link mutation}, {@link simulation}, {@link traceability},
@@ -181,6 +204,40 @@ export interface GateContext {
    * {@link FuzzCorpusFacts}.
    */
   readonly fuzzCorpus?: FuzzCorpusFacts;
+  /**
+   * Pre-computed PROOF-STRENGTH evidence — an INJECTED capability (the
+   * LOCAL-VS-GLOBAL correctness family — the lax-functor: local proof ≤ weakest
+   * dependency), the same lean-engine pattern as {@link ir}, {@link mutation}, and
+   * {@link simulation}. OPTIONAL: the heavy work (reading the proof signals —
+   * mutation-score baseline, coverage report, property-test presence, the enrolled
+   * invariants ledger — and blending them into a per-module proof scalar) lives in a
+   * HOST (the CLI's `czap check --ir --proof` path), which folds them into flat
+   * {@link ProofFacts} and lands them here. The {@link proofPropagationGate}
+   * PROPAGATES the scalar along the IR's dep DAG (the `min`-fixpoint dual of
+   * assurance propagation) and reads ONLY through this; in-memory fixtures supply a
+   * literal facts record (no report, no ledger). When ABSENT the gate reports an
+   * honest advisory "not-evidenced" finding rather than a silent green. A trust-spine
+   * module whose GLOBAL proof drops below a floor BECAUSE of a weak dependency folds
+   * to a Finding naming the weak-link path. See {@link ProofFacts}.
+   */
+  readonly proof?: ProofFacts;
+  /**
+   * Pre-computed COMPOSITION-COVERAGE evidence — an INJECTED capability (the
+   * LOCAL-VS-GLOBAL correctness family — "locally green, globally untested
+   * interaction"), the same lean-engine pattern as {@link ir} and {@link proof}.
+   * OPTIONAL: the heavy work (deriving the interaction edges from the IR call graph,
+   * deciding which units are individually tested, and deciding which edges an
+   * integration test exercises TOGETHER — by a per-test execution-coverage probe or
+   * the sound static-reference proxy) lives in a HOST (the CLI's `czap check --ir
+   * --composition` path), which folds the classified edges into flat
+   * {@link CompositionFacts} and lands them here. The {@link compositionCoverageGate}
+   * reads ONLY through this; in-memory fixtures supply a literal facts record (no
+   * call graph, no probe). When ABSENT the gate reports an honest advisory
+   * "not-evidenced" finding rather than a silent green. An UNCOVERED L4 interaction
+   * edge folds to a Finding at the edge's (propagated) level. See
+   * {@link CompositionFacts}.
+   */
+  readonly composition?: CompositionFacts;
 }
 
 /**
