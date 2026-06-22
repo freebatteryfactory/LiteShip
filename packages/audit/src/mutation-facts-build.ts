@@ -32,6 +32,7 @@ import {
   type CoverageMap,
   type MutantTestRunner,
   type MutantVerdictCache,
+  type EquivalentMutantRegistry,
 } from './mutation-verdict.js';
 
 /** One source file to mutate — its repo-relative id + its current source text. */
@@ -58,6 +59,13 @@ export interface MutationBuildOptions {
   readonly cache?: MutantVerdictCache;
   /** The toolchain digest the verdict cache keys against (required iff `cache`). */
   readonly toolchainDigest?: string;
+  /**
+   * The injected equivalent-mutant registry (the committed, content-addressed
+   * `mutation-equivalents.json`). A mutant whose content address it matches is
+   * recorded `equivalent` (excluded from the survivor work-list + the score
+   * denominator). Omitted → no mutant is treated as equivalent.
+   */
+  readonly equivalents?: EquivalentMutantRegistry;
 }
 
 /** Parse a target file's source into a `ts.SourceFile` for the engine. */
@@ -85,6 +93,7 @@ export function buildMutationFacts(files: readonly MutationTargetFile[], options
         originalSource: target.text,
         ...(options.cache !== undefined ? { cache: options.cache } : {}),
         ...(options.toolchainDigest !== undefined ? { toolchainDigest: options.toolchainDigest } : {}),
+        ...(options.equivalents !== undefined ? { equivalents: options.equivalents } : {}),
       });
       outcomes.push({
         mutantId: mutant.id,

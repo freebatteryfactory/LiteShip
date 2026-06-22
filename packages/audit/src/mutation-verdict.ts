@@ -113,8 +113,44 @@ export interface NoCoverageVerdict {
   readonly mutant: Mutant;
 }
 
+/**
+ * A justified-EQUIVALENT mutant — a RUNTIME mutation the engine cannot statically
+ * exclude (it is not erased type syntax, so the type-position skip does not catch it)
+ * but that is PROVABLY behaviour-identical to the original, so no test could ever
+ * observe — and therefore never kill — it. It is matched by the injected
+ * {@link EquivalentMutantRegistry} against the mutant's CONTENT ADDRESS (so the
+ * justification cannot silently drift to a different mutant: if the code changes, the
+ * mutant's id changes, the registry entry no longer matches, and the mutant is
+ * re-surfaced as a normal survivor — the anti-drift property). Excluded from the
+ * survivor work-list AND the score denominator, yet RECORDED (the justification
+ * travels with the verdict for review). NEVER a fake test — the avionics anti-laundering
+ * discipline: the only honest way to mark a genuinely-equivalent mutant.
+ */
+export interface EquivalentVerdict {
+  readonly _tag: 'equivalent';
+  readonly mutant: Mutant;
+  /** The justification string from the registry (why this mutation changes nothing). */
+  readonly justification: string;
+}
+
 /** The closed verdict union — a `_tag` data discriminant (composition). */
-export type MutantVerdict = KilledVerdict | SurvivedVerdict | NoCoverageVerdict;
+export type MutantVerdict = KilledVerdict | SurvivedVerdict | NoCoverageVerdict | EquivalentVerdict;
+
+/**
+ * The injected EQUIVALENT-MUTANT registry — resolves a mutant's CONTENT ADDRESS to its
+ * justification, or `null` when the mutant is not a registered equivalent. The host
+ * loads it from a committed, content-addressed artifact (`benchmarks/mutation-
+ * equivalents.json`); the verdict consults it. Keying on `mutant.id` (not file:line)
+ * is the ANTI-DRIFT keystone: the id is the blake3 of `{file, operator, line, column,
+ * originalText, mutatedText}`, so any change to the mutated code yields a NEW id that
+ * the registry no longer matches — a stale justification can never silently cover a
+ * different (possibly real) mutant. Composition: a function over the open contract, not
+ * a class.
+ */
+export interface EquivalentMutantRegistry {
+  /** The justification for `mutantId`, or `null` when it is not a registered equivalent. */
+  justification(mutantId: string): string | null;
+}
 
 /**
  * The injected verdict store — the B2 content-addressed cache for mutant verdicts,
@@ -146,6 +182,13 @@ export interface EvaluateMutantOptions {
    * runner entirely. Omit it → the runner always runs (the uncached path).
    */
   readonly cache?: MutantVerdictCache;
+  /**
+   * The injected EQUIVALENT-MUTANT registry (optional). When present and it matches
+   * the mutant's content address, the verdict is `equivalent` (the runner is NEVER
+   * invoked — there is nothing to test). Omitted → no mutant is treated as equivalent
+   * (every mutant runs the normal kill/survive path).
+   */
+  readonly equivalents?: EquivalentMutantRegistry;
   /**
    * The host's toolchain digest (the gauntlet/test-runner build fingerprint) — the
    * anti-lie keystone of the verdict key, exactly as in the gate-verdict cache. A
@@ -189,6 +232,18 @@ export function mutantVerdictKey(mutant: Mutant, coveringTests: readonly string[
  * from the inputs, so the cache is a pure speedup, never the source of truth).
  */
 export function evaluateMutant(mutant: Mutant, options: EvaluateMutantOptions): MutantVerdict {
+  // The EQUIVALENT registry is consulted FIRST — a registered-equivalent mutant is
+  // behaviour-identical regardless of coverage, so neither the coverage map nor the
+  // runner has anything to decide. The match is on the mutant's content address (the
+  // anti-drift keystone): if the code changed, the id changed, the entry no longer
+  // matches, and the mutant falls through to the normal kill/survive path.
+  if (options.equivalents !== undefined) {
+    const justification = options.equivalents.justification(mutant.id);
+    if (justification !== null) {
+      return { _tag: 'equivalent', mutant, justification };
+    }
+  }
+
   const coveringTests = options.coverage.covering(mutant.file, mutant.line);
   if (coveringTests.length === 0) {
     return { _tag: 'no-coverage', mutant };
@@ -228,23 +283,28 @@ function cacheKeyFor(mutant: Mutant, coveringTests: readonly string[], options: 
 }
 
 /**
- * Rehydrate a cached verdict TAG into a full {@link MutantVerdict}. A `no-coverage`
- * tag can never be cached against a covered key (the no-coverage branch returns
- * before the cache path), so a `no-coverage` tag here is an impossible cache state —
- * a tagged invariant violation, never a silent coercion.
+ * Rehydrate a cached verdict TAG into a full {@link MutantVerdict}. Only `killed` and
+ * `survived` are ever written to the cache (the runner path); a `no-coverage` tag
+ * returns before the cache path and an `equivalent` tag returns before coverage is
+ * even resolved, so EITHER of those tags here is an impossible cache state — a tagged
+ * invariant violation, never a silent coercion.
  */
 function rehydrate(tag: MutantVerdict['_tag'], mutant: Mutant, coveringTests: readonly string[]): MutantVerdict {
   if (tag === 'killed') return { _tag: 'killed', mutant, coveringTests };
   if (tag === 'survived') return { _tag: 'survived', mutant, coveringTests };
   throw InvariantViolationError(
     'evaluateMutant',
-    `cache returned a "no-coverage" verdict for a covered mutant (${mutant.id}) — a no-coverage verdict is never cached against a covered key`,
+    `cache returned a "${tag}" verdict for a covered mutant (${mutant.id}) — only killed/survived are ever cached (no-coverage and equivalent verdicts never reach the cache path)`,
   );
 }
 
-/** The mutation SCORE summary over a set of verdicts — killed / total + survivors. */
+/** The mutation SCORE summary over a set of verdicts — killed / scored-total + survivors. */
 export interface MutationScore {
-  /** Total mutants evaluated (killed + survived + no-coverage). */
+  /**
+   * The SCORED total — killed + survived + no-coverage (the non-equivalent mutants).
+   * EXCLUDES `equivalent` mutants (they are not a coverage gap, so they are not part
+   * of the kill denominator).
+   */
   readonly total: number;
   /** Mutants a covering test killed. */
   readonly killed: number;
@@ -252,12 +312,15 @@ export interface MutationScore {
   readonly survived: number;
   /** Mutants with no covering test at all (untested). */
   readonly noCoverage: number;
+  /** Justified-equivalent mutants (registry-recorded) — excluded from {@link total}. */
+  readonly equivalent: number;
   /**
-   * The kill score in [0, 1] — `killed / total`. A no-coverage mutant counts
-   * AGAINST the score (it is in `total` but not `killed`): untested code is not
-   * adequately tested. `total === 0` → a score of `1` (vacuously perfect — no
-   * mutable behaviour to test). This is the number the L4 kill-floor compares and
-   * the ratchet baseline pins.
+   * The kill score in [0, 1] — `killed / total`, where `total` is the NON-EQUIVALENT
+   * mutant count. A no-coverage mutant counts AGAINST the score (untested); an
+   * `equivalent` mutant is excluded entirely (no test could ever kill it, so counting
+   * it would cap the honest score below 1.0 forever). `total === 0` → a score of `1`
+   * (vacuously perfect — no killable behaviour to test). This is the number the L4
+   * kill-floor compares and the ratchet baseline pins.
    */
   readonly score: number;
 }
@@ -267,11 +330,14 @@ export function scoreVerdicts(verdicts: readonly MutantVerdict[]): MutationScore
   let killed = 0;
   let survived = 0;
   let noCoverage = 0;
+  let equivalent = 0;
   for (const v of verdicts) {
     if (v._tag === 'killed') killed += 1;
     else if (v._tag === 'survived') survived += 1;
-    else noCoverage += 1;
+    else if (v._tag === 'no-coverage') noCoverage += 1;
+    else equivalent += 1;
   }
-  const total = verdicts.length;
-  return { total, killed, survived, noCoverage, score: total === 0 ? 1 : killed / total };
+  // The denominator is the non-equivalent mutants (an equivalent mutant is not a gap).
+  const total = killed + survived + noCoverage;
+  return { total, killed, survived, noCoverage, equivalent, score: total === 0 ? 1 : killed / total };
 }

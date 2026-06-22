@@ -47,6 +47,15 @@ import { join } from 'node:path';
 import { normalizeRepoPath } from '@czap/audit';
 import { makeCoverageMap, type CoverageMap, type MutationTargetFile } from '@czap/audit';
 import { levelOf, propagateAssuranceLevels, type RepoIR } from '@czap/gauntlet';
+import {
+  computeSeamExecutionCoverage,
+  executionCoverageRelation,
+  seamLineCount,
+  type CandidateTest,
+  type SeamCandidates,
+  type SeamExecutionCoverageOptions,
+  type SeamTestExecution,
+} from './seam-execution-coverage.js';
 
 /**
  * The curated first-deployment L4 seam CANDIDATES — the trust-spine files whose
@@ -55,29 +64,46 @@ import { levelOf, propagateAssuranceLevels, type RepoIR } from '@czap/gauntlet';
  * of truth: a candidate that the propagated map does not actually rate L4 is dropped
  * (never mutated on a stale assumption). Repo-relative POSIX paths.
  *
- * THE FIRST DEPLOYMENT IS SCOPED TO THE CANONICAL/IDENTITY KERNEL (the deterministic
- * content-addressing + FNV bytes). It is the most critical L4 seam ("if the content
- * address lies, EVERY downstream cache/receipt/capsule trusts a forged identity") AND
- * it is the TRACTABLE one: the canonical barrel is rarely imported, so its covering
- * set is small (~9 tests/seam), keeping the suite-runs-per-mutant bounded for a first
- * honest run. The CORE trust-spine seams (content-address.ts, hlc.ts, plan/dag/
- * receipt/validated-output/assembly) are equally effective-L4 but their covering set
- * is dominated by the SOUND barrel over-approximation (every `@czap/core` importer —
- * ~220 tests), so a tractable run over them needs LINE-GRANULAR coverage
- * instrumentation (an instrumented coverage report mapping each mutant LINE to only
- * the tests that hit it) — the queued next increment. Keeping them out of the first
- * cannon is the aim-don't-spray discipline, NOT a soundness compromise: the coverage
- * map for the targeted seams is the full sound closure.
+ * THE CANONICAL/IDENTITY KERNEL (the deterministic content-addressing + FNV bytes)
+ * is the most critical L4 seam ("if the content address lies, EVERY downstream
+ * cache/receipt/capsule trusts a forged identity") AND the TRACTABLE one: the
+ * canonical barrel is rarely imported, so its covering set is small (~9 tests/seam).
  *
- * The cannon is aimed, not sprayed (a suite-run-per-mutant is heavy; the budget caps
- * per file). Owner-redlinable: add the core seams here once the line-granular
- * coverage map lands.
+ * THE BROAD CORE TRUST-SPINE SEAMS (hlc / dag, plus content-address / graph-patch
+ * whose effective-L4 status is decided by the LIVE propagation, NEVER assumed here)
+ * were previously deferred: their covering set is dominated by the SOUND barrel
+ * over-approximation (every `@czap/core` importer — ~220 tests), making a
+ * suite-run-per-mutant intractable. The EXECUTION-BASED coverage filter
+ * ({@link buildSeamCoverageMap} → `seam-execution-coverage.ts`) solves exactly this:
+ * a barrel importer is kept for a seam's function-body lines ONLY when it actually
+ * EXECUTES a function of the seam (proven by a scoped v8 coverage probe), pruning
+ * ~220 barrel candidates to the handful that genuinely exercise the seam. The cannon
+ * is now AIMED at the broad seams too, with no soundness compromise (a pruned test
+ * provably never enters the seam, so it could never kill a mutant there; top-level
+ * lines keep the full barrel closure — see the soundness note in
+ * `seam-execution-coverage.ts`).
+ *
+ * Each candidate is intersected with the LIVE effective-L4 set in
+ * {@link l4SeamTargets}: a candidate the propagation does NOT rate L4 (e.g. a file no
+ * L4 file imports) is DROPPED and surfaced (`skippedNotL4`), never mutated on a stale
+ * assumption. So adding a broad-seam candidate here is safe — the map is the source
+ * of truth for what is actually targeted. The budget still caps the per-file
+ * catalogue. Owner-redlinable.
  */
 const L4_SEAM_CANDIDATES: readonly string[] = [
   // The canonical/identity kernel — content-addressing + deterministic FNV bytes.
   // The keystone of EVERY content address downstream trusts.
   'packages/canonical/src/addressed-digest.ts',
   'packages/canonical/src/fnv.ts',
+  // The broad core trust-spine seams — now tractable via the execution-coverage
+  // filter. content-address / graph-patch are listed as candidates but only mutated
+  // if the LIVE propagation actually rates them L4 (content-address is pulled L4 by
+  // validated-output; graph-patch's level is whatever the fixpoint computes — if it
+  // is not L4 it is surfaced as skipped, never silently mutated).
+  'packages/core/src/hlc.ts',
+  'packages/core/src/dag.ts',
+  'packages/core/src/content-address.ts',
+  'packages/core/src/graph-patch.ts',
 ];
 
 /**
@@ -201,18 +227,25 @@ function deepImportSpecifier(seamFile: string): string {
 }
 
 /**
- * Does `test` cover `seamFile`? SOUND over-approximation (the documented model): a
- * deep import of the seam's source path (precise) OR a barrel import of the seam's
- * package (a barrel importer could exercise any export of the package, so it MUST be
- * counted — under-counting yields false survivors). The barrel test matches both
- * `from '@czap/pkg'` and `from '@czap/pkg/sub'` by checking the quoted-prefix forms.
+ * Does `test` DEEP-import `seamFile`'s source path? The precise covering signal — a
+ * test that references `packages/P/src/F.js` exercises F by construction (it is
+ * always kept, on every line, no probe).
  */
-function testCoversSeam(test: TestFile, seamFile: string): boolean {
-  if (test.text.includes(deepImportSpecifier(seamFile))) return true;
+function testDeepImports(test: TestFile, seamFile: string): boolean {
+  return test.text.includes(deepImportSpecifier(seamFile));
+}
+
+/**
+ * Does `test` import the seam's package BARREL (`@czap/P` or any `@czap/P/sub`)? A
+ * barrel importer pulls in F's package — the SOUND over-approximation candidate set.
+ * It is no longer counted wholesale: the EXECUTION-COVERAGE filter probes each barrel
+ * importer and keeps it for F's function-body lines only when it actually executes a
+ * function of F (the barrel-problem fix). Matches both quote styles. Returns `false`
+ * when the seam has no package barrel (then only the deep-import signal applies).
+ */
+function testImportsBarrel(test: TestFile, seamFile: string): boolean {
   const barrel = barrelOf(seamFile);
   if (barrel === null) return false;
-  // Match an import/export specifier of the barrel or any of its subpaths, in either
-  // quote style — `'@czap/core'`, `"@czap/core"`, `'@czap/core/host'`, etc.
   return (
     test.text.includes(`'${barrel}'`) ||
     test.text.includes(`"${barrel}"`) ||
@@ -222,27 +255,15 @@ function testCoversSeam(test: TestFile, seamFile: string): boolean {
 }
 
 /**
- * Build the DETERMINISTIC, SOUND {@link CoverageMap} for the seam targets — every
- * mutable LINE of each seam file maps to the SORTED set of test-file ids that cover
- * it (deep-import precise ∪ barrel-import over-approximation; see the module doc).
- *
- * Line granularity: the coverage relation is built over `(file, line)` for EVERY
- * line `1..lineCount(F)` of each seam file, all mapped to F's covering set. The
- * engine's {@link makeCoverageMap} de-duplicates + sorts, so the resulting per-site
- * covering list (and its digest, the verdict-cache key half) is byte-stable. Because
- * the relation covers every line, a mutant at ANY line of F resolves to F's covering
- * tests — never a NO-COVERAGE false negative for a covered file.
- *
- * Pure + deterministic: a function of the seam bytes + the test-corpus bytes only.
- *
- * @returns the coverage map AND the resolved per-seam covering-test lists (so the
- *          caller can report which tests cover each seam — the work-list provenance).
+ * Partition the test corpus into per-seam candidate sets — the DEEP-importers
+ * (precise, always kept) and the BARREL-importers (probed by the execution filter).
+ * Reads the test corpus ONCE (sorted, de-duplicated across the roots), so the
+ * partition is a pure function of the seam ids + the on-disk test bytes.
  */
-export function buildSeamCoverageMap(
+export function partitionSeamCandidates(
   repoRoot: string,
   seams: readonly MutationTargetFile[],
-): SeamCoverageResult {
-  // Read the test corpus ONCE (sorted, de-duplicated test ids across the roots).
+): readonly SeamCandidates[] {
   const seen = new Set<string>();
   const tests: TestFile[] = [];
   for (const root of TEST_ROOTS) {
@@ -254,18 +275,105 @@ export function buildSeamCoverageMap(
   }
   tests.sort((a, b) => a.id.localeCompare(b.id));
 
-  const relation: { file: string; line: number; testId: string }[] = [];
+  return seams.map((seam) => {
+    const deepImporters: string[] = [];
+    const barrelImporters: CandidateTest[] = [];
+    for (const t of tests) {
+      if (testDeepImports(t, seam.file)) {
+        deepImporters.push(t.id);
+      } else if (testImportsBarrel(t, seam.file)) {
+        barrelImporters.push({ id: t.id, text: t.text });
+      }
+    }
+    return {
+      seamFile: seam.file,
+      seamText: seam.text,
+      deepImporters: deepImporters.sort((a, b) => a.localeCompare(b)),
+      barrelImporters: barrelImporters.sort((a, b) => a.id.localeCompare(b.id)),
+    };
+  });
+}
+
+/** How the coverage map resolves a barrel-importer's covering scope for a seam. */
+export type CoverageMode =
+  | {
+      /**
+       * EXECUTION-based (the barrel-problem fix): each barrel importer is PROBED with
+       * a scoped v8 coverage run and kept for a seam's function-body lines only when
+       * it executes a function of the seam. The probe + cache are injected (the
+       * production fs-cache, or a deterministic stub for the self-test).
+       */
+      readonly _tag: 'execution';
+      readonly options: SeamExecutionCoverageOptions;
+    }
+  | {
+      /**
+       * BARREL over-approximation (the original sound-but-broad model): every barrel
+       * importer covers every line. Retained for the canonical-kernel seams (whose
+       * barrel set is already small ~9 tests, so the execution probe would only cost a
+       * run to confirm), and as the no-probe path the determinism self-test compares.
+       */
+      readonly _tag: 'barrel';
+    };
+
+/**
+ * Build the DETERMINISTIC, SOUND {@link CoverageMap} for the seam targets — every
+ * mutable LINE of each seam file maps to the SORTED set of test-file ids that cover
+ * it. The covering set is the DEEP-importers (precise) ∪ the barrel-importers scoped
+ * by {@link CoverageMode}:
+ *   - `execution` — each barrel importer is probed; a function-body line maps to the
+ *     barrel importers that EXECUTE a function spanning it (the barrel-problem fix),
+ *     a top-level line keeps the full sound barrel closure (see
+ *     `seam-execution-coverage.ts`). This makes the broad core seams tractable.
+ *   - `barrel` — every barrel importer covers every line (the original sound-but-broad
+ *     closure), kept for the canonical-kernel seams whose barrel set is already small.
+ *
+ * The engine's {@link makeCoverageMap} de-duplicates + sorts, so the resulting
+ * per-site covering list (and its digest, the verdict-cache key half) is byte-stable.
+ *
+ * @returns the coverage map AND the resolved per-seam covering-test lists (so the
+ *          caller can report which tests cover each seam — the work-list provenance).
+ */
+export function buildSeamCoverageMap(
+  repoRoot: string,
+  seams: readonly MutationTargetFile[],
+  mode: CoverageMode = { _tag: 'barrel' },
+): SeamCoverageResult {
+  const candidates = partitionSeamCandidates(repoRoot, seams);
+  const lineCount = new Map<string, number>(seams.map((s) => [s.file, seamLineCount(s)]));
+
+  // Resolve the per-(test, seam) execution decisions. In `barrel` mode every barrel
+  // candidate covers every line (the empty function-range list with the relation's
+  // top-level fallback yields the full barrel closure — sound, broad). In `execution`
+  // mode the probe prunes them to the executing subset.
+  const executions: SeamTestExecution[] = [];
+  for (const candidate of candidates) {
+    for (const testId of candidate.deepImporters) {
+      executions.push({ testId, seamFile: candidate.seamFile, deepImporter: true, coveredFunctionRanges: [] });
+    }
+  }
+  if (mode._tag === 'execution') {
+    for (const ex of computeSeamExecutionCoverage(candidates, mode.options)) {
+      if (!ex.deepImporter) executions.push(ex);
+    }
+  } else {
+    for (const candidate of candidates) {
+      for (const test of candidate.barrelImporters) {
+        // Empty ranges → the relation's top-level fallback maps the barrel importer to
+        // EVERY line: exactly the original sound-but-broad barrel closure.
+        executions.push({ testId: test.id, seamFile: candidate.seamFile, deepImporter: false, coveredFunctionRanges: [] });
+      }
+    }
+  }
+
+  const relation = executionCoverageRelation(executions, lineCount);
+
+  // Per-seam provenance: the sorted, de-duplicated covering test ids across all lines.
   const coveringBySeam = new Map<string, readonly string[]>();
   for (const seam of seams) {
-    const covering = tests.filter((t) => testCoversSeam(t, seam.file)).map((t) => t.id);
-    const sorted = [...covering].sort((a, b) => a.localeCompare(b));
-    coveringBySeam.set(seam.file, sorted);
-    // Map EVERY line of the seam to its covering set (file-granular soundness — a
-    // mutant on any line runs every test that could exercise the file).
-    const lineCount = seam.text.split('\n').length;
-    for (let line = 1; line <= lineCount; line++) {
-      for (const testId of sorted) relation.push({ file: seam.file, line, testId });
-    }
+    const set = new Set<string>();
+    for (const r of relation) if (r.file === seam.file) set.add(r.testId);
+    coveringBySeam.set(seam.file, [...set].sort((a, b) => a.localeCompare(b)));
   }
 
   return { coverage: makeCoverageMap(relation), coveringBySeam };

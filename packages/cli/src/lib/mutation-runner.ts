@@ -26,7 +26,8 @@
  *
  * DETERMINISM. The subprocess is launched with `shell: false`, a fixed argv, a
  * fixed `cwd` (the repo root), and the inherited environment plus a pinned
- * `CI=1` / single-threaded vitest pool (`--pool=forks --poolOptions.forks.singleFork`)
+ * `CI=1` / single-process vitest pool (`--pool=forks --no-file-parallelism` — vitest 4
+ * REMOVED the old `--poolOptions.forks.singleFork` flag, which CAC now rejects)
  * so the run is reproducible and never races itself. Mutants are evaluated
  * SEQUENTIALLY by the host (the in-place mutate FORBIDS concurrency — two mutants
  * cannot share the file at once); this runner is the per-mutant primitive, never
@@ -154,8 +155,9 @@ export function makeVitestMutationRunner(repoRoot: string, options: VitestMutati
       writeFileSync(absTarget, mutatedSource, 'utf8');
 
       // 3. Run ONLY the covering tests in a clean vitest subprocess (the isolation
-      //    boundary). `shell: false` (argv array), fixed cwd, single-fork pool so a
-      //    mutant run never races itself — deterministic by construction.
+      //    boundary). `shell: false` (argv array), fixed cwd, single-process pool
+      //    (`--pool=forks --no-file-parallelism`) so a mutant run never races itself —
+      //    deterministic by construction.
       const exit = runCoveringTests(spawn, repoRoot, config, coveringTests, timeoutMs, options.targetFile);
 
       // 4. Read the verdict from the exit code. 0 → all passed → SURVIVED; 1 → a
@@ -172,8 +174,9 @@ export function makeVitestMutationRunner(repoRoot: string, options: VitestMutati
 
 /**
  * The default subprocess launcher — a real `vitest run` over the covering tests in a
- * clean process (`shell: false` argv, fixed cwd, single-fork pool, `CI=1`), the
- * deterministic isolation boundary. Production injection for {@link MutationSubprocessSpawn}.
+ * clean process (`shell: false` argv, fixed cwd, single-process pool
+ * `--pool=forks --no-file-parallelism`, `CI=1`), the deterministic isolation boundary.
+ * Production injection for {@link MutationSubprocessSpawn}.
  */
 function defaultVitestSpawn(
   repoRoot: string,
@@ -188,10 +191,14 @@ function defaultVitestSpawn(
     config,
     '--no-coverage',
     '--reporter=dot',
-    // Single-fork pool: one worker, no parallelism — the per-mutant run is
-    // deterministic and never races itself (the file is mutated in place).
+    // Forks pool with NO file parallelism — one file at a time, no worker race — so
+    // the per-mutant run is deterministic and never races itself (the file is mutated
+    // in place). vitest 4 REMOVED the `--poolOptions.forks.singleFork` CLI flag (CAC
+    // rejects it as an unknown option → exit 1, which this runner would MISREAD as a
+    // test-failure "kill" — a false verdict); `--no-file-parallelism` is the vitest-4
+    // single-process equivalent.
     '--pool=forks',
-    '--poolOptions.forks.singleFork',
+    '--no-file-parallelism',
     ...coveringTests,
   ];
   const result = spawnSync('pnpm', ['exec', ...args], {

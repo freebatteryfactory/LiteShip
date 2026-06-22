@@ -112,6 +112,42 @@ describe('mutationDivergenceGate — kill-floor calibration by level', () => {
     expect(findings).toHaveLength(0);
   });
 
+  it('an EQUIVALENT mutant produces no finding AND is excluded from the score', () => {
+    // A justified, registry-recorded equivalent is not a coverage gap → no survivor
+    // finding. AND it is excluded from the score denominator: one killed + one
+    // equivalent over the L4 file at a committed baseline of 1.0 must stay GREEN
+    // (measured score = killed/non-equivalent = 1/1 = 1.0), never a ratchet regression.
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        outcomes: [
+          outcome({ file: L4_FILE, verdict: 'killed', line: 10 }),
+          outcome({ file: L4_FILE, verdict: 'equivalent', line: 20 }),
+        ],
+        scoreBaseline: { [L4_FILE]: 1.0 },
+      }),
+    );
+    expect(findings).toHaveLength(0);
+  });
+
+  it('an EQUIVALENT mutant does NOT mask a real survivor regression', () => {
+    // killed + survived + equivalent over the L4 file. The equivalent is excluded, so
+    // the measured score is killed/(killed+survived) = 1/2 = 0.5 < the 1.0 baseline →
+    // STILL a regression (the equivalent cannot launder away the real survivor).
+    const findings = mutationDivergenceGate.run(
+      ctx(simpleIR([L4_FILE]), {
+        outcomes: [
+          outcome({ file: L4_FILE, verdict: 'killed', line: 10 }),
+          outcome({ file: L4_FILE, verdict: 'survived', line: 20 }),
+          outcome({ file: L4_FILE, verdict: 'equivalent', line: 30 }),
+        ],
+        scoreBaseline: { [L4_FILE]: 1.0 },
+      }),
+    );
+    // The survivor finding + the ratchet regression finding (the equivalent is silent).
+    expect(findings.some((f) => f.title.includes('survived'))).toBe(true);
+    expect(findings.some((f) => f.title.includes('regressed'))).toBe(true);
+  });
+
   it('the redlinable kill-floor data is the documented ladder', () => {
     expect(SURVIVOR_SEVERITY_BY_LEVEL.L4).toBe('error');
     expect(SURVIVOR_SEVERITY_BY_LEVEL.L3).toBe('error');

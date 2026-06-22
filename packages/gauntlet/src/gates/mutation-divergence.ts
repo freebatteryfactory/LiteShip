@@ -11,7 +11,11 @@
  * test) becomes a Finding at the file's EFFECTIVE assurance level, carrying the
  * operator + the location + the `originalText`→`mutatedText` rewrite (so the
  * dev/agent sees EXACTLY what survived). A `killed` mutant is adequate coverage — no
- * finding.
+ * finding. An `equivalent` mutant (a justified, content-addressed registry entry — a
+ * RUNTIME mutation the engine cannot statically exclude but that is provably
+ * behaviour-identical, e.g. an unreachable comparator boundary on distinct object
+ * keys) is ALSO no finding and is excluded from the score denominator: it is not a
+ * coverage gap, so counting it would cap the honest score below 1.0 forever.
  *
  * AIM THE CANNON (the kill-floor by level). The severity of a survivor scales with
  * the file's effective level (the {@link propagateAssuranceLevels} fixpoint over the
@@ -184,11 +188,20 @@ function ratchetFindings(
   return findings;
 }
 
-/** Per-file measured mutation score (killed / total) over the live outcomes. */
+/**
+ * Per-file measured mutation score (killed / non-equivalent total) over the live
+ * outcomes. An `equivalent` mutant is EXCLUDED from BOTH the numerator and the
+ * denominator: it is not a coverage gap (no test could ever observe it), so counting
+ * it against the score would be a LIE (an unkillable mutant can never be killed, so it
+ * would cap the score below 1.0 forever). The denominator is therefore the
+ * non-equivalent mutants; a file whose every non-equivalent mutant is killed scores a
+ * HONEST 1.0.
+ */
 function measuredScores(outcomes: readonly MutantOutcome[]): ReadonlyMap<string, number> {
   const killed = new Map<string, number>();
   const total = new Map<string, number>();
   for (const o of outcomes) {
+    if (o.verdict === 'equivalent') continue; // excluded from the score denominator
     total.set(o.file, (total.get(o.file) ?? 0) + 1);
     if (o.verdict === 'killed') killed.set(o.file, (killed.get(o.file) ?? 0) + 1);
   }
@@ -210,7 +223,9 @@ function foldMutation(context: GateContext): readonly Finding[] {
 
   const survivors: Finding[] = [];
   for (const outcome of facts.outcomes) {
-    if (outcome.verdict === 'killed') continue;
+    // A `killed` mutant is adequate coverage; an `equivalent` mutant is a justified,
+    // registry-recorded non-gap (no test could observe it). Neither is a finding.
+    if (outcome.verdict === 'killed' || outcome.verdict === 'equivalent') continue;
     survivors.push(survivorFinding(outcome, levelForFile(outcome.file, levels)));
   }
   survivors.sort(

@@ -284,6 +284,11 @@
           "signature": "(1)"
         },
         {
+          "name": "makeEquivalentMutantRegistry",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "mutantVerdictKey",
           "kind": "function",
           "signature": "(3)"
@@ -301,6 +306,11 @@
         {
           "name": "packageTopology",
           "kind": "const"
+        },
+        {
+          "name": "parseEquivalentMutants",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "partitionAllowlistedFindings",

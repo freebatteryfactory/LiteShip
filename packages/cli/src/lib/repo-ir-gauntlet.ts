@@ -35,7 +35,12 @@ import {
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
-import { buildMutationFacts } from '@czap/audit';
+import {
+  buildMutationFacts,
+  makeEquivalentMutantRegistry,
+  parseEquivalentMutants,
+  type EquivalentMutantRegistry,
+} from '@czap/audit';
 import {
   litelaunchGauntletWithIR,
   supplyChainGate,
@@ -60,6 +65,10 @@ import {
 } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
 import { l4SeamTargets, buildSeamCoverageMap } from './mutation-targets.js';
+import {
+  makeFsSeamCoverageProbeCache,
+  type SeamExecutionCoverageOptions,
+} from './seam-execution-coverage.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
 
@@ -310,6 +319,9 @@ const MUTATION_BUDGET_PER_FILE = 12;
 /** The committed mutation-score baseline (the ratchet floor) — repo-relative. */
 const MUTATION_SCORE_BASELINE = 'benchmarks/mutation-score.json';
 
+/** The committed equivalent-mutant registry (the justified non-gaps) — repo-relative. */
+const MUTATION_EQUIVALENTS = 'benchmarks/mutation-equivalents.json';
+
 /**
  * Build the {@link MutationFacts} the avionics `mutationDivergenceGate` folds — the
  * HOST's heavy job (Slice C, mutation-as-divergence):
@@ -339,8 +351,23 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
     process.stderr.write(`czap check --mutate: seam candidate "${f}" could not be read (skipped)\n`);
   }
 
-  const { coverage } = buildSeamCoverageMap(repoRoot, targets);
+  // EXECUTION-based coverage (the barrel-problem fix): each barrel-importer of a broad
+  // core seam (~220 `@czap/core` importers) is probed with a scoped v8 coverage run
+  // and kept for the seam's function-body lines ONLY when it actually executes a
+  // function of the seam — pruning the barrel set to the handful that exercise it, so
+  // the broad seams (hlc / dag / content-address) become tractable. The probe results
+  // are cached against the toolchain digest (the B2 pattern), so a probe re-runs only
+  // when the toolchain, the seam, or the test changes. The probe cache mode rides the
+  // SAME toolchain digest the mutant-verdict cache uses (mtMode-namespaced), so a
+  // probe minted under one toolchain never serves another.
+  const probeCacheOptions: SeamExecutionCoverageOptions = {
+    repoRoot,
+    cache: makeFsSeamCoverageProbeCache(repoRoot),
+    ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
+  };
+  const { coverage } = buildSeamCoverageMap(repoRoot, targets, { _tag: 'execution', options: probeCacheOptions });
   const scoreBaseline = readMutationScoreBaseline(repoRoot);
+  const equivalents = readEquivalentMutantRegistry(repoRoot);
   const mutantCache = makeFsMutantVerdictCache(repoRoot);
 
   const outcomes: MutationFacts['outcomes'][number][] = [];
@@ -351,6 +378,7 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       runner,
       coverage,
       scoreBaseline,
+      equivalents,
       budget: MUTATION_BUDGET_PER_FILE,
       cache: mutantCache,
       ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
@@ -398,6 +426,22 @@ function readMutationScoreBaseline(repoRoot: string): Readonly<Record<string, nu
     baseline[file] = score;
   }
   return baseline;
+}
+
+/**
+ * Read the committed equivalent-mutant registry (the justified non-gaps) from
+ * {@link MUTATION_EQUIVALENTS}. Absent file → an EMPTY registry (no mutant treated as
+ * equivalent — every mutant runs the normal kill/survive path). A malformed document
+ * is a tagged throw (a corrupt registry must be visible, never silently treated as
+ * "no equivalents"). The registry matches on the mutant's content address (the
+ * anti-drift keystone — a code change re-surfaces the mutant), so it can never silently
+ * suppress a real survivor.
+ */
+function readEquivalentMutantRegistry(repoRoot: string): EquivalentMutantRegistry {
+  const path = join(repoRoot, MUTATION_EQUIVALENTS);
+  if (!existsSync(path)) return makeEquivalentMutantRegistry([]);
+  const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
+  return makeEquivalentMutantRegistry(parseEquivalentMutants(parsed));
 }
 
 /** Project a discovered workspace package into the analyzer's view. */

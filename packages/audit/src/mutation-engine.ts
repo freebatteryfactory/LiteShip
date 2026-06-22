@@ -336,13 +336,66 @@ function nodeText(node: ts.Node, sourceFile: ts.SourceFile): string {
 }
 
 /**
+ * Is `node` in a TYPE-ONLY position — TS-erased syntax that exists at no runtime,
+ * so any mutation of it is GUARANTEED-EQUIVALENT by construction (no test, however
+ * strong, can observe a change to erased syntax)? Mutating such a node only ever
+ * mints a FALSE survivor — there is nothing for a test to catch. The engine must
+ * skip it AT THE SOURCE rather than report an unkillable mutant.
+ *
+ * The robust predicate (walk the parent chain — a single node can be deep inside a
+ * type, e.g. a string literal → `LiteralType` → `UnionType` → the parameter's type
+ * annotation):
+ *   - ANY ancestor is a {@link ts.isTypeNode} — covers a literal type, a union/
+ *     intersection type, a type reference, a type annotation (a parameter/variable
+ *     `: T`), and a type-alias's RHS. This is the broad, sound catch.
+ *   - ANY ancestor is a {@link ts.isTypeAliasDeclaration} (its body is a TypeNode,
+ *     but the alias keyword/name region is belt-and-suspenders covered too).
+ *   - The node is the specifier of a TYPE-ONLY import/export (`import type … from
+ *     '…'` / a type-only named specifier) — the whole declaration is erased.
+ *
+ * CRUCIAL PRECISION (the default-value boundary). A parameter/variable DEFAULT VALUE
+ * (`algo = 'sha256'`) is the node's `initializer`, NOT its `type` — its parent is the
+ * `Parameter`/`VariableDeclaration` directly, never a `TypeNode`. So a default value
+ * is RUNTIME and is NOT skipped: it remains a real, killable mutant. Only ERASED type
+ * syntax is excluded.
+ */
+function isInTypeOnlyPosition(node: ts.Node): boolean {
+  let current: ts.Node | undefined = node;
+  while (current !== undefined) {
+    if (ts.isTypeNode(current) || ts.isTypeAliasDeclaration(current)) return true;
+    if (isTypeOnlyImportExportSpecifier(current)) return true;
+    current = current.parent;
+  }
+  return false;
+}
+
+/**
+ * Is `node` the specifier (or a child of the import/export clause) of a TYPE-ONLY
+ * import/export — `import type … from '…'`, `export type … from '…'`, or a type-only
+ * NAMED specifier (`import { type Foo } from '…'`)? Such a declaration is entirely
+ * erased, so a string-literal mutation of its specifier is guaranteed-equivalent.
+ */
+function isTypeOnlyImportExportSpecifier(node: ts.Node): boolean {
+  if (ts.isImportDeclaration(node)) return node.importClause?.isTypeOnly === true;
+  if (ts.isExportDeclaration(node)) return node.isTypeOnly;
+  if (ts.isImportSpecifier(node) || ts.isExportSpecifier(node)) return node.isTypeOnly;
+  return false;
+}
+
+/**
  * Offer one operator a node and collect its 0+ mutations. A pure dispatch over the
  * catalogue — each branch is a single, documented, behaviour-changing rewrite that
  * NEVER produces a syntactically-invalid program (the operator only fires on the
  * exact node shape it understands, and splices a same-arity token / a typed
  * canonical value).
+ *
+ * A node in a TYPE-ONLY position ({@link isInTypeOnlyPosition}) is SKIPPED — erased
+ * syntax can carry no runtime behaviour, so any mutation of it is guaranteed-
+ * equivalent and could only ever mint a FALSE survivor. The skip is at the SOURCE
+ * (the deterministic generator never emits the mutant), not a downstream filter.
  */
 function mutationsFor(operator: MutationOperatorId, node: ts.Node, sourceFile: ts.SourceFile): readonly Mutation[] {
+  if (isInTypeOnlyPosition(node)) return [];
   switch (operator) {
     case 'conditional-boundary':
       return binaryOperatorMutation(node, sourceFile, operator, CONDITIONAL_BOUNDARY_FLIPS);

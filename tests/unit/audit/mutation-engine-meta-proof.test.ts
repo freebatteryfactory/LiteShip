@@ -40,6 +40,8 @@ import {
   applyMutant,
   evaluateMutant,
   makeCoverageMap,
+  makeEquivalentMutantRegistry,
+  parseEquivalentMutants,
   scoreVerdicts,
   MUTATION_OPERATORS,
   type Mutant,
@@ -137,6 +139,61 @@ describe('LEVEL 1 — deterministic mutant generation', () => {
     // budget 0 → empty; budget ≥ size → full.
     expect(generateMutants(sf(), { file: 'g.ts', budget: 0 })).toHaveLength(0);
     expect(generateMutants(sf(), { file: 'g.ts', budget: full.length + 10 })).toHaveLength(full.length);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// LEVEL 1b — TYPE-ONLY positions are NOT mutated; RUNTIME positions ARE.
+// TS-erased syntax (a type union member, a type annotation, a type-only import
+// specifier) carries no runtime behaviour, so a mutation of it is guaranteed-
+// equivalent — an unkillable FALSE survivor. The engine must skip it AT THE SOURCE.
+// CRUCIALLY a DEFAULT VALUE (`= 'x'`) is RUNTIME, not type-level, and MUST stay
+// mutated. This proves both directions (the precision that separates the two).
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('LEVEL 1b — type-only syntax is skipped, runtime syntax is mutated', () => {
+  /** Collect the string-literal mutants' original texts for a source fixture. */
+  const stringLiterals = (source: string): readonly string[] =>
+    generateMutants(parse('t.ts', source), { file: 't.ts' })
+      .filter((m) => m.operator === 'string-literal')
+      .map((m) => m.originalText);
+
+  it('a string literal in a TYPE UNION (an interface property) is NOT mutated', () => {
+    const src = 'export interface D { readonly algo: "sha256" | "blake3"; }';
+    // No runtime string literal anywhere — the only string syntax is type-level.
+    expect(stringLiterals(src)).toEqual([]);
+  });
+
+  it('a string literal in a parameter TYPE ANNOTATION is NOT mutated, but its DEFAULT VALUE IS', () => {
+    // Exactly the addressed-digest.ts shape: a union type annotation AND a default
+    // value. The two type-union members ('sha256' | 'blake3') are erased → skipped;
+    // the default `= 'sha256'` is RUNTIME → a real mutant. This is the precision
+    // boundary: the engine must skip ONLY the erased syntax.
+    const src = 'export function f(algo: "sha256" | "blake3" = "sha256"): void {}';
+    const literals = stringLiterals(src);
+    // Precisely ONE string-literal mutant — the default value, NOT the type members.
+    expect(literals).toEqual(['"sha256"']);
+    // And the union type members are absent (would be a false survivor if present).
+    expect(literals.filter((t) => t === '"blake3"')).toEqual([]);
+  });
+
+  it('a TYPE ALIAS body string literal is NOT mutated, a runtime const string IS', () => {
+    const src = ['type Mode = "fast" | "slow";', 'export const chosen: Mode = "fast";'].join('\n');
+    // The alias members ("fast" | "slow") are erased; the runtime initializer `=
+    // "fast"` is a real mutant. Exactly one string-literal mutant survives.
+    expect(stringLiterals(src)).toEqual(['"fast"']);
+  });
+
+  it('a TYPE-ONLY import specifier is NOT mutated, a value import specifier IS', () => {
+    const src = ['import type { A } from "./a.js";', 'import { b } from "./b.js";'].join('\n');
+    // The `import type` specifier is erased; the value import's specifier is runtime
+    // (a real module-resolution input). Only the value import yields a mutant.
+    expect(stringLiterals(src)).toEqual(['"./b.js"']);
+  });
+
+  it('a runtime CALL ARGUMENT string literal IS mutated (the control — runtime is never skipped)', () => {
+    const src = 'export function g(): void { console.log("hi"); }';
+    expect(stringLiterals(src)).toEqual(['"hi"']);
   });
 });
 
@@ -348,5 +405,131 @@ describe('DETERMINISM PROOF — mutants + verdicts are byte-identical across two
       expect(src.includes('Math.random('), `${file} must not call Math.random()`).toBe(false);
       expect(src.includes('new Date('), `${file} must not call new Date()`).toBe(false);
     }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// EQUIVALENT-MUTANT REGISTRY — a justified, content-addressed equivalent gets the
+// `equivalent` verdict (excluded from the score denominator), NEVER a fake test; and
+// the ANTI-DRIFT property holds: if the code changes, the mutant id changes, the
+// registry entry no longer matches, and the mutant re-surfaces as a survivor.
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('EQUIVALENT-MUTANT REGISTRY — justified non-gaps + the anti-drift property', () => {
+  // A fixture whose key-sort-comparator-shaped boundary is genuinely equivalent: a
+  // `<` over a value that is never equal. We build a registry against the REAL mutant
+  // id the engine mints, then prove the verdict + the anti-drift re-surfacing.
+  const FIXTURE = 'export const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);';
+
+  /** The first conditional-boundary `<`→`<=` mutant the engine mints for the fixture. */
+  function boundaryMutant(source: string): Mutant {
+    const mutants = generateMutants(parse('cmp.ts', source), { file: 'cmp.ts' });
+    const m = mutants.find((x) => x.operator === 'conditional-boundary' && x.originalText === '<');
+    if (m === undefined) throw new Error('fixture must mint a `<` conditional-boundary mutant');
+    return m;
+  }
+
+  it('parses a committed registry document and resolves a justification by content address', () => {
+    const m = boundaryMutant(FIXTURE);
+    const doc = {
+      entries: [
+        {
+          mutantId: m.id,
+          file: m.file,
+          line: m.line,
+          column: m.column,
+          operator: m.operator,
+          originalText: m.originalText,
+          mutatedText: m.mutatedText,
+          justification: 'a < over always-distinct values — the <= boundary is unreachable',
+        },
+      ],
+    };
+    const registry = makeEquivalentMutantRegistry(parseEquivalentMutants(doc));
+    expect(registry.justification(m.id)).toMatch(/unreachable/);
+    expect(registry.justification('blake3:not-a-real-id')).toBeNull();
+  });
+
+  it('a registered mutant earns the `equivalent` verdict — the runner is NEVER called', () => {
+    const m = boundaryMutant(FIXTURE);
+    const registry = makeEquivalentMutantRegistry([
+      {
+        mutantId: m.id,
+        file: m.file,
+        line: m.line,
+        column: m.column,
+        operator: m.operator,
+        originalText: m.originalText,
+        mutatedText: m.mutatedText,
+        justification: 'equivalent: unreachable boundary',
+      },
+    ]);
+    let runnerCalls = 0;
+    const countingRunner: MutantTestRunner = () => {
+      runnerCalls += 1;
+      return { failed: false };
+    };
+    const coverage = makeCoverageMap([{ file: m.file, line: m.line, testId: 'cmp.test' }]);
+    const verdict = evaluateMutant(m, { runner: countingRunner, coverage, originalSource: FIXTURE, equivalents: registry });
+    expect(verdict._tag).toBe('equivalent');
+    // The equivalent short-circuit precedes coverage + the runner — nothing was run.
+    expect(runnerCalls).toBe(0);
+  });
+
+  it('an `equivalent` verdict is EXCLUDED from the score denominator (an honest 1.0)', () => {
+    // One killable mutant (killed) + one registered-equivalent mutant. The score must
+    // be 1.0 (killed / non-equivalent total = 1/1), NOT 1/2 — the equivalent is not a
+    // gap, so counting it would cap the honest score below 1.0 forever.
+    const m = boundaryMutant(FIXTURE);
+    const registry = makeEquivalentMutantRegistry([
+      { mutantId: m.id, file: m.file, line: m.line, column: m.column, operator: m.operator, originalText: m.originalText, mutatedText: m.mutatedText, justification: 'equivalent' },
+    ]);
+    const coverage = makeCoverageMap([{ file: m.file, line: m.line, testId: 'cmp.test' }]);
+    const killsEverythingButEquivalent: MutantTestRunner = () => ({ failed: true });
+    const all = generateMutants(parse('cmp.ts', FIXTURE), { file: 'cmp.ts' });
+    const verdicts = all.map((mut) =>
+      evaluateMutant(mut, { runner: killsEverythingButEquivalent, coverage, originalSource: FIXTURE, equivalents: registry }),
+    );
+    const score = scoreVerdicts(verdicts);
+    expect(score.equivalent).toBe(1);
+    // The equivalent is out of `total`; every remaining mutant is killed → score 1.0.
+    expect(score.total).toBe(verdicts.length - 1);
+    expect(score.score).toBe(1);
+  });
+
+  it('ANTI-DRIFT — a code change re-surfaces the mutant (the registry no longer matches)', () => {
+    // Register the equivalent against the ORIGINAL fixture's mutant id, then evaluate
+    // the SAME logical mutant on a DRIFTED fixture (a leading blank line shifts the
+    // line, so the content-addressed id changes). The registry entry no longer matches
+    // → the mutant is NOT equivalent → it re-surfaces (here as a survivor under a
+    // passing runner). A stale justification can never silently cover the new code.
+    const original = boundaryMutant(FIXTURE);
+    const registry = makeEquivalentMutantRegistry([
+      { mutantId: original.id, file: original.file, line: original.line, column: original.column, operator: original.operator, originalText: original.originalText, mutatedText: original.mutatedText, justification: 'equivalent' },
+    ]);
+    const drifted = `\n${FIXTURE}`; // shifts the comparator down one line → a new id
+    const driftedMutant = boundaryMutant(drifted);
+    expect(driftedMutant.id).not.toBe(original.id); // the content address changed
+    const coverage = makeCoverageMap([{ file: driftedMutant.file, line: driftedMutant.line, testId: 'cmp.test' }]);
+    const survives: MutantTestRunner = () => ({ failed: false });
+    const verdict = evaluateMutant(driftedMutant, { runner: survives, coverage, originalSource: drifted, equivalents: registry });
+    // NOT equivalent — the registry's stale id does not match the drifted mutant.
+    expect(verdict._tag).toBe('survived');
+  });
+
+  it('the COMMITTED registry document parses and is well-formed (the repo artifact)', () => {
+    // The real benchmarks/mutation-equivalents.json must parse + carry only justified
+    // entries (a corrupt artifact is a tagged throw, never a silent "no equivalents").
+    const here = dirname(fileURLToPath(import.meta.url));
+    const path = resolve(here, '../../../benchmarks/mutation-equivalents.json');
+    const doc: unknown = JSON.parse(readFileSync(path, 'utf8'));
+    const entries = parseEquivalentMutants(doc);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const e of entries) {
+      expect(e.mutantId.startsWith('blake3:'), `entry id must be a content address: ${e.mutantId}`).toBe(true);
+      expect(e.justification.length).toBeGreaterThan(20); // a real justification, not a stub
+    }
+    // The registry builds without a duplicate-id throw.
+    expect(() => makeEquivalentMutantRegistry(entries)).not.toThrow();
   });
 });
