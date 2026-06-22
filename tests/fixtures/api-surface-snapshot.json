@@ -130,6 +130,14 @@
       "version": "0.4.0",
       "exports": [
         {
+          "name": "CONDITION_FORCES",
+          "kind": "const"
+        },
+        {
+          "name": "DEFAULT_TAINT_INTERPROCEDURAL_DEPTH",
+          "kind": "const"
+        },
+        {
           "name": "LANGUAGE_SERVICE_ORACLE_ID",
           "kind": "const"
         },
@@ -146,8 +154,17 @@
           "kind": "const"
         },
         {
+          "name": "TAINT_ORACLE_ID",
+          "kind": "const"
+        },
+        {
           "name": "WORKSPACE_ALIASES",
           "kind": "const"
+        },
+        {
+          "name": "applyConditionMutant",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "applyMutant",
@@ -172,6 +189,11 @@
           "kind": "const"
         },
         {
+          "name": "buildMcdcFacts",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "buildMutationFacts",
           "kind": "function",
           "signature": "(2)"
@@ -187,7 +209,17 @@
           "signature": "(0)"
         },
         {
+          "name": "buildRepoIRTaint",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "compareSeverity",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "conditionSourceDigest",
           "kind": "function",
           "signature": "(2)"
         },
@@ -243,6 +275,11 @@
         {
           "name": "foundationalPackages",
           "kind": "const"
+        },
+        {
+          "name": "generateConditionMutants",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "generateMutants",
@@ -1774,6 +1811,14 @@
           "kind": "const"
         },
         {
+          "name": "MCDC_FLOOR_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "MCDC_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
           "name": "MISSING_DIGEST_SENTINEL",
           "kind": "const"
         },
@@ -1868,12 +1913,22 @@
           "signature": "(2)"
         },
         {
+          "name": "fuzzCorpusGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "gateVerdictKey",
           "kind": "function",
           "signature": "(1)"
         },
         {
           "name": "isFinding",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isMcdcCovered",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1916,6 +1971,11 @@
           "name": "maxLevel",
           "kind": "function",
           "signature": "(2)"
+        },
+        {
+          "name": "mcdcCoverageGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "memoryContext",
@@ -1980,7 +2040,7 @@
         {
           "name": "nodeContext",
           "kind": "function",
-          "signature": "(8)"
+          "signature": "(10)"
         },
         {
           "name": "perfClaimBenchGate",
@@ -2008,7 +2068,17 @@
           "signature": "(2)"
         },
         {
+          "name": "requireMcdc",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
           "name": "requireMutation",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "requireTaint",
           "kind": "function",
           "signature": "(2)"
         },
@@ -2064,6 +2134,11 @@
         },
         {
           "name": "symbolOrphanDivergenceGate",
+          "kind": "namespace",
+          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "taintFlowGate",
           "kind": "namespace",
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },

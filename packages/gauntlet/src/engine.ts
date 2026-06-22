@@ -169,6 +169,14 @@ export function scopeContextByLevel(
     // mutationDivergenceGate (an L4 gate, so always scoped) would see no facts and
     // throw `mutation-facts unavailable` even though the host injected them.
     ...(context.mutation !== undefined ? { mutation: context.mutation } : {}),
+    // Likewise the injected MC/DC facts (the avionics MC/DC tier): each
+    // McdcConditionOutcome carries its own `file` + (line, column) (the gate scopes
+    // itself to the file's propagated level via the IR), so file-scoping never narrows
+    // them — they pass through unchanged. Omit the key when absent. WITHOUT this
+    // pass-through the mcdcCoverageGate (an L4 gate, so always scoped) would see no facts
+    // and throw `mcdc-facts unavailable` even though the host injected them — exactly the
+    // scoped-context drop the supplyChain/mutation pass-throughs above already fix.
+    ...(context.mcdc !== undefined ? { mcdc: context.mcdc } : {}),
     // Likewise the injected DST (simulation) facts (the determinism spine): each
     // ScenarioReplayFact carries its own scenarioId (the gate folds it as an L4
     // verdict; the scenario id is the location, not a src file), so file-scoping never
@@ -196,6 +204,15 @@ export function scopeContextByLevel(
     // surface — exactly the scoped-context drop the supplyChain/mutation/simulation/
     // traceability pass-throughs above already fix.
     ...(context.standards !== undefined ? { standards: context.standards } : {}),
+    // Likewise the injected decode-fuzz facts (the untrusted-byte decode-surface
+    // hardening): each DecoderFuzzFact carries its own decoderId (the gate folds it
+    // as an L4 verdict; the decoder id is the location, not a src file), so
+    // file-scoping never narrows them — they pass through unchanged. Omit the key
+    // when absent. WITHOUT this pass-through the fuzzCorpusGate (an L4 gate, so
+    // always scoped) would see no facts and report `not-evidenced` even though the
+    // host injected the per-decoder verdicts — exactly the scoped-context drop the
+    // supplyChain/mutation/simulation/traceability/standards pass-throughs above fix.
+    ...(context.fuzzCorpus !== undefined ? { fuzzCorpus: context.fuzzCorpus } : {}),
   };
 }
 

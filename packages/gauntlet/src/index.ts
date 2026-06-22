@@ -75,6 +75,8 @@ export {
   defineGate,
   requireIR,
   requireMutation,
+  requireMcdc,
+  requireTaint,
 } from './gate.js';
 
 export {
@@ -82,6 +84,13 @@ export {
   type MutantOutcome,
   type MutantVerdictTag,
 } from './mutation-facts.js';
+
+export {
+  type McdcFacts,
+  type McdcConditionOutcome,
+  type McdcPinVerdict,
+  isMcdcCovered,
+} from './mcdc-facts.js';
 
 export {
   type SupplyChainFacts,
@@ -97,6 +106,21 @@ export {
   type ScenarioReplayFact,
   type ReplayDivergence,
 } from './simulation-facts.js';
+
+export {
+  type FuzzCorpusFacts,
+  type DecoderFuzzFact,
+  type DecodeViolation,
+  type DecodeViolationClass,
+} from './fuzz-facts.js';
+
+export {
+  type TaintFacts,
+  type TaintFlow,
+  type TaintEndpoint,
+  type SanitizerSite,
+  type TaintPathStep,
+} from './taint-facts.js';
 
 export {
   type TraceabilityFacts,
@@ -247,6 +271,23 @@ export {
   KILL_FLOOR_BY_LEVEL,
 } from './gates/mutation-divergence.js';
 
+// The avionics-tier MC/DC-coverage gate (DO-178B Level A's Modified Condition/Decision
+// Coverage, realized as CONDITION-LEVEL MUTATION — a sound, recognized technique reusing
+// the mutation engine). It folds the host-supplied McdcFacts (each atomic condition's
+// two pins' verdicts folded): a condition whose independent effect is NOT observed (a
+// surviving force-true/force-false pin) becomes a Finding at the file's PROPAGATED
+// assurance level, the MC/DC floor by level deciding blocking (L4 requires FULL MC/DC).
+// The heavy condition-mutant AST work + the per-pin vitest runs live in @czap/audit + the
+// @czap/cli host. Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES:
+// MC/DC is OPT-IN (`czap check --ir --mcdc`) — running a suite per pin (two per condition)
+// is too heavy for a default run. The integrator composes it on like mutationDivergenceGate
+// (a ~3-line wiring). See the MCDC_SEVERITY_BY_LEVEL / MCDC_FLOOR_BY_LEVEL redlinable data.
+export {
+  mcdcCoverageGate,
+  MCDC_SEVERITY_BY_LEVEL,
+  MCDC_FLOOR_BY_LEVEL,
+} from './gates/mcdc-coverage.js';
+
 // The avionics-tier simulation-determinism (DST) gate (Slice C). It folds the
 // host-supplied SimulationFacts — a replay-divergence (two replays of one seed
 // produce different byte-exact trace digests) is a self-explaining L4 Finding
@@ -257,6 +298,34 @@ export {
 // facts-injected, opt-in `--simulate` host path only (a ~3-line wiring like
 // supplyChainGate — the integrator composes it on, the gate ships qualified).
 export { simulationDeterminismGate } from './gates/simulation-determinism.js';
+
+// The avionics-tier decode-fuzz gate (the untrusted-byte decode-surface hardening).
+// It folds the host-supplied FuzzCorpusFacts — a decode-surface violation (a raw
+// crash / a prototype-pollution / a misparse on an L4 decoder — canonical-CBOR /
+// HLC / GraphPatch / DocumentGraph / ShipCapsule) is a self-explaining L4 Finding
+// carrying the REPRODUCER (a corpus seed id or a `generated@seed=0x…` source). The
+// heavy work (hammering every decoder with the committed `tests/fixtures/fuzz-corpus`
+// seeds + a fixed, seeded count of `fast-check` generated inputs, classifying each
+// outcome) lives in the `tests/fuzz` decode fuzzer, driven by the @czap/cli host.
+// Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the
+// facts-injected host path only (a ~3-line wiring like supplyChainGate — the
+// integrator composes it on, the gate ships qualified).
+export { fuzzCorpusGate } from './gates/fuzz-corpus.js';
+
+// The TAINT-ANALYSIS family gate (the untrusted-input source→sink hardening). It
+// folds the host-supplied TaintFacts — an UNSANITIZED source→sink dataflow (an
+// untrusted fetch/AI-cast-proposal/runtime-URL/file-env value reaching a dangerous
+// shader-compile / innerHTML / graph-apply / fetch sink with NO sanitizer on the
+// path) is a self-explaining Finding at the sink's (propagated) level; a sanitized
+// flow is the guarded-seam green (no finding). The heavy work (the whole-corpus
+// `ts.Program` + type-checker dataflow trace) lives in @czap/audit's taint oracle,
+// classified by the LiteShip-LOCAL source/sink/sanitizer registry the @czap/cli
+// host injects (the audit engine references NO LiteShip policy — ADR-0012/D7b).
+// Exported but DELIBERATELY NOT in LITESHIP_GATES / LITESHIP_IR_GATES: taint is
+// OPT-IN (`czap check --ir --taint`) — a whole-corpus trace is too heavy for a
+// default run. The integrator composes it on like supplyChainGate (a ~3-line
+// wiring).
+export { taintFlowGate } from './gates/taint-flow.js';
 
 // The avionics-tier requirements-traceability bridge gate (DO-178B-style). It folds
 // the host-supplied TraceabilityFacts — an UNTRACED invariant, an EXPIRED waiver, or

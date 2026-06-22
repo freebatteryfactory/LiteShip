@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:5d8ee838",
+  "address": "fnv1a:6cad10d3",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -188,6 +188,15 @@
       "name": "mutation-score::packages/canonical/src/fnv.ts",
       "value": 1,
       "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/mcdc-coverage",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
     },
     {
       "_tag": "gate",

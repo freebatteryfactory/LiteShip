@@ -75,6 +75,19 @@ export interface CheckOptions {
    */
   readonly mutate?: boolean;
   /**
+   * `--mcdc`: also run the avionics-tier `mcdcCoverageGate` (L4 — DO-178B Level A's
+   * Modified Condition/Decision Coverage, realized as CONDITION-LEVEL MUTATION). The host
+   * decomposes each effective-L4 decision into its atomic conditions, mints the
+   * force-true/force-false condition-mutant per condition, runs each through the per-pin
+   * vitest runner (in-place pin → isolated subprocess → verified restore), and folds the
+   * two pins per condition: a condition is MC/DC-covered iff BOTH pins are KILLED, else its
+   * independent effect is unobserved — an MC/DC gap surfaced as a finding (L4 demands full
+   * MC/DC). Only meaningful with `--ir`; opt-in (a covering-test suite run per pin, two per
+   * condition, is HEAVY). The cache key is namespaced by this mode (an MC/DC verdict never
+   * serves a non-MC/DC run). MUST run in isolation — it mutates real source files in place.
+   */
+  readonly mcdc?: boolean;
+  /**
    * `--simulate`: also run the avionics-tier `simulationDeterminismGate` (L4 — the
    * determinism spine, DST). The host drives the committed scenario corpus — real L4
    * trust-spine SUTs (content-address / HLC / graph-patch / boundary-evaluator) —
@@ -86,6 +99,17 @@ export interface CheckOptions {
    * namespaced by this mode (a simulation verdict never serves a non-simulation run).
    */
   readonly simulate?: boolean;
+  /**
+   * `--taint`: also run the `taintFlowGate` (the TAINT-ANALYSIS family, L4). The host
+   * traces the source→sink dataflow via @czap/audit's GENERIC taint oracle, classified
+   * by the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader-
+   * source fetch→compile, the AI-cast graph-apply, the runtime-URL SSRF seam, …). An
+   * UNSANITIZED untrusted-value→dangerous-sink flow is a finding; a sanitized flow is
+   * clean. Only meaningful with `--ir`; opt-in (a whole-corpus ts.Program + checker
+   * dataflow trace is HEAVY). The cache key is namespaced by this mode (a taint verdict
+   * never serves a non-taint run).
+   */
+  readonly taint?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -100,7 +124,9 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
           opts.symbols === true,
           opts.supplyChain === true,
           opts.mutate === true,
+          opts.mcdc === true,
           opts.simulate === true,
+          opts.taint === true,
         )
       : await runLeanPath(cwd);
 
@@ -160,7 +186,9 @@ async function runIrPath(
   symbols: boolean,
   supplyChain: boolean,
   mutate: boolean,
+  mcdc: boolean,
   simulate: boolean,
+  taint: boolean,
 ): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
   const result = await runGauntletWithRepoIR(cwd, now, undefined, {
@@ -168,7 +196,9 @@ async function runIrPath(
     withSymbolReferences: symbols,
     withSupplyChain: supplyChain,
     withMutate: mutate,
+    withMcdc: mcdc,
     withSimulate: simulate,
+    withTaint: taint,
   });
   const findings = result.findings;
   return {

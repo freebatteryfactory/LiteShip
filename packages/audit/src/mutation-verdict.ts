@@ -43,7 +43,7 @@
  */
 import { InvariantViolationError } from '@czap/error';
 import { CanonicalCbor, addressedDigestOf } from '@czap/canonical';
-import type { Mutant } from './mutation-engine.js';
+import type { Mutant, MutantCore } from './mutation-engine.js';
 import { applyMutant } from './mutation-engine.js';
 
 /**
@@ -91,26 +91,31 @@ export function makeCoverageMap(relation: readonly { readonly file: string; read
   };
 }
 
-/** A killed mutant — a covering test failed on it (adequate coverage). */
-export interface KilledVerdict {
+/**
+ * A killed mutant — a covering test failed on it (adequate coverage). Generic over the
+ * mutant shape `M` (defaulting to the classic {@link Mutant}) so the SAME verdict path
+ * carries an MC/DC `ConditionMutant` (operator = a condition-force) without a fork — the
+ * evaluator reads only the operator-agnostic {@link MutantCore} fields.
+ */
+export interface KilledVerdict<M extends MutantCore = Mutant> {
   readonly _tag: 'killed';
-  readonly mutant: Mutant;
+  readonly mutant: M;
   /** The covering tests that were run (the evidence the mutation was exercised). */
   readonly coveringTests: readonly string[];
 }
 
 /** A surviving mutant — every covering test passed on it (a coverage divergence). */
-export interface SurvivedVerdict {
+export interface SurvivedVerdict<M extends MutantCore = Mutant> {
   readonly _tag: 'survived';
-  readonly mutant: Mutant;
+  readonly mutant: M;
   /** The covering tests that all passed (the evidence the behaviour is untested). */
   readonly coveringTests: readonly string[];
 }
 
 /** A mutant with no covering test at all — untested code (the worst signal). */
-export interface NoCoverageVerdict {
+export interface NoCoverageVerdict<M extends MutantCore = Mutant> {
   readonly _tag: 'no-coverage';
-  readonly mutant: Mutant;
+  readonly mutant: M;
 }
 
 /**
@@ -126,15 +131,23 @@ export interface NoCoverageVerdict {
  * travels with the verdict for review). NEVER a fake test — the avionics anti-laundering
  * discipline: the only honest way to mark a genuinely-equivalent mutant.
  */
-export interface EquivalentVerdict {
+export interface EquivalentVerdict<M extends MutantCore = Mutant> {
   readonly _tag: 'equivalent';
-  readonly mutant: Mutant;
+  readonly mutant: M;
   /** The justification string from the registry (why this mutation changes nothing). */
   readonly justification: string;
 }
 
-/** The closed verdict union — a `_tag` data discriminant (composition). */
-export type MutantVerdict = KilledVerdict | SurvivedVerdict | NoCoverageVerdict | EquivalentVerdict;
+/**
+ * The closed verdict union — a `_tag` data discriminant (composition). Generic over the
+ * mutant shape `M` (defaulting to the classic {@link Mutant}); the MC/DC builder
+ * instantiates it at `ConditionMutant` so the same evaluator serves both paths.
+ */
+export type MutantVerdict<M extends MutantCore = Mutant> =
+  | KilledVerdict<M>
+  | SurvivedVerdict<M>
+  | NoCoverageVerdict<M>
+  | EquivalentVerdict<M>;
 
 /**
  * The injected EQUIVALENT-MUTANT registry — resolves a mutant's CONTENT ADDRESS to its
@@ -211,7 +224,7 @@ const RECORD = '';
  * over the SORTED test ids (so insertion order never forks the key), routed through
  * the same `addressedDigestOf` content-addressing the engine uses.
  */
-export function mutantVerdictKey(mutant: Mutant, coveringTests: readonly string[], toolchainDigest: string): string {
+export function mutantVerdictKey(mutant: MutantCore, coveringTests: readonly string[], toolchainDigest: string): string {
   const coveringDigest = addressedDigestOf(
     CanonicalCbor.encode([...coveringTests].sort((a, b) => a.localeCompare(b))),
     'blake3',
@@ -231,7 +244,7 @@ export function mutantVerdictKey(mutant: Mutant, coveringTests: readonly string[
  * cache stores only the verdict TAG (the mutant + covering tests are re-resolved
  * from the inputs, so the cache is a pure speedup, never the source of truth).
  */
-export function evaluateMutant(mutant: Mutant, options: EvaluateMutantOptions): MutantVerdict {
+export function evaluateMutant<M extends MutantCore = Mutant>(mutant: M, options: EvaluateMutantOptions): MutantVerdict<M> {
   // The EQUIVALENT registry is consulted FIRST — a registered-equivalent mutant is
   // behaviour-identical regardless of coverage, so neither the coverage map nor the
   // runner has anything to decide. The match is on the mutant's content address (the
@@ -262,7 +275,7 @@ export function evaluateMutant(mutant: Mutant, options: EvaluateMutantOptions): 
 
   const mutatedSource = applyMutant(options.originalSource, mutant);
   const { failed } = options.runner(mutatedSource, coveringTests);
-  const verdict: MutantVerdict = failed
+  const verdict: MutantVerdict<M> = failed
     ? { _tag: 'killed', mutant, coveringTests }
     : { _tag: 'survived', mutant, coveringTests };
 
@@ -277,7 +290,7 @@ export function evaluateMutant(mutant: Mutant, options: EvaluateMutantOptions): 
  * digest supplied). Armed iff a toolchain digest is present — never a key without
  * the anti-lie keystone.
  */
-function cacheKeyFor(mutant: Mutant, coveringTests: readonly string[], options: EvaluateMutantOptions): string | null {
+function cacheKeyFor(mutant: MutantCore, coveringTests: readonly string[], options: EvaluateMutantOptions): string | null {
   if (options.toolchainDigest === undefined) return null;
   return mutantVerdictKey(mutant, coveringTests, options.toolchainDigest);
 }
@@ -289,7 +302,7 @@ function cacheKeyFor(mutant: Mutant, coveringTests: readonly string[], options: 
  * even resolved, so EITHER of those tags here is an impossible cache state — a tagged
  * invariant violation, never a silent coercion.
  */
-function rehydrate(tag: MutantVerdict['_tag'], mutant: Mutant, coveringTests: readonly string[]): MutantVerdict {
+function rehydrate<M extends MutantCore>(tag: MutantVerdict['_tag'], mutant: M, coveringTests: readonly string[]): MutantVerdict<M> {
   if (tag === 'killed') return { _tag: 'killed', mutant, coveringTests };
   if (tag === 'survived') return { _tag: 'survived', mutant, coveringTests };
   throw InvariantViolationError(

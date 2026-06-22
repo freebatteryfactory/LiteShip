@@ -130,20 +130,20 @@ export interface Mutation {
 }
 
 /**
- * A content-addressed mutant — one deterministic, located, identified rewrite of a
- * source file. The `id` is STABLE across runs: it is the blake3 digest (over
- * canonical CBOR) of `{file, operator, line, column, originalText, mutatedText}`,
- * so the same source always mints the same id (the verdict-cache key half the B2
- * cache content-addresses against). `line`/`column` are 1-based (human display);
+ * The OPERATOR-AGNOSTIC core of a content-addressed mutant — every field a runner
+ * consumes to splice + evaluate a mutant, WITHOUT the `operator` discriminant. Extracted
+ * so the deterministic splice ({@link applyMutant}) and the kill/survive verdict
+ * (`evaluateMutant`) operate on ANY span-located mutant — the classic {@link Mutant}
+ * (operator ∈ {@link MutationOperatorId}) AND the MC/DC `ConditionMutant` (operator ∈ the
+ * condition-force union) — without widening the classic operator catalogue or forking the
+ * runner. The `id` is the content address; `line`/`column` are 1-based (human display);
  * `start`/`end` are absolute offsets (the splice the runner applies).
  */
-export interface Mutant {
+export interface MutantCore {
   /** Stable content address — `addressedDigestOf(...).integrity_digest`. */
   readonly id: IntegrityDigest;
   /** The repo-relative source file the mutant lives in. */
   readonly file: string;
-  /** The operator that produced the mutant. */
-  readonly operator: MutationOperatorId;
   /** 1-based line of the mutated span. */
   readonly line: number;
   /** 1-based column of the mutated span. */
@@ -156,6 +156,19 @@ export interface Mutant {
   readonly originalText: string;
   /** The text the span is replaced with. */
   readonly mutatedText: string;
+}
+
+/**
+ * A content-addressed mutant — one deterministic, located, identified rewrite of a
+ * source file. The `id` is STABLE across runs: it is the blake3 digest (over
+ * canonical CBOR) of `{file, operator, line, column, originalText, mutatedText}`,
+ * so the same source always mints the same id (the verdict-cache key half the B2
+ * cache content-addresses against). The classic-mutation specialization of
+ * {@link MutantCore} — its `operator` is a {@link MutationOperatorId}.
+ */
+export interface Mutant extends MutantCore {
+  /** The operator that produced the mutant. */
+  readonly operator: MutationOperatorId;
 }
 
 /** Options for {@link generateMutants}. */
@@ -248,7 +261,7 @@ export function generateMutants(sourceFile: ts.SourceFile, options: GenerateMuta
  * re-serialization artefact). Pure — derives entirely from `originalSource` + the
  * mutant's offsets.
  */
-export function applyMutant(originalSource: string, mutant: Mutant): string {
+export function applyMutant(originalSource: string, mutant: MutantCore): string {
   return originalSource.slice(0, mutant.start) + mutant.mutatedText + originalSource.slice(mutant.end);
 }
 

@@ -213,4 +213,8 @@ export const nodeTestInclude = [
   'tests/component/**/*.test.ts',
   'tests/regression/**/*.test.ts',
   'tests/generated/**/*.test.ts',
+  // The decode-fuzz harness: the committed corpus replay (the regression floor,
+  // incl. the __proto__ CVE seed) + the deterministic seeded generated fuzz over
+  // every L4 untrusted-byte decoder, plus the fuzzCorpusGate self-proof.
+  'tests/fuzz/**/*.test.ts',
 ];

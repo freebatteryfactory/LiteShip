@@ -20,9 +20,12 @@ import type { Finding } from './finding.js';
 import type { FileId, RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
+import type { TaintFacts } from './taint-facts.js';
+import type { FuzzCorpusFacts } from './fuzz-facts.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -75,6 +78,21 @@ export interface GateContext {
    */
   readonly mutation?: MutationFacts;
   /**
+   * Pre-computed MC/DC (Modified Condition/Decision Coverage) evidence — an INJECTED
+   * capability (the avionics tier — DO-178B Level A's coverage requirement, realized as
+   * CONDITION-LEVEL MUTATION), the same lean-engine pattern as {@link mutation}.
+   * OPTIONAL: the heavy work (decomposing every L4 decision into its atomic conditions,
+   * minting the force-true/force-false pin per condition, running the covering tests per
+   * pin) all lives in a HOST (`@czap/audit`'s condition-mutation engine + the CLI's
+   * per-mutant vitest runner), which folds the two pins per condition into flat
+   * {@link McdcFacts} (each condition MC/DC-covered iff BOTH pins were KILLED) and lands
+   * them here. The {@link mcdcCoverageGate} reads ONLY through this; in-memory fixtures
+   * supply a literal facts record (no parse, no test run). When ABSENT the gate is simply
+   * not in the set (MC/DC is opt-in: `czap check --ir --mcdc`), so there is no per-pin
+   * cost and no noise on a default run. See {@link McdcFacts}.
+   */
+  readonly mcdc?: McdcFacts;
+  /**
    * Pre-computed DETERMINISTIC-SIMULATION (DST) evidence — an INJECTED capability
    * (Slice C, the avionics tier), the same lean-engine pattern as {@link ir},
    * {@link supplyChain}, and {@link mutation}. OPTIONAL: the heavy work (minting a
@@ -124,6 +142,45 @@ export interface GateContext {
    * raccoon caught. See {@link StandardsIntegrityFacts}.
    */
   readonly standards?: StandardsIntegrityFacts;
+  /**
+   * Pre-computed TAINT-DATAFLOW evidence — an INJECTED capability (the
+   * TAINT-ANALYSIS family), the same lean-engine pattern as {@link ir},
+   * {@link supplyChain}, {@link mutation}, {@link simulation}, {@link traceability},
+   * and {@link standards}. OPTIONAL: the heavy work (a whole-corpus `ts.Program` +
+   * a type-checker dataflow trace from each untrusted SOURCE call to each dangerous
+   * SINK call argument, observing the SANITIZER on the path) lives in a HOST
+   * (`@czap/audit`'s taint oracle, classified by the LiteShip-LOCAL source/sink/
+   * sanitizer registry the `@czap/cli` host injects — the audit engine itself
+   * references NO LiteShip policy, ADR-0012/D7b), which folds the traced flows into
+   * flat {@link TaintFacts} (every source→sink flow + its sanitizer, if any + the
+   * honest interprocedural depth the trace covered) and lands them here. The
+   * {@link taintFlowGate} reads ONLY through this; in-memory fixtures supply a
+   * literal facts record (no program, no checker). When ABSENT the gate is simply
+   * not in the set (taint is opt-in: `czap check --ir --taint`). An UNSANITIZED
+   * source→sink flow folds to a Finding at the sink's (propagated) level — L4 for a
+   * trust-spine sink. See {@link TaintFacts}.
+   */
+  readonly taint?: TaintFacts;
+  /**
+   * Pre-computed DECODE-FUZZ evidence — an INJECTED capability (the
+   * UNTRUSTED-BYTE DECODE-SURFACE hardening), the same lean-engine pattern as
+   * {@link ir}, {@link supplyChain}, {@link mutation}, {@link simulation},
+   * {@link traceability}, {@link standards}, and {@link taint}. OPTIONAL: the heavy
+   * work (hammering every L4 decoder — canonical-CBOR / HLC / GraphPatch /
+   * DocumentGraph / ShipCapsule — with the committed `tests/fixtures/fuzz-corpus`
+   * seeds + a fixed, seeded count of `fast-check` generated inputs, classifying
+   * each outcome as fail-closed-or-typed vs a crash / a prototype-pollution / a
+   * misparse) lives in a HOST (the `tests/fuzz` decode fuzzer, driven by the CLI
+   * fuzz path), which folds the per-decoder verdicts into flat
+   * {@link FuzzCorpusFacts} and lands them here. The {@link fuzzCorpusGate} reads
+   * ONLY through this; in-memory fixtures supply a literal facts record (no
+   * `fast-check`, no corpus, no decoder). When ABSENT the gate reports an honest
+   * advisory "not-evidenced" finding rather than a silent green. A violation fact
+   * carries its REPRODUCER (a corpus seed id or a `generated@seed=0x…` source), so
+   * the decode crash/pollution it folds replays byte-for-byte. See
+   * {@link FuzzCorpusFacts}.
+   */
+  readonly fuzzCorpus?: FuzzCorpusFacts;
 }
 
 /**
@@ -250,4 +307,39 @@ export function requireMutation(context: GateContext, gateId: string): MutationF
     );
   }
   return context.mutation;
+}
+
+/**
+ * Read the injected {@link McdcFacts} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} when none were injected — the guard the
+ * {@link mcdcCoverageGate} uses so the lean engine's optional `mcdc` fails LOUD (never
+ * silently no-ops a gate whose whole job is the MC/DC facts). `gateId` is woven into the
+ * error for traceability. The same shape as {@link requireMutation}.
+ */
+export function requireMcdc(context: GateContext, gateId: string): McdcFacts {
+  if (context.mcdc === undefined) {
+    throw HostCapabilityError(
+      'mcdc-facts',
+      `gate "${gateId}" requires the injected MC/DC facts, but none were supplied on the GateContext — a host (the CLI) must generate the condition-mutants via @czap/audit's condition-mutation engine, run the covering tests per pin, and inject the decided McdcFacts as context.mcdc (the opt-in \`czap check --ir --mcdc\` path)`,
+    );
+  }
+  return context.mcdc;
+}
+
+/**
+ * Read the injected {@link TaintFacts} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} when none were injected — the guard the
+ * {@link taintFlowGate} uses so the lean engine's optional `taint` fails LOUD
+ * (never silently no-ops a gate whose whole job is the taint dataflow facts).
+ * `gateId` is woven into the error for traceability. The same shape as
+ * {@link requireMutation} / {@link requireMcdc}.
+ */
+export function requireTaint(context: GateContext, gateId: string): TaintFacts {
+  if (context.taint === undefined) {
+    throw HostCapabilityError(
+      'taint-facts',
+      `gate "${gateId}" requires the injected taint facts, but none were supplied on the GateContext — a host (the CLI) must trace the source→sink dataflow via @czap/audit's taint oracle (classified by the host-injected LiteShip source/sink/sanitizer registry) and inject the decided TaintFacts as context.taint (the opt-in \`czap check --ir --taint\` path)`,
+    );
+  }
+  return context.taint;
 }

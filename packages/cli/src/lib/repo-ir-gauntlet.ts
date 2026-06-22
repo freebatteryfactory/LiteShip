@@ -37,27 +37,34 @@ import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
 import {
   buildMutationFacts,
+  buildMcdcFacts,
   makeEquivalentMutantRegistry,
   parseEquivalentMutants,
+  buildRepoIRTaint,
   type EquivalentMutantRegistry,
 } from '@czap/audit';
+import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
 import {
   litelaunchGauntletWithIR,
   supplyChainGate,
   mutationDivergenceGate,
+  mcdcCoverageGate,
   simulationDeterminismGate,
   traceabilityBridgeGate,
   standardsIntegrityGate,
+  taintFlowGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
   type Gate,
   type GauntletResult,
   type LitelaunchCacheOptions,
+  type McdcFacts,
   type MutationFacts,
   type RepoIR,
   type SimulationFacts,
   type SupplyChainFacts,
+  type TaintFacts,
   type TraceabilityFacts,
   type StandardsIntegrityFacts,
 } from '@czap/gauntlet';
@@ -262,7 +269,9 @@ export async function runGauntletWithRepoIR(
   const gateSet: Gate[] = [...LITESHIP_IR_GATES];
   let supplyChainFacts: SupplyChainFacts | undefined;
   let mutationFacts: MutationFacts | undefined;
+  let mcdcFacts: McdcFacts | undefined;
   let simulationFacts: SimulationFacts | undefined;
+  let taintFacts: TaintFacts | undefined;
 
   // The requirements-traceability ledger (the avionics-tier bidirectional trace) is
   // ALWAYS-ON on the `--ir` path: the committed `traceability/*.yaml` is cheap to fold
@@ -309,6 +318,22 @@ export async function runGauntletWithRepoIR(
     mutationFacts = buildRepoMutationFacts(repoRoot, ir, cache.toolchainDigest);
   }
 
+  // The `--mcdc` opt-in (DO-178B Level A's Modified Condition/Decision Coverage via
+  // CONDITION-LEVEL MUTATION): over the LIVE effective-L4 trust-spine seams, decompose
+  // each decision into its atomic conditions, mint the force-true/force-false pin per
+  // condition, evaluate each pin via the SAME per-mutant vitest runner (in-place pin +
+  // isolated subprocess + verified restore), and fold the two pins per condition into the
+  // injected facts; compose `mcdcCoverageGate`. A condition whose independent effect is
+  // not observed (a surviving pin) is an MC/DC gap the gate surfaces (L4 demands full
+  // MC/DC). The MC/DC cache mode is namespaced in the toolchain digest (see
+  // resolveVerdictCache) so an MC/DC verdict never serves a non-MC/DC run. This is HEAVY
+  // (a covering-test suite run per pin, TWO pins per condition) — aimed at the trust
+  // spine only.
+  if (cacheOpts.withMcdc === true) {
+    gateSet.push(mcdcCoverageGate);
+    mcdcFacts = buildRepoMcdcFacts(repoRoot, ir, cache.toolchainDigest);
+  }
+
   // The `--simulate` opt-in (the determinism spine, DST going LIVE): drive the
   // committed scenario corpus — REAL L4 trust-spine SUTs (content-address / HLC /
   // graph-patch / boundary-evaluator) — through the seeded `@czap/core/simulation`
@@ -323,6 +348,22 @@ export async function runGauntletWithRepoIR(
     simulationFacts = await runSimulationCorpus();
   }
 
+  // The `--taint` opt-in (the TAINT-ANALYSIS family): trace the source→sink dataflow
+  // in the HOST via @czap/audit's GENERIC taint oracle, classified by the
+  // LiteShip-LOCAL source/sink/sanitizer registry injected HERE (the ADR-0012 / D7b
+  // boundary — the audit engine references no LiteShip source/sink name). An
+  // UNSANITIZED flow (an untrusted fetch/AI-cast/runtime-URL value reaching a
+  // shader-compile / innerHTML / graph-apply / fetch sink with no sanitizer on the
+  // path) is folded into a finding by `taintFlowGate`; a sanitized flow is clean. The
+  // trace is a WHOLE-CORPUS ts.Program + checker walk (HEAVY) — opt-in. The taint
+  // cache mode is namespaced in the toolchain digest (see resolveVerdictCache) so a
+  // taint-run verdict never serves a non-taint run. The honest bounded interprocedural
+  // depth is carried in the facts (the report states what was and was not traced).
+  if (cacheOpts.withTaint === true) {
+    gateSet.push(taintFlowGate);
+    taintFacts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile: withRepoRoot(liteshipDevopsProfile, repoRoot) });
+  }
+
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
@@ -334,7 +375,9 @@ export async function runGauntletWithRepoIR(
     standards: standardsFacts,
     ...(supplyChainFacts !== undefined ? { supplyChain: supplyChainFacts } : {}),
     ...(mutationFacts !== undefined ? { mutation: mutationFacts } : {}),
+    ...(mcdcFacts !== undefined ? { mcdc: mcdcFacts } : {}),
     ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),
+    ...(taintFacts !== undefined ? { taint: taintFacts } : {}),
   };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
@@ -431,6 +474,70 @@ function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: s
       a.mutatedText.localeCompare(b.mutatedText),
   );
   return { outcomes: sorted, scoreBaseline };
+}
+
+/**
+ * Build the {@link McdcFacts} the avionics `mcdcCoverageGate` folds — the HOST's heavy
+ * job (DO-178B Level A MC/DC via CONDITION-LEVEL MUTATION). It mirrors
+ * {@link buildRepoMutationFacts} EXACTLY (the cannon-aiming + the SOUND coverage map are
+ * shared), differing only in WHAT is mutated: instead of operator-mutants it mints, per
+ * atomic CONDITION of each L4 decision, the force-true/force-false pin, evaluates each via
+ * the per-pin vitest runner, and folds the two pins per condition into one outcome:
+ *   1. The LIVE effective-L4 seam targets from the IR's propagation fixpoint
+ *      ({@link l4SeamTargets} — the level is computed from the live IR, never hardcoded).
+ *   2. The SOUND covering-tests map ({@link buildSeamCoverageMap}, the same execution-
+ *      filtered deep-import ∪ barrel closure the mutation run uses — under-mapping yields
+ *      false MC/DC gaps, so it errs toward running too many tests).
+ *   3. Per seam, {@link buildMcdcFacts} generates the deterministic condition-mutants,
+ *      evaluates each pin via the per-mutant vitest runner (in-place pin → isolated
+ *      subprocess → VERIFIED restore — the SAME runner the mutation path uses), and folds
+ *      the two pins per condition. The mutant-verdict cache is namespaced by the MC/DC
+ *      mode (the toolchain digest carries `mcMode`, see resolveVerdictCache).
+ * The runner is constructed per-target-file (each instance pins exactly its file). Pure +
+ * deterministic over the seam bytes + the runner verdicts.
+ */
+function buildRepoMcdcFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): McdcFacts {
+  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
+  // Surface a vanished/demoted seam LOUDLY (stderr), never a quiet hole in the coverage.
+  for (const f of skippedNotL4) {
+    process.stderr.write(`czap check --mcdc: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  }
+  for (const f of unreadable) {
+    process.stderr.write(`czap check --mcdc: seam candidate "${f}" could not be read (skipped)\n`);
+  }
+
+  // The SAME execution-filtered coverage map the mutation run uses (the barrel-problem
+  // fix) — a pin's covering set is the deep-importers ∪ the executing barrel-importers.
+  const probeCacheOptions: SeamExecutionCoverageOptions = {
+    repoRoot,
+    cache: makeFsSeamCoverageProbeCache(repoRoot),
+    ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
+  };
+  const { coverage } = buildSeamCoverageMap(repoRoot, targets, { _tag: 'execution', options: probeCacheOptions });
+  const mutantCache = makeFsMutantVerdictCache(repoRoot);
+
+  const conditions: McdcFacts['conditions'][number][] = [];
+  for (const target of targets) {
+    // One runner per seam file — it backs up / pins / restores exactly that file.
+    const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+    const fileFacts = buildMcdcFacts([target], {
+      runner,
+      coverage,
+      cache: mutantCache,
+      ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
+    });
+    for (const c of fileFacts.conditions) conditions.push(c);
+  }
+  // Re-sort the merged conditions deterministically (the same total order buildMcdcFacts
+  // uses) so the facts are byte-stable regardless of the per-file iteration.
+  const sorted = [...conditions].sort(
+    (a, b) =>
+      a.file.localeCompare(b.file) ||
+      a.line - b.line ||
+      a.column - b.column ||
+      a.condition.localeCompare(b.condition),
+  );
+  return { conditions: sorted };
 }
 
 /**
@@ -558,6 +665,18 @@ export interface RepoIRGauntletCacheOptions {
    */
   readonly withMutate?: boolean;
   /**
+   * Compose the avionics-tier `mcdcCoverageGate` (L4) onto the run and inject the
+   * host-computed {@link McdcFacts} (`czap check --ir --mcdc`). The host decomposes each
+   * effective-L4 decision into its atomic conditions, mints the force-true/force-false
+   * pin per condition, runs each pin via the per-mutant vitest runner, and folds the two
+   * pins per condition (a condition is MC/DC-covered iff BOTH pins are killed). It changes
+   * BOTH which gates run AND the injected facts, so the verdict cache is NAMESPACED by
+   * this mode (see {@link resolveVerdictCache}): an MC/DC verdict can never be served to a
+   * non-MC/DC run, or vice versa — exactly the `--mutate` cache-soundness lesson. HEAVY (a
+   * covering-test suite run per pin, TWO pins per condition) — opt-in.
+   */
+  readonly withMcdc?: boolean;
+  /**
    * Compose the avionics-tier `simulationDeterminismGate` (L4 — the determinism
    * spine) onto the run and inject the host-computed {@link SimulationFacts}
    * (`czap check --ir --simulate`). The host drives the committed scenario corpus
@@ -571,6 +690,19 @@ export interface RepoIRGauntletCacheOptions {
    * `not-evidenced` advisory.
    */
   readonly withSimulate?: boolean;
+  /**
+   * Compose the `taintFlowGate` (the TAINT-ANALYSIS family, L4) onto the run and
+   * inject the host-computed {@link TaintFacts} (`czap check --ir --taint`). The host
+   * traces the source→sink dataflow via @czap/audit's GENERIC taint oracle, classified
+   * by the LiteShip-LOCAL `LITESHIP_TAINT_REGISTRY` injected from the CLI host (the
+   * ADR-0012 / D7b boundary). It changes BOTH which gates run AND the injected facts,
+   * so the verdict cache is NAMESPACED by this mode (see {@link resolveVerdictCache}):
+   * a taint-run verdict can never be served to a non-taint run, or vice versa — exactly
+   * the `--symbols` / `--supply-chain` / `--mutate` / `--simulate` cache-soundness
+   * lesson. HEAVY (a whole-corpus ts.Program + type-checker dataflow trace) — opt-in,
+   * so the default `--ir` run carries no taint cost.
+   */
+  readonly withTaint?: boolean;
 }
 
 /**
@@ -601,11 +733,24 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // This `mtMode` also flows into the mutant-verdict cache key via the toolchain
     // digest, so a mutant verdict minted under one mode never serves another.
     ...(opts.withMutate === true ? { mtMode: 'mutate' } : {}),
+    // The MC/DC MODE changes BOTH the gate set (mcdcCoverageGate composed on) AND the
+    // injected facts WITHOUT changing any file's content digest, so it must namespace the
+    // key — else an MC/DC verdict could be served to a non-MC/DC run (the same stale-serve
+    // LIE the --symbols namespacing fixes). This `mcMode` also flows into the mutant-
+    // verdict cache key via the toolchain digest, so a condition-pin verdict minted under
+    // the MC/DC mode never serves the (operator-) mutation mode or vice versa (the two
+    // share the fs mutant cache; the mode disjoins their keys).
+    ...(opts.withMcdc === true ? { mcMode: 'mcdc' } : {}),
     // The simulation MODE changes BOTH the gate set (simulationDeterminismGate
     // composed on) AND the injected facts WITHOUT changing any file's content digest,
     // so it must namespace the key — else a simulation-run verdict could be served to
     // a non-simulation run (the same stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withSimulate === true ? { simMode: 'simulate' } : {}),
+    // The taint MODE changes BOTH the gate set (taintFlowGate composed on) AND the
+    // injected facts WITHOUT changing any file's content digest, so it must namespace
+    // the key — else a taint-run verdict could be served to a non-taint run (the same
+    // stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withTaint === true ? { taintMode: 'taint' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),

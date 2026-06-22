@@ -202,6 +202,16 @@ export async function run(argv: readonly string[]): Promise<number> {
       // mutant is HEAVY); the cache key is namespaced by this mode. It mutates real
       // source files IN PLACE (verified-restored), so it must run in ISOLATION.
       const mutate = rest.includes('--mutate');
+      // `--mcdc` composes the avionics-tier mcdcCoverageGate (L4 — DO-178B Level A's
+      // Modified Condition/Decision Coverage via CONDITION-LEVEL MUTATION) on + runs the
+      // per-pin vitest runner over the live effective-L4 trust-spine seams: each atomic
+      // condition's force-true/force-false pin → an isolated subprocess; a condition whose
+      // independent effect is unobserved (a surviving pin) surfaces as an MC/DC-gap finding
+      // (L4 demands full MC/DC). Only meaningful with `--ir`; opt-in (a covering-test suite
+      // run per pin, two per condition, is HEAVY); the cache key is namespaced by this
+      // mode. It mutates real source files IN PLACE (verified-restored), so it must run in
+      // ISOLATION.
+      const mcdc = rest.includes('--mcdc');
       // `--simulate` composes the avionics-tier simulationDeterminismGate (L4 — the
       // determinism spine, DST) on + drives the committed scenario corpus through the
       // `@czap/core/simulation` seeded world (each scenario replayed twice; a
@@ -209,16 +219,26 @@ export async function run(argv: readonly string[]): Promise<number> {
       // carrying the seed). Only meaningful with `--ir`; opt-in (no not-evidenced
       // advisory on the default `--ir` run); the cache key is namespaced by this mode.
       const simulate = rest.includes('--simulate');
-      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` are
-      // only meaningful on the IR path (the lean path has no cache + no IR). A bare
-      // flag there is a no-op, never a silent wrong run.
+      // `--taint` composes the taintFlowGate (the TAINT-ANALYSIS family, L4) on + traces
+      // the source→sink dataflow via @czap/audit's generic taint oracle, classified by
+      // the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader
+      // fetch→compile, the AI-cast graph-apply, the runtime-URL SSRF seam). An
+      // UNSANITIZED untrusted-value→dangerous-sink flow is a finding. Only meaningful
+      // with `--ir`; opt-in (a whole-corpus ts.Program + checker trace is HEAVY); the
+      // cache key is namespaced by this mode.
+      const taint = rest.includes('--taint');
+      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
+      // `--taint` are only meaningful on the IR path (the lean path has no cache + no
+      // IR). A bare flag there is a no-op, never a silent wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
         ...(symbols ? { symbols } : {}),
         ...(supplyChain ? { supplyChain } : {}),
         ...(mutate ? { mutate } : {}),
+        ...(mcdc ? { mcdc } : {}),
         ...(simulate ? { simulate } : {}),
+        ...(taint ? { taint } : {}),
       });
     }
     case 'check-invariants': {

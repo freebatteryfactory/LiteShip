@@ -43,6 +43,7 @@ import {
   ALWAYS_BLOCKING_RULES,
   supplyChainGate,
   mutationDivergenceGate,
+  mcdcCoverageGate,
   simulationDeterminismGate,
   traceabilityBridgeGate,
   standardsIntegrityGate,
@@ -83,6 +84,7 @@ const GATE_SETS: readonly { readonly set: string; readonly gates: readonly Gate[
     gates: [
       supplyChainGate,
       mutationDivergenceGate,
+      mcdcCoverageGate,
       simulationDeterminismGate,
       traceabilityBridgeGate,
       standardsIntegrityGate,

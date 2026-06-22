@@ -24,9 +24,11 @@ import type { GateContext } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
+import type { FuzzCorpusFacts } from './fuzz-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -108,6 +110,8 @@ export function nodeContext(
   simulation?: SimulationFacts,
   traceability?: TraceabilityFacts,
   standards?: StandardsIntegrityFacts,
+  mcdc?: McdcFacts,
+  fuzzCorpus?: FuzzCorpusFacts,
 ): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
@@ -139,6 +143,9 @@ export function nodeContext(
     ...(supplyChain !== undefined ? { supplyChain } : {}),
     // Thread the injected mutation facts through (Slice C); omit when absent.
     ...(mutation !== undefined ? { mutation } : {}),
+    // Thread the injected MC/DC facts through (the avionics MC/DC tier); omit when
+    // absent (the default `--ir` run — MC/DC is opt-in via `--mcdc`).
+    ...(mcdc !== undefined ? { mcdc } : {}),
     // Thread the injected DST (simulation) facts through (the determinism spine);
     // omit when absent (the default `--ir` run — simulation is opt-in via `--simulate`).
     ...(simulation !== undefined ? { simulation } : {}),
@@ -148,5 +155,8 @@ export function nodeContext(
     // Thread the injected standards-integrity facts through (the raccoon-rule
     // backstop); omit when absent (the lean path, where the host runs no extractor).
     ...(standards !== undefined ? { standards } : {}),
+    // Thread the injected decode-fuzz facts through (the untrusted-byte decode-surface
+    // hardening); omit when absent (the lean path, where the host runs no fuzzer).
+    ...(fuzzCorpus !== undefined ? { fuzzCorpus } : {}),
   };
 }

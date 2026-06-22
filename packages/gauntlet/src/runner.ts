@@ -22,9 +22,11 @@ import type { Gate } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
+import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
+import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -138,6 +140,17 @@ export interface RunGauntletOnRepoOptions {
    */
   readonly mutation?: MutationFacts;
   /**
+   * The INJECTED MC/DC facts (the avionics tier — DO-178B Level A's coverage requirement,
+   * realized as condition-level mutation) — OPTIONAL. A host (`@czap/audit`'s
+   * condition-mutation engine + the CLI's per-pin vitest runner) generates + evaluates
+   * the force-true/force-false pins per atomic condition, folds the two pins per
+   * condition, then threads the decided {@link McdcFacts} here, where they land on the
+   * {@link GateContext} for `mcdcCoverageGate` to fold. Omit them (the default `--ir`
+   * run) and the gate is simply not in the set — no condition-mutants generated, no
+   * suite-runs, no cost.
+   */
+  readonly mcdc?: McdcFacts;
+  /**
    * The INJECTED DST (deterministic-simulation) facts (the avionics tier — the
    * determinism spine) — OPTIONAL. A host (the CLI's `czap check --ir --simulate`
    * path) drives the scenario corpus through the `@czap/core/simulation` harness
@@ -170,6 +183,16 @@ export interface RunGauntletOnRepoOptions {
    * not in the set — no surface read, no addressing cost.
    */
   readonly standards?: StandardsIntegrityFacts;
+  /**
+   * The INJECTED decode-fuzz facts (the untrusted-byte decode-surface hardening) —
+   * OPTIONAL. A host (the `tests/fuzz` decode fuzzer, driven by the CLI fuzz path)
+   * hammers every L4 decoder with the committed `tests/fixtures/fuzz-corpus` seeds +
+   * a fixed, seeded count of `fast-check` generated inputs, classifies each outcome,
+   * and threads the decided {@link FuzzCorpusFacts} here, where they land on the
+   * {@link GateContext} for `fuzzCorpusGate` to fold. Omit them (the lean path) and
+   * the gate is simply not in the set — no fuzzer run, no cost.
+   */
+  readonly fuzzCorpus?: FuzzCorpusFacts;
 }
 
 /**
@@ -196,6 +219,8 @@ export function runGauntletOnRepo(
       opts.simulation,
       opts.traceability,
       opts.standards,
+      opts.mcdc,
+      opts.fuzzCorpus,
     ),
     runOpts,
   );
@@ -296,6 +321,10 @@ export function litelaunchGauntletWithIR(
       // `mutationDivergenceGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (mutation is opt-in: `--mutate`).
       ...(cacheOpts.mutation !== undefined ? { mutation: cacheOpts.mutation } : {}),
+      // Inject the host-computed MC/DC facts (the avionics MC/DC tier) when supplied —
+      // `mcdcCoverageGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the set at
+      // all on the default `--ir` run (MC/DC is opt-in: `--mcdc`).
+      ...(cacheOpts.mcdc !== undefined ? { mcdc: cacheOpts.mcdc } : {}),
       // Inject the host-computed DST (simulation) facts when supplied —
       // `simulationDeterminismGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (simulation is opt-in: `--simulate`).
@@ -362,6 +391,15 @@ export interface LitelaunchCacheOptions {
    * verdict can never be served to a non-mutation run, or vice versa).
    */
   readonly mutation?: MutationFacts;
+  /**
+   * OPTIONAL host-computed MC/DC facts (the avionics tier — DO-178B Level A coverage via
+   * condition-level mutation) threaded onto the {@link GateContext} for
+   * `mcdcCoverageGate` to fold. Supplied ONLY on the `czap check --ir --mcdc` run,
+   * alongside a `gates` override that includes the gate. The cache key is namespaced by
+   * the MC/DC mode (an MC/DC verdict can never be served to a non-MC/DC run, or vice
+   * versa) — exactly the `--mutate` cache-soundness lesson.
+   */
+  readonly mcdc?: McdcFacts;
   /**
    * OPTIONAL host-computed DST (deterministic-simulation) facts (the determinism
    * spine) threaded onto the {@link GateContext} for `simulationDeterminismGate` to
