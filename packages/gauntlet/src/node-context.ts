@@ -23,6 +23,7 @@ import fg from 'fast-glob';
 import type { GateContext } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
+import type { MutationFacts } from './mutation-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -50,14 +51,24 @@ import type { SupplyChainFacts } from './supply-chain-facts.js';
  *
  * @param repoRoot Absolute root the gate's paths resolve against.
  * @param globs Repo-relative glob patterns selecting the gate's file scope.
+ * The optional `mutation` is the INJECTED mutation-facts capability (Slice C, the
+ * avionics tier — mutation-as-divergence): a host (`@czap/audit`'s mutation engine +
+ * the CLI's per-mutant vitest runner) generates the mutants, evaluates each, and
+ * folds the verdicts into {@link MutationFacts}, then threads them through so the
+ * `mutationDivergenceGate` can fold them. Same lean-engine pattern as `ir` /
+ * `supplyChain` — the gauntlet RECEIVES the facts, never computes them. Omitted ⇒
+ * absent (the default `--ir` run, where mutation is opt-in via `--mutate`).
+ *
  * @param ir Optional pre-built repo-IR to inject onto the context.
  * @param supplyChain Optional pre-computed supply-chain facts to inject.
+ * @param mutation Optional pre-computed mutation facts to inject.
  */
 export function nodeContext(
   repoRoot: string,
   globs: readonly string[],
   ir?: RepoIR,
   supplyChain?: SupplyChainFacts,
+  mutation?: MutationFacts,
 ): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
@@ -87,5 +98,7 @@ export function nodeContext(
     ...(ir !== undefined ? { ir } : {}),
     // Thread the injected supply-chain facts through (Slice C); omit when absent.
     ...(supplyChain !== undefined ? { supplyChain } : {}),
+    // Thread the injected mutation facts through (Slice C); omit when absent.
+    ...(mutation !== undefined ? { mutation } : {}),
   };
 }

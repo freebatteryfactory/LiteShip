@@ -43,11 +43,77 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { isFinding, type Finding, type GateVerdictCache } from '@czap/gauntlet';
 import { currentEnvFingerprint } from '@czap/command/host';
-import { normalizeRepoPath } from '@czap/audit';
+import { normalizeRepoPath, type MutantVerdictCache, type MutantVerdict } from '@czap/audit';
 import { IoError } from '@czap/error';
 
 /** The cache sub-directory under `.czap/cache` (sibling to the idempotency receipts). */
 const GAUNTLET_CACHE_DIR = ['.czap', 'cache', 'gauntlet'] as const;
+
+/** The mutation-verdict cache sub-directory under `.czap/cache` (sibling to gauntlet). */
+const MUTATION_CACHE_DIR = ['.czap', 'cache', 'mutation'] as const;
+
+/** The closed set of mutant-verdict tags a cache file may hold (the only valid values). */
+const MUTANT_VERDICT_TAGS: ReadonlySet<MutantVerdict['_tag']> = new Set(['killed', 'survived', 'no-coverage']);
+
+/** The on-disk path for a mutant verdict keyed by the engine's `mutantVerdictKey`. */
+function mutantVerdictPath(key: string, cwd: string): string {
+  return join(cwd, ...MUTATION_CACHE_DIR, `${keyToSlug(key)}.txt`);
+}
+
+/**
+ * Build an fs-backed {@link MutantVerdictCache} rooted at `cwd` — the production half
+ * of the B2 content-addressed mutant-verdict store the avionics mutation run keys
+ * against (`mutantVerdictKey` = `mutant.id + coveringTestsDigest + toolchainDigest`).
+ * It stores ONLY the verdict TAG (a single line) under
+ * `.czap/cache/mutation/<keyhash>.txt`, mirroring the gauntlet verdict cache's
+ * sound-MISS discipline:
+ *
+ * `read` returns `null` (a MISS → re-run, the SAFE direction) for ANY uncertain case
+ * — absent file, unreadable file, or a value that is not one of the three sanctioned
+ * tags — so a corrupt/stale/hand-edited entry can never be served as a real verdict
+ * (a stale "killed" hiding a now-surviving mutant is the worst lie this layer could
+ * tell). `write` is ATOMIC (temp + rename) so a crash mid-write never leaves a half
+ * file. The toolchain digest folded into the key (by the engine) invalidates every
+ * cached verdict when the runner logic or the covering tests change.
+ */
+export function makeFsMutantVerdictCache(cwd: string = process.cwd()): MutantVerdictCache {
+  return {
+    read(key: string): MutantVerdict['_tag'] | null {
+      const path = mutantVerdictPath(key, cwd);
+      if (!existsSync(path)) return null;
+      let raw: string;
+      try {
+        raw = readFileSync(path, 'utf8');
+      } catch (err) {
+        // The file existed at the existsSync check, so a read failure is a perms
+        // issue or a delete/replace race ⇒ a designed MISS (re-run, the SAFE
+        // direction). A read failure with no recognized best-effort code (e.g. EIO,
+        // a real disk fault) surfaces as a tagged IoError rather than a silent miss.
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'EACCES' || code === 'EISDIR' || code === 'EPERM') {
+          return null;
+        }
+        throw IoError('mutant-verdict-cache.read', `unreadable cache entry (${String(code ?? 'unknown')})`, {
+          path,
+          cause: err,
+        });
+      }
+      const tag = raw.trim();
+      // Only one of the three sanctioned tags is a valid serve — anything else
+      // (a partial write, a schema drift, a hand-edit) is a MISS, never a guess.
+      return MUTANT_VERDICT_TAGS.has(tag as MutantVerdict['_tag']) ? (tag as MutantVerdict['_tag']) : null;
+    },
+    write(key: string, tag: MutantVerdict['_tag']): void {
+      const path = mutantVerdictPath(key, cwd);
+      mkdirSync(dirname(path), { recursive: true });
+      // Atomic: a unique temp file, then a rename over the target (atomic on one
+      // filesystem) so a concurrent reader sees the old file or the complete new one.
+      const tmp = `${path}.${process.pid}.${createHash('sha256').update(key).digest('hex').slice(0, 8)}.tmp`;
+      writeFileSync(tmp, `${tag}\n`, 'utf8');
+      renameSync(tmp, path);
+    },
+  };
+}
 
 /** Hash the engine's stable verdict KEY into a short filesystem-safe slug. */
 function keyToSlug(key: string): string {

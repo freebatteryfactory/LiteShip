@@ -71,7 +71,7 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     // (repoRoot, now: Date, globs, { noCache, withSymbolReferences, withSupplyChain })
     const [, now, , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(now).toBeInstanceOf(Date);
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: false });
     // The lean handler is NEVER touched on the IR path.
     expect(handlerMock).not.toHaveBeenCalled();
     // The receipt carries the SAME CheckPayload shape (ok/blocked/findingCount/findings).
@@ -84,7 +84,7 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--no-cache']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false, withSupplyChain: false });
+    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false, withSupplyChain: false, withMutate: false });
   });
 
   it('--ir --symbols threads the symbol-evidenced oracle opt-in through to runGauntletWithRepoIR', async () => {
@@ -92,7 +92,7 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--symbols']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true, withSupplyChain: false });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true, withSupplyChain: false, withMutate: false });
   });
 
   it('--ir --supply-chain threads the avionics supply-chain opt-in through to runGauntletWithRepoIR', async () => {
@@ -100,7 +100,15 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--supply-chain']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: true });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: true, withMutate: false });
+  });
+
+  it('--ir --mutate threads the avionics mutation opt-in through to runGauntletWithRepoIR', async () => {
+    runGauntletWithRepoIRMock.mockReturnValue(okResult);
+    const code = await captureStdout(() => run(['check', '--ir', '--mutate']));
+    expect(code.result).toBe(0);
+    const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false, withMutate: true });
   });
 
   it('a blocked IR run exits 1 and the receipt mirrors the engine verdict', async () => {
@@ -134,6 +142,15 @@ describe('czap check (lean, no --ir) — UNCHANGED, never builds the IR', () => 
     const { result } = await captureStdout(() => run(['check', '--supply-chain']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
+    expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
+  });
+
+  it('a bare --mutate (no --ir) stays on the lean path (no silent IR/mutation run)', async () => {
+    const { result } = await captureStdout(() => run(['check', '--mutate']));
+    expect(result).toBe(0);
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    // The mutation run mutates real source in place — a bare --mutate must NEVER
+    // silently trigger it off the lean path.
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
   });
 });

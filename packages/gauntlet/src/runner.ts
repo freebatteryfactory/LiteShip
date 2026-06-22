@@ -21,6 +21,7 @@
 import type { Gate } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
+import type { MutationFacts } from './mutation-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -119,6 +120,15 @@ export interface RunGauntletOnRepoOptions {
    * set — no facts computed, no SBOM cost, no `not-evidenced` noise.
    */
   readonly supplyChain?: SupplyChainFacts;
+  /**
+   * The INJECTED mutation facts (Slice C, the avionics tier — mutation-as-divergence)
+   * — OPTIONAL. A host (`@czap/audit`'s mutation engine + the CLI's per-mutant vitest
+   * runner) generates + evaluates the mutants, then threads the decided
+   * {@link MutationFacts} here, where they land on the {@link GateContext} for
+   * `mutationDivergenceGate` to fold. Omit them (the default `--ir` run) and the gate
+   * is simply not in the set — no mutants generated, no suite-runs, no cost.
+   */
+  readonly mutation?: MutationFacts;
 }
 
 /**
@@ -134,7 +144,7 @@ export function runGauntletOnRepo(
   opts: RunGauntletOnRepoOptions,
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
-  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain), runOpts);
+  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain, opts.mutation), runOpts);
 }
 
 /** The default scope: every package's TypeScript source. */
@@ -228,6 +238,10 @@ export function litelaunchGauntletWithIR(
       // in the set) advisories "not-evidenced"; but on the default run the gate is
       // not in the set at all, so there is no facts cost and no advisory noise.
       ...(cacheOpts.supplyChain !== undefined ? { supplyChain: cacheOpts.supplyChain } : {}),
+      // Inject the host-computed mutation facts (Slice C) when supplied —
+      // `mutationDivergenceGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
+      // the set at all on the default `--ir` run (mutation is opt-in: `--mutate`).
+      ...(cacheOpts.mutation !== undefined ? { mutation: cacheOpts.mutation } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -272,4 +286,12 @@ export interface LitelaunchCacheOptions {
    * `--supply-chain` run, alongside a `gates` override that includes the gate.
    */
   readonly supplyChain?: SupplyChainFacts;
+  /**
+   * OPTIONAL host-computed mutation facts (Slice C — mutation-as-divergence) threaded
+   * onto the {@link GateContext} for `mutationDivergenceGate` to fold. Supplied ONLY
+   * on the `czap check --ir --mutate` run, alongside a `gates` override that includes
+   * the gate. The cache key is namespaced by the mutation mode (a mutation-run
+   * verdict can never be served to a non-mutation run, or vice versa).
+   */
+  readonly mutation?: MutationFacts;
 }

@@ -35,18 +35,28 @@ import {
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
+import { buildMutationFacts } from '@czap/audit';
 import {
   litelaunchGauntletWithIR,
   supplyChainGate,
+  mutationDivergenceGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
+  type Gate,
   type GauntletResult,
   type LitelaunchCacheOptions,
+  type MutationFacts,
   type RepoIR,
   type SupplyChainFacts,
 } from '@czap/gauntlet';
-import { gauntletToolchainDigest, makeFsVerdictCache } from './gauntlet-verdict-cache.js';
+import {
+  gauntletToolchainDigest,
+  makeFsVerdictCache,
+  makeFsMutantVerdictCache,
+} from './gauntlet-verdict-cache.js';
+import { makeVitestMutationRunner } from './mutation-runner.js';
+import { l4SeamTargets, buildSeamCoverageMap } from './mutation-targets.js';
 import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
 
@@ -226,21 +236,149 @@ export function runGauntletWithRepoIR(
   const ir = buildRepoIRForRepo(repoRoot, withSymbols);
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
 
-  // The `--supply-chain` opt-in (Slice C, the avionics tier): compute the heavy
-  // SupplyChainFacts in the HOST (lockfile parse + SBOM + CI scan via the @czap/cli
-  // analyzer), inject them onto the context, AND compose `supplyChainGate` onto the
-  // IR-host gate set for THIS run. WITHOUT the opt-in, no facts are computed (no
-  // SBOM cost) and the gate is not in the set (no `not-evidenced` noise on `--ir`).
-  const supplyChainOpts: Pick<LitelaunchCacheOptions, 'gates' | 'supplyChain'> =
-    cacheOpts.withSupplyChain === true
-      ? { gates: [...LITESHIP_IR_GATES, supplyChainGate], supplyChain: analyzeRepoSupplyChain(repoRoot) }
-      : {};
+  // Each avionics opt-in composes its gate onto the IR-host set + injects its facts
+  // for THIS run only. WITHOUT an opt-in the gate is not in the set (no facts cost,
+  // no `not-evidenced`/mutation noise on the default `--ir` run). The gate set
+  // ACCUMULATES (both `--supply-chain` and `--mutate` may be on at once), starting
+  // from the lean IR-host set; the facts are folded onto the launch options.
+  const gateSet: Gate[] = [...LITESHIP_IR_GATES];
+  let supplyChainFacts: SupplyChainFacts | undefined;
+  let mutationFacts: MutationFacts | undefined;
 
-  const launchOpts: LitelaunchCacheOptions = { ...cache, ...supplyChainOpts };
+  // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
+  // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
+  if (cacheOpts.withSupplyChain === true) {
+    gateSet.push(supplyChainGate);
+    supplyChainFacts = analyzeRepoSupplyChain(repoRoot);
+  }
+
+  // The `--mutate` opt-in (Slice C, mutation-as-divergence): generate the deterministic
+  // mutants over the LIVE effective-L4 trust-spine seams, evaluate each via the
+  // per-mutant vitest runner (the in-place mutate + isolated subprocess + verified
+  // restore), and fold the verdicts into the injected facts; compose
+  // `mutationDivergenceGate`. The mutation cache mode is namespaced in the toolchain
+  // digest (see resolveVerdictCache) so a mutation verdict never serves a non-mutation
+  // run. This is HEAVY (a covering-test suite run per mutant) — the budget caps the
+  // per-file catalogue and the cannon is aimed at the trust spine only.
+  if (cacheOpts.withMutate === true) {
+    gateSet.push(mutationDivergenceGate);
+    mutationFacts = buildRepoMutationFacts(repoRoot, ir, cache.toolchainDigest);
+  }
+
+  const launchOpts: LitelaunchCacheOptions = {
+    ...cache,
+    // Only override the gate set when an opt-in actually added a gate (a bare `--ir`
+    // run leaves `gates` unset → the engine uses its own LITESHIP_IR_GATES default).
+    ...(gateSet.length > LITESHIP_IR_GATES.length ? { gates: gateSet } : {}),
+    ...(supplyChainFacts !== undefined ? { supplyChain: supplyChainFacts } : {}),
+    ...(mutationFacts !== undefined ? { mutation: mutationFacts } : {}),
+  };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
     ? litelaunchGauntletWithIR(repoRoot, now, ir, undefined, launchOpts)
     : litelaunchGauntletWithIR(repoRoot, now, ir, effectiveGlobs, launchOpts);
+}
+
+/**
+ * The per-mutant mutant-budget cap (the seeded deterministic prefix the engine
+ * samples). Bounds the suite-runs-per-seam for a tractable first live run — the
+ * cannon is aimed (the trust-spine seams) and budgeted (a sample per file), never
+ * sprayed. Owner-redlinable: raise it to widen the per-file catalogue as the score
+ * ratchet climbs.
+ */
+const MUTATION_BUDGET_PER_FILE = 12;
+
+/** The committed mutation-score baseline (the ratchet floor) — repo-relative. */
+const MUTATION_SCORE_BASELINE = 'benchmarks/mutation-score.json';
+
+/**
+ * Build the {@link MutationFacts} the avionics `mutationDivergenceGate` folds — the
+ * HOST's heavy job (Slice C, mutation-as-divergence):
+ *   1. Compute the LIVE effective-L4 seam targets from the IR's propagation fixpoint
+ *      ({@link l4SeamTargets} — the level is computed from the live IR, never a
+ *      hardcoded list beside the file).
+ *   2. Build the SOUND covering-tests map ({@link buildSeamCoverageMap} — the
+ *      over-approximating deep-import ∪ barrel-import closure; under-mapping yields
+ *      false survivors, so it errs toward running too many tests).
+ *   3. For each seam, generate the deterministic mutants (budget-capped), evaluate
+ *      each via the per-mutant vitest runner (in-place mutate → isolated subprocess →
+ *      VERIFIED restore), and fold the verdicts into the flat facts.
+ * The runner is constructed per-target-file (each instance mutates exactly its file).
+ * The committed score baseline arms the ratchet (a DROP is a regression finding); on
+ * the first run the baseline file may be absent → an empty baseline (no ratchet,
+ * just the survivor surfacing).
+ */
+function buildRepoMutationFacts(repoRoot: string, ir: RepoIR, toolchainDigest: string | undefined): MutationFacts {
+  const { targets, skippedNotL4, unreadable } = l4SeamTargets(ir, repoRoot);
+  // Surface a vanished/demoted seam LOUDLY (stderr) rather than silently dropping it —
+  // a candidate the live map no longer rates L4, or whose bytes vanished, is drift the
+  // owner must see (never a quiet hole in the trust-spine coverage).
+  for (const f of skippedNotL4) {
+    process.stderr.write(`czap check --mutate: seam candidate "${f}" is no longer effective-L4 (skipped)\n`);
+  }
+  for (const f of unreadable) {
+    process.stderr.write(`czap check --mutate: seam candidate "${f}" could not be read (skipped)\n`);
+  }
+
+  const { coverage } = buildSeamCoverageMap(repoRoot, targets);
+  const scoreBaseline = readMutationScoreBaseline(repoRoot);
+  const mutantCache = makeFsMutantVerdictCache(repoRoot);
+
+  const outcomes: MutationFacts['outcomes'][number][] = [];
+  for (const target of targets) {
+    // One runner per seam file — it backs up / mutates / restores exactly that file.
+    const runner = makeVitestMutationRunner(repoRoot, { targetFile: target.file });
+    const fileFacts = buildMutationFacts([target], {
+      runner,
+      coverage,
+      scoreBaseline,
+      budget: MUTATION_BUDGET_PER_FILE,
+      cache: mutantCache,
+      ...(toolchainDigest !== undefined ? { toolchainDigest } : {}),
+    });
+    for (const o of fileFacts.outcomes) outcomes.push(o);
+  }
+  // Re-sort the merged outcomes deterministically (same total order buildMutationFacts
+  // uses) so the facts are byte-stable regardless of the per-file iteration.
+  const sorted = [...outcomes].sort(
+    (a, b) =>
+      a.file.localeCompare(b.file) ||
+      a.line - b.line ||
+      a.column - b.column ||
+      a.operator.localeCompare(b.operator) ||
+      a.mutatedText.localeCompare(b.mutatedText),
+  );
+  return { outcomes: sorted, scoreBaseline };
+}
+
+/**
+ * Read the committed per-file mutation-score baseline (the ratchet floor) from
+ * {@link MUTATION_SCORE_BASELINE}. Absent file → an empty baseline (the first run
+ * has no floor — survivors are surfaced, no ratchet regression). A malformed or
+ * non-numeric entry is a tagged throw (a corrupt ratchet artifact must be visible,
+ * never silently treated as "no floor").
+ */
+function readMutationScoreBaseline(repoRoot: string): Readonly<Record<string, number>> {
+  const path = join(repoRoot, MUTATION_SCORE_BASELINE);
+  if (!existsSync(path)) return {};
+  const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw InvariantViolationError(
+      'repo-ir-gauntlet',
+      `the mutation-score baseline "${MUTATION_SCORE_BASELINE}" is not a JSON object of file→score — refusing to run with a corrupt ratchet artifact`,
+    );
+  }
+  const baseline: Record<string, number> = {};
+  for (const [file, score] of Object.entries(parsed)) {
+    if (typeof score !== 'number' || !Number.isFinite(score)) {
+      throw InvariantViolationError(
+        'repo-ir-gauntlet',
+        `the mutation-score baseline entry for "${file}" is not a finite number (got ${String(score)}) — a corrupt ratchet artifact`,
+      );
+    }
+    baseline[file] = score;
+  }
+  return baseline;
 }
 
 /** Project a discovered workspace package into the analyzer's view. */
@@ -310,6 +448,17 @@ export interface RepoIRGauntletCacheOptions {
    * the `--symbols` cache-soundness lesson.
    */
   readonly withSupplyChain?: boolean;
+  /**
+   * Compose the avionics-tier `mutationDivergenceGate` (L4) onto the run and inject
+   * the host-computed {@link MutationFacts} (`czap check --ir --mutate`). The host
+   * generates the deterministic mutants over the live effective-L4 seams, runs the
+   * per-mutant vitest runner, and folds the verdicts. It changes BOTH which gates run
+   * AND the injected facts, so the verdict cache is NAMESPACED by this mode (see
+   * {@link resolveVerdictCache}): a mutation-run verdict can never be served to a
+   * non-mutation run, or vice versa — exactly the `--symbols` / `--supply-chain`
+   * cache-soundness lesson. HEAVY (a covering-test suite run per mutant) — opt-in.
+   */
+  readonly withMutate?: boolean;
 }
 
 /**
@@ -333,6 +482,13 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // namespace the key — else a supply-chain verdict could be served to a
     // non-supply-chain run (the same stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withSupplyChain === true ? { scMode: 'supply-chain' } : {}),
+    // The mutation MODE changes BOTH the gate set (mutationDivergenceGate composed
+    // on) AND the injected facts WITHOUT changing any file's content digest, so it
+    // must namespace the key — else a mutation-run verdict could be served to a
+    // non-mutation run (the same stale-serve LIE the --symbols namespacing fixes).
+    // This `mtMode` also flows into the mutant-verdict cache key via the toolchain
+    // digest, so a mutant verdict minted under one mode never serves another.
+    ...(opts.withMutate === true ? { mtMode: 'mutate' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),

@@ -195,14 +195,22 @@ export async function run(argv: readonly string[]): Promise<number> {
       // opt-in (no SBOM cost + no not-evidenced noise on the default `--ir` run); the
       // cache key is namespaced by this mode (mirrors --symbols).
       const supplyChain = rest.includes('--supply-chain');
-      // `--no-cache` / `--symbols` / `--supply-chain` are only meaningful on the IR
-      // path (the lean path has no cache + no IR). A bare flag there is a no-op,
-      // never a silent wrong run.
+      // `--mutate` composes the avionics-tier mutationDivergenceGate (Slice C, L4) on
+      // + runs the per-mutant vitest runner over the live effective-L4 trust-spine
+      // seams (each mutant → an isolated subprocess; the score's survivors surface as
+      // findings). Only meaningful with `--ir`; opt-in (a covering-test suite run per
+      // mutant is HEAVY); the cache key is namespaced by this mode. It mutates real
+      // source files IN PLACE (verified-restored), so it must run in ISOLATION.
+      const mutate = rest.includes('--mutate');
+      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` are only meaningful
+      // on the IR path (the lean path has no cache + no IR). A bare flag there is a
+      // no-op, never a silent wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
         ...(symbols ? { symbols } : {}),
         ...(supplyChain ? { supplyChain } : {}),
+        ...(mutate ? { mutate } : {}),
       });
     }
     case 'check-invariants': {

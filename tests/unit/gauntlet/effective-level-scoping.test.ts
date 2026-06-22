@@ -60,6 +60,35 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     // PULLED → L4 (in map); TRUE_L4 → glob L4 (absent, fallback); PLAIN → glob L1 (dropped).
     expect([...scoped.files()].sort()).toEqual([PULLED_FILE, TRUE_L4_FILE].sort());
   });
+
+  it('passes the injected mutation facts THROUGH (file-scoping never drops them)', () => {
+    // REGRESSION GUARD: scoping narrows files(), NEVER the injected facts. An L4 gate
+    // is ALWAYS scoped, so if scopeContextByLevel dropped `mutation` the
+    // mutationDivergenceGate would throw `mutation-facts unavailable` on the real
+    // `czap check --ir --mutate` path even though the host injected the facts. The
+    // facts carry each mutant's own `file`; the gate scopes itself, so the context
+    // must hand the WHOLE facts set to every scope (exactly like `ir` / `supplyChain`).
+    const withFacts: GateContext = {
+      ...ctx,
+      mutation: {
+        outcomes: [
+          {
+            mutantId: 'blake3:fixture',
+            verdict: 'survived',
+            file: TRUE_L4_FILE,
+            line: 1,
+            column: 1,
+            operator: 'equality',
+            originalText: '===',
+            mutatedText: '!==',
+          },
+        ],
+        scoreBaseline: {},
+      },
+    };
+    const scoped = scopeContextByLevel(withFacts, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
+    expect(scoped.mutation).toBe(withFacts.mutation);
+  });
 });
 
 // ── runGates: a gate scoped by effective levels sees the pulled-in file ───────

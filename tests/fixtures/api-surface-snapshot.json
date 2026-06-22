@@ -1952,7 +1952,7 @@
         {
           "name": "nodeContext",
           "kind": "function",
-          "signature": "(4)"
+          "signature": "(5)"
         },
         {
           "name": "performanceContractsGate",

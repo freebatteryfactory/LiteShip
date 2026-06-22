@@ -228,6 +228,7 @@ export default tseslint.config(
       'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@czap/command dist)
       'packages/cli/src/commands/package-smoke.ts', // reason: execFileSync (sync packaging smoke test) — migrated from scripts/package-smoke.ts (CUT A5); the runPackageSmoke engine is CLI-only, spawns sync pnpm pack/install/tar/node with no code under test
       'packages/cli/src/commands/capsule-verify.ts', // reason: execSync('pnpm run capsule:compile' / 'pnpm exec vitest run tests/generated/') — migrated from scripts/capsule-verify.ts; the runCapsuleGate engine is CLI-only, spawns the freshness-confirm compile + the generated-suite run, no code under test
+      'packages/cli/src/lib/mutation-runner.ts', // reason: spawnSync('pnpm exec vitest run <coveringTests>') — the per-mutant mutation runner (czap check --ir --mutate). The @czap/audit evaluateMutant contract is SYNCHRONOUS (runner => {failed}), so the async spawn helper is inapplicable; the subprocess runs the COVERING TESTS under their own coverage (not the runner's code), and the clean process per mutant IS the determinism/isolation boundary
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)

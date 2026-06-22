@@ -63,6 +63,17 @@ export interface CheckOptions {
    * never be served to a non-supply-chain run).
    */
   readonly supplyChain?: boolean;
+  /**
+   * `--mutate`: also run the avionics-tier `mutationDivergenceGate` (Slice C, L4 —
+   * mutation-as-divergence). The host generates the deterministic mutants over the
+   * live effective-L4 trust-spine seams, runs each through the per-mutant vitest
+   * runner (in-place mutate → isolated subprocess → verified restore), folds the
+   * kill/survive verdicts, and surfaces every SURVIVOR as a finding. Only meaningful
+   * with `--ir`; opt-in (a covering-test suite run per mutant is HEAVY). The cache
+   * key is namespaced by this mode (a mutation verdict never serves a non-mutation
+   * run). MUST run in isolation — it mutates real source files in place.
+   */
+  readonly mutate?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -71,7 +82,7 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
 
   const payload =
     opts.ir === true
-      ? runIrPath(cwd, opts.noCache === true, opts.symbols === true, opts.supplyChain === true)
+      ? runIrPath(cwd, opts.noCache === true, opts.symbols === true, opts.supplyChain === true, opts.mutate === true)
       : await runLeanPath(cwd);
 
   const receipt: CheckReceipt = {
@@ -112,17 +123,27 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
  * and runs the triangulated cross-check + the B2 verdict cache via
  * `runGauntletWithRepoIR`. `noCache` (`--no-cache`) disarms the cache (a full,
  * uncached run); `supplyChain` (`--supply-chain`) composes the avionics-tier
- * supplyChainGate on + injects the host-computed facts. The wall-clock `now` is the
+ * supplyChainGate on + injects the host-computed facts; `mutate` (`--mutate`) composes
+ * the mutationDivergenceGate on + runs the per-mutant vitest runner over the live
+ * effective-L4 seams (HEAVY — must run in isolation, it mutates real source files in
+ * place). The wall-clock `now` is the
  * waiver-expiry calendar comparison
  * (TWO-CLOCK LAW: a wallClock boundary, NEVER systemClock). Returns the SAME
  * `CheckPayload` shape the lean path emits, so the receipt is consistent.
  */
-function runIrPath(cwd: string, noCache: boolean, symbols: boolean, supplyChain: boolean): CheckPayload {
+function runIrPath(
+  cwd: string,
+  noCache: boolean,
+  symbols: boolean,
+  supplyChain: boolean,
+  mutate: boolean,
+): CheckPayload {
   const now = new Date(wallClock.now());
   const result = runGauntletWithRepoIR(cwd, now, undefined, {
     noCache,
     withSymbolReferences: symbols,
     withSupplyChain: supplyChain,
+    withMutate: mutate,
   });
   const findings = result.findings;
   return {

@@ -162,6 +162,13 @@ export function scopeContextByLevel(
     // narrows them (they describe the lockfile / SBOM / capsules / workflows, not
     // src files), so they pass through unchanged. Omit the key when absent.
     ...(context.supplyChain !== undefined ? { supplyChain: context.supplyChain } : {}),
+    // Likewise the injected mutation facts (Slice C, mutation-as-divergence): the
+    // facts already carry each mutant's own `file` (the gate scopes itself to the
+    // file's propagated level via the IR), so file-scoping never narrows them — they
+    // pass through unchanged. Omit the key when absent. WITHOUT this pass-through the
+    // mutationDivergenceGate (an L4 gate, so always scoped) would see no facts and
+    // throw `mutation-facts unavailable` even though the host injected them.
+    ...(context.mutation !== undefined ? { mutation: context.mutation } : {}),
   };
 }
 
