@@ -50,6 +50,7 @@ It ships:
 - [RuntimeEndpointPolicy](interfaces/RuntimeEndpointPolicy.md)
 - [ScrollPosition](interfaces/ScrollPosition.md)
 - [SelectionState](interfaces/SelectionState.md)
+- [ShaderIntegrity](interfaces/ShaderIntegrity.md)
 - [SlotEntry](interfaces/SlotEntry.md)
 - [SlotEntryInput](interfaces/SlotEntryInput.md)
 - [SlotRegistryShape](interfaces/SlotRegistryShape.md)
@@ -62,6 +63,8 @@ It ships:
 
 - [ChunkParser](type-aliases/ChunkParser.md)
 - [HtmlPolicy](type-aliases/HtmlPolicy.md)
+- [IntegrityDecision](type-aliases/IntegrityDecision.md)
+- [IntegrityResult](type-aliases/IntegrityResult.md)
 - [IslandMode](type-aliases/IslandMode.md)
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
@@ -71,6 +74,7 @@ It ships:
 - [ResumptionStateInput](type-aliases/ResumptionStateInput.md)
 - [RuntimeEndpointKind](type-aliases/RuntimeEndpointKind.md)
 - [RuntimeUrlResolution](type-aliases/RuntimeUrlResolution.md)
+- [ShaderIntegrityMode](type-aliases/ShaderIntegrityMode.md)
 - [SlotPath](type-aliases/SlotPath.md)
 - [SlotPath](type-aliases/SlotPath-1.md)
 - [SSEMessage](type-aliases/SSEMessage.md)
@@ -79,6 +83,7 @@ It ships:
 
 ## Variables
 
+- [DEFAULT\_SHADER\_INTEGRITY\_MODE](variables/DEFAULT_SHADER_INTEGRITY_MODE.md)
 - [Hints](variables/Hints.md)
 - [LLMAdapter](variables/LLMAdapter.md)
 - [LLMChunkNormalization](variables/LLMChunkNormalization.md)
@@ -97,8 +102,12 @@ It ships:
 - [captureVideo](functions/captureVideo.md)
 - [createAudioProcessor](functions/createAudioProcessor.md)
 - [createHtmlFragment](functions/createHtmlFragment.md)
+- [decideShaderIntegrity](functions/decideShaderIntegrity.md)
+- [isExternalShaderSource](functions/isExternalShaderSource.md)
 - [isPrivateOrReservedIP](functions/isPrivateOrReservedIP.md)
+- [parseShaderIntegrity](functions/parseShaderIntegrity.md)
 - [renderToCanvas](functions/renderToCanvas.md)
 - [resolveHtmlString](functions/resolveHtmlString.md)
 - [resolveRuntimeUrl](functions/resolveRuntimeUrl.md)
 - [sanitizeHTML](functions/sanitizeHTML.md)
+- [verifyShaderIntegrity](functions/verifyShaderIntegrity.md)

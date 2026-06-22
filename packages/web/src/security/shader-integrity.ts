@@ -51,7 +51,7 @@ export interface ShaderIntegrity {
  *     shader was tampered with / the origin was compromised. Carries both digests
  *     so the caller can report precisely what diverged.
  *   • `'absent'` — no integrity hash was supplied. Whether this REFUSES depends on
- *     the policy ({@link shaderIntegrityRequired}); secure-by-default refuses an
+ *     the policy ({@link decideShaderIntegrity}); secure-by-default refuses an
  *     external fetch with no pin.
  */
 export type IntegrityResult =

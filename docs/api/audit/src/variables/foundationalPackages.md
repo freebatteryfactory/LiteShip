@@ -8,7 +8,7 @@
 
 > `const` **foundationalPackages**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:249](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L249)
+Defined in: [audit/src/policy.ts:264](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L264)
 
 Foundational packages every internal package may import WITHOUT an explicit
 `allowedInternalImports` entry — the runtime analogue of how `@czap/_spine`

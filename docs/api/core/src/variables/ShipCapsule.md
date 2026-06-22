@@ -8,11 +8,12 @@
 
 > `const` **ShipCapsule**: `object`
 
-Defined in: [core/src/ship-capsule.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L187)
+Defined in: [core/src/ship-capsule.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L216)
 
 Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
 input, `canonicalize` encodes it as canonical CBOR for transport / hashing,
-`decode` round-trips canonical bytes and rejects non-canonical encodings,
+`decode` round-trips canonical bytes and rejects non-canonical encodings AND
+unknown `schema_version`s (`unsupported_version`, fail-closed),
 `computeId` mints the fnv1a label over the canonicalized payload.
 
 ## Type Declaration

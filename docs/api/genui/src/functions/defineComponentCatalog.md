@@ -10,7 +10,7 @@
 
 Defined in: [genui/src/catalog.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/catalog.ts#L33)
 
-Register a host-owned component catalog. Mints ComponentCatalog.catalogHash
+Register a host-owned component catalog. Mints [ComponentCatalog.catalogHash](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 over canonical catalog bytes (version + component defs).
 
 ## Parameters

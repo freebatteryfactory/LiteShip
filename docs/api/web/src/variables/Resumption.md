@@ -199,7 +199,7 @@ The resumption state to persist; `timestamp` defaults to the clock's `now()`
 
 ##### clock?
 
-`Clock` = `wallClock`
+[`Clock`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) = `wallClock`
 
 Time source for the default timestamp; defaults to `wallClock`
                (epoch ms — the persisted timestamp is a real point in time, read

@@ -135,15 +135,34 @@ describe('LSP — Finding → Diagnostic projection (pure)', () => {
     expect(projectFinding(UNANCHORED_FINDING)).toBeNull();
   });
 
-  it('maps a repo-relative POSIX path to a file:// URI via pathToFileURL (canonical, percent-encoded)', () => {
+  it('maps a repo-relative POSIX path to a canonical, percent-encoded file:// URI — PLATFORM-DETERMINISTIC', () => {
     expect(fileToUri('packages/x/src/a.ts')).toBe('file:///packages/x/src/a.ts');
     expect(fileToUri('/abs/a.ts')).toBe('file:///abs/a.ts');
     expect(fileToUri('file:///already.ts')).toBe('file:///already.ts');
-    // pathToFileURL is the canonical constructor: it percent-encodes reserved
-    // characters per the URI grammar (a hand-rolled `file://` concat would emit an
-    // invalid URI here). Inputs are repo-relative POSIX — paths are normalized
-    // upstream (the audit layer), so there are no backslashes to convert here.
+    // The canonical file→URI form percent-encodes reserved characters per the
+    // URI path grammar (a hand-rolled `file://` concat would emit an invalid URI
+    // here). Inputs are repo-relative POSIX — paths are normalized upstream (the
+    // audit layer), so there are no backslashes to convert here.
     expect(fileToUri('packages/x/with space.ts')).toBe('file:///packages/x/with%20space.ts');
+    // A literal `%` round-trips to `%25` (strict encoding, not the lenient
+    // WHATWG pathname setter which would pass `%` through and emit an invalid URI).
+    expect(fileToUri('packages/x/100%done.ts')).toBe('file:///packages/x/100%25done.ts');
+
+    // WINDOWS-ROBUSTNESS (the determinism contract). `fileToUri` must NOT route
+    // through `pathToFileURL`, which on Windows interprets a `/`-leading path as
+    // drive-relative and injects the cwd drive (`file:///C:/packages/...`),
+    // breaking the "content-addressable, replayable" cross-machine determinism.
+    // The URI is workspace-rooted forward-slash on EVERY OS: no drive letter, no
+    // backslash, identical bytes on Windows and POSIX.
+    const uri = fileToUri('packages/x/src/a.ts');
+    expect(uri).toBe('file:///packages/x/src/a.ts');
+    expect(uri).not.toMatch(/file:\/\/\/[a-zA-Z]:/); // no drive-letter authority
+    expect(uri).not.toContain('\\'); // no backslash leaked
+    // The literal `%20`/`%25`/`%23` expectations above are themselves the
+    // canonical-encoding pin: they are byte-identical to node's POSIX
+    // `pathToFileURL` (verified in diagnostic.ts) yet hold on every OS because
+    // `fileToUri` no longer routes through the platform path resolver.
+    expect(fileToUri('packages/x/a#b.ts')).toBe('file:///packages/x/a%23b.ts');
   });
 
   it('groups diagnostics by URI deterministically, dropping unanchored findings', () => {

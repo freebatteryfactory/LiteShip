@@ -8,11 +8,12 @@
 
 > `const` **TokenBuffer**: `object`
 
-Defined in: [core/src/token-buffer.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token-buffer.ts#L150)
+Defined in: [core/src/token-buffer.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token-buffer.ts#L201)
 
-TokenBuffer — zero-alloc ring buffer that absorbs bursty LLM token arrival
-and hands tokens out at a smooth cadence. Reports stall via `isStalled`
-and rate via an internal EMA.
+TokenBuffer — ring buffer that absorbs bursty LLM token arrival and hands
+tokens out at a smooth cadence. The `push` + `drainInto` path is genuinely
+zero-allocation (measured, pinned); `drain` is the allocating convenience.
+Reports stall via `isStalled` and rate via an internal EMA.
 
 ## Type Declaration
 

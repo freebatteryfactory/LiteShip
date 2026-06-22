@@ -12,7 +12,7 @@ Defined in: [core/src/capsules/escalation-choose-rung.ts:198](https://github.com
 
 Declared policyGate capsule for the escalation chooser. Registered in the
 module-level catalog at import time; walked by the factory compiler. The
-generated traversal samples subjects from EscalationSubject, drives the
+generated traversal samples subjects from [EscalationSubject](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts), drives the
 REAL `decide` (which seals a real policy and calls `chooseRung`), and the
 invariants assert the minimal-downgrade / site-gate / verdict-shape laws over
 the REAL verdict.

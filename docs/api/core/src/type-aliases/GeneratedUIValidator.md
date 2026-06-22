@@ -34,7 +34,7 @@ a renderer because only `ok: true` mints the envelope.
 
 ### node
 
-`GeneratedUINode`
+[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### catalog
 

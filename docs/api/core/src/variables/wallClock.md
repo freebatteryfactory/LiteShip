@@ -8,7 +8,7 @@
 
 > `const` **wallClock**: [`Clock`](../interfaces/Clock.md)
 
-Defined in: [core/src/clock.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L77)
+Defined in: [core/src/clock.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L76)
 
 The sanctioned WALL-CLOCK read — epoch milliseconds, for TIMESTAMPS.
 

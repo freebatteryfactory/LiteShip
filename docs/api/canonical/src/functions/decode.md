@@ -14,7 +14,7 @@ Decode a canonical CBOR byte sequence produced by [CanonicalCbor.encode](../vari
 
 Strict: any deviation from the RFC 8949 §4.2.1 deterministic subset the
 encoder emits (non-shortest forms, float16/32, indefinite lengths,
-out-of-order map keys, trailing bytes) raises a typed ParseError
+out-of-order map keys, trailing bytes) raises a typed [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)
 (source `'cbor'`, `code` = the reason discriminant).
 
 ## Parameters
@@ -29,4 +29,4 @@ out-of-order map keys, trailing bytes) raises a typed ParseError
 
 ## Throws
 
-A `@czap/error` ParseError (`source` `'cbor'`).
+A `@czap/error` [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) (`source` `'cbor'`).

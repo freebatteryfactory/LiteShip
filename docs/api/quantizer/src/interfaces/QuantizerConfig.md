@@ -6,7 +6,7 @@
 
 # Interface: QuantizerConfig\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L208)
+Defined in: [quantizer/src/quantizer.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L216)
 
 Immutable, content-addressed quantizer definition.
 
@@ -31,7 +31,7 @@ fresh [LiveQuantizer](LiveQuantizer.md) within an Effect scope.
 
 > `readonly` **boundary**: `B`
 
-Defined in: [quantizer/src/quantizer.ts:210](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L210)
+Defined in: [quantizer/src/quantizer.ts:218](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L218)
 
 Boundary this config quantizes against.
 
@@ -41,7 +41,7 @@ Boundary this config quantizes against.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [quantizer/src/quantizer.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L214)
+Defined in: [quantizer/src/quantizer.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
 
 Content-addressed identity (FNV-1a of boundary id + outputs).
 
@@ -51,7 +51,7 @@ Content-addressed identity (FNV-1a of boundary id + outputs).
 
 > `readonly` **outputs**: `O`
 
-Defined in: [quantizer/src/quantizer.ts:212](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L212)
+Defined in: [quantizer/src/quantizer.ts:220](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L220)
 
 Per-target output tables keyed by state.
 
@@ -61,7 +61,7 @@ Per-target output tables keyed by state.
 
 > `readonly` `optional` **spring?**: [`SpringConfig`](SpringConfig.md)
 
-Defined in: [quantizer/src/quantizer.ts:218](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L218)
+Defined in: [quantizer/src/quantizer.ts:226](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L226)
 
 Spring config driving CSS easing injection.
 
@@ -71,7 +71,7 @@ Spring config driving CSS easing injection.
 
 > `readonly` `optional` **tier?**: `MotionTier`
 
-Defined in: [quantizer/src/quantizer.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L216)
+Defined in: [quantizer/src/quantizer.ts:224](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L224)
 
 Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFromOptions.md#tier) for the tier → targets table.
 
@@ -81,7 +81,7 @@ Motion tier gating active targets; see [QuantizerFromOptions.tier](QuantizerFrom
 
 > **create**(`runtime?`): `Effect`\<[`LiveQuantizer`](LiveQuantizer.md)\<`B`, `O`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
-Defined in: [quantizer/src/quantizer.ts:227](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L227)
+Defined in: [quantizer/src/quantizer.ts:235](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L235)
 
 Instantiate a reactive [LiveQuantizer](LiveQuantizer.md) scoped to an Effect fiber.
 

@@ -60,11 +60,11 @@ Sole boundary's outputs; undefined when multiple boundaries are configured.
 
 ### tiers
 
-> `readonly` **tiers**: `Readonly`\<`Record`\<`CapAxis`, `string`\>\>
+> `readonly` **tiers**: `Readonly`\<`Record`\<[`CapAxis`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md), `string`\>\>
 
 Defined in: [astro/src/middleware.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L39)
 
 Resolved capability tiers keyed by axis. Each field projects to the
 matching `data-czap-<axis>` attribute on `<html>` — the field name and the
-attribute name are the same CapAxis key (one source: `CAP_AXES`),
+attribute name are the same [CapAxis](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md) key (one source: `CAP_AXES`),
 so they can never disagree.

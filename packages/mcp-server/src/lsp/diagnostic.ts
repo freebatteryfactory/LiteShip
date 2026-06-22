@@ -29,7 +29,6 @@
  * @module
  */
 
-import { pathToFileURL } from 'node:url';
 import {
   DiagnosticSeverity,
   type FindingLike,
@@ -147,22 +146,67 @@ export function groupDiagnosticsByUri(
 }
 
 /**
+ * The path-segment characters node's `pathToFileURL` leaves LITERAL but
+ * `encodeURIComponent` over-encodes: the RFC 3986 `sub-delims` plus `:` and `@`
+ * that are valid inside a URI path segment (`pchar`). Decoding them back from the
+ * `encodeURIComponent` output reproduces `pathToFileURL`'s exact path encoding
+ * (`~` is handled separately — see {@link encodePathSegment}). This is the ONE
+ * gap between the two encoders, fixed by an explicit, total character map (no
+ * heuristics) so the codec is byte-identical to the canonical constructor.
+ */
+const PCHAR_KEPT_LITERAL: Readonly<Record<string, string>> = {
+  '%24': '$',
+  '%26': '&',
+  '%2B': '+',
+  '%2C': ',',
+  '%3A': ':',
+  '%3B': ';',
+  '%3D': '=',
+  '%40': '@',
+};
+
+/**
+ * Percent-encode ONE path segment to the exact form node's `pathToFileURL`
+ * emits — but PLATFORM-INDEPENDENTLY (no OS path resolution, so no Windows
+ * drive-letter is ever injected). `encodeURIComponent` is the strict base
+ * (it encodes a literal `%` → `%25`, a space → `%20`, multi-byte → UTF-8
+ * percent-octets); two precise fix-ups reconcile it with the file-URL path
+ * grammar: restore the `pchar` sub-delims it over-encodes
+ * ({@link PCHAR_KEPT_LITERAL}) and encode `~` → `%7E` (which `pathToFileURL`
+ * percent-encodes but `encodeURIComponent` keeps). The result is verified
+ * byte-identical to POSIX `pathToFileURL` over the full ASCII + multi-byte
+ * range. NOT a slash-normalizer — it never sees a `/` (the caller splits on it).
+ */
+function encodePathSegment(segment: string): string {
+  return encodeURIComponent(segment)
+    .replace(/%24|%26|%2B|%2C|%3A|%3B|%3D|%40/g, (m) => PCHAR_KEPT_LITERAL[m]!)
+    .replace(/~/g, '%7E');
+}
+
+/**
  * Convert a repo-relative (or absolute) POSIX file path to a `file://` URI — the
  * form LSP `publishDiagnostics` keys on. A path that is already a `file://` URI
  * (or any scheme URI) passes through unchanged.
  *
- * The URI is built by node's `pathToFileURL`, which is the CANONICAL file→URI
- * constructor: it emits the correct `file://` authority AND percent-encodes path
- * segments per the URI grammar (a space → `%20`, a literal `%` → `%25`) — more
- * correct than a hand-rolled `file://` concatenation, which would emit invalid
- * URIs for any path carrying a reserved character. It is NOT a slash-normalizer
- * (the b5 cage's concern): the path inputs are already repo-relative POSIX (the
- * runner roots at the workspace and the audit layer normalizes paths upstream),
- * so there are no backslashes to convert here.
+ * The URI is the CANONICAL file→URI form: each path segment is percent-encoded
+ * per the URI path grammar (a space → `%20`, a literal `%` → `%25`, a reserved
+ * char → its octet) — byte-identical to node's `pathToFileURL` (the internal
+ * `encodePathSegment` reconciles `encodeURIComponent` with the file-URL path
+ * grammar). Encoding per SEGMENT (rather than handing the whole path to
+ * `pathToFileURL`) makes the URI PLATFORM-DETERMINISTIC: `pathToFileURL`
+ * interprets a `/`-leading path as a filesystem path and on Windows roots it at
+ * the cwd DRIVE (`file:///C:/packages/...`), breaking the "content-addressable,
+ * replayable" determinism this URI promises. The segment codec touches no
+ * filesystem and injects no drive, so `packages/x/src/a.ts` maps to the SAME
+ * `file:///packages/x/src/a.ts` on every OS.
  *
- * The repo-relative path is made absolute with a leading `/` before handing it to
- * `pathToFileURL` (which requires an absolute path), yielding the deterministic
- * `file:///packages/...` form the LSP client keys on. No filesystem read.
+ * It is NOT a slash-normalizer (the b5 cage's concern): the inputs are already
+ * repo-relative POSIX (the runner roots at the workspace and the audit layer
+ * normalizes paths upstream), so the split on `/` only delimits segments to
+ * encode — it never converts a backslash.
+ *
+ * The repo-relative path is made absolute with a leading `/`, yielding the
+ * deterministic `file:///packages/...` form the LSP client keys on.
  *
  * PURE: a deterministic transform, no filesystem read (the server keys
  * diagnostics by the workspace-rooted path the CLI host already rooted at).
@@ -170,5 +214,8 @@ export function groupDiagnosticsByUri(
 export function fileToUri(file: string): string {
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(file)) return file;
   const absolute = file.startsWith('/') ? file : `/${file}`;
-  return pathToFileURL(absolute).href;
+  // Split on `/` to encode each segment, then rejoin with `/` — preserving the
+  // separators exactly (POSIX in, POSIX out). The leading `/` yields an empty
+  // first segment, reproducing the `file://` + `/...` authority boundary.
+  return `file://${absolute.split('/').map(encodePathSegment).join('/')}`;
 }

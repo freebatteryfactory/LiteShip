@@ -160,7 +160,7 @@ Defined in: [core/src/capsule.ts:201](https://github.com/heyoub/LiteShip/blob/ma
 
 Declared faults for `receiptedMutation` arms — failure modes the capsule
 promises are reachable. The harness drives each fault's
-FaultDecl.trigger through [CapsuleContract.mutate](CapsuleContract.md#mutate) and
+[FaultDecl.trigger](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts) through [CapsuleContract.mutate](CapsuleContract.md#mutate) and
 asserts it surfaces as declared. Requires `mutate`. Under the mandatory
 `mutate` requirement (see the kind-level rule below) every receipted
 mutation with a pure core declares at least one fault — a capsule with a

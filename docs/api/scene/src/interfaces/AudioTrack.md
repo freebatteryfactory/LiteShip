@@ -64,7 +64,7 @@ Defined in: [scene/src/contract.ts:70](https://github.com/heyoub/LiteShip/blob/m
 
 Stereo position, -1 (left) .. 1 (right).
 
-##### Default
+##### Default Value
 
 ```ts
 0
@@ -86,7 +86,7 @@ Linear gain multiplier — 1 is unity (asset plays at its authored
 level), 0 is silence. Mixers multiply this by the envelope-driven
 `_gain` factor each tick (see `systems/audio.ts`).
 
-##### Default
+##### Default Value
 
 ```ts
 1

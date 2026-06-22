@@ -8,4 +8,4 @@
 
 > `const` **surfacePolicy**: [`SurfacePolicyShape`](../interfaces/SurfacePolicyShape.md)
 
-Defined in: [audit/src/policy.ts:267](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L267)
+Defined in: [audit/src/policy.ts:282](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L282)

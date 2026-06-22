@@ -8,6 +8,6 @@
 
 > **NodeOp** = [`NodePatchOp`](../../../interfaces/NodePatchOp.md)
 
-Defined in: [core/src/graph-patch.ts:318](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L318)
+Defined in: [core/src/graph-patch.ts:361](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L361)
 
 Alias for [NodePatchOp](../../../interfaces/NodePatchOp.md).

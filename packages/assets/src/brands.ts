@@ -6,7 +6,7 @@
 
 import { ValidationError } from '@czap/error';
 
-/** Registered asset id — validated by {@link AssetRef} against the module registry. */
+/** Registered asset id — validated by {@link AssetRegistry} against the module registry. */
 export type AssetRefId = string & { readonly __brand: unique symbol };
 
 /** Type guard: `s` is a syntactically well-formed {@link AssetRefId} (non-empty, no whitespace). */
@@ -17,7 +17,7 @@ export const isAssetRefId = (s: string): s is AssetRefId => s.length > 0 && !/\s
  *
  * The id is a registry KEY (it indexes a `Map`) and is serialized into asset
  * references, so it must be a non-empty token with no whitespace. Registration
- * existence is enforced separately by {@link AssetRef}.
+ * existence is enforced separately by {@link AssetRegistry}.
  *
  * @throws {@link ValidationError} when `value` is empty or contains whitespace.
  */

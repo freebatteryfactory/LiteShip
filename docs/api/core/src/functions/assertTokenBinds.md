@@ -22,7 +22,7 @@ minted token cannot be paired with a different payload at apply time.
 
 It enforces, at runtime, the same three properties the type encodes:
  1. PROVENANCE — the token carries the module-private witness, so it was minted
-    by mintValidated (a runtime brand check that backs the type-level
+    by [mintValidated](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts) (a runtime brand check that backs the type-level
     guarantee against a structurally-shaped but un-minted impostor token).
  2. TARGET CONSISTENCY — `token.target === proposal.target` (no target/token
     divergence routing a payload through the wrong validator's authority).

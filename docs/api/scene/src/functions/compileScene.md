@@ -24,7 +24,7 @@ Every declared [SceneInvariant](../interfaces/SceneInvariant.md) is evaluated ag
 normalized contract before any compilation work happens. A check that
 returns `false` — or throws — counts as a violation. ALL violations
 are collected, then reported together in a single
-ValidationError (module `'compileScene'`) listing each
+[ValidationError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) (module `'compileScene'`) listing each
 violated invariant's name and message, so one compile run surfaces
 every problem instead of stopping at the first.
 

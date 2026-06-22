@@ -301,9 +301,11 @@ plan graph, ECS, capsule factory).
 ## Functions
 
 - [assertTokenBinds](functions/assertTokenBinds.md)
+- [canonicalAddressBytes](functions/canonicalAddressBytes.md)
 - [chooseRung](functions/chooseRung.md)
 - [compositeStateToRgba](functions/compositeStateToRgba.md)
 - [contentAddressOf](functions/contentAddressOf.md)
+- [decodeDocumentGraph](functions/decodeDocumentGraph.md)
 - [defineCapsule](functions/defineCapsule.md)
 - [defineConfig](functions/defineConfig.md)
 - [fixedClock](functions/fixedClock.md)

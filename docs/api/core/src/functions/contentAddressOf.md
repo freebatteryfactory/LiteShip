@@ -12,7 +12,7 @@ Defined in: [core/src/content-address.ts:63](https://github.com/heyoub/LiteShip/
 
 Mint a [ContentAddress](../variables/ContentAddress.md) (fnv1a over canonical CBOR) — the one identity
 kernel (CUT B1). The mint expression is written explicitly (not via
-canonicalAddressBytes) so the canonical-identity source guard can see
+[canonicalAddressBytes](canonicalAddressBytes.md)) so the canonical-identity source guard can see
 that identity is paired with `CanonicalCbor`, never cborg / JSON.
 
 ## Parameters

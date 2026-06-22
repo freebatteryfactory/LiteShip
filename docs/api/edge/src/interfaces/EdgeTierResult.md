@@ -18,11 +18,11 @@ code paths from `@czap/detect`.
 
 ### capTier
 
-> `readonly` **capTier**: `CapTier`
+> `readonly` **capTier**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [edge/src/edge-tier.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L33)
 
-Highest CapTier the device qualifies for.
+Highest [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
 
 ***
 

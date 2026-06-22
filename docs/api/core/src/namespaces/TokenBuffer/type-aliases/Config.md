@@ -8,6 +8,6 @@
 
 > **Config** = `TokenBufferConfig`
 
-Defined in: [core/src/token-buffer.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token-buffer.ts#L159)
+Defined in: [core/src/token-buffer.ts:210](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token-buffer.ts#L210)
 
 Configuration accepted by [TokenBuffer.make](../../../variables/TokenBuffer.md#make).

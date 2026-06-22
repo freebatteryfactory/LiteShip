@@ -17,7 +17,7 @@ Returns `false` when validation fails (target left unchanged unless `clear` alre
 
 ### node
 
-`GeneratedUINode`
+[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### options
 

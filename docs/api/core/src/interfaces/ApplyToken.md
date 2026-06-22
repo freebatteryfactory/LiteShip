@@ -9,7 +9,7 @@
 Defined in: [core/src/validated-output.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts#L52)
 
 A validation-minted, host-authorized apply token. Branded with a private
-witness so it is impossible to construct except inside mintValidated.
+witness so it is impossible to construct except inside [mintValidated](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts).
 Its value is the content address of the validated payload — so the token both
 (a) proves validation happened and (b) binds to the EXACT payload validated
 (a host cannot swap the payload after the token is minted without invalidating

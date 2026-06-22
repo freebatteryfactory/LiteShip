@@ -40,7 +40,7 @@ Extended capabilities (superset of `DeviceCapabilities`).
 
 Defined in: [detect/src/detect.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
 
-Monotone set of every CapTier at or below `capTier`.
+Monotone set of every [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
 
 #### Inherited from
 
@@ -50,11 +50,11 @@ Monotone set of every CapTier at or below `capTier`.
 
 ### capTier
 
-> `readonly` **capTier**: `CapTier`
+> `readonly` **capTier**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [detect/src/detect.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
 
-Highest CapTier the device qualifies for.
+Highest [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
 
 #### Inherited from
 

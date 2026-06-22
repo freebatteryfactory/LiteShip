@@ -6,7 +6,7 @@
 
 # Function: capTierFromCapabilities()
 
-> **capTierFromCapabilities**(`caps`): `CapTier`
+> **capTierFromCapabilities**(`caps`): [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [detect/src/tiers.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L35)
 
@@ -25,4 +25,4 @@ from a `detect()` sweep (capsule/edge consumers).
 
 ## Returns
 
-`CapTier`
+[`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)

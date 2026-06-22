@@ -26,7 +26,7 @@ Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
 ### detectedCapTier?
 
-> `readonly` `optional` **detectedCapTier?**: `CapTier`
+> `readonly` `optional` **detectedCapTier?**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [astro/src/quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 

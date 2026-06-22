@@ -6,11 +6,11 @@
 
 # Function: headProbeCapTier()
 
-> **headProbeCapTier**(`caps`): `CapTier`
+> **headProbeCapTier**(`caps`): [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [detect/src/head-probe.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L54)
 
-Resolve the CapTier for a device — the SINGLE source of truth for
+Resolve the [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) for a device — the SINGLE source of truth for
 the GPU/cores/memory/reduced-motion → cap-level ladder.
 
 `capTierFromCapabilities` (`tiers.ts`) delegates here for the runtime sweep, and
@@ -28,4 +28,4 @@ closures) so its `.toString()` is valid standalone browser script.
 
 ## Returns
 
-`CapTier`
+[`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)

@@ -16,7 +16,7 @@ Stable identity for a validated tree under a catalog — cache/replay/tests.
 
 ### node
 
-`GeneratedUINode`
+[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### catalog
 

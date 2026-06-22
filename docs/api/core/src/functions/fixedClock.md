@@ -8,7 +8,7 @@
 
 > **fixedClock**(`ms`): [`Clock`](../interfaces/Clock.md)
 
-Defined in: [core/src/clock.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L87)
+Defined in: [core/src/clock.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L86)
 
 A frozen clock that always returns `ms` — for deterministic tests and replay.
 

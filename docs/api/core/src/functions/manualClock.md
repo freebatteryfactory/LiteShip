@@ -8,7 +8,7 @@
 
 > **manualClock**(`startMs?`): [`ManualClock`](../interfaces/ManualClock.md)
 
-Defined in: [core/src/clock.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L102)
+Defined in: [core/src/clock.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/clock.ts#L101)
 
 A manually-advanced clock — the caller drives time, so elapsed-time logic
 (rate estimation, throttling, velocity history) becomes a deterministic

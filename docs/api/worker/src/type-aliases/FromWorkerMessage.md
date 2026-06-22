@@ -6,7 +6,7 @@
 
 # Type Alias: FromWorkerMessage
 
-> **FromWorkerMessage** = `ReadyMessage` \| `StateMessage` \| `ResolvedStateAckMessage` \| `FrameMessage` \| `RenderCompleteMessage` \| `ErrorMessage` \| `MetricsMessage`
+> **FromWorkerMessage** = `ReadyMessage` \| `StateMessage` \| `ResolvedStateAckMessage` \| `FrameMessage` \| `RenderCompleteMessage` \| `ErrorMessage` \| [`MetricsMessage`](https://github.com/heyoub/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md)
 
 Defined in: [worker/src/messages.ts:328](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L328)
 
