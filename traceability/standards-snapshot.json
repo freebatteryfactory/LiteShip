@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:6cad10d3",
+  "address": "fnv1a:78662358",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -530,6 +530,12 @@
     },
     {
       "_tag": "invariant",
+      "id": "INV-SHADER-CONTENT-INTEGRITY",
+      "level": "L4",
+      "proofKind": "proof"
+    },
+    {
+      "_tag": "invariant",
       "id": "INV-SUPPLY-CHAIN-HERMETIC",
       "level": "L4",
       "proofKind": "proof"
@@ -580,12 +586,6 @@
       "_tag": "waiver",
       "key": "gauntlet/no-nondeterminism|packages/core/src/rng.ts|39",
       "ruleId": "gauntlet/no-nondeterminism",
-      "expiry": "2027-06-20"
-    },
-    {
-      "_tag": "waiver",
-      "key": "gauntlet/no-silent-catch|packages/astro/src/runtime/wgpu.ts|287",
-      "ruleId": "gauntlet/no-silent-catch",
       "expiry": "2027-06-20"
     },
     {

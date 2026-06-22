@@ -1,4 +1,11 @@
 import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@czap/core';
+import {
+  parseShaderIntegrity,
+  verifyShaderIntegrity,
+  isExternalShaderSource,
+  decideShaderIntegrity,
+  DEFAULT_SHADER_INTEGRITY_MODE,
+} from '@czap/web';
 import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
@@ -191,6 +198,13 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     },
     readRuntimeEndpointPolicy(),
   );
+  // The author-pinned content integrity hash (SRI `sha256-<base64>`), parsed
+  // alongside the URL. The URL guard above decides WHICH origin may serve the
+  // shader; this pin verifies WHAT BYTES come back — so a compromised same-origin
+  // server (or a poisoned CDN cache) cannot slip a tampered shader past the URL
+  // guard into the GPU. `null` = no pin (the secure-by-default policy refuses an
+  // external fetch with no pin; an inline shader needs none).
+  const shaderIntegrity = parseShaderIntegrity(el.getAttribute('data-czap-shader-integrity'));
 
   // Force escape hatch: `client:gpu={{ force: true }}` or a `data-czap-gpu-force`
   // attr bypasses the perf-tier gate so headless/CI (SwiftShader → gpuTier 0,
@@ -266,7 +280,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       // Pass `el` (the satellite) so the runtime subscribes to its
       // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
       // live on every crossing.
-      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations);
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations, shaderIntegrity);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
@@ -335,7 +349,8 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   async function initShader(): Promise<void> {
     let fragSource: string;
 
-    if (shaderSrc && (shaderSrc.startsWith('/') || shaderSrc.startsWith('http'))) {
+    if (shaderSrc && isExternalShaderSource(shaderSrc)) {
+      let fetchedSource: string;
       try {
         const response = await fetch(shaderSrc);
         if (!response.ok) {
@@ -347,7 +362,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
           });
           return;
         }
-        fragSource = await response.text();
+        fetchedSource = await response.text();
       } catch (err) {
         Diagnostics.warn({
           source: 'czap/astro.gpu',
@@ -357,6 +372,47 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         });
         return;
       }
+
+      // CONTENT INTEGRITY (defense-in-depth): the URL guard already vetted the
+      // ORIGIN; now verify the fetched BYTES against the author-pinned SRI hash
+      // BEFORE they reach `gl.shaderSource`. The compiled `fragSource` is the
+      // VERIFIED content this returns — a value that reaches the GPU has provably
+      // passed this check (the taint-breaking content sanitizer on the data path).
+      // On a mismatch (a tampered / compromised shader) or a missing pin under the
+      // secure-by-default policy, REFUSE: log a security diagnostic and return
+      // before any compile. Never compile unverified external bytes.
+      const verification = verifyShaderIntegrity(fetchedSource, shaderIntegrity);
+      // The secure-by-default decision: a `mismatch` (tampered shader) ALWAYS
+      // refuses; an `absent` pin on an external fetch refuses under
+      // `required-for-external` (the runtime's fixed, secure-by-default mode).
+      // Only a `verified` result proceeds — so the value compiled below has
+      // provably passed the integrity sanitizer.
+      if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
+        if (verification._tag === 'mismatch') {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'shader-integrity-mismatch',
+            message:
+              `Shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
+              `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
+              `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
+          });
+        } else {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'shader-integrity-absent',
+            message:
+              `External shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
+              `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
+              `Fix: add a data-czap-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
+          });
+        }
+        return;
+      }
+      // VERIFIED — compile the verified content (the value that passed the
+      // integrity sanitizer; the taint-clean shader bytes reach the GPU).
+      if (verification._tag !== 'verified') return;
+      fragSource = verification.content;
     } else if (shaderSrc) {
       fragSource = shaderSrc;
     } else {

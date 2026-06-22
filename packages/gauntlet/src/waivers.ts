@@ -85,18 +85,12 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   // finding the run surfaces. (The gauntlet's own scripts/* teardown catches are a
   // scripts-scoped concern, not part of this packages/*/src registry — a waiver for
   // an unscanned file is itself stale weight the mechanism would flag.)
-  {
-    ruleId: 'gauntlet/no-silent-catch',
-    file: 'packages/astro/src/runtime/wgpu.ts',
-    line: 287,
-    owner: 'heyoub',
-    reason:
-      'WGSL shader fetch with graceful fallback. The DIAGNOSTIC IS EMITTED upstream: fetchShaderSource itself calls Diagnostics.warn on both !response.ok and a thrown fetch (codes wgsl-fetch-failed / wgsl-fetch-threw). The catch here keeps the built-in fallback shader — observable failure, non-corrupting fallback. Meets the "emit diagnostics" bar exactly.',
-    expires: BOUNDARY_REVIEW,
-    blastRadius:
-      'If the upstream warn is ever removed, a fetch failure would degrade to the fallback shader silently. Pin: the waiver reason names the upstream Diagnostics.warn codes.',
-    debtScore: 1,
-  },
+  // (No waiver for packages/astro/src/runtime/wgpu.ts: the WGSL fetch-fallback
+  // catch was DISCRIMINATED when the shader content-integrity feature landed — it
+  // now binds the caught network error and emits its own `wgsl-fetch-fallback-builtin`
+  // warnOnce before keeping the built-in shader, so the gate no longer flags it. A
+  // waiver for a site that is no longer silent would be STALE weight the mechanism
+  // flags — discriminating the catch is the cure, not a renewed suppression.)
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/web/src/stream/resumption-pure.ts',

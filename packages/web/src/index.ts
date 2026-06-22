@@ -58,6 +58,19 @@ export { Hints } from './morph/hints.js';
 export { createHtmlFragment, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
 export { isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
 export type { RuntimeUrlResolution } from './security/runtime-url.js';
+export {
+  parseShaderIntegrity,
+  verifyShaderIntegrity,
+  isExternalShaderSource,
+  decideShaderIntegrity,
+  DEFAULT_SHADER_INTEGRITY_MODE,
+} from './security/shader-integrity.js';
+export type {
+  ShaderIntegrity,
+  IntegrityResult,
+  ShaderIntegrityMode,
+  IntegrityDecision,
+} from './security/shader-integrity.js';
 
 // Slot
 export { SlotRegistry } from './slot/registry.js';

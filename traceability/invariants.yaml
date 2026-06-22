@@ -127,6 +127,12 @@ invariants:
     level: L3
     category: determinism
 
+  # ── Security — defense-in-depth content guards on the untrusted seams ───────
+  - id: INV-SHADER-CONTENT-INTEGRITY
+    law: "A fetched (external) GPU shader's BYTES are verified against an author-pinned SRI sha256 hash BEFORE they reach a compile sink (gl.shaderSource / device.createShaderModule): a matching hash compiles, a tampered byte is REFUSED (mismatch), and an external fetch with NO pin is REFUSED (secure-by-default). The verifier (verifyShaderIntegrity) sits ON the fetch→compile data path, so the taint oracle classifies the shader-content flows as genuinely SANITIZED."
+    level: L4
+    category: security
+
   # ── Meta — the coverage rail that keeps the spine from rotting ──────────────
   - id: INV-CRDT-LAWS-PINNED
     law: "The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth)."

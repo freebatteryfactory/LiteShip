@@ -41,6 +41,10 @@
  *   • `resolveRuntimeUrl` / `allowRuntimeEndpointUrl` — the runtime-URL SSRF guard
  *     (origin / private-IP / protocol allowlist) — so a URL/shader-src that crosses
  *     it is sanitized before the fetch.
+ *   • `verifyShaderIntegrity` — the shader CONTENT-integrity guard (SRI sha256 of
+ *     the fetched shader bytes vs the author-pinned hash) — the CONTENT sibling of
+ *     the URL guard. The runtime compiles the value it returns, so the fetched
+ *     bytes that reach `gl.shaderSource` / `createShaderModule` are verified.
  *   • `sanitizeElementTree` / `createHtmlFragment` / `resolveHtmlString` — the HTML
  *     trust policy (strip dangerous tags / attributes) — so HTML that crosses it is
  *     sanitized before an innerHTML write.
@@ -114,6 +118,14 @@ const LITESHIP_TAINT_SANITIZERS: readonly string[] = [
   // The runtime-URL SSRF guard (origin / private-IP / protocol allowlist).
   'resolveRuntimeUrl',
   'allowRuntimeEndpointUrl',
+  // The shader CONTENT-integrity guard (SRI sha256 of the fetched shader bytes vs
+  // the author-pinned hash, BEFORE `gl.shaderSource` / `createShaderModule`). The
+  // CONTENT sibling of the URL guard above: `resolveRuntimeUrl` sanitizes the URL
+  // (the ORIGIN); THIS sanitizes the fetched BYTES (the CONTENT). The GLSL/WGSL
+  // runtimes compile the value this returns (`verification.content`), so a shader
+  // reaching the GPU has provably been verified — the fetch→verify→compile flow is
+  // genuinely SANITIZED, not softened.
+  'verifyShaderIntegrity',
   // The HTML trust policy (strip dangerous tags / attributes).
   'sanitizeElementTree',
   'createHtmlFragment',

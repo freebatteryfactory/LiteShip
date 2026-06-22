@@ -100,6 +100,13 @@ describe('gpu reinit-race (F-3)', () => {
 
     const canvas = document.createElement('canvas');
     canvas.setAttribute('data-czap-shader-src', '/shader.frag');
+    // Secure-by-default: an external shader fetch must carry a valid integrity pin
+    // or the runtime REFUSES to compile (no program → no teardown to observe). This
+    // test's intent is the reinit TEARDOWN RACE, not integrity, so pin the exact
+    // mock content the fetch resolves with ('void main(){}') — `sha256-<base64>` via
+    // the same kernel the verifier uses — so the fetch+verify path proceeds to the
+    // race it actually exercises (the orphaned program tearing ITSELF down).
+    canvas.setAttribute('data-czap-shader-integrity', 'sha256-SiIwsNXzaDxxGGj/iArP98JuZQA2Kum5Ll+4iDGgqDs=');
     document.body.appendChild(canvas);
 
     const gpuReady = vi.fn();

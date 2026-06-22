@@ -109,6 +109,16 @@ traces:
     tests:
       - "tests/property/token-buffer-zero-alloc.test.ts::the allocation gate reports the token-buffer hot path at ≈ 0 live bytes/op (within budget)"
 
+  # ── Security (shader content integrity — defense-in-depth content guard) ────
+  - id: INV-SHADER-CONTENT-INTEGRITY
+    tests:
+      - "tests/unit/web/shader-integrity.test.ts::VERIFIES content whose bytes match the author-pinned hash"
+      - "tests/unit/web/shader-integrity.test.ts::reports a MISMATCH when a single byte is tampered"
+      - "tests/unit/web/shader-integrity.test.ts::an absent pin REFUSES under the secure default but is allowed under lenient"
+      - "tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched shader is REFUSED — security diagnostic fires, gl.shaderSource never sees the body"
+      - "tests/unit/astro/shader-integrity-integration.test.ts::a TAMPERED fetched WGSL shader is REFUSED — no createShaderModule, security diagnostic fires"
+      - "tests/integration/cli/shader-taint-sanitized-live.test.ts::every fetch→shader-compile-sink flow is broken by verifyShaderIntegrity on the path"
+
   # ── Meta (crdt-laws coverage rail) — tests/property/crdt-laws-gate.test.ts ──
   - id: INV-CRDT-LAWS-PINNED
     tests:
