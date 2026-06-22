@@ -31,6 +31,14 @@ import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
 
 /**
+ * The default CONFIRMER-CORPUS globs unioned into {@link GateContext.allFiles} — the
+ * governed test tree a claim-vs-reality gate reads as EVIDENCE (a determinism / round-trip
+ * test that confirms a claim). Kept OUT of the judged `files()` scope, so a judging gate is
+ * never widened to scan tests; unioned only into the unscoped {@link GateContext.allFiles}.
+ */
+const CONFIRMER_CORPUS_GLOBS: readonly string[] = ['tests/**/*.ts'];
+
+/**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
  * files matched by `globs`.
  *
@@ -123,9 +131,31 @@ export function nodeContext(
   });
   const files = [...matched].sort();
 
+  // The CONFIRMER-CORPUS superset for `allFiles()`: the JUDGED `files` UNIONED with the
+  // governed test corpus ({@link CONFIRMER_CORPUS_GLOBS}). A claim-vs-reality gate reads
+  // `allFiles()` as EVIDENCE (a determinism / round-trip test that confirms a claim), so
+  // the corpus must contain the test tree EVEN WHEN the judged `globs` are
+  // published-source-only — that is the fix for the claim-property honesty bug (an empty
+  // corpus made every claim read unconfirmed). Crucially the test files are in
+  // `allFiles()` ONLY, NEVER in `files()`, so no JUDGING gate (no-placeholder,
+  // traceability) is widened to scan tests. Globbed once, eagerly, sorted —
+  // deterministic. When the judged `globs` ALREADY cover the corpus, the union is
+  // idempotent (deduped), so `allFiles()` === `files()`.
+  const allMatched = fg.sync([...globs, ...CONFIRMER_CORPUS_GLOBS], {
+    cwd: repoRoot,
+    ignore: ['**/node_modules/**', '**/dist/**'],
+    dot: false,
+  });
+  const allFilesList = [...new Set(allMatched)].sort();
+
   return {
     repoRoot,
     files: (): readonly string[] => files,
+    // The UNSCOPED confirmer-evidence corpus: the judged files PLUS the governed test
+    // tree. Level-scoping (scopeContextByLevel) narrows `files()` but preserves this, so
+    // a confirmer-reading gate sees the full corpus as evidence in production exactly as
+    // in its self-test.
+    allFiles: (): readonly string[] => allFilesList,
     readFile: (relativePath: string): string | undefined => {
       try {
         return readFileSync(resolve(repoRoot, relativePath), 'utf8');

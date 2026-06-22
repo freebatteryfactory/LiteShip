@@ -149,6 +149,12 @@ export function scopeContextByLevel(
     readFile: context.readFile,
     files: (): readonly string[] =>
       context.files().filter((f) => atLeast(effectiveLevelOf(f, map, effectiveLevels), level)),
+    // The UNSCOPED corpus passes through verbatim — scoping narrows the JUDGED surface
+    // (`files()`), NEVER the confirmer EVIDENCE. A confirmer-reading gate (the
+    // claim-vs-reality family) reads `allFiles()` for its test corpus, so its evidence
+    // survives level-scoping exactly as `readFile` does. Fall back to the scoped (well,
+    // pre-scope) `files()` when the underlying context predates this accessor.
+    allFiles: (): readonly string[] => (context.allFiles !== undefined ? context.allFiles() : context.files()),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.
@@ -402,6 +408,10 @@ export function memoryContext(files: Readonly<Record<string, string>>, repoRoot 
     repoRoot,
     readFile: (relativePath: string): string | undefined => map.get(relativePath),
     files: (): readonly string[] => [...map.keys()],
+    // The UNSCOPED corpus — identical to `files()` here (no scoping is applied to a
+    // memory context). A confirmer-reading gate's self-proof fixtures thus expose the
+    // full corpus via `allFiles()`, matching the real nodeContext.
+    allFiles: (): readonly string[] => [...map.keys()],
   };
 }
 

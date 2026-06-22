@@ -264,7 +264,19 @@ export function runGauntletOnRepo(
   return runGates(gates, context, runOpts);
 }
 
-/** The default scope: every package's TypeScript source. */
+/**
+ * The default JUDGED scope: every package's TypeScript source. This is the surface the
+ * gates FLAG findings on — narrow on purpose (a gate must not red a finding outside the
+ * published, downstream-installable tree).
+ *
+ * The CONFIRMER EVIDENCE a claim-vs-reality gate reads (the test corpus a determinism /
+ * round-trip test lives in) is NOT judged — it is read through the context's unscoped
+ * `allFiles()` (see {@link nodeContext}'s `confirmerGlobs`), so it never enters this
+ * judged scope and never makes another gate (no-placeholder, traceability) fire on a
+ * test file. Keeping the judged scope at published source while the confirmer corpus
+ * reads the test tree is the precise fix for the claim-property honesty bug WITHOUT the
+ * collateral of broadening every gate's judged surface.
+ */
 export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.ts'];
 
 /**

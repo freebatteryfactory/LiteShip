@@ -44,6 +44,24 @@ export interface GateContext {
   /** Repo-relative paths the gate may consider (already filtered to its scope). */
   files(): readonly string[];
   /**
+   * The UNSCOPED repo-relative file list — every path the context globs, BEFORE
+   * level-scoping narrows {@link files} to a gate's band. OPTIONAL (a context that
+   * predates this accessor omits it; a reader falls back to {@link files}).
+   *
+   * Why this exists: {@link files} is level-SCOPED (a gate at L3 only sees files at
+   * L3+). That is correct for the JUDGED surface — a gate should only flag findings in
+   * its band. But a CONFIRMER-reading gate (the claim-vs-reality family) needs the
+   * test corpus as EVIDENCE, and the test corpus sits BELOW the gate's level (tests are
+   * not L3 source). Scoping the evidence away makes every claim read as unconfirmed — a
+   * false finding born of scope (the honesty bug that made the claim-property gate flag
+   * 1000+ untested claims in production while its own test, globbing the full corpus,
+   * stayed green). `allFiles` is the unscoped evidence corpus, preserved verbatim
+   * through {@link scopeContextByLevel} exactly as {@link readFile} is — so a confirmer
+   * gate reads the SAME corpus in production as in its self-test. The JUDGED surface is
+   * still `files()` (scoped); only the confirmer EVIDENCE reads `allFiles()`.
+   */
+  allFiles?(): readonly string[];
+  /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
    * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
    * a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never
