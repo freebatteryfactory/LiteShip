@@ -12,13 +12,15 @@
  *   2. WRITES the mutated source to the file IN PLACE (the splice
  *      {@link evaluateMutant} already computed).
  *   3. Runs ONLY the `coveringTests` via a vitest SUBPROCESS (`vitest run <files>
- *      --no-coverage --reporter=dot`, NO watch). A clean process per mutant is the
+ *      --no-coverage --reporter=json`, NO watch). A clean process per mutant is the
  *      ISOLATION boundary: no cross-mutant state leak, no module-cache carry-over —
  *      deterministic by construction. The mutant currently on disk is the only
  *      variable.
- *   4. Reads pass/fail from the EXIT CODE: `0` = every covering test passed (the
- *      mutant SURVIVED → `failed: false`); non-zero = a covering test failed (the
- *      mutant was KILLED → `failed: true`).
+ *   4. Reads the verdict from vitest's CONFIRMED structured report (not a bare exit
+ *      code): ≥1 test must have ACTUALLY EXECUTED, then `numFailedTests > 0` = a
+ *      covering test failed (the mutant was KILLED → `failed: true`); all passed = the
+ *      mutant SURVIVED → `failed: false`. The exit code is a cross-check, never the
+ *      sole signal (see ERROR DISCRIMINATION).
  *   5. ALWAYS restores the original bytes in a `finally`, then VERIFIES the restore
  *      (re-reads and byte-compares). A crash, a kill, a throw — NONE may leave a
  *      mutated source on disk. This is the safety keystone: the runner mutates REAL
@@ -33,13 +35,19 @@
  * cannot share the file at once); this runner is the per-mutant primitive, never
  * invoked concurrently.
  *
- * ERROR DISCRIMINATION (the anti-lie keystone). A vitest exit code is `0` (pass)
- * or `1` (test failures). Any OTHER outcome — the binary could not be spawned
- * (`spawnSync` error), a signal kill, or a non-`{0,1}` exit (a config/parse/infra
- * fault) — is NOT a "killed" verdict: reporting infra failure as a kill would be a
- * LIE (it would inflate the mutation score with mutants nothing actually caught).
- * Such cases throw a tagged {@link IoError} so the run aborts loudly rather than
- * minting a false verdict. The restore still runs first (the `finally`).
+ * ERROR DISCRIMINATION (the anti-lie keystone — the CACError scar made permanent).
+ * The verdict is keyed on vitest's CONFIRMED structured report, NEVER a bare exit
+ * code. The scar: a runner that read "exit 1 = killed" misread a removed-CLI-flag
+ * rejection (CAC exits 1) as 56 kills — a fabricated `1.0` score from a run that
+ * executed zero tests. Keying on the exit code cannot tell a test-assertion failure
+ * from a config/parse/load fault that also exits 1, nor a real survivor from an
+ * exit-0 run that executed NO tests. So a verdict is minted ONLY when: the subprocess
+ * spawned and was not signal-killed; a `--reporter=json` report PARSES; `numTotalTests
+ * > 0` (the mutant was actually exercised); and the exit code AGREES with the report.
+ * Every other outcome — spawn error, signal/timeout kill, no parseable report, a
+ * 0-test run, or an exit/report disagreement — throws a tagged {@link IoError} so the
+ * run aborts loudly rather than laundering a false verdict. The restore still runs
+ * first (the `finally`).
  *
  * @module
  */
@@ -65,6 +73,12 @@ export interface MutationSubprocessResult {
   readonly signal: NodeJS.Signals | null;
   /** A spawn-level error (binary not found, EACCES) — an infra fault when present. */
   readonly error?: Error | undefined;
+  /**
+   * Captured stdout — carries vitest's `--reporter=json` structured report (the
+   * VERDICT source of truth: confirmed test counts, not a bare exit code). A run
+   * that produced no parseable report never actually executed tests → infra fault.
+   */
+  readonly stdout: string | null;
   /** Captured stderr (for the infra-fault message tail). */
   readonly stderr: string | null;
 }
@@ -158,11 +172,12 @@ export function makeVitestMutationRunner(repoRoot: string, options: VitestMutati
       //    boundary). `shell: false` (argv array), fixed cwd, single-process pool
       //    (`--pool=forks --no-file-parallelism`) so a mutant run never races itself —
       //    deterministic by construction.
-      const exit = runCoveringTests(spawn, repoRoot, config, coveringTests, timeoutMs, options.targetFile);
-
-      // 4. Read the verdict from the exit code. 0 → all passed → SURVIVED; 1 → a
-      //    covering test failed → KILLED. Any other outcome already threw.
-      return { failed: exit === VITEST_TEST_FAILURE };
+      // 4. The verdict is keyed on the CONFIRMED structured report (≥1 test executed,
+      //    numFailedTests > 0 → KILLED), cross-checked against the exit code. A run
+      //    that executed 0 tests, produced no parseable report, or whose exit code
+      //    disagrees with its report already threw an infra fault — never a false
+      //    verdict. Any other outcome already threw.
+      return runCoveringTests(spawn, repoRoot, config, coveringTests, timeoutMs, options.targetFile);
     } finally {
       // 5. ALWAYS restore the original bytes, then VERIFY the restore. The restore
       //    runs even if the subprocess threw (infra fault) or the process is being
@@ -190,13 +205,18 @@ function defaultVitestSpawn(
     '--config',
     config,
     '--no-coverage',
-    '--reporter=dot',
+    // `--reporter=json` writes a structured report (numTotalTests/numFailedTests) to
+    // stdout — the VERDICT source of truth. Keying on confirmed test COUNTS, not the
+    // bare exit code, is the anti-lie keystone: a run that executed 0 tests, or that
+    // exited 1 for a non-assertion reason (a config/parse fault, a module that failed
+    // to load), produces no trustworthy pass/fail and is rejected as an infra fault
+    // rather than minting a false survived/killed.
+    '--reporter=json',
     // Forks pool with NO file parallelism — one file at a time, no worker race — so
     // the per-mutant run is deterministic and never races itself (the file is mutated
     // in place). vitest 4 REMOVED the `--poolOptions.forks.singleFork` CLI flag (CAC
-    // rejects it as an unknown option → exit 1, which this runner would MISREAD as a
-    // test-failure "kill" — a false verdict); `--no-file-parallelism` is the vitest-4
-    // single-process equivalent.
+    // rejects it as an unknown option → exit 1); `--no-file-parallelism` is the
+    // vitest-4 single-process equivalent.
     '--pool=forks',
     '--no-file-parallelism',
     ...coveringTests,
@@ -217,15 +237,28 @@ function defaultVitestSpawn(
     status: result.status,
     signal: result.signal,
     error: result.error,
+    stdout: result.stdout,
     stderr: result.stderr,
   };
 }
 
 /**
- * Run the covering tests via the injected spawn and return the exit code,
- * discriminated to the verdict codes. A spawn error, a signal kill, a timeout, or
- * any exit code that is neither `0` nor `1` is an INFRA fault — a tagged throw, not
- * a verdict (reporting infra failure as a kill would inflate the score with a lie).
+ * Run the covering tests via the injected spawn and return the VERDICT, keyed on
+ * vitest's CONFIRMED structured report — never a bare exit code. The anti-lie
+ * keystone (the CACError scar): a mutation runner that reads "exit 1 = killed"
+ * misreads ANY exit-1 cause (a removed CLI flag, a config/parse fault, a module that
+ * failed to load) as a kill, and an exit-0 run that executed ZERO tests as a survivor
+ * — both false verdicts that silently corrupt the mutation score. So the verdict
+ * requires:
+ *   1. the subprocess spawned + was not signal-killed (else infra fault),
+ *   2. a PARSEABLE `--reporter=json` report (else the run produced no trustworthy
+ *      result → infra fault),
+ *   3. ≥1 test ACTUALLY EXECUTED (`numTotalTests > 0`; a 0-test run never exercised
+ *      the mutant → infra fault, never a survived/killed), and
+ *   4. the exit code AGREES with the report (failed ⇔ exit 1) — a disagreement is an
+ *      inconsistent run, not a trustworthy verdict.
+ * Only then is `failed = numFailedTests > 0` minted. Every other path throws a tagged
+ * {@link IoError} so the run aborts loudly rather than laundering a false verdict.
  */
 function runCoveringTests(
   spawn: MutationSubprocessSpawn,
@@ -234,7 +267,7 @@ function runCoveringTests(
   coveringTests: readonly string[],
   timeoutMs: number,
   targetFile: string,
-): number {
+): { readonly failed: boolean } {
   const result = spawn(repoRoot, config, coveringTests, timeoutMs);
 
   // A spawn-level error (binary not found, EACCES) → infra fault, never a verdict.
@@ -253,18 +286,74 @@ function runCoveringTests(
       { path: targetFile },
     );
   }
-  const code = result.status;
-  // A null status with no signal is an impossible spawnSync state; an exit code
-  // that is neither pass nor test-failure (e.g. a vitest config/parse error, code
-  // 2+) is an infra fault, NOT a kill — discriminate it loudly.
-  if (code === VITEST_PASS || code === VITEST_TEST_FAILURE) {
-    return code;
+
+  // The structured report is the verdict source of truth — NOT the exit code.
+  const report = parseVitestReport(result.stdout);
+  if (report === null) {
+    throw IoError(
+      'makeVitestMutationRunner',
+      `the vitest subprocess for "${targetFile}" (exit ${String(result.status)}) produced no parseable --reporter=json report — the run did not yield a trustworthy pass/fail (a config/parse/load fault, NOT a kill/survive verdict). stderr tail: ${tail(result.stderr)}`,
+      { path: targetFile },
+    );
   }
-  throw IoError(
-    'makeVitestMutationRunner',
-    `the vitest subprocess for "${targetFile}" exited with code ${String(code)} (neither pass=0 nor test-failure=1) — an infra/config fault, not a kill/survive verdict. stderr tail: ${tail(result.stderr)}`,
-    { path: targetFile },
-  );
+  // CONFIRM tests actually executed. A 0-test run (no covering test matched, or every
+  // covering test errored at load) never exercised the mutant — scoring it survived
+  // OR killed would be a lie. This is the false-survivor guard the bare exit code
+  // could never give (vitest exits 0 on "no tests run").
+  if (report.total === 0) {
+    throw IoError(
+      'makeVitestMutationRunner',
+      `the vitest subprocess for "${targetFile}" executed 0 covering tests — the mutant was never exercised, so neither survived nor killed is a truthful verdict (refusing to mint one). Covering tests: ${coveringTests.length === 0 ? '<none supplied>' : coveringTests.join(', ')}`,
+      { path: targetFile },
+    );
+  }
+  const failed = report.failed > 0;
+  // Cross-check the exit code agrees with the structured report. They should be
+  // redundant (a failed test ⇒ exit 1); a DISAGREEMENT means the run was inconsistent
+  // (e.g. a non-test error alongside passing tests) → not a trustworthy verdict.
+  const code = result.status;
+  const exitAgrees = failed ? code === VITEST_TEST_FAILURE : code === VITEST_PASS;
+  if (!exitAgrees) {
+    throw IoError(
+      'makeVitestMutationRunner',
+      `the vitest subprocess for "${targetFile}" exited ${String(code)} but its JSON report says ${report.failed}/${report.total} tests failed — exit code and report disagree, so the run is inconsistent (not a trustworthy verdict). stderr tail: ${tail(result.stderr)}`,
+      { path: targetFile },
+    );
+  }
+  return { failed };
+}
+
+/**
+ * Parse vitest's `--reporter=json` stdout into the confirmed test counts the verdict
+ * needs (`numTotalTests`/`numFailedTests`, Jest-compatible). Returns `null` when the
+ * stdout carries no parseable report object or the count fields are absent/non-numeric
+ * — the caller treats `null` as an infra fault (the run produced no trustworthy
+ * result), NEVER a survived/killed verdict. The report object is extracted from the
+ * outermost `{…}` so a stray banner line cannot defeat the parse.
+ */
+function parseVitestReport(stdout: string | null): { readonly total: number; readonly failed: number } | null {
+  if (stdout === null || stdout.length === 0) return null;
+  const start = stdout.indexOf('{');
+  const end = stdout.lastIndexOf('}');
+  if (start === -1 || end === -1 || end < start) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout.slice(start, end + 1));
+  } catch (err) {
+    // JSON.parse throws ONLY SyntaxError ⇒ the stdout's brace block was not a real
+    // report (e.g. a CLI-arg rejection that printed a `{…}`-shaped diagnostic) ⇒ null,
+    // which the caller surfaces as a discriminated infra fault (NEVER a verdict). The
+    // binding is CONSUMED by discriminating it: anything that is NOT a SyntaxError is an
+    // impossible VM-level fault, rethrown loud rather than swallowed into a false null.
+    if (!(err instanceof SyntaxError)) throw err;
+    return null;
+  }
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  const record = parsed as Record<string, unknown>;
+  const total = record['numTotalTests'];
+  const failed = record['numFailedTests'];
+  if (typeof total !== 'number' || typeof failed !== 'number') return null;
+  return { total, failed };
 }
 
 /**
