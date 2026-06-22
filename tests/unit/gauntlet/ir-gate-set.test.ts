@@ -58,6 +58,10 @@ describe('the host LITESHIP_IR_GATES composition', () => {
     const got = ids(LITESHIP_IR_GATES);
     // The divergence gate is present.
     expect(got).toContain('gauntlet/no-default-export-divergence');
+    // The avionics-tier performance-contracts gate (Slice C) ships in the IR-host
+    // set — a LEAN fold over committed benchmarks/, NOT requireIR, but composed here
+    // alongside the other Slice B/C gates (never in the lean LITESHIP_GATES cut).
+    expect(got).toContain('gauntlet/performance-contracts');
     // no-bare-throw appears exactly once (the IR fold REPLACES the regex one — no
     // double-count of the same rule).
     expect(got.filter((id) => id === 'gauntlet/no-bare-throw')).toHaveLength(1);

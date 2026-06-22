@@ -158,6 +158,10 @@ export function scopeContextByLevel(
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.
     ...(context.ir !== undefined ? { ir: context.ir } : {}),
+    // Likewise the injected supply-chain facts (Slice C): file-scoping never
+    // narrows them (they describe the lockfile / SBOM / capsules / workflows, not
+    // src files), so they pass through unchanged. Omit the key when absent.
+    ...(context.supplyChain !== undefined ? { supplyChain: context.supplyChain } : {}),
   };
 }
 

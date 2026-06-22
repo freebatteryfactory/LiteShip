@@ -18,6 +18,7 @@ import { ValidationError, HostCapabilityError } from '@czap/error';
 import type { AssuranceLevel } from './assurance.js';
 import type { Finding } from './finding.js';
 import type { FileId, RepoIR } from './repo-ir.js';
+import type { SupplyChainFacts } from './supply-chain-facts.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -43,6 +44,18 @@ export interface GateContext {
    * until a host supplies one. See {@link RepoIR}.
    */
   readonly ir?: RepoIR;
+  /**
+   * Pre-computed supply-chain evidence — an INJECTED capability (Slice C, the
+   * avionics tier), the same lean-engine pattern as {@link ir}. OPTIONAL: the
+   * heavy lockfile parse / SBOM build / ShipCapsule decode / CI scan all live in
+   * a HOST (the CLI's `@czap/cli` supply-chain analyzer), which folds them into
+   * flat {@link SupplyChainFacts} and lands them here. The
+   * {@link supplyChainGate} reads ONLY through this; in-memory fixtures supply a
+   * literal facts record (no I/O, no YAML). When ABSENT the supply-chain gate
+   * reports an honest advisory "not-evidenced" finding rather than a silent
+   * green. See {@link SupplyChainFacts}.
+   */
+  readonly supplyChain?: SupplyChainFacts;
 }
 
 /**

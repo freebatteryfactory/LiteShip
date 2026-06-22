@@ -28,7 +28,18 @@ examples/remotion-demo/node_modules/
 test-results/
 tests/_results/
 coverage/
-benchmarks/
+# Ignore benchmarks/ CONTENTS (regenerated run artifacts) but allow the two
+# COMMITTED performance CONTRACTS below to be re-included. `benchmarks/*` (not
+# `benchmarks/`) is required so git walks the dir and the negations can match —
+# a wholesale `benchmarks/` ignore cannot be un-ignored per-file.
+benchmarks/*
+# …except the two COMMITTED performance CONTRACTS (source of truth, not
+# regenerated bench output): the declared-distribution registry (the headline
+# law's anchor) and the complexity-map baseline (the regression baseline). The
+# performance-contracts gate folds over these committed bytes, so they must be
+# tracked — every other benchmarks/ file stays an ignored run artifact.
+!benchmarks/distributions.json
+!benchmarks/complexity-map.json
 reports/
 .vitest-attachments/
 lint-report.json

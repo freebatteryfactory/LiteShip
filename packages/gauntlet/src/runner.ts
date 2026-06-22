@@ -20,6 +20,7 @@
 
 import type { Gate } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
+import type { SupplyChainFacts } from './supply-chain-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -38,6 +39,7 @@ import { noVarDivergenceGate } from './gates/no-var-divergence.js';
 import { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 import { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 import { crdtLawsGate } from './gates/crdt-laws.js';
+import { performanceContractsGate } from './gates/performance-contracts.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -87,6 +89,11 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   noRequireDivergenceGate,
   symbolOrphanDivergenceGate,
   crdtLawsGate,
+  // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
+  // fold over the committed `benchmarks/` artifacts (read via context.readFile). It
+  // does NOT requireIR, but it belongs in the IR-host set alongside the other Slice
+  // B/C gates (the IR-present composition), NOT the lean cut LITESHIP_GATES.
+  performanceContractsGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */
@@ -103,6 +110,15 @@ export interface RunGauntletOnRepoOptions {
    * regex gates run unchanged.
    */
   readonly ir?: RepoIR;
+  /**
+   * The INJECTED supply-chain facts (Slice C, the avionics tier) — OPTIONAL. A
+   * host (the CLI's `@czap/cli` analyzer) parses the lockfile, builds the SBOM,
+   * and scans the workflows, then threads the decided {@link SupplyChainFacts}
+   * here, where they land on the {@link GateContext} for `supplyChainGate` to
+   * fold. Omit them (the default `--ir` run) and the gate is simply not in the
+   * set — no facts computed, no SBOM cost, no `not-evidenced` noise.
+   */
+  readonly supplyChain?: SupplyChainFacts;
 }
 
 /**
@@ -118,7 +134,7 @@ export function runGauntletOnRepo(
   opts: RunGauntletOnRepoOptions,
   runOpts: RunGatesOptions = {},
 ): GauntletResult {
-  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir), runOpts);
+  return runGates(gates, nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain), runOpts);
 }
 
 /** The default scope: every package's TypeScript source. */
@@ -200,8 +216,19 @@ export function litelaunchGauntletWithIR(
   // raises it. Deterministic, cycle-safe, bounded (levels L0..L4 only rise).
   const effectiveLevels = propagateAssuranceLevels(ir, (file) => levelOf(file, LITESHIP_ASSURANCE_MAP));
   return runGauntletOnRepo(
-    LITESHIP_IR_GATES,
-    { repoRoot, globs, ir },
+    // The gate set is the IR-host default UNLESS the host overrides it (the
+    // `--supply-chain` opt-in composes `supplyChainGate` on for that run only).
+    cacheOpts.gates ?? LITESHIP_IR_GATES,
+    {
+      repoRoot,
+      globs,
+      ir,
+      // Inject the host-computed supply-chain facts onto the context (Slice C) when
+      // supplied — `supplyChainGate` folds them. Omitted ⇒ absent ⇒ the gate (when
+      // in the set) advisories "not-evidenced"; but on the default run the gate is
+      // not in the set at all, so there is no facts cost and no advisory noise.
+      ...(cacheOpts.supplyChain !== undefined ? { supplyChain: cacheOpts.supplyChain } : {}),
+    },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
       effectiveLevels,
@@ -232,4 +259,17 @@ export interface LitelaunchCacheOptions {
   readonly toolchainDigest?: string;
   /** The environment fingerprint folded into every key. */
   readonly env?: Readonly<Record<string, string>>;
+  /**
+   * OPTIONAL gate-set override (Slice C, the `--supply-chain` opt-in). Defaults to
+   * {@link LITESHIP_IR_GATES}. The host composes `supplyChainGate` onto the IR-host
+   * set for a `--supply-chain` run only; the default `--ir` run leaves it unset, so
+   * the avionics gate never appears (no `not-evidenced` noise on the default path).
+   */
+  readonly gates?: readonly Gate[];
+  /**
+   * OPTIONAL host-computed supply-chain facts (Slice C) threaded onto the
+   * {@link GateContext} for `supplyChainGate` to fold. Supplied ONLY on the
+   * `--supply-chain` run, alongside a `gates` override that includes the gate.
+   */
+  readonly supplyChain?: SupplyChainFacts;
 }

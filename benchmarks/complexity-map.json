@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "path": "boundary.evaluateBatch",
+      "describe": "Boundary.evaluateBatch — one scan over the value array; O(n) in value count.",
+      "shape": "batch-values",
+      "sizes": [
+        256,
+        1024,
+        4096,
+        16384,
+        65536
+      ],
+      "class": "O(n)",
+      "fittedSlope": 0.9302,
+      "fittedR2": 0.9965
+    },
+    {
+      "path": "contentAddress.of",
+      "describe": "contentAddressOf — canonicalize → CanonicalCbor → fnv1a; O(n) in element count.",
+      "shape": "address-elements",
+      "sizes": [
+        8,
+        32,
+        128,
+        512,
+        2048
+      ],
+      "class": "O(n)",
+      "fittedSlope": 0.96,
+      "fittedR2": 0.9983
+    }
+  ]
+}

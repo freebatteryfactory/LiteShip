@@ -68,10 +68,10 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const { result, stdout } = await captureStdout(() => run(['check', '--ir']));
     expect(result).toBe(0);
     expect(runGauntletWithRepoIRMock).toHaveBeenCalledTimes(1);
-    // (repoRoot, now: Date, globs, { noCache, withSymbolReferences })
+    // (repoRoot, now: Date, globs, { noCache, withSymbolReferences, withSupplyChain })
     const [, now, , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
     expect(now).toBeInstanceOf(Date);
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: false });
     // The lean handler is NEVER touched on the IR path.
     expect(handlerMock).not.toHaveBeenCalled();
     // The receipt carries the SAME CheckPayload shape (ok/blocked/findingCount/findings).
@@ -84,7 +84,7 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--no-cache']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false });
+    expect(cacheOpts).toEqual({ noCache: true, withSymbolReferences: false, withSupplyChain: false });
   });
 
   it('--ir --symbols threads the symbol-evidenced oracle opt-in through to runGauntletWithRepoIR', async () => {
@@ -92,7 +92,15 @@ describe('czap check --ir — the CLI-only IR-enriched path', () => {
     const code = await captureStdout(() => run(['check', '--ir', '--symbols']));
     expect(code.result).toBe(0);
     const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
-    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true });
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: true, withSupplyChain: false });
+  });
+
+  it('--ir --supply-chain threads the avionics supply-chain opt-in through to runGauntletWithRepoIR', async () => {
+    runGauntletWithRepoIRMock.mockReturnValue(okResult);
+    const code = await captureStdout(() => run(['check', '--ir', '--supply-chain']));
+    expect(code.result).toBe(0);
+    const [, , , cacheOpts] = runGauntletWithRepoIRMock.mock.calls[0]!;
+    expect(cacheOpts).toEqual({ noCache: false, withSymbolReferences: false, withSupplyChain: true });
   });
 
   it('a blocked IR run exits 1 and the receipt mirrors the engine verdict', async () => {
@@ -117,6 +125,13 @@ describe('czap check (lean, no --ir) — UNCHANGED, never builds the IR', () => 
 
   it('a bare --no-cache (no --ir) stays on the lean path (no silent IR run)', async () => {
     const { result } = await captureStdout(() => run(['check', '--no-cache']));
+    expect(result).toBe(0);
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();
+  });
+
+  it('a bare --supply-chain (no --ir) stays on the lean path (no silent IR/SBOM run)', async () => {
+    const { result } = await captureStdout(() => run(['check', '--supply-chain']));
     expect(result).toBe(0);
     expect(handlerMock).toHaveBeenCalledTimes(1);
     expect(runGauntletWithRepoIRMock).not.toHaveBeenCalled();

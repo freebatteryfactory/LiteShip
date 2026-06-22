@@ -76,6 +76,15 @@ export {
   requireIR,
 } from './gate.js';
 
+export {
+  type SupplyChainFacts,
+  type SupplyChainViolation,
+  type LockfilePolicyFacts,
+  type SbomFacts,
+  type ProvenanceFacts,
+  type CiAuthorityFacts,
+} from './supply-chain-facts.js';
+
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
 export {
@@ -124,6 +133,11 @@ export {
   DEFAULT_GAUNTLET_GLOBS,
 } from './runner.js';
 
+// The shared comment/string stripper — the honest "is this CODE?" floor. Exported
+// so a host script (the bench-contract producer) strips bench source through the
+// ONE implementation the gates use, never a copy.
+export { codeOnly, stringsBlanked, commentsBlanked } from './gates/code-only.js';
+
 export { noBareThrowGate } from './gates/no-bare-throw.js';
 export { noTsIgnoreGate } from './gates/no-ts-ignore.js';
 export { noNondeterminismGate } from './gates/no-nondeterminism.js';
@@ -144,6 +158,19 @@ export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
+
+// The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
+// fold over the committed `benchmarks/` artifacts (declared-distribution registry +
+// complexity-class map). It does NOT requireIR, but it ships in LITESHIP_IR_GATES
+// (the IR-host composition), not the lean cut LITESHIP_GATES.
+export { performanceContractsGate } from './gates/performance-contracts.js';
+
+// The avionics-tier supply-chain gate (Slice C). It folds the host-supplied
+// SupplyChainFacts (lockfile policy / SBOM / provenance / CI authority) — the
+// heavy analysis lives in the @czap/cli host. Exported but DELIBERATELY NOT in
+// LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path
+// only. See the integrator note in the Slice-C report (a ~3-line wiring like B3.3).
+export { supplyChainGate } from './gates/supply-chain.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

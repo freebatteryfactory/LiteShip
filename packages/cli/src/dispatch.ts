@@ -29,6 +29,7 @@ import { gauntlet } from './commands/gauntlet.js';
 import { lsp } from './commands/lsp.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
+import { sbom } from './commands/sbom.js';
 import { readCliVersion, version } from './commands/version.js';
 import { emitError } from './receipts.js';
 
@@ -189,12 +190,19 @@ export async function run(argv: readonly string[]): Promise<number> {
       // `--symbols` adds the heavy symbol-evidenced LanguageService oracle (B3.3) —
       // only meaningful with `--ir`; the cache key is namespaced by this mode.
       const symbols = rest.includes('--symbols');
-      // `--no-cache` / `--symbols` are only meaningful on the IR path (the lean path
-      // has no cache + no IR). A bare flag there is a no-op, never a silent wrong run.
+      // `--supply-chain` composes the avionics-tier supplyChainGate (Slice C, L4) on
+      // + injects the host-computed supply-chain facts — only meaningful with `--ir`;
+      // opt-in (no SBOM cost + no not-evidenced noise on the default `--ir` run); the
+      // cache key is namespaced by this mode (mirrors --symbols).
+      const supplyChain = rest.includes('--supply-chain');
+      // `--no-cache` / `--symbols` / `--supply-chain` are only meaningful on the IR
+      // path (the lean path has no cache + no IR). A bare flag there is a no-op,
+      // never a silent wrong run.
       return check({
         ...(ir ? { ir } : {}),
         ...(noCache ? { noCache } : {}),
         ...(symbols ? { symbols } : {}),
+        ...(supplyChain ? { supplyChain } : {}),
       });
     }
     case 'check-invariants': {
@@ -214,6 +222,9 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'verify': {
       return verify(rest);
+    }
+    case 'sbom': {
+      return sbom(rest);
     }
     case 'mcp': {
       // @czap/mcp-server is an optional sibling install, not a dependency of

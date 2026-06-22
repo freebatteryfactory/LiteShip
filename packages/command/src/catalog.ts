@@ -96,6 +96,15 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { destructive: true, group: 'ship' },
   },
   {
+    name: 'sbom',
+    summary:
+      'Emit the deterministic, content-addressed CycloneDX SBOM over the lockfile + workspace; fail on a lockfile-policy or completeness violation.',
+    inputSchema: { type: 'object', properties: {} },
+    // NOT mcpExposed: sbom writes a reviewable artifact to the working tree
+    // (reports/sbom.json) — a host/file-orchestration verb, not an MCP tool.
+    annotations: { group: 'ship' },
+  },
+  {
     name: 'mcp',
     summary: 'Start the MCP server (stdio default; --http=PORT for HTTP).',
     inputSchema: { type: 'object', properties: { http: { type: 'string' } } },

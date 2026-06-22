@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
 
 /** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
-const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'lsp', 'mcp', 'scene.dev', 'ship'] as const;
+const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'lsp', 'mcp', 'sbom', 'scene.dev', 'ship'] as const;
 
 /** Every command czap currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
@@ -26,6 +26,7 @@ const EXPECTED_NAMES = [
   'mcp',
   'package-smoke',
   'plumb',
+  'sbom',
   'scene.compile',
   'scene.dev',
   'scene.render',

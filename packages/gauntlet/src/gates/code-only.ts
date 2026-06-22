@@ -171,3 +171,83 @@ export function stringsBlanked(src: string): string {
   }
   return out;
 }
+
+/**
+ * Blank out COMMENT CONTENTS only, leaving STRING LITERALS and code intact
+ * (newlines preserved, so line numbers still align). The complement of
+ * {@link stringsBlanked}: the floor for a scanner whose target is a string-literal
+ * VALUE (e.g. a benchmark's registered name in `bench('name', …)`) that must
+ * survive while a commented-out copy (`// bench('name', …)`) vanishes. A genuine
+ * registration's name is preserved; a commented-out registration is erased, so a
+ * disabled bench does not count as registered.
+ *
+ * Same five-state char machine as {@link codeOnly}; only the disposition differs —
+ * strings pass through verbatim, comment contents are replaced with spaces.
+ */
+export function commentsBlanked(src: string): string {
+  let out = '';
+  type State = 'code' | 'line' | 'block' | 'single' | 'double' | 'template';
+  let state: State = 'code';
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]!;
+    const next = src[i + 1];
+    const keep = c === '\n' ? '\n' : ' ';
+    if (state === 'code') {
+      if (c === '/' && next === '/') {
+        state = 'line';
+        out += '  ';
+        i++;
+        continue;
+      }
+      if (c === '/' && next === '*') {
+        state = 'block';
+        out += '  ';
+        i++;
+        continue;
+      }
+      if (c === "'") {
+        state = 'single';
+        out += c;
+        continue;
+      }
+      if (c === '"') {
+        state = 'double';
+        out += c;
+        continue;
+      }
+      if (c === '`') {
+        state = 'template';
+        out += c;
+        continue;
+      }
+      out += c;
+      continue;
+    }
+    if (state === 'line') {
+      if (c === '\n') state = 'code';
+      out += keep; // comment content blanked
+      continue;
+    }
+    if (state === 'block') {
+      if (c === '*' && next === '/') {
+        state = 'code';
+        out += '  ';
+        i++;
+        continue;
+      }
+      out += keep; // comment content blanked
+      continue;
+    }
+    // string states — passed through verbatim (the value must survive)
+    if (c === '\\') {
+      out += c;
+      out += src[i + 1] ?? '';
+      i++;
+      continue;
+    } // escape — keep both chars
+    const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
+    if (c === closer) state = 'code';
+    out += c;
+  }
+  return out;
+}

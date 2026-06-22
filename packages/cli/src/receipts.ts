@@ -96,6 +96,21 @@ export interface ShipVerifyReceipt extends BaseReceipt {
   readonly mismatches: readonly string[];
 }
 
+/** Receipt emitted by `czap sbom` (Slice C — supply chain). */
+export interface SbomReceipt extends BaseReceipt {
+  readonly command: 'sbom';
+  /** Repo-relative path the deterministic SBOM was written to. */
+  readonly artifact_path: string;
+  /** Content address (AddressedDigest display id) of the emitted SBOM. */
+  readonly content_address: ContentAddress;
+  /** Total components (workspace + external) enumerated. */
+  readonly component_count: number;
+  /** Lockfile packages the SBOM covers. */
+  readonly lockfile_package_count: number;
+  /** Lockfile-policy + SBOM-completeness violations (empty ⇒ clean). */
+  readonly violations: readonly { readonly code: string; readonly subject: string }[];
+}
+
 /** Emit a receipt to stdout as a single JSON line. */
 export function emit(receipt: unknown): void {
   process.stdout.write(JSON.stringify(receipt) + '\n');

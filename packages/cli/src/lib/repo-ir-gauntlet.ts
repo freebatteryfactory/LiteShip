@@ -23,6 +23,8 @@
  *
  * @module
  */
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   buildRepoIR,
   withRepoRoot,
@@ -35,13 +37,18 @@ import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
 import {
   litelaunchGauntletWithIR,
+  supplyChainGate,
+  LITESHIP_IR_GATES,
   type Fact,
   type FileId,
   type GauntletResult,
   type LitelaunchCacheOptions,
   type RepoIR,
+  type SupplyChainFacts,
 } from '@czap/gauntlet';
 import { gauntletToolchainDigest, makeFsVerdictCache } from './gauntlet-verdict-cache.js';
+import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspace.js';
+import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
 
 /**
  * The PARAMETRIC binding between a canonical `INVARIANTS` rule and the IR property
@@ -218,10 +225,60 @@ export function runGauntletWithRepoIR(
   const withSymbols = cacheOpts.withSymbolReferences === true;
   const ir = buildRepoIRForRepo(repoRoot, withSymbols);
   const cache = resolveVerdictCache(repoRoot, cacheOpts);
+
+  // The `--supply-chain` opt-in (Slice C, the avionics tier): compute the heavy
+  // SupplyChainFacts in the HOST (lockfile parse + SBOM + CI scan via the @czap/cli
+  // analyzer), inject them onto the context, AND compose `supplyChainGate` onto the
+  // IR-host gate set for THIS run. WITHOUT the opt-in, no facts are computed (no
+  // SBOM cost) and the gate is not in the set (no `not-evidenced` noise on `--ir`).
+  const supplyChainOpts: Pick<LitelaunchCacheOptions, 'gates' | 'supplyChain'> =
+    cacheOpts.withSupplyChain === true
+      ? { gates: [...LITESHIP_IR_GATES, supplyChainGate], supplyChain: analyzeRepoSupplyChain(repoRoot) }
+      : {};
+
+  const launchOpts: LitelaunchCacheOptions = { ...cache, ...supplyChainOpts };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL
-    ? litelaunchGauntletWithIR(repoRoot, now, ir, undefined, cache)
-    : litelaunchGauntletWithIR(repoRoot, now, ir, effectiveGlobs, cache);
+    ? litelaunchGauntletWithIR(repoRoot, now, ir, undefined, launchOpts)
+    : litelaunchGauntletWithIR(repoRoot, now, ir, effectiveGlobs, launchOpts);
+}
+
+/** Project a discovered workspace package into the analyzer's view. */
+function toAnalyzerPkg(p: WorkspacePackageIdentity): WorkspacePkg {
+  return { name: p.name, version: p.version, private: p.private, importerPath: p.importerPath };
+}
+
+/**
+ * Compute the {@link SupplyChainFacts} the avionics `supplyChainGate` folds — the
+ * HOST's heavy job (ADR-0012): read pnpm-lock.yaml + the workspace manifests, then
+ * run the @czap/cli analyzer (lockfile policy + SBOM completeness + CI authority
+ * scan). The lockfile bytes are read once and passed as the live address-of source.
+ *
+ * NO ShipCapsule is located here: the PROVENANCE family validates a release
+ * artifact against the live tree, and a working-tree `czap check` run has no minted
+ * capsule. Provenance is therefore left unevidenced — the gate surfaces that as an
+ * HONEST advisory (`provenance/not-evidenced`), never a silent green (the gate's
+ * own under-coverage contract). The other three families (lockfile / SBOM / CI)
+ * ARE evidenced from the live tree and folded into real findings.
+ */
+function analyzeRepoSupplyChain(repoRoot: string): SupplyChainFacts {
+  const lockfilePath = join(repoRoot, 'pnpm-lock.yaml');
+  if (!existsSync(lockfilePath)) {
+    throw InvariantViolationError(
+      'repo-ir-gauntlet',
+      `pnpm-lock.yaml not found at ${lockfilePath} — the --supply-chain run cannot compute the avionics-tier facts without the lockfile (the hermetic-build anchor).`,
+    );
+  }
+  const lockfileBytes = readFileSync(lockfilePath);
+  const lockfileText = lockfileBytes.toString('utf8');
+  const workspace = readWorkspacePackages(repoRoot).map(toAnalyzerPkg);
+  const { facts } = analyzeSupplyChain({
+    repoRoot,
+    lockfileText,
+    liveLockfileBytes: new Uint8Array(lockfileBytes.buffer, lockfileBytes.byteOffset, lockfileBytes.byteLength),
+    workspace,
+  });
+  return facts;
 }
 
 /** Sentinel marking "no explicit globs" so we forward the engine's own default. */
@@ -244,6 +301,15 @@ export interface RepoIRGauntletCacheOptions {
    * a symbols-on verdict can never be served to a symbols-off run, or vice versa.
    */
   readonly withSymbolReferences?: boolean;
+  /**
+   * Compose the avionics-tier `supplyChainGate` (L4) onto the run and inject the
+   * host-computed {@link SupplyChainFacts} (`czap check --ir --supply-chain`). It
+   * changes BOTH which gates run AND the injected facts, so the verdict cache is
+   * NAMESPACED by this mode (see {@link resolveVerdictCache}): a supply-chain
+   * verdict can never be served to a non-supply-chain run, or vice versa — exactly
+   * the `--symbols` cache-soundness lesson.
+   */
+  readonly withSupplyChain?: boolean;
 }
 
 /**
@@ -262,6 +328,11 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
   const env = {
     ...currentEnvFingerprint(),
     ...(opts.withSymbolReferences === true ? { irMode: 'symbols' } : {}),
+    // The supply-chain MODE changes BOTH the gate set (supplyChainGate composed on)
+    // AND the injected facts WITHOUT changing any file's content digest, so it must
+    // namespace the key — else a supply-chain verdict could be served to a
+    // non-supply-chain run (the same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withSupplyChain === true ? { scMode: 'supply-chain' } : {}),
   };
   return {
     cache: makeFsVerdictCache(opts.cacheCwd ?? repoRoot),

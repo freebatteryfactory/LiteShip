@@ -22,6 +22,7 @@ import { resolve } from 'node:path';
 import fg from 'fast-glob';
 import type { GateContext } from './gate.js';
 import type { RepoIR } from './repo-ir.js';
+import type { SupplyChainFacts } from './supply-chain-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -40,11 +41,24 @@ import type { RepoIR } from './repo-ir.js';
  * IR, never builds one. When omitted, `ir` is absent and regex gates run
  * unchanged (back-compat).
  *
+ * The optional `supplyChain` is the INJECTED supply-chain facts capability
+ * (Slice C, the avionics tier): a host (the CLI's `@czap/cli` analyzer) parses
+ * the lockfile, builds the SBOM, decodes the ShipCapsule, and scans the
+ * workflows, then threads the decided {@link SupplyChainFacts} through so the
+ * `supplyChainGate` can fold them. Same lean-engine pattern as `ir` — the
+ * gauntlet RECEIVES the facts, never computes them. Omitted ⇒ absent.
+ *
  * @param repoRoot Absolute root the gate's paths resolve against.
  * @param globs Repo-relative glob patterns selecting the gate's file scope.
  * @param ir Optional pre-built repo-IR to inject onto the context.
+ * @param supplyChain Optional pre-computed supply-chain facts to inject.
  */
-export function nodeContext(repoRoot: string, globs: readonly string[], ir?: RepoIR): GateContext {
+export function nodeContext(
+  repoRoot: string,
+  globs: readonly string[],
+  ir?: RepoIR,
+  supplyChain?: SupplyChainFacts,
+): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
   // count as repo source.
@@ -71,5 +85,7 @@ export function nodeContext(repoRoot: string, globs: readonly string[], ir?: Rep
     // Thread the injected IR through; omit the key entirely when none was
     // supplied so the context shape stays minimal (an IR-free run is identical).
     ...(ir !== undefined ? { ir } : {}),
+    // Thread the injected supply-chain facts through (Slice C); omit when absent.
+    ...(supplyChain !== undefined ? { supplyChain } : {}),
   };
 }

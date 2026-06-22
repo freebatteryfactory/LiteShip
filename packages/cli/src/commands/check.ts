@@ -18,7 +18,9 @@
  *   lean handler — `--ir` is CLI-only).
  * - The IR-ENRICHED path (`--ir`, CLI-ONLY): builds the repo-IR via `@czap/audit`
  *   and runs the triangulated cross-check (the B1 oracle-divergence) + the B2
- *   verdict cache via `runGauntletWithRepoIR`. `--no-cache` bypasses the cache.
+ *   verdict cache via `runGauntletWithRepoIR`. `--no-cache` bypasses the cache;
+ *   `--supply-chain` composes the avionics-tier supplyChainGate on + injects the
+ *   host-computed supply-chain facts (lockfile/SBOM/CI), namespacing the cache mode.
  *   This path lives ENTIRELY in the CLI host (which already deps `@czap/audit`) —
  *   never pushed into the lean engine. Both paths emit the SAME `CheckPayload`
  *   shape (ok/blocked/findingCount/findings) so the receipt is consistent.
@@ -52,6 +54,15 @@ export interface CheckOptions {
    * meaningful with `--ir`; ~2 min cold, amortized by the (mode-namespaced) cache.
    */
   readonly symbols?: boolean;
+  /**
+   * `--supply-chain`: also run the avionics-tier `supplyChainGate` (Slice C, L4)
+   * — the host computes the SupplyChainFacts (lockfile policy + SBOM completeness +
+   * CI authority scan) and injects them for the gate to fold. Only meaningful with
+   * `--ir`; opt-in so the default `--ir` run has no SBOM cost + no `not-evidenced`
+   * noise. The cache key is namespaced by this mode (a supply-chain verdict can
+   * never be served to a non-supply-chain run).
+   */
+  readonly supplyChain?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -59,7 +70,9 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
   const payload =
-    opts.ir === true ? runIrPath(cwd, opts.noCache === true, opts.symbols === true) : await runLeanPath(cwd);
+    opts.ir === true
+      ? runIrPath(cwd, opts.noCache === true, opts.symbols === true, opts.supplyChain === true)
+      : await runLeanPath(cwd);
 
   const receipt: CheckReceipt = {
     status: payload.blocked ? 'failed' : 'ok',
@@ -98,13 +111,19 @@ async function runLeanPath(cwd: string): Promise<CheckPayload> {
  * The IR-ENRICHED path (`--ir`, CLI-only) — builds the repo-IR via `@czap/audit`
  * and runs the triangulated cross-check + the B2 verdict cache via
  * `runGauntletWithRepoIR`. `noCache` (`--no-cache`) disarms the cache (a full,
- * uncached run). The wall-clock `now` is the waiver-expiry calendar comparison
+ * uncached run); `supplyChain` (`--supply-chain`) composes the avionics-tier
+ * supplyChainGate on + injects the host-computed facts. The wall-clock `now` is the
+ * waiver-expiry calendar comparison
  * (TWO-CLOCK LAW: a wallClock boundary, NEVER systemClock). Returns the SAME
  * `CheckPayload` shape the lean path emits, so the receipt is consistent.
  */
-function runIrPath(cwd: string, noCache: boolean, symbols: boolean): CheckPayload {
+function runIrPath(cwd: string, noCache: boolean, symbols: boolean, supplyChain: boolean): CheckPayload {
   const now = new Date(wallClock.now());
-  const result = runGauntletWithRepoIR(cwd, now, undefined, { noCache, withSymbolReferences: symbols });
+  const result = runGauntletWithRepoIR(cwd, now, undefined, {
+    noCache,
+    withSymbolReferences: symbols,
+    withSupplyChain: supplyChain,
+  });
   const findings = result.findings;
   return {
     ok: !result.blocked,
