@@ -1,0 +1,103 @@
+# The trace — every invariant in invariants.yaml mapped to its proving test(s) OR
+# a waiver-with-teeth. This is one half of the bidirectional trace: the OTHER half
+# is the `// PROVES: <id>` header the proving test itself carries. The deterministic
+# state machine (packages/cli/src/lib/traceability.ts) scans the LIVE headers and
+# REQUIRES the two agree — a ledger entry whose claimed test lacks a matching header
+# (or vice versa) is a divergence finding (the head-probe LAW).
+#
+# Schema (per entry):
+#   id:      the invariant id from invariants.yaml (REQUIRED)
+#   tests:   a non-empty list of [file::test-name] proving refs    (the TRACED form)
+#     -- the file is repo-relative; the test-name is the exact it()/test() title.
+#   waiver:  { owner, justification, expiry }                       (the WAIVED form)
+#     -- expiry is an ISO yyyy-mm-dd; a past expiry re-reds (the waiver came due).
+# Exactly ONE of `tests` / `waiver` per entry (a trace OR a signed deferral).
+
+traces:
+  # ── HLC — tests/property/hlc-crdt-laws.prop.test.ts ─────────────────────────
+  - id: INV-HLC-JOIN-IDEMPOTENT
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::IDEMPOTENCE: join(a, a) ≡ a"
+  - id: INV-HLC-JOIN-COMMUTATIVE
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::COMMUTATIVITY: join(a, b) ≡ join(b, a)"
+  - id: INV-HLC-JOIN-ASSOCIATIVE
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::ASSOCIATIVITY: join(join(a, b), c) ≡ join(a, join(b, c))"
+  - id: INV-HLC-ORDER-TRANSITIVE
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::TRANSITIVITY of happens-before: compare(a,b)<0 && compare(b,c)<0 ⟹ compare(a,c)<0"
+  - id: INV-HLC-ORDER-TOTAL
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::TOTALITY: exactly one of compare<0, ===0, compare>0 holds for every pair"
+  - id: INV-HLC-MERGE-DOMINANCE
+    tests:
+      - "tests/property/hlc-crdt-laws.prop.test.ts::DOMINANCE: merge(local, remote, now) is ≥ BOTH inputs on (wall, counter)"
+
+  # ── GraphPatch — tests/property/graph-patch-crdt-laws.prop.test.ts ──────────
+  - id: INV-GRAPHPATCH-IDEMPOTENT
+    tests:
+      - "tests/property/graph-patch-crdt-laws.prop.test.ts::apply(base, p) twice yields the SAME content-address id"
+  - id: INV-GRAPHPATCH-COMMUTATIVE
+    tests:
+      - "tests/property/graph-patch-crdt-laws.prop.test.ts::apply(apply(G, p1), p2) and apply(apply(G, p2), p1) reach the SAME id"
+  - id: INV-GRAPHPATCH-CONVERGENCE
+    tests:
+      - "tests/property/graph-patch-crdt-laws.prop.test.ts::3 concurrent non-conflicting adds converge to ONE id across all 6 orderings"
+  - id: INV-GRAPHPATCH-CONFLICT-BOUNDARY
+    tests:
+      - "tests/property/graph-patch-crdt-laws.prop.test.ts::conflicting patches (same logical cell, different payload) are ORDER-DEPENDENT at the apply layer"
+      - "tests/property/graph-patch-crdt-laws.prop.test.ts::the fork-detection seam SURFACES two concurrent patches off a shared base (forkOf → DAG.isFork)"
+
+  # ── Content-address — tests/property/content-address.prop.test.ts ───────────
+  - id: INV-CONTENT-ADDRESS-DETERMINISTIC
+    tests:
+      - "tests/property/content-address.prop.test.ts::same boundary config → same content address"
+      - "tests/property/content-address.prop.test.ts::different inputs → different content addresses"
+
+  # ── Assurance propagation — tests/unit/gauntlet/assurance-propagation.test.ts ─
+  - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
+    tests:
+      - "tests/unit/gauntlet/assurance-propagation.test.ts::LAW: every file effective >= its base (propagation only raises) — over random DAGs+cycles"
+  - id: INV-ASSURANCE-PROPAGATION-DETERMINISTIC
+    tests:
+      - "tests/unit/gauntlet/assurance-propagation.test.ts::determinism: computing twice yields an identical map"
+
+  # ── DST substrate — tests/unit/core/simulation-determinism-substrate.test.ts ─
+  - id: INV-DST-TRACE-CONTENT-ADDRESSED
+    tests:
+      - "tests/unit/core/simulation-determinism-substrate.test.ts::the trace digest is minted through the ONE content-address kernel (contentAddressOf), never forked"
+  - id: INV-DST-NO-AMBIENT-ENTROPY
+    tests:
+      - "tests/unit/core/simulation-determinism-substrate.test.ts::the harness imports its time/randomness ONLY from the @czap/core substrate (manualClock / seededRng)"
+
+  # ── Supply-chain — tests/unit/gauntlet/supply-chain-gate.test.ts ────────────
+  - id: INV-SUPPLY-CHAIN-HERMETIC
+    tests:
+      - "tests/unit/gauntlet/supply-chain-gate.test.ts::a git-URL lockfile violation reds the gate"
+      - "tests/unit/gauntlet/supply-chain-gate.test.ts::an incomplete SBOM reds the gate"
+      - "tests/unit/gauntlet/supply-chain-gate.test.ts::a drifted lockfile_address reds the gate"
+  - id: INV-SUPPLY-CHAIN-NO-AMBIENT-CI
+    tests:
+      - "tests/unit/gauntlet/supply-chain-gate.test.ts::an ambient NPM_TOKEN reds the gate"
+
+  # ── Mutation engine — tests/unit/audit/mutation-facts-build.test.ts ─────────
+  - id: INV-MUTATION-FACTS-DETERMINISTIC
+    tests:
+      - "tests/unit/audit/mutation-facts-build.test.ts::is deterministic — same source + runner → byte-identical facts"
+
+  # ── Meta (crdt-laws coverage rail) — tests/property/crdt-laws-gate.test.ts ──
+  - id: INV-CRDT-LAWS-PINNED
+    tests:
+      - "tests/property/crdt-laws-gate.test.ts::FLAGS a repo whose law file pins only SOME of the required laws (the red fixture world)"
+      - "tests/property/crdt-laws-gate.test.ts::passes its OWN green fixture clean (no false positive on a fully-pinned repo)"
+
+  # ── The owner-signed deferral (a real future law, no proving test YET) ──────
+  # WAIVED, not UNTRACED — the waiver keeps the path honest. When the expiry passes
+  # the state machine flips it to EXPIRED and the bridge gate reds. Replace with a
+  # `tests:` ref the moment a dedicated vector-clock property suite enrolls it.
+  - id: INV-VECTOR-CLOCK-MONOTONIC
+    waiver:
+      owner: heyoub
+      justification: "The vector-clock monotonicity/merge-max law is exercised transitively by the HLC suite (the HLC carries a logical counter), but it has no DEDICATED property-test enrollment yet. Owner-signed deferral pending a tests/property/vector-clock.prop.test.ts law-marker pass. NOT a placeholder — a declared boundary with a clock: the expiry forces re-confirmation."
+      expiry: "2027-06-22"

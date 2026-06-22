@@ -21,6 +21,7 @@ import type { FileId, RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
+import type { TraceabilityFacts } from './traceability-facts.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -88,6 +89,22 @@ export interface GateContext {
    * byte-for-byte. See {@link SimulationFacts}.
    */
   readonly simulation?: SimulationFacts;
+  /**
+   * Pre-computed REQUIREMENTS-TRACEABILITY evidence — an INJECTED capability (the
+   * avionics-tier ledger, DO-178B-style), the same lean-engine pattern as {@link ir},
+   * {@link supplyChain}, {@link mutation}, and {@link simulation}. OPTIONAL: the heavy
+   * work (parsing `traceability/*.yaml`, scanning the test corpus for `// PROVES:`
+   * headers, running the lifecycle state machine against the injected wall-clock date,
+   * content-addressing the resolved ledger) all lives in a HOST (the CLI's
+   * `packages/cli/src/lib/traceability.ts` state machine), which folds the verdicts
+   * into flat {@link TraceabilityFacts} (every invariant's resolved state + any
+   * ledger⇔header divergence + the resolved-ledger content address) and lands them
+   * here. The {@link traceabilityBridgeGate} reads ONLY through this; in-memory
+   * fixtures supply a literal facts record (no YAML, no clock). When ABSENT the gate
+   * is simply not in the set. An UNTRACED invariant or an EXPIRED waiver folds to a
+   * self-explaining Finding at the invariant's level. See {@link TraceabilityFacts}.
+   */
+  readonly traceability?: TraceabilityFacts;
 }
 
 /**

@@ -1,0 +1,10 @@
+{
+  "name": "gauntlet-downstream-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Throwaway downstream-consumer fixture — proves a project can `npm i @czap/gauntlet`, register its OWN gate via the public plugin API, and run the gauntlet green WITHOUT touching or rebuilding the engine (ADR-0012 zero-rebuild / no-fork boundary). A TEST FIXTURE, never published.",
+  "dependencies": {
+    "@czap/gauntlet": "workspace:*"
+  }
+}

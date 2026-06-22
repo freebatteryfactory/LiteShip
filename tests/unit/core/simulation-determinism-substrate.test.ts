@@ -18,6 +18,7 @@
  * @module
  */
 
+// PROVES: INV-DST-TRACE-CONTENT-ADDRESSED, INV-DST-NO-AMBIENT-ENTROPY
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

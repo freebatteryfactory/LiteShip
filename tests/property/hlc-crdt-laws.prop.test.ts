@@ -36,6 +36,7 @@
  * @module
  */
 
+// PROVES: INV-HLC-JOIN-IDEMPOTENT, INV-HLC-JOIN-COMMUTATIVE, INV-HLC-JOIN-ASSOCIATIVE, INV-HLC-ORDER-TRANSITIVE, INV-HLC-ORDER-TOTAL, INV-HLC-MERGE-DOMINANCE
 import { describe, test } from 'vitest';
 import fc from 'fast-check';
 import { HLC } from '@czap/core';

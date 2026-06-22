@@ -25,6 +25,7 @@ import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
+import type { TraceabilityFacts } from './traceability-facts.js';
 
 /**
  * A {@link GateContext} backed by the filesystem at `repoRoot`, scoped to the
@@ -74,6 +75,17 @@ import type { SimulationFacts } from './simulation-facts.js';
  * @param supplyChain Optional pre-computed supply-chain facts to inject.
  * @param mutation Optional pre-computed mutation facts to inject.
  * @param simulation Optional pre-computed DST (simulation) facts to inject.
+ *
+ * The optional `traceability` is the INJECTED requirements-traceability facts
+ * capability (the avionics-tier ledger): a host (the CLI's
+ * `packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+ * scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
+ * injected wall-clock date, and folds the verdicts into {@link TraceabilityFacts},
+ * then threads them through so the `traceabilityBridgeGate` can fold them. Same
+ * lean-engine pattern as `ir` / `supplyChain` / `mutation` / `simulation` — the
+ * gauntlet RECEIVES the facts, never parses YAML or reads a clock. Omitted ⇒ absent.
+ *
+ * @param traceability Optional pre-computed requirements-traceability facts to inject.
  */
 export function nodeContext(
   repoRoot: string,
@@ -82,6 +94,7 @@ export function nodeContext(
   supplyChain?: SupplyChainFacts,
   mutation?: MutationFacts,
   simulation?: SimulationFacts,
+  traceability?: TraceabilityFacts,
 ): GateContext {
   // Glob ONCE, eagerly, and sort — a stable, deterministic file list for the
   // whole run. `dot: false` matches the contract; node_modules + dist never
@@ -116,5 +129,8 @@ export function nodeContext(
     // Thread the injected DST (simulation) facts through (the determinism spine);
     // omit when absent (the default `--ir` run — simulation is opt-in via `--simulate`).
     ...(simulation !== undefined ? { simulation } : {}),
+    // Thread the injected requirements-traceability facts through (the avionics-tier
+    // ledger); omit when absent (the lean path, where the host computes no facts).
+    ...(traceability !== undefined ? { traceability } : {}),
   };
 }

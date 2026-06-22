@@ -46,6 +46,7 @@ import {
   supplyChainGate,
   mutationDivergenceGate,
   simulationDeterminismGate,
+  traceabilityBridgeGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -56,7 +57,9 @@ import {
   type RepoIR,
   type SimulationFacts,
   type SupplyChainFacts,
+  type TraceabilityFacts,
 } from '@czap/gauntlet';
+import { buildTraceabilityFacts } from './traceability.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
 import {
   gauntletToolchainDigest,
@@ -258,6 +261,17 @@ export async function runGauntletWithRepoIR(
   let mutationFacts: MutationFacts | undefined;
   let simulationFacts: SimulationFacts | undefined;
 
+  // The requirements-traceability ledger (the avionics-tier bidirectional trace) is
+  // ALWAYS-ON on the `--ir` path: the committed `traceability/*.yaml` is cheap to fold
+  // (a YAML parse + a corpus header scan, no test runs) and complete enough that it
+  // never spuriously fails (only invariants with a REAL proving test are enrolled).
+  // The host parses the ledger, scans the corpus for `// PROVES:` headers, runs the
+  // lifecycle state machine against the injected wall-clock `now` (the two-clock law),
+  // and injects the decided facts for `traceabilityBridgeGate` to fold. An untraced
+  // invariant, an expired waiver, or a ledger⇔header divergence reds the gate.
+  gateSet.push(traceabilityBridgeGate);
+  const traceabilityFacts: TraceabilityFacts = buildTraceabilityFacts(repoRoot, now);
+
   // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
   // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
   if (cacheOpts.withSupplyChain === true) {
@@ -294,9 +308,12 @@ export async function runGauntletWithRepoIR(
 
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
-    // Only override the gate set when an opt-in actually added a gate (a bare `--ir`
-    // run leaves `gates` unset → the engine uses its own LITESHIP_IR_GATES default).
-    ...(gateSet.length > LITESHIP_IR_GATES.length ? { gates: gateSet } : {}),
+    // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
+    // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
+    // runs exactly this composed set, never its own default. (The default is now only
+    // used by the lean `litelaunchGauntletWithIR` callers that pass no gate override.)
+    gates: gateSet,
+    traceability: traceabilityFacts,
     ...(supplyChainFacts !== undefined ? { supplyChain: supplyChainFacts } : {}),
     ...(mutationFacts !== undefined ? { mutation: mutationFacts } : {}),
     ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),

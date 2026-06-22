@@ -12,6 +12,7 @@
  *    function of `context.supplyChain`).
  */
 
+// PROVES: INV-SUPPLY-CHAIN-HERMETIC, INV-SUPPLY-CHAIN-NO-AMBIENT-CI
 import { describe, it, expect } from 'vitest';
 import {
   supplyChainGate,

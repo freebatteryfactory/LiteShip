@@ -98,6 +98,17 @@ export {
   type ReplayDivergence,
 } from './simulation-facts.js';
 
+export {
+  type TraceabilityFacts,
+  type ResolvedInvariant,
+  type InvariantState,
+  type InvariantProven,
+  type InvariantUntraced,
+  type InvariantWaived,
+  type InvariantExpired,
+  type TraceabilityDivergence,
+} from './traceability-facts.js';
+
 export { type Authority, type GateProof, verifyGate, earnedAuthority } from './authority.js';
 
 export {
@@ -211,6 +222,18 @@ export {
 // facts-injected, opt-in `--simulate` host path only (a ~3-line wiring like
 // supplyChainGate — the integrator composes it on, the gate ships qualified).
 export { simulationDeterminismGate } from './gates/simulation-determinism.js';
+
+// The avionics-tier requirements-traceability bridge gate (DO-178B-style). It folds
+// the host-supplied TraceabilityFacts — an UNTRACED invariant, an EXPIRED waiver, or
+// a ledger⇔header DIVERGENCE becomes a self-explaining Finding at the invariant's
+// level. The heavy work (parsing traceability/*.yaml, scanning the corpus for
+// `// PROVES:` headers, running the lifecycle state machine against an injected
+// wall-clock date, content-addressing the resolved ledger) lives in the @czap/cli
+// host (`packages/cli/src/lib/traceability.ts`). Exported but DELIBERATELY NOT in
+// LITESHIP_GATES / LITESHIP_IR_GATES: it runs on the facts-injected host path only.
+// The CLI composes it ALWAYS-ON on the `--ir` path (the committed ledger is cheap to
+// fold), the same ~3-line wiring as supplyChainGate. See the integrator note.
+export { traceabilityBridgeGate } from './gates/traceability-bridge.js';
 
 // The IR-host gate set the CLI runs WHEN an IR is present (the lean set + the
 // IR-fold gates). See `LITESHIP_IR_GATES`.

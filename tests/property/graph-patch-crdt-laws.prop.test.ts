@@ -44,6 +44,7 @@
  * @module
  */
 
+// PROVES: INV-GRAPHPATCH-IDEMPOTENT, INV-GRAPHPATCH-COMMUTATIVE, INV-GRAPHPATCH-CONVERGENCE, INV-GRAPHPATCH-CONFLICT-BOUNDARY
 import { describe, test, expect } from 'vitest';
 import { Effect } from 'effect';
 import fc from 'fast-check';

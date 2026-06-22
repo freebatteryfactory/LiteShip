@@ -23,6 +23,7 @@ import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
+import type { TraceabilityFacts } from './traceability-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -141,6 +142,17 @@ export interface RunGauntletOnRepoOptions {
    * scenario run, no cost.
    */
   readonly simulation?: SimulationFacts;
+  /**
+   * The INJECTED requirements-traceability facts (the avionics-tier ledger,
+   * DO-178B-style) — OPTIONAL. A host (the CLI's
+   * `packages/cli/src/lib/traceability.ts` state machine) parses `traceability/*.yaml`,
+   * scans the corpus for `// PROVES:` headers, runs the lifecycle fold against the
+   * injected wall-clock date, and threads the decided {@link TraceabilityFacts} here,
+   * where they land on the {@link GateContext} for `traceabilityBridgeGate` to fold.
+   * Omit them (the lean path) and the gate is simply not in the set — no YAML parse,
+   * no corpus scan, no cost.
+   */
+  readonly traceability?: TraceabilityFacts;
 }
 
 /**
@@ -158,7 +170,15 @@ export function runGauntletOnRepo(
 ): GauntletResult {
   return runGates(
     gates,
-    nodeContext(opts.repoRoot, opts.globs, opts.ir, opts.supplyChain, opts.mutation, opts.simulation),
+    nodeContext(
+      opts.repoRoot,
+      opts.globs,
+      opts.ir,
+      opts.supplyChain,
+      opts.mutation,
+      opts.simulation,
+      opts.traceability,
+    ),
     runOpts,
   );
 }
@@ -262,6 +282,11 @@ export function litelaunchGauntletWithIR(
       // `simulationDeterminismGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (simulation is opt-in: `--simulate`).
       ...(cacheOpts.simulation !== undefined ? { simulation: cacheOpts.simulation } : {}),
+      // Inject the host-computed requirements-traceability facts when supplied —
+      // `traceabilityBridgeGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
+      // set at all. The CLI composes the gate + injects these always-on on the `--ir`
+      // path (the committed ledger is cheap to fold).
+      ...(cacheOpts.traceability !== undefined ? { traceability: cacheOpts.traceability } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -323,4 +348,13 @@ export interface LitelaunchCacheOptions {
    * vice versa).
    */
   readonly simulation?: SimulationFacts;
+  /**
+   * OPTIONAL host-computed requirements-traceability facts (the avionics-tier ledger)
+   * threaded onto the {@link GateContext} for `traceabilityBridgeGate` to fold.
+   * Supplied alongside a `gates` override that includes the gate. The CLI runs this
+   * ALWAYS-ON on the `--ir` path (the committed ledger is cheap to fold), so its
+   * verdict varies only with the ledger + the corpus headers + the date — it carries
+   * no separate cache mode (the env fingerprint + toolchain digest already key it).
+   */
+  readonly traceability?: TraceabilityFacts;
 }

@@ -11,6 +11,7 @@
  * LAW (every file's effective >= its base) generalizes.
  */
 
+// PROVES: INV-ASSURANCE-PROPAGATION-MONOTONIC, INV-ASSURANCE-PROPAGATION-DETERMINISTIC
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import {

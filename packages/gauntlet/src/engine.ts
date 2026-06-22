@@ -178,6 +178,15 @@ export function scopeContextByLevel(
     // corpus verdicts — exactly the scoped-context drop the supplyChain/mutation
     // pass-throughs above already fix.
     ...(context.simulation !== undefined ? { simulation: context.simulation } : {}),
+    // Likewise the injected requirements-traceability facts (the avionics-tier ledger):
+    // each ResolvedInvariant carries its own INV-* id + level (the gate folds it as a
+    // finding at the invariant's level; the id is the location, not a src file), so
+    // file-scoping never narrows them — they pass through unchanged. Omit the key when
+    // absent. WITHOUT this pass-through the traceabilityBridgeGate (an L4 gate, so
+    // always scoped) would see no facts and silently fold NOTHING even though the host
+    // injected the resolved ledger — exactly the scoped-context drop the
+    // supplyChain/mutation/simulation pass-throughs above already fix.
+    ...(context.traceability !== undefined ? { traceability: context.traceability } : {}),
   };
 }
 

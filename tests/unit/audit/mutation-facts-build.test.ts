@@ -6,6 +6,7 @@
  *
  * @module
  */
+// PROVES: INV-MUTATION-FACTS-DETERMINISTIC
 import { describe, it, expect } from 'vitest';
 import {
   buildMutationFacts,
