@@ -170,9 +170,17 @@ const checks: Check[] = [
         / as any\b/,
         true, // exclude sanctioned files
       );
+      // DIRECTIVE-POSITION only — a comment that STARTS with @ts-ignore/@ts-nocheck
+      // (after optional whitespace + `//` or `/*`). A raw `/@ts-(ignore|nocheck)/`
+      // false-positives on PROSE that merely MENTIONS the directive — e.g. the
+      // canonical gauntlet gate `packages/gauntlet/src/gates/no-ts-ignore.ts`, whose
+      // whole job is to detect @ts-ignore, documents it in its docstring, remediation
+      // text, and red-fixture string. That gate is the fine-grained BLOCKING authority
+      // (it strips comments/strings before judging); this roll-up matches the same
+      // intent coarsely so it agrees with it (a prose mention is never a violation).
       const tsHits = scanFiles(
         ['packages/*/src/**/*.ts'],
-        /@ts-(ignore|nocheck)\b/,
+        /^\s*\/(?:\/|\*)\s*@ts-(ignore|nocheck)\b/,
         false,
       );
       const lint = sh('pnpm run lint');
