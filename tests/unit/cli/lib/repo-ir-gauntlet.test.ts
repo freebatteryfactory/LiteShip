@@ -45,20 +45,50 @@ import { resolve, join } from 'node:path';
 import { scaledTimeout } from '../../../../vitest.shared.js';
 import { isTaggedError } from '@czap/error';
 import { INVARIANTS } from '@czap/command/invariants';
+import { readFileSync } from 'node:fs';
 import {
   readLiveStandardsSurface,
   serializeStandardsSurface,
+  STANDARDS_SNAPSHOT_PATH,
+  type GitShowReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
 import type { Fact, FileId } from '@czap/gauntlet';
 import {
   liteshipRegexOracle,
   buildRepoIRForRepo,
-  runGauntletWithRepoIR,
+  runGauntletWithRepoIR as runGauntletWithRepoIRRaw,
   DEFAULT_EXPORT_CHECK_EXCLUDED,
+  type RepoIRGauntletCacheOptions,
 } from '../../../../packages/cli/src/lib/repo-ir-gauntlet.js';
 
 /** The injected wall-clock — every run is reproducible against THIS date (two-clock law). */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
+
+/**
+ * The raccoon-rule backstop now diffs the LIVE surface against a PRIOR, INDEPENDENT
+ * baseline sourced FROM GIT (the snapshot as committed on the base ref the change is
+ * reviewed against), never the working-tree snapshot. A hermetic fixture has no git
+ * history, so we inject the BASE via the gitShow seam: the fixture's freshly-written
+ * working snapshot IS the unweakened baseline (a fresh fixture weakens nothing), so the
+ * diff is empty and the always-on gate is green — exactly as before the fortification,
+ * but now via the base-ref path. (A fixture that DID weaken a standard would still be
+ * caught: it would diverge from this base.)
+ */
+const fixtureBaseGitShow: GitShowReader = (repoRoot) =>
+  readFileSync(join(repoRoot, STANDARDS_SNAPSHOT_PATH), 'utf8');
+
+/** Wrap `runGauntletWithRepoIR`, injecting the hermetic base-ref snapshot reader by default. */
+function runGauntletWithRepoIR(
+  repoRoot: string,
+  now: Date,
+  globs?: readonly string[],
+  cacheOpts: RepoIRGauntletCacheOptions = {},
+): ReturnType<typeof runGauntletWithRepoIRRaw> {
+  return runGauntletWithRepoIRRaw(repoRoot, now, globs, {
+    standards: { gitShow: fixtureBaseGitShow },
+    ...cacheOpts,
+  });
+}
 
 /**
  * The real-IR / full-run tests build a `ts.Program` and run the gauntlet over a tmp

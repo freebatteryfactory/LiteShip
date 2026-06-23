@@ -455,6 +455,122 @@ export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 /** Re-exported from `document-graph-schema.ts` so existing `@czap/core` consumers keep the same import site. */
 export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 
+// ---------------------------------------------------------------------------
+// SCHEMA-DERIVED required-field enforcement — "validated-in == the advertised
+// contract" as a CHECKED property, not a hand-list that drifts field-by-field.
+//
+// The advertised JSON schema (`graphPatchProposalSchema`) is the SINGLE SOURCE
+// of the required-field list for the envelope AND for every op variant (node
+// add/remove/update, edge add/remove, plus the nested `edge` object's own
+// required `from`/`to`/`type`). The validator derives its presence checks FROM
+// that schema object — so a future schema addition (a new required field, a new
+// op variant) AUTOMATICALLY gains enforcement here, and no advertised field can
+// be silently unenforced again. (The original gap: the schema required
+// `edge.from`/`edge.to`/`edge.type` but the validator only checked `edge.type`,
+// so `{ op:'remove', edge:{ type:'seq' } }` no-op'd in apply and minted.)
+// ---------------------------------------------------------------------------
+
+/** A JSON-schema object node with the fields this module reads (required + nested properties). */
+type JsonSchemaObject = {
+  readonly type?: string;
+  readonly required?: readonly string[];
+  readonly properties?: Record<string, JsonSchemaObject>;
+  readonly oneOf?: readonly JsonSchemaObject[];
+  readonly items?: JsonSchemaObject;
+};
+
+/**
+ * The DISCRIMINATING body key of an op variant: the required field whose property schema
+ * is an object (`node` for the node variant, `edge` for the edge variant). This is the
+ * structural payload that distinguishes the variants — NOT just "the first non-op required
+ * field" (the node variant requires `family` too, which is an enum, not the body). Derived
+ * from the schema so it stays correct if a future variant adds more required scalars.
+ */
+function variantBodyKey(variant: JsonSchemaObject): string | undefined {
+  for (const field of variant.required ?? []) {
+    if (field === 'op') continue;
+    if (variant.properties?.[field]?.type === 'object') return field;
+  }
+  return undefined;
+}
+
+/** Read the `ops` items' `oneOf` op-variant schemas straight out of the advertised contract. */
+function opVariantSchemas(base: ContentAddress): readonly JsonSchemaObject[] {
+  const schema = graphPatchProposalSchema(base).jsonSchema as JsonSchemaObject;
+  const ops = schema.properties?.['ops'];
+  const variants = ops?.items?.oneOf;
+  if (variants === undefined) {
+    // The advertised schema is the source of truth; if its op-variant shape ever stops
+    // matching this reader, that is a build-of-this-module bug, not untrusted input —
+    // surface it loudly rather than silently degrading the enforcement to nothing.
+    throw InvariantViolationError(
+      'ai-cast.schema-shape',
+      'The advertised GraphPatch schema no longer exposes ops.items.oneOf; the schema-derived ' +
+        'required-field validator cannot read its contract. Reconcile opVariantSchemas with graphPatchProposalSchema.',
+    );
+  }
+  return variants;
+}
+
+/**
+ * Pick the advertised op variant that an untrusted op CLAIMS to be — by the variant's
+ * own discriminating required field (`node` for the node variant, `edge` for the edge
+ * variant). Returns null when the op matches no advertised variant (a malformed op the
+ * caller rejects). Schema-derived: the discriminator is whichever required key the
+ * variant pins, so adding a third op kind to the schema is picked up here automatically.
+ */
+function pickOpVariant(op: Record<string, unknown>, variants: readonly JsonSchemaObject[]): JsonSchemaObject | null {
+  for (const variant of variants) {
+    // The op-BODY key (the variant's required OBJECT property — `node` vs `edge`)
+    // identifies the variant. Discriminate on the body's PRESENCE, so an op that
+    // carries the body but is missing OTHER required scalars (e.g. `family`) still
+    // matches its variant and is rejected for the missing scalar — not mis-routed
+    // to "neither node nor edge".
+    const bodyKey = variantBodyKey(variant);
+    if (bodyKey !== undefined && bodyKey in op) return variant;
+  }
+  return null;
+}
+
+/**
+ * Enforce EVERY required field the advertised schema pins for a matched op variant,
+ * INCLUDING the nested required fields of object-typed properties (so `edge.from` /
+ * `edge.to` / `edge.type` are all enforced, not just `edge.type`). Returns one error
+ * string per missing required field, derived from the schema — never a hand-list.
+ *
+ * Closes the CLASS the edge.remove gap belonged to: any advertised-but-unchecked
+ * required field surfaces HERE as a clean rejection rather than a silent mint.
+ */
+function requiredFieldErrors(op: Record<string, unknown>, variant: JsonSchemaObject, i: number): string[] {
+  const errors: string[] = [];
+  for (const field of variant.required ?? []) {
+    if (!(field in op) || op[field] === undefined) {
+      errors.push(`Patch op[${i}] is missing the advertised required field ${JSON.stringify(field)}.`);
+      continue;
+    }
+    // Recurse into an object-typed required property's OWN required fields (e.g. the
+    // `edge` object pins from/to/type). This is what makes edge.from/edge.to enforced.
+    const propSchema = variant.properties?.[field];
+    const nested = propSchema?.required;
+    if (nested !== undefined && nested.length > 0) {
+      const value = op[field];
+      if (value === null || typeof value !== 'object') {
+        errors.push(`Patch op[${i}] field ${JSON.stringify(field)} must be an object (advertised schema).`);
+        continue;
+      }
+      const valueRec = value as Record<string, unknown>;
+      for (const nestedField of nested) {
+        if (!(nestedField in valueRec) || valueRec[nestedField] === undefined) {
+          errors.push(
+            `Patch op[${i}] ${JSON.stringify(field)} is missing the advertised required field ${JSON.stringify(nestedField)}.`,
+          );
+        }
+      }
+    }
+  }
+  return errors;
+}
+
 /**
  * Validate a proposed node op's payload against {@link DocumentGraphNodeSchema} — the one
  * declarative schema for all eight families. Also checks the op's declared `family`
@@ -463,7 +579,11 @@ export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-sche
 function nodeSchemaError(op: { family?: unknown; node: unknown }, i: number): string | null {
   const nodeFamily = (op.node as { family?: unknown } | null)?.family;
   // The advertised NodePatchOp REQUIRES `family`; a missing op.family must not slip
-  // through (it would mint a patch whose op violates the advertised schema).
+  // through (it would mint a patch whose op violates the advertised schema). The
+  // schema-derived required-field gate (`requiredFieldErrors`) now catches a missing
+  // `family` FIRST, so this branch is belt-and-suspenders — kept so this function stays
+  // total on its own (it is the family-MISMATCH gate, which the required-field gate does
+  // not cover, and a defensive missing-field check costs nothing).
   if (op.family === undefined) {
     return `Patch op[${i}] node op is missing its required 'family' field.`;
   }
@@ -544,10 +664,27 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
     // off-schema `type` ("foo") would mint and persist as a structurally-invalid
     // DocumentGraphEdge. Model JSON is untrusted, so the edge type is gated here.
     const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
+    // SCHEMA-DERIVED required-field gate (the fortify): the advertised contract's op
+    // variants ARE the source of which fields each op must carry. Read them once.
+    const variants = opVariantSchemas(graph.id);
     patch.ops.forEach((rawOp, i) => {
       const op = rawOp as { op?: unknown; node?: unknown; edge?: unknown };
       if (op === null || typeof op !== 'object') {
         errors.push(`Patch op[${i}] is not an object (malformed).`);
+        return;
+      }
+      // FIRST: enforce EVERY advertised required field for the variant this op claims to
+      // be (node vs edge), including nested object-required fields (edge.from/to/type).
+      // This makes "validated-in shape == the advertised schema" a structural property —
+      // a missing required field is a clean rejection, never a silent no-op-then-mint.
+      const variant = pickOpVariant(op as Record<string, unknown>, variants);
+      if (variant === null) {
+        errors.push(`Patch op[${i}] is neither a node nor an edge op (malformed).`);
+        return;
+      }
+      const missing = requiredFieldErrors(op as Record<string, unknown>, variant, i);
+      if (missing.length > 0) {
+        for (const m of missing) errors.push(m);
         return;
       }
       const kind = 'node' in op ? 'node' : 'edge' in op ? 'edge' : null;

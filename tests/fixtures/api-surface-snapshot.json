@@ -1968,6 +1968,11 @@
           "signature": "(1)"
         },
         {
+          "name": "fileHasSanctionedSkip",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "fileMatchesGlob",
           "kind": "function",
           "signature": "(2)"
@@ -2118,6 +2123,11 @@
           "signature": "(10)"
         },
         {
+          "name": "normalizeSiteLine",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "perfClaimBenchGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2144,6 +2154,11 @@
         },
         {
           "name": "rankOf",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "recordingContext",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2180,7 +2195,7 @@
         {
           "name": "sanctionedSkipFor",
           "kind": "function",
-          "signature": "(1)"
+          "signature": "(2)"
         },
         {
           "name": "scopeContextByLevel",
@@ -3017,6 +3032,11 @@
         },
         {
           "name": "isExternalShaderSource",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isFetchableRuntimeUrl",
           "kind": "function",
           "signature": "(1)"
         },

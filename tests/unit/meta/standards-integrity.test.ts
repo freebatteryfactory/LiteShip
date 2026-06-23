@@ -42,12 +42,29 @@ import {
   serializeStandardsSurface,
   writeCommittedSnapshot,
   buildStandardsIntegrityFacts,
+  resolveStandardsBaseRef,
+  readBaseSnapshot,
+  STANDARDS_BASE_REF_ENV,
+  STANDARDS_DEFAULT_BASE_REF,
+  type GitShowReader,
 } from '../../../packages/cli/src/lib/standards-surface.js';
 
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 /** A fixed reference date — the proofKind classification is stable regardless of `now`. */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
 const ALWAYS_BLOCKING = new Set(ALWAYS_BLOCKING_RULES);
+
+/**
+ * The PRIOR-baseline ground truth the real-repo green path is reviewed AGAINST: the
+ * committed working-tree snapshot. On a clean tree the live surface equals it, so a
+ * gitShow stub returning these bytes models "the base where the standards were
+ * unweakened" — the honest baseline for the green-on-real-repo proofs (the default
+ * `main` base may not yet carry the snapshot pre-merge; the backstop fails CLOSED there,
+ * which the dedicated fail-closed test covers).
+ */
+const committedBaseGitShow: GitShowReader = () =>
+  serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
+const BASE_OPTS = { gitShow: committedBaseGitShow } as const;
 
 /** Apply a mutation to a copy of the live elements, diff vs committed, partition by sign-offs. */
 function simulate(
@@ -91,8 +108,8 @@ describe('standards-snapshot drift gate', () => {
 });
 
 describe('the standards backstop is GREEN on the real repo (the live standards are not weakened)', () => {
-  test('zero unsigned weakenings + the committed/live addresses match', () => {
-    const facts = buildStandardsIntegrityFacts(REPO_ROOT, NOW);
+  test('zero unsigned weakenings + the base/live addresses match', () => {
+    const facts = buildStandardsIntegrityFacts(REPO_ROOT, NOW, BASE_OPTS);
     expect(facts.unsignedWeakenings).toEqual([]);
     expect(facts.forbiddenSignoffs).toEqual([]);
     expect(facts.expiredSignoffs).toEqual([]);
@@ -100,7 +117,7 @@ describe('the standards backstop is GREEN on the real repo (the live standards a
   });
 
   test('the standardsIntegrityGate does not block over the real facts', () => {
-    const facts = buildStandardsIntegrityFacts(REPO_ROOT, NOW);
+    const facts = buildStandardsIntegrityFacts(REPO_ROOT, NOW, BASE_OPTS);
     const ctx = { ...memoryContext({}), standards: facts };
     const result = runGates([standardsIntegrityGate], ctx, { now: NOW });
     expect(result.blocked).toBe(false);
@@ -159,14 +176,19 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
   test('a NEW sanctioned skip (more is skipped — the always-blocking no-skipped-test floor relaxed)', () => {
     const part = simulate((els) => [
       ...els,
-      { _tag: 'skip-allowlist', file: 'tests/unit/fake/unsanctioned.test.ts', capability: 'ffmpeg-absent' },
+      {
+        _tag: 'skip-allowlist',
+        file: 'tests/unit/fake/unsanctioned.test.ts',
+        site: "it.skip('fake', () => {});",
+        capability: 'ffmpeg-absent',
+      },
     ]);
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
   });
 
   test('a skip-allowlist add can NEVER be signed (it relaxes the always-blocking no-skipped-test floor)', () => {
     const signoff: StandardsWaiver = {
-      elementKey: 'skip-allowlist::tests/unit/fake/unsanctioned.test.ts',
+      elementKey: "skip-allowlist::tests/unit/fake/unsanctioned.test.ts::it.skip('fake', () => {});",
       weakening: 'skip-allowlist-added',
       owner: 'raccoon',
       justification: 'trust me, this skip is fine',
@@ -175,7 +197,12 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
     const part = simulate(
       (els) => [
         ...els,
-        { _tag: 'skip-allowlist', file: 'tests/unit/fake/unsanctioned.test.ts', capability: 'ffmpeg-absent' },
+        {
+          _tag: 'skip-allowlist',
+          file: 'tests/unit/fake/unsanctioned.test.ts',
+          site: "it.skip('fake', () => {});",
+          capability: 'ffmpeg-absent',
+        },
       ],
       [signoff],
     );
@@ -258,6 +285,136 @@ describe('BITE — a STRENGTHEN never blocks', () => {
         mutationFixtureCount: 1,
       },
     ]);
+    expect(part.unsignedWeakenings).toEqual([]);
+    expect(part.unregeneratedStrengthens.some((c) => c.changeClass === 'strengthen')).toBe(true);
+  });
+});
+
+// ───────────────────────── the base-ref resolution (deterministic) ────────────
+describe('the base ref is resolved deterministically (CI override → PR base → main)', () => {
+  test('CZAP_STANDARDS_BASE_REF wins (the explicit override has highest authority)', () => {
+    expect(
+      resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: 'origin/release-1.2', GITHUB_BASE_REF: 'develop' }),
+    ).toBe('origin/release-1.2');
+  });
+
+  test('GITHUB_BASE_REF is read as origin/<branch> (the GitHub Actions pull_request base)', () => {
+    expect(resolveStandardsBaseRef({ GITHUB_BASE_REF: 'develop' })).toBe('origin/develop');
+  });
+
+  test('falls back to the integration default (main) for a local / feature-branch run', () => {
+    expect(resolveStandardsBaseRef({})).toBe(STANDARDS_DEFAULT_BASE_REF);
+    expect(STANDARDS_DEFAULT_BASE_REF).toBe('main');
+  });
+
+  test('a blank/whitespace override is ignored (not treated as a real ref)', () => {
+    expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: '   ' })).toBe(STANDARDS_DEFAULT_BASE_REF);
+  });
+});
+
+// ───────────────────────── the FAIL-CLOSED base read ──────────────────────────
+describe('the base snapshot read is FAIL-CLOSED (refuse, never fall back to the working snapshot)', () => {
+  test('an unresolvable base (the snapshot absent at the ref) THROWS rather than passing', () => {
+    // gitShow returns undefined ⇒ the snapshot does not exist at the base ref. The
+    // backstop MUST refuse (the whole point: a same-commit weakening must not be able to
+    // make the gate fall back to the working snapshot and pass).
+    const absentBase: GitShowReader = () => undefined;
+    expect(() => readBaseSnapshot(REPO_ROOT, 'origin/does-not-exist', absentBase)).toThrow();
+  });
+
+  test('buildStandardsIntegrityFacts fails closed when the base ref carries no snapshot', () => {
+    const absentBase: GitShowReader = () => undefined;
+    expect(() => buildStandardsIntegrityFacts(REPO_ROOT, NOW, { gitShow: absentBase })).toThrow();
+  });
+});
+
+// ──────────────────── THE DRILL SERGEANT — the same-commit bypass is CLOSED ────
+//
+// THE ATTACK (the finding, tip 69261df8): a raccoon weakens a standard AND
+// regenerates+commits the working snapshot to MATCH the weakened live surface, in the
+// SAME commit. The OLD backstop diffed live vs the COMMITTED WORKING snapshot → live ==
+// working ⇒ NO weakening seen (the bypass). The NEW backstop diffs live vs the PRIOR,
+// INDEPENDENT BASE ref → the weakening STILL surfaces even though the working snapshot
+// was regenerated to hide it. You cannot sign away a lie by shipping the lie and its
+// cover-up together.
+describe('DRILL SERGEANT — the same-commit code+snapshot bypass is CLOSED', () => {
+  // Build the attack from the REAL live surface. The BASE (prior, unweakened) omits ONE
+  // real sanctioned-skip element; the LIVE surface (and the regenerated WORKING snapshot
+  // that matches it) BOTH carry it — so versus the base it is a `skip-allowlist-added`
+  // weakening, which is NEVER signable (the meta-analogue of "you cannot waive a lie").
+  function attackSurfaces(): {
+    base: StandardsElement[];
+    workingSnapshot: StandardsElement[];
+    live: StandardsElement[];
+  } {
+    const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
+    const skip = live.find((e) => e._tag === 'skip-allowlist');
+    expect(skip, 'the live surface must carry at least one sanctioned skip for this drill').toBeDefined();
+    // The PRIOR base did NOT have this sanctioned skip (the unweakened baseline).
+    const base = live.filter((e) => e !== skip);
+    // The cover-up: the WORKING snapshot was regenerated to MATCH the weakened live (so it
+    // ALSO carries the new skip). live == workingSnapshot — the same-commit attack.
+    const workingSnapshot = [...live];
+    return { base, workingSnapshot, live };
+  }
+
+  test('RED (the OLD behavior — diff vs the WORKING snapshot — BYPASSES the weakening)', () => {
+    const { workingSnapshot, live } = attackSurfaces();
+    // Reproduce the OLD `buildStandardsIntegrityFacts`: diff the live surface against the
+    // just-committed WORKING snapshot. Because the cover-up made working == live, the diff
+    // is EMPTY → no weakening → the raccoon walked. THIS is the bug the fix closes.
+    const oldChanges = diffStandardsSurface(workingSnapshot, live);
+    const oldPart = applyStandardsWaivers(oldChanges, [], NOW, ALWAYS_BLOCKING);
+    expect(oldPart.unsignedWeakenings).toEqual([]); // BYPASS: the lie passed.
+  });
+
+  test('GREEN (the NEW behavior — diff vs the PRIOR BASE ref — CATCHES it as never-signable)', () => {
+    const { base, live } = attackSurfaces();
+    // The fix: diff the live surface against the PRIOR, INDEPENDENT base ref (NOT the
+    // working snapshot). The skip-allowlist-add surfaces as a weakening versus the base —
+    // and it is NEVER signable (it relaxes the always-blocking no-skipped-test floor).
+    const newChanges = diffStandardsSurface(base, live);
+    const newPart = applyStandardsWaivers(newChanges, [], NOW, ALWAYS_BLOCKING);
+    expect(newPart.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+  });
+
+  test('END-TO-END: buildStandardsIntegrityFacts (base-ref sourced) catches the same-commit weakening', () => {
+    const { base } = attackSurfaces();
+    // Inject the base snapshot via the gitShow seam (the prior, unweakened baseline). The
+    // WORKING snapshot on disk is irrelevant to the verdict now — the backstop reads the
+    // base ref, not the working file. The never-signable weakening is caught + blocking.
+    const baseGitShow: GitShowReader = () =>
+      serializeStandardsSurface({ snapshotFormat: 1, elements: base, address: '' });
+    const facts = buildStandardsIntegrityFacts(REPO_ROOT, NOW, { gitShow: baseGitShow });
+    expect(facts.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+    const ctx = { ...memoryContext({}), standards: facts };
+    expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
+  });
+
+  test('a same-commit STRENGTHEN (legit regeneration) is NOT a false weakening', () => {
+    // The legitimate path preserved: an intentional STRENGTHENING committed together with
+    // its regenerated snapshot. The base lacks a NEW gate; live (and the regenerated
+    // working snapshot) carry it → versus the base it is a strengthen, never blocking.
+    const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
+    const extraGate: StandardsElement = {
+      _tag: 'gate',
+      ruleId: 'gauntlet/new-stricter-gate',
+      set: 'LITESHIP_IR_GATES',
+      level: 'L4',
+      redFixtureCount: 1,
+      greenFixtureCount: 1,
+      mutationFixtureCount: 1,
+    };
+    const liveStrengthened = [...live, extraGate];
+    // The base is the prior surface WITHOUT the new gate.
+    const baseGitShow: GitShowReader = () =>
+      serializeStandardsSurface({ snapshotFormat: 1, elements: live, address: '' });
+    // Diff the strengthened live against the prior base → a strengthen, not a weakening.
+    const changes = diffStandardsSurface(
+      JSON.parse(baseGitShow(REPO_ROOT, 'base', 'p')!).elements as StandardsElement[],
+      liveStrengthened,
+    );
+    const part = applyStandardsWaivers(changes, [], NOW, ALWAYS_BLOCKING);
     expect(part.unsignedWeakenings).toEqual([]);
     expect(part.unregeneratedStrengthens.some((c) => c.changeClass === 'strengthen')).toBe(true);
   });

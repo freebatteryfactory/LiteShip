@@ -21,6 +21,7 @@
  */
 // PROVES: INV-SHADER-CONTENT-INTEGRITY
 import { describe, it, expect } from 'vitest';
+import fc from 'fast-check';
 import { AddressedDigest } from '@czap/core';
 import {
   parseShaderIntegrity,
@@ -29,7 +30,7 @@ import {
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
 } from '../../../packages/web/src/security/shader-integrity.js';
-import { resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
+import { isFetchableRuntimeUrl, resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
 
 const SAMPLE_GLSL = '#version 300 es\nprecision mediump float;\nout vec4 c;\nvoid main(){c=vec4(1.0);}';
 
@@ -171,6 +172,34 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
     }
   });
 
+  // SECURITY REGRESSION (P2b — the re-attacked bypass): `resolveRuntimeUrl` ACCEPTS
+  // and returns same-origin QUERY-RELATIVE (`?shader=wave`) and BARE SAME-DIR
+  // (`wave`) tokens — they resolve to fetchable same-origin URLs. The OLD classifier
+  // keyed off extension / embedded-slash / scheme only, so these slash-less,
+  // extension-less, scheme-less tokens fell into the INLINE branch UNVERIFIED —
+  // fetched/integrity-verified NEVER, compiled as literal "source". This is the SRI
+  // bypass codex found. The classifier now DELEGATES to the URL policy's fetchable-URL
+  // predicate, so any shape the policy treats as a fetchable URL is EXTERNAL.
+  it('treats a QUERY-RELATIVE shader URL (`?shader=wave`) as EXTERNAL (the re-attacked bypass)', () => {
+    expect(isExternalShaderSource('?shader=wave')).toBe(true);
+    expect(isExternalShaderSource('?name=blur&v=2')).toBe(true);
+  });
+
+  it('treats a BARE same-dir token (`wave`, no slash/ext/scheme) as EXTERNAL', () => {
+    expect(isExternalShaderSource('wave')).toBe(true);
+    expect(isExternalShaderSource('post')).toBe(true);
+  });
+
+  it('treats data:/blob: URL tokens as EXTERNAL (URL-shaped, never inline literal source)', () => {
+    // A data:/blob: token is something the URL policy treats as a URL (data: is
+    // cross-origin → policy-vetted/refused; blob: resolves same-origin → fetchable).
+    // Either way it is NOT a genuine multi-line GLSL body the author typed inline,
+    // so secure-by-default it must take the external path (fetch+verify or refuse),
+    // never be compiled as literal shader text.
+    expect(isExternalShaderSource('blob:http://localhost/abc-123')).toBe(true);
+    expect(isExternalShaderSource('data:text/plain,void%20main(){}')).toBe(true);
+  });
+
   it('does NOT over-correct: a real multi-line GLSL/WGSL body stays inline', () => {
     // Bodies carry inner whitespace / newlines / shader syntax — never fetched.
     expect(isExternalShaderSource(SAMPLE_GLSL)).toBe(false);
@@ -181,6 +210,78 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
     ).toBe(false);
     // A single-line body with inner whitespace (statements) is still inline.
     expect(isExternalShaderSource('void main() { gl_FragColor = vec4(1.0); }')).toBe(false);
+  });
+});
+
+describe('THE DRILL SERGEANT — classifier is a provable function of the URL policy', () => {
+  // The cross-check that makes drift IMPOSSIBLE: for EVERY input, if the URL policy
+  // (`isFetchableRuntimeUrl`, the SAME predicate the shader classifier delegates to)
+  // treats the token as a fetchable URL, then `isExternalShaderSource` MUST return
+  // true. Delegation means this can never be violated by construction; the property
+  // guards against a future re-introduction of a parallel heuristic. If someone later
+  // teaches the URL policy a new fetchable shape, the classifier follows automatically.
+  it('PROPERTY: fetchable-by-the-URL-policy ⟹ external (no fetchable shape reaches inline)', () => {
+    fc.assert(
+      fc.property(fc.string(), (raw) => {
+        // The single source of truth: the URL policy's own fetchable-URL predicate.
+        if (isFetchableRuntimeUrl(raw)) {
+          expect(isExternalShaderSource(raw)).toBe(true);
+        }
+      }),
+      { numRuns: 2000 },
+    );
+  });
+
+  it('PROPERTY: the classifier and the URL-policy predicate are IDENTICAL (delegation, not a twin)', () => {
+    // Stronger than the implication above: the two are the SAME function. A real
+    // inline body (carries inner whitespace) is rejected by BOTH; a URL token is
+    // accepted by BOTH. This is what "function OF the URL policy" means.
+    fc.assert(
+      fc.property(fc.string(), (raw) => {
+        expect(isExternalShaderSource(raw)).toBe(isFetchableRuntimeUrl(raw));
+      }),
+      { numRuns: 2000 },
+    );
+  });
+
+  it('drives the cross-check over the canonical accepted-shape corpus the URL tests use', () => {
+    // The exact corpus of shapes the URL policy accepts as fetchable: path-relative,
+    // query-relative, bare same-dir, protocol-relative, scheme-absolute http(s),
+    // root-absolute, and the data:/blob: URL-shaped tokens. Each must be EXTERNAL.
+    const fetchableCorpus = [
+      '/shaders/wave.glsl', // root-absolute
+      'shaders/foo.glsl', // path-relative
+      './sub/bar.wgsl', // explicit-relative
+      '../assets/wave.frag', // parent-relative
+      '?shader=wave', // query-relative (the re-attacked bypass)
+      '?name=blur&v=2', // query-relative, multi-param
+      'wave', // bare same-dir token (the re-attacked bypass)
+      'post.vert', // bare token w/ shader extension
+      '//cdn.example/wave.wgsl', // protocol-relative
+      'https://cdn.example/wave.glsl', // scheme-absolute https
+      'http://localhost/wave.glsl', // scheme-absolute http
+      'blob:http://localhost/abc-123', // blob: URL token
+      'data:text/plain,void%20main(){}', // data: URL token
+    ];
+    for (const url of fetchableCorpus) {
+      // The URL policy treats it as a fetchable URL...
+      expect(isFetchableRuntimeUrl(url)).toBe(true);
+      // ...so the classifier MUST agree it is external (never compiled unverified).
+      expect(isExternalShaderSource(url)).toBe(true);
+    }
+  });
+
+  it('a genuine multi-line GLSL AND WGSL body is rejected as a URL by BOTH (stays inline)', () => {
+    const glsl = '#version 300 es\nprecision mediump float;\nout vec4 c;\nvoid main(){ c = vec4(1.0); }';
+    const wgsl =
+      '@group(0) @binding(0) var<uniform> u: U;\n@fragment fn fs_main() -> @location(0) vec4<f32> {\n  return vec4<f32>(1.0);\n}';
+    for (const body of [glsl, wgsl]) {
+      // The URL policy does NOT treat a multi-line body as a fetchable URL token
+      // (inner whitespace/newlines ⟹ a body, not a single URL token)...
+      expect(isFetchableRuntimeUrl(body)).toBe(false);
+      // ...so the classifier keeps it INLINE — no over-correction.
+      expect(isExternalShaderSource(body)).toBe(false);
+    }
   });
 });
 

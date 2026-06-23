@@ -8,7 +8,7 @@
 
 > **IntegrityDecision** = \{ `proceed`: `true`; \} \| \{ `proceed`: `false`; `reason`: `"mismatch"` \| `"absent-required"`; \}
 
-Defined in: [web/src/security/shader-integrity.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L244)
+Defined in: [web/src/security/shader-integrity.ts:275](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L275)
 
 The secure-by-default refusal decision: given the resolved integrity result and
 the policy mode, should the runtime REFUSE to compile? Returns a discriminated

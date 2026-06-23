@@ -25,19 +25,17 @@ import {
 } from '../registry.js';
 
 /**
- * One skipped generated test, modelled for the single-source derivation. The
- * `kind` literal-union faithfully mirrors {@link PlumbSkip} so the engine's
- * `PlumbSkip[]` is assignable to the derived element type and the `skips` array's
- * `items` schema is the real element shape (tighter than a bare `{type:'array'}`).
+ * One skipped generated test, modelled for the single-source derivation. The `kind`
+ * mirrors {@link PlumbSkip.kind} — the detected skip TOKEN from the UNIFIED alias-aware
+ * detector (`@czap/gauntlet`'s `detectSkips`), which covers every form a generated test
+ * can carry (`it.skip` / `test.skip` / `describe.skip` / `bench.skip` / `it.todo` / `xit`
+ * / the runtime-conditional `it.skipIf` / `it.runIf` / the `COND ? it : it.skip` alias).
+ * It is a free `string` (not a closed literal union) so a new runner-verb skip form the
+ * detector learns is faithfully surfaced — a generated test must NEVER skip in ANY form.
  */
 const PlumbSkipSchema = Schema.Struct({
   file: Schema.String,
-  kind: Schema.Union([
-    Schema.Literal('it.skip'),
-    Schema.Literal('test.skip'),
-    Schema.Literal('describe.skip'),
-    Schema.Literal('bench.skip'),
-  ]),
+  kind: Schema.String,
   message: Schema.String,
 });
 

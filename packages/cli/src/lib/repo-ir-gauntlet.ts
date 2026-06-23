@@ -68,7 +68,7 @@ import {
 } from '@czap/gauntlet';
 import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
-import { buildStandardsIntegrityFacts } from './standards-surface.js';
+import { buildStandardsIntegrityFacts, type StandardsFactsOptions } from './standards-surface.js';
 import { runSimulationCorpus } from './simulation-corpus.js';
 import { gauntletToolchainDigest, makeFsVerdictCache, makeFsMutantVerdictCache } from './gauntlet-verdict-cache.js';
 import { makeVitestMutationRunner } from './mutation-runner.js';
@@ -295,7 +295,7 @@ export async function runGauntletWithRepoIR(
   // content-address + a diff, no test runs), so it rides the always-on path with
   // traceability.
   gateSet.push(standardsIntegrityGate);
-  const standardsFacts: StandardsIntegrityFacts = buildStandardsIntegrityFacts(repoRoot, now);
+  const standardsFacts: StandardsIntegrityFacts = buildStandardsIntegrityFacts(repoRoot, now, cacheOpts.standards);
 
   // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
   // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
@@ -754,6 +754,18 @@ export interface RepoIRGauntletCacheOptions {
    * over the IR edges, no test runs) — opt-in.
    */
   readonly withComposition?: boolean;
+  /**
+   * The always-on raccoon-rule backstop ({@link standardsIntegrityGate}) diffs the LIVE
+   * standards surface against a PRIOR, INDEPENDENT baseline — the standards snapshot AS
+   * COMMITTED ON THE BASE REF the change is reviewed against (read from git), NOT the
+   * just-committed working-tree snapshot (so a same-commit code+snapshot weakening still
+   * diffs as a weakening). These seams ({@link StandardsFactsOptions}) override the base
+   * ref resolution (default: `CZAP_STANDARDS_BASE_REF` → `GITHUB_BASE_REF` → `main`) and
+   * the `git show` reader — injected by CI (which knows the PR base) and by hermetic
+   * tests (which inject a deterministic base snapshot). FAIL-CLOSED: an unresolvable base
+   * THROWS rather than fall back to the working snapshot.
+   */
+  readonly standards?: StandardsFactsOptions;
 }
 
 /**

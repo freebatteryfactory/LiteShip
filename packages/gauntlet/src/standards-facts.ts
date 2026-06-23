@@ -158,8 +158,16 @@ export interface FloorSurface {
  */
 export interface SkipAllowlistSurface {
   readonly _tag: 'skip-allowlist';
-  /** The repo-relative test file whose skip is sanctioned (the stable identity). */
+  /** The repo-relative test file whose skip is sanctioned. */
   readonly file: string;
+  /**
+   * The SITE discriminator — the normalized source line the sanctioned skip sits on. The
+   * sanction is PER-SITE, not per-file: `(file, site)` is the stable identity, so a file
+   * may carry MULTIPLE sanctioned sites (e.g. the wasm-parity dual arms) as two distinct
+   * surface elements, and adding a NEW site to an already-sanctioned file is a visible
+   * WEAKEN (one more skip allowed) the raccoon-rule diff surfaces.
+   */
+  readonly site: string;
   /** The capability whose absence sanctions the skip (ffmpeg-absent / wasm-absent / …). */
   readonly capability: string;
 }
@@ -239,7 +247,10 @@ export function surfaceElementKey(el: StandardsElement): string {
     case 'floor':
       return `floor::${el.name}`;
     case 'skip-allowlist':
-      return `skip-allowlist::${el.file}`;
+      // PER-SITE identity: `(file, site)`. A file may carry multiple sanctioned sites, so
+      // the file alone is not the identity — keying by file would collapse the dual arms
+      // into one element and hide a sanctioned site from the snapshot.
+      return `skip-allowlist::${el.file}::${el.site}`;
   }
 }
 
@@ -513,9 +524,11 @@ function diffFloor(prior: FloorSurface, current: FloorSurface): readonly Standar
 }
 
 /**
- * Diff a skip-allowlist MODIFY (same file) — only the CAPABILITY reason changed. The file
- * is still sanctioned (the skip is still allowed), so the count of allowed skips is
- * unchanged: NEUTRAL drift (re-label the reason; regenerate the snapshot to refresh it).
+ * Diff a skip-allowlist MODIFY (same `(file, site)`) — only the CAPABILITY reason changed.
+ * The exact SITE is still sanctioned (the skip is still allowed), so the count of allowed
+ * skips is unchanged: NEUTRAL drift (re-label the reason; regenerate the snapshot to
+ * refresh it). A re-worded SITE is NOT a modify — the site is part of the identity, so it
+ * surfaces as a remove (strengthen) + add (weaken), re-opening the sanction (correct).
  */
 function diffSkipAllowlist(prior: SkipAllowlistSurface, current: SkipAllowlistSurface): readonly StandardsChange[] {
   if (prior.capability === current.capability) return [];
@@ -523,7 +536,7 @@ function diffSkipAllowlist(prior: SkipAllowlistSurface, current: SkipAllowlistSu
     {
       elementKey: surfaceElementKey(current),
       changeClass: 'neutral',
-      detail: `sanctioned skip for ${current.file} capability re-labelled ${prior.capability} → ${current.capability} — still sanctioned (the skip count is unchanged); regenerate the snapshot to refresh the recorded reason.`,
+      detail: `sanctioned skip for ${current.file} (site \`${current.site}\`) capability re-labelled ${prior.capability} → ${current.capability} — still sanctioned (the skip count is unchanged); regenerate the snapshot to refresh the recorded reason.`,
     },
   ];
 }
@@ -575,11 +588,12 @@ function removalChange(el: StandardsElement): StandardsChange {
         detail: `waiver for ${el.ruleId} removed — less is waived.`,
       };
     case 'skip-allowlist':
-      // A REMOVED sanctioned skip = LESS is skipped (a test re-enabled) = a STRENGTHEN.
+      // A REMOVED sanctioned site = LESS is skipped (a test re-enabled, or the skip
+      // re-worded so this exact site no longer matches) = a STRENGTHEN.
       return {
         elementKey: key,
         changeClass: 'strengthen',
-        detail: `sanctioned skip for ${el.file} removed — one fewer file is allowed to skip (a capability gate was re-wired or the dead skip dropped).`,
+        detail: `sanctioned skip for ${el.file} (site \`${el.site}\`) removed — one fewer skip SITE is allowed (a capability gate was re-wired, re-worded, or the dead skip dropped).`,
       };
   }
 }
@@ -605,7 +619,7 @@ function additionChange(el: StandardsElement): StandardsChange {
       elementKey: key,
       changeClass: 'weaken',
       weakening: 'skip-allowlist-added',
-      detail: `NEW sanctioned skip for ${el.file} (capability: ${el.capability}) — one more file is allowed to skip than the committed snapshot recorded. A skip allowlist entry can never be signed off (it relaxes the always-blocking no-skipped-test floor); regenerate the snapshot intentionally only if the capability gate is genuinely honest.`,
+      detail: `NEW sanctioned skip for ${el.file} (site \`${el.site}\`, capability: ${el.capability}) — one more skip SITE is allowed than the committed snapshot recorded. A skip allowlist entry can never be signed off (it relaxes the always-blocking no-skipped-test floor); regenerate the snapshot intentionally only if the capability gate is genuinely honest.`,
     };
   }
   // Adding any other element (gate, invariant, always-blocking rule, floor,

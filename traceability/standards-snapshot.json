@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:d6b89ece",
+  "address": "fnv1a:cab3fe48",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -582,71 +582,91 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/browser/spsc-ring-browser.test.ts",
+      "site": "describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
       "capability": "shared-array-buffer-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/e2e/astro-directives.e2e.ts",
+      "site": "test.skip(!built, 'astro example not built — run: pnpm exec tsx tests/integration/astro/test.ts');",
       "capability": "astro-example-not-built"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/integration/cli/idempotency.test.ts",
+      "site": "const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/integration/cli/scene-dev.test.ts",
+      "site": "const conditionalIt = underCoverage ? it.skip : it;",
       "capability": "coverage-instrumentation"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/integration/cli/scene-render.test.ts",
+      "site": "const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/property/boundary-evaluate-batch.prop.test.ts",
+      "site": "describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluate (Rust kernel loaded)', () => {",
       "capability": "wasm-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/smoke/intro-render.test.ts",
+      "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/command/error-contract.test.ts",
+      "site": "it.runIf(FFMPEG_RENDER_CAPABLE)('a stream failure mentioning stdin/EPIPE surfaces the probe verdict', async () => {",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/command/ffmpeg-render-backend.test.ts",
+      "site": "test.skip('ffmpeg+libx264 render (skipped — codec not on PATH)', () => {",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/command/host-context.test.ts",
+      "site": "it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-parity.test.ts",
+      "site": "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "capability": "wasm-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/core/wasm-parity.test.ts",
+      "site": "describe.skipIf(wasmPresent)('WASM/TS kernel parity (artifact absent — fallbackKernels is what ships here)', () => {",
       "capability": "wasm-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/core/wasm-shipping.test.ts",
+      "site": "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
       "capability": "wasm-dist-staged"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/stage/dual-export-node.test.ts",
+      "site": "test.skip('headless dual-export end to end (skipped — codec not on PATH)', () => {",
       "capability": "ffmpeg-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/stage/ffmpeg-encoder.test.ts",
+      "site": "test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
       "capability": "ffmpeg-absent"
     },
     {

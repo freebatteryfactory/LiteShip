@@ -239,6 +239,63 @@ function malformedResolution(
 }
 
 /**
+ * Inner-whitespace test — a single URL TOKEN carries NO inner whitespace or
+ * newline. This is the load-bearing distinguisher between a fetchable URL token and
+ * an inline body: the WHATWG URL parser SILENTLY percent-encodes/strips inner
+ * whitespace (a multi-line shader body becomes a mangled path that would never fetch
+ * the intended resource), so any string with inner whitespace was NOT authored as a
+ * URL — it is a body. Trailing/leading whitespace is trimmed by the caller before
+ * this runs, so only INNER whitespace reaches here. Pure + deterministic.
+ */
+const INNER_WHITESPACE_RE = /\s/;
+
+/**
+ * The CANONICAL "is this a fetchable runtime URL?" predicate — the single source of
+ * truth that the shader-integrity classifier ({@link isExternalShaderSource})
+ * DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
+ *
+ *   1. it is a single URL TOKEN (no inner whitespace / newline — see
+ *      {@link INNER_WHITESPACE_RE}); a string with inner whitespace is an inline
+ *      body the URL parser would silently mangle, never a URL the author meant; AND
+ *   2. {@link resolveRuntimeUrl} treats it as a URL — i.e. the resolution is NEITHER
+ *      `'missing'` (empty) NOR `'malformed'` (the parser rejected it). EVERY other
+ *      variant (`allowed`, `cross-origin-rejected`, `origin-not-allowed`,
+ *      `kind-not-allowed`, `private-ip-rejected`) means "this IS a URL the policy
+ *      reasoned about" — fetchable in shape, even when the policy then refuses the
+ *      ORIGIN. A refused-origin URL is still a URL, never an inline body.
+ *
+ * This captures EXACTLY the inputs `resolveRuntimeUrl` would treat as a fetchable
+ * URL vs an opaque body. It deliberately uses the `'gpu-shader'` kind and a
+ * `same-origin` policy: the classification question is "URL-or-body?", which the
+ * kind/origin-allowlist does NOT change (a cross-origin URL is still URL-SHAPED, it
+ * is merely refused) — so the predicate is stable regardless of the host's policy.
+ *
+ * Shapes this accepts (all URL-shaped, none an inline body): root-absolute
+ * (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`, `../x`), query-relative
+ * (`?shader=wave`), bare same-dir (`wave`), protocol-relative (`//host/x`),
+ * scheme-absolute (`http(s)://…`), and URL-scheme tokens (`data:…`, `blob:…`). A
+ * genuine multi-line GLSL/WGSL body is rejected (inner whitespace ⟹ not a token).
+ *
+ * Pure + deterministic: no clock, no network — the resolution is a syntactic
+ * classification only. Never throws ({@link resolveRuntimeUrl} never throws).
+ *
+ * @param rawUrl - the candidate token (e.g. a `data-czap-shader-src` value).
+ */
+export function isFetchableRuntimeUrl(rawUrl: string | null | undefined): boolean {
+  if (rawUrl === null || rawUrl === undefined) return false;
+  const trimmed = rawUrl.trim();
+  if (trimmed.length === 0) return false;
+  // A body carries inner whitespace; a URL token does not. Reject bodies up front so
+  // the URL parser never silently mangles a multi-line shader into a fake path.
+  if (INNER_WHITESPACE_RE.test(trimmed)) return false;
+  // Delegate the URL-or-not decision to the canonical resolver. Any variant other
+  // than `missing` / `malformed` means the resolver treated it as a URL it reasoned
+  // about — i.e. URL-shaped, hence fetchable in shape (origin refusal is separate).
+  const resolution = resolveRuntimeUrl(trimmed, { kind: 'gpu-shader', policy: { mode: 'same-origin' } });
+  return resolution.type !== 'missing' && resolution.type !== 'malformed';
+}
+
+/**
  * Resolve a user-supplied `rawUrl` under `options.policy` and classify
  * the result as one of {@link RuntimeUrlResolution}'s variants.
  *

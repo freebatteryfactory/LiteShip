@@ -40,8 +40,20 @@ import {
   buildStandardsIntegrityFacts,
   STANDARDS_SNAPSHOT_PATH,
   STANDARDS_WAIVERS_PATH,
+  type GitShowReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
-import type { StandardsWaiver } from '@czap/gauntlet';
+import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
+
+/**
+ * Build a {@link GitShowReader} stub serving `base` as the PRIOR baseline snapshot. The
+ * base-ref model: `buildStandardsIntegrityFacts` diffs the LIVE surface against the
+ * snapshot AS COMMITTED ON THE BASE REF (read via git), NOT the working-tree snapshot —
+ * so a same-commit weakening that regenerates the working snapshot still diffs vs the
+ * base. These hermetic tests inject the base directly (no real git in a temp repo).
+ */
+function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElement[]; address: string }): GitShowReader {
+  return () => serializeStandardsSurface(base);
+}
 
 /** A fixed reference date — the two-clock law: every state resolves against THIS. */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
@@ -308,25 +320,30 @@ describe('readStandardsWaivers — the owner sign-off ledger (the only honest es
 });
 
 describe('buildStandardsIntegrityFacts — the host-computed facts the gate folds', () => {
-  it('an UN-weakened repo (snapshot regenerated from live) → zero unsigned weakenings + matching addresses', () => {
-    // Generate the snapshot from the SAME live surface → the diff is empty.
-    writeCommittedSnapshot(root, readLiveStandardsSurface(root, NOW));
-    const facts = buildStandardsIntegrityFacts(root, NOW);
+  it('an UN-weakened branch (the BASE-ref snapshot equals live) → zero unsigned weakenings + matching addresses', () => {
+    // The BASE (the prior, reviewed-against baseline) equals the live surface → the diff
+    // is empty. The base is sourced via git (the gitShow seam), NOT the working snapshot.
+    const facts = buildStandardsIntegrityFacts(root, NOW, { gitShow: baseGitShow(readLiveStandardsSurface(root, NOW)) });
     expect(facts.unsignedWeakenings).toEqual([]);
     expect(facts.forbiddenSignoffs).toEqual([]);
     expect(facts.expiredSignoffs).toEqual([]);
     expect(facts.committedAddress).toBe(facts.liveAddress);
   });
 
-  it('a WEAKENED committed→live pair (a lowered mutation floor in the snapshot) → a blocking unsigned floor-lowered weakening', () => {
-    // Commit a snapshot whose mutation floor is STRONGER than live (live lowered it) →
-    // the live surface is a weakening relative to the committed ground truth.
+  it('a WEAKENED base→live pair (a lowered mutation floor) → a blocking unsigned floor-lowered weakening', () => {
+    // The BASE-ref snapshot has a STRONGER mutation floor than live (live lowered it) →
+    // the live surface is a weakening relative to the prior baseline — caught even if the
+    // working snapshot was regenerated to match live (the base-ref diff is what bites).
     const live = readLiveStandardsSurface(root, NOW);
     const strongerElements = live.elements.map((e) =>
       e._tag === 'floor' && e.name === 'mutation-score::packages/x/src/b.ts' ? { ...e, value: 1 } : e,
     );
-    writeCommittedSnapshot(root, { snapshotFormat: 1, elements: strongerElements, address: '' });
-    const facts = buildStandardsIntegrityFacts(root, NOW);
+    // The COVER-UP: the working snapshot is regenerated to MATCH the weakened live — the
+    // OLD (working-snapshot) diff would have passed. The base-ref diff still catches it.
+    writeCommittedSnapshot(root, live);
+    const facts = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+    });
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
     expect(facts.committedAddress).not.toBe(facts.liveAddress);
   });
@@ -336,7 +353,6 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
     const strongerElements = live.elements.map((e) =>
       e._tag === 'floor' && e.name === 'mutation-score::packages/x/src/b.ts' ? { ...e, value: 1 } : e,
     );
-    writeCommittedSnapshot(root, { snapshotFormat: 1, elements: strongerElements, address: '' });
     const signoff: StandardsWaiver = {
       elementKey: 'floor::mutation-score::packages/x/src/b.ts',
       weakening: 'floor-lowered',
@@ -345,7 +361,9 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
       expiry: '2999-01-01',
     };
     writeFileSync(join(root, STANDARDS_WAIVERS_PATH), JSON.stringify({ signoffs: [signoff] }), 'utf8');
-    const facts = buildStandardsIntegrityFacts(root, NOW);
+    const facts = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+    });
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(false);
     expect(facts.signedWeakenings.some((c) => c.weakening === 'floor-lowered' && c.owner === 'heyoub')).toBe(true);
   });
@@ -355,7 +373,6 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
     const strongerElements = live.elements.map((e) =>
       e._tag === 'floor' && e.name === 'mutation-score::packages/x/src/b.ts' ? { ...e, value: 1 } : e,
     );
-    writeCommittedSnapshot(root, { snapshotFormat: 1, elements: strongerElements, address: '' });
     const signoff: StandardsWaiver = {
       elementKey: 'floor::mutation-score::packages/x/src/b.ts',
       weakening: 'floor-lowered',
@@ -364,9 +381,18 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
       expiry: '2000-01-01',
     };
     writeFileSync(join(root, STANDARDS_WAIVERS_PATH), JSON.stringify({ signoffs: [signoff] }), 'utf8');
-    const facts = buildStandardsIntegrityFacts(root, NOW);
+    const facts = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+    });
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
     expect(facts.expiredSignoffs.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('FAILS CLOSED when the base ref carries no snapshot (refuse, never fall back to the working snapshot)', () => {
+    // The bypass we are closing: a same-commit weakening regenerates the working snapshot,
+    // then HOPES the gate falls back to it. It must not — an unresolvable base THROWS.
+    writeCommittedSnapshot(root, readLiveStandardsSurface(root, NOW));
+    expect(() => buildStandardsIntegrityFacts(root, NOW, { gitShow: () => undefined })).toThrow();
   });
 });
 

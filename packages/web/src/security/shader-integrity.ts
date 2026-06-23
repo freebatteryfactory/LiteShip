@@ -24,6 +24,7 @@
  * @module
  */
 import { AddressedDigest } from '@czap/core';
+import { isFetchableRuntimeUrl } from './runtime-url.js';
 
 /**
  * A parsed, author-pinned shader integrity expectation — the result of
@@ -66,12 +67,6 @@ export type IntegrityResult =
 
 /** The SRI grammar this module accepts: `sha256-<base64>`. Only sha256 (the kernel). */
 const SRI_SHA256_RE = /^sha256-([A-Za-z0-9+/]+={0,2})$/;
-
-/**
- * Shader-file extensions that mark a single-token `data-czap-shader-src` value as a
- * fetchable URL (not an inline body) — see {@link isExternalShaderSource}.
- */
-const SHADER_FILE_EXTENSION_RE = /\.(?:glsl|wgsl|frag|vert|comp|vs|fs)$/i;
 
 /**
  * The reason an `atob` decode of an SRI base64 payload did not yield bytes. A
@@ -231,61 +226,40 @@ export const DEFAULT_SHADER_INTEGRITY_MODE: ShaderIntegrityMode = 'required-for-
  * Does `shaderSrc` denote an EXTERNAL (network-fetched) shader, as opposed to an
  * inline source string?
  *
- * SECURITY-CRITICAL — this classification MUST AGREE with {@link resolveRuntimeUrl}'s
- * notion of "a fetchable URL", or a fetchable-URL shape slips into the inline branch
- * UNVERIFIED. `resolveRuntimeUrl` accepts not only `/`-absolute, protocol-relative
- * (`//host`), and scheme-absolute (`http(s):`) URLs but ALSO PATH-RELATIVE ones
- * (`shaders/foo.glsl`, `./sub/bar.wgsl`) — they resolve same-origin and are FETCHED.
- * The previous classifier missed path-relative URLs: it returned `false` for
- * `shaders/foo.glsl`, so `gpu.ts`/`wgpu.ts` treated that URL TOKEN as inline shader
- * SOURCE TEXT — never fetched, never integrity-verified — a hole in the secure-by-
- * default SRI cure. The fix below classifies ANY fetchable-URL shape as external.
+ * SECURITY-CRITICAL — this classification is a PROVABLE FUNCTION OF the canonical URL
+ * policy, not a parallel heuristic that drifts. It DELEGATES wholesale to
+ * {@link isFetchableRuntimeUrl} — the single source of truth the URL guard uses to
+ * decide "is this a fetchable runtime URL?". The rule is therefore exact and
+ * drift-proof:
  *
- * The distinguisher is robust to the two genuinely different inputs a consumer
- * supplies on `data-czap-shader-src`:
- *   • an INLINE GLSL/WGSL BODY — a multi-line shader program. It carries newlines
- *     and/or shader syntax (`#version`, `#define`, `precision`, `@vertex`/`@fragment`/
- *     `@group`, a `void main`/`fn …()` declaration, `{`/`}`/`;`) and inner whitespace.
- *     There is no network boundary — the bytes are the author's own — so it is INLINE.
- *   • a SHADER URL — a single path/URL TOKEN pointing at a shader file. It has NO
- *     inner whitespace and NO newline, and looks like a path or URL (a scheme, a
- *     leading/embedded `/`, or a shader-file extension `.glsl`/`.wgsl`/`.frag`/`.vert`/
- *     `.comp`/`.vs`/`.fs`). It crosses a network boundary, so it is EXTERNAL and MUST
- *     be fetched + integrity-verified.
+ *   a shaderSrc is EXTERNAL (must be fetched + integrity-verified, or refused
+ *   secure-by-default) IFF the URL policy would treat it as a fetchable URL.
  *
- * Any input that is a single token (no inner whitespace / newline) AND resembles a
- * path/URL is EXTERNAL — closing the path-relative hole while never misclassifying a
- * real multi-line shader body (which always carries whitespace) as a URL.
+ * An INLINE shader is a genuine GLSL/WGSL BODY — multi-line program text carrying
+ * inner whitespace / newlines / shader syntax — which {@link isFetchableRuntimeUrl}
+ * rejects as a URL (inner whitespace ⟹ a body, never a single URL token). EVERY
+ * URL-shaped input the policy accepts is EXTERNAL: root-absolute (`/x.glsl`),
+ * path-relative (`shaders/x.glsl`, `./x`, `../x`), QUERY-relative (`?shader=wave`),
+ * BARE same-dir (`wave`), protocol-relative (`//host/x`), scheme-absolute
+ * (`http(s)://…`), and URL-scheme tokens (`data:…` / `blob:…`).
+ *
+ * This closes the bypass a prior extension/slash/scheme heuristic left open: a bare
+ * `wave` and a `?shader=wave` carry no slash, extension, or scheme, so the old
+ * classifier returned `false` — slipping a fetchable same-origin URL into the inline
+ * branch UNVERIFIED. Because the classifier now IS the URL-fetchability predicate, if
+ * the URL policy ever learns a new fetchable shape the classifier follows it
+ * automatically, and the cross-check property in the suite guards the equality.
+ *
+ * A `data:` / `blob:` token is URL-SHAPED (the policy reasons about it as a URL —
+ * `data:` resolves cross-origin and is origin-refused; `blob:` resolves same-origin
+ * and is fetchable), so it classifies EXTERNAL: it is never a genuine inline body the
+ * author typed, and secure-by-default it must take the external (fetch+verify-or-
+ * refuse) path rather than be compiled as literal shader text.
  */
 export function isExternalShaderSource(shaderSrc: string): boolean {
-  const trimmed = shaderSrc.trim();
-  if (trimmed.length === 0) return false;
-
-  // Unambiguous URL prefixes — the original cases. A `/`-absolute path, a
-  // protocol-relative `//host` URL, or a scheme-absolute `http(s):` URL is always
-  // an EXTERNAL fetch (these also match `resolveRuntimeUrl`'s fetchable shapes).
-  if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return true;
-  }
-
-  // An inline shader BODY carries inner whitespace or a newline (a multi-line
-  // program, or at minimum statements separated by spaces). A shader URL is a
-  // single path/URL TOKEN with no inner whitespace. So anything with inner
-  // whitespace is an inline body — NOT a fetchable URL.
-  if (/\s/.test(trimmed)) {
-    return false;
-  }
-
-  // A single token with NO inner whitespace. Classify it as a fetchable URL when it
-  // resembles a path or URL — matching `resolveRuntimeUrl`'s acceptance of
-  // PATH-RELATIVE shader URLs (`shaders/foo.glsl`, `./sub/bar.wgsl`). The tells:
-  //   • a shader-file extension (`.glsl`/`.wgsl`/`.frag`/`.vert`/`.comp`/`.vs`/`.fs`);
-  //   • an embedded `/` (a path segment — `shaders/foo`, `./x`, `../x`);
-  //   • a URL scheme (`scheme:…` — any same-/cross-origin URL the policy will vet).
-  // A lone bareword with none of these (a degenerate single-token "shader body"
-  // like `void` is not valid shader source anyway) stays INLINE — no fetchable
-  // shape reaches the inline branch.
-  return SHADER_FILE_EXTENSION_RE.test(trimmed) || trimmed.includes('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
+  // DELEGATE to the canonical URL-fetchability predicate — the single source of
+  // truth. NO parallel extension/slash heuristic (which would drift from the policy).
+  return isFetchableRuntimeUrl(shaderSrc);
 }
 
 /**

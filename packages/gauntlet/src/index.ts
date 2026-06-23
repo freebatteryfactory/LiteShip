@@ -156,6 +156,11 @@ export {
   injectedFactEvidenceDigest,
 } from './verdict-cache.js';
 
+// The structural enforcement of the evidence-declaration LAW: the instrumented
+// GateContext recorder the meta-test drives to prove no gate reads undeclared
+// out-of-IR / fact-channel evidence (the verdict-cache soundness drill sergeant).
+export { type EvidenceChannel, type EvidenceRecorder, recordingContext } from './evidence-recorder.js';
+
 export { type LevelRule, LITESHIP_ASSURANCE_MAP, levelOf, matchesGlob } from './assurance-map.js';
 
 export { propagateAssuranceLevels } from './assurance-propagation.js';
@@ -246,6 +251,8 @@ export {
   type SanctionedSkip,
   SANCTIONED_SKIPS,
   sanctionedSkipFor,
+  fileHasSanctionedSkip,
+  normalizeSiteLine,
 } from './gates/skip-allowlist.js';
 
 // The IR-fold gates (Slice B, B1) — these REQUIRE the injected repo-IR, so they

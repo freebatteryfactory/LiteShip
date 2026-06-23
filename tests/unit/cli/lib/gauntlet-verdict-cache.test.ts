@@ -26,6 +26,9 @@ import {
   makeFsVerdictCache,
   makeFsMutantVerdictCache,
   gauntletToolchainDigest,
+  toolchainDigestOf,
+  TOOLCHAIN_PACKAGES,
+  type ToolchainPackageSegment,
 } from '../../../../packages/cli/src/lib/gauntlet-verdict-cache.js';
 
 /** True only when this process can actually be denied read by a 0o000 chmod (not root). */
@@ -155,6 +158,105 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
     const folded = gauntletToolchainDigest(sparse);
     const withEmpty = gauntletToolchainDigest({ node: 'v22', platform: 'linux', arch: 'x64', pm: '' });
     expect(folded).toBe(withEmpty); // undefined value === '' in the fold
+  });
+});
+
+// ── TEETH (P1 #1): the toolchain digest folds EVERY fact-producing package's dist ──
+//
+// The "pure-IR" divergence gates fold `ir.facts`/`ir.refs` whose VALUES are computed
+// by the host `liteshipRegexOracle` (@czap/cli) + the audit LanguageService oracle
+// (@czap/audit). The PRE-FIX digest folded ONLY @czap/gauntlet's dist, so an
+// ORACLE-logic change with byte-identical source + an unchanged gauntlet dist produced
+// an IDENTICAL digest → a warm cache STALE-HIT (the deeper lie). These tests build two
+// fake dist trees that differ ONLY in the @czap/cli (or @czap/audit) segment — an
+// oracle-logic edit — and assert the now-extended digest CHANGES. The `oldGauntletOnly`
+// helper reproduces the PRE-FIX fold and is RED (digest IDENTICAL → stale hit) under the
+// exact same edit, proving the bug existed and the fold cures it.
+
+describe('toolchainDigest folds cli + audit (the oracle-code soundness keystone) — P1 #1', () => {
+  let fakeDistRoot: string;
+
+  beforeEach(() => {
+    fakeDistRoot = mkdtempSync(join(tmpdir(), 'czap-tc-segments-'));
+  });
+  afterEach(() => {
+    rmSync(fakeDistRoot, { recursive: true, force: true });
+  });
+
+  const ENV = { node: 'v22', platform: 'linux', arch: 'x64', pm: '' } as const;
+
+  let seq = 0;
+  /**
+   * Materialize a fake `dist` dir holding `oracle.js` with `body`, return its path. Each
+   * call gets a UNIQUE directory (a monotonic suffix) so two variants of the "same"
+   * package never overwrite each other on disk — the digest reads the bytes we built,
+   * not whatever the last write left behind (the fold reads files eagerly, so distinct
+   * BODIES must live at distinct PATHS to coexist). The repo-relative path the digest
+   * folds is `oracle.js` either way (the dist-relative name, not the temp prefix), so the
+   * ONLY difference the digest sees is the file BODY — exactly an oracle-logic edit.
+   */
+  function fakeDist(name: string, body: string): string {
+    const dir = join(fakeDistRoot, `${name}-${seq++}`, 'dist');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'oracle.js'), body, 'utf8');
+    return dir;
+  }
+
+  /** The three fact-producing segments, with the cli/audit oracle bodies parameterized. */
+  function segments(opts: { cliOracle: string; auditOracle: string }): ToolchainPackageSegment[] {
+    return [
+      { label: '@czap/audit', distDir: fakeDist('audit', opts.auditOracle), version: '0.4.0' },
+      { label: '@czap/cli', distDir: fakeDist('cli', opts.cliOracle), version: '0.4.0' },
+      { label: '@czap/gauntlet', distDir: fakeDist('gauntlet', 'export const gate = 1;\n'), version: '0.4.0' },
+    ];
+  }
+
+  /**
+   * The PRE-FIX fold: ONLY the @czap/gauntlet segment (the bug). Reproduced here so the
+   * RED-before is concrete — under a cli/audit oracle edit this digest does NOT change.
+   */
+  function oldGauntletOnly(segs: readonly ToolchainPackageSegment[]): string {
+    const gauntletOnly = segs.filter((s) => s.label === '@czap/gauntlet');
+    return toolchainDigestOf(gauntletOnly, ENV);
+  }
+
+  it('the FIXED digest is IDENTICAL when every fact-producing package is byte-identical', () => {
+    const a = toolchainDigestOf(segments({ cliOracle: 'A', auditOracle: 'B' }), ENV);
+    const b = toolchainDigestOf(segments({ cliOracle: 'A', auditOracle: 'B' }), ENV);
+    expect(a).toBe(b); // determinism preserved — the fix did not break the HIT path
+    expect(a).toMatch(/^tc-sha256:[0-9a-f]{32}$/); // unchanged scheme
+  });
+
+  it('changing the @czap/cli HOST-ORACLE dist (source + gauntlet unchanged) FLIPS the digest — no stale hit', () => {
+    const before = segments({ cliOracle: 'liteshipRegexOracle@v1', auditOracle: 'lsOracle@v1' });
+    const afterCliEdit = segments({ cliOracle: 'liteshipRegexOracle@v2-EDITED', auditOracle: 'lsOracle@v1' });
+
+    // RED-before: the pre-fix gauntlet-only fold does NOT change → it would serve a
+    // stale verdict for a divergence gate whose facts the edited cli oracle produced.
+    expect(oldGauntletOnly(afterCliEdit)).toBe(oldGauntletOnly(before));
+
+    // GREEN-after: the extended fold (cli + audit + gauntlet) DOES change → MISS → re-run.
+    expect(toolchainDigestOf(afterCliEdit, ENV)).not.toBe(toolchainDigestOf(before, ENV));
+  });
+
+  it('changing the @czap/audit LS-ORACLE / IR-builder dist FLIPS the digest — no stale hit', () => {
+    const before = segments({ cliOracle: 'regex@v1', auditOracle: 'symbolOrphanOracle@v1' });
+    const afterAuditEdit = segments({ cliOracle: 'regex@v1', auditOracle: 'symbolOrphanOracle@v2-EDITED' });
+
+    // RED-before: the pre-fix gauntlet-only fold is blind to the audit oracle edit.
+    expect(oldGauntletOnly(afterAuditEdit)).toBe(oldGauntletOnly(before));
+
+    // GREEN-after: the extended fold catches it.
+    expect(toolchainDigestOf(afterAuditEdit, ENV)).not.toBe(toolchainDigestOf(before, ENV));
+  });
+
+  it('the real gauntletToolchainDigest declares ALL THREE fact-producing packages (cli + audit + gauntlet)', () => {
+    // The fix is the SET: a future refactor that drops cli or audit from the fold would
+    // silently reopen the hole, so pin the membership as a law.
+    expect([...TOOLCHAIN_PACKAGES].sort()).toEqual(['@czap/audit', '@czap/cli', '@czap/gauntlet']);
+    // And the live digest (resolving the real built dist) is well-formed + deterministic.
+    expect(gauntletToolchainDigest(ENV)).toBe(gauntletToolchainDigest(ENV));
+    expect(gauntletToolchainDigest(ENV)).toMatch(/^tc-sha256:[0-9a-f]{32}$/);
   });
 });
 

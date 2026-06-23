@@ -20,7 +20,7 @@ export {
   defaultConfig as defaultMorphConfig,
 } from './morph/diff-pure.js';
 export { createHtmlFragment, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
-export { isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
+export { isFetchableRuntimeUrl, isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
 
 // Semantic ID (already Effect-free)
 export {

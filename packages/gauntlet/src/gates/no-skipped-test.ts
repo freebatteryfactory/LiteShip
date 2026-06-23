@@ -83,7 +83,7 @@ function formLabel(form: SkipMatch['form']): string {
   }
 }
 
-/** Scan the governed corpus; a skip is a finding UNLESS its file is sanctioned. */
+/** Scan the governed corpus; a skip is a finding UNLESS its EXACT SITE is sanctioned. */
 function scan(context: GateContext): readonly Finding[] {
   const findings: Finding[] = [];
   for (const file of governedFiles(context)) {
@@ -91,11 +91,15 @@ function scan(context: GateContext): readonly Finding[] {
     if (text === undefined) continue;
     const skips = detectSkips(text);
     if (skips.length === 0) continue;
-    // A SANCTIONED file's skips are allowed — they are the enumerated, audited
-    // capability gates. The allowlist is the visible record (the standards surface folds
-    // it), so this is a waiver-with-teeth, never a silent ignore.
-    if (sanctionedSkipFor(file) !== undefined) continue;
+    const rawLines = text.split('\n');
     for (const skip of skips) {
+      // PER-SITE sanctioning: a skip is allowed ONLY when its OWN line matches a declared
+      // sanctioned site for this file (the enumerated, audited capability gate). A
+      // different/new/unrelated skip in the SAME file is NOT sanctioned — a sanctioned
+      // file is no longer a blind spot. The allowlist is the visible record (the standards
+      // surface folds it), so this is a waiver-with-teeth, never a silent ignore.
+      const rawLine = rawLines[skip.line - 1] ?? '';
+      if (sanctionedSkipFor(file, rawLine) !== undefined) continue;
       findings.push(
         finding({
           ruleId: 'gauntlet/no-skipped-test',
@@ -110,7 +114,7 @@ function scan(context: GateContext): readonly Finding[] {
               'Make the test real, remove it, or — for a genuine capability gate — enumerate it in the sanctioned-skip allowlist.',
             steps: [
               'If the test asserts something real, WIRE it: bind the real subject and turn the skip into a running `it(...)` with teeth.',
-              'If the case is a genuine capability gate (ffmpeg/wasm/SharedArrayBuffer/coverage absent), add an enumerated entry to SANCTIONED_SKIPS (skip-allowlist.ts) with the file + the capability reason — the allowlist is the visible, snapshot-pinned record (adding an entry is a standards WEAKEN the raccoon-rule diff surfaces).',
+              'If the case is a genuine capability gate (ffmpeg/wasm/SharedArrayBuffer/coverage absent), add an enumerated entry to SANCTIONED_SKIPS (skip-allowlist.ts) with the file + the EXACT skip SITE (the normalized source line) + the capability reason — the sanction is per-site, not per-file, and the allowlist is the visible, snapshot-pinned record (adding an entry is a standards WEAKEN the raccoon-rule diff surfaces).',
               'If the test was a placeholder for work not yet done, delete it; an empty promise of coverage is worse than no test (it reads as covered).',
             ],
           },
@@ -175,9 +179,11 @@ export const noSkippedTestGate: Gate = defineGate({
     green: {
       name: 'a SANCTIONED capability-gate skip passes + a prose mention of it.skip is clean',
       context: memoryContext({
-        // The skip lives in a file enumerated in SANCTIONED_SKIPS (ffmpeg-absent) — it is
-        // the audited, visible capability gate, so it is ALLOWED.
-        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed', () => {});\n",
+        // The skip lives in a file enumerated in SANCTIONED_SKIPS (ffmpeg-absent) AT the
+        // exact sanctioned SITE (byte-for-byte the enumerated `site` line) — it is the
+        // audited, visible capability gate, so it is ALLOWED. Per-site sanctioning: a
+        // DIFFERENT skip in this same file would NOT pass (see the class-guard test).
+        [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});\n",
         // A REAL test plus a docstring + string that MENTION it.skip descriptively — the
         // codeOnly strip blanks both so neither trips the gate (no false positive).
         'tests/unit/widget/good.test.ts':
@@ -195,12 +201,13 @@ export const noSkippedTestGate: Gate = defineGate({
           const out: Finding[] = [];
           const LITERAL_CALL = /\b(?:it|test|describe|bench)\.skip\s*\(/;
           for (const file of governedFiles(context)) {
-            if (sanctionedSkipFor(file) !== undefined) continue;
             const text = context.readFile(file);
             if (text === undefined) continue;
             const lines = text.split('\n');
             for (let i = 0; i < lines.length; i++) {
-              if (LITERAL_CALL.test(lines[i] ?? '')) {
+              const line = lines[i] ?? '';
+              if (sanctionedSkipFor(file, line) !== undefined) continue;
+              if (LITERAL_CALL.test(line)) {
                 out.push(
                   finding({
                     ruleId: gate.id,

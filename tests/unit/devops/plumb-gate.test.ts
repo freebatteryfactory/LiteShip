@@ -74,9 +74,59 @@ describe('plumb gate — mechanism', () => {
     expect(r.skips.some((s) => s.message.startsWith('invariants — schema'))).toBe(true);
   });
 
-  it('does NOT match runtime-conditional .skipIf (an honest conditional, not a placeholder)', () => {
+  it('CATCHES a runtime-conditional .skipIf in a GENERATED test (detector unified with the no-skip gate)', () => {
+    // The handoff is now detector-UNIFIED: tests/generated/ uses the SAME alias-aware
+    // detectSkips the no-skip gate uses. A generated capsule test must NEVER skip in ANY
+    // form — a conditional skip there is a placeholder, not an honest capability gate
+    // (the harness emits no conditionals). This was the P2 handoff gap: .skipIf slipped
+    // through BOTH plumb (literal-`.skip(` only) AND the no-skip gate (excludes generated).
     const root = fixtureRoot({
       generated: { 'probe.test.ts': `describe.skipIf(!x)('cond', () => { it('real', () => {}); });\n` },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.map((s) => s.kind)).toContain('describe.skipIf');
+  });
+
+  it('CATCHES a generated it.runIf (the inverse runtime-conditional) — the P2 handoff hole', () => {
+    const root = fixtureRoot({
+      generated: { 'probe.test.ts': `it.runIf(FFMPEG)('only when capable', () => {});\n` },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.map((s) => s.kind)).toContain('it.runIf');
+  });
+
+  it('CATCHES a generated ALIAS-form skip (`COND ? it : it.skip`) — no call paren, the regex missed it', () => {
+    const root = fixtureRoot({
+      generated: { 'probe.test.ts': `const maybe = COND ? it : it.skip;\nmaybe('x', () => {});\n` },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    expect(r.skips.map((s) => s.kind)).toContain('it.skip');
+  });
+
+  it('CATCHES a generated it.todo / xit placeholder', () => {
+    const root = fixtureRoot({
+      generated: {
+        'todo.test.ts': `it.todo('not written yet');\n`,
+        'xit.test.ts': `xit('disabled', () => {});\n`,
+      },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    const kinds = r.skips.map((s) => s.kind);
+    expect(kinds).toContain('it.todo');
+    expect(kinds).toContain('xit');
+  });
+
+  it('does NOT flag a PROSE / string mention of it.skip in a generated test (no false positive)', () => {
+    // The unified detector runs over codeOnly-stripped text, so a docstring/string mention
+    // of a skip token is never a placeholder — the zero-skip guarantee keeps no false reds.
+    const root = fixtureRoot({
+      generated: {
+        'probe.test.ts': `// this capsule never uses it.skip\nit('real', () => { const s = 'it.skip in a string'; expect(s.length).toBeGreaterThan(0); });\n`,
+      },
     });
     expect(runPlumbGate(root).skips).toEqual([]);
   });

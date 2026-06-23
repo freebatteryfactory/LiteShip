@@ -11,19 +11,25 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ParseError } from '@czap/error';
+import { detectSkips } from '@czap/gauntlet';
 import { PACKAGE_PLUMB } from '../commands/plumb-registry.js';
 import type { PlumbGateSummary, PlumbSkip } from '../registry.js';
 
-// Matches the `.skip(` CALL itself — `it.skip(`, `test.skip(`, `describe.skip(` —
-// regardless of whether the first arg is a string literal or a computed expression
-// (the harness writes `it.skip(cond ? 'a' : 'b')` for not-arbitrary-derivable
-// schemas). `.skipIf(` is NOT matched (the `(` must follow `skip` directly), so
-// genuine runtime-conditional skips are excluded.
-const SKIP_CALL_RE = /\b(it|test|describe|bench)\.skip\(/g;
-// The first quoted string after the call — the human-readable reason — used for
-// the work-list line (escape-aware; tolerates a leading ternary condition).
+// The first quoted string after the matched skip token — the human-readable reason —
+// used for the work-list line (escape-aware; tolerates a leading ternary condition).
 const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
 
+/**
+ * THE GENERATED HANDOFF, detector-UNIFIED. `tests/generated/` is the plumb-gate's
+ * exclusive subtree (the `no-skipped-test` gate excludes it to avoid double-jeopardy), so
+ * this scan must use the SAME full, alias-aware detector that gate uses — never a weaker
+ * regex. The first cut here matched only the literal `.skip(` CALL, so a generated
+ * `it.runIf(...)` / `it.skipIf(...)` / `it.todo(...)` / `xit(...)` / the `COND ? it :
+ * it.skip` alias would slip through BOTH this scan AND the gate (the exact handoff gap the
+ * second review found). Now it folds `@czap/gauntlet`'s `detectSkips` (call / conditional /
+ * alias forms over `codeOnly`-stripped text, so a prose mention is never flagged) — ONE
+ * owner, the FULL detector. A generated test must NEVER skip in ANY form.
+ */
 function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boolean } {
   const dir = resolve(root, 'tests', 'generated');
   if (!existsSync(dir)) return { skips: [], present: false };
@@ -38,17 +44,23 @@ function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boo
     if (!rel.endsWith('.test.ts') && !rel.endsWith('.bench.ts')) continue;
     sawGenerated = true;
     const src = readFileSync(resolve(dir, rel), 'utf8');
-    for (const m of src.matchAll(SKIP_CALL_RE)) {
-      const window = src.slice(m.index + m[0].length, m.index + m[0].length + 400);
+    const lines = src.split('\n');
+    for (const skip of detectSkips(src)) {
+      // The human-readable reason: the first string literal at/after the matched line
+      // (the title for a call form, the guard's reason for a conditional). Scan from the
+      // raw source line so a computed/ternary message is still surfaced as best effort.
+      const window = lines.slice(skip.line - 1, skip.line + 9).join('\n');
       const msg = FIRST_STRING_RE.exec(window);
       skips.push({
         file: `tests/generated/${rel.split(/[\\/]/).join('/')}`,
-        kind: `${m[1]}.skip` as PlumbSkip['kind'],
+        kind: skip.token,
         message: msg ? (msg[2] ?? '') : '(computed reason)',
       });
     }
   }
-  skips.sort((a, b) => a.file.localeCompare(b.file) || a.message.localeCompare(b.message));
+  skips.sort(
+    (a, b) => a.file.localeCompare(b.file) || a.kind.localeCompare(b.kind) || a.message.localeCompare(b.message),
+  );
   return { skips, present: sawGenerated };
 }
 

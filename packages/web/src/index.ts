@@ -56,7 +56,7 @@ export { Morph } from './morph/diff.js';
 export { SemanticId } from './morph/semantic-id.js';
 export { Hints } from './morph/hints.js';
 export { createHtmlFragment, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';
-export { isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
+export { isFetchableRuntimeUrl, isPrivateOrReservedIP, resolveRuntimeUrl } from './security/runtime-url.js';
 export type { RuntimeUrlResolution } from './security/runtime-url.js';
 export {
   parseShaderIntegrity,

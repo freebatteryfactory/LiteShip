@@ -17,14 +17,23 @@
  *    direction (re-run is always sound; a stale/corrupt serve is the lie).
  *
  * 2. {@link gauntletToolchainDigest} — the ANTI-LIE KEYSTONE. A hash over the
- *    `@czap/gauntlet` BUILT artifact (its `dist/**.js` bytes) + the gauntlet
- *    package version + the env fingerprint. It CHANGES when the gauntlet's gate
- *    logic changes (a gate edit → `tsc` rebuild → new dist bytes → new digest →
- *    every cached verdict invalidated). WITHOUT it, editing a gate's logic while
- *    its covered files are unchanged would serve a stale verdict — the exact lie
- *    B2's soundness rail exists to prevent. The covered-files digest catches a
- *    code change in the FILES UNDER TEST; the toolchain digest catches a code
- *    change in the GATE doing the testing. A sound cache needs both.
+ *    BUILT artifacts (the `dist/**.js` bytes + the package version) of EVERY
+ *    package whose code computes a gate's verdict OR the IR/facts a gate folds —
+ *    `@czap/gauntlet` (the gates), `@czap/cli` (the host oracle that mints the
+ *    `invariant-regex` facts + the IR-build wiring + this very `repo-ir-gauntlet`
+ *    host path), and `@czap/audit` (the `ts.Program` IR builder + the
+ *    LanguageService `symbol-orphan` oracle) — plus the env fingerprint. It
+ *    CHANGES when ANY of that fact-producing logic changes (a gate edit OR an
+ *    oracle edit → `tsc` rebuild → new dist bytes → new digest → every cached
+ *    verdict invalidated). WITHOUT the cli/audit dist folded, editing the ORACLE
+ *    logic (the `liteshipRegexOracle` or the LS oracle) while the source bytes +
+ *    the gauntlet dist stayed identical would serve a stale verdict — a SECOND,
+ *    deeper instance of the exact lie B2's soundness rail exists to prevent (a
+ *    "pure-IR" divergence gate folds `ir.facts` whose VALUES the host oracle
+ *    computed, so the oracle's code is as load-bearing as the gate's). The
+ *    covered-files digest catches a change in the FILES UNDER TEST; the toolchain
+ *    digest now catches a change in the GATE doing the testing AND in the ORACLE
+ *    producing the facts the gate folds. A sound cache needs all three.
  *
  * @module
  */
@@ -32,7 +41,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, basename } from 'node:path';
 import { isFinding, type Finding, type GateVerdictCache } from '@czap/gauntlet';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { normalizeRepoPath, type MutantVerdictCache, type MutantVerdict } from '@czap/audit';
@@ -232,52 +241,169 @@ function relTo(root: string, abs: string): string {
 }
 
 /**
- * Compute the TOOLCHAIN DIGEST — the anti-lie keystone. A sha256 over:
- * - the gauntlet package VERSION (a published-version bump is a logic change), then
- * - every `dist/**.js` byte of the BUILT `@czap/gauntlet` (a gate edit → rebuilt
+ * The fact-producing packages whose BUILT `dist` the toolchain digest folds, in a
+ * FIXED, sorted order so the fold is deterministic regardless of host. Each is a
+ * package whose CODE affects a cached gate's raw verdict:
+ *  - `@czap/gauntlet` — the gate logic itself (a gate edit changes a verdict).
+ *  - `@czap/cli` — the HOST oracle that mints the `invariant-regex` facts the
+ *    divergence gates fold (`liteshipRegexOracle` in `repo-ir-gauntlet.ts`), the
+ *    IR-build wiring, and the host fact-builders; its dist is fact-producing code.
+ *  - `@czap/audit` — the `ts.Program` IR builder + the LanguageService
+ *    `symbol-orphan` oracle whose facts the symbol-orphan-divergence gate folds.
+ *
+ * `@czap/gauntlet` + `@czap/audit` are dependencies of `@czap/cli` (this module's
+ * own package) and so resolve via `import.meta.resolve`; `@czap/cli` resolves to
+ * ITSELF (this module's own dist), located by walking up from `import.meta.url` to
+ * the package root rather than self-resolving (a package's `exports` need not name
+ * itself). The order is sorted so {@link gauntletToolchainDigest} folds them
+ * identically every run.
+ */
+export const TOOLCHAIN_PACKAGES = ['@czap/audit', '@czap/cli', '@czap/gauntlet'] as const;
+
+/**
+ * Locate the BUILT `dist` directory + the manifest version of one fact-producing
+ * package. `@czap/cli` is THIS module's own package, resolved by walking up from
+ * `import.meta.url` to the nearest `package.json` named `@czap/cli` (a package's own
+ * `exports` map need not expose a self-import condition, so `import.meta.resolve`
+ * is not reliable for self-resolution). Every OTHER package is a declared dependency
+ * resolved via `import.meta.resolve` (the ESM resolver — NOT `createRequire`, because
+ * the `@czap/*` `exports` are import-only and the CJS resolver throws
+ * `ERR_PACKAGE_PATH_NOT_EXPORTED` even on a correct build; the same ESM-only-exports
+ * trap `wasm-package-resolve.ts` documents). A package that cannot be resolved or
+ * whose `dist` is absent THROWS a tagged {@link IoError} — caching against a digest
+ * we could not compute over ALL fact-producing code would be unsound, so we fail loud
+ * rather than degrade to a constant (a build-resolver must not throw on the happy
+ * path, but a MISSING built dependency here is a real misconfiguration the caller
+ * must see).
+ */
+function resolvePackageDist(pkg: string): { distDir: string; version: string } {
+  let packageRoot: string;
+  if (pkg === '@czap/cli') {
+    packageRoot = ownPackageRoot();
+  } else {
+    let entry: string;
+    try {
+      entry = fileURLToPath(import.meta.resolve(pkg));
+    } catch (cause) {
+      throw IoError(
+        'gauntletToolchainDigest',
+        `cannot resolve ${pkg} to compute the toolchain digest — every fact-producing package (the gates, the host oracle, the IR builder) must be installed/built for the verdict cache to be sound`,
+        { cause },
+      );
+    }
+    // entry is .../<pkg>/dist/index.js → up one is the dist root, up two is the package root.
+    packageRoot = dirname(dirname(entry));
+  }
+  const distDir = join(packageRoot, 'dist');
+  if (!existsSync(distDir) || !statSync(distDir).isDirectory()) {
+    throw IoError(
+      'gauntletToolchainDigest',
+      `the ${pkg} dist directory "${distDir}" is absent — run \`pnpm --filter ${pkg} build\` before a cached gauntlet run (the verdict cache folds it to stay sound against a fact-producing code change)`,
+      { path: distDir },
+    );
+  }
+  return { distDir, version: packageManifestVersion(packageRoot) };
+}
+
+/**
+ * Walk up from THIS module's URL to the nearest `package.json` named `@czap/cli` —
+ * the package root of the CLI host. The host oracle, the IR-build wiring, and this
+ * very module all live under that root's `dist`. Throws a tagged {@link IoError}
+ * if the walk runs out of parents without finding the manifest (an impossible
+ * layout — this module IS inside `@czap/cli`).
+ */
+function ownPackageRoot(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  // Bound the walk by the filesystem root (basename(dir) === dir at the root).
+  while (basename(dir) !== dir) {
+    const manifestPath = join(dir, 'package.json');
+    if (existsSync(manifestPath)) {
+      const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      if (typeof parsed === 'object' && parsed !== null && (parsed as { name?: unknown }).name === '@czap/cli') {
+        return dir;
+      }
+    }
+    dir = dirname(dir);
+  }
+  throw IoError(
+    'gauntletToolchainDigest',
+    'cannot locate the @czap/cli package root from this module — the toolchain digest cannot fold the host oracle dist',
+    { path: fileURLToPath(import.meta.url) },
+  );
+}
+
+/**
+ * Compute the TOOLCHAIN DIGEST — the anti-lie keystone. A sha256 over, for EACH
+ * fact-producing package ({@link TOOLCHAIN_PACKAGES}, in sorted order):
+ * - the package id + its manifest VERSION (a published-version bump is a logic
+ *   change), then
+ * - every `dist/**.js` byte of the BUILT package (a gate OR oracle edit → rebuilt
  *   dist → changed bytes → changed digest), folded in sorted repo-relative order,
+ * then finally:
  * - the env fingerprint (node / platform / arch / pm — the same toolchain identity
  *   the idempotency layer folds, so a verdict cached under one runtime is never
  *   served to another).
  *
- * The gauntlet's dist directory is located via `import.meta.resolve`
- * (the ESM resolver), then walking up to its `dist`. `import.meta.resolve` — NOT
- * `createRequire(...).resolve` — because `@czap/gauntlet`'s `exports` are
- * import-only (no `require`/`default` condition), so the CJS resolver throws
- * `ERR_PACKAGE_PATH_NOT_EXPORTED` even when the package is correctly built and
- * installed (the same ESM-only-exports trap the vite wasm resolver already documents
- * — `wasm-package-resolve.ts`). If the dist cannot be found or read, this THROWS a
- * tagged {@link IoError} (a build-resolver must never throw on the happy path, but
- * here a MISSING built gauntlet is a real misconfiguration the caller must see —
- * caching against a digest we could not compute would be unsound, so we fail loud
- * rather than degrade to a constant).
+ * Folding `@czap/cli` + `@czap/audit` alongside `@czap/gauntlet` closes the deeper
+ * soundness hole: a "pure-IR" divergence gate folds `ir.facts`/`ir.refs` whose
+ * VALUES are computed by the host's `liteshipRegexOracle` (`@czap/cli`) and the
+ * audit LanguageService oracle (`@czap/audit`); their code is therefore as
+ * load-bearing on the verdict as the gate's own. An oracle-logic change with
+ * byte-identical source + an unchanged gauntlet dist now still flips the digest →
+ * no stale hit.
+ *
+ * If ANY package cannot be resolved or its `dist` read, this THROWS a tagged
+ * {@link IoError} (see {@link resolvePackageDist}) — a missing built dependency is
+ * a real misconfiguration; caching against a digest we could not compute over all
+ * fact-producing code would be unsound, so we fail loud rather than degrade.
  */
 export function gauntletToolchainDigest(env: Readonly<Record<string, string>> = currentEnvFingerprint()): string {
-  let entry: string;
-  try {
-    entry = fileURLToPath(import.meta.resolve('@czap/gauntlet'));
-  } catch (cause) {
-    throw IoError(
-      'gauntletToolchainDigest',
-      'cannot resolve @czap/gauntlet to compute the toolchain digest — the gauntlet must be installed/built for the verdict cache to be sound',
-      { cause },
-    );
-  }
-  // entry is .../@czap/gauntlet/dist/index.js → its directory is the dist root.
-  const distDir = dirname(entry);
-  if (!existsSync(distDir) || !statSync(distDir).isDirectory()) {
-    throw IoError(
-      'gauntletToolchainDigest',
-      `the resolved @czap/gauntlet dist directory "${distDir}" is absent — run \`pnpm --filter @czap/gauntlet build\` before a cached gauntlet run`,
-      { path: distDir },
-    );
-  }
+  const resolved = TOOLCHAIN_PACKAGES.map((pkg) => {
+    const { distDir, version } = resolvePackageDist(pkg);
+    return { label: pkg, distDir, version };
+  });
+  return toolchainDigestOf(resolved, env);
+}
 
+/** One fact-producing package's BUILT segment, as folded by {@link toolchainDigestOf}. */
+export interface ToolchainPackageSegment {
+  /** The package id — namespaces this segment so two dist trees can never alias. */
+  readonly label: string;
+  /** The absolute path of the package's BUILT `dist` directory (every `*.js` byte folded). */
+  readonly distDir: string;
+  /** The package's manifest version (a published-version bump is a logic change). */
+  readonly version: string;
+}
+
+/**
+ * The PURE digest core (extracted so the soundness law can be proven WITHOUT
+ * perturbing a real built `dist`). Folds, for each `segment` IN THE GIVEN ORDER:
+ * its `label@version`, then every `dist/**.js` byte (sorted repo-relative). Then
+ * the env fingerprint (sorted keys → order-independent). Returns the
+ * `tc-sha256:<32hex>` digest.
+ *
+ * Because EVERY segment's bytes fold in, a change to ANY fact-producing package's
+ * dist (the gates in `@czap/gauntlet`, the host oracle in `@czap/cli`, the IR
+ * builder / LS oracle in `@czap/audit`) flips the digest — the keystone that makes
+ * an oracle-logic change invalidate every cached verdict even when the source bytes
+ * + the other packages' dist are byte-identical. {@link gauntletToolchainDigest}
+ * resolves the real packages and delegates here.
+ */
+export function toolchainDigestOf(
+  segments: readonly ToolchainPackageSegment[],
+  env: Readonly<Record<string, string>>,
+): string {
   const hash = createHash('sha256');
-  hash.update(gauntletPackageVersion(distDir), 'utf8');
-  hash.update('\0', 'utf8');
-  for (const abs of collectJsFiles(distDir, distDir)) {
-    hashFileInto(hash, relTo(distDir, abs), abs);
+  for (const { label, distDir, version } of segments) {
+    // Namespace each package's segment by its id so two packages' dist trees can
+    // never alias, and fold the version (a bump is a logic change).
+    hash.update(`pkg:${label}@${version}`, 'utf8');
+    hash.update('\0', 'utf8');
+    for (const abs of collectJsFiles(distDir, distDir)) {
+      hashFileInto(hash, relTo(distDir, abs), abs);
+    }
+    // A record-separator double-NUL between packages so the boundary is unambiguous.
+    hash.update('\0\0', 'utf8');
   }
   // Fold the env fingerprint LAST (sorted keys → order-independent).
   for (const k of Object.keys(env).sort()) {
@@ -286,9 +412,9 @@ export function gauntletToolchainDigest(env: Readonly<Record<string, string>> = 
   return `tc-sha256:${hash.digest('hex').slice(0, 32)}`;
 }
 
-/** Read the gauntlet package version from its manifest (a sibling of `dist`). */
-function gauntletPackageVersion(distDir: string): string {
-  const manifestPath = join(dirname(distDir), 'package.json');
+/** Read a package's version from its manifest (the root of `dist`). */
+function packageManifestVersion(packageRoot: string): string {
+  const manifestPath = join(packageRoot, 'package.json');
   if (!existsSync(manifestPath)) return 'unknown-version';
   const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
   if (typeof parsed === 'object' && parsed !== null && 'version' in parsed) {

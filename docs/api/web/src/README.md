@@ -104,6 +104,7 @@ It ships:
 - [createHtmlFragment](functions/createHtmlFragment.md)
 - [decideShaderIntegrity](functions/decideShaderIntegrity.md)
 - [isExternalShaderSource](functions/isExternalShaderSource.md)
+- [isFetchableRuntimeUrl](functions/isFetchableRuntimeUrl.md)
 - [isPrivateOrReservedIP](functions/isPrivateOrReservedIP.md)
 - [parseShaderIntegrity](functions/parseShaderIntegrity.md)
 - [renderToCanvas](functions/renderToCanvas.md)

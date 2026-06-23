@@ -202,9 +202,12 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     // an add, so without the discriminant gate this would apply as an edge-add, pass
     // the structural preview, and MINT a validated edge from an off-schema op. The
     // gate refuses it before the preview, so it never mints.
+    // The edge carries ALL advertised required fields (from/to/type) so the
+    // schema-derived required-field gate passes and the DISCRIMINANT gate is the one
+    // that fires — the op kind ('update') is off-schema for edges.
     const malformed = {
       ...honest,
-      ops: [{ op: 'update', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id } }],
+      ops: [{ op: 'update', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id, type: 'seq' } }],
     } as unknown as GraphPatch;
     const checked = AICast.validateGraphPatchProposal(base, malformed);
     expect(checked.ok).toBe(false);
@@ -404,7 +407,9 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const checked = AICast.validateGraphPatchProposal(base, patch);
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
-    expect(checked.errors.join(' ')).toMatch(/missing its required 'family'/);
+    // The schema-derived required-field gate (which runs first) rejects the missing
+    // `family` against the advertised contract; the message names the missing field.
+    expect(checked.errors.join(' ')).toMatch(/missing the advertised required field "family"/);
   });
 
   test('policy and export node families are RECOGNIZED — not false-rejected as unknown family', () => {
@@ -471,6 +476,163 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
     expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
+  });
+
+  test('an EDGE op missing from/to (only type) is REJECTED — not a silent no-op-then-mint (the fortify regression)', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // THE FINDING (codex, tip 69261df8): the advertised schema requires edge.from/to/type,
+    // but the validator checked ONLY edge.type. `{ op:'remove', edge:{ type:'seq' } }`
+    // (missing from/to) no-op'd in GraphPatch.apply, left a valid graph, and MINTED —
+    // off-schema model output accepted. The schema-derived required-field gate rejects it.
+    const malformed = { ...honest, ops: [{ op: 'remove', edge: { type: 'seq' } }] } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, malformed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+    expect(checked.errors.join(' ')).toMatch(/missing the advertised required field/);
+    // Both missing nested fields are surfaced (from AND to), not just one.
+    expect(checked.errors.join(' ')).toMatch(/"from"/);
+    expect(checked.errors.join(' ')).toMatch(/"to"/);
+  });
+
+  test('an EDGE add op missing `to` is REJECTED (the other half of the class)', () => {
+    const a = node('a');
+    const b = node('b');
+    const base = graph([a, b]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+    const malformed = { ...honest, ops: [{ op: 'add', edge: { from: a.id, type: 'seq' } }] } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, malformed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/"to"/);
+  });
+
+  // -------------------------------------------------------------------------
+  // THE DRILL SERGEANT — the schema-completeness LAW. For EVERY required field
+  // the advertised JSON schema declares (envelope + every op variant + the nested
+  // `edge` object's required from/to/type), build an input MISSING that field and
+  // assert the validator REJECTS it. The required-field list is DERIVED FROM the
+  // advertised schema object itself (AICast.graphPatchProposalSchema), so a future
+  // schema addition AUTOMATICALLY gains a rejection case — "validated-in == the
+  // advertised contract" becomes a structural guarantee, caught here if ever
+  // unenforced, rather than field-by-field as codex finds each gap.
+  // -------------------------------------------------------------------------
+  describe('schema-completeness LAW: every advertised required field is ENFORCED by the validator', () => {
+    // A small JSON-schema reader mirroring only the shape this contract uses.
+    type SchemaObj = {
+      readonly type?: string;
+      readonly required?: readonly string[];
+      readonly properties?: Record<string, SchemaObj>;
+      readonly oneOf?: readonly SchemaObj[];
+      readonly items?: SchemaObj;
+    };
+    // The body key is the required OBJECT-typed property (`node` vs `edge`) — the
+    // structural payload that distinguishes the variants (NOT `family`, an enum).
+    const bodyKeyOf = (variant: SchemaObj): string | undefined =>
+      (variant.required ?? []).find((k) => k !== 'op' && variant.properties?.[k]?.type === 'object');
+
+    const buildBaseline = () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      // A fully-schema-valid envelope: a valid node-add op AND a valid edge-add op,
+      // so we can drop one required field at a time and watch the validator reject.
+      const validNodeOp = { op: 'add', family: 'signal', node: node('c') } as Record<string, unknown>;
+      const validEdgeOp = { op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } } as Record<string, unknown>;
+      const envelope = { _tag: 'GraphPatch', _version: 1, base: base.id } as Record<string, unknown>;
+      return { base, envelope, validNodeOp, validEdgeOp };
+    };
+
+    const schemaOf = (base: ReturnType<typeof graph>): SchemaObj =>
+      AICast.graphPatchProposalSchema(base.id).jsonSchema as unknown as SchemaObj;
+
+    test('the advertised schema is non-trivial (envelope + node/edge op variants with required fields)', () => {
+      const { base } = buildBaseline();
+      const schema = schemaOf(base);
+      expect((schema.required ?? []).length).toBeGreaterThan(0);
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+      expect(variants.length).toBe(2); // node-op variant + edge-op variant
+      for (const v of variants) expect((v.required ?? []).length).toBeGreaterThan(0);
+    });
+
+    test('ENVELOPE: dropping any required envelope field is rejected', () => {
+      const { base, envelope, validNodeOp } = buildBaseline();
+      const schema = schemaOf(base);
+      const required = schema.required ?? [];
+      expect(required).toContain('_tag');
+      for (const field of required) {
+        const full = { ...envelope, ops: [validNodeOp] } as Record<string, unknown>;
+        delete full[field];
+        const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+        expect(checked.ok, `envelope missing required '${field}' must be rejected`).toBe(false);
+      }
+    });
+
+    test('OP VARIANTS: for every required field of every advertised op variant, the op missing it is rejected', () => {
+      const { base, envelope, validNodeOp, validEdgeOp } = buildBaseline();
+      const schema = schemaOf(base);
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+
+      for (const variant of variants) {
+        const req = variant.required ?? [];
+        // The variant's body key (the required object property) tells us which valid op
+        // to start from: node-variant → validNodeOp, edge → validEdgeOp.
+        const bodyKey = bodyKeyOf(variant);
+        const validOp = bodyKey === 'node' ? validNodeOp : validEdgeOp;
+
+        for (const field of req) {
+          const op = structuredClone(validOp);
+          delete op[field];
+          const full = { ...envelope, ops: [op] } as Record<string, unknown>;
+          const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+          expect(checked.ok, `op variant [${req.join(',')}] missing required '${field}' must be rejected`).toBe(false);
+        }
+
+        // NESTED required: an object-typed required property pins its OWN required fields
+        // (the `edge` object → from/to/type). Drop each nested field and assert rejection —
+        // this is the exact class the original gap belonged to (edge.from/edge.to unenforced).
+        for (const field of req) {
+          const nested = variant.properties?.[field]?.required ?? [];
+          if (nested.length === 0) continue;
+          const valueOf = (validOp[field] ?? {}) as Record<string, unknown>;
+          for (const nestedField of nested) {
+            const innerValue = { ...valueOf };
+            delete innerValue[nestedField];
+            const op = { ...structuredClone(validOp), [field]: innerValue };
+            const full = { ...envelope, ops: [op] } as Record<string, unknown>;
+            const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+            expect(
+              checked.ok,
+              `op variant [${req.join(',')}] field '${field}' missing nested required '${nestedField}' must be rejected`,
+            ).toBe(false);
+          }
+        }
+      }
+    });
+
+    test('CONTROL: the fully-schema-valid baseline (both op kinds present) VALIDATES and MINTS', () => {
+      const { base, envelope, validNodeOp, validEdgeOp } = buildBaseline();
+      // Edge first would dangle until its endpoints exist; the node-add introduces 'c',
+      // and the edge connects the two pre-existing graph nodes — a structurally valid result.
+      const full = { ...envelope, ops: [validNodeOp, validEdgeOp] } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, full);
+      expect(checked.ok).toBe(true);
+      if (!checked.ok) return;
+      expect(checked.proposal.target).toBe('graph-patch');
+      // Re-stamp preserved: propose recomputes base + resultId deterministically.
+      expect(checked.proposal.payload.base).toBe(base.id);
+      expect(checked.proposal.payload.resultId).toBeDefined();
+      const expected = GraphPatch.propose(base, [
+        { op: 'add', family: 'signal', node: node('c') },
+        { op: 'add', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id, type: 'seq' } },
+      ]);
+      expect(checked.proposal.payload.resultId).toBe(expected.resultId);
+      // The minted proposal applies cleanly through the host-authorized step.
+      const next = AICast.applyValidatedPatch(base, checked.proposal);
+      expect(next.id).toBe(expected.resultId);
+    });
   });
 
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {

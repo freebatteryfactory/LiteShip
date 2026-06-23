@@ -17,6 +17,9 @@
  * legit capability gate is VISIBLE + audited and any unsanctioned skip is caught.
  */
 
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import {
   noSkippedTestGate,
@@ -24,6 +27,7 @@ import {
   memoryContext,
   detectSkips,
   sanctionedSkipFor,
+  normalizeSiteLine,
   SANCTIONED_SKIPS,
   type Finding,
 } from '@czap/gauntlet';
@@ -67,11 +71,12 @@ describe('no-skipped-test — scope widened to the tests/ tree, with teeth', () 
     expect(findings.length).toBe(2);
   });
 
-  it('(c) a SANCTIONED capability-gate skip (in the allowlist) PASSES', () => {
-    // tests/smoke/intro-render.test.ts is enumerated (ffmpeg-absent).
-    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts')?.capability).toBe('ffmpeg-absent');
+  it('(c) a SANCTIONED capability-gate skip AT ITS EXACT SITE (in the allowlist) PASSES', () => {
+    // tests/smoke/intro-render.test.ts is enumerated (ffmpeg-absent) at this exact line.
+    const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";
+    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', SITE)?.capability).toBe('ffmpeg-absent');
     const findings = run(noSkippedTestGate, {
-      'tests/smoke/intro-render.test.ts': "it.skip('skipped — ffmpeg libx264 render probe failed', () => {});\n",
+      'tests/smoke/intro-render.test.ts': `${SITE}\n`,
     });
     expect(findings).toEqual([]);
   });
@@ -126,18 +131,100 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
     expect(byForm).toEqual(['alias', 'call', 'conditional']);
   });
 
-  it('every sanctioned-skip entry names a real tests/ file and a capability reason', () => {
+  it('every sanctioned-skip entry names a real tests/ file, a site discriminator, and a capability reason', () => {
     for (const entry of SANCTIONED_SKIPS) {
       expect(entry.file.startsWith('tests/'), `${entry.file} must be under tests/`).toBe(true);
       expect(entry.file.endsWith('.ts')).toBe(true);
       expect(entry.why.length, `${entry.file} needs a justification`).toBeGreaterThan(0);
+      expect(entry.site.length, `${entry.file} needs a site discriminator`).toBeGreaterThan(0);
+      // The site must itself carry a detectable skip form (it pins a real skip line).
+      expect(detectSkips(entry.site).length, `${entry.file} site is not a skip: ${entry.site}`).toBeGreaterThan(0);
       // tests/generated/ is the plumb-gate's tree — never sanctioned here.
       expect(/(?:^|\/)tests\/generated\//.test(entry.file)).toBe(false);
     }
   });
 
-  it('the allowlist is uniquely keyed by file (no duplicate sanctions)', () => {
-    const files = SANCTIONED_SKIPS.map((s) => s.file);
-    expect(new Set(files).size).toBe(files.length);
+  it('the allowlist is uniquely keyed by (file, site) — a file may carry MULTIPLE sites (e.g. the wasm-parity dual arms)', () => {
+    const keys = SANCTIONED_SKIPS.map((s) => `${s.file}::${normalizeSiteLine(s.site)}`);
+    expect(new Set(keys).size).toBe(keys.length);
+    // The wasm-parity file is the proof a file CAN carry two distinct sanctioned sites.
+    const parityFiles = SANCTIONED_SKIPS.filter((s) => s.file === 'tests/unit/core/wasm-parity.test.ts');
+    expect(parityFiles.length).toBe(2);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// PER-SITE class guard (FORTIFY A): a SANCTIONED FILE is NOT a blind spot. The
+// first cut sanctioned a whole file (any skip in it passed); a NEW unrelated skip
+// in a sanctioned file shipped green. These prove the sanction is per-SITE.
+// ───────────────────────────────────────────────────────────────────────────
+describe('per-site sanctioning — a sanctioned file is NOT a blind spot (FORTIFY A)', () => {
+  const SANCTIONED_FILE = 'tests/smoke/intro-render.test.ts';
+  const SANCTIONED_SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";
+
+  it('the EXACT sanctioned site passes (baseline)', () => {
+    expect(run(noSkippedTestGate, { [SANCTIONED_FILE]: `${SANCTIONED_SITE}\n` })).toEqual([]);
+  });
+
+  it('a NEW unrelated it.skip ADDED to a sanctioned file is FLAGGED (per-site, not file-wide)', () => {
+    // The sanctioned site is present AND a second, unrelated skip — the file-wide allowlist
+    // would have passed BOTH (the bug). Per-site flags ONLY the unsanctioned new one.
+    const findings = run(noSkippedTestGate, {
+      [SANCTIONED_FILE]: `${SANCTIONED_SITE}\nit.skip('a NEW unrelated placeholder — not a capability gate', () => {});\n`,
+    });
+    expect(findings.length).toBe(1);
+    expect(findings[0]?.location?.file).toBe(SANCTIONED_FILE);
+    expect(findings[0]?.location?.line).toBe(2);
+  });
+
+  it('a DIFFERENT-capability skip in a sanctioned file is FLAGGED (only the declared site is allowed)', () => {
+    // An alias-form skip (a different shape/capability) added to the same file — unsanctioned.
+    const findings = run(noSkippedTestGate, {
+      [SANCTIONED_FILE]: `${SANCTIONED_SITE}\nconst maybe = OTHER ? it : it.skip;\nmaybe('different gate', () => {});\n`,
+    });
+    expect(findings.length).toBe(1);
+    expect(findings[0]?.detail).toMatch(/alias/i);
+  });
+
+  it('the sanctioned site is line-number-INDEPENDENT (re-ordering the file does not break it)', () => {
+    // Push the sanctioned skip down with leading real tests — its SITE (content) still matches.
+    const findings = run(noSkippedTestGate, {
+      [SANCTIONED_FILE]: `it('real one', () => {});\nit('real two', () => {});\n${SANCTIONED_SITE}\n`,
+    });
+    expect(findings).toEqual([]);
+  });
+
+  it('a re-WORDED sanctioned line is NO LONGER sanctioned (re-opens the question — the strengthening posture)', () => {
+    const findings = run(noSkippedTestGate, {
+      [SANCTIONED_FILE]: "it.skip('skipped — ffmpeg render probe failed', () => {});\n", // dropped `(see czap doctor)`
+    });
+    expect(findings.length).toBe(1);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// LIVE-SOURCE PIN (anti-rot): every enumerated site must match a REAL skip line
+// in the live repo file — and conversely, the live no-skip gate over the WHOLE
+// real tests/ tree must be GREEN (every real skip is sanctioned at site level).
+// This is what keeps the discriminator honest: a moved/reworded real skip, or a
+// stale allowlist entry, breaks here loudly.
+// ───────────────────────────────────────────────────────────────────────────
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
+
+describe('the allowlist sites are PINNED to live source (anti-rot)', () => {
+  it('every SANCTIONED_SKIPS.site matches a real detected skip line in its live file', () => {
+    for (const entry of SANCTIONED_SKIPS) {
+      const text = readFileSync(resolve(REPO_ROOT, entry.file), 'utf8');
+      const rawLines = text.split('\n');
+      const want = normalizeSiteLine(entry.site);
+      // The site must equal the normalized RAW line of some detected skip in the file.
+      const hit = detectSkips(text).some((s) => normalizeSiteLine(rawLines[s.line - 1] ?? '') === want);
+      expect(hit, `allowlist site drifted from live source in ${entry.file}: ${entry.site}`).toBe(true);
+      // And the gate must actually allow that exact live line.
+      const live = rawLines.find((l) => normalizeSiteLine(l) === want) ?? '';
+      expect(sanctionedSkipFor(entry.file, live)?.capability, `${entry.file} site not sanctioned`).toBe(
+        entry.capability,
+      );
+    }
   });
 });
