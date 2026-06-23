@@ -120,7 +120,7 @@ describe('directive benchmark suite', () => {
     expect(taskNames).toContain('[MANUAL] stream -- direct JSON.parse');
     expect(taskNames).toContain('[DIRECTIVE] llm -- parse tool delta');
     expect(taskNames).toContain('[DIRECTIVE] worker -- shared evaluate + composite build');
-    expect(taskNames).toContain('[MANUAL] worker -- Boundary.evaluate + composite build');
+    expect(taskNames).toContain('[MANUAL] worker -- Boundary.evaluateWithHysteresis + composite build');
     expect(taskNames).toContain('[DIAGNOSTIC] worker -- state envelope structured clone');
     expect(taskNames).toContain('[BASELINE] worker -- state payload structured clone');
     expect(taskNames).toContain('[GATE] llm-startup-shared -- first token boundary');
