@@ -403,6 +403,84 @@ export const defaultGitShow: GitShowReader = (repoRoot, ref, path) => {
   }
 };
 
+// ────────────── the SNAPSHOT-GENESIS git seams (bootstrap-aware activation) ───
+//
+// The backstop diffs the LIVE surface against the snapshot AS COMMITTED ON THE BASE.
+// But the snapshot was BORN on a feature branch — it does NOT exist on `main` yet. On
+// the bootstrap PR (base = origin/main) the base GENUINELY has no prior baseline to
+// diff against — that is GENESIS, not a config error. To distinguish the two we ask
+// git TWO deterministic questions, injected as seams (testable, no shell):
+//   1. WHEN was the snapshot introduced? (the earliest commit that ADDED the file.)
+//   2. Is that intro commit an ANCESTOR of the base ref?
+// If the intro commit is NOT an ancestor of the base, the base PREDATES the snapshot's
+// very existence → there is no baseline → the backstop is INACTIVE (a loud pass). If it
+// IS an ancestor (the base SHOULD carry the snapshot) but the snapshot could not be read
+// → a genuine CONFIG ERROR (unfetched / wrong path) → FAIL-CLOSED.
+
+/**
+ * Resolve the INTRODUCTION commit of a repo-relative path — the earliest commit that
+ * ADDED it (`git log --diff-filter=A --format=%H --reverse -- <path> | head -1`,
+ * argument-vector, no shell). Returns the full SHA, or `undefined` if the path was never
+ * added in this history (a shallow clone that does not reach the genesis, or a brand-new
+ * untracked file). THROWS (tagged) only on a git INVOCATION fault (git missing / not a
+ * repo) — distinct from "no introducing commit found", which is a clean `undefined`.
+ */
+export type GitIntroReader = (repoRoot: string, path: string) => string | undefined;
+
+/** The default {@link GitIntroReader} — a real `git log --diff-filter=A …` via `execFileSync`. */
+export const defaultGitIntro: GitIntroReader = (repoRoot, path) => {
+  try {
+    const out = execFileSync('git', ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', path], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const first = out
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => l.length > 0);
+    return first;
+  } catch (err: unknown) {
+    if (isRecord(err) && typeof (err as { status?: unknown }).status === 'number') {
+      // A non-zero exit with no matching commit is a clean "not found"; only a spawn
+      // fault (no status) is the environment error that must fail closed.
+      return undefined;
+    }
+    throw IoError('git.log', `failed to invoke git to resolve the intro commit of ${path}`, { path, cause: err });
+  }
+};
+
+/**
+ * Ask git whether `ancestor` is an ANCESTOR of `descendant` (`git merge-base
+ * --is-ancestor`, argument-vector, no shell): exit 0 ⇒ ancestor (true), exit 1 ⇒ not an
+ * ancestor (false). THROWS (tagged) only on a git INVOCATION fault OR an UNEXPECTED exit
+ * (e.g. a bad ref — exit ≥ 2), so a malformed ref can never be silently read as "not an
+ * ancestor" (which would mis-classify a config error as genesis).
+ */
+export type GitAncestryReader = (repoRoot: string, ancestor: string, descendant: string) => boolean;
+
+/** The default {@link GitAncestryReader} — a real `git merge-base --is-ancestor …` via `execFileSync`. */
+export const defaultGitAncestry: GitAncestryReader = (repoRoot, ancestor, descendant) => {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], {
+      cwd: repoRoot,
+      stdio: ['ignore', 'ignore', 'ignore'],
+    });
+    return true; // exit 0 → ancestor.
+  } catch (err: unknown) {
+    // `merge-base --is-ancestor` exits 1 when NOT an ancestor — a clean `false`. Any
+    // OTHER non-zero exit (≥ 2 — e.g. a bad/unknown ref) or a spawn fault is an error we
+    // must NOT swallow as "not an ancestor" (that would mis-read a config error as genesis).
+    if (isRecord(err) && (err as { status?: unknown }).status === 1) return false;
+    throw IoError(
+      'git.merge-base',
+      `failed to determine whether ${ancestor} is an ancestor of ${descendant} (a bad ref or a git fault — never silently "not an ancestor")`,
+      { cause: err },
+    );
+  }
+};
+
 /**
  * Resolve the BASE REF the live surface is diffed against — the snapshot the change is
  * being REVIEWED against, NOT the working-tree snapshot. Deterministic precedence:
@@ -514,6 +592,52 @@ export interface StandardsFactsOptions {
   readonly env?: NodeJS.ProcessEnv;
   /** The `git show <ref>:<path>` reader (default {@link defaultGitShow}). */
   readonly gitShow?: GitShowReader;
+  /** The intro-commit resolver for the snapshot path (default {@link defaultGitIntro}). */
+  readonly gitIntro?: GitIntroReader;
+  /** The ancestry oracle (`merge-base --is-ancestor`) (default {@link defaultGitAncestry}). */
+  readonly gitAncestry?: GitAncestryReader;
+}
+
+/**
+ * The BOOTSTRAP-AWARE result of the raccoon-rule backstop — a discriminated state so the
+ * GENESIS case (no prior baseline yet exists) is a CLEAN, LOUD pass distinct from a green
+ * diff and distinct from a fail-closed config error:
+ *
+ *  - `active`: the base ref carries the snapshot → the diff ran; `facts` are the decided
+ *    {@link StandardsIntegrityFacts} the `standardsIntegrityGate` folds.
+ *  - `inactive`: the snapshot's introduction commit is NOT an ancestor of the base ref →
+ *    the base PREDATES the snapshot's existence (the genesis it cannot guard). There is no
+ *    prior baseline to diff against, so the backstop is INACTIVE — a LOUD pass (the
+ *    `message` says so), NOT a silent green. You cannot sneak a weakening past a baseline
+ *    that does not exist. It activates once the base carries the snapshot (post-merge).
+ *
+ * A CONFIG ERROR (the intro commit IS an ancestor of the base — the base SHOULD have the
+ * snapshot — but it could not be read: unfetched / wrong path) is NEITHER state: it THROWS
+ * (fail-closed), so a fetch/config fault can never masquerade as genesis.
+ */
+export type StandardsIntegrityResult =
+  | { readonly _tag: 'active'; readonly facts: StandardsIntegrityFacts }
+  | {
+      readonly _tag: 'inactive';
+      /** The base ref the backstop would have diffed against. */
+      readonly baseRef: string;
+      /** The commit that introduced the snapshot (the genesis it cannot guard at `baseRef`). */
+      readonly introCommit: string;
+      /** The loud, self-explaining message (printed by the gate; NOT a silent pass). */
+      readonly message: string;
+    };
+
+/**
+ * Compose the INACTIVE message — loud + self-explaining, naming the base, the intro commit,
+ * and exactly when the backstop activates (post-merge, once the base carries the snapshot).
+ */
+function inactiveMessage(baseRef: string, introCommit: string): string {
+  return (
+    `standards backstop INACTIVE: the snapshot ${STANDARDS_SNAPSHOT_PATH} does not exist at base "${baseRef}" ` +
+    `(it was introduced at ${introCommit}, which is NOT an ancestor of "${baseRef}"); the backstop activates once ` +
+    `"${baseRef}" carries the snapshot — i.e. post-merge. NOT a silent pass — there is genuinely no prior baseline ` +
+    `to guard, so you cannot sneak a weakening past a baseline that does not exist.`
+  );
 }
 
 /**
@@ -540,18 +664,59 @@ export interface StandardsFactsOptions {
  * `committedAddress` carries the BASE snapshot's address (the prior baseline the diff is
  * against), so the report's drift keystone reflects the reviewed-against ground truth,
  * not the working snapshot.
+ *
+ * BOOTSTRAP-AWARE: returns a {@link StandardsIntegrityResult} discriminated state. If the
+ * base ref carries the snapshot → `active` (the decided facts). If the base PREDATES the
+ * snapshot's existence (its introduction commit is NOT an ancestor of the base) → there is
+ * no prior baseline → `inactive` (a LOUD pass, never a silent green — you cannot sneak a
+ * weakening past a baseline that does not exist; the backstop activates post-merge). If the
+ * base SHOULD carry the snapshot (the intro commit IS an ancestor) but it could not be read
+ * → a genuine CONFIG ERROR → THROWS (fail-closed), so a fetch/path fault never poses as
+ * genesis.
  */
 export function buildStandardsIntegrityFacts(
   repoRoot: string,
   now: Date,
   opts: StandardsFactsOptions = {},
-): StandardsIntegrityFacts {
+): StandardsIntegrityResult {
   const live = readLiveStandardsSurface(repoRoot, now);
   const baseRef = resolveStandardsBaseRef(opts.env ?? process.env);
-  const base = readBaseSnapshot(repoRoot, baseRef, opts.gitShow ?? defaultGitShow);
+  const gitShow = opts.gitShow ?? defaultGitShow;
+
+  // Try to read the PRIOR baseline at the base ref. If it is present, the backstop is
+  // ACTIVE and we run the normal diff.
+  const raw = gitShow(repoRoot, baseRef, STANDARDS_SNAPSHOT_PATH);
+  if (raw === undefined) {
+    // The base ref does NOT carry the snapshot. DISTINGUISH genesis from a config error:
+    // resolve the snapshot's introduction commit and ask whether it is an ANCESTOR of the
+    // base. If it is NOT an ancestor, the base PREDATES the snapshot's existence → GENESIS
+    // → INACTIVE (a loud pass — there is no prior baseline to guard). If it IS an ancestor
+    // (the base SHOULD have it) OR the intro commit cannot be resolved (we cannot prove
+    // genesis), FALL THROUGH to readBaseSnapshot, which FAILS CLOSED (the config-error path).
+    const gitIntro = opts.gitIntro ?? defaultGitIntro;
+    const gitAncestry = opts.gitAncestry ?? defaultGitAncestry;
+    const introCommit = gitIntro(repoRoot, STANDARDS_SNAPSHOT_PATH);
+    if (introCommit !== undefined && !gitAncestry(repoRoot, introCommit, baseRef)) {
+      return { _tag: 'inactive', baseRef, introCommit, message: inactiveMessage(baseRef, introCommit) };
+    }
+    // CONFIG ERROR (intro is an ancestor of base, or unprovable genesis): fail closed.
+    // `readBaseSnapshot` re-reads via the SAME seam and throws the precise tagged message.
+    readBaseSnapshot(repoRoot, baseRef, gitShow);
+    // `readBaseSnapshot` always throws on an undefined read; this is unreachable, but the
+    // tagged throw above is the real exit — never a silent pass.
+    throw InvariantViolationError(
+      'standards-surface',
+      `the standards snapshot ${STANDARDS_SNAPSHOT_PATH} could not be read at base "${baseRef}" and genesis could not be proven — fail-closed.`,
+    );
+  }
+
+  const base = parseSnapshot(raw, `${baseRef}:${STANDARDS_SNAPSHOT_PATH}`);
   const changes = diffStandardsSurface(base.elements, live.elements);
   const signoffs = readStandardsWaivers(repoRoot);
   const alwaysBlocking = new Set(ALWAYS_BLOCKING_RULES);
   const partitioned = applyStandardsWaivers(changes, signoffs, now, alwaysBlocking);
-  return { ...partitioned, committedAddress: base.address, liveAddress: live.address };
+  return {
+    _tag: 'active',
+    facts: { ...partitioned, committedAddress: base.address, liveAddress: live.address },
+  };
 }

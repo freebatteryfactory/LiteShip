@@ -43,6 +43,26 @@ import {
   type GitShowReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
 import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
+import type { StandardsIntegrityResult } from '../../../../packages/cli/src/lib/standards-surface.js';
+
+/**
+ * Assert the backstop is ACTIVE (the base carried the snapshot → the diff ran) and return
+ * the decided facts. The bootstrap-aware {@link buildStandardsIntegrityFacts} returns a
+ * discriminated state; these facts-shape pins all exercise the ACTIVE path.
+ */
+function activeFacts(result: StandardsIntegrityResult) {
+  expect(result._tag, 'expected the backstop to be ACTIVE (the base carried the snapshot)').toBe('active');
+  if (result._tag !== 'active') throw new Error('unreachable: asserted active above');
+  return result.facts;
+}
+
+/**
+ * A git-seam pair modeling the CONFIG-ERROR side: the snapshot's intro commit IS an
+ * ancestor of the base (so the base SHOULD carry it) — so a base with NO snapshot is a
+ * genuine config error (fail-closed), NOT genesis. Injected so the temp-repo tests are
+ * hermetic (no real git history in the synthetic root).
+ */
+const introIsAncestor = { gitIntro: () => 'introsha', gitAncestry: () => true } as const;
 
 /**
  * Build a {@link GitShowReader} stub serving `base` as the PRIOR baseline snapshot. The
@@ -323,7 +343,9 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
   it('an UN-weakened branch (the BASE-ref snapshot equals live) → zero unsigned weakenings + matching addresses', () => {
     // The BASE (the prior, reviewed-against baseline) equals the live surface → the diff
     // is empty. The base is sourced via git (the gitShow seam), NOT the working snapshot.
-    const facts = buildStandardsIntegrityFacts(root, NOW, { gitShow: baseGitShow(readLiveStandardsSurface(root, NOW)) });
+    const facts = activeFacts(
+      buildStandardsIntegrityFacts(root, NOW, { gitShow: baseGitShow(readLiveStandardsSurface(root, NOW)) }),
+    );
     expect(facts.unsignedWeakenings).toEqual([]);
     expect(facts.forbiddenSignoffs).toEqual([]);
     expect(facts.expiredSignoffs).toEqual([]);
@@ -341,9 +363,11 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
     // The COVER-UP: the working snapshot is regenerated to MATCH the weakened live — the
     // OLD (working-snapshot) diff would have passed. The base-ref diff still catches it.
     writeCommittedSnapshot(root, live);
-    const facts = buildStandardsIntegrityFacts(root, NOW, {
-      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
-    });
+    const facts = activeFacts(
+      buildStandardsIntegrityFacts(root, NOW, {
+        gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+      }),
+    );
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
     expect(facts.committedAddress).not.toBe(facts.liveAddress);
   });
@@ -361,9 +385,11 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
       expiry: '2999-01-01',
     };
     writeFileSync(join(root, STANDARDS_WAIVERS_PATH), JSON.stringify({ signoffs: [signoff] }), 'utf8');
-    const facts = buildStandardsIntegrityFacts(root, NOW, {
-      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
-    });
+    const facts = activeFacts(
+      buildStandardsIntegrityFacts(root, NOW, {
+        gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+      }),
+    );
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(false);
     expect(facts.signedWeakenings.some((c) => c.weakening === 'floor-lowered' && c.owner === 'heyoub')).toBe(true);
   });
@@ -381,18 +407,84 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
       expiry: '2000-01-01',
     };
     writeFileSync(join(root, STANDARDS_WAIVERS_PATH), JSON.stringify({ signoffs: [signoff] }), 'utf8');
-    const facts = buildStandardsIntegrityFacts(root, NOW, {
-      gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
-    });
+    const facts = activeFacts(
+      buildStandardsIntegrityFacts(root, NOW, {
+        gitShow: baseGitShow({ snapshotFormat: 1, elements: strongerElements, address: '' }),
+      }),
+    );
     expect(facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
     expect(facts.expiredSignoffs.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('FAILS CLOSED when the base ref carries no snapshot (refuse, never fall back to the working snapshot)', () => {
+  it('FAILS CLOSED on a CONFIG ERROR (the base SHOULD carry the snapshot — intro IS an ancestor — but it cannot be read)', () => {
     // The bypass we are closing: a same-commit weakening regenerates the working snapshot,
-    // then HOPES the gate falls back to it. It must not — an unresolvable base THROWS.
+    // then HOPES the gate falls back to it. It must not — when the snapshot's intro commit
+    // IS an ancestor of the base (so the base should have it) but the read returns undefined
+    // (unfetched / wrong path), that is a CONFIG ERROR → THROWS (never falls back, never
+    // mis-read as genesis).
     writeCommittedSnapshot(root, readLiveStandardsSurface(root, NOW));
-    expect(() => buildStandardsIntegrityFacts(root, NOW, { gitShow: () => undefined })).toThrow();
+    expect(() =>
+      buildStandardsIntegrityFacts(root, NOW, { gitShow: () => undefined, ...introIsAncestor }),
+    ).toThrow();
+  });
+});
+
+// ───────────────────── REFINEMENT 1 — bootstrap-aware activation ───────────────
+describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (bootstrap-aware activation)', () => {
+  it('GENESIS → INACTIVE (a loud pass): the base PREDATES the snapshot (intro is NOT an ancestor of base)', () => {
+    // The base ref does NOT carry the snapshot (gitShow → undefined), AND the snapshot's
+    // intro commit is NOT an ancestor of the base (the base predates the snapshot's very
+    // existence — the bootstrap PR vs main). There is no prior baseline to diff against →
+    // the backstop is INACTIVE: a discriminated state with a loud message, NOT a throw and
+    // NOT a silent green.
+    const result = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: () => undefined,
+      gitIntro: () => 'd0c214b7intro',
+      gitAncestry: () => false, // intro is NOT an ancestor of the base → genesis.
+    });
+    expect(result._tag).toBe('inactive');
+    if (result._tag !== 'inactive') throw new Error('unreachable');
+    expect(result.introCommit).toBe('d0c214b7intro');
+    expect(result.message).toContain('INACTIVE');
+    expect(result.message).toContain('NOT a silent pass');
+  });
+
+  it('CONFIG ERROR → FAIL-CLOSED: the base SHOULD carry it (intro IS an ancestor) but it cannot be read', () => {
+    expect(() =>
+      buildStandardsIntegrityFacts(root, NOW, {
+        gitShow: () => undefined,
+        gitIntro: () => 'introsha',
+        gitAncestry: () => true, // intro IS an ancestor → the base should have it → config error.
+      }),
+    ).toThrow();
+  });
+
+  it('UNPROVABLE GENESIS → FAIL-CLOSED: the intro commit cannot be resolved (a shallow clone) → refuse', () => {
+    // We cannot PROVE the base predates the snapshot if we cannot find the intro commit
+    // (a shallow clone that does not reach genesis). The safe default is FAIL-CLOSED — never
+    // assume genesis and pass.
+    expect(() =>
+      buildStandardsIntegrityFacts(root, NOW, {
+        gitShow: () => undefined,
+        gitIntro: () => undefined, // intro unresolvable → cannot prove genesis → fail closed.
+        gitAncestry: () => false,
+      }),
+    ).toThrow();
+  });
+
+  it('a base that HAS the snapshot is ACTIVE (the normal diff path, unchanged)', () => {
+    // The ancestry seams are never consulted when the base carries the snapshot — the
+    // ACTIVE path is exactly the prior behavior.
+    const result = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: baseGitShow(readLiveStandardsSurface(root, NOW)),
+      gitIntro: () => {
+        throw new Error('gitIntro must NOT be consulted when the base carries the snapshot');
+      },
+      gitAncestry: () => {
+        throw new Error('gitAncestry must NOT be consulted when the base carries the snapshot');
+      },
+    });
+    expect(result._tag).toBe('active');
   });
 });
 

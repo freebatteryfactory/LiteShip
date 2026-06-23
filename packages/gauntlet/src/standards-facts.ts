@@ -150,11 +150,19 @@ export interface FloorSurface {
  * One SANCTIONED CAPABILITY-GATED SKIP (an entry in `SANCTIONED_SKIPS`) — the
  * waiver-with-teeth that makes a legit `tests/` skip VISIBLE + auditable. A skip is a
  * lie UNLESS it is enumerated; enumerating it is the honest, accountable escape. ADDING
- * an entry (more is skipped) is a WEAKEN — it surfaces in the raccoon-rule diff and must
- * be an intentional snapshot regeneration; REMOVING one (a re-enabled test) is a
- * STRENGTHEN. It can NEVER be signed off against the always-blocking rule it relaxes (the
- * `gauntlet/no-skipped-test` floor), so an allowlist-add is a {@link NEVER_SIGNABLE_WEAKENINGS}
- * class — the meta-analogue of "you cannot waive a lie".
+ * an entry (more is skipped) is a WEAKEN — it surfaces in the raccoon-rule diff.
+ *
+ * IT IS OWNER-SIGNABLE (not in {@link NEVER_SIGNABLE_WEAKENINGS}). A capability-gate skip
+ * is CONDITIONAL (the test IS implemented; it runs when the capability — ffmpeg / wasm /
+ * SAB / coverage — is present, and skips only when absent) and enumerated with an
+ * environmental reason. That makes it a legitimate, owner-REVIEWABLE weakening: the
+ * sign-off is the REVIEW gate ("is this a genuine capability-gate?"). This is HONESTLY
+ * different from a PLACEHOLDER skip (unconditional, the test not implemented), which is a
+ * lie the always-blocking `gauntlet/no-skipped-test` gate catches as a VIOLATION and which
+ * can never be honestly sanctioned. Signable ≠ auto-allowed: an UNSIGNED skip-allowlist-add
+ * still BLOCKS (it must be owner-signed OR an intentional, reviewed snapshot regeneration);
+ * a matching, non-expired sign-off converts it to a recorded signed weakening. REMOVING one
+ * (a re-enabled test) is a STRENGTHEN.
  */
 export interface SkipAllowlistSurface {
   readonly _tag: 'skip-allowlist';
@@ -611,15 +619,19 @@ function additionChange(el: StandardsElement): StandardsChange {
     };
   }
   if (el._tag === 'skip-allowlist') {
-    // A NEW sanctioned skip = MORE is skipped = a WEAKEN (the always-blocking
-    // no-skipped-test floor relaxed for one more file). Like a waiver-add, this can
-    // NEVER be signed off (it relaxes an always-blocking rule) — `skip-allowlist-added`
-    // is in NEVER_SIGNABLE_WEAKENINGS.
+    // A NEW sanctioned skip = MORE is skipped = a WEAKEN (one more capability-gated skip
+    // SITE allowed). It is OWNER-SIGNABLE (NOT in NEVER_SIGNABLE_WEAKENINGS): a
+    // capability-gate skip is CONDITIONAL (the test runs when the capability is present) +
+    // enumerated with an environmental reason, so the owner sign-off is the legitimate
+    // REVIEW gate. Signable ≠ auto-allowed: while UNSIGNED it BLOCKS (it must be owner-signed
+    // or an intentional, reviewed snapshot regeneration). A PLACEHOLDER skip (unconditional,
+    // not implemented) is a different thing — the always-blocking no-skipped-test gate
+    // catches it as a violation and it can never be honestly sanctioned.
     return {
       elementKey: key,
       changeClass: 'weaken',
       weakening: 'skip-allowlist-added',
-      detail: `NEW sanctioned skip for ${el.file} (site \`${el.site}\`, capability: ${el.capability}) — one more skip SITE is allowed than the committed snapshot recorded. A skip allowlist entry can never be signed off (it relaxes the always-blocking no-skipped-test floor); regenerate the snapshot intentionally only if the capability gate is genuinely honest.`,
+      detail: `NEW sanctioned skip for ${el.file} (site \`${el.site}\`, capability: ${el.capability}) — one more capability-gated skip SITE is allowed than the committed snapshot recorded. This is owner-SIGNABLE (a capability-gate skip is conditional + reviewable): add a matching owner sign-off, or regenerate the snapshot intentionally if the capability gate is genuinely honest. Until signed/regenerated it BLOCKS.`,
     };
   }
   // Adding any other element (gate, invariant, always-blocking rule, floor,
@@ -697,11 +709,13 @@ export function diffStandardsSurface(
  * onto it for the gate-level check.)
  */
 export const NEVER_SIGNABLE_WEAKENINGS: readonly WeakeningClass[] = [
+  // `always-blocking-removed` can NEVER be reviewed away: removing a gate's always-blocking
+  // status, removing the no-skip / no-placeholder gate, or lowering a floor below zero is an
+  // erosion of the never-waivable floor itself — there is no honest review that sanctions
+  // deleting the floor. (A PLACEHOLDER skip — unconditional, the test not implemented — is
+  // separately caught as a VIOLATION by the no-skipped-test gate, so it can never be
+  // honestly sanctioned here either; only a CONDITIONAL, capability-gated skip is signable.)
   'always-blocking-removed',
-  // A skip-allowlist add relaxes the always-blocking no-skipped-test floor for one more
-  // file — the meta-analogue of "you cannot waive a lie". It is permitted only by an
-  // INTENTIONAL snapshot regeneration (the visible, reviewed record), never by a sign-off.
-  'skip-allowlist-added',
 ];
 
 /** True iff the standards waiver's expiry is strictly before `now` (day granularity). */

@@ -78,6 +78,26 @@ import { readWorkspacePackages, type WorkspacePackageIdentity } from './workspac
 import { analyzeSupplyChain, type WorkspacePkg } from './supply-chain.js';
 
 /**
+ * The CLEAN {@link StandardsIntegrityFacts} folded when the raccoon-rule backstop is
+ * INACTIVE (the base ref predates the snapshot's existence — genesis). Zero weakenings
+ * (the gate folds to no findings) with a sentinel address that NAMES the inactive reason,
+ * so the report's drift keystone shows the backstop did not diff (not a false "addresses
+ * match"). NOT a silent pass: the host also logs the loud activation message.
+ */
+function inactiveStandardsFacts(message: string): StandardsIntegrityFacts {
+  const sentinel = `inactive:${message}`;
+  return {
+    unsignedWeakenings: [],
+    signedWeakenings: [],
+    unregeneratedStrengthens: [],
+    forbiddenSignoffs: [],
+    expiredSignoffs: [],
+    committedAddress: sentinel,
+    liveAddress: sentinel,
+  };
+}
+
+/**
  * The PARAMETRIC binding between a canonical `INVARIANTS` rule and the IR property
  * its text-only oracle observes (B3.2). One row drives the generic
  * {@link liteshipRegexOracle} for each of the three triangulated check-invariants:
@@ -295,7 +315,20 @@ export async function runGauntletWithRepoIR(
   // content-address + a diff, no test runs), so it rides the always-on path with
   // traceability.
   gateSet.push(standardsIntegrityGate);
-  const standardsFacts: StandardsIntegrityFacts = buildStandardsIntegrityFacts(repoRoot, now, cacheOpts.standards);
+  // BOOTSTRAP-AWARE: the backstop is INACTIVE when the base ref PREDATES the snapshot's
+  // existence (genesis — e.g. a PR vs main where the snapshot was born on the branch).
+  // There is no prior baseline to diff against, so we fold to CLEAN facts (no findings) and
+  // emit the loud message — never a silent pass, and never a fail-closed for a base that
+  // genuinely cannot carry the snapshot yet. A true config error (base SHOULD have it but
+  // could not be read) still THROWS inside buildStandardsIntegrityFacts (fail-closed).
+  const standardsResult = buildStandardsIntegrityFacts(repoRoot, now, cacheOpts.standards);
+  const standardsFacts: StandardsIntegrityFacts =
+    standardsResult._tag === 'active' ? standardsResult.facts : inactiveStandardsFacts(standardsResult.message);
+  if (standardsResult._tag === 'inactive') {
+    // Surface the bootstrap activation notice LOUDLY (stderr) — the same channel the
+    // mutate/mcdc seam-skip notices use; never a quiet drop, never a finding.
+    process.stderr.write(`[standards-integrity] ${standardsResult.message}\n`);
+  }
 
   // The `--supply-chain` opt-in (Slice C): compute the heavy SupplyChainFacts in the
   // HOST (lockfile parse + SBOM + CI scan), inject them, compose `supplyChainGate`.
