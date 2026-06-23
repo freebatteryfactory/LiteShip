@@ -901,6 +901,16 @@ describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth
    * elements at it. Returns undefined if the birth commit is not reachable in this checkout.
    */
   async function realBirthElements(): Promise<readonly StandardsElement[] | undefined> {
+    // A SHALLOW checkout (the platform smoke runners use a default depth-1 clone) cannot
+    // reach the snapshot's real introduction commit: `git log --diff-filter=A` mis-reports
+    // the shallow BOUNDARY commit as the "birth" (git cannot see before the boundary, so the
+    // file looks newly-added there) — a wrong, recent baseline, not undefined. This real-repo
+    // invariant is OS-independent, so it runs authoritatively on the full-history runner
+    // (truth-linux, fetch-depth:0) and skips cleanly when the clone is shallow.
+    const shallow = await spawnArgvCapture('git', ['rev-parse', '--is-shallow-repository'], {
+      cwd: REPO_ROOT,
+    });
+    if (shallow.exitCode !== 0 || shallow.stdout.trim() === 'true') return undefined;
     const res = await spawnArgvCapture(
       'git',
       ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', STANDARDS_SNAPSHOT_PATH],
