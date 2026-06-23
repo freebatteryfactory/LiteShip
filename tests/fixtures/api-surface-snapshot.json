@@ -1767,6 +1767,14 @@
       "version": "0.4.0",
       "exports": [
         {
+          "name": "ABSENT_SUFFIX",
+          "kind": "const"
+        },
+        {
+          "name": "ACCESSED_ABSENT_MARKER",
+          "kind": "const"
+        },
+        {
           "name": "ALWAYS_BLOCKING_RULES",
           "kind": "const"
         },
@@ -1800,6 +1808,10 @@
         },
         {
           "name": "DEFAULT_GAUNTLET_GLOBS",
+          "kind": "const"
+        },
+        {
+          "name": "FACT_CHANNELS",
           "kind": "const"
         },
         {
@@ -1852,6 +1864,10 @@
         },
         {
           "name": "PLACEHOLDER_DIGEST",
+          "kind": "const"
+        },
+        {
+          "name": "PLACEHOLDER_SKIP_MARKERS",
           "kind": "const"
         },
         {
@@ -1966,6 +1982,11 @@
           "name": "earnedAuthority",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "factAccessEvidenceDigest",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "fileHasSanctionedSkip",
@@ -2206,6 +2227,11 @@
           "name": "simulationDeterminismGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "siteCarriesPlaceholderMarker",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "sortSurfaceElements",

@@ -37,7 +37,12 @@ import {
   defineGate,
   finding,
   makeRepoIR,
+  memoryContext,
   PLACEHOLDER_DIGEST,
+  FACT_CHANNELS,
+  ABSENT_SUFFIX,
+  gateVerdictKey,
+  supplyChainGate,
   type EvidenceChannel,
   type Gate,
   type GateContext,
@@ -353,19 +358,10 @@ function cloneContext(base: GateContext): GateContext {
   return out;
 }
 
-const FACT_CHANNELS: readonly EvidenceChannel[] = [
-  'supplyChain',
-  'mutation',
-  'mcdc',
-  'simulation',
-  'traceability',
-  'standards',
-  'declaredFix',
-  'taint',
-  'fuzzCorpus',
-  'proof',
-  'composition',
-];
+// The injected-fact channels are derived from the SINGLE SOURCE (`@czap/gauntlet`'s
+// FACT_CHANNELS, pinned to GateContext by a compile-time conformance assertion) — never
+// a hand-copy that can drift from the context shape (the round-5 residual: a channel the
+// recorder/law forgot to instrument). cloneContext + perturbFact iterate exactly this set.
 
 /** True iff `read` names an injected-fact channel (vs a file read or an ir.* read). */
 function isFactChannel(read: string): read is EvidenceChannel {
@@ -985,5 +981,165 @@ describe('THE LAW IS SHAPE-BROAD — list-dependence on ANY out-of-IR shape is c
           p.includes('/'),
       ),
     ).toBe(true);
+  });
+});
+
+// ── the ABSENCE keystone (Codex round-5 P3): reading an ABSENT channel is recorded ──
+
+/**
+ * A faithful REPLICA of the OLD (pre-round-5) recorder's fact-channel instrumentation —
+ * it installed a recording getter ONLY for the channels that were PRESENT on the context
+ * (`if (value === undefined) continue;`), so a gate that ACCESSED a channel and found it
+ * ABSENT recorded NOTHING. Used by the RED-before assertions to PROVE the old recorder
+ * was blind to absence-dependence, end-to-end, over the SAME gate the new recorder now
+ * captures. Everything else (files / allFiles / ir.*) matches the live recorder.
+ */
+function oldRecordingReads(base: GateContext, run: (ctx: GateContext) => void): ReadonlySet<string> {
+  const reads = new Set<string>();
+  const inIr = new Set<string>(base.ir !== undefined ? [...base.ir.files.keys()] : []);
+  const context: GateContext = {
+    repoRoot: base.repoRoot,
+    readFile: (relativePath: string): string | undefined => {
+      if (!inIr.has(relativePath)) reads.add(`readFile:${relativePath}`);
+      return base.readFile(relativePath);
+    },
+    files: (): readonly string[] => base.files(),
+    allFiles: (): readonly string[] => {
+      reads.add('allFiles');
+      return base.allFiles !== undefined ? base.allFiles() : base.files();
+    },
+    ...(base.ir !== undefined ? { ir: base.ir } : {}),
+  };
+  // OLD: install a getter ONLY for PRESENT channels — the absence hole.
+  for (const channel of FACT_CHANNELS) {
+    const value = (base as Record<string, unknown>)[channel];
+    if (value === undefined) continue; // ← the hole: an absent channel is never instrumented
+    Object.defineProperty(context, channel, {
+      enumerable: true,
+      configurable: true,
+      get(): unknown {
+        reads.add(channel);
+        return value;
+      },
+    });
+  }
+  run(context);
+  return reads;
+}
+
+describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a dependency (round-5 P3)', () => {
+  // The witness: the REAL absence-dependent supply-chain gate (supply-chain.ts:81). Its
+  // `fold` branches on `facts?.lockfile === undefined` etc. — when supplyChain is ABSENT
+  // it emits four "not-evidenced" findings, so its verdict DEPENDS on the absence.
+  const probeChannel: EvidenceChannel = 'supplyChain';
+  // A context with EVERY fact channel absent (a bare memory context). The supply-chain
+  // gate run over it ACCESSES `context.supplyChain` and finds it undefined.
+  const absentCtx: GateContext = memoryContext({});
+
+  it('RED-before: the OLD recorder records NOTHING for the absent supplyChain access (the hole)', () => {
+    const oldReads = oldRecordingReads(absentCtx, (ctx) => void supplyChainGate.run(ctx));
+    // The gate read `context.supplyChain` (found it absent) — but the old recorder, which
+    // only instrumented PRESENT channels, captured no marker for it. The dependency on the
+    // channel's ABSENCE was invisible.
+    expect(oldReads.has('supplyChain')).toBe(false);
+    expect(oldReads.has(`supplyChain${ABSENT_SUFFIX}`)).toBe(false);
+  });
+
+  it('GREEN-after: the NEW recorder records the absent access as `supplyChain:absent`', () => {
+    const rec = recordingContext(absentCtx);
+    supplyChainGate.run(rec.context);
+    const reads = rec.reads();
+    // The access is now recorded — DISTINCT from a present read AND from never-accessed.
+    expect(reads.has(`supplyChain${ABSENT_SUFFIX}`)).toBe(true);
+    expect(reads.has('supplyChain')).toBe(false); // not the present marker (it WAS absent)
+  });
+
+  it('a gate that NEVER touches supplyChain records neither marker (no spurious dependency)', () => {
+    // Prove present-channel behavior is preserved: a probe that ignores supplyChain
+    // entirely records nothing for it — the absent getter fires ONLY on an explicit access,
+    // so a gate that does not read the channel keys identically (no spurious cache-busting).
+    const rec = recordingContext(absentCtx);
+    const ignorer: Gate['run'] = (ctx) => {
+      void ctx.files(); // touches files, never supplyChain
+      return [];
+    };
+    ignorer(rec.context);
+    expect(rec.reads().has(`supplyChain${ABSENT_SUFFIX}`)).toBe(false);
+    expect(rec.reads().has('supplyChain')).toBe(false);
+  });
+
+  it('the absent access is DISTINCT from a present access (three mutually-exclusive markers)', () => {
+    const present = recordingContext(supplyChainGate.fixtures.green.context);
+    supplyChainGate.run(present.context);
+    const absent = recordingContext(absentCtx);
+    supplyChainGate.run(absent.context);
+    // present world → `supplyChain`; absent world → `supplyChain:absent`; never read → neither.
+    expect(present.reads().has('supplyChain')).toBe(true);
+    expect(present.reads().has(`supplyChain${ABSENT_SUFFIX}`)).toBe(false);
+    expect(absent.reads().has(`supplyChain${ABSENT_SUFFIX}`)).toBe(true);
+    expect(absent.reads().has('supplyChain')).toBe(false);
+  });
+
+  it('the absent getter returns `undefined` verbatim — the gate sees an IDENTICAL world', () => {
+    // FAITHFULNESS: the instrumented absent channel reads exactly as the base (undefined),
+    // so the gate's run output is identical with or without the recorder.
+    const rec = recordingContext(absentCtx);
+    expect((rec.context as Record<string, unknown>)['supplyChain']).toBeUndefined();
+    const bare = supplyChainGate.run(absentCtx);
+    const wrapped = supplyChainGate.run(rec.context);
+    expect(JSON.stringify(wrapped)).toBe(JSON.stringify(bare));
+  });
+
+  it('ABSENCE↔PRESENCE flips the verdict KEY (everything else fixed) — the soundness proof', () => {
+    // The structural guarantee made true: with toolchain/gate/coverage/env all FIXED,
+    // flipping supplyChain absent↔present changes the gate's evidenceDigest, which flips
+    // the verdict-cache key — so a warm cache can NEVER serve an absent-world verdict to a
+    // present world (or vice versa). The witness is the gate's REAL evidenceDigest.
+    const digest = supplyChainGate.evidenceDigest;
+    expect(digest).toBeDefined();
+    const fixed = {
+      toolchainDigest: 'tc-fixed',
+      gateId: supplyChainGate.id,
+      coverageDigest: 'cov-fixed',
+      env: { node: 'v20' },
+    } as const;
+    const keyAbsent = gateVerdictKey({ ...fixed, evidenceDigest: digest?.(absentCtx) });
+    const keyPresent = gateVerdictKey({
+      ...fixed,
+      evidenceDigest: digest?.(supplyChainGate.fixtures.green.context),
+    });
+    expect(keyAbsent).not.toBe(keyPresent); // the absence-state is folded into the key
+  });
+
+  it('EVERY fact channel: an absent access is recorded for ALL of them (the perturbation law covers absence)', () => {
+    // The broadened law: for EVERY channel in the single-source FACT_CHANNELS, a probe that
+    // accesses it while absent records the `<channel>:absent` marker. This is the absence
+    // analogue of the presence perturbation — no channel is left un-instrumented when absent.
+    for (const channel of FACT_CHANNELS) {
+      const rec = recordingContext(absentCtx);
+      // A minimal probe: access exactly this channel (the recorder's getter fires).
+      void (rec.context as Record<string, unknown>)[channel];
+      expect(
+        rec.reads().has(`${channel}${ABSENT_SUFFIX}`),
+        `channel "${channel}" absent-access must be recorded`,
+      ).toBe(true);
+      expect(rec.reads().has(channel), `channel "${channel}" must NOT record a present marker when absent`).toBe(false);
+    }
+  });
+
+  it('FACT_CHANNELS is the single source — it lists every optional fact key the recorder instruments', () => {
+    // Pin the single-source claim at runtime: the recorder installs a getter for exactly
+    // these channels. A channel added to GateContext but not FACT_CHANNELS is already a
+    // BUILD ERROR (the compile-time conformance assertion in evidence-recorder.ts); this
+    // runtime check pins the COUNT so an accidental shrink of the list is caught too.
+    const ctx = memoryContext({});
+    const recorder = recordingContext(ctx);
+    // Touching each channel name on the wrapped context must fire the absent getter — i.e.
+    // every name in FACT_CHANNELS is genuinely instrumented (no name silently uninstalled).
+    for (const channel of FACT_CHANNELS) {
+      void (recorder.context as Record<string, unknown>)[channel];
+    }
+    expect(recorder.reads().size).toBe(FACT_CHANNELS.length);
+    expect(new Set(FACT_CHANNELS).size).toBe(FACT_CHANNELS.length); // no duplicate names
   });
 });

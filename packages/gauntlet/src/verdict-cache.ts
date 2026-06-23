@@ -291,3 +291,39 @@ export function injectedFactEvidenceDigest(label: string, fact: unknown): string
   if (fact === undefined) return undefined;
   return stableEvidenceDigest([[label, stableSerialize(fact)]]);
 }
+
+/**
+ * The inert marker {@link factAccessEvidenceDigest} folds for a channel a gate
+ * ACCESSED and found ABSENT (`undefined`). DISTINCT from {@link NO_EVIDENCE_MARKER}
+ * (the gate declared/read NO evidence at all) and from a real `ev:` fold (a present
+ * fact) — three mutually-exclusive states keyed apart. The `absent:` scheme prefix
+ * means it can never collide with a real evidence fold (`ev:`) or the no-evidence
+ * marker (`evidence:none`), so a gate whose verdict DEPENDS on a channel being absent
+ * (the supply-chain `not-evidenced` branch) keys apart BOTH from a present-fact verdict
+ * AND from a gate that never touched the channel — the absence is folded as evidence.
+ */
+export const ACCESSED_ABSENT_MARKER = 'absent:accessed' as const;
+
+/**
+ * The OUT-OF-IR evidence digest for a gate whose verdict DEPENDS on a fact channel
+ * REGARDLESS of whether it is present or absent — the absence-aware sibling of
+ * {@link injectedFactEvidenceDigest}. The structural soundness keystone for the
+ * not-evidenced gate families (supply-chain, simulation, standards, …): when the gate
+ * ACCESSES the channel and finds it ABSENT, its verdict (the `not-evidenced`
+ * advisories) DEPENDS on that absence, so the digest folds a DISTINCT
+ * accessed-and-absent segment ({@link ACCESSED_ABSENT_MARKER}) rather than collapsing
+ * to the no-evidence marker. This makes the verdict key reflect absence-dependence:
+ *  - PRESENT  → a real `ev:` content fold of the fact (any content change flips it);
+ *  - ABSENT   → the `absent:accessed` marker (DISTINCT from never-accessed);
+ * so flipping the channel absent↔present (everything else fixed) ALWAYS flips the key.
+ *
+ * Unlike {@link injectedFactEvidenceDigest} (which returns `undefined` on absence — the
+ * opt-in "not in the set, no dependence" contract), this folds the absence as a
+ * dependency: use it for a gate whose verdict CHANGES on absence (it emits findings ABOUT
+ * the missing fact), NOT for an opt-in gate that simply does nothing when the fact is
+ * absent. PURE, lean, deterministic — the same fold vocabulary, no clock, no I/O.
+ */
+export function factAccessEvidenceDigest(label: string, fact: unknown): string {
+  if (fact === undefined) return stableEvidenceDigest([[label, ACCESSED_ABSENT_MARKER]]);
+  return stableEvidenceDigest([[label, stableSerialize(fact)]]);
+}

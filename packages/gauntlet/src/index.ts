@@ -154,12 +154,22 @@ export {
   stableEvidenceDigest,
   stableSerialize,
   injectedFactEvidenceDigest,
+  factAccessEvidenceDigest,
+  ACCESSED_ABSENT_MARKER,
 } from './verdict-cache.js';
 
 // The structural enforcement of the evidence-declaration LAW: the instrumented
 // GateContext recorder the meta-test drives to prove no gate reads undeclared
 // out-of-IR / fact-channel evidence (the verdict-cache soundness drill sergeant).
-export { type EvidenceChannel, type EvidenceRecorder, recordingContext } from './evidence-recorder.js';
+export {
+  type EvidenceChannel,
+  type FactChannel,
+  type AbsentRead,
+  type EvidenceRecorder,
+  FACT_CHANNELS,
+  ABSENT_SUFFIX,
+  recordingContext,
+} from './evidence-recorder.js';
 
 export { type LevelRule, LITESHIP_ASSURANCE_MAP, levelOf, matchesGlob } from './assurance-map.js';
 
@@ -253,6 +263,12 @@ export {
   sanctionedSkipFor,
   fileHasSanctionedSkip,
   normalizeSiteLine,
+  // The placeholder-marker floor: a skip whose SITE carries a TODO/FIXME/not-implemented/…
+  // marker is NON-sanctionable + NON-signable — a placeholder can never be signed away,
+  // even via the owner-signable capability-gate category (the standards weakening partition
+  // rejects it too). Exported so the host/tests can reuse the ONE detector + vocabulary.
+  PLACEHOLDER_SKIP_MARKERS,
+  siteCarriesPlaceholderMarker,
 } from './gates/skip-allowlist.js';
 
 // The IR-fold gates (Slice B, B1) — these REQUIRE the injected repo-IR, so they

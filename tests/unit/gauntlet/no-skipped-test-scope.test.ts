@@ -89,6 +89,24 @@ describe('no-skipped-test — scope widened to the tests/ tree, with teeth', () 
     );
   });
 
+  it('(b4m) a MULTI-LINE aliased-root skip (codex round-5) is FLAGGED at the call line', () => {
+    // Each construct's tokens SPAN physical lines — the old per-line alias pre-pass missed all four.
+    const findings = run(noSkippedTestGate, {
+      'tests/unit/widget/ml-import.test.ts': 'import {\n  it as spec\n} from "vitest";\nspec.skip("x", () => {});\n',
+      'tests/unit/widget/ml-namespace.test.ts': 'import * as v from "vitest";\nv.it.skip("x", () => {});\n',
+      'tests/unit/widget/ml-typed.test.ts': 'const t: typeof it = it;\nt.skip("x", () => {});\n',
+      'tests/unit/widget/ml-destructure.test.ts': 'const {\n  skip\n} = it;\nskip("x", () => {});\n',
+    });
+    expect(locs(findings)).toEqual(
+      expect.arrayContaining([
+        'tests/unit/widget/ml-import.test.ts:4',
+        'tests/unit/widget/ml-namespace.test.ts:2',
+        'tests/unit/widget/ml-typed.test.ts:2',
+        'tests/unit/widget/ml-destructure.test.ts:4',
+      ]),
+    );
+  });
+
   it('(b5) a rebind/destructure off a NON-runner is NOT flagged (no false positive on a genuine `t.skip`)', () => {
     const findings = run(noSkippedTestGate, {
       'tests/unit/widget/non-runner.test.ts':

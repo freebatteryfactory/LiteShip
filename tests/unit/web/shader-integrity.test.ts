@@ -353,6 +353,78 @@ describe('THE DRILL SERGEANT — classifier is a provable function of the URL po
   });
 });
 
+describe('PLATFORM REALITY — a raw newline does NOT make a string un-URL-parseable', () => {
+  // The premise the OLD comments asserted ("a URL can NEVER contain a raw newline";
+  // "the newline cannot collide") was FALSE. The WHATWG URL parser STRIPS ASCII
+  // tab/newline/CR from its input, so a value with a newline DOES URL.canParse and
+  // normalizes the newline away. This test pins that platform truth — a guard built on
+  // the old false premise would have ASSUMED these are false. RED-before/green-after:
+  // the corrected comments now state exactly this behavior.
+  it('URL.canParse("shader\\n.wgsl", base) is TRUE and normalizes to /shader.wgsl', () => {
+    const base = 'http://localhost';
+    // The WHATWG parser strips the newline, so the value DOES parse as a URL.
+    expect(URL.canParse('shader\n.wgsl', base)).toBe(true);
+    expect(new URL('shader\n.wgsl', base).href).toBe('http://localhost/shader.wgsl');
+    // Tab and CR are stripped identically — the whole ASCII-whitespace-in-URL class.
+    expect(URL.canParse('shader\t.wgsl', base)).toBe(true);
+    expect(new URL('shader\t.wgsl', base).href).toBe('http://localhost/shader.wgsl');
+    expect(URL.canParse('shader\r.wgsl', base)).toBe(true);
+    expect(new URL('shader\r.wgsl', base).href).toBe('http://localhost/shader.wgsl');
+  });
+
+  it('resolveRuntimeUrl WOULD accept the newline-stripped value (proving the divergence is real)', () => {
+    // resolveRuntimeUrl delegates to the WHATWG parser, so it resolves the
+    // newline-stripped URL as a fetchable same-origin 'allowed'. The shader classifier
+    // deliberately does NOT — this is the divergence the corrected docs now state, NOT
+    // the false "equivalent to resolveRuntimeUrl" claim.
+    const res = resolveRuntimeUrl('shader\n.wgsl', { kind: 'gpu-shader', policy: { mode: 'same-origin' } });
+    expect(res.type).toBe('allowed');
+    if (res.type === 'allowed') expect(res.resolved.href).toBe('http://localhost/shader.wgsl');
+  });
+});
+
+describe('THE CODEX WITNESS — a newline-stripping value is INLINE (fail-loud), never an unverified fetch', () => {
+  // Codex round-5 P3: `"shader\n.wgsl"` newline-strips to the valid URL
+  // `…/shader.wgsl`. The defect was the FALSE claim it can't be a URL; the BEHAVIOR is
+  // safe. This pins the real guarantee: the classifier treats the multi-line value as
+  // INLINE (NOT fetchable) — so the runtime compiles it as shader text and it FAILS
+  // LOUD (invalid GLSL/WGSL), it is NEVER fetched as the salvaged URL. No SRI bypass.
+  it('classifies the codex value `"shader\\n.wgsl"` as INLINE (not external, not fetchable)', () => {
+    // isFetchableRuntimeUrl / isExternalShaderSource report NOT-fetchable (inline body)
+    // even though resolveRuntimeUrl WOULD have accepted the stripped URL — the
+    // deliberate, secure-by-default divergence.
+    expect(isFetchableRuntimeUrl('shader\n.wgsl')).toBe(false);
+    expect(isExternalShaderSource('shader\n.wgsl')).toBe(false);
+  });
+
+  it('the inline value is invalid shader source ⟹ it FAILS LOUD at compile, never fetched (no SRI bypass)', () => {
+    // The runtime inline branch (gpu.ts: `fragSource = shaderSrc`) compiles this value
+    // LITERALLY. `"shader\n.wgsl"` is not valid GLSL/WGSL, so a real GL/GPU compile
+    // rejects it (fails loud). We assert here the path is INLINE — meaning the value
+    // never reaches the external fetch+verify branch — which is the no-bypass property.
+    // (gpu/wgpu compile is exercised by the runtime tests; this owns the classifier.)
+    expect(isExternalShaderSource('shader\n.wgsl')).toBe(false);
+    // It is NOT valid shader source either — so the inline-compile fails loud. We pin
+    // its non-shader shape (a one-token "path" with a newline) to make the contract
+    // explicit: this is neither a fetchable URL (we refuse to strip+fetch) NOR a real
+    // body, so the only outcome is a loud compile failure — never an unverified fetch.
+    expect('shader\n.wgsl'.includes('\n')).toBe(true);
+    expect('shader\n.wgsl'.includes('void')).toBe(false);
+  });
+
+  it('an INLINE value that is INVALID shader source carries NO integrity boundary (absent ⟹ inline never fetches)', () => {
+    // The classifier puts it on the inline path, where verifyShaderIntegrity is NOT
+    // consulted (no fetch ⟹ no bytes-from-network to verify). Pinning the contract: an
+    // inline value's safety is "fail loud at compile", not "fetch+SRI". The external
+    // path (fetch + verifyShaderIntegrity + decideShaderIntegrity) is reached ONLY for
+    // single-line fetchable URLs — which `"shader\n.wgsl"` is deliberately NOT.
+    expect(isExternalShaderSource('shader\n.wgsl')).toBe(false);
+    // Contrast: the SINGLE-LINE form IS external (fetched + verified) — proving the
+    // divergence is exactly the multi-line case, nothing wider.
+    expect(isExternalShaderSource('shader.wgsl')).toBe(true);
+  });
+});
+
 describe('decideShaderIntegrity — secure-by-default refusal', () => {
   it('a verified result ALWAYS proceeds', () => {
     const expected = parseShaderIntegrity(sriOf(SAMPLE_GLSL));

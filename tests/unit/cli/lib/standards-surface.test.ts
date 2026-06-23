@@ -42,6 +42,7 @@ import {
   STANDARDS_WAIVERS_PATH,
   STANDARDS_BASE_PROBE_PATH,
   type GitShowReader,
+  type GitIntroCommitReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
 import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
 import type { StandardsIntegrityResult } from '../../../../packages/cli/src/lib/standards-surface.js';
@@ -437,18 +438,77 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
 
 // ───────────── bootstrap-aware activation (RESOLVABLE-BASE model, `git show`-only) ─────
 describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-base activation, no intro/ancestry)', () => {
-  it('GENESIS → INACTIVE (a loud pass): the base RESOLVES (probe reads) but lacks the snapshot', () => {
-    // The robust detection: the base ref does NOT carry the snapshot (snapshot path →
-    // undefined) but the KNOWN-STABLE probe file (package.json) DOES read at the base → the
-    // base commit genuinely exists and predates the snapshot → genesis. There is no prior
-    // baseline to diff against → INACTIVE: a discriminated state with a loud message, NOT a
-    // throw and NOT a silent green. No intro-commit / ancestry git math is consulted.
-    const result = buildStandardsIntegrityFacts(root, NOW, { gitShow: resolvableBaseNoSnapshot });
+  it('INACTIVE (a loud pass) ONLY when the snapshot exists NOWHERE: base resolves, lacks it, NO intro commit', () => {
+    // The base ref does NOT carry the snapshot (snapshot path → undefined) but the
+    // KNOWN-STABLE probe (package.json) DOES read at the base → the base resolves and predates
+    // the snapshot. The snapshot ALSO has no introduction commit reachable from HEAD (the
+    // injected reader returns undefined — the genuinely-never-committed edge). ONLY then is the
+    // backstop INACTIVE: a discriminated loud-message state, NOT a throw, NOT a silent green.
+    // No `merge-base --is-ancestor` ancestry math is consulted.
+    const result = buildStandardsIntegrityFacts(root, NOW, {
+      gitShow: resolvableBaseNoSnapshot,
+      gitIntroCommit: () => undefined,
+    });
     expect(result._tag).toBe('inactive');
     if (result._tag !== 'inactive') throw new Error('unreachable');
     expect(result.message).toContain('INACTIVE');
     expect(result.message).toContain('NOT a silent pass');
     expect(result.message).toContain(STANDARDS_BASE_PROBE_PATH);
+    expect(result.message).toContain('never committed');
+  });
+
+  it('BIRTH BASELINE → ACTIVE: base resolves but lacks the snapshot, yet the intro commit IS reachable', () => {
+    // FINDING 3: when the base predates the snapshot but the snapshot's BIRTH (introduction)
+    // commit is reachable from HEAD, the backstop does NOT go inactive — it diffs vs the birth
+    // snapshot (the BRANCH BASELINE), guarding any branch-local weakening landed after birth.
+    const INTRO = 'a'.repeat(40);
+    const birthBytes = serializeStandardsSurface(readLiveStandardsSurface(root, NOW));
+    const gitShow: GitShowReader = (_root, ref, path) => {
+      if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      return undefined;
+    };
+    const gitIntroCommit: GitIntroCommitReader = () => INTRO;
+    const result = buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit });
+    expect(result._tag).toBe('active');
+    if (result._tag !== 'active') throw new Error('unreachable');
+    // live == birth here → a clean diff; the point is it RAN vs the birth baseline.
+    expect(result.facts.unsignedWeakenings).toEqual([]);
+  });
+
+  it('BIRTH BASELINE catches a post-birth weakening (a lowered floor vs the birth snapshot blocks)', () => {
+    // The birth snapshot has a STRONGER mutation floor than live (the branch lowered it after
+    // birth). Diffing live vs birth surfaces it as a blocking unsigned floor-lowered weakening
+    // — the window the old inactive path left unguarded is now closed.
+    const INTRO = 'b'.repeat(40);
+    const live = readLiveStandardsSurface(root, NOW);
+    const strongerBirth = {
+      snapshotFormat: 1 as const,
+      elements: live.elements.map((e) =>
+        e._tag === 'floor' && e.name === 'mutation-score::packages/x/src/b.ts' ? { ...e, value: 1 } : e,
+      ),
+      address: '',
+    };
+    const birthBytes = serializeStandardsSurface(strongerBirth);
+    const gitShow: GitShowReader = (_root, ref, path) => {
+      if (path === STANDARDS_SNAPSHOT_PATH) return ref === INTRO ? birthBytes : undefined;
+      if (path === STANDARDS_BASE_PROBE_PATH) return '{"name":"czap"}';
+      return undefined;
+    };
+    const result = buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => INTRO });
+    expect(result._tag).toBe('active');
+    if (result._tag !== 'active') throw new Error('unreachable');
+    expect(result.facts.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
+  });
+
+  it('the intro commit resolves but the snapshot is UNREADABLE there → FAIL-CLOSED (no baseline-less pass)', () => {
+    // A git inconsistency: the intro commit resolves, but `git show <intro>:<snapshot>` is
+    // undefined. The backstop must refuse rather than pass without a baseline.
+    const gitShow: GitShowReader = (_root, _ref, path) =>
+      path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+    expect(() =>
+      buildStandardsIntegrityFacts(root, NOW, { gitShow, gitIntroCommit: () => 'c'.repeat(40) }),
+    ).toThrow();
   });
 
   it('CONFIG ERROR → FAIL-CLOSED: the base ref is UNRESOLVABLE (even the known-stable probe is absent)', () => {

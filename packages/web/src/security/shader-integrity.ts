@@ -226,19 +226,27 @@ export const DEFAULT_SHADER_INTEGRITY_MODE: ShaderIntegrityMode = 'required-for-
  * Does `shaderSrc` denote an EXTERNAL (network-fetched) shader, as opposed to an
  * inline source string?
  *
- * SECURITY-CRITICAL — this classification is a PROVABLE FUNCTION OF the canonical URL
- * policy, not a parallel heuristic that drifts. It DELEGATES wholesale to
- * {@link isFetchableRuntimeUrl} — the single source of truth the URL guard uses to
- * decide "is this a fetchable runtime URL?". The rule is therefore exact and
- * drift-proof:
+ * SECURITY-CRITICAL — this classification DELEGATES to {@link isFetchableRuntimeUrl},
+ * the single source of truth the URL guard uses to decide "is this a fetchable runtime
+ * URL?". For SINGLE-LINE values it agrees exactly with that predicate; it diverges,
+ * deliberately, on MULTI-LINE values (see below). The rule:
  *
  *   a shaderSrc is EXTERNAL (must be fetched + integrity-verified, or refused
- *   secure-by-default) IFF the URL policy would treat it as a fetchable URL.
+ *   secure-by-default) IFF {@link isFetchableRuntimeUrl} reports it fetchable — which
+ *   excludes any value carrying a raw newline (an authored multi-line body).
  *
- * An INLINE shader is a genuine GLSL/WGSL BODY — program text identified by the ONE
- * property a URL can NEVER have: a raw NEWLINE (multi-line text). The discriminator
- * is NEWLINE-only, with NO in-content character markers: a URL/path CAN contain a
- * space (`shader file.wgsl`) AND legal-but-shader-looking characters
+ * An INLINE shader is a genuine GLSL/WGSL BODY — multi-line PROGRAM TEXT, marked by a
+ * raw NEWLINE. IMPORTANT: a newline does NOT make a string un-URL-parseable. The
+ * WHATWG URL parser STRIPS ASCII tab/newline/CR from its input, so
+ * `URL.canParse("shader\n.wgsl", base)` is `true` and normalizes to `…/shader.wgsl`.
+ * A newline's presence therefore does NOT prove "not a URL"; it signals AUTHORED
+ * multi-line text. The classifier makes a DELIBERATE choice to treat a multi-line
+ * value as an inline body and never follow the newline-stripped URL the parser would
+ * salvage. This is a divergence from {@link resolveRuntimeUrl} — which WOULD accept
+ * `…/shader.wgsl` — not an equivalence (see the "secure-by-default" note below).
+ *
+ * The discriminator is NEWLINE-only, with NO in-content character markers: a URL/path
+ * CAN contain a space (`shader file.wgsl`) AND legal-but-shader-looking characters
  * (`shader{1}.wgsl`, `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), so
  * neither inner whitespace NOR any `{`/`}`/`;`/`fn `-style marker is a sound
  * distinguisher — each collides with a real URL. EVERY single-line URL-shaped input
@@ -255,15 +263,27 @@ export const DEFAULT_SHADER_INTEGRITY_MODE: ShaderIntegrityMode = 'required-for-
  * let a PATH-WITH-A-SPACE (`shader file.wgsl`) slip inline; (3) a shader-syntax marker
  * (`{`/`;`/`fn `/`#version`) let `shader{1}.wgsl`, `./shader;v=1.wgsl`, `shader?x={y}`,
  * `shaders/fn file.wgsl` — all legal same-origin URLs — slip inline UNVERIFIED. The
- * NEWLINE rule depends on nothing an attacker can put in a URL, so the class is shut.
+ * NEWLINE rule depends on no in-content character an attacker can vary in a URL.
  *
- * HONEST TRADE-OFF: a genuine SINGLE-LINE inline body (e.g. `void main(){discard;}` on
- * one line) is now treated as EXTERNAL — it is fetched (which fails loudly) rather than
- * compiled inline. That is the SECURE choice: you cannot tell a one-liner body from a
+ * THE REAL GUARANTEE (why the multi-line case is safe even though such a value CAN be
+ * newline-stripped into a valid URL): the safety argument is NOT "a newline can't be a
+ * URL" — it can (the WHATWG parser strips it). It is: a real external shader URL is
+ * authored single-line and fetchable, so a MULTI-LINE value is treated as an inline
+ * BODY and compiled literally. If that multi-line value is not valid shader source —
+ * e.g. the codex case `"shader\n.wgsl"` — it FAILS LOUD at `gl.shaderSource` /
+ * `device.createShaderModule`; it is NEVER silently fetched as the salvaged
+ * `…/shader.wgsl`. So a multi-line value cannot become an UNVERIFIED FETCH — there is
+ * no SRI bypass, only a loud compile failure. This is the secure-by-default divergence
+ * from {@link resolveRuntimeUrl}, which WOULD have followed the stripped URL.
+ *
+ * SECURE-BY-DEFAULT TRADE-OFF: a genuine SINGLE-LINE inline body (e.g.
+ * `void main(){discard;}` on one line) is treated as EXTERNAL — it is fetched (which
+ * fails loudly) rather than compiled inline. You cannot tell a one-liner body from a
  * URL by content without a marker the attacker controls, so secure-by-default never
  * compiles an unverified single-line string. Real bodies are virtually always
- * multi-line. Because the classifier IS the URL-fetchability predicate, a new fetchable
- * shape is followed automatically; the cross-check property guards equality.
+ * multi-line. For single-line inputs the classifier IS the URL-fetchability predicate,
+ * so a new fetchable shape is followed automatically; the cross-check property guards
+ * that equality (it excludes the deliberately-divergent multi-line case).
  *
  * A `data:` / `blob:` token is URL-SHAPED (the policy reasons about it as a URL —
  * `data:` resolves cross-origin and is origin-refused; `blob:` resolves same-origin
@@ -273,7 +293,8 @@ export const DEFAULT_SHADER_INTEGRITY_MODE: ShaderIntegrityMode = 'required-for-
  */
 export function isExternalShaderSource(shaderSrc: string): boolean {
   // DELEGATE to the canonical URL-fetchability predicate — the single source of
-  // truth. NO parallel extension/slash heuristic (which would drift from the policy).
+  // truth (for single-line values; multi-line values are the deliberate inline-body
+  // divergence documented above). NO parallel extension/slash heuristic.
   return isFetchableRuntimeUrl(shaderSrc);
 }
 

@@ -8,7 +8,7 @@
 
 > **resolveRuntimeUrl**(`rawUrl`, `options`): [`RuntimeUrlResolution`](../type-aliases/RuntimeUrlResolution.md)
 
-Defined in: [web/src/security/runtime-url.ts:354](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L354)
+Defined in: [web/src/security/runtime-url.ts:387](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L387)
 
 Resolve a user-supplied `rawUrl` under `options.policy` and classify
 the result as one of [RuntimeUrlResolution](../type-aliases/RuntimeUrlResolution.md)'s variants.

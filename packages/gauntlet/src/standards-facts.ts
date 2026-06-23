@@ -38,6 +38,7 @@
  */
 
 import type { AssuranceLevel } from './assurance.js';
+import { siteCarriesPlaceholderMarker } from './gates/skip-allowlist.js';
 
 // ───────────────────────────── the surface model ────────────────────────────
 //
@@ -767,6 +768,21 @@ export function applyStandardsWaivers(
       const parts = change.elementKey.split('::');
       const ruleId = parts.slice(2).join('::');
       if (alwaysBlockingRuleIds.has(ruleId)) return true;
+    }
+    // A skip-allowlist-add whose SITE carries a PLACEHOLDER MARKER (TODO / FIXME / not
+    // implemented / stub / …) is a placeholder skip, NOT a capability gate — it can NEVER be
+    // signed away, even via the owner-signable capability-gate category. The element key
+    // shape is `skip-allowlist::<file>::<site>`; the site (everything after the file
+    // segment) is the TITLE/source line. A genuine capability-gate skip's title names a
+    // capability — never a placeholder tell — so this only ever forbids the lie, never the
+    // honest gate. (Defense-in-depth with `sanctionedSkipFor`, which already refuses to
+    // enumerate a marker-bearing site: the standards partition rejects it independently, so
+    // a hand-written snapshot or sign-off can never launder a placeholder past this floor.)
+    if (change.weakening === 'skip-allowlist-added' && change.elementKey.startsWith('skip-allowlist::')) {
+      const parts = change.elementKey.split('::');
+      // [0]='skip-allowlist', [1]=file, [2..]=site (the site itself may contain `::`).
+      const site = parts.slice(2).join('::');
+      if (siteCarriesPlaceholderMarker(site)) return true;
     }
     return false;
   };

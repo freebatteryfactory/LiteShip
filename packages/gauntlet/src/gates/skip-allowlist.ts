@@ -99,6 +99,53 @@ export function normalizeSiteLine(line: string): string {
 }
 
 /**
+ * The PLACEHOLDER-MARKER vocabulary — the tells of an unfinished-work skip (a TODO stub),
+ * which a sign-off can NEVER sanction. This is the SAME family the always-blocking
+ * `gauntlet/no-placeholder` gate flags (TODO / FIXME / XXX / HACK), WIDENED here with the
+ * prose tells that show up in a skip TITLE specifically — "not implemented" /
+ * "unimplemented" / "stub" / "placeholder" / "wip". A genuine capability-gate skip's title
+ * names a CAPABILITY ("ffmpeg libx264 render probe failed", "WASM artifact absent") — never
+ * a placeholder tell — so this list partitions the honest, conditional, owner-signable skip
+ * from the lie a sign-off must never be able to launder past the capability-gate category.
+ *
+ * Re-derived here (NOT imported from `no-placeholder.ts`, which keeps its detector private +
+ * comment-anchored): the matcher below is WHOLE-WORD for the single-token markers (so
+ * `SwiPe` / `stubbornly` never false-trip) and a substring for the multi-word phrase
+ * `not implemented`. Case-insensitive. The lean engine stays `@czap/core`-free — pure regex.
+ */
+export const PLACEHOLDER_SKIP_MARKERS: readonly string[] = [
+  'TODO',
+  'FIXME',
+  'XXX',
+  'HACK',
+  'not implemented',
+  'unimplemented',
+  'stub',
+  'placeholder',
+  'wip',
+];
+
+// The single-token markers are matched as WHOLE WORDS (`\b…\b`) so a substring inside an
+// unrelated identifier never false-rejects a legit capability gate; `not implemented` is a
+// multi-word phrase matched as a (whitespace-tolerant) substring. Case-insensitive.
+const PLACEHOLDER_MARKER_RE = /\b(?:TODO|FIXME|XXX|HACK|unimplemented|stub|placeholder|wip)\b|not\s+implemented/i;
+
+/**
+ * Does `site` (a skip's normalized title / source line) carry a PLACEHOLDER MARKER — the
+ * tell of an unfinished-work stub? A skip whose site matches is NON-sanctionable and
+ * NON-signable: it stays BLOCKING (the always-blocking no-placeholder floor), and the
+ * standards weakening partition must never convert it to a signed weakening even via the
+ * owner-signable capability-gate category. A placeholder can NEVER be signed away.
+ *
+ * Pure + dependency-free. Applied to the RAW or normalized line interchangeably (the marker
+ * survives whitespace collapse). The legit capability-gate sites — named by capability, not
+ * by a TODO — never match.
+ */
+export function siteCarriesPlaceholderMarker(site: string): boolean {
+  return PLACEHOLDER_MARKER_RE.test(site);
+}
+
+/**
  * THE ENUMERATED ALLOWLIST — every sanctioned capability-gated skip in `tests/`
  * (outside `tests/generated/`, which the separate plumb-gate owns), at SITE granularity.
  * Each entry was found by sweeping the test tree for every skip form (`it.skip` /
@@ -231,8 +278,16 @@ const SANCTIONED_BY_SITE: ReadonlyMap<string, ReadonlyMap<string, SanctionedSkip
  * caller passes it un-normalized; this normalizes both sides). Returns the matching entry
  * (for the visible-audit detail) or `undefined` when the skip is unsanctioned (→ BLOCKING)
  * — including a NEW, unrelated skip in an otherwise-sanctioned file.
+ *
+ * PLACEHOLDER FLOOR: a site carrying a {@link PLACEHOLDER_SKIP_MARKERS placeholder marker}
+ * (TODO / FIXME / not implemented / stub / …) is NON-sanctionable — it is rejected here even
+ * if it were (mistakenly or maliciously) enumerated in {@link SANCTIONED_SKIPS}. A
+ * placeholder skip is unfinished work, not a capability gate; it can never be sanctioned
+ * past the always-blocking no-placeholder floor. The legit capability-gate sites (named by
+ * capability) never carry a marker, so this never false-rejects a genuine gate.
  */
 export function sanctionedSkipFor(file: string, siteLine: string): SanctionedSkip | undefined {
+  if (siteCarriesPlaceholderMarker(siteLine)) return undefined;
   return SANCTIONED_BY_SITE.get(file)?.get(normalizeSiteLine(siteLine));
 }
 

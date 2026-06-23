@@ -75,6 +75,12 @@ describe('detectSkips — every Vitest skip/disable form is caught (codex round-
     ['import { test as t2 } from "vitest"; t2.todo("later");', 'import-rename `test as t2`; t2.todo'],
     ['const { todo: gone } = test; gone("x");', 'destructured-and-renamed `{ todo: gone } = test`; gone(...)'],
     ['const t = cond ? it : myObj; t("x", () => {});', 'SUSPICIOUS rebind to a ternary mentioning a runner — flagged, not passed'],
+    // The codex round-5 MULTI-LINE misses (the alias pre-pass was per physical line):
+    ['import {\n  it as spec\n} from "vitest";\nspec.skip("x", () => {});', 'MULTI-LINE import-rename `{\\n it as spec \\n}`; spec.skip'],
+    ['import * as v from "vitest";\nv.it.skip("x", () => {});', 'NAMESPACE import `import * as v`; v.it.skip'],
+    ['import * as v from "vitest";\nv.describe.skip("x", () => {});', 'NAMESPACE import; v.describe.skip'],
+    ['const t: typeof it = it;\nt.skip("x", () => {});', 'TYPED rebind `const t: typeof it = it`; t.skip'],
+    ['const {\n  skip\n} = it;\nskip("x", () => {});', 'MULTI-LINE destructure `{\\n skip \\n} = it`; skip(...)'],
   ];
 
   for (const [src, label] of MUST_DETECT) {
@@ -115,6 +121,29 @@ describe('detectSkips — every Vitest skip/disable form is caught (codex round-
       expect(detectSkips(src).length, `still missed (aliased root): ${src}`).toBeGreaterThan(0);
     }
   });
+
+  // RED-BEFORE PROOF (codex round-5): the MULTI-LINE aliased-root misses. The old alias pre-pass
+  // tokenized each PHYSICAL line and split on `;`, so a declaration/import whose tokens spanned
+  // multiple lines was never seen as ONE statement — each returned `[]`. The statement-aware
+  // whole-file token stream resolves them. Each case asserts the finding AND its exact `.skip(`
+  // line (the catch must point at the real skip-call line, not the binding line).
+  it('the codex round-5 MULTI-LINE [] misses are ALL now caught at the right line (RED-before → green-after)', () => {
+    const proven: ReadonlyArray<readonly [string, number]> = [
+      // multi-line import alias — `spec.skip` is on line 4
+      ['import {\n  it as spec\n} from "vitest";\nspec.skip("x", () => {});', 4],
+      // namespace import — `v.it.skip` is on line 2
+      ['import * as v from "vitest";\nv.it.skip("x", () => {});', 2],
+      // typed rebind (`: typeof it` annotation must not break the `= it` detection) — `t.skip` on line 2
+      ['const t: typeof it = it;\nt.skip("x", () => {});', 2],
+      // multi-line destructure — the bare `skip(...)` call is on line 4 (NOT the line-2 pattern)
+      ['const {\n  skip\n} = it;\nskip("x", () => {});', 4],
+    ];
+    for (const [src, line] of proven) {
+      const hits = detectSkips(src);
+      expect(hits.length, `still missed (multi-line): ${JSON.stringify(src)}`).toBe(1);
+      expect(hits[0]?.line, `wrong line for: ${JSON.stringify(src)}`).toBe(line);
+    }
+  });
 });
 
 describe('detectSkips — NO false positives (prose/strings/non-runner chains stay clean)', () => {
@@ -137,6 +166,13 @@ describe('detectSkips — NO false positives (prose/strings/non-runner chains st
     ['import { it as spec } from "vitest"; spec("a real test", () => {});', 'import-rename then a REAL run `spec(...)` — no skip member'],
     ['const t = it; t("a real test", () => {});', 'local rebind then a REAL run `t(...)` — no skip member'],
     ['const { each } = it; each([1])("runs", () => {});', 'destructure of a NON-skip member `const { each } = it`; each(...)'],
+    // The codex round-5 MULTI-LINE false-positive guards — the statement-aware scan must not over-fire:
+    ['const t: typeof myObj = myObj;\nt.skip("not a runner", () => {});', 'TYPED rebind off a NON-runner `const t: typeof myObj = myObj`; t.skip'],
+    ['import * as v from "vitest";\nv.it("a real test", () => {});', 'NAMESPACE import then a REAL run `v.it(...)` — no skip member'],
+    ['const v = makeThing();\nv.it.skip("not a runner", () => {});', 'a NON-namespace `v` (call-result) — `v.it.skip` is not a runner namespace'],
+    ['const {\n  each\n} = it;\neach([1])("runs", () => {});', 'MULTI-LINE destructure of a NON-skip member `{\\n each \\n} = it`; each(...)'],
+    ['const {\n  skip\n} = config;\nskip();', 'MULTI-LINE destructure off a NON-runner `{\\n skip \\n} = config`; skip()'],
+    ['let t: typeof it;\nt = something;', 'an UNINITIALIZED typed declaration `let t: typeof it;` — no `= it` rebind'],
   ];
 
   for (const [src, label] of MUST_NOT_DETECT) {
@@ -178,6 +214,20 @@ describe('detectSkips — form discrimination (call vs alias vs conditional vs c
     expect(detectSkips('const t = cond ? it : x; t("y", () => {});')[0]?.form).toBe('aliased');
     // A CLEAN rebind resolves the root, so the real `.skip(` is the strong `call` form.
     expect(detectSkips('const t = it; t.skip("y", () => {});')[0]?.form).toBe('call');
+  });
+
+  it('a namespace-import skip carries the `<ns>.` prefix in its token and is a `call`', () => {
+    const hits = detectSkips('import * as v from "vitest";\nv.it.skip("y", () => {});');
+    expect(hits.length).toBe(1);
+    expect(hits[0]?.form).toBe('call');
+    expect(hits[0]?.token).toBe('v.it.skip');
+  });
+
+  it('a multi-line construct reports the skip at the CALL line, never the binding line', () => {
+    // The destructure pattern spans lines 1-3; the bare `skip(...)` USE is on line 4 — the only hit.
+    const hits = detectSkips('const {\n  skip\n} = it;\nskip("y", () => {});');
+    expect(hits.length).toBe(1);
+    expect(hits[0]?.line).toBe(4);
   });
 
   it('reports the right 1-based line for a skip on line 3', () => {

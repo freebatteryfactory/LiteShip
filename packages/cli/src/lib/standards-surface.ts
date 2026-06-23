@@ -403,6 +403,60 @@ export const defaultGitShow: GitShowReader = (repoRoot, ref, path) => {
   }
 };
 
+/**
+ * A reader resolving the INTRODUCTION COMMIT of `path` reachable from HEAD — the FIRST
+ * commit (oldest, by `--reverse`) that ADDED the file (`--diff-filter=A`). The branch
+ * BASELINE: on a feature branch whose base (e.g. `origin/main`) predates the snapshot's
+ * existence, the snapshot was BORN on the branch, so its birth commit IS reachable from
+ * HEAD (under the repo's `fetch-depth: 0` full-history checkout). Diffing the live surface
+ * vs the snapshot AS COMMITTED AT ITS BIRTH guards every branch-local weakening landed
+ * AFTER the snapshot was introduced — the window the inactive state used to leave unguarded.
+ *
+ * Returns the 40-char commit SHA, or `undefined` if the path has NO add-commit in HEAD's
+ * history (the file was never committed — effectively never once introduced). THROWS
+ * (tagged) only on a git INVOCATION fault (git missing / not a repo), the SAME fail-closed
+ * discipline as {@link GitShowReader}: a missing/never-added file is a clean `undefined`,
+ * never a mis-read.
+ *
+ * The seam (injected, argument-vector — no shell) is hermetically stubbable; it is the ONLY
+ * git verb beyond `git show` the extractor uses, and it is reachable from HEAD WITHOUT any
+ * `merge-base --is-ancestor origin/main` ancestry math (the fragile query the genesis
+ * rewrite removed and which a shallow PR-merge checkout cannot satisfy).
+ */
+export type GitIntroCommitReader = (repoRoot: string, path: string) => string | undefined;
+
+/**
+ * The default {@link GitIntroCommitReader} — `git log --diff-filter=A --format=%H --reverse
+ * -- <path>` over HEAD, taking the FIRST line (the oldest add-commit). A clean empty output
+ * (no add-commit reachable) is `undefined`; a spawn fault re-throws (fail-closed). The
+ * `--reverse` orders oldest-first so the head of the list is the genuine introduction
+ * commit even if the file were ever deleted + re-added (the first add is the birth).
+ */
+export const defaultGitIntroCommit: GitIntroCommitReader = (repoRoot, path) => {
+  try {
+    const out = execFileSync('git', ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', path], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const first = out
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => l !== '');
+    return first;
+  } catch (err: unknown) {
+    // A non-zero exit (status set) — e.g. an unborn HEAD with no commits — is the clean
+    // "no introduction commit" → undefined. A spawn fault (no status — git absent / not a
+    // repo) re-throws so the caller fails CLOSED.
+    if (isRecord(err) && typeof (err as { status?: unknown }).status === 'number') return undefined;
+    throw IoError('git.log', `failed to invoke git to resolve the introduction commit of ${path}`, {
+      path,
+      cause: err,
+    });
+  }
+};
+
 // ────────────── the GENESIS PROBE PATH (bootstrap-aware activation, `git show`-only) ──
 //
 // The backstop diffs the LIVE surface against the snapshot AS COMMITTED ON THE BASE.
@@ -554,21 +608,42 @@ export interface StandardsFactsOptions {
    * so a single injected stub controls every git read the extractor makes.
    */
   readonly gitShow?: GitShowReader;
+  /**
+   * The snapshot INTRODUCTION-COMMIT reader (default {@link defaultGitIntroCommit}). Used on
+   * the BIRTH-BASELINE path: when the configured base resolves but predates the snapshot, the
+   * extractor diffs the live surface vs the snapshot AS COMMITTED AT ITS BIRTH commit
+   * (reachable from HEAD under `fetch-depth: 0`) — guarding every branch-local weakening
+   * landed after the snapshot was introduced. Injected so the path is hermetically testable
+   * (no real git history in a temp repo) and so a shallow checkout never needs the fragile
+   * `merge-base --is-ancestor origin/main` ancestry math.
+   */
+  readonly gitIntroCommit?: GitIntroCommitReader;
 }
 
 /**
  * The BOOTSTRAP-AWARE result of the raccoon-rule backstop — a discriminated state so the
- * GENESIS case (no prior baseline yet exists) is a CLEAN, LOUD pass distinct from a green
+ * (now unreachable-in-practice) GENESIS case is a CLEAN, LOUD pass distinct from a green
  * diff and distinct from a fail-closed config error:
  *
- *  - `active`: the base ref carries the snapshot → the diff ran; `facts` are the decided
- *    {@link StandardsIntegrityFacts} the `standardsIntegrityGate` folds.
- *  - `inactive`: the base ref RESOLVES (the known-stable {@link STANDARDS_BASE_PROBE_PATH}
- *    reads there) but does NOT carry the snapshot → the base PREDATES the snapshot's
- *    existence (the genesis it cannot guard). There is no prior baseline to diff against,
- *    so the backstop is INACTIVE — a LOUD pass (the `message` says so), NOT a silent green.
- *    You cannot sneak a weakening past a baseline that does not exist. It activates once the
- *    base carries the snapshot (post-merge).
+ *  - `active`: a prior baseline EXISTS → the diff ran; `facts` are the decided
+ *    {@link StandardsIntegrityFacts} the `standardsIntegrityGate` folds. The baseline is one
+ *    of two, in precedence order:
+ *      1. the snapshot AS COMMITTED ON THE BASE REF (the post-merge case, the base carries
+ *         the snapshot) — the reviewed-against ground truth; OR
+ *      2. when the base ref RESOLVES but PREDATES the snapshot (the bootstrap PR), the
+ *         snapshot AS COMMITTED AT ITS BIRTH (introduction) commit, reachable from HEAD — the
+ *         BRANCH BASELINE. This guards every branch-local weakening landed AFTER the snapshot
+ *         was introduced (the window the old `inactive` state left unguarded). It uses ONLY
+ *         `git log --diff-filter=A … <snapshot>` over HEAD + a `git show` of the birth — NO
+ *         `merge-base --is-ancestor origin/main` ancestry math (the fragility a shallow
+ *         PR-merge checkout cannot satisfy).
+ *  - `inactive`: the snapshot exists NOWHERE in HEAD's history — it was effectively NEVER
+ *    once committed (the introduction commit does not resolve), AND the base resolves but
+ *    lacks it. There is genuinely no prior baseline of any kind to diff against → a LOUD pass
+ *    (the `message` says so), NOT a silent green. Once the snapshot is committed anywhere in
+ *    HEAD's history (i.e. always, in practice, on any branch that carries it), the birth
+ *    baseline applies and this branch becomes UNREACHABLE — kept in the discriminated type
+ *    for totality + the genuinely-never-committed edge, never expected to fire on a real run.
  *
  * A CONFIG ERROR (the base ref is UNRESOLVABLE — even the known-stable probe file is absent
  * there: unfetched / a bogus ref) is NEITHER state: it THROWS (fail-closed), so a
@@ -585,17 +660,21 @@ export type StandardsIntegrityResult =
     };
 
 /**
- * Compose the INACTIVE message — loud + self-explaining, naming the base and exactly when
- * the backstop activates (post-merge, once the base carries the snapshot). The base ref
- * RESOLVED (the known-stable probe file read there) but the snapshot does not exist at it,
- * so the base genuinely predates the snapshot — there is no prior baseline to guard.
+ * Compose the INACTIVE message — loud + self-explaining. Reached ONLY when the snapshot
+ * exists NOWHERE in HEAD's history (no introduction commit resolves) AND the base resolves
+ * but lacks it: there is genuinely no prior baseline of any kind. In practice — on any branch
+ * that has ever committed the snapshot — the BIRTH BASELINE applies instead and the backstop
+ * is ACTIVE; this message is the totality/never-committed edge, not the expected bootstrap
+ * path (which now diffs vs the snapshot's birth commit).
  */
 function inactiveMessage(baseRef: string): string {
   return (
-    `standards backstop INACTIVE: no prior baseline at "${baseRef}"; the snapshot ${STANDARDS_SNAPSHOT_PATH} ` +
-    `does not exist there (the base resolves — ${STANDARDS_BASE_PROBE_PATH} reads at it — but predates the ` +
-    `snapshot). The backstop activates once "${baseRef}" carries the snapshot — i.e. post-merge. NOT a silent ` +
-    `pass — there is no prior baseline to guard, so you cannot sneak a weakening past a baseline that does not exist.`
+    `standards backstop INACTIVE: no prior baseline ANYWHERE — the snapshot ${STANDARDS_SNAPSHOT_PATH} does ` +
+    `not exist at the base "${baseRef}" (the base resolves — ${STANDARDS_BASE_PROBE_PATH} reads at it — but ` +
+    `predates the snapshot) AND has NO introduction commit reachable from HEAD (it was never committed). NOT a ` +
+    `silent pass — there is genuinely no baseline to guard, so you cannot sneak a weakening past a baseline that ` +
+    `does not exist. The backstop activates as soon as the snapshot is committed (the birth baseline) or the base ` +
+    `carries it (post-merge).`
   );
 }
 
@@ -624,15 +703,25 @@ function inactiveMessage(baseRef: string): string {
  * against), so the report's drift keystone reflects the reviewed-against ground truth,
  * not the working snapshot.
  *
- * BOOTSTRAP-AWARE (robust to CI's PR merge-checkout — `git show` only, NO intro/ancestry
- * git math): returns a {@link StandardsIntegrityResult} discriminated state. If the base ref
- * carries the snapshot → `active` (the decided facts). If the base ref RESOLVES (the
- * known-stable {@link STANDARDS_BASE_PROBE_PATH} reads there) but lacks the snapshot → the
- * base PREDATES the snapshot → there is no prior baseline → `inactive` (a LOUD pass, never a
- * silent green — you cannot sneak a weakening past a baseline that does not exist; the
- * backstop activates post-merge). If the base ref is UNRESOLVABLE (even the probe file is
- * absent there: unfetched / a bogus ref) → a genuine CONFIG ERROR → THROWS (fail-closed),
- * so a fetch/path fault never poses as genesis.
+ * BOOTSTRAP-AWARE (robust to CI's PR merge-checkout — `git show` + a single `git log
+ * --diff-filter=A`, NO `merge-base --is-ancestor` ancestry math): returns a
+ * {@link StandardsIntegrityResult} discriminated state.
+ *  - If the base ref CARRIES the snapshot → `active`, diffing vs the base (post-merge).
+ *  - If the base ref RESOLVES (the known-stable {@link STANDARDS_BASE_PROBE_PATH} reads
+ *    there) but lacks the snapshot — the base PREDATES the snapshot (the bootstrap PR) —
+ *    the backstop does NOT go inactive: it resolves the snapshot's INTRODUCTION (birth)
+ *    commit reachable from HEAD ({@link GitIntroCommitReader}, under `fetch-depth: 0`) and
+ *    diffs vs the snapshot AS COMMITTED AT ITS BIRTH (the BRANCH BASELINE) → `active`. This
+ *    guards every branch-local weakening landed AFTER the snapshot was introduced (the
+ *    window the old inactive state left unguarded). The intro commit is reachable from HEAD
+ *    WITHOUT the fragile `merge-base --is-ancestor origin/main` query.
+ *  - `inactive` now applies ONLY if the snapshot exists NOWHERE in HEAD's history (no
+ *    introduction commit resolves) — effectively NEVER once committed — AND the base lacks
+ *    it. A LOUD pass (never a silent green); UNREACHABLE-IN-PRACTICE once the snapshot is
+ *    committed on any branch.
+ *  - If the base ref is UNRESOLVABLE (even the probe file is absent there: unfetched / a
+ *    bogus ref) → a genuine CONFIG ERROR → THROWS (fail-closed); a fetch/path fault never
+ *    poses as genesis.
  */
 export function buildStandardsIntegrityFacts(
   repoRoot: string,
@@ -642,22 +731,21 @@ export function buildStandardsIntegrityFacts(
   const live = readLiveStandardsSurface(repoRoot, now);
   const baseRef = resolveStandardsBaseRef(opts.env ?? process.env);
   const gitShow = opts.gitShow ?? defaultGitShow;
+  const gitIntroCommit = opts.gitIntroCommit ?? defaultGitIntroCommit;
 
   // Try to read the PRIOR baseline at the base ref. If it is present, the backstop is
-  // ACTIVE and we run the normal diff.
+  // ACTIVE and we diff vs the base (the post-merge case, the reviewed-against ground truth).
   const raw = gitShow(repoRoot, baseRef, STANDARDS_SNAPSHOT_PATH);
-  if (raw === undefined) {
-    // The base ref does NOT carry the snapshot. DISTINGUISH genesis from a config error with
-    // ONE MORE `git show` (the SAME seam — no intro/ancestry git math that a shallow PR-merge
-    // checkout cannot satisfy): probe the KNOWN-STABLE file. If it READS, the base commit
-    // genuinely EXISTS (resolvable/fetched) but simply predates the snapshot → GENESIS →
-    // INACTIVE (a loud pass — there is no prior baseline to guard). If the probe is ALSO
-    // undefined, the base ref itself is UNRESOLVABLE (unfetched / a bogus ref) → CONFIG ERROR
-    // → fall through to readBaseSnapshot, which FAILS CLOSED with the precise tagged message.
-    const probe = gitShow(repoRoot, baseRef, STANDARDS_BASE_PROBE_PATH);
-    if (probe !== undefined) {
-      return { _tag: 'inactive', baseRef, message: inactiveMessage(baseRef) };
-    }
+  if (raw !== undefined) {
+    const base = parseSnapshot(raw, `${baseRef}:${STANDARDS_SNAPSHOT_PATH}`);
+    return activeFacts(repoRoot, now, base, live);
+  }
+
+  // The base ref does NOT carry the snapshot. Distinguish a CONFIG ERROR (the base ref does
+  // not resolve at all) from the BOOTSTRAP case (the base resolves but predates the snapshot)
+  // with ONE `git show` of the KNOWN-STABLE probe file — NO `merge-base --is-ancestor` math.
+  const probe = gitShow(repoRoot, baseRef, STANDARDS_BASE_PROBE_PATH);
+  if (probe === undefined) {
     // CONFIG ERROR (the base ref does not resolve at all): fail closed. `readBaseSnapshot`
     // re-reads via the SAME seam and throws the precise tagged message.
     readBaseSnapshot(repoRoot, baseRef, gitShow);
@@ -669,13 +757,53 @@ export function buildStandardsIntegrityFacts(
     );
   }
 
-  const base = parseSnapshot(raw, `${baseRef}:${STANDARDS_SNAPSHOT_PATH}`);
-  const changes = diffStandardsSurface(base.elements, live.elements);
+  // BOOTSTRAP (the base resolves but predates the snapshot — e.g. the PR vs origin/main where
+  // the snapshot was born on this branch). DO NOT go inactive: diff vs the snapshot's BIRTH
+  // commit (the BRANCH BASELINE), reachable from HEAD, so a weakening landed AFTER the
+  // snapshot was introduced is STILL caught. Resolve the introduction commit with a single
+  // `git log --diff-filter=A … <snapshot>` over HEAD — no ancestry query a shallow PR-merge
+  // checkout cannot satisfy.
+  const introCommit = gitIntroCommit(repoRoot, STANDARDS_SNAPSHOT_PATH);
+  if (introCommit !== undefined) {
+    const birthRaw = gitShow(repoRoot, introCommit, STANDARDS_SNAPSHOT_PATH);
+    if (birthRaw !== undefined) {
+      const birth = parseSnapshot(birthRaw, `${introCommit}:${STANDARDS_SNAPSHOT_PATH}`);
+      return activeFacts(repoRoot, now, birth, live);
+    }
+    // The introduction commit resolved but the snapshot does not read THERE — a git
+    // inconsistency (the add-commit names the path, but `git show <intro>:<path>` is empty).
+    // Fail CLOSED rather than silently fall through to a baseline-less pass.
+    throw InvariantViolationError(
+      'standards-surface',
+      `the standards snapshot ${STANDARDS_SNAPSHOT_PATH} resolved an introduction commit (${introCommit}) but could not be read AT it — a git inconsistency. FAIL-CLOSED: the backstop refuses rather than pass without a baseline.`,
+    );
+  }
+
+  // The snapshot has NO introduction commit reachable from HEAD AND the base lacks it — it was
+  // genuinely never committed anywhere in this history. There is no baseline of any kind. A
+  // LOUD pass (NOT a silent green). Unreachable-in-practice once the snapshot is committed.
+  return { _tag: 'inactive', baseRef, message: inactiveMessage(baseRef) };
+}
+
+/**
+ * Diff `baseline` (the prior, reviewed-against surface — the base-ref OR the birth-commit
+ * snapshot) against the `live` surface, apply the owner sign-offs against the injected `now`
+ * + the live always-blocking rule ids, and return the decided `active` facts. The
+ * `committedAddress` carries the BASELINE's address (the drift keystone reflects what the
+ * diff was actually against — base or birth).
+ */
+function activeFacts(
+  repoRoot: string,
+  now: Date,
+  baseline: StandardsSurface,
+  live: StandardsSurface,
+): StandardsIntegrityResult {
+  const changes = diffStandardsSurface(baseline.elements, live.elements);
   const signoffs = readStandardsWaivers(repoRoot);
   const alwaysBlocking = new Set(ALWAYS_BLOCKING_RULES);
   const partitioned = applyStandardsWaivers(changes, signoffs, now, alwaysBlocking);
   return {
     _tag: 'active',
-    facts: { ...partitioned, committedAddress: base.address, liveAddress: live.address },
+    facts: { ...partitioned, committedAddress: baseline.address, liveAddress: live.address },
   };
 }
