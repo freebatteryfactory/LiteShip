@@ -23,6 +23,7 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import {
   litelaunchGauntlet,
   runGauntletOnRepo,
@@ -80,7 +81,10 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
     // No committed waiver is stale/expired/forbidden anywhere in the run.
     const waiverFindings = result.outcomes.flatMap((o) => o.waiverFindings);
     expect(waiverFindings).toEqual([]);
-  });
+    // litelaunchGauntlet scans the whole repo (one ts.Program build) — generous,
+    // CI-scaled headroom so a slow runner is never read as a failure (raw numeric
+    // literals are rejected by the timeout policy; scaledTimeout is the seam).
+  }, scaledTimeout(60000));
 
   it('AFTER the review date: the SAME waivers EXPIRE — re-red + block (the recurring audit fires)', () => {
     const before = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
@@ -110,7 +114,8 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
     // An expired waiver blocks unconditionally (waiver teeth, regardless of the
     // gate's earned authority).
     expect(after.blocked).toBe(true);
-  });
+    // Two full-repo scans (before + after) — the slow-runner timeout that bit windows.
+  }, scaledTimeout(60000));
 
   it('is deterministic — same repo + same injected now → identical blocking verdict', () => {
     const a = litelaunchGauntlet(REPO_ROOT, BEFORE_REVIEW);
@@ -119,7 +124,8 @@ describe('litelaunchGauntlet — the committed waivers govern the REAL repo', ()
     expect(a.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length])).toEqual(
       b.outcomes.map((o) => [o.gateId, o.findings.length, o.waived.length]),
     );
-  });
+    // Two full-repo scans (a + b) for the determinism check — same scaled headroom.
+  }, scaledTimeout(60000));
 });
 
 describe('the always-blocking rules are emitted by REAL gates (the forbidden floor is not inert)', () => {

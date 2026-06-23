@@ -30,19 +30,22 @@
  * needs no `@czap/gauntlet` symlink at the repo root) while gating on the EXACT
  * partition the gate blocks on.
  *
- * FAIL-CLOSED, BUT BOOTSTRAP-AWARE: a CONFIG ERROR — the base SHOULD carry the snapshot
- * (the snapshot's introduction commit IS an ancestor of the base) but it could not be read
- * (unfetched / wrong path) — makes {@link buildStandardsIntegrityFacts} THROW (the tagged
- * `InvariantViolation`), so this gate REFUSES rather than passes; it never silently falls
- * back to the working-tree snapshot. But GENESIS — the base PREDATES the snapshot's very
- * existence (its introduction commit is NOT an ancestor of the base, e.g. the bootstrap PR
- * vs main where the snapshot was born on the branch) — is NOT a config error: there is
- * genuinely no prior baseline to diff against, so the backstop is INACTIVE (a LOUD pass,
- * never a silent green — you cannot sneak a weakening past a baseline that does not exist).
- * It activates once the base carries the snapshot (post-merge). CI fetches enough history
- * and sets `CZAP_STANDARDS_BASE_REF` to the review base (see ci.yml); a base that has the
- * snapshot runs the normal diff, one that predates it is inactive, one that should have it
- * but lacks it fails closed.
+ * FAIL-CLOSED, BUT BOOTSTRAP-AWARE (robust to CI's PR merge-checkout — `git show` only):
+ * a CONFIG ERROR — the base ref is UNRESOLVABLE (even a known-stable committed file does
+ * not read there: unfetched / a bogus ref) — makes {@link buildStandardsIntegrityFacts}
+ * THROW (the tagged `InvariantViolation`), so this gate REFUSES rather than passes; it never
+ * silently falls back to the working-tree snapshot. But GENESIS — the base RESOLVES (the
+ * known-stable probe file reads at it) but does NOT carry the snapshot, because the base
+ * PREDATES the snapshot's very existence (e.g. the bootstrap PR vs main where the snapshot
+ * was born on the branch) — is NOT a config error: there is genuinely no prior baseline to
+ * diff against, so the backstop is INACTIVE (a LOUD pass, never a silent green — you cannot
+ * sneak a weakening past a baseline that does not exist). It activates once the base carries
+ * the snapshot (post-merge). This genesis-vs-config distinction needs ONLY `git show` (a
+ * second read of a stable file), NOT the snapshot's introduction commit + an ancestry query
+ * — which the PR merge-checkout frequently cannot resolve (the old fragility that
+ * fail-closed at "origin/main"). CI fetches enough history and sets `CZAP_STANDARDS_BASE_REF`
+ * to the review base (see ci.yml); a base that has the snapshot runs the normal diff, one
+ * that resolves but predates it is inactive, one that does not resolve at all fails closed.
  *
  * `now` is the wall-clock (the two-clock law — the sign-off-expiry calendar
  * comparison reads the wall clock, never `systemClock`).

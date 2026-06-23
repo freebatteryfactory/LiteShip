@@ -40,6 +40,7 @@ import {
   buildStandardsIntegrityFacts,
   STANDARDS_SNAPSHOT_PATH,
   STANDARDS_WAIVERS_PATH,
+  STANDARDS_BASE_PROBE_PATH,
   type GitShowReader,
 } from '../../../../packages/cli/src/lib/standards-surface.js';
 import type { StandardsElement, StandardsWaiver } from '@czap/gauntlet';
@@ -57,14 +58,6 @@ function activeFacts(result: StandardsIntegrityResult) {
 }
 
 /**
- * A git-seam pair modeling the CONFIG-ERROR side: the snapshot's intro commit IS an
- * ancestor of the base (so the base SHOULD carry it) — so a base with NO snapshot is a
- * genuine config error (fail-closed), NOT genesis. Injected so the temp-repo tests are
- * hermetic (no real git history in the synthetic root).
- */
-const introIsAncestor = { gitIntro: () => 'introsha', gitAncestry: () => true } as const;
-
-/**
  * Build a {@link GitShowReader} stub serving `base` as the PRIOR baseline snapshot. The
  * base-ref model: `buildStandardsIntegrityFacts` diffs the LIVE surface against the
  * snapshot AS COMMITTED ON THE BASE REF (read via git), NOT the working-tree snapshot —
@@ -72,8 +65,24 @@ const introIsAncestor = { gitIntro: () => 'introsha', gitAncestry: () => true } 
  * base. These hermetic tests inject the base directly (no real git in a temp repo).
  */
 function baseGitShow(base: { snapshotFormat: 1; elements: readonly StandardsElement[]; address: string }): GitShowReader {
-  return () => serializeStandardsSurface(base);
+  return (_root, _ref, path) => (path === STANDARDS_SNAPSHOT_PATH ? serializeStandardsSurface(base) : '{}');
 }
+
+/**
+ * A {@link GitShowReader} modeling the GENESIS side WITHOUT intro/ancestry git math: the
+ * base ref RESOLVES (the known-stable {@link STANDARDS_BASE_PROBE_PATH} reads there) but the
+ * standards snapshot does NOT exist at it — so the base genuinely predates the snapshot →
+ * INACTIVE (a loud pass). The probe path returns bytes; the snapshot path returns undefined.
+ */
+const resolvableBaseNoSnapshot: GitShowReader = (_root, _ref, path) =>
+  path === STANDARDS_BASE_PROBE_PATH ? '{"name":"czap"}' : undefined;
+
+/**
+ * A {@link GitShowReader} modeling the CONFIG-ERROR side: the base ref is UNRESOLVABLE —
+ * EVERY path (including the known-stable probe) returns undefined (an unfetched / bogus ref)
+ * → fail-closed, NOT genesis.
+ */
+const unresolvableBase: GitShowReader = () => undefined;
 
 /** A fixed reference date — the two-clock law: every state resolves against THIS. */
 const NOW = new Date('2026-06-22T00:00:00.000Z');
@@ -416,72 +425,47 @@ describe('buildStandardsIntegrityFacts — the host-computed facts the gate fold
     expect(facts.expiredSignoffs.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('FAILS CLOSED on a CONFIG ERROR (the base SHOULD carry the snapshot — intro IS an ancestor — but it cannot be read)', () => {
+  it('FAILS CLOSED on a CONFIG ERROR (the base ref is UNRESOLVABLE — even the known-stable probe is absent)', () => {
     // The bypass we are closing: a same-commit weakening regenerates the working snapshot,
-    // then HOPES the gate falls back to it. It must not — when the snapshot's intro commit
-    // IS an ancestor of the base (so the base should have it) but the read returns undefined
-    // (unfetched / wrong path), that is a CONFIG ERROR → THROWS (never falls back, never
-    // mis-read as genesis).
+    // then HOPES the gate falls back to it. It must not — when the base ref does not resolve
+    // at all (even the known-stable probe file returns undefined — an unfetched / bogus ref),
+    // that is a CONFIG ERROR → THROWS (never falls back, never mis-read as genesis).
     writeCommittedSnapshot(root, readLiveStandardsSurface(root, NOW));
-    expect(() =>
-      buildStandardsIntegrityFacts(root, NOW, { gitShow: () => undefined, ...introIsAncestor }),
-    ).toThrow();
+    expect(() => buildStandardsIntegrityFacts(root, NOW, { gitShow: unresolvableBase })).toThrow();
   });
 });
 
-// ───────────────────── REFINEMENT 1 — bootstrap-aware activation ───────────────
-describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (bootstrap-aware activation)', () => {
-  it('GENESIS → INACTIVE (a loud pass): the base PREDATES the snapshot (intro is NOT an ancestor of base)', () => {
-    // The base ref does NOT carry the snapshot (gitShow → undefined), AND the snapshot's
-    // intro commit is NOT an ancestor of the base (the base predates the snapshot's very
-    // existence — the bootstrap PR vs main). There is no prior baseline to diff against →
-    // the backstop is INACTIVE: a discriminated state with a loud message, NOT a throw and
-    // NOT a silent green.
-    const result = buildStandardsIntegrityFacts(root, NOW, {
-      gitShow: () => undefined,
-      gitIntro: () => 'd0c214b7intro',
-      gitAncestry: () => false, // intro is NOT an ancestor of the base → genesis.
-    });
+// ───────────── bootstrap-aware activation (RESOLVABLE-BASE model, `git show`-only) ─────
+describe('buildStandardsIntegrityFacts — GENESIS vs CONFIG ERROR (resolvable-base activation, no intro/ancestry)', () => {
+  it('GENESIS → INACTIVE (a loud pass): the base RESOLVES (probe reads) but lacks the snapshot', () => {
+    // The robust detection: the base ref does NOT carry the snapshot (snapshot path →
+    // undefined) but the KNOWN-STABLE probe file (package.json) DOES read at the base → the
+    // base commit genuinely exists and predates the snapshot → genesis. There is no prior
+    // baseline to diff against → INACTIVE: a discriminated state with a loud message, NOT a
+    // throw and NOT a silent green. No intro-commit / ancestry git math is consulted.
+    const result = buildStandardsIntegrityFacts(root, NOW, { gitShow: resolvableBaseNoSnapshot });
     expect(result._tag).toBe('inactive');
     if (result._tag !== 'inactive') throw new Error('unreachable');
-    expect(result.introCommit).toBe('d0c214b7intro');
     expect(result.message).toContain('INACTIVE');
     expect(result.message).toContain('NOT a silent pass');
+    expect(result.message).toContain(STANDARDS_BASE_PROBE_PATH);
   });
 
-  it('CONFIG ERROR → FAIL-CLOSED: the base SHOULD carry it (intro IS an ancestor) but it cannot be read', () => {
-    expect(() =>
-      buildStandardsIntegrityFacts(root, NOW, {
-        gitShow: () => undefined,
-        gitIntro: () => 'introsha',
-        gitAncestry: () => true, // intro IS an ancestor → the base should have it → config error.
-      }),
-    ).toThrow();
-  });
-
-  it('UNPROVABLE GENESIS → FAIL-CLOSED: the intro commit cannot be resolved (a shallow clone) → refuse', () => {
-    // We cannot PROVE the base predates the snapshot if we cannot find the intro commit
-    // (a shallow clone that does not reach genesis). The safe default is FAIL-CLOSED — never
-    // assume genesis and pass.
-    expect(() =>
-      buildStandardsIntegrityFacts(root, NOW, {
-        gitShow: () => undefined,
-        gitIntro: () => undefined, // intro unresolvable → cannot prove genesis → fail closed.
-        gitAncestry: () => false,
-      }),
-    ).toThrow();
+  it('CONFIG ERROR → FAIL-CLOSED: the base ref is UNRESOLVABLE (even the known-stable probe is absent)', () => {
+    // Even the probe file returns undefined → the base ref does not resolve at all (unfetched
+    // / a bogus ref) → a genuine config error → FAIL-CLOSED, never mis-read as genesis.
+    expect(() => buildStandardsIntegrityFacts(root, NOW, { gitShow: unresolvableBase })).toThrow();
   });
 
   it('a base that HAS the snapshot is ACTIVE (the normal diff path, unchanged)', () => {
-    // The ancestry seams are never consulted when the base carries the snapshot — the
-    // ACTIVE path is exactly the prior behavior.
+    // The probe is never consulted when the base carries the snapshot — the ACTIVE path is
+    // exactly the prior behavior (a single git read of the snapshot path).
     const result = buildStandardsIntegrityFacts(root, NOW, {
-      gitShow: baseGitShow(readLiveStandardsSurface(root, NOW)),
-      gitIntro: () => {
-        throw new Error('gitIntro must NOT be consulted when the base carries the snapshot');
-      },
-      gitAncestry: () => {
-        throw new Error('gitAncestry must NOT be consulted when the base carries the snapshot');
+      gitShow: (_root, _ref, path) => {
+        if (path === STANDARDS_BASE_PROBE_PATH) {
+          throw new Error('the probe must NOT be consulted when the base carries the snapshot');
+        }
+        return serializeStandardsSurface(readLiveStandardsSurface(root, NOW));
       },
     });
     expect(result._tag).toBe('active');
