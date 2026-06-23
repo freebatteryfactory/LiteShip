@@ -8,7 +8,7 @@
 
 > **GeneratedUIValidator** = (`node`, `catalog`) => \{ `ok`: `true`; \} \| \{ `error`: \{ `message`: `string`; `path?`: `string`; \}; `ok`: `false`; \}
 
-Defined in: [core/src/ai-cast.ts:781](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L781)
+Defined in: [core/src/ai-cast.ts:849](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L849)
 
 The catalog-validation contract genui owns.
 

@@ -31,7 +31,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      # fetch-depth: 0 brings the FULL history so the standards:gate phase can run
+      # `git show <base>:traceability/standards-snapshot.json` against the review base
+      # (the raccoon-rule backstop diffs the LIVE surface against the PRIOR, INDEPENDENT
+      # baseline — never the working-tree snapshot). A shallow checkout has neither the
+      # parent commit nor the fetched base branch, so the gate would fail CLOSED.
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -45,6 +52,29 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+      # Resolve the standards-integrity base ref DETERMINISTICALLY (the snapshot the
+      # change is REVIEWED against). The raccoon-rule backstop (gauntlet:full's
+      # `standards:gate` phase) diffs the LIVE standards surface against the snapshot AS
+      # COMMITTED ON THIS REF — so a same-commit weaken+regenerate still diffs as a
+      # weakening versus the base. Two cases, both choosing a ref that HAS the snapshot:
+      #   - pull_request: the PR base BRANCH, fetched and named as `origin/<base>`. The
+      #     diff is exactly "this PR vs what it merges into" (the true review base). The
+      #     checkout above already created `refs/remotes/pull/<n>/merge`; we fetch the
+      #     base branch tip explicitly so `git show origin/<base>:…` resolves.
+      #   - push (to main or a feature branch): `HEAD~1` (the parent commit). It HAS the
+      #     snapshot (we are past the snapshot's birth commit) AND catches a SAME-COMMIT
+      #     weakening (the just-pushed commit is diffed against its own parent), so a
+      #     raccoon cannot weaken + regenerate in one push and slip by.
+      # FAIL-CLOSED is preserved: if the chosen ref has no snapshot, the gate THROWS
+      # rather than fall back to the working-tree snapshot.
+      - name: Resolve standards-integrity base ref
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            echo "CZAP_STANDARDS_BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          else
+            echo "CZAP_STANDARDS_BASE_REF=HEAD~1" >> "$GITHUB_ENV"
+          fi
       - run: pnpm run gauntlet:full
         env:
           CI: true

@@ -238,25 +238,69 @@ function malformedResolution(
   };
 }
 
+/** A newline ⟹ a multi-line value, which is a shader BODY and never a single URL. */
+const NEWLINE_RE = /[\n\r]/;
+
 /**
- * Inner-whitespace test — a single URL TOKEN carries NO inner whitespace or
- * newline. This is the load-bearing distinguisher between a fetchable URL token and
- * an inline body: the WHATWG URL parser SILENTLY percent-encodes/strips inner
- * whitespace (a multi-line shader body becomes a mangled path that would never fetch
- * the intended resource), so any string with inner whitespace was NOT authored as a
- * URL — it is a body. Trailing/leading whitespace is trimmed by the caller before
- * this runs, so only INNER whitespace reaches here. Pure + deterministic.
+ * An EXPLICIT URL scheme prefix per RFC 3986: `scheme:` where the scheme is
+ * `[A-Za-z][A-Za-z0-9+.-]*`. A leading `scheme:` (e.g. `http:`, `https:`, `data:`,
+ * `blob:`) is an UNAMBIGUOUS URL signal — a genuine GLSL/WGSL body never begins with
+ * one (a body starts with `#version`, `@group`, `precision`, `void …`, or whitespace).
  */
-const INNER_WHITESPACE_RE = /\s/;
+const URL_SCHEME_RE = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+
+/** A leading `//` is a protocol-relative URL (`//host/x`) — also an explicit URL signal. */
+const PROTOCOL_RELATIVE_RE = /^\/\//;
+
+/**
+ * SHADER-BODY syntax markers — the content signal that a value is genuine GLSL/WGSL
+ * PROGRAM TEXT, not a path/URL. A URL or filesystem path NEVER legitimately contains
+ * a structural shader token: braces / semicolons (`{`, `}`, `;`), a `#version`
+ * directive, `void main`, a `gl_` builtin, a `precision` qualifier, or a WGSL
+ * `@group` / `@binding` attribute or `fn ` declaration. The presence of ANY of these
+ * marks the value as a body the runtime compiles literally — never something to fetch.
+ */
+const SHADER_BODY_MARKER_RE = /[{};]|#version\b|void\s+main\b|gl_|\bprecision\b|@group\b|@binding\b|\bfn\s/;
+
+/**
+ * Is `value` a genuine inline shader BODY (compile literally) rather than a URL/path
+ * to fetch? The FOUNDATIONAL discriminator — CONTENT/policy-based, NOT a raw
+ * whitespace heuristic (a URL/path CAN contain a space, e.g. `shader file.wgsl`, so
+ * "has a space" was the WRONG distinguisher and silently routed a fetchable path into
+ * the inline branch). The rule:
+ *
+ *   1. An EXPLICIT URL — a leading `scheme:` (`http:`/`https:`/`data:`/`blob:`/…) or
+ *      a protocol-relative `//host` — is a URL, NEVER a body. This wins FIRST so a
+ *      `data:` token whose payload happens to embed shader-looking text
+ *      (`data:text/plain,void%20main(){}`) is still classified as a URL.
+ *   2. Otherwise the value is a BODY iff it carries genuine shader CONTENT: a newline
+ *      (multi-line program text) OR a {@link SHADER_BODY_MARKER_RE} syntax marker.
+ *   3. Everything else is a single-line, scheme-less, marker-less token — a path/URL,
+ *      EVEN one containing a space. Secure-by-default: an ambiguous single token
+ *      prefers the URL (external fetch+verify) path over compiling an unverified
+ *      string.
+ *
+ * Pure + deterministic; never throws.
+ */
+function isInlineShaderBody(value: string): boolean {
+  // An explicit URL scheme / protocol-relative prefix is an unambiguous URL — but
+  // only on a single-line value (a multi-line value is program text, never a URL).
+  if (!NEWLINE_RE.test(value) && (PROTOCOL_RELATIVE_RE.test(value) || URL_SCHEME_RE.test(value))) {
+    return false;
+  }
+  // A body carries genuine shader content: multi-line text or a syntax marker.
+  return NEWLINE_RE.test(value) || SHADER_BODY_MARKER_RE.test(value);
+}
 
 /**
  * The CANONICAL "is this a fetchable runtime URL?" predicate — the single source of
  * truth that the shader-integrity classifier ({@link isExternalShaderSource})
  * DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
  *
- *   1. it is a single URL TOKEN (no inner whitespace / newline); a string with
- *      inner whitespace is an inline body the URL parser would silently mangle,
- *      never a URL the author meant; AND
+ *   1. it is NOT a genuine inline shader BODY ({@link isInlineShaderBody}) — i.e. it
+ *      is not multi-line program text nor scheme-less shader-syntax text. A URL/path
+ *      CAN contain a space (`shader file.wgsl`), so inner whitespace is NOT the
+ *      discriminator; only genuine shader CONTENT (newline / syntax marker) is; AND
  *   2. {@link resolveRuntimeUrl} treats it as a URL — i.e. the resolution is NEITHER
  *      `'missing'` (empty) NOR `'malformed'` (the parser rejected it). EVERY other
  *      variant (`allowed`, `cross-origin-rejected`, `origin-not-allowed`,
@@ -271,10 +315,11 @@ const INNER_WHITESPACE_RE = /\s/;
  * is merely refused) — so the predicate is stable regardless of the host's policy.
  *
  * Shapes this accepts (all URL-shaped, none an inline body): root-absolute
- * (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`, `../x`), query-relative
- * (`?shader=wave`), bare same-dir (`wave`), protocol-relative (`//host/x`),
- * scheme-absolute (`http(s)://…`), and URL-scheme tokens (`data:…`, `blob:…`). A
- * genuine multi-line GLSL/WGSL body is rejected (inner whitespace ⟹ not a token).
+ * (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`, `../x`), path-WITH-A-SPACE
+ * (`shader file.wgsl`, `./shader file.wgsl` — a fetchable URL the policy accepts),
+ * query-relative (`?shader=wave`), bare same-dir (`wave`), protocol-relative
+ * (`//host/x`), scheme-absolute (`http(s)://…`), and URL-scheme tokens (`data:…`,
+ * `blob:…`). A genuine multi-line / shader-syntax GLSL/WGSL body is rejected.
  *
  * Pure + deterministic: no clock, no network — the resolution is a syntactic
  * classification only. Never throws ({@link resolveRuntimeUrl} never throws).
@@ -285,9 +330,13 @@ export function isFetchableRuntimeUrl(rawUrl: string | null | undefined): boolea
   if (rawUrl === null || rawUrl === undefined) return false;
   const trimmed = rawUrl.trim();
   if (trimmed.length === 0) return false;
-  // A body carries inner whitespace; a URL token does not. Reject bodies up front so
-  // the URL parser never silently mangles a multi-line shader into a fake path.
-  if (INNER_WHITESPACE_RE.test(trimmed)) return false;
+  // CONTENT discriminator: a genuine shader body (multi-line / shader-syntax, and not
+  // an explicit URL scheme) is compiled inline — it is NOT a fetchable URL. Inner
+  // whitespace is NOT the test: a single-line path WITH A SPACE (`shader file.wgsl`)
+  // carries no shader content, so it stays a URL and is fetched+verified, never
+  // silently compiled. This agrees with `resolveRuntimeUrl` for every value the
+  // policy accepts as fetchable.
+  if (isInlineShaderBody(trimmed)) return false;
   // Delegate the URL-or-not decision to the canonical resolver. Any variant other
   // than `missing` / `malformed` means the resolver treated it as a URL it reasoned
   // about — i.e. URL-shaped, hence fetchable in shape (origin refusal is separate).

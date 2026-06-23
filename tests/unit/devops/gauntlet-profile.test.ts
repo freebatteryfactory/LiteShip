@@ -14,7 +14,7 @@ import { gauntletPhases, gauntletPhaseLabels } from '../../../packages/cli/src/g
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 37 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical 38 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
@@ -50,15 +50,16 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
+  { label: 'standards:gate', command: 'pnpm run standards:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 37 phases', () => {
-    expect(gauntletPhases.length).toBe(37);
-    expect(gauntletPhaseLabels().length).toBe(37);
+  it('has exactly 38 phases', () => {
+    expect(gauntletPhases.length).toBe(38);
+    expect(gauntletPhaseLabels().length).toBe(38);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {

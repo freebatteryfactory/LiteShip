@@ -180,6 +180,23 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
   // fetched/integrity-verified NEVER, compiled as literal "source". This is the SRI
   // bypass codex found. The classifier now DELEGATES to the URL policy's fetchable-URL
   // predicate, so any shape the policy treats as a fetchable URL is EXTERNAL.
+  // SECURITY REGRESSION (P2c — codex round-3, the space-path bypass): `resolveRuntimeUrl`
+  // ACCEPTS a single-line PATH-WITH-A-SPACE (`shader file.wgsl`, `./shader file.wgsl`) as a
+  // fetchable same-origin URL ('allowed'). The OLD classifier used a raw inner-whitespace
+  // pre-check, so any value with a space was rejected as a URL and fell into the INLINE
+  // branch UNVERIFIED (external FALSE) — bypassing fetch+SRI. A URL/path CAN contain a
+  // space; whitespace was the WRONG distinguisher. The content/policy-based classifier now
+  // routes these to EXTERNAL (external TRUE → fetch+verify or refuse). RED before / green now.
+  it('treats a single-line PATH-WITH-A-SPACE as EXTERNAL (codex round-3 — fetch+verify, not inline)', () => {
+    expect(isExternalShaderSource('shader file.wgsl')).toBe(true);
+    expect(isExternalShaderSource('./shader file.wgsl')).toBe(true);
+    // The space-containing path resolves as a fetchable same-origin URL under the policy...
+    expect(resolveRuntimeUrl('shader file.wgsl', { kind: 'gpu-shader', policy: { mode: 'same-origin' } }).type).toBe('allowed');
+    // ...so the classifier MUST agree it is external (never compiled unverified).
+    expect(isFetchableRuntimeUrl('shader file.wgsl')).toBe(true);
+    expect(isFetchableRuntimeUrl('./shader file.wgsl')).toBe(true);
+  });
+
   it('treats a QUERY-RELATIVE shader URL (`?shader=wave`) as EXTERNAL (the re-attacked bypass)', () => {
     expect(isExternalShaderSource('?shader=wave')).toBe(true);
     expect(isExternalShaderSource('?name=blur&v=2')).toBe(true);
@@ -253,6 +270,8 @@ describe('THE DRILL SERGEANT — classifier is a provable function of the URL po
       'shaders/foo.glsl', // path-relative
       './sub/bar.wgsl', // explicit-relative
       '../assets/wave.frag', // parent-relative
+      'shader file.wgsl', // single-line path WITH A SPACE (codex round-3 bypass)
+      './shader file.wgsl', // explicit-relative path WITH A SPACE
       '?shader=wave', // query-relative (the re-attacked bypass)
       '?name=blur&v=2', // query-relative, multi-param
       'wave', // bare same-dir token (the re-attacked bypass)

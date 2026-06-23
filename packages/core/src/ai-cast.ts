@@ -286,10 +286,16 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
           type: 'array',
           description: 'Ordered node/edge mutations.',
           items: {
+            // `oneOf` carries JSON-Schema EXACTLY-ONE semantics: a valid op matches PRECISELY
+            // one of these variants. Each variant pins `additionalProperties: false` so a body
+            // it does not model (e.g. a stray `edge` on a node op) is OFF-CONTRACT — an op
+            // carrying BOTH `node` and `edge` then satisfies NEITHER variant cleanly AND would
+            // otherwise straddle both, so the validator rejects it (see pickSoleOpVariant).
             oneOf: [
               {
                 type: 'object',
                 required: ['op', 'family', 'node'],
+                additionalProperties: false,
                 properties: {
                   // Nodes are CONTENT-ADDRESSED, so a changed payload has a new id. `update`
                   // is a LOGICAL REPLACE: apply drops the prior node in the same logical cell
@@ -307,6 +313,7 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
               {
                 type: 'object',
                 required: ['op', 'edge'],
+                additionalProperties: false,
                 properties: {
                   op: { enum: ['add', 'remove'] },
                   edge: {
@@ -477,6 +484,7 @@ type JsonSchemaObject = {
   readonly properties?: Record<string, JsonSchemaObject>;
   readonly oneOf?: readonly JsonSchemaObject[];
   readonly items?: JsonSchemaObject;
+  readonly additionalProperties?: boolean;
 };
 
 /**
@@ -512,24 +520,62 @@ function opVariantSchemas(base: ContentAddress): readonly JsonSchemaObject[] {
   return variants;
 }
 
+/** The outcome of matching an untrusted op against the advertised `oneOf` op variants. */
+type OpVariantMatch =
+  | { readonly kind: 'one'; readonly variant: JsonSchemaObject }
+  /** The op matched NO advertised variant (carries neither body) — malformed. */
+  | { readonly kind: 'none' }
+  /**
+   * The op satisfied MORE THAN ONE advertised variant (e.g. carries BOTH the `node` body
+   * AND the `edge` body). JSON-Schema `oneOf` is EXACTLY-ONE, so this is rejected, never
+   * minted. `matched` names the body keys that straddled, for a self-explaining error.
+   */
+  | { readonly kind: 'many'; readonly matched: readonly string[] };
+
 /**
- * Pick the advertised op variant that an untrusted op CLAIMS to be — by the variant's
- * own discriminating required field (`node` for the node variant, `edge` for the edge
- * variant). Returns null when the op matches no advertised variant (a malformed op the
- * caller rejects). Schema-derived: the discriminator is whichever required key the
- * variant pins, so adding a third op kind to the schema is picked up here automatically.
+ * Resolve which advertised `oneOf` op variant an untrusted op is — enforcing JSON-Schema
+ * `oneOf` EXACTLY-ONE semantics, schema-derived from the variants' own discriminating body
+ * keys (`node` vs `edge`). An op that satisfies ZERO variants is `none`; one that straddles
+ * ≥2 variants (carries both bodies) is `many` — BOTH rejected. Only an op matching PRECISELY
+ * one variant routes onward (so it can then be checked for missing required scalars like
+ * `family`). Discriminating on body PRESENCE (not full validity) keeps a node op that merely
+ * omits `family` routed to the node variant — rejected for the missing scalar, not mis-classed.
+ *
+ * Adding a third op kind to the schema is picked up here automatically: a new variant with a
+ * new required object body extends the `oneOf` and this matcher counts it like the rest.
  */
-function pickOpVariant(op: Record<string, unknown>, variants: readonly JsonSchemaObject[]): JsonSchemaObject | null {
+function pickSoleOpVariant(op: Record<string, unknown>, variants: readonly JsonSchemaObject[]): OpVariantMatch {
+  const matched: { readonly bodyKey: string; readonly variant: JsonSchemaObject }[] = [];
   for (const variant of variants) {
-    // The op-BODY key (the variant's required OBJECT property — `node` vs `edge`)
-    // identifies the variant. Discriminate on the body's PRESENCE, so an op that
-    // carries the body but is missing OTHER required scalars (e.g. `family`) still
-    // matches its variant and is rejected for the missing scalar — not mis-routed
-    // to "neither node nor edge".
     const bodyKey = variantBodyKey(variant);
-    if (bodyKey !== undefined && bodyKey in op) return variant;
+    if (bodyKey !== undefined && bodyKey in op) matched.push({ bodyKey, variant });
   }
-  return null;
+  if (matched.length === 0) return { kind: 'none' };
+  if (matched.length > 1) return { kind: 'many', matched: matched.map((m) => m.bodyKey) };
+  return { kind: 'one', variant: matched[0]!.variant };
+}
+
+/**
+ * Enforce a variant's `additionalProperties: false` clause: when the advertised variant
+ * forbids unmodeled fields, an op carrying a property outside the variant's `properties`
+ * is OFF-CONTRACT and rejected — so the validated payload can never preserve a field the
+ * matched variant does not model (e.g. a stray `edge` on a node op). Returns one error per
+ * extraneous field. When the variant does NOT pin `additionalProperties: false`, no error
+ * (the schema permits extras), so this stays schema-derived — enforcement tracks the clause.
+ */
+function extraneousFieldErrors(op: Record<string, unknown>, variant: JsonSchemaObject, i: number): string[] {
+  if (variant.additionalProperties !== false) return [];
+  const modeled = new Set(Object.keys(variant.properties ?? {}));
+  const errors: string[] = [];
+  for (const field of Object.keys(op)) {
+    if (!modeled.has(field)) {
+      errors.push(
+        `Patch op[${i}] carries the field ${JSON.stringify(field)}, which the advertised op variant does not model ` +
+          '(additionalProperties: false). Off-contract fields are rejected, never preserved in the validated payload.',
+      );
+    }
+  }
+  return errors;
 }
 
 /**
@@ -673,15 +719,37 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
         errors.push(`Patch op[${i}] is not an object (malformed).`);
         return;
       }
-      // FIRST: enforce EVERY advertised required field for the variant this op claims to
-      // be (node vs edge), including nested object-required fields (edge.from/to/type).
-      // This makes "validated-in shape == the advertised schema" a structural property —
-      // a missing required field is a clean rejection, never a silent no-op-then-mint.
-      const variant = pickOpVariant(op as Record<string, unknown>, variants);
-      if (variant === null) {
+      // FIRST: resolve which advertised `oneOf` op variant this op is, enforcing
+      // JSON-Schema EXACTLY-ONE semantics. An op matching NO variant (neither body) OR
+      // straddling ≥2 variants (carrying BOTH the `node` AND the `edge` body) is a clean
+      // tagged rejection — never minted. `oneOf` requires PRECISELY one branch, so a
+      // both-bodies op (codex's probe `{op,family,node,edge}`) is off-contract here.
+      const match = pickSoleOpVariant(op as Record<string, unknown>, variants);
+      if (match.kind === 'none') {
         errors.push(`Patch op[${i}] is neither a node nor an edge op (malformed).`);
         return;
       }
+      if (match.kind === 'many') {
+        errors.push(
+          `Patch op[${i}] matches more than one advertised op variant (carries the bodies ` +
+            `${match.matched.map((k) => JSON.stringify(k)).join(' and ')}). The advertised schema uses ` +
+            'JSON-Schema `oneOf` (EXACTLY ONE variant); an op satisfying multiple variants is rejected, never minted.',
+        );
+        return;
+      }
+      const variant = match.variant;
+      // ENFORCE the variant's `additionalProperties: false`: an op carrying a field the
+      // matched variant does not model (e.g. a stray `edge` left on a node op) is rejected,
+      // so the validated payload never preserves an off-contract field.
+      const extraneous = extraneousFieldErrors(op as Record<string, unknown>, variant, i);
+      if (extraneous.length > 0) {
+        for (const e of extraneous) errors.push(e);
+        return;
+      }
+      // THEN: enforce EVERY advertised required field for the matched variant (node vs
+      // edge), including nested object-required fields (edge.from/to/type). This makes
+      // "validated-in shape == the advertised schema" a structural property — a missing
+      // required field is a clean rejection, never a silent no-op-then-mint.
       const missing = requiredFieldErrors(op as Record<string, unknown>, variant, i);
       if (missing.length > 0) {
         for (const m of missing) errors.push(m);

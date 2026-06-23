@@ -633,6 +633,78 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
       const next = AICast.applyValidatedPatch(base, checked.proposal);
       expect(next.id).toBe(expected.resultId);
     });
+
+    // -----------------------------------------------------------------------
+    // oneOf EXACTLY-ONE exclusivity — the codex round-3 finding. The advertised
+    // schema uses `ops.items.oneOf` (node-variant XOR edge-variant). A single op
+    // carrying BOTH a valid `node` AND a valid `edge` matches BOTH branches —
+    // JSON-Schema `oneOf` requires EXACTLY ONE, so it MUST reject. The old
+    // validator picked the first body-present variant (node dominant) and MINTED
+    // the op, PRESERVING the stray `edge` in the validated payload.
+    // -----------------------------------------------------------------------
+    test('oneOf EXCLUSIVITY: an op carrying BOTH a valid node AND a valid edge is REJECTED (never minted)', () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+      // Codex's probe: a single op satisfying BOTH the node variant (op/family/node)
+      // AND the edge variant (op/edge). Both bodies are individually valid.
+      const bothBodies = {
+        ...honest,
+        ops: [{ op: 'add', family: 'signal', node: node('c'), edge: { from: a.id, to: b.id, type: 'seq' } }],
+      } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, bothBodies);
+      // GREEN-AFTER: rejected. (RED-BEFORE was `ok: true` with the edge preserved.)
+      expect(checked.ok).toBe(false);
+      if (checked.ok) return;
+      expect(checked.target).toBe('graph-patch');
+      expect('proposal' in checked).toBe(false);
+      // The rejection is self-explaining: either it straddled >1 oneOf branch, or the
+      // matched variant's additionalProperties:false rejected the off-contract body.
+      expect(checked.errors.join(' ')).toMatch(/oneOf|additionalProperties|more than one|does not model/i);
+    });
+
+    test('additionalProperties: a node op carrying a stray UNMODELED field is REJECTED (payload never preserves it)', () => {
+      const base = graph([node('a')]);
+      const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+      // A node op with an extra field the node variant does not model (not a second body —
+      // just an unmodeled scalar). additionalProperties:false must reject it.
+      const withExtra = {
+        ...honest,
+        ops: [{ op: 'add', family: 'signal', node: node('c'), bogus: 'extra' }],
+      } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, withExtra);
+      expect(checked.ok).toBe(false);
+      if (checked.ok) return;
+      expect(checked.errors.join(' ')).toMatch(/additionalProperties|does not model/i);
+      expect(checked.errors.join(' ')).toMatch(/"bogus"/);
+    });
+
+    test('the advertised op variants pin additionalProperties:false (the schema-derived source of the extras gate)', () => {
+      const base = graph([node('a')]);
+      const schema = AICast.graphPatchProposalSchema(base.id).jsonSchema as unknown as {
+        readonly properties?: Record<string, { readonly items?: { readonly oneOf?: readonly { readonly additionalProperties?: boolean }[] } }>;
+      };
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+      expect(variants.length).toBe(2);
+      for (const v of variants) expect(v.additionalProperties).toBe(false);
+    });
+
+    test('CONTROL: a clean single-variant op still validates+mints (node-only AND edge-only)', () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      const envelope = { _tag: 'GraphPatch', _version: 1, base: base.id } as Record<string, unknown>;
+      // node-only op
+      const nodeOnly = { ...envelope, ops: [{ op: 'add', family: 'signal', node: node('c') }] } as unknown as GraphPatch;
+      expect(AICast.validateGraphPatchProposal(base, nodeOnly).ok).toBe(true);
+      // edge-only op (between the two pre-existing nodes)
+      const edgeOnly = {
+        ...envelope,
+        ops: [{ op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } }],
+      } as unknown as GraphPatch;
+      expect(AICast.validateGraphPatchProposal(base, edgeOnly).ok).toBe(true);
+    });
   });
 
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {

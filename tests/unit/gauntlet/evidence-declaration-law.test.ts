@@ -36,6 +36,8 @@ import {
   recordingContext,
   defineGate,
   finding,
+  makeRepoIR,
+  PLACEHOLDER_DIGEST,
   type EvidenceChannel,
   type Gate,
   type GateContext,
@@ -46,40 +48,90 @@ import {
 
 /**
  * Channels covered by a digest OTHER than `evidenceDigest`, so reading them is NOT an
- * `evidenceDigest` obligation:
- *  - `ir.facts` / `ir.refs` — host-oracle-computed IR values folded by the EXTENDED
- *    TOOLCHAIN digest (the cli/audit oracle dist, P1 #1).
- *  - `allFiles` — the DISCOVERY surface (enumerating the unscoped corpus). Reading the
- *    LIST is not a verdict dependency; the dependency is the out-of-IR FILE bodies the
- *    gate then reads (recorded as `readFile:<path>`), which the law DOES require folded.
+ * `evidenceDigest` obligation. The ONLY genuinely-exempt channels:
+ *  - `ir.facts` / `ir.refs` — host-oracle-computed IR VALUES folded by the EXTENDED
+ *    TOOLCHAIN digest (the cli/audit oracle dist, P1 #1). Not the coverage digest, not
+ *    `evidenceDigest`: the toolchain digest changes when the oracle dist changes.
+ *
+ * `allFiles` is DELIBERATELY NOT exempt here (the keystone fix — Codex round-3). The
+ * file LIST is itself evidence: a gate whose verdict depends on `allFiles()`'s RESULT
+ * (e.g. "are there N test files", "does file X exist in the corpus") can serve a stale
+ * verdict when the list changes even if no body it read changed. `allFiles` is handled
+ * by the dedicated LIST-DEPENDENCE check ({@link allFilesObligation}), not blanket-
+ * exempted: a gate that merely ENUMERATES then reads bodies is proven list-INDEPENDENT
+ * and passes; a gate whose run output changes when the list changes MUST fold the list
+ * (or be caught).
  */
-const NON_EVIDENCE_CHANNELS: ReadonlySet<string> = new Set<EvidenceChannel>(['ir.facts', 'ir.refs', 'allFiles']);
+const NON_EVIDENCE_CHANNELS: ReadonlySet<string> = new Set<EvidenceChannel>(['ir.facts', 'ir.refs']);
 
 /**
- * The OUT-OF-IR roots — the trees the IR (built from `auditSourceGlobs`, package source
- * only) does NOT contain, so their bytes are NOT folded by the COVERAGE digest and MUST
- * be folded by `evidenceDigest`: the `tests/` confirmer corpus, the `benchmarks/`
- * registries, the `traceability/` ledger. (A `.bench.ts` under `tests/bench/` is caught
- * by the `tests/` root; a top-level bench root, if any, by `benchmarks/`.)
+ * Does `path` live in the IR's COVERAGE-DIGEST domain — i.e. is it IN the IR file set, so
+ * its bytes are folded by the coverage digest and reading it is NOT an `evidenceDigest`
+ * obligation? This is the COMPLETE out-of-IR predicate's complement: OUT-OF-IR is
+ * ANYTHING NOT in the IR file set — no 3-root hand-list, no exempted prefixes.
+ *
+ * Two worlds, ONE membership semantics:
+ *  - REAL node context (`ctx.ir` present) — the coverage digest folds exactly
+ *    `ir.files`, so in-IR ⇔ `ctx.ir.files.has(path)`. EXACT + complete: a `package.json`,
+ *    a `.github/workflows/*`, a `docs/*`, a `tests/*`, a `benchmarks/*` — NONE are in
+ *    `ir.files`, so every one is an out-of-IR obligation.
+ *  - DEGENERATE memory fixture (`ctx.ir` absent) — there is no `ir.files` to test, so the
+ *    law uses the FAITHFUL stand-in for the set a host WOULD build (`auditSourceGlobs` =
+ *    every `.ts`/`.tsx` under a `packages/<pkg>/src/` tree). A fixture, however, may use a
+ *    SHORTHAND source path (`good.ts`, `bad.ts`) as a package-source stand-in (the regex
+ *    gates do), so the predicate also admits a bare SOURCE FILE (a `.ts`/`.tsx` NOT under
+ *    a known non-IR tree) as in-IR. Crucially every NON-SOURCE artifact — a `package.json`
+ *    / `.github/*` / `docs/*.md` / any non-`.ts` path — and every `.ts` under a non-IR
+ *    tree (`tests/`, `benchmarks/`, `traceability/`) is OUT-OF-IR (an obligation). This is
+ *    what closes hole #1: a manifest/workflow/doc read is no longer silently ignored.
+ *
+ * The two worlds AGREE on the real repo (a host's `ir.files` IS the `auditSourceGlobs`
+ * set, all under the `packages/<pkg>/src` tree), so the law classifies by IR MEMBERSHIP —
+ * never the old 3-root out-of-IR hand-list. On the `ctx.ir`-present path it is EXACT; the no-IR
+ * stand-in is the tightest faithful approximation (it catches EVERY non-source artifact).
  */
-const OUT_OF_IR_ROOTS: readonly string[] = ['tests/', 'benchmarks/', 'traceability/'];
+function isInIr(path: string, ctx: GateContext): boolean {
+  if (ctx.ir !== undefined) return ctx.ir.files.has(path);
+  // No injected IR — use the faithful stand-in for `ir.files`:
+  //  • real package source (`packages/<pkg>/src/**` `.ts`/`.tsx`) is in-IR; OR
+  //  • a fixture SHORTHAND source file: a bare `.ts`/`.tsx` NOT under a non-IR tree
+  //    (the regex gates' `good.ts`/`bad.ts` stand-ins for package source).
+  // Everything else — a non-`.ts` artifact (package.json / a .yml workflow / a .md doc),
+  // or a `.ts`/`.tsx` UNDER a non-IR tree (tests/ confirmer, benchmarks/, traceability/) —
+  // is OUT-OF-IR, an evidenceDigest obligation.
+  if (PACKAGE_SOURCE.test(path)) return true;
+  const isSourceFile = path.endsWith('.ts') || path.endsWith('.tsx');
+  return isSourceFile && !NON_IR_SOURCE_TREES.some((tree) => path.startsWith(tree));
+}
+
+/**
+ * The IR's package-source shape — every `.ts`/`.tsx` under a `packages/<pkg>/src/` tree
+ * (the `auditSourceGlobs` set). This is exactly what a host's `ts.Program` lands in
+ * `ir.files`; a `.d.ts` under `src/` IS package source (the host lists it), so it is
+ * matched (over-classifying a `.d.ts` as in-IR is sound — the coverage digest folds it).
+ */
+const PACKAGE_SOURCE = /^packages\/[^/]+\/src\/.*\.tsx?$/;
+
+/**
+ * The NON-IR SOURCE trees — `.ts`/`.tsx` files here are NOT in `auditSourceGlobs` (which
+ * is the `packages/<pkg>/src` tree only), so a SOURCE FILE under one of these is out-of-IR evidence:
+ * `tests/` (the confirmer corpus + `tests/bench/*.bench.ts`), `benchmarks/` (the perf
+ * registries), `traceability/` (the requirements ledger). This is NOT the old out-of-IR
+ * hand-list (which IGNORED everything else) — it only down-classifies SOURCE FILES that
+ * sit OUTSIDE the IR's package-source tree; every NON-source artifact is out-of-IR
+ * unconditionally (handled in {@link isInIr} by the source-file gate).
+ */
+const NON_IR_SOURCE_TREES: readonly string[] = ['tests/', 'benchmarks/', 'traceability/'];
 
 /**
  * Is `path` OUT-OF-IR — a `readFile` of evidence the COVERAGE digest cannot see, so its
- * read is an `evidenceDigest` obligation? True iff the path is under a known out-of-IR
- * root. Everything ELSE (package source `packages/<name>/src/`, or a fixture's shorthand
- * source name like `bad.ts`) is the coverage-digest domain — in-IR, no obligation.
- *
- * This is the REAL-PATH classification, deliberately NOT a `context.files()` membership
- * test: a degenerate `memoryContext` fixture lumps its `tests/` files into `files()`
- * (there is no level-scoping to separate them), which would wrongly mark them coverage-
- * covered. On the real node context `files()` is package source only and the `tests/`
- * corpus is reached via `allFiles()`. Classifying by the out-of-IR ROOT matches reality
- * in both worlds — so stripping a gate's `evidenceDigest` (the cheater) is caught even
- * when its fixture is an undifferentiated memory map.
+ * read is an `evidenceDigest` obligation? COMPLETE predicate: out-of-IR ⇔ NOT in the IR
+ * file set ({@link isInIr}). Replaces the old 3-root hand-list (`tests/`/`benchmarks/`/
+ * `traceability/`), which silently IGNORED every other non-IR path (`package.json`,
+ * `.github/*`, `docs/*`) — a gate reading those could stale-hit unnoticed.
  */
-function isOutOfIr(path: string): boolean {
-  return OUT_OF_IR_ROOTS.some((root) => path.startsWith(root));
+function isOutOfIr(path: string, ctx: GateContext): boolean {
+  return !isInIr(path, ctx);
 }
 
 /** A recorded `readFile:<path>` read → its path; otherwise undefined. */
@@ -151,6 +203,89 @@ function perturbFile(base: GateContext, path: string): GateContext {
   };
 }
 
+/**
+ * The benign sentinel paths the LIST perturbation ADDS — one per file SHAPE a
+ * list-dependent gate might select on (a `tests/` confirmer, a `tests/bench/*.bench.ts`
+ * registration, a `benchmarks/*.json` registry, a generic `tests/*.ts`). Covering MULTIPLE
+ * shapes means a gate that counts/membership-tests ANY of these corpora reacts to the
+ * perturbation — a single-shape sentinel could miss a selector keyed on a different shape.
+ * Every body is BENIGN by construction: empty / no bench registration / an empty JSON
+ * registry, so a BODY-reading gate's verdict is UNCHANGED (only a LIST-dependent gate, one
+ * whose verdict turns on the SET OF PATHS, reacts). The paths are fresh (a `__evidence_
+ * law_*__` marker) so they never collide with a real fixture file.
+ */
+const LIST_SENTINELS: readonly (readonly [string, string])[] = [
+  ['tests/__evidence_law_sentinel__.test.ts', ''],
+  ['tests/bench/__evidence_law_sentinel__.bench.ts', ''],
+  ['benchmarks/__evidence_law_sentinel__.json', '{"distributions":[]}\n'],
+  ['tests/__evidence_law_sentinel__.ts', ''],
+];
+
+/**
+ * A perturbation of the FILE LIST `allFiles()`/`files()` return — ADD the benign
+ * {@link LIST_SENTINELS} paths the gate has not seen, WITHOUT changing any existing file's
+ * body. This isolates LIST-dependence from BODY-dependence: only a gate whose verdict (or
+ * digest) depends on the SET OF PATHS itself reacts (a count, a membership test, a
+ * "does file X exist"); a gate that merely enumerates then reads bodies is unaffected (the
+ * sentinels' bodies are benign — empty / no registration). The sentinels sit in
+ * `allFiles()` AND `files()` AND `readFile()`, so a gate that reads a body sees a real
+ * (benign) file. A list-INDEPENDENT gate's run output is identical; a list-DEPENDENT
+ * gate's output (or evidenceDigest) changes — exactly the signal the law keys on.
+ */
+function perturbList(base: GateContext): GateContext {
+  const sentinels = new Map<string, string>(LIST_SENTINELS.map(([p, b]) => [p, b]));
+  const sentinelPaths = [...sentinels.keys()];
+  const clone = cloneContext(base);
+  const baseAll = (): readonly string[] => (base.allFiles !== undefined ? base.allFiles() : base.files());
+  return {
+    ...clone,
+    readFile: (p: string): string | undefined => (sentinels.has(p) ? sentinels.get(p) : base.readFile(p)),
+    files: (): readonly string[] => [...base.files(), ...sentinelPaths],
+    allFiles: (): readonly string[] => [...baseAll(), ...sentinelPaths],
+  };
+}
+
+/**
+ * The verdict (run output) of a gate over `ctx`, as a stable string — used to decide
+ * LIST-INDEPENDENCE: if `run` yields the SAME verdict over the base and the
+ * list-perturbed context, the gate does not depend on the file LIST (it only enumerated),
+ * so reading `allFiles()` is no obligation. A DIFFERENT verdict means the list IS a
+ * verdict dependency → the gate must fold it (or be caught). Captures a throw as a
+ * distinct, comparable outcome so a gate that throws is still classified deterministically.
+ */
+function verdictOf(gate: Gate, ctx: GateContext): string {
+  try {
+    const findings = gate.run(ctx);
+    // Fold the findings to a stable shape — ruleId + level + detail capture what the
+    // verdict actually SAYS, so a list change that adds/drops/edits a finding flips this.
+    return `ok:${JSON.stringify(findings.map((f) => [f.ruleId, f.level, f.severity, f.detail]))}`;
+  } catch (err) {
+    return `throw:${(err as Error).message}`;
+  }
+}
+
+/**
+ * The LIST-DEPENDENCE obligation for a gate that read `allFiles()`. The file LIST is
+ * evidence; this decides whether the gate DECLARES it:
+ *  - LIST-INDEPENDENT — the gate's run verdict is unchanged when a new path is added to
+ *    the list (it enumerated then read bodies; the new path changed nothing it judges).
+ *    No obligation: the list is not a verdict dependency.
+ *  - LIST-DEPENDENT — the verdict CHANGES with the list. The list IS a dependency, so the
+ *    gate's `evidenceDigest` MUST fold a digest of the relevant list (proven by the SAME
+ *    list perturbation flipping the digest). A list-dependent gate that declares nothing
+ *    is the stale-cache hole the law CATCHES.
+ *
+ * Returns the undeclared read marker (`'allFiles'`) when the gate is list-dependent but
+ * its digest does not cover the list, else `undefined` (conforms).
+ */
+function allFilesObligation(gate: Gate, ctx: GateContext): 'allFiles' | undefined {
+  const perturbed = perturbList(ctx);
+  const listIndependent = verdictOf(gate, ctx) === verdictOf(gate, perturbed);
+  if (listIndependent) return undefined; // the list is not a verdict dependency
+  // The list IS a dependency — the evidenceDigest must reflect list membership.
+  return digestCovers(gate, ctx, perturbed) ? undefined : 'allFiles';
+}
+
 /** A perturbation of one injected-fact channel — replace its value with a salted clone. */
 function perturbFact(base: GateContext, channel: EvidenceChannel): GateContext {
   const value = (base as Record<string, unknown>)[channel];
@@ -208,18 +343,30 @@ function isFactChannel(read: string): read is EvidenceChannel {
  *
  * Exempt (covered by a digest OTHER than evidenceDigest, so not an obligation):
  *  - `ir.facts` / `ir.refs` — the extended TOOLCHAIN digest (cli/audit oracle dist).
- *  - `allFiles` — discovery only; the obligation is the out-of-IR FILES it then reads.
- *  - `readFile:<package-source>` — the COVERAGE digest folds package source bytes.
+ *  - `readFile:<in-IR path>` — the COVERAGE digest folds the IR file set (package
+ *    source; on the real path exactly `ir.files`). See {@link isInIr}.
  *
  * Required (MUST flip evidenceDigest when perturbed):
- *  - `readFile:<out-of-IR path>` — a tests/ confirmer, a benchmarks/*.json, a ledger…
+ *  - `readFile:<out-of-IR path>` — ANY path NOT in the IR file set: a `tests/` confirmer,
+ *    a `benchmarks/*.json`, a `traceability/` ledger, a `package.json`, a `.github/*`
+ *    workflow, a `docs/*` page — the COMPLETE predicate, not a 3-root hand-list.
  *  - an injected-fact channel — the fact content (external-artifact source bytes).
+ *  - `allFiles` when the gate's verdict DEPENDS ON THE LIST — the file LIST is evidence;
+ *    a list-dependent gate must fold it (see {@link allFilesObligation}). A gate that
+ *    merely enumerates then reads bodies is list-independent and exempt.
  */
 function undeclaredReads(gate: Gate, ctx: GateContext): readonly string[] {
   const reads = readsOf(gate, ctx);
   const undeclared: string[] = [];
   for (const read of reads) {
     if (NON_EVIDENCE_CHANNELS.has(read)) continue;
+
+    if (read === 'allFiles') {
+      // The file LIST is evidence: require it folded IFF the verdict depends on it.
+      const obligation = allFilesObligation(gate, ctx);
+      if (obligation !== undefined) undeclared.push(obligation);
+      continue;
+    }
 
     if (isFactChannel(read)) {
       if (!digestCovers(gate, ctx, perturbFact(ctx, read))) undeclared.push(read);
@@ -228,7 +375,7 @@ function undeclaredReads(gate: Gate, ctx: GateContext): readonly string[] {
 
     const path = readFilePath(read);
     if (path !== undefined) {
-      if (!isOutOfIr(path)) continue; // coverage-digest domain (package source), not an obligation
+      if (!isOutOfIr(path, ctx)) continue; // in-IR (coverage-digest domain), not an obligation
       if (!digestCovers(gate, ctx, perturbFile(ctx, path))) undeclared.push(read);
       continue;
     }
@@ -345,5 +492,245 @@ describe('THE LAW HAS TEETH — a gate that reads allFiles() but declares no evi
     });
     const undeclared = undeclaredReads(conformingGate, conformingGate.fixtures.green.context);
     expect(undeclared).toEqual([]); // the declared read is covered → conforms
+  });
+});
+
+// ── the keystone probes (Codex round-3): the two exemption HOLES, now CLOSED ───
+
+/**
+ * A faithful REPLICA of the OLD (pre-fix) law's `undeclaredReads` — the 3-root out-of-IR
+ * hand-list AND the blanket `allFiles` exemption. Used by the RED-before assertions to
+ * PROVE the old law false-passed each cheater (returned `[]`), end-to-end, not just at the
+ * predicate level. This is the law as it stood before this commit, run over the SAME
+ * cheater gate so the regression is undeniable.
+ */
+function oldLawUndeclaredReads(gate: Gate, ctx: GateContext): readonly string[] {
+  const OLD_NON_EVIDENCE = new Set<string>(['ir.facts', 'ir.refs', 'allFiles']); // allFiles EXEMPT (hole #2)
+  const OLD_OUT_OF_IR_ROOTS = ['tests/', 'benchmarks/', 'traceability/'];
+  const oldIsOutOfIr = (p: string): boolean => OLD_OUT_OF_IR_ROOTS.some((r) => p.startsWith(r)); // 3-root hand-list (hole #1)
+  const reads = readsOf(gate, ctx);
+  const undeclared: string[] = [];
+  for (const read of reads) {
+    if (OLD_NON_EVIDENCE.has(read)) continue;
+    if (isFactChannel(read)) {
+      if (!digestCovers(gate, ctx, perturbFact(ctx, read))) undeclared.push(read);
+      continue;
+    }
+    const path = readFilePath(read);
+    if (path !== undefined) {
+      if (!oldIsOutOfIr(path)) continue;
+      if (!digestCovers(gate, ctx, perturbFile(ctx, path))) undeclared.push(read);
+      continue;
+    }
+    undeclared.push(read);
+  }
+  return undeclared;
+}
+
+describe('THE LAW IS COMPLETE — out-of-IR is IR-membership, not a 3-root hand-list (hole #1)', () => {
+  /**
+   * A throwaway CHEATER reading an OUT-OF-IR path that is NOT under any of the OLD
+   * hand-list roots (`tests/`/`benchmarks/`/`traceability/`): it reads `package.json`'s
+   * body — a real out-of-IR artifact whose verdict it depends on — and folds NO
+   * `evidenceDigest`. Editing `package.json` (a dependency bump, a script change) would
+   * serve a STALE verdict under a coverage-digest-only key. The OLD law IGNORED this read
+   * (not in the 3 roots → classified in-IR → no obligation); the COMPLETE law CATCHES it
+   * (not in `ir.files`, not package source → out-of-IR → obligation).
+   */
+  function manifestContext(): GateContext {
+    const corpus = new Map<string, string>([
+      ['packages/x/src/a.ts', 'export const a = 1;\n'],
+      ['package.json', '{"name":"root","dependencies":{"left-pad":"1.0.0"}}\n'],
+    ]);
+    return {
+      repoRoot: '/virtual',
+      readFile: (p: string): string | undefined => corpus.get(p),
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      allFiles: (): readonly string[] => [...corpus.keys()],
+    };
+  }
+
+  const manifestCheater: Gate = defineGate({
+    id: 'gauntlet/__evidence_law_manifest_cheater__',
+    level: 'L1',
+    describe:
+      'A deliberately non-conforming gate (reads package.json — out-of-IR but NOT under the old 3 roots — declares no evidenceDigest) — the hole-#1 red fixture.',
+    run: (context: GateContext): readonly Finding[] => {
+      // The verdict genuinely depends on package.json's body — a dep present is a finding.
+      const manifest = context.readFile('package.json') ?? '';
+      return manifest.includes('left-pad')
+        ? [
+            finding({
+              ruleId: 'gauntlet/__evidence_law_manifest_cheater__',
+              severity: 'advisory',
+              level: 'L1',
+              title: 'x',
+              detail: 'x',
+            }),
+          ]
+        : [];
+    },
+    // NO evidenceDigest — the violation: editing package.json would stale-hit.
+    fixtures: {
+      red: { name: 'a manifest the cheater reads', context: manifestContext() },
+      green: { name: 'the same manifest', context: manifestContext() },
+      mutation: {
+        describe: 'a mutant that ignores package.json',
+        mutate: (gate: Gate): Gate => ({ ...gate, run: (): readonly Finding[] => [] }),
+      },
+    },
+  });
+
+  it('OLD law would PASS it (the false-pass), NEW law FAILS it: package.json is out-of-IR', () => {
+    const greenCtx = manifestCheater.fixtures.green.context;
+    // RED-before (end-to-end): the OLD 3-root predicate classified package.json as in-IR
+    // (no root prefix matched), so the read was IGNORED — the old law returned NOTHING.
+    expect(oldLawUndeclaredReads(manifestCheater, greenCtx)).toEqual([]); // the false pass
+
+    // GREEN-after: the COMPLETE law sees package.json is NOT in the IR file set → an
+    // obligation the cheater did not declare → CAUGHT.
+    expect(isOutOfIr('package.json', greenCtx)).toBe(true);
+    expect(undeclaredReads(manifestCheater, greenCtx)).toContain('readFile:package.json');
+  });
+
+  it('the SAME predicate holds on a real-IR context: a non-IR path is out-of-IR by ir.files', () => {
+    // Build a context WITH an injected IR whose file set is exactly the package source.
+    // A `.github/workflows/ci.yml` read is out-of-IR because it is NOT in `ir.files` —
+    // proving the predicate is IR-MEMBERSHIP, identical with or without an injected IR.
+    const ir = makeRepoIR({
+      files: [{ id: 'packages/x/src/a.ts', contentDigest: PLACEHOLDER_DIGEST, packageName: '@czap/x' }],
+    });
+    const ctx: GateContext = {
+      repoRoot: '/virtual',
+      readFile: (): string | undefined => undefined,
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      ir,
+    };
+    expect(isOutOfIr('packages/x/src/a.ts', ctx)).toBe(false); // in ir.files → in-IR
+    expect(isOutOfIr('.github/workflows/ci.yml', ctx)).toBe(true); // not in ir.files → out-of-IR
+    expect(isOutOfIr('package.json', ctx)).toBe(true);
+    expect(isOutOfIr('docs/ARCHITECTURE.md', ctx)).toBe(true);
+  });
+});
+
+describe('THE LAW IS COMPLETE — a verdict that depends on allFiles().length is caught (hole #2)', () => {
+  /**
+   * A throwaway CHEATER whose verdict depends on the file LIST ITSELF — it counts the
+   * `tests/` entries in `allFiles()` and flags when there are "too few", reading NO file
+   * BODY at all. The list is evidence: ADDING a test file flips the verdict WITHOUT
+   * changing any body the gate read, so a coverage-digest-only key (no body read to fold)
+   * would serve a STALE verdict. The OLD law blanket-EXEMPTED `allFiles` ("discovery
+   * only") → this cheater passed. The COMPLETE law proves the verdict is list-DEPENDENT
+   * and demands the list folded → CAUGHT.
+   */
+  function listContext(): GateContext {
+    const corpus = new Map<string, string>([
+      ['packages/x/src/a.ts', 'export const a = 1;\n'],
+      ['tests/unit/x/a.test.ts', "it('runs', () => {});\n"],
+    ]);
+    return {
+      repoRoot: '/virtual',
+      readFile: (p: string): string | undefined => corpus.get(p),
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      allFiles: (): readonly string[] => [...corpus.keys()],
+    };
+  }
+
+  const listCheater: Gate = defineGate({
+    id: 'gauntlet/__evidence_law_list_cheater__',
+    level: 'L1',
+    describe:
+      'A deliberately non-conforming gate (verdict depends on allFiles().length, reads no body, declares no evidenceDigest) — the hole-#2 red fixture.',
+    run: (context: GateContext): readonly Finding[] => {
+      // The verdict depends ONLY on the LIST (a membership/count test), never a body.
+      const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+      const testCount = corpus.filter((p) => p.startsWith('tests/') && p.endsWith('.test.ts')).length;
+      // "Too few test files" — a finding driven purely by the list's cardinality.
+      return testCount < 2
+        ? [
+            finding({
+              ruleId: 'gauntlet/__evidence_law_list_cheater__',
+              severity: 'advisory',
+              level: 'L1',
+              title: 'too few tests',
+              detail: `only ${testCount} test file(s) in the corpus`,
+            }),
+          ]
+        : [];
+    },
+    // NO evidenceDigest — the violation: adding/removing a test file flips the verdict
+    // without flipping the key.
+    fixtures: {
+      red: { name: 'a one-test corpus the cheater counts', context: listContext() },
+      green: { name: 'the same corpus', context: listContext() },
+      mutation: {
+        describe: 'a mutant that ignores the count',
+        mutate: (gate: Gate): Gate => ({ ...gate, run: (): readonly Finding[] => [] }),
+      },
+    },
+  });
+
+  it('OLD law would PASS it (allFiles exempt), NEW law FAILS it: the list IS evidence', () => {
+    const greenCtx = listCheater.fixtures.green.context;
+    // RED-before (end-to-end): the OLD law put `allFiles` in NON_EVIDENCE_CHANNELS and the
+    // cheater reads NO body (only the list), so the old law found NOTHING to charge.
+    expect(oldLawUndeclaredReads(listCheater, greenCtx)).toEqual([]); // the false pass
+
+    // GREEN-after: the COMPLETE law proves the verdict CHANGES when the list changes
+    // (list-dependent) and the digest does not cover it → CAUGHT.
+    expect(allFilesObligation(listCheater, greenCtx)).toBe('allFiles');
+    expect(undeclaredReads(listCheater, greenCtx)).toContain('allFiles');
+  });
+
+  it('a CONFORMING twin (same run, WITH a list-folding evidenceDigest) PASSES the law', () => {
+    // Prove the law is not "no allFiles ever" — a list-dependent gate that FOLDS the list
+    // (its membership) conforms. Pins the law to list-dependence-WITHOUT-declaration.
+    const conformer: Gate = defineGate({
+      ...listCheater,
+      id: 'gauntlet/__evidence_law_list_conformer__',
+      evidenceDigest: (context: GateContext): string | undefined => {
+        const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+        // Fold the LIST membership the verdict depends on (the test-file set). Adding or
+        // removing a test path flips this digest — exactly what soundness requires.
+        const tests = corpus.filter((p) => p.startsWith('tests/') && p.endsWith('.test.ts')).sort();
+        return `ev:list:${tests.join('\x1e')}`;
+      },
+    });
+    expect(allFilesObligation(conformer, conformer.fixtures.green.context)).toBeUndefined();
+    const undeclared = undeclaredReads(conformer, conformer.fixtures.green.context);
+    expect(undeclared).toEqual([]);
+  });
+
+  it('a list-INDEPENDENT gate (enumerates, then reads bodies) is NOT charged for allFiles', () => {
+    // Prove the law does not over-fire: a gate that reads allFiles() purely to ENUMERATE
+    // and whose verdict depends only on BODIES (not the list) is list-independent, so the
+    // bare `allFiles` read is no obligation (only its out-of-IR body reads are).
+    const enumerator: Gate = defineGate({
+      ...listCheater,
+      id: 'gauntlet/__evidence_law_enumerator__',
+      run: (context: GateContext): readonly Finding[] => {
+        // Depends on a BODY's content, not the list cardinality — adding an unrelated
+        // (benign) path to the list changes nothing it judges.
+        const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+        for (const p of corpus) {
+          if (p.startsWith('tests/') && (context.readFile(p) ?? '').includes('FORBIDDEN')) {
+            return [finding({ ruleId: 'gauntlet/__evidence_law_enumerator__', severity: 'advisory', level: 'L1', title: 'x', detail: p })];
+          }
+        }
+        return [];
+      },
+      // It DOES fold its out-of-IR body reads (so only the allFiles list-charge is under test).
+      evidenceDigest: (context: GateContext): string | undefined => {
+        const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+        const entries = corpus
+          .filter((p) => p.startsWith('tests/'))
+          .sort()
+          .map((p): readonly [string, string] => [p, context.readFile(p) ?? '']);
+        return `ev:${entries.map(([p, b]) => `${p}\x1f${b}`).join('\x1e')}`;
+      },
+    });
+    // The sentinel path the perturbation adds has a benign body (no FORBIDDEN), so the
+    // enumerator's verdict is unchanged → list-independent → no allFiles charge.
+    expect(allFilesObligation(enumerator, enumerator.fixtures.green.context)).toBeUndefined();
   });
 });

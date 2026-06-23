@@ -80,6 +80,8 @@ function formLabel(form: SkipMatch['form']): string {
       return 'a runtime-conditional skip (.skipIf / .runIf)';
     case 'alias':
       return 'an aliased skip reference (e.g. `COND ? it : it.skip`)';
+    case 'computed':
+      return 'a computed member access on a test runner (e.g. `it[cond ? "skip" : "only"]`) — it can resolve to skip';
   }
 }
 
@@ -167,13 +169,21 @@ export const noSkippedTestGate: Gate = defineGate({
   evidenceDigest: noSkippedTestEvidenceDigest,
   fixtures: {
     red: {
-      name: 'an UNSANCTIONED tests/-tree file with an ALIAS-form skip (the `.skip(` regex misses it)',
+      name: 'an UNSANCTIONED tests/-tree file with the EXOTIC skip forms a flat `.skip(` regex misses (alias + chained-modifier + bracket + computed)',
       context: memoryContext({
-        // A tests/-tree file (out of the old IR scope) using the ALIAS form: a bare
-        // `it.skip` reference behind a ternary, called via `renderIt(...)`. The old gate
-        // (scope = packages/*/src, regex = `.skip(`) caught NEITHER. NOT in the allowlist.
+        // A tests/-tree file (out of the old IR scope) carrying the skip forms NO flat regex
+        // catches and the OLD detector missed: the ALIAS form (a bare `it.skip` behind a
+        // ternary), a CHAINED-MODIFIER skip (`it.concurrent.skip`), a BRACKET skip
+        // (`it["skip"]`), and a COMPUTED member access on a runner root
+        // (`it[cond?"skip":"only"]`). The comprehensive token-aware detector catches ALL of
+        // them; a mutant that narrows back to the literal `.skip(` call lets EVERY one escape.
+        // NOT in the allowlist → all are blocking.
         'tests/unit/widget/unwired.test.ts':
-          "const renderIt = COND ? it : it.skip;\nrenderIt('not wired yet', () => {});\n",
+          'const renderIt = COND ? it : it.skip;\n' +
+          "renderIt('not wired yet', () => {});\n" +
+          "it.concurrent.skip('chained modifier skip', () => {});\n" +
+          'it["skip"]("bracket skip", () => {});\n' +
+          'it[cond ? "skip" : "only"]("computed skip", () => {});\n',
       }),
     },
     green: {
@@ -192,7 +202,7 @@ export const noSkippedTestGate: Gate = defineGate({
     },
     mutation: {
       describe:
-        'A gate that only catches the LITERAL `.skip(` call (dropping the alias detection) lets the red fixture — an ALIAS-form `COND ? it : it.skip` with no call paren — escape. The mutant must then DIFFER from the original on the red fixture (it finds nothing where the original finds the alias skip).',
+        'A gate that narrows back to the LITERAL `.skip(` call (dropping the comprehensive token-aware detection) lets the red fixture — the ALIAS (`COND ? it : it.skip`), the CHAINED `it.concurrent.skip`, the BRACKET `it["skip"]`, and the COMPUTED `it[cond?"skip":"only"]` forms, none of which the flat regex matches — escape entirely. The mutant must then DIFFER from the original on the red fixture (it finds nothing where the comprehensive detector finds four exotic skips).',
       mutate: (gate: Gate): Gate => ({
         ...gate,
         run: (context: GateContext): readonly Finding[] => {

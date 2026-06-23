@@ -8,7 +8,7 @@
 
 > **isExternalShaderSource**(`shaderSrc`): `boolean`
 
-Defined in: [web/src/security/shader-integrity.ts:259](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L259)
+Defined in: [web/src/security/shader-integrity.ts:267](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L267)
 
 Does `shaderSrc` denote an EXTERNAL (network-fetched) shader, as opposed to an
 inline source string?
@@ -22,20 +22,28 @@ drift-proof:
   a shaderSrc is EXTERNAL (must be fetched + integrity-verified, or refused
   secure-by-default) IFF the URL policy would treat it as a fetchable URL.
 
-An INLINE shader is a genuine GLSL/WGSL BODY — multi-line program text carrying
-inner whitespace / newlines / shader syntax — which [isFetchableRuntimeUrl](isFetchableRuntimeUrl.md)
-rejects as a URL (inner whitespace ⟹ a body, never a single URL token). EVERY
-URL-shaped input the policy accepts is EXTERNAL: root-absolute (`/x.glsl`),
-path-relative (`shaders/x.glsl`, `./x`, `../x`), QUERY-relative (`?shader=wave`),
-BARE same-dir (`wave`), protocol-relative (`//host/x`), scheme-absolute
-(`http(s)://…`), and URL-scheme tokens (`data:…` / `blob:…`).
+An INLINE shader is a genuine GLSL/WGSL BODY — program text identified by its
+CONTENT (a newline, or a shader-syntax marker: `#version`, `void main`, `gl_`,
+`precision`, `{`/`}`/`;`, or a WGSL `@group`/`@binding`/`fn `) — which
+[isFetchableRuntimeUrl](isFetchableRuntimeUrl.md) rejects as a URL. The discriminator is CONTENT, not
+raw whitespace: a URL/path CAN contain a space (`shader file.wgsl`), so inner
+whitespace was the WRONG distinguisher. EVERY URL-shaped input the policy accepts
+is EXTERNAL: root-absolute (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`,
+`../x`), path-WITH-A-SPACE (`shader file.wgsl`, `./shader file.wgsl`),
+QUERY-relative (`?shader=wave`), BARE same-dir (`wave`), protocol-relative
+(`//host/x`), scheme-absolute (`http(s)://…`), and URL-scheme tokens
+(`data:…` / `blob:…`).
 
-This closes the bypass a prior extension/slash/scheme heuristic left open: a bare
-`wave` and a `?shader=wave` carry no slash, extension, or scheme, so the old
-classifier returned `false` — slipping a fetchable same-origin URL into the inline
-branch UNVERIFIED. Because the classifier now IS the URL-fetchability predicate, if
-the URL policy ever learns a new fetchable shape the classifier follows it
-automatically, and the cross-check property in the suite guards the equality.
+This closes two bypasses. (1) A prior extension/slash/scheme heuristic left bare
+`wave` and `?shader=wave` in the inline branch (no slash/extension/scheme). (2) A
+raw inner-whitespace pre-check then let a single-line PATH-WITH-A-SPACE
+(`shader file.wgsl`) — which `resolveRuntimeUrl` resolves as a fetchable
+same-origin URL — slip into the inline branch UNVERIFIED. The content/policy-based
+discriminator routes any value the policy treats as a fetchable URL to the external
+(fetch+verify-or-refuse) path. Secure-by-default: an ambiguous single-line token
+(no shader content) prefers EXTERNAL — fetch+verify beats compiling an unverified
+path-string. Because the classifier IS the URL-fetchability predicate, a new
+fetchable shape is followed automatically; the cross-check property guards equality.
 
 A `data:` / `blob:` token is URL-SHAPED (the policy reasons about it as a URL —
 `data:` resolves cross-origin and is origin-refused; `blob:` resolves same-origin

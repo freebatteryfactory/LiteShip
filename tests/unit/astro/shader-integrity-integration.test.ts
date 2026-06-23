@@ -216,6 +216,59 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     expect(shaderSources.some((s) => s.includes('shaders/wave.glsl'))).toBe(false);
   });
 
+  test('a PATH-WITH-A-SPACE shader URL is FETCHED + verified, NOT literal-compiled (codex round-3, P2c regression)', async () => {
+    // SECURITY REGRESSION (P2c — codex round-3): a single-line path WITH A SPACE
+    // (`shader file.glsl`) is a FETCHABLE same-origin URL under `resolveRuntimeUrl`,
+    // yet the OLD inner-whitespace pre-check rejected it as a URL, so gpu.ts compiled
+    // the path TOKEN as inline shader SOURCE TEXT — never fetched, never verified. The
+    // content/policy-based classifier now treats it as EXTERNAL: fetched, verified, and
+    // the path token must NEVER reach gl.shaderSource as literal source.
+    const fetchSpy = vi.fn(async () => new Response(FETCHED_GLSL, { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    const shaderSources: string[] = [];
+    const gl = makeGlStub(shaderSources);
+    const canvas = mountCanvas(gl);
+    canvas.setAttribute('data-czap-shader-src', 'shader file.glsl');
+    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+    await flush();
+
+    // The space-containing path was actually FETCHED (not treated as inline source).
+    expect(fetchSpy).toHaveBeenCalledWith('shader file.glsl');
+    const fragSource = shaderSources.find((s) => s.includes('fragColor'));
+    expect(fragSource).toBeDefined();
+    expect(fragSource).toContain('vec4(v_uv, 0.5, 1.0)');
+    // The path token itself NEVER reached GL as literal source.
+    expect(shaderSources.some((s) => s.includes('shader file.glsl'))).toBe(false);
+  });
+
+  test('a PATH-WITH-A-SPACE shader URL with NO pin is REFUSED (secure-by-default, codex round-3, P2c)', async () => {
+    // The space-path is external, so a missing pin must REFUSE — proving the bypass is
+    // closed: a path-with-a-space can no longer slip past the SRI gate as "inline".
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(FETCHED_GLSL, { status: 200 })),
+    );
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const shaderSources: string[] = [];
+    const gl = makeGlStub(shaderSources);
+    const canvas = mountCanvas(gl);
+    canvas.setAttribute('data-czap-shader-src', 'shader file.glsl');
+    // No data-czap-shader-integrity attribute.
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+    await flush();
+
+    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    expect(absent).toBeDefined();
+    expect(absent!.level).toBe('error');
+    // The unverified space-path shader never reached GL as source, literal or fetched.
+    expect(shaderSources.some((s) => s.includes('shader file.glsl'))).toBe(false);
+    expect(shaderSources.some((s) => s.includes('fragColor') && s.includes('v_uv'))).toBe(false);
+  });
+
   test('a PATH-RELATIVE shader URL with NO pin is REFUSED (secure-by-default, P2a regression)', async () => {
     // The path-relative URL is external, so a missing pin must REFUSE — proving the
     // hole is closed: a path-relative URL can no longer slip past the SRI gate as
