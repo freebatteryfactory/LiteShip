@@ -8,7 +8,7 @@
 
 > **decideShaderIntegrity**(`result`, `mode`): [`IntegrityDecision`](../type-aliases/IntegrityDecision.md)
 
-Defined in: [web/src/security/shader-integrity.ts:288](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L288)
+Defined in: [web/src/security/shader-integrity.ts:295](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L295)
 
 Decide whether to proceed or refuse, given the verify result and the mode.
 

@@ -8,16 +8,18 @@
 
 > **isFetchableRuntimeUrl**(`rawUrl`): `boolean`
 
-Defined in: [web/src/security/runtime-url.ts:329](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L329)
+Defined in: [web/src/security/runtime-url.ts:324](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L324)
 
 The CANONICAL "is this a fetchable runtime URL?" predicate — the single source of
 truth that the shader-integrity classifier ([isExternalShaderSource](isExternalShaderSource.md))
 DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
 
   1. it is NOT a genuine inline shader BODY (isInlineShaderBody) — i.e. it
-     is not multi-line program text nor scheme-less shader-syntax text. A URL/path
-     CAN contain a space (`shader file.wgsl`), so inner whitespace is NOT the
-     discriminator; only genuine shader CONTENT (newline / syntax marker) is; AND
+     is not MULTI-LINE program text (a raw newline). A URL/path CAN contain a space
+     (`shader file.wgsl`) AND legal-but-shader-looking characters (`shader{1}.wgsl`,
+     `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), so NEITHER inner
+     whitespace NOR any in-content character marker is the discriminator — only a
+     raw newline (which a URL can never contain) marks a multi-line body; AND
   2. [resolveRuntimeUrl](resolveRuntimeUrl.md) treats it as a URL — i.e. the resolution is NEITHER
      `'missing'` (empty) NOR `'malformed'` (the parser rejected it). EVERY other
      variant (`allowed`, `cross-origin-rejected`, `origin-not-allowed`,
@@ -34,9 +36,11 @@ is merely refused) — so the predicate is stable regardless of the host's polic
 Shapes this accepts (all URL-shaped, none an inline body): root-absolute
 (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`, `../x`), path-WITH-A-SPACE
 (`shader file.wgsl`, `./shader file.wgsl` — a fetchable URL the policy accepts),
+path-WITH-SHADER-LOOKING-PUNCTUATION (`shader{1}.wgsl`, `./shader;v=1.wgsl`,
+`shader?x={y}`, `shaders/fn file.wgsl` — all single-line, all legal URLs),
 query-relative (`?shader=wave`), bare same-dir (`wave`), protocol-relative
 (`//host/x`), scheme-absolute (`http(s)://…`), and URL-scheme tokens (`data:…`,
-`blob:…`). A genuine multi-line / shader-syntax GLSL/WGSL body is rejected.
+`blob:…`). A genuine MULTI-LINE GLSL/WGSL body (a raw newline) is rejected.
 
 Pure + deterministic: no clock, no network — the resolution is a syntactic
 classification only. Never throws ([resolveRuntimeUrl](resolveRuntimeUrl.md) never throws).

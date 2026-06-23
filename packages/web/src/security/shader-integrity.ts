@@ -235,28 +235,35 @@ export const DEFAULT_SHADER_INTEGRITY_MODE: ShaderIntegrityMode = 'required-for-
  *   a shaderSrc is EXTERNAL (must be fetched + integrity-verified, or refused
  *   secure-by-default) IFF the URL policy would treat it as a fetchable URL.
  *
- * An INLINE shader is a genuine GLSL/WGSL BODY — program text identified by its
- * CONTENT (a newline, or a shader-syntax marker: `#version`, `void main`, `gl_`,
- * `precision`, `{`/`}`/`;`, or a WGSL `@group`/`@binding`/`fn `) — which
- * {@link isFetchableRuntimeUrl} rejects as a URL. The discriminator is CONTENT, not
- * raw whitespace: a URL/path CAN contain a space (`shader file.wgsl`), so inner
- * whitespace was the WRONG distinguisher. EVERY URL-shaped input the policy accepts
- * is EXTERNAL: root-absolute (`/x.glsl`), path-relative (`shaders/x.glsl`, `./x`,
- * `../x`), path-WITH-A-SPACE (`shader file.wgsl`, `./shader file.wgsl`),
- * QUERY-relative (`?shader=wave`), BARE same-dir (`wave`), protocol-relative
- * (`//host/x`), scheme-absolute (`http(s)://…`), and URL-scheme tokens
- * (`data:…` / `blob:…`).
+ * An INLINE shader is a genuine GLSL/WGSL BODY — program text identified by the ONE
+ * property a URL can NEVER have: a raw NEWLINE (multi-line text). The discriminator
+ * is NEWLINE-only, with NO in-content character markers: a URL/path CAN contain a
+ * space (`shader file.wgsl`) AND legal-but-shader-looking characters
+ * (`shader{1}.wgsl`, `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), so
+ * neither inner whitespace NOR any `{`/`}`/`;`/`fn `-style marker is a sound
+ * distinguisher — each collides with a real URL. EVERY single-line URL-shaped input
+ * the policy accepts is EXTERNAL: root-absolute (`/x.glsl`), path-relative
+ * (`shaders/x.glsl`, `./x`, `../x`), path-WITH-A-SPACE (`shader file.wgsl`,
+ * `./shader file.wgsl`), path-WITH-SHADER-PUNCTUATION (`shader{1}.wgsl`,
+ * `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), QUERY-relative
+ * (`?shader=wave`), BARE same-dir (`wave`), protocol-relative (`//host/x`),
+ * scheme-absolute (`http(s)://…`), and URL-scheme tokens (`data:…` / `blob:…`).
  *
- * This closes two bypasses. (1) A prior extension/slash/scheme heuristic left bare
- * `wave` and `?shader=wave` in the inline branch (no slash/extension/scheme). (2) A
- * raw inner-whitespace pre-check then let a single-line PATH-WITH-A-SPACE
- * (`shader file.wgsl`) — which `resolveRuntimeUrl` resolves as a fetchable
- * same-origin URL — slip into the inline branch UNVERIFIED. The content/policy-based
- * discriminator routes any value the policy treats as a fetchable URL to the external
- * (fetch+verify-or-refuse) path. Secure-by-default: an ambiguous single-line token
- * (no shader content) prefers EXTERNAL — fetch+verify beats compiling an unverified
- * path-string. Because the classifier IS the URL-fetchability predicate, a new
- * fetchable shape is followed automatically; the cross-check property guards equality.
+ * This closes the whole CHARACTER-collision class. Prior heuristics each lost the
+ * same way — a URL and shader source SHARE characters: (1) an extension/slash/scheme
+ * test left bare `wave` and `?shader=wave` inline; (2) an inner-whitespace pre-check
+ * let a PATH-WITH-A-SPACE (`shader file.wgsl`) slip inline; (3) a shader-syntax marker
+ * (`{`/`;`/`fn `/`#version`) let `shader{1}.wgsl`, `./shader;v=1.wgsl`, `shader?x={y}`,
+ * `shaders/fn file.wgsl` — all legal same-origin URLs — slip inline UNVERIFIED. The
+ * NEWLINE rule depends on nothing an attacker can put in a URL, so the class is shut.
+ *
+ * HONEST TRADE-OFF: a genuine SINGLE-LINE inline body (e.g. `void main(){discard;}` on
+ * one line) is now treated as EXTERNAL — it is fetched (which fails loudly) rather than
+ * compiled inline. That is the SECURE choice: you cannot tell a one-liner body from a
+ * URL by content without a marker the attacker controls, so secure-by-default never
+ * compiles an unverified single-line string. Real bodies are virtually always
+ * multi-line. Because the classifier IS the URL-fetchability predicate, a new fetchable
+ * shape is followed automatically; the cross-check property guards equality.
  *
  * A `data:` / `blob:` token is URL-SHAPED (the policy reasons about it as a URL —
  * `data:` resolves cross-origin and is origin-refused; `blob:` resolves same-origin

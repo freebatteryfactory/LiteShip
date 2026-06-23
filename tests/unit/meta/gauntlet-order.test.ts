@@ -65,8 +65,18 @@ describe('gauntlet ordering', () => {
     // `git show <base>:traceability/standards-snapshot.json` resolves (else fail-closed).
     expect(ci).toContain('fetch-depth: 0');
     // It must set CZAP_STANDARDS_BASE_REF deterministically — the PR base for a
-    // pull_request, HEAD~1 (the parent, catching a same-commit weaken) for a push.
+    // pull_request; `github.event.before` (the SHA the ref pointed at BEFORE the push) for
+    // a push, so the diff covers the ENTIRE pushed range and an earlier-commit weakening in
+    // a multi-commit push cannot sail through (the HEAD~1 form only caught the LAST commit).
     expect(ci).toContain('CZAP_STANDARDS_BASE_REF=origin/${{ github.base_ref }}');
-    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=HEAD~1');
+    expect(ci).toContain('PUSH_BEFORE: ${{ github.event.before }}');
+    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=$BASE');
+    // The legacy HEAD~1 push base (which MISSED earlier-commit weakenings in a multi-commit
+    // push) must be GONE — a regression guard so it cannot creep back.
+    expect(ci).not.toContain('CZAP_STANDARDS_BASE_REF=HEAD~1');
+    // The brand-new-branch bootstrap must be handled fail-closed: the all-zeros sentinel is
+    // detected and falls back to the merge-base with main (else the zero-SHA fails closed).
+    expect(ci).toContain('0000000000000000000000000000000000000000');
+    expect(ci).toContain('git merge-base origin/main HEAD');
   });
 });

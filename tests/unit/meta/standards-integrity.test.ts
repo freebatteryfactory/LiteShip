@@ -24,7 +24,11 @@
 
 import { describe, test, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { scaledTimeout } from '../../../vitest.shared.js';
+import { spawnArgvCapture } from '../../../scripts/lib/spawn.js';
 import {
   diffStandardsSurface,
   applyStandardsWaivers,
@@ -44,8 +48,10 @@ import {
   buildStandardsIntegrityFacts,
   resolveStandardsBaseRef,
   readBaseSnapshot,
+  defaultGitShow,
   STANDARDS_BASE_REF_ENV,
   STANDARDS_DEFAULT_BASE_REF,
+  STANDARDS_SNAPSHOT_PATH,
   type GitShowReader,
 } from '../../../packages/cli/src/lib/standards-surface.js';
 
@@ -310,6 +316,28 @@ describe('the base ref is resolved deterministically (CI override → PR base �
   test('a blank/whitespace override is ignored (not treated as a real ref)', () => {
     expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: '   ' })).toBe(STANDARDS_DEFAULT_BASE_REF);
   });
+
+  test('a real before-SHA override (github.event.before for a push) is used verbatim (the whole pushed range)', () => {
+    // The push base is the SHA the ref pointed at BEFORE the push — covering the ENTIRE
+    // pushed range, not just HEAD~1. The resolver passes a real SHA straight through.
+    const beforeSha = 'dbba725a9f6b61fbf1f36ef0db08c5f638b82b60';
+    expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: beforeSha })).toBe(beforeSha);
+  });
+
+  test('the all-zeros before-SHA (brand-new-branch bootstrap sentinel) is IGNORED → falls through to main', () => {
+    // GitHub puts the all-zeros "null commit" in github.event.before for the first push of
+    // a brand-new branch (no prior tip). It is NOT a resolvable ref, so the resolver must
+    // NOT hand it to `git show` — it falls through to the integration baseline (main),
+    // where readBaseSnapshot then fails CLOSED if main lacks the snapshot (never a pass).
+    const zero = '0000000000000000000000000000000000000000';
+    expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero })).toBe(STANDARDS_DEFAULT_BASE_REF);
+    // Defense-in-depth: even with a GITHUB_BASE_REF present, the zero-SHA override is
+    // dropped and the pull_request-style fall-through applies (origin/<branch>), never the
+    // zero ref. (A push run does not set GITHUB_BASE_REF, but the precedence must be exact.)
+    expect(
+      resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero, GITHUB_BASE_REF: 'main' }),
+    ).toBe('origin/main');
+  });
 });
 
 // ───────────────────────── the FAIL-CLOSED base read ──────────────────────────
@@ -417,5 +445,110 @@ describe('DRILL SERGEANT — the same-commit code+snapshot bypass is CLOSED', ()
     const part = applyStandardsWaivers(changes, [], NOW, ALWAYS_BLOCKING);
     expect(part.unsignedWeakenings).toEqual([]);
     expect(part.unregeneratedStrengthens.some((c) => c.changeClass === 'strengthen')).toBe(true);
+  });
+});
+
+// ──────────────── THE MULTI-COMMIT PUSH GAP — HEAD~1 misses earlier weakenings ──
+//
+// THE FINDING (codex round-4): the push path set CZAP_STANDARDS_BASE_REF=HEAD~1, which
+// only diffs the LAST commit of a push. When a branch is pushed with N commits, a
+// weakening introduced in an EARLIER commit is ALREADY PRESENT at HEAD~1 — so the diff
+// live-vs-HEAD~1 sees no change and the weakening sails through. The base for a push must
+// be `github.event.before` (the SHA the ref pointed at BEFORE the push), which covers the
+// WHOLE pushed range. This drill builds a REAL git repo over a real multi-commit push and
+// proves RED-before (HEAD~1 misses) / GREEN-after (the before-SHA catches), using the REAL
+// `defaultGitShow` (`git show <ref>:…`) — not a hermetic stub.
+describe('MULTI-COMMIT PUSH GAP — the push base must be github.event.before, not HEAD~1', () => {
+  /** A minimal, valid standards snapshot carrying one `floor` element at a given value. */
+  function snapshotWithFloor(value: number): string {
+    const elements: StandardsElement[] = [
+      { _tag: 'floor', name: 'mutation-score::pkg/a.ts', value, direction: 'higher-is-stronger' },
+    ];
+    return serializeStandardsSurface({ snapshotFormat: 1, elements, address: '' });
+  }
+
+  /** Run a git argv in `repo` via the canonical spawn helper; assert clean exit; return stdout. */
+  async function git(repo: string, args: readonly string[]): Promise<string> {
+    const res = await spawnArgvCapture('git', args, { cwd: repo });
+    expect(res.exitCode, `git ${args.join(' ')} failed: ${res.stderr}`).toBe(0);
+    return res.stdout;
+  }
+
+  /** Initialize a temp repo with a deterministic, in-repo git identity (no ambient env). */
+  async function initRepo(branch: string): Promise<string> {
+    const repo = mkdtempSync(join(tmpdir(), 'czap-mc-'));
+    mkdirSync(join(repo, 'traceability'), { recursive: true });
+    await git(repo, ['init', '-q', '-b', branch]);
+    await git(repo, ['config', 'user.name', 't']);
+    await git(repo, ['config', 'user.email', 't@t']);
+    return repo;
+  }
+
+  /** Commit the snapshot bytes at `repo`; return the new HEAD SHA. */
+  async function commitSnapshot(repo: string, bytes: string, message: string): Promise<string> {
+    writeFileSync(join(repo, STANDARDS_SNAPSHOT_PATH), bytes);
+    await git(repo, ['add', STANDARDS_SNAPSHOT_PATH]);
+    await git(repo, ['commit', '-q', '-m', message]);
+    return (await git(repo, ['rev-parse', 'HEAD'])).trim();
+  }
+
+  test('RED: diff vs HEAD~1 MISSES a weakening introduced 2 commits back; GREEN: diff vs the before-SHA CATCHES it', async () => {
+    const repo = await initRepo('main');
+    try {
+      // The PRE-PUSH tip (`before`): the STRONG floor (value 100). This is the SHA the ref
+      // pointed at before the push — the true range base.
+      const beforeSha = await commitSnapshot(repo, snapshotWithFloor(100), 'c0: strong floor (pre-push tip)');
+
+      // The push delivers TWO commits:
+      //   c1 — the WEAKENING: the floor is lowered 100 → 50 (a real erosion).
+      //   c2 — an innocuous follow-up that does NOT touch the standards snapshot.
+      await commitSnapshot(repo, snapshotWithFloor(50), 'c1: LOWER the floor (the weakening, 2 commits back)');
+      writeFileSync(join(repo, 'unrelated.txt'), 'a follow-up commit that does not touch standards\n');
+      await git(repo, ['add', 'unrelated.txt']);
+      await git(repo, ['commit', '-q', '-m', 'c2: unrelated follow-up']);
+
+      // The LIVE surface at the pushed HEAD already carries the weakened (50) floor.
+      const live = readBaseSnapshot(repo, 'HEAD', defaultGitShow);
+      expect(live.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
+
+      // ── RED (the OLD push base): diff live vs HEAD~1 ──────────────────────────────
+      // HEAD~1 is c1 — which ALREADY contains the lowered floor (50). So live (50) vs
+      // HEAD~1 (50) shows NO change. The weakening — landed 2 commits back — sails through.
+      const head1 = readBaseSnapshot(repo, 'HEAD~1', defaultGitShow);
+      expect(head1.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 50 });
+      const oldChanges = diffStandardsSurface(head1.elements, live.elements);
+      const oldPart = applyStandardsWaivers(oldChanges, [], NOW, ALWAYS_BLOCKING);
+      expect(oldPart.unsignedWeakenings).toEqual([]); // BYPASS: HEAD~1 missed it.
+
+      // ── GREEN (the NEW push base): diff live vs the before-SHA (the whole pushed range) ─
+      // `before` is c0 — the STRONG floor (100). live (50) vs before (100) IS a weakening.
+      // The resolver passes the real before-SHA straight through (highest authority).
+      expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: beforeSha })).toBe(beforeSha);
+      const before = readBaseSnapshot(repo, beforeSha, defaultGitShow);
+      expect(before.elements.find((e) => e._tag === 'floor')).toMatchObject({ value: 100 });
+      const newChanges = diffStandardsSurface(before.elements, live.elements);
+      const newPart = applyStandardsWaivers(newChanges, [], NOW, ALWAYS_BLOCKING);
+      expect(newPart.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true); // CAUGHT.
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  test('BOOTSTRAP: an all-zeros before-SHA falls through to main (fail-closed if main lacks the snapshot)', async () => {
+    // The brand-new-branch first push: github.event.before is the all-zeros sentinel. The
+    // resolver must NOT pass it to git — it falls through to main. In a temp repo with no
+    // `main` snapshot reachable, the base read FAILS CLOSED (refuse), never a silent pass.
+    const repo = await initRepo('feature');
+    try {
+      await commitSnapshot(repo, snapshotWithFloor(100), 'only commit on a brand-new branch');
+      const zero = '0000000000000000000000000000000000000000';
+      // The zero-SHA is dropped → resolves to `main`. `main` does not exist here → the base
+      // read throws (fail-closed), never falls back to the working snapshot.
+      const resolved = resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero });
+      expect(resolved).toBe(STANDARDS_DEFAULT_BASE_REF);
+      expect(() => readBaseSnapshot(repo, resolved, defaultGitShow)).toThrow();
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
   });
 });

@@ -204,33 +204,69 @@ function perturbFile(base: GateContext, path: string): GateContext {
 }
 
 /**
- * The benign sentinel paths the LIST perturbation ADDS — one per file SHAPE a
- * list-dependent gate might select on (a `tests/` confirmer, a `tests/bench/*.bench.ts`
- * registration, a `benchmarks/*.json` registry, a generic `tests/*.ts`). Covering MULTIPLE
- * shapes means a gate that counts/membership-tests ANY of these corpora reacts to the
- * perturbation — a single-shape sentinel could miss a selector keyed on a different shape.
- * Every body is BENIGN by construction: empty / no bench registration / an empty JSON
- * registry, so a BODY-reading gate's verdict is UNCHANGED (only a LIST-dependent gate, one
- * whose verdict turns on the SET OF PATHS, reacts). The paths are fresh (a `__evidence_
- * law_*__` marker) so they never collide with a real fixture file.
+ * The benign sentinel paths the LIST perturbation ADDS — one representative path per
+ * OUT-OF-IR SHAPE/ROOT a list-dependent gate might select on. This set is CO-EXTENSIVE
+ * with the recorder's out-of-IR predicate ({@link isOutOfIr} / {@link isInIr}): every
+ * shape that predicate flags as out-of-IR has a sentinel here, so a gate whose verdict
+ * turns on the MEMBERSHIP or CARDINALITY of ANY out-of-IR shape reacts to the
+ * perturbation. A narrower set (the prior test/bench-only sentinels) left WHOLE shapes
+ * un-perturbed — a gate keyed on `docs/*.md` / `.github/workflows/*.yml` / a root
+ * `package.json` / `traceability/*.yaml` membership would NOT react, so the law could
+ * read undeclared list-evidence and pass. The shapes, matching the classifier's roots:
+ *  - the NON-IR SOURCE TREES the classifier down-classifies ({@link NON_IR_SOURCE_TREES}):
+ *    `tests/*.test.ts` (the confirmer corpus), `tests/bench/*.bench.ts` (the bench
+ *    registrations), a generic `tests/*.ts`, `benchmarks/*.json` (the perf registries),
+ *    `traceability/*.yaml` (the requirements ledger);
+ *  - the NON-SOURCE ARTIFACTS the classifier flags unconditionally (any non-`.ts` path,
+ *    or a `.ts` outside the IR tree): `docs/*.md`, `.github/workflows/*.yml`, a root
+ *    `package.json`-sibling, AND a generic deep non-IR path (a shape with no fixed root,
+ *    standing in for any out-of-IR artifact a gate could query that the named roots miss).
+ *
+ * Every body is BENIGN by construction — empty / no registration / an empty JSON or YAML
+ * registry / a placeholder doc — so a BODY-reading gate's verdict is UNCHANGED: only a
+ * LIST-dependent gate, one whose verdict turns on the SET OF PATHS, reacts. The paths are
+ * fresh (a `__evidence_law_*__` marker) so they never collide with a real fixture file.
+ *
+ * HONEST RESIDUAL — NOT a complete guarantee. This covers every out-of-IR SHAPE/ROOT, so
+ * it catches any REALISTIC list-dependence (a gate selecting on a corpus by root/extension).
+ * Knowing the EXACT set of list-queries a gate makes is statically undecidable, so an
+ * adversary could hard-code one VERY specific exact filename no sentinel happens to equal
+ * (e.g. `docs/THIS-EXACT-NAME.md`) and its membership would not flip the perturbation. That
+ * exact-path residual is the irreducible undecidable tail; the SHAPE-coverage here is the
+ * tightest decidable approximation — it is co-extensive with the out-of-IR predicate, so no
+ * shape the recorder flags is left un-perturbed.
  */
 const LIST_SENTINELS: readonly (readonly [string, string])[] = [
+  // ── the NON-IR SOURCE TREES (NON_IR_SOURCE_TREES) ─────────────────────────────
   ['tests/__evidence_law_sentinel__.test.ts', ''],
   ['tests/bench/__evidence_law_sentinel__.bench.ts', ''],
-  ['benchmarks/__evidence_law_sentinel__.json', '{"distributions":[]}\n'],
   ['tests/__evidence_law_sentinel__.ts', ''],
+  ['benchmarks/__evidence_law_sentinel__.json', '{"distributions":[]}\n'],
+  ['traceability/__evidence_law_sentinel__.yaml', 'requirements: []\n'],
+  // ── the NON-SOURCE ARTIFACTS (every non-.ts path the classifier flags out-of-IR) ──
+  ['docs/__evidence_law_sentinel__.md', '<!-- evidence-law sentinel -->\n'],
+  ['.github/workflows/__evidence_law_sentinel__.yml', 'name: evidence-law-sentinel\non: []\n'],
+  ['__evidence_law_sentinel__.package.json', '{"name":"__evidence_law_sentinel__"}\n'],
+  // ── a generic deep non-IR path (no fixed root) — any out-of-IR artifact the named
+  //    roots miss; closes the residual for shapes with no recognizable root prefix. ──
+  ['vendor/__evidence_law_sentinel__/data.bin', ''],
 ];
 
 /**
  * A perturbation of the FILE LIST `allFiles()`/`files()` return — ADD the benign
- * {@link LIST_SENTINELS} paths the gate has not seen, WITHOUT changing any existing file's
- * body. This isolates LIST-dependence from BODY-dependence: only a gate whose verdict (or
- * digest) depends on the SET OF PATHS itself reacts (a count, a membership test, a
- * "does file X exist"); a gate that merely enumerates then reads bodies is unaffected (the
- * sentinels' bodies are benign — empty / no registration). The sentinels sit in
- * `allFiles()` AND `files()` AND `readFile()`, so a gate that reads a body sees a real
- * (benign) file. A list-INDEPENDENT gate's run output is identical; a list-DEPENDENT
- * gate's output (or evidenceDigest) changes — exactly the signal the law keys on.
+ * {@link LIST_SENTINELS} paths the gate has not seen (one per out-of-IR SHAPE/ROOT, so
+ * co-extensive with the recorder's out-of-IR predicate), WITHOUT changing any existing
+ * file's body. This isolates LIST-dependence from BODY-dependence: only a gate whose
+ * verdict (or digest) depends on the SET OF PATHS itself reacts (a count, a membership
+ * test, a "does file X exist"); a gate that merely enumerates then reads bodies is
+ * unaffected (the sentinels' bodies are benign — empty / no registration). Because a
+ * sentinel exists for EVERY out-of-IR shape (`docs/*.md`, `.github/workflows/*.yml`, a
+ * root `package.json`-sibling, `traceability/*.yaml`, a generic deep path — not just
+ * `tests/`/`benchmarks/`), a gate keyed on the membership of ANY such shape reacts. The
+ * sentinels sit in `allFiles()` AND `files()` AND `readFile()`, so a gate that reads a
+ * body sees a real (benign) file. A list-INDEPENDENT gate's run output is identical; a
+ * list-DEPENDENT gate's output (or evidenceDigest) changes — exactly the signal the law
+ * keys on.
  */
 function perturbList(base: GateContext): GateContext {
   const sentinels = new Map<string, string>(LIST_SENTINELS.map(([p, b]) => [p, b]));
@@ -732,5 +768,222 @@ describe('THE LAW IS COMPLETE — a verdict that depends on allFiles().length is
     // The sentinel path the perturbation adds has a benign body (no FORBIDDEN), so the
     // enumerator's verdict is unchanged → list-independent → no allFiles charge.
     expect(allFilesObligation(enumerator, enumerator.fixtures.green.context)).toBeUndefined();
+  });
+});
+
+// ── the list-shape keystone (Codex round-4): list-dependence is SHAPE-broad ────
+
+/**
+ * A faithful REPLICA of the OLD (pre-round-4) list perturbation — the NARROW sentinel set
+ * that only added `tests/` + `benchmarks/` shapes (no `docs/`, no `.github/`, no
+ * `package.json`, no `traceability/`, no generic deep path). Used by the RED-before
+ * assertion to PROVE the old perturbation false-passed a gate keyed on a non-sentinel
+ * shape's membership, end-to-end. A gate whose verdict depends on the membership/cardinality
+ * of a shape this narrow set does not touch is classified list-INDEPENDENT by it (the verdict
+ * does not move under the perturbation) → the law charges nothing → false-pass.
+ */
+const OLD_NARROW_LIST_SENTINELS: readonly (readonly [string, string])[] = [
+  ['tests/__evidence_law_sentinel__.test.ts', ''],
+  ['tests/bench/__evidence_law_sentinel__.bench.ts', ''],
+  ['benchmarks/__evidence_law_sentinel__.json', '{"distributions":[]}\n'],
+  ['tests/__evidence_law_sentinel__.ts', ''],
+];
+
+/** The OLD narrow list perturbation (test/bench sentinels only) — the round-4 hole. */
+function oldNarrowPerturbList(base: GateContext): GateContext {
+  const sentinels = new Map<string, string>(OLD_NARROW_LIST_SENTINELS.map(([p, b]) => [p, b]));
+  const sentinelPaths = [...sentinels.keys()];
+  const clone = cloneContext(base);
+  const baseAll = (): readonly string[] => (base.allFiles !== undefined ? base.allFiles() : base.files());
+  return {
+    ...clone,
+    readFile: (p: string): string | undefined => (sentinels.has(p) ? sentinels.get(p) : base.readFile(p)),
+    files: (): readonly string[] => [...base.files(), ...sentinelPaths],
+    allFiles: (): readonly string[] => [...baseAll(), ...sentinelPaths],
+  };
+}
+
+/** The OLD narrow allFiles obligation — list-dependence judged by {@link oldNarrowPerturbList}. */
+function oldNarrowAllFilesObligation(gate: Gate, ctx: GateContext): 'allFiles' | undefined {
+  const perturbed = oldNarrowPerturbList(ctx);
+  const listIndependent = verdictOf(gate, ctx) === verdictOf(gate, perturbed);
+  if (listIndependent) return undefined;
+  return digestCovers(gate, ctx, perturbed) ? undefined : 'allFiles';
+}
+
+describe('THE LAW IS SHAPE-BROAD — list-dependence on ANY out-of-IR shape is caught (round-4 hole)', () => {
+  /**
+   * A throwaway CHEATER whose verdict depends on the membership/cardinality of a NON-SENTINEL
+   * out-of-IR shape — `docs/*.md` — reading NO body at all. The list is evidence: adding a
+   * `docs/*.md` page flips the verdict WITHOUT changing any body, so a coverage-digest-only
+   * key serves a STALE verdict. The OLD narrow perturbation only added `tests/`/`benchmarks/`
+   * sentinels, so the docs membership never moved → the cheater was (falsely) list-independent
+   * → it PASSED. The BROADENED perturbation adds a `docs/*.md` sentinel → the verdict moves →
+   * the law proves list-dependence and demands the list folded → CAUGHT.
+   */
+  function docsContext(): GateContext {
+    const corpus = new Map<string, string>([
+      ['packages/x/src/a.ts', 'export const a = 1;\n'],
+      ['docs/ARCHITECTURE.md', '# arch\n'],
+    ]);
+    return {
+      repoRoot: '/virtual',
+      readFile: (p: string): string | undefined => corpus.get(p),
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      allFiles: (): readonly string[] => [...corpus.keys()],
+    };
+  }
+
+  const docsCheater: Gate = defineGate({
+    id: 'gauntlet/__evidence_law_docs_cheater__',
+    level: 'L1',
+    describe:
+      'A deliberately non-conforming gate (verdict depends on docs/*.md membership — an out-of-IR shape NOT in the old narrow sentinel set — reads no body, declares no evidenceDigest) — the round-4 red fixture.',
+    run: (context: GateContext): readonly Finding[] => {
+      // The verdict depends ONLY on the docs/*.md membership/cardinality, never a body.
+      const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+      const docCount = corpus.filter((p) => p.startsWith('docs/') && p.endsWith('.md')).length;
+      // "Too few docs" — a finding driven purely by the docs LIST cardinality.
+      return docCount < 2
+        ? [
+            finding({
+              ruleId: 'gauntlet/__evidence_law_docs_cheater__',
+              severity: 'advisory',
+              level: 'L1',
+              title: 'too few docs',
+              detail: `only ${docCount} doc page(s) in the corpus`,
+            }),
+          ]
+        : [];
+    },
+    // NO evidenceDigest — the violation: adding/removing a docs page flips the verdict
+    // without flipping the key.
+    fixtures: {
+      red: { name: 'a one-doc corpus the cheater counts', context: docsContext() },
+      green: { name: 'the same corpus', context: docsContext() },
+      mutation: {
+        describe: 'a mutant that ignores the docs count',
+        mutate: (gate: Gate): Gate => ({ ...gate, run: (): readonly Finding[] => [] }),
+      },
+    },
+  });
+
+  it('OLD narrow perturbation PASSES it (the false-pass), BROADENED perturbation FAILS it', () => {
+    const greenCtx = docsCheater.fixtures.green.context;
+    // RED-before (end-to-end): the OLD narrow perturbation added only test/bench sentinels,
+    // so the docs/*.md membership never moved — the cheater's verdict was unchanged → the
+    // old obligation judged it list-INDEPENDENT → charged NOTHING.
+    expect(oldNarrowAllFilesObligation(docsCheater, greenCtx)).toBeUndefined(); // the false pass
+
+    // GREEN-after: the BROADENED perturbation adds a docs/*.md sentinel → the verdict moves
+    // (the docs count goes 1 → 2, dropping the finding) → list-DEPENDENT and undeclared → CAUGHT.
+    expect(allFilesObligation(docsCheater, greenCtx)).toBe('allFiles');
+    expect(undeclaredReads(docsCheater, greenCtx)).toContain('allFiles');
+  });
+
+  /**
+   * The SAME proof for a `.github/workflows/*.yml`-keyed cheater — a SECOND non-sentinel
+   * shape, to show the broadening is not one-off. Its verdict turns on whether ANY workflow
+   * file is present (a "missing CI" gate), pure list membership, no body read.
+   */
+  function workflowContext(): GateContext {
+    const corpus = new Map<string, string>([['packages/x/src/a.ts', 'export const a = 1;\n']]);
+    return {
+      repoRoot: '/virtual',
+      readFile: (p: string): string | undefined => corpus.get(p),
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      allFiles: (): readonly string[] => [...corpus.keys()],
+    };
+  }
+
+  const workflowCheater: Gate = defineGate({
+    id: 'gauntlet/__evidence_law_workflow_cheater__',
+    level: 'L1',
+    describe:
+      'A deliberately non-conforming gate (verdict depends on .github/workflows/*.yml membership, reads no body, declares no evidenceDigest) — a second round-4 red fixture.',
+    run: (context: GateContext): readonly Finding[] => {
+      const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+      const hasCi = corpus.some((p) => p.startsWith('.github/workflows/') && p.endsWith('.yml'));
+      // "No CI workflow present" — a finding driven purely by workflow LIST membership.
+      return hasCi
+        ? []
+        : [
+            finding({
+              ruleId: 'gauntlet/__evidence_law_workflow_cheater__',
+              severity: 'advisory',
+              level: 'L1',
+              title: 'no CI workflow',
+              detail: 'no .github/workflows/*.yml present',
+            }),
+          ];
+    },
+    // NO evidenceDigest — adding a workflow flips the verdict without flipping the key.
+    fixtures: {
+      red: { name: 'a corpus with no workflow', context: workflowContext() },
+      green: { name: 'the same corpus', context: workflowContext() },
+      mutation: {
+        describe: 'a mutant that ignores the workflow membership',
+        mutate: (gate: Gate): Gate => ({ ...gate, run: (): readonly Finding[] => [] }),
+      },
+    },
+  });
+
+  it('the .github/workflows/*.yml cheater is also a false-pass OLD, CAUGHT broadened', () => {
+    const greenCtx = workflowCheater.fixtures.green.context;
+    expect(oldNarrowAllFilesObligation(workflowCheater, greenCtx)).toBeUndefined(); // false pass
+    expect(allFilesObligation(workflowCheater, greenCtx)).toBe('allFiles'); // caught
+    expect(undeclaredReads(workflowCheater, greenCtx)).toContain('allFiles');
+  });
+
+  it('a CONFORMING twin (docs cheater, WITH a docs-list-folding evidenceDigest) PASSES', () => {
+    // Pins the broadened law to list-dependence-WITHOUT-declaration, not "no docs query ever".
+    const conformer: Gate = defineGate({
+      ...docsCheater,
+      id: 'gauntlet/__evidence_law_docs_conformer__',
+      evidenceDigest: (context: GateContext): string | undefined => {
+        const corpus = context.allFiles !== undefined ? context.allFiles() : context.files();
+        const docs = corpus.filter((p) => p.startsWith('docs/') && p.endsWith('.md')).sort();
+        return `ev:docs:${docs.join('\x1e')}`;
+      },
+    });
+    expect(allFilesObligation(conformer, conformer.fixtures.green.context)).toBeUndefined();
+    expect(undeclaredReads(conformer, conformer.fixtures.green.context)).toEqual([]);
+  });
+
+  it('the broadened sentinel set is CO-EXTENSIVE with the out-of-IR predicate (no shape un-perturbed)', () => {
+    // Every sentinel path the perturbation adds MUST be classified out-of-IR by the
+    // recorder's predicate — otherwise the perturbation would add an in-IR path (which the
+    // coverage digest already folds), not exercising list-evidence. This pins the
+    // co-extensiveness the broadening claims: the perturbation set ⊆ the out-of-IR domain.
+    const probeCtx: GateContext = {
+      repoRoot: '/virtual',
+      readFile: (): string | undefined => undefined,
+      files: (): readonly string[] => ['packages/x/src/a.ts'],
+      allFiles: (): readonly string[] => ['packages/x/src/a.ts'],
+    };
+    for (const [path] of LIST_SENTINELS) {
+      expect(isOutOfIr(path, probeCtx), `sentinel "${path}" must be out-of-IR`).toBe(true);
+    }
+    // And the set spans every out-of-IR ROOT the classifier recognizes (the union check):
+    // the non-IR source trees PLUS a non-source artifact PLUS a generic deep path.
+    const sentinelPaths = LIST_SENTINELS.map(([p]) => p);
+    for (const tree of ['tests/', 'benchmarks/', 'traceability/']) {
+      expect(sentinelPaths.some((p) => p.startsWith(tree)), `a sentinel under ${tree}`).toBe(true);
+    }
+    expect(sentinelPaths.some((p) => p.startsWith('docs/') && p.endsWith('.md'))).toBe(true);
+    expect(sentinelPaths.some((p) => p.startsWith('.github/workflows/'))).toBe(true);
+    expect(sentinelPaths.some((p) => p.endsWith('.package.json') || p === 'package.json')).toBe(true);
+    // A generic deep path with NO recognizable root prefix (the residual-narrowing shape).
+    expect(
+      sentinelPaths.some(
+        (p) =>
+          !p.startsWith('tests/') &&
+          !p.startsWith('benchmarks/') &&
+          !p.startsWith('traceability/') &&
+          !p.startsWith('docs/') &&
+          !p.startsWith('.github/') &&
+          p.includes('/'),
+      ),
+    ).toBe(true);
   });
 });

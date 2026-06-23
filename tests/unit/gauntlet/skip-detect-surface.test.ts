@@ -65,6 +65,16 @@ describe('detectSkips — every Vitest skip/disable form is caught (codex round-
     // Alias (bare reference, no call paren) — both arms:
     ['const f = COND ? it : it.skip;', 'alias COND ? it : it.skip'],
     ['const g = underCoverage ? it.skip : it;', 'inverse alias'],
+    // The codex round-4 ALIASED-ROOT misses (rebind / import-rename / capture / destructure):
+    ['import { it as spec } from "vitest"; spec.skip("x", () => {});', 'import-rename `it as spec`; spec.skip'],
+    ['const t = it; t.skip("x", () => {});', 'local rebind `const t = it`; t.skip'],
+    ['const { skip } = it; skip("x", () => {});', 'destructured skip `const { skip } = it`; skip(...)'],
+    ['const skipIt = it.skip; skipIt("x", () => {});', 'captured skip `const skipIt = it.skip`; skipIt(...)'],
+    ['const a = it;\nconst b = a;\nb.skip("x", () => {});', 'transitive rebind `a = it; b = a`; b.skip'],
+    ['const a = it; const b = a; b.skip("x", () => {});', 'transitive rebind on ONE line; b.skip'],
+    ['import { test as t2 } from "vitest"; t2.todo("later");', 'import-rename `test as t2`; t2.todo'],
+    ['const { todo: gone } = test; gone("x");', 'destructured-and-renamed `{ todo: gone } = test`; gone(...)'],
+    ['const t = cond ? it : myObj; t("x", () => {});', 'SUSPICIOUS rebind to a ternary mentioning a runner — flagged, not passed'],
   ];
 
   for (const [src, label] of MUST_DETECT) {
@@ -90,6 +100,21 @@ describe('detectSkips — every Vitest skip/disable form is caught (codex round-
       expect(detectSkips(src).length, `still missed: ${src}`).toBeGreaterThan(0);
     }
   });
+
+  // RED-BEFORE PROOF (codex round-4): the ALIASED-ROOT misses. Each returned `[]` before the
+  // per-file alias pre-pass (the detector started chains only from the LITERAL runner names, so
+  // any rebind/import-rename/capture/destructure evaded it). All GREEN-after.
+  it('the codex round-4 ALIASED-ROOT [] misses are ALL now caught (RED-before → green-after)', () => {
+    const proven = [
+      'import { it as spec } from "vitest"; spec.skip("x", () => {});', // import-rename
+      'const t = it; t.skip("x", () => {});', // local rebind
+      'const { skip } = it; skip("x", () => {});', // destructured skip member
+      'const skipIt = it.skip; skipIt("x", () => {});', // captured .skip accessor
+    ];
+    for (const src of proven) {
+      expect(detectSkips(src).length, `still missed (aliased root): ${src}`).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe('detectSkips — NO false positives (prose/strings/non-runner chains stay clean)', () => {
@@ -105,6 +130,13 @@ describe('detectSkips — NO false positives (prose/strings/non-runner chains st
     ['result.todo();', 'a NON-runner .todo'],
     ['foo.it.skip("it is a property here", () => {});', 'obj.it.skip — `it` is a member, not the root'],
     ['queue.fit("not focus", () => {});', 'array.fit — `fit` is a member, not the root'],
+    // The codex round-4 ALIAS false-positive guards — a rebind/destructure off a NON-runner must stay clean:
+    ['const t = myObj; t.skip("not a runner", () => {});', 'rebind off a NON-runner `const t = myObj`; t.skip — not a runner alias'],
+    ['const { skip } = config; skip("not a runner", () => {});', 'destructure off a NON-runner `const { skip } = config`; skip(...)'],
+    ['const log = it.toString; log();', 'capture of a NON-skip member `const log = it.toString`; log() — not a skip'],
+    ['import { it as spec } from "vitest"; spec("a real test", () => {});', 'import-rename then a REAL run `spec(...)` — no skip member'],
+    ['const t = it; t("a real test", () => {});', 'local rebind then a REAL run `t(...)` — no skip member'],
+    ['const { each } = it; each([1])("runs", () => {});', 'destructure of a NON-skip member `const { each } = it`; each(...)'],
   ];
 
   for (const [src, label] of MUST_NOT_DETECT) {
@@ -139,6 +171,13 @@ describe('detectSkips — form discrimination (call vs alias vs conditional vs c
   it('a bracket-string skip is `call` when invoked, `alias` when a bare value', () => {
     expect(detectSkips('it["skip"]("y", () => {});')[0]?.form).toBe('call');
     expect(detectSkips('const f = it["skip"];')[0]?.form).toBe('alias');
+  });
+
+  it('a suspicious rebind (non-literal RHS mentioning a runner) is `aliased`; a clean rebind resolves to `call`', () => {
+    // A ternary/opaque RHS is undecidable → flagged `aliased`, not silently passed.
+    expect(detectSkips('const t = cond ? it : x; t("y", () => {});')[0]?.form).toBe('aliased');
+    // A CLEAN rebind resolves the root, so the real `.skip(` is the strong `call` form.
+    expect(detectSkips('const t = it; t.skip("y", () => {});')[0]?.form).toBe('call');
   });
 
   it('reports the right 1-based line for a skip on line 3', () => {

@@ -351,6 +351,23 @@ export const STANDARDS_BASE_REF_ENV = 'CZAP_STANDARDS_BASE_REF';
 export const STANDARDS_DEFAULT_BASE_REF = 'main';
 
 /**
+ * The git all-zeros object id — the "null commit" sentinel GitHub Actions puts in
+ * `github.event.before` for the FIRST push of a brand-new branch (there is no prior
+ * tip the ref pointed at). It is NEVER a valid base ref: `git show <zero>:<path>`
+ * cannot resolve. We treat an all-zeros override as "no explicit base supplied" so the
+ * resolution FALLS THROUGH to the integration baseline ({@link STANDARDS_DEFAULT_BASE_REF})
+ * — and if THAT lacks the snapshot, {@link readBaseSnapshot} fails CLOSED (refuse, never
+ * pass). This keeps the zero-SHA handling deterministic + env-driven in ONE place.
+ */
+export const GIT_ZERO_SHA = '0000000000000000000000000000000000000000';
+
+/** True iff `ref` is the git all-zeros object id (any length ≥ 7 of all zeros, trimmed). */
+function isZeroSha(ref: string): boolean {
+  const t = ref.trim();
+  return t.length >= 7 && /^0+$/.test(t);
+}
+
+/**
  * A `git show <ref>:<path>` reader — the injection seam. Returns the file's bytes at
  * the ref, or `undefined` if the ref/path does not resolve (a deleted/absent baseline
  * file at that ref). THROWS (tagged) only on a git INVOCATION fault (git missing, not
@@ -391,18 +408,30 @@ export const defaultGitShow: GitShowReader = (repoRoot, ref, path) => {
  * being REVIEWED against, NOT the working-tree snapshot. Deterministic precedence:
  *
  *  1. `CZAP_STANDARDS_BASE_REF` — an explicit override (CI sets it to the PR base, e.g.
- *     `origin/main` or the merge-base SHA). Highest authority: the host KNOWS the base.
+ *     `origin/main`, OR, for a PUSH, `github.event.before`: the SHA the ref pointed at
+ *     BEFORE the push, so the diff covers the ENTIRE pushed range — not just `HEAD~1`,
+ *     which would miss a weakening introduced earlier in a multi-commit push). Highest
+ *     authority: the host KNOWS the base. EXCEPTION: an all-zeros {@link GIT_ZERO_SHA}
+ *     override is the GitHub "null commit" sentinel for the FIRST push of a brand-new
+ *     branch (no prior tip) — it is NOT a usable ref, so it is IGNORED and resolution
+ *     falls through to the integration baseline below (which, if it lacks the snapshot,
+ *     makes {@link readBaseSnapshot} fail CLOSED — never a silent pass).
  *  2. `GITHUB_BASE_REF` — GitHub Actions sets this on a pull_request run to the target
  *     branch name; we read it as `origin/<branch>` (the fetched remote-tracking ref).
  *  3. {@link STANDARDS_DEFAULT_BASE_REF} (`main`) — the integration baseline for a local
- *     run / a push to a feature branch.
+ *     run / a push to a feature branch / the brand-new-branch bootstrap fall-through.
  *
  * Returns the chosen ref STRING (resolution of whether the snapshot exists at that ref
  * is the caller's fail-closed job). Reads only `env` (injected for determinism/tests).
  */
 export function resolveStandardsBaseRef(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env[STANDARDS_BASE_REF_ENV];
-  if (typeof explicit === 'string' && explicit.trim() !== '') return explicit.trim();
+  // An all-zeros override (the brand-new-branch `github.event.before` sentinel) is NOT a
+  // resolvable ref — ignore it so we fall through to the integration baseline rather than
+  // hand `git show 000…:…` a guaranteed-unresolvable ref. Deterministic, env-driven.
+  if (typeof explicit === 'string' && explicit.trim() !== '' && !isZeroSha(explicit)) {
+    return explicit.trim();
+  }
   const ghBase = env.GITHUB_BASE_REF;
   if (typeof ghBase === 'string' && ghBase.trim() !== '') return `origin/${ghBase.trim()}`;
   return STANDARDS_DEFAULT_BASE_REF;

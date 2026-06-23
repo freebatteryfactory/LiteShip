@@ -106,6 +106,25 @@ describe('plumb gate — mechanism', () => {
     expect(r.skips.map((s) => s.kind)).toContain('it.skip');
   });
 
+  it('CATCHES a generated ALIASED-ROOT skip (rebind / import-rename / capture / destructure) — codex round-4', () => {
+    // The aliased-root evasion: the harness must NEVER emit a rebound/renamed runner that then
+    // skips. The per-file alias pre-pass in detectSkips closes it for the generated handoff too.
+    const root = fixtureRoot({
+      generated: {
+        'rebind.test.ts': `const t = it;\nt.skip('rebound skip', () => {});\n`,
+        'rename.test.ts': `import { it as spec } from 'vitest';\nspec.skip('renamed skip', () => {});\n`,
+        'capture.test.ts': `const skipIt = it.skip;\nskipIt('captured skip', () => {});\n`,
+        'destructure.test.ts': `const { skip } = it;\nskip('destructured skip', () => {});\n`,
+      },
+    });
+    const r = runPlumbGate(root);
+    expect(r.ok).toBe(false);
+    const kinds = r.skips.map((s) => s.kind);
+    expect(kinds).toContain('t.skip');
+    expect(kinds).toContain('spec.skip');
+    expect(kinds).toContain('it.skip');
+  });
+
   it('CATCHES a generated it.todo / xit placeholder', () => {
     const root = fixtureRoot({
       generated: {

@@ -138,10 +138,10 @@ describe('initWGSLRuntime — shader source arms', () => {
     vi.stubGlobal('fetch', fetchSpy);
     const { canvas, configure } = makeCanvas(true);
 
-    const dispose = await initWGSLRuntime(canvas, '@fragment fn custom() {}');
+    const dispose = await initWGSLRuntime(canvas, '@fragment\nfn custom() {}');
     expect(dispose).not.toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(harness.calls.shaderCodes[0]).toBe('@fragment fn custom() {}');
+    expect(harness.calls.shaderCodes[0]).toBe('@fragment\nfn custom() {}');
     expect(configure).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'bgra8unorm', alphaMode: 'premultiplied' }),
     );

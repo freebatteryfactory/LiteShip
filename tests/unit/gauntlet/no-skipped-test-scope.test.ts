@@ -71,6 +71,40 @@ describe('no-skipped-test — scope widened to the tests/ tree, with teeth', () 
     expect(findings.length).toBe(2);
   });
 
+  it('(b4) an ALIASED-ROOT skip (import-rename / rebind / destructure / capture) is FLAGGED (codex round-4)', () => {
+    const findings = run(noSkippedTestGate, {
+      'tests/unit/widget/import-rename.test.ts': 'import { it as spec } from "vitest";\nspec.skip("x", () => {});\n',
+      'tests/unit/widget/rebind.test.ts': 'const t = it;\nt.skip("x", () => {});\n',
+      'tests/unit/widget/destructure.test.ts': 'const { skip } = it;\nskip("x", () => {});\n',
+      'tests/unit/widget/capture.test.ts': 'const skipIt = it.skip;\nskipIt("x", () => {});\n',
+    });
+    // Each aliased-root file carries exactly one detectable skip site.
+    expect(locs(findings)).toEqual(
+      expect.arrayContaining([
+        'tests/unit/widget/import-rename.test.ts:2',
+        'tests/unit/widget/rebind.test.ts:2',
+        'tests/unit/widget/destructure.test.ts:2',
+        'tests/unit/widget/capture.test.ts:2',
+      ]),
+    );
+  });
+
+  it('(b5) a rebind/destructure off a NON-runner is NOT flagged (no false positive on a genuine `t.skip`)', () => {
+    const findings = run(noSkippedTestGate, {
+      'tests/unit/widget/non-runner.test.ts':
+        'const t = makeQueue();\nt.skip("a queue method, not a runner", () => {});\nconst { skip } = config;\nskip();\n',
+    });
+    expect(findings).toEqual([]);
+  });
+
+  it('(b6) a SUSPICIOUS rebind to a ternary mentioning a runner is FLAGGED as aliased (undecidable, not passed)', () => {
+    const findings = run(noSkippedTestGate, {
+      'tests/unit/widget/suspicious.test.ts': 'const t = cond ? it : myObj;\nt("obfuscated runner", () => {});\n',
+    });
+    expect(findings.length).toBe(1);
+    expect(findings[0]?.detail).toMatch(/aliased|undecidable/i);
+  });
+
   it('(c) a SANCTIONED capability-gate skip AT ITS EXACT SITE (in the allowlist) PASSES', () => {
     // tests/smoke/intro-render.test.ts is enumerated (ffmpeg-absent) at this exact line.
     const SITE = "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});";

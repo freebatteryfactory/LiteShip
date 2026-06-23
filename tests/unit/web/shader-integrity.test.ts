@@ -130,9 +130,13 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
     expect(isExternalShaderSource('http://localhost/wave.glsl')).toBe(true);
   });
 
-  it('treats an inline shader body as NOT external (no fetch boundary)', () => {
+  it('treats a MULTI-LINE inline shader body as NOT external (no fetch boundary)', () => {
+    // The sound body signal is a raw NEWLINE — a URL can never contain one. SAMPLE_GLSL
+    // is multi-line; a single-line `@fragment fn fs_main() {}` would now be EXTERNAL
+    // (secure-by-default: indistinguishable from a URL by content), so the WGSL body is
+    // given a newline to prove it is genuine program text.
     expect(isExternalShaderSource(SAMPLE_GLSL)).toBe(false);
-    expect(isExternalShaderSource('@fragment fn fs_main() {}')).toBe(false);
+    expect(isExternalShaderSource('@fragment\nfn fs_main() {}')).toBe(false);
   });
 
   // SECURITY REGRESSION (P2a): a PATH-RELATIVE shader URL is a FETCHABLE same-origin
@@ -217,16 +221,57 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
     expect(isExternalShaderSource('data:text/plain,void%20main(){}')).toBe(true);
   });
 
-  it('does NOT over-correct: a real multi-line GLSL/WGSL body stays inline', () => {
-    // Bodies carry inner whitespace / newlines / shader syntax — never fetched.
+  it('does NOT over-correct: a real MULTI-LINE GLSL/WGSL body stays inline', () => {
+    // The ONLY sound body signal is a raw NEWLINE (a URL can never hold one). A
+    // multi-line GLSL/WGSL body is program text, compiled inline — never fetched.
     expect(isExternalShaderSource(SAMPLE_GLSL)).toBe(false);
     expect(
       isExternalShaderSource(
         '@group(0) @binding(0) var<uniform> u: U;\n@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4(1.0); }',
       ),
     ).toBe(false);
-    // A single-line body with inner whitespace (statements) is still inline.
-    expect(isExternalShaderSource('void main() { gl_FragColor = vec4(1.0); }')).toBe(false);
+  });
+
+  // SECURITY REGRESSION (codex round-4 — the MARKER-COLLISION bypass): the prior
+  // classifier keyed inline-vs-URL off in-content shader-syntax MARKERS (`{`/`}`/`;`/
+  // `fn `/`#version`/…). But those characters are LEGAL in a URL/path/query/fragment,
+  // so a single-line URL that happens to contain one collided with the marker and fell
+  // into the INLINE branch UNVERIFIED — bypassing fetch+SRI. `shader{1}.wgsl`,
+  // `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl` ALL resolve as ALLOWED
+  // same-origin URLs yet OLD classifier said external=FALSE. The NEWLINE-based
+  // discriminator (a URL can never contain a raw newline) has NO content markers, so
+  // every single-line value delegates to the URL policy → these are EXTERNAL. RED
+  // before / green now: each was external=false, each is now external=true.
+  it('treats single-line URLs containing SHADER-SYNTAX punctuation as EXTERNAL (codex round-4)', () => {
+    const markerCollisionUrls = [
+      'shader{1}.wgsl', // `{`/`}` in the path segment
+      './shader;v=1.wgsl', // `;` in the path
+      'shader?x={y}', // `{`/`}` in the query
+      'shaders/fn file.wgsl', // `fn ` in the path
+    ];
+    for (const url of markerCollisionUrls) {
+      // It resolves as a fetchable same-origin URL under the policy...
+      expect(resolveRuntimeUrl(url, { kind: 'gpu-shader', policy: { mode: 'same-origin' } }).type).toBe('allowed');
+      // ...and the (single-line) value carries NO newline, so it delegates to the URL
+      // policy and is classified EXTERNAL — never compiled as unverified inline source.
+      expect(isFetchableRuntimeUrl(url)).toBe(true);
+      expect(isExternalShaderSource(url)).toBe(true);
+    }
+  });
+
+  // HONEST SECURE-BY-DEFAULT TRADE-OFF (codex round-4): a genuine SINGLE-LINE inline
+  // body (`void main(){discard;}` on one line) is now treated as EXTERNAL — it will be
+  // FETCHED (failing loudly) rather than compiled inline. This REPLACES the prior
+  // over-correction test ("a single-line body stays inline"), which depended on the
+  // unsound marker heuristic. You cannot distinguish a one-liner body from a URL by
+  // content without a marker an attacker controls, so secure-by-default NEVER compiles
+  // an unverified single-line string. Real shader bodies are virtually always
+  // multi-line, so this costs nothing in practice while closing the whole class.
+  it('treats a SINGLE-LINE shader body as EXTERNAL (secure-by-default — never compile unverified)', () => {
+    expect(isExternalShaderSource('void main() { gl_FragColor = vec4(1.0); }')).toBe(true);
+    expect(isExternalShaderSource('void main(){discard;}')).toBe(true);
+    // A MULTI-LINE version of the same body is inline (the newline proves it is a body).
+    expect(isExternalShaderSource('void main() {\n  gl_FragColor = vec4(1.0);\n}')).toBe(false);
   });
 });
 
@@ -272,6 +317,10 @@ describe('THE DRILL SERGEANT — classifier is a provable function of the URL po
       '../assets/wave.frag', // parent-relative
       'shader file.wgsl', // single-line path WITH A SPACE (codex round-3 bypass)
       './shader file.wgsl', // explicit-relative path WITH A SPACE
+      'shader{1}.wgsl', // path with `{`/`}` (codex round-4 marker-collision bypass)
+      './shader;v=1.wgsl', // path with `;` (codex round-4)
+      'shader?x={y}', // query with `{`/`}` (codex round-4)
+      'shaders/fn file.wgsl', // path with `fn ` (codex round-4)
       '?shader=wave', // query-relative (the re-attacked bypass)
       '?name=blur&v=2', // query-relative, multi-param
       'wave', // bare same-dir token (the re-attacked bypass)

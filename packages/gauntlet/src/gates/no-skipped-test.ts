@@ -82,6 +82,8 @@ function formLabel(form: SkipMatch['form']): string {
       return 'an aliased skip reference (e.g. `COND ? it : it.skip`)';
     case 'computed':
       return 'a computed member access on a test runner (e.g. `it[cond ? "skip" : "only"]`) — it can resolve to skip';
+    case 'aliased':
+      return 'a suspicious aliased runner (a rebind to a non-literal RHS mentioning a runner, e.g. `const t = cond ? it : x`) — statically undecidable, flagged not passed';
   }
 }
 
@@ -169,21 +171,30 @@ export const noSkippedTestGate: Gate = defineGate({
   evidenceDigest: noSkippedTestEvidenceDigest,
   fixtures: {
     red: {
-      name: 'an UNSANCTIONED tests/-tree file with the EXOTIC skip forms a flat `.skip(` regex misses (alias + chained-modifier + bracket + computed)',
+      name: 'an UNSANCTIONED tests/-tree file with the EXOTIC skip forms a flat `.skip(` regex misses (alias + chained-modifier + bracket + computed + ALIASED runner roots)',
       context: memoryContext({
         // A tests/-tree file (out of the old IR scope) carrying the skip forms NO flat regex
         // catches and the OLD detector missed: the ALIAS form (a bare `it.skip` behind a
         // ternary), a CHAINED-MODIFIER skip (`it.concurrent.skip`), a BRACKET skip
-        // (`it["skip"]`), and a COMPUTED member access on a runner root
-        // (`it[cond?"skip":"only"]`). The comprehensive token-aware detector catches ALL of
-        // them; a mutant that narrows back to the literal `.skip(` call lets EVERY one escape.
-        // NOT in the allowlist → all are blocking.
+        // (`it["skip"]`), a COMPUTED member access on a runner root (`it[cond?"skip":"only"]`),
+        // AND the codex round-4 ALIASED-ROOT evasions — an import-rename (`it as spec`), a local
+        // rebind (`const t = it`), a destructured skip member (`const { skip } = it`), and a
+        // captured `.skip` accessor (`const skipIt = it.skip`). The comprehensive, alias-aware
+        // detector catches ALL of them; a mutant that narrows back to the literal `.skip(` call
+        // OR that drops the per-file alias pre-pass lets the aliased forms escape. NOT in the
+        // allowlist → all are blocking.
         'tests/unit/widget/unwired.test.ts':
           'const renderIt = COND ? it : it.skip;\n' +
           "renderIt('not wired yet', () => {});\n" +
           "it.concurrent.skip('chained modifier skip', () => {});\n" +
           'it["skip"]("bracket skip", () => {});\n' +
           'it[cond ? "skip" : "only"]("computed skip", () => {});\n',
+        // The aliased-root corpus — each in its OWN file so a single-skip-per-line stays clear.
+        'tests/unit/widget/import-rename.test.ts':
+          'import { it as spec } from "vitest";\nspec.skip("import-renamed runner skip", () => {});\n',
+        'tests/unit/widget/rebind.test.ts': 'const t = it;\nt.skip("rebound runner skip", () => {});\n',
+        'tests/unit/widget/destructure.test.ts': 'const { skip } = it;\nskip("destructured skip member", () => {});\n',
+        'tests/unit/widget/capture.test.ts': 'const skipIt = it.skip;\nskipIt("captured skip accessor", () => {});\n',
       }),
     },
     green: {
@@ -202,7 +213,7 @@ export const noSkippedTestGate: Gate = defineGate({
     },
     mutation: {
       describe:
-        'A gate that narrows back to the LITERAL `.skip(` call (dropping the comprehensive token-aware detection) lets the red fixture — the ALIAS (`COND ? it : it.skip`), the CHAINED `it.concurrent.skip`, the BRACKET `it["skip"]`, and the COMPUTED `it[cond?"skip":"only"]` forms, none of which the flat regex matches — escape entirely. The mutant must then DIFFER from the original on the red fixture (it finds nothing where the comprehensive detector finds four exotic skips).',
+        'A gate that narrows back to the LITERAL `.skip(` call (dropping the comprehensive, alias-aware token detection) lets the red fixture escape: the ALIAS (`COND ? it : it.skip`), the CHAINED `it.concurrent.skip`, the BRACKET `it["skip"]`, the COMPUTED `it[cond?"skip":"only"]`, AND the codex round-4 ALIASED-ROOT forms (`it as spec; spec.skip`, `const t = it; t.skip`, `const { skip } = it; skip(...)`, `const skipIt = it.skip; skipIt(...)`) — none of which a flat literal regex matches, and none of which survive if the per-file alias PRE-PASS is removed. The mutant must DIFFER from the original on the red fixture (it finds nothing where the alias-aware detector finds every exotic + aliased skip).',
       mutate: (gate: Gate): Gate => ({
         ...gate,
         run: (context: GateContext): readonly Finding[] => {
