@@ -42,7 +42,15 @@ describe('coverage config drift guard', () => {
     // ffmpeg to encode the video cast headless; its branch surface is dominated
     // by ffmpeg-absent/encode-failure paths unreachable when ffmpeg succeeds (the
     // CI condition). Happy path stays tested by tests/unit/stage/ffmpeg-encoder.test.ts.
-    expect(coverageExclude).toHaveLength(22);
+    // + 1 subprocess-style command (0.4.0 gauntlet-host coverage wave):
+    // cli/src/commands/package-smoke.ts — the SAME earned precedent as ship.ts: it
+    // orchestrates `pnpm pack` ×N → install → smoke-import → czap describe (pure
+    // subprocess glue with no in-process branch surface). Its genuinely pure logic
+    // (executable resolution, pnpm-store dependency resolution, tarball URLs) was
+    // EXTRACTED to cli/src/lib/package-smoke-helpers.ts and unit-tested directly
+    // (tests/unit/cli/commands/package-smoke-helpers.test.ts), so only the thin
+    // spawn wrapper is excluded — logic extracted + tested first, never to dodge work.
+    expect(coverageExclude).toHaveLength(23);
   });
 
   it('merge-coverage.ts PACKAGE_THRESHOLD_OVERRIDES are pinned', () => {

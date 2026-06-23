@@ -23,11 +23,43 @@
  *
  * @module
  */
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as fc from 'fast-check';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+/**
+ * The fields of a `spawnSync` result the two probes classify — a local structural type
+ * so this test never imports `node:child_process` (the canonical-spawn-helper lint ban),
+ * yet crafts the exact shape the probe reads ({status, signal, error} + stderr).
+ */
+interface ProbeSpawnResult {
+  readonly pid: number;
+  readonly status: number | null;
+  readonly signal: string | null;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly output: readonly (string | null)[];
+  readonly error?: Error;
+}
+
+/**
+ * Mock ONLY `node:child_process.spawnSync` — the single host-realm boundary of the two
+ * spawn-based probes. Every other call the probes make (`mkdtempSync` for the per-probe
+ * reports dir, `existsSync`/`readFileSync` for the report, `rmSync` cleanup) stays on
+ * the REAL fs, so the report-read + reports-dir-cleanup branches are exercised for real
+ * against a synthetic report the mock writes. No PATH, no shebang shim, no real `pnpm`,
+ * no real subprocess — every spawn result is crafted, so each classification branch is
+ * exercised deterministically on EVERY OS (the cross-platform-by-construction fix).
+ */
+const { spawnSyncMock } = vi.hoisted(() => ({
+  spawnSyncMock: vi.fn<(cmd: string, args?: readonly string[]) => unknown>(),
+}));
+vi.mock('node:child_process', async (importOriginal) => {
+  const orig = await importOriginal<Record<string, unknown>>();
+  return { ...orig, spawnSync: spawnSyncMock };
+});
 import type { MutationTargetFile } from '../../../../packages/audit/src/index.js';
 import { buildSeamCoverageMap } from '../../../../packages/cli/src/lib/mutation-targets.js';
 import {
@@ -464,179 +496,162 @@ describe('computeSeamExecutionCoverage — the execution filter (deep kept verba
 });
 
 /**
- * Drive the REAL spawn-based probes deterministically with a fake `pnpm` on PATH that
- * writes a controlled `coverage-final.json` (or simulates an infra fault). This covers
- * the spawn/parse/error-discipline branches WITHOUT a real (slow) vitest coverage run.
+ * Drive the REAL spawn-based probes deterministically with SYNTHETIC `spawnSync`
+ * results — `node:child_process.spawnSync` is mocked (top of file), so every branch of
+ * the result-classification (signal-kill → tagged throw, spawn-error → tagged throw,
+ * non-{0,1} exit → tagged throw, exit-0-with-report → ranges, exit-1 → still a valid
+ * execution signal, no-report → tagged throw, seam-absent → null, reports-dir cleanup)
+ * is exercised with a crafted `{status, signal, error}` + a controlled report on every
+ * OS. NO PATH, NO shebang, NO fake executable, NO real subprocess — platform-independent
+ * by construction (the prior fake-pnpm-on-PATH shim was unix-only and diverged on
+ * macos/windows). The report file (when written) goes onto the REAL fs in the probe's
+ * own mkdtemp reports dir, so the report-read + reports-dir-cleanup branches stay real.
  */
-describe('default(Batched)CoverageProbe — the real spawn glue, driven by a fake pnpm shim', () => {
-  // spawnSync needs a REAL existing cwd (a non-existent cwd is its own ENOENT, masking
-  // the PATH-resolved fake pnpm). One real dir for the whole block; the probe writes
-  // only into its own mkdtemp reports dir, never into this cwd.
-  const realCwd = mkdtempSync(join(tmpdir(), 'czap-probe-cwd-'));
-  afterAll(() => rmSync(realCwd, { recursive: true, force: true }));
+describe('default(Batched)CoverageProbe — the real spawn glue, driven by a synthetic spawnSync', () => {
+  // An arbitrary repo root — never read (spawnSync is mocked, so cwd is inert).
+  const repoRoot = '/repo';
+  // No mockReset between tests — each test re-arms `spawnSync` via armSpawn (a fresh
+  // mockImplementation fully overrides the prior one; resetting a mocked module export
+  // would detach the binding from the loaded module).
 
-  /** Make a fake `pnpm` executable; return a PATH with it prepended. Caller cleans up. */
-  function fakePnpm(body: string): { binDir: string; path: string } {
-    const binDir = mkdtempSync(join(tmpdir(), 'czap-fake-pnpm-'));
-    const exe = join(binDir, 'pnpm');
-    writeFileSync(exe, `#!/usr/bin/env node\n${body}\n`, 'utf8');
-    chmodSync(exe, 0o755);
-    return { binDir, path: `${binDir}:${process.env.PATH ?? ''}` };
+  /** The `--coverage.reportsDirectory=<dir>` the probe computed, recovered from the spawn args (or null if absent). */
+  function reportsDirOf(args: readonly string[]): string | null {
+    const flag = args.find((a) => a.startsWith('--coverage.reportsDirectory='));
+    return flag === undefined ? null : flag.slice('--coverage.reportsDirectory='.length);
   }
 
-  /** Run `fn` with `process.env.PATH` temporarily set to `path`, then restore + cleanup. */
-  function withPath<T>(shim: { binDir: string; path: string }, fn: () => T): T {
-    const prev = process.env.PATH;
-    process.env.PATH = shim.path;
-    try {
-      return fn();
-    } finally {
-      process.env.PATH = prev;
-      rmSync(shim.binDir, { recursive: true, force: true });
-    }
+  /** Build a crafted spawn result (the fields the probe classifies). */
+  function spawnResult(over: Partial<ProbeSpawnResult>): ProbeSpawnResult {
+    return { pid: 1, output: [], stdout: '', stderr: '', status: 0, signal: null, ...over };
   }
 
-  const COVERED_REPORT = (seam: string): string =>
-    `const fs=require('node:fs');` +
-    `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
-    `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({['/abs/${seam}']:{f:{'0':2},fnMap:{'0':{loc:{start:{line:3},end:{line:5}}}}}}));` +
-    `process.exit(0);`;
+  /** A v8/istanbul report mapping `seam` to one covered function on lines 3..5. */
+  function coveredReport(seam: string): string {
+    return JSON.stringify({ [`/abs/${seam}`]: { f: { '0': 2 }, fnMap: { '0': { loc: { start: { line: 3 }, end: { line: 5 } } } } } });
+  }
+
+  /**
+   * Arm `spawnSync` to (optionally) write `reportJson` into the probe's reports dir and
+   * return a crafted result. `onReportsDir` lets a caller observe the real reports dir
+   * the probe created (for the cleanup assertion).
+   */
+  function armSpawn(opts: {
+    readonly result: Partial<ProbeSpawnResult>;
+    readonly reportJson?: string;
+    readonly onReportsDir?: (dir: string) => void;
+  }): void {
+    spawnSyncMock.mockImplementation((_cmd, argsUnknown) => {
+      const args = (argsUnknown ?? []) as readonly string[];
+      const dir = reportsDirOf(args);
+      // Only act on the probe's OWN spawn (the one carrying the reports-dir flag); any
+      // unrelated spawnSync call in the loaded graph gets a benign empty result.
+      if (dir === null) return spawnResult({ status: 0 });
+      opts.onReportsDir?.(dir);
+      if (opts.reportJson !== undefined) writeFileSync(join(dir, 'coverage-final.json'), opts.reportJson, 'utf8');
+      return spawnResult(opts.result);
+    });
+  }
 
   it('single probe — exit 0 with a written report returns the covered-function ranges', () => {
-    const shim = fakePnpm(COVERED_REPORT(SEAM_FILE));
-    const ranges = withPath(shim, () =>
-      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
-    );
+    armSpawn({ result: { status: 0 }, reportJson: coveredReport(SEAM_FILE) });
+    const ranges = defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000);
     expect(ranges).toEqual([{ startLine: 3, endLine: 5 }]);
   });
 
   it('single probe — exit 1 (a FAILING covering test) is still a valid execution signal, not an abort', () => {
-    // The fake writes the report then exits 1: a test-failure exit is NOT a fault.
-    const shim = fakePnpm(`${COVERED_REPORT(SEAM_FILE).replace('process.exit(0);', 'process.exit(1);')}`);
-    const ranges = withPath(shim, () =>
-      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
-    );
+    // status 1 = a test-failure exit, NOT a fault — the report still classifies into ranges.
+    armSpawn({ result: { status: 1 }, reportJson: coveredReport(SEAM_FILE) });
+    const ranges = defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000);
     expect(ranges).toEqual([{ startLine: 3, endLine: 5 }]);
   });
 
   it('single probe — a non-{0,1} exit code is a tagged infra/config-fault throw (never a "covers nothing")', () => {
-    const shim = fakePnpm(`process.stderr.write('boom');process.exit(2);`);
-    withPath(shim, () => {
-      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
-        /neither pass=0 nor test-failure=1/,
-      );
-    });
+    armSpawn({ result: { status: 2, stderr: 'boom' } });
+    expect(() => defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+      /neither pass=0 nor test-failure=1/,
+    );
   });
 
   it('single probe — exit 0 but NO coverage-final.json written is a tagged throw (refusing to under-map)', () => {
-    const shim = fakePnpm(`process.exit(0);`); // writes nothing
-    withPath(shim, () => {
-      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
-        /wrote NO coverage-final\.json/,
-      );
-    });
+    armSpawn({ result: { status: 0 } }); // no reportJson → nothing written
+    expect(() => defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+      /wrote NO coverage-final\.json/,
+    );
   });
 
-  it('single probe — a spawn fault (pnpm not found) is a tagged throw, never a silent verdict', () => {
-    const prev = process.env.PATH;
-    process.env.PATH = mkdtempSync(join(tmpdir(), 'czap-empty-path-')); // empty dir → no pnpm
-    try {
-      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
-        /failed to spawn/,
-      );
-    } finally {
-      rmSync(process.env.PATH, { recursive: true, force: true });
-      process.env.PATH = prev;
-    }
+  it('single probe — a spawn fault (result.error set) is a tagged throw, never a silent verdict', () => {
+    // A crafted spawn error (e.g. the launcher binary is unresolvable) — the same shape
+    // spawnSync returns on ENOENT, but synthetic so it never depends on PATH resolution.
+    armSpawn({ result: { status: null, error: Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT' }) } });
+    expect(() => defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+      /failed to spawn/,
+    );
   });
 
   it('single probe — a signal kill (result.signal != null, no spawn error) is a tagged throw', () => {
-    // The fake SIGKILLs ITSELF, so spawnSync returns { signal: 'SIGKILL', error: null,
-    // status: null } — the deterministic way to hit the signal branch (spawnSync's own
-    // timeout sets BOTH error AND signal, and the error branch wins first).
-    const shim = fakePnpm(`process.kill(process.pid, 'SIGKILL');`);
-    withPath(shim, () => {
-      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
-        /killed by signal/,
-      );
-    });
+    // The crafted result mimics a probe killed by the timeout: a signal, no spawn error.
+    armSpawn({ result: { status: null, signal: 'SIGKILL' } });
+    expect(() => defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+      /killed by signal/,
+    );
   });
 
   it('single probe — when the seam is ABSENT from the written report, returns null (covers nothing)', () => {
-    const shim = fakePnpm(COVERED_REPORT('packages/core/src/other.ts')); // report has a DIFFERENT file
-    const ranges = withPath(shim, () =>
-      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
-    );
+    armSpawn({ result: { status: 0 }, reportJson: coveredReport('packages/core/src/other.ts') }); // a DIFFERENT file
+    const ranges = defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000);
     expect(ranges).toBeNull();
   });
 
   it('single probe — the per-probe reports directory is removed after the run (no temp leak)', () => {
-    // Capture the reportsDirectory the probe created, then assert it is gone afterwards.
-    const shim = fakePnpm(
-      `const fs=require('node:fs');` +
-        `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
-        `fs.writeFileSync('${join(tmpdir(), 'czap-probe-rd-marker')}',rd);` +
-        `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({['/abs/${SEAM_FILE}']:{f:{},fnMap:{}}}));` +
-        `process.exit(0);`,
-    );
-    const marker = join(tmpdir(), 'czap-probe-rd-marker');
-    withPath(shim, () => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000));
-    const rd = readFileSync(marker, 'utf8');
-    expect(existsSync(rd)).toBe(false); // the finally{ rmSync } cleaned it up
-    rmSync(marker, { force: true });
+    // Observe the REAL reports dir the probe created, then assert the finally{ rmSync } removed it.
+    let reportsDir = '';
+    armSpawn({
+      result: { status: 0 },
+      reportJson: JSON.stringify({ [`/abs/${SEAM_FILE}`]: { f: {}, fnMap: {} } }),
+      onReportsDir: (dir) => (reportsDir = dir),
+    });
+    defaultCoverageProbe(repoRoot, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000);
+    expect(reportsDir).not.toBe('');
+    expect(existsSync(reportsDir)).toBe(false); // the finally{ rmSync } cleaned it up
   });
 
   it('batched probe — exit 0 returns the per-seam map; a non-{0,1} exit throws tagged', () => {
     const seamA = 'packages/core/src/a.ts';
     const seamB = 'packages/core/src/b.ts';
-    const good = fakePnpm(
-      `const fs=require('node:fs');` +
-        `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
-        `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({` +
-        `['/abs/${seamA}']:{f:{'0':1},fnMap:{'0':{loc:{start:{line:1},end:{line:2}}}}}}));` +
-        `process.exit(0);`,
-    );
-    const m = withPath(good, () =>
-      defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000),
-    );
+    armSpawn({
+      result: { status: 0 },
+      reportJson: JSON.stringify({
+        [`/abs/${seamA}`]: { f: { '0': 1 }, fnMap: { '0': { loc: { start: { line: 1 }, end: { line: 2 } } } } },
+        // seamB ABSENT from the report → covers nothing.
+      }),
+    });
+    const m = defaultBatchedCoverageProbe(repoRoot, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000);
     expect(m.get(seamA)).toEqual([{ startLine: 1, endLine: 2 }]);
     expect(m.has(seamB)).toBe(false); // absent → covers nothing
 
-    const bad = fakePnpm(`process.exit(3);`);
-    withPath(bad, () => {
-      expect(() =>
-        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000),
-      ).toThrowError(/neither pass=0 nor test-failure=1/);
-    });
+    armSpawn({ result: { status: 3 } });
+    expect(() =>
+      defaultBatchedCoverageProbe(repoRoot, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000),
+    ).toThrowError(/neither pass=0 nor test-failure=1/);
   });
 
   it('batched probe — exit 0 but NO report is a tagged throw; a spawn fault is a tagged throw', () => {
-    const noReport = fakePnpm(`process.exit(0);`);
-    withPath(noReport, () => {
-      expect(() =>
-        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
-      ).toThrowError(/wrote NO coverage-final\.json/);
-    });
+    armSpawn({ result: { status: 0 } }); // no report written
+    expect(() =>
+      defaultBatchedCoverageProbe(repoRoot, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+    ).toThrowError(/wrote NO coverage-final\.json/);
 
-    const prev = process.env.PATH;
-    process.env.PATH = mkdtempSync(join(tmpdir(), 'czap-empty-path-'));
-    try {
-      expect(() =>
-        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
-      ).toThrowError(/failed to spawn/);
-    } finally {
-      rmSync(process.env.PATH, { recursive: true, force: true });
-      process.env.PATH = prev;
-    }
+    armSpawn({ result: { status: null, error: Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT' }) } });
+    expect(() =>
+      defaultBatchedCoverageProbe(repoRoot, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+    ).toThrowError(/failed to spawn/);
   });
 
   it('batched probe — a signal kill (no spawn error) is a tagged throw', () => {
-    const shim = fakePnpm(`process.kill(process.pid, 'SIGKILL');`);
-    withPath(shim, () => {
-      expect(() =>
-        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
-      ).toThrowError(/killed by signal/);
-    });
+    armSpawn({ result: { status: null, signal: 'SIGKILL' } });
+    expect(() =>
+      defaultBatchedCoverageProbe(repoRoot, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+    ).toThrowError(/killed by signal/);
   });
 
   it('the default single probe is wired as the injectable SeamCoverageProbe type', () => {

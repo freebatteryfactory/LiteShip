@@ -183,11 +183,8 @@ describe('test-corpus reader — the missing-root tolerance', () => {
     expect(collectRepoTestFiles(root)).toEqual([]);
   });
 
-  it('propagates a non-ENOENT read fault (never a silent swallow)', () => {
-    // A FILE where the reader expects a directory: readdirSync on a file throws
-    // ENOTDIR (not ENOENT), which must propagate per the contract.
-    writeFileSync(join(root, 'tests'), 'not a dir', 'utf8');
-    // `tests/unit` resolves through `tests` (a file) → ENOTDIR on readdir.
-    expect(() => collectRepoTestFiles(root)).toThrow();
-  });
+  // The NON-ENOENT propagation law (a real disk fault must NOT be swallowed as a missing
+  // tier) is proven in test-corpus-iofault.test.ts with a SYNTHETIC injected fs error —
+  // a real platform-dependent on-disk condition (ENOTDIR from a file-where-a-dir-is-
+  // expected) has an OS-dependent errno, so it cannot be pinned with the real fs.
 });
