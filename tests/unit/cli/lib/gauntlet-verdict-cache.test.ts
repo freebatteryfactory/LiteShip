@@ -9,14 +9,27 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync, statSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { finding, type Finding } from '@czap/gauntlet';
+import fc from 'fast-check';
+import { hasTag } from '@czap/error';
+import {
+  finding,
+  gateVerdictKey,
+  coverageDigestOf,
+  makeRepoIR,
+  MISSING_DIGEST_SENTINEL,
+  type Finding,
+} from '@czap/gauntlet';
 import {
   makeFsVerdictCache,
+  makeFsMutantVerdictCache,
   gauntletToolchainDigest,
 } from '../../../../packages/cli/src/lib/gauntlet-verdict-cache.js';
+
+/** True only when this process can actually be denied read by a 0o000 chmod (not root). */
+const CAN_TEST_EACCES = process.getuid !== undefined && process.getuid() !== 0;
 
 let dir: string;
 
@@ -108,5 +121,197 @@ describe('gauntletToolchainDigest — deterministic + dist-sensitive (the anti-l
     expect(gauntletToolchainDigest({ node: 'v22', platform: 'linux', arch: 'x64', pm: '' })).toMatch(
       /^tc-sha256:[0-9a-f]{32}$/,
     );
+  });
+
+  it('folds the env fingerprint order-INDEPENDENTLY (sorted keys → same digest)', () => {
+    fc.assert(
+      fc.property(
+        fc.string({ minLength: 1, maxLength: 6 }),
+        fc.string({ minLength: 1, maxLength: 6 }),
+        (a, b) => {
+          // Two structurally-equal env maps with different insertion order key identically.
+          const forward = gauntletToolchainDigest({ node: a, platform: b, arch: 'x64', pm: '' });
+          const reordered = gauntletToolchainDigest({ pm: '', arch: 'x64', platform: b, node: a });
+          expect(forward).toBe(reordered);
+        },
+      ),
+    );
+  });
+
+  it('uses currentEnvFingerprint() by DEFAULT — a digest computed with no arg is well-formed', () => {
+    // The default-parameter arm: no env passed → the live process fingerprint is folded.
+    expect(gauntletToolchainDigest()).toMatch(/^tc-sha256:[0-9a-f]{32}$/);
+  });
+
+  it('an env entry whose value is absent folds as the empty string (the `?? \'\'` arm), still deterministic', () => {
+    // A key present in Object.keys but with no own string value exercises the
+    // nullish-coalesce arm of the env fold. Built with a null-proto record so the typed
+    // surface stays honest (no cast) while the runtime value is genuinely undefined.
+    const sparse: Record<string, string> = Object.create(null);
+    sparse['node'] = 'v22';
+    sparse['platform'] = 'linux';
+    sparse['arch'] = 'x64';
+    Object.defineProperty(sparse, 'pm', { value: undefined, enumerable: true, writable: true });
+    const folded = gauntletToolchainDigest(sparse);
+    const withEmpty = gauntletToolchainDigest({ node: 'v22', platform: 'linux', arch: 'x64', pm: '' });
+    expect(folded).toBe(withEmpty); // undefined value === '' in the fold
+  });
+});
+
+describe('THE CONTENT-ADDRESS LAW (the host fs store keyed by the engine key) — same hash hits, changed hash misses', () => {
+  const TC = 'tc-sha256:deadbeef';
+  const ENV = { node: 'v22', platform: 'linux', arch: 'x64', pm: '' } as const;
+  const FILE = 'packages/core/src/x.ts';
+
+  /** An IR where FILE has a given content address (the byte-state the cache keys on). */
+  function irWith(contentDigest: string) {
+    return makeRepoIR({ files: [{ id: FILE, contentDigest, packageName: '@czap/core' }] });
+  }
+
+  it('UNCHANGED coverage hash → a HIT (the same engine key resolves the same on-disk slug)', () => {
+    const cache = makeFsVerdictCache(dir);
+    const key = gateVerdictKey({
+      toolchainDigest: TC,
+      gateId: 'g/one',
+      coverageDigest: coverageDigestOf([FILE], irWith('blake3:aaaa')),
+      env: ENV,
+    });
+    cache.write(key, SAMPLE);
+    // Re-deriving the SAME key from the SAME byte-state hits the cached verdict.
+    const sameKey = gateVerdictKey({
+      toolchainDigest: TC,
+      gateId: 'g/one',
+      coverageDigest: coverageDigestOf([FILE], irWith('blake3:aaaa')),
+      env: ENV,
+    });
+    expect(sameKey).toBe(key); // the engine key is content-addressed + deterministic
+    expect(cache.read(sameKey)).toEqual(SAMPLE); // → a HIT
+  });
+
+  it('a CHANGED covered-file content digest flips the key → a MISS (re-run, the safe direction)', () => {
+    const cache = makeFsVerdictCache(dir);
+    const before = gateVerdictKey({
+      toolchainDigest: TC,
+      gateId: 'g/one',
+      coverageDigest: coverageDigestOf([FILE], irWith('blake3:aaaa')),
+      env: ENV,
+    });
+    cache.write(before, SAMPLE);
+    const after = gateVerdictKey({
+      toolchainDigest: TC,
+      gateId: 'g/one',
+      coverageDigest: coverageDigestOf([FILE], irWith('blake3:BBBB')), // the file's bytes changed
+      env: ENV,
+    });
+    expect(after).not.toBe(before);
+    expect(cache.read(after)).toBeNull(); // the stale verdict is NOT served under the new key
+  });
+
+  it('the MISSING_DIGEST_SENTINEL keys an absent file STABLY — never collides with a present-and-changed one', () => {
+    // A covered file ABSENT from the IR folds the inert sentinel; the key is stable but
+    // distinct from any real-content key, so a later present version cannot serve it.
+    const absent = coverageDigestOf([FILE], makeRepoIR({ files: [] }));
+    expect(absent).toContain(MISSING_DIGEST_SENTINEL);
+    const present = coverageDigestOf([FILE], irWith('blake3:real'));
+    expect(absent).not.toBe(present);
+  });
+});
+
+describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertain ⇒ re-run, never a throw)', () => {
+  it('a cache PATH that is a directory (EISDIR) reads as a MISS, not a throw', () => {
+    const cache = makeFsVerdictCache(dir);
+    // Write a real entry, then REPLACE its file with a directory at the same path so the
+    // existsSync passes but readFileSync throws EISDIR → the sanctioned best-effort MISS.
+    cache.write('eisdir-key', SAMPLE);
+    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const file = join(gdir, readdirSync(gdir)[0] as string);
+    rmSync(file);
+    mkdirSync(file); // now a directory at the verdict path
+    expect(statSync(file).isDirectory()).toBe(true);
+    expect(cache.read('eisdir-key')).toBeNull(); // EISDIR ⇒ MISS
+  });
+
+  it('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+    if (!CAN_TEST_EACCES) return; // root bypasses perms — skip the assertion, never fake it
+    const cache = makeFsVerdictCache(dir);
+    cache.write('eacces-key', SAMPLE);
+    const gdir = join(dir, '.czap', 'cache', 'gauntlet');
+    const file = join(gdir, readdirSync(gdir)[0] as string);
+    chmodSync(file, 0o000);
+    try {
+      expect(cache.read('eacces-key')).toBeNull(); // EACCES ⇒ sanctioned MISS
+    } finally {
+      chmodSync(file, 0o644); // restore so afterEach rmSync can clean up
+    }
+  });
+});
+
+describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict store (the sound-MISS twin)', () => {
+  it('round-trips a verdict TAG under .czap/cache/mutation, distinct keys do not collide', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    expect(cache.read('m-1')).toBeNull(); // absent → MISS
+    cache.write('m-1', 'killed');
+    cache.write('m-2', 'survived');
+    expect(cache.read('m-1')).toBe('killed');
+    expect(cache.read('m-2')).toBe('survived');
+
+    const files = readdirSync(join(dir, '.czap', 'cache', 'mutation'));
+    expect(files.length).toBe(2);
+    expect(files.every((f) => f.endsWith('.txt'))).toBe(true);
+  });
+
+  it('accepts ONLY the three sanctioned tags; any other on-disk value is a MISS, never a guessed serve', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-x', 'no-coverage');
+    expect(cache.read('m-x')).toBe('no-coverage');
+
+    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const file = join(mdir, readdirSync(mdir)[0] as string);
+    // A hand-edit / schema-drift value that is NOT one of the three tags → MISS.
+    writeFileSync(file, 'equivalent\n', 'utf8'); // a real verdict tag, but NOT in the write set
+    expect(cache.read('m-x')).toBeNull();
+    writeFileSync(file, 'garbage-not-a-tag\n', 'utf8');
+    expect(cache.read('m-x')).toBeNull();
+  });
+
+  it('trims surrounding whitespace before validating the tag (an atomic-write newline is fine)', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-trim', 'killed');
+    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const file = join(mdir, readdirSync(mdir)[0] as string);
+    writeFileSync(file, '   survived  \n\n', 'utf8');
+    expect(cache.read('m-trim')).toBe('survived');
+  });
+
+  it('a mutation cache PATH that is a directory (EISDIR) reads as a MISS, not a throw', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-eisdir', 'killed');
+    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const file = join(mdir, readdirSync(mdir)[0] as string);
+    rmSync(file);
+    mkdirSync(file);
+    expect(cache.read('m-eisdir')).toBeNull();
+  });
+
+  it('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+    if (!CAN_TEST_EACCES) return;
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-eacces', 'killed');
+    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const file = join(mdir, readdirSync(mdir)[0] as string);
+    chmodSync(file, 0o000);
+    try {
+      expect(cache.read('m-eacces')).toBeNull();
+    } finally {
+      chmodSync(file, 0o644);
+    }
+  });
+
+  it('write is ATOMIC (no leftover .tmp files after a successful write)', () => {
+    const cache = makeFsMutantVerdictCache(dir);
+    cache.write('m-atomic', 'killed');
+    const mdir = join(dir, '.czap', 'cache', 'mutation');
+    const leftovers = readdirSync(mdir).filter((f) => f.endsWith('.tmp'));
+    expect(leftovers).toEqual([]); // the temp-then-rename left no half-file
   });
 });

@@ -24,6 +24,7 @@ import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
 import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
+import type { TaintFacts } from './taint-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
@@ -193,6 +194,16 @@ export interface RunGauntletOnRepoOptions {
    */
   readonly standards?: StandardsIntegrityFacts;
   /**
+   * The INJECTED taint-flow facts (the TAINT-ANALYSIS family) — OPTIONAL. A host (the
+   * CLI's `czap check --ir --taint` path) traces the source→sink dataflow via
+   * `@czap/audit`'s GENERIC taint oracle (classified by the host-injected LiteShip
+   * source/sink/sanitizer registry) and threads the decided {@link TaintFacts} here,
+   * where they land on the {@link GateContext} for `taintFlowGate` to fold. Omit them
+   * (the default `--ir` run) and the gate is simply not in the set — no dataflow trace,
+   * no cost.
+   */
+  readonly taint?: TaintFacts;
+  /**
    * The INJECTED decode-fuzz facts (the untrusted-byte decode-surface hardening) —
    * OPTIONAL. A host (the `tests/fuzz` decode fuzzer, driven by the CLI fuzz path)
    * hammers every L4 decoder with the committed `tests/fixtures/fuzz-corpus` seeds +
@@ -254,11 +265,12 @@ export function runGauntletOnRepo(
     opts.fuzzCorpus,
   );
   const context =
-    opts.proof !== undefined || opts.composition !== undefined
+    opts.proof !== undefined || opts.composition !== undefined || opts.taint !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
           ...(opts.composition !== undefined ? { composition: opts.composition } : {}),
+          ...(opts.taint !== undefined ? { taint: opts.taint } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -379,6 +391,10 @@ export function litelaunchGauntletWithIR(
       // `simulationDeterminismGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (simulation is opt-in: `--simulate`).
       ...(cacheOpts.simulation !== undefined ? { simulation: cacheOpts.simulation } : {}),
+      // Inject the host-computed taint-flow facts (the TAINT-ANALYSIS family) when
+      // supplied — `taintFlowGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
+      // the set at all on the default `--ir` run (taint is opt-in: `--taint`).
+      ...(cacheOpts.taint !== undefined ? { taint: cacheOpts.taint } : {}),
       // Inject the host-computed requirements-traceability facts when supplied —
       // `traceabilityBridgeGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
       // set at all. The CLI composes the gate + injects these always-on on the `--ir`
@@ -467,6 +483,15 @@ export interface LitelaunchCacheOptions {
    * vice versa).
    */
   readonly simulation?: SimulationFacts;
+  /**
+   * OPTIONAL host-computed taint-flow facts (the TAINT-ANALYSIS family) threaded onto
+   * the {@link GateContext} for `taintFlowGate` to fold. Supplied ONLY on the
+   * `czap check --ir --taint` run, alongside a `gates` override that includes the gate.
+   * The cache key is namespaced by the taint mode (a taint-run verdict can never be
+   * served to a non-taint run, or vice versa) — exactly the `--mutate` cache-soundness
+   * lesson.
+   */
+  readonly taint?: TaintFacts;
   /**
    * OPTIONAL host-computed requirements-traceability facts (the avionics-tier ledger)
    * threaded onto the {@link GateContext} for `traceabilityBridgeGate` to fold.

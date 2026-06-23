@@ -86,6 +86,19 @@ export const coverageExclude = [
   // ship.ts itself stays excluded as long as it's pure orchestration
   // of git + pnpm + npm subprocesses.
   'packages/cli/src/commands/ship.ts',
+  // package-smoke.ts is the ship.ts-class subprocess-orchestration command — its
+  // `runPackageSmokeScan` body is a sequence of `pnpm pack` (×PACKAGES.length),
+  // `pnpm install`, `node smoke.mjs`, and `czap describe` spawns, plus `tar`-
+  // spawning packed-manifest reads. Vitest cannot meaningfully cover the
+  // subprocess paths in-process; the end-to-end correctness is integration-tested
+  // by the `package:smoke` gauntlet phase (CI-grade). The pure, branch-heavy
+  // helpers it composes — resolveExecutable / tarballFileUrl / peerDependenciesOnly
+  // / findConsumerDependencyRoot / assertConsumerDependencyInstalled — were
+  // EXTRACTED to lib/package-smoke-helpers.ts and are unit-tested directly
+  // (tests/unit/cli/commands/package-smoke-helpers.test.ts). package-smoke.ts
+  // itself stays excluded as long as it's pure orchestration of pnpm + tar + node
+  // subprocesses (mirrors the ship.ts precedent above).
+  'packages/cli/src/commands/package-smoke.ts',
   // ffmpeg.ts (render backend) spawns the system `ffmpeg` binary to encode
   // VideoFrameOutput streams to mp4. Coverage requires ffmpeg on PATH —
   // tests/smoke/intro-render.test.ts skips when it isn't, so this surface

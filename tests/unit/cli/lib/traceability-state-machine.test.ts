@@ -183,4 +183,122 @@ describe('traceability state machine — fail-loud parsing', () => {
     // No ledger files written.
     expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
   });
+
+  it('throws when invariants.yaml lacks the top-level `invariants:` sequence key', () => {
+    writeInvariants(`not-invariants:\n  - id: INV-A\n`);
+    writeLedger(`traces:\n  - id: INV-A\n    waiver:\n      owner: o\n      justification: "x"\n      expiry: "2999-01-01"\n`);
+    try {
+      buildTraceabilityFacts(root, DATE);
+      expect.unreachable('expected a tagged ParseError on a missing sequence key');
+    } catch (e) {
+      expect(isTaggedError(e)).toBe(true);
+    }
+  });
+
+  it('throws when a sequence item is not a `- key: value` mapping', () => {
+    // A `- ` item with no colon is not a mapping the reader can place.
+    writeInvariants(`invariants:\n  - just-a-scalar\n`);
+    writeLedger(`traces:\n  - id: INV-A\n    waiver:\n      owner: o\n      justification: "x"\n      expiry: "2999-01-01"\n`);
+    expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
+  });
+
+  it('throws when an item field line is not `key: value`', () => {
+    // A continuation line under an item that carries no colon.
+    writeInvariants(`invariants:\n  - id: INV-A\n    law-without-colon\n`);
+    writeLedger(`traces:\n  - id: INV-A\n    waiver:\n      owner: o\n      justification: "x"\n      expiry: "2999-01-01"\n`);
+    expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
+  });
+
+  it('throws when a waiver sub-mapping field has no value', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    // The `owner:` leaf under `waiver:` is bare (no value) at indent 6.
+    writeLedger(`traces:\n  - id: INV-A\n    waiver:\n      owner:\n      justification: "x"\n      expiry: "2999-01-01"\n`);
+    expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
+  });
+
+  it('throws when an invariant id is declared more than once (the trace identity breaks)', () => {
+    writeInvariants(
+      `invariants:\n  - id: INV-DUP\n    law: "a"\n    level: L4\n    category: crdt\n  - id: INV-DUP\n    law: "b"\n    level: L4\n    category: crdt\n`,
+    );
+    writeLedger(`traces:\n  - id: INV-DUP\n    waiver:\n      owner: o\n      justification: "x"\n      expiry: "2999-01-01"\n`);
+    try {
+      buildTraceabilityFacts(root, DATE);
+      expect.unreachable('expected a tagged throw on a duplicate invariant id');
+    } catch (e) {
+      expect(isTaggedError(e)).toBe(true);
+    }
+  });
+
+  it('throws when a trace entry carries NEITHER tests nor a waiver', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    // A trace entry with only an `id` (a bare field, no tests list, no waiver map).
+    writeLedger(`traces:\n  - id: INV-A\n    note: "nothing useful"\n`);
+    expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
+  });
+
+  it('throws when a trace entry’s tests list is empty', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    // `tests:` opens a list that never gets a `- ` entry → empty list.
+    writeLedger(`traces:\n  - id: INV-A\n    tests:\n`);
+    expect(() => buildTraceabilityFacts(root, DATE)).toThrow();
+  });
+
+  it('throws when a waiver is missing one of owner/justification/expiry', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    // No `expiry:` leaf — the waiver triple is incomplete.
+    writeLedger(`traces:\n  - id: INV-A\n    waiver:\n      owner: o\n      justification: "x"\n`);
+    try {
+      buildTraceabilityFacts(root, DATE);
+      expect.unreachable('expected a tagged ParseError on an incomplete waiver');
+    } catch (e) {
+      expect(isTaggedError(e)).toBe(true);
+    }
+  });
+});
+
+describe('traceability state machine — scalar + corpus details', () => {
+  it('unquotes single- AND double-quoted scalars identically (the YAML scalar law)', () => {
+    // INV-A uses double quotes, INV-B uses single quotes; both resolve to bare laws.
+    writeInvariants(
+      `invariants:\n  - id: INV-A\n    law: "double quoted"\n    level: L4\n    category: crdt\n  - id: INV-B\n    law: 'single quoted'\n    level: L4\n    category: crdt\n`,
+    );
+    writeLedger(
+      `traces:\n  - id: INV-A\n    waiver:\n      owner: o\n      justification: "j"\n      expiry: "2999-01-01"\n  - id: INV-B\n    waiver:\n      owner: o\n      justification: 'j'\n      expiry: '2999-01-01'\n`,
+    );
+    const facts = buildTraceabilityFacts(root, DATE);
+    const a = facts.invariants.find((i) => i.id === 'INV-A')!;
+    const b = facts.invariants.find((i) => i.id === 'INV-B')!;
+    expect(a.law).toBe('double quoted');
+    expect(b.law).toBe('single quoted');
+  });
+
+  it('treats a present-but-headerless test ref as unbacked-claim, not missing-test', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    writeLedger(`traces:\n  - id: INV-A\n    tests:\n      - "tests/property/headerless.test.ts::a"\n`);
+    // The file EXISTS but carries no `// PROVES:` header at all.
+    writeFileSync(
+      join(root, 'tests/property/headerless.test.ts'),
+      "import { test } from 'vitest';\n",
+      'utf8',
+    );
+    const facts = buildTraceabilityFacts(root, DATE);
+    const kinds = facts.divergences.filter((d) => d.invariantId === 'INV-A').map((d) => d.kind);
+    expect(kinds).toContain('unbacked-claim');
+    expect(kinds).not.toContain('missing-test');
+  });
+
+  it('ignores node_modules / dist while scanning the corpus for headers', () => {
+    writeInvariants(`invariants:\n  - id: INV-A\n    law: "a"\n    level: L4\n    category: crdt\n`);
+    writeLedger(`traces:\n  - id: INV-A\n    tests:\n      - "tests/property/a.test.ts::a"\n`);
+    writeTest('tests/property/a.test.ts', 'INV-A');
+    // A header buried under node_modules / dist must NOT register as a proof claim.
+    mkdirSync(join(root, 'packages', 'x', 'node_modules'), { recursive: true });
+    mkdirSync(join(root, 'packages', 'x', 'dist'), { recursive: true });
+    writeFileSync(join(root, 'packages/x/node_modules/dep.test.ts'), '// PROVES: INV-GHOST\n', 'utf8');
+    writeFileSync(join(root, 'packages/x/dist/built.test.ts'), '// PROVES: INV-GHOST\n', 'utf8');
+    const facts = buildTraceabilityFacts(root, DATE);
+    // INV-A proves cleanly; the buried INV-GHOST header never minted an undeclared-proof.
+    expect(facts.invariants[0]!.state._tag).toBe('proven');
+    expect(facts.divergences.some((d) => d.invariantId === 'INV-GHOST')).toBe(false);
+  });
 });

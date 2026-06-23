@@ -23,17 +23,26 @@
  *
  * @module
  */
-import { describe, it, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { describe, it, expect, afterAll } from 'vitest';
+import * as fc from 'fast-check';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSync, chmodSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { MutationTargetFile } from '../../../../packages/audit/src/index.js';
 import { buildSeamCoverageMap } from '../../../../packages/cli/src/lib/mutation-targets.js';
 import {
+  computeSeamExecutionCoverage,
   executionCoverageRelation,
   parseCoveredFunctionRanges,
   parseBatchedCoveredFunctionRanges,
+  defaultCoverageProbe,
+  defaultBatchedCoverageProbe,
+  makeFsSeamCoverageProbeCache,
+  seamLineCount,
   type BatchedSeamCoverageProbe,
+  type SeamCoverageProbe,
+  type SeamCoverageProbeCache,
+  type SeamCandidates,
   type LineRange,
   type SeamTestExecution,
 } from '../../../../packages/cli/src/lib/seam-execution-coverage.js';
@@ -198,5 +207,543 @@ describe('seam execution coverage — the barrel-problem fix', () => {
     expect(m.get(seamB)).toEqual([]);
     // content-address: absent → omitted (the caller reads `?? []` = covers nothing).
     expect(m.has(seamC)).toBe(false);
+  });
+
+  it('parse* — a non-object JSON report (number / null / string) is a tagged throw, never a silent empty', () => {
+    // A primitive / null parses but is NOT the `{ [absFile]: entry }` shape; reading it
+    // as "no coverage" would under-map → false survivor, so it must throw (`typeof !==
+    // 'object' || === null`).
+    for (const bad of ['42', 'null', '"a string"']) {
+      expect(() => parseCoveredFunctionRanges(bad, SEAM_FILE)).toThrowError(/not a JSON object/);
+      expect(() => parseBatchedCoveredFunctionRanges(bad, [SEAM_FILE])).toThrowError(/not a JSON object/);
+    }
+    // An ARRAY is technically a (typeof) object with no matching seam keys → not a throw:
+    // single → null (seam absent); batched → empty map (no seam attributed).
+    expect(parseCoveredFunctionRanges('[]', SEAM_FILE)).toBeNull();
+    expect(parseBatchedCoveredFunctionRanges('[]', [SEAM_FILE]).size).toBe(0);
+  });
+
+  it('parseCoveredFunctionRanges — drops a function whose loc/start line is missing or non-positive (never a NaN range)', () => {
+    const report = JSON.stringify({
+      [`/abs/${SEAM_FILE}`]: {
+        f: { '0': 1, '1': 1, '2': 1, '3': 1 },
+        fnMap: {
+          '0': { loc: { start: { line: 3 }, end: { line: 5 } } }, // kept
+          '1': { loc: { start: { line: 0 }, end: { line: 4 } } }, // start non-positive → dropped
+          '2': { loc: { start: { line: 'x' }, end: { line: 4 } } }, // start non-numeric → dropped
+          '3': { loc: {} }, // no start → dropped
+        },
+      },
+    });
+    expect(parseCoveredFunctionRanges(report, SEAM_FILE)).toEqual([{ startLine: 3, endLine: 5 }]);
+  });
+
+  it('parseCoveredFunctionRanges — a non-object file-coverage entry yields an empty range list (defensive, no throw)', () => {
+    // The seam key matches by suffix but its value is a primitive — coveredRangesOf
+    // returns [] rather than crashing (a present-but-garbage entry covers nothing).
+    const report = JSON.stringify({ [`/abs/${SEAM_FILE}`]: 7 });
+    expect(parseCoveredFunctionRanges(report, SEAM_FILE)).toEqual([]);
+  });
+
+  it('parseCoveredFunctionRanges — sorts the covered ranges deterministically by start then end', () => {
+    const report = JSON.stringify({
+      [`/abs/${SEAM_FILE}`]: {
+        f: { '0': 1, '1': 1, '2': 1 },
+        fnMap: {
+          '0': { loc: { start: { line: 10 }, end: { line: 12 } } },
+          '1': { loc: { start: { line: 3 }, end: { line: 5 } } },
+          '2': { loc: { start: { line: 3 }, end: { line: 4 } } },
+        },
+      },
+    });
+    expect(parseCoveredFunctionRanges(report, SEAM_FILE)).toEqual([
+      { startLine: 3, endLine: 4 },
+      { startLine: 3, endLine: 5 },
+      { startLine: 10, endLine: 12 },
+    ]);
+  });
+});
+
+describe('seamLineCount — the relation line-bound from the seam bytes', () => {
+  it('counts newline-delimited lines (a trailing newline adds an empty final line)', () => {
+    expect(seamLineCount({ file: SEAM_FILE, text: SEAM_TEXT })).toBe(SEAM_LINES);
+    expect(seamLineCount({ file: 'x', text: '' })).toBe(1); // '' splits to ['']
+    expect(seamLineCount({ file: 'x', text: 'a\nb\nc' })).toBe(3);
+    expect(seamLineCount({ file: 'x', text: 'a\nb\n' })).toBe(3); // trailing \n → ['a','b','']
+  });
+
+  it('property — line count is always 1 + the number of newline bytes', () => {
+    fc.assert(
+      fc.property(fc.string(), (text) => {
+        const newlines = [...text].filter((ch) => ch === '\n').length;
+        expect(seamLineCount({ file: 'x', text })).toBe(newlines + 1);
+      }),
+    );
+  });
+});
+
+describe('executionCoverageRelation — the per-(file,line,test) substrate', () => {
+  it('throws (tagged) when a seam has executions but no line count — a wiring bug surfaces, never silently no-coverages the seam', () => {
+    const executions: SeamTestExecution[] = [
+      { testId: 't.test.ts', seamFile: SEAM_FILE, deepImporter: true, coveredFunctionRanges: [] },
+    ];
+    // Empty line-count map → the seam's count is undefined → tagged throw.
+    expect(() => executionCoverageRelation(executions, new Map())).toThrowError(/no line count for seam/);
+  });
+
+  it('a deep importer covers EVERY line of its seam; an empty execution set yields an empty relation', () => {
+    const deep: SeamTestExecution[] = [
+      { testId: 'deep.test.ts', seamFile: SEAM_FILE, deepImporter: true, coveredFunctionRanges: [] },
+    ];
+    const rel = executionCoverageRelation(deep, new Map([[SEAM_FILE, SEAM_LINES]]));
+    // One (file,line,test) per line for the deep importer.
+    expect(rel).toHaveLength(SEAM_LINES);
+    for (let line = 1; line <= SEAM_LINES; line++) {
+      expect(rel).toContainEqual({ file: SEAM_FILE, line, testId: 'deep.test.ts' });
+    }
+    // No executions at all → no relation rows.
+    expect(executionCoverageRelation([], new Map())).toEqual([]);
+  });
+
+  it('multiple executing barrel importers on the same function-body line are BOTH kept; only line-containing ones', () => {
+    const executions: SeamTestExecution[] = [
+      { testId: 'a.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [{ startLine: 3, endLine: 5 }] },
+      { testId: 'b.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [{ startLine: 4, endLine: 4 }] },
+    ];
+    const map = makeCoverageMap(executionCoverageRelation(executions, new Map([[SEAM_FILE, SEAM_LINES]])));
+    // Line 4 is inside BOTH ranges → both kept.
+    expect(map.covering(SEAM_FILE, 4)).toEqual(['a.test.ts', 'b.test.ts']);
+    // Line 3 is inside a's range only (a function-body line covered by ≥1 fn) → only a.
+    expect(map.covering(SEAM_FILE, 3)).toEqual(['a.test.ts']);
+    // Line 2 is top-level (inside no covered fn of any test) → full barrel closure (both).
+    expect(map.covering(SEAM_FILE, 2)).toEqual(['a.test.ts', 'b.test.ts']);
+  });
+});
+
+/** A seam-candidates fixture: `seam` with the given deep + barrel candidate ids/text. */
+function candidatesFor(opts: {
+  readonly seam?: string;
+  readonly deep?: readonly string[];
+  readonly barrel?: readonly { id: string; text: string }[];
+}): SeamCandidates {
+  return {
+    seamFile: opts.seam ?? SEAM_FILE,
+    seamText: SEAM_TEXT,
+    deepImporters: opts.deep ?? [],
+    barrelImporters: opts.barrel ?? [],
+  };
+}
+
+describe('computeSeamExecutionCoverage — the execution filter (deep kept verbatim, barrel probed, batched per test)', () => {
+  it('deep importers are kept WITHOUT a probe; barrel importers are probed once per test for all their seams', () => {
+    let probeCalls = 0;
+    const seamA = 'packages/core/src/a.ts';
+    const seamB = 'packages/core/src/b.ts';
+    // Test `shared` is a barrel candidate for BOTH seams → must be probed ONCE with both.
+    const candidates: SeamCandidates[] = [
+      { seamFile: seamA, seamText: 'A', deepImporters: ['deepA.test.ts'], barrelImporters: [{ id: 'shared.test.ts', text: 'sA' }] },
+      { seamFile: seamB, seamText: 'B', deepImporters: [], barrelImporters: [{ id: 'shared.test.ts', text: 'sB' }] },
+    ];
+    const batchedProbe: BatchedSeamCoverageProbe = (_r, _c, seamFiles, testId) => {
+      probeCalls++;
+      expect(testId).toBe('shared.test.ts');
+      // Batched: BOTH seams probed in one subprocess (the tractability keystone).
+      expect([...seamFiles].sort()).toEqual([seamA, seamB]);
+      return new Map<string, readonly LineRange[]>([[seamA, [{ startLine: 1, endLine: 2 }]]]); // executes a fn of A, none of B
+    };
+
+    const out = computeSeamExecutionCoverage(candidates, { repoRoot: '/repo', batchedProbe });
+
+    // Exactly ONE probe (the shared test batched over both seams), not one per (test,seam).
+    expect(probeCalls).toBe(1);
+    // Deep importer kept verbatim (deepImporter:true, no ranges).
+    expect(out).toContainEqual({ testId: 'deepA.test.ts', seamFile: seamA, deepImporter: true, coveredFunctionRanges: [] });
+    // Barrel probe ranges flow through for seam A (executed a fn) and seam B (none → []).
+    expect(out).toContainEqual({ testId: 'shared.test.ts', seamFile: seamA, deepImporter: false, coveredFunctionRanges: [{ startLine: 1, endLine: 2 }] });
+    expect(out).toContainEqual({ testId: 'shared.test.ts', seamFile: seamB, deepImporter: false, coveredFunctionRanges: [] });
+    // Deterministic order: by seam, then by test id.
+    const ordered = [...out].sort((x, y) => x.seamFile.localeCompare(y.seamFile) || x.testId.localeCompare(y.testId));
+    expect(out).toEqual(ordered);
+  });
+
+  it('a barrel seam ABSENT from the probe map maps to [] (covers nothing) — the sound exclusion', () => {
+    const batchedProbe: BatchedSeamCoverageProbe = () => new Map(); // executes nothing
+    const out = computeSeamExecutionCoverage(
+      [candidatesFor({ barrel: [{ id: 'idle.test.ts', text: 't' }] })],
+      { repoRoot: '/repo', batchedProbe },
+    );
+    expect(out).toEqual([{ testId: 'idle.test.ts', seamFile: SEAM_FILE, deepImporter: false, coveredFunctionRanges: [] }]);
+  });
+
+  it('no barrel candidates → no probe runs at all (the default probe is never reached)', () => {
+    // With only deep importers and the DEFAULT (real-spawn) batched probe, no subprocess
+    // is spawned because the uncached set is empty — proven by it not throwing/hanging.
+    const out = computeSeamExecutionCoverage([candidatesFor({ deep: ['d1.test.ts', 'd2.test.ts'] })], {
+      repoRoot: '/nonexistent-repo',
+    });
+    expect(out).toEqual([
+      { testId: 'd1.test.ts', seamFile: SEAM_FILE, deepImporter: true, coveredFunctionRanges: [] },
+      { testId: 'd2.test.ts', seamFile: SEAM_FILE, deepImporter: true, coveredFunctionRanges: [] },
+    ]);
+  });
+
+  describe('the B2 probe cache — a HIT serves prior ranges (no re-probe); a MISS probes + writes; gated on the toolchain digest', () => {
+    /** An in-memory cache that records reads + writes for assertion. */
+    function memCache(seed?: ReadonlyMap<string, readonly LineRange[]>): {
+      cache: SeamCoverageProbeCache;
+      reads: string[];
+      writes: { key: string; ranges: readonly LineRange[] }[];
+    } {
+      const store = new Map<string, readonly LineRange[]>(seed);
+      const reads: string[] = [];
+      const writes: { key: string; ranges: readonly LineRange[] }[] = [];
+      return {
+        reads,
+        writes,
+        cache: {
+          read(key) {
+            reads.push(key);
+            return store.get(key) ?? null;
+          },
+          write(key, ranges) {
+            writes.push({ key, ranges });
+            store.set(key, ranges);
+          },
+        },
+      };
+    }
+
+    it('a cold cache MISS runs the probe and WRITES the result; a warm run serves the HIT without re-probing', () => {
+      const { cache, writes } = memCache();
+      let probeCalls = 0;
+      const batchedProbe: BatchedSeamCoverageProbe = (_r, _c, seamFiles) => {
+        probeCalls++;
+        return new Map(seamFiles.map((s) => [s, [{ startLine: 3, endLine: 5 }]] as const));
+      };
+      const cands = [candidatesFor({ barrel: [{ id: 'b.test.ts', text: 'tt' }] })];
+      const opts = { repoRoot: '/repo', batchedProbe, cache, toolchainDigest: 'tc-1' } as const;
+
+      const first = computeSeamExecutionCoverage(cands, opts);
+      expect(probeCalls).toBe(1); // cold → probed
+      expect(writes).toHaveLength(1); // result cached
+      expect(first[0].coveredFunctionRanges).toEqual([{ startLine: 3, endLine: 5 }]);
+
+      const second = computeSeamExecutionCoverage(cands, opts);
+      expect(probeCalls).toBe(1); // warm → served from cache, NO second probe
+      expect(second).toEqual(first); // byte-identical decision
+    });
+
+    it('WITHOUT a toolchain digest the cache is NEVER consulted (no key is built — the anti-lie keystone)', () => {
+      const { cache, reads, writes } = memCache();
+      const batchedProbe: BatchedSeamCoverageProbe = (_r, _c, seamFiles) =>
+        new Map(seamFiles.map((s) => [s, []] as const));
+      // cache supplied but toolchainDigest omitted → cacheKeyFor returns null → cache skipped.
+      computeSeamExecutionCoverage([candidatesFor({ barrel: [{ id: 'b.test.ts', text: 't' }] })], {
+        repoRoot: '/repo',
+        batchedProbe,
+        cache,
+      });
+      expect(reads).toEqual([]);
+      expect(writes).toEqual([]);
+    });
+
+    it('the cache key flips when the toolchain digest changes → a re-probe (the digest is part of the key)', () => {
+      const seed = memCache();
+      let probeCalls = 0;
+      const batchedProbe: BatchedSeamCoverageProbe = (_r, _c, seamFiles) => {
+        probeCalls++;
+        return new Map(seamFiles.map((s) => [s, []] as const));
+      };
+      const cands = [candidatesFor({ barrel: [{ id: 'b.test.ts', text: 't' }] })];
+      computeSeamExecutionCoverage(cands, { repoRoot: '/r', batchedProbe, cache: seed.cache, toolchainDigest: 'tc-1' });
+      computeSeamExecutionCoverage(cands, { repoRoot: '/r', batchedProbe, cache: seed.cache, toolchainDigest: 'tc-2' });
+      // Different toolchain digest ⇒ different key ⇒ a fresh probe (no stale serve).
+      expect(probeCalls).toBe(2);
+    });
+  });
+});
+
+/**
+ * Drive the REAL spawn-based probes deterministically with a fake `pnpm` on PATH that
+ * writes a controlled `coverage-final.json` (or simulates an infra fault). This covers
+ * the spawn/parse/error-discipline branches WITHOUT a real (slow) vitest coverage run.
+ */
+describe('default(Batched)CoverageProbe — the real spawn glue, driven by a fake pnpm shim', () => {
+  // spawnSync needs a REAL existing cwd (a non-existent cwd is its own ENOENT, masking
+  // the PATH-resolved fake pnpm). One real dir for the whole block; the probe writes
+  // only into its own mkdtemp reports dir, never into this cwd.
+  const realCwd = mkdtempSync(join(tmpdir(), 'czap-probe-cwd-'));
+  afterAll(() => rmSync(realCwd, { recursive: true, force: true }));
+
+  /** Make a fake `pnpm` executable; return a PATH with it prepended. Caller cleans up. */
+  function fakePnpm(body: string): { binDir: string; path: string } {
+    const binDir = mkdtempSync(join(tmpdir(), 'czap-fake-pnpm-'));
+    const exe = join(binDir, 'pnpm');
+    writeFileSync(exe, `#!/usr/bin/env node\n${body}\n`, 'utf8');
+    chmodSync(exe, 0o755);
+    return { binDir, path: `${binDir}:${process.env.PATH ?? ''}` };
+  }
+
+  /** Run `fn` with `process.env.PATH` temporarily set to `path`, then restore + cleanup. */
+  function withPath<T>(shim: { binDir: string; path: string }, fn: () => T): T {
+    const prev = process.env.PATH;
+    process.env.PATH = shim.path;
+    try {
+      return fn();
+    } finally {
+      process.env.PATH = prev;
+      rmSync(shim.binDir, { recursive: true, force: true });
+    }
+  }
+
+  const COVERED_REPORT = (seam: string): string =>
+    `const fs=require('node:fs');` +
+    `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
+    `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({['/abs/${seam}']:{f:{'0':2},fnMap:{'0':{loc:{start:{line:3},end:{line:5}}}}}}));` +
+    `process.exit(0);`;
+
+  it('single probe — exit 0 with a written report returns the covered-function ranges', () => {
+    const shim = fakePnpm(COVERED_REPORT(SEAM_FILE));
+    const ranges = withPath(shim, () =>
+      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
+    );
+    expect(ranges).toEqual([{ startLine: 3, endLine: 5 }]);
+  });
+
+  it('single probe — exit 1 (a FAILING covering test) is still a valid execution signal, not an abort', () => {
+    // The fake writes the report then exits 1: a test-failure exit is NOT a fault.
+    const shim = fakePnpm(`${COVERED_REPORT(SEAM_FILE).replace('process.exit(0);', 'process.exit(1);')}`);
+    const ranges = withPath(shim, () =>
+      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
+    );
+    expect(ranges).toEqual([{ startLine: 3, endLine: 5 }]);
+  });
+
+  it('single probe — a non-{0,1} exit code is a tagged infra/config-fault throw (never a "covers nothing")', () => {
+    const shim = fakePnpm(`process.stderr.write('boom');process.exit(2);`);
+    withPath(shim, () => {
+      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+        /neither pass=0 nor test-failure=1/,
+      );
+    });
+  });
+
+  it('single probe — exit 0 but NO coverage-final.json written is a tagged throw (refusing to under-map)', () => {
+    const shim = fakePnpm(`process.exit(0);`); // writes nothing
+    withPath(shim, () => {
+      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+        /wrote NO coverage-final\.json/,
+      );
+    });
+  });
+
+  it('single probe — a spawn fault (pnpm not found) is a tagged throw, never a silent verdict', () => {
+    const prev = process.env.PATH;
+    process.env.PATH = mkdtempSync(join(tmpdir(), 'czap-empty-path-')); // empty dir → no pnpm
+    try {
+      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+        /failed to spawn/,
+      );
+    } finally {
+      rmSync(process.env.PATH, { recursive: true, force: true });
+      process.env.PATH = prev;
+    }
+  });
+
+  it('single probe — a signal kill (result.signal != null, no spawn error) is a tagged throw', () => {
+    // The fake SIGKILLs ITSELF, so spawnSync returns { signal: 'SIGKILL', error: null,
+    // status: null } — the deterministic way to hit the signal branch (spawnSync's own
+    // timeout sets BOTH error AND signal, and the error branch wins first).
+    const shim = fakePnpm(`process.kill(process.pid, 'SIGKILL');`);
+    withPath(shim, () => {
+      expect(() => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000)).toThrowError(
+        /killed by signal/,
+      );
+    });
+  });
+
+  it('single probe — when the seam is ABSENT from the written report, returns null (covers nothing)', () => {
+    const shim = fakePnpm(COVERED_REPORT('packages/core/src/other.ts')); // report has a DIFFERENT file
+    const ranges = withPath(shim, () =>
+      defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000),
+    );
+    expect(ranges).toBeNull();
+  });
+
+  it('single probe — the per-probe reports directory is removed after the run (no temp leak)', () => {
+    // Capture the reportsDirectory the probe created, then assert it is gone afterwards.
+    const shim = fakePnpm(
+      `const fs=require('node:fs');` +
+        `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
+        `fs.writeFileSync('${join(tmpdir(), 'czap-probe-rd-marker')}',rd);` +
+        `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({['/abs/${SEAM_FILE}']:{f:{},fnMap:{}}}));` +
+        `process.exit(0);`,
+    );
+    const marker = join(tmpdir(), 'czap-probe-rd-marker');
+    withPath(shim, () => defaultCoverageProbe(realCwd, 'vitest.config.ts', SEAM_FILE, 't.test.ts', 60_000));
+    const rd = readFileSync(marker, 'utf8');
+    expect(existsSync(rd)).toBe(false); // the finally{ rmSync } cleaned it up
+    rmSync(marker, { force: true });
+  });
+
+  it('batched probe — exit 0 returns the per-seam map; a non-{0,1} exit throws tagged', () => {
+    const seamA = 'packages/core/src/a.ts';
+    const seamB = 'packages/core/src/b.ts';
+    const good = fakePnpm(
+      `const fs=require('node:fs');` +
+        `const rd=process.argv.slice(2).find(a=>a.startsWith('--coverage.reportsDirectory=')).split('=')[1];` +
+        `fs.writeFileSync(rd+'/coverage-final.json',JSON.stringify({` +
+        `['/abs/${seamA}']:{f:{'0':1},fnMap:{'0':{loc:{start:{line:1},end:{line:2}}}}}}));` +
+        `process.exit(0);`,
+    );
+    const m = withPath(good, () =>
+      defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000),
+    );
+    expect(m.get(seamA)).toEqual([{ startLine: 1, endLine: 2 }]);
+    expect(m.has(seamB)).toBe(false); // absent → covers nothing
+
+    const bad = fakePnpm(`process.exit(3);`);
+    withPath(bad, () => {
+      expect(() =>
+        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [seamA, seamB], 't.test.ts', 60_000),
+      ).toThrowError(/neither pass=0 nor test-failure=1/);
+    });
+  });
+
+  it('batched probe — exit 0 but NO report is a tagged throw; a spawn fault is a tagged throw', () => {
+    const noReport = fakePnpm(`process.exit(0);`);
+    withPath(noReport, () => {
+      expect(() =>
+        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+      ).toThrowError(/wrote NO coverage-final\.json/);
+    });
+
+    const prev = process.env.PATH;
+    process.env.PATH = mkdtempSync(join(tmpdir(), 'czap-empty-path-'));
+    try {
+      expect(() =>
+        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+      ).toThrowError(/failed to spawn/);
+    } finally {
+      rmSync(process.env.PATH, { recursive: true, force: true });
+      process.env.PATH = prev;
+    }
+  });
+
+  it('batched probe — a signal kill (no spawn error) is a tagged throw', () => {
+    const shim = fakePnpm(`process.kill(process.pid, 'SIGKILL');`);
+    withPath(shim, () => {
+      expect(() =>
+        defaultBatchedCoverageProbe(realCwd, 'vitest.config.ts', [SEAM_FILE], 't.test.ts', 60_000),
+      ).toThrowError(/killed by signal/);
+    });
+  });
+
+  it('the default single probe is wired as the injectable SeamCoverageProbe type', () => {
+    // A compile-and-identity check that defaultCoverageProbe satisfies the injection type.
+    const asType: SeamCoverageProbe = defaultCoverageProbe;
+    expect(asType).toBe(defaultCoverageProbe);
+  });
+});
+
+describe('makeFsSeamCoverageProbeCache — the fs-backed B2 probe store (atomic write, sound-MISS reads)', () => {
+  /** The single `.json` entry in `cacheDir` (the content-addressed probe file). */
+  function onlyJsonFile(cacheDir: string): string {
+    const jsons = readdirSync(cacheDir).filter((f) => f.endsWith('.json'));
+    expect(jsons).toHaveLength(1); // exactly one cached entry under test
+    return join(cacheDir, jsons[0]);
+  }
+
+  it('round-trips ranges: write then read returns the same ranges (content-addressed key → stable path)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      const cache = makeFsSeamCoverageProbeCache(dir);
+      const key = 'seamdigAtestdigBtctc1';
+      const ranges: LineRange[] = [{ startLine: 3, endLine: 5 }, { startLine: 10, endLine: 12 }];
+      expect(cache.read(key)).toBeNull(); // cold → MISS
+      cache.write(key, ranges);
+      expect(cache.read(key)).toEqual(ranges); // warm → HIT round-trips
+      // A different key is a MISS (distinct content-addressed slug).
+      expect(cache.read('seamdigAtestdigBtctc2')).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('an empty ranges list (covers nothing) round-trips as [] — distinct from a MISS (null)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      const cache = makeFsSeamCoverageProbeCache(dir);
+      cache.write('k', []);
+      expect(cache.read('k')).toEqual([]); // present-but-empty ≠ absent
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a write is ATOMIC — no .tmp file is left behind after a successful write', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      const cache = makeFsSeamCoverageProbeCache(dir);
+      cache.write('k', [{ startLine: 1, endLine: 1 }]);
+      const cacheDir = join(dir, '.czap', 'cache', 'seam-coverage');
+      const leftovers = readdirSync(cacheDir).filter((f) => f.endsWith('.tmp'));
+      expect(leftovers).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a malformed/hand-edited cache file is a sound MISS (null), never a partial/garbage decision', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      const cache = makeFsSeamCoverageProbeCache(dir);
+      const key = 'k';
+      // Seed a real entry, then corrupt the on-disk file with several malformed shapes.
+      cache.write(key, [{ startLine: 1, endLine: 2 }]);
+      const file = onlyJsonFile(join(dir, '.czap', 'cache', 'seam-coverage'));
+      for (const garbage of [
+        'not json{',                                   // invalid JSON → SyntaxError → null
+        '{"not":"an array"}',                          // not an array → null
+        '[42]',                                        // element not an object → null
+        '[{"startLine":2,"endLine":1}]',               // endLine < startLine → null
+        '[{"startLine":0,"endLine":3}]',               // non-positive line → null
+        '[{"startLine":1.5,"endLine":3}]',             // non-integer line → null
+        'null',                                        // JSON null, not an array → null
+      ]) {
+        writeFileSync(file, garbage, 'utf8');
+        expect(cache.read(key)).toBeNull();
+      }
+      // A WELL-FORMED file still reads back correctly (the MISS is specific to garbage).
+      writeFileSync(file, JSON.stringify([{ startLine: 4, endLine: 9 }]), 'utf8');
+      expect(cache.read(key)).toEqual([{ startLine: 4, endLine: 9 }]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reading an absent key (no file) is a MISS (null), never a throw', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      expect(makeFsSeamCoverageProbeCache(dir).read('never-written')).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a directory at the cache path (EISDIR on read) is a sound MISS, not a throw', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'czap-fs-cache-'));
+    try {
+      const cache = makeFsSeamCoverageProbeCache(dir);
+      // Write a real entry to learn the on-disk file path, then replace the FILE with a DIR.
+      const key = 'eisdir-key';
+      cache.write(key, [{ startLine: 1, endLine: 1 }]);
+      const file = onlyJsonFile(join(dir, '.czap', 'cache', 'seam-coverage'));
+      rmSync(file, { force: true });
+      mkdirSync(file); // now reading `file` as a regular file fails EISDIR
+      expect(cache.read(key)).toBeNull(); // the typed-ENOENT/EISDIR/EACCES/EPERM guard → MISS
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

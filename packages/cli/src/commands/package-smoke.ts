@@ -11,11 +11,10 @@
  *
  * @module
  */
-import { cpSync, existsSync, mkdirSync, readdirSync, realpathSync, symlinkSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, symlinkSync } from 'node:fs';
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {
   packageSmokeCommand,
@@ -27,21 +26,25 @@ import {
 } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { IntegrityError, InvariantViolationError } from '@czap/error';
+import {
+  assertConsumerDependencyInstalled,
+  findConsumerDependencyRoot,
+  peerDependenciesOnly as peerDependenciesOnlyHelper,
+  resolveExecutable,
+  tarballFileUrl,
+} from '../lib/package-smoke-helpers.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
+
+/** `PEER_INSTALLS` → `{name: version}` map (the extracted, unit-tested helper). */
+function peerDependenciesOnly(): Record<string, string> {
+  return peerDependenciesOnlyHelper(PEER_INSTALLS);
+}
 
 /** Receipt emitted by `czap package-smoke`. */
 export interface PackageSmokeReceipt extends PackageSmokePayload {
   readonly status: 'ok' | 'failed';
   readonly command: 'package-smoke';
   readonly timestamp: WallClockTimestamp;
-}
-
-/** Tarball path → `file://` URL for pnpm `dependencies` / `pnpm.overrides`. */
-function tarballFileUrl(absolutePath: string): string {
-  // Windows CI profiles often live under 8.3 short paths (`RUNNER~1`). pathToFileURL
-  // percent-encodes `~` as `%7E`; pnpm then looks for a path that does not exist.
-  const resolved = process.platform === 'win32' ? realpathSync.native(absolutePath) : absolutePath;
-  return pathToFileURL(resolved).href;
 }
 
 /**
@@ -56,16 +59,6 @@ async function createScratchDir(root: string): Promise<string> {
     return mkdtemp(join(base, 'run-'));
   }
   return mkdtemp(join(tmpdir(), 'czap-package-smoke-'));
-}
-
-function resolveExecutable(command: string): string {
-  if (command === 'pnpm' && process.env['npm_execpath']) {
-    return process.execPath;
-  }
-  if (process.platform === 'win32' && command === 'pnpm') {
-    return 'pnpm.cmd';
-  }
-  return command;
 }
 
 function run(command: string, args: readonly string[], cwd: string): string {
@@ -98,15 +91,6 @@ function extractPackedPackage(tarballPath: string, destinationDir: string): void
   execFileSync('tar', ['-xzf', tarballPath, '-C', destinationDir, '--strip-components=1'], { stdio: 'inherit' });
 }
 
-function peerDependenciesOnly(): Record<string, string> {
-  return Object.fromEntries(
-    PEER_INSTALLS.map((specifier) => {
-      const atIndex = specifier.lastIndexOf('@');
-      return [specifier.slice(0, atIndex), specifier.slice(atIndex + 1)];
-    }),
-  );
-}
-
 /** npm deps declared in packed manifests (e.g. mediabunny, cborg) — not installed by tar extract alone. */
 function collectPackedExternalDependencies(tarballByPackage: Map<string, string>): Record<string, string> {
   const peers = peerDependenciesOnly();
@@ -123,47 +107,6 @@ function collectPackedExternalDependencies(tarballByPackage: Map<string, string>
     }
   }
   return external;
-}
-
-/** Hoisted pnpm often keeps packages only under `node_modules/.pnpm/<pkg>@ver/node_modules/<pkg>`. */
-function findConsumerDependencyRoot(consumerDir: string, packageName: string): string | undefined {
-  const segments = packageName.split('/');
-  const direct = join(consumerDir, 'node_modules', ...segments);
-  if (existsSync(join(direct, 'package.json'))) {
-    return direct;
-  }
-
-  const hoisted = join(consumerDir, 'node_modules', '.pnpm', 'node_modules', ...segments);
-  if (existsSync(join(hoisted, 'package.json'))) {
-    return hoisted;
-  }
-
-  const store = join(consumerDir, 'node_modules', '.pnpm');
-  if (!existsSync(store)) {
-    return undefined;
-  }
-
-  const folderPrefix = `${packageName.replace('/', '+')}@`;
-  for (const entry of readdirSync(store)) {
-    if (!entry.startsWith(folderPrefix)) {
-      continue;
-    }
-    const candidate = join(store, entry, 'node_modules', ...segments);
-    if (existsSync(join(candidate, 'package.json'))) {
-      return candidate;
-    }
-  }
-
-  return undefined;
-}
-
-function assertConsumerDependencyInstalled(consumerDir: string, packageName: string): void {
-  if (!findConsumerDependencyRoot(consumerDir, packageName)) {
-    throw IntegrityError(
-      'package-smoke',
-      `${packageName} missing from ${join(consumerDir, 'node_modules')} after install — import-smoke cannot resolve it.`,
-    );
-  }
 }
 
 /**

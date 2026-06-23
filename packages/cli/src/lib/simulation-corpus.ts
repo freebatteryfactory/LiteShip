@@ -295,10 +295,16 @@ export const SIMULATION_CORPUS: readonly CorpusEntry[] = [
  * The fold is itself DETERMINISTIC and pure: it reads no ambient time/randomness
  * (the world owns the clock/rng), and the facts are emitted in corpus order so the
  * SimulationFacts are byte-stable across runs (the verdict cache can serve them).
+ *
+ * `corpus` defaults to the committed {@link SIMULATION_CORPUS} (the host's real run);
+ * it is a parameter so the divergence path can be exercised against the SAME code
+ * with an injected scenario, never a fork of the fold.
  */
-export async function runSimulationCorpus(): Promise<SimulationFacts> {
+export async function runSimulationCorpus(
+  corpus: readonly CorpusEntry[] = SIMULATION_CORPUS,
+): Promise<SimulationFacts> {
   const runs: ScenarioReplayFact[] = [];
-  for (const { scenario, seeds } of SIMULATION_CORPUS) {
+  for (const { scenario, seeds } of corpus) {
     for (const seed of seeds) {
       const result = await assertReplayDeterministic(seed, scenario);
       const base = {

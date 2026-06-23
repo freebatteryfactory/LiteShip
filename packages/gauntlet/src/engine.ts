@@ -223,6 +223,30 @@ export function scopeContextByLevel(
     // host injected the per-decoder verdicts — exactly the scoped-context drop the
     // supplyChain/mutation/simulation/traceability/standards pass-throughs above fix.
     ...(context.fuzzCorpus !== undefined ? { fuzzCorpus: context.fuzzCorpus } : {}),
+    // Likewise the injected taint-flow facts (the TAINT-ANALYSIS family): each
+    // TaintFlow carries its own source/sink location (the gate folds it as an L4
+    // finding; the flow describes a dataflow path, not one judged src file), so
+    // file-scoping never narrows them — they pass through unchanged. Omit the key
+    // when absent. WITHOUT this pass-through the taintFlowGate (an L4 gate, so always
+    // scoped) would see no facts and throw `taint-facts unavailable` even though the
+    // host injected them — exactly the scoped-context drop the supplyChain/mutation/
+    // simulation/traceability/standards pass-throughs above already fix.
+    ...(context.taint !== undefined ? { taint: context.taint } : {}),
+    // Likewise the injected proof-strength facts (the LOCAL-VS-GLOBAL lax-functor):
+    // each module's proof scalar is keyed by its own file id (the gate propagates it
+    // along the IR dep DAG), so file-scoping never narrows them — they pass through
+    // unchanged. Omit the key when absent. WITHOUT this pass-through the
+    // proofPropagationGate (an L4 gate, so always scoped) would see no facts and fold
+    // NOTHING even though the host injected them — the same scoped-context drop the
+    // pass-throughs above fix.
+    ...(context.proof !== undefined ? { proof: context.proof } : {}),
+    // Likewise the injected composition-coverage facts (the LOCAL-VS-GLOBAL family):
+    // each interaction edge carries its own endpoint files (the gate folds an uncovered
+    // L4 edge), so file-scoping never narrows them — they pass through unchanged. Omit
+    // the key when absent. WITHOUT this pass-through the compositionCoverageGate (an L4
+    // gate, so always scoped) would see no facts and fold NOTHING even though the host
+    // injected them — the same scoped-context drop the pass-throughs above fix.
+    ...(context.composition !== undefined ? { composition: context.composition } : {}),
   };
 }
 
