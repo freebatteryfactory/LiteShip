@@ -1,10 +1,10 @@
 /**
- * Core primitive benchmarks -- Boundary, Token, BlendTree, Compositor, ECS.
+ * Core primitive benchmarks -- Boundary, Token, BlendTree, Compositor, ECS, Config.
  */
 
 import { Bench } from 'tinybench';
 import { Effect, Scope, Schema } from 'effect';
-import { Boundary, Token, Compositor, BlendTree, World, Part } from '@czap/core';
+import { Boundary, Token, Compositor, BlendTree, World, Part, Config } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 100 });
 
@@ -191,12 +191,22 @@ bench.add('Compositor.compute() -- empty', () => {
   void posY;
 }
 
-// TODO(bang2/task8): uncomment when Config.make() is implemented
-// import { Config } from '@czap/core';
-// const testCfg = Config.make({ boundaries: { viewport: boundary3 } });
-// bench.add('Config.make() -- empty config', () => { Config.make({}); });
-// bench.add('Config.make() -- with boundaries', () => { Config.make({ boundaries: { viewport: boundary3, layout: boundary5 } }); });
-// bench.add('Config.toViteConfig() -- projection', () => { Config.toViteConfig(testCfg); });
+// Config -- make() mints a CanonicalCbor + FNV-1a content address; the
+// projections (toViteConfig) are pure structural folds. Both are on the
+// adapter-config hot path every czap project pays once at startup.
+const testCfg = Config.make({ boundaries: { viewport: boundary3 } });
+
+bench.add('Config.make() -- empty config', () => {
+  Config.make({});
+});
+
+bench.add('Config.make() -- with boundaries', () => {
+  Config.make({ boundaries: { viewport: boundary3, layout: boundary5 } });
+});
+
+bench.add('Config.toViteConfig() -- projection', () => {
+  Config.toViteConfig(testCfg);
+});
 
 // ---------------------------------------------------------------------------
 // Run

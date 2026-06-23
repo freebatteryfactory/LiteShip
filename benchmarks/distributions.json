@@ -72,6 +72,27 @@
       "replicates": 1
     },
     {
+      "name": "Config.make() -- empty config",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Config.make() -- with boundaries",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Config.toViteConfig() -- projection",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
       "name": "direct boundary evaluation",
       "file": "tests/bench/ecs-composition.bench.ts",
       "inputSize": 1,

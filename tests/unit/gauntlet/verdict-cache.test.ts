@@ -404,10 +404,24 @@ describe('gateVerdictKey — determinism + sensitivity', () => {
     expect(gateVerdictKey(diffEnv)).not.toBe(gateVerdictKey(parts));
   });
 
-  it('flips when ANY of toolchain / gateId / coverageDigest changes', () => {
+  it('flips when ANY of toolchain / gateId / coverageDigest / evidenceDigest changes', () => {
     expect(gateVerdictKey({ ...parts, toolchainDigest: TC_B })).not.toBe(gateVerdictKey(parts));
     expect(gateVerdictKey({ ...parts, gateId: 'g2' })).not.toBe(gateVerdictKey(parts));
     expect(gateVerdictKey({ ...parts, coverageDigest: 'cov2' })).not.toBe(gateVerdictKey(parts));
+    // The out-of-IR evidence digest is a key segment: two different evidence folds key
+    // apart (the soundness keystone for out-of-IR-reading gates).
+    expect(gateVerdictKey({ ...parts, evidenceDigest: 'ev:a' })).not.toBe(
+      gateVerdictKey({ ...parts, evidenceDigest: 'ev:b' }),
+    );
+  });
+
+  it('an OMITTED evidenceDigest keys IDENTICALLY to before the fix (pure-IR gate back-compat)', () => {
+    // A pure-IR gate supplies no evidence digest; the key must be byte-identical to the
+    // historical 4-segment key so its existing cache entries still hit. (We assert the
+    // omitted case equals itself and differs from any REAL evidence fold — a real fold
+    // carries the `ev:` scheme and can never alias the inert no-evidence marker.)
+    expect(gateVerdictKey(parts)).toBe(gateVerdictKey({ ...parts, evidenceDigest: undefined }));
+    expect(gateVerdictKey(parts)).not.toBe(gateVerdictKey({ ...parts, evidenceDigest: 'ev:something' }));
   });
 });
 

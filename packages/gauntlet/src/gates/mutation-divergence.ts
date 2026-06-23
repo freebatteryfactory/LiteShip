@@ -51,6 +51,7 @@
 import { defineGate, requireMutation, requireIR, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
 import { levelOf } from '../assurance-map.js';
 import { propagateAssuranceLevels } from '../assurance-propagation.js';
@@ -342,5 +343,11 @@ export const mutationDivergenceGate: Gate = defineGate({
   describe:
     "Reports each surviving or no-coverage mutant as a coverage divergence at the file's propagated assurance level (kill-floor by level decides blocking), plus a per-file mutation-score-ratchet regression. Folds host-injected MutationFacts. Reports, never decides.",
   run: foldMutation,
+  // OUT-OF-IR evidence: the injected MutationFacts come from EXTERNAL per-mutant vitest
+  // runs (a mutant flips killed→survived when a confirmer test is weakened) — NOT from
+  // any IR source byte. Fold the fact content so the cache refolds on a verdict flip
+  // even when the IR source is byte-identical (the soundness keystone for this gate).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('mutation', context.mutation),
   fixtures: FIXTURES,
 });

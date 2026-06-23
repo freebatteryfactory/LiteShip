@@ -1,9 +1,3 @@
-// TODO(bang2/task10): uncomment when resolvePrimitive is implemented
-// import { resolvePrimitive } from '@czap/vite';
-// bench.add('resolvePrimitive(boundary) -- same-dir hit', async () => {
-//   await resolvePrimitive('boundary', 'primary', join(root, 'src/panel.css'), root);
-// });
-
 import {
   DEFAULT_GATE_REPLICATES,
   collectBenchResults,

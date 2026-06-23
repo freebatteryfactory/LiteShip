@@ -22,6 +22,7 @@
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
+import { stableEvidenceDigest } from '../verdict-cache.js';
 
 /** The shared rule id — namespaces every finding for traceability. */
 const RULE_ID = 'gauntlet/crdt-laws-pinned';
@@ -126,6 +127,26 @@ function fold(context: GateContext): readonly Finding[] {
   return findings;
 }
 
+/**
+ * The OUT-OF-IR evidence digest — the verdict-cache soundness fold. This gate's verdict
+ * depends ENTIRELY on the `tests/property/*-crdt-laws.prop.test.ts` files it reads (the
+ * {@link REQUIRED_LAW_FAMILIES} paths), which live UNDER `tests/` — OUTSIDE the IR. The
+ * coverage digest (package source) never sees them, so editing or deleting a law file
+ * WITHOUT touching package source would serve a stale verdict unless this is folded.
+ * We fold each required family file's `(path, body)`; an absent file folds the distinct
+ * `«absent»` marker, so deleting a law file (a real verdict change) flips the digest.
+ */
+function crdtLawsEvidenceDigest(context: GateContext): string {
+  const entries: [string, string][] = REQUIRED_LAW_FAMILIES.map((family) => {
+    const text = context.readFile(family.file);
+    // Tag presence so an ABSENT file ("A") can never alias a PRESENT file ("P") whose
+    // body coincidentally equals the absent text — the present/absent flip the verdict
+    // hinges on must always flip the digest.
+    return [family.file, text === undefined ? 'A' : `P${text}`];
+  });
+  return stableEvidenceDigest(entries);
+}
+
 // ---------------------------------------------------------------------------
 // Fixtures — in-memory file maps (the GateContext file map IS the world here).
 // ---------------------------------------------------------------------------
@@ -156,6 +177,7 @@ export const crdtLawsGate: Gate = defineGate({
   describe:
     'Verifies the L4 CRDT / linearizability laws (HLC + GraphPatch) are PINNED by deterministic property tests — the coverage rail for the causal/CRDT trust spine.',
   run: fold,
+  evidenceDigest: crdtLawsEvidenceDigest,
   fixtures: {
     red: {
       // Both files are PRESENT but INCOMPLETE — each pins only some laws. The real

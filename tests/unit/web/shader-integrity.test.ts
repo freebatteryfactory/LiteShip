@@ -29,6 +29,7 @@ import {
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
 } from '../../../packages/web/src/security/shader-integrity.js';
+import { resolveRuntimeUrl } from '../../../packages/web/src/security/runtime-url.js';
 
 const SAMPLE_GLSL = '#version 300 es\nprecision mediump float;\nout vec4 c;\nvoid main(){c=vec4(1.0);}';
 
@@ -131,6 +132,55 @@ describe('isExternalShaderSource — fetch vs inline classification', () => {
   it('treats an inline shader body as NOT external (no fetch boundary)', () => {
     expect(isExternalShaderSource(SAMPLE_GLSL)).toBe(false);
     expect(isExternalShaderSource('@fragment fn fs_main() {}')).toBe(false);
+  });
+
+  // SECURITY REGRESSION (P2a): a PATH-RELATIVE shader URL is a FETCHABLE same-origin
+  // URL under `resolveRuntimeUrl` — so it MUST be classified EXTERNAL (→ fetched +
+  // integrity-verified), never treated as inline shader SOURCE TEXT. The previous
+  // classifier (`/`-absolute / `http(s):` only) returned `false` for these, so the
+  // URL TOKEN slipped into gpu.ts/wgpu.ts's inline branch UNVERIFIED — a hole in the
+  // secure-by-default SRI cure. These assertions FAIL against the unfixed classifier.
+  it('treats a PATH-RELATIVE shader URL as EXTERNAL (fetched + verified, not inline)', () => {
+    expect(isExternalShaderSource('shaders/foo.glsl')).toBe(true);
+    expect(isExternalShaderSource('./sub/bar.wgsl')).toBe(true);
+    expect(isExternalShaderSource('../assets/wave.frag')).toBe(true);
+    // A bare single-token filename with a shader extension is still a fetchable URL.
+    expect(isExternalShaderSource('wave.glsl')).toBe(true);
+    expect(isExternalShaderSource('post.vert')).toBe(true);
+  });
+
+  it('classifies EVERY fetchable-URL shape resolveRuntimeUrl accepts as external', () => {
+    // The classifier MUST agree with the URL policy. `resolveRuntimeUrl` resolves all
+    // of these as fetchable same-/cross-origin URLs; none may reach the inline branch.
+    const fetchableShapes = [
+      '/shaders/wave.glsl', // root-absolute
+      '//cdn.example/wave.wgsl', // protocol-relative
+      'https://cdn.example/wave.glsl', // scheme-absolute https
+      'http://localhost/wave.glsl', // scheme-absolute http
+      'shaders/foo.glsl', // path-relative
+      './sub/bar.wgsl', // explicit-relative
+      '../assets/wave.frag', // parent-relative
+    ];
+    for (const url of fetchableShapes) {
+      const cls = resolveRuntimeUrl(url, { kind: 'gpu-shader', policy: { mode: 'allowlist', allowOrigins: ['https://cdn.example', 'http://localhost'] } });
+      // Every shape is something the URL policy treats as a URL (allowed or rejected
+      // for an origin reason) — i.e. NOT an opaque inline body. The integrity
+      // classifier must agree it is external so it never compiles unverified.
+      expect(cls.type === 'missing').toBe(false);
+      expect(isExternalShaderSource(url)).toBe(true);
+    }
+  });
+
+  it('does NOT over-correct: a real multi-line GLSL/WGSL body stays inline', () => {
+    // Bodies carry inner whitespace / newlines / shader syntax — never fetched.
+    expect(isExternalShaderSource(SAMPLE_GLSL)).toBe(false);
+    expect(
+      isExternalShaderSource(
+        '@group(0) @binding(0) var<uniform> u: U;\n@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4(1.0); }',
+      ),
+    ).toBe(false);
+    // A single-line body with inner whitespace (statements) is still inline.
+    expect(isExternalShaderSource('void main() { gl_FragColor = vec4(1.0); }')).toBe(false);
   });
 });
 

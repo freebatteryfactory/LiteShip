@@ -33,6 +33,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { rankOf, type AssuranceLevel } from '../assurance.js';
 import { memoryContext } from '../engine.js';
@@ -224,6 +225,12 @@ export const traceabilityBridgeGate: Gate = defineGate({
   describe:
     "Avionics-tier fold over the host-supplied requirements-traceability facts: every system INVARIANT (a LAW) is traced to a proving test or a waiver-with-teeth; an untraced invariant, an expired waiver, or a ledger⇔header divergence is a self-explaining Finding at the invariant's level (the bidirectional-trace / test-honesty rail).",
   run: fold,
+  // OUT-OF-IR evidence: the injected TraceabilityFacts are derived from EXTERNAL
+  // artifacts (the `traceability/*.yaml` ledger + the test-corpus `// PROVES:` headers +
+  // the injected date) — NONE in the IR. Editing the ledger or a confirmer header WITHOUT
+  // touching package source must refold. Fold the fact content (the soundness keystone).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('traceability', context.traceability),
   fixtures: {
     red: {
       name: 'a ledger with an untraced L4 invariant, an expired waiver, and a ledger⇔header divergence',

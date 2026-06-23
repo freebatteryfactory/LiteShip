@@ -71,6 +71,7 @@
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { stableEvidenceDigest } from '../verdict-cache.js';
 import { codeOnly, stringsBlanked } from './code-only.js';
 
 export const CLAIM_PROPERTY_RULE_ID = 'gauntlet/claim-without-confirmer';
@@ -745,6 +746,32 @@ const GREEN_CONTENT = 'export function canonicalize(x: number): number {\n  retu
 const GREEN_CONTENT_TEST =
   "import { it } from 'vitest';\nimport { addressedDigestOf } from '@czap/canonical';\nit('canonicalize round-trips: equal value, equal address', () => {\n  void addressedDigestOf;\n});\n";
 
+/**
+ * The OUT-OF-IR EVIDENCE digest — the verdict-cache soundness fold for this gate. The
+ * gate's verdict depends not only on the published source it scans (IN the IR, covered
+ * by the coverage digest) but also on the CONFIRMER TEST CORPUS it reads through the
+ * UNSCOPED `allFiles()` (under `tests/` — OUTSIDE the IR). Editing a confirmer test (or
+ * deleting it) flips a claim between confirmed and unconfirmed WITHOUT touching any IR
+ * source byte, so the cache would serve a stale verdict unless this evidence is folded.
+ *
+ * We fold the EXACT confirmer corpus the gate's `run` reads: every governed test file
+ * (the same {@link confirmerCorpusFiles} ∩ {@link isTestFile} set the determinism +
+ * content-address confirmer scans walk), as `(path, body)` pairs. The fold is
+ * order-independent ({@link stableEvidenceDigest} sorts by path), so it is stable and
+ * sensitive to ADDING, REMOVING, or EDITING any confirmer. Pure: it only re-reads the
+ * bytes through the same context `run` uses.
+ */
+function claimPropertyEvidenceDigest(context: GateContext): string {
+  const entries: [string, string][] = [];
+  for (const file of confirmerCorpusFiles(context)) {
+    if (!isTestFile(file)) continue;
+    const text = context.readFile(file);
+    if (text === undefined) continue;
+    entries.push([file, text]);
+  }
+  return stableEvidenceDigest(entries);
+}
+
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
 export const claimPropertyGate: Gate = defineGate({
   id: CLAIM_PROPERTY_RULE_ID,
@@ -752,6 +779,7 @@ export const claimPropertyGate: Gate = defineGate({
   describe:
     'Claim-without-confirmer — a NAME-based semantic property claim (deterministic / pure / content-addressed) in published src with no measurable confirmer, or a purity claim contradicted by an in-declaration ambient read, is a HARD finding; a declaration-leading DOC claim with no confirmer is advisory (Rice).',
   run: scan,
+  evidenceDigest: claimPropertyEvidenceDigest,
   fixtures: {
     red: {
       name: 'three published NAME/contradiction claims (deterministicFold / pureProject-with-Date.now / canonicalize) each MISSING its confirmer',

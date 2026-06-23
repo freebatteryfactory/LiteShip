@@ -33,6 +33,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { DecoderFuzzFact, DecodeViolationClass, FuzzCorpusFacts } from '../fuzz-facts.js';
@@ -173,6 +174,13 @@ export const fuzzCorpusGate: Gate = defineGate({
   describe:
     'Avionics-tier fold over host-supplied decode-fuzz facts: a decode-surface violation (a crash / a prototype pollution / a misparse on an untrusted-byte decoder) is a self-explaining L4 Finding carrying the reproducer — the untrusted-byte decode surface is the trust spine.',
   run: fold,
+  // OUT-OF-IR evidence: the injected FuzzCorpusFacts come from an EXTERNAL fuzzer run
+  // over the committed `tests/fixtures/fuzz-corpus` + seeded generated inputs (a decoder
+  // flips clean↔violation as the corpus / seed changes), NOT from any IR source byte.
+  // Fold the fact content so the cache refolds on a decoder-verdict change (the
+  // soundness keystone for this gate).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('fuzzCorpus', context.fuzzCorpus),
   fixtures: {
     red: {
       name: 'a corpus where the CBOR decoder pollutes Object.prototype on the __proto__ CVE seed (the fail-closed invariant broke)',

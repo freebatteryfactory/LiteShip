@@ -189,6 +189,60 @@ describe('GLSL shader content integrity — verify-before-compile, refuse-on-mis
     expect(shaderSources.some((s) => s.includes('vec4(v_uv, 0.0, 1.0)'))).toBe(false);
   });
 
+  test('a PATH-RELATIVE shader URL is FETCHED + verified, NOT literal-compiled (P2a regression)', async () => {
+    // SECURITY REGRESSION (P2a): a path-relative `data-czap-shader-src`
+    // (`shaders/wave.glsl`) is a FETCHABLE same-origin URL. Before the fix the
+    // integrity classifier returned false for it, so gpu.ts compiled the URL TOKEN
+    // as inline shader SOURCE TEXT — never fetched, never verified. Now it is
+    // classified EXTERNAL: fetched, integrity-verified, and the URL token must NEVER
+    // reach gl.shaderSource as literal source.
+    const fetchSpy = vi.fn(async () => new Response(FETCHED_GLSL, { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    const shaderSources: string[] = [];
+    const gl = makeGlStub(shaderSources);
+    const canvas = mountCanvas(gl);
+    canvas.setAttribute('data-czap-shader-src', 'shaders/wave.glsl');
+    canvas.setAttribute('data-czap-shader-integrity', sriOf(FETCHED_GLSL));
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+    await flush();
+
+    // The path-relative URL was actually FETCHED (not treated as inline source).
+    expect(fetchSpy).toHaveBeenCalledWith('shaders/wave.glsl');
+    // The verified fetched body reached gl.shaderSource — the URL token itself never did.
+    const fragSource = shaderSources.find((s) => s.includes('fragColor'));
+    expect(fragSource).toBeDefined();
+    expect(fragSource).toContain('vec4(v_uv, 0.5, 1.0)');
+    expect(shaderSources.some((s) => s.includes('shaders/wave.glsl'))).toBe(false);
+  });
+
+  test('a PATH-RELATIVE shader URL with NO pin is REFUSED (secure-by-default, P2a regression)', async () => {
+    // The path-relative URL is external, so a missing pin must REFUSE — proving the
+    // hole is closed: a path-relative URL can no longer slip past the SRI gate as
+    // "inline" unverified source.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(FETCHED_GLSL, { status: 200 })),
+    );
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const shaderSources: string[] = [];
+    const gl = makeGlStub(shaderSources);
+    const canvas = mountCanvas(gl);
+    canvas.setAttribute('data-czap-shader-src', 'shaders/wave.glsl');
+    // No data-czap-shader-integrity attribute.
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+    await flush();
+
+    const absent = events.find((e) => e.code === 'shader-integrity-absent');
+    expect(absent).toBeDefined();
+    expect(absent!.level).toBe('error');
+    // The unverified path-relative shader never reached GL as source, literal or fetched.
+    expect(shaderSources.some((s) => s.includes('shaders/wave.glsl'))).toBe(false);
+    expect(shaderSources.some((s) => s.includes('fragColor') && s.includes('v_uv'))).toBe(false);
+  });
+
   test('an EXTERNAL fetch with NO pin is REFUSED (secure-by-default)', async () => {
     vi.stubGlobal(
       'fetch',
@@ -289,6 +343,60 @@ describe('WGSL shader content integrity — refuse-on-mismatch before createShad
     const mismatch = events.find((e) => e.code === 'wgsl-integrity-mismatch');
     expect(mismatch).toBeDefined();
     expect(mismatch!.level).toBe('error');
+  });
+
+  test('a PATH-RELATIVE WGSL shader URL is FETCHED + verified, NOT literal-compiled (P2a regression)', async () => {
+    // The WGSL twin of the GLSL P2a regression: a path-relative `shaders/wave.wgsl`
+    // is a fetchable URL — it MUST be fetched + verified, never passed to
+    // `createShaderModule` as literal source. With a matching pin it compiles the
+    // FETCHED body; the URL token never appears in the compiled code.
+    const fetchSpy = vi.fn(async () => new Response(FETCHED_WGSL, { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    const moduleCodes: string[] = [];
+    const env = makeWebGpuEnv(moduleCodes);
+    vi.stubGlobal('navigator', { gpu: env.gpu } as never);
+    const canvas = document.createElement('canvas');
+    vi.spyOn(canvas, 'getContext').mockImplementation((kind: string) =>
+      kind === 'webgpu' ? (env.context as never) : null,
+    );
+
+    const { parseShaderIntegrity } = await import('../../../packages/web/src/security/shader-integrity.js');
+    const pinned = parseShaderIntegrity(sriOf(FETCHED_WGSL));
+
+    const dispose = await initWGSLRuntime(canvas, 'shaders/wave.wgsl', undefined, undefined, pinned);
+
+    // Fetched (not inline) + the verified fetched body compiled; the URL token never did.
+    expect(fetchSpy).toHaveBeenCalledWith('shaders/wave.wgsl');
+    expect(moduleCodes.some((c) => c.includes('vec4(1.0, 0.0, 0.0, 1.0)'))).toBe(true);
+    expect(moduleCodes.some((c) => c.includes('shaders/wave.wgsl'))).toBe(false);
+    expect(dispose).not.toBeNull();
+    dispose?.();
+  });
+
+  test('a PATH-RELATIVE WGSL shader URL with NO pin is REFUSED (secure-by-default, P2a regression)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(FETCHED_WGSL, { status: 200 })),
+    );
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const moduleCodes: string[] = [];
+    const env = makeWebGpuEnv(moduleCodes);
+    vi.stubGlobal('navigator', { gpu: env.gpu } as never);
+    const canvas = document.createElement('canvas');
+    vi.spyOn(canvas, 'getContext').mockImplementation((kind: string) =>
+      kind === 'webgpu' ? (env.context as never) : null,
+    );
+
+    // No integrity pin passed — a path-relative external WGSL fetch must REFUSE.
+    const dispose = await initWGSLRuntime(canvas, 'shaders/wave.wgsl', undefined, undefined, null);
+
+    expect(env.device.createShaderModule).not.toHaveBeenCalled();
+    expect(moduleCodes).toHaveLength(0);
+    expect(dispose).toBeNull();
+    const absent = events.find((e) => e.code === 'wgsl-integrity-absent');
+    expect(absent).toBeDefined();
+    expect(absent!.level).toBe('error');
   });
 
   test('a VERIFIED fetched WGSL shader compiles — createShaderModule receives the verified code', async () => {

@@ -155,6 +155,35 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
     });
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'invariant-removed')).toBe(true);
   });
+
+  test('a NEW sanctioned skip (more is skipped — the always-blocking no-skipped-test floor relaxed)', () => {
+    const part = simulate((els) => [
+      ...els,
+      { _tag: 'skip-allowlist', file: 'tests/unit/fake/unsanctioned.test.ts', capability: 'ffmpeg-absent' },
+    ]);
+    expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+  });
+
+  test('a skip-allowlist add can NEVER be signed (it relaxes the always-blocking no-skipped-test floor)', () => {
+    const signoff: StandardsWaiver = {
+      elementKey: 'skip-allowlist::tests/unit/fake/unsanctioned.test.ts',
+      weakening: 'skip-allowlist-added',
+      owner: 'raccoon',
+      justification: 'trust me, this skip is fine',
+      expiry: '2999-01-01',
+    };
+    const part = simulate(
+      (els) => [
+        ...els,
+        { _tag: 'skip-allowlist', file: 'tests/unit/fake/unsanctioned.test.ts', capability: 'ffmpeg-absent' },
+      ],
+      [signoff],
+    );
+    // The sign-off is VOID: the weakening stays unsigned (blocking) AND a forbidden
+    // sign-off is recorded — you cannot sign away a lie, even a skip-shaped one.
+    expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+    expect(part.forbiddenSignoffs.length).toBeGreaterThan(0);
+  });
 });
 
 describe('BITE — the owner sign-off is the only honest escape (with teeth, never covering a lie)', () => {

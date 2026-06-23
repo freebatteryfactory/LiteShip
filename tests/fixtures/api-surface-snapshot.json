@@ -1843,6 +1843,10 @@
           "kind": "const"
         },
         {
+          "name": "NO_EVIDENCE_MARKER",
+          "kind": "const"
+        },
+        {
           "name": "PERF_CLAIM_BENCH_RULE_ID",
           "kind": "const"
         },
@@ -1856,6 +1860,10 @@
         },
         {
           "name": "PROOF_SEVERITY_BY_LEVEL",
+          "kind": "const"
+        },
+        {
+          "name": "SANCTIONED_SKIPS",
           "kind": "const"
         },
         {
@@ -1897,7 +1905,7 @@
         {
           "name": "claimPropertyGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "codeOnly",
@@ -1912,7 +1920,7 @@
         {
           "name": "compositionCoverageGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "computeHeatmap",
@@ -1932,15 +1940,20 @@
         {
           "name": "crdtLawsGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "declaredFixProtocolGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "defineGate",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "detectSkips",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1972,12 +1985,17 @@
         {
           "name": "fuzzCorpusGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "gateVerdictKey",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "injectedFactEvidenceDigest",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "isFinding",
@@ -2032,7 +2050,7 @@
         {
           "name": "mcdcCoverageGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "memoryContext",
@@ -2042,7 +2060,7 @@
         {
           "name": "mutationDivergenceGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noBareThrowGate",
@@ -2067,7 +2085,7 @@
         {
           "name": "noPlaceholderGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noRequireDivergenceGate",
@@ -2082,7 +2100,7 @@
         {
           "name": "noSkippedTestGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "noTsIgnoreGate",
@@ -2102,17 +2120,17 @@
         {
           "name": "perfClaimBenchGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "performanceContractsGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "proofPropagationGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "propagateAssuranceLevels",
@@ -2160,6 +2178,11 @@
           "signature": "(2)"
         },
         {
+          "name": "sanctionedSkipFor",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "scopeContextByLevel",
           "kind": "function",
           "signature": "(4)"
@@ -2167,7 +2190,7 @@
         {
           "name": "simulationDeterminismGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "sortSurfaceElements",
@@ -2175,9 +2198,19 @@
           "signature": "(1)"
         },
         {
+          "name": "stableEvidenceDigest",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "stableSerialize",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "standardsIntegrityGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "stringsBlanked",
@@ -2192,7 +2225,7 @@
         {
           "name": "supplyChainGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "surfaceElementKey",
@@ -2207,7 +2240,7 @@
         {
           "name": "taintFlowGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "tallyBySeverity",
@@ -2217,7 +2250,7 @@
         {
           "name": "traceabilityBridgeGate",
           "kind": "namespace",
-          "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
           "name": "verifyDeclaredFix",

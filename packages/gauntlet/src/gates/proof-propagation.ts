@@ -87,6 +87,7 @@
  */
 
 import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../repo-ir.js';
@@ -427,5 +428,11 @@ export const proofPropagationGate: Gate = defineGate({
   describe:
     'Propagates a per-module proof scalar along the dep DAG (min-fixpoint, the lax-functor) and reports each trust-spine module whose global proof drops below its level floor because of a weak dependency, naming the weak-link path. Folds host-injected ProofFacts. Reports, never decides.',
   run: foldProofPropagation,
+  // OUT-OF-IR evidence: the gate propagates over the IR dep DAG (in the coverage digest)
+  // BUT seeds it with the injected ProofFacts derived from EXTERNAL signals (the
+  // mutation-score ratchet, the coverage report, the enrolled-invariant ledger) — NONE in
+  // the IR. A weakened signal flips a module below its floor WITHOUT touching source, so
+  // fold the fact content too (the soundness keystone for this gate).
+  evidenceDigest: (context: GateContext): string | undefined => injectedFactEvidenceDigest('proof', context.proof),
   fixtures: FIXTURES,
 });

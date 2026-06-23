@@ -41,6 +41,7 @@ import {
   LITESHIP_WAIVERS,
   LITESHIP_ASSURANCE_MAP,
   ALWAYS_BLOCKING_RULES,
+  SANCTIONED_SKIPS,
   supplyChainGate,
   mutationDivergenceGate,
   mcdcCoverageGate,
@@ -153,6 +154,18 @@ function assuranceElements(): readonly StandardsElement[] {
 }
 
 /**
+ * Extract every SANCTIONED CAPABILITY-GATED SKIP (`SANCTIONED_SKIPS`) — the
+ * waiver-with-teeth that makes each legit `tests/` skip VISIBLE on the content-addressed
+ * surface. ADDING an entry is a WEAKEN the raccoon-rule diff surfaces (more is skipped),
+ * so a new sanctioned skip must be an intentional, reviewed snapshot regeneration.
+ */
+function skipAllowlistElements(): readonly StandardsElement[] {
+  return SANCTIONED_SKIPS.map(
+    (s): StandardsElement => ({ _tag: 'skip-allowlist', file: s.file, capability: s.capability }),
+  );
+}
+
+/**
  * Extract every INVARIANT-ledger element. Reuses the host traceability state machine
  * ({@link buildTraceabilityFacts}) so the invariants + their resolved proof/waiver kind
  * come from the SAME source of truth the traceability gate uses — never a fork. The
@@ -238,6 +251,7 @@ export function readLiveStandardsSurface(repoRoot: string, now: Date): Standards
     ...gateElements(),
     ...waiverElements(),
     ...assuranceElements(),
+    ...skipAllowlistElements(),
     ...invariantElements(repoRoot, now),
     ...floorElements(repoRoot),
   ]);

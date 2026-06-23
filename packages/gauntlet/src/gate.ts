@@ -320,6 +320,38 @@ export interface Gate {
    * consulted on the cache path; a run with no cache never calls it.
    */
   readonly coverage?: (ir: RepoIR) => readonly FileId[];
+  /**
+   * OPTIONAL out-of-IR EVIDENCE digest (the verdict-cache soundness keystone). A
+   * gate's {@link coverage} (or the default-to-all floor) captures only the bytes
+   * IN THE IR (package source built from `auditSourceGlobs`). A gate that reads
+   * evidence OUTSIDE the IR — the confirmer test corpus via {@link GateContext.allFiles}
+   * (under `tests/`), a `benchmarks/*.json` registry / `tests/bench/*.bench.ts` via
+   * {@link GateContext.readFile}, a ledger/snapshot, or the CONTENT of an injected
+   * fact ({@link GateContext.mutation} / {@link GateContext.supplyChain} / … whose
+   * source bytes are an external artifact) — has evidence the coverage digest CANNOT
+   * see. Without folding it, the cache would serve a STALE verdict when that out-of-IR
+   * evidence changed while IR source stayed byte-identical (the soundness bug this
+   * field cures).
+   *
+   * Return a deterministic content digest of the EXACT out-of-IR bytes this gate's
+   * {@link run} reads — built from the SAME context, via {@link stableEvidenceDigest}
+   * (a `(label, bytes)` fold) for file evidence or {@link stableSerialize} for an
+   * injected fact. The digest is folded into the cache key alongside the coverage
+   * digest, so editing the out-of-IR evidence flips the key → MISS → re-run.
+   *
+   * A gate that reads ONLY IR files returns `undefined` (or omits this field): the
+   * key folds the inert no-evidence marker and the gate's caching is UNCHANGED. The
+   * digest MUST cover EXACTLY the gate's out-of-IR reads — an under-fold is the same
+   * too-narrow-coverage SOUNDNESS BUG {@link coverage} warns about (fold MORE when in
+   * doubt: a needless MISS, never a stale serve).
+   *
+   * Pure w.r.t. the context (no clock, no ambient I/O beyond the context's own
+   * `readFile`/`allFiles`/injected facts). Only consulted on the cache path; a run
+   * with no cache never calls it. The context passed is the SAME scoped context
+   * `run` receives — `allFiles()`/`readFile` pass through level-scoping verbatim, so
+   * the evidence the digest folds matches the evidence `run` reads.
+   */
+  readonly evidenceDigest?: (context: GateContext) => string | undefined;
   /** The self-proof evidence — required, by construction. */
   readonly fixtures: GateFixtures;
 }

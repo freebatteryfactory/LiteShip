@@ -39,6 +39,7 @@ import { ValidationError } from '@czap/error';
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { stableEvidenceDigest } from '../verdict-cache.js';
 import { commentsBlanked } from './code-only.js';
 
 export const PERFORMANCE_CONTRACTS_RULE_ID = 'gauntlet/performance-contracts';
@@ -372,6 +373,32 @@ function scan(context: GateContext): readonly Finding[] {
   return [...checkDeclaredDistributions(context, declared), ...checkComplexityMap(readComplexityEntries(context))];
 }
 
+/**
+ * The OUT-OF-IR EVIDENCE digest — the verdict-cache soundness fold. This gate reads its
+ * entire evidence from OUTSIDE the IR: `benchmarks/distributions.json`,
+ * `benchmarks/complexity-map.json`, and every governed `tests/bench/*.bench.ts` the
+ * distributions reference (under `benchmarks/` and `tests/` — neither in the IR's
+ * package-source scope). Editing a benchmark registry or a bench file WITHOUT touching
+ * package source flips the verdict, so the cache would serve a stale result unless those
+ * bytes are folded. We fold all three sources (the bench-file set derived from the
+ * distributions exactly as {@link checkDeclaredDistributions} does), each present/absent-
+ * tagged so adding/removing/editing any of them flips the digest.
+ */
+function performanceContractsEvidenceDigest(context: GateContext): string {
+  const tag = (text: string | undefined): string => (text === undefined ? 'A' : `P${text}`);
+  const entries: [string, string][] = [
+    [DISTRIBUTIONS_PATH, tag(context.readFile(DISTRIBUTIONS_PATH))],
+    [COMPLEXITY_MAP_PATH, tag(context.readFile(COMPLEXITY_MAP_PATH))],
+  ];
+  // The governed bench files are exactly those the distributions registry references —
+  // the same set the fold reads (no glob dependence). Fold each file's bytes so editing
+  // a bench registration (adding an undeclared bench) flips the digest.
+  for (const file of new Set(readDistributions(context).map((d) => d.file))) {
+    entries.push([file, tag(context.readFile(file))]);
+  }
+  return stableEvidenceDigest(entries);
+}
+
 // ---------------------------------------------------------------------------
 // Fixtures — the authority ratchet's evidence (red catches, green stays clean,
 // mutation proves the fixtures have teeth). All in-memory; no filesystem.
@@ -419,6 +446,7 @@ export const performanceContractsGate: Gate = defineGate({
   describe:
     'Performance contracts — a bench result is invalid unless its input distribution is declared; a hot path must not regress its complexity class.',
   run: scan,
+  evidenceDigest: performanceContractsEvidenceDigest,
   fixtures: {
     red: {
       name: 'an undeclared bench + a complexity-class regression to O(n^2)',

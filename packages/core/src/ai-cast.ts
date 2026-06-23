@@ -44,7 +44,7 @@ import { contentAddressOf } from './content-address.js';
 import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-graph.js';
 import { isWellFormedNode } from './document-graph-schema.js';
 import { linearizeGraph, sealNode } from './document-graph-address.js';
-import { GraphPatch } from './graph-patch.js';
+import { GraphPatch, SUPPORTED_PATCH_VERSION } from './graph-patch.js';
 import type { PatchOp } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
 import { mintValidated, assertTokenBinds } from './validated-output.js';
@@ -280,7 +280,7 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
       required: ['_tag', '_version', 'base', 'ops'],
       properties: {
         _tag: { const: 'GraphPatch' },
-        _version: { const: 1 },
+        _version: { const: SUPPORTED_PATCH_VERSION },
         base: { const: base, description: 'The id of the graph this patch applies to.' },
         ops: {
           type: 'array',
@@ -494,12 +494,33 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
   // — a non-object patch or a missing / non-array `ops` must yield a clean
   // ProposalRejection, never a TypeError that escapes the validation boundary and
   // crashes host admission code.
-  const env = patch as { _tag?: unknown; ops?: unknown } | null;
+  const env = patch as { _tag?: unknown; _version?: unknown; ops?: unknown } | null;
   if (env === null || typeof env !== 'object' || env._tag !== 'GraphPatch' || !Array.isArray(env.ops)) {
     return {
       ok: false,
       target: 'graph-patch',
-      errors: ['Proposal is not a well-formed GraphPatch envelope (expected { _tag: "GraphPatch", ops: [...] }).'],
+      errors: [
+        `Proposal is not a well-formed GraphPatch envelope (expected { _tag: "GraphPatch", _version: ${SUPPORTED_PATCH_VERSION}, ops: [...] }).`,
+      ],
+    };
+  }
+  // VERSION-SKEW GATE (the advertised schema PINS `_version` to SUPPORTED_PATCH_VERSION;
+  // the guard must ENFORCE it). The proposal is re-stamped below via `GraphPatch.propose`,
+  // which mints a CURRENT-version patch — so a missing `_version` or a future/foreign
+  // `_version` (e.g. 2) would otherwise be silently COERCED to current instead of rejected,
+  // breaking "validated-in shape == the advertised output contract" and risking a
+  // future-format patch being mis-interpreted as v1. Reject off-version input HERE, BEFORE
+  // re-stamping, as the same clean, tagged ProposalRejection the other envelope failures
+  // produce (never a TypeError, never silent coercion). Single source: the version constant
+  // shared with `GraphPatch.decode` and the advertised JSON schema.
+  if (env._version !== SUPPORTED_PATCH_VERSION) {
+    return {
+      ok: false,
+      target: 'graph-patch',
+      errors: [
+        `Proposal carries _version ${JSON.stringify(env._version)} — this build's advertised GraphPatch contract pins _version ${SUPPORTED_PATCH_VERSION}. ` +
+          'A missing or skewed version is rejected, never coerced to the current format.',
+      ],
     };
   }
   if (patch.base !== graph.id) {

@@ -30,6 +30,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { ScenarioReplayFact, SimulationFacts } from '../simulation-facts.js';
@@ -163,6 +164,12 @@ export const simulationDeterminismGate: Gate = defineGate({
   describe:
     'Avionics-tier fold over host-supplied DST (deterministic-simulation) facts: a replay-divergence (two replays of one seed produce different byte-exact trace digests) is a self-explaining L4 Finding carrying the seed — determinism is the trust spine.',
   run: fold,
+  // OUT-OF-IR evidence: the injected SimulationFacts come from EXTERNAL seeded replay
+  // runs (a scenario flips deterministic→divergent), NOT from any IR source byte. Fold
+  // the fact content so the cache refolds on a divergence change even when the IR source
+  // is byte-identical (the soundness keystone for this gate).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('simulation', context.simulation),
   fixtures: {
     red: {
       name: 'a corpus where one scenario diverges on replay (the SUT leaked an ambient clock read)',

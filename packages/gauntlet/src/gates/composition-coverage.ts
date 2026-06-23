@@ -48,6 +48,7 @@
  */
 
 import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../repo-ir.js';
@@ -254,5 +255,12 @@ export const compositionCoverageGate: Gate = defineGate({
   describe:
     "Reports each uncovered composition edge (A calls B, both individually tested, no integration test exercises them together) at the edge's propagated level. A structural over-approximation of integration coverage, honestly stated. Folds host-injected CompositionFacts. Reports, never decides.",
   run: foldComposition,
+  // OUT-OF-IR evidence: the injected CompositionFacts carry the interaction-edge coverage
+  // classification derived from an EXTERNAL per-test execution probe / static-reference
+  // scan over the TEST corpus (an edge flips covered↔uncovered as an integration test
+  // changes), NOT from any IR source byte alone. Fold the fact content so the cache
+  // refolds on an edge-coverage change (the soundness keystone for this gate).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('composition', context.composition),
   fixtures: FIXTURES,
 });

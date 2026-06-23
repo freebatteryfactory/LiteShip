@@ -40,6 +40,7 @@
 import { defineGate, type GateContext, type Gate } from '../gate.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
+import { stableEvidenceDigest } from '../verdict-cache.js';
 import { codeOnly, stringsBlanked, commentsBlanked } from './code-only.js';
 
 export const PERF_CLAIM_BENCH_RULE_ID = 'gauntlet/perf-claim-without-bench';
@@ -420,6 +421,26 @@ const GREEN_DISTRIBUTIONS = JSON.stringify({
   ],
 });
 
+/**
+ * The OUT-OF-IR EVIDENCE digest — the verdict-cache soundness fold. The published source
+ * the gate SCANS for claims is in the IR (covered by the coverage digest), but the BENCH
+ * surface that SATISFIES a claim — `benchmarks/distributions.json` plus every governed
+ * `*.bench.ts` file (under `benchmarks/`/`tests/bench/` — OUTSIDE the IR) — is not.
+ * Removing a bench that backed a claim flips it from benched to unbenched WITHOUT touching
+ * the claimed source, so the cache would serve a stale verdict unless this is folded. We
+ * fold the EXACT benched-surface sources {@link benchedSurface} reads: the distributions
+ * registry + the `.bench.ts` files `context.files()` exposes, each present/absent-tagged.
+ */
+function perfClaimBenchEvidenceDigest(context: GateContext): string {
+  const tag = (text: string | undefined): string => (text === undefined ? 'A' : `P${text}`);
+  const entries: [string, string][] = [[DISTRIBUTIONS_PATH, tag(context.readFile(DISTRIBUTIONS_PATH))]];
+  for (const file of context.files()) {
+    if (!file.endsWith('.bench.ts')) continue;
+    entries.push([file, tag(context.readFile(file))]);
+  }
+  return stableEvidenceDigest(entries);
+}
+
 /** The qualified gate — fixtures included, so it self-proves via the ratchet. */
 export const perfClaimBenchGate: Gate = defineGate({
   id: PERF_CLAIM_BENCH_RULE_ID,
@@ -427,6 +448,7 @@ export const perfClaimBenchGate: Gate = defineGate({
   describe:
     'Perf-claim-without-bench — a measurable performance claim (zero-alloc / fast-path / O(1) …) in published src with no benchmark measuring it is a finding.',
   run: scan,
+  evidenceDigest: perfClaimBenchEvidenceDigest,
   fixtures: {
     red: {
       name: 'a `fastPath` function in published src with NO bench measuring it',

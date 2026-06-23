@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:bfdfd834",
+  "address": "fnv1a:d6b89ece",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -578,6 +578,76 @@
       "id": "INV-VERDICT-CACHE-KEY-DETERMINISTIC",
       "level": "L4",
       "proofKind": "proof"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/browser/spsc-ring-browser.test.ts",
+      "capability": "shared-array-buffer-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/e2e/astro-directives.e2e.ts",
+      "capability": "astro-example-not-built"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/integration/cli/idempotency.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/integration/cli/scene-dev.test.ts",
+      "capability": "coverage-instrumentation"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/integration/cli/scene-render.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/property/boundary-evaluate-batch.prop.test.ts",
+      "capability": "wasm-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/smoke/intro-render.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/command/error-contract.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/command/ffmpeg-render-backend.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/command/host-context.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/core/wasm-parity.test.ts",
+      "capability": "wasm-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/core/wasm-shipping.test.ts",
+      "capability": "wasm-dist-staged"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/stage/dual-export-node.test.ts",
+      "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/stage/ffmpeg-encoder.test.ts",
+      "capability": "ffmpeg-absent"
     },
     {
       "_tag": "waiver",

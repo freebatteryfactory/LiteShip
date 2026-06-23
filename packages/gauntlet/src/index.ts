@@ -147,9 +147,13 @@ export {
   type GateVerdictCache,
   type GateVerdictKeyParts,
   MISSING_DIGEST_SENTINEL,
+  NO_EVIDENCE_MARKER,
   gateVerdictKey,
   coverageDigestOf,
   allFileIds,
+  stableEvidenceDigest,
+  stableSerialize,
+  injectedFactEvidenceDigest,
 } from './verdict-cache.js';
 
 export { type LevelRule, LITESHIP_ASSURANCE_MAP, levelOf, matchesGlob } from './assurance-map.js';
@@ -231,6 +235,18 @@ export { noNondeterminismGate } from './gates/no-nondeterminism.js';
 export { noSilentCatchGate } from './gates/no-silent-catch.js';
 export { noSkippedTestGate } from './gates/no-skipped-test.js';
 export { noPlaceholderGate } from './gates/no-placeholder.js';
+
+// The skip-form detector + the enumerated sanctioned-skip allowlist — exported so the
+// standards-surface extractor can fold the allowlist into the content-addressed snapshot
+// (a sanctioned skip is a visible, snapshot-pinned standards element; adding one is a
+// WEAKEN the raccoon-rule diff surfaces) and a host/test can reuse the ONE detector.
+export { type SkipForm, type SkipMatch, detectSkips } from './gates/skip-detect.js';
+export {
+  type SkipCapability,
+  type SanctionedSkip,
+  SANCTIONED_SKIPS,
+  sanctionedSkipFor,
+} from './gates/skip-allowlist.js';
 
 // The IR-fold gates (Slice B, B1) — these REQUIRE the injected repo-IR, so they
 // run only on the host path (the CLI builds + injects the IR). They are NOT in

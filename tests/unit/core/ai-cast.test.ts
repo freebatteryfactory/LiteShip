@@ -214,7 +214,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
 
   test('a REFLECTION-FORGED token (witness symbol harvested off a real proposal) is still refused — authenticity is WeakSet identity, not a property brand', () => {
     const base = graph([node('a')]);
-    const real = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    const real = AICast.validateGraphPatchProposal(
+      base,
+      GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]),
+    );
     expect(real.ok).toBe(true);
     if (!real.ok) return;
 
@@ -233,7 +236,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
 
   test('a minted proposal and its token are FROZEN — the bound subject cannot be mutated in place', () => {
     const base = graph([node('a')]);
-    const checked = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    const checked = AICast.validateGraphPatchProposal(
+      base,
+      GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]),
+    );
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
     expect(Object.isFrozen(checked.proposal.token)).toBe(true);
@@ -251,7 +257,9 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
 
-    const mintedNode = checked.proposal.payload.ops.find((o): o is Extract<typeof o, { node: unknown }> => 'node' in o)?.node;
+    const mintedNode = checked.proposal.payload.ops.find(
+      (o): o is Extract<typeof o, { node: unknown }> => 'node' in o,
+    )?.node;
     expect(mintedNode?.id).toBe(honestB.id); // re-sealed to the true address
     expect(mintedNode?.id).not.toBe(base.nodes[0]!.id); // NOT the forged (impersonated) id
   });
@@ -269,7 +277,51 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     // A wholly non-object / non-envelope patch is also a clean rejection, not a crash.
     expect(() => AICast.validateGraphPatchProposal(base, null as unknown as GraphPatch)).not.toThrow();
     expect(AICast.validateGraphPatchProposal(base, 'nope' as unknown as GraphPatch).ok).toBe(false);
-    expect(AICast.validateGraphPatchProposal(base, { _tag: 'GraphPatch', ops: 'no' } as unknown as GraphPatch).ok).toBe(false);
+    expect(AICast.validateGraphPatchProposal(base, { _tag: 'GraphPatch', ops: 'no' } as unknown as GraphPatch).ok).toBe(
+      false,
+    );
+  });
+
+  test('an envelope MISSING _version is REJECTED — the advertised schema PINS _version, the guard enforces it', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // A model output that omits the advertised, REQUIRED `_version` field. Its ops
+    // are otherwise valid — the ONLY defect is the missing version. The envelope
+    // guard must reject it cleanly (not silently re-stamp it to a current patch).
+    const { _version, ...noVersion } = honest;
+    void _version;
+    const checked = AICast.validateGraphPatchProposal(base, noVersion as unknown as GraphPatch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+  });
+
+  test('an envelope with a SKEWED _version (2) is REJECTED — a future/foreign format is never coerced to current', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // A future/foreign patch format claims `_version: 2`. The guard must REJECT it,
+    // never silently re-interpret it as a v1 delta (that would mis-read a format the
+    // build does not understand). Ops are otherwise valid; version skew is the defect.
+    const skewed = { ...honest, _version: 2 } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, skewed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+  });
+
+  test('the happy path: _version: 1 + valid ops still validates and mints', () => {
+    const base = graph([node('a')]);
+    // The advertised, pinned version on a well-formed envelope — accepted + minted.
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    expect(patch._version).toBe(1);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+    expect(checked.proposal.target).toBe('graph-patch');
+    const next = AICast.applyValidatedPatch(base, checked.proposal);
+    expect(next.nodes.length).toBe(2);
   });
 
   test('a proposed edge with an off-schema type is REJECTED before minting', () => {
@@ -464,7 +516,12 @@ describe('AI cast: deterministic content-addressed context + summary', () => {
     expect(c1.summary).toEqual(c2.summary);
     // The id is the real content address of the payload (no hidden state).
     expect(c1.id).toBe(
-      contentAddressOf({ base: g.id, summary: c1.summary, proposalSchemas: c1.proposalSchemas, systemPrompt: c1.systemPrompt }),
+      contentAddressOf({
+        base: g.id,
+        summary: c1.summary,
+        proposalSchemas: c1.proposalSchemas,
+        systemPrompt: c1.systemPrompt,
+      }),
     );
   });
 
@@ -552,7 +609,10 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     const ctx = AICast.castContext(g, { targets: ['graph-patch'] });
     const gp = ctx.proposalSchemas.find((s) => s.target === 'graph-patch')!;
     const ops = (gp.jsonSchema['properties'] as Record<string, Record<string, unknown>>)['ops']!;
-    const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<string, Record<string, Record<string, unknown>>>;
+    const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<
+      string,
+      Record<string, Record<string, unknown>>
+    >;
     expect(nodeOp['properties']!['op']!['enum']).toEqual(['add', 'remove', 'update']);
   });
 
@@ -612,7 +672,11 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
   });
 
   test('applyValidatedPatch refuses a (genuinely minted) GENERATED-UI proposal — the graph-patch apply step is target-gated', () => {
-    const ui = AICast.validateGeneratedUIProposal({ name: 'Text', props: { value: 'hi' } }, catalog, generatedUiValidator);
+    const ui = AICast.validateGeneratedUIProposal(
+      { name: 'Text', props: { value: 'hi' } },
+      catalog,
+      generatedUiValidator,
+    );
     expect(ui.ok).toBe(true);
     if (!ui.ok) return;
     // The proposal is authentic for its OWN target, but its UI-tree payload must never
@@ -646,8 +710,12 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
 
   test('the generated-ui validator is TOTAL — malformed/parsed-JSON input is rejected, never thrown', () => {
     // null / non-object would deref `node.name` inside the injected validator.
-    expect(() => AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator)).not.toThrow();
-    expect(AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator).ok).toBe(false);
+    expect(() =>
+      AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator),
+    ).not.toThrow();
+    expect(
+      AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator).ok,
+    ).toBe(false);
     // `children` as a non-array is a clean rejection, not a crash.
     const badShape = { name: 'Text', children: 'nope' } as unknown as GeneratedUINode;
     expect(AICast.validateGeneratedUIProposal(badShape, catalog, generatedUiValidator).ok).toBe(false);

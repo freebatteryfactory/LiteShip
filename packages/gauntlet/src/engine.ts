@@ -301,14 +301,19 @@ interface ArmedCache {
  *    sound key to write under). This is the no-IR soundness rail: you cannot cache
  *    what you cannot content-address.
  * 2. IR present — the gate's covered FileIds are `gate.coverage?.(ir)` (the OPT-IN
- *    narrowing) or {@link allFileIds} (the conservative default: every file). The
- *    coverage digest folds those files' `(FileId, contentDigest)` pairs; the key
- *    binds it to the gateId, the toolchainDigest, and the env. `cache.read(key)`
- *    HITS → return the cached raw findings (skip `gate.run`); MISSES → run the
- *    gate and `cache.write(key, raw)`.
+ *    narrowing) or {@link allFileIds} (the conservative default: every IR file). The
+ *    coverage digest folds those files' `(FileId, contentDigest)` pairs (the IN-IR
+ *    bytes); the gate's `gate.evidenceDigest?.(scoped)` folds its OUT-OF-IR bytes
+ *    (the confirmer test corpus, the benchmark registries, the ledgers/snapshots, or
+ *    the injected facts). The key binds BOTH digests to the gateId, the
+ *    toolchainDigest, and the env. `cache.read(key)` HITS → return the cached raw
+ *    findings (skip `gate.run`); MISSES → run the gate and `cache.write(key, raw)`.
  *
  * Because the key includes the toolchainDigest, a gate-LOGIC change (rebuilt dist
- * → new digest) flips the key for unchanged files too — the anti-lie keystone.
+ * → new digest) flips the key for unchanged files too — the anti-lie keystone. And
+ * because it includes the evidenceDigest, a change to a gate's OUT-OF-IR evidence
+ * (a confirmer test, a benchmark, a ledger, an injected fact) flips the key even
+ * when the IR source is byte-identical — the out-of-IR-evidence soundness keystone.
  */
 function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): readonly Finding[] {
   const ir = scoped.ir;
@@ -319,10 +324,16 @@ function runRawCached(gate: Gate, scoped: GateContext, cache: ArmedCache): reado
   }
   const covered = gate.coverage !== undefined ? gate.coverage(ir) : allFileIds(ir);
   const coverageDigest = coverageDigestOf(covered, ir);
+  // The gate's OUT-OF-IR evidence digest (the confirmer corpus / benchmarks / ledgers
+  // / injected facts) — undefined for a pure-IR gate, which keys exactly as before.
+  // Computed from the SAME scoped context `gate.run` reads, so the digest folds the
+  // SAME bytes the verdict depends on.
+  const evidenceDigest = gate.evidenceDigest?.(scoped);
   const key = gateVerdictKey({
     toolchainDigest: cache.toolchainDigest,
     gateId: gate.id,
     coverageDigest,
+    ...(evidenceDigest !== undefined ? { evidenceDigest } : {}),
     env: cache.env,
   });
 

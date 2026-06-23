@@ -41,6 +41,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { DeclaredFixFacts, FixRejection, FixRejectionClass } from '../declared-fix.js';
@@ -136,6 +137,12 @@ export const declaredFixProtocolGate: Gate = defineGate({
   describe:
     'Avionics-tier agent-fix ADMISSION gate (the raccoon rule, phases B+C): folds the host-supplied declared-fix verdict — a fix REJECTED for scope-creep, size-exceeded, an unsigned/forbidden standards weakening (reusing phase A), or a forged/missing receipt is a BLOCKING Finding per reason; an ADMITTED (in-scope, sized, non-weakening, receipted) fix is clean; no declared fix present (a normal commit) is silent (phase A guards that path).',
   run: fold,
+  // OUT-OF-IR evidence: the injected DeclaredFixFacts are derived from the EXTERNAL
+  // working-tree change + the before/after standards receipts + the declaration — NONE in
+  // the IR. The verdict varies with the declared fix, not package source, so fold the fact
+  // content so the cache refolds on any admission-verdict change (the soundness keystone).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('declaredFix', context.declaredFix),
   fixtures: {
     red: {
       name: 'a rejected agent-fix whose sole reason is scope-creep (a file touched outside its declared scope)',

@@ -38,6 +38,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { StandardsIntegrityFacts, StandardsChange } from '../standards-facts.js';
@@ -217,6 +218,13 @@ export const standardsIntegrityGate: Gate = defineGate({
   describe:
     'Avionics-tier UNCONDITIONAL COMMIT BACKSTOP (the raccoon rule): folds the host-diffed standards surface vs its committed content-addressed snapshot — an UNSIGNED weakening (removed gate, reduced fixtures, lowered floor/level, new/extended waiver, removed/lowered invariant) is a BLOCKING Finding; a forbidden or expired sign-off blocks; a signed weakening is allowed + recorded; a stale strengthen is a regenerate warning.',
   run: fold,
+  // OUT-OF-IR evidence: the injected StandardsIntegrityFacts are derived from EXTERNAL
+  // artifacts (the LIVE standards surface + the committed content-addressed snapshot +
+  // the owner sign-offs + the injected date) — the snapshot is NOT in the IR. Editing the
+  // snapshot or a sign-off WITHOUT touching package source must refold. Fold the fact
+  // content so the cache refolds on any standards-diff change (the soundness keystone).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('standards', context.standards),
   fixtures: {
     red: {
       name: 'a surface with an unsigned weakening, a forbidden sign-off, and an expired sign-off',

@@ -146,6 +146,24 @@ export interface FloorSurface {
   readonly direction: FloorDirection;
 }
 
+/**
+ * One SANCTIONED CAPABILITY-GATED SKIP (an entry in `SANCTIONED_SKIPS`) — the
+ * waiver-with-teeth that makes a legit `tests/` skip VISIBLE + auditable. A skip is a
+ * lie UNLESS it is enumerated; enumerating it is the honest, accountable escape. ADDING
+ * an entry (more is skipped) is a WEAKEN — it surfaces in the raccoon-rule diff and must
+ * be an intentional snapshot regeneration; REMOVING one (a re-enabled test) is a
+ * STRENGTHEN. It can NEVER be signed off against the always-blocking rule it relaxes (the
+ * `gauntlet/no-skipped-test` floor), so an allowlist-add is a {@link NEVER_SIGNABLE_WEAKENINGS}
+ * class — the meta-analogue of "you cannot waive a lie".
+ */
+export interface SkipAllowlistSurface {
+  readonly _tag: 'skip-allowlist';
+  /** The repo-relative test file whose skip is sanctioned (the stable identity). */
+  readonly file: string;
+  /** The capability whose absence sanctions the skip (ffmpeg-absent / wasm-absent / …). */
+  readonly capability: string;
+}
+
 /** One element of the standards surface — a `_tag`-discriminated union. */
 export type StandardsElement =
   | GateSurface
@@ -153,7 +171,8 @@ export type StandardsElement =
   | AlwaysBlockingSurface
   | AssuranceSurface
   | InvariantSurface
-  | FloorSurface;
+  | FloorSurface
+  | SkipAllowlistSurface;
 
 /**
  * The full content-addressed STANDARDS SURFACE — a sorted, deterministic list of
@@ -219,6 +238,8 @@ export function surfaceElementKey(el: StandardsElement): string {
       return `invariant::${el.id}`;
     case 'floor':
       return `floor::${el.name}`;
+    case 'skip-allowlist':
+      return `skip-allowlist::${el.file}`;
   }
 }
 
@@ -283,7 +304,8 @@ export type WeakeningClass =
   | 'invariant-removed'
   | 'invariant-level-lowered'
   | 'invariant-proof-to-waiver'
-  | 'floor-lowered';
+  | 'floor-lowered'
+  | 'skip-allowlist-added';
 
 /** A single classified change between the committed snapshot and the live surface. */
 export interface StandardsChange {
@@ -490,6 +512,22 @@ function diffFloor(prior: FloorSurface, current: FloorSurface): readonly Standar
   ];
 }
 
+/**
+ * Diff a skip-allowlist MODIFY (same file) — only the CAPABILITY reason changed. The file
+ * is still sanctioned (the skip is still allowed), so the count of allowed skips is
+ * unchanged: NEUTRAL drift (re-label the reason; regenerate the snapshot to refresh it).
+ */
+function diffSkipAllowlist(prior: SkipAllowlistSurface, current: SkipAllowlistSurface): readonly StandardsChange[] {
+  if (prior.capability === current.capability) return [];
+  return [
+    {
+      elementKey: surfaceElementKey(current),
+      changeClass: 'neutral',
+      detail: `sanctioned skip for ${current.file} capability re-labelled ${prior.capability} → ${current.capability} — still sanctioned (the skip count is unchanged); regenerate the snapshot to refresh the recorded reason.`,
+    },
+  ];
+}
+
 /** The detail message for a REMOVED element (gone from the live surface) — always a weaken. */
 function removalChange(el: StandardsElement): StandardsChange {
   const key = surfaceElementKey(el);
@@ -536,6 +574,13 @@ function removalChange(el: StandardsElement): StandardsChange {
         changeClass: 'strengthen',
         detail: `waiver for ${el.ruleId} removed — less is waived.`,
       };
+    case 'skip-allowlist':
+      // A REMOVED sanctioned skip = LESS is skipped (a test re-enabled) = a STRENGTHEN.
+      return {
+        elementKey: key,
+        changeClass: 'strengthen',
+        detail: `sanctioned skip for ${el.file} removed — one fewer file is allowed to skip (a capability gate was re-wired or the dead skip dropped).`,
+      };
   }
 }
 
@@ -549,6 +594,18 @@ function additionChange(el: StandardsElement): StandardsChange {
       changeClass: 'weaken',
       weakening: 'waiver-added',
       detail: `NEW waiver for ${el.ruleId} (expires ${el.expiry}) — more is waived than the committed snapshot recorded.`,
+    };
+  }
+  if (el._tag === 'skip-allowlist') {
+    // A NEW sanctioned skip = MORE is skipped = a WEAKEN (the always-blocking
+    // no-skipped-test floor relaxed for one more file). Like a waiver-add, this can
+    // NEVER be signed off (it relaxes an always-blocking rule) — `skip-allowlist-added`
+    // is in NEVER_SIGNABLE_WEAKENINGS.
+    return {
+      elementKey: key,
+      changeClass: 'weaken',
+      weakening: 'skip-allowlist-added',
+      detail: `NEW sanctioned skip for ${el.file} (capability: ${el.capability}) — one more file is allowed to skip than the committed snapshot recorded. A skip allowlist entry can never be signed off (it relaxes the always-blocking no-skipped-test floor); regenerate the snapshot intentionally only if the capability gate is genuinely honest.`,
     };
   }
   // Adding any other element (gate, invariant, always-blocking rule, floor,
@@ -591,6 +648,8 @@ export function diffStandardsSurface(
     else if (priorEl._tag === 'invariant' && currentEl._tag === 'invariant')
       changes.push(...diffInvariant(priorEl, currentEl));
     else if (priorEl._tag === 'floor' && currentEl._tag === 'floor') changes.push(...diffFloor(priorEl, currentEl));
+    else if (priorEl._tag === 'skip-allowlist' && currentEl._tag === 'skip-allowlist')
+      changes.push(...diffSkipAllowlist(priorEl, currentEl));
     else if (priorEl._tag !== currentEl._tag) {
       // The element kind under one key changed — a structural change; treat
       // conservatively as a weaken (the prior guarantee is gone).
@@ -623,7 +682,13 @@ export function diffStandardsSurface(
  * (The set is kept open so the host can compose the live `ALWAYS_BLOCKING_RULES` ids
  * onto it for the gate-level check.)
  */
-export const NEVER_SIGNABLE_WEAKENINGS: readonly WeakeningClass[] = ['always-blocking-removed'];
+export const NEVER_SIGNABLE_WEAKENINGS: readonly WeakeningClass[] = [
+  'always-blocking-removed',
+  // A skip-allowlist add relaxes the always-blocking no-skipped-test floor for one more
+  // file — the meta-analogue of "you cannot waive a lie". It is permitted only by an
+  // INTENTIONAL snapshot regeneration (the visible, reviewed record), never by a sign-off.
+  'skip-allowlist-added',
+];
 
 /** True iff the standards waiver's expiry is strictly before `now` (day granularity). */
 function signoffExpired(expiry: string, now: Date): boolean {

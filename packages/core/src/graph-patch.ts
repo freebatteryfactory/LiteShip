@@ -289,7 +289,7 @@ export function forkOf(local: DAG.Graph, patchReceipts: readonly ReceiptEnvelope
  * The ONE `_version` this build's GraphPatch reader understands. A patch stamped
  * with a different `_version` is rejected fail-closed by {@link decode}.
  */
-const SUPPORTED_PATCH_VERSION = 1 as const;
+export const SUPPORTED_PATCH_VERSION = 1 as const;
 
 /**
  * VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED GraphPatch value (a patch

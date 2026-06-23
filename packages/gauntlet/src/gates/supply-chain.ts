@@ -30,6 +30,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
+import { injectedFactEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { SupplyChainFacts, SupplyChainViolation } from '../supply-chain-facts.js';
@@ -193,6 +194,12 @@ export const supplyChainGate: Gate = defineGate({
   describe:
     'Avionics-tier fold over host-supplied supply-chain facts: lockfile policy, SBOM completeness, ShipCapsule provenance, and no-ambient-CI-authority — pins the build hermeticity runtime determinism depends on.',
   run: fold,
+  // OUT-OF-IR evidence: the injected SupplyChainFacts are derived from EXTERNAL
+  // artifacts (the lockfile, the SBOM, the ShipCapsules, the CI workflows) — NONE in
+  // the IR. Editing the lockfile WITHOUT touching package source must refold. Fold the
+  // fact content so the cache refolds on any supply-chain change (the soundness keystone).
+  evidenceDigest: (context: GateContext): string | undefined =>
+    injectedFactEvidenceDigest('supplyChain', context.supplyChain),
   fixtures: {
     red: {
       name: 'a supply chain with a git-URL dep, an incomplete SBOM, a drifted lockfile address, and an ambient NPM_TOKEN',
