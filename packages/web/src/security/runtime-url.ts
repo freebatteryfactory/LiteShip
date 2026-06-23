@@ -254,9 +254,9 @@ const INNER_WHITESPACE_RE = /\s/;
  * truth that the shader-integrity classifier ({@link isExternalShaderSource})
  * DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
  *
- *   1. it is a single URL TOKEN (no inner whitespace / newline — see
- *      {@link INNER_WHITESPACE_RE}); a string with inner whitespace is an inline
- *      body the URL parser would silently mangle, never a URL the author meant; AND
+ *   1. it is a single URL TOKEN (no inner whitespace / newline); a string with
+ *      inner whitespace is an inline body the URL parser would silently mangle,
+ *      never a URL the author meant; AND
  *   2. {@link resolveRuntimeUrl} treats it as a URL — i.e. the resolution is NEITHER
  *      `'missing'` (empty) NOR `'malformed'` (the parser rejected it). EVERY other
  *      variant (`allowed`, `cross-origin-rejected`, `origin-not-allowed`,

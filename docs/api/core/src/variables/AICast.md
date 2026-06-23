@@ -8,7 +8,7 @@
 
 > `const` **AICast**: `object`
 
-Defined in: [core/src/ai-cast.ts:920](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L920)
+Defined in: [core/src/ai-cast.ts:917](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L917)
 
 The AI cast namespace — the framework PRIMITIVE that casts a [DocumentGraph](../interfaces/DocumentGraph.md)
 OUT to a model-facing [AIContext](../interfaces/AIContext.md), validates the patch / UI tree the model

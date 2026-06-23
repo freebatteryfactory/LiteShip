@@ -14,9 +14,9 @@ The CANONICAL "is this a fetchable runtime URL?" predicate — the single source
 truth that the shader-integrity classifier ([isExternalShaderSource](isExternalShaderSource.md))
 DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
 
-  1. it is a single URL TOKEN (no inner whitespace / newline — see
-     INNER\_WHITESPACE\_RE); a string with inner whitespace is an inline
-     body the URL parser would silently mangle, never a URL the author meant; AND
+  1. it is a single URL TOKEN (no inner whitespace / newline); a string with
+     inner whitespace is an inline body the URL parser would silently mangle,
+     never a URL the author meant; AND
   2. [resolveRuntimeUrl](resolveRuntimeUrl.md) treats it as a URL — i.e. the resolution is NEITHER
      `'missing'` (empty) NOR `'malformed'` (the parser rejected it). EVERY other
      variant (`allowed`, `cross-origin-rejected`, `origin-not-allowed`,
