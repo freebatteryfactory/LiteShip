@@ -121,6 +121,8 @@ export {
   type TaintPathStep,
 } from './taint-facts.js';
 
+export { type CapabilityLinkFacts, type CapabilityLinkResult } from './capability-link-facts.js';
+
 export {
   type TraceabilityFacts,
   type ResolvedInvariant,
@@ -203,6 +205,7 @@ export {
   sortSurfaceElements,
   diffStandardsSurface,
   applyStandardsWaivers,
+  type SiteConditionalityResolver,
 } from './standards-facts.js';
 
 // The AGENT-SAFETY META-GAUNTLET (the "raccoon rule") phases B+C — the DECLARED-FIX

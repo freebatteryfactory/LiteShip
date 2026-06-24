@@ -70,7 +70,9 @@ import {
   type StandardsSurface,
   type StandardsWaiver,
   type StandardsIntegrityFacts,
+  type SiteConditionalityResolver,
 } from '@czap/gauntlet';
+import { detectSkipsAST } from '@czap/audit';
 import { buildTraceabilityFacts } from './traceability.js';
 
 /** Repo-relative location of the committed, reviewable standards snapshot. */
@@ -801,9 +803,51 @@ function activeFacts(
   const changes = diffStandardsSurface(baseline.elements, live.elements);
   const signoffs = readStandardsWaivers(repoRoot);
   const alwaysBlocking = new Set(ALWAYS_BLOCKING_RULES);
-  const partitioned = applyStandardsWaivers(changes, signoffs, now, alwaysBlocking);
+  // The SOUND conditionality proof (codex round-7) for the raccoon backstop's `skip-allowlist-added`
+  // forbidden check: the host parses the live site via `detectSkipsAST` and injects its STRUCTURAL
+  // classification, so an `if (true) { it.skip("ffmpeg…") }` placeholder is forbidden REGARDLESS of a
+  // capability-naming title (the lean title-keyword heuristic was the laundering surface). Lazy — a
+  // file is parsed only when a sanctioned-skip ADDITION is actually being judged, so a clean run (no
+  // such change) pays nothing.
+  const siteConditionality = buildSiteConditionalityResolver(repoRoot);
+  const partitioned = applyStandardsWaivers(changes, signoffs, now, alwaysBlocking, siteConditionality);
   return {
     _tag: 'active',
     facts: { ...partitioned, committedAddress: baseline.address, liveAddress: live.address },
+  };
+}
+
+/**
+ * Build the host's {@link SiteConditionalityResolver} — given a sanctioned skip's `(file, site)`, the
+ * STRUCTURAL conditionality of that site in the LIVE working tree, via `@czap/audit`'s sound
+ * `detectSkipsAST` (the same proof the no-skip gate uses). Each file is parsed AT MOST ONCE (cached),
+ * and only when the resolver is actually invoked (lazy — the partition calls it solely for a
+ * `skip-allowlist-added` change). A site absent from the live parse (e.g. an addition whose source
+ * isn't on disk) resolves `undefined`, so `siteConsistentWithCapability` falls back to the documented
+ * title-keyword heuristic — never a crash, never a silent strengthening.
+ */
+function buildSiteConditionalityResolver(repoRoot: string): SiteConditionalityResolver {
+  const perFile = new Map<string, Map<string, string>>();
+  const parse = (file: string): Map<string, string> => {
+    const cached = perFile.get(file);
+    if (cached !== undefined) return cached;
+    const out = new Map<string, string>();
+    const abs = join(repoRoot, file);
+    if (existsSync(abs)) {
+      const text = readFileSync(abs, 'utf8');
+      const lines = text.split('\n');
+      for (const m of detectSkipsAST(text)) {
+        // `detectSkipsAST` ALWAYS sets `conditional` (the AST proof); the field is optional only
+        // because the token fallback omits it. Guard for the type — a missing one is simply not mapped
+        // (the resolver then returns `undefined` → the title-keyword fallback, never a crash).
+        if (m.conditional !== undefined) out.set(normalizeSiteLine(lines[m.line - 1] ?? ''), m.conditional);
+      }
+    }
+    perFile.set(file, out);
+    return out;
+  };
+  return (file, site) => {
+    const c = parse(file).get(normalizeSiteLine(site));
+    return c as ReturnType<SiteConditionalityResolver>;
   };
 }

@@ -17,6 +17,7 @@ export * from './ts-program.js';
 export * from './repo-ir-build.js';
 export * from './repo-ir-language-service.js';
 export * from './repo-ir-taint.js';
+export * from './repo-ir-capability-link.js';
 export * from './mutation-engine.js';
 export * from './mutation-verdict.js';
 export * from './mutation-equivalents.js';

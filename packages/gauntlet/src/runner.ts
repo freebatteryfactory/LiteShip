@@ -332,16 +332,30 @@ export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.t
  *                 caller owns the date so the verdict is reproducible).
  * @param globs    The file scope (defaults to every package's source).
  * @param ir       Optional pre-built repo-IR to inject (the host path).
+ * @param skipDetector Optional host-built SOUND AST skip detector (`@czap/audit`'s
+ *                 `detectSkipsAST`). The no-skipped-test gate uses it via
+ *                 `(context.skipDetector ?? detectSkips)` — so the LEAN path, when run
+ *                 from a host that deps `@czap/audit` (the CLI's `czap check` / `czap
+ *                 lsp`), gains the line-agnostic multi-line/ASI/inner-describe/alias
+ *                 detection + the structural conditionality proof. Omitted on the
+ *                 no-`@czap/audit` path (MCP) → the token fallback (the documented lean
+ *                 degradation, like `runCheckInvariants`).
  */
 export function litelaunchGauntlet(
   repoRoot: string,
   now: Date,
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
   ir?: RepoIR,
+  skipDetector?: (source: string) => readonly SkipMatch[],
 ): GauntletResult {
   return runGauntletOnRepo(
     LITESHIP_GATES,
-    { repoRoot, globs, ...(ir !== undefined ? { ir } : {}) },
+    {
+      repoRoot,
+      globs,
+      ...(ir !== undefined ? { ir } : {}),
+      ...(skipDetector !== undefined ? { skipDetector } : {}),
+    },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
   );
 }

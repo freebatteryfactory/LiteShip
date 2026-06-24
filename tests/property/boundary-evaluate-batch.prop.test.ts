@@ -14,10 +14,11 @@
  * @module
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fc from 'fast-check';
 import { Boundary, rawIndexF32, WASMDispatch, WASM_BATCH_MAX } from '@czap/core';
+import { wasmAbsent } from '../helpers/capabilities.js';
 
 function makeBoundary(thresholds: readonly number[]) {
   const at = thresholds.map((t, i) => [t, `s${i}`] as const);
@@ -100,7 +101,9 @@ const WASM_PATH = resolve(
   '..',
   'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
 );
-const wasmPresent = existsSync(WASM_PATH);
+// Single-sourced in the canonical capability symbol table (same artifact path) so the
+// capability-gate linker can prove this guard derives from the `wasm-absent` probe.
+const wasmPresent = !wasmAbsent;
 
 describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluate (Rust kernel loaded)', () => {
   afterEach(() => {

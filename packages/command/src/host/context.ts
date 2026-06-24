@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 import { Effect } from 'effect';
 import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
 import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
-import { litelaunchGauntlet } from '@czap/gauntlet';
+import { litelaunchGauntlet, type SkipMatch } from '@czap/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
@@ -40,8 +40,19 @@ const DEFAULT_HEIGHT = 720;
  * Build the shared Node host context. Pass the adapter's `cwd` so EVERY path
  * capability resolves against it (manifest, cache, file reads, asset/scene
  * loading, CZAP_CAPSULE_MANIFEST) — not just manifest + cache.
+ *
+ * `skipDetector` is the OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s
+ * `detectSkipsAST`). It is injected by the ADAPTER, not imported here: `@czap/command`
+ * must NOT depend on `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`).
+ * So the CLI adapter — which already deps `@czap/audit` — passes `detectSkipsAST`, and
+ * BOTH the in-process `runGauntlet` (`czap check`) and `runPlumb` capabilities gain the
+ * line-agnostic alias/multi-line/inner-describe detection + the structural conditionality
+ * proof. The MCP adapter omits it → the lean token fallback (the documented degradation,
+ * exactly like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
  */
-export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): CommandContext {
+export function createNodeCommandContext(
+  opts: { readonly cwd?: string; readonly skipDetector?: (source: string) => readonly SkipMatch[] } = {},
+): CommandContext {
   const cwd = opts.cwd ?? process.cwd();
   const resolveFrom = (path: string): string => resolve(cwd, path);
 
@@ -77,7 +88,7 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
     // generated-test corpus + the published-package set are both facts about the
     // working tree the host was pointed at. Pure fs walk, so it lives in the
     // shared host factory and the MCP host gets it for free.
-    runPlumb: async () => runPlumbScan(cwd),
+    runPlumb: async () => runPlumbScan(cwd, opts.skipDetector),
     // The pure gauntlet engine fold (the `check` command), run IN-PROCESS over
     // the repo at `cwd` — no subprocess, unlike the CLI-owned `gauntlet`
     // orchestrator. Like `runPlumb` it is a `node:fs` glob, so it lives in the
@@ -90,7 +101,8 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
     // performance.now (a monotonic DURATION reading whose value is not epoch ms —
     // feeding it into `new Date()` would land near 1970 and silently mis-expire
     // every waiver).
-    runGauntlet: async (globs) => litelaunchGauntlet(cwd, new Date(wallClock.now()), globs),
+    runGauntlet: async (globs) =>
+      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector),
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
     // invariant scan needs `@czap/audit`'s `normalizeRepoPath` (the one B5b
     // slash-normalize home), and `@czap/command` must not import `@czap/audit`

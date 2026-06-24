@@ -140,3 +140,121 @@ describe('detectSkipsAST — F2 conditionality is the structural sanctioning pro
     expect(m?.conditional).toBe('skipIf');
   });
 });
+
+describe('detectSkipsAST — codex round-7 #1: the LOCAL alias closure (no Program needed)', () => {
+  // Every case is a LOCAL binding the parser CAN resolve — the gap was that the binding collectors
+  // checked the LITERAL root set / did not unwrap the initializer / did not propagate namespaces. The
+  // cure consults the GROWING resolved sets + unwraps paren/`as`/`!` + propagates `const w = v`. These
+  // were all MISSES before (the detector returned []); each MUST now detect.
+  const DETECT: ReadonlyArray<readonly [string, string]> = [
+    ['const { skip } = (it);\nskip("x", () => {});', 'a parenthesized destructure base'],
+    ['const { skip } = it as typeof it;\nskip("x", () => {});', 'an `as`-asserted destructure base'],
+    ['const { skip } = it!;\nskip("x", () => {});', 'a non-null-asserted destructure base'],
+    ['const t = it;\nconst { skip } = t;\nskip("x", () => {});', 'a destructure off a RESOLVED alias'],
+    ['import * as v from "vitest";\nconst w = v;\nw.it.skip("x", () => {});', 'a rebound namespace `const w = v`'],
+    ['const skipIt = (it).skip;\nskipIt("x", () => {});', 'a capture off a parenthesized root'],
+    ['const t = it;\nconst s = t.skip;\ns("x", () => {});', 'a capture off a RESOLVED alias'],
+  ];
+  for (const [source, label] of DETECT) {
+    it(`detects ${label}`, () => {
+      const matches = detectSkipsAST(source);
+      expect(matches.length, `${label}: expected ≥1 match in ${JSON.stringify(matches)}`).toBeGreaterThanOrEqual(1);
+    });
+  }
+
+  it('the documented CROSS-MODULE residual stays clean (a renamed import from an unknown module)', () => {
+    // `import { it as x } from "./local"` is undecidable without the Program — left clean, not flagged
+    // (flagging would flood a real repo with false positives), exactly as documented.
+    expect(detectSkipsAST('import { it as x } from "./local.js";\nx.skip("y", () => {});')).toEqual([]);
+  });
+});
+
+describe('detectSkipsAST — codex round-7 #2: VACUOUS guards fold to unconditional', () => {
+  // A guard whose condition is a COMPILE-TIME CONSTANT is not a runtime gate — the branch is taken
+  // (or not) unconditionally, so the skip is a placeholder dressed as a gate. It MUST classify
+  // `unconditional` (non-sanctionable) regardless of a capability-naming title (the codex laundering).
+  const VACUOUS: ReadonlyArray<readonly [string, string]> = [
+    ['if (true) {\n  it.skip("ffmpeg unavailable", () => {});\n}', 'if (true) — the exact codex probe'],
+    ['if (1) { it.skip("x", () => {}); }', 'if (1)'],
+    ['if ("yes") { it.skip("x", () => {}); }', 'if (non-empty string)'],
+    ['if (!false) { it.skip("x", () => {}); }', 'if (!false)'],
+    ['if (true && true) { it.skip("x", () => {}); }', 'if (true && true)'],
+    ['if (false) { foo(); } else { it.skip("x", () => {}); }', 'else of if(false)'],
+    ['it.skipIf(true)("x", () => {});', 'skipIf(true)'],
+    ['it.skip(true, "x", () => {});', 'skip(true, …) condition-arg'],
+    ['const r = true ? it.skip : it;\nr("x", () => {});', 'true ? it.skip : it'],
+  ];
+  for (const [source, label] of VACUOUS) {
+    it(`folds ${label} to unconditional`, () => {
+      const matches = detectSkipsAST(source);
+      expect(matches.length, `${label}: expected a detected skip`).toBeGreaterThanOrEqual(1);
+      for (const m of matches) expect(m.conditional, `${label}: ${JSON.stringify(m)}`).toBe('unconditional');
+    });
+  }
+
+  // The mirror law: a GENUINE runtime-valued condition MUST stay conditional (no over-strictness — the
+  // fold only ever fires on a literal constant, never a real gate that references a runtime value).
+  const GENUINE: ReadonlyArray<readonly [string, SkipConditionality]> = [
+    ['if (!FFMPEG) {\n  it.skip("x", () => {});\n}', 'enclosing-if'],
+    ['if (process.platform === "win32") { it.skip("x", () => {}); }', 'enclosing-if'],
+    ['if (FFMPEG) { foo(); } else { it.skip("x", () => {}); }', 'enclosing-if'],
+    ['it.skipIf(!built)("x", () => {});', 'skipIf'],
+    ['it.skip(!built, "x", () => {});', 'skipIf'],
+    ['it.runIf(canUseSAB)("x", () => {});', 'runIf'],
+    ['const r = FFMPEG ? it : it.skip;\nr("x", () => {});', 'ternary'],
+  ];
+  for (const [source, want] of GENUINE) {
+    it(`keeps a runtime gate conditional (${want}): ${JSON.stringify(source).slice(0, 48)}`, () => {
+      const got = detectSkipsAST(source).map((m) => m.conditional);
+      expect(got, `expected ${want} in ${JSON.stringify(got)}`).toContain(want);
+    });
+  }
+});
+
+describe('detectSkipsAST — codex round-8 residuals (#2 chain unwrap, #3 namespace extraction, #1a constant fold)', () => {
+  // #2 — the CHAIN WALKER (not just the binding collectors) unwraps `as`/`satisfies`/`!`/parens.
+  const CHAIN_WRAPPED: ReadonlyArray<readonly [string, string]> = [
+    ['(it as typeof it).skip("x", () => {});', 'an `as`-asserted runner head'],
+    ['(it satisfies typeof it).skip("x", () => {});', 'a `satisfies`-asserted runner head'],
+    ['it!.skip("x", () => {});', 'a non-null-asserted runner head'],
+    ['(it).skip("x", () => {});', 'a parenthesized runner head'],
+  ];
+  for (const [source, label] of CHAIN_WRAPPED) {
+    it(`detects ${label}`, () => {
+      expect(detectSkipsAST(source).length, JSON.stringify(detectSkipsAST(source))).toBeGreaterThanOrEqual(1);
+    });
+  }
+
+  // #3 — extracting a runner ROOT from a NAMESPACE member into a local binding.
+  const NS_EXTRACT: ReadonlyArray<readonly [string, string]> = [
+    ['import * as v from "vitest";\nconst spec = v.it;\nspec.skip("x", () => {});', 'a namespace-member capture `const spec = v.it`'],
+    ['import * as v from "vitest";\nconst { it: spec } = v;\nspec.skip("x", () => {});', 'a namespace destructure `const { it: spec } = v`'],
+    ['import * as v from "vitest";\nconst spec = v["it"];\nspec.skip("x", () => {});', 'a bracket namespace-member capture'],
+  ];
+  for (const [source, label] of NS_EXTRACT) {
+    it(`detects ${label}`, () => {
+      expect(detectSkipsAST(source).length, JSON.stringify(detectSkipsAST(source))).toBeGreaterThanOrEqual(1);
+    });
+  }
+  it('does NOT extract an ordinary (non-runner) namespace member', () => {
+    expect(detectSkipsAST('import * as v from "vitest";\nconst x = v.expect;\nx(1);')).toEqual([]);
+  });
+
+  // #1a — constant comparisons / Boolean(...) fold to vacuous (unconditional); runtime ones do not.
+  it('folds `if (1 === 1)` to unconditional', () => {
+    const [m] = detectSkipsAST('if (1 === 1) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('unconditional');
+  });
+  it('folds `if (Boolean(1))` to unconditional', () => {
+    const [m] = detectSkipsAST('if (Boolean(1)) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('unconditional');
+  });
+  it('folds `it.skipIf(2 > 1)` to unconditional', () => {
+    const [m] = detectSkipsAST('it.skipIf(2 > 1)("x", () => {});');
+    expect(m?.conditional).toBe('unconditional');
+  });
+  it('keeps a RUNTIME comparison `if (x === 1)` conditional', () => {
+    const [m] = detectSkipsAST('if (x === 1) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('enclosing-if');
+  });
+});

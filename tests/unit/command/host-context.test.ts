@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Effect } from 'effect';
 import { createNodeCommandContext, startSpawnHandle } from '@czap/command/host';
+import { detectSkipsAST } from '@czap/audit';
 import { FFMPEG_RENDER_CAPABLE } from '../../helpers/ffmpeg.js';
 import { scaledTimeout } from '../../../vitest.shared.js';
 
@@ -208,6 +209,32 @@ describe('createNodeCommandContext', () => {
     await handle.dispose();
     await handle.dispose();
     expect(handle.stderrTail()).toBeDefined();
+  });
+
+  // codex round-7 #3: the injected `skipDetector` reaches the in-process gauntlet surfaces. The CLI
+  // adapter passes `detectSkipsAST` (it deps `@czap/audit`); MCP omits it → the token fallback. We
+  // prove the injection CHANGES BEHAVIOUR with an ASI-alias skip (`const t = it⏎t.skip`) — a form the
+  // token detector MISSES but the AST catches — in `tests/generated/`, the plumb gate's subtree.
+  it('runPlumb uses the injected AST skipDetector (catches an alias the token detector misses)', () => {
+    const genDir = join(workDir, 'tests/generated');
+    mkdirSync(genDir, { recursive: true });
+    // The plumb scan also enumerates `<root>/packages` for published-package classification — an
+    // empty dir keeps that surface clean so the assertion isolates the skip-detection difference.
+    mkdirSync(join(workDir, 'packages'), { recursive: true });
+    // ASI rebind alias — `detectSkips` (token) returns []; `detectSkipsAST` catches `t.skip`.
+    writeFileSync(join(genDir, 'aliased.test.ts'), 'const t = it\nt.skip("aliased placeholder", () => {})\n');
+
+    // WITHOUT the detector → the token fallback misses the alias → no skip surfaced (the gap).
+    const lean = createNodeCommandContext({ cwd: workDir });
+    // runPlumb is provisioned in the shared host factory (sync `node:fs` walk under the hood).
+    return Promise.all([lean.runPlumb!(), createNodeCommandContext({ cwd: workDir, skipDetector: detectSkipsAST }).runPlumb!()]).then(
+      ([leanSummary, astSummary]) => {
+        expect(leanSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(false);
+        // WITH the injected AST detector → the alias is caught → a blocking plumb finding.
+        expect(astSummary.skips.some((s) => s.file.endsWith('aliased.test.ts'))).toBe(true);
+        expect(astSummary.ok).toBe(false);
+      },
+    );
   });
 
   it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {

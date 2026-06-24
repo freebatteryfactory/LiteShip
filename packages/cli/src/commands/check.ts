@@ -30,6 +30,7 @@
 import { checkCommand, type CheckPayload } from '@czap/command';
 import { createNodeCommandContext } from '@czap/command/host';
 import { wallClock } from '@czap/core';
+import { detectSkipsAST } from '@czap/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 
@@ -183,7 +184,11 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
  * `@czap/mcp-server` never see the IR. Projects the handler's `CheckPayload`.
  */
 async function runLeanPath(cwd: string): Promise<CheckPayload> {
-  const context = createNodeCommandContext({ cwd });
+  // Inject the host-built SOUND AST skip detector — the CLI deps `@czap/audit`, so even the
+  // lean (`@czap/command`) check path gains `detectSkipsAST`'s alias/multi-line/inner-describe
+  // detection + structural conditionality. (The MCP adapter builds the context WITHOUT it → the
+  // token fallback; the boundary that keeps `@czap/audit` out of `@czap/mcp-server`.)
+  const context = createNodeCommandContext({ cwd, skipDetector: detectSkipsAST });
   const result = await checkCommand.handler({ name: 'check', args: {} }, context);
   return result.payload as CheckPayload;
 }

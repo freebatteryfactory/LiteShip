@@ -15,10 +15,11 @@
  * the same "build truth" doctrine as package:smoke.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as fc from 'fast-check';
 import { WASMDispatch, fallbackKernels, type WASMKernels } from '@czap/core';
+import { wasmAbsent } from '../../helpers/capabilities.js';
 
 const WASM_PATH = resolve(
   import.meta.dirname,
@@ -28,7 +29,9 @@ const WASM_PATH = resolve(
   'crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm',
 );
 
-const wasmPresent = existsSync(WASM_PATH);
+// The presence probe is single-sourced in the canonical capability symbol table (same artifact path)
+// so the capability-gate linker can prove this guard derives from the `wasm-absent` probe.
+const wasmPresent = !wasmAbsent;
 
 // f32-representable finite floats in a sane magnitude band — the WASM kernels
 // compute in f32, and the fallback canonicalizes through toBoundaryF32/f32

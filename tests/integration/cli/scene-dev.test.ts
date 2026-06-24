@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { withSpawned } from '../../../scripts/lib/spawn.js';
 import type { SpawnHandle } from '../../../scripts/lib/spawn.js';
+import { coverageInstrumentation } from '../../helpers/capabilities.js';
 
 // Under v8 coverage on Windows the spawned tsx -> vite-server pipeline
 // occasionally trips a STATUS_ACCESS_VIOLATION (exit 3221226505) — a

@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { SPSCRing } from '../../packages/worker/src/spsc-ring.js';
+import { sharedArrayBufferAbsent } from '../helpers/capabilities.browser.js';
 
-const canUseSAB = typeof SharedArrayBuffer !== 'undefined';
+// The capability probe is single-sourced in the canonical (browser-safe) capability symbol table so
+// the capability-gate linker can prove this guard derives from the `shared-array-buffer-absent` probe.
+const canUseSAB = !sharedArrayBufferAbsent;
 
 describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {
   beforeEach(() => {

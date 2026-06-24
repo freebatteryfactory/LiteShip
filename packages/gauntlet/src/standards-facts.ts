@@ -42,7 +42,17 @@ import {
   asSkipCapability,
   siteCarriesPlaceholderMarker,
   siteConsistentWithCapability,
+  type SiteConditionality,
 } from './gates/skip-allowlist.js';
+
+/**
+ * Resolve the STRUCTURAL conditionality of a sanctioned skip site (the AST proof), injected by the
+ * host (which parses the live source via `@czap/audit`'s `detectSkipsAST`). `undefined` ⇒ the site
+ * was not found / no AST available → the title-keyword heuristic is the documented lean fallback.
+ * The lean engine carries no `typescript`, so the SOUND proof is host-computed and injected here —
+ * the same boundary as the no-skip gate's `skipDetector`.
+ */
+export type SiteConditionalityResolver = (file: string, site: string) => SiteConditionality | undefined;
 
 // ───────────────────────────── the surface model ────────────────────────────
 //
@@ -763,6 +773,7 @@ export function applyStandardsWaivers(
   signoffs: readonly StandardsWaiver[],
   now: Date,
   alwaysBlockingRuleIds: ReadonlySet<string>,
+  siteConditionality?: SiteConditionalityResolver,
 ): Omit<StandardsIntegrityFacts, 'committedAddress' | 'liveAddress'> {
   const unsignedWeakenings: StandardsChange[] = [];
   const signedWeakenings: (StandardsChange & { owner: string; justification: string })[] = [];
@@ -797,20 +808,28 @@ export function applyStandardsWaivers(
     //
     // CAPABILITY-CONSISTENCY (codex round-6): a MARKER-FREE placeholder — `it.skip("later")` —
     // slips the marker check yet proves nothing. A sanctioned skip must be SELF-CONSISTENT with
-    // its declared capability (a visible conditional form OR a title referencing the capability
-    // domain). The capability is carried in the change `detail` (`, capability: <cap>)`); an
-    // UNCONDITIONAL skip whose title references neither its capability nor a visible condition is
-    // NOT a recognizable gate → forbidden (a covering sign-off is VOID). Defense-in-depth with
-    // `sanctionedSkipFor`, which already refuses to enumerate an inconsistent site; this rejects it
-    // independently in the standards partition so a hand-written snapshot/sign-off can't launder it.
-    // The SOUND conditionality proof (the enclosing `if (!CAP) {…}`) is the AST follow-up.
+    // its declared capability. The capability is carried in the change `detail` (`, capability:
+    // <cap>)`); an UNCONDITIONAL skip is NOT a recognizable gate → forbidden (a covering sign-off
+    // is VOID). Defense-in-depth with `sanctionedSkipFor`, which already refuses to enumerate an
+    // inconsistent site; this rejects it independently in the standards partition so a hand-written
+    // snapshot/sign-off can't launder it.
+    //
+    // THE SOUND CONDITIONALITY PROOF (codex round-7) is now THREADED: when the host injects
+    // `siteConditionality` (the CLI parses the live site via `detectSkipsAST`), the STRUCTURAL
+    // classification is the proof — an `if (true) { it.skip("ffmpeg unavailable") }` classifies
+    // `unconditional` and is forbidden REGARDLESS of its capability-naming title (closing the
+    // title-keyword laundering codex found). Absent the resolver (a lean/no-AST run), the
+    // documented title-keyword heuristic is the best-effort fallback — `siteConsistentWithCapability`
+    // selects the path by whether `conditional` is supplied.
     if (change.weakening === 'skip-allowlist-added' && change.elementKey.startsWith('skip-allowlist::')) {
       const parts = change.elementKey.split('::');
       // [0]='skip-allowlist', [1]=file, [2..]=site (the site itself may contain `::`).
+      const file = parts[1] ?? '';
       const site = parts.slice(2).join('::');
       if (siteCarriesPlaceholderMarker(site)) return true;
       const capability = skipAllowlistCapabilityFromDetail(change.detail);
-      if (capability !== undefined && !siteConsistentWithCapability(site, capability)) return true;
+      const conditional = siteConditionality?.(file, site);
+      if (capability !== undefined && !siteConsistentWithCapability(site, capability, conditional)) return true;
     }
     return false;
   };

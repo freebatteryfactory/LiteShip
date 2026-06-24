@@ -13,11 +13,11 @@
  * exercises it.
  */
 import { test, expect } from '@playwright/test';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { astroExampleNotBuilt } from '../helpers/capabilities.js';
 
-const ASTRO_DIST = resolve(import.meta.dirname, '../integration/astro/dist');
-const built = existsSync(resolve(ASTRO_DIST, 'index.html'));
+// Single-sourced in the canonical capability symbol table (same dist index.html) so the
+// capability-gate linker can prove this guard derives from the `astro-example-not-built` probe.
+const built = !astroExampleNotBuilt;
 
 test.describe('astro directive boot (built example)', () => {
   test.skip(!built, 'astro example not built — run: pnpm exec tsx tests/integration/astro/test.ts');

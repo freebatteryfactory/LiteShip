@@ -130,6 +130,10 @@
       "version": "0.4.0",
       "exports": [
         {
+          "name": "CAPABILITY_LINK_ORACLE_ID",
+          "kind": "const"
+        },
+        {
           "name": "CONDITION_FORCES",
           "kind": "const"
         },
@@ -187,6 +191,11 @@
         {
           "name": "auditSourceGlobs",
           "kind": "const"
+        },
+        {
+          "name": "buildCapabilityLinkFacts",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "buildMcdcFacts",
@@ -288,6 +297,11 @@
         },
         {
           "name": "generateMutants",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "guardExpressionsOf",
           "kind": "function",
           "signature": "(1)"
         },
@@ -1915,7 +1929,7 @@
         {
           "name": "applyStandardsWaivers",
           "kind": "function",
-          "signature": "(4)"
+          "signature": "(5)"
         },
         {
           "name": "applyWaivers",

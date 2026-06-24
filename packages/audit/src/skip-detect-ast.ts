@@ -128,19 +128,54 @@ export function detectSkipsAST(source: string): readonly SkipMatch[] {
 // ---------------------------------------------------------------------------
 
 /**
+ * Peel the TRANSPARENT value wrappers off an expression — parentheses, `x as T`, `x!`,
+ * `x satisfies T`, and the `<T>x` type-assertion — down to the core value expression. A
+ * runner ALIAS hides behind exactly these (`const { skip } = (it)`, `= it as typeof it`,
+ * `= it!`): they change the TYPE-LEVEL view but not the runtime value, so they are
+ * invisible to the binding resolver UNLESS peeled. Pure, syntax-only (the same
+ * unwrap `peelAccessChain` already applies mid-chain — applied here at the binding sites too).
+ */
+function unwrapExpr(expr: ts.Expression): ts.Expression {
+  let e: ts.Expression = expr;
+  for (;;) {
+    if (
+      ts.isParenthesizedExpression(e) ||
+      ts.isAsExpression(e) ||
+      ts.isNonNullExpression(e) ||
+      ts.isSatisfiesExpression(e) ||
+      ts.isTypeAssertionExpression(e)
+    ) {
+      e = e.expression;
+      continue;
+    }
+    break;
+  }
+  return e;
+}
+
+/**
  * Resolve every runner ALIAS the file's SYNTAX decides, as a fixpoint. Walks ALL declaration
  * statements (top-level AND nested in blocks/functions — a rebind can live inside a closure), then
- * closes the transitive `const a = it; const b = a` chain one hop per pass until no new root appears.
+ * closes the transitive `const a = it; const b = a` chain one hop per pass until no new binding appears.
  *
- * The decidable forms (each PROVEN against the R4/R5/R6 corpus):
+ * THE FIXPOINT covers EVERY binding kind together (roots, namespaces, destructured skips, captured
+ * skips) so a binding that resolves through a PRIOR alias settles in a later pass — `const t = it;
+ * const { skip } = t` (destructure off a RESOLVED root, not just a literal one) and `const w = v;
+ * w.it.skip` (a namespace rebind). The initializer is always {@link unwrapExpr unwrapped} first, so a
+ * paren / `as T` / `!` wrapper never hides the alias. Each collector returns whether it added a new
+ * binding; the loop re-runs until none does (bounded by the declaration count). The SUSPICIOUS-ternary
+ * pass runs LAST (after roots settle) so `const t = cond ? it : x` is judged against the FULL root set.
+ *
+ * The decidable forms (each PROVEN against the R4/R5/R6/R7 corpus):
  *  - `import { it as spec } from "vitest"` → `spec` is a root (line-agnostic: the AST has no
  *    multi-line specifier problem);
- *  - `import * as v from "vitest"` → `v` is a runner namespace (`v.it.skip` trips);
- *  - `const t = it` / `let d = describe` (incl. `const t: typeof it = it`) → `t`/`d` are roots,
- *    transitively to a fixpoint, AND the ASI form `const t = it⏎t.skip` (the AST sees `const t = it`
- *    as one statement regardless of the missing semicolon);
- *  - `const skipIt = it.skip` → `skipIt` is a DIRECT skip caller (the accessor captured as a value);
- *  - `const { skip } = it` / `const { todo: gone } = test` → `skip`/`gone` are bare skip callers;
+ *  - `import * as v from "vitest"` → `v` is a runner namespace (`v.it.skip` trips), AND a rebind of
+ *    that namespace `const w = v` → `w` is a namespace too (`w.it.skip` trips);
+ *  - `const t = it` / `let d = describe` (incl. `const t: typeof it = it`, `const t = (it)`,
+ *    `const t = it as typeof it`) → `t`/`d` are roots, transitively to a fixpoint, AND the ASI form
+ *    `const t = it⏎t.skip` (the AST sees `const t = it` as one statement regardless of the semicolon);
+ *  - `const skipIt = it.skip` / `= t.skip` (off a resolved root) → `skipIt` is a DIRECT skip caller;
+ *  - `const { skip } = it` / `= t` (off a resolved root) / `= (it)` → `skip` is a bare skip caller;
  *  - `const t = cond ? it : x` → `t` is SUSPICIOUS (a ternary arm IS the runner — flagged, not passed).
  */
 function resolveRunnerBindings(sourceFile: ts.SourceFile): RunnerBindings {
@@ -160,23 +195,29 @@ function resolveRunnerBindings(sourceFile: ts.SourceFile): RunnerBindings {
   };
   collect(sourceFile);
 
-  // Pass A (non-transitive): imports, destructures, direct-skip captures, suspicious ternaries.
+  // Seed the root/namespace sets from imports (a renamed runner / a namespace from a trusted module).
   for (const imp of imports) collectImport(imp, roots, namespaces);
-  for (const decl of varDecls) {
-    collectDestructuredSkip(decl, bareSkips);
-    collectDirectSkipCapture(decl, directSkips);
-  }
 
-  // Pass B (transitive fixpoint): plain `const t = <root>` rebinds, one hop per pass, until settled.
+  // FIXPOINT over EVERY binding kind together — one hop per pass until nothing new resolves. Each
+  // collector consults the GROWING `roots`/`namespaces` sets, so a transitive alias (a destructure or
+  // capture off a binding resolved in an earlier pass) settles. Bounded by the declaration count.
   let changed = true;
   let guard = 0;
-  while (changed && guard <= varDecls.length) {
+  const limit = varDecls.length + 2;
+  while (changed && guard <= limit) {
     changed = false;
     guard++;
     for (const decl of varDecls) {
-      if (collectRootRebind(decl, roots, suspicious)) changed = true;
+      if (collectRootRebind(decl, roots)) changed = true;
+      if (collectNamespaceRebind(decl, namespaces)) changed = true;
+      if (collectNamespaceMemberExtraction(decl, namespaces, roots)) changed = true;
+      if (collectDestructuredSkip(decl, roots, bareSkips)) changed = true;
+      if (collectDirectSkipCapture(decl, roots, directSkips)) changed = true;
     }
   }
+
+  // SUSPICIOUS ternaries last — judged against the SETTLED root set (so an arm resolved late is seen).
+  for (const decl of varDecls) collectSuspiciousTernary(decl, roots, suspicious);
 
   return { roots, namespaces, directSkips, bareSkips, suspicious };
 }
@@ -227,37 +268,138 @@ function collectImport(imp: ts.ImportDeclaration, roots: Set<string>, namespaces
 }
 
 /**
- * `const t = it` / `let d = describe` (incl. `const t: typeof it = it`) → add the LHS as a root when
- * the initializer is EXACTLY a known root identifier. A ternary-arm runner (`const t = cond ? it : x`)
- * is recorded SUSPICIOUS. Returns true when a NEW root was added (drives the transitive fixpoint).
+ * `const t = it` / `let d = describe` (incl. `const t: typeof it = it`, `const t = (it)`,
+ * `const t = it as typeof it`) → add the LHS as a root when the UNWRAPPED initializer is exactly a
+ * known/resolved root identifier. Returns true when a NEW root was added (drives the transitive
+ * fixpoint). The SUSPICIOUS-ternary case is handled separately ({@link collectSuspiciousTernary}),
+ * after the root set settles, so its judgement sees the full transitive closure.
  */
-function collectRootRebind(decl: ts.VariableDeclaration, roots: Set<string>, suspicious: Map<string, string>): boolean {
+function collectRootRebind(decl: ts.VariableDeclaration, roots: Set<string>): boolean {
   if (!ts.isIdentifier(decl.name)) return false;
   const lhs = decl.name.text;
   if (roots.has(lhs)) return false;
-  const init = decl.initializer;
-  if (init === undefined) return false;
-  // Clean alias: the initializer is exactly a known/resolved root identifier (the type annotation,
-  // if any, is `decl.type` — a SEPARATE node, so it never contaminates the initializer check).
+  if (decl.initializer === undefined) return false;
+  // Clean alias: the UNWRAPPED initializer is exactly a known/resolved root identifier (the type
+  // annotation, if any, is `decl.type` — a SEPARATE node, so it never contaminates the check; the
+  // `as T`/`!`/paren wrappers are peeled by `unwrapExpr` so they never hide the alias).
+  const init = unwrapExpr(decl.initializer);
   if (ts.isIdentifier(init) && roots.has(init.text)) {
     roots.add(lhs);
     return true;
   }
-  // Suspicious: a ternary whose arm is a BARE runner root — `const t = cond ? it : x`. Narrow on
-  // purpose (the runner names are common ordinary identifiers). We do NOT flag when the OTHER arm
-  // already carries a detectable skip chain (`cond ? it : it.skip`): that arm is recognised by the
-  // chain walk at THIS declaration line (form `alias`), so flagging the alias too would double-report
-  // AND mis-classify it `unconditional` at every later call — exactly the false positive that broke
-  // the real-repo `const renderIt = FFMPEG ? it : it.skip` sanctioned sites.
-  if (
-    ts.isConditionalExpression(init) &&
-    !suspicious.has(lhs) &&
-    ternaryArmIsBareRoot(init, roots) &&
-    !ternaryHasDetectableSkip(init)
-  ) {
-    suspicious.set(lhs, 'rebind to a ternary whose arm is a bare runner root');
+  return false;
+}
+
+/**
+ * `const w = v` where `v` is a runner NAMESPACE (`import * as v from "vitest"`) → `w` is a namespace
+ * too, so `w.it.skip` trips exactly like `v.it.skip`. The UNWRAPPED initializer must be an identifier
+ * already in the namespace set; transitive (`const w = v; const u = w`) via the fixpoint. Returns true
+ * when a NEW namespace binding was added.
+ */
+function collectNamespaceRebind(decl: ts.VariableDeclaration, namespaces: Set<string>): boolean {
+  if (!ts.isIdentifier(decl.name)) return false;
+  const lhs = decl.name.text;
+  if (namespaces.has(lhs)) return false;
+  if (decl.initializer === undefined) return false;
+  const init = unwrapExpr(decl.initializer);
+  if (ts.isIdentifier(init) && namespaces.has(init.text)) {
+    namespaces.add(lhs);
+    return true;
   }
   return false;
+}
+
+/**
+ * Extract a runner ROOT from a NAMESPACE member into a local binding (codex round-8) — the namespace
+ * analogue of {@link collectNamespaceRebind}:
+ *  - `const spec = v.it` / `const spec = v["it"]` → `spec` is a root (a runner-root MEMBER off a
+ *    namespace `v` — `import * as v from "vitest"`);
+ *  - `const { it: spec } = v` / `const { it } = v` → the destructured local is a root.
+ * Only a RUNNER_ROOTS member counts (so `const x = v.expect` / `const { vi } = v` add nothing — no
+ * false positive on an ordinary namespace member). Returns true when a NEW root was added.
+ */
+function collectNamespaceMemberExtraction(
+  decl: ts.VariableDeclaration,
+  namespaces: ReadonlySet<string>,
+  roots: Set<string>,
+): boolean {
+  if (decl.initializer === undefined) return false;
+  const init = unwrapExpr(decl.initializer);
+  // Form A: `const spec = v.it` — a runner-root member accessed off a namespace head.
+  if (ts.isIdentifier(decl.name)) {
+    const lhs = decl.name.text;
+    if (roots.has(lhs)) return false;
+    if (namespaceRunnerMember(init, namespaces) !== undefined) {
+      roots.add(lhs);
+      return true;
+    }
+    return false;
+  }
+  // Form B: `const { it: spec } = v` — destructure a runner root off a namespace.
+  if (ts.isObjectBindingPattern(decl.name) && ts.isIdentifier(init) && namespaces.has(init.text)) {
+    let added = false;
+    for (const element of decl.name.elements) {
+      const source =
+        element.propertyName !== undefined && ts.isIdentifier(element.propertyName)
+          ? element.propertyName.text
+          : ts.isIdentifier(element.name)
+            ? element.name.text
+            : undefined;
+      if (source === undefined || !RUNNER_ROOTS.has(source)) continue;
+      const local = ts.isIdentifier(element.name) ? element.name.text : source;
+      if (!roots.has(local)) {
+        roots.add(local);
+        added = true;
+      }
+    }
+    return added;
+  }
+  return false;
+}
+
+/** If `expr` is `<namespace>.<runnerRoot>` (or `<namespace>["runnerRoot"]`), the runner member name; else undefined. */
+function namespaceRunnerMember(expr: ts.Expression, namespaces: ReadonlySet<string>): string | undefined {
+  if (
+    ts.isPropertyAccessExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    namespaces.has(expr.expression.text) &&
+    RUNNER_ROOTS.has(expr.name.text)
+  ) {
+    return expr.name.text;
+  }
+  if (
+    ts.isElementAccessExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    namespaces.has(expr.expression.text) &&
+    ts.isStringLiteralLike(expr.argumentExpression) &&
+    RUNNER_ROOTS.has(expr.argumentExpression.text)
+  ) {
+    return expr.argumentExpression.text;
+  }
+  return undefined;
+}
+
+/**
+ * Record `const t = cond ? it : x` as SUSPICIOUS — a ternary whose arm is a BARE runner root. Narrow
+ * on purpose (the runner names are common ordinary identifiers). We do NOT flag when the OTHER arm
+ * already carries a detectable skip chain (`cond ? it : it.skip`): that arm is recognised by the chain
+ * walk at THIS declaration line (form `alias`), so flagging the alias too would double-report AND
+ * mis-classify it `unconditional` at every later call — exactly the false positive that broke the
+ * real-repo `const renderIt = FFMPEG ? it : it.skip` sanctioned sites. Runs after the root fixpoint
+ * settles, so `roots` is the full transitive closure.
+ */
+function collectSuspiciousTernary(
+  decl: ts.VariableDeclaration,
+  roots: ReadonlySet<string>,
+  suspicious: Map<string, string>,
+): void {
+  if (!ts.isIdentifier(decl.name)) return;
+  const lhs = decl.name.text;
+  if (roots.has(lhs) || suspicious.has(lhs) || decl.initializer === undefined) return;
+  const init = unwrapExpr(decl.initializer);
+  if (ts.isConditionalExpression(init) && ternaryArmIsBareRoot(init, roots) && !ternaryHasDetectableSkip(init, roots)) {
+    suspicious.set(lhs, 'rebind to a ternary whose arm is a bare runner root');
+  }
 }
 
 /**
@@ -316,32 +458,41 @@ function isLocallyShadowed(node: ts.Node, name: string): boolean {
 }
 
 /** Does either arm of a `?:` carry a detectable runner→skip ACCESS chain (`cond ? it : it.skip`)? */
-function ternaryHasDetectableSkip(cond: ts.ConditionalExpression): boolean {
-  return captureSkipChain(cond.whenTrue) !== undefined || captureSkipChain(cond.whenFalse) !== undefined;
+function ternaryHasDetectableSkip(cond: ts.ConditionalExpression, roots: ReadonlySet<string>): boolean {
+  return captureSkipChain(cond.whenTrue, roots) !== undefined || captureSkipChain(cond.whenFalse, roots) !== undefined;
 }
 
 /**
- * `const skipIt = it.skip` → record `skipIt` as a DIRECT skip caller bound to that chain. The
- * initializer must be a runner→skip ACCESS chain (NOT a call) whose terminal access is a skip /
- * conditional member. `const t = it.each` (no skip terminal) is NOT a capture.
+ * `const skipIt = it.skip` / `= t.skip` (off a RESOLVED root) / `= (it).skip` → record `skipIt` as a
+ * DIRECT skip caller bound to that chain. The UNWRAPPED initializer must be a runner→skip ACCESS chain
+ * (NOT a call) whose terminal access is a skip / conditional member, rooted at a member of the GROWING
+ * `roots` set. `const t = it.each` (no skip terminal) is NOT a capture. Returns true when a NEW capture
+ * was recorded (drives the fixpoint).
  */
-function collectDirectSkipCapture(decl: ts.VariableDeclaration, directSkips: Map<string, string>): void {
-  if (!ts.isIdentifier(decl.name)) return;
-  const init = decl.initializer;
-  if (init === undefined) return;
+function collectDirectSkipCapture(
+  decl: ts.VariableDeclaration,
+  roots: ReadonlySet<string>,
+  directSkips: Map<string, string>,
+): boolean {
+  if (!ts.isIdentifier(decl.name)) return false;
+  const lhs = decl.name.text;
+  if (directSkips.has(lhs) || decl.initializer === undefined) return false;
+  const init = unwrapExpr(decl.initializer);
   // The initializer is an access chain (no trailing call) — a captured `.skip` VALUE.
-  if (ts.isCallExpression(init)) return; // `const t = it.skip()` is a call, not a capture
-  const captured = captureSkipChain(init);
-  if (captured !== undefined) directSkips.set(decl.name.text, captured);
+  if (ts.isCallExpression(init)) return false; // `const t = it.skip()` is a call, not a capture
+  const captured = captureSkipChain(init, roots);
+  if (captured === undefined) return false;
+  directSkips.set(lhs, captured);
+  return true;
 }
 
 /**
  * Walk an ACCESS chain expression (no trailing call) from its runner root, returning the captured
  * chain token (`it.skip`, `describe.skipIf`, `it["skip"]`) when a skip/conditional member is reached,
- * or `undefined` when the chain has no skip terminal / does not bottom out at a runner root.
+ * or `undefined` when the chain has no skip terminal / does not bottom out at a (resolved) runner root.
  */
-function captureSkipChain(expr: ts.Expression): string | undefined {
-  const peeled = peelForCapture(expr);
+function captureSkipChain(expr: ts.Expression, roots: ReadonlySet<string>): string | undefined {
+  const peeled = peelForCapture(expr, roots);
   if (peeled === undefined) return undefined;
   for (const access of peeled.accesses) {
     if (access.kind === 'skip' || access.kind === 'conditional') return peeled.tokenUpTo(access);
@@ -350,14 +501,22 @@ function captureSkipChain(expr: ts.Expression): string | undefined {
 }
 
 /**
- * `const { skip } = it` / `const { todo: gone } = test` → record the destructured local name
- * (`skip` / `gone`) as a BARE skip caller bound to that runner. Only members in {@link SKIP_MEMBERS}
+ * `const { skip } = it` / `= t` (off a RESOLVED root) / `= (it)` / `const { todo: gone } = test` →
+ * record the destructured local name (`skip` / `gone`) as a BARE skip caller bound to that runner. The
+ * UNWRAPPED initializer must be an identifier in the GROWING `roots` set (a literal OR a resolved
+ * alias — the codex-R7 `const t = it; const { skip } = t` case). Only members in {@link SKIP_MEMBERS}
  * / {@link CONDITIONAL_MEMBERS} matter; an ordinary destructure (`const { each } = it`) is ignored.
+ * Returns true when a NEW bare-skip binding was added (drives the fixpoint).
  */
-function collectDestructuredSkip(decl: ts.VariableDeclaration, bareSkips: Map<string, string>): void {
-  if (!ts.isObjectBindingPattern(decl.name)) return;
-  const init = decl.initializer;
-  if (init === undefined || !ts.isIdentifier(init) || !RUNNER_ROOTS.has(init.text)) return;
+function collectDestructuredSkip(
+  decl: ts.VariableDeclaration,
+  roots: ReadonlySet<string>,
+  bareSkips: Map<string, string>,
+): boolean {
+  if (!ts.isObjectBindingPattern(decl.name) || decl.initializer === undefined) return false;
+  const init = unwrapExpr(decl.initializer);
+  if (!ts.isIdentifier(init) || !roots.has(init.text)) return false;
+  let added = false;
   for (const element of decl.name.elements) {
     // `propertyName` is the source member (`todo`) when renamed (`{ todo: gone }`); else `name` is both.
     const member =
@@ -369,8 +528,11 @@ function collectDestructuredSkip(decl: ts.VariableDeclaration, bareSkips: Map<st
     if (member === undefined) continue;
     if (!SKIP_MEMBERS.has(member) && !CONDITIONAL_MEMBERS.has(member)) continue;
     const local = ts.isIdentifier(element.name) ? element.name.text : member;
+    if (bareSkips.has(local)) continue;
     bareSkips.set(local, `${init.text}.${member}`);
+    added = true;
   }
+  return added;
 }
 
 // ---------------------------------------------------------------------------
@@ -426,8 +588,14 @@ function peelAccessChain(expr: ts.Expression): { rootName: string; accesses: Cha
       cursor = cursor.expression;
       continue;
     }
-    if (ts.isNonNullExpression(cursor) || ts.isParenthesizedExpression(cursor)) {
-      cursor = cursor.expression;
+    // Peel the TRANSPARENT value wrappers mid-chain too — `(it as typeof it).skip`,
+    // `(it satisfies T).skip`, `(<T>it).skip`, `(it).skip`, `it!.skip` — the SAME set the binding
+    // collectors unwrap (codex round-8: the wrapper unwrap was at the binding sites but not in the
+    // chain walker, so a wrapped runner HEAD escaped). `unwrapExpr` is value-preserving, so the chain
+    // root is unchanged.
+    const unwrapped = unwrapExpr(cursor);
+    if (unwrapped !== cursor) {
+      cursor = unwrapped;
       continue;
     }
     break;
@@ -621,18 +789,137 @@ function followedByCall(node: ts.PropertyAccessExpression | ts.ElementAccessExpr
 // ---------------------------------------------------------------------------
 
 /**
+ * The COMPILE-TIME truthiness of a condition expression WHEN it is a constant — `true`/`false`, a
+ * numeric / string / bigint literal, `null`, the `undefined`/`NaN`/`Infinity` identifiers, a regex
+ * (always truthy), a `!`/unary-`±`/`void` over a constant, and a short-circuiting `&&`/`||` of
+ * constants. Returns `true`/`false` for a DECIDED constant, or `undefined` when the expression
+ * references a RUNTIME value (an ordinary identifier, a call, a comparison, …). PARSER-DECIDABLE — no
+ * evaluation, no checker, no Program.
+ *
+ * THE SOUNDNESS FLOOR (codex round-7). A guard is a genuine runtime gate ONLY when its condition can
+ * vary at runtime; a COMPILE-TIME-CONSTANT condition (`if (true) {…}`, `skipIf(true)`, `true ? … : …`)
+ * is VACUOUS — the branch is taken (or not) unconditionally, so the skip is a placeholder dressed as a
+ * gate. A real capability gate (`!FFMPEG`, `process.platform === 'win32'`, `!canUseSAB`) references a
+ * runtime value → `undefined` here → NEVER folded. The function ONLY ever returns a decided boolean
+ * for a literal-constant expression, so it can never mis-judge a real gate as vacuous (no false
+ * "unconditional"); the residual is the reverse (a contrived all-literal comparison like `1 === 1` is
+ * left as `undefined` → treated as a gate), which is harmless and far rarer than `if (true)`.
+ */
+function constTruthiness(expr: ts.Expression): boolean | undefined {
+  const e = unwrapExpr(expr);
+  if (e.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (e.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (e.kind === ts.SyntaxKind.NullKeyword) return false;
+  if (ts.isNumericLiteral(e)) return Number(e.text) !== 0 && !Number.isNaN(Number(e.text));
+  if (ts.isBigIntLiteral(e)) return !/^0+n$/.test(e.text); // "0n" → false, any non-zero bigint → true
+  if (ts.isStringLiteralLike(e)) return e.text.length > 0;
+  if (ts.isRegularExpressionLiteral(e)) return true; // a RegExp object is always truthy
+  if (ts.isIdentifier(e)) {
+    if (e.text === 'undefined' || e.text === 'NaN') return false;
+    if (e.text === 'Infinity') return true;
+    return undefined; // any other identifier is a runtime value — a genuine gate
+  }
+  if (ts.isVoidExpression(e)) return false; // `void <anything>` evaluates to `undefined` → falsy
+  if (ts.isPrefixUnaryExpression(e)) {
+    const inner = constTruthiness(e.operand);
+    if (inner === undefined) return undefined;
+    if (e.operator === ts.SyntaxKind.ExclamationToken) return !inner;
+    // Unary ±: the truthiness of `-x`/`+x` matches that of `x` (only ±0 is falsy, already false).
+    if (e.operator === ts.SyntaxKind.MinusToken || e.operator === ts.SyntaxKind.PlusToken) return inner;
+    return undefined;
+  }
+  // `Boolean(<constant>)` — the explicit cast (codex round-8: `if (Boolean(1))` was not folded).
+  if (
+    ts.isCallExpression(e) &&
+    ts.isIdentifier(e.expression) &&
+    e.expression.text === 'Boolean' &&
+    e.arguments.length === 1
+  ) {
+    return constTruthiness(e.arguments[0]!);
+  }
+  if (ts.isBinaryExpression(e)) {
+    const op = e.operatorToken.kind;
+    if (op === ts.SyntaxKind.AmpersandAmpersandToken) {
+      const l = constTruthiness(e.left);
+      if (l === false) return false; // `false && _` → false (short-circuit)
+      if (l === undefined) return undefined;
+      return constTruthiness(e.right); // `true && right` → truthiness of right
+    }
+    if (op === ts.SyntaxKind.BarBarToken) {
+      const l = constTruthiness(e.left);
+      if (l === true) return true; // `true || _` → true (short-circuit)
+      if (l === undefined) return undefined;
+      return constTruthiness(e.right); // `false || right` → truthiness of right
+    }
+    // A comparison of two CONSTANT literals folds to a constant (codex round-8: `if (1 === 1)` was not
+    // folded). Only fires when BOTH sides are decidable literal VALUES — a runtime operand → undefined.
+    return constComparison(op, e.left, e.right);
+  }
+  return undefined;
+}
+
+/** A decidable literal VALUE of a constant expression (number/string/boolean/null), else undefined. */
+function constValue(expr: ts.Expression): { v: number | string | boolean | null } | undefined {
+  const e = unwrapExpr(expr);
+  if (e.kind === ts.SyntaxKind.TrueKeyword) return { v: true };
+  if (e.kind === ts.SyntaxKind.FalseKeyword) return { v: false };
+  if (e.kind === ts.SyntaxKind.NullKeyword) return { v: null };
+  if (ts.isNumericLiteral(e)) return { v: Number(e.text) };
+  if (ts.isStringLiteralLike(e)) return { v: e.text };
+  if (ts.isPrefixUnaryExpression(e)) {
+    const inner = constValue(e.operand);
+    if (inner === undefined) return undefined;
+    if (e.operator === ts.SyntaxKind.MinusToken && typeof inner.v === 'number') return { v: -inner.v };
+    if (e.operator === ts.SyntaxKind.PlusToken && typeof inner.v === 'number') return { v: +inner.v };
+    if (e.operator === ts.SyntaxKind.ExclamationToken) return { v: !inner.v };
+  }
+  return undefined;
+}
+
+/**
+ * Fold a comparison of two CONSTANT operands (`1 === 1`, `2 < 3`, `"a" !== "b"`) to its boolean value,
+ * or undefined when either side is not a decidable literal (a runtime operand). Strict `===`/`!==` and
+ * the orderings only — loose `==`/`!=` is left runtime (never folded) so the eqeqeq discipline holds and
+ * no coercion surprise can mis-fold. Sound: it only ever decides a genuinely-constant comparison.
+ */
+function constComparison(op: ts.SyntaxKind, left: ts.Expression, right: ts.Expression): boolean | undefined {
+  const l = constValue(left);
+  const r = constValue(right);
+  if (l === undefined || r === undefined) return undefined;
+  switch (op) {
+    case ts.SyntaxKind.EqualsEqualsEqualsToken:
+      return l.v === r.v;
+    case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+      return l.v !== r.v;
+    case ts.SyntaxKind.LessThanToken:
+      return (l.v as number | string) < (r.v as number | string);
+    case ts.SyntaxKind.GreaterThanToken:
+      return (l.v as number | string) > (r.v as number | string);
+    case ts.SyntaxKind.LessThanEqualsToken:
+      return (l.v as number | string) <= (r.v as number | string);
+    case ts.SyntaxKind.GreaterThanEqualsToken:
+      return (l.v as number | string) >= (r.v as number | string);
+    default:
+      return undefined;
+  }
+}
+
+/**
  * Classify the CONDITIONALITY of a detected skip from `node` (the skip access or its call):
- *  - `'skipIf'` / `'runIf'` — the access member IS the runtime gate;
- *  - `'ternary'` — the skip is (transitively) a `?:` arm — `cond ? it : it.skip`;
- *  - `'enclosing-if'` — an ANCESTOR is an `if (<cond>) { … }` whose THEN/ELSE branch holds the skip
- *    (the structural proof the token CANNOT see — walking PARENT pointers up the tree);
- *  - `'unconditional'` — none of the above (a placeholder, always reached).
+ *  - `'skipIf'` / `'runIf'` — the access member IS the runtime gate (with a RUNTIME-valued condition);
+ *  - `'ternary'` — the skip is (transitively) a `?:` arm whose CONDITION is runtime — `cond ? it : it.skip`;
+ *  - `'enclosing-if'` — an ANCESTOR is an `if (<runtime cond>) { … }` whose THEN/ELSE branch holds the
+ *    skip (the structural proof the token CANNOT see — walking PARENT pointers up the tree);
+ *  - `'unconditional'` — none of the above (a placeholder, always reached) — INCLUDING a guard whose
+ *    condition is a COMPILE-TIME CONSTANT (`if (true)`, `skipIf(true)`, `true ? …`): vacuous, not a gate.
  *
  * The check ORDER matters: a `.skipIf`/`.runIf` member is conditional by its own form; a ternary arm
- * is next; the enclosing-`if` ancestor walk is last (the broadest). The first that holds wins.
+ * is next; the enclosing-`if` ancestor walk is last (the broadest). The first that holds wins. A
+ * VACUOUS (constant-condition) form at any of these does NOT classify conditional — it falls through to
+ * `unconditional`, so a placeholder cannot launder itself behind `if (true)` (codex round-7).
  */
 function classifyConditional(node: ts.Node): SkipConditionality {
-  // 1) The access member itself a conditional member (`it.skipIf(…)`)?
+  // 1) The access member itself a conditional member (`it.skipIf(<runtime>)`) — vacuous arg folds away.
   const memberCond = conditionalMemberOf(node);
   if (memberCond !== undefined) return memberCond;
 
@@ -650,6 +937,79 @@ function classifyConditional(node: ts.Node): SkipConditionality {
   if (isInsideIfBranch(node)) return 'enclosing-if';
 
   return 'unconditional';
+}
+
+/**
+ * Collect EVERY guard CONDITION expression governing the skip at `node` (the skip access or its call):
+ *  - the `.skipIf(<cond>)` / `.runIf(<cond>)` member-call argument;
+ *  - a `.skip(<cond>, …)` skip-with-condition argument;
+ *  - every enclosing `?:` condition on the value spine (`cond ? it : it.skip`);
+ *  - every enclosing `if (<cond>) { … }` condition up to the function boundary.
+ *
+ * This is the syntactic counterpart of {@link classifyConditional} that returns the guard NODES rather
+ * than a classification — the CAPABILITY-GATE LINKER (`@czap/audit`'s capability-link oracle) resolves
+ * the symbols of these expressions through the checker to PROVE the skip's guard derives from its
+ * declared capability's probe (codex round-8 #1b: conditional ≠ gated-by-the-declared-capability).
+ * Returns `[]` for an unconditional skip (no guard) — exported for the host oracle (parser-only; the
+ * symbol resolution happens in the oracle's `ts.Program`).
+ */
+export function guardExpressionsOf(node: ts.Node): readonly ts.Expression[] {
+  const guards: ts.Expression[] = [];
+  // `.skipIf`/`.runIf` member call — its first argument is the runtime gate.
+  const condCall = conditionalMemberCall(node);
+  if (condCall?.arguments[0] !== undefined) guards.push(condCall.arguments[0]);
+  // `.skip(<cond>, …)` skip-with-condition — the non-title first argument.
+  if (isSkipWithConditionArg(node)) {
+    const call = ts.isCallExpression(node) ? node : ts.isCallExpression(node.parent) ? node.parent : undefined;
+    if (call?.arguments[0] !== undefined) guards.push(call.arguments[0]);
+  }
+  // Ancestor walk: every enclosing ternary condition (on the value spine) + every enclosing-if condition.
+  let child: ts.Node = node;
+  let parent: ts.Node | undefined = node.parent;
+  while (parent !== undefined) {
+    if (
+      ts.isFunctionDeclaration(parent) ||
+      ts.isFunctionExpression(parent) ||
+      ts.isArrowFunction(parent) ||
+      ts.isMethodDeclaration(parent)
+    ) {
+      // A ternary arm crosses into a callback only as the SAME value (the skip accessor); an enclosing
+      // `if` does not govern a nested function body. Stop the `if` walk at the function boundary, but a
+      // ternary whose arm IS this function-valued expression still counts (handled by the spine check).
+      if (!(ts.isArrowFunction(parent) || ts.isFunctionExpression(parent))) break;
+    }
+    if (ts.isConditionalExpression(parent) && (parent.whenTrue === child || parent.whenFalse === child)) {
+      guards.push(parent.condition);
+    }
+    if (ts.isIfStatement(parent) && (parent.thenStatement === child || parent.elseStatement === child)) {
+      guards.push(parent.expression);
+    }
+    child = parent;
+    parent = parent.parent;
+  }
+  return guards;
+}
+
+/** The `.skipIf(<cond>)` / `.runIf(<cond>)` CALL governing the skip at `node`, or undefined. */
+function conditionalMemberCall(node: ts.Node): ts.CallExpression | undefined {
+  let expr: ts.Node | undefined = ts.isCallExpression(node) ? node.expression : node;
+  while (expr !== undefined) {
+    const isCondMember =
+      (ts.isPropertyAccessExpression(expr) && (expr.name.text === 'skipIf' || expr.name.text === 'runIf')) ||
+      (ts.isElementAccessExpression(expr) &&
+        ts.isStringLiteralLike(expr.argumentExpression) &&
+        (expr.argumentExpression.text === 'skipIf' || expr.argumentExpression.text === 'runIf'));
+    if (isCondMember) {
+      const call = expr.parent;
+      return ts.isCallExpression(call) && call.expression === expr ? call : undefined;
+    }
+    if (ts.isPropertyAccessExpression(expr) || ts.isElementAccessExpression(expr) || ts.isCallExpression(expr)) {
+      expr = expr.expression;
+      continue;
+    }
+    break;
+  }
+  return undefined;
 }
 
 /**
@@ -674,25 +1034,32 @@ function isSkipWithConditionArg(node: ts.Node): boolean {
   if (!isSkipMember) return false;
   const first = call.arguments[0];
   // A non-string-literal first argument is the runtime condition (`!built`); a string is the title.
-  return first !== undefined && !ts.isStringLiteralLike(first);
+  // A COMPILE-TIME-CONSTANT first arg (`it.skip(true, …)`) is VACUOUS — not a runtime gate (codex R7).
+  return first !== undefined && !ts.isStringLiteralLike(first) && constTruthiness(first) === undefined;
 }
 
-/** If `node`'s access chain trips on a `.skipIf`/`.runIf` member, return that classification; else undefined. */
+/**
+ * If `node`'s access chain trips on a `.skipIf`/`.runIf` member with a RUNTIME-valued condition, return
+ * that classification; else undefined. A `.skipIf`/`.runIf` whose argument is a COMPILE-TIME CONSTANT
+ * (`it.skipIf(true)`) is VACUOUS — not a runtime gate — and returns undefined so it folds to
+ * `unconditional` (codex round-7). The `member` access node is the callee of the `.skipIf(<arg>)` call,
+ * so the call (and its argument) is the member access's parent.
+ */
 function conditionalMemberOf(node: ts.Node): SkipConditionality | undefined {
   // `node` is either the skip access or the call wrapping it. Inspect the access chain it belongs to.
   let expr: ts.Node | undefined = ts.isCallExpression(node) ? node.expression : node;
   // Walk down the access chain for a conditional member (the chain may be `it.skipIf(c)` directly).
   while (expr !== undefined) {
     if (ts.isPropertyAccessExpression(expr)) {
-      if (expr.name.text === 'skipIf') return 'skipIf';
-      if (expr.name.text === 'runIf') return 'runIf';
+      if (expr.name.text === 'skipIf') return conditionalMemberKind(expr, 'skipIf');
+      if (expr.name.text === 'runIf') return conditionalMemberKind(expr, 'runIf');
       expr = expr.expression;
       continue;
     }
     if (ts.isElementAccessExpression(expr)) {
       if (ts.isStringLiteralLike(expr.argumentExpression)) {
-        if (expr.argumentExpression.text === 'skipIf') return 'skipIf';
-        if (expr.argumentExpression.text === 'runIf') return 'runIf';
+        if (expr.argumentExpression.text === 'skipIf') return conditionalMemberKind(expr, 'skipIf');
+        if (expr.argumentExpression.text === 'runIf') return conditionalMemberKind(expr, 'runIf');
       }
       expr = expr.expression;
       continue;
@@ -706,13 +1073,34 @@ function conditionalMemberOf(node: ts.Node): SkipConditionality | undefined {
   return undefined;
 }
 
-/** Is `node` (transitively, through access/call parents) an ARM of a conditional `?:` expression? */
+/**
+ * The conditional-member kind for a `.skipIf`/`.runIf` access — `kind` unless the member's call passes a
+ * COMPILE-TIME-CONSTANT condition, in which case the gate is VACUOUS (`undefined` → folds to
+ * `unconditional`). The call invoking the member is the access node's parent (`<member>(<arg>)`).
+ */
+function conditionalMemberKind(member: ts.Node, kind: 'skipIf' | 'runIf'): SkipConditionality | undefined {
+  const call = member.parent;
+  if (ts.isCallExpression(call) && call.expression === member) {
+    const first = call.arguments[0];
+    if (first !== undefined && constTruthiness(first) !== undefined) return undefined; // vacuous condition
+  }
+  return kind;
+}
+
+/**
+ * Is `node` (transitively, through access/call parents) an ARM of a conditional `?:` whose CONDITION is
+ * a runtime value? A ternary with a COMPILE-TIME-CONSTANT condition (`true ? it.skip : it`) is VACUOUS —
+ * one arm is dead, the other unconditional — so it is NOT a runtime gate (codex round-7) and is left for
+ * the unconditional fall-through.
+ */
 function isInTernaryArm(node: ts.Node): boolean {
   let current: ts.Node = node;
   let parent: ts.Node | undefined = node.parent;
   while (parent !== undefined) {
     if (ts.isConditionalExpression(parent) && (parent.whenTrue === current || parent.whenFalse === current)) {
-      return true;
+      // A RUNTIME-conditioned ternary arm is a gate; a VACUOUS (constant-condition) one is not — keep
+      // ascending past it (an OUTER runtime ternary/if could still guard the skip).
+      if (constTruthiness(parent.condition) === undefined) return true;
     }
     // Only ascend through the access/call/paren spine that keeps the skip as the SAME value; stop at
     // a statement/argument boundary (a ternary in the test BODY is unrelated to the skip accessor).
@@ -734,19 +1122,28 @@ function isInTernaryArm(node: ts.Node): boolean {
 }
 
 /**
- * Is `node` inside the THEN or ELSE branch of an `if (<cond>) { … }` ancestor? Walk PARENT pointers
- * up the tree; if any ancestor is an `IfStatement` and `node` lies within its `thenStatement` or
- * `elseStatement` (NOT the condition expression itself), the skip is guarded. We stop at a function
- * boundary (a skip inside a nested function is governed by that function's own control flow, not the
- * outer `if` — a conservative, sound choice that never over-claims conditionality).
+ * Is `node` inside the THEN or ELSE branch of an `if (<runtime cond>) { … }` ancestor? Walk PARENT
+ * pointers up the tree; if any ancestor is an `IfStatement` whose CONDITION is a runtime value and
+ * `node` lies within its `thenStatement` or `elseStatement` (NOT the condition expression itself), the
+ * skip is guarded. An `if (<compile-time constant>) { … }` (`if (true) {…}`) is VACUOUS — the branch is
+ * taken (or not) unconditionally, so it is NOT a gate (codex round-7: the demonstrated laundering of a
+ * placeholder behind `if (true)`); we keep ascending past it for an OUTER real guard. We stop at a
+ * function boundary (a skip inside a nested function is governed by that function's own control flow,
+ * not the outer `if` — a conservative, sound choice that never over-claims conditionality).
  */
 function isInsideIfBranch(node: ts.Node): boolean {
   let child: ts.Node = node;
   let parent: ts.Node | undefined = node.parent;
   while (parent !== undefined) {
     if (ts.isIfStatement(parent)) {
-      // Guarded iff the child is in the THEN or ELSE branch (not the condition).
-      if (parent.thenStatement === child || parent.elseStatement === child) return true;
+      // Guarded iff the child is in the THEN or ELSE branch (not the condition) AND the condition is a
+      // RUNTIME value. A vacuous constant condition is not a gate — fall through to keep ascending.
+      if (
+        (parent.thenStatement === child || parent.elseStatement === child) &&
+        constTruthiness(parent.expression) === undefined
+      ) {
+        return true;
+      }
       // `child` may be a deeper descendant — but our walk ascends one level at a time, so by the time
       // we reach the IfStatement, `child` is exactly its direct branch statement (thenStatement is a
       // Block in the canonical `if (c) { … }`). If `child` is the condition, it's not guarded.
@@ -831,10 +1228,14 @@ function buildTokenUpTo(rootName: string, accesses: readonly ChainAccess[], acce
   return token;
 }
 
-/** Re-export of {@link peelAccessChain} with the {@link PeeledChain} token builder, for capture. */
-function peelForCapture(expr: ts.Expression): PeeledChain | undefined {
+/**
+ * Re-export of {@link peelAccessChain} with the {@link PeeledChain} token builder, for capture.
+ * Validates the chain's root against the RESOLVED `roots` set (a literal root OR a resolved alias —
+ * so `const skipIt = t.skip` captures off the `const t = it` alias), not just the literal set.
+ */
+function peelForCapture(expr: ts.Expression, roots: ReadonlySet<string>): PeeledChain | undefined {
   const peeled = peelAccessChain(expr);
-  if (peeled === undefined || !RUNNER_ROOTS.has(peeled.rootName)) return undefined;
+  if (peeled === undefined || !roots.has(peeled.rootName)) return undefined;
   return {
     rootName: peeled.rootName,
     accesses: peeled.accesses,

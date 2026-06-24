@@ -44,6 +44,7 @@ import {
   PLACEHOLDER_SKIP_MARKERS,
   type StandardsElement,
   type StandardsWaiver,
+  type SiteConditionalityResolver,
 } from '@czap/gauntlet';
 import {
   readLiveStandardsSurface,
@@ -255,6 +256,51 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
     expect(
       part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub'),
     ).toBe(true);
+  });
+});
+
+describe('codex round-7 — the SOUND conditionality proof is threaded into the standards backstop', () => {
+  // A capability-NAMING title: the title-keyword heuristic alone calls this "consistent" and would let
+  // a sign-off cover it. The injected AST proof is what distinguishes a genuine `if (!CAP)` gate from an
+  // `if (true)` placeholder — REGARDLESS of the title. "You cannot sign away a lie."
+  const FILE = 'tests/unit/fake/ffmpeg-gated.test.ts';
+  const SITE = 'it.skip("ffmpeg unavailable", () => {});';
+  const ADDED: StandardsElement = { _tag: 'skip-allowlist', file: FILE, site: SITE, capability: 'ffmpeg-absent' };
+  const SIGNOFF: StandardsWaiver = {
+    elementKey: `skip-allowlist::${FILE}::${SITE}`,
+    weakening: 'skip-allowlist-added',
+    owner: 'heyoub',
+    justification: 'claims a genuine ffmpeg capability gate',
+    expiry: '2999-01-01',
+  };
+
+  function partitionWith(resolver?: SiteConditionalityResolver): ReturnType<typeof applyStandardsWaivers> {
+    const committed = readCommittedSnapshot(REPO_ROOT);
+    const live = readLiveStandardsSurface(REPO_ROOT, NOW);
+    const changes = diffStandardsSurface(committed.elements, [...live.elements, ADDED]);
+    return applyStandardsWaivers(changes, [SIGNOFF], NOW, ALWAYS_BLOCKING, resolver);
+  }
+
+  test('an UNCONDITIONAL (if(true)) placeholder is FORBIDDEN even with a covering sign-off + a capability title', () => {
+    const part = partitionWith(() => 'unconditional');
+    // The AST proof overrides the title: the covering sign-off is VOID, the weakening stays unsigned.
+    expect(part.forbiddenSignoffs.some((f) => f.elementKey === SIGNOFF.elementKey)).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
+    expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+  });
+
+  test('a genuine CONDITIONAL (enclosing-if) skip stays owner-SIGNABLE (the resolver never over-forbids)', () => {
+    const part = partitionWith(() => 'enclosing-if');
+    expect(part.forbiddenSignoffs).toEqual([]);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(true);
+  });
+
+  test('WITHOUT the resolver the title-keyword heuristic alone (wrongly) accepts it — the gap the AST closes', () => {
+    // Documents WHY the resolver matters: the lean title path sees "ffmpeg" in the title and calls it
+    // consistent, so the sign-off is honored — exactly the laundering the injected AST proof closes.
+    const part = partitionWith(undefined);
+    expect(part.forbiddenSignoffs).toEqual([]);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
   });
 });
 
