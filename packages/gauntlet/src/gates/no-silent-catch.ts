@@ -46,7 +46,7 @@ function scan(context: GateContext): readonly Finding[] {
     // Scan CODE only — a `catch (e) {}` written inside a string/comment is not a
     // real swallow. Run the matcher over the whole stripped text so a block that
     // wraps onto the next line is still seen; derive the line from the offset.
-    const stripped = codeOnly(text);
+    const stripped = (context.codeOnly ?? codeOnly)(text);
     const re = new RegExp(SILENT_CATCH, 'g');
     let m: RegExpExecArray | null;
     while ((m = re.exec(stripped)) !== null) {

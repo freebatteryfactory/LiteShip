@@ -77,6 +77,16 @@ export interface GateContext {
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
+   * The sound, parser-backed `codeOnly` floor — an INJECTED capability, the same shape as
+   * {@link skipDetector}. The lean char-state-machine `codeOnly` (gates/code-only.ts) is the
+   * no-typescript FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `codeOnlyAST` (a real
+   * `ts.createSourceFile` token walk that the parser disambiguates — regex-vs-division, nested
+   * templates, comments) and injects it here. A code-scanning gate calls `(context.codeOnly ?? codeOnly)(text)`
+   * — the scanner when injected, the char-machine otherwise. The two are pinned equivalent by the
+   * differential test (tests/unit/audit/code-ranges.test.ts), so the fallback stays faithful.
+   */
+  readonly codeOnly?: (source: string) => string;
+  /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
    * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by
    * a host (the CLI, via `@czap/audit`'s `ts.Program`), so the gauntlet never

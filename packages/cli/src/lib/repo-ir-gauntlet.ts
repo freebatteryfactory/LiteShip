@@ -31,6 +31,7 @@ import {
   liteshipDevopsProfile,
   normalizeRepoPath,
   detectSkipsAST,
+  codeOnlyAST,
   type FactOracle,
 } from '@czap/audit';
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
@@ -461,6 +462,11 @@ export async function runGauntletWithRepoIR(
     // detection + the structural F2 conditionality the token scanner cannot produce — the cure that
     // ends the token-scanner whack-a-mole. The lean `czap check`/MCP path keeps the token fallback.
     skipDetector: detectSkipsAST,
+    // The SOUND scanner `codeOnly` floor — same always-on `--ir` injection. Code-scanning gates
+    // (no-bare-throw, no-nondeterminism, no-silent-catch) use it via `(context.codeOnly ?? codeOnly)`,
+    // a real parser tokenization (regex-vs-division, nested templates) over the char-machine fallback
+    // — pinned equivalent by tests/unit/audit/code-ranges.test.ts.
+    codeOnly: codeOnlyAST,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only

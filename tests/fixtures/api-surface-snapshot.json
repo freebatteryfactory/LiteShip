@@ -134,6 +134,10 @@
           "kind": "const"
         },
         {
+          "name": "CODE_ONLY_ORACLE_ID",
+          "kind": "const"
+        },
+        {
           "name": "CONDITION_FORCES",
           "kind": "const"
         },
@@ -219,6 +223,11 @@
         },
         {
           "name": "buildRepoIRTaint",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "codeOnlyAST",
           "kind": "function",
           "signature": "(1)"
         },

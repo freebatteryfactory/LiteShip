@@ -140,6 +140,15 @@ export function codeOnly(src: string): string {
   let state: State = 'code';
   let lastSig: string | undefined;
   let lastSigPos = -1;
+  // Template ${…} substitution tracking: a backtick only CLOSES the template from template TEXT
+  // (inSubst === false), so a NESTED template inside a substitution (`` `a ${ `b` } c` ``) is blanked
+  // wholesale instead of the inner backtick falsely closing the outer (the char-machine's parser-shaped
+  // blind spot, caught by the differential test vs the sound @czap/audit scanner). Literal braces in
+  // template text are ignored; only `${` opens a substitution. The residual the lexer cannot balance —
+  // a string carrying an unbalanced brace INSIDE a substitution — is vanishingly rare; the injected
+  // scanner has no such limit.
+  let inSubst = false;
+  let substBraceDepth = 0;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -211,7 +220,35 @@ export function codeOnly(src: string): string {
       i++;
       continue;
     } // escape — consume the next char too
-    const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
+    if (state === 'template') {
+      if (!inSubst) {
+        if (c === '$' && next === '{') {
+          inSubst = true;
+          substBraceDepth = 1;
+          out += '  ';
+          i++;
+          continue;
+        }
+        if (c === '`') {
+          state = 'code';
+          inSubst = false;
+          substBraceDepth = 0;
+          lastSig = ')';
+          lastSigPos = i;
+        }
+        // a literal brace in template TEXT is not a substitution delimiter — ignored
+      } else {
+        if (c === '{') substBraceDepth++;
+        else if (c === '}') {
+          substBraceDepth--;
+          if (substBraceDepth === 0) inSubst = false;
+        }
+        // a backtick here lives inside a substitution (a nested template) → blanked, never closes the outer
+      }
+      out += keep;
+      continue;
+    }
+    const closer = state === 'single' ? "'" : '"';
     if (c === closer) {
       state = 'code';
       // A closed string is a VALUE → a following `/` is division.
@@ -237,6 +274,10 @@ export function stringsBlanked(src: string): string {
   let state: State = 'code';
   let lastSig: string | undefined;
   let lastSigPos = -1;
+  // See codeOnly: a backtick closes the template only from template TEXT, so nested templates inside a
+  // ${…} substitution are blanked wholesale rather than the inner backtick closing the outer.
+  let inSubst = false;
+  let substBraceDepth = 0;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -311,7 +352,33 @@ export function stringsBlanked(src: string): string {
       i++;
       continue;
     } // escape — consume the next char too
-    const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
+    if (state === 'template') {
+      if (!inSubst) {
+        if (c === '$' && next === '{') {
+          inSubst = true;
+          substBraceDepth = 1;
+          out += '  ';
+          i++;
+          continue;
+        }
+        if (c === '`') {
+          state = 'code';
+          inSubst = false;
+          substBraceDepth = 0;
+          lastSig = ')';
+          lastSigPos = i;
+        }
+      } else {
+        if (c === '{') substBraceDepth++;
+        else if (c === '}') {
+          substBraceDepth--;
+          if (substBraceDepth === 0) inSubst = false;
+        }
+      }
+      out += keep;
+      continue;
+    }
+    const closer = state === 'single' ? "'" : '"';
     if (c === closer) {
       state = 'code';
       // A closed string is a VALUE → a following `/` is division.
@@ -341,6 +408,10 @@ export function commentsBlanked(src: string): string {
   let state: State = 'code';
   let lastSig: string | undefined;
   let lastSigPos = -1;
+  // See codeOnly: a backtick closes the template only from template TEXT, so a `//` inside a NESTED
+  // template (`` `a ${ `b //x` } c` ``) is not mistaken for a real comment via a falsely-closed template.
+  let inSubst = false;
+  let substBraceDepth = 0;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -413,7 +484,34 @@ export function commentsBlanked(src: string): string {
       i++;
       continue;
     } // escape — keep both chars
-    const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
+    if (state === 'template') {
+      if (!inSubst) {
+        if (c === '$' && next === '{') {
+          inSubst = true;
+          substBraceDepth = 1;
+          out += c;
+          out += next;
+          i++;
+          continue;
+        }
+        if (c === '`') {
+          state = 'code';
+          inSubst = false;
+          substBraceDepth = 0;
+          lastSig = ')';
+          lastSigPos = i;
+        }
+      } else {
+        if (c === '{') substBraceDepth++;
+        else if (c === '}') {
+          substBraceDepth--;
+          if (substBraceDepth === 0) inSubst = false;
+        }
+      }
+      out += c;
+      continue;
+    }
+    const closer = state === 'single' ? "'" : '"';
     if (c === closer) {
       state = 'code';
       // A closed string is a VALUE → a following `/` is division.
