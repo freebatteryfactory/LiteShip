@@ -1922,16 +1922,20 @@ export function applyInterleavedGateOverrides(pairs: readonly PairEvaluation[]):
     const directiveFn = SYNC_DIRECTIVE_TASK_FN_BY_NAME.get(evaluation.directive);
     const baselineFn = SYNC_DIRECTIVE_TASK_FN_BY_NAME.get(evaluation.baseline);
     if (directiveFn === undefined || baselineFn === undefined) return evaluation;
+    // FAIL CLOSED (codex PR#59 review): when the per-task pass already marked the pair MISSING (a task
+    // produced no/invalid BenchResult), keep it missing — do NOT flip `missing` to false. Overriding it
+    // would let evaluateBenchPairsAcrossReplicates treat the replicate as valid and dereference the
+    // absent directiveResult/baselineResult, turning the intended missing-benchmark failure into a crash
+    // or a silent pass. Re-measure ONLY a pair the per-task pass produced real results for.
+    if (evaluation.missing || evaluation.directiveResult === undefined || evaluation.baselineResult === undefined) {
+      return evaluation;
+    }
     const paired = measurePairedOverhead(directiveFn, baselineFn);
     return {
       ...evaluation,
       overhead: paired.overhead,
-      directiveResult: evaluation.directiveResult
-        ? { ...evaluation.directiveResult, meanNs: paired.directiveNs }
-        : evaluation.directiveResult,
-      baselineResult: evaluation.baselineResult
-        ? { ...evaluation.baselineResult, meanNs: paired.baselineNs }
-        : evaluation.baselineResult,
+      directiveResult: { ...evaluation.directiveResult, meanNs: paired.directiveNs },
+      baselineResult: { ...evaluation.baselineResult, meanNs: paired.baselineNs },
       missing: false,
       pass: paired.overhead <= evaluation.threshold,
     };

@@ -22,6 +22,7 @@ import {
   type ReplicateResult,
 } from '../../../scripts/bench/directive-suite.ts';
 import { LLM_STEADY_REPLICATE_EXCEEDANCE_MAX } from '../../../scripts/bench/flex-policy.ts';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
 function makeBenchResult(name: string, meanNs: number): BenchResult {
   return {
@@ -401,20 +402,32 @@ describe('interleaved paired measurement — window-invariant hot-path ratio (CI
     expect(sink).toBeGreaterThan(0); // guard against dead-code elimination of the measured work
   });
 
-  test('applyInterleavedGateOverrides re-measures an interleaved pair, leaves a non-interleaved one untouched', () => {
-    // Use ONE light interleaved pair (satellite) + one non-interleaved pair — measuring all four real
-    // pairs (stream runs 5000 inner iters/call) would blow the test timeout for no extra coverage.
+  test(
+    'applyInterleavedGateOverrides re-measures an interleaved pair, leaves a non-interleaved one untouched',
+    () => {
+      // Use ONE light interleaved pair (satellite) + one non-interleaved pair — measuring all four real
+      // pairs (stream runs 5000 inner iters/call) would blow the test timeout for no extra coverage.
+      const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
+      const nonInterleaved = DIRECTIVE_BENCH_PAIRS.find(
+        (pair) => !['satellite', 'stream', 'llm', 'worker'].includes(pair.label),
+      )!;
+      const inputs = [makePairEvaluation(satellite, 0.999), makePairEvaluation(nonInterleaved, 0.999)];
+      const [satelliteOut, otherOut] = applyInterleavedGateOverrides(inputs);
+      // The interleaved pair is re-measured live (sentinel 0.999 replaced by a real, finite paired ratio).
+      expect(satelliteOut!.overhead).not.toBe(0.999);
+      expect(Number.isFinite(satelliteOut!.overhead)).toBe(true);
+      // The non-interleaved pair is returned untouched — same reference, sentinel intact.
+      expect(otherOut).toBe(inputs[1]);
+      expect(otherOut!.overhead).toBe(0.999);
+    },
+    scaledTimeout(15000),
+  );
+
+  test('a MISSING interleaved pair stays missing — fail-closed, never re-measured into a false pass', () => {
     const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
-    const nonInterleaved = DIRECTIVE_BENCH_PAIRS.find(
-      (pair) => !['satellite', 'stream', 'llm', 'worker'].includes(pair.label),
-    )!;
-    const inputs = [makePairEvaluation(satellite, 0.999), makePairEvaluation(nonInterleaved, 0.999)];
-    const [satelliteOut, otherOut] = applyInterleavedGateOverrides(inputs);
-    // The interleaved pair is re-measured live (sentinel 0.999 replaced by a real, finite paired ratio).
-    expect(satelliteOut!.overhead).not.toBe(0.999);
-    expect(Number.isFinite(satelliteOut!.overhead)).toBe(true);
-    // The non-interleaved pair is returned untouched — same reference, sentinel intact.
-    expect(otherOut).toBe(inputs[1]);
-    expect(otherOut!.overhead).toBe(0.999);
-  }, 15000);
+    const missingPair = makePairEvaluation(satellite, null); // directiveResult/baselineResult undefined, missing: true
+    const [out] = applyInterleavedGateOverrides([missingPair]);
+    expect(out!.missing).toBe(true); // NOT flipped to false
+    expect(out).toBe(missingPair); // returned untouched — no deref of the absent results
+  });
 });
