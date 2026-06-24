@@ -1,7 +1,7 @@
 /**
  * THE SOUND, AST-BASED SKIP DETECTOR — the cure that ends the token-scanner whack-a-mole.
  *
- * The token {@link detectSkips} (`@czap/gauntlet`'s dependency-free fallback) is a char/token
+ * The token `detectSkips` (`@czap/gauntlet`'s dependency-free fallback) is a char/token
  * scanner. It cannot PARSE JavaScript, so each codex round found a new spelling it missed
  * (`it.concurrent.skip`, multi-line `.each([⏎…]).skip`, the ASI rebind `const t = it⏎t.skip`).
  * The cure is a REAL AST: `ts.createSourceFile` (the PARSER — we do NOT need a full
@@ -14,7 +14,7 @@
  * an INJECTED capability (`(context.skipDetector ?? detectSkips)(text)`) — the host (the CLI, which
  * deps `@czap/audit`) injects `detectSkipsAST`; the lean token detector stays as the fallback.
  *
- * WHAT IT RETURNS. The SAME {@link SkipMatch} shape the token detector returns (so it is a drop-in
+ * WHAT IT RETURNS. The SAME `SkipMatch` shape the token detector returns (so it is a drop-in
  * for both consumers), EXTENDED with the `conditional` classification ({@link SkipConditionality}) —
  * the F2-soundness discriminant the token level cannot produce. An UNCONDITIONAL skip is a
  * placeholder (non-sanctionable regardless of title); a CONDITIONAL one is a signable capability gate.
@@ -101,7 +101,7 @@ interface RunnerBindings {
 /**
  * THE PUBLIC ENTRY — parse `source` with `ts.createSourceFile`, resolve the local runner bindings,
  * then walk the tree for EVERY skip/disable form, each carrying its 1-based line + the structural
- * `conditional` classification. Drop-in for the token {@link detectSkips} (same {@link SkipMatch}
+ * `conditional` classification. Drop-in for the token `detectSkips` (same `SkipMatch`
  * shape), extended with `conditional`. PURE — no I/O, no `ts.Program`, no checker.
  *
  * The file is parsed as `.tsx` with full JS support so type annotations (`const t: typeof it = it`),

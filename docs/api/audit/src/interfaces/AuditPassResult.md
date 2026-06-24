@@ -6,7 +6,7 @@
 
 # Interface: AuditPassResult
 
-Defined in: [audit/src/index.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L39)
+Defined in: [audit/src/index.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L40)
 
 The three audit passes plus their merged counts, run against one profile.
 
@@ -16,7 +16,7 @@ The three audit passes plus their merged counts, run against one profile.
 
 > `readonly` **counts**: [`AuditCounts`](AuditCounts.md)
 
-Defined in: [audit/src/index.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L43)
+Defined in: [audit/src/index.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L44)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/index.ts:43](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **findings**: readonly [`AuditFinding`](AuditFinding.md)[]
 
-Defined in: [audit/src/index.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L44)
+Defined in: [audit/src/index.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L45)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [audit/src/index.ts:44](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **integrity**: [`AuditSectionResult`](AuditSectionResult.md)\<[`IntegritySummary`](IntegritySummary.md)\>
 
-Defined in: [audit/src/index.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L41)
+Defined in: [audit/src/index.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L42)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [audit/src/index.ts:41](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **structure**: [`AuditSectionResult`](AuditSectionResult.md)\<[`StructureSummary`](StructureSummary.md)\>
 
-Defined in: [audit/src/index.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L40)
+Defined in: [audit/src/index.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L41)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [audit/src/index.ts:40](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **suppressed**: readonly [`AuditSuppression`](AuditSuppression.md)[]
 
-Defined in: [audit/src/index.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L45)
+Defined in: [audit/src/index.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L46)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [audit/src/index.ts:45](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **surface**: [`AuditSectionResult`](AuditSectionResult.md)\<[`SurfaceSummary`](SurfaceSummary.md)\>
 
-Defined in: [audit/src/index.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L42)
+Defined in: [audit/src/index.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/index.ts#L43)

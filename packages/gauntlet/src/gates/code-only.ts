@@ -22,15 +22,124 @@
  */
 
 /**
+ * The last significant CODE char after which a `/` is DIVISION, never a regex —
+ * a VALUE-ender: an identifier/number end, a closing `)`/`]`/`}`, or a `.`. When
+ * the preceding significant char matches this, `/` is treated as the division
+ * operator (unless the preceding WORD is a regex-allowing keyword; see below).
+ */
+const DIVISION_PRECEDER = /[A-Za-z0-9_$)\].}]/;
+
+/**
+ * Keywords after which a `/` BEGINS a regex literal even though the previous
+ * significant char is a letter — e.g. `return /re/`, `typeof /x/`, `case /y/`.
+ * Without this exception the `n` of `return` would look like a value-ender and
+ * the `/re/` would be mis-read as division.
+ */
+const REGEX_KEYWORDS = new Set([
+  'return',
+  'typeof',
+  'instanceof',
+  'in',
+  'of',
+  'new',
+  'delete',
+  'void',
+  'yield',
+  'await',
+  'case',
+  'do',
+  'else',
+  'throw',
+]);
+
+/** The identifier WORD ending at `pos` (walk back over `[A-Za-z0-9_$]`). */
+function precedingWord(src: string, pos: number): string {
+  let start = pos;
+  while (start >= 0 && /[A-Za-z0-9_$]/.test(src[start]!)) start--;
+  return src.slice(start + 1, pos + 1);
+}
+
+/**
+ * Conservative, lookahead-based regex-literal recognizer. Given a `/` at `start`
+ * and the last significant CODE char (`lastSig`, at `lastSigPos`), decide whether
+ * the `/` opens a SINGLE-LINE regex literal — and if so, return the index AFTER
+ * the literal (past any trailing flags). Returns `undefined` when the `/` is
+ * NOT a regex (⇒ the caller treats it as division).
+ *
+ * It is a regex-POSITION iff there is no preceding value to divide:
+ *  - `lastSig === undefined` (statement / file start), OR
+ *  - the preceding significant char is NOT a value-ender, OR
+ *  - it IS an identifier char but the preceding WORD is a regex-allowing keyword
+ *    (`return /re/` etc.).
+ *
+ * The SAME-LINE-close lookahead is what makes this SAFE: a bare division like
+ * `a / b` (no second `/` on the line) never finds a closer and falls through to
+ * division, so it is never mis-blanked. Inside the literal `\` escapes the next
+ * char, a `[`/`]` pair toggles a character class (a `/` inside `[...]` does NOT
+ * close), a newline before the closer aborts (regex literals are single-line),
+ * and the body must be non-empty (so `//` is a line comment, handled earlier).
+ */
+function regexLiteralEnd(
+  src: string,
+  start: number,
+  lastSig: string | undefined,
+  lastSigPos: number,
+): number | undefined {
+  const isRegexPosition =
+    lastSig === undefined ||
+    !DIVISION_PRECEDER.test(lastSig) ||
+    (/[A-Za-z0-9_$]/.test(lastSig) && REGEX_KEYWORDS.has(precedingWord(src, lastSigPos)));
+  if (!isRegexPosition) return undefined;
+
+  let inClass = false;
+  let body = 0;
+  for (let j = start + 1; j < src.length; j++) {
+    const ch = src[j]!;
+    if (ch === '\n') return undefined; // single-line only — abort to division
+    if (ch === '\\') {
+      j++; // escape — skip the next char
+      body++;
+      continue;
+    }
+    if (ch === '[') {
+      inClass = true;
+      body++;
+      continue;
+    }
+    if (ch === ']') {
+      inClass = false;
+      body++;
+      continue;
+    }
+    if (ch === '/' && !inClass) {
+      if (body === 0) return undefined; // empty `//` is a line comment, not a regex
+      // consume trailing flags
+      let k = j + 1;
+      while (k < src.length && /[dgimsuvy]/.test(src[k]!)) k++;
+      return k;
+    }
+    body++;
+  }
+  return undefined; // no closer on the line — treat `/` as division
+}
+
+/**
  * Blank out comment and string-literal CONTENTS (replace with spaces, preserving
  * every newline so line numbers still align), leaving only code. A char-level
  * state machine over the five string/comment states plus code; handles escapes
  * inside strings so a `\'` does not prematurely close a single-quoted literal.
+ *
+ * Regex literals are recognized (lookahead-based, conservative) and blanked to
+ * spaces too — an opaque literal for every dependent gate. Blanking them prevents
+ * a quote char inside a character class (`/(['"`])/`) from DESYNCing the
+ * string/comment state machine for the rest of the file.
  */
 export function codeOnly(src: string): string {
   let out = '';
   type State = 'code' | 'line' | 'block' | 'single' | 'double' | 'template';
   let state: State = 'code';
+  let lastSig: string | undefined;
+  let lastSigPos = -1;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -48,6 +157,17 @@ export function codeOnly(src: string): string {
         i++;
         continue;
       }
+      if (c === '/') {
+        const end = regexLiteralEnd(src, i, lastSig, lastSigPos);
+        if (end !== undefined) {
+          for (let k = i; k < end; k++) out += src[k] === '\n' ? '\n' : ' ';
+          lastSig = ')';
+          lastSigPos = end - 1;
+          i = end - 1;
+          continue;
+        }
+        // else: division — fall through and treat `/` as a code char
+      }
       if (c === "'") {
         state = 'single';
         out += ' ';
@@ -64,6 +184,10 @@ export function codeOnly(src: string): string {
         continue;
       }
       out += c;
+      if (c.trim() !== '') {
+        lastSig = c;
+        lastSigPos = i;
+      }
       continue;
     }
     if (state === 'line') {
@@ -88,7 +212,12 @@ export function codeOnly(src: string): string {
       continue;
     } // escape — consume the next char too
     const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
-    if (c === closer) state = 'code';
+    if (c === closer) {
+      state = 'code';
+      // A closed string is a VALUE → a following `/` is division.
+      lastSig = ')';
+      lastSigPos = i;
+    }
     out += keep;
   }
   return out;
@@ -106,6 +235,8 @@ export function stringsBlanked(src: string): string {
   let out = '';
   type State = 'code' | 'line' | 'block' | 'single' | 'double' | 'template';
   let state: State = 'code';
+  let lastSig: string | undefined;
+  let lastSigPos = -1;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -126,6 +257,17 @@ export function stringsBlanked(src: string): string {
         i++;
         continue;
       }
+      if (c === '/') {
+        const end = regexLiteralEnd(src, i, lastSig, lastSigPos);
+        if (end !== undefined) {
+          for (let k = i; k < end; k++) out += src[k] === '\n' ? '\n' : ' ';
+          lastSig = ')';
+          lastSigPos = end - 1;
+          i = end - 1;
+          continue;
+        }
+        // else: division — fall through and treat `/` as a code char
+      }
       if (c === "'") {
         state = 'single';
         out += ' ';
@@ -142,6 +284,10 @@ export function stringsBlanked(src: string): string {
         continue;
       }
       out += c;
+      if (c.trim() !== '') {
+        lastSig = c;
+        lastSigPos = i;
+      }
       continue;
     }
     if (state === 'line') {
@@ -166,7 +312,12 @@ export function stringsBlanked(src: string): string {
       continue;
     } // escape — consume the next char too
     const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
-    if (c === closer) state = 'code';
+    if (c === closer) {
+      state = 'code';
+      // A closed string is a VALUE → a following `/` is division.
+      lastSig = ')';
+      lastSigPos = i;
+    }
     out += keep;
   }
   return out;
@@ -188,6 +339,8 @@ export function commentsBlanked(src: string): string {
   let out = '';
   type State = 'code' | 'line' | 'block' | 'single' | 'double' | 'template';
   let state: State = 'code';
+  let lastSig: string | undefined;
+  let lastSigPos = -1;
   for (let i = 0; i < src.length; i++) {
     const c = src[i]!;
     const next = src[i + 1];
@@ -205,6 +358,17 @@ export function commentsBlanked(src: string): string {
         i++;
         continue;
       }
+      if (c === '/') {
+        const end = regexLiteralEnd(src, i, lastSig, lastSigPos);
+        if (end !== undefined) {
+          for (let k = i; k < end; k++) out += src[k] === '\n' ? '\n' : ' ';
+          lastSig = ')';
+          lastSigPos = end - 1;
+          i = end - 1;
+          continue;
+        }
+        // else: division — fall through and treat `/` as a code char
+      }
       if (c === "'") {
         state = 'single';
         out += c;
@@ -221,6 +385,10 @@ export function commentsBlanked(src: string): string {
         continue;
       }
       out += c;
+      if (c.trim() !== '') {
+        lastSig = c;
+        lastSigPos = i;
+      }
       continue;
     }
     if (state === 'line') {
@@ -246,7 +414,12 @@ export function commentsBlanked(src: string): string {
       continue;
     } // escape — keep both chars
     const closer = state === 'single' ? "'" : state === 'double' ? '"' : '`';
-    if (c === closer) state = 'code';
+    if (c === closer) {
+      state = 'code';
+      // A closed string is a VALUE → a following `/` is division.
+      lastSig = ')';
+      lastSigPos = i;
+    }
     out += c;
   }
   return out;

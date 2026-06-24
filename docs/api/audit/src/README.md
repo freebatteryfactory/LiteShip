@@ -113,6 +113,7 @@ package — it stays repo-local and composes these passes.
 - [createPackagePathResolver](functions/createPackagePathResolver.md)
 - [createTypeDirectedProgram](functions/createTypeDirectedProgram.md)
 - [defaultRoot](functions/defaultRoot.md)
+- [detectSkipsAST](functions/detectSkipsAST.md)
 - [discoverInstalledPackageRoots](functions/discoverInstalledPackageRoots.md)
 - [evaluateMutant](functions/evaluateMutant.md)
 - [exportedNamesFromNode](functions/exportedNamesFromNode.md)

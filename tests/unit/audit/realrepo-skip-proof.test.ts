@@ -36,13 +36,13 @@ describe('REAL REPO — detectSkipsAST over the whole tests/ tree', () => {
   const files: string[] = [];
   walk(resolve(ROOT, 'tests'), files);
   // Exclude tests/generated/ — the plumb-gate owns that subtree (no double-jeopardy).
-  const governed = files.filter((f) => !/\/tests\/generated\//.test(f));
+  const governed = files.filter((f) => !/[\\/]tests[\\/]generated[\\/]/.test(f));
 
   it('detects every sanctioned skip + classifies it conditional + ZERO unsanctioned (no false positives)', () => {
     const detectedSanctioned = new Set<string>();
     const blocking: string[] = [];
     for (const abs of governed) {
-      const rel = abs.slice(ROOT.length + 1);
+      const rel = abs.slice(ROOT.length + 1).replace(/\\/g, '/');
       const text = readFileSync(abs, 'utf8');
       const lines = text.split('\n');
       for (const skip of detectSkipsAST(text)) {
