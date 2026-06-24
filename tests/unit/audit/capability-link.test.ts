@@ -48,7 +48,10 @@ function resolveSanctionedSites(): CapabilitySkipSite[] {
 describe('capability-link oracle — the dataflow proof', () => {
   it('every sanctioned skip links to its DECLARED capability (the real repo)', () => {
     const sites = resolveSanctionedSites();
-    expect(sites.every((s) => s.line > 0), `unresolved lines: ${JSON.stringify(sites.filter((s) => s.line <= 0))}`).toBe(true);
+    expect(
+      sites.every((s) => s.line > 0),
+      `unresolved lines: ${JSON.stringify(sites.filter((s) => s.line <= 0))}`,
+    ).toBe(true);
     const facts = buildCapabilityLinkFacts({
       repoRoot: REPO_ROOT,
       capabilityModules: CAPABILITY_MODULES,
@@ -59,7 +62,10 @@ describe('capability-link oracle — the dataflow proof', () => {
     expect(
       unlinked,
       `unlinked sanctioned skips (guard does not derive from the declared capability's probe):\n${unlinked
-        .map((r) => `  ${r.file}:${r.line} [${r.declaredCapability}] guard="${r.guardText}" -> {${r.linkedCapabilities.join(',')}}`)
+        .map(
+          (r) =>
+            `  ${r.file}:${r.line} [${r.declaredCapability}] guard="${r.guardText}" -> {${r.linkedCapabilities.join(',')}}`,
+        )
         .join('\n')}`,
     ).toEqual([]);
     // The symbol table self-assembled from the canonical modules covers every declared capability.
@@ -70,7 +76,10 @@ describe('capability-link oracle — the dataflow proof', () => {
     const dir = mkdtempSync(join(tmpdir(), 'caplink-adv-'));
     try {
       const file = join(dir, 'adv.test.ts');
-      writeFileSync(file, 'import { it } from "vitest";\nif (Math.random() > 0.5) {\n  it.skip("ffmpeg render probe", () => {});\n}\n');
+      writeFileSync(
+        file,
+        'import { it } from "vitest";\nif (Math.random() > 0.5) {\n  it.skip("ffmpeg render probe", () => {});\n}\n',
+      );
       const facts = buildCapabilityLinkFacts({
         repoRoot: REPO_ROOT,
         capabilityModules: CAPABILITY_MODULES.map((m) => resolve(REPO_ROOT, m)),
@@ -132,19 +141,61 @@ describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTION
     expect(linkOne(`${imp}if (coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
   });
   it('a MIXED `capability || unrelated` guard is REJECTED (skip can fire on the unrelated condition)', () => {
-    expect(linkOne(`${imp}if (Math.random() > 0.5 || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+    expect(linkOne(`${imp}if (Math.random() > 0.5 || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(
+      false,
+    );
   });
   it('a MIXED `capability && unrelated` guard is REJECTED (impure)', () => {
-    expect(linkOne(`${imp}if (coverageInstrumentation && Math.random() > 0.5) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+    expect(linkOne(`${imp}if (coverageInstrumentation && Math.random() > 0.5) {\n  it.skip("x", () => {});\n}\n`)).toBe(
+      false,
+    );
   });
   it('a REIMPLEMENTED probe (not routed through the export) is REJECTED', () => {
-    expect(linkOne(`import { it } from "vitest";\nif (process.env.NODE_V8_COVERAGE !== undefined) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+    expect(
+      linkOne(
+        `import { it } from "vitest";\nif (process.env.NODE_V8_COVERAGE !== undefined) {\n  it.skip("x", () => {});\n}\n`,
+      ),
+    ).toBe(false);
   });
   it('a VACUOUS `true || capability` guard is REJECTED (the skip fires unconditionally)', () => {
     expect(linkOne(`${imp}if (true || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
   });
+  it('a VACUOUS `capability || true` guard is REJECTED (right-side decisive true)', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation || true) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
+  it('a VACUOUS `capability && false` guard is REJECTED (right-side decisive false)', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation && false) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
   it('a `false || capability` guard links (it is EQUIVALENT to the capability)', () => {
     expect(linkOne(`${imp}if (false || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
+  });
+  it('a `capability || false` guard links (it is EQUIVALENT to the capability)', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation || false) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
+  });
+  it('a `capability && true` guard links (it is EQUIVALENT to the capability)', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation && true) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
+  });
+  it('a pure zero-arg thunk returning the capability links', () => {
+    expect(
+      linkOne(`${imp}const cap = () => coverageInstrumentation;\nif (cap()) {\n  it.skip("x", () => {});\n}\n`),
+    ).toBe(true);
+  });
+  it('a truthy function object that mentions the capability is REJECTED', () => {
+    expect(
+      linkOne(`${imp}const cap = () => coverageInstrumentation;\nif (cap) {\n  it.skip("x", () => {});\n}\n`),
+    ).toBe(false);
+  });
+  it('a thunk body that only mentions the capability but returns true is REJECTED', () => {
+    expect(
+      linkOne(
+        `${imp}const cap = () => { coverageInstrumentation; return true; };\nif (cap()) {\n  it.skip("x", () => {});\n}\n`,
+      ),
+    ).toBe(false);
+  });
+  it('a truthy container that mentions the capability is REJECTED', () => {
+    expect(linkOne(`${imp}const cap = [coverageInstrumentation];\nif (cap) {\n  it.skip("x", () => {});\n}\n`)).toBe(
+      false,
+    );
   });
 
   it('an UNRESOLVED sanctioned site (allowlist drift) is FAIL-CLOSED to a finding, never dropped', () => {

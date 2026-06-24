@@ -35,22 +35,23 @@ export const LITESHIP_CAPABILITY_IDS: readonly string[] = [...SKIP_CAPABILITIES]
  * 1-based line of the skip (matched by the normalized site text via the sound AST detector), and the
  * capability it declares.
  *
- * FAIL-CLOSED (codex round-9): a site whose text cannot be located in its file resolves `line: -1` and
- * is STILL returned (NEVER dropped) — the oracle then surfaces it as an unlinked finding ("sanctioned
- * skip not located — allowlist drift"). Dropping it would silently shrink the proven corpus, so a
- * drifted allowlist entry could vanish from the gate instead of reding. The count of returned sites
- * therefore always equals `SANCTIONED_SKIPS.length`, so the gate proves the WHOLE allowlist or reds.
+ * FAIL-CLOSED (codex round-9/10): a site whose text cannot be located in its file, OR whose normalized
+ * source line occurs more than once, resolves `line: -1` and is STILL returned (NEVER dropped) — the
+ * oracle then surfaces it as an unlinked finding ("sanctioned skip not located — allowlist drift").
+ * Dropping it would silently shrink the proven corpus, and accepting a duplicate would let one
+ * allowlist discriminator cover multiple live skip sites. The count of returned sites therefore always
+ * equals `SANCTIONED_SKIPS.length`, so the gate proves the WHOLE allowlist or reds.
  */
 export function resolveCapabilitySites(repoRoot: string): CapabilitySkipSite[] {
   return SANCTIONED_SKIPS.map((s) => {
     const lines = readFileSync(resolve(repoRoot, s.file), 'utf8').split('\n');
-    let line = -1;
+    const matches: number[] = [];
     for (const m of detectSkipsAST(lines.join('\n'))) {
       if (normalizeSiteLine(lines[m.line - 1] ?? '') === normalizeSiteLine(s.site)) {
-        line = m.line;
-        break;
+        matches.push(m.line);
       }
     }
+    const line = matches.length === 1 ? matches[0]! : -1;
     return { file: s.file, line, declaredCapability: s.capability };
   });
 }

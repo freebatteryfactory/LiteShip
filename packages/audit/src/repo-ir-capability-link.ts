@@ -249,46 +249,130 @@ function analyzeGuard(
   deAlias: (s: ts.Symbol) => ts.Symbol,
   expr: ts.Expression,
 ): { reached: Set<ts.Symbol>; pure: boolean } {
-  const reached = new Set<ts.Symbol>();
-  let pure = true;
   const seen = new Set<ts.Symbol>();
-  const visit = (node: ts.Node): void => {
-    // The property NAME in `a.b` / `a["b"]` is not a free symbol — only the receiver / computed key is.
-    if (ts.isPropertyAccessExpression(node)) {
-      visit(node.expression);
-      return;
-    }
-    if (ts.isElementAccessExpression(node)) {
-      visit(node.expression);
-      visit(node.argumentExpression);
-      return;
-    }
-    if (ts.isIdentifier(node)) {
-      if (NEUTRAL_IDENTIFIERS.has(node.text)) return;
-      const sym = checker.getSymbolAtLocation(node);
-      if (sym === undefined) {
-        pure = false;
-        return;
-      }
-      const real = deAlias(sym);
-      if (capExports.has(real)) {
-        reached.add(real); // the trusted single-source leaf — STOP (never descend into its internals)
-        return;
-      }
-      if (seen.has(real)) return;
-      seen.add(real);
-      const decl = real.valueDeclaration;
-      if (decl !== undefined && ts.isVariableDeclaration(decl) && decl.initializer !== undefined) {
-        visit(decl.initializer); // a local alias — pure iff its initializer is pure
-      } else {
-        pure = false; // a global / non-capability import / parameter — NOT capability-derived
-      }
-      return;
-    }
-    ts.forEachChild(node, visit);
+  const thunkSeen = new Set<ts.Symbol>();
+
+  const pureEmpty = (): { reached: Set<ts.Symbol>; pure: boolean } => ({ reached: new Set<ts.Symbol>(), pure: true });
+  const impure = (): { reached: Set<ts.Symbol>; pure: boolean } => ({ reached: new Set<ts.Symbol>(), pure: false });
+  const merge = (
+    a: { reached: Set<ts.Symbol>; pure: boolean },
+    b: { reached: Set<ts.Symbol>; pure: boolean },
+  ): { reached: Set<ts.Symbol>; pure: boolean } => ({
+    reached: new Set<ts.Symbol>([...a.reached, ...b.reached]),
+    pure: a.pure && b.pure,
+  });
+
+  const analyzeFunctionReturn = (fn: ts.FunctionLikeDeclarationBase): { reached: Set<ts.Symbol>; pure: boolean } => {
+    if (fn.parameters.length > 0 || fn.body === undefined) return impure();
+    if (ts.isArrowFunction(fn) && !ts.isBlock(fn.body)) return analyze(fn.body);
+    if (!ts.isBlock(fn.body)) return impure();
+    const statements = fn.body.statements;
+    if (statements.length !== 1) return impure();
+    const [stmt] = statements;
+    if (stmt === undefined || !ts.isReturnStatement(stmt) || stmt.expression === undefined) return impure();
+    return analyze(stmt.expression);
   };
-  visit(expr);
-  return { reached, pure };
+
+  const functionForCall = (sym: ts.Symbol): ts.FunctionLikeDeclarationBase | undefined => {
+    const decl = sym.valueDeclaration;
+    if (decl !== undefined && ts.isFunctionDeclaration(decl)) return decl;
+    if (decl !== undefined && ts.isVariableDeclaration(decl) && decl.initializer !== undefined) {
+      const init = unwrapGuardExpr(decl.initializer);
+      if (ts.isArrowFunction(init) || ts.isFunctionExpression(init)) return init;
+    }
+    return undefined;
+  };
+
+  const analyzeIdentifier = (node: ts.Identifier): { reached: Set<ts.Symbol>; pure: boolean } => {
+    if (NEUTRAL_IDENTIFIERS.has(node.text)) return pureEmpty();
+    const sym = checker.getSymbolAtLocation(node);
+    if (sym === undefined) return impure();
+    const real = deAlias(sym);
+    if (capExports.has(real)) {
+      return { reached: new Set<ts.Symbol>([real]), pure: true }; // trusted leaf — do not descend
+    }
+    if (seen.has(real)) return impure();
+    seen.add(real);
+    const decl = real.valueDeclaration;
+    if (decl !== undefined && ts.isVariableDeclaration(decl) && decl.initializer !== undefined) {
+      const init = unwrapGuardExpr(decl.initializer);
+      if (ts.isArrowFunction(init) || ts.isFunctionExpression(init)) return impure();
+      return analyze(init);
+    }
+    return impure(); // global / non-capability import / parameter / function object
+  };
+
+  const analyzeCallee = (callee: ts.Expression): { reached: Set<ts.Symbol>; pure: boolean } => {
+    const c = unwrapGuardExpr(callee);
+    if (!ts.isIdentifier(c)) return impure();
+    const sym = checker.getSymbolAtLocation(c);
+    if (sym === undefined) return impure();
+    const real = deAlias(sym);
+    if (thunkSeen.has(real)) return impure();
+    const fn = functionForCall(real);
+    if (fn === undefined) return impure();
+    thunkSeen.add(real);
+    const out = analyzeFunctionReturn(fn);
+    thunkSeen.delete(real);
+    return out;
+  };
+
+  const analyze = (node: ts.Expression): { reached: Set<ts.Symbol>; pure: boolean } => {
+    const e = unwrapGuardExpr(node);
+    if (constTruthiness(e) !== undefined) return pureEmpty();
+    if (ts.isIdentifier(e)) return analyzeIdentifier(e);
+    if (ts.isPrefixUnaryExpression(e)) {
+      if (e.operator === ts.SyntaxKind.ExclamationToken) return analyze(e.operand);
+      return impure();
+    }
+    if (ts.isBinaryExpression(e)) {
+      const op = e.operatorToken.kind;
+      if (op === ts.SyntaxKind.AmpersandAmpersandToken || op === ts.SyntaxKind.BarBarToken) {
+        return merge(analyze(e.left), analyze(e.right));
+      }
+      if (COMPARISON_OPERATORS.has(op)) return merge(analyze(e.left), analyze(e.right));
+      return impure();
+    }
+    if (ts.isConditionalExpression(e))
+      return merge(analyze(e.condition), merge(analyze(e.whenTrue), analyze(e.whenFalse)));
+    if (ts.isCallExpression(e)) {
+      if (ts.isIdentifier(e.expression) && e.expression.text === 'Boolean' && e.arguments.length === 1) {
+        return analyze(e.arguments[0]!);
+      }
+      if (e.arguments.length === 0) return analyzeCallee(e.expression);
+      return impure();
+    }
+    if (ts.isPropertyAccessExpression(e)) return impure();
+    if (ts.isElementAccessExpression(e)) return impure();
+    return impure();
+  };
+  return analyze(expr);
+}
+
+const COMPARISON_OPERATORS: ReadonlySet<ts.SyntaxKind> = new Set([
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.LessThanToken,
+  ts.SyntaxKind.GreaterThanToken,
+  ts.SyntaxKind.LessThanEqualsToken,
+  ts.SyntaxKind.GreaterThanEqualsToken,
+]);
+
+function unwrapGuardExpr(expr: ts.Expression): ts.Expression {
+  let e: ts.Expression = expr;
+  for (;;) {
+    if (
+      ts.isParenthesizedExpression(e) ||
+      ts.isAsExpression(e) ||
+      ts.isNonNullExpression(e) ||
+      ts.isSatisfiesExpression(e) ||
+      ts.isTypeAssertionExpression(e)
+    ) {
+      e = e.expression;
+      continue;
+    }
+    return e;
+  }
 }
 
 /**

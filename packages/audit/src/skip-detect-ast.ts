@@ -880,13 +880,21 @@ export function constTruthiness(expr: ts.Expression): boolean | undefined {
     if (op === ts.SyntaxKind.AmpersandAmpersandToken) {
       const l = constTruthiness(e.left);
       if (l === false) return false; // `false && _` → false (short-circuit)
-      if (l === undefined) return undefined;
+      if (l === undefined) {
+        const r = constTruthiness(e.right);
+        if (r === false) return false; // `_ && false` → false (right-side decisive)
+        return undefined;
+      }
       return constTruthiness(e.right); // `true && right` → truthiness of right
     }
     if (op === ts.SyntaxKind.BarBarToken) {
       const l = constTruthiness(e.left);
       if (l === true) return true; // `true || _` → true (short-circuit)
-      if (l === undefined) return undefined;
+      if (l === undefined) {
+        const r = constTruthiness(e.right);
+        if (r === true) return true; // `_ || true` → true (right-side decisive)
+        return undefined;
+      }
       return constTruthiness(e.right); // `false || right` → truthiness of right
     }
     // A comparison of two CONSTANT literals folds to a constant (codex round-8: `if (1 === 1)` was not

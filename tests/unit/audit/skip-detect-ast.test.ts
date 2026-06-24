@@ -22,7 +22,9 @@ import type { SkipMatch, SkipConditionality } from '@czap/gauntlet';
  * like the token detector; the matrix asserts the specific line it targets).
  */
 function find(matches: readonly SkipMatch[], needle: string, line: number): SkipMatch | undefined {
-  return matches.find((m) => m.token.includes(needle) && m.line === line) ?? matches.find((m) => m.token.includes(needle));
+  return (
+    matches.find((m) => m.token.includes(needle) && m.line === line) ?? matches.find((m) => m.token.includes(needle))
+  );
 }
 
 describe('detectSkipsAST — the full skip spelling surface (every R4/R5/R6 + inner-describe), RUN', () => {
@@ -107,7 +109,10 @@ describe('detectSkipsAST — NO false positives', () => {
     ['const x = { skip: 1 };', 'an object with a skip key'],
     ['// this mentions it.skip in prose', 'a comment mentioning it.skip'],
     ['const s = "use it.skip here";', 'a string literal mentioning it.skip'],
-    ['const t = makeRunner();\nt.skip("opaque call result", () => {});', 'a call-result rebind (undecidable, not flagged)'],
+    [
+      'const t = makeRunner();\nt.skip("opaque call result", () => {});',
+      'a call-result rebind (undecidable, not flagged)',
+    ],
     ['const t = myObj;\nt.skip();', 'a rebind to a non-runner (clean)'],
     ['describe("real", () => {\n  it("runs", () => { expect(1).toBe(1); });\n});', 'an inner running test'],
   ];
@@ -227,9 +232,18 @@ describe('detectSkipsAST — codex round-8 residuals (#2 chain unwrap, #3 namesp
 
   // #3 — extracting a runner ROOT from a NAMESPACE member into a local binding.
   const NS_EXTRACT: ReadonlyArray<readonly [string, string]> = [
-    ['import * as v from "vitest";\nconst spec = v.it;\nspec.skip("x", () => {});', 'a namespace-member capture `const spec = v.it`'],
-    ['import * as v from "vitest";\nconst { it: spec } = v;\nspec.skip("x", () => {});', 'a namespace destructure `const { it: spec } = v`'],
-    ['import * as v from "vitest";\nconst spec = v["it"];\nspec.skip("x", () => {});', 'a bracket namespace-member capture'],
+    [
+      'import * as v from "vitest";\nconst spec = v.it;\nspec.skip("x", () => {});',
+      'a namespace-member capture `const spec = v.it`',
+    ],
+    [
+      'import * as v from "vitest";\nconst { it: spec } = v;\nspec.skip("x", () => {});',
+      'a namespace destructure `const { it: spec } = v`',
+    ],
+    [
+      'import * as v from "vitest";\nconst spec = v["it"];\nspec.skip("x", () => {});',
+      'a bracket namespace-member capture',
+    ],
   ];
   for (const [source, label] of NS_EXTRACT) {
     it(`detects ${label}`, () => {
@@ -248,6 +262,22 @@ describe('detectSkipsAST — codex round-8 residuals (#2 chain unwrap, #3 namesp
   it('folds `if (Boolean(1))` to unconditional', () => {
     const [m] = detectSkipsAST('if (Boolean(1)) { it.skip("x", () => {}); }');
     expect(m?.conditional).toBe('unconditional');
+  });
+  it('folds `if (x || true)` to unconditional (right-side decisive true)', () => {
+    const [m] = detectSkipsAST('if (x || true) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('unconditional');
+  });
+  it('folds `if (x && false)` to unconditional (right-side decisive false)', () => {
+    const [m] = detectSkipsAST('if (x && false) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('unconditional');
+  });
+  it('keeps `if (x || false)` conditional', () => {
+    const [m] = detectSkipsAST('if (x || false) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('enclosing-if');
+  });
+  it('keeps `if (x && true)` conditional', () => {
+    const [m] = detectSkipsAST('if (x && true) { it.skip("x", () => {}); }');
+    expect(m?.conditional).toBe('enclosing-if');
   });
   it('folds `it.skipIf(2 > 1)` to unconditional', () => {
     const [m] = detectSkipsAST('it.skipIf(2 > 1)("x", () => {});');
