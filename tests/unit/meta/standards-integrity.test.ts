@@ -102,19 +102,23 @@ function simulate(
 }
 
 describe('standards-snapshot drift gate', () => {
-  test('the committed snapshot matches the live standards surface (regenerate with CZAP_UPDATE_STANDARDS_SNAPSHOT=1)', { timeout: scaledTimeout(30_000) }, () => {
-    const live = readLiveStandardsSurface(REPO_ROOT, NOW);
-    const serialized = serializeStandardsSurface(live);
-    if (process.env.CZAP_UPDATE_STANDARDS_SNAPSHOT === '1') {
-      writeCommittedSnapshot(REPO_ROOT, live);
-      return;
-    }
-    const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
-    expect(
-      serialized === committed,
-      'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
-    ).toBe(true);
-  });
+  test(
+    'the committed snapshot matches the live standards surface (regenerate with CZAP_UPDATE_STANDARDS_SNAPSHOT=1)',
+    { timeout: scaledTimeout(30_000) },
+    () => {
+      const live = readLiveStandardsSurface(REPO_ROOT, NOW);
+      const serialized = serializeStandardsSurface(live);
+      if (process.env.CZAP_UPDATE_STANDARDS_SNAPSHOT === '1') {
+        writeCommittedSnapshot(REPO_ROOT, live);
+        return;
+      }
+      const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
+      expect(
+        serialized === committed,
+        'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
+      ).toBe(true);
+    },
+  );
 
   test('the live surface address is byte-deterministic (twice → identical)', () => {
     const a = serializeStandardsSurface(readLiveStandardsSurface(REPO_ROOT, NOW));
@@ -122,7 +126,7 @@ describe('standards-snapshot drift gate', () => {
     expect(a).toBe(b);
   });
 
-  test('the diff\'s level ladder matches the canonical ASSURANCE_LEVELS (no drifted private copy)', () => {
+  test("the diff's level ladder matches the canonical ASSURANCE_LEVELS (no drifted private copy)", () => {
     // standards-facts.ts carries a closed LEVEL_LADDER constant (the lean module must
     // not import the engine\'s rank helper into a value position). Pin it to the source
     // of truth so a future level added to ASSURANCE_LEVELS forces the ladder updated.
@@ -150,7 +154,9 @@ describe('the standards backstop is GREEN on the real repo (the live standards a
 describe('BITE — each weakening class is caught as a blocking unsigned weakening', () => {
   test('a removed gate', () => {
     const part = simulate((els) =>
-      els.filter((e) => !(e._tag === 'gate' && e.ruleId === 'gauntlet/crdt-laws-pinned' && e.set === 'LITESHIP_IR_GATES')),
+      els.filter(
+        (e) => !(e._tag === 'gate' && e.ruleId === 'gauntlet/crdt-laws-pinned' && e.set === 'LITESHIP_IR_GATES'),
+      ),
     );
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'gate-removed')).toBe(true);
   });
@@ -168,7 +174,9 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
 
   test('a lowered mutation-score floor', () => {
     const part = simulate((els) =>
-      els.map((e) => (e._tag === 'floor' && e.name.startsWith('mutation-score::') ? { ...e, value: e.value - 0.5 } : e)),
+      els.map((e) =>
+        e._tag === 'floor' && e.name.startsWith('mutation-score::') ? { ...e, value: e.value - 0.5 } : e,
+      ),
     );
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'floor-lowered')).toBe(true);
   });
@@ -253,9 +261,9 @@ describe('BITE — each weakening class is caught as a blocking unsigned weakeni
     // SIGNED — not unsigned, not forbidden: the honest, reviewed capability-gate escape.
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
     expect(part.forbiddenSignoffs).toEqual([]);
-    expect(
-      part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub'),
-    ).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(
+      true,
+    );
   });
 });
 
@@ -292,7 +300,9 @@ describe('codex round-7 — the SOUND conditionality proof is threaded into the 
   test('a genuine CONDITIONAL (enclosing-if) skip stays owner-SIGNABLE (the resolver never over-forbids)', () => {
     const part = partitionWith(() => 'enclosing-if');
     expect(part.forbiddenSignoffs).toEqual([]);
-    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(
+      true,
+    );
   });
 
   test('WITHOUT the resolver the title-keyword heuristic alone (wrongly) accepts it — the gap the AST closes', () => {
@@ -419,9 +429,7 @@ describe('the base ref is resolved deterministically (CI override → PR base �
     // Defense-in-depth: even with a GITHUB_BASE_REF present, the zero-SHA override is
     // dropped and the pull_request-style fall-through applies (origin/<branch>), never the
     // zero ref. (A push run does not set GITHUB_BASE_REF, but the precedence must be exact.)
-    expect(
-      resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero, GITHUB_BASE_REF: 'main' }),
-    ).toBe('origin/main');
+    expect(resolveStandardsBaseRef({ [STANDARDS_BASE_REF_ENV]: zero, GITHUB_BASE_REF: 'main' })).toBe('origin/main');
   });
 });
 
@@ -726,7 +734,17 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
   test('the marker vocabulary covers the no-placeholder family + the prose tells', () => {
     // The vocabulary is the always-blocking no-placeholder family (TODO/FIXME/XXX/HACK)
     // WIDENED with the skip-title prose tells. Pinned so a future narrowing is caught.
-    for (const m of ['TODO', 'FIXME', 'XXX', 'HACK', 'not implemented', 'unimplemented', 'stub', 'placeholder', 'wip']) {
+    for (const m of [
+      'TODO',
+      'FIXME',
+      'XXX',
+      'HACK',
+      'not implemented',
+      'unimplemented',
+      'stub',
+      'placeholder',
+      'wip',
+    ]) {
       expect(PLACEHOLDER_SKIP_MARKERS).toContain(m);
     }
   });
@@ -773,7 +791,9 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
     // entry carrying a TODO can never be sanctioned past the always-blocking no-placeholder
     // floor. (We can't add to the closed SANCTIONED_SKIPS here; the rejection is unconditional
     // on the SITE, so a placeholder site returns undefined regardless of the file.)
-    expect(sanctionedSkipFor('tests/unit/fake/x.test.ts', "it.skip('TODO: not implemented', () => {})")).toBeUndefined();
+    expect(
+      sanctionedSkipFor('tests/unit/fake/x.test.ts', "it.skip('TODO: not implemented', () => {})"),
+    ).toBeUndefined();
   });
 
   test('RED→GREEN partition: a placeholder skip-allowlist-add + a sign-off stays BLOCKING (the marker rejection)', () => {
@@ -815,7 +835,9 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
     };
     const part = simulate((els) => [...els, legitEl], [signoff]);
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
-    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(
+      true,
+    );
     expect(part.forbiddenSignoffs).toEqual([]);
   });
 });
@@ -833,22 +855,55 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
 describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (capability-consistency floor)', () => {
   test('siteConsistentWithCapability ACCEPTS every legit form (conditional OR capability-named)', () => {
     // Conditional forms — conditionality is visible at the token level (capability irrelevant to the form).
-    expect(siteConsistentWithCapability('const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;', 'ffmpeg-absent')).toBe(true);
-    expect(siteConsistentWithCapability('const conditionalIt = underCoverage ? it.skip : it;', 'coverage-instrumentation')).toBe(true);
-    expect(siteConsistentWithCapability("describe.skipIf(!canUseSAB)('browser SPSCRing', () => {", 'shared-array-buffer-absent')).toBe(true);
-    expect(siteConsistentWithCapability("it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene', async () => {", 'ffmpeg-absent')).toBe(true);
-    expect(siteConsistentWithCapability("test.skip(!built, 'astro example not built', () => {});", 'astro-example-not-built')).toBe(true);
+    expect(
+      siteConsistentWithCapability('const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;', 'ffmpeg-absent'),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability('const conditionalIt = underCoverage ? it.skip : it;', 'coverage-instrumentation'),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability(
+        "describe.skipIf(!canUseSAB)('browser SPSCRing', () => {",
+        'shared-array-buffer-absent',
+      ),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability("it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene', async () => {", 'ffmpeg-absent'),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability(
+        "test.skip(!built, 'astro example not built', () => {});",
+        'astro-example-not-built',
+      ),
+    ).toBe(true);
     // Capability-named titles on UNCONDITIONAL skips — the title references the capability domain.
-    expect(siteConsistentWithCapability("it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});", 'ffmpeg-absent')).toBe(true);
-    expect(siteConsistentWithCapability("test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {", 'ffmpeg-absent')).toBe(true);
-    expect(siteConsistentWithCapability("it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm', () => {", 'wasm-dist-staged')).toBe(true);
+    expect(
+      siteConsistentWithCapability(
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+        'ffmpeg-absent',
+      ),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability(
+        "test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
+        'ffmpeg-absent',
+      ),
+    ).toBe(true);
+    expect(
+      siteConsistentWithCapability(
+        "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm', () => {",
+        'wasm-dist-staged',
+      ),
+    ).toBe(true);
   });
 
   test('siteConsistentWithCapability REJECTS the marker-free placeholder (unconditional + capability NOT named)', () => {
     // The codex `it.skip("later")` case: unconditional, "later" names no capability domain.
     expect(siteConsistentWithCapability("it.skip('later', () => {});", 'ffmpeg-absent')).toBe(false);
     // An unconditional skip claiming a capability its title never references is inconsistent.
-    expect(siteConsistentWithCapability("it.skip('a probe that fails sometimes', () => {});", 'wasm-absent')).toBe(false);
+    expect(siteConsistentWithCapability("it.skip('a probe that fails sometimes', () => {});", 'wasm-absent')).toBe(
+      false,
+    );
     expect(siteConsistentWithCapability("it.skip('flaky on CI', () => {});", 'coverage-instrumentation')).toBe(false);
   });
 
@@ -860,7 +915,10 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
       const cap = asSkipCapability(s.capability);
       expect(cap, `sanctioned capability must be a known capability: ${s.capability}`).toBeDefined();
       if (cap === undefined) continue;
-      expect(siteConsistentWithCapability(s.site, cap), `sanctioned site must be capability-consistent: ${s.site}`).toBe(true);
+      expect(
+        siteConsistentWithCapability(s.site, cap),
+        `sanctioned site must be capability-consistent: ${s.site}`,
+      ).toBe(true);
     }
   });
 
@@ -870,7 +928,10 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     // not be hand-extended in-test, so we prove the rejection direction via the consistency primitive
     // and the live allowlist's positive case.)
     expect(
-      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});")?.capability,
+      sanctionedSkipFor(
+        'tests/smoke/intro-render.test.ts',
+        "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      )?.capability,
     ).toBe('ffmpeg-absent');
     // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
     // the site does not match, so it is unsanctioned regardless of consistency.
@@ -913,7 +974,9 @@ describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (cap
     };
     const part = simulate((els) => [...els, legitEl], [signoff]);
     expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
-    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(
+      true,
+    );
     expect(part.forbiddenSignoffs).toEqual([]);
   });
 });
@@ -1063,7 +1126,11 @@ describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth
       { cwd: REPO_ROOT },
     );
     if (res.exitCode !== 0) return undefined;
-    const introCommit = res.stdout.split('\n').map((l) => l.trim()).find((l) => l !== '') ?? '';
+    const introCommit =
+      res.stdout
+        .split('\n')
+        .map((l) => l.trim())
+        .find((l) => l !== '') ?? '';
     if (introCommit === '') return undefined;
     const birthRaw = defaultGitShow(REPO_ROOT, introCommit, STANDARDS_SNAPSHOT_PATH);
     if (birthRaw === undefined) return undefined;
@@ -1077,18 +1144,20 @@ describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth
     const signoffs = readStandardsWaivers(REPO_ROOT);
     const changes = diffStandardsSurface(birth, live.elements);
     const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
+    // THE portable safety property — every live-vs-birth weakening is signed (the test's namesake),
+    // and no sign-off is forbidden or expired. Holds on a feature branch (17 weakenings, all signed) AND
+    // on post-squash main (0 weakenings — birth == live — vacuously zero unsigned).
     expect(part.unsignedWeakenings).toEqual([]);
     expect(part.forbiddenSignoffs).toEqual([]);
     expect(part.expiredSignoffs).toEqual([]);
-    // Every committed sign-off is load-bearing: the live-vs-birth diff produces exactly the
-    // signed set (no orphan sign-off, no unsigned weakening). This holds ONLY against a PRE-erosion
-    // baseline — on a feature branch the snapshot's birth predates the sanctioned skips. After a
-    // SQUASH merge to main the snapshot's birth IS the merge commit (birth == live → an empty diff),
-    // so the count is vacuous and only the portable zero-unsigned invariant above applies. Assert the
-    // load-bearing equality only when the baseline actually shows erosion.
-    if (changes.length > 0) {
-      expect(part.signedWeakenings.length).toBe(signoffs.length);
-    }
+    // We deliberately do NOT assert `signedWeakenings.length === signoffs.length` ("every sign-off is
+    // load-bearing"). That equality only holds against a PRE-erosion baseline (a feature branch where
+    // birth predates the skips); after a squash to main the snapshot's birth already CONTAINS the skips,
+    // so the bootstrap sign-offs are legitimately orphaned vs birth (birth == live → 0 weakenings), and
+    // a later VALID standards change (a strengthening gate, a newly-signed weakening) would re-red it
+    // though nothing is wrong (codex PR#58 review — my first `changes.length > 0` guard was too broad).
+    // And `signedWeakenings ⊆ signoffs` ALWAYS, so the equality can never CATCH a bug, only false-red —
+    // orphan sign-offs are the standards:gate base-ref diff's job, not this birth test's.
   });
 
   test('an 18th UNSIGNED fake skip (a probe) BLOCKS vs the birth baseline (the no-grandfather floor)', async () => {

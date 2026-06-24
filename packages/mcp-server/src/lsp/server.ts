@@ -230,7 +230,7 @@ async function route(
       requireInitialized(state, method);
       const globs = readGlobs(params);
       const { findings } = await runGauntlet(globs);
-      const notifications = publishNotificationsFor(findings);
+      const notifications = publishNotificationsFor(findings, state.lastFindings);
       const response: JsonRpcResponse | null = isNotification
         ? null
         : successResponse(id, { findingCount: findings.length, publishedUris: notifications.length });
@@ -291,12 +291,33 @@ function logMessageNotification(err: unknown): LspNotification {
   return { method: LOG_MESSAGE_METHOD, params };
 }
 
-/** Build the publishDiagnostics notifications for a finding list (grouped + clearing). */
-function publishNotificationsFor(findings: readonly FindingLike[]): readonly LspNotification[] {
-  return groupDiagnosticsByUri(findings).map((group) => {
-    const params: PublishDiagnosticsParams = { uri: group.uri, diagnostics: group.diagnostics };
-    return { method: PUBLISH_DIAGNOSTICS_METHOD, params };
-  });
+/**
+ * Build the publishDiagnostics notifications for a finding list (grouped + CLEARING). A URI that carried
+ * diagnostics on the PREVIOUS run but is clean now must receive an EMPTY `diagnostics` array, or the LSP
+ * client keeps the stale squiggles forever — clients only drop diagnostics for a URI on an explicit
+ * publish for that URI (codex PR#57 review). `previousFindings` is last run's finding list.
+ */
+function publishNotificationsFor(
+  findings: readonly FindingLike[],
+  previousFindings: readonly FindingLike[] = [],
+): readonly LspNotification[] {
+  const groups = groupDiagnosticsByUri(findings);
+  const currentUris = new Set(groups.map((group) => group.uri));
+  const notifications: LspNotification[] = groups.map((group) => ({
+    method: PUBLISH_DIAGNOSTICS_METHOD,
+    params: { uri: group.uri, diagnostics: group.diagnostics } satisfies PublishDiagnosticsParams,
+  }));
+  // Clear every URI that was published last run and is now finding-free (an empty publish drops the
+  // editor squiggles); a URI still in `currentUris` is republished above, never double-cleared.
+  for (const stale of groupDiagnosticsByUri(previousFindings)) {
+    if (!currentUris.has(stale.uri)) {
+      notifications.push({
+        method: PUBLISH_DIAGNOSTICS_METHOD,
+        params: { uri: stale.uri, diagnostics: [] } satisfies PublishDiagnosticsParams,
+      });
+    }
+  }
+  return notifications;
 }
 
 /**

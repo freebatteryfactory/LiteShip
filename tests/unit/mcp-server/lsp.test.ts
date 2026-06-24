@@ -58,7 +58,11 @@ const ERR_FINDING: FindingLike = {
   title: 'default export',
   detail: 'modules must use named exports',
   location: { file: 'packages/x/src/a.ts', line: 12, column: 5 },
-  remediation: { kind: 'patch', description: 'convert to a named export', diff: '--- a\n+++ b\n@@ -1 +1 @@\n-export default x\n+export { x }\n' },
+  remediation: {
+    kind: 'patch',
+    description: 'convert to a named export',
+    diff: '--- a\n+++ b\n@@ -1 +1 @@\n-export default x\n+export { x }\n',
+  },
 };
 const WARN_FINDING: FindingLike = {
   ruleId: 'no-var',
@@ -167,10 +171,7 @@ describe('LSP — Finding → Diagnostic projection (pure)', () => {
 
   it('groups diagnostics by URI deterministically, dropping unanchored findings', () => {
     const grouped = groupDiagnosticsByUri([ERR_FINDING, WARN_FINDING, ADVISORY_FINDING, UNANCHORED_FINDING]);
-    expect(grouped.map((g) => g.uri)).toEqual([
-      'file:///packages/x/src/a.ts',
-      'file:///packages/x/src/b.ts',
-    ]); // sorted, unanchored dropped
+    expect(grouped.map((g) => g.uri)).toEqual(['file:///packages/x/src/a.ts', 'file:///packages/x/src/b.ts']); // sorted, unanchored dropped
     const aGroup = grouped.find((g) => g.uri.endsWith('a.ts'))!;
     expect(aGroup.diagnostics).toHaveLength(2); // ERR + ADVISORY both in a.ts
     // Determinism: same input → byte-identical grouping.
@@ -257,7 +258,13 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
   });
 
   it('shutdown then exit closes the loop cleanly (exit gets no response)', async () => {
-    let s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }), initialLspState(), runner)).state;
+    let s = (
+      await handle(
+        JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+        initialLspState(),
+        runner,
+      )
+    ).state;
     const sd = await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'shutdown' }), s, runner);
     expect((sd.result.response as JsonRpcSuccess).result).toBeNull();
     s = sd.state;
@@ -298,7 +305,11 @@ describe('LSP — server lifecycle (initialize / shutdown / exit)', () => {
 describe('LSP — czap/check publishes diagnostics grouped by URI (injected runner)', () => {
   it('runs the injected runner and emits one publishDiagnostics per file URI', async () => {
     const runner = stubRunner([ERR_FINDING, WARN_FINDING, ADVISORY_FINDING, UNANCHORED_FINDING]);
-    const init = await handle(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }), initialLspState(), runner);
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      runner,
+    );
     const { state, result } = await handle(
       JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
       init.state,
@@ -309,13 +320,47 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     expect(methods).toEqual(['textDocument/publishDiagnostics', 'textDocument/publishDiagnostics']);
     const uris = result.notifications.map((n) => (n.params as { uri: string }).uri).sort();
     expect(uris).toEqual(['file:///packages/x/src/a.ts', 'file:///packages/x/src/b.ts']);
-    const aParams = result.notifications.find((n) => (n.params as { uri: string }).uri.endsWith('a.ts'))!
-      .params as { diagnostics: readonly LspDiagnostic[] };
+    const aParams = result.notifications.find((n) => (n.params as { uri: string }).uri.endsWith('a.ts'))!.params as {
+      diagnostics: readonly LspDiagnostic[];
+    };
     expect(aParams.diagnostics).toHaveLength(2);
     // findings are cached on state for the codeAction resolution
     expect(state.lastFindings).toHaveLength(4);
     // response carries the summary
     expect((result.response as JsonRpcSuccess).result).toEqual({ findingCount: 4, publishedUris: 2 });
+  });
+
+  it('CLEARS stale diagnostics — a URI that had findings and is now clean gets an empty publish', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    // First run: a.ts (ERR) and b.ts (WARN) both carry findings.
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING, WARN_FINDING]),
+    );
+    expect(first.result.notifications.map((n) => (n.params as { uri: string }).uri).sort()).toEqual([
+      'file:///packages/x/src/a.ts',
+      'file:///packages/x/src/b.ts',
+    ]);
+    // Second run: only a.ts still has a finding — b.ts is now clean.
+    const second = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 3, method: CZAP_CHECK_METHOD }),
+      first.state,
+      stubRunner([ERR_FINDING]),
+    );
+    const byUri = new Map(
+      second.result.notifications.map((n) => [
+        (n.params as { uri: string }).uri,
+        n.params as { diagnostics: readonly LspDiagnostic[] },
+      ]),
+    );
+    // a.ts is republished WITH its diagnostic; b.ts is CLEARED with an empty diagnostics array.
+    expect(byUri.get('file:///packages/x/src/a.ts')!.diagnostics.length).toBeGreaterThan(0);
+    expect(byUri.get('file:///packages/x/src/b.ts')!.diagnostics).toEqual([]);
   });
 });
 
@@ -324,7 +369,13 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
 describe('LSP — textDocument/codeAction returns the remediations in range', () => {
   it('returns the patch + instruction code actions for findings in the requested document/range', async () => {
     const runner = stubRunner([ERR_FINDING, WARN_FINDING, ADVISORY_FINDING]);
-    let s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }), initialLspState(), runner)).state;
+    let s = (
+      await handle(
+        JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+        initialLspState(),
+        runner,
+      )
+    ).state;
     s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }), s, runner)).state;
 
     // a.ts, lines 0..40 — covers ERR_FINDING (line 11) but ADVISORY has no remediation
@@ -368,7 +419,13 @@ describe('LSP — textDocument/codeAction returns the remediations in range', ()
 
   it('returns no actions for a range that overlaps no finding', async () => {
     const runner = stubRunner([ERR_FINDING]);
-    let s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }), initialLspState(), runner)).state;
+    let s = (
+      await handle(
+        JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+        initialLspState(),
+        runner,
+      )
+    ).state;
     s = (await handle(JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }), s, runner)).state;
     const r = await handle(
       JSON.stringify({
