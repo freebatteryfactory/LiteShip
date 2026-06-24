@@ -1081,8 +1081,14 @@ describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth
     expect(part.forbiddenSignoffs).toEqual([]);
     expect(part.expiredSignoffs).toEqual([]);
     // Every committed sign-off is load-bearing: the live-vs-birth diff produces exactly the
-    // signed set (no orphan sign-off, no unsigned weakening).
-    expect(part.signedWeakenings.length).toBe(signoffs.length);
+    // signed set (no orphan sign-off, no unsigned weakening). This holds ONLY against a PRE-erosion
+    // baseline — on a feature branch the snapshot's birth predates the sanctioned skips. After a
+    // SQUASH merge to main the snapshot's birth IS the merge commit (birth == live → an empty diff),
+    // so the count is vacuous and only the portable zero-unsigned invariant above applies. Assert the
+    // load-bearing equality only when the baseline actually shows erosion.
+    if (changes.length > 0) {
+      expect(part.signedWeakenings.length).toBe(signoffs.length);
+    }
   });
 
   test('an 18th UNSIGNED fake skip (a probe) BLOCKS vs the birth baseline (the no-grandfather floor)', async () => {
