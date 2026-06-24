@@ -1887,6 +1887,10 @@
           "kind": "const"
         },
         {
+          "name": "SKIP_CAPABILITIES",
+          "kind": "const"
+        },
+        {
           "name": "SURVIVOR_SEVERITY_BY_LEVEL",
           "kind": "const"
         },
@@ -1912,6 +1916,11 @@
           "name": "applyWaivers",
           "kind": "function",
           "signature": "(3)"
+        },
+        {
+          "name": "asSkipCapability",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "atLeast",
@@ -2017,11 +2026,6 @@
           "name": "gateVerdictKey",
           "kind": "function",
           "signature": "(1)"
-        },
-        {
-          "name": "injectedFactEvidenceDigest",
-          "kind": "function",
-          "signature": "(2)"
         },
         {
           "name": "isFinding",
@@ -2232,6 +2236,11 @@
           "name": "siteCarriesPlaceholderMarker",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "siteConsistentWithCapability",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "sortSurfaceElements",

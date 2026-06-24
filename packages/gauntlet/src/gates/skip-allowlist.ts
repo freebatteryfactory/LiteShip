@@ -50,13 +50,22 @@
  * for unfinished work. The reason is recorded on the standards surface so the owner reads
  * the WHY without opening the file.
  */
-export type SkipCapability =
-  | 'ffmpeg-absent' // an ffmpeg + libx264 render/encode probe failed (the codec is not on PATH)
-  | 'wasm-absent' // the compiled Rust kernel (czap-compute.wasm) is not present in this run
-  | 'wasm-dist-staged' // the built @czap/core dist wasm artifact is not staged (a publish-shape probe)
-  | 'shared-array-buffer-absent' // SharedArrayBuffer / cross-origin isolation is unavailable
-  | 'coverage-instrumentation' // the test is REDUNDANT (and crash-prone) under v8 coverage; the in-process unit covers the same path
-  | 'astro-example-not-built'; // the built Astro example dist is absent (the integration build runs before the e2e lane)
+export const SKIP_CAPABILITIES = [
+  'ffmpeg-absent', // an ffmpeg + libx264 render/encode probe failed (the codec is not on PATH)
+  'wasm-absent', // the compiled Rust kernel (czap-compute.wasm) is not present in this run
+  'wasm-dist-staged', // the built @czap/core dist wasm artifact is not staged (a publish-shape probe)
+  'shared-array-buffer-absent', // SharedArrayBuffer / cross-origin isolation is unavailable
+  'coverage-instrumentation', // the test is REDUNDANT (and crash-prone) under v8 coverage; the in-process unit covers the same path
+  'astro-example-not-built', // the built Astro example dist is absent (the integration build runs before the e2e lane)
+] as const;
+
+/** The closed capability union — derived from the single-source {@link SKIP_CAPABILITIES} list. */
+export type SkipCapability = (typeof SKIP_CAPABILITIES)[number];
+
+/** Narrow an arbitrary string to a {@link SkipCapability} (the runtime guard for a parsed value) — `undefined` if unknown. */
+export function asSkipCapability(value: string): SkipCapability | undefined {
+  return SKIP_CAPABILITIES.find((c) => c === value);
+}
 
 /**
  * One sanctioned skip — a `(file, site, capability, why)` record sanctioning a SPECIFIC
@@ -143,6 +152,80 @@ const PLACEHOLDER_MARKER_RE = /\b(?:TODO|FIXME|XXX|HACK|unimplemented|stub|place
  */
 export function siteCarriesPlaceholderMarker(site: string): boolean {
   return PLACEHOLDER_MARKER_RE.test(site);
+}
+
+/**
+ * CAPABILITY-CONSISTENCY (codex round-6 — the MARKER-FREE placeholder). A placeholder skip with
+ * NO marker word — `it.skip("later", () => {})` — slips past {@link siteCarriesPlaceholderMarker}
+ * ("later" carries no TODO/stub tell) yet proves nothing. The TOKEN level cannot see the enclosing
+ * `if (!CAP) {…}` that would PROVE the skip is genuinely conditional (that soundness is the AST
+ * follow-up). The best TOKEN-LEVEL tightening is SELF-CONSISTENCY: a sanctioned skip must either
+ *  (a) be a CONDITIONAL FORM whose conditionality IS visible at the token level — `.skipIf(` /
+ *      `.runIf(` / a ternary arm (`? it : it.skip` / `cond ? it.skip : it`) / a `.skip(<cond>, …)`
+ *      with a boolean-looking first argument — in which case the gate IS in the source, OR
+ *  (b) REFERENCE its declared CAPABILITY DOMAIN in the site/title (a `ffmpeg-absent` skip names
+ *      ffmpeg/libx264/codec/render/encode; `wasm-absent` names wasm/cargo/rust/kernel; etc.).
+ * An UNCONDITIONAL `it.skip(<title>)` whose title references NEITHER its capability NOR a visible
+ * condition is NOT a recognizable capability gate — it is `it.skip("later")` in disguise — so it is
+ * NOT auto-sanctionable and stays BLOCKING (and a covering sign-off becomes void/forbidden).
+ *
+ * This is a TOKEN-LEVEL HEURISTIC, NOT a soundness proof: it closes the marker-free placeholder
+ * `it.skip("later")` by demanding the skip NAME what makes it conditional. The SOUND check — proving
+ * the `it.skip` is reached only inside an `if (!capabilityPresent) {…}` guard — needs the enclosing
+ * control-flow the token scan cannot see, and is the documented AST (`ts.Program`) follow-up.
+ */
+const CAPABILITY_KEYWORDS: ReadonlyMap<SkipCapability, readonly string[]> = new Map<SkipCapability, readonly string[]>([
+  ['ffmpeg-absent', ['ffmpeg', 'libx264', 'codec', 'render', 'encode']],
+  ['wasm-absent', ['wasm', 'cargo', 'rust', 'kernel']],
+  ['wasm-dist-staged', ['wasm', 'dist', 'cargo']],
+  ['shared-array-buffer-absent', ['sab', 'sharedarraybuffer', 'atomics', 'cross-origin', 'coop', 'coep']],
+  ['coverage-instrumentation', ['coverage']],
+  ['astro-example-not-built', ['astro', 'built']],
+]);
+
+/**
+ * Is `site` a CONDITIONAL skip FORM whose conditionality is VISIBLE at the token level? A
+ * `.skipIf(` / `.runIf(` call, a ternary that selects `it` vs `it.skip` (`? it : it.skip` /
+ * `? it.skip : it`), or a `.skip(<first-arg>, …)` whose first argument looks like a runtime
+ * CONDITION (not a bare string title) — all carry the gate IN the source, so the skip is
+ * self-evidently conditional regardless of whether its title names the capability.
+ */
+function siteIsConditionalForm(site: string): boolean {
+  // `.skipIf(` / `.runIf(` — the explicit conditional members (dotted OR bracket-string).
+  if (
+    /\.\s*(?:skipIf|runIf)\s*\(/.test(site) ||
+    /\[\s*[\x27\x22\x60](?:skipIf|runIf)[\x27\x22\x60]\s*\]\s*\(/.test(site)
+  )
+    return true;
+  // A ternary selecting the runner vs its `.skip` accessor — `cond ? it : it.skip` (either arm).
+  if (/\?\s*it\s*:\s*it\s*\.\s*skip\b/.test(site) || /\?\s*it\s*\.\s*skip\b\s*:\s*it\b/.test(site)) return true;
+  // `it.skip(<cond>, …)` / `test.skip(<cond>, …)` — Vitest's skip-with-condition: a FIRST argument
+  // that is NOT a quoted string title (so it is a runtime condition like `!built`) makes it
+  // conditional. A first arg that IS a quoted string is the UNCONDITIONAL title form.
+  const skipCall = /\b(?:it|test|describe|suite|bench)\s*\.\s*skip\s*\(\s*([^,)]*)/.exec(site);
+  if (skipCall) {
+    const firstArg = (skipCall[1] ?? '').trim();
+    if (firstArg.length > 0 && !/^[\x27\x22\x60]/.test(firstArg)) return true; // a non-string first arg = a condition
+  }
+  return false;
+}
+
+/**
+ * Is the sanctioned skip at `site` SELF-CONSISTENT with its declared `capability`? True iff the
+ * site is a visible CONDITIONAL FORM ({@link siteIsConditionalForm}) OR its text references the
+ * capability's domain keywords ({@link CAPABILITY_KEYWORDS}). An UNCONDITIONAL `it.skip(<title>)`
+ * whose title references neither is the marker-free placeholder (`it.skip("later")`) — NOT
+ * consistent → not auto-sanctionable. Case-insensitive; pure + dependency-free.
+ *
+ * An UNKNOWN capability string (one not in the map — should never happen, the type is closed)
+ * conservatively requires the conditional form (no keyword set to match against).
+ */
+export function siteConsistentWithCapability(site: string, capability: SkipCapability): boolean {
+  if (siteIsConditionalForm(site)) return true;
+  const keywords = CAPABILITY_KEYWORDS.get(capability);
+  if (keywords === undefined) return false;
+  const lower = site.toLowerCase();
+  return keywords.some((kw) => lower.includes(kw));
 }
 
 /**
@@ -285,10 +368,22 @@ const SANCTIONED_BY_SITE: ReadonlyMap<string, ReadonlyMap<string, SanctionedSkip
  * placeholder skip is unfinished work, not a capability gate; it can never be sanctioned
  * past the always-blocking no-placeholder floor. The legit capability-gate sites (named by
  * capability) never carry a marker, so this never false-rejects a genuine gate.
+ *
+ * CAPABILITY-CONSISTENCY FLOOR (codex round-6): the marker-free placeholder. Even an enumerated
+ * site is rejected if it is NOT {@link siteConsistentWithCapability self-consistent with its
+ * declared capability} — an UNCONDITIONAL `it.skip(<title>)` whose title neither names the
+ * capability domain nor carries a visible condition (`it.skip("later")`). A genuine gate is either
+ * a visible conditional (skipIf/runIf/ternary) or names its capability, so this only ever rejects
+ * the disguised placeholder, never one of the 15 legit sanctioned sites (each does one or the
+ * other). The SOUND conditionality proof (the enclosing `if (!CAP) {…}` the token level can't see)
+ * is the AST follow-up.
  */
 export function sanctionedSkipFor(file: string, siteLine: string): SanctionedSkip | undefined {
   if (siteCarriesPlaceholderMarker(siteLine)) return undefined;
-  return SANCTIONED_BY_SITE.get(file)?.get(normalizeSiteLine(siteLine));
+  const entry = SANCTIONED_BY_SITE.get(file)?.get(normalizeSiteLine(siteLine));
+  if (entry === undefined) return undefined;
+  if (!siteConsistentWithCapability(siteLine, entry.capability)) return undefined;
+  return entry;
 }
 
 /** Does `file` carry ANY sanctioned skip site at all? (Cheap pre-check / audit helper.) */

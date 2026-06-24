@@ -38,6 +38,8 @@ import {
   runGates,
   memoryContext,
   siteCarriesPlaceholderMarker,
+  siteConsistentWithCapability,
+  asSkipCapability,
   sanctionedSkipFor,
   PLACEHOLDER_SKIP_MARKERS,
   type StandardsElement,
@@ -763,6 +765,104 @@ describe('FINDING 2 — a placeholder-marker skip is NON-sanctionable + NON-sign
       weakening: 'skip-allowlist-added',
       owner: 'heyoub',
       justification: 'genuine ffmpeg capability gate',
+      expiry: '2999-01-01',
+    };
+    const part = simulate((els) => [...els, legitEl], [signoff]);
+    expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added' && c.owner === 'heyoub')).toBe(true);
+    expect(part.forbiddenSignoffs).toEqual([]);
+  });
+});
+
+// ───────────── FINDING 2b (codex round-6) — the MARKER-FREE placeholder ─────────
+//
+// THE ATTACK: `it.skip("later", () => {})` carries NO placeholder MARKER ("later" has no
+// placeholder-keyword tell), so the round-5 marker floor does NOT catch it — yet it is an unconditional
+// skip that proves nothing. The token level CANNOT see the enclosing `if (!CAP) {…}` that would
+// PROVE conditionality (the sound AST follow-up). The TOKEN-LEVEL tightening: a sanctioned skip
+// must be SELF-CONSISTENT with its declared capability — a VISIBLE conditional form (skipIf/runIf/
+// ternary) OR a title that REFERENCES the capability domain (ffmpeg-absent → ffmpeg/libx264/codec/
+// render/encode, etc.). An unconditional `it.skip(<title>)` whose title references NEITHER is NOT
+// auto-sanctionable: it stays blocking and a covering sign-off becomes void/forbidden.
+describe('FINDING 2b — a marker-FREE placeholder skip is non-sanctionable (capability-consistency floor)', () => {
+  test('siteConsistentWithCapability ACCEPTS every legit form (conditional OR capability-named)', () => {
+    // Conditional forms — conditionality is visible at the token level (capability irrelevant to the form).
+    expect(siteConsistentWithCapability('const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;', 'ffmpeg-absent')).toBe(true);
+    expect(siteConsistentWithCapability('const conditionalIt = underCoverage ? it.skip : it;', 'coverage-instrumentation')).toBe(true);
+    expect(siteConsistentWithCapability("describe.skipIf(!canUseSAB)('browser SPSCRing', () => {", 'shared-array-buffer-absent')).toBe(true);
+    expect(siteConsistentWithCapability("it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene', async () => {", 'ffmpeg-absent')).toBe(true);
+    expect(siteConsistentWithCapability("test.skip(!built, 'astro example not built', () => {});", 'astro-example-not-built')).toBe(true);
+    // Capability-named titles on UNCONDITIONAL skips — the title references the capability domain.
+    expect(siteConsistentWithCapability("it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});", 'ffmpeg-absent')).toBe(true);
+    expect(siteConsistentWithCapability("test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {", 'ffmpeg-absent')).toBe(true);
+    expect(siteConsistentWithCapability("it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm', () => {", 'wasm-dist-staged')).toBe(true);
+  });
+
+  test('siteConsistentWithCapability REJECTS the marker-free placeholder (unconditional + capability NOT named)', () => {
+    // The codex `it.skip("later")` case: unconditional, "later" names no capability domain.
+    expect(siteConsistentWithCapability("it.skip('later', () => {});", 'ffmpeg-absent')).toBe(false);
+    // An unconditional skip claiming a capability its title never references is inconsistent.
+    expect(siteConsistentWithCapability("it.skip('a probe that fails sometimes', () => {});", 'wasm-absent')).toBe(false);
+    expect(siteConsistentWithCapability("it.skip('flaky on CI', () => {});", 'coverage-instrumentation')).toBe(false);
+  });
+
+  test('EVERY enumerated SANCTIONED skip is capability-CONSISTENT (the floor never bites a real gate)', () => {
+    const skips = readLiveStandardsSurface(REPO_ROOT, NOW).elements.filter((e) => e._tag === 'skip-allowlist');
+    expect(skips.length).toBeGreaterThan(0);
+    for (const s of skips) {
+      if (s._tag !== 'skip-allowlist') continue;
+      const cap = asSkipCapability(s.capability);
+      expect(cap, `sanctioned capability must be a known capability: ${s.capability}`).toBeDefined();
+      if (cap === undefined) continue;
+      expect(siteConsistentWithCapability(s.site, cap), `sanctioned site must be capability-consistent: ${s.site}`).toBe(true);
+    }
+  });
+
+  test('sanctioning path: a marker-free placeholder is NON-sanctionable even if (file, site) matches', () => {
+    // intro-render's REAL sanctioned site IS allowed; a marker-free placeholder at a fake file is
+    // rejected because it neither names ffmpeg nor is conditional. (The closed SANCTIONED_SKIPS can
+    // not be hand-extended in-test, so we prove the rejection direction via the consistency primitive
+    // and the live allowlist's positive case.)
+    expect(
+      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});")?.capability,
+    ).toBe('ffmpeg-absent');
+    // Even a real sanctioned FILE cannot launder a marker-free placeholder at a DIFFERENT site —
+    // the site does not match, so it is unsanctioned regardless of consistency.
+    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+  });
+
+  test('RED→GREEN partition: an UNCONDITIONAL `it.skip("later")` + a sign-off stays BLOCKING (void sign-off)', () => {
+    // RED (the round-5 hole): "later" has no marker, so it slipped the marker floor and a sign-off
+    // would partition it as SIGNED. NEW: the capability-consistency floor rejects it — it stays
+    // unsigned (blocking) AND the covering sign-off is recorded as forbidden (void).
+    const file = 'tests/unit/fake/marker-free-placeholder.test.ts';
+    const site = "it.skip('later', () => {});"; // unconditional + names no capability domain.
+    const placeholderEl: StandardsElement = { _tag: 'skip-allowlist', file, site, capability: 'ffmpeg-absent' };
+    const elementKey = `skip-allowlist::${file}::${site}`;
+    const signoff: StandardsWaiver = {
+      elementKey,
+      weakening: 'skip-allowlist-added',
+      owner: 'raccoon',
+      justification: 'pretend this is an ffmpeg gate',
+      expiry: '2999-01-01',
+    };
+    const part = simulate((els) => [...els, placeholderEl], [signoff]);
+    expect(part.unsignedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(true);
+    expect(part.signedWeakenings.some((c) => c.weakening === 'skip-allowlist-added')).toBe(false);
+    expect(part.forbiddenSignoffs.some((f) => f.elementKey === elementKey)).toBe(true);
+  });
+
+  test('GREEN: a capability-CONSISTENT skip ("ffmpeg libx264 probe failed") + a sign-off IS signed', () => {
+    // The flip: an unconditional skip whose title NAMES ffmpeg is consistent → signable → signed.
+    const file = 'tests/unit/fake/ffmpeg-consistent.test.ts';
+    const site = "it.skip('ffmpeg libx264 probe failed — codec not on PATH', () => {});";
+    const legitEl: StandardsElement = { _tag: 'skip-allowlist', file, site, capability: 'ffmpeg-absent' };
+    const elementKey = `skip-allowlist::${file}::${site}`;
+    const signoff: StandardsWaiver = {
+      elementKey,
+      weakening: 'skip-allowlist-added',
+      owner: 'heyoub',
+      justification: 'genuine ffmpeg capability gate — title names the capability',
       expiry: '2999-01-01',
     };
     const part = simulate((els) => [...els, legitEl], [signoff]);

@@ -38,7 +38,11 @@
  */
 
 import type { AssuranceLevel } from './assurance.js';
-import { siteCarriesPlaceholderMarker } from './gates/skip-allowlist.js';
+import {
+  asSkipCapability,
+  siteCarriesPlaceholderMarker,
+  siteConsistentWithCapability,
+} from './gates/skip-allowlist.js';
 
 // ───────────────────────────── the surface model ────────────────────────────
 //
@@ -725,6 +729,18 @@ function signoffExpired(expiry: string, now: Date): boolean {
 }
 
 /**
+ * Recover the declared CAPABILITY from a `skip-allowlist-added` change's `detail`. The host-minted
+ * detail ends `…, capability: <cap>) — …` (see `additionChange` in this module); we read the
+ * `, capability: <cap>)` clause and narrow it to a known {@link SkipCapability}. Returns `undefined`
+ * if the clause is absent or names an unknown capability (the consistency check is then skipped —
+ * the marker-floor + the `sanctionedSkipFor` consistency floor are the independent backstops). Pure.
+ */
+function skipAllowlistCapabilityFromDetail(detail: string): ReturnType<typeof asSkipCapability> {
+  const m = /,\s*capability:\s*([a-z-]+)\)/.exec(detail);
+  return m === null ? undefined : asSkipCapability(m[1] ?? '');
+}
+
+/**
  * Partition the classified changes against the committed owner sign-offs as of
  * `now` (the INJECTED wall-clock date — the two-clock law, never `Date.now()`), and
  * the live always-blocking rule ids (so a weakening of a gate emitting one is
@@ -778,11 +794,23 @@ export function applyStandardsWaivers(
     // honest gate. (Defense-in-depth with `sanctionedSkipFor`, which already refuses to
     // enumerate a marker-bearing site: the standards partition rejects it independently, so
     // a hand-written snapshot or sign-off can never launder a placeholder past this floor.)
+    //
+    // CAPABILITY-CONSISTENCY (codex round-6): a MARKER-FREE placeholder — `it.skip("later")` —
+    // slips the marker check yet proves nothing. A sanctioned skip must be SELF-CONSISTENT with
+    // its declared capability (a visible conditional form OR a title referencing the capability
+    // domain). The capability is carried in the change `detail` (`, capability: <cap>)`); an
+    // UNCONDITIONAL skip whose title references neither its capability nor a visible condition is
+    // NOT a recognizable gate → forbidden (a covering sign-off is VOID). Defense-in-depth with
+    // `sanctionedSkipFor`, which already refuses to enumerate an inconsistent site; this rejects it
+    // independently in the standards partition so a hand-written snapshot/sign-off can't launder it.
+    // The SOUND conditionality proof (the enclosing `if (!CAP) {…}`) is the AST follow-up.
     if (change.weakening === 'skip-allowlist-added' && change.elementKey.startsWith('skip-allowlist::')) {
       const parts = change.elementKey.split('::');
       // [0]='skip-allowlist', [1]=file, [2..]=site (the site itself may contain `::`).
       const site = parts.slice(2).join('::');
       if (siteCarriesPlaceholderMarker(site)) return true;
+      const capability = skipAllowlistCapabilityFromDetail(change.detail);
+      if (capability !== undefined && !siteConsistentWithCapability(site, capability)) return true;
     }
     return false;
   };

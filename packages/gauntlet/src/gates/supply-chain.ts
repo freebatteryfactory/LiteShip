@@ -30,7 +30,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { SupplyChainFacts, SupplyChainViolation } from '../supply-chain-facts.js';
@@ -199,7 +199,7 @@ export const supplyChainGate: Gate = defineGate({
   // the IR. Editing the lockfile WITHOUT touching package source must refold. Fold the
   // fact content so the cache refolds on any supply-chain change (the soundness keystone).
   evidenceDigest: (context: GateContext): string | undefined =>
-    injectedFactEvidenceDigest('supplyChain', context.supplyChain),
+    factAccessEvidenceDigest('supplyChain', context.supplyChain),
   fixtures: {
     red: {
       name: 'a supply chain with a git-URL dep, an incomplete SBOM, a drifted lockfile address, and an ambient NPM_TOKEN',

@@ -33,7 +33,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { DecoderFuzzFact, DecodeViolationClass, FuzzCorpusFacts } from '../fuzz-facts.js';
@@ -180,7 +180,7 @@ export const fuzzCorpusGate: Gate = defineGate({
   // Fold the fact content so the cache refolds on a decoder-verdict change (the
   // soundness keystone for this gate).
   evidenceDigest: (context: GateContext): string | undefined =>
-    injectedFactEvidenceDigest('fuzzCorpus', context.fuzzCorpus),
+    factAccessEvidenceDigest('fuzzCorpus', context.fuzzCorpus),
   fixtures: {
     red: {
       name: 'a corpus where the CBOR decoder pollutes Object.prototype on the __proto__ CVE seed (the fail-closed invariant broke)',

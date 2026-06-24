@@ -38,7 +38,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { StandardsIntegrityFacts, StandardsChange } from '../standards-facts.js';
@@ -224,7 +224,7 @@ export const standardsIntegrityGate: Gate = defineGate({
   // snapshot or a sign-off WITHOUT touching package source must refold. Fold the fact
   // content so the cache refolds on any standards-diff change (the soundness keystone).
   evidenceDigest: (context: GateContext): string | undefined =>
-    injectedFactEvidenceDigest('standards', context.standards),
+    factAccessEvidenceDigest('standards', context.standards),
   fixtures: {
     red: {
       name: 'a surface with an unsigned weakening, a forbidden sign-off, and an expired sign-off',

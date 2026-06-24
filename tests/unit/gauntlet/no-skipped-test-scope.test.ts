@@ -27,6 +27,7 @@ import {
   memoryContext,
   detectSkips,
   sanctionedSkipFor,
+  siteConsistentWithCapability,
   normalizeSiteLine,
   SANCTIONED_SKIPS,
   type Finding,
@@ -202,6 +203,30 @@ describe('the skip-detect oracle + the sanctioned-skip allowlist', () => {
     // The wasm-parity file is the proof a file CAN carry two distinct sanctioned sites.
     const parityFiles = SANCTIONED_SKIPS.filter((s) => s.file === 'tests/unit/core/wasm-parity.test.ts');
     expect(parityFiles.length).toBe(2);
+  });
+
+  // ── codex round-6: the MARKER-FREE placeholder (capability-consistency floor) ──
+  it('every enumerated SANCTIONED skip is self-consistent with its declared capability (the floor never false-rejects a real gate)', () => {
+    for (const s of SANCTIONED_SKIPS) {
+      expect(
+        siteConsistentWithCapability(s.site, s.capability),
+        `sanctioned site must reference its capability OR be a visible conditional: ${s.file} → ${s.site}`,
+      ).toBe(true);
+      // And the gate path actually sanctions it (the consistency floor is wired into sanctionedSkipFor).
+      expect(sanctionedSkipFor(s.file, s.site)?.capability, `${s.file} site not sanctioned`).toBe(s.capability);
+    }
+  });
+
+  it('sanctionedSkipFor REJECTS a marker-free placeholder `it.skip("later")` even at a real sanctioned file', () => {
+    // The codex round-6 case: an unconditional `it.skip("later")` carries no marker AND names no
+    // capability — it is not auto-sanctionable. Even pointed at a REAL sanctioned file (intro-render,
+    // ffmpeg-absent), the (file, site) does not match the enumerated site, so it stays unsanctioned;
+    // and the consistency floor independently rejects the title even if the site DID match.
+    expect(sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('later', () => {});")).toBeUndefined();
+    // The real ffmpeg-named site at the same file IS sanctioned (the floor passes a genuine gate).
+    expect(
+      sanctionedSkipFor('tests/smoke/intro-render.test.ts', "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});")?.capability,
+    ).toBe('ffmpeg-absent');
   });
 });
 

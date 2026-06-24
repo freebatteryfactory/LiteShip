@@ -35,7 +35,7 @@
  */
 
 import { defineGate, requireTaint, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { TaintFacts, TaintFlow } from '../taint-facts.js';
@@ -172,7 +172,7 @@ export const taintFlowGate: Gate = defineGate({
   // ts.Program dataflow trace (a flow flips sanitized↔unsanitized as the registry /
   // corpus changes), NOT captured by the IR coverage digest alone. Fold the fact
   // content so the cache refolds on a flow change (the soundness keystone for this gate).
-  evidenceDigest: (context: GateContext): string | undefined => injectedFactEvidenceDigest('taint', context.taint),
+  evidenceDigest: (context: GateContext): string | undefined => factAccessEvidenceDigest('taint', context.taint),
   fixtures: {
     red: {
       name: 'a run with an unsanitized fetch → createShaderModule shader-injection flow',

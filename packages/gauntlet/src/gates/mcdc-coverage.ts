@@ -43,7 +43,7 @@
  */
 
 import { defineGate, requireMcdc, requireIR, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR } from '../repo-ir.js';
@@ -284,6 +284,6 @@ export const mcdcCoverageGate: Gate = defineGate({
   // (a condition's pin flips killed→survived when its covering test weakens), NOT from
   // any IR source byte. Fold the fact content so the cache refolds on a pin-verdict flip
   // even when the IR source is byte-identical (the soundness keystone for this gate).
-  evidenceDigest: (context: GateContext): string | undefined => injectedFactEvidenceDigest('mcdc', context.mcdc),
+  evidenceDigest: (context: GateContext): string | undefined => factAccessEvidenceDigest('mcdc', context.mcdc),
   fixtures: FIXTURES,
 });

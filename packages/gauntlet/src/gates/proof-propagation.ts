@@ -87,7 +87,7 @@
  */
 
 import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../repo-ir.js';
@@ -433,6 +433,6 @@ export const proofPropagationGate: Gate = defineGate({
   // mutation-score ratchet, the coverage report, the enrolled-invariant ledger) — NONE in
   // the IR. A weakened signal flips a module below its floor WITHOUT touching source, so
   // fold the fact content too (the soundness keystone for this gate).
-  evidenceDigest: (context: GateContext): string | undefined => injectedFactEvidenceDigest('proof', context.proof),
+  evidenceDigest: (context: GateContext): string | undefined => factAccessEvidenceDigest('proof', context.proof),
   fixtures: FIXTURES,
 });

@@ -273,26 +273,6 @@ export function stableSerialize(value: unknown): string {
 }
 
 /**
- * The OUT-OF-IR evidence digest for an INJECTED-FACT gate — the one-line
- * {@link Gate.evidenceDigest} for a gate whose verdict folds a single host-injected
- * fact (`context.mutation` / `context.supplyChain` / `context.traceability` / …)
- * whose SOURCE bytes (the per-mutant verdicts, the lockfile, the ledger, the snapshot)
- * are an EXTERNAL artifact OUTSIDE the IR. Returns a stable content digest of the fact
- * under `label`, or `undefined` when the fact is ABSENT (the gate then keys as a
- * pure-IR gate — sound, because an absent fact means the gate's verdict does not
- * depend on it: it advisories "not-evidenced" / is simply not in the set).
- *
- * The label namespaces the fact family so two gates that both inject (different) facts
- * cannot collide; the value is folded via {@link stableSerialize} (recursive,
- * key-sorted) so structurally-equal facts digest identically and ANY content change —
- * a flipped mutant verdict, an edited ledger line, a new SBOM entry — flips the key.
- */
-export function injectedFactEvidenceDigest(label: string, fact: unknown): string | undefined {
-  if (fact === undefined) return undefined;
-  return stableEvidenceDigest([[label, stableSerialize(fact)]]);
-}
-
-/**
  * The inert marker {@link factAccessEvidenceDigest} folds for a channel a gate
  * ACCESSED and found ABSENT (`undefined`). DISTINCT from {@link NO_EVIDENCE_MARKER}
  * (the gate declared/read NO evidence at all) and from a real `ev:` fold (a present
@@ -305,23 +285,36 @@ export function injectedFactEvidenceDigest(label: string, fact: unknown): string
 export const ACCESSED_ABSENT_MARKER = 'absent:accessed' as const;
 
 /**
- * The OUT-OF-IR evidence digest for a gate whose verdict DEPENDS on a fact channel
- * REGARDLESS of whether it is present or absent — the absence-aware sibling of
- * {@link injectedFactEvidenceDigest}. The structural soundness keystone for the
- * not-evidenced gate families (supply-chain, simulation, standards, …): when the gate
- * ACCESSES the channel and finds it ABSENT, its verdict (the `not-evidenced`
- * advisories) DEPENDS on that absence, so the digest folds a DISTINCT
- * accessed-and-absent segment ({@link ACCESSED_ABSENT_MARKER}) rather than collapsing
- * to the no-evidence marker. This makes the verdict key reflect absence-dependence:
+ * The SINGLE OUT-OF-IR evidence digest for an INJECTED-FACT gate — the one-line
+ * {@link Gate.evidenceDigest} for a gate whose verdict folds a single host-injected
+ * fact (`context.mutation` / `context.supplyChain` / `context.traceability` / …) whose
+ * SOURCE bytes (the per-mutant verdicts, the lockfile, the ledger, the snapshot) are an
+ * EXTERNAL artifact OUTSIDE the IR. This is ABSENCE-AWARE: it folds whether the channel
+ * was PRESENT or ACCESSED-AND-ABSENT, the structural soundness keystone for the
+ * not-evidenced gate families (supply-chain, simulation, standards, …). When a gate
+ * ACCESSES the channel and finds it ABSENT, its verdict (the `not-evidenced` advisories)
+ * DEPENDS on that absence, so the digest folds a DISTINCT accessed-and-absent segment
+ * ({@link ACCESSED_ABSENT_MARKER}) rather than collapsing to `undefined` / the
+ * no-evidence marker. This makes the verdict key reflect absence-dependence:
  *  - PRESENT  → a real `ev:` content fold of the fact (any content change flips it);
  *  - ABSENT   → the `absent:accessed` marker (DISTINCT from never-accessed);
- * so flipping the channel absent↔present (everything else fixed) ALWAYS flips the key.
+ * so flipping the channel absent↔present (everything else fixed) ALWAYS flips the key —
+ * a warm cache can never serve an absent-world verdict to a present world (or vice versa).
  *
- * Unlike {@link injectedFactEvidenceDigest} (which returns `undefined` on absence — the
- * opt-in "not in the set, no dependence" contract), this folds the absence as a
- * dependency: use it for a gate whose verdict CHANGES on absence (it emits findings ABOUT
- * the missing fact), NOT for an opt-in gate that simply does nothing when the fact is
- * absent. PURE, lean, deterministic — the same fold vocabulary, no clock, no I/O.
+ * THE ONE FACT-EVIDENCE DIGEST (Codex round-6 P3): there is intentionally NO non-absence-
+ * aware sibling. The earlier `injectedFactEvidenceDigest` (which returned `undefined` on
+ * absence, collapsing absent into the no-evidence marker) was a soundness drift — a gate
+ * that branches on a fact's ABSENCE did not fold that dependence into its key, so the
+ * cache could serve a verdict computed under the other absence-state. Every fact-consuming
+ * gate now uses THIS digest; the present-fact fold is byte-identical to the old helper's
+ * (`stableEvidenceDigest([[label, stableSerialize(fact)]])`), so present-fact cache keys are
+ * UNCHANGED, while absent-fact keys now correctly key apart from present-fact keys.
+ *
+ * The label namespaces the fact family so two gates that both inject (different) facts
+ * cannot collide; a present value is folded via {@link stableSerialize} (recursive,
+ * key-sorted) so structurally-equal facts digest identically and ANY content change — a
+ * flipped mutant verdict, an edited ledger line, a new SBOM entry — flips the key. PURE,
+ * lean, deterministic — no clock, no I/O.
  */
 export function factAccessEvidenceDigest(label: string, fact: unknown): string {
   if (fact === undefined) return stableEvidenceDigest([[label, ACCESSED_ABSENT_MARKER]]);

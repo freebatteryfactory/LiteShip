@@ -43,6 +43,21 @@ import {
   ABSENT_SUFFIX,
   gateVerdictKey,
   supplyChainGate,
+  simulationDeterminismGate,
+  fuzzCorpusGate,
+  mutationDivergenceGate,
+  mcdcCoverageGate,
+  taintFlowGate,
+  traceabilityBridgeGate,
+  standardsIntegrityGate,
+  declaredFixProtocolGate,
+  proofPropagationGate,
+  compositionCoverageGate,
+  stableEvidenceDigest,
+  stableSerialize,
+  factAccessEvidenceDigest,
+  ACCESSED_ABSENT_MARKER,
+  NO_EVIDENCE_MARKER,
   type EvidenceChannel,
   type Gate,
   type GateContext,
@@ -342,6 +357,50 @@ function perturbFact(base: GateContext, channel: EvidenceChannel): GateContext {
   return clone;
 }
 
+
+/** The channel named by an absent-access read marker (`<channel>:absent`), else undefined. */
+function absentReadChannel(read: string): EvidenceChannel | undefined {
+  if (!read.endsWith(ABSENT_SUFFIX)) return undefined;
+  const channel = read.slice(0, -ABSENT_SUFFIX.length);
+  return isFactChannel(channel) ? channel : undefined;
+}
+
+/**
+ * The ABSENCE obligation (round-6 P3) for a gate that ACCESSED `channel` and found it
+ * ABSENT. The bug the old `injectedFactEvidenceDigest` had was NOT "absent ≠ present" (it
+ * returned `undefined` for absent and an `ev:` fold for present — those already differ);
+ * it was "accessed-absent COLLAPSES to never-accessed" — `undefined` folds the SAME
+ * {@link NO_EVIDENCE_MARKER} a gate that declared NO evidence at all does. So the verdict
+ * key for the absent world is byte-identical to a no-dependence world, and a warm cache
+ * cannot tell them apart.
+ *
+ * The obligation therefore PROVES the digest keys the accessed-absent state APART FROM the
+ * never-accessed state: the verdict key built from `evidenceDigest(absentCtx)` must DIFFER
+ * from the key built from `undefined` (the never-accessed / no-evidence marker). An
+ * absence-aware digest folds a distinct `absent:accessed` segment → the keys differ → it
+ * conforms; the old absence-collapsing digest returns `undefined` → the keys are identical
+ * → CAUGHT. Returns the undeclared marker (`<channel>:absent`) when the gate fails, else
+ * undefined.
+ */
+function absentObligation(gate: Gate, ctx: GateContext, channel: EvidenceChannel): string | undefined {
+  if (gate.evidenceDigest === undefined) return `${channel}${ABSENT_SUFFIX}`;
+  const absentKey = gateVerdictKey({
+    toolchainDigest: 'tc',
+    gateId: gate.id,
+    coverageDigest: 'cov',
+    env: {},
+    evidenceDigest: gate.evidenceDigest(ctx),
+  });
+  const neverAccessedKey = gateVerdictKey({
+    toolchainDigest: 'tc',
+    gateId: gate.id,
+    coverageDigest: 'cov',
+    env: {},
+    evidenceDigest: undefined,
+  });
+  return absentKey === neverAccessedKey ? `${channel}${ABSENT_SUFFIX}` : undefined;
+}
+
 /** A shallow structural clone of a context (so a perturbation does not mutate the base). */
 function cloneContext(base: GateContext): GateContext {
   const out: GateContext = {
@@ -402,6 +461,19 @@ function undeclaredReads(gate: Gate, ctx: GateContext): readonly string[] {
 
     if (isFactChannel(read)) {
       if (!digestCovers(gate, ctx, perturbFact(ctx, read))) undeclared.push(read);
+      continue;
+    }
+
+    // An ABSENT fact access (`<channel>:absent`) is a FIRST-CLASS evidence read (round-6
+    // P3): a gate that branches on the channel being absent (the supply-chain
+    // not-evidenced path) DEPENDS on that absence, so its evidenceDigest MUST key the
+    // absent world apart from the present world — proven by flipping the channel absent→
+    // present flipping the digest. A digest that collapses absence into the no-evidence
+    // marker (the old injectedFactEvidenceDigest) fails this and is CAUGHT.
+    const absentChannel = absentReadChannel(read);
+    if (absentChannel !== undefined) {
+      const obligation = absentObligation(gate, ctx, absentChannel);
+      if (obligation !== undefined) undeclared.push(obligation);
       continue;
     }
 
@@ -1141,5 +1213,191 @@ describe('THE ABSENCE KEYSTONE — accessing an ABSENT channel is recorded as a 
     }
     expect(recorder.reads().size).toBe(FACT_CHANNELS.length);
     expect(new Set(FACT_CHANNELS).size).toBe(FACT_CHANNELS.length); // no duplicate names
+  });
+});
+
+// ── the ABSENCE-IN-THE-KEY keystone (Codex round-6 P3): the digest folds absence ──
+
+/**
+ * A faithful REPLICA of the OLD (pre-round-6) `injectedFactEvidenceDigest` — the helper
+ * that returned `undefined` on an ABSENT fact, collapsing "accessed-and-absent" into the
+ * SAME key segment as "never declared any evidence" (both fold {@link NO_EVIDENCE_MARKER}).
+ * That is the drift Codex caught: a gate whose verdict DEPENDS on a channel being absent
+ * (the supply-chain `not-evidenced` branch) did NOT fold that dependence into its key, so a
+ * warm cache could serve a verdict computed under the other absence-state. Used by the
+ * RED-before assertions to prove the bug end-to-end over the REAL witness gates, then the
+ * GREEN-after proves the live (consolidated) {@link factAccessEvidenceDigest} cures it.
+ */
+function oldInjectedFactEvidenceDigest(label: string, fact: unknown): string | undefined {
+  if (fact === undefined) return undefined; // ← the hole: absence collapses to the no-evidence marker
+  return stableEvidenceDigest([[label, stableSerialize(fact)]]);
+}
+
+/** The verdict-cache key for a witness gate's digest output (everything else FIXED). */
+function keyFor(gateId: string, evidenceDigest: string | undefined): string {
+  return gateVerdictKey({
+    toolchainDigest: 'tc-fixed',
+    gateId,
+    coverageDigest: 'cov-fixed',
+    env: { node: 'v20' },
+    evidenceDigest,
+  });
+}
+
+/** The live fact value `channel` carries on `ctx` (its present fact, or undefined). */
+function factOf(ctx: GateContext, channel: EvidenceChannel): unknown {
+  return (ctx as Record<string, unknown>)[channel];
+}
+
+/**
+ * The witness gates whose verdict GENUINELY depends on a fact channel being ABSENT — each
+ * emits a `not-evidenced` finding when its channel is `undefined`, so the absent world is a
+ * distinct verdict the cache must key apart. `(gate, channel)` pairs drive every assertion
+ * below over REAL shipping gates: the ABSENT world is a bare memory context (the channel is
+ * `undefined`); the PRESENT world is the gate's OWN green fixture (a real fact that yields a
+ * clean, divergent verdict and folds to a real `ev:` digest), not a throwaway sentinel.
+ */
+const ABSENCE_WITNESSES: readonly (readonly [Gate, EvidenceChannel])[] = [
+  [supplyChainGate, 'supplyChain'],
+  [simulationDeterminismGate, 'simulation'],
+  [fuzzCorpusGate, 'fuzzCorpus'],
+];
+
+describe('THE ABSENCE-IN-THE-KEY LAW — a gate that branches on absence keys it apart (round-6 P3)', () => {
+  for (const [gate, channel] of ABSENCE_WITNESSES) {
+    const absentCtx = memoryContext({});
+    const presentCtx = gate.fixtures.green.context; // a REAL present fact (the gate's clean world)
+
+    it(`${gate.id}: it emits a not-evidenced verdict when ${channel} is absent (the dependence is real)`, () => {
+      // Pin the premise: the gate's run output genuinely DIFFERS absent-vs-present, so the
+      // verdict-cache MUST key the two apart (else a warm cache serves the wrong one).
+      const absentFindings = gate.run(absentCtx);
+      const presentFindings = gate.run(presentCtx);
+      expect(absentFindings.length).toBeGreaterThan(0); // a not-evidenced advisory
+      expect(JSON.stringify(absentFindings)).not.toBe(JSON.stringify(presentFindings));
+    });
+
+    it(`${gate.id}: RED-before — the OLD digest collapses absent into the never-accessed (no-evidence) key`, () => {
+      // The bug, end-to-end on the real gate: under the OLD helper an ABSENT channel folds
+      // `undefined` → the verdict key is BYTE-IDENTICAL to a gate that declared NO evidence
+      // at all (NO_EVIDENCE_MARKER). The absence-dependence is invisible to the key — a warm
+      // cache cannot tell an accessed-absent world from a no-dependence world.
+      const oldAbsentDigest = oldInjectedFactEvidenceDigest(channel, factOf(absentCtx, channel));
+      expect(oldAbsentDigest).toBeUndefined();
+      const oldAbsentKey = keyFor(gate.id, oldAbsentDigest);
+      const neverAccessedKey = keyFor(gate.id, undefined); // a gate that declares no evidence
+      expect(oldAbsentKey).toBe(neverAccessedKey); // ← the collapse: absent ≡ never-accessed
+    });
+
+    it(`${gate.id}: GREEN-after — the LIVE digest keys absent apart from BOTH never-accessed AND present`, () => {
+      // The cure: the consolidated factAccessEvidenceDigest folds a DISTINCT
+      // `absent:accessed` segment on absence — three mutually-exclusive keys.
+      const liveDigest = gate.evidenceDigest;
+      expect(liveDigest).toBeDefined();
+      const absentKey = keyFor(gate.id, liveDigest?.(absentCtx));
+      const presentKey = keyFor(gate.id, liveDigest?.(presentCtx));
+      const neverAccessedKey = keyFor(gate.id, undefined);
+      expect(absentKey).not.toBe(neverAccessedKey); // absent ≠ never-accessed (the cure)
+      expect(absentKey).not.toBe(presentKey); // absent ≠ present (soundness)
+      expect(presentKey).not.toBe(neverAccessedKey); // present ≠ never-accessed (unchanged)
+    });
+
+    it(`${gate.id}: present-fact fold is BYTE-IDENTICAL to the old helper (no spurious cache busting)`, () => {
+      // Back-compat: for a PRESENT fact the live digest must equal the old helper's fold, so
+      // every present-fact cache key is UNCHANGED — only the absent case keys differently.
+      const liveDigest = gate.evidenceDigest;
+      expect(liveDigest?.(presentCtx)).toBe(oldInjectedFactEvidenceDigest(channel, factOf(presentCtx, channel)));
+    });
+
+    it(`${gate.id}: the law CONFORMS — undeclaredReads is empty for the absent world (it folds the absence)`, () => {
+      // The broadened law (undeclaredReads now treats `<channel>:absent` as a first-class
+      // read) passes the LIVE gate over an ABSENT context: the gate folds the absence apart
+      // from never-accessed, so nothing is undeclared. The law exercising the absence path
+      // on the REAL gate.
+      expect(undeclaredReads(gate, absentCtx)).toEqual([]);
+    });
+
+    it(`${gate.id}: TEETH — reverting this gate to the OLD digest FAILS the absence law`, () => {
+      // Prove the wiring is LOAD-BEARING, not decorative: a mutant of the gate that swaps the
+      // live absence-aware digest back to the OLD (absence-collapsing) helper reads the absent
+      // channel but folds `undefined` → the accessed-absent key collapses to never-accessed →
+      // the law surfaces the undeclared `:absent` read. Reverting ONE gate fails a specific
+      // law assertion.
+      const reverted: Gate = {
+        ...gate,
+        evidenceDigest: (ctx: GateContext): string | undefined =>
+          oldInjectedFactEvidenceDigest(channel, factOf(ctx, channel)),
+      };
+      const undeclared = undeclaredReads(reverted, absentCtx);
+      expect(undeclared).toContain(`${channel}${ABSENT_SUFFIX}`);
+    });
+  }
+
+  it('factAccessEvidenceDigest folds the three states apart (absent / present / never-accessed)', () => {
+    // The digest-level invariant the gate keys depend on: absent → the `absent:accessed`
+    // marker fold; present → a real `ev:` fold; and the absent marker can NEVER equal the
+    // never-accessed marker (NO_EVIDENCE_MARKER) — three mutually-exclusive schemes.
+    const absentFold = factAccessEvidenceDigest('supplyChain', undefined);
+    const presentFold = factAccessEvidenceDigest('supplyChain', { a: 1 });
+    expect(absentFold).toBe(stableEvidenceDigest([['supplyChain', ACCESSED_ABSENT_MARKER]]));
+    expect(absentFold).not.toBe(presentFold);
+    expect(absentFold).not.toBe(NO_EVIDENCE_MARKER);
+    expect(presentFold).not.toBe(NO_EVIDENCE_MARKER);
+    expect(presentFold.startsWith('ev:')).toBe(true);
+  });
+
+  // EVERY fact-consuming built-in gate paired with the channel it folds. These ship
+  // DELIBERATELY OUTSIDE the default LITESHIP_GATES / LITESHIP_IR_GATES sets (the integrator
+  // composes them on via the facts-injected host path), so they are NOT covered by the ALL_GATES
+  // sweep — this explicit list is the consolidation guard's population. The `evidenceDigest` of
+  // each is pure (it folds `context.<channel>` via the absence-aware digest; no IR read), so the
+  // absence obligation can be evaluated WITHOUT running the gate (several require an injected IR
+  // to run). A gate left on the old absence-collapsing helper is CAUGHT by absentObligation here.
+  const FACT_CONSUMING_GATES: readonly (readonly [Gate, EvidenceChannel])[] = [
+    [supplyChainGate, 'supplyChain'],
+    [simulationDeterminismGate, 'simulation'],
+    [fuzzCorpusGate, 'fuzzCorpus'],
+    [mutationDivergenceGate, 'mutation'],
+    [mcdcCoverageGate, 'mcdc'],
+    [taintFlowGate, 'taint'],
+    [traceabilityBridgeGate, 'traceability'],
+    [standardsIntegrityGate, 'standards'],
+    [declaredFixProtocolGate, 'declaredFix'],
+    [proofPropagationGate, 'proof'],
+    [compositionCoverageGate, 'composition'],
+  ];
+
+  it('EVERY fact-consuming gate folds the absence apart from never-accessed (the consolidation sweep)', () => {
+    // The consolidation guard (round-6 P3): for EVERY fact-consuming gate, its evidenceDigest
+    // over an ABSENT context must key the accessed-absent world APART from the never-accessed
+    // (no-evidence) world — i.e. it uses the absence-aware digest, not the old helper. A gate
+    // still on `injectedFactEvidenceDigest` would return `undefined` for absent → collapse to
+    // the no-evidence marker → CAUGHT.
+    const absentCtx = memoryContext({});
+    for (const [gate, channel] of FACT_CONSUMING_GATES) {
+      const obligation = absentObligation(gate, absentCtx, channel);
+      expect(
+        obligation,
+        `gate "${gate.id}" does not key channel "${channel}" absent apart from never-accessed (still on the old helper?)`,
+      ).toBeUndefined();
+    }
+  });
+
+  it('TEETH — reverting ANY fact-consuming gate to the old helper fails the consolidation sweep', () => {
+    // Prove the sweep is load-bearing across the WHOLE set: reverting EACH gate (one at a time)
+    // to the old absence-collapsing helper makes absentObligation flag THAT gate. So a single
+    // regression anywhere in the 11 gates is caught — the wiring is not decorative.
+    const absentCtx = memoryContext({});
+    for (const [gate, channel] of FACT_CONSUMING_GATES) {
+      const reverted: Gate = {
+        ...gate,
+        evidenceDigest: (ctx: GateContext): string | undefined =>
+          oldInjectedFactEvidenceDigest(channel, factOf(ctx, channel)),
+      };
+      expect(
+        absentObligation(reverted, absentCtx, channel),
+        `reverting gate "${gate.id}" to the old helper should fail the absence law`,
+      ).toBe(`${channel}${ABSENT_SUFFIX}`);
+    }
   });
 });

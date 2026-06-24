@@ -153,7 +153,6 @@ export {
   allFileIds,
   stableEvidenceDigest,
   stableSerialize,
-  injectedFactEvidenceDigest,
   factAccessEvidenceDigest,
   ACCESSED_ABSENT_MARKER,
 } from './verdict-cache.js';
@@ -259,7 +258,9 @@ export { type SkipForm, type SkipMatch, detectSkips } from './gates/skip-detect.
 export {
   type SkipCapability,
   type SanctionedSkip,
+  SKIP_CAPABILITIES,
   SANCTIONED_SKIPS,
+  asSkipCapability,
   sanctionedSkipFor,
   fileHasSanctionedSkip,
   normalizeSiteLine,
@@ -269,6 +270,12 @@ export {
   // rejects it too). Exported so the host/tests can reuse the ONE detector + vocabulary.
   PLACEHOLDER_SKIP_MARKERS,
   siteCarriesPlaceholderMarker,
+  // The capability-CONSISTENCY floor (codex round-6): a sanctioned skip must be self-consistent
+  // with its declared capability — a visible conditional form OR a title referencing the
+  // capability domain. An unconditional `it.skip("later")` (marker-free placeholder) is NOT —
+  // it stays blocking + a covering sign-off is void. The SOUND conditionality proof is the AST
+  // follow-up. Exported so the host/tests reuse the ONE consistency check.
+  siteConsistentWithCapability,
 } from './gates/skip-allowlist.js';
 
 // The IR-fold gates (Slice B, B1) — these REQUIRE the injected repo-IR, so they

@@ -48,7 +48,7 @@
  */
 
 import { defineGate, requireIR, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding, type Severity } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import { makeRepoIR, PLACEHOLDER_DIGEST, type RepoIR, type FileId } from '../repo-ir.js';
@@ -261,6 +261,6 @@ export const compositionCoverageGate: Gate = defineGate({
   // changes), NOT from any IR source byte alone. Fold the fact content so the cache
   // refolds on an edge-coverage change (the soundness keystone for this gate).
   evidenceDigest: (context: GateContext): string | undefined =>
-    injectedFactEvidenceDigest('composition', context.composition),
+    factAccessEvidenceDigest('composition', context.composition),
   fixtures: FIXTURES,
 });

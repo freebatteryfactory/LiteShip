@@ -30,7 +30,7 @@
  */
 
 import { defineGate, type GateContext, type Gate } from '../gate.js';
-import { injectedFactEvidenceDigest } from '../verdict-cache.js';
+import { factAccessEvidenceDigest } from '../verdict-cache.js';
 import { finding, type Finding } from '../finding.js';
 import { memoryContext } from '../engine.js';
 import type { ScenarioReplayFact, SimulationFacts } from '../simulation-facts.js';
@@ -169,7 +169,7 @@ export const simulationDeterminismGate: Gate = defineGate({
   // the fact content so the cache refolds on a divergence change even when the IR source
   // is byte-identical (the soundness keystone for this gate).
   evidenceDigest: (context: GateContext): string | undefined =>
-    injectedFactEvidenceDigest('simulation', context.simulation),
+    factAccessEvidenceDigest('simulation', context.simulation),
   fixtures: {
     red: {
       name: 'a corpus where one scenario diverges on replay (the SUT leaked an ambient clock read)',
