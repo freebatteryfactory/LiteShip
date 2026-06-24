@@ -8,7 +8,7 @@
 
 > **watchCapabilities**(`onChange`): `Effect`\<`void`, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\>
 
-Defined in: [detect/src/detect.ts:738](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L738)
+Defined in: [detect/src/detect.ts:696](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L696)
 
 Watch for capability changes via matchMedia listeners and resize observer.
 Emits a fresh DetectionResult whenever viewport, color scheme, or
@@ -43,7 +43,7 @@ import { Effect } from 'effect';
 
 const program = Effect.scoped(
   Detect.watchCapabilities((result) => {
-    console.log('Capabilities changed:', result.tier);
+    console.log('Capabilities changed:', result.capTier);
   }),
 );
 ```

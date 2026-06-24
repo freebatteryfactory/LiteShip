@@ -13,6 +13,7 @@
  * @module
  */
 
+import { InvariantViolationError, IoError } from '@czap/error';
 import { fallbackKernels } from './wasm-fallback.js';
 import { WASM_SCRATCH_BASE } from './defaults.js';
 
@@ -70,7 +71,8 @@ const validateWASMExports = (exports: WebAssembly.Exports): WASMExports => {
   const requiredFunctions = ['spring_curve', 'batch_boundary_eval', 'blend_normalize'] as const;
   for (const name of requiredFunctions) {
     if (typeof exports[name] !== 'function') {
-      throw new Error(
+      throw InvariantViolationError(
+        'wasm.exports',
         `WASM module missing required export: "${name}". Available exports: [${Object.keys(exports).join(', ')}]`,
       );
     }
@@ -83,7 +85,8 @@ const validateWASMExports = (exports: WebAssembly.Exports): WASMExports => {
      guard exists only so the cast to WASMExports stays runtime-safe if a caller ever
      supplies a drift/tampered module. Cannot be reached by valid instantiate output. */
   if (!isMemoryShape) {
-    throw new Error(
+    throw InvariantViolationError(
+      'wasm.exports',
       `WASM module missing required memory export. Available exports: [${Object.keys(exports).join(', ')}]`,
     );
   }
@@ -251,7 +254,9 @@ export const WASMDispatch: WASMDispatchAPI = {
         if (typeof wasmUrl === 'string') {
           const response = await fetch(wasmUrl);
           if (!response.ok) {
-            throw new Error(`Failed to fetch WASM module: ${response.status} ${response.statusText}`);
+            throw IoError('wasm.fetch', `Failed to fetch WASM module: ${response.status} ${response.statusText}`, {
+              path: wasmUrl,
+            });
           }
           source = await response.arrayBuffer();
         } else {

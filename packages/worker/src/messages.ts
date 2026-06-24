@@ -283,9 +283,17 @@ interface ErrorMessage {
   readonly context?: string;
 }
 
-interface MetricsMessage {
+/**
+ * Performance sample emitted by a worker's render/compute loop. Doubles as
+ * the record delivered to {@link CompositorWorkerShape.onMetrics} listeners
+ * (see {@link WorkerMetrics}) — so adding a future metric field extends the
+ * callback payload without changing its arity.
+ */
+export interface MetricsMessage {
   readonly type: 'metrics';
+  /** Most recent measured frames-per-second. */
   readonly fps: number;
+  /** Fraction of the per-frame budget consumed (0..1+). */
   readonly budgetUsed: number;
 }
 

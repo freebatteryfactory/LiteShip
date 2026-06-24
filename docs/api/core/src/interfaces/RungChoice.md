@@ -6,7 +6,7 @@
 
 # Interface: RungChoice
 
-Defined in: [core/src/escalation.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L114)
+Defined in: [core/src/escalation.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L118)
 
 The successful chooser verdict.
 
@@ -16,7 +16,7 @@ The successful chooser verdict.
 
 > `readonly` **admittedTargets**: `ReadonlySet`\<`string`\>
 
-Defined in: [core/src/escalation.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L118)
+Defined in: [core/src/escalation.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L122)
 
 The projection targets that rung admits, intersected with the rung's table.
 
@@ -24,8 +24,8 @@ The projection targets that rung admits, intersected with the rung's table.
 
 ### rung
 
-> `readonly` **rung**: [`CapLevel`](../type-aliases/CapLevel.md)
+> `readonly` **rung**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [core/src/escalation.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L116)
+Defined in: [core/src/escalation.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/escalation.ts#L120)
 
-The minimal [CapLevel](../type-aliases/CapLevel.md) satisfying site, budget, grants, and admissibility.
+The minimal [CapTier](../type-aliases/CapTier.md) satisfying site, budget, grants, and admissibility.

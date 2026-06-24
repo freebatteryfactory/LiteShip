@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { emitError } from '../../../../packages/cli/src/receipts.js';
-import { readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
+import { readCliVersion } from '../../../../packages/cli/src/commands/version.js';
 
 vi.mock('@czap/mcp-server', () => {
   const err = new Error("Cannot find package '@czap/mcp-server'");

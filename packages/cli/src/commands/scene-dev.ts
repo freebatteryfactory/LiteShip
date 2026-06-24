@@ -9,6 +9,7 @@
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { wallClock } from '@czap/core';
 import { emit, emitError } from '../receipts.js';
 
 type StartDevServerFn = (scenePath: string) => Promise<{ url: string; close(): Promise<void> }>;
@@ -56,7 +57,7 @@ export async function sceneDevSetup(
   emit({
     status: 'ok',
     command: 'scene.dev',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     url: srv.url,
     scenePath: abs,
   });

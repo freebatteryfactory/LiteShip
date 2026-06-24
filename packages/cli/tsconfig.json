@@ -16,7 +16,8 @@
     "composite": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
-      "@czap/_spine": ["../_spine/index.d.ts"]
+      "@czap/_spine": ["../_spine/index.d.ts"],
+      "@czap/error": ["../error/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],
@@ -26,6 +27,7 @@
     { "path": "../command" },
     { "path": "../scene" },
     { "path": "../assets" },
-    { "path": "../audit" }
+    { "path": "../audit" },
+    { "path": "../error" }
   ]
 }

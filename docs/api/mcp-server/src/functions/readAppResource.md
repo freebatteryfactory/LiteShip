@@ -10,7 +10,7 @@
 
 Defined in: [mcp-server/src/app-resources.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/app-resources.ts#L51)
 
-Read one app resource by exact `ui://liteship/app/…` URI. Unknown → [ResourceNotFoundError](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts) (→ -32002).
+Read one app resource by exact `ui://liteship/app/…` URI. Unknown → `NotFoundError` (→ -32002).
 
 ## Parameters
 

@@ -18,6 +18,7 @@
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
+import { IoError } from '@czap/error';
 import { fileExists } from './resolve-fs.js';
 
 /** Where the artifact sits inside a built/installed `@czap/core`. */
@@ -36,8 +37,26 @@ function packageRootFrom(entryPath: string, pkgName: string): string | null {
     if (fileExists(manifest, 'czap/vite.wasm-resolve')) {
       try {
         if ((JSON.parse(readFileSync(manifest, 'utf8')) as { name?: string }).name === pkgName) return dir;
-      } catch {
-        // Unreadable/!json manifest — keep walking.
+      } catch (err) {
+        // A malformed (`SyntaxError`) or read-failed (ENOENT race after the
+        // fileExists check, EACCES/EISDIR perms) manifest is a designed SKIP —
+        // keep walking to the next ancestor. The binding is CONSUMED by
+        // discriminating those expected cases; any OTHER fault (e.g. EIO — a
+        // real disk error) is surfaced as a tagged IoError, never masked.
+        const code = (err as NodeJS.ErrnoException).code;
+        const skippable =
+          err instanceof SyntaxError ||
+          code === 'ENOENT' ||
+          code === 'EACCES' ||
+          code === 'EISDIR' ||
+          code === 'EPERM' ||
+          code === 'ENOTDIR';
+        if (!skippable) {
+          throw IoError('czap/vite.wasm-resolve', `unreadable package manifest while walking to ${pkgName}`, {
+            path: manifest,
+            cause: err,
+          });
+        }
       }
     }
     const parent = path.dirname(dir);

@@ -6,7 +6,7 @@
 
 # Interface: McpToolCall
 
-Defined in: [mcp-server/src/dispatch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L50)
+Defined in: [mcp-server/src/dispatch.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L54)
 
 Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP spec; omitted means `{}`.
 
@@ -16,7 +16,7 @@ Shape of an MCP tools/call parameter object. `arguments` is optional per the MCP
 
 > `readonly` `optional` **arguments?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [mcp-server/src/dispatch.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L52)
+Defined in: [mcp-server/src/dispatch.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L56)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/dispatch.ts:52](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/dispatch.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L51)
+Defined in: [mcp-server/src/dispatch.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L55)

@@ -8,7 +8,7 @@
 
 > `const` **AICast**: `object`
 
-Defined in: [core/src/ai-cast.ts:906](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L906)
+Defined in: [core/src/ai-cast.ts:985](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L985)
 
 The AI cast namespace — the framework PRIMITIVE that casts a [DocumentGraph](../interfaces/DocumentGraph.md)
 OUT to a model-facing [AIContext](../interfaces/AIContext.md), validates the patch / UI tree the model
@@ -155,9 +155,9 @@ summary ⇒ same content address.
 
 ### validateGeneratedUIProposal
 
-> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<`GeneratedUINode`\>
+> **validateGeneratedUIProposal**: (`node`, `catalog`, `validate`) => [`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
 
-Validate a model-proposed GeneratedUINode against a host catalog using
+Validate a model-proposed [GeneratedUINode](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts) against a host catalog using
 the host's genui validator, then MINT a [ValidatedProposal](../interfaces/ValidatedProposal.md). The genui
 instance of the SAME envelope discipline — same gate, same minting, same
 unforgeable token — so a UI tree cannot reach a host renderer un-validated any
@@ -170,7 +170,7 @@ genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
 
 ##### node
 
-`GeneratedUINode`
+[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ##### catalog
 
@@ -182,7 +182,7 @@ genui renderer dependency; pass `validateGeneratedUITree` from `@czap/genui`.
 
 #### Returns
 
-[`ProposalResult`](../type-aliases/ProposalResult.md)\<`GeneratedUINode`\>
+[`ProposalResult`](../type-aliases/ProposalResult.md)\<[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)\>
 
 ### validateGraphPatchProposal
 

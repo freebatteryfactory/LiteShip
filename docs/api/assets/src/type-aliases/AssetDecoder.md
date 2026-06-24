@@ -8,7 +8,7 @@
 
 > **AssetDecoder** = (`bytes`) => `Promise`\<`unknown`\>
 
-Defined in: [assets/src/contract.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L74)
+Defined in: [assets/src/contract.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L82)
 
 Decode function shape shared by AssetDecl.decoder and the built-ins.
 

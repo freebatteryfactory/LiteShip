@@ -92,8 +92,32 @@ describe('B5b — no package-graph poisoning', () => {
     expect(importers.map(rel)).toEqual([]);
   });
 
-  it('@czap/audit keeps zero @czap edges (D9b standalone law)', () => {
-    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) => /from\s+['"]@czap\//.test(readFileSync(f, 'utf8')));
+  it('@czap/audit imports only the blessed standalone leaves (D9b + Slice B law)', () => {
+    // D9b: the audit engine stays downstream-installable — it must not pull the
+    // heavy monorepo runtime. The blessed edges are STANDALONE leaves that each
+    // install from npm exactly like a third-party dep, so they do not poison the
+    // package graph:
+    //   • @czap/error    — the zero-dep error algebra (the @czap/_spine analogue);
+    //   • @czap/gauntlet — Slice B (B1): the lean rigor engine DEFINES the RepoIR
+    //     interface; audit is the HOST that BUILDS it (buildRepoIR). Gauntlet deps
+    //     only @czap/error + fast-glob, so audit → gauntlet is acyclic;
+    //   • @czap/canonical — the blake3 content-address kernel for per-file digests
+    //     (deps only @czap/error + @noble/hashes), acyclic.
+    // The audit engine references NO LiteShip-local contract (ADR-0012): it must
+    // NOT import @czap/command — not even the pure `/invariants` subpath — because
+    // that bakes LiteShip-LOCAL config (the NO_DEFAULT_EXPORT rule + its exclude
+    // list) into the downstream-installable engine. The repo-IR builder emits only
+    // STRUCTURAL AST facts (is-default-export / bare-throw, which any TS repo has)
+    // and exposes a `FactOracle` injection hook; LiteShip's repo-LOCAL
+    // invariant-regex oracle is built + INJECTED by the CLI HOST (which legitimately
+    // deps @czap/command). Any @czap import beyond the three blessed leaves would
+    // poison the package graph and is forbidden.
+    const ALLOWED = /from\s+['"]@czap\/(?:error|gauntlet|canonical)['"]/;
+    const importers = walkTs(resolve(REPO, 'packages/audit/src')).filter((f) => {
+      const text = readFileSync(f, 'utf8');
+      const lines = text.split('\n').filter((l) => /from\s+['"]@czap\//.test(l));
+      return lines.some((l) => !ALLOWED.test(l));
+    });
     expect(importers.map(rel)).toEqual([]);
   });
 });

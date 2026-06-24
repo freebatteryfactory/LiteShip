@@ -9,6 +9,7 @@
 
 import type { CaptureConfig, CaptureFrame, FrameCapture, CaptureResult } from '@czap/core';
 import { CAPTURE_KEYFRAME_INTERVAL, Millis } from '@czap/core';
+import { HostCapabilityError, IoError, UnsupportedError, ValidationError } from '@czap/error';
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from './mediabunny.js';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +38,10 @@ function toMediabunnyCodec(webCodecsCodec: string): 'avc' | 'hevc' | 'vp9' | 'av
   if (webCodecsCodec.startsWith('hvc') || webCodecsCodec.startsWith('hev')) return 'hevc';
   if (webCodecsCodec.startsWith('vp09') || webCodecsCodec.startsWith('vp9')) return 'vp9';
   if (webCodecsCodec.startsWith('av01') || webCodecsCodec.startsWith('av1')) return 'av1';
-  throw new Error(`Unsupported WebCodecs codec "${webCodecsCodec}"`);
+  throw UnsupportedError(
+    'codec',
+    `Unsupported WebCodecs codec "${webCodecsCodec}" — supported families: avc/hvc/hev, vp09/vp9, av01/av1.`,
+  );
 }
 
 function requiresEvenDimensions(webCodecsCodec: string): boolean {
@@ -77,7 +81,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
   let output: Output | null = null;
   let target: BufferTarget | null = null;
   let packetQueue: Array<{ packet: EncodedPacket; metadata?: EncodedVideoChunkMetadata }> = [];
-  let pendingError: Error | null = null;
+  let pendingError: IoError | null = null;
   let lastTimestampUs = -1;
 
   function assertHealthy(): void {
@@ -102,13 +106,17 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
 
     async init(captureConfig: CaptureConfig): Promise<void> {
       if (typeof VideoEncoder === 'undefined') {
-        throw new Error('WebCodecs VideoEncoder is unavailable in this environment');
+        throw HostCapabilityError(
+          'WebCodecs.VideoEncoder',
+          'WebCodecs VideoEncoder is unavailable in this environment',
+        );
       }
 
       if (requiresEvenDimensions(codec) && (captureConfig.width % 2 !== 0 || captureConfig.height % 2 !== 0)) {
         const evenWidth = captureConfig.width - (captureConfig.width % 2);
         const evenHeight = captureConfig.height - (captureConfig.height % 2);
-        throw new Error(
+        throw ValidationError(
+          'WebCodecsCapture.init',
           `Codec "${codec}" (H.264/HEVC) requires even width and height. Got ${captureConfig.width}x${captureConfig.height} — round to ${evenWidth}x${evenHeight}, or use a VP9/AV1 codec string.`,
         );
       }
@@ -126,11 +134,14 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
         try {
           support = await VideoEncoder.isConfigSupported(encoderConfig);
         } catch (err) {
-          throw new Error(`VideoEncoder support probe failed: ${supportErrorMessage(err)}`);
+          throw IoError('webcodecs.probe', `VideoEncoder support probe failed: ${supportErrorMessage(err)}`, {
+            cause: err,
+          });
         }
 
         if (!support.supported) {
-          throw new Error(
+          throw UnsupportedError(
+            'codec',
             `VideoEncoder does not support codec "${codec}" at ${captureConfig.width}x${captureConfig.height}@${captureConfig.fps}`,
           );
         }
@@ -156,7 +167,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
           packetQueue.push({ packet: EncodedPacket.fromEncodedChunk(chunk), metadata });
         },
         error(err: DOMException) {
-          pendingError = new Error(`VideoEncoder error: ${err.message}`);
+          pendingError = IoError('webcodecs.encode', `VideoEncoder error: ${err.message}`, { cause: err });
         },
       });
 
@@ -165,7 +176,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
 
     async capture(frame: CaptureFrame): Promise<void> {
       if (!encoder || !config) {
-        throw new Error('FrameCapture not initialized. Call init() first.');
+        throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
       }
 
       assertHealthy();
@@ -191,11 +202,11 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
 
     async finalize(): Promise<CaptureResult> {
       if (!encoder || !config || !videoSource || !output || !target) {
-        throw new Error('FrameCapture not initialized. Call init() first.');
+        throw ValidationError('WebCodecsCapture', 'FrameCapture not initialized. Call init() first.');
       }
 
       if (frameCount === 0) {
-        throw new Error('FrameCapture has no frames to finalize');
+        throw ValidationError('WebCodecsCapture.finalize', 'FrameCapture has no frames to finalize');
       }
 
       await encoder.flush();
@@ -203,7 +214,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
       encoder.close();
 
       if (packetQueue.length === 0) {
-        throw new Error('VideoEncoder produced no packets');
+        throw IoError('webcodecs.encode', 'VideoEncoder produced no packets');
       }
 
       for (const entry of packetQueue) {
@@ -219,7 +230,7 @@ function make(options?: WebCodecsCaptureOptions): FrameCapture {
 
       const buffer = target.buffer;
       if (!buffer || buffer.byteLength === 0) {
-        throw new Error('MP4 muxer produced no output');
+        throw IoError('webcodecs.mux', 'MP4 muxer produced no output');
       }
 
       const result: CaptureResult = {

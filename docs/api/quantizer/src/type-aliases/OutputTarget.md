@@ -6,9 +6,9 @@
 
 # Type Alias: OutputTarget
 
-> **OutputTarget** = `"css"` \| `"glsl"` \| `"wgsl"` \| `"aria"` \| `"ai"`
+> **OutputTarget** = [`LadderTarget`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md)
 
-Defined in: [quantizer/src/quantizer.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L62)
+Defined in: [quantizer/src/quantizer.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L69)
 
 Compilation target for quantizer per-state outputs.
 
@@ -16,3 +16,7 @@ Compilation target for quantizer per-state outputs.
 `aria` emits accessibility attributes, `ai` emits model-facing signals.
 MotionTier gates which targets a device is permitted to receive; see
 [QuantizerFromOptions.tier](../interfaces/QuantizerFromOptions.md#tier) for the tier → targets table.
+
+Aliases `@czap/core`'s [LadderTarget](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md) — the shared codomain of the
+capability-admissibility ladder both this gate and the core escalation gate
+project from — so the target vocabulary itself has a single source too.

@@ -16,6 +16,7 @@ import type { TokenBuffer } from './token-buffer.js';
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
 import type { UIQualityTier } from './ui-quality.js';
+import { type Clock, systemClock } from './clock.js';
 
 // ---------------------------------------------------------------------------
 // UIFrame
@@ -105,6 +106,13 @@ interface GenFrameConfig {
   readonly fps?: number;
   readonly tokenBuffer: TokenBuffer.Shape<string>;
   readonly getQualityTier: () => UIQualityTier;
+  /**
+   * Injected time source for the frame's `timestamp` metadata (NOT a content-
+   * address input — ADR-0013 keeps the timestamp out of the receipt id, so the
+   * frame's identity stays deterministic regardless). Defaults to
+   * {@link systemClock}; a test passes a {@link fixedClock} for a stable stamp.
+   */
+  readonly clock?: Clock;
 }
 
 interface GenFrameSchedulerShape {
@@ -119,6 +127,7 @@ interface GenFrameSchedulerShape {
 
 function _make(config: GenFrameConfig): GenFrameSchedulerShape {
   const { tokenBuffer, getQualityTier } = config;
+  const clock = config.clock ?? systemClock;
 
   let frameCount = 0;
   let lastFrame: UIFrame | null = null;
@@ -162,7 +171,7 @@ function _make(config: GenFrameConfig): GenFrameSchedulerShape {
       }
 
       totalTokensDrained += tokens.length;
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const now = clock.now();
 
       // Frame content address — stable inputs only; timestamp stays metadata (ADR-0013).
       const receiptId = fnv1aBytes(

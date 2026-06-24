@@ -8,10 +8,12 @@
  * @module
  */
 
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { versionCommand, type VersionPayload } from '@czap/command';
 import { spawnArgvCapture } from '../lib/spawn.js';
 import { emit, type WallClockTimestamp } from '../receipts.js';
-import { readCliVersion } from './doctor.js';
 
 /** Receipt shape emitted by `czap version`. */
 export interface VersionReceipt {
@@ -21,6 +23,39 @@ export interface VersionReceipt {
   readonly czap: string;
   readonly node: string;
   readonly pnpm: string | null;
+}
+
+/**
+ * Read the @czap/cli package version off disk. This is `czap version`'s own
+ * logic (not doctoring), so it lives here beside its primary caller.
+ *
+ * Resolution order:
+ *   1. Module-relative — `packages/cli/{src,dist}/commands/version.{ts,js}`
+ *      back to the cli package.json is `../../package.json` either way.
+ *      Works from any cwd (monorepo subdir, global install, external project).
+ *   2. cwd-relative fallback — for test seams that pass a synthesized cwd
+ *      containing a `packages/cli/package.json` or root `package.json`.
+ *
+ * Returns `'0.0.0-unknown'` only if every candidate fails (unusual: would
+ * indicate the package was unpacked without its own package.json).
+ */
+export function readCliVersion(cwd?: string): string {
+  const candidates: string[] = [];
+  try {
+    const moduleDir = dirname(fileURLToPath(import.meta.url));
+    candidates.push(resolve(moduleDir, '../../package.json'));
+  } catch {
+    // import.meta.url may be unavailable in odd contexts; fall through.
+  }
+  const root = cwd ?? process.cwd();
+  candidates.push(resolve(root, 'packages/cli/package.json'));
+  candidates.push(resolve(root, 'package.json'));
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    const pkg = JSON.parse(readFileSync(path, 'utf8')) as { name?: string; version?: string };
+    if (pkg.name === '@czap/cli' && typeof pkg.version === 'string') return pkg.version;
+  }
+  return '0.0.0-unknown';
 }
 
 /** Execute the version command. */

@@ -12,6 +12,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Diagnostics } from '@czap/core';
+import { parseShaderIntegrity } from '@czap/web';
 import { initWGSLRuntime, warnWebGpuUnavailable } from '../../../packages/astro/src/runtime/wgpu.js';
 
 interface FakeGpuHarness {
@@ -137,17 +138,17 @@ describe('initWGSLRuntime — shader source arms', () => {
     vi.stubGlobal('fetch', fetchSpy);
     const { canvas, configure } = makeCanvas(true);
 
-    const dispose = await initWGSLRuntime(canvas, '@fragment fn custom() {}');
+    const dispose = await initWGSLRuntime(canvas, '@fragment\nfn custom() {}');
     expect(dispose).not.toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(harness.calls.shaderCodes[0]).toBe('@fragment fn custom() {}');
+    expect(harness.calls.shaderCodes[0]).toBe('@fragment\nfn custom() {}');
     expect(configure).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'bgra8unorm', alphaMode: 'premultiplied' }),
     );
     dispose!();
   });
 
-  it('fetches a path-rooted shader source and renders it', async () => {
+  it('fetches a path-rooted shader source and VERIFIES it against the SRI pin, then renders it', async () => {
     const harness = makeGpuHarness();
     stubGpu(harness.gpu);
     stubRaf();
@@ -157,10 +158,60 @@ describe('initWGSLRuntime — shader source arms', () => {
     );
     const { canvas } = makeCanvas(true);
 
-    const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl');
+    // Secure-by-default: an EXTERNAL fetch must carry a valid integrity pin. The
+    // pin below is `sha256-<base64>` of the exact mock content ('fetched-wgsl'),
+    // computed through the SAME kernel the verifier uses (AddressedDigest sha256 →
+    // hex → base64), so the fetched bytes VERIFY and the verified content compiles.
+    // This now exercises the fetch+VERIFY+render path (the correct new behavior).
+    const integrity = parseShaderIntegrity('sha256-NgYbuwxCipPjt2k5OUhc+tMVm6/Jx32lcEEz0CvJD6M=');
+    const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl', undefined, undefined, integrity);
     expect(dispose).not.toBeNull();
     expect(harness.calls.shaderCodes[0]).toBe('fetched-wgsl');
     dispose!();
+  });
+
+  it('REFUSES an external fetch with no integrity pin (secure-by-default), degrading to null', async () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, text: async () => 'fetched-wgsl' })),
+    );
+    const { canvas } = makeCanvas(true);
+
+    // A SUCCESSFUL external fetch with NO pin is the secure-by-default REFUSAL: an
+    // unverified external shader must never reach the GPU. The runtime returns null
+    // (degrade) and emits the absent-pin security diagnostic — it does NOT silently
+    // render the unverified bytes, and does NOT fall through to the built-in (that
+    // fallback is only for a FAILED fetch, which produces no content to verify).
+    const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl');
+    expect(dispose).toBeNull();
+    expect(harness.calls.shaderCodes.length).toBe(0);
+    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-integrity-absent' }));
+  });
+
+  it('REFUSES a tampered external fetch whose bytes do not match the pin', async () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    // The server returns DIFFERENT bytes than the author pinned (a tampered /
+    // compromised origin). The pin is for 'fetched-wgsl'; the bytes are not.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, text: async () => 'tampered-wgsl' })),
+    );
+    const { canvas } = makeCanvas(true);
+
+    const integrity = parseShaderIntegrity('sha256-NgYbuwxCipPjt2k5OUhc+tMVm6/Jx32lcEEz0CvJD6M=');
+    const dispose = await initWGSLRuntime(canvas, '/shaders/main.wgsl', undefined, undefined, integrity);
+    expect(dispose).toBeNull();
+    expect(harness.calls.shaderCodes.length).toBe(0);
+    expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-integrity-mismatch' }));
   });
 
   it('falls back to the built-in fullscreen shader when the fetch responds non-ok', async () => {

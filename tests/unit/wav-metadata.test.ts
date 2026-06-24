@@ -4,9 +4,13 @@
  * tag parsing; an empty-LIST WAV exercises the "no metadata" fallback.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { extractWavMetadata, WavMetadataProjection, defineAsset } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
+import { describe, it, expect } from 'vitest';
+import { extractWavMetadata, WavMetadataProjection, defineAsset, AssetRegistry } from '@czap/assets';
+
+const registry = AssetRegistry.make([
+  defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' }),
+  defineAsset({ id: 'test-asset', source: 'test.wav', kind: 'audio' }),
+]);
 
 function writeFourCC(dst: Uint8Array, off: number, cc: string): void {
   if (cc.length !== 4) throw new Error(`fourCC must be 4 chars: ${cc}`);
@@ -136,26 +140,20 @@ describe('extractWavMetadata', () => {
 });
 
 describe('WavMetadataProjection', () => {
-  beforeEach(() => {
-    resetAssetRegistry();
-    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
-    defineAsset({ id: 'test-asset', source: 'test.wav', kind: 'audio' });
-  });
-
   it('emits a cachedProjection capsule named <id>:wav-metadata', () => {
-    const cap = WavMetadataProjection('intro-bed');
+    const cap = WavMetadataProjection(registry, 'intro-bed');
     expect(cap._kind).toBe('cachedProjection');
     expect(cap.name).toBe('intro-bed:wav-metadata');
   });
 
   it('declares an asset:<id> read capability', () => {
-    const cap = WavMetadataProjection('test-asset');
+    const cap = WavMetadataProjection(registry, 'test-asset');
     expect(cap.capabilities.reads).toContain('asset:test-asset');
     expect(cap.capabilities.writes).toEqual([]);
   });
 
   it('runs invariants against valid + invalid metadata shapes', () => {
-    const cap = WavMetadataProjection('intro-bed');
+    const cap = WavMetadataProjection(registry, 'intro-bed');
     const inv = cap.invariants;
     const shapeInv = inv.find((i) => i.name === 'output-shape');
     const bpmInv = inv.find((i) => i.name === 'bpm-in-range');

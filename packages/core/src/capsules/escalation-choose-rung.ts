@@ -1,26 +1,32 @@
 /**
  * Capsule declaration locking {@link chooseRung} — the escalation chooser, the
- * READER of {@link PolicyNode} — as a standing `pureTransform` contract. Where
- * `graph-patch-identity.ts` proves the structural differ inverts itself, this
- * pins the chooser's MINIMAL-DOWNGRADE law: the rung it returns never escalates
- * ABOVE `requires`, only as far down as budgets/grants force, and the targets it
- * admits are a fresh, scoped copy — never a shared reference to the memoized
- * `RUNG_TARGETS` const (the memoization scar `compute` defends against).
+ * READER of {@link PolicyNode} — as a standing `policyGate` contract. This is the
+ * FIRST concrete `policyGate` instance (ADR-0008's closure rule requires one):
+ * `chooseRung` is the canonical permission/authz check in LiteShip — it admits
+ * (`allow`) or rejects (`deny`) a capability RUNG for a policy on a runtime site,
+ * with a reason naming WHY. The arm ADR-0008 reserved for "permission / authz
+ * check" finally has the decision it was reserved for.
  *
- * WHY `pureTransform`: `chooseRung` is a pure function of `(policy, site)` — no
- * receipt byte law, no async hashing, no mutate channel. The chooser's memo is an
- * internal cache keyed by the policy's content address + site; it is a pure
- * function up to that cache, so the determinism law (same seed → same result) is
- * exactly what the pure-transform harness's property test fits.
+ * WHY `policyGate` (not `pureTransform`): a policyGate's job is to resolve a
+ * verdict — `allow`/`deny` + a reason chain — against a typed subject. That is
+ * exactly `chooseRung`: a `{policy, site}` subject in, a verdict out. Filing it as
+ * a `pureTransform` (the prior classification) only described what it ISN'T (no
+ * receipt byte law, no mutate channel); `policyGate` describes what it IS. The
+ * `decide` core stays PURE and TOTAL (the same determinism discipline a
+ * `pureTransform` `run` holds), so the harness can drive allow/deny coverage,
+ * reason-chain integrity, and determinism for real. A policyGate returns a
+ * verdict; it never enforces it — the side-effecting admission (refusing the
+ * projection target) lives downstream in the compositor escalation gate
+ * (`compositor.ts`), per ADR-0014 "no built-in authority".
  *
- * WHY THE INPUT IS SEED MATERIAL (not a raw `PolicyNode`): a `PolicyNode` is a
+ * WHY THE SUBJECT IS SEED MATERIAL (not a raw `PolicyNode`): a `PolicyNode` is a
  * content-addressed graph node — its `id` is minted ONLY through `sealNode` over
  * its payload, and `chooseRung` keys its memo on that `id`. A schema-arbitrary
- * cannot mint that address, so the input schema generates a fully-supported seed
+ * cannot mint that address, so the SUBJECT schema generates a fully-supported seed
  * (the policy's `requires`/`grants`/`sites`/`budgets` fields plus the runtime
- * site to choose on), and `run` SEALS a real `PolicyNode` from it before calling
+ * site to decide on), and `decide` SEALS a real `PolicyNode` from it before calling
  * the chooser. The invariants then assert over the REAL chooser verdict, never a
- * weakened stand-in. To keep determinism honest under the shared memo, `run`
+ * weakened stand-in. To keep determinism honest under the shared memo, `decide`
  * resets the memo per call (the memo is a process-global cache, not part of the
  * value-level contract under test).
  *
@@ -30,15 +36,16 @@
 import { Schema } from 'effect';
 import type { ContentAddress } from '../brands.js';
 import { defineCapsule } from '../assembly.js';
+import type { Decision } from '../capsule.js';
 import { sealNode } from '../document-graph-address.js';
 import { Cap } from '../caps.js';
-import type { PolicyNode, RuntimeSite } from '../document-graph.js';
+import type { PolicyNode } from '../document-graph.js';
 import type { CellMeta } from '../protocol.js';
 import { chooseRung, rungTargets, _resetEscalationMemo } from '../escalation.js';
 import type { EscalationResult, RungChoice } from '../escalation.js';
 
 /** The five rungs, as a schema literal union the arbitrary fully supports. */
-const CapLevelSchema = Schema.Union([
+const CapTierSchema = Schema.Union([
   Schema.Literal('static'),
   Schema.Literal('styled'),
   Schema.Literal('reactive'),
@@ -59,17 +66,18 @@ const AllocClassSchema = Schema.Union([Schema.Literal('zero'), Schema.Literal('b
 
 /**
  * Seed material the schema-arbitrary CAN produce: the policy's capability /
- * constraint fields plus the runtime site the chooser reads on. `run` seals a
- * real {@link PolicyNode} from this and calls `chooseRung`.
+ * constraint fields plus the runtime site the chooser decides on. `decide` seals a
+ * real {@link PolicyNode} from this and calls `chooseRung`. This IS the policyGate
+ * SUBJECT — the typed thing the verdict is resolved against.
  */
-const EscalationSeed = Schema.Struct({
-  /** The required {@link CapLevel} — the rung ceiling the chooser starts at and only DOWNGRADES from. */
-  requires: CapLevelSchema,
+const EscalationSubject = Schema.Struct({
+  /** The required {@link CapTier} — the rung ceiling the chooser starts at and only DOWNGRADES from. */
+  requires: CapTierSchema,
   /** The granted rungs — a rung the chooser would pick must be granted here. */
-  grants: Schema.Array(CapLevelSchema),
+  grants: Schema.Array(CapTierSchema),
   /** The runtime sites the policy admits. */
   sites: Schema.Array(RuntimeSiteSchema),
-  /** The site the chooser reads on — may or may not be in `sites` (the unsat path). */
+  /** The site the chooser decides on — may or may not be in `sites` (the deny path). */
   site: RuntimeSiteSchema,
   /** Optional p95 latency budget (ms) — below a rung's floor forces a downgrade. */
   p95Ms: Schema.optional(Schema.Number),
@@ -79,7 +87,22 @@ const EscalationSeed = Schema.Struct({
   allocClass: Schema.optional(AllocClassSchema),
 });
 
-type EscalationSeedValue = Schema.Schema.Type<typeof EscalationSeed>;
+type EscalationSubjectValue = Schema.Schema.Type<typeof EscalationSubject>;
+
+/**
+ * The verdict schema — the {@link Decision} shape the policyGate harness decodes
+ * each verdict against. `output` IS this schema, so the reason-chain check
+ * round-trips every verdict through it (the policyGate analogue of the receipt
+ * byte law).
+ */
+const ReasonSchema = Schema.Struct({
+  code: Schema.String,
+  message: Schema.String,
+});
+const DecisionSchema = Schema.Struct({
+  effect: Schema.Union([Schema.Literal('allow'), Schema.Literal('deny')]),
+  reasons: Schema.Array(ReasonSchema),
+});
 
 /** Fixed volatile meta — excluded from the content address, so a constant is faithful. */
 const META: CellMeta = {
@@ -88,41 +111,34 @@ const META: CellMeta = {
   version: 1,
 };
 
-/** Build the budgets sub-record from the seed, omitting unspecified axes (so they stay `undefined`). */
-function buildBudgets(seed: EscalationSeedValue): PolicyNode['budgets'] {
-  if (seed.p95Ms === undefined && seed.memoryMb === undefined && seed.allocClass === undefined) {
+/** Build the budgets sub-record from the subject, omitting unspecified axes (so they stay `undefined`). */
+function buildBudgets(subject: EscalationSubjectValue): PolicyNode['budgets'] {
+  if (subject.p95Ms === undefined && subject.memoryMb === undefined && subject.allocClass === undefined) {
     return undefined;
   }
   return {
-    ...(seed.p95Ms !== undefined ? { p95Ms: seed.p95Ms } : {}),
-    ...(seed.memoryMb !== undefined ? { memoryMb: seed.memoryMb } : {}),
-    ...(seed.allocClass !== undefined ? { allocClass: seed.allocClass } : {}),
+    ...(subject.p95Ms !== undefined ? { p95Ms: subject.p95Ms } : {}),
+    ...(subject.memoryMb !== undefined ? { memoryMb: subject.memoryMb } : {}),
+    ...(subject.allocClass !== undefined ? { allocClass: subject.allocClass } : {}),
   };
 }
 
-/** Seal a real, content-addressed {@link PolicyNode} from a seed (its `id` is minted from the payload). */
-function buildPolicy(seed: EscalationSeedValue): PolicyNode {
+/** Seal a real, content-addressed {@link PolicyNode} from a subject (its `id` is minted from the payload). */
+function buildPolicy(subject: EscalationSubjectValue): PolicyNode {
   return sealNode({
     _tag: 'DocGraphPolicyNode',
     _version: 1,
     family: 'policy',
     id: '' as ContentAddress,
     meta: META,
-    // No content-addressed applies-to targets in the seed: `[]` is faithful (the
+    // No content-addressed applies-to targets in the subject: `[]` is faithful (the
     // chooser never reads `appliesTo`; it gates on requires/grants/sites/budgets).
     appliesTo: [],
-    requires: seed.requires,
-    grants: Cap.from(seed.grants),
-    sites: seed.sites,
-    budgets: buildBudgets(seed),
+    requires: subject.requires,
+    grants: Cap.from(subject.grants),
+    sites: subject.sites,
+    budgets: buildBudgets(subject),
   } as PolicyNode);
-}
-
-/** The output: the sealed policy, the site chosen on, and the chooser verdict. */
-interface EscalationOutput {
-  readonly policy: PolicyNode;
-  readonly site: RuntimeSite;
-  readonly result: EscalationResult;
 }
 
 /** Narrow an {@link EscalationResult} to the success branch. */
@@ -131,115 +147,134 @@ function isChoice(r: EscalationResult): r is RungChoice {
 }
 
 /**
- * Declared capsule for the escalation chooser. Registered in the module-level
- * catalog at import time; walked by the factory compiler. The generated property
- * test feeds schema-seeds, `run` seals a real policy and calls `chooseRung`, and
- * the invariants assert the minimal-downgrade / site-gate / determinism / fresh-Set
- * laws over the REAL verdict.
+ * Classify a deny `EscalationResult` into a stable, machine-readable reason
+ * `code`. The site gate is the only branch the chooser distinguishes by message
+ * ("does not admit runtime site"); every other unsatisfiability collapses to "no
+ * rung admits". The `message` is the REAL chooser error string verbatim — never a
+ * fabricated reason.
+ */
+function denyCode(error: string): string {
+  return error.includes('does not admit runtime site') ? 'site-not-admitted' : 'no-rung-admits';
+}
+
+/**
+ * The pure verdict core: seal a real policy from the subject, run the chooser, and
+ * map its result to a {@link Decision}. The reason chain justifies a REJECTION:
+ * an `allow` is a bare admission with an EMPTY chain (there is nothing to refuse);
+ * a `deny` carries exactly one reason whose `message` is the REAL chooser error
+ * string verbatim — never a fabricated reason. This keeps the policyGate law
+ * crisp: `reasons` is non-empty EXACTLY when the verdict is `deny`.
+ *
+ * PURE + TOTAL: every well-formed subject yields exactly one verdict, no throw.
+ * The memo is reset per call so the value-level determinism law is proved cold,
+ * not via a warm-cache hit.
+ */
+function decideEscalation(subject: EscalationSubjectValue): Decision {
+  // Reset the process-global memo so each decision starts cold — the value-level
+  // contract under test is the chooser, not the cache's warm/cold state.
+  _resetEscalationMemo();
+  const policy = buildPolicy(subject);
+  const result = chooseRung(policy, subject.site);
+  if (isChoice(result)) {
+    // Admission carries no rejection reason — the chosen rung + its targets are
+    // the chooser's OUTPUT (read by the compositor escalation gate), not a reason
+    // to refuse anything. An allow's reason chain is empty.
+    return { effect: 'allow', reasons: [] };
+  }
+  return {
+    effect: 'deny',
+    reasons: [{ code: denyCode(result.error), message: result.error }],
+  };
+}
+
+/**
+ * Declared policyGate capsule for the escalation chooser. Registered in the
+ * module-level catalog at import time; walked by the factory compiler. The
+ * generated traversal samples subjects from {@link EscalationSubject}, drives the
+ * REAL `decide` (which seals a real policy and calls `chooseRung`), and the
+ * invariants assert the minimal-downgrade / site-gate / verdict-shape laws over
+ * the REAL verdict.
  */
 export const escalationChooseRungCapsule = defineCapsule({
-  _kind: 'pureTransform',
+  _kind: 'policyGate',
   name: 'core.escalation.choose-rung',
-  input: EscalationSeed,
-  output: Schema.Unknown,
+  input: EscalationSubject,
+  output: DecisionSchema,
   capabilities: { reads: [], writes: [] },
   invariants: [
     {
-      name: 'never-escalates-above-requires',
-      check: (_input: unknown, output: unknown): boolean => {
-        const o = output as EscalationOutput;
-        // LAW: the chooser only DOWNGRADES. On success the chosen rung sits at or
-        // below `policy.requires` on the `Cap.ordinal` ladder — it never climbs
-        // above what the policy required.
-        if (!isChoice(o.result)) return true; // error branch: nothing to assert here
-        return Cap.ordinal(o.result.rung) <= Cap.ordinal(o.policy.requires);
+      name: 'deny-iff-nonempty-reasons',
+      check: (_subject: unknown, verdict: unknown): boolean => {
+        const v = verdict as Decision;
+        // LAW: the reason chain justifies a REJECTION — a deny names why (non-empty
+        // chain, no silent denial), an allow is a bare admission (empty chain). The
+        // chain is non-empty EXACTLY when the verdict is `deny`.
+        return (v.effect === 'deny') === v.reasons.length > 0;
       },
-      message: 'chosen rung must be at or below policy.requires (the chooser only downgrades, never escalates)',
+      message: 'reason chain is non-empty exactly when the verdict is deny',
     },
     {
-      name: 'admitted-subset-of-rung-targets',
-      check: (_input: unknown, output: unknown): boolean => {
-        const o = output as EscalationOutput;
-        // LAW: the admitted targets are a subset of the chosen rung's own table.
-        if (!isChoice(o.result)) return true;
-        const table = rungTargets(o.result.rung);
-        for (const t of o.result.admittedTargets) {
+      name: 'site-gate-forces-deny',
+      check: (subject: unknown, verdict: unknown): boolean => {
+        const s = subject as EscalationSubjectValue;
+        const v = verdict as Decision;
+        // LAW: a site the policy does not admit is unsatisfiable — the verdict MUST
+        // be `deny` with the `site-not-admitted` reason. (The converse — every
+        // admitted site is allowed — is NOT a law: grants/budgets can still force
+        // deny, so we only pin one direction.)
+        if (!s.sites.includes(s.site)) {
+          return v.effect === 'deny' && v.reasons.some((r) => r.code === 'site-not-admitted');
+        }
+        return true;
+      },
+      message: 'a site not in policy.sites must yield a deny with the site-not-admitted reason',
+    },
+    {
+      name: 'allow-rung-never-escalates-above-requires',
+      check: (subject: unknown, verdict: unknown): boolean => {
+        const s = subject as EscalationSubjectValue;
+        const v = verdict as Decision;
+        // LAW: the chooser only DOWNGRADES. On an `allow`, the admitted rung sits at
+        // or below the policy's `requires`. We re-run the chooser to read the rung
+        // (the chooser is the source of truth) and assert the ordinal bound.
+        if (v.effect !== 'allow') return true;
+        _resetEscalationMemo();
+        const result = chooseRung(buildPolicy(s), s.site);
+        return isChoice(result) && Cap.ordinal(result.rung) <= Cap.ordinal(s.requires);
+      },
+      message: 'an admitted rung must be at or below policy.requires (the chooser only downgrades)',
+    },
+    {
+      name: 'allow-targets-subset-of-rung-targets',
+      check: (subject: unknown, verdict: unknown): boolean => {
+        const s = subject as EscalationSubjectValue;
+        const v = verdict as Decision;
+        // LAW: on an `allow`, the chooser's admitted targets are a subset of the
+        // chosen rung's own table — the verdict never invents a target the rung
+        // does not gate.
+        if (v.effect !== 'allow') return true;
+        _resetEscalationMemo();
+        const result = chooseRung(buildPolicy(s), s.site);
+        if (!isChoice(result)) return false;
+        const table = rungTargets(result.rung);
+        for (const t of result.admittedTargets) {
           if (!table.has(t as never)) return false;
         }
         return true;
       },
-      message: 'admittedTargets must be a subset of RUNG_TARGETS[rung]',
-    },
-    {
-      name: 'site-gate-forces-error',
-      check: (_input: unknown, output: unknown): boolean => {
-        const o = output as EscalationOutput;
-        // LAW: a site the policy does not admit is unsatisfiable — the result MUST
-        // be the `{error}` branch. (The converse — every admitted site succeeds —
-        // is NOT a law: grants/budgets can still force unsat, so we only pin one
-        // direction.)
-        if (!o.policy.sites.includes(o.site)) {
-          return !isChoice(o.result);
-        }
-        return true;
-      },
-      message: 'a site not in policy.sites must yield the {error} branch (the site gate is total)',
-    },
-    {
-      name: 'determinism',
-      check: (input: unknown, output: unknown): boolean => {
-        const o = output as EscalationOutput;
-        const seed = input as EscalationSeedValue;
-        // LAW: same seed → same verdict. Re-run from a COLD memo (reset first) so
-        // this proves the chooser's value-level determinism, not just a memo hit.
-        _resetEscalationMemo();
-        const policy2 = buildPolicy(seed);
-        const result2 = chooseRung(policy2, seed.site);
-        return deepEqualsResult(o.result, result2);
-      },
-      message: 'same seed must yield the same chooser verdict (determinism, cold-memo)',
-    },
-    {
-      name: 'admitted-targets-fresh-set',
-      check: (input: unknown, output: unknown): boolean => {
-        const o = output as EscalationOutput;
-        // LAW (the memoization scar): mutating the returned admittedTargets must
-        // NOT pollute the process-global memo — a subsequent chooseRung() for the
-        // SAME policy (a memo HIT) must hand back a clean, isolated Set.
-        if (!isChoice(o.result)) return true;
-        const seed = input as EscalationSeedValue;
-        (o.result.admittedTargets as Set<string>).add('__isolation_probe__');
-        const result2 = chooseRung(buildPolicy(seed), seed.site); // same policy id → memo hit
-        return isChoice(result2) && !(result2.admittedTargets as ReadonlySet<string>).has('__isolation_probe__');
-      },
-      message: 'mutating admittedTargets must not pollute the memo (a memo-hit must return a fresh, isolated Set)',
+      message: 'admitted targets must be a subset of RUNG_TARGETS[rung]',
     },
   ],
   budgets: { p95Ms: 0.2, allocClass: 'bounded' },
   site: ['node', 'browser', 'worker', 'edge'],
-  run: (input: EscalationSeedValue): EscalationOutput => {
-    // Reset the process-global memo so each run starts cold — the value-level
-    // contract under test is the chooser, not the cache's warm/cold state.
-    _resetEscalationMemo();
-    const policy = buildPolicy(input);
-    const result = chooseRung(policy, input.site);
-    return { policy, site: input.site, result };
-  },
+  decide: decideEscalation,
 });
 
-/** Structural equality over an {@link EscalationResult} (error string OR rung+targets multiset). */
-function deepEqualsResult(a: EscalationResult, b: EscalationResult): boolean {
-  const aChoice = isChoice(a);
-  const bChoice = isChoice(b);
-  if (aChoice !== bChoice) return false;
-  if (!aChoice || !bChoice) {
-    return (a as { error: string }).error === (b as { error: string }).error;
-  }
-  if (a.rung !== b.rung) return false;
-  if (a.admittedTargets.size !== b.admittedTargets.size) return false;
-  for (const t of a.admittedTargets) if (!b.admittedTargets.has(t)) return false;
-  return true;
-}
-
-/** Internal helpers exported for direct unit assertions over the seed→policy builder. */
-export const _escalationChooseRungInternals = { buildPolicy, buildBudgets, deepEqualsResult, isChoice } as const;
+/** Internal helpers exported for direct unit assertions over the subject→policy builder and verdict core. */
+export const _escalationChooseRungInternals = {
+  buildPolicy,
+  buildBudgets,
+  isChoice,
+  denyCode,
+  decideEscalation,
+} as const;

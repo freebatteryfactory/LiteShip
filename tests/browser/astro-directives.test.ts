@@ -25,7 +25,7 @@ describe('browser astro directive coverage', () => {
 
   afterEach(() => {
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:dispose'));
+      element.dispatchEvent(new CustomEvent('czap:teardown'));
     });
     stubs.restoreAll();
     vi.restoreAllMocks();
@@ -75,7 +75,7 @@ describe('browser astro directive coverage', () => {
     el.dispatchEvent(new CustomEvent('czap:reinit'));
     expect(el.getAttribute('data-czap-state')).toBe('narrow');
 
-    el.dispatchEvent(new CustomEvent('czap:dispose'));
+    el.dispatchEvent(new CustomEvent('czap:teardown'));
     expect(disconnect).toHaveBeenCalled();
   });
 

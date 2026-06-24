@@ -59,7 +59,7 @@ Performance budgets.
 
 > `readonly` **p95FrameMs**: `number`
 
-#### Default
+#### Default Value
 
 ```ts
 { p95FrameMs: 1000 / fps } (one frame budget)
@@ -75,7 +75,7 @@ Defined in: [scene/src/contract.ts:156](https://github.com/heyoub/LiteShip/blob/
 
 Scene duration in milliseconds.
 
-#### Default
+#### Default Value
 
 derived from the tracks — max resolved `to` / fps * 1000
 
@@ -107,7 +107,7 @@ Defined in: [scene/src/contract.ts:165](https://github.com/heyoub/LiteShip/blob/
 
 Compile-time checks.
 
-#### Default
+#### Default Value
 
 ```ts
 [] (no declared checks)
@@ -131,7 +131,7 @@ Defined in: [scene/src/contract.ts:169](https://github.com/heyoub/LiteShip/blob/
 
 Deployment sites the scene targets.
 
-#### Default
+#### Default Value
 
 ```ts
 ['node', 'browser']

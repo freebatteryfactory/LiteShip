@@ -8,7 +8,7 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import { Effect, Fiber, Scope, Stream } from 'effect';
-import { Boundary } from '@czap/core';
+import { Boundary, fixedClock, manualClock, type Clock } from '@czap/core';
 import { Q, type OutputTarget, type MotionTier, type QuantizerConfig, type LiveQuantizer } from '@czap/quantizer';
 import { TIER_TARGETS, MemoCache } from '@czap/quantizer/testing';
 
@@ -659,5 +659,96 @@ describe('tier gating output correctness', () => {
     expect(outputs.css).toEqual({ [`--${t}`]: '1rem' });
     expect(outputs.aria).toEqual({ 'aria-label': `m-${t}` });
     expect(outputs.glsl).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A-1 determinism guard: the crossing HLC is injected per-instantiation, NOT a
+// process-wide module singleton. Same input + a fixed clock → identical
+// timestamp regardless of how many other quantizers evaluated first.
+// ---------------------------------------------------------------------------
+
+describe('injected-HLC determinism (A-1)', () => {
+  /** Drive `lq` to its first crossing and return the crossing's HLC timestamp. */
+  function firstCrossingHlc<B extends Boundary.Shape>(b: B, clock: Clock, node?: string) {
+    const { css } = uniqueCssForGuard();
+    return Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const lq = yield* Q.from(b).outputs({ css }).create({ clock, node });
+          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lq.changes, 1)));
+          yield* Effect.yieldNow;
+          yield* Effect.sync(() => {
+            lq.evaluate(900);
+          });
+          const chunk = yield* Fiber.join(fiber);
+          return Array.from(chunk)[0]!.timestamp as unknown as { wall_ms: number; counter: number; node_id: string };
+        }),
+      ),
+    );
+  }
+
+  let guardCounter = 0;
+  function uniqueCssForGuard() {
+    const t = `guard${++guardCounter}`;
+    return {
+      css: {
+        compact: { [`--${t}`]: '0.5rem' },
+        medium: { [`--${t}`]: '1rem' },
+        expanded: { [`--${t}`]: '2rem' },
+      } as Record<string, Record<string, string | number>>,
+    };
+  }
+
+  test('same input + a fixed clock yields an identical timestamp regardless of prior calls', async () => {
+    const b = viewport();
+    // Warm up: evaluate several OTHER quantizers first. With the old module
+    // singleton these advanced a process-wide HLC and would poison the stamp.
+    for (let i = 0; i < 5; i++) await firstCrossingHlc(b, fixedClock(1_000 + i));
+
+    const a = await firstCrossingHlc(b, fixedClock(1_715_000_000_000), 'q');
+    const c = await firstCrossingHlc(b, fixedClock(1_715_000_000_000), 'q');
+    expect(a).toEqual(c);
+    expect(a.wall_ms).toBe(1_715_000_000_000);
+    expect(a.node_id).toBe('q');
+    // First increment from a fresh per-instance HLC: counter resets to 0, it
+    // does NOT inherit any prior quantizer's counter.
+    expect(a.counter).toBe(0);
+  });
+
+  test("each create() owns its clock — one instance's evaluates never advance another's HLC", async () => {
+    const b = viewport();
+    const clockA = manualClock(2_000);
+    const clockB = manualClock(2_000);
+    const { css } = uniqueCssForGuard();
+    const stamps = await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const config = Q.from(b).outputs({ css });
+          const lqA = yield* config.create({ clock: clockA, node: 'A' });
+          const lqB = yield* config.create({ clock: clockB, node: 'B' });
+          const fiberA = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lqA.changes, 1)));
+          const fiberB = yield* Effect.forkScoped(Stream.runCollect(Stream.take(lqB.changes, 1)));
+          yield* Effect.yieldNow;
+          // Advance only A's clock and evaluate A several times before B ever
+          // crosses; B's stamp must be untouched by A's activity.
+          yield* Effect.sync(() => {
+            clockA.advance(50);
+            lqA.evaluate(900);
+            clockB.advance(10);
+            lqB.evaluate(900);
+          });
+          const ca = Array.from(yield* Fiber.join(fiberA))[0]!.timestamp as unknown as { wall_ms: number; node_id: string };
+          const cb = Array.from(yield* Fiber.join(fiberB))[0]!.timestamp as unknown as { wall_ms: number; node_id: string };
+          return { ca, cb };
+        }),
+      ),
+    );
+    expect(stamps.ca.wall_ms).toBe(2_050);
+    expect(stamps.ca.node_id).toBe('A');
+    // B's stamp reflects ONLY B's own clock (2_010), not A's 2_050 — no shared
+    // process-wide HLC bleeds A's time into B.
+    expect(stamps.cb.wall_ms).toBe(2_010);
+    expect(stamps.cb.node_id).toBe('B');
   });
 });

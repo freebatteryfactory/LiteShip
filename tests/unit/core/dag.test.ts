@@ -200,6 +200,32 @@ describe('DAG', () => {
       expect(ordered.indexOf(sameActorFirst.hash)).toBeLessThan(ordered.indexOf(sameActorSecond.hash));
     });
 
+    test('canonicalHead picks the SMALLER-actor head on an equal-HLC fork (the actor tiebreak sign)', async () => {
+      // Two heads at the IDENTICAL HLC by DISTINCT actors, both children of GENESIS —
+      // a 2-head fork. The tiebreak orders by actor id; canonicalHead sorts the heads
+      // and returns the FIRST. So the lexicographically-SMALLER actor ('actor-a') must
+      // win, regardless of insertion order. This asserts the SIGN of the actor
+      // comparison (`actorA < actorB → -1`, the smaller sorts first) — the kill for the
+      // `return -1` → `return null` mutant: via Array.prototype.sort, a comparator that
+      // returns null (coerced to 0) where it should return -1 mis-orders the heads, so
+      // canonicalHead returns the WRONG head and this assertion fails.
+      const sharedTs = HLC.increment(HLC.create('same-node'), 9000);
+      const actorA = await Effect.runPromise(
+        Receipt.createEnvelope('op', subject('actor-a'), payload(), sharedTs, Receipt.GENESIS),
+      );
+      const actorB = await Effect.runPromise(
+        Receipt.createEnvelope('op', subject('actor-b'), payload(), sharedTs, Receipt.GENESIS),
+      );
+
+      // Insert actor-b FIRST so a broken (null-returning) comparator cannot accidentally
+      // land actor-a first by insertion luck — the sort sign is what must hold.
+      const head = DAG.canonicalHead(DAG.fromReceipts([actorB, actorA]));
+      expect(head?.hash).toBe(actorA.hash);
+      // And the reverse insertion order yields the SAME canonical head (determinism).
+      const headReverse = DAG.canonicalHead(DAG.fromReceipts([actorA, actorB]));
+      expect(headReverse?.hash).toBe(actorA.hash);
+    });
+
     test('linearize handles reverse actor and reverse hash tie-break insertion deterministically', async () => {
       const sharedTs = HLC.increment(HLC.create('same-node'), 3000);
       const actorZ = await Effect.runPromise(
@@ -555,7 +581,7 @@ describe('DAG', () => {
         Receipt.createEnvelope('op', subject('actor-1'), payload(), forkTs, chain[0]!.hash),
       );
 
-      expect(() => DAG.merge(dag, [forkEnvelope])).toThrow(/Anti-fork violation/);
+      expect(() => DAG.merge(dag, [forkEnvelope])).toThrow(/dag\.anti-fork|attempted to fork/);
     });
 
     test('merge reports a fork when a remote history adds a competing head without violating anti-fork', async () => {

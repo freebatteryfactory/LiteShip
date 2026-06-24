@@ -7,7 +7,7 @@
  * @module
  */
 
-import type { Boundary, CapLevel, Quantizer } from '@czap/core';
+import type { Boundary, CapTier, Quantizer } from '@czap/core';
 import { VIEWPORT } from '@czap/core';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +25,7 @@ export interface ServerIslandContext {
   /** Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`. */
   readonly clientHints?: Record<string, string>;
   /** Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px). */
-  readonly detectedTier?: CapLevel;
+  readonly detectedCapTier?: CapTier;
 }
 
 /**
@@ -98,7 +98,7 @@ function estimateViewportFromUA(ua: string): number {
 // Tier-Based Heuristic
 // ---------------------------------------------------------------------------
 
-const TIER_ORDINALS: Record<CapLevel, number> = {
+const CAP_TIER_ORDINALS: Record<CapTier, number> = {
   static: 0,
   styled: 1,
   reactive: 2,
@@ -107,11 +107,11 @@ const TIER_ORDINALS: Record<CapLevel, number> = {
 };
 
 /**
- * Map a CapLevel tier to a synthetic viewport-like value for boundary evaluation.
+ * Map a CapTier to a synthetic viewport-like value for boundary evaluation.
  * This bridges between the capability tier system and viewport-based boundaries.
  */
-function syntheticValueFromTier(tier: CapLevel): number {
-  const ord = TIER_ORDINALS[tier];
+function syntheticValueFromCapTier(capTier: CapTier): number {
+  const ord = CAP_TIER_ORDINALS[capTier];
   // Map tier ordinal to viewport-like breakpoints: 320, 640, 960, 1280, 1920
   return 320 + ord * 320;
 }
@@ -135,7 +135,7 @@ export function resolveInitialState<B extends Boundary.Shape>(boundary: B, conte
   const thresholds = boundary.thresholds as readonly number[];
   const userAgent = context.userAgent ?? '';
   const clientHints = context.clientHints ?? {};
-  const detectedTier = context.detectedTier ?? 'reactive';
+  const detectedCapTier = context.detectedCapTier ?? 'reactive';
 
   if (stateNames.length === 0) return '';
   if (stateNames.length === 1) return stateNames[0]!;
@@ -152,12 +152,12 @@ export function resolveInitialState<B extends Boundary.Shape>(boundary: B, conte
   } else if (userAgent) {
     value = estimateViewportFromUA(userAgent);
   } else {
-    value = syntheticValueFromTier(detectedTier);
+    value = syntheticValueFromCapTier(detectedCapTier);
   }
 
   // If reduced motion is detected and the tier suggests limited capability,
   // bias toward the lowest state
-  if (reducedMotion === true && TIER_ORDINALS[detectedTier] <= 1) {
+  if (reducedMotion === true && CAP_TIER_ORDINALS[detectedCapTier] <= 1) {
     return stateNames[0]!;
   }
 

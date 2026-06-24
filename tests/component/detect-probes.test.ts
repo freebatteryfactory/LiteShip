@@ -162,7 +162,7 @@ describe('detect()', () => {
     const result = run(detect());
 
     expect(result.capabilities).toBeDefined();
-    expect(result.tier).toBeDefined();
+    expect(result.capTier).toBeDefined();
     expect(result.capSet).toBeDefined();
     expect(result.confidence).toBeGreaterThanOrEqual(0.5);
     expect(result.confidence).toBeLessThanOrEqual(1.0);

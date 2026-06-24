@@ -6,7 +6,7 @@
 
 # Interface: McpToolResult
 
-Defined in: [mcp-server/src/dispatch.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L61)
+Defined in: [mcp-server/src/dispatch.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L65)
 
 MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 (what a D2 `outputSchema` will describe); LiteShip result identity rides in
@@ -19,7 +19,7 @@ MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 
 > `readonly` `optional` **\_meta?**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L66)
+Defined in: [mcp-server/src/dispatch.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L70)
 
 MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
@@ -29,7 +29,7 @@ MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
 > `readonly` **content**: readonly `object`[]
 
-Defined in: [mcp-server/src/dispatch.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L62)
+Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L66)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [mcp-server/src/dispatch.ts:62](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **isError**: `boolean`
 
-Defined in: [mcp-server/src/dispatch.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L64)
+Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L68)
 
 ***
 
@@ -45,4 +45,4 @@ Defined in: [mcp-server/src/dispatch.ts:64](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **structuredContent**: `unknown`
 
-Defined in: [mcp-server/src/dispatch.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L63)
+Defined in: [mcp-server/src/dispatch.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L67)

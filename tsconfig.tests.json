@@ -8,6 +8,8 @@
     "noEmit": true,
     "types": ["node"],
     "paths": {
+      "@czap/error": ["./packages/error/src/index.ts"],
+      "@czap/gauntlet": ["./packages/gauntlet/src/index.ts"],
       "@czap/canonical": ["./packages/canonical/src/index.ts"],
       "@czap/genui": ["./packages/genui/src/index.ts"],
       "@czap/core": ["./packages/core/src/index.ts"],
@@ -48,6 +50,25 @@
     // property is only enforced if THIS project typechecks the directive.
     "tests/unit/core/ai-cast.test.ts",
     "tests/unit/_spine/beat-contract.test.ts",
+    // The worker spine mirror (worker.d.ts) had no drift guard and silently
+    // diverged; this pins it via bidirectional spine⇔runtime assignability so a
+    // future divergence fails the typecheck (see the file's module doc).
+    "tests/unit/_spine/worker-contract.test.ts",
+    // The @czap/core spine conformance guard: its type-level assignments
+    // (Config.Shape ⇔ runtime, and the CompositeState / VideoConfig / CaptureResult
+    // bidirectional pins) only bite if THIS project typechecks them. Listed here so
+    // a future divergence between core.d.ts and the @czap/core runtime fails the
+    // typecheck rather than living as a dead assertion.
+    "tests/unit/spine-conformance.test.ts",
+    // The cure-wave determinism + zero-alloc + perf-claim tests: typechecked here
+    // so their type-level contracts (RepoIR / GateVerdictKeyParts folds, the
+    // alloc-gate budget import, the gate surface) bite rather than rot.
+    "tests/property/verdict-cache-determinism.prop.test.ts",
+    "tests/property/repo-ir-determinism.prop.test.ts",
+    "tests/property/compositor-zero-alloc.test.ts",
+    "tests/property/token-buffer-zero-alloc.test.ts",
+    "tests/unit/gauntlet/perf-claim-bench-gate.test.ts",
+    "tests/bench/allocation.bench.ts",
     "tests/helpers/mock-websocket.ts",
     "tests/helpers/mock-event-source.ts",
     "tests/helpers/mock-worker.ts",

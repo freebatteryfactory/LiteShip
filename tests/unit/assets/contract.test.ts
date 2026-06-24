@@ -1,20 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   defineAsset,
-  AssetRef,
-  getAssetRegistry,
+  AssetRegistry,
   builtinDecoderFor,
   builtinDecoderSiteFor,
-  resolveAssetDecoder,
   audioDecoder,
   videoDecoder,
   imageDecoder,
   type DecodedAudio,
   type DecodedVideo,
 } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
 import type { Site } from '@czap/core';
 
 /** Minimal mono PCM16 WAV (2 silent samples at 48 kHz) for decoder routing checks. */
@@ -73,9 +70,7 @@ function minimalWav(): ArrayBuffer {
 }
 
 describe('Asset capsule', () => {
-  beforeEach(() => resetAssetRegistry());
-
-  it('defineAsset registers an audio asset as a cachedProjection', () => {
+  it('defineAsset builds an audio asset as a cachedProjection (pure — no registration side effect)', () => {
     const a = defineAsset({
       id: 'intro-bed-test',
       source: 'intro-bed.wav',
@@ -86,22 +81,32 @@ describe('Asset capsule', () => {
     });
     expect(a._kind).toBe('cachedProjection');
     expect(a.name).toBe('intro-bed-test');
-    expect(getAssetRegistry().has('intro-bed-test')).toBe(true);
+    // No module-global registration: the capsule is resolvable only once it is
+    // assembled into an explicit AssetRegistry.
+    expect(AssetRegistry.make([a]).has('intro-bed-test')).toBe(true);
   });
 
-  it('AssetRef resolves to a registered id', () => {
-    defineAsset({
+  it('registry.ref resolves to a registered id', () => {
+    const img = defineAsset({
       id: 'test-img',
       source: 'test.png',
       kind: 'image',
       budgets: { decodeP95Ms: 20 },
       invariants: [],
     });
-    expect(AssetRef('test-img')).toBe('test-img');
+    expect(AssetRegistry.make([img]).ref('test-img')).toBe('test-img');
   });
 
-  it('AssetRef throws on unregistered id with registry-miss teaching error', () => {
-    expect(() => AssetRef('nonexistent-123')).toThrow(/registry-miss.*nonexistent-123.*Registered ids: \(none\)/);
+  it('registry.ref throws on unregistered id with registry-miss teaching error', () => {
+    expect(() => AssetRegistry.make([]).ref('nonexistent-123')).toThrow(
+      /registry-miss.*nonexistent-123.*Registered ids: \(none\)/,
+    );
+  });
+
+  it('AssetRegistry.make throws on duplicate asset ids', () => {
+    const a = defineAsset({ id: 'dup', source: 'a.wav', kind: 'audio', invariants: [] });
+    const b = defineAsset({ id: 'dup', source: 'b.wav', kind: 'audio', invariants: [] });
+    expect(() => AssetRegistry.make([a, b])).toThrow(/duplicate asset id 'dup'/);
   });
 
   it('builtinDecoderFor maps media kinds to their decoders and analysis kinds to undefined', () => {
@@ -295,7 +300,7 @@ describe('Asset capsule', () => {
     expect(src).not.toMatch(/^import\s[^;]*['"]node:/m);
   });
 
-  it('resolveAssetDecoder returns the registered capsule decoder and falls back to the audio built-in', async () => {
+  it('registry.resolveDecoder returns the registered capsule decoder and falls back to the audio built-in', async () => {
     const marker: DecodedAudio = {
       sampleRate: 2,
       channels: 1,
@@ -304,7 +309,7 @@ describe('Asset capsule', () => {
       samples: new Int16Array(0),
       durationMs: 0,
     };
-    defineAsset({
+    const resolvable = defineAsset({
       id: 'resolvable-asset',
       source: 'resolvable.wav',
       kind: 'audio',
@@ -312,10 +317,12 @@ describe('Asset capsule', () => {
       budgets: { decodeP95Ms: 50 },
       invariants: [],
     });
-    await expect(resolveAssetDecoder('resolvable-asset')(new ArrayBuffer(0))).resolves.toBe(marker);
-    // Unregistered id → audio built-in (the CLI's manifest-only processes
-    // never import the scene's asset module, so this is today's behavior).
-    const fallbackDecoded = (await resolveAssetDecoder('never-registered')(minimalWav())) as DecodedAudio;
+    const registry = AssetRegistry.make([resolvable]);
+    await expect(registry.resolveDecoder('resolvable-asset')(new ArrayBuffer(0))).resolves.toBe(marker);
+    // Unregistered id → audio built-in (a host that builds a registry without
+    // the scene's asset module — e.g. the CLI reading only the compiled
+    // manifest — keeps the audio-decode fallback).
+    const fallbackDecoded = (await registry.resolveDecoder('never-registered')(minimalWav())) as DecodedAudio;
     expect(fallbackDecoded.sampleRate).toBe(48000);
   });
 });

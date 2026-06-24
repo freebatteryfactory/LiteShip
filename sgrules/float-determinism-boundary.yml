@@ -1,0 +1,67 @@
+# Backstops tests/unit/meta/float-determinism.test.ts (the "f32-canonical CUT" scars).
+#
+# Float-determinism is load-bearing across 6+ packages and has diverged before:
+# the boundary state-index kernel was re-implemented inline as a hand-rolled
+# reverse-scan that compared a value to `thresholds[i]` in raw f64, selecting a
+# DIFFERENT state index than the deployed f32 WASM kernel within ~1 ULP of a
+# threshold (output-identity drift). The fix consolidated ONE f32-canonical
+# kernel — `rawIndexF32` / `EVALUATE_THRESHOLDS_SOURCE` in
+# packages/core/src/boundary-f32.ts — and pinned every surface to it via
+# tests/property/boundary-evaluator-parity.prop.test.ts.
+#
+# This rule bans the regression: a NEW inline boundary reverse-scan — a `for`
+# loop that walks an index DOWNWARD (`i--` / `i -= 1`) while comparing a float
+# against an array subscript (`v >= thresholds[i]`). That is precisely the
+# hand-rolled kernel shape; any such loop outside the canonical kernel files is
+# an un-gated f32/f64 twin and must route through `rawIndexF32` instead.
+#
+# It is TIGHT by construction — it fires only when BOTH the downward update and
+# the subscript float-comparison are present:
+#   - `rawIndexF32` uses an unrolled if-chain + binary search (forward `mid`
+#     bisection, no `i--`) — no match.
+#   - `EVALUATE_THRESHOLDS_SOURCE` is the reverse-scan but lives inside a
+#     template-literal STRING, not a parsed `for_statement` — no AST match.
+#   - `wasm-fallback.ts` / `content-address.ts` use only forward loops — no match.
+#   - the host twin `evaluateRegistrationState` (packages/worker/src) routes
+#     through `EVALUATE_THRESHOLDS_SOURCE` — no inline scan, no match.
+# So `boundary-f32.ts`, `wasm-fallback.ts`, `content-address.ts` are excluded by
+# the PATTERN SHAPE, not a path glob (ast-grep does not honor `!`-negation in a
+# rule's `files:`, so the pattern — not a glob — carries the precision).
+#
+# SCOPE: production source only (`packages/**/src/**`). The test tree deliberately
+# re-implements the reverse-scan as a verification ORACLE (`simWasmIndex`,
+# `evalInline` in tests/property/boundary-evaluator-parity.prop.test.ts) and
+# executes the worker-blob string — that machinery is HOW drift is caught, not
+# drift itself, so tests are out of scope. The scar this guards is a NEW inline
+# kernel shipping in a package's runtime source.
+#
+# Run: `pnpm run lint:structural`  (CI: gauntlet `lint:structural` phase)
+id: float-determinism-boundary
+language: typescript
+severity: error
+message: "Inline boundary reverse-scan (downward for-loop comparing a value to thresholds[i]) re-implements the f32-canonical kernel — route through rawIndexF32 / EVALUATE_THRESHOLDS_SOURCE (packages/core/src/boundary-f32.ts). The 'f32-canonical CUT' scar: a raw-f64 twin selects a different state index than the deployed WASM within ~1 ULP."
+files:
+  - '**/packages/**/src/**'
+rule:
+  all:
+    - kind: for_statement
+    # Downward scan: the update clause decrements the index.
+    - has:
+        field: increment
+        any:
+          - pattern: $I--
+          - pattern: --$I
+          - pattern: $I -= 1
+          - pattern: $I = $I - 1
+    # Float boundary comparison against an array subscript: thresholds[i].
+    - has:
+        stopBy: end
+        any:
+          - pattern: $V >= $ARR[$IDX]
+          - pattern: $V > $ARR[$IDX]
+          - pattern: $V <= $ARR[$IDX]
+          - pattern: $V < $ARR[$IDX]
+          - pattern: $ARR[$IDX] <= $V
+          - pattern: $ARR[$IDX] < $V
+          - pattern: $ARR[$IDX] >= $V
+          - pattern: $ARR[$IDX] > $V

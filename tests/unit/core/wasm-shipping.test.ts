@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { resolvePackagedWasm } from '../../../packages/vite/src/wasm-package-resolve.js';
+import { wasmDistStaged } from '../../helpers/capabilities.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const corePkg = JSON.parse(readFileSync(join(REPO, 'packages/core/package.json'), 'utf8')) as {
@@ -83,7 +84,9 @@ describe('@czap/core ships the czap-compute WASM kernel', () => {
 // The "absent → null" fall-through is exercised by the mocked plugin tests
 // (vite-dx-wave3 / vite-runtime), since in-workspace @czap/core is always
 // resolvable and can't be made genuinely absent here.
-const staged = existsSync(join(REPO, 'packages/core/dist/czap-compute.wasm'));
+// Single-sourced in the canonical capability symbol table (same dist artifact) so the
+// capability-gate linker can prove this guard derives from the `wasm-dist-staged` probe.
+const staged = wasmDistStaged;
 describe('resolvePackagedWasm', () => {
   it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {
     const resolved = resolvePackagedWasm();

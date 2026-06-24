@@ -11,6 +11,8 @@
  * @module
  */
 
+import { ParseError } from '@czap/error';
+
 /** Four-character code, e.g. 'RIFF', 'fmt ', 'data', 'LIST', 'INFO'. */
 export type FourCC = string;
 
@@ -53,23 +55,28 @@ function sniffContainerHint(buffer: ArrayBuffer): string {
  * order they appear. LIST chunks carry their listType so callers can
  * dispatch (e.g. LIST/INFO for tag metadata).
  *
- * Throws RangeError if the buffer is too small or a chunk overruns the
- * buffer; throws Error for non-RIFF magic.
+ * Throws a `ParseError('riff', …, { code: 'malformed', offset })` when the
+ * buffer is too small, a chunk overruns the buffer, or the magic is not
+ * 'RIFF' — `offset` carries the byte position of the failure.
  */
 export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
   if (buffer.byteLength < 12) {
-    throw new RangeError(
+    throw ParseError(
+      'riff',
       `RIFF buffer too small (${buffer.byteLength} bytes) — WAV requires at least 12 bytes for the header. ` +
         `The file may be truncated; re-fetch or re-export the asset.`,
+      { code: 'malformed', offset: 0 },
     );
   }
   const view = new DataView(buffer);
   const dec = new TextDecoder('ascii');
   const riffMagic = dec.decode(new Uint8Array(buffer, 0, 4));
   if (riffMagic !== 'RIFF') {
-    throw new Error(
+    throw ParseError(
+      'riff',
       `Not a RIFF file: expected magic 'RIFF', found '${riffMagic}'${sniffContainerHint(buffer)}. ` +
         `Provide a WAV (RIFF/WAVE) file or re-export: ffmpeg -i input -c:a pcm_s16le output.wav`,
+      { code: 'malformed', offset: 0 },
     );
   }
   const riffSize = view.getUint32(4, true);
@@ -82,9 +89,11 @@ export function* walkRiff(buffer: ArrayBuffer): Generator<WavChunk> {
     const size = view.getUint32(pos + 4, true);
     const dataOffset = pos + 8;
     if (dataOffset + size > buffer.byteLength) {
-      throw new RangeError(
+      throw ParseError(
+        'riff',
         `RIFF chunk ${id} claims ${size} bytes but buffer only has ${buffer.byteLength - dataOffset} remaining ` +
           `(truncated-chunk) — re-fetch the asset source or re-export the file.`,
+        { code: 'malformed', offset: pos },
       );
     }
     const data = new DataView(buffer, dataOffset, size);

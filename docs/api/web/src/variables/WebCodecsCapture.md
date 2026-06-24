@@ -8,7 +8,7 @@
 
 > `const` **WebCodecsCapture**: `object`
 
-Defined in: [web/src/capture/webcodecs.ts:241](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L241)
+Defined in: [web/src/capture/webcodecs.ts:252](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L252)
 
 WebCodecsCapture -- module object + namespace for browser-native video capture.
 

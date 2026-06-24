@@ -18,6 +18,14 @@ Audio track — plays an asset with optional mix metadata.
 
 ## Properties
 
+### \_tag
+
+> `readonly` **\_tag**: `"audio"`
+
+Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
+
+***
+
 ### envelope?
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
@@ -44,14 +52,6 @@ Defined in: [scene/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/m
 
 ***
 
-### kind
-
-> `readonly` **kind**: `"audio"`
-
-Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
-
-***
-
 ### mix?
 
 > `readonly` `optional` **mix?**: `object`
@@ -64,7 +64,7 @@ Defined in: [scene/src/contract.ts:70](https://github.com/heyoub/LiteShip/blob/m
 
 Stereo position, -1 (left) .. 1 (right).
 
-##### Default
+##### Default Value
 
 ```ts
 0
@@ -86,7 +86,7 @@ Linear gain multiplier — 1 is unity (asset plays at its authored
 level), 0 is silence. Mixers multiply this by the envelope-driven
 `_gain` factor each tick (see `systems/audio.ts`).
 
-##### Default
+##### Default Value
 
 ```ts
 1

@@ -15,7 +15,6 @@ import fc from 'fast-check';
 import {
   Boundary,
   ContentAddress,
-  CzapValidationError,
   Easing,
   Animation,
   DirtyFlags,
@@ -24,6 +23,7 @@ import {
   Millis,
   Compositor,
 } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { Effect, Duration } from 'effect';
 
 // --- Quantizer imports ---
@@ -431,7 +431,12 @@ describe('Invariant 6: DirtyFlags bitmask correctness', () => {
 
   test('throws on > 31 keys', () => {
     const keys = Array.from({ length: 32 }, (_, i) => `k${i}`);
-    expect(() => DirtyFlags.make(keys)).toThrow(CzapValidationError);
+    try {
+      DirtyFlags.make(keys);
+      expect.unreachable('expected DirtyFlags.make to throw');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+    }
   });
 });
 

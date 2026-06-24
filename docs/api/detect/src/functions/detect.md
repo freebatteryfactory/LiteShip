@@ -8,7 +8,7 @@
 
 > **detect**(): `Effect`\<[`ExtendedDetectionResult`](../interfaces/ExtendedDetectionResult.md)\>
 
-Defined in: [detect/src/detect.ts:673](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L673)
+Defined in: [detect/src/detect.ts:631](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L631)
 
 Run a full device capability detection sweep.
 All probes are synchronous with internal error handling -- gracefully
@@ -27,7 +27,7 @@ import { Effect } from 'effect';
 
 const result = Effect.runSync(Detect.detect());
 console.log(result.capabilities.gpu);       // 0-3
-console.log(result.tier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
 console.log(result.confidence);             // 0.5 - 1.0

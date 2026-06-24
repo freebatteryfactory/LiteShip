@@ -18,6 +18,7 @@
  */
 import { existsSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { IoError } from '@czap/error';
 import { normalizeRepoPath } from './policy.js';
 import { liteshipDevopsProfile, type DevopsProfile } from './devops-profile.js';
 
@@ -65,11 +66,12 @@ export function discoverInstalledPackageRoots(cwd: string, packageNames: readonl
   try {
     cwdRealpath = realpathSync(cwd);
   } catch (cause) {
-    throw new Error(
+    throw IoError(
+      'audit.consumer',
       `Consumer-mode package discovery cannot start from ${cwd} — the directory does not exist or is ` +
         `unreadable (${cause instanceof Error ? cause.message : String(cause)}). Pass the repo directory ` +
         `that contains node_modules.`,
-      { cause },
+      { path: cwd, cause },
     );
   }
   const seeds: string[] = [normalizeRepoPath(cwdRealpath)];

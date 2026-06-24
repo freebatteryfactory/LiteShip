@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { tokenBufferCapsule } from '@czap/core';
+import { hasTag } from '@czap/error';
 
 describe('tokenBufferCapsule', () => {
   it('declares a stateMachine for the LLM token buffer', () => {
@@ -74,6 +75,23 @@ describe('tokenBufferCapsule', () => {
       state = step(state, { _tag: 'push', token });
     }
     expect(state.tokens).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('step rejects an out-of-type event _tag with a typed InvariantViolationError (exhaustiveness guard)', () => {
+    // The TokenEvent union forbids any _tag outside push/flush/reset, so this
+    // is reachable only by defeating the types — exactly the bad-decoded-data
+    // case the `default: assertNever` arm exists for. It must fail as the
+    // algebra's InvariantViolationError, never silently fold to a no-op.
+    const step = tokenBufferCapsule.step!;
+    const initial = tokenBufferCapsule.initialState!;
+    const forged = { _tag: 'evict' } as unknown as Parameters<typeof step>[1];
+    try {
+      step(initial, forged);
+      throw new Error('expected step to throw on an out-of-type event _tag');
+    } catch (e) {
+      expect(hasTag(e, 'InvariantViolationError')).toBe(true);
+      expect((e as { invariant: string }).invariant).toBe('TokenEvent._tag');
+    }
   });
 
   it('step exercises the production overflow: capacity stays 256 and the oldest token drops', () => {

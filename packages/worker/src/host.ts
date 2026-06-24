@@ -12,6 +12,7 @@
 
 import type { CompositeState, VideoConfig, Millis } from '@czap/core';
 import { Millis as mkMillis } from '@czap/core';
+import { HostCapabilityError } from '@czap/error';
 import type { WorkerConfig } from './messages.js';
 import { CompositorWorker, type CompositorWorkerStartupTelemetry } from './compositor-worker.js';
 import { RenderWorker } from './render-worker.js';
@@ -155,7 +156,10 @@ function _createWorkerHost(
 
     startRender(renderConfig: WorkerHostRenderConfig): void {
       if (renderer === null || attachedCanvasSize === null) {
-        throw new Error('WorkerHost: cannot start render -- no canvas attached. Call attachCanvas() first.');
+        throw HostCapabilityError(
+          'WorkerHost.canvas',
+          'cannot start render -- no canvas attached. Call attachCanvas() first.',
+        );
       }
       const videoConfig: VideoConfig = {
         // Brand internally — the host accepts plain numbers (mkMillis is

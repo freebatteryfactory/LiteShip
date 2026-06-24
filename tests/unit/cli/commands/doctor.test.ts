@@ -8,7 +8,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { doctor, findWorkspaceRoot, readCliVersion } from '../../../../packages/cli/src/commands/doctor.js';
+import { doctor, findWorkspaceRoot } from '../../../../packages/cli/src/commands/doctor.js';
+import { readCliVersion } from '../../../../packages/cli/src/commands/version.js';
 import * as spawnLib from '../../../../packages/cli/src/lib/spawn.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 

@@ -6,13 +6,18 @@
 
 # Function: OnsetProjection()
 
-> **OnsetProjection**(`audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
+> **OnsetProjection**(`registry`, `audioAssetId`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/onsets.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/onsets.ts#L54)
+Defined in: [assets/src/analysis/onsets.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/onsets.ts#L57)
 
-Build an OnsetProjection cachedProjection capsule for a named audio asset.
+Build an OnsetProjection cachedProjection capsule for a named audio asset,
+validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller assembled.
 
 ## Parameters
+
+### registry
+
+[`AssetRegistry`](../interfaces/AssetRegistry.md)
 
 ### audioAssetId
 

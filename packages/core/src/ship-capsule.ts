@@ -45,7 +45,15 @@ interface ShipCapsuleShape {
 
 type ShipCapsuleInput = Omit<ShipCapsuleShape, 'id' | 'integrity'>;
 
-type ShipCapsuleDecodeError = 'non_canonical' | 'malformed_cbor' | 'invalid_shape';
+/**
+ * The ONE `schema_version` this build's decoder understands. A capsule whose
+ * `schema_version` is a number OTHER than this (a future writer, or a corrupted
+ * stamp) is rejected `unsupported_version` — it is NOT laundered into the v1
+ * shape. Bump this (and add a migration) when the wire schema evolves.
+ */
+const SUPPORTED_SCHEMA_VERSION = 1 as const;
+
+type ShipCapsuleDecodeError = 'non_canonical' | 'malformed_cbor' | 'invalid_shape' | 'unsupported_version';
 
 const REQUIRED_KEYS: readonly (keyof ShipCapsuleShape)[] = [
   '_kind',
@@ -141,13 +149,24 @@ const canonicalize = (capsule: ShipCapsuleShape): Uint8Array =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const validateShape = (value: unknown): value is ShipCapsuleShape => {
+/**
+ * A capsule whose every required key is present and whose non-version fields are
+ * structurally sound. The `schema_version` VALUE is deliberately NOT pinned here
+ * — version mismatch is a SEPARATE, honest verdict (`unsupported_version`),
+ * checked after shape so a future writer's capsule is reported as a version
+ * problem, not silently rejected as malformed. `schema_version` is still
+ * required to be PRESENT and a finite number (a string/absent version is a shape
+ * failure, not a version failure).
+ */
+const isWellShaped = (
+  value: unknown,
+): value is Omit<ShipCapsuleShape, 'schema_version'> & { schema_version: number } => {
   if (!isRecord(value)) return false;
   for (const k of REQUIRED_KEYS) {
     if (!(k in value)) return false;
   }
   if (value._kind !== 'shipCapsule') return false;
-  if (value.schema_version !== 1) return false;
+  if (typeof value.schema_version !== 'number' || !Number.isInteger(value.schema_version)) return false;
   if (!isRecord(value.integrity)) return false;
   if (!isRecord(value.build_env)) return false;
   if (!Array.isArray(value.lifecycle_scripts_observed)) return false;
@@ -163,10 +182,19 @@ const decode = (bytes: Uint8Array): Effect.Effect<ShipCapsuleShape, ShipCapsuleD
     } catch {
       return yield* Effect.fail('malformed_cbor' as const);
     }
-    if (!validateShape(decoded)) {
+    if (!isWellShaped(decoded)) {
       return yield* Effect.fail('invalid_shape' as const);
     }
-    const reencoded = canonicalize(decoded);
+    // VERSION-AWARE, FAIL-CLOSED: a shape-valid capsule stamped with a
+    // schema_version this build does not understand is rejected as a DISTINCT
+    // version verdict — never coerced into the v1 shape. This is the
+    // migration boundary: a v2 writer's bytes must NOT silently misparse as v1.
+    if (decoded.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+      return yield* Effect.fail('unsupported_version' as const);
+    }
+    // schema_version is now provably the supported literal — narrow to the shape.
+    const capsule = decoded as ShipCapsuleShape;
+    const reencoded = canonicalize(capsule);
     if (reencoded.length !== bytes.length) {
       return yield* Effect.fail('non_canonical' as const);
     }
@@ -175,13 +203,14 @@ const decode = (bytes: Uint8Array): Effect.Effect<ShipCapsuleShape, ShipCapsuleD
         return yield* Effect.fail('non_canonical' as const);
       }
     }
-    return decoded;
+    return capsule;
   });
 
 /**
  * Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
  * input, `canonicalize` encodes it as canonical CBOR for transport / hashing,
- * `decode` round-trips canonical bytes and rejects non-canonical encodings,
+ * `decode` round-trips canonical bytes and rejects non-canonical encodings AND
+ * unknown `schema_version`s (`unsupported_version`, fail-closed),
  * `computeId` mints the fnv1a label over the canonicalized payload.
  */
 export const ShipCapsule = { make, canonicalize, decode, computeId };

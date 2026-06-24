@@ -7,22 +7,43 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
-type Projection = 'beat' | 'onset' | 'waveform';
+/** The audio projection literal-set — single source of the `projection` enum. */
+const ProjectionSchema = Schema.Union([Schema.Literal('beat'), Schema.Literal('onset'), Schema.Literal('waveform')]);
+type Projection = Schema.Schema.Type<typeof ProjectionSchema>;
+
+/**
+ * Structured payload returned by asset.analyze — ONE Effect Schema is the source
+ * of both {@link AssetAnalyzePayload} and the descriptor's `outputSchema`.
+ */
+export const AssetAnalyzePayloadSchema = Schema.Struct({
+  assetId: Schema.String,
+  projection: ProjectionSchema,
+  markerCount: Schema.Number,
+  cached: Schema.Boolean,
+});
 
 /** Structured payload returned by asset.analyze. */
-export interface AssetAnalyzePayload {
-  readonly assetId: string;
-  readonly projection: Projection;
-  readonly markerCount: number;
-  readonly cached: boolean;
-}
+export type AssetAnalyzePayload = Schema.Schema.Type<typeof AssetAnalyzePayloadSchema>;
+
+/** asset.verify output — the asset id + count of invariants checked. */
+const AssetVerifyPayloadSchema = Schema.Struct({
+  assetId: Schema.String,
+  invariantsChecked: Schema.Number,
+});
 
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload: { error },
+  };
 }
 
 /** `asset analyze <id> --projection=<beat|onset|waveform>`. */
@@ -31,21 +52,8 @@ export const assetAnalyzeCommand: HandledCommand = {
     name: 'asset.analyze',
     summary: 'Run a cachedProjection (beat / onset / waveform) over an asset.',
     requires: ['loadAssetBytes', 'runAudioProjection'] satisfies readonly CommandCapability[],
-    inputSchema: {
-      type: 'object',
-      required: ['asset', 'projection'],
-      properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
-    },
-    outputSchema: {
-      type: 'object',
-      required: ['assetId', 'projection', 'markerCount', 'cached'],
-      properties: {
-        assetId: { type: 'string' },
-        projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] },
-        markerCount: { type: 'number' },
-        cached: { type: 'boolean' },
-      },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({ asset: Schema.String, projection: ProjectionSchema })),
+    outputSchema: schemaToJsonSchema(AssetAnalyzePayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -64,7 +72,7 @@ export const assetAnalyzeCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'asset.analyze',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...cached, cached: true } satisfies AssetAnalyzePayload,
       };
     }
@@ -87,7 +95,7 @@ export const assetAnalyzeCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'asset.analyze',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { ...computed, cached: false } satisfies AssetAnalyzePayload,
     };
   },
@@ -98,12 +106,8 @@ export const assetVerifyCommand: HandledCommand = {
   descriptor: {
     name: 'asset.verify',
     summary: 'Verify an asset capsule.',
-    inputSchema: { type: 'object', required: ['asset'], properties: { asset: { type: 'string' } } },
-    outputSchema: {
-      type: 'object',
-      required: ['assetId', 'invariantsChecked'],
-      properties: { assetId: { type: 'string' }, invariantsChecked: { type: 'number' } },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({ asset: Schema.String })),
+    outputSchema: schemaToJsonSchema(AssetVerifyPayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -119,7 +123,7 @@ export const assetVerifyCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'asset.verify',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { assetId, invariantsChecked: 0 },
       };
     }
@@ -134,7 +138,7 @@ export const assetVerifyCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'asset.verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { assetId, invariantsChecked: 1 },
     };
   },

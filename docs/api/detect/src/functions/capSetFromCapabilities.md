@@ -8,7 +8,7 @@
 
 > **capSetFromCapabilities**(`caps`): [`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
-Defined in: [detect/src/tiers.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L65)
+Defined in: [detect/src/tiers.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L47)
 
 Build a CapSet containing all levels the device qualifies for.
 A device at level X automatically has all levels below it.

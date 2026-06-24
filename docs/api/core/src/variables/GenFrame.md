@@ -8,7 +8,7 @@
 
 > `const` **GenFrame**: `object`
 
-Defined in: [core/src/gen-frame.ts:225](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L225)
+Defined in: [core/src/gen-frame.ts:234](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L234)
 
 Generative-UI frame scheduler namespace.
 

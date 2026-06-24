@@ -19,13 +19,14 @@
  */
 
 import type { BeatComponent, BeatProjectionResolutionInput } from '@czap/_spine';
+import { ValidationError } from '@czap/error';
 
 /**
  * Resolve a raw beat-marker projection into scene-ready beat components.
  *
  * Each sample index becomes a millisecond timestamp via
  * `timeMs = sampleIndex / sampleRate * 1000`. Order and count are preserved
- * (one component per input beat), every marker is tagged `kind: 'beat'`, and
+ * (one component per input beat), every marker is tagged `_tag: 'beat'`, and
  * `strength` is stamped deterministically (defaults to 1). When `anchorTrackId`
  * is supplied it is carried onto every marker; otherwise the field is omitted.
  *
@@ -37,14 +38,15 @@ export function resolveBeatProjectionToSceneBeats(input: BeatProjectionResolutio
   const { projection, sampleRate, anchorTrackId, defaultStrength = 1 } = input;
 
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
-    throw new RangeError(
-      `resolveBeatProjectionToSceneBeats: sampleRate must be a positive, finite number — got ${String(sampleRate)}. Pass the sample rate of the decoded audio asset that produced this BeatMarkerSet (typically 44100 or 48000), e.g. resolveBeatProjectionToSceneBeats({ projection, sampleRate: asset.sampleRate }).`,
+    throw ValidationError(
+      'resolveBeatProjectionToSceneBeats',
+      `sampleRate must be a positive, finite number — got ${String(sampleRate)}. Pass the sample rate of the decoded audio asset that produced this BeatMarkerSet (typically 44100 or 48000), e.g. resolveBeatProjectionToSceneBeats({ projection, sampleRate: asset.sampleRate }).`,
     );
   }
 
   return projection.beats.map((sampleIndex) => {
     const marker: BeatComponent = {
-      kind: 'beat',
+      _tag: 'beat',
       timeMs: (sampleIndex / sampleRate) * 1000,
       strength: defaultStrength,
       ...(anchorTrackId !== undefined ? { anchorTrackId } : {}),

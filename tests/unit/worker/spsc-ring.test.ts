@@ -167,18 +167,20 @@ describe('SPSCRing', () => {
     expect(out[1]).toBe(20);
   });
 
-  test('attachProducer throws RangeError for invalid slotCount', () => {
+  test('attachProducer throws for invalid slotCount', () => {
     const sab = new SharedArrayBuffer(64);
-    expect(() => SPSCRing.attachProducer(sab, 0, 2)).toThrow(RangeError);
-    expect(() => SPSCRing.attachProducer(sab, -1, 2)).toThrow(RangeError);
-    expect(() => SPSCRing.attachProducer(sab, 1.5, 2)).toThrow(RangeError);
+    // A zeroed buffer carries no header geometry, so the geometry read rejects
+    // it before the explicit (invalid) slotCount ever reaches the ring builder.
+    expect(() => SPSCRing.attachProducer(sab, 0, 2)).toThrow(/no ring geometry/);
+    expect(() => SPSCRing.attachProducer(sab, -1, 2)).toThrow(/no ring geometry/);
+    expect(() => SPSCRing.attachProducer(sab, 1.5, 2)).toThrow(/no ring geometry/);
   });
 
-  test('attachConsumer throws RangeError for invalid slotSize', () => {
+  test('attachConsumer throws for invalid slotSize', () => {
     const sab = new SharedArrayBuffer(64);
-    expect(() => SPSCRing.attachConsumer(sab, 4, 0)).toThrow(RangeError);
-    expect(() => SPSCRing.attachConsumer(sab, 4, -1)).toThrow(RangeError);
-    expect(() => SPSCRing.attachConsumer(sab, 4, 1.5)).toThrow(RangeError);
+    expect(() => SPSCRing.attachConsumer(sab, 4, 0)).toThrow(/no ring geometry/);
+    expect(() => SPSCRing.attachConsumer(sab, 4, -1)).toThrow(/no ring geometry/);
+    expect(() => SPSCRing.attachConsumer(sab, 4, 1.5)).toThrow(/no ring geometry/);
   });
 });
 

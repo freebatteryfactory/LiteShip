@@ -6,7 +6,7 @@
 
 # Interface: ExtendedDetectionResult
 
-Defined in: [detect/src/detect.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L147)
+Defined in: [detect/src/detect.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L148)
 
 Full detection result including design and motion tiers.
 
@@ -24,7 +24,7 @@ and compiler dispatch.
 
 > `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](ExtendedDeviceCapabilities.md)
 
-Defined in: [detect/src/detect.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L149)
+Defined in: [detect/src/detect.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L150)
 
 Extended capabilities (superset of `DeviceCapabilities`).
 
@@ -38,9 +38,9 @@ Extended capabilities (superset of `DeviceCapabilities`).
 
 > `readonly` **capSet**: [`CapSet`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md)
 
-Defined in: [detect/src/detect.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L113)
+Defined in: [detect/src/detect.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L114)
 
-Monotone set of every [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) at or below `tier`.
+Monotone set of every [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) at or below `capTier`.
 
 #### Inherited from
 
@@ -48,11 +48,25 @@ Monotone set of every [CapLevel](https://github.com/heyoub/LiteShip/blob/main/do
 
 ***
 
+### capTier
+
+> `readonly` **capTier**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+
+Defined in: [detect/src/detect.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L112)
+
+Highest [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
+
+#### Inherited from
+
+[`DetectionResult`](DetectionResult.md).[`capTier`](DetectionResult.md#captier)
+
+***
+
 ### confidence
 
 > `readonly` **confidence**: `number`
 
-Defined in: [detect/src/detect.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L115)
+Defined in: [detect/src/detect.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L116)
 
 Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
@@ -66,7 +80,7 @@ Heuristic confidence in `[0.5, 1]` based on how many probes succeeded.
 
 > `readonly` **designTier**: [`DesignTier`](../type-aliases/DesignTier.md)
 
-Defined in: [detect/src/detect.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L151)
+Defined in: [detect/src/detect.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L152)
 
 Visual fidelity tier derived from display metadata.
 
@@ -76,20 +90,6 @@ Visual fidelity tier derived from display metadata.
 
 > `readonly` **motionTier**: `MotionTier`
 
-Defined in: [detect/src/detect.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L153)
+Defined in: [detect/src/detect.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L154)
 
 Motion complexity tier derived from GPU, cores, and reduced-motion.
-
-***
-
-### tier
-
-> `readonly` **tier**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
-
-Defined in: [detect/src/detect.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L111)
-
-Highest [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) the device qualifies for.
-
-#### Inherited from
-
-[`DetectionResult`](DetectionResult.md).[`tier`](DetectionResult.md#tier)

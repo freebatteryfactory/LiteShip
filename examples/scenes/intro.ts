@@ -12,10 +12,11 @@ import { Schema } from 'effect';
 import { defineCapsule } from '@czap/core';
 import { Track, Beat, fade, syncTo, compileScene, resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { SceneContract, SceneBeat } from '@czap/scene';
-import { AssetRef } from '@czap/assets';
 import type { BeatMarkerSet } from '@czap/assets';
-// Side-effect import registers introBed + introBedBeats in the asset registry.
-import './assets.js';
+// The scene's immutable asset registry — assembled in ./assets.ts from the
+// declared capsules. `ref('intro-bed')` validates the id against it (no
+// module-global lookup, no import-order dependence).
+import { assetRegistry } from './assets.js';
 
 const SceneInputSchema = Schema.Unknown;
 const SceneOutputSchema = Schema.Unknown;
@@ -67,7 +68,7 @@ const contract: SceneContract = {
     }),
     Track.video('outro', { from: Beat(4), to: Beat(8), source: { _t: 'quantizer', id: 'outro-boundary' } }),
     Track.audio('bed', {
-      from: Beat(0), to: Beat(8), source: AssetRef('intro-bed'), mix: { volume: -6 }, envelope: fade.out(Beat(2)),
+      from: Beat(0), to: Beat(8), source: assetRegistry.ref('intro-bed'), mix: { volume: -6 }, envelope: fade.out(Beat(2)),
     }),
     Track.transition('fade-in', { from: Beat(0), to: Beat(1), kind: 'crossfade', between: [heroId, heroId] }),
     Track.transition('hero-outro', {

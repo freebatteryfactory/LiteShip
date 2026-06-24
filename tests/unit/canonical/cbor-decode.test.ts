@@ -4,12 +4,14 @@
  * The decoder is the inverse of `CanonicalCbor.encode` over the encoder's
  * NORMALIZED domain (top-level `undefined`→`null`, undefined object props
  * dropped). It accepts ONLY the RFC 8949 §4.2.1 deterministic subset the
- * encoder emits and rejects everything else with a typed `CborDecodeError`.
+ * encoder emits and rejects everything else with a typed `@czap/error`
+ * `ParseError` (source `'cbor'`, `code` = the reason discriminant).
  */
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { CanonicalCbor, decode, CborDecodeError } from '@czap/canonical';
+import { CanonicalCbor, decode } from '@czap/canonical';
+import { hasTag } from '@czap/error';
 import { _canonicalCborDecodeInternals } from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
 
 const { normalize } = _canonicalCborDecodeInternals;
@@ -75,11 +77,12 @@ describe('decode — strict rejection of non-canonical input', () => {
   it('rejects float32 (major 7, ai=26) with reason non_canonical', () => {
     // 0xfa = major 7, ai 26 (float32), followed by 4 bytes (1.5f = 0x3fc00000).
     const float32 = new Uint8Array([0xfa, 0x3f, 0xc0, 0x00, 0x00]);
-    expect(() => decode(float32)).toThrow(CborDecodeError);
+    expect(() => decode(float32)).toThrow();
     try {
       decode(float32);
     } catch (e) {
-      expect((e as CborDecodeError).reason).toBe('non_canonical');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
     }
   });
 
@@ -89,8 +92,8 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(float16);
       expect.unreachable('float16 should be rejected');
     } catch (e) {
-      expect(e).toBeInstanceOf(CborDecodeError);
-      expect((e as CborDecodeError).reason).toBe('non_canonical');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
     }
   });
 
@@ -101,8 +104,8 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(indefinite);
       expect.unreachable('indefinite-length array should be rejected');
     } catch (e) {
-      expect(e).toBeInstanceOf(CborDecodeError);
-      expect((e as CborDecodeError).reason).toBe('non_canonical');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
     }
   });
 
@@ -114,8 +117,8 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(outOfOrder);
       expect.unreachable('out-of-order map keys should be rejected');
     } catch (e) {
-      expect(e).toBeInstanceOf(CborDecodeError);
-      expect((e as CborDecodeError).reason).toBe('non_canonical');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
     }
   });
 
@@ -125,14 +128,21 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(dup);
       expect.unreachable('duplicate map keys should be rejected');
     } catch (e) {
-      expect((e as CborDecodeError).reason).toBe('non_canonical');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
     }
   });
 
   it('rejects non-shortest integer encoding with reason non_canonical', () => {
     // 24 encoded in a 2-byte head (0x19 0x00 0x18) instead of 0x18 0x18.
     const nonShortest = new Uint8Array([0x19, 0x00, 0x18]);
-    expect(() => decode(nonShortest)).toThrowError(/non_canonical/);
+    try {
+      decode(nonShortest);
+      expect.unreachable('non-shortest integer encoding should be rejected');
+    } catch (e) {
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('non_canonical');
+    }
   });
 
   it('rejects truncated input with reason unexpected_eof', () => {
@@ -142,7 +152,10 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(truncated);
       expect.unreachable('truncated input should be rejected');
     } catch (e) {
-      expect((e as CborDecodeError).reason).toBe('unexpected_eof');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('unexpected_eof');
+      // The decoder carries the byte offset where it ran out of input.
+      expect((e as { offset: number }).offset).toBe(1);
     }
   });
 
@@ -152,7 +165,8 @@ describe('decode — strict rejection of non-canonical input', () => {
       decode(trailing);
       expect.unreachable('trailing bytes should be rejected');
     } catch (e) {
-      expect((e as CborDecodeError).reason).toBe('malformed');
+      expect(hasTag(e, 'ParseError')).toBe(true);
+      expect((e as { code: string }).code).toBe('malformed');
     }
   });
 });

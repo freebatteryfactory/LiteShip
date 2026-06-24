@@ -6,7 +6,8 @@
  */
 
 import { Effect } from 'effect';
-import { Millis } from '@czap/core';
+import { Millis, wallClock, type Clock } from '@czap/core';
+import { IoError, ParseError, ValidationError, type LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumptionState, ResumptionStateInput, ResumeResponse } from '../types.js';
 import { appendArtifactIdToUrl, validateArtifactId } from './sse-pure.js';
 import { resolveRuntimeUrl } from '../security/runtime-url.js';
@@ -82,14 +83,18 @@ const storageKey = (artifactId: string): string => `czap:resumption:${artifactId
  * }));
  * ```
  *
- * @param state - The resumption state to persist; `timestamp` defaults to `Date.now()`
+ * @param state - The resumption state to persist; `timestamp` defaults to the clock's `now()`
+ * @param clock - Time source for the default timestamp; defaults to `wallClock`
+ *                (epoch ms — the persisted timestamp is a real point in time, read
+ *                back as epoch, not the monotonic systemClock). Pass a
+ *                `fixedClock`/`manualClock` to make the persisted artifact deterministic.
  * @returns An Effect that saves the state
  */
-export const saveState = (state: ResumptionStateInput): Effect.Effect<void> =>
+export const saveState = (state: ResumptionStateInput, clock: Clock = wallClock): Effect.Effect<void> =>
   Effect.sync(() => {
     const key = storageKey(validateArtifactId(state.artifactId));
     // Stored shape keeps timestamp required; isResumptionState validates it on load.
-    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? Date.now() };
+    const stored: ResumptionState = { ...state, timestamp: state.timestamp ?? clock.now() };
     sessionStorage.setItem(key, JSON.stringify(stored));
   });
 
@@ -187,7 +192,7 @@ export const resume = (
   artifactId: string,
   currentEventId: string,
   config?: Partial<ResumptionConfig>,
-): Effect.Effect<ResumeResponse, Error> =>
+): Effect.Effect<ResumeResponse, LiteShipError> =>
   Effect.gen(function* () {
     validateArtifactId(artifactId);
     const finalConfig = { ...defaultResumptionConfig, ...config };
@@ -267,14 +272,16 @@ const requestSnapshot = (
   artifactId: string,
   snapshotUrl: string,
   endpointPolicy: ResumptionConfig['endpointPolicy'],
-): Effect.Effect<ResumeResponse, Error> =>
+): Effect.Effect<ResumeResponse, LiteShipError> =>
   Effect.gen(function* () {
     const resolved = resolveRuntimeUrl(snapshotUrl, {
       kind: 'snapshot',
       policy: endpointPolicy,
     });
     if (resolved.type !== 'allowed') {
-      return yield* Effect.fail(new Error(describeEndpointRejection('snapshot', snapshotUrl, resolved)));
+      return yield* Effect.fail(
+        ValidationError('resumption.snapshotUrl', describeEndpointRejection('snapshot', snapshotUrl, resolved)),
+      );
     }
 
     const url = new URL(resolved.resolved.toString());
@@ -282,24 +289,30 @@ const requestSnapshot = (
 
     const response = yield* Effect.tryPromise({
       try: () => fetch(url.toString()),
-      catch: (error) => new Error(`Failed to fetch snapshot: ${error}`),
+      catch: (error) => IoError('resumption.snapshot', `Failed to fetch snapshot: ${error}`, { cause: error }),
     });
 
     if (!response.ok) {
       return yield* Effect.fail(
-        new Error(
+        IoError(
+          'resumption.snapshot',
           `Snapshot request to ${url.toString()} failed: ${response.status} ${response.statusText}. The default snapshot endpoint is '${defaultResumptionConfig.snapshotUrl}/<artifactId>' — your server must implement it, or set ResumptionConfig.snapshotUrl to your endpoint.`,
+          { path: url.toString() },
         ),
       );
     }
 
     const data: unknown = yield* Effect.tryPromise({
       try: () => response.json(),
-      catch: (error) => new Error(`Failed to parse snapshot: ${error}`),
+      catch: (error) => ParseError('snapshot-response', `Failed to parse snapshot: ${error}`),
     });
 
     if (!isSnapshotPayload(data)) {
-      return yield* Effect.fail(new Error('Malformed snapshot response: missing or invalid html/lastEventId fields'));
+      return yield* Effect.fail(
+        ParseError('snapshot-response', 'Malformed snapshot response: missing or invalid html/lastEventId fields', {
+          code: 'malformed',
+        }),
+      );
     }
 
     return {
@@ -319,14 +332,16 @@ const requestReplay = (
   toEventId: string,
   replayUrl: string,
   endpointPolicy: ResumptionConfig['endpointPolicy'],
-): Effect.Effect<readonly unknown[], Error> =>
+): Effect.Effect<readonly unknown[], LiteShipError> =>
   Effect.gen(function* () {
     const resolved = resolveRuntimeUrl(replayUrl, {
       kind: 'replay',
       policy: endpointPolicy,
     });
     if (resolved.type !== 'allowed') {
-      return yield* Effect.fail(new Error(describeEndpointRejection('replay', replayUrl, resolved)));
+      return yield* Effect.fail(
+        ValidationError('resumption.replayUrl', describeEndpointRejection('replay', replayUrl, resolved)),
+      );
     }
 
     const url = new URL(resolved.resolved.toString());
@@ -336,24 +351,30 @@ const requestReplay = (
 
     const response = yield* Effect.tryPromise({
       try: () => fetch(url.toString()),
-      catch: (error) => new Error(`Failed to fetch replay: ${error}`),
+      catch: (error) => IoError('resumption.replay', `Failed to fetch replay: ${error}`, { cause: error }),
     });
 
     if (!response.ok) {
       return yield* Effect.fail(
-        new Error(
+        IoError(
+          'resumption.replay',
           `Replay request to ${url.toString()} failed: ${response.status} ${response.statusText}. The default replay endpoint is '${defaultResumptionConfig.replayUrl}/<artifactId>?from=<eventId>&to=<eventId>' — your server must implement it, or set ResumptionConfig.replayUrl to your endpoint.`,
+          { path: url.toString() },
         ),
       );
     }
 
     const data: unknown = yield* Effect.tryPromise({
       try: () => response.json(),
-      catch: (error) => new Error(`Failed to parse replay: ${error}`),
+      catch: (error) => ParseError('replay-response', `Failed to parse replay: ${error}`),
     });
 
     if (!isReplayPayload(data)) {
-      return yield* Effect.fail(new Error('Malformed replay response: missing or invalid patches array'));
+      return yield* Effect.fail(
+        ParseError('replay-response', 'Malformed replay response: missing or invalid patches array', {
+          code: 'malformed',
+        }),
+      );
     }
 
     return data.patches;
@@ -373,7 +394,7 @@ const requestReplay = (
  * import { Resumption } from '@czap/web';
  * import { Effect } from 'effect';
  *
- * // Save state on each SSE message (timestamp defaults to Date.now())
+ * // Save state on each SSE message (timestamp defaults to systemClock.now())
  * Effect.runSync(Resumption.saveState({
  *   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
  * }));

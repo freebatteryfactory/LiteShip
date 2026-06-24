@@ -6,6 +6,7 @@
  * @module
  */
 
+import { InvariantViolationError } from '@czap/error';
 import { compare as hlcCompare } from './hlc.js';
 import type { ReceiptEnvelope } from './receipt.js';
 import { GENESIS } from './receipt.js';
@@ -466,8 +467,9 @@ export const merge = (local: ReceiptDAG, remote: ReadonlyArray<ReceiptEnvelope>)
 
     const violation = checkForkRule(current, envelope);
     if (violation !== null) {
-      throw new Error(
-        `Anti-fork violation: actor "${violation.actor}" attempted to fork from ` +
+      throw InvariantViolationError(
+        'dag.anti-fork',
+        `actor "${violation.actor}" attempted to fork from ` +
           `prev-hash "${violation.prevHash}". Existing child: "${violation.existing}", ` +
           `attempted: "${violation.attempted}" (each actor must have a single causal chain — use merge receipts to join branches).`,
       );

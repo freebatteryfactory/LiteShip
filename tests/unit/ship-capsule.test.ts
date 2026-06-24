@@ -148,14 +148,16 @@ describe('ShipCapsule.decode error paths', () => {
     expect(err).toBe('invalid_shape');
   });
 
-  it('schema_version other than 1 is rejected with invalid_shape', async () => {
+  it('schema_version other than 1 is rejected with unsupported_version (honest version verdict, not laundered into invalid_shape)', async () => {
     // Forced cast to drill schema-evolution handling without bypassing the type
-    // system at the decode boundary. v0.1.0 locks schema_version === 1.
+    // system at the decode boundary. This build locks schema_version === 1; a
+    // future writer's v2 capsule is shape-valid but a DISTINCT version failure —
+    // it must NOT be silently misparsed as v1 nor masked as a shape problem.
     const input = sampleInput() as ShipCapsule.Input & { schema_version: number };
     input.schema_version = 2;
     const capsule = await run(ShipCapsule.make(input as ShipCapsule.Input));
     const bytes = ShipCapsule.canonicalize(capsule);
     const err = await Effect.runPromise(ShipCapsule.decode(bytes).pipe(Effect.flip));
-    expect(err).toBe('invalid_shape');
+    expect(err).toBe('unsupported_version');
   });
 });

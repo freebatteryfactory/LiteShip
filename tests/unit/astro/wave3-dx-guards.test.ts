@@ -125,11 +125,11 @@ describe('LESSON (#91): resolveInitialState degrades gracefully on absent contex
         arbBoundary,
         fc.option(fc.constant('Mozilla/5.0 (iPhone)'), { nil: undefined }),
         fc.option(fc.constant('reactive' as const), { nil: undefined }),
-        (boundary, userAgent, detectedTier) => {
+        (boundary, userAgent, detectedCapTier) => {
           // Any subset of fields present — still resolves a real state.
           const state = resolveInitialState(boundary, {
             ...(userAgent !== undefined ? { userAgent } : {}),
-            ...(detectedTier !== undefined ? { detectedTier } : {}),
+            ...(detectedCapTier !== undefined ? { detectedCapTier } : {}),
             // clientHints intentionally always omitted → exercises the {} default
           });
           expect(boundary.states).toContain(state);

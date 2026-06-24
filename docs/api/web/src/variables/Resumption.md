@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:386](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L386)
+Defined in: [web/src/stream/resumption.ts:407](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L407)
 
 SSE resumption protocol namespace.
 
@@ -140,7 +140,7 @@ Legacy: numeric ("123"), prefixed ("evt-123"), dash-decimal resumption ids.
 
 ### resume
 
-> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `Error`\>
+> **resume**: (`artifactId`, `currentEventId`, `config?`) => `Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
 
 Resume from a disconnection, choosing between event replay (small gap)
 and full snapshot (large gap or no prior state).
@@ -167,7 +167,7 @@ Optional partial config overriding defaults
 
 #### Returns
 
-`Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `Error`\>
+`Effect`\<[`ResumeResponse`](../type-aliases/ResumeResponse.md), `LiteShipError`\>
 
 An Effect yielding a [ResumeResponse](../type-aliases/ResumeResponse.md)
 
@@ -185,7 +185,7 @@ const response = Effect.runPromise(
 
 ### saveState
 
-> **saveState**: (`state`) => `Effect`\<`void`\>
+> **saveState**: (`state`, `clock`) => `Effect`\<`void`\>
 
 Save resumption state to sessionStorage.
 
@@ -195,7 +195,16 @@ Save resumption state to sessionStorage.
 
 [`ResumptionStateInput`](../type-aliases/ResumptionStateInput.md)
 
-The resumption state to persist; `timestamp` defaults to `Date.now()`
+The resumption state to persist; `timestamp` defaults to the clock's `now()`
+
+##### clock?
+
+[`Clock`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) = `wallClock`
+
+Time source for the default timestamp; defaults to `wallClock`
+               (epoch ms — the persisted timestamp is a real point in time, read
+               back as epoch, not the monotonic systemClock). Pass a
+               `fixedClock`/`manualClock` to make the persisted artifact deterministic.
 
 #### Returns
 
@@ -222,7 +231,7 @@ Effect.runSync(Resumption.saveState({
 import { Resumption } from '@czap/web';
 import { Effect } from 'effect';
 
-// Save state on each SSE message (timestamp defaults to Date.now())
+// Save state on each SSE message (timestamp defaults to systemClock.now())
 Effect.runSync(Resumption.saveState({
   artifactId: 'doc-1', lastEventId: 'evt-99', lastSequence: 99,
 }));

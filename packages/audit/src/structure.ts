@@ -58,18 +58,24 @@ interface ExportedSymbol {
   readonly column: number;
 }
 
-interface ResolvedImport {
+/**
+ * A specifier resolved against the package-export targets — the structure pass's
+ * module-graph edge model. Exported so the Slice-B repo-IR builder
+ * (`repo-ir-build.ts`) materializes import edges from the SAME resolver, never a
+ * divergent fork (the drift this slice fights).
+ */
+export interface ResolvedImport {
   readonly specifier: string;
   readonly targetFile: string | null;
   readonly targetPackage: string | null;
   readonly kind: 'relative' | 'internal-package' | 'external';
 }
 
-interface PackageExportTarget {
+export interface PackageExportTarget {
   readonly [subpath: string]: string;
 }
 
-function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
+export function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   return ts.canHaveModifiers(node)
     ? (ts.getModifiers(node)?.some((modifier) => modifier.kind === kind) ?? false)
     : false;
@@ -103,7 +109,9 @@ function resolveRelativeImport(specifier: string, containingFile: string): strin
   return null;
 }
 
-function buildPackageExportTargets(packageInfos: readonly PackageManifestInfo[]): Map<string, PackageExportTarget> {
+export function buildPackageExportTargets(
+  packageInfos: readonly PackageManifestInfo[],
+): Map<string, PackageExportTarget> {
   const targets = new Map<string, PackageExportTarget>();
 
   for (const pkg of packageInfos) {
@@ -201,7 +209,7 @@ function resolveInternalPackageImport(
   };
 }
 
-function resolveImport(
+export function resolveImport(
   specifier: string,
   containingFile: string,
   packageExportTargets: Map<string, PackageExportTarget>,
@@ -219,7 +227,7 @@ function resolveImport(
   return resolveInternalPackageImport(specifier, packageExportTargets, internalPrefix);
 }
 
-function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: number }[] {
+export function exportedNamesFromNode(node: ts.Node): readonly { name: string; pos: number }[] {
   if (
     ts.isFunctionDeclaration(node) ||
     ts.isClassDeclaration(node) ||
@@ -445,7 +453,8 @@ export function runStructureAudit(
             if (
               resolved.targetPackage !== packageInfo.name &&
               policy &&
-              !policy.allowedInternalImports.includes(resolved.targetPackage)
+              !policy.allowedInternalImports.includes(resolved.targetPackage) &&
+              !(profile.foundationalPackages ?? []).includes(resolved.targetPackage)
             ) {
               rawFindings.push({
                 id: `structure/layer-violation/${record.relativePath}:${line}:${column}`,

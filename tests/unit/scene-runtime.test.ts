@@ -163,7 +163,7 @@ describe('SceneRuntime', () => {
         // An entity that is BOTH an effect and a sync anchor — Effect writes
         // first, Sync writes second; final value should be Sync's decay output.
         {
-          kind: 'effect' as const,
+          _tag: 'effect' as const,
           id: 'effect-with-sync' as TrackId<'effect'>,
           from: 0,
           to: 30,
@@ -225,7 +225,7 @@ describe('SceneRuntime', () => {
       invariants: [],
       budgets: { p95FrameMs: 16 },
       site: ['node'],
-      beats: [{ kind: 'beat', timeMs: 500, strength: 1 }],
+      beats: [{ _tag: 'beat', timeMs: 500, strength: 1 }],
     };
     const compiled = compileScene(scene);
     const handle = await SceneRuntime.build(compiled);

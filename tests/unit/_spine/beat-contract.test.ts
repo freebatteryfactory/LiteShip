@@ -35,14 +35,14 @@ describe('A5 — beat contract family is homed in @czap/_spine', () => {
   });
 
   it('the spine declares the scene/world-space marker (BeatComponent)', () => {
-    const marker: SpineBeatComponent = { kind: 'beat', timeMs: 500, strength: 1, anchorTrackId: 'bed' };
-    expect(marker.kind).toBe('beat');
+    const marker: SpineBeatComponent = { _tag: 'beat', timeMs: 500, strength: 1, anchorTrackId: 'bed' };
+    expect(marker._tag).toBe('beat');
     expect(marker.timeMs).toBe(500);
   });
 
   it('the spine declares the ECS spawn descriptor (BeatSpawn)', () => {
-    const spawn: SpineBeatSpawn = { components: { kind: 'beat', timeMs: 0, strength: 1 } };
-    expect(spawn.components.kind).toBe('beat');
+    const spawn: SpineBeatSpawn = { components: { _tag: 'beat', timeMs: 0, strength: 1 } };
+    expect(spawn.components._tag).toBe('beat');
   });
 
   it('the spine declares the resolver input contract (BeatProjectionResolutionInput)', () => {
@@ -67,7 +67,7 @@ describe('A5 — beat contract family is homed in @czap/_spine', () => {
   });
 
   it("scene's BeatComponent / BeatSpawn / SceneBeat ARE the spine types", () => {
-    const fromSpine: SpineBeatComponent = { kind: 'beat', timeMs: 250, strength: 0.5 };
+    const fromSpine: SpineBeatComponent = { _tag: 'beat', timeMs: 250, strength: 0.5 };
     const asScene: SceneBeatComponent = fromSpine;
     const asSceneBeat: SceneBeat = fromSpine;
     const backToSpine: SpineBeatComponent = asScene;
@@ -76,6 +76,6 @@ describe('A5 — beat contract family is homed in @czap/_spine', () => {
     const backSpawn: SpineBeatSpawn = asSceneSpawn;
     expect(asSceneBeat.timeMs).toBe(250);
     expect(backToSpine.strength).toBe(0.5);
-    expect(backSpawn.components.kind).toBe('beat');
+    expect(backSpawn.components._tag).toBe('beat');
   });
 });

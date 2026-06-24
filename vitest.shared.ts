@@ -1,3 +1,4 @@
+import { cpus, loadavg } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Config } from './packages/core/src/config.js';
@@ -9,12 +10,21 @@ export const repoRoot = resolve(rootDir);
 export const alias: Record<string, string> = {
   ...Config.toTestAliases(Config.make({}), repoRoot),
   '@czap/_spine': resolve(repoRoot, 'packages/_spine/index.d.ts'),
+  // @czap/error is the zero-dep root error algebra — outside the design-layer
+  // alias set, so map it to source explicitly (every package imports it).
+  '@czap/error': resolve(repoRoot, 'packages/error/src/index.ts'),
+  // @czap/gauntlet is the rigor engine — outside the design-layer alias set.
+  '@czap/gauntlet': resolve(repoRoot, 'packages/gauntlet/src/index.ts'),
   // CUT A1: @czap/command is outside the design-layer alias set, so map it to
   // source explicitly (the CLI and MCP adapter tests import it by name). The
   // /host subpath (Node host execution) is aliased separately; the longer key
   // is listed first so it takes precedence.
   '@czap/command/host': resolve(repoRoot, 'packages/command/src/host/index.ts'),
   '@czap/command/host-browser': resolve(repoRoot, 'packages/command/src/host-browser/index.ts'),
+  // Slice B (B1, step 3): the PURE invariants subpath (check-invariants-registry,
+  // zero imports) — @czap/audit's repo-IR invariant-regex oracle references the
+  // CANONICAL NO_DEFAULT_EXPORT rule through it without pulling the command runtime.
+  '@czap/command/invariants': resolve(repoRoot, 'packages/command/src/commands/check-invariants-registry.ts'),
   '@czap/command': resolve(repoRoot, 'packages/command/src/index.ts'),
 };
 
@@ -76,6 +86,19 @@ export const coverageExclude = [
   // ship.ts itself stays excluded as long as it's pure orchestration
   // of git + pnpm + npm subprocesses.
   'packages/cli/src/commands/ship.ts',
+  // package-smoke.ts is the ship.ts-class subprocess-orchestration command — its
+  // `runPackageSmokeScan` body is a sequence of `pnpm pack` (×PACKAGES.length),
+  // `pnpm install`, `node smoke.mjs`, and `czap describe` spawns, plus `tar`-
+  // spawning packed-manifest reads. Vitest cannot meaningfully cover the
+  // subprocess paths in-process; the end-to-end correctness is integration-tested
+  // by the `package:smoke` gauntlet phase (CI-grade). The pure, branch-heavy
+  // helpers it composes — resolveExecutable / tarballFileUrl / peerDependenciesOnly
+  // / findConsumerDependencyRoot / assertConsumerDependencyInstalled — were
+  // EXTRACTED to lib/package-smoke-helpers.ts and are unit-tested directly
+  // (tests/unit/cli/commands/package-smoke-helpers.test.ts). package-smoke.ts
+  // itself stays excluded as long as it's pure orchestration of pnpm + tar + node
+  // subprocesses (mirrors the ship.ts precedent above).
+  'packages/cli/src/commands/package-smoke.ts',
   // ffmpeg.ts (render backend) spawns the system `ffmpeg` binary to encode
   // VideoFrameOutput streams to mp4. Coverage requires ffmpeg on PATH —
   // tests/smoke/intro-render.test.ts skips when it isn't, so this surface
@@ -113,9 +136,55 @@ export const coverageExclude = [
  */
 export const COVERAGE_TIMEOUT_FLOOR_MS = 240_000;
 
+/**
+ * The largest factor the AUTOMATIC contention scale may reach. Capped so a
+ * pathological load average can never inflate a budget enough to let a REAL hang
+ * wait minutes before failing — the budget tracks pressure, it does not abdicate.
+ */
+export const MAX_AUTO_TIMEOUT_SCALE = 4;
+
+/**
+ * The contention scale for a given 1-minute load average + core count — PURE, so
+ * the policy can pin it deterministically. The ratio `load / cores` is how
+ * oversubscribed the host is: < 1 means spare capacity (idle) → scale 1 (keep the
+ * tight budget that fast-fails a true hang); > 1 means more runnable work than
+ * cores (a busy dev box, sibling agents, or the full suite saturating its own
+ * worker pool) → scale up proportionally, which is exactly when a subprocess-
+ * spawning test runs starved and a fixed budget flakes. Clamped to
+ * {@link MAX_AUTO_TIMEOUT_SCALE}; a non-finite / non-positive load (e.g. Windows,
+ * which has no real load average) yields 1.
+ */
+export function contentionScaleFor(load: number, cores: number): number {
+  const safeCores = Math.max(1, cores);
+  if (!Number.isFinite(load) || load <= 0) return 1;
+  return Math.min(MAX_AUTO_TIMEOUT_SCALE, Math.max(1, load / safeCores));
+}
+
+/**
+ * The live contention scale from the host's 1-minute load average ÷ core count.
+ * Set `CZAP_TEST_TIMEOUT_AUTOSCALE=0` to disable it (strict, deterministic budgets
+ * — e.g. when pinning the policy, or on a dedicated CI runner that wants the tight
+ * limit). Otherwise it is read fresh each call.
+ */
+const contentionScale = (): number => {
+  if (process.env['CZAP_TEST_TIMEOUT_AUTOSCALE'] === '0') return 1;
+  return contentionScaleFor(loadavg()[0] ?? 0, cpus().length);
+};
+
+/**
+ * The timeout multiplier — the MAX of the manual override and the automatic
+ * contention scale, so the budget tracks real resource pressure WITHOUT anyone
+ * having to set an env var. An idle host keeps the tight budget that fast-fails a
+ * true hang; an oversubscribed one gets proportionally more room (an honest slow
+ * run is not a test failure). `CZAP_TEST_TIMEOUT_SCALE=<n>` still forces a floor
+ * for known-slow hardware; `CZAP_TEST_TIMEOUT_AUTOSCALE=0` disables the auto scale.
+ * CI on a dedicated (near-idle) runner sees scale 1, so gate semantics there are
+ * unchanged; a contended runner self-corrects instead of flaking.
+ */
 const timeoutScale = (): number => {
   const parsed = Number(process.env['CZAP_TEST_TIMEOUT_SCALE'] ?? '1');
-  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  const envScale = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+  return Math.max(envScale, contentionScale());
 };
 
 // CZAP_COVERAGE is authoritative when present: test workers always receive it
@@ -157,4 +226,8 @@ export const nodeTestInclude = [
   'tests/component/**/*.test.ts',
   'tests/regression/**/*.test.ts',
   'tests/generated/**/*.test.ts',
+  // The decode-fuzz harness: the committed corpus replay (the regression floor,
+  // incl. the __proto__ CVE seed) + the deterministic seeded generated fuzz over
+  // every L4 untrusted-byte decoder, plus the fuzzCorpusGate self-proof.
+  'tests/fuzz/**/*.test.ts',
 ];

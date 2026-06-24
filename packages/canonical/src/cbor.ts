@@ -23,6 +23,8 @@
  * @module
  */
 
+import { UnsupportedError, ValidationError } from '@czap/error';
+
 const MAJOR_UNSIGNED = 0 << 5;
 const MAJOR_NEGATIVE = 1 << 5;
 const MAJOR_BYTES = 2 << 5;
@@ -41,7 +43,10 @@ const textEncoder = new TextEncoder();
 /** Internal: encode an unsigned integer head with the given major type. */
 function encodeHead(major: number, value: number): Uint8Array {
   if (value < 0 || !Number.isFinite(value)) {
-    throw new RangeError(`CanonicalCbor: head argument must be a non-negative finite integer, got ${value}`);
+    throw ValidationError(
+      'CanonicalCbor.encodeHead',
+      `head argument must be a non-negative finite integer, got ${value}`,
+    );
   }
   if (value < 24) {
     return new Uint8Array([major | value]);
@@ -183,7 +188,7 @@ const _encode = (value: unknown): Uint8Array => {
   if (typeof value === 'object') {
     return encodeObject(value as Record<string, unknown>);
   }
-  throw new TypeError(`CanonicalCbor: unsupported value type ${typeof value}`);
+  throw UnsupportedError('CBOR value type', `${typeof value} cannot be canonically encoded`);
 };
 
 /** Canonical CBOR encoder namespace (ADR-0001 pattern). */

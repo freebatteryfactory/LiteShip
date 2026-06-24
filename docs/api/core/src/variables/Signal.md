@@ -8,7 +8,7 @@
 
 > `const` **Signal**: `object`
 
-Defined in: [core/src/signal.ts:381](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L381)
+Defined in: [core/src/signal.ts:387](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L387)
 
 Signal namespace -- live data feeds from the browser environment.
 
@@ -27,7 +27,7 @@ Create an audio signal backed by an AVBridge.
 In 'sample' mode, returns the raw sample index. In 'normalized' mode,
 returns a 0..1 progress value based on totalDurationSec — omitting
 `totalDurationSec` (or passing a non-positive value) in 'normalized'
-mode throws a `CzapValidationError`. Call `.poll()` to read the latest
+mode throws a `ValidationError`. Call `.poll()` to read the latest
 sample from the bridge and update the signal.
 
 #### Parameters

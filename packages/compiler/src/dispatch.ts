@@ -1,7 +1,10 @@
 /**
  * Compiler dispatch — tagged CompilerDef discriminated union.
  *
- * Zero `unknown`, zero `as` casts. No default case — TypeScript enforces exhaustiveness.
+ * Zero `unknown`, zero `as` casts. The `switch` ends in an `assertNever`
+ * exhaustiveness guard: TypeScript enforces that every arm is handled at
+ * compile time (a new arm without a case is a type error), and a value that
+ * escapes the static type at runtime fails as a typed `InvariantViolationError`.
  */
 
 import type { Boundary, Config } from '@czap/core';
@@ -10,6 +13,7 @@ import type { GLSLCompileResult } from './glsl.js';
 import type { WGSLCompileResult } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
 import type { AIManifestCompileResult, AIManifestInput } from './ai-manifest.js';
+import { assertNever } from '@czap/error';
 import { CSSCompiler } from './css.js';
 import { GLSLCompiler } from './glsl.js';
 import { WGSLCompiler } from './wgsl.js';
@@ -69,8 +73,8 @@ const ConfigTemplateCompiler = {
  * Tagged discriminated union describing a single compilation request.
  *
  * Every arm carries exactly the inputs its target needs; {@link dispatch}
- * switches on `_tag` with no default case, so TypeScript guarantees
- * exhaustiveness and no runtime `unknown`/`as` casts are required.
+ * switches on `_tag` and closes with an `assertNever` guard, so TypeScript
+ * guarantees exhaustiveness and no runtime `unknown`/`as` casts are required.
  *
  * Arms:
  * - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
@@ -122,8 +126,8 @@ export type CompileResult =
  * tagged {@link CompileResult}.
  *
  * This is the single public entry point for multi-target compilation.
- * The switch has no default case; adding a new arm to {@link CompilerDef}
- * will produce a type error at dispatch.
+ * The switch ends in an `assertNever` exhaustiveness guard; adding a new arm
+ * to {@link CompilerDef} without a matching case produces a type error here.
  *
  * @example
  * ```ts
@@ -178,5 +182,13 @@ export function dispatch(def: CompilerDef): CompileResult {
       return { target: 'ai', result: AIManifestCompiler.compile(def.manifest) };
     case 'ConfigCompiler':
       return { target: 'config', result: ConfigTemplateCompiler.compile(def.config) };
+    default:
+      // Statement-level exhaustiveness guard (the twin of the type-level
+      // narrowing above): every arm is handled, so `def` is `never` here and
+      // this compiles. Add a `CompilerDef` arm without a matching case and
+      // tsc rejects this call (TS2345); if bad external data ever reaches it
+      // at runtime, it throws a typed `InvariantViolationError`, never a
+      // silent fall-through to `undefined`.
+      return assertNever(def, 'CompilerDef._tag');
   }
 }

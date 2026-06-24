@@ -4,11 +4,11 @@
  *
  * @module
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import {
   defineAsset,
-  AssetRef,
+  AssetRegistry,
   audioDecoder,
   videoDecoder,
   walkRiff,
@@ -18,39 +18,35 @@ import {
   WavMetadataProjection,
   defaultDecodeP95MsFor,
 } from '@czap/assets';
-import { resetAssetRegistry } from '@czap/assets/testing';
 
-function registerIntroBed(): void {
-  defineAsset({
-    id: 'intro-bed',
-    source: 'examples/scenes/intro-bed.wav',
-    kind: 'audio',
-  });
-}
+const introBed = defineAsset({
+  id: 'intro-bed',
+  source: 'examples/scenes/intro-bed.wav',
+  kind: 'audio',
+});
 
 describe('registry-miss (#160, #158)', () => {
-  beforeEach(() => resetAssetRegistry());
-
-  it('AssetRef lists sorted registered ids and an import-order hint', () => {
-    defineAsset({ id: 'zebra', source: 'z.wav', kind: 'audio' });
-    defineAsset({ id: 'alpha', source: 'a.wav', kind: 'audio' });
-    expect(() => AssetRef('missing-id')).toThrow(
-      /registry-miss.*missing-id.*Registered ids: alpha, zebra.*defineAsset\('missing-id'/s,
+  it('registry.ref lists sorted registered ids and the assembly hint', () => {
+    const zebra = defineAsset({ id: 'zebra', source: 'z.wav', kind: 'audio' });
+    const alpha = defineAsset({ id: 'alpha', source: 'a.wav', kind: 'audio' });
+    expect(() => AssetRegistry.make([zebra, alpha]).ref('missing-id')).toThrow(
+      /registry-miss.*missing-id.*Registered ids: alpha, zebra.*AssetRegistry\.make/s,
     );
   });
 
   it('a near-miss id gets a Did-you-mean suggestion of the closest registered id (#160)', () => {
-    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
-    defineAsset({ id: 'intro-sting', source: 'intro-sting.wav', kind: 'audio' });
+    const bed = defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    const sting = defineAsset({ id: 'intro-sting', source: 'intro-sting.wav', kind: 'audio' });
     // A single-edit typo of a registered id surfaces the nearest match.
-    expect(() => AssetRef('intro-bd')).toThrow(/Did you mean 'intro-bed'\?/);
+    expect(() => AssetRegistry.make([bed, sting]).ref('intro-bd')).toThrow(/Did you mean 'intro-bed'\?/);
   });
 
   it('a far-off id does NOT fabricate a Did-you-mean (no misleading suggestion) (#160)', () => {
-    defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    const bed = defineAsset({ id: 'intro-bed', source: 'intro-bed.wav', kind: 'audio' });
+    const registry = AssetRegistry.make([bed]);
     // 'zzzzzzzz' is nowhere near any registered id — suggesting one would mislead.
-    expect(() => AssetRef('zzzzzzzz')).toThrow(/registry-miss/);
-    expect(() => AssetRef('zzzzzzzz')).not.toThrow(/Did you mean/);
+    expect(() => registry.ref('zzzzzzzz')).toThrow(/registry-miss/);
+    expect(() => registry.ref('zzzzzzzz')).not.toThrow(/Did you mean/);
   });
 
   it('LAW: a single-character edit of a registered id always suggests that id (#160)', () => {
@@ -61,8 +57,7 @@ describe('registry-miss (#160, #158)', () => {
         fc.stringMatching(/^[a-z]{4,12}$/),
         fc.nat(),
         (id, posSeed) => {
-          resetAssetRegistry();
-          defineAsset({ id, source: `${id}.wav`, kind: 'audio' });
+          const registry = AssetRegistry.make([defineAsset({ id, source: `${id}.wav`, kind: 'audio' })]);
           // Substitute one character with a guaranteed-different one.
           const pos = posSeed % id.length;
           const orig = id[pos]!;
@@ -71,7 +66,7 @@ describe('registry-miss (#160, #158)', () => {
           if (typo === id) return; // alphabet collision guard (never happens here)
           let msg = '';
           try {
-            AssetRef(typo);
+            registry.ref(typo);
           } catch (e) {
             msg = (e as Error).message;
           }
@@ -82,26 +77,26 @@ describe('registry-miss (#160, #158)', () => {
     );
   });
 
-  it('BeatMarkerProjection throws registry-miss when the audio asset is not registered', () => {
-    expect(() => BeatMarkerProjection('intro-bed')).toThrow(/registry-miss.*intro-bed.*Registered ids: \(none\)/);
-    registerIntroBed();
-    expect(() => BeatMarkerProjection('intro-bed')).not.toThrow();
+  it('BeatMarkerProjection throws registry-miss when the audio asset is not in the registry', () => {
+    expect(() => BeatMarkerProjection(AssetRegistry.make([]), 'intro-bed')).toThrow(
+      /registry-miss.*intro-bed.*Registered ids: \(none\)/,
+    );
+    expect(() => BeatMarkerProjection(AssetRegistry.make([introBed]), 'intro-bed')).not.toThrow();
   });
 
   it('OnsetProjection, WaveformProjection, and WavMetadataProjection validate at construction', () => {
-    expect(() => OnsetProjection('x')).toThrow(/registry-miss/);
-    expect(() => WaveformProjection('x')).toThrow(/registry-miss/);
-    expect(() => WavMetadataProjection('x')).toThrow(/registry-miss/);
-    registerIntroBed();
-    expect(OnsetProjection('intro-bed').name).toBe('intro-bed:onsets');
-    expect(WaveformProjection('intro-bed').name).toBe('intro-bed:waveform:512');
-    expect(WavMetadataProjection('intro-bed').name).toBe('intro-bed:wav-metadata');
+    const empty = AssetRegistry.make([]);
+    expect(() => OnsetProjection(empty, 'x')).toThrow(/registry-miss/);
+    expect(() => WaveformProjection(empty, 'x')).toThrow(/registry-miss/);
+    expect(() => WavMetadataProjection(empty, 'x')).toThrow(/registry-miss/);
+    const registry = AssetRegistry.make([introBed]);
+    expect(OnsetProjection(registry, 'intro-bed').name).toBe('intro-bed:onsets');
+    expect(WaveformProjection(registry, 'intro-bed').name).toBe('intro-bed:waveform:512');
+    expect(WavMetadataProjection(registry, 'intro-bed').name).toBe('intro-bed:wav-metadata');
   });
 });
 
 describe('defineAsset DX defaults (#153, #155, #159)', () => {
-  beforeEach(() => resetAssetRegistry());
-
   it('omitted invariants default to []', () => {
     const cap = defineAsset({
       id: 'no-invariants',

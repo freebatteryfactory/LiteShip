@@ -8,7 +8,7 @@
 
 > **renderToCanvas**(`state`, `canvas`, `renderFn?`): `void`
 
-Defined in: [web/src/capture/render.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/render.ts#L67)
+Defined in: [web/src/capture/render.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/render.ts#L68)
 
 Render CompositeState to an OffscreenCanvas.
 

@@ -38,7 +38,7 @@ export interface BeatMarkerSet {
  */
 export interface BeatComponent {
   /** Discriminant tag — Beat-typed ECS component. */
-  readonly kind: 'beat';
+  readonly _tag: 'beat';
   /** Beat time in **milliseconds** from scene start. */
   readonly timeMs: number;
   /** Normalized beat strength. */

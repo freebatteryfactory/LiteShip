@@ -45,6 +45,7 @@ import {
   HLC,
 } from '@czap/core';
 import { Effect } from 'effect';
+import { ValidationError } from '@czap/error';
 import { CSSCompiler } from '@czap/compiler';
 import { resolveInitialState, satelliteAttrs } from '@czap/astro';
 // `captureVideo` is the real WebCodecs/Canvas egress for the video carrier. It
@@ -125,8 +126,9 @@ function boundaryOf(component: ComponentNode): Boundary.Shape {
   // Boundary.make requires a non-empty tuple — validate before the cast lies,
   // so an empty ComponentNode fails with a clear message, not a cryptic one.
   if (at.length === 0) {
-    throw new Error(
-      `dual-export: ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
+    throw ValidationError(
+      'dual-export',
+      `ComponentNode "${component.name}" has no states/thresholds — cannot reconstruct a Boundary for the cast.`,
     );
   }
   return Boundary.make({
@@ -529,4 +531,63 @@ export function dualExport(graph: DocumentGraph): Promise<DualExportResult> {
       return { sharedSourceDigest, astro, video, astroReceipt, videoReceipt, receipt };
     }),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Headless dual export — the proof PLUS a real injected byte-encode
+// ---------------------------------------------------------------------------
+
+/**
+ * The result of a HEADLESS dual export: the full {@link DualExportResult} proof
+ * PLUS the real encoded video the injected {@link FrameEncoder} produced.
+ */
+export interface DualExportNodeResult extends DualExportResult {
+  /**
+   * The real encoded video (a validatable MP4 when the ffmpeg adapter is used).
+   * This rides ALONGSIDE the proof — the proof's `video` carrier remains a
+   * content address of the produced FRAMES, never the encoded bytes, so the
+   * page-digest == video-source-digest invariant is identical to {@link dualExport}.
+   */
+  readonly encoded: EncodedVideo;
+  /** Content address of the encoded container bytes (the mp4 byte stream). */
+  readonly bytesDigest: AddressedDigest;
+}
+
+/**
+ * THE JEWEL, HEADLESS. Run the full {@link dualExport} proof in node/CI AND run a
+ * REAL byte-encode through the injected {@link FrameEncoder} so a node caller gets
+ * a genuine MP4 — not a browser-gated one.
+ *
+ * Determinism / invariant: the dual-export PROOF is taken verbatim from
+ * {@link dualExport}, whose video carrier content-addresses the produced FRAMES
+ * (NOT the encoded bytes). The byte-encode is the INJECTED seam and rides
+ * alongside as `encoded`/`bytesDigest`; it never touches the proof's frame digest.
+ * Both `dualExport(graph)` and `produceVideoFrames(graph)` walk the SAME graph
+ * deterministically, so the frames the proof addresses are exactly the frames the
+ * encoder receives — the page-digest == video-source-digest assertion holds
+ * headless, identical to the browser path.
+ *
+ * Stage's core imports no codec: `encode` is injected. In node, wire
+ * `ffmpegFrameEncoder()` from `@czap/stage/ffmpeg` (env-gate with
+ * `ffmpegEncodeAvailable()` first); in a browser wrapper, wire WebCodecs.
+ *
+ * @example
+ * ```ts
+ * import { dualExportNode } from '@czap/stage';
+ * import { ffmpegFrameEncoder, ffmpegEncodeAvailable } from '@czap/stage/ffmpeg';
+ *
+ * if (ffmpegEncodeAvailable()) {
+ *   const r = await dualExportNode(graph, ffmpegFrameEncoder());
+ *   // r.encoded.bytes is a real, ffprobe-validatable MP4
+ *   // r.sharedSourceDigest === graph.digest — the proof still holds headless
+ * }
+ * ```
+ */
+export async function dualExportNode(graph: DocumentGraph, encode: FrameEncoder): Promise<DualExportNodeResult> {
+  // The proof — page + frame-addressed video carrier + the parent merge head.
+  // Untouched by the byte-encode, so the invariant is byte-for-byte `dualExport`.
+  const proof = await dualExport(graph);
+  // The real injected byte-encode over the SAME deterministic frame stream.
+  const { encoded, bytesDigest } = await exportVideoEncoded(graph, encode);
+  return { ...proof, encoded, bytesDigest };
 }

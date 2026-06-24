@@ -6,6 +6,7 @@
  *
  * @module
  */
+import { IoError } from '@czap/error';
 import type { CommandContext } from '../registry.js';
 
 const BROWSER_SAFE_COMMANDS = new Set(['capsule.inspect', 'capsule.list', 'glossary']);
@@ -59,8 +60,10 @@ export function createBrowserCommandContext(
             params as unknown as Record<string, unknown>,
           );
           if (remote.failed) {
-            throw new Error(
-              `scene.render delegation to ${opts.mcpServerUrl} failed: ${JSON.stringify(remote.payload)} — is the MCP HTTP server running (\`czap mcp --http=PORT\`)?`,
+            throw IoError(
+              'browser-context.render',
+              `scene.render delegation failed: ${JSON.stringify(remote.payload)} — is the MCP HTTP server running (\`czap mcp --http=PORT\`)?`,
+              { path: opts.mcpServerUrl },
             );
           }
           const payload = remote.payload as { frameCount?: number; elapsedMs?: number } | null;

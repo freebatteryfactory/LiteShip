@@ -8,7 +8,7 @@
 
 Cap — algebra over [CapSet](../../interfaces/CapSet.md).
 Pure, immutable helpers for building, combining, and comparing capability
-sets; the underlying `CapLevel` lattice is totally ordered via [Cap.ordinal](../../variables/Cap.md#ordinal).
+sets; the underlying `CapTier` lattice is totally ordered via [Cap.ordinal](../../variables/Cap.md#ordinal).
 
 ## Type Aliases
 

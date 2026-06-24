@@ -1,0 +1,151 @@
+# The requirements register — every SYSTEM INVARIANT (a LAW the avionics tier
+# upholds) the traceability ledger traces to a proving test (or a waiver).
+#
+# These are SYSTEM LAWS (determinism / CRDT convergence / content-address identity
+# / assurance propagation / hermeticity), NOT the code-style banned-pattern rules in
+# @czap/command's INVARIANTS (NO_DEFAULT_EXPORT &c.) — do not conflate them.
+#
+# RULE: only enroll an invariant that has a REAL proving test. The trace must be
+# genuine — never fabricate a law, never enroll one with no proof. The matching
+# proving test carries a `// PROVES: <id>` header (see traceability/README.md).
+#
+# Schema (per entry, all four fields REQUIRED):
+#   id:       stable INV-* identifier (the head-probe key the PROVES headers name)
+#   law:      the statement the system upholds (one line)
+#   level:    L0..L4 (the assurance tier; an untraced L3/L4 invariant HARD-FAILS)
+#   category: a grouping label (determinism | crdt | content-address | assurance |
+#             hermeticity | mutation | meta)
+
+invariants:
+  # ── HLC (hybrid logical clock) — the causal trust spine ─────────────────────
+  - id: INV-HLC-JOIN-IDEMPOTENT
+    law: "HLC join (compare-max LUB, no clock tick) is idempotent: join(a, a) === a."
+    level: L4
+    category: crdt
+  - id: INV-HLC-JOIN-COMMUTATIVE
+    law: "HLC join is commutative: join(a, b) === join(b, a)."
+    level: L4
+    category: crdt
+  - id: INV-HLC-JOIN-ASSOCIATIVE
+    law: "HLC join is associative: join(join(a, b), c) === join(a, join(b, c))."
+    level: L4
+    category: crdt
+  - id: INV-HLC-ORDER-TRANSITIVE
+    law: "HLC.compare induces a transitive happens-before: a<b && b<c ⟹ a<c."
+    level: L4
+    category: crdt
+  - id: INV-HLC-ORDER-TOTAL
+    law: "HLC.compare is a total order: exactly one of <, ===, > holds for every pair."
+    level: L4
+    category: crdt
+  - id: INV-HLC-MERGE-DOMINANCE
+    law: "HLC.merge is a monotone clock-advance: merge(local, remote, now) ≥ both inputs on (wall, counter)."
+    level: L4
+    category: crdt
+
+  # ── GraphPatch (document-graph CRDT) — the other half of the spine ──────────
+  - id: INV-GRAPHPATCH-IDEMPOTENT
+    law: "GraphPatch.apply is idempotent on the content-address id: re-applying a patch to the same base converges to one id."
+    level: L4
+    category: crdt
+  - id: INV-GRAPHPATCH-COMMUTATIVE
+    law: "GraphPatch non-conflicting (disjoint-cell) patches commute: apply orderings reach the same content-address id."
+    level: L4
+    category: crdt
+  - id: INV-GRAPHPATCH-CONVERGENCE
+    law: "GraphPatch satisfies strong eventual consistency: all orderings of concurrent non-conflicting patches converge to one id."
+    level: L4
+    category: crdt
+  - id: INV-GRAPHPATCH-CONFLICT-BOUNDARY
+    law: "GraphPatch.apply is LWW at the structural-delta layer; fork detection of concurrent writers lives on the receipt DAG (forkOf → DAG.isFork)."
+    level: L4
+    category: crdt
+
+  # ── Content-address identity — the one identity kernel ──────────────────────
+  - id: INV-CONTENT-ADDRESS-DETERMINISTIC
+    law: "Content addressing is deterministic: the same payload mints the same content address, distinct payloads mint distinct addresses (fnv1a over canonical CBOR)."
+    level: L4
+    category: content-address
+
+  # ── Assurance propagation — AUTHORITY decides assurance, not folder names ───
+  - id: INV-ASSURANCE-PROPAGATION-MONOTONIC
+    law: "Assurance-level propagation only ever RAISES a file's level (a file pulled into an L4 import path inherits ≥ L4); it never lowers a level."
+    level: L4
+    category: assurance
+  - id: INV-ASSURANCE-PROPAGATION-DETERMINISTIC
+    law: "Assurance-level propagation is deterministic: computing the effective-level map twice over the same IR yields an identical map."
+    level: L4
+    category: assurance
+
+  # ── Deterministic simulation (DST) — the determinism spine substrate ────────
+  - id: INV-DST-TRACE-CONTENT-ADDRESSED
+    law: "The DST trace digest is minted through the ONE content-address kernel (contentAddressOf), never a forked encoder — so a byte-exact replay comparison is sound."
+    level: L4
+    category: determinism
+  - id: INV-DST-NO-AMBIENT-ENTROPY
+    law: "The DST harness reads time/randomness ONLY from the injected @czap/core substrate (manualClock / seededRng) — no ambient Date.now / performance.now / Math.random in its code."
+    level: L4
+    category: determinism
+
+  # ── Supply-chain hermeticity — runtime determinism needs a hermetic build ───
+  - id: INV-SUPPLY-CHAIN-HERMETIC
+    law: "The supply-chain gate reds on a non-hermetic lockfile (git/URL dep, floating resolution) or an incomplete/drifted SBOM/ShipCapsule — the build is reproducible from the committed lockfile."
+    level: L4
+    category: hermeticity
+  - id: INV-SUPPLY-CHAIN-NO-AMBIENT-CI
+    law: "No long-lived publish secret (NPM_TOKEN, …) grants ambient CI authority: publish authority is the short-lived OIDC id-token only."
+    level: L4
+    category: hermeticity
+
+  # ── Mutation engine — the second-oracle determinism ─────────────────────────
+  - id: INV-MUTATION-FACTS-DETERMINISTIC
+    law: "Mutation-fact construction is deterministic: the same source + runner yields byte-identical MutationFacts (so a survivor verdict is reproducible)."
+    level: L4
+    category: mutation
+
+  # ── Verdict cache + repo-IR — the B2 content-addressed-cache soundness spine ─
+  - id: INV-VERDICT-CACHE-KEY-DETERMINISTIC
+    law: "gateVerdictKey is a PURE function of its four soundness inputs: the same parts (env maps differing only in insertion order included) mint a BYTE-IDENTICAL key, and coverageDigestOf is an order/multiplicity-independent set fold — so a verdict cached one run is found the next, never a different slot."
+    level: L4
+    category: determinism
+  - id: INV-TOOLCHAIN-DIGEST-INVALIDATES
+    law: "A change in ANY verdict-cache soundness input (a covered file's contentDigest, the toolchainDigest, the gateId, or the env fingerprint) yields a DIFFERENT key — a cache MISS, a re-run. A stale 'green' can never be served (the B2 anti-lie keystone)."
+    level: L4
+    category: determinism
+  - id: INV-REPO-IR-DETERMINISTIC
+    law: "buildRepoIR is idempotent: building the IR twice over the same source corpus yields byte-identical per-file contentDigests and an identical canonical fold (no mtime/run-id/Map-order leak), and a single edited byte flips that file's digest — the byte-stable identity the verdict cache stands on."
+    level: L4
+    category: determinism
+
+  # ── Zero-allocation hot paths — MEASURED, not asserted (the perf-claim spine) ─
+  - id: INV-COMPOSITOR-ZERO-ALLOC
+    law: "The Compositor per-frame compose hot path is genuinely zero-allocation in BOTH senses, measured + enforced by the allocation gate: (1) RETAINED — its LIVE per-op heap growth surviving a forced GC stays at or below the proven near-zero budget (no retained per-op allocation); and (2) TRANSIENT — its reactive publish (a raw listener-set fan-out over a stable live reference, replacing the per-publish-allocating SubscriptionRef.set) CHURNS nothing per op with no `changes` subscriber (near-zero B/op), and only the bounded Stream.callback bridge enqueue cost with one. Safe because the compositor is the single synchronous writer of the live state, so the bypassed semaphore's atomicity guarantee is moot."
+    level: L3
+    category: determinism
+  - id: INV-TOKEN-BUFFER-ZERO-ALLOC
+    law: "The TokenBuffer push + drainInto hot path is genuinely zero-allocation: its LIVE per-op heap growth (surviving a forced GC, measured by the allocation gate) stays at or below the proven near-zero budget — drainInto writes into a caller-owned sink, allocating nothing."
+    level: L3
+    category: determinism
+
+  # ── Security — defense-in-depth content guards on the untrusted seams ───────
+  - id: INV-SHADER-CONTENT-INTEGRITY
+    law: "A fetched (external) GPU shader's BYTES are verified against an author-pinned SRI sha256 hash BEFORE they reach a compile sink (gl.shaderSource / device.createShaderModule): a matching hash compiles, a tampered byte is REFUSED (mismatch), and an external fetch with NO pin is REFUSED (secure-by-default). The verifier (verifyShaderIntegrity) sits ON the fetch→compile data path, so the taint oracle classifies the shader-content flows as genuinely SANITIZED."
+    level: L4
+    category: security
+
+  # ── Meta — the coverage rail that keeps the spine from rotting ──────────────
+  - id: INV-CRDT-LAWS-PINNED
+    law: "The crdt-laws coverage gate self-proves it FLAGS a repo missing a required CRDT law family and passes a fully-pinned one (the L4 law-coverage rail has teeth)."
+    level: L4
+    category: meta
+
+  # ── A DECLARED-but-not-yet-traced invariant, covered by an owner waiver ──────
+  # This is a REAL future law with NO proving test yet. It is enrolled to keep the
+  # waiver path honest on the real repo: the state machine resolves it to WAIVED
+  # (not UNTRACED), and the moment the owner-signed expiry passes it re-reds. When a
+  # proving test lands, move it to testing-ledger.yaml's `tests:` form and delete the
+  # waiver. (Never fake a PROVES header to clear it — that would be laundering.)
+  - id: INV-VECTOR-CLOCK-MONOTONIC
+    law: "A vector clock increment is strictly monotone per node and merge takes the component-wise max (the pre-HLC causal substrate); pending a dedicated property-test enrollment."
+    level: L4
+    category: crdt

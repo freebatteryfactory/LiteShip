@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { scaledTimeout } from '../../../vitest.shared.js';
 import { Effect, Stream } from 'effect';
-import { Animation, CzapValidationError, Millis, Scheduler, Easing } from '@czap/core';
+import { Animation, Millis, Scheduler, Easing } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { interpolate as rawInterpolate } from '../../../packages/core/src/interpolate.js';
 
 async function settleAnimationRegistration(): Promise<void> {
@@ -206,24 +207,33 @@ describe('Animation.interpolate', () => {
 // ---------------------------------------------------------------------------
 
 describe('Easing.spring input validation', () => {
-  test('throws CzapValidationError when stiffness is 0', () => {
-    expect(() => Easing.spring({ stiffness: 0, damping: 10 })).toThrow(CzapValidationError);
+  function expectValidationError(fn: () => unknown): void {
+    try {
+      fn();
+      expect.unreachable('expected a ValidationError to be thrown');
+    } catch (error) {
+      expect(hasTag(error, 'ValidationError')).toBe(true);
+    }
+  }
+
+  test('throws ValidationError when stiffness is 0', () => {
+    expectValidationError(() => Easing.spring({ stiffness: 0, damping: 10 }));
   });
 
-  test('throws CzapValidationError when stiffness is negative', () => {
-    expect(() => Easing.spring({ stiffness: -1, damping: 10 })).toThrow(CzapValidationError);
+  test('throws ValidationError when stiffness is negative', () => {
+    expectValidationError(() => Easing.spring({ stiffness: -1, damping: 10 }));
   });
 
-  test('throws CzapValidationError when mass is 0', () => {
-    expect(() => Easing.spring({ stiffness: 200, damping: 10, mass: 0 })).toThrow(CzapValidationError);
+  test('throws ValidationError when mass is 0', () => {
+    expectValidationError(() => Easing.spring({ stiffness: 200, damping: 10, mass: 0 }));
   });
 
-  test('throws CzapValidationError when mass is negative', () => {
-    expect(() => Easing.spring({ stiffness: 200, damping: 10, mass: -1 })).toThrow(CzapValidationError);
+  test('throws ValidationError when mass is negative', () => {
+    expectValidationError(() => Easing.spring({ stiffness: 200, damping: 10, mass: -1 }));
   });
 
-  test('throws CzapValidationError when damping is negative', () => {
-    expect(() => Easing.spring({ stiffness: 200, damping: -1 })).toThrow(CzapValidationError);
+  test('throws ValidationError when damping is negative', () => {
+    expectValidationError(() => Easing.spring({ stiffness: 200, damping: -1 }));
   });
 
   test('does not throw when damping is 0 (undamped)', () => {
@@ -234,11 +244,11 @@ describe('Easing.spring input validation', () => {
     expect(() => Easing.spring({ stiffness: 200, damping: 10 })).not.toThrow();
   });
 
-  test('springNaturalDuration throws CzapValidationError for stiffness 0', () => {
-    expect(() => Easing.springNaturalDuration({ stiffness: 0, damping: 10 })).toThrow(CzapValidationError);
+  test('springNaturalDuration throws ValidationError for stiffness 0', () => {
+    expectValidationError(() => Easing.springNaturalDuration({ stiffness: 0, damping: 10 }));
   });
 
-  test('springNaturalDuration throws CzapValidationError for Infinity stiffness', () => {
-    expect(() => Easing.springNaturalDuration({ stiffness: Infinity, damping: 10 })).toThrow(CzapValidationError);
+  test('springNaturalDuration throws ValidationError for Infinity stiffness', () => {
+    expectValidationError(() => Easing.springNaturalDuration({ stiffness: Infinity, damping: 10 }));
   });
 });

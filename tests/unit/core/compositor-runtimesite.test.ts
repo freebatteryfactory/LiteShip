@@ -23,7 +23,7 @@
 
 import { afterEach, describe, test, expect } from 'vitest';
 import { Boundary, Compositor, Cap, sealNode } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapLevel, CapSet, CellMeta } from '@czap/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
 import { Effect } from 'effect';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
@@ -56,8 +56,8 @@ const META: CellMeta = {
   version: 1,
 };
 
-const grantUpTo = (top: CapLevel): CapSet => {
-  const ALL: readonly CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+const grantUpTo = (top: CapTier): CapSet => {
+  const ALL: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
   return Cap.from(ALL.filter((l) => Cap.ordinal(l) <= Cap.ordinal(top)));
 };
 

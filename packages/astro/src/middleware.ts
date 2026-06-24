@@ -128,7 +128,7 @@ export function czapMiddleware(
     // Inject into locals for component access
     context.locals.czap = {
       tiers: {
-        tier: tier.capLevel,
+        tier: tier.capTier,
         motion: tier.motionTier,
         design: tier.designTier,
       },

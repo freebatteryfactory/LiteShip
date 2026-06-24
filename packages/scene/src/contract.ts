@@ -40,7 +40,7 @@ export type FrameMark = _FrameMark;
 
 /** Video track — renders a quantizer-driven source for its frame range. */
 export interface VideoTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'video';
+  readonly _tag: 'video';
   readonly id: TrackId<'video'>;
   readonly from: M;
   readonly to: M;
@@ -62,7 +62,7 @@ export interface VideoTrack<M extends FrameMark = FrameMark> {
 
 /** Audio track — plays an asset with optional mix metadata. */
 export interface AudioTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'audio';
+  readonly _tag: 'audio';
   readonly id: TrackId<'audio'>;
   readonly from: M;
   readonly to: M;
@@ -72,10 +72,10 @@ export interface AudioTrack<M extends FrameMark = FrameMark> {
      * Linear gain multiplier — 1 is unity (asset plays at its authored
      * level), 0 is silence. Mixers multiply this by the envelope-driven
      * `_gain` factor each tick (see `systems/audio.ts`).
-     * @default 1
+     * @defaultValue 1
      */
     readonly volume?: number;
-    /** Stereo position, -1 (left) .. 1 (right). @default 0 */
+    /** Stereo position, -1 (left) .. 1 (right). @defaultValue 0 */
     readonly pan?: number;
     readonly sync?: { readonly bpm?: number };
   };
@@ -85,7 +85,7 @@ export interface AudioTrack<M extends FrameMark = FrameMark> {
 
 /** Transition track — blends two video tracks across a frame window. */
 export interface TransitionTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'transition';
+  readonly _tag: 'transition';
   readonly id: TrackId<'transition'>;
   readonly from: M;
   readonly to: M;
@@ -97,7 +97,7 @@ export interface TransitionTrack<M extends FrameMark = FrameMark> {
 
 /** Effect track — applies an intensity curve to a target video track, optionally synced to audio. */
 export interface EffectTrack<M extends FrameMark = FrameMark> {
-  readonly kind: 'effect';
+  readonly _tag: 'effect';
   readonly id: TrackId<'effect'>;
   readonly from: M;
   readonly to: M;
@@ -119,7 +119,7 @@ export type Track<M extends FrameMark = FrameMark> =
  * Scene invariant — evaluated against the contract at compile time.
  * `compileScene` runs every declared check; a check returning `false`
  * (or throwing) is a violation, and all violations are reported in one
- * `CzapValidationError` carrying each invariant's name and message.
+ * `ValidationError` carrying each invariant's name and message.
  *
  * The check receives the {@link ResolvedSceneContract} — track `from` /
  * `to` are plain frame numbers because `compileScene` resolves every
@@ -151,7 +151,7 @@ export interface SceneContract<M extends FrameMark = FrameMark> {
   readonly name: string;
   /**
    * Scene duration in milliseconds.
-   * @default derived from the tracks — max resolved `to` / fps * 1000
+   * @defaultValue derived from the tracks — max resolved `to` / fps * 1000
    */
   readonly duration?: number;
   readonly fps: number;
@@ -161,11 +161,11 @@ export interface SceneContract<M extends FrameMark = FrameMark> {
   /** Optional render height in pixels. Render hosts fall back to 720 when absent. */
   readonly height?: number;
   readonly tracks: readonly Track<M>[];
-  /** Compile-time checks. @default [] (no declared checks) */
+  /** Compile-time checks. @defaultValue [] (no declared checks) */
   readonly invariants?: readonly SceneInvariant[];
-  /** Performance budgets. @default { p95FrameMs: 1000 / fps } (one frame budget) */
+  /** Performance budgets. @defaultValue { p95FrameMs: 1000 / fps } (one frame budget) */
   readonly budgets?: { readonly p95FrameMs: number; readonly memoryMb?: number };
-  /** Deployment sites the scene targets. @default ['node', 'browser'] */
+  /** Deployment sites the scene targets. @defaultValue ['node', 'browser'] */
   readonly site?: readonly Site[];
   /**
    * Optional pre-resolved beat markers. When present, the scene

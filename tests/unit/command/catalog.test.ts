@@ -2,23 +2,31 @@ import { describe, it, expect } from 'vitest';
 import { commandRegistry, COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
 
 /** Commands whose execution is CLI-owned (executionKind 'cli-orchestration', no handler). */
-const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'mcp', 'scene.dev', 'ship'] as const;
+const CLI_ORCHESTRATION = ['completion', 'describe', 'doctor', 'gauntlet', 'help', 'lsp', 'mcp', 'sbom', 'scene.dev', 'ship'] as const;
 
 /** Every command czap currently routes — the single canonical catalog. */
 const EXPECTED_NAMES = [
   'asset.analyze',
   'asset.verify',
   'audit',
+  'audit-floor',
+  'capsule-verify',
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check',
+  'check-invariants',
   'completion',
   'describe',
   'doctor',
   'gauntlet',
   'glossary',
   'help',
+  'lsp',
   'mcp',
+  'package-smoke',
+  'plumb',
+  'sbom',
   'scene.compile',
   'scene.dev',
   'scene.render',
@@ -29,10 +37,19 @@ const EXPECTED_NAMES = [
 ] as const;
 
 /**
- * The MCP-exposed subset: the 8 finite, handler-backed compute/verify commands.
- * describe (catalog projection — tools/list already serves it) and gauntlet
- * (terminal-streaming orchestration) were dropped from the legacy 10: an MCP
- * tool must be handler-backed structured execution, never CLI-owned orchestration.
+ * The MCP-exposed subset: the 10 finite, handler-backed compute/verify/gate
+ * commands. describe (catalog projection — tools/list already serves it) and
+ * gauntlet (terminal-streaming orchestration) are CLI-owned orchestration, never
+ * MCP tools. `plumb` IS exposed: it returns a structured skip work-list — an ideal
+ * agent tool. `check` IS exposed: it runs the PURE gauntlet gate fold in-process
+ * (`litelaunchGauntlet`) and returns the Finding[] work-list — the tasks-vs-gates
+ * weld, an ideal agent tool (distinct from the CLI-owned `gauntlet` orchestrator).
+ * `check-invariants` is NOT exposed: its scan needs `@czap/audit`'s
+ * `normalizeRepoPath` (the one B5b slash-normalize home), so — like `audit`/
+ * `audit-floor` — it is CLI-only and the capability is absent over MCP.
+ * `capsule-verify` is NOT exposed either: like `package-smoke` its engine is a
+ * CLI-injected subprocess orchestrator (it spawns `capsule:compile` + `vitest`),
+ * so the capability is absent over MCP.
  */
 const EXPECTED_MCP_NAMES = [
   'asset.analyze',
@@ -40,6 +57,8 @@ const EXPECTED_MCP_NAMES = [
   'capsule.inspect',
   'capsule.list',
   'capsule.verify',
+  'check',
+  'plumb',
   'scene.compile',
   'scene.render',
   'scene.verify',
@@ -106,19 +125,23 @@ describe('@czap/command canonical catalog', () => {
     expect(mcpExposedDescriptors().map((d) => d.name)).toEqual([...EXPECTED_MCP_NAMES]);
   });
 
-  it('preserves the legacy MCP inputSchemas byte-for-byte (listTools compatibility)', () => {
+  it('preserves the MCP inputSchemas (now single-source-derived from one Effect Schema)', () => {
     const byName = new Map(commandRegistry.list().map((d) => [d.name, d.inputSchema]));
     // 0.2.0 widening: `output` is no longer required — when omitted, the
     // handler derives `<sceneBasename>.mp4` beside the scene file.
+    // Source-of-truth cut: these inputSchemas are now DERIVED from the command's
+    // args Effect Schema (schemaToJsonSchema), so a literal-set field surfaces as
+    // a bare `{ enum: [...] }` (the dialect's literal-set form) rather than the
+    // old hand-written `{ type:'string', enum:[...] }` — tighter, same constraint.
     expect(byName.get('scene.render')).toEqual({
       type: 'object',
-      required: ['scene'],
       properties: { scene: { type: 'string' }, output: { type: 'string' } },
+      required: ['scene'],
     });
     expect(byName.get('asset.analyze')).toEqual({
       type: 'object',
+      properties: { asset: { type: 'string' }, projection: { enum: ['beat', 'onset', 'waveform'] } },
       required: ['asset', 'projection'],
-      properties: { asset: { type: 'string' }, projection: { type: 'string', enum: ['beat', 'onset', 'waveform'] } },
     });
     expect(byName.get('gauntlet')).toEqual({
       type: 'object',

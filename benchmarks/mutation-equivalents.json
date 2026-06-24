@@ -1,0 +1,45 @@
+{
+  "$schema-note": "The justified, content-addressed equivalent-mutant registry (Slice C). Each entry marks a RUNTIME mutant the deterministic engine cannot statically exclude but that is PROVABLY behaviour-identical to the original, so no test could ever kill it. The ONLY honest way to exclude such a mutant — NEVER a fake test. Matched by `mutantId` (the blake3 content address of {file,operator,line,column,originalText,mutatedText}); the file/line/operator/rewrite fields are advisory human-review provenance. ANTI-DRIFT: if the code changes the id changes and the entry no longer matches, re-surfacing the mutant as a normal survivor. Owner-redlinable.",
+  "entries": [
+    {
+      "mutantId": "blake3:6cd160ff1b020cef91063dded46f39d718e57f40b1352db8bb9f6d6a349d5547",
+      "file": "packages/core/src/content-address.ts",
+      "line": 41,
+      "column": 40,
+      "operator": "conditional-boundary",
+      "originalText": "<",
+      "mutatedText": "<=",
+      "justification": "The key-sort comparator `left < right` orders the entries of Object.entries(value). Object keys are ALWAYS DISTINCT, so the equal-key case (the only case `<` and `<=` decide differently) is UNREACHABLE: for every (left,right) pair the comparator sees, left !== right, so `left < right` and `left <= right` return the identical result. Verified empirically by applying the mutation to the source and content-addressing rich nested objects with many keys (including '', ' ', 'a', 'A', 'aa') — every output is byte-identical. No test can distinguish the two."
+    },
+    {
+      "mutantId": "blake3:808f531676a684a72c73259025514a234015a36002c3d170f5b00489ff05f80c",
+      "file": "packages/core/src/content-address.ts",
+      "line": 41,
+      "column": 60,
+      "operator": "conditional-boundary",
+      "originalText": ">",
+      "mutatedText": ">=",
+      "justification": "The same key-sort comparator's second boundary `left > right` vs `left >= right`. Object keys are always distinct, so the equal-key case is unreachable and the two boundaries return the identical result for every pair the comparator sees. Verified empirically (byte-identical content addresses over rich nested objects). No test can distinguish the two."
+    },
+    {
+      "mutantId": "blake3:6b6a63f5dff1e0b2bd5d5e1839e65c553ee4d2985dae777c3b34d08000aadea8",
+      "file": "packages/core/src/content-address.ts",
+      "line": 27,
+      "column": 42,
+      "operator": "string-literal",
+      "originalText": "'string'",
+      "mutatedText": "''",
+      "justification": "The primitive-passthrough guard `typeof value === 'string'` mutated to `typeof value === ''`. With the guard always false for a string, a string `s` no longer takes the passthrough branch and instead falls through to `return String(value)`. But `String(s) === s` for every string, so canonicalizeForAddress returns the identical value either way, and the content address is unchanged. Verified empirically by applying the mutation to the source and content-addressing a bare string — the output is byte-identical to the original. (The `||` disjunction mutants on the same line are NOT equivalent and ARE killed by a real test addressing a number/boolean primitive.)"
+    },
+    {
+      "mutantId": "blake3:57be12378924550c95c5263e00fff4e2ad86214883c0fb30b519f6b1f7afd464",
+      "file": "packages/canonical/src/addressed-digest.ts",
+      "line": 30,
+      "column": 82,
+      "operator": "string-literal",
+      "originalText": "'sha256'",
+      "mutatedText": "''",
+      "justification": "The DEFAULT VALUE of the `algo` parameter (`algo: 'sha256' | 'blake3' = 'sha256'`) mutated to `algo = ''`. addressedDigestOf branches only on `if (algo === 'blake3')`; every other value (including '' and 'sha256') falls to the sha256 branch. So calling addressedDigestOf(bytes) with no algo arg produces the IDENTICAL sha256 digest whether the default is 'sha256' or ''. Verified empirically by applying the mutation to the source and comparing — byte-identical integrity_digest and algo='sha256'. (A real test pins the genuine contract: the no-arg default ≡ 'sha256' ≠ 'blake3' — but that test cannot kill THIS mutant because '' also routes to sha256. Honestly equivalent.)"
+    }
+  ]
+}

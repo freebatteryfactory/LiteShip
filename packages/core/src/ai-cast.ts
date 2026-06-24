@@ -39,15 +39,16 @@
  * @module
  */
 
-import { Schema } from 'effect';
 import type { ContentAddress } from './brands.js';
 import { contentAddressOf } from './content-address.js';
 import type { DocumentGraph, DocumentGraphNode, NodeFamily } from './document-graph.js';
+import { isWellFormedNode } from './document-graph-schema.js';
 import { linearizeGraph, sealNode } from './document-graph-address.js';
-import { GraphPatch } from './graph-patch.js';
+import { GraphPatch, SUPPORTED_PATCH_VERSION } from './graph-patch.js';
 import type { PatchOp } from './graph-patch.js';
 import type { ValidatedProposal, ProposalTarget } from './validated-output.js';
 import { mintValidated, assertTokenBinds } from './validated-output.js';
+import { InvariantViolationError, ValidationError } from '@czap/error';
 
 // genui types are re-anchored from the shared spine (the same source `@czap/genui`
 // uses) — TYPES ONLY, no genui runtime import, so the cast stays pure and core
@@ -279,16 +280,22 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
       required: ['_tag', '_version', 'base', 'ops'],
       properties: {
         _tag: { const: 'GraphPatch' },
-        _version: { const: 1 },
+        _version: { const: SUPPORTED_PATCH_VERSION },
         base: { const: base, description: 'The id of the graph this patch applies to.' },
         ops: {
           type: 'array',
           description: 'Ordered node/edge mutations.',
           items: {
+            // `oneOf` carries JSON-Schema EXACTLY-ONE semantics: a valid op matches PRECISELY
+            // one of these variants. Each variant pins `additionalProperties: false` so a body
+            // it does not model (e.g. a stray `edge` on a node op) is OFF-CONTRACT — an op
+            // carrying BOTH `node` and `edge` then satisfies NEITHER variant cleanly AND would
+            // otherwise straddle both, so the validator rejects it (see pickSoleOpVariant).
             oneOf: [
               {
                 type: 'object',
                 required: ['op', 'family', 'node'],
+                additionalProperties: false,
                 properties: {
                   // Nodes are CONTENT-ADDRESSED, so a changed payload has a new id. `update`
                   // is a LOGICAL REPLACE: apply drops the prior node in the same logical cell
@@ -306,6 +313,7 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
               {
                 type: 'object',
                 required: ['op', 'edge'],
+                additionalProperties: false,
                 properties: {
                   op: { enum: ['add', 'remove'] },
                   edge: {
@@ -405,8 +413,9 @@ export function castContext(graph: DocumentGraph, options: CastContextOptions = 
       proposalSchemas.push(graphPatchProposalSchema(graph.id));
     } else if (target === 'generated-ui') {
       if (!options.catalog) {
-        throw new Error(
-          "castContext: target 'generated-ui' requires a host component catalog (options.catalog). " +
+        throw ValidationError(
+          'AICast.castContext',
+          "target 'generated-ui' requires a host component catalog (options.catalog). " +
             'The advertised UI schema must enumerate the catalog the host can render.',
         );
       }
@@ -440,169 +449,173 @@ export type ProposalAcceptance<T> = {
 export type ProposalResult<T> = ProposalAcceptance<T> | ProposalRejection;
 
 // ---------------------------------------------------------------------------
-// Untrusted-node validation — a declarative schema, the SINGLE source of truth.
+// Untrusted-node validation — FACTORED OUT to `document-graph-schema.ts`.
 //
-// A model-proposed node is untrusted JSON. `sealNode` only recomputes its content
-// address; it does NOT verify the node's shape. Rather than hand-roll a per-family
-// field table (which kept missing families and fields), validate each proposed node
-// against a discriminated `Schema.Union` over ALL EIGHT node families: the union forces
-// every family, each struct forces that family's required fields + types, and the
-// compile-time exhaustiveness check below makes "added a family but not a schema" a
-// BUILD error. Branded string types (ContentAddress / SignalInput / StateName /
-// AddressedDigest) validate as plain `Schema.String` (the brand is a compile-time
-// refinement; address FORMAT is an invariant, not a wire law). `meta` and the
-// structurally-opaque fields (CapSet, the digests, ProjectionKeys, the evaluate cache)
-// are `Schema.Unknown` — presence is the contract; their shape is sealed/derived
-// elsewhere. Optional (`?`) interface fields are `Schema.optional`.
+// A model-proposed node is untrusted JSON, and so is a serialized graph the
+// runtime loader (`@czap/astro`) lowers. The per-family `Schema.Union` that
+// answers "is this a well-formed DocumentGraphNode?" now lives in ONE place so
+// BOTH this AI seam AND the loader share a single trust gate (no second,
+// drifting copy). The schema + its compile-time family-exhaustiveness check
+// moved verbatim; `isWellFormedNode` is re-exported below for back-compat.
 // ---------------------------------------------------------------------------
 
-/** Branded-string fields validate as plain strings (brand + format are compile-time / invariant laws). */
-const Addr = Schema.String;
-/** `meta` + structurally-opaque fields: presence is the contract, internal shape is sealed/derived elsewhere. */
-const Opaque = Schema.Unknown;
+/** Re-exported from `document-graph-schema.ts` so existing `@czap/core` consumers keep the same import site. */
+export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 
-const SignalNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphSignalNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('signal'),
-  id: Addr,
-  meta: Opaque,
-  input: Schema.String,
-  range: Schema.optional(Schema.Tuple([Schema.Number, Schema.Number])),
-});
-const EntityNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphEntityNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('entity'),
-  id: Addr,
-  meta: Opaque,
-  components: Schema.Array(Addr),
-});
-const ComponentNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphComponentNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('component'),
-  id: Addr,
-  meta: Opaque,
-  name: Schema.String,
-  boundaryRef: Schema.optional(Addr),
-  thresholds: Schema.optional(Schema.Array(Opaque)),
-  states: Schema.optional(Schema.Array(Schema.String)),
-});
-const PoseNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphPoseNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('pose'),
-  id: Addr,
-  meta: Opaque,
-  entityRef: Addr,
-  state: Schema.String,
-  bindings: Schema.Record(Schema.String, Schema.Union([Schema.Number, Schema.String])),
-  evaluated: Schema.optional(Opaque),
-});
-const TransitionNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphTransitionNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('transition'),
-  id: Addr,
-  meta: Opaque,
-  fromPose: Addr,
-  toPose: Addr,
-  routing: Schema.Union([
-    Schema.Literal('seq'),
-    Schema.Literal('par'),
-    Schema.Literal('choice_then'),
-    Schema.Literal('choice_else'),
-  ]),
-  durationMs: Schema.optional(Schema.Number),
-});
-const ProjectionNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphProjectionNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('projection'),
-  id: Addr,
-  meta: Opaque,
-  target: Schema.Union([
-    Schema.Literal('css'),
-    Schema.Literal('glsl'),
-    Schema.Literal('wgsl'),
-    Schema.Literal('aria'),
-    Schema.Literal('ai'),
-    Schema.Literal('config'),
-    Schema.Literal('svg'),
-  ]),
-  sourceRef: Addr,
-  keys: Opaque,
-  resultDigest: Opaque,
-});
-const PolicyNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphPolicyNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('policy'),
-  id: Addr,
-  meta: Opaque,
-  appliesTo: Schema.Array(Addr),
-  requires: Schema.Union([
-    Schema.Literal('static'),
-    Schema.Literal('styled'),
-    Schema.Literal('reactive'),
-    Schema.Literal('animated'),
-    Schema.Literal('gpu'),
-  ]),
-  grants: Opaque,
-  sites: Schema.Array(
-    Schema.Union([Schema.Literal('node'), Schema.Literal('browser'), Schema.Literal('worker'), Schema.Literal('edge')]),
-  ),
-  budgets: Schema.optional(Opaque),
-});
-const ExportNodeSchema = Schema.Struct({
-  _tag: Schema.Literal('DocGraphExportNode'),
-  _version: Schema.Literal(1),
-  family: Schema.Literal('export'),
-  id: Addr,
-  meta: Opaque,
-  carrier: Schema.Union([
-    Schema.Literal('astro-page'),
-    Schema.Literal('video'),
-    Schema.Literal('svg'),
-    Schema.Literal('ship-capsule'),
-    Schema.Literal('receipt'),
-  ]),
-  sourceRefs: Schema.Array(Addr),
-  artifactDigest: Opaque,
-  receiptHash: Schema.optional(Schema.String),
-});
+// ---------------------------------------------------------------------------
+// SCHEMA-DERIVED required-field enforcement — "validated-in == the advertised
+// contract" as a CHECKED property, not a hand-list that drifts field-by-field.
+//
+// The advertised JSON schema (`graphPatchProposalSchema`) is the SINGLE SOURCE
+// of the required-field list for the envelope AND for every op variant (node
+// add/remove/update, edge add/remove, plus the nested `edge` object's own
+// required `from`/`to`/`type`). The validator derives its presence checks FROM
+// that schema object — so a future schema addition (a new required field, a new
+// op variant) AUTOMATICALLY gains enforcement here, and no advertised field can
+// be silently unenforced again. (The original gap: the schema required
+// `edge.from`/`edge.to`/`edge.type` but the validator only checked `edge.type`,
+// so `{ op:'remove', edge:{ type:'seq' } }` no-op'd in apply and minted.)
+// ---------------------------------------------------------------------------
 
-/** Per-family schemas, keyed by family. */
-const NODE_FAMILY_SCHEMAS = {
-  signal: SignalNodeSchema,
-  entity: EntityNodeSchema,
-  component: ComponentNodeSchema,
-  pose: PoseNodeSchema,
-  transition: TransitionNodeSchema,
-  projection: ProjectionNodeSchema,
-  policy: PolicyNodeSchema,
-  export: ExportNodeSchema,
+/** A JSON-schema object node with the fields this module reads (required + nested properties). */
+type JsonSchemaObject = {
+  readonly type?: string;
+  readonly required?: readonly string[];
+  readonly properties?: Record<string, JsonSchemaObject>;
+  readonly oneOf?: readonly JsonSchemaObject[];
+  readonly items?: JsonSchemaObject;
+  readonly additionalProperties?: boolean;
 };
 
-// COMPILE-TIME EXHAUSTIVENESS: every NodeFamily MUST have a schema above. Adding a family
-// to document-graph.ts without one here is a build error — this is what closes the
-// "validator missed a family" class for good (no runtime table to forget to update).
-const _familyExhaustiveness: Record<NodeFamily, unknown> = NODE_FAMILY_SCHEMAS;
-void _familyExhaustiveness;
+/**
+ * The DISCRIMINATING body key of an op variant: the required field whose property schema
+ * is an object (`node` for the node variant, `edge` for the edge variant). This is the
+ * structural payload that distinguishes the variants — NOT just "the first non-op required
+ * field" (the node variant requires `family` too, which is an enum, not the body). Derived
+ * from the schema so it stays correct if a future variant adds more required scalars.
+ */
+function variantBodyKey(variant: JsonSchemaObject): string | undefined {
+  for (const field of variant.required ?? []) {
+    if (field === 'op') continue;
+    if (variant.properties?.[field]?.type === 'object') return field;
+  }
+  return undefined;
+}
 
-/** The single source of truth for "is this a well-formed DocumentGraph node?" */
-const DocumentGraphNodeSchema = Schema.Union([
-  SignalNodeSchema,
-  EntityNodeSchema,
-  ComponentNodeSchema,
-  PoseNodeSchema,
-  TransitionNodeSchema,
-  ProjectionNodeSchema,
-  PolicyNodeSchema,
-  ExportNodeSchema,
-]);
-const isWellFormedNode = Schema.is(DocumentGraphNodeSchema);
+/** Read the `ops` items' `oneOf` op-variant schemas straight out of the advertised contract. */
+function opVariantSchemas(base: ContentAddress): readonly JsonSchemaObject[] {
+  const schema = graphPatchProposalSchema(base).jsonSchema as JsonSchemaObject;
+  const ops = schema.properties?.['ops'];
+  const variants = ops?.items?.oneOf;
+  if (variants === undefined) {
+    // The advertised schema is the source of truth; if its op-variant shape ever stops
+    // matching this reader, that is a build-of-this-module bug, not untrusted input —
+    // surface it loudly rather than silently degrading the enforcement to nothing.
+    throw InvariantViolationError(
+      'ai-cast.schema-shape',
+      'The advertised GraphPatch schema no longer exposes ops.items.oneOf; the schema-derived ' +
+        'required-field validator cannot read its contract. Reconcile opVariantSchemas with graphPatchProposalSchema.',
+    );
+  }
+  return variants;
+}
+
+/** The outcome of matching an untrusted op against the advertised `oneOf` op variants. */
+type OpVariantMatch =
+  | { readonly kind: 'one'; readonly variant: JsonSchemaObject }
+  /** The op matched NO advertised variant (carries neither body) — malformed. */
+  | { readonly kind: 'none' }
+  /**
+   * The op satisfied MORE THAN ONE advertised variant (e.g. carries BOTH the `node` body
+   * AND the `edge` body). JSON-Schema `oneOf` is EXACTLY-ONE, so this is rejected, never
+   * minted. `matched` names the body keys that straddled, for a self-explaining error.
+   */
+  | { readonly kind: 'many'; readonly matched: readonly string[] };
+
+/**
+ * Resolve which advertised `oneOf` op variant an untrusted op is — enforcing JSON-Schema
+ * `oneOf` EXACTLY-ONE semantics, schema-derived from the variants' own discriminating body
+ * keys (`node` vs `edge`). An op that satisfies ZERO variants is `none`; one that straddles
+ * ≥2 variants (carries both bodies) is `many` — BOTH rejected. Only an op matching PRECISELY
+ * one variant routes onward (so it can then be checked for missing required scalars like
+ * `family`). Discriminating on body PRESENCE (not full validity) keeps a node op that merely
+ * omits `family` routed to the node variant — rejected for the missing scalar, not mis-classed.
+ *
+ * Adding a third op kind to the schema is picked up here automatically: a new variant with a
+ * new required object body extends the `oneOf` and this matcher counts it like the rest.
+ */
+function pickSoleOpVariant(op: Record<string, unknown>, variants: readonly JsonSchemaObject[]): OpVariantMatch {
+  const matched: { readonly bodyKey: string; readonly variant: JsonSchemaObject }[] = [];
+  for (const variant of variants) {
+    const bodyKey = variantBodyKey(variant);
+    if (bodyKey !== undefined && bodyKey in op) matched.push({ bodyKey, variant });
+  }
+  if (matched.length === 0) return { kind: 'none' };
+  if (matched.length > 1) return { kind: 'many', matched: matched.map((m) => m.bodyKey) };
+  return { kind: 'one', variant: matched[0]!.variant };
+}
+
+/**
+ * Enforce a variant's `additionalProperties: false` clause: when the advertised variant
+ * forbids unmodeled fields, an op carrying a property outside the variant's `properties`
+ * is OFF-CONTRACT and rejected — so the validated payload can never preserve a field the
+ * matched variant does not model (e.g. a stray `edge` on a node op). Returns one error per
+ * extraneous field. When the variant does NOT pin `additionalProperties: false`, no error
+ * (the schema permits extras), so this stays schema-derived — enforcement tracks the clause.
+ */
+function extraneousFieldErrors(op: Record<string, unknown>, variant: JsonSchemaObject, i: number): string[] {
+  if (variant.additionalProperties !== false) return [];
+  const modeled = new Set(Object.keys(variant.properties ?? {}));
+  const errors: string[] = [];
+  for (const field of Object.keys(op)) {
+    if (!modeled.has(field)) {
+      errors.push(
+        `Patch op[${i}] carries the field ${JSON.stringify(field)}, which the advertised op variant does not model ` +
+          '(additionalProperties: false). Off-contract fields are rejected, never preserved in the validated payload.',
+      );
+    }
+  }
+  return errors;
+}
+
+/**
+ * Enforce EVERY required field the advertised schema pins for a matched op variant,
+ * INCLUDING the nested required fields of object-typed properties (so `edge.from` /
+ * `edge.to` / `edge.type` are all enforced, not just `edge.type`). Returns one error
+ * string per missing required field, derived from the schema — never a hand-list.
+ *
+ * Closes the CLASS the edge.remove gap belonged to: any advertised-but-unchecked
+ * required field surfaces HERE as a clean rejection rather than a silent mint.
+ */
+function requiredFieldErrors(op: Record<string, unknown>, variant: JsonSchemaObject, i: number): string[] {
+  const errors: string[] = [];
+  for (const field of variant.required ?? []) {
+    if (!(field in op) || op[field] === undefined) {
+      errors.push(`Patch op[${i}] is missing the advertised required field ${JSON.stringify(field)}.`);
+      continue;
+    }
+    // Recurse into an object-typed required property's OWN required fields (e.g. the
+    // `edge` object pins from/to/type). This is what makes edge.from/edge.to enforced.
+    const propSchema = variant.properties?.[field];
+    const nested = propSchema?.required;
+    if (nested !== undefined && nested.length > 0) {
+      const value = op[field];
+      if (value === null || typeof value !== 'object') {
+        errors.push(`Patch op[${i}] field ${JSON.stringify(field)} must be an object (advertised schema).`);
+        continue;
+      }
+      const valueRec = value as Record<string, unknown>;
+      for (const nestedField of nested) {
+        if (!(nestedField in valueRec) || valueRec[nestedField] === undefined) {
+          errors.push(
+            `Patch op[${i}] ${JSON.stringify(field)} is missing the advertised required field ${JSON.stringify(nestedField)}.`,
+          );
+        }
+      }
+    }
+  }
+  return errors;
+}
 
 /**
  * Validate a proposed node op's payload against {@link DocumentGraphNodeSchema} — the one
@@ -612,7 +625,11 @@ const isWellFormedNode = Schema.is(DocumentGraphNodeSchema);
 function nodeSchemaError(op: { family?: unknown; node: unknown }, i: number): string | null {
   const nodeFamily = (op.node as { family?: unknown } | null)?.family;
   // The advertised NodePatchOp REQUIRES `family`; a missing op.family must not slip
-  // through (it would mint a patch whose op violates the advertised schema).
+  // through (it would mint a patch whose op violates the advertised schema). The
+  // schema-derived required-field gate (`requiredFieldErrors`) now catches a missing
+  // `family` FIRST, so this branch is belt-and-suspenders — kept so this function stays
+  // total on its own (it is the family-MISMATCH gate, which the required-field gate does
+  // not cover, and a defensive missing-field check costs nothing).
   if (op.family === undefined) {
     return `Patch op[${i}] node op is missing its required 'family' field.`;
   }
@@ -643,12 +660,33 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
   // — a non-object patch or a missing / non-array `ops` must yield a clean
   // ProposalRejection, never a TypeError that escapes the validation boundary and
   // crashes host admission code.
-  const env = patch as { _tag?: unknown; ops?: unknown } | null;
+  const env = patch as { _tag?: unknown; _version?: unknown; ops?: unknown } | null;
   if (env === null || typeof env !== 'object' || env._tag !== 'GraphPatch' || !Array.isArray(env.ops)) {
     return {
       ok: false,
       target: 'graph-patch',
-      errors: ['Proposal is not a well-formed GraphPatch envelope (expected { _tag: "GraphPatch", ops: [...] }).'],
+      errors: [
+        `Proposal is not a well-formed GraphPatch envelope (expected { _tag: "GraphPatch", _version: ${SUPPORTED_PATCH_VERSION}, ops: [...] }).`,
+      ],
+    };
+  }
+  // VERSION-SKEW GATE (the advertised schema PINS `_version` to SUPPORTED_PATCH_VERSION;
+  // the guard must ENFORCE it). The proposal is re-stamped below via `GraphPatch.propose`,
+  // which mints a CURRENT-version patch — so a missing `_version` or a future/foreign
+  // `_version` (e.g. 2) would otherwise be silently COERCED to current instead of rejected,
+  // breaking "validated-in shape == the advertised output contract" and risking a
+  // future-format patch being mis-interpreted as v1. Reject off-version input HERE, BEFORE
+  // re-stamping, as the same clean, tagged ProposalRejection the other envelope failures
+  // produce (never a TypeError, never silent coercion). Single source: the version constant
+  // shared with `GraphPatch.decode` and the advertised JSON schema.
+  if (env._version !== SUPPORTED_PATCH_VERSION) {
+    return {
+      ok: false,
+      target: 'graph-patch',
+      errors: [
+        `Proposal carries _version ${JSON.stringify(env._version)} — this build's advertised GraphPatch contract pins _version ${SUPPORTED_PATCH_VERSION}. ` +
+          'A missing or skewed version is rejected, never coerced to the current format.',
+      ],
     };
   }
   if (patch.base !== graph.id) {
@@ -672,10 +710,49 @@ export function validateGraphPatchProposal(graph: DocumentGraph, patch: GraphPat
     // off-schema `type` ("foo") would mint and persist as a structurally-invalid
     // DocumentGraphEdge. Model JSON is untrusted, so the edge type is gated here.
     const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
+    // SCHEMA-DERIVED required-field gate (the fortify): the advertised contract's op
+    // variants ARE the source of which fields each op must carry. Read them once.
+    const variants = opVariantSchemas(graph.id);
     patch.ops.forEach((rawOp, i) => {
       const op = rawOp as { op?: unknown; node?: unknown; edge?: unknown };
       if (op === null || typeof op !== 'object') {
         errors.push(`Patch op[${i}] is not an object (malformed).`);
+        return;
+      }
+      // FIRST: resolve which advertised `oneOf` op variant this op is, enforcing
+      // JSON-Schema EXACTLY-ONE semantics. An op matching NO variant (neither body) OR
+      // straddling ≥2 variants (carrying BOTH the `node` AND the `edge` body) is a clean
+      // tagged rejection — never minted. `oneOf` requires PRECISELY one branch, so a
+      // both-bodies op (codex's probe `{op,family,node,edge}`) is off-contract here.
+      const match = pickSoleOpVariant(op as Record<string, unknown>, variants);
+      if (match.kind === 'none') {
+        errors.push(`Patch op[${i}] is neither a node nor an edge op (malformed).`);
+        return;
+      }
+      if (match.kind === 'many') {
+        errors.push(
+          `Patch op[${i}] matches more than one advertised op variant (carries the bodies ` +
+            `${match.matched.map((k) => JSON.stringify(k)).join(' and ')}). The advertised schema uses ` +
+            'JSON-Schema `oneOf` (EXACTLY ONE variant); an op satisfying multiple variants is rejected, never minted.',
+        );
+        return;
+      }
+      const variant = match.variant;
+      // ENFORCE the variant's `additionalProperties: false`: an op carrying a field the
+      // matched variant does not model (e.g. a stray `edge` left on a node op) is rejected,
+      // so the validated payload never preserves an off-contract field.
+      const extraneous = extraneousFieldErrors(op as Record<string, unknown>, variant, i);
+      if (extraneous.length > 0) {
+        for (const e of extraneous) errors.push(e);
+        return;
+      }
+      // THEN: enforce EVERY advertised required field for the matched variant (node vs
+      // edge), including nested object-required fields (edge.from/to/type). This makes
+      // "validated-in shape == the advertised schema" a structural property — a missing
+      // required field is a clean rejection, never a silent no-op-then-mint.
+      const missing = requiredFieldErrors(op as Record<string, unknown>, variant, i);
+      if (missing.length > 0) {
+        for (const m of missing) errors.push(m);
         return;
       }
       const kind = 'node' in op ? 'node' : 'edge' in op ? 'edge' : null;
@@ -859,7 +936,8 @@ export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedPro
   // generated-ui proposal could otherwise be handed here and its UI-tree payload fed to
   // the graph mutator. Pin the target before anything else.
   if (proposal.target !== 'graph-patch') {
-    throw new Error(
+    throw InvariantViolationError(
+      'ai-cast.apply-contract',
       `applyValidatedPatch: expected a 'graph-patch' proposal but got '${proposal.target}'; refusing to apply.`,
     );
   }
@@ -872,7 +950,8 @@ export function applyValidatedPatch(graph: DocumentGraph, proposal: ValidatedPro
   assertTokenBinds(proposal);
   // Bind the proposal to the graph it was validated against (its pinned `base`).
   if (proposal.payload.base !== graph.id) {
-    throw new Error(
+    throw InvariantViolationError(
+      'ai-cast.apply-contract',
       `applyValidatedPatch: proposal was validated against graph ${proposal.payload.base} but is being applied to ${graph.id}. ` +
         'The graph advanced after validation; refusing to apply. Re-validate the proposal against the current graph.',
     );

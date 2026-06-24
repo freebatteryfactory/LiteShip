@@ -14,6 +14,8 @@
  * @module
  */
 
+import { IoError, ValidationError } from '@czap/error';
+
 /** Decoded video container + codec metadata. */
 export interface DecodedVideo {
   readonly container: string;
@@ -28,7 +30,10 @@ export interface DecodedVideo {
 export async function videoDecoder(bytes: ArrayBuffer, sourcePath?: string): Promise<DecodedVideo> {
   if (bytes.byteLength === 0) {
     const at = sourcePath ? ` (source: ${sourcePath})` : '';
-    throw new Error(`videoDecoder: empty buffer${at} — verify the asset source file is readable and non-empty.`);
+    throw ValidationError(
+      'video.decode',
+      `videoDecoder: empty buffer${at} — verify the asset source file is readable and non-empty.`,
+    );
   }
   const [{ spawnSync }, { writeFileSync, mkdtempSync, rmSync }, { tmpdir }, { join }] = await Promise.all([
     import('node:child_process'),
@@ -44,7 +49,10 @@ export async function videoDecoder(bytes: ArrayBuffer, sourcePath?: string): Pro
     } catch (err) {
       const at = sourcePath ? ` for asset source '${sourcePath}'` : '';
       const detail = err instanceof Error ? err.message : String(err);
-      throw new Error(`videoDecoder: failed to write probe file${at}: ${detail}`);
+      throw IoError('video.decode', `videoDecoder: failed to write probe file${at}: ${detail}`, {
+        ...(sourcePath !== undefined ? { path: sourcePath } : {}),
+        cause: err,
+      });
     }
     const r = spawnSync('ffprobe', ['-v', 'error', '-show_format', '-show_streams', '-of', 'json', file], {
       encoding: 'utf8',

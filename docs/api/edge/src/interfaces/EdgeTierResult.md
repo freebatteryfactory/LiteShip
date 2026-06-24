@@ -16,13 +16,13 @@ code paths from `@czap/detect`.
 
 ## Properties
 
-### capLevel
+### capTier
 
-> `readonly` **capLevel**: [`CapLevel`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md)
+> `readonly` **capTier**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
 Defined in: [edge/src/edge-tier.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L33)
 
-Highest [CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md) the device qualifies for.
+Highest [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) the device qualifies for.
 
 ***
 

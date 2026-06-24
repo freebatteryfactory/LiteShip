@@ -14,7 +14,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@czap/error": ["../error/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
@@ -22,6 +25,7 @@
     { "path": "../core" },
     { "path": "../compiler" },
     { "path": "../astro" },
-    { "path": "../web" }
+    { "path": "../web" },
+    { "path": "../error" }
   ]
 }

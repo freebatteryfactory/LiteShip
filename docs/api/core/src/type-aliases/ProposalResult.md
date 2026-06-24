@@ -8,7 +8,7 @@
 
 > **ProposalResult**\<`T`\> = [`ProposalAcceptance`](ProposalAcceptance.md)\<`T`\> \| [`ProposalRejection`](ProposalRejection.md)
 
-Defined in: [core/src/ai-cast.ts:440](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L440)
+Defined in: [core/src/ai-cast.ts:449](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L449)
 
 The outcome of validating a model proposal: an acceptance (with envelope) or a rejection (with errors).
 

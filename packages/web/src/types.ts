@@ -301,8 +301,8 @@ export interface ResumptionState {
 
 /**
  * Input accepted by `Resumption.saveState`. The stored shape keeps
- * `timestamp` required; on input it defaults to `Date.now()` — only the
- * engine reads it.
+ * `timestamp` required; on input it defaults to the save clock's `now()`
+ * (`systemClock` unless one is injected) — only the engine reads it.
  */
 export type ResumptionStateInput = Omit<ResumptionState, 'timestamp'> & {
   readonly timestamp?: number;

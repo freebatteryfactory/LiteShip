@@ -15,14 +15,22 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Effect } from 'effect';
-import { Compositor, VideoRenderer, type Millis } from '@czap/core';
-import { resolveAssetDecoder, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
+import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
+import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
+import { litelaunchGauntlet, type SkipMatch } from '@czap/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
 import { renderWithFfmpeg } from './ffmpeg.js';
 import { tryReadCache, writeCache } from './idempotency.js';
 import { getCapsuleManifestPath } from './manifest-path.js';
+import { runPlumbScan } from './plumb-scan.js';
+
+// Host audio decode resolves by asset id, falling back to the built-in audio
+// decoder for any id not in a registry. An EMPTY immutable registry preserves
+// the prior global `resolveAssetDecoder` behavior (no scene is imported in the
+// host, so nothing was ever registered) without the order-dependent global.
+const HOST_ASSET_REGISTRY = AssetRegistry.make([]);
 
 /** Render-dimension fallbacks when the scene contract carries no width/height. */
 const DEFAULT_WIDTH = 1280;
@@ -32,8 +40,19 @@ const DEFAULT_HEIGHT = 720;
  * Build the shared Node host context. Pass the adapter's `cwd` so EVERY path
  * capability resolves against it (manifest, cache, file reads, asset/scene
  * loading, CZAP_CAPSULE_MANIFEST) — not just manifest + cache.
+ *
+ * `skipDetector` is the OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s
+ * `detectSkipsAST`). It is injected by the ADAPTER, not imported here: `@czap/command`
+ * must NOT depend on `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`).
+ * So the CLI adapter — which already deps `@czap/audit` — passes `detectSkipsAST`, and
+ * BOTH the in-process `runGauntlet` (`czap check`) and `runPlumb` capabilities gain the
+ * line-agnostic alias/multi-line/inner-describe detection + the structural conditionality
+ * proof. The MCP adapter omits it → the lean token fallback (the documented degradation,
+ * exactly like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
  */
-export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): CommandContext {
+export function createNodeCommandContext(
+  opts: { readonly cwd?: string; readonly skipDetector?: (source: string) => readonly SkipMatch[] } = {},
+): CommandContext {
   const cwd = opts.cwd ?? process.cwd();
   const resolveFrom = (path: string): string => resolve(cwd, path);
 
@@ -65,6 +84,31 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
       return existsSync(abs) ? new Uint8Array(readFileSync(abs)) : null;
     },
     runVitest: (testFiles) => VitestRunner.run({ testFiles: [...testFiles] }),
+    // The plumb gate scans the repo at `cwd` (NOT a script-relative root): the
+    // generated-test corpus + the published-package set are both facts about the
+    // working tree the host was pointed at. Pure fs walk, so it lives in the
+    // shared host factory and the MCP host gets it for free.
+    runPlumb: async () => runPlumbScan(cwd, opts.skipDetector),
+    // The pure gauntlet engine fold (the `check` command), run IN-PROCESS over
+    // the repo at `cwd` — no subprocess, unlike the CLI-owned `gauntlet`
+    // orchestrator. Like `runPlumb` it is a `node:fs` glob, so it lives in the
+    // shared host factory and the MCP host gets it for free (an agent can call
+    // `check` and read the Finding[] work-list).
+    //
+    // TWO-CLOCK LAW: the waiver-expiry `now` is a CALENDAR-DATE comparison (a
+    // waiver's `expires` is a wall-clock date), so it MUST come from the
+    // wallClock boundary (epoch ms → `new Date(...)`), NEVER systemClock /
+    // performance.now (a monotonic DURATION reading whose value is not epoch ms —
+    // feeding it into `new Date()` would land near 1970 and silently mis-expire
+    // every waiver).
+    runGauntlet: async (globs) =>
+      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector),
+    // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
+    // invariant scan needs `@czap/audit`'s `normalizeRepoPath` (the one B5b
+    // slash-normalize home), and `@czap/command` must not import `@czap/audit`
+    // (it would drag the heavy TS-compiler/glob engine into `@czap/mcp-server`).
+    // So — like `audit`/`audit-floor` — the gate is CLI-only: only `@czap/cli`
+    // injects `runCheckInvariants`, and over MCP it degrades to capabilityUnavailable.
     loadAssetBytes,
     runAudioProjection: async (bytes, projection, assetId) => {
       // The asset's OWN decoder (AssetDecl.decoder override or the kind
@@ -73,7 +117,7 @@ export function createNodeCommandContext(opts: { readonly cwd?: string } = {}): 
       // registered in this process. The three projections are audio
       // analyses, so the decoded shape must be DecodedAudio (enforced on
       // AssetDecl.decoder for kind 'audio').
-      const decoded = (await resolveAssetDecoder(assetId ?? '')(bytes)) as DecodedAudio;
+      const decoded = (await HOST_ASSET_REGISTRY.resolveDecoder(assetId ?? '')(bytes)) as DecodedAudio;
       if (projection === 'beat') return detectBeats(decoded).beats.length;
       if (projection === 'onset') return detectOnsets(decoded).length;
       return computeWaveform(decoded, { bins: 512 }).length;

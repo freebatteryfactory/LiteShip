@@ -6,7 +6,7 @@
 
 # Interface: SPSCRingBufferShape
 
-Defined in: [worker/src/spsc-ring.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L72)
+Defined in: [worker/src/spsc-ring.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L74)
 
 Producer- or consumer-side handle to a single-producer/single-consumer
 ring buffer backed by `SharedArrayBuffer`. Created by
@@ -18,7 +18,7 @@ ring buffer backed by `SharedArrayBuffer`. Created by
 
 > `readonly` **capacity**: `number`
 
-Defined in: [worker/src/spsc-ring.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L86)
+Defined in: [worker/src/spsc-ring.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L88)
 
 Number of slots in the ring buffer.
 
@@ -28,7 +28,7 @@ Number of slots in the ring buffer.
 
 > `readonly` **count**: `number`
 
-Defined in: [worker/src/spsc-ring.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L89)
+Defined in: [worker/src/spsc-ring.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L91)
 
 Current number of occupied slots.
 
@@ -38,7 +38,7 @@ Current number of occupied slots.
 
 > **pop**(`out`): `boolean`
 
-Defined in: [worker/src/spsc-ring.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L83)
+Defined in: [worker/src/spsc-ring.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L85)
 
 Pop a data slot from the ring buffer into the provided output array.
 Returns `false` if the buffer is empty (non-blocking).
@@ -59,7 +59,7 @@ Returns `false` if the buffer is empty (non-blocking).
 
 > **push**(`data`): `boolean`
 
-Defined in: [worker/src/spsc-ring.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L77)
+Defined in: [worker/src/spsc-ring.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L79)
 
 Push a data slot into the ring buffer.
 Returns `false` if the buffer is full (non-blocking).

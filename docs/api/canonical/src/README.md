@@ -12,17 +12,12 @@
 
 - [CanonicalCbor](namespaces/CanonicalCbor/README.md)
 
-## Classes
-
-- [CborDecodeError](classes/CborDecodeError.md)
-
 ## Interfaces
 
 - [AddressedDigest](interfaces/AddressedDigest.md)
 
 ## Type Aliases
 
-- [CborDecodeErrorReason](type-aliases/CborDecodeErrorReason.md)
 - [ContentAddress](type-aliases/ContentAddress.md)
 - [IntegrityDigest](type-aliases/IntegrityDigest.md)
 

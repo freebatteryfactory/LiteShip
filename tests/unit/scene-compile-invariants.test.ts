@@ -3,13 +3,13 @@
  * documented as "evaluated against the contract at compile time"
  * (packages/scene/src/contract.ts). These tests pin that behavior:
  * passing invariants compile, any failing/throwing check raises a
- * CzapValidationError, and ALL violations are reported in one error.
+ * ValidationError, and ALL violations are reported in one error.
  */
 import { describe, it, expect } from 'vitest';
 import { Track, compileScene } from '@czap/scene';
 import type { SceneContract, SceneInvariant } from '@czap/scene';
-import { isValidationError } from '@czap/core';
-import type { CzapValidationError } from '@czap/core';
+import { hasTag } from '@czap/error';
+import type { ValidationError } from '@czap/error';
 import { introContract } from '../../examples/scenes/intro.js';
 
 const hero = Track.videoId('hero');
@@ -52,7 +52,7 @@ describe('compileScene invariant evaluation', () => {
     expect(compiled.trackSpawns.length).toBe(1);
   });
 
-  it('a false check throws CzapValidationError with module, invariant name, and message', () => {
+  it('a false check throws ValidationError with module, invariant name, and message', () => {
     const scene = sceneWith([
       {
         name: 'never-holds',
@@ -66,8 +66,8 @@ describe('compileScene invariant evaluation', () => {
     } catch (error) {
       caught = error;
     }
-    expect(isValidationError(caught)).toBe(true);
-    const err = caught as CzapValidationError;
+    expect(hasTag(caught, 'ValidationError')).toBe(true);
+    const err = caught as ValidationError;
     expect(err.module).toBe('compileScene');
     expect(err.detail).toContain('scene "invariant-demo"');
     expect(err.detail).toContain('never-holds');
@@ -90,8 +90,8 @@ describe('compileScene invariant evaluation', () => {
     } catch (error) {
       caught = error;
     }
-    expect(isValidationError(caught)).toBe(true);
-    const err = caught as CzapValidationError;
+    expect(hasTag(caught, 'ValidationError')).toBe(true);
+    const err = caught as ValidationError;
     expect(err.detail).toContain('explosive-check');
     expect(err.detail).toContain('check must not explode');
     expect(err.detail).toContain('boom from inside the check');
@@ -121,8 +121,8 @@ describe('compileScene invariant evaluation', () => {
     } catch (error) {
       caught = error;
     }
-    expect(isValidationError(caught)).toBe(true);
-    const err = caught as CzapValidationError;
+    expect(hasTag(caught, 'ValidationError')).toBe(true);
+    const err = caught as ValidationError;
     expect(err.detail).toContain('2 invariants');
     expect(err.detail).toContain('first-failure');
     expect(err.detail).toContain('first declared violation');

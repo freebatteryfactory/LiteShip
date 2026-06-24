@@ -9,6 +9,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
+import { hasTag } from '@czap/error';
 import { Morph, SlotAddressing, SSE } from '@czap/web';
 import { resolveHtmlString } from '../../../packages/web/src/security/html-trust.js';
 import { restoreFocusState } from '../../../packages/web/src/physical/restore.js';
@@ -42,7 +43,15 @@ const captureDiagnostics = () => {
 
 describe('artifactId validation message', () => {
   test('names the allowed characters and gives literal examples', () => {
-    expect(() => SSE.buildUrl('/stream', 'a/b')).toThrow(
+    let caught: unknown;
+    try {
+      SSE.buildUrl('/stream', 'a/b');
+    } catch (error) {
+      caught = error;
+    }
+    expect(hasTag(caught, 'ValidationError')).toBe(true);
+    // The message preserves the full human-readable detail (tag prefix aside).
+    expect((caught as Error).message).toContain(
       `Invalid artifactId "a/b". Allowed characters: letters, digits, ':', '_', '-' (it becomes a URL path segment), e.g. 'doc-123' or 'page:home'.`,
     );
   });

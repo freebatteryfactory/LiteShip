@@ -1,6 +1,6 @@
 {
   "name": "@czap/stage",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Stage — the verb layer: cast one DocumentGraph to multiple carriers from one source digest",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -48,6 +48,7 @@
     "@czap/astro": "workspace:*",
     "@czap/compiler": "workspace:*",
     "@czap/core": "workspace:*",
+    "@czap/error": "workspace:*",
     "@czap/web": "workspace:*"
   },
   "peerDependencies": {

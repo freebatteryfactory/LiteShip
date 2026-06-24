@@ -31,7 +31,7 @@ export type FrameMarkSum = _FrameMarkSum;
 
 /** Build a beat handle with the given count (may be fractional). */
 export function Beat(count: number): BeatHandle {
-  return { _t: 'beat', count };
+  return { _tag: 'beat', count };
 }
 
 /** Resolve a BeatHandle to a frame index using scene BPM and fps. */
@@ -47,7 +47,7 @@ export function resolveBeat(handle: BeatHandle, ctx: { bpm: number; fps: number 
  */
 export function resolveFrameMark(mark: FrameMark, ctx: { bpm: number; fps: number }): number {
   if (typeof mark === 'number') return mark;
-  if (mark._t === 'beat') return resolveBeat(mark, ctx);
+  if (mark._tag === 'beat') return resolveBeat(mark, ctx);
   return mark.frames + resolveBeat(Beat(mark.beats), ctx);
 }
 
@@ -64,17 +64,17 @@ export function addFrameMarks(a: FrameMark, b: FrameMark): FrameMark {
   const beats = beatsPart(a) + beatsPart(b);
   if (beats === 0) return frames;
   if (frames === 0) return Beat(beats);
-  return { _t: 'mark-sum', frames, beats };
+  return { _tag: 'mark-sum', frames, beats };
 }
 
 /** Frame-space portion of a mark. */
 function framesPart(mark: FrameMark): number {
   if (typeof mark === 'number') return mark;
-  return mark._t === 'mark-sum' ? mark.frames : 0;
+  return mark._tag === 'mark-sum' ? mark.frames : 0;
 }
 
 /** Beat-space portion of a mark. */
 function beatsPart(mark: FrameMark): number {
   if (typeof mark === 'number') return 0;
-  return mark._t === 'mark-sum' ? mark.beats : mark.count;
+  return mark._tag === 'mark-sum' ? mark.beats : mark.count;
 }

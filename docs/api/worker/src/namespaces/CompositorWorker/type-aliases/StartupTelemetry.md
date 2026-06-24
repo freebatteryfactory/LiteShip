@@ -8,6 +8,6 @@
 
 > **StartupTelemetry** = `CompositorWorkerStartupTelemetry`
 
-Defined in: [worker/src/compositor-worker.ts:641](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L641)
+Defined in: [worker/src/compositor-worker.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-worker.ts#L222)
 
 Telemetry sink accepted by [CompositorWorker.create](../../../variables/CompositorWorker.md#create).

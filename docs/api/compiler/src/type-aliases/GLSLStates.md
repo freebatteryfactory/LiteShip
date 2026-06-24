@@ -8,6 +8,6 @@
 
 > **GLSLStates** = `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
 
-Defined in: [compiler/src/dispatch.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L31)
+Defined in: [compiler/src/dispatch.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L35)
 
 Per-state GLSL uniform values keyed by state name (numeric only).

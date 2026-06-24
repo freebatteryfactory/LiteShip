@@ -17,7 +17,7 @@ import { Style as StyleNS } from './style.js';
 import { Boundary } from './boundary.js';
 import { Part } from './ecs.js';
 import { contentAddressOf } from './content-address.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 import { Effect } from 'effect';
 
 // ---------------------------------------------------------------------------
@@ -83,14 +83,14 @@ function _compose<T extends EntityComponents>(
 
 function _merge<T extends EntityComponents>(...entities: ComposableEntity<T>[]): ComposableEntity<T> {
   if (entities.length === 0) {
-    throw new CzapValidationError(
+    throw ValidationError(
       'Composable.merge',
       'called with no entities — pass at least one ComposableEntity, e.g. Composable.merge(a, b).',
     );
   }
   const first = entities[0];
   if (!first) {
-    throw new CzapValidationError(
+    throw ValidationError(
       'Composable.merge',
       'entities[0] is undefined — you likely passed a sparse or filtered array. ' +
         'Filter out undefined before merging: Composable.merge(...entities.filter(Boolean)).',
@@ -241,7 +241,7 @@ function makeComposableDenseStore(world: World.Shape): ComposableDenseStore {
     store<T extends EntityComponents>(entity: ComposableEntity<T>, value: number): Effect.Effect<void> {
       return Effect.gen(function* () {
         if (!denseStore) {
-          throw new CzapValidationError(
+          throw ValidationError(
             'ComposableWorld.store',
             'no dense store exists — call world.create(name, capacity) before world.store(entity, value).',
           );

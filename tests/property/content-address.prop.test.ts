@@ -5,6 +5,7 @@
  * Hash format matches expected patterns.
  */
 
+// PROVES: INV-CONTENT-ADDRESS-DETERMINISTIC
 import { describe, test, expect } from 'vitest';
 import fc from 'fast-check';
 import { Boundary } from '@czap/core';

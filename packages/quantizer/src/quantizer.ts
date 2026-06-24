@@ -19,17 +19,20 @@ import type {
   Quantizer,
   OutputsFor,
   HLCBrand,
+  Clock,
 } from '@czap/core';
 import { HLC } from '@czap/core';
-import type { MotionTier } from '@czap/core';
+import type { MotionTier, LadderTarget } from '@czap/core';
 import {
   StateName as mkStateName,
   CanonicalCbor,
-  CzapValidationError,
   Diagnostics,
   Easing,
   fnv1aBytes,
+  wallClock,
+  projectLadder,
 } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import { evaluate } from './evaluate.js';
 import type { EvaluateResult } from './evaluate.js';
 import { MemoCache } from './memo-cache.js';
@@ -58,8 +61,12 @@ function firstState<B extends Boundary.Shape>(boundary: B): StateUnion<B> {
  * `aria` emits accessibility attributes, `ai` emits model-facing signals.
  * MotionTier gates which targets a device is permitted to receive; see
  * {@link QuantizerFromOptions.tier} for the tier → targets table.
+ *
+ * Aliases `@czap/core`'s {@link LadderTarget} — the shared codomain of the
+ * capability-admissibility ladder both this gate and the core escalation gate
+ * project from — so the target vocabulary itself has a single source too.
  */
-export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
+export type OutputTarget = LadderTarget;
 
 // ---------------------------------------------------------------------------
 // MotionTier gating (canonical type from @czap/core)
@@ -68,19 +75,23 @@ export type OutputTarget = 'css' | 'glsl' | 'wgsl' | 'aria' | 'ai';
 export type { MotionTier } from '@czap/core';
 
 /**
- * MotionTier → allowed {@link OutputTarget} set.
+ * MotionTier → allowed {@link OutputTarget} set — a PROJECTION of `@czap/core`'s
+ * shared capability-admissibility ladder (`cap-ladder.ts`) onto the `MotionTier`
+ * rung order. The core escalation chooser's `RUNG_TARGETS` projects the SAME
+ * ladder onto the `CapTier` order; the two are therefore congruent by
+ * construction (a drift guard pins them, computing `expected` from the ladder).
  *
  * Higher tiers include lower-tier targets. `none` only allows ARIA; `compute`
  * unlocks every target including WGSL and AI signal routing. `force()` can
  * override this gating per-target for prototype and test scenarios.
  */
-export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = {
-  none: new Set(['aria']),
-  transitions: new Set(['css', 'aria']),
-  animations: new Set(['css', 'aria']),
-  physics: new Set(['css', 'glsl', 'aria']),
-  compute: new Set(['css', 'glsl', 'wgsl', 'aria', 'ai']),
-};
+export const TIER_TARGETS: Record<MotionTier, ReadonlySet<OutputTarget>> = projectLadder<MotionTier>([
+  'none',
+  'transitions',
+  'animations',
+  'physics',
+  'compute',
+]);
 
 // ---------------------------------------------------------------------------
 // Quantizer outputs shape
@@ -162,6 +173,35 @@ export interface QuantizerFromOptions {
 }
 
 // ---------------------------------------------------------------------------
+// Per-instantiation runtime injection (clock boundary — NOT config identity)
+// ---------------------------------------------------------------------------
+
+/**
+ * Runtime injection for {@link QuantizerConfig.create}.
+ *
+ * The crossing `timestamp` is an HLC whose `wall_ms` is epoch ms, so the
+ * monotonic clock is the {@link Clock} WALL boundary (`@czap/core`'s
+ * `wallClock`), NOT the monotonic `systemClock`. It is injected here — at
+ * instantiation, NOT in {@link QuantizerFromOptions} — so it never enters the
+ * content address (a clock is a volatile boundary, not part of a config's
+ * identity; folding it into the address would also be unserializable). Each
+ * `create()` call therefore owns a fresh monotonic HLC seeded from `node` and
+ * advanced by `clock`: same input + a {@link Clock} of fixed time → identical
+ * timestamps regardless of how many other quantizers evaluated first. There is
+ * no process-wide HLC.
+ */
+export interface QuantizerRuntime {
+  /**
+   * Wall-clock boundary advancing this instance's HLC; defaults to
+   * `@czap/core`'s `wallClock`. Pass a `fixedClock`/`manualClock` for
+   * deterministic, replayable crossing timestamps.
+   */
+  readonly clock?: Clock;
+  /** HLC node id seeding this instance's clock; defaults to `'quantizer'`. */
+  readonly node?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Quantizer config (immutable, content-addressed)
 // ---------------------------------------------------------------------------
 
@@ -184,8 +224,15 @@ export interface QuantizerConfig<B extends Boundary.Shape, O extends QuantizerOu
   readonly tier?: MotionTier;
   /** Spring config driving CSS easing injection. */
   readonly spring?: SpringConfig;
-  /** Instantiate a reactive {@link LiveQuantizer} scoped to an Effect fiber. */
-  create(): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
+  /**
+   * Instantiate a reactive {@link LiveQuantizer} scoped to an Effect fiber.
+   *
+   * Pass a {@link QuantizerRuntime} to inject the wall-clock boundary that
+   * advances this instance's monotonic crossing HLC; omit it to default to
+   * `@czap/core`'s `wallClock`. The clock is per-instantiation, never part of
+   * the cached config's identity.
+   */
+  create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope>;
 }
 
 // ---------------------------------------------------------------------------
@@ -368,12 +415,6 @@ function resolveOutputs<B extends Boundary.Shape, O extends QuantizerOutputs<B>>
 }
 
 // ---------------------------------------------------------------------------
-// Monotonic HLC for sync evaluate() — HLC.increment, not ad-hoc counter++
-// ---------------------------------------------------------------------------
-
-let quantizerHlc = HLC.create('quantizer');
-
-// ---------------------------------------------------------------------------
 // Spring CSS computation with caching
 // ---------------------------------------------------------------------------
 
@@ -429,7 +470,7 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
   // Failing open on an invalid tier would disable gating entirely and allow
   // every target (including ai/wgsl) — the inverse of what gating is for.
   if (tier !== undefined && !(tier in TIER_TARGETS)) {
-    throw new CzapValidationError(
+    throw ValidationError(
       'Q.from',
       `unknown MotionTier '${String(tier)}'. Valid tiers: ${Object.keys(TIER_TARGETS).join(', ')}. Omit \`tier\` to allow all targets.`,
     );
@@ -468,7 +509,13 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
         id,
         tier,
         spring,
-        create(): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope> {
+        create(runtime?: QuantizerRuntime): Effect.Effect<LiveQuantizer<B, O>, never, Scope.Scope> {
+          // Per-instantiation monotonic clock: this live quantizer OWNS its HLC,
+          // so its crossing timestamps depend only on its own evaluate() calls
+          // and the injected wall-clock boundary — never on how many other
+          // quantizers evaluated first in this process. No module global.
+          const tickClock: Clock = runtime?.clock ?? wallClock;
+          let hlc = HLC.create(runtime?.node ?? 'quantizer');
           return Effect.gen(function* () {
             // Boundary.make guarantees non-empty states; head access widens to StateUnion<B>.
             const initialState: StateUnion<B> = firstState(boundary);
@@ -495,11 +542,17 @@ function fromBoundary<B extends Boundary.Shape>(boundary: B, options?: Quantizer
                 const result: EvaluateResult<StateUnion<B> & string> = evaluate(boundary, value, previousState);
 
                 if (result.crossed) {
-                  quantizerHlc = HLC.increment(quantizerHlc, Date.now());
+                  // Live crossing stamp: HLC wall_ms is epoch ms (the protocol
+                  // defines it as ≈ Date.now()), so advance through the injected
+                  // wall-clock boundary (`tickClock`, defaulting to wallClock) —
+                  // the epoch entropy boundary — not the monotonic systemClock.
+                  // `hlc` is this instance's own clock, so the stamp is a
+                  // function of this quantizer's crossings alone.
+                  hlc = HLC.increment(hlc, tickClock.now());
                   const crossing: BoundaryCrossing<StateUnion<B> & string> = {
                     from: mkStateName<StateUnion<B> & string>(previousState),
                     to: mkStateName(result.state),
-                    timestamp: quantizerHlc satisfies HLCBrand,
+                    timestamp: hlc satisfies HLCBrand,
                     value,
                   };
                   previousState = result.state;

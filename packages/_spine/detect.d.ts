@@ -3,7 +3,7 @@
  */
 
 import type { Effect } from 'effect';
-import type { CapLevel, CapSet, MotionTier } from './core.d.ts';
+import type { CapTier, CapSet, MotionTier } from './core.d.ts';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
 // `@czap/_spine` consumers reading the detect surface still see it on this
@@ -36,7 +36,7 @@ export interface DeviceCapabilities {
 
 export interface DetectionResult {
   readonly capabilities: DeviceCapabilities;
-  readonly tier: CapLevel;
+  readonly capTier: CapTier;
   readonly capSet: CapSet;
   readonly confidence: number;
 }
@@ -49,7 +49,7 @@ export declare function detect(): Effect.Effect<DetectionResult>;
 
 export declare function detectGPUTier(): Effect.Effect<GPUTier>;
 
-export declare function tierFromCapabilities(caps: DeviceCapabilities): CapLevel;
+export declare function capTierFromCapabilities(caps: DeviceCapabilities): CapTier;
 
 export declare function capSetFromCapabilities(caps: DeviceCapabilities): CapSet;
 

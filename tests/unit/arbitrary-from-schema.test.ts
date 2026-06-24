@@ -10,9 +10,11 @@
 import { describe, expect, it } from 'vitest';
 import { Effect, Schema } from 'effect';
 import * as fc from 'fast-check';
+import { hasTag } from '@czap/error';
 import {
   schemaToArbitrary,
-  UnsupportedSchemaError,
+  withArbitrary,
+  ArbitraryAnnotationId,
 } from '../../packages/core/src/harness/arbitrary-from-schema.js';
 
 /** Drive an arbitrary into a schema's decoder; assert every sample decodes. */
@@ -109,23 +111,43 @@ describe('schemaToArbitrary', () => {
     expectAllDecode(schema, arb);
   });
 
-  it('throws UnsupportedSchemaError for unsupported Declaration nodes', () => {
-    // Schema.instanceOf(Uint8Array) is a Declaration whose probe fails;
-    // walker rejects it.
-    const schema = Schema.instanceOf(Uint8Array);
-    expect(() => schemaToArbitrary(schema)).toThrow(UnsupportedSchemaError);
-  });
-
-  it('throws UnsupportedSchemaError naming the unsupported node tag', () => {
-    const schema = Schema.instanceOf(Uint8Array);
+  it('throws UnsupportedError for genuinely-opaque Declaration nodes', () => {
+    // A user class is an opaque Declaration: it carries no constructor
+    // annotation and rejects every recognised sentinel, so the walker
+    // throws rather than blanket-accepting all declarations.
+    class OpaqueThing {}
+    const schema = Schema.instanceOf(OpaqueThing);
     let caught: unknown;
     try {
       schemaToArbitrary(schema);
     } catch (err) {
       caught = err;
     }
-    expect(caught).toBeInstanceOf(UnsupportedSchemaError);
-    expect((caught as UnsupportedSchemaError).nodeTag).toBe('Declaration');
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
+  });
+
+  it('throws UnsupportedError naming the unsupported node tag', () => {
+    class OpaqueThing {}
+    const schema = Schema.instanceOf(OpaqueThing);
+    let caught: unknown;
+    try {
+      schemaToArbitrary(schema);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
+    expect(hasTag(caught, 'UnsupportedError') && caught.subject).toBe('Declaration');
+  });
+
+  it('handles Schema.instanceOf(Uint8Array) via the sentinel probe', () => {
+    // The un-annotated instanceOf form carries no constructor annotation;
+    // the parser-sentinel probe still recognises it as Uint8Array.
+    const schema = Schema.instanceOf(Uint8Array);
+    const arb = schemaToArbitrary(schema);
+    fc.assert(
+      fc.property(arb, (v) => v instanceof Uint8Array),
+      { numRuns: 10 },
+    );
   });
 
   it('handles NonEmptyString refinement (checks-based)', () => {
@@ -208,12 +230,16 @@ describe('schemaToArbitrary', () => {
     );
   });
 
-  it('throws UnsupportedSchemaError for unhandled AST tags (Schema.Never)', () => {
+  it('throws UnsupportedError for unhandled AST tags (Schema.Never)', () => {
     // Schema.Never has _tag 'Never' which the walker does not handle —
     // exercises the switch's default-case throw.
-    expect(() => schemaToArbitrary(Schema.Never)).toThrow(
-      UnsupportedSchemaError,
-    );
+    let caught: unknown;
+    try {
+      schemaToArbitrary(Schema.Never);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
   });
 
   it('handles Schema.Enum', () => {
@@ -274,5 +300,124 @@ describe('schemaToArbitrary', () => {
       ),
       { numRuns: 20 },
     );
+  });
+
+  // ── Gap 1: Transformation / codec schemas ────────────────────────────
+  // The harness feeds DECODED values straight into a capsule's run/derive
+  // handler, so the arbitrary must yield the codec's decoded (runtime)
+  // type. `Schema.NumberFromString` decodes a string into a number; the
+  // arbitrary must produce values that decode cleanly through the codec.
+  it('handles a codec (NumberFromString) by yielding decoded-side values', () => {
+    const schema = Schema.NumberFromString;
+    const arb = schemaToArbitrary(schema);
+    // Every sample must be the decoded (runtime) type — a number — the
+    // type the capsule handler actually receives. Conformance is checked
+    // against the schema's decoded Type (`Schema.is`) and a clean encode
+    // back to the wire side, NOT `decodeUnknown` (which expects the
+    // encoded string and would reject a decoded number).
+    const isType = Schema.is(schema);
+    const encode = Schema.encodeUnknownEffect(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(typeof s).toBe('number');
+      expect(isType(s)).toBe(true);
+      expect(Effect.runSyncExit(encode(s as unknown))._tag).toBe('Success');
+    }
+  });
+
+  // ── Gap 2: TemplateLiteral ───────────────────────────────────────────
+  it('handles a TemplateLiteral by yielding template-conforming strings', () => {
+    // `/user/${number}` — every sample must be a string starting with the
+    // literal head and decode through the template schema.
+    const schema = Schema.TemplateLiteral(['/user/', Schema.Number]);
+    const arb = schemaToArbitrary(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(typeof s).toBe('string');
+      expect((s as string).startsWith('/user/')).toBe(true);
+      const exit = Effect.runSyncExit(
+        Schema.decodeUnknownEffect(schema)(s as unknown),
+      );
+      expect(exit._tag).toBe('Success');
+    }
+  });
+
+  it('handles a TemplateLiteral with a String span', () => {
+    // `a${string}-${number}` — exercises the alphanumeric String-span
+    // arbitrary so adjacent delimiters stay unambiguous.
+    const schema = Schema.TemplateLiteral([
+      'a',
+      Schema.String,
+      '-',
+      Schema.Number,
+    ]);
+    const arb = schemaToArbitrary(schema);
+    expectAllDecode(schema, arb as fc.Arbitrary<string>, 50);
+  });
+
+  // ── Gap 3: Declaration → Uint8Array ──────────────────────────────────
+  it('handles Schema.Uint8Array by yielding Uint8Array samples', () => {
+    const schema = Schema.Uint8Array;
+    const arb = schemaToArbitrary(schema);
+    const samples = fc.sample(arb, 10);
+    expect(samples.length).toBe(10);
+    for (const s of samples) {
+      expect(s).toBeInstanceOf(Uint8Array);
+      const exit = Effect.runSyncExit(
+        Schema.decodeUnknownEffect(schema)(s as unknown),
+      );
+      expect(exit._tag).toBe('Success');
+    }
+  });
+});
+
+describe('withArbitrary / ArbitraryAnnotationId — explicit author-supplied arbitrary', () => {
+  it('honours the annotated thunk ahead of structural derivation', () => {
+    // `instanceOf(Uint8Array)` would structurally yield random bytes; the
+    // annotation narrows the sampled domain to a fixed sentinel value, proving
+    // the override takes precedence over the carrier's structural arbitrary.
+    const sentinel = new Uint8Array([1, 2, 3]);
+    const schema = withArbitrary(
+      Schema.instanceOf(Uint8Array),
+      () => fc.constant(sentinel),
+    );
+    const arb = schemaToArbitrary(schema);
+    for (const s of fc.sample(arb, 20)) expect(s).toBe(sentinel);
+  });
+
+  it('builds the arbitrary lazily — the thunk runs at walk time, not at annotate time', () => {
+    let built = 0;
+    const schema = withArbitrary(Schema.String, () => {
+      built++;
+      return fc.constant('x');
+    });
+    // Annotating must NOT have invoked the thunk yet.
+    expect(built).toBe(0);
+    schemaToArbitrary(schema);
+    expect(built).toBe(1);
+  });
+
+  it('surfaces the annotation under ArbitraryAnnotationId on the AST', () => {
+    const schema = withArbitrary(Schema.Number, () => fc.constant(7));
+    const annotations = (schema.ast as { annotations?: Record<symbol, unknown> }).annotations;
+    expect(annotations).toBeDefined();
+    expect(typeof annotations?.[ArbitraryAnnotationId]).toBe('function');
+  });
+
+  it('throws when the thunk does not return a fast-check arbitrary', () => {
+    const schema = withArbitrary(
+      Schema.String,
+      // Intentionally wrong: returns a non-Arbitrary.
+      (() => 'not-an-arbitrary') as unknown as () => fc.Arbitrary<unknown>,
+    );
+    let caught: unknown;
+    try {
+      schemaToArbitrary(schema);
+    } catch (err) {
+      caught = err;
+    }
+    expect(hasTag(caught, 'UnsupportedError')).toBe(true);
   });
 });

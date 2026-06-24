@@ -8,7 +8,7 @@
 
 > **resolveDevopsProfile**(`partial`): [`DevopsProfile`](../interfaces/DevopsProfile.md)
 
-Defined in: [audit/src/devops-profile.ts:131](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L131)
+Defined in: [audit/src/devops-profile.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L147)
 
 Resolve a PARTIAL profile into a full [DevopsProfile](../interfaces/DevopsProfile.md) with documented
 defaults, so `runAuditPasses({ repoRoot })` just works:

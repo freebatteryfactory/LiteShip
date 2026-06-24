@@ -17,10 +17,11 @@
     "noUncheckedIndexedAccess": true,
     "paths": {
       "@czap/_spine": ["../_spine/index.d.ts"],
-      "@czap/canonical": ["../canonical/src/index.ts"]
+      "@czap/canonical": ["../canonical/src/index.ts"],
+      "@czap/error": ["../error/src/index.ts"]
     }
   },
-  "references": [{ "path": "../canonical" }],
+  "references": [{ "path": "../canonical" }, { "path": "../error" }],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

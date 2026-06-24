@@ -31,7 +31,7 @@ export interface GauntletPhase {
   readonly gracePeriodMs?: number;
 }
 
-/** The canonical 36-phase gauntlet sequence, in execution order. */
+/** The canonical 38-phase gauntlet sequence, in execution order. */
 export const gauntletPhases: readonly GauntletPhase[] = [
   // ── Phase 0: Rig-check (env preflight) ─────────────────────────────
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
@@ -43,7 +43,7 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
-  { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
 
   // ── Phase 2: Unit tests ────────────────────────────────────────────
@@ -86,6 +86,20 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
+  // The raccoon-rule backstop run OVER THE REAL REPO (the agent-safety meta-gauntlet):
+  // diffs the LIVE standards surface against the snapshot AS COMMITTED ON THE BASE REF
+  // (via a REAL `git show`, not an injected hermetic reader) and reds on any UNSIGNED
+  // weakening of the gauntlet's own rigor. FAIL-CLOSED — an unresolvable base ref / an
+  // absent baseline snapshot THROWS (the gate refuses, never silently passes). CI sets
+  // `CZAP_STANDARDS_BASE_REF` to a ref that has the snapshot + fetches its history
+  // (see .github/workflows/ci.yml); a local run defaults to `main`.
+  { label: 'standards:gate', command: 'pnpm run standards:gate' },
+  // The capability-link proof (codex round-8 #1b) — the sanctioned-skip INTEGRITY family, beside
+  // standards:gate/plumb:gate: every sanctioned capability-gated skip's guard must DERIVE FROM its
+  // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
+  // modules), or the cut reds. Opt-in `czap check --ir --capability-gate` runs the same proof.
+  { label: 'capability:gate', command: 'pnpm run capability:gate' },
+  { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];

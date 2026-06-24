@@ -6,7 +6,7 @@
 
 # Interface: LiveQuantizer\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:222](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L222)
+Defined in: [quantizer/src/quantizer.ts:269](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L269)
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
@@ -91,7 +91,7 @@ Defined in: core/dist/quantizer-types.d.ts:25
 
 > `readonly` **config**: [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:227](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L227)
+Defined in: [quantizer/src/quantizer.ts:274](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L274)
 
 The config this quantizer was created from.
 
@@ -101,7 +101,7 @@ The config this quantizer was created from.
 
 > `readonly` **currentOutputs**: `Effect`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:229](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L229)
+Defined in: [quantizer/src/quantizer.ts:276](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L276)
 
 Read the currently-active per-target output record.
 
@@ -111,7 +111,7 @@ Read the currently-active per-target output record.
 
 > `readonly` **outputChanges**: `Stream`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:231](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L231)
+Defined in: [quantizer/src/quantizer.ts:278](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L278)
 
 Stream of per-target output records emitted on each boundary crossing.
 

@@ -6,7 +6,7 @@
 
 # Interface: EdgePatchOp
 
-Defined in: [core/src/graph-patch.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L49)
+Defined in: [core/src/graph-patch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L50)
 
 An edge-level mutation: add/remove a single [DocumentGraphEdge](DocumentGraphEdge.md).
 
@@ -16,7 +16,7 @@ An edge-level mutation: add/remove a single [DocumentGraphEdge](DocumentGraphEdg
 
 > `readonly` **edge**: [`DocumentGraphEdge`](DocumentGraphEdge.md)
 
-Defined in: [core/src/graph-patch.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L51)
+Defined in: [core/src/graph-patch.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L52)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [core/src/graph-patch.ts:51](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **op**: `"add"` \| `"remove"`
 
-Defined in: [core/src/graph-patch.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L50)
+Defined in: [core/src/graph-patch.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L51)

@@ -5,6 +5,23 @@
 import { describe, test, expect, vi, afterEach } from 'vitest';
 import { Effect } from 'effect';
 import { HLC } from '@czap/core';
+import { hasTag } from '@czap/error';
+
+/**
+ * Capture the `code` of a thrown {@link ParseError}, or `undefined` if `fn` did not
+ * throw a ParseError. No `any`/`as unknown`: catches `unknown`, narrows by tag, then
+ * reads the optional `code` field off the tagged record.
+ */
+function parseErrorCode(fn: () => unknown): string | undefined {
+  try {
+    fn();
+  } catch (caught) {
+    if (!hasTag(caught, 'ParseError')) return undefined;
+    const code = (caught as { readonly code?: unknown }).code;
+    return typeof code === 'string' ? code : undefined;
+  }
+  return undefined;
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -177,7 +194,18 @@ describe('HLC', () => {
     });
 
     test('decode throws on invalid format', () => {
-      expect(() => HLC.decode('invalid')).toThrow('Invalid HLC format');
+      expect(() => HLC.decode('invalid')).toThrow(/colon-separated parts/);
+    });
+
+    test('decode on a too-short input throws a ParseError with code "malformed"', () => {
+      // The too-short (< 3 colon-separated parts) decode path throws
+      // `ParseError('hlc', ..., { code: 'malformed' })`. Asserting the CODE (not just
+      // that it throws) is the kill for the `code: 'malformed'` → `code: ''` mutant:
+      // the message-only `toThrow` above passes on the mutant, but the machine code
+      // changes from 'malformed' to '' — a real, branch-distinguishing contract.
+      expect(parseErrorCode(() => HLC.decode('only-one-part'))).toBe('malformed');
+      // The two-part case is also too short (< 3) — same malformed code.
+      expect(parseErrorCode(() => HLC.decode('aa:bb'))).toBe('malformed');
     });
 
     test('decode throws on invalid wall_ms hex', () => {

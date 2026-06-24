@@ -8,13 +8,13 @@
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:704](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L704)
+Defined in: [detect/src/detect.ts:662](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L662)
 
 Device capability detection namespace.
 
 Probes browser APIs for GPU tier, CPU cores, memory, input modality,
 user preferences, and network info. Maps detected capabilities to
-[CapLevel](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md), [CapSet](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
+[CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md), [CapSet](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
 Supports live watching for preference and viewport changes.
 
 You usually never call these yourself — the `@czap/astro` boundary runs
@@ -32,7 +32,7 @@ console.log(result.motionTier); // 'none' | 'transitions' | 'animations' | ...
 
 // Watch for changes
 const watch = Effect.scoped(
-  Detect.watchCapabilities((r) => console.log('tier:', r.tier)),
+  Detect.watchCapabilities((r) => console.log('capTier:', r.capTier)),
 );
 ```
 
@@ -59,7 +59,7 @@ import { Effect } from 'effect';
 
 const result = Effect.runSync(Detect.detect());
 console.log(result.capabilities.gpu);       // 0-3
-console.log(result.tier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
+console.log(result.capTier);                   // 'static' | 'styled' | 'reactive' | 'animated' | 'gpu'
 console.log(result.designTier);             // 'minimal' | 'standard' | 'enhanced' | 'rich'
 console.log(result.motionTier);             // 'none' | 'transitions' | ...
 console.log(result.confidence);             // 0.5 - 1.0
@@ -145,7 +145,7 @@ import { Effect } from 'effect';
 
 const program = Effect.scoped(
   Detect.watchCapabilities((result) => {
-    console.log('Capabilities changed:', result.tier);
+    console.log('Capabilities changed:', result.capTier);
   }),
 );
 ```

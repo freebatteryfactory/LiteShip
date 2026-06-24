@@ -1,6 +1,6 @@
 {
   "name": "@czap/astro",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Astro 6 integration with adaptive directives",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -60,6 +60,16 @@
       "import": "./dist/client-directives/wasm.js",
       "development": "./src/client-directives/wasm.ts"
     },
+    "./client-directives/graph": {
+      "types": "./dist/client-directives/graph.d.ts",
+      "import": "./dist/client-directives/graph.js",
+      "development": "./src/client-directives/graph.ts"
+    },
+    "./client-directives/svg": {
+      "types": "./dist/client-directives/svg.d.ts",
+      "import": "./dist/client-directives/svg.js",
+      "development": "./src/client-directives/svg.ts"
+    },
     "./middleware": {
       "types": "./dist/middleware.d.ts",
       "import": "./dist/middleware.js",
@@ -98,6 +108,7 @@
     "@czap/detect": "workspace:*",
     "@czap/edge": "workspace:*",
     "@czap/genui": "workspace:*",
+    "@czap/scene": "workspace:*",
     "@czap/web": "workspace:*",
     "@czap/worker": "workspace:*"
   },

@@ -8,7 +8,7 @@
 
 > `const` **SpeculativeEvaluator**: `object`
 
-Defined in: [core/src/speculative.ts:179](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/speculative.ts#L179)
+Defined in: [core/src/speculative.ts:180](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/speculative.ts#L180)
 
 SpeculativeEvaluator -- threshold proximity prefetching for boundaries.
 Pre-computes the next discrete state when a signal is near a threshold,
@@ -18,7 +18,7 @@ using velocity estimation and hysteresis-based prefetch windows.
 
 ### make
 
-> **make**: \<`B`\>(`boundary`) => `SpeculativeEvaluatorShape`\<`B`\> = `_make`
+> **make**: \<`B`\>(`boundary`, `clock`) => `SpeculativeEvaluatorShape`\<`B`\> = `_make`
 
 Creates a speculative evaluator for a boundary that prefetches the next state
 when the signal value is near a threshold and moving toward it.
@@ -34,6 +34,10 @@ when the signal value is near a threshold and moving toward it.
 ##### boundary
 
 `B`
+
+##### clock?
+
+[`Clock`](../interfaces/Clock.md) = `systemClock`
 
 #### Returns
 

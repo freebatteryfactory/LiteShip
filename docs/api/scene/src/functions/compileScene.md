@@ -8,7 +8,7 @@
 
 > **compileScene**(`scene`): [`CompiledScene`](../interfaces/CompiledScene.md)
 
-Defined in: [scene/src/compile.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L107)
+Defined in: [scene/src/compile.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L108)
 
 Compile a [SceneContract](../interfaces/SceneContract.md) into a pure [CompiledScene](../interfaces/CompiledScene.md)
 descriptor. No world is constructed here — see [SceneRuntime](../namespaces/SceneRuntime/README.md).
@@ -24,7 +24,7 @@ Every declared [SceneInvariant](../interfaces/SceneInvariant.md) is evaluated ag
 normalized contract before any compilation work happens. A check that
 returns `false` — or throws — counts as a violation. ALL violations
 are collected, then reported together in a single
-[CzapValidationError](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md) (module `'compileScene'`) listing each
+[ValidationError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) (module `'compileScene'`) listing each
 violated invariant's name and message, so one compile run surfaces
 every problem instead of stopping at the first.
 
@@ -55,5 +55,5 @@ when intended — rather than failing the compile.
 
 ## Throws
 
-CzapValidationError when structural checks or declared scene
+ValidationError when structural checks or declared scene
 invariants fail — all problems are collected into one error.

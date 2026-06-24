@@ -310,7 +310,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
     init();
   });
 
-  element.addEventListener('czap:dispose', () => {
+  element.addEventListener('czap:teardown', () => {
     cleanup();
   });
 

@@ -12,6 +12,7 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
+import { hasTag } from '@czap/error';
 import { resolveBeatProjectionToSceneBeats } from '@czap/scene';
 import type { BeatMarkerSet } from '@czap/_spine';
 
@@ -31,10 +32,10 @@ describe('resolveBeatProjectionToSceneBeats', () => {
     }
   });
 
-  it("tags every marker with kind: 'beat'", () => {
+  it("tags every marker with _tag: 'beat'", () => {
     const projection: BeatMarkerSet = { bpm: 120, beats: [0, 100] };
     const beats = resolveBeatProjectionToSceneBeats({ projection, sampleRate: 1000 });
-    expect(beats.every((b) => b.kind === 'beat')).toBe(true);
+    expect(beats.every((b) => b._tag === 'beat')).toBe(true);
   });
 
   it('defaults strength deterministically to 1 when no default given', () => {
@@ -63,12 +64,20 @@ describe('resolveBeatProjectionToSceneBeats', () => {
 
   it('rejects a non-positive or non-finite sampleRate explicitly', () => {
     const projection: BeatMarkerSet = { bpm: 120, beats: [0, 100] };
-    expect(() => resolveBeatProjectionToSceneBeats({ projection, sampleRate: 0 })).toThrow(RangeError);
-    expect(() => resolveBeatProjectionToSceneBeats({ projection, sampleRate: -48_000 })).toThrow(RangeError);
-    expect(() => resolveBeatProjectionToSceneBeats({ projection, sampleRate: Number.NaN })).toThrow(RangeError);
-    expect(() =>
-      resolveBeatProjectionToSceneBeats({ projection, sampleRate: Number.POSITIVE_INFINITY }),
-    ).toThrow(RangeError);
+    const rejects = (sampleRate: number): void => {
+      let caught: unknown;
+      try {
+        resolveBeatProjectionToSceneBeats({ projection, sampleRate });
+      } catch (e) {
+        caught = e;
+      }
+      expect(hasTag(caught, 'ValidationError')).toBe(true);
+      expect((caught as { module: string }).module).toBe('resolveBeatProjectionToSceneBeats');
+    };
+    rejects(0);
+    rejects(-48_000);
+    rejects(Number.NaN);
+    rejects(Number.POSITIVE_INFINITY);
   });
 
   it('returns an empty array for an empty projection (no beats detected)', () => {

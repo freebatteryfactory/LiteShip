@@ -4,6 +4,17 @@ Thanks for considering a contribution. LiteShip is pre-1.0 and intentionally gre
 
 Ontology for prose and docs: [GLOSSARY.md](./GLOSSARY.md). The git remote and directory name may still read `czap`; `@czap/*` on npm is the package line.
 
+## How this project is governed
+
+LiteShip is **maintainer-led and doctrine-protected**. Open source means you can inspect, fork, learn from, build on, and contribute to it — it does not mean direction is crowdsourced. Contributions are welcome; the steering wheel is not up for grabs.
+
+- **Open a PR directly** for: bug fixes, tests, docs corrections, small compatibility patches.
+- **Open an issue / RFC first** for: new features, public-API changes, architecture or runtime-model changes, new dependencies, or naming changes. Large PRs without prior discussion are usually closed.
+- **A technically-correct patch may still be declined** if it doesn't fit the project's doctrine, performance model, maintenance budget, or conceptual shape. That's not arbitrary — it means it *violates a written invariant*. The invariants are codified, not vibes: the [ADRs](./docs/adr/), the source-of-truth principle (every identity computed from its source, not a proxy beside it), the **plumb-completeness gate** (a built-not-plumbed primitive fails CI), the zero-advisory floor, "split don't bump caps," and every-behavior-change-ships-its-falsifying-test (the SQLite/DO-178B bar). Read [ARCHITECTURE.md](./ARCHITECTURE.md) and the relevant ADR as the contract a PR must not silently break.
+- **AI-generated PRs** must be read and understood by the submitter — the same bar the maintainer holds with their own agents. No vibe-dump-and-flee.
+
+The `docs/` chain is **sacred**: match house voice, never restructure autonomously, keep `docs:check` green. `main` is protected (PR + the gauntlet's required checks; no force-push, no deletions; release `v*` tags are protected).
+
 ## Quick start (development)
 
 ```bash
@@ -81,7 +92,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 
 ## The gauntlet, your release gate
 
-`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 35 phases (see `STATUS.md` for the canonical ordered list):
+`pnpm run gauntlet:full` is the contract: the full shake-down cruise. It runs 37 phases (see `STATUS.md` for the canonical ordered list):
 
 - rig-check (`doctor --preflight --ci` — env probes hard-fail before build)
 - build, capsule:compile, typecheck, lint, docs:check, invariants, audit:floor
@@ -94,7 +105,7 @@ in CI with `CI=1` (already standard) or `CZAP_QUIET_INSTALL=1`.
 - node + browser coverage + cross-runtime merge with statementMap dedup
 - runtime-seams report, codebase audit, satellite scan
 - feedback integrity verification (artifact fingerprint chain)
-- runtime gate, capsule verify
+- runtime gate, plumb gate (every published package classified runtime/tooling/deferred in `scripts/plumb-registry.ts` + no new unwired capsule — a built-not-plumbed primitive fails here), capsule verify
 - `flex:verify` 10/10 acceptance across 7 rating dimensions
 
 **Bench trend gate (`bench:trend`):** it reads `benchmarks/history.jsonl` (one

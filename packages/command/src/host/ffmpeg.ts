@@ -1,14 +1,21 @@
 /**
- * Direct-ffmpeg render backend. Reads a VideoFrameOutput async iterable,
- * encodes each frame to raw RGBA, pipes through ffmpeg stdin, produces mp4.
- * No Revideo dependency — ffmpeg is a standard dev-machine binary.
+ * Direct-ffmpeg render backend. Reads a {@link VideoFrameOutput} async iterable,
+ * paints each frame's `CompositeState` to raw RGBA through the ONE deterministic
+ * `compositeStateToRgba` painter from `@czap/core` (the SAME painter the
+ * `@czap/stage` ffmpeg encoder uses), pipes the bytes through ffmpeg stdin, and
+ * produces an mp4. The graph's per-frame poses therefore genuinely reach the
+ * rendered video — distinct frame state yields distinct pixels, identical state
+ * yields byte-identical pixels (content-addressable, replayable). No Revideo
+ * dependency — ffmpeg is a standard dev-machine binary.
  *
  * @module
  */
 
 import { spawn } from 'node:child_process';
 import { statSync } from 'node:fs';
-import type { VideoFrameOutput } from '@czap/core';
+import type { Clock, VideoFrameOutput } from '@czap/core';
+import { compositeStateToRgba, systemClock } from '@czap/core';
+import { HostCapabilityError, IoError } from '@czap/error';
 import { probeFfmpegRender } from './ffmpeg-probe.js';
 
 /** Options for `renderWithFfmpeg`. */
@@ -17,6 +24,14 @@ export interface RenderOpts {
   readonly width: number;
   readonly height: number;
   readonly fps: number;
+  /**
+   * MONOTONIC clock for the `elapsedMs` DURATION. Defaults to {@link systemClock}
+   * (`performance.now`). Injected so a deterministic replay/test can thread a
+   * {@link import('@czap/core').manualClock}; this measures an ELAPSED interval,
+   * never a timestamp, so it MUST stay monotonic (an NTP/DST wall-clock jump would
+   * corrupt the duration).
+   */
+  readonly clock?: Clock;
 }
 
 /** Result summary after a successful render. */
@@ -31,7 +46,9 @@ export async function renderWithFfmpeg(
   opts: RenderOpts,
 ): Promise<RenderResult> {
   assertFfmpegAvailable();
-  const start = Date.now();
+  // Monotonic duration clock — `elapsedMs` is an interval, never a timestamp.
+  const clock = opts.clock ?? systemClock;
+  const start = clock.now();
   const args = [
     '-y',
     '-f',
@@ -60,7 +77,10 @@ export async function renderWithFfmpeg(
 
   try {
     for await (const frame of frames) {
-      const buf = frameToRGBA(frame, opts.width, opts.height);
+      // Paint REAL pixels from the frame's CompositeState — the SAME
+      // deterministic `(state, w, h) → RGBA` painter the @czap/stage ffmpeg
+      // encoder uses. The graph's per-frame poses genuinely reach the video.
+      const buf = compositeStateToRgba(frame.state, opts.width, opts.height);
       await writeStdin(proc.stdin, buf);
       frameCount++;
     }
@@ -73,8 +93,9 @@ export async function renderWithFfmpeg(
       const diagnosis = probe.ok
         ? 'the encode probe passes, so inspect the ffmpeg stderr tail below'
         : `${probe.detail}${probe.hint ? ` — ${probe.hint}` : ''}`;
-      throw new Error(
-        `ffmpeg stdin closed before render finished: ${diagnosis}. ffmpeg stderr tail: ${stderrBuf.slice(-500) || message}`,
+      throw IoError(
+        'ffmpeg.render',
+        `stdin closed before render finished: ${diagnosis}. ffmpeg stderr tail: ${stderrBuf.slice(-500) || message}`,
         { cause: err },
       );
     }
@@ -92,7 +113,7 @@ export async function renderWithFfmpeg(
   await new Promise<void>((resolveExit, rejectExit) => {
     proc.on('close', (code) => {
       if (code === 0) resolveExit();
-      else rejectExit(new Error(`ffmpeg exited with code ${code}: ${stderrBuf.slice(0, 500)}`));
+      else rejectExit(IoError('ffmpeg.encode', `ffmpeg exited with code ${code}: ${stderrBuf.slice(0, 500)}`));
     });
     proc.on('error', (err) => rejectExit(err));
   });
@@ -102,26 +123,29 @@ export async function renderWithFfmpeg(
   try {
     size = statSync(opts.output).size;
   } catch (err) {
-    throw new Error(
-      `ffmpeg exited 0 but no output file at ${opts.output}: ${(err as Error).message}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+    throw IoError(
+      'ffmpeg.encode',
+      `ffmpeg exited 0 but no output file: ${(err as Error).message}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+      { path: opts.output, cause: err },
     );
   }
   if (size === 0) {
-    throw new Error(
-      `ffmpeg exited 0 but wrote a 0-byte file at ${opts.output}\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+    throw IoError(
+      'ffmpeg.encode',
+      `ffmpeg exited 0 but wrote a 0-byte file\nffmpeg stderr tail: ${stderrBuf.slice(-500)}`,
+      { path: opts.output },
     );
   }
 
-  return { frameCount, elapsedMs: Date.now() - start };
+  return { frameCount, elapsedMs: clock.now() - start };
 }
 
 function assertFfmpegAvailable(): void {
   const probe = probeFfmpegRender();
   if (!probe.ok) {
-    throw new Error(
-      probe.hint
-        ? `ffmpeg scene rendering unavailable: ${probe.detail}. ${probe.hint}`
-        : `ffmpeg scene rendering unavailable: ${probe.detail}`,
+    throw HostCapabilityError(
+      'ffmpeg',
+      probe.hint ? `scene rendering: ${probe.detail}. ${probe.hint}` : `scene rendering: ${probe.detail}`,
     );
   }
 }
@@ -149,18 +173,4 @@ function writeStdin(stream: NodeJS.WritableStream, buf: Uint8Array): Promise<voi
       stream.once('drain', onDrain);
     }
   });
-}
-
-/**
- * Reference encoder — emits an opaque black RGBA buffer of the declared
- * dimensions. Real encoders map CompositeState through the Compositor's
- * multi-target outputs (CSS/GLSL/WGSL/ARIA). This stub produces valid
- * RGBA bytes so ffmpeg can encode the declared number of frames.
- */
-function frameToRGBA(_frame: VideoFrameOutput, w: number, h: number): Uint8Array {
-  const bytes = new Uint8Array(w * h * 4);
-  for (let i = 0; i < bytes.length; i += 4) {
-    bytes[i + 3] = 255;
-  }
-  return bytes;
 }

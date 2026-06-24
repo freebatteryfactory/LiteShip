@@ -8,7 +8,7 @@
 
 > **ContentAddress**: (`value`) => `ContentAddress`
 
-Defined in: [genui/src/brands.ts:9](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/brands.ts#L9)
+Defined in: [genui/src/brands.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/brands.ts#L15)
 
 Wrap canonical fnv1a bytes as a spine ContentAddress.
 
@@ -21,3 +21,7 @@ Wrap canonical fnv1a bytes as a spine ContentAddress.
 ## Returns
 
 `ContentAddress`
+
+## Throws
+
+ValidationError when `value` is not `fnv1a:` + 8 lowercase hex.

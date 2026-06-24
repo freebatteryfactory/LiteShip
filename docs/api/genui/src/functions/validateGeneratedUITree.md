@@ -16,7 +16,7 @@ Validate a generated UI tree against the host catalog. Unknown names / bad props
 
 ### node
 
-`GeneratedUINode`
+[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### catalog
 

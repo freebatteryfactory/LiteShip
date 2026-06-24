@@ -10,9 +10,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { hasTag } from '@czap/error';
 import {
   scaffold,
-  ScaffoldError,
   defaultTemplateDir,
   projectNameFromDir,
   run,
@@ -104,7 +104,13 @@ describe('create-liteship scaffold', () => {
     const target = join(workDir, 'taken');
     mkdirSync(target);
     writeFileSync(join(target, 'precious.txt'), 'do not eat');
-    expect(() => scaffold(target)).toThrowError(ScaffoldError);
+    let thrown: unknown;
+    try {
+      scaffold(target);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
     expect(() => scaffold(target)).toThrowError(/never overwrites/);
     expect(readFileSync(join(target, 'precious.txt'), 'utf8')).toBe('do not eat');
     expect(existsSync(join(target, 'package.json'))).toBe(false);

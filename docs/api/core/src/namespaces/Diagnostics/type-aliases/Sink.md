@@ -8,6 +8,6 @@
 
 > **Sink** = [`DiagnosticsSink`](../../../interfaces/DiagnosticsSink.md)
 
-Defined in: [core/src/diagnostics.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L187)
+Defined in: [core/src/diagnostics.ts:217](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L217)
 
 Alias for [DiagnosticsSink](../../../interfaces/DiagnosticsSink.md).

@@ -1,7 +1,7 @@
 /**
  * CUT D8 — the canonical gauntlet phase profile is the ONE source of truth.
  *
- * Pins the 36-phase order to the executor's real run-order (no drift), proves the
+ * Pins the 39-phase order to the executor's real run-order (no drift), proves the
  * executor + CLI both DERIVE from this list (no hand-maintained copies left), and
  * preserves the coverage:browser watchdog options across the migration.
  *
@@ -14,7 +14,7 @@ import { gauntletPhases, gauntletPhaseLabels } from '../../../packages/cli/src/g
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 36 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical 39 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
@@ -23,7 +23,7 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'lint', command: 'pnpm run lint' },
   { label: 'lint:structural', command: 'pnpm run lint:structural' },
   { label: 'docs:check', command: 'pnpm run docs:check' },
-  { label: 'invariants', command: 'pnpm exec tsx scripts/check-invariants.ts' },
+  { label: 'invariants', command: 'pnpm exec tsx packages/cli/src/bin.ts check-invariants' },
   { label: 'audit:floor', command: 'pnpm run audit:floor' },
   { label: 'test (unit + component + property + integration)', command: 'pnpm test' },
   { label: 'test:vite', command: 'pnpm run test:vite' },
@@ -50,14 +50,17 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'report:satellite-scan', command: 'pnpm run report:satellite-scan' },
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
+  { label: 'standards:gate', command: 'pnpm run standards:gate' },
+  { label: 'capability:gate', command: 'pnpm run capability:gate' },
+  { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 36 phases', () => {
-    expect(gauntletPhases.length).toBe(36);
-    expect(gauntletPhaseLabels().length).toBe(36);
+  it('has exactly 39 phases', () => {
+    expect(gauntletPhases.length).toBe(39);
+    expect(gauntletPhaseLabels().length).toBe(39);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {

@@ -241,6 +241,25 @@ const edgeHeaders = new Headers({
   'sec-ch-device-memory': '8',
   'sec-ch-dpr': '2',
 });
+/**
+ * Prior-frame state for the satellite/worker hot-path pairs. Production
+ * `client:satellite` (packages/astro/src/runtime/satellite.ts:39) and the
+ * worker fallback/host steady-state update (packages/astro/src/runtime/worker.ts:253)
+ * BOTH call `evaluateBoundary(boundary, value, previousState || undefined)` —
+ * i.e. they carry the prior frame's state into every re-evaluation, taking the
+ * hysteresis branch (`Boundary.evaluateWithHysteresis`). Measuring the no-
+ * previousState path (plain `Boundary.evaluate`) measured a call production
+ * never makes. We evaluate `value = 1290` (just past the 1280 `desktop`
+ * threshold) carrying `previousState = 'tablet'`: the signal is attempting a
+ * crossing, so the hysteresis branch runs its full dead-zone scan — the
+ * heaviest, most representative slice of the production hysteresis path — and,
+ * because 1290 is within the half-hysteresis dead zone (1280 + 20), the scan
+ * SUPPRESSES the transition back to `'tablet'`. That is the jitter case
+ * hysteresis exists for, exercised on BOTH the directive and the hand-written
+ * baseline so the comparison is work-equivalent, not work-advantaged.
+ */
+const SATELLITE_PREVIOUS_STATE = 'tablet';
+const SATELLITE_HOT_VALUE = 1290;
 const HOT_LOOP_REPEAT = 250;
 const STREAM_HOT_LOOP_REPEAT = 5000;
 const LLM_HOT_LOOP_REPEAT = 5000;
@@ -515,7 +534,7 @@ class BenchWorker {
         if (typeof update.name === 'string' && typeof update.value === 'number') {
           const existing = this.states.get(update.name);
           this.states.set(update.name, {
-            currentState: evaluateWorkerDirectiveState(update.value),
+            currentState: boundaryStateFromValue(update.value),
             initialState: existing?.initialState ?? satelliteBoundary.states[0],
           });
         }
@@ -649,19 +668,47 @@ function quantile(values: readonly number[], percentile: number): number {
   return sorted[index] ?? 0;
 }
 
-function evaluateSatelliteDirectiveState(value: number): string {
+function requireSharedSatelliteBoundary(): typeof sharedSatelliteBoundary & object {
   if (!sharedSatelliteBoundary) {
     throw new Error('Shared satellite boundary benchmark fixture failed to parse.');
   }
 
-  return evaluateBoundary(sharedSatelliteBoundary, value);
+  return sharedSatelliteBoundary;
 }
 
-function evaluateWorkerDirectiveState(value: number): string {
-  return evaluateSatelliteDirectiveState(value);
+/**
+ * The EXACT production hot-path shape. `client:satellite`
+ * (satellite.ts:39) and the worker steady-state update (worker.ts:253) call
+ * `evaluateBoundary(boundary, value, previousState || undefined)` — the
+ * directive-abstraction call under measurement. With a hysteresis boundary and
+ * a real `previousState`, this routes through `Boundary.evaluateWithHysteresis`
+ * inside `evaluateBoundary`, including the dead-zone scan on a crossing.
+ */
+function evaluateSatelliteDirectiveState(value: number): string {
+  return evaluateBoundary(requireSharedSatelliteBoundary(), value, SATELLITE_PREVIOUS_STATE);
 }
 
-function evaluateWorkerBaselineState(value: number): string {
+/**
+ * The hand-written equivalent of {@link evaluateSatelliteDirectiveState}'s
+ * observable work: the canonical hysteresis primitive `evaluateBoundary` itself
+ * delegates to, called directly with the same value + previousState. Because
+ * the boundary has hysteresis and `previousState` crosses a threshold, this runs
+ * the IDENTICAL dead-zone scan the directive runs — the only difference is the
+ * directive-abstraction frame (the `evaluateBoundary` spec-gate + branch), which
+ * is precisely the tax this pair is meant to isolate.
+ */
+function evaluateSatelliteBaselineState(value: number): string {
+  return Boundary.evaluateWithHysteresis(canonicalSatelliteBoundary, value, SATELLITE_PREVIOUS_STATE) as string;
+}
+
+/**
+ * State-from-value helper for the worker fixtures that only need a plausible
+ * state string (resolved-state payload seeding, BenchWorker quantizer updates,
+ * the worker-runtime-steady diagnostic) and are NOT the hard-gated hot-path
+ * pair. These never carry a previousState in their bench role, so they use the
+ * raw evaluate — keeping their setup cheap without affecting the gated pair.
+ */
+function boundaryStateFromValue(value: number): string {
   return Boundary.evaluate(canonicalSatelliteBoundary, value) as string;
 }
 
@@ -1034,12 +1081,12 @@ async function runWorkerRuntimeStartupParityBaseline(): Promise<void> {
 
 const sharedWorkerRuntimeCoordinator = RuntimeCoordinator.create({ capacity: 8, name: 'bench-worker-runtime-steady' });
 sharedWorkerRuntimeCoordinator.registerQuantizer('layout', satelliteBoundary.states);
-const workerResolvedStatePayload = buildResolvedStatePayload(evaluateWorkerDirectiveState(800));
+const workerResolvedStatePayload = buildResolvedStatePayload(boundaryStateFromValue(800));
 const workerResolvedStateEnvelope = makeResolvedStateEnvelope('apply-resolved-state', workerResolvedStatePayload, true);
 
 function runWorkerRuntimeCoordinatorSteady(): void {
   sharedWorkerRuntimeCoordinator.markDirty('layout');
-  const state = evaluateWorkerDirectiveState(800);
+  const state = boundaryStateFromValue(800);
   workerRuntimeIndexSink = sharedWorkerRuntimeCoordinator.applyState('layout', state);
   const payload = buildCompositePayload(state);
   workerRuntimePayloadSink = JSON.stringify(payload).length + workerRuntimeIndexSink;
@@ -1190,11 +1237,12 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
   {
     label: 'satellite',
     directive: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
-    baseline: '[MANUAL] satellite -- Boundary.evaluate + state string',
+    baseline: '[MANUAL] satellite -- Boundary.evaluateWithHysteresis + state string',
     threshold: HARD_GATE_OVERHEAD_THRESHOLD,
     gate: true,
     runtimeClass: 'hot-path',
-    rationale: 'Hot-path state evaluation should stay close to the canonical boundary evaluator.',
+    rationale:
+      'Production client:satellite (satellite.ts:39) evaluates WITH previousState — the hysteresis branch — so the directive measures evaluateBoundary(boundary, value, previousState) against the canonical evaluateWithHysteresis it delegates to. Both run the identical dead-zone scan; the ratio is the pure directive-abstraction tax.',
   },
   {
     label: 'stream',
@@ -1226,11 +1274,12 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
   {
     label: 'worker',
     directive: '[DIRECTIVE] worker -- shared evaluate + composite build',
-    baseline: '[MANUAL] worker -- Boundary.evaluate + composite build',
+    baseline: '[MANUAL] worker -- Boundary.evaluateWithHysteresis + composite build',
     threshold: HARD_GATE_OVERHEAD_THRESHOLD,
     gate: true,
     runtimeClass: 'hot-path',
-    rationale: 'Normalized worker fallback evaluation should stay close to the canonical boundary evaluator.',
+    rationale:
+      'Production worker steady-state update (worker.ts:253) evaluates WITH previousState — the hysteresis branch — then builds a composite. The directive measures that exact call against the canonical evaluateWithHysteresis + identical composite build, so the ratio is the pure directive-abstraction tax.',
   },
   {
     label: 'worker-envelope',
@@ -1326,17 +1375,17 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
     name: '[DIRECTIVE] satellite -- evaluate + state string (hot path)',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateSatelliteDirectiveState(800);
+        const state = evaluateSatelliteDirectiveState(SATELLITE_HOT_VALUE);
         void `data-czap-state=${state}`;
       });
     },
     options: syncBenchTaskOptions,
   },
   {
-    name: '[MANUAL] satellite -- Boundary.evaluate + state string',
+    name: '[MANUAL] satellite -- Boundary.evaluateWithHysteresis + state string',
     fn: () => {
       repeatHotPath(() => {
-        const state = Boundary.evaluate(canonicalSatelliteBoundary, 800);
+        const state = evaluateSatelliteBaselineState(SATELLITE_HOT_VALUE);
         void `data-czap-state=${state}`;
       });
     },
@@ -1433,17 +1482,24 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
     name: '[DIRECTIVE] worker -- shared evaluate + composite build',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateWorkerDirectiveState(800);
+        // Production worker steady-state update (worker.ts:253) calls
+        // `evaluateBoundary(boundary, value, previousState || undefined)` — the
+        // SAME hysteresis-branch directive call satellite makes — then builds a
+        // composite. Measure that exact shape, not the no-previousState path.
+        const state = evaluateSatelliteDirectiveState(SATELLITE_HOT_VALUE);
         buildCompositeState(state);
       });
     },
     options: syncBenchTaskOptions,
   },
   {
-    name: '[MANUAL] worker -- Boundary.evaluate + composite build',
+    name: '[MANUAL] worker -- Boundary.evaluateWithHysteresis + composite build',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateWorkerBaselineState(800);
+        // Hand-written equivalent: the canonical hysteresis primitive directly,
+        // then the identical composite build. Work-equivalent to the directive
+        // closure save for the directive-abstraction frame.
+        const state = evaluateSatelliteBaselineState(SATELLITE_HOT_VALUE);
         buildCompositeState(state);
       });
     },
@@ -1568,7 +1624,7 @@ export const DIRECTIVE_BENCH_TASKS: readonly DirectiveBenchTaskDefinition[] = [
     name: '[BASELINE] worker-runtime-steady -- shared evaluate only',
     fn: () => {
       repeatHotPath(() => {
-        const state = evaluateWorkerDirectiveState(800);
+        const state = boundaryStateFromValue(800);
         const payload = buildCompositePayload(state);
         workerRuntimePayloadSink = JSON.stringify(payload).length;
         if (workerRuntimePayloadSink < -1) {
@@ -2151,3 +2207,56 @@ export function formatWorkerStartupSeamReport(split: WorkerStartupSplitResult | 
     `        shared residual share: ${sharedResidualShare === null ? 'n/a' : `${sharedResidualShare.toFixed(1)}%`}`,
   ];
 }
+
+/**
+ * Production-pin descriptor for a corrected hot-path pair. Surfaces the exact
+ * call the bench's DIRECTIVE closure measures so a drift guard can assert it
+ * still matches the real production call site (file + the arg shape production
+ * passes). The guard recomputes its `expected` from the production source — if a
+ * production call site stops passing `previousState`, or the bench reverts to a
+ * no-previousState phantom, the values here diverge and the guard fails loudly.
+ *
+ * `directiveState(value)` runs the bench's directive call. `hysteresisState` /
+ * `rawState` recompute the production (with-previousState) and phantom (no-
+ * previousState) results directly from the canonical primitives, so the guard
+ * can assert the directive equals the production branch and DIFFERS from the
+ * phantom on the pinned crossing input — proof the bench measures the heavier
+ * branch production actually runs, not the lightest path.
+ */
+export interface DirectiveProductionPin {
+  readonly label: string;
+  readonly productionFile: string;
+  /** Substring of the exact production call expression, incl. previousState arg. */
+  readonly productionCall: string;
+  readonly value: number;
+  readonly previousState: string;
+  readonly directiveState: (value: number) => string;
+  readonly hysteresisState: (value: number, previousState: string) => string;
+  readonly rawState: (value: number) => string;
+}
+
+export const DIRECTIVE_PRODUCTION_PINS: readonly DirectiveProductionPin[] = [
+  {
+    label: 'satellite',
+    productionFile: 'packages/astro/src/runtime/satellite.ts',
+    productionCall: 'evaluateBoundary(runtimeBoundary, value, previousState || undefined)',
+    value: SATELLITE_HOT_VALUE,
+    previousState: SATELLITE_PREVIOUS_STATE,
+    directiveState: evaluateSatelliteDirectiveState,
+    hysteresisState: (value, previousState) =>
+      evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
+    rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
+  },
+  {
+    label: 'worker',
+    productionFile: 'packages/astro/src/runtime/worker.ts',
+    productionCall: 'evaluateBoundary(boundary, value, previousState || undefined)',
+    value: SATELLITE_HOT_VALUE,
+    previousState: SATELLITE_PREVIOUS_STATE,
+    // The worker directive closure routes the SAME hysteresis call as satellite.
+    directiveState: evaluateSatelliteDirectiveState,
+    hysteresisState: (value, previousState) =>
+      evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
+    rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
+  },
+] as const;

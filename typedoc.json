@@ -47,11 +47,47 @@
       "Millis": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
       "CapLevel": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
       "CapSet": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
+      "CapTier": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md",
       "Quantizer": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",
-      "CzapValidationError": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md"
+      "Clock": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md",
+      "Rng": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md",
+      "LadderTarget": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md",
+      "CzapValidationError": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md",
+      "FaultDecl.trigger": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts",
+      "EscalationSubject": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
+      "mintValidated": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts",
+      "__type.evaluateResult": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary-f32.ts"
+    },
+    "@czap/error": {
+      "ValidationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
+      "ParseError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
+      "InvariantViolationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts"
+    },
+    "@czap/gauntlet": {
+      "RepoIR": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "Fact": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "Fact.value": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "SymbolId": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "TaintFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
+      "TaintFacts.interproceduralDepth": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
+      "MutationFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts",
+      "McdcFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
+      "McdcConditionOutcome": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts"
+    },
+    "@czap/_spine": {
+      "GeneratedUINode": "https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts",
+      "ComponentCatalog.catalogHash": "https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts"
+    },
+    "@czap/worker": {
+      "MetricsMessage": "https://github.com/heyoub/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md",
+      "_makeRing": "https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
+    },
+    "@czap/vite": {
+      "CAST_TARGETS": "https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
     },
     "@czap/detect": {
-      "ExtendedDeviceCapabilities": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md"
+      "ExtendedDeviceCapabilities": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",
+      "CapAxis": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md"
     },
     "@czap/scene": {
       "CANONICAL_SYSTEM_COUNT": "https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts",
@@ -70,7 +106,10 @@
       "Scope": "https://effect-ts.github.io/effect/effect/Scope.ts.html"
     },
     "typescript": {
-      "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map"
+      "Map": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+      "ts.CompilerOptions": "https://www.typescriptlang.org/docs/handbook/compiler-options.html",
+      "ts.Program": "https://github.com/microsoft/TypeScript/blob/main/src/compiler/types.ts",
+      "ts.LanguageService": "https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API"
     }
   }
 }

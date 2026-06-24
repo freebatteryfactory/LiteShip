@@ -202,9 +202,12 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     // an add, so without the discriminant gate this would apply as an edge-add, pass
     // the structural preview, and MINT a validated edge from an off-schema op. The
     // gate refuses it before the preview, so it never mints.
+    // The edge carries ALL advertised required fields (from/to/type) so the
+    // schema-derived required-field gate passes and the DISCRIMINANT gate is the one
+    // that fires — the op kind ('update') is off-schema for edges.
     const malformed = {
       ...honest,
-      ops: [{ op: 'update', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id } }],
+      ops: [{ op: 'update', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id, type: 'seq' } }],
     } as unknown as GraphPatch;
     const checked = AICast.validateGraphPatchProposal(base, malformed);
     expect(checked.ok).toBe(false);
@@ -214,7 +217,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
 
   test('a REFLECTION-FORGED token (witness symbol harvested off a real proposal) is still refused — authenticity is WeakSet identity, not a property brand', () => {
     const base = graph([node('a')]);
-    const real = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    const real = AICast.validateGraphPatchProposal(
+      base,
+      GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]),
+    );
     expect(real.ok).toBe(true);
     if (!real.ok) return;
 
@@ -233,7 +239,10 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
 
   test('a minted proposal and its token are FROZEN — the bound subject cannot be mutated in place', () => {
     const base = graph([node('a')]);
-    const checked = AICast.validateGraphPatchProposal(base, GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]));
+    const checked = AICast.validateGraphPatchProposal(
+      base,
+      GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]),
+    );
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
     expect(Object.isFrozen(checked.proposal.token)).toBe(true);
@@ -251,7 +260,9 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.ok).toBe(true);
     if (!checked.ok) return;
 
-    const mintedNode = checked.proposal.payload.ops.find((o): o is Extract<typeof o, { node: unknown }> => 'node' in o)?.node;
+    const mintedNode = checked.proposal.payload.ops.find(
+      (o): o is Extract<typeof o, { node: unknown }> => 'node' in o,
+    )?.node;
     expect(mintedNode?.id).toBe(honestB.id); // re-sealed to the true address
     expect(mintedNode?.id).not.toBe(base.nodes[0]!.id); // NOT the forged (impersonated) id
   });
@@ -269,7 +280,51 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     // A wholly non-object / non-envelope patch is also a clean rejection, not a crash.
     expect(() => AICast.validateGraphPatchProposal(base, null as unknown as GraphPatch)).not.toThrow();
     expect(AICast.validateGraphPatchProposal(base, 'nope' as unknown as GraphPatch).ok).toBe(false);
-    expect(AICast.validateGraphPatchProposal(base, { _tag: 'GraphPatch', ops: 'no' } as unknown as GraphPatch).ok).toBe(false);
+    expect(AICast.validateGraphPatchProposal(base, { _tag: 'GraphPatch', ops: 'no' } as unknown as GraphPatch).ok).toBe(
+      false,
+    );
+  });
+
+  test('an envelope MISSING _version is REJECTED — the advertised schema PINS _version, the guard enforces it', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // A model output that omits the advertised, REQUIRED `_version` field. Its ops
+    // are otherwise valid — the ONLY defect is the missing version. The envelope
+    // guard must reject it cleanly (not silently re-stamp it to a current patch).
+    const { _version, ...noVersion } = honest;
+    void _version;
+    const checked = AICast.validateGraphPatchProposal(base, noVersion as unknown as GraphPatch);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+  });
+
+  test('an envelope with a SKEWED _version (2) is REJECTED — a future/foreign format is never coerced to current', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // A future/foreign patch format claims `_version: 2`. The guard must REJECT it,
+    // never silently re-interpret it as a v1 delta (that would mis-read a format the
+    // build does not understand). Ops are otherwise valid; version skew is the defect.
+    const skewed = { ...honest, _version: 2 } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, skewed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+  });
+
+  test('the happy path: _version: 1 + valid ops still validates and mints', () => {
+    const base = graph([node('a')]);
+    // The advertised, pinned version on a well-formed envelope — accepted + minted.
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    expect(patch._version).toBe(1);
+    const checked = AICast.validateGraphPatchProposal(base, patch);
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+    expect(checked.proposal.target).toBe('graph-patch');
+    const next = AICast.applyValidatedPatch(base, checked.proposal);
+    expect(next.nodes.length).toBe(2);
   });
 
   test('a proposed edge with an off-schema type is REJECTED before minting', () => {
@@ -352,7 +407,9 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     const checked = AICast.validateGraphPatchProposal(base, patch);
     expect(checked.ok).toBe(false);
     if (checked.ok) return;
-    expect(checked.errors.join(' ')).toMatch(/missing its required 'family'/);
+    // The schema-derived required-field gate (which runs first) rejects the missing
+    // `family` against the advertised contract; the message names the missing field.
+    expect(checked.errors.join(' ')).toMatch(/missing the advertised required field "family"/);
   });
 
   test('policy and export node families are RECOGNIZED — not false-rejected as unknown family', () => {
@@ -421,6 +478,235 @@ describe('AI cast: no apply-without-validate path (the load-bearing rule)', () =
     expect(checked.errors.join(' ')).toMatch(/does not conform|schema/i);
   });
 
+  test('an EDGE op missing from/to (only type) is REJECTED — not a silent no-op-then-mint (the fortify regression)', () => {
+    const base = graph([node('a')]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
+    // THE FINDING (codex, tip 69261df8): the advertised schema requires edge.from/to/type,
+    // but the validator checked ONLY edge.type. `{ op:'remove', edge:{ type:'seq' } }`
+    // (missing from/to) no-op'd in GraphPatch.apply, left a valid graph, and MINTED —
+    // off-schema model output accepted. The schema-derived required-field gate rejects it.
+    const malformed = { ...honest, ops: [{ op: 'remove', edge: { type: 'seq' } }] } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, malformed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.target).toBe('graph-patch');
+    expect('proposal' in checked).toBe(false);
+    expect(checked.errors.join(' ')).toMatch(/missing the advertised required field/);
+    // Both missing nested fields are surfaced (from AND to), not just one.
+    expect(checked.errors.join(' ')).toMatch(/"from"/);
+    expect(checked.errors.join(' ')).toMatch(/"to"/);
+  });
+
+  test('an EDGE add op missing `to` is REJECTED (the other half of the class)', () => {
+    const a = node('a');
+    const b = node('b');
+    const base = graph([a, b]);
+    const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+    const malformed = { ...honest, ops: [{ op: 'add', edge: { from: a.id, type: 'seq' } }] } as unknown as GraphPatch;
+    const checked = AICast.validateGraphPatchProposal(base, malformed);
+    expect(checked.ok).toBe(false);
+    if (checked.ok) return;
+    expect(checked.errors.join(' ')).toMatch(/"to"/);
+  });
+
+  // -------------------------------------------------------------------------
+  // THE DRILL SERGEANT — the schema-completeness LAW. For EVERY required field
+  // the advertised JSON schema declares (envelope + every op variant + the nested
+  // `edge` object's required from/to/type), build an input MISSING that field and
+  // assert the validator REJECTS it. The required-field list is DERIVED FROM the
+  // advertised schema object itself (AICast.graphPatchProposalSchema), so a future
+  // schema addition AUTOMATICALLY gains a rejection case — "validated-in == the
+  // advertised contract" becomes a structural guarantee, caught here if ever
+  // unenforced, rather than field-by-field as codex finds each gap.
+  // -------------------------------------------------------------------------
+  describe('schema-completeness LAW: every advertised required field is ENFORCED by the validator', () => {
+    // A small JSON-schema reader mirroring only the shape this contract uses.
+    type SchemaObj = {
+      readonly type?: string;
+      readonly required?: readonly string[];
+      readonly properties?: Record<string, SchemaObj>;
+      readonly oneOf?: readonly SchemaObj[];
+      readonly items?: SchemaObj;
+    };
+    // The body key is the required OBJECT-typed property (`node` vs `edge`) — the
+    // structural payload that distinguishes the variants (NOT `family`, an enum).
+    const bodyKeyOf = (variant: SchemaObj): string | undefined =>
+      (variant.required ?? []).find((k) => k !== 'op' && variant.properties?.[k]?.type === 'object');
+
+    const buildBaseline = () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      // A fully-schema-valid envelope: a valid node-add op AND a valid edge-add op,
+      // so we can drop one required field at a time and watch the validator reject.
+      const validNodeOp = { op: 'add', family: 'signal', node: node('c') } as Record<string, unknown>;
+      const validEdgeOp = { op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } } as Record<string, unknown>;
+      const envelope = { _tag: 'GraphPatch', _version: 1, base: base.id } as Record<string, unknown>;
+      return { base, envelope, validNodeOp, validEdgeOp };
+    };
+
+    const schemaOf = (base: ReturnType<typeof graph>): SchemaObj =>
+      AICast.graphPatchProposalSchema(base.id).jsonSchema as unknown as SchemaObj;
+
+    test('the advertised schema is non-trivial (envelope + node/edge op variants with required fields)', () => {
+      const { base } = buildBaseline();
+      const schema = schemaOf(base);
+      expect((schema.required ?? []).length).toBeGreaterThan(0);
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+      expect(variants.length).toBe(2); // node-op variant + edge-op variant
+      for (const v of variants) expect((v.required ?? []).length).toBeGreaterThan(0);
+    });
+
+    test('ENVELOPE: dropping any required envelope field is rejected', () => {
+      const { base, envelope, validNodeOp } = buildBaseline();
+      const schema = schemaOf(base);
+      const required = schema.required ?? [];
+      expect(required).toContain('_tag');
+      for (const field of required) {
+        const full = { ...envelope, ops: [validNodeOp] } as Record<string, unknown>;
+        delete full[field];
+        const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+        expect(checked.ok, `envelope missing required '${field}' must be rejected`).toBe(false);
+      }
+    });
+
+    test('OP VARIANTS: for every required field of every advertised op variant, the op missing it is rejected', () => {
+      const { base, envelope, validNodeOp, validEdgeOp } = buildBaseline();
+      const schema = schemaOf(base);
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+
+      for (const variant of variants) {
+        const req = variant.required ?? [];
+        // The variant's body key (the required object property) tells us which valid op
+        // to start from: node-variant → validNodeOp, edge → validEdgeOp.
+        const bodyKey = bodyKeyOf(variant);
+        const validOp = bodyKey === 'node' ? validNodeOp : validEdgeOp;
+
+        for (const field of req) {
+          const op = structuredClone(validOp);
+          delete op[field];
+          const full = { ...envelope, ops: [op] } as Record<string, unknown>;
+          const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+          expect(checked.ok, `op variant [${req.join(',')}] missing required '${field}' must be rejected`).toBe(false);
+        }
+
+        // NESTED required: an object-typed required property pins its OWN required fields
+        // (the `edge` object → from/to/type). Drop each nested field and assert rejection —
+        // this is the exact class the original gap belonged to (edge.from/edge.to unenforced).
+        for (const field of req) {
+          const nested = variant.properties?.[field]?.required ?? [];
+          if (nested.length === 0) continue;
+          const valueOf = (validOp[field] ?? {}) as Record<string, unknown>;
+          for (const nestedField of nested) {
+            const innerValue = { ...valueOf };
+            delete innerValue[nestedField];
+            const op = { ...structuredClone(validOp), [field]: innerValue };
+            const full = { ...envelope, ops: [op] } as Record<string, unknown>;
+            const checked = AICast.validateGraphPatchProposal(base, full as unknown as GraphPatch);
+            expect(
+              checked.ok,
+              `op variant [${req.join(',')}] field '${field}' missing nested required '${nestedField}' must be rejected`,
+            ).toBe(false);
+          }
+        }
+      }
+    });
+
+    test('CONTROL: the fully-schema-valid baseline (both op kinds present) VALIDATES and MINTS', () => {
+      const { base, envelope, validNodeOp, validEdgeOp } = buildBaseline();
+      // Edge first would dangle until its endpoints exist; the node-add introduces 'c',
+      // and the edge connects the two pre-existing graph nodes — a structurally valid result.
+      const full = { ...envelope, ops: [validNodeOp, validEdgeOp] } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, full);
+      expect(checked.ok).toBe(true);
+      if (!checked.ok) return;
+      expect(checked.proposal.target).toBe('graph-patch');
+      // Re-stamp preserved: propose recomputes base + resultId deterministically.
+      expect(checked.proposal.payload.base).toBe(base.id);
+      expect(checked.proposal.payload.resultId).toBeDefined();
+      const expected = GraphPatch.propose(base, [
+        { op: 'add', family: 'signal', node: node('c') },
+        { op: 'add', edge: { from: base.nodes[0]!.id, to: base.nodes[1]!.id, type: 'seq' } },
+      ]);
+      expect(checked.proposal.payload.resultId).toBe(expected.resultId);
+      // The minted proposal applies cleanly through the host-authorized step.
+      const next = AICast.applyValidatedPatch(base, checked.proposal);
+      expect(next.id).toBe(expected.resultId);
+    });
+
+    // -----------------------------------------------------------------------
+    // oneOf EXACTLY-ONE exclusivity — the codex round-3 finding. The advertised
+    // schema uses `ops.items.oneOf` (node-variant XOR edge-variant). A single op
+    // carrying BOTH a valid `node` AND a valid `edge` matches BOTH branches —
+    // JSON-Schema `oneOf` requires EXACTLY ONE, so it MUST reject. The old
+    // validator picked the first body-present variant (node dominant) and MINTED
+    // the op, PRESERVING the stray `edge` in the validated payload.
+    // -----------------------------------------------------------------------
+    test('oneOf EXCLUSIVITY: an op carrying BOTH a valid node AND a valid edge is REJECTED (never minted)', () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+      // Codex's probe: a single op satisfying BOTH the node variant (op/family/node)
+      // AND the edge variant (op/edge). Both bodies are individually valid.
+      const bothBodies = {
+        ...honest,
+        ops: [{ op: 'add', family: 'signal', node: node('c'), edge: { from: a.id, to: b.id, type: 'seq' } }],
+      } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, bothBodies);
+      // GREEN-AFTER: rejected. (RED-BEFORE was `ok: true` with the edge preserved.)
+      expect(checked.ok).toBe(false);
+      if (checked.ok) return;
+      expect(checked.target).toBe('graph-patch');
+      expect('proposal' in checked).toBe(false);
+      // The rejection is self-explaining: either it straddled >1 oneOf branch, or the
+      // matched variant's additionalProperties:false rejected the off-contract body.
+      expect(checked.errors.join(' ')).toMatch(/oneOf|additionalProperties|more than one|does not model/i);
+    });
+
+    test('additionalProperties: a node op carrying a stray UNMODELED field is REJECTED (payload never preserves it)', () => {
+      const base = graph([node('a')]);
+      const honest = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('c') }]);
+      // A node op with an extra field the node variant does not model (not a second body —
+      // just an unmodeled scalar). additionalProperties:false must reject it.
+      const withExtra = {
+        ...honest,
+        ops: [{ op: 'add', family: 'signal', node: node('c'), bogus: 'extra' }],
+      } as unknown as GraphPatch;
+      const checked = AICast.validateGraphPatchProposal(base, withExtra);
+      expect(checked.ok).toBe(false);
+      if (checked.ok) return;
+      expect(checked.errors.join(' ')).toMatch(/additionalProperties|does not model/i);
+      expect(checked.errors.join(' ')).toMatch(/"bogus"/);
+    });
+
+    test('the advertised op variants pin additionalProperties:false (the schema-derived source of the extras gate)', () => {
+      const base = graph([node('a')]);
+      const schema = AICast.graphPatchProposalSchema(base.id).jsonSchema as unknown as {
+        readonly properties?: Record<string, { readonly items?: { readonly oneOf?: readonly { readonly additionalProperties?: boolean }[] } }>;
+      };
+      const variants = schema.properties?.['ops']?.items?.oneOf ?? [];
+      expect(variants.length).toBe(2);
+      for (const v of variants) expect(v.additionalProperties).toBe(false);
+    });
+
+    test('CONTROL: a clean single-variant op still validates+mints (node-only AND edge-only)', () => {
+      const a = node('a');
+      const b = node('b');
+      const base = graph([a, b]);
+      const envelope = { _tag: 'GraphPatch', _version: 1, base: base.id } as Record<string, unknown>;
+      // node-only op
+      const nodeOnly = { ...envelope, ops: [{ op: 'add', family: 'signal', node: node('c') }] } as unknown as GraphPatch;
+      expect(AICast.validateGraphPatchProposal(base, nodeOnly).ok).toBe(true);
+      // edge-only op (between the two pre-existing nodes)
+      const edgeOnly = {
+        ...envelope,
+        ops: [{ op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } }],
+      } as unknown as GraphPatch;
+      expect(AICast.validateGraphPatchProposal(base, edgeOnly).ok).toBe(true);
+    });
+  });
+
   test('assertTokenBinds enforces the private witness AND target consistency (runtime brand)', () => {
     const base = graph([node('a')]);
     const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b') }]);
@@ -464,7 +750,12 @@ describe('AI cast: deterministic content-addressed context + summary', () => {
     expect(c1.summary).toEqual(c2.summary);
     // The id is the real content address of the payload (no hidden state).
     expect(c1.id).toBe(
-      contentAddressOf({ base: g.id, summary: c1.summary, proposalSchemas: c1.proposalSchemas, systemPrompt: c1.systemPrompt }),
+      contentAddressOf({
+        base: g.id,
+        summary: c1.summary,
+        proposalSchemas: c1.proposalSchemas,
+        systemPrompt: c1.systemPrompt,
+      }),
     );
   });
 
@@ -552,7 +843,10 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
     const ctx = AICast.castContext(g, { targets: ['graph-patch'] });
     const gp = ctx.proposalSchemas.find((s) => s.target === 'graph-patch')!;
     const ops = (gp.jsonSchema['properties'] as Record<string, Record<string, unknown>>)['ops']!;
-    const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<string, Record<string, Record<string, unknown>>>;
+    const nodeOp = (ops['items'] as Record<string, unknown[]>)['oneOf']![0] as Record<
+      string,
+      Record<string, Record<string, unknown>>
+    >;
     expect(nodeOp['properties']!['op']!['enum']).toEqual(['add', 'remove', 'update']);
   });
 
@@ -612,7 +906,11 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
   });
 
   test('applyValidatedPatch refuses a (genuinely minted) GENERATED-UI proposal — the graph-patch apply step is target-gated', () => {
-    const ui = AICast.validateGeneratedUIProposal({ name: 'Text', props: { value: 'hi' } }, catalog, generatedUiValidator);
+    const ui = AICast.validateGeneratedUIProposal(
+      { name: 'Text', props: { value: 'hi' } },
+      catalog,
+      generatedUiValidator,
+    );
     expect(ui.ok).toBe(true);
     if (!ui.ok) return;
     // The proposal is authentic for its OWN target, but its UI-tree payload must never
@@ -646,8 +944,12 @@ describe('AI cast: genui GeneratedUITree rides the SAME validated-proposal envel
 
   test('the generated-ui validator is TOTAL — malformed/parsed-JSON input is rejected, never thrown', () => {
     // null / non-object would deref `node.name` inside the injected validator.
-    expect(() => AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator)).not.toThrow();
-    expect(AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator).ok).toBe(false);
+    expect(() =>
+      AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator),
+    ).not.toThrow();
+    expect(
+      AICast.validateGeneratedUIProposal(null as unknown as GeneratedUINode, catalog, generatedUiValidator).ok,
+    ).toBe(false);
     // `children` as a non-array is a clean rejection, not a crash.
     const badShape = { name: 'Text', children: 'nope' } as unknown as GeneratedUINode;
     expect(AICast.validateGeneratedUIProposal(badShape, catalog, generatedUiValidator).ok).toBe(false);

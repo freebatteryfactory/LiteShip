@@ -1,6 +1,6 @@
 {
   "name": "@czap/command",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -38,6 +38,11 @@
       "types": "./dist/host-browser/index.d.ts",
       "import": "./dist/host-browser/index.js",
       "development": "./src/host-browser/index.ts"
+    },
+    "./invariants": {
+      "types": "./dist/commands/check-invariants-registry.d.ts",
+      "import": "./dist/commands/check-invariants-registry.js",
+      "development": "./src/commands/check-invariants-registry.ts"
     }
   },
   "files": [
@@ -51,10 +56,10 @@
   },
   "dependencies": {
     "@czap/core": "workspace:*",
-    "@czap/assets": "workspace:*"
-  },
-  "peerDependencies": {
-    "effect": ">=4.0.0-beta.0"
+    "@czap/assets": "workspace:*",
+    "@czap/error": "workspace:*",
+    "@czap/gauntlet": "workspace:*",
+    "effect": ">=4.0.0-beta.32 <5"
   },
   "engines": {
     "node": ">=22.0.0"

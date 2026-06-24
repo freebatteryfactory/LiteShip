@@ -8,6 +8,6 @@
 
 > **SignalSourceType** = `"viewport"` \| `"time"` \| `"pointer"` \| `"scroll"` \| `"media"` \| `"custom"` \| `"audio"`
 
-Defined in: [core/src/signal.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L15)
+Defined in: [core/src/signal.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal.ts#L16)
 
 Tag of a [SignalSource](SignalSource.md) — the family of live data feed a signal binds to.

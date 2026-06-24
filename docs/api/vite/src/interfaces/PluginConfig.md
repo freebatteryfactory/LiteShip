@@ -6,7 +6,7 @@
 
 # Interface: PluginConfig
 
-Defined in: [vite/src/plugin.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L65)
+Defined in: [vite/src/plugin.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L52)
 
 Configuration options for the [plugin](../functions/plugin.md) factory. Every field
 is optional; omitted values use convention-based defaults.
@@ -17,7 +17,7 @@ is optional; omitted values use convention-based defaults.
 
 > `readonly` `optional` **dirs?**: `Partial`\<`Record`\<`"boundary"` \| `"style"` \| `"token"` \| `"theme"`, `string`\>\>
 
-Defined in: [vite/src/plugin.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L67)
+Defined in: [vite/src/plugin.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L54)
 
 Override source directories for each primitive kind.
 
@@ -27,7 +27,7 @@ Override source directories for each primitive kind.
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [vite/src/plugin.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L71)
+Defined in: [vite/src/plugin.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L58)
 
 Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted.
 
@@ -37,7 +37,7 @@ Named Vite environments to configure (browser / server / shader). Defaults to br
 
 > `readonly` `optional` **hmr?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L69)
+Defined in: [vite/src/plugin.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L56)
 
 Toggle surgical HMR emission (default `true`).
 
@@ -47,7 +47,7 @@ Toggle surgical HMR emission (default `true`).
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [vite/src/plugin.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L80)
+Defined in: [vite/src/plugin.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L67)
 
 WASM runtime configuration. Omitted (the default) **auto-detects**: the
 deterministic 3-step search in [resolveWASM](../functions/resolveWASM.md) runs, and the compute

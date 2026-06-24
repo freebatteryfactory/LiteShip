@@ -4,7 +4,7 @@ import { Beat, resolveBeat, resolveFrameMark, addFrameMarks } from '@czap/scene'
 describe('Beat', () => {
   it('tags a beat count without resolving to frames', () => {
     const b = Beat(4);
-    expect(b._t).toBe('beat');
+    expect(b._tag).toBe('beat');
     expect(b.count).toBe(4);
   });
 
@@ -46,7 +46,7 @@ describe('addFrameMarks', () => {
   });
 
   it('mixed units defer as a mark-sum until compile resolves them', () => {
-    expect(addFrameMarks(30, Beat(8))).toEqual({ _t: 'mark-sum', frames: 30, beats: 8 });
+    expect(addFrameMarks(30, Beat(8))).toEqual({ _tag: 'mark-sum', frames: 30, beats: 8 });
   });
 
   it('zero offsets renormalize to the narrowest representation', () => {
@@ -56,7 +56,7 @@ describe('addFrameMarks', () => {
 
   it('a mark-sum composes with further offsets', () => {
     const first = addFrameMarks(30, Beat(8));
-    expect(addFrameMarks(first, Beat(2))).toEqual({ _t: 'mark-sum', frames: 30, beats: 10 });
-    expect(addFrameMarks(first, 5)).toEqual({ _t: 'mark-sum', frames: 35, beats: 8 });
+    expect(addFrameMarks(first, Beat(2))).toEqual({ _tag: 'mark-sum', frames: 30, beats: 10 });
+    expect(addFrameMarks(first, 5)).toEqual({ _tag: 'mark-sum', frames: 35, beats: 8 });
   });
 });

@@ -43,7 +43,7 @@ describe('astro directive branch coverage', () => {
     restoreWorker?.();
     restoreWorker = null;
     document.querySelectorAll<HTMLElement>('*').forEach((element) => {
-      element.dispatchEvent(new CustomEvent('czap:dispose'));
+      element.dispatchEvent(new CustomEvent('czap:teardown'));
     });
     Diagnostics.reset();
     stubs.restoreAll();
@@ -627,11 +627,12 @@ describe('astro directive branch coverage', () => {
   });
 
   test('gpu directive still re-boots a host that SURVIVES a live reinit before the probe settles', () => {
-    // slots.ts dispatches czap:dispose + czap:reinit on still-connected roots on
-    // every VT after-swap. A persisted (transition:persist) host that bailed on
-    // the provisional tier must keep its deferred boot through that reinit — the
-    // bail path has no czap:reinit re-registration, so dropping the listener on
-    // dispose would strand a capable device that upgrades right after the swap.
+    // slots.ts dispatches czap:reinit on still-connected roots on every VT
+    // after-swap (the reinit step of the swap pipeline; teardown is a SEPARATE
+    // event after F-2). A persisted (transition:persist) host that bailed on the
+    // provisional tier must keep its deferred onDetectReady boot through that
+    // reinit — the bail path has no czap:reinit re-registration, so the deferred
+    // listener (which only fires on detect-ready) must survive a stray reinit.
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
     document.documentElement.setAttribute('data-czap-tier', 'styled');
 
@@ -640,7 +641,6 @@ describe('astro directive branch coverage', () => {
     expect(host.querySelector('canvas')).toBeNull();
 
     // Live VT reinit lands before the probe settles; the host stays connected.
-    host.dispatchEvent(new CustomEvent('czap:dispose', { bubbles: true }));
     host.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
     expect(host.isConnected).toBe(true);
 
@@ -1975,7 +1975,7 @@ describe('astro directive branch coverage', () => {
     resizeCallback?.([] as never, {} as never);
     expect(el.getAttribute('data-czap-state')).toBe('mobile');
 
-    el.dispatchEvent(new CustomEvent('czap:dispose'));
+    el.dispatchEvent(new CustomEvent('czap:teardown'));
     expect(disconnect).toHaveBeenCalled();
   });
 });

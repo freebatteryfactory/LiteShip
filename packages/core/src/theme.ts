@@ -10,7 +10,7 @@
 import type { ContentAddress } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { fnv1aBytes } from './fnv.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 interface ThemeDef<V extends readonly string[] = readonly string[]> {
   readonly _tag: 'ThemeDef';
@@ -127,7 +127,7 @@ export const Theme: ThemeFactory & {
     for (const [tokenName, variantMap] of Object.entries(config.tokens)) {
       for (const variant of variantSet) {
         if (!(variant in variantMap)) {
-          throw new CzapValidationError('Theme.make', `Token "${tokenName}" is missing value for variant "${variant}"`);
+          throw ValidationError('Theme.make', `Token "${tokenName}" is missing value for variant "${variant}"`);
         }
       }
     }

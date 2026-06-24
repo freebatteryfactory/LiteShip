@@ -4,57 +4,61 @@ import { defineCapsule } from '@czap/core';
 import { resetCapsuleCatalog } from '@czap/core/testing';
 import * as Harness from '@czap/core/harness';
 
+const demoBuffer = () =>
+  defineCapsule({
+    _kind: 'stateMachine',
+    name: 'demo.tokenBuffer',
+    input: Schema.Unknown,
+    output: Schema.Unknown,
+    capabilities: { reads: [], writes: [] },
+    invariants: [],
+    budgets: { p95Ms: 1 },
+    site: ['node'],
+  });
+
 describe('generateStateMachine', () => {
   beforeEach(() => resetCapsuleCatalog());
 
-  it('emits illegal-transition, replay, invariant-preservation skips without a binding context', () => {
-    const cap = defineCapsule({
-      _kind: 'stateMachine',
-      name: 'demo.tokenBuffer',
-      input: Schema.Unknown,
-      output: Schema.Unknown,
-      capabilities: { reads: [], writes: [] },
-      invariants: [],
-      budgets: { p95Ms: 1 },
-      site: ['node'],
-    });
-    const { testFile, benchFile } = Harness.generateStateMachine(cap);
-    expect(testFile).toContain('illegal transition');
-    expect(testFile).toContain('replay');
-    expect(testFile).toContain('invariant holds');
-    expect(testFile).toContain('it.skip');
-    expect(testFile).not.toContain('fc.assert');
-    expect(benchFile).toContain("bench('demo.tokenBuffer'");
-    expect(benchFile).toContain('{ time: 500 }');
+  it('THROWS UnsupportedError without a binding context (wire-or-fail, never a skip)', () => {
+    expect(() => Harness.generateStateMachine(demoBuffer())).toThrow(
+      /neither a runtime tick driver nor an importable field binding/i,
+    );
   });
 
-  it('emits runtime-probing property tests wired to the binding when a HarnessContext is supplied', () => {
-    const cap = defineCapsule({
-      _kind: 'stateMachine',
-      name: 'demo.tokenBuffer',
-      input: Schema.Unknown,
-      output: Schema.Unknown,
-      capabilities: { reads: [], writes: [] },
-      invariants: [],
-      budgets: { p95Ms: 1 },
-      site: ['node'],
-    });
-    const { testFile } = Harness.generateStateMachine(cap, {
+  it('THROWS when a binding is present but the compile-time probe did not resolve step/initialState', () => {
+    expect(() =>
+      Harness.generateStateMachine(demoBuffer(), {
+        bindingImport: '../../packages/demo/src/buffer.js',
+        bindingName: 'bufferCapsule',
+        arbitraryImport: '../../packages/core/src/harness/arbitrary-from-schema.js',
+      }),
+    ).toThrow(/did not resolve it as arbitrary-derivable/i);
+  });
+
+  it('emits a real field-driven traversal + a REAL step() bench when the binding + probe resolved step/initialState', () => {
+    const { testFile, benchFile } = Harness.generateStateMachine(demoBuffer(), {
       bindingImport: '../../packages/demo/src/buffer.js',
       bindingName: 'bufferCapsule',
       arbitraryImport: '../../packages/core/src/harness/arbitrary-from-schema.js',
+      arbitraryDerivable: true,
+      handlersPresent: true,
     });
     expect(testFile).toContain("from '../../packages/demo/src/buffer.js'");
     expect(testFile).toContain('bufferCapsule');
     expect(testFile).toContain('fc.assert');
     expect(testFile).toContain('schemaToArbitrary');
-    // The handler probe happens at RUNTIME inside the generated file — a
-    // capsule without step/initialState must self-report as a skip there.
-    expect(testFile).toContain('cap.step === undefined || cap.initialState === undefined');
-    expect(testFile).toContain('it.skip');
-    // Non-UnsupportedSchemaError derivation failures must fail, not skip.
-    expect(testFile).toContain('throw arbError');
+    expect(testFile).toContain('cap.step!');
     expect(testFile).toContain('invariants hold after every step');
     expect(testFile).toContain('replays deterministically');
+    // The harness emits a real test or throws — never a skip token.
+    expect(testFile).not.toContain('.skip(');
+    // The bench is a REAL step() measurement — never a not-applicable marker, never
+    // a vacuous typeof-string premise guard. Every lesser disposition threw above,
+    // so a returned state-machine bench is ALWAYS a real measurement.
+    expect(benchFile).not.toContain('// BENCH-NOT-APPLICABLE:');
+    expect(benchFile).toContain('step() over canonical events');
+    expect(benchFile).toContain('cap.step!');
+    expect(benchFile).not.toContain(".toBe('string')");
+    expect(benchFile).not.toContain('bench.skip');
   });
 });

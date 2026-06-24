@@ -22,6 +22,8 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { CompositeState } from '@czap/core';
+import { compositeStateToRgba } from '@czap/core';
+import { HostCapabilityError, IoError, ValidationError } from '@czap/error';
 import type { EncodedVideo, FrameEncoder, VideoEncodeConfig } from './dual-export.js';
 
 // ---------------------------------------------------------------------------
@@ -102,48 +104,10 @@ function platformHint(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Deterministic frame → RGBA — a real, reproducible function of the frame state
+// Frame → RGBA: the ONE shared painter (`@czap/core`'s `compositeStateToRgba`).
+// The command ffmpeg render backend uses the SAME function, so a given
+// CompositeState yields byte-identical pixels on either headless path.
 // ---------------------------------------------------------------------------
-
-/**
- * Paint one {@link CompositeState} into a solid `width*height*4` RGBA buffer.
- *
- * The fill color is a DETERMINISTIC function of the frame's discrete state +
- * css outputs (a small FNV-1a over the canonical-ish key/value pairs). This is
- * honest: re-encoding the same frames yields byte-identical RGBA, and distinct
- * frames yield distinct pixels — the encoded video genuinely varies with the
- * graph's poses. (A future renderer can paint richer geometry; the seam shape
- * is unchanged.)
- */
-function frameToRgba(state: CompositeState, width: number, height: number): Uint8Array {
-  let hash = 0x811c9dc5;
-  const mix = (s: string): void => {
-    for (let i = 0; i < s.length; i++) {
-      hash ^= s.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-  };
-  for (const [k, v] of Object.entries(state.discrete)) {
-    mix(k);
-    mix(String(v));
-  }
-  for (const [k, v] of Object.entries(state.outputs.css)) {
-    mix(k);
-    mix(String(v));
-  }
-  const r = hash & 0xff;
-  const g = (hash >>> 8) & 0xff;
-  const b = (hash >>> 16) & 0xff;
-
-  const bytes = new Uint8Array(width * height * 4);
-  for (let i = 0; i < bytes.length; i += 4) {
-    bytes[i] = r;
-    bytes[i + 1] = g;
-    bytes[i + 2] = b;
-    bytes[i + 3] = 255;
-  }
-  return bytes;
-}
 
 // ---------------------------------------------------------------------------
 // The ffmpeg FrameEncoder
@@ -197,14 +161,10 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
   return async (frames: readonly CompositeState[], config: VideoEncodeConfig): Promise<EncodedVideo> => {
     const probe = probeFfmpegEncode(bin);
     if (!probe.ok) {
-      throw new Error(
-        probe.hint
-          ? `ffmpeg headless encode unavailable: ${probe.detail}. ${probe.hint}`
-          : `ffmpeg headless encode unavailable: ${probe.detail}`,
-      );
+      throw HostCapabilityError('ffmpeg', probe.hint ? `${probe.detail}. ${probe.hint}` : probe.detail);
     }
     if (frames.length === 0) {
-      throw new Error('ffmpegFrameEncoder: no frames to encode');
+      throw ValidationError('ffmpeg.encode', 'no frames to encode');
     }
 
     const dir = mkdtempSync(join(tmpdir(), 'czap-stage-encode-'));
@@ -236,7 +196,7 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
 
       try {
         for (const state of frames) {
-          await writeStdin(proc.stdin, frameToRgba(state, config.width, config.height));
+          await writeStdin(proc.stdin, compositeStateToRgba(state, config.width, config.height));
         }
       } finally {
         proc.stdin.end();
@@ -245,17 +205,27 @@ export function ffmpegFrameEncoder(options?: FfmpegEncoderOptions): FrameEncoder
       await new Promise<void>((resolve, reject) => {
         proc.on('close', (code) => {
           if (code === 0) resolve();
-          else reject(new Error(`ffmpeg exited with code ${code}: ${stderrBuf.slice(-500)}`));
+          else reject(IoError('ffmpeg.encode', `ffmpeg exited with code ${code}: ${stderrBuf.slice(-500)}`));
         });
         proc.on('error', (err) => reject(err));
       });
 
       if (!existsSync(output)) {
-        throw new Error(`ffmpeg exited 0 but wrote no file at ${output}. stderr tail: ${stderrBuf.slice(-500)}`);
+        throw IoError(
+          'ffmpeg.writeOutput',
+          `ffmpeg exited 0 but wrote no file. stderr tail: ${stderrBuf.slice(-500)}`,
+          {
+            path: output,
+          },
+        );
       }
       const bytes = new Uint8Array(readFileSync(output));
       if (bytes.byteLength === 0) {
-        throw new Error(`ffmpeg exited 0 but wrote a 0-byte file. stderr tail: ${stderrBuf.slice(-500)}`);
+        throw IoError(
+          'ffmpeg.writeOutput',
+          `ffmpeg exited 0 but wrote a 0-byte file. stderr tail: ${stderrBuf.slice(-500)}`,
+          { path: output },
+        );
       }
 
       return { bytes, codec: 'h264', container: 'video/mp4' };

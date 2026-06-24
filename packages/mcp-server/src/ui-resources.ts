@@ -15,7 +15,7 @@
  */
 import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
-import { ResourceNotFoundError } from './errors.js';
+import { NotFoundError } from '@czap/error';
 import { renderCommandCatalog, renderComponentCatalog, renderGlossary } from './ui-render.js';
 
 /** The MCP Apps UI content type (exact literal per SEP-1865 2026-01-26). */
@@ -123,9 +123,9 @@ export function listUiResources(): readonly McpUiResource[] {
   return REGISTRY.map((entry) => entry.resource);
 }
 
-/** Read one UI resource by exact `ui://` URI. Unknown URI → {@link ResourceNotFoundError} (→ -32002), as for D3. */
+/** Read one UI resource by exact `ui://` URI. Unknown URI → `NotFoundError` (→ -32002), as for D3. */
 export function readUiResource(uri: string): McpUiResourceContents {
   const entry = BY_URI.get(uri);
-  if (!entry) throw new ResourceNotFoundError(uri);
+  if (!entry) throw NotFoundError('resource', uri);
   return { contents: [{ uri, mimeType: entry.resource.mimeType, text: entry.render(), _meta: entry.resource._meta }] };
 }

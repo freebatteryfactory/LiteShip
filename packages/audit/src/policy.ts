@@ -58,7 +58,9 @@ export const auditIgnoreGlobs = [
 
 export const packageTopology: Record<string, PackagePolicy> = {
   '@czap/canonical': {
-    // Self-contained bytes kernel (ADR-0013): sole dep @noble/hashes; no internal @czap imports.
+    // Self-contained bytes kernel (ADR-0013): sole third-party dep @noble/hashes.
+    // Imports the foundational @czap/error algebra (layering-exempt — see
+    // foundationalPackages below); no other internal @czap imports.
     allowedInternalImports: [],
     kind: 'standalone',
   },
@@ -128,6 +130,9 @@ export const packageTopology: Record<string, PackagePolicy> = {
       '@czap/web',
       '@czap/worker',
       '@czap/genui',
+      // 0.4.0: the SVG last-mile directive + the scene→live bridge reuse the live
+      // SVG egress / scene runtime. Acyclic — @czap/scene depends only on _spine + core.
+      '@czap/scene',
     ],
     kind: 'host-adjacent',
   },
@@ -169,7 +174,11 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // registry, assets (asset-analyze), and @czap/audit (CUT D9b-2: the CLI is
     // the sole adapter that wires the runAudit capability for `czap audit`). The
     // cli <-> mcp-server relationship is a dynamic import not tracked here.
-    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit'],
+    // Slice B (B1): @czap/gauntlet — the CLI is the HOST that builds the repo-IR
+    // (via @czap/audit) and injects it into litelaunchGauntlet, keeping the lean
+    // @czap/command/MCP check path IR-free. A direct edge to the standalone
+    // gauntlet leaf (no cycle).
+    allowedInternalImports: ['@czap/core', '@czap/command', '@czap/assets', '@czap/audit', '@czap/gauntlet'],
     kind: 'host-adjacent',
   },
   '@czap/mcp-server': {
@@ -204,18 +213,55 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // imports @czap/assets for the audio-projection DSP the asset.analyze handler
     // runs. Host execution (spawn/ffmpeg/vitest) lives here so CLI and MCP share
     // one factory and mcp-server never imports cli.
-    allowedInternalImports: ['@czap/core', '@czap/assets'],
+    // The `check` command wraps the PURE gauntlet engine fold
+    // (litelaunchGauntlet), so the host surface also imports @czap/gauntlet —
+    // a one-way edge to a standalone leaf (the gauntlet imports only
+    // @czap/error, so no cycle), blessed here.
+    allowedInternalImports: ['@czap/core', '@czap/assets', '@czap/gauntlet'],
     kind: 'layered',
   },
   '@czap/audit': {
     // CUT D9b-1: the packageable, downstream-installable audit engine. Operates
-    // on a repo as a file/AST corpus (typescript + fast-glob) and imports NO
-    // internal @czap package — a standalone leaf consumed by @czap/cli (D9b-2)
-    // and by downstream projects directly.
+    // on a repo as a file/AST corpus (typescript + fast-glob). Imports the
+    // foundational @czap/error algebra (layering-exempt, see foundationalPackages).
+    // Slice B (B1): audit is the HOST that materializes the gauntlet's RepoIR
+    // (buildRepoIR) — it imports @czap/gauntlet (the lean engine DEFINES the
+    // RepoIR interface; audit BUILDS it) and @czap/canonical (the blake3 content
+    // -address kernel for per-file digests). Both are standalone leaves, so the
+    // audit → gauntlet / audit → canonical edges are acyclic (gauntlet deps only
+    // @czap/error + fast-glob; canonical deps only @czap/error + @noble/hashes).
+    // Slice B (B1): audit references NO LiteShip-local contract (ADR-0012 — it is
+    // downstream-installable). Its repo-IR builder emits only STRUCTURAL facts
+    // (the AST `is-default-export` / `bare-throw` any TS repo has) and exposes a
+    // `FactOracle` injection hook; LiteShip's repo-LOCAL `NO_DEFAULT_EXPORT`
+    // invariant-regex oracle is built + injected by the CLI HOST (which deps
+    // @czap/command). The audit engine must NOT depend on @czap/command.
+    allowedInternalImports: ['@czap/canonical', '@czap/gauntlet'],
+    kind: 'standalone',
+  },
+  '@czap/gauntlet': {
+    // The rigor engine (Slice A foundations). A standalone, downstream-installable
+    // leaf: Findings + assurance levels + the gate plugin contract + authority
+    // ratchet. Imports only the foundational @czap/error algebra (layering-exempt).
     allowedInternalImports: [],
     kind: 'standalone',
   },
 };
+
+/**
+ * Foundational packages every internal package may import WITHOUT an explicit
+ * `allowedInternalImports` entry — the runtime analogue of how `@czap/_spine`
+ * is the universal type source. `@czap/error` is the one zero-dependency error
+ * algebra the whole monorepo (and downstream consumers) builds failure paths
+ * on; threading it through every package's allow-list would be noise that every
+ * NEW package must then remember to repeat. Listed here once, the topology
+ * check (structure.ts) treats an edge to any of these as always-blessed.
+ *
+ * Kept deliberately tiny: a package qualifies only if it is a zero-`@czap`-dep
+ * root that is genuinely universal. Adding to this list widens what every
+ * package may import unchecked, so it is a conscious architectural decision.
+ */
+export const foundationalPackages: readonly string[] = ['@czap/error'];
 
 /**
  * Dynamic package imports — `import('@czap/...')` — that are deliberately
@@ -315,15 +361,21 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
   {
     rule: 'default-export',
     package: '@czap/astro',
+    filePrefix: 'src/client-directives/graph.ts',
+    reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
+  },
+  {
+    rule: 'default-export',
+    package: '@czap/astro',
+    filePrefix: 'src/client-directives/svg.ts',
+    reason: 'Astro client directives require default exports and this file is an intentionally tiny wrapper.',
+  },
+  {
+    rule: 'default-export',
+    package: '@czap/astro',
     filePrefix: 'src/runtime/inspector-toolbar-app.ts',
     reason:
       "Astro's addDevToolbarApp contract requires a default-exported DevToolbarApp entrypoint — the same unavoidable framework contract as the client directives.",
-  },
-  {
-    rule: 'placeholder-content',
-    package: '@czap/vite',
-    filePrefix: 'src/virtual-modules.ts',
-    reason: 'Virtual module placeholders are documented stubs for bundler/type-checker compatibility.',
   },
   {
     rule: 'missing-runtime-capability',
@@ -331,26 +383,6 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     filePrefix: 'src/client-directives/gpu.ts',
     summaryIncludes: 'WebGPU',
     reason: 'GPU/WebGPU is an explicitly documented partial capability surface in the first wave.',
-  },
-  {
-    // CUT D9b-1 — the audit engine now lives in a scanned package, so the
-    // integrity detector reads its OWN pattern/summary strings (e.g. the
-    // "placeholder/debug marker" message it emits). Those are detector copy, not
-    // runtime placeholders.
-    rule: 'placeholder-content',
-    package: '@czap/audit',
-    filePrefix: 'src/integrity.ts',
-    reason:
-      "The integrity detector's own placeholder/debug summary strings — detector copy, not a runtime placeholder.",
-  },
-  {
-    // The audit policy's documented-stub allowlist reason + the vite virtual-module
-    // capability note both contain the word "placeholder" describing OTHER files.
-    rule: 'placeholder-content',
-    package: '@czap/audit',
-    filePrefix: 'src/policy.ts',
-    reason:
-      "The audit policy's own allowlist reason + capability-note strings describe documented stubs elsewhere — not a runtime placeholder here.",
   },
   {
     // html-trust's Trusted Types policy creation can fail under restrictive
@@ -404,6 +436,20 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
     summaryIncludes: 'returns null',
     reason:
       'readFailedPhase enriches a gauntlet failure from an optional timings artifact; a corrupt artifact degrades to the bare exit status by design — the failure itself is never swallowed.',
+  },
+  {
+    // 0.4.0 — _declarationAccepts is a boolean acceptance PROBE: it runs an
+    // Effect schema parser against a sentinel value to detect un-annotated
+    // `Schema.instanceOf(Ctor)` forms (which carry no typeConstructor annotation).
+    // A parser that THROWS is exactly the rejection signal — the caught error
+    // carries no information beyond accepted=false, which is the function's whole
+    // contract. There is nothing to surface; consuming the binding would be noise.
+    rule: 'fallback-laundering',
+    package: '@czap/core',
+    filePrefix: 'src/harness/arbitrary-from-schema.ts',
+    summaryIncludes: 'returns false',
+    reason:
+      'Declaration acceptance probe (_declarationAccepts): a throwing schema parser IS the rejection result (accepted=false); the caught error carries no information beyond the boolean the function returns, so nothing is laundered — the probe result is the contract.',
   },
   {
     // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumers

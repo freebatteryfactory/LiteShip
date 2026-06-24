@@ -11,7 +11,7 @@ import type { ContentAddress } from './brands.js';
 import { CanonicalCbor } from './cbor.js';
 import { Diagnostics } from './diagnostics.js';
 import { fnv1aBytes } from './fnv.js';
-import { CzapValidationError } from './validation-error.js';
+import { ValidationError } from '@czap/error';
 
 /** Design-system category of a {@link Token} — governs compilation strategy and CSS property prefix. */
 export type TokenCategory = 'color' | 'spacing' | 'typography' | 'shadow' | 'radius' | 'animation' | 'effect';
@@ -198,7 +198,7 @@ export const Token: TokenFactory & {
     if ('value' in config && !('values' in config)) {
       const simple = config as { name: N; category: TokenCategory; value: unknown };
       if (simple.name === '') {
-        throw new CzapValidationError('Token.make', 'Token name must not be empty.');
+        throw ValidationError('Token.make', 'Token name must not be empty.');
       }
       const axes = [] as unknown as A;
       const values = {};
@@ -225,13 +225,13 @@ export const Token: TokenFactory & {
       readonly fallback?: unknown;
     };
     if (full.name === '') {
-      throw new CzapValidationError('Token.make', 'Token name must not be empty.');
+      throw ValidationError('Token.make', 'Token name must not be empty.');
     }
     const axes = (full.axes ?? ['default']) as A;
     const seen = new Set<string>();
     for (const axis of axes) {
       if (seen.has(axis)) {
-        throw new CzapValidationError('Token.make', `duplicate axis "${axis}". Each axis must have a unique name.`);
+        throw ValidationError('Token.make', `duplicate axis "${axis}". Each axis must have a unique name.`);
       }
       seen.add(axis);
     }
@@ -240,7 +240,7 @@ export const Token: TokenFactory & {
     for (const key of Object.keys(full.values)) {
       const segments = key.split(':').length;
       if (segments !== axes.length) {
-        throw new CzapValidationError(
+        throw ValidationError(
           'Token.make',
           `values key "${key}" has ${segments} segment(s) but the token declares ${axes.length} axes [${axes.join(', ')}]. ` +
             `Keys join one value per axis with ':' in alphabetical axis-name order — e.g. "${sortedAxes.map((axis) => `<${axis}>`).join(':')}".`,
@@ -251,7 +251,7 @@ export const Token: TokenFactory & {
     let fallback = full.fallback;
     if (!('fallback' in full)) {
       if (!('default' in full.values)) {
-        throw new CzapValidationError(
+        throw ValidationError(
           'Token.make',
           'fallback omitted and values has no "default" key — add values.default or pass fallback explicitly.',
         );

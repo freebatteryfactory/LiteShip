@@ -53,7 +53,7 @@ describe('createEdgeHostAdapter', () => {
     const result = await adapter.resolve(makeHeaders());
 
     expect(result.capabilities.viewportWidth).toBe(1280);
-    expect(result.tier.capLevel).toBeDefined();
+    expect(result.tier.capTier).toBeDefined();
     expect(result.htmlAttributes).toContain('data-czap-tier=');
     expect(result.responseHeaders.acceptCH).toContain('Sec-CH-Viewport-Width');
     expect(result.cacheStatus).toBe('disabled');

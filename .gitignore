@@ -28,7 +28,31 @@ examples/remotion-demo/node_modules/
 test-results/
 tests/_results/
 coverage/
-benchmarks/
+# Ignore benchmarks/ CONTENTS (regenerated run artifacts) but allow the two
+# COMMITTED performance CONTRACTS below to be re-included. `benchmarks/*` (not
+# `benchmarks/`) is required so git walks the dir and the negations can match —
+# a wholesale `benchmarks/` ignore cannot be un-ignored per-file.
+benchmarks/*
+# …except the two COMMITTED performance CONTRACTS (source of truth, not
+# regenerated bench output): the declared-distribution registry (the headline
+# law's anchor) and the complexity-map baseline (the regression baseline). The
+# performance-contracts gate folds over these committed bytes, so they must be
+# tracked — every other benchmarks/ file stays an ignored run artifact.
+!benchmarks/distributions.json
+!benchmarks/complexity-map.json
+# …and the mutation-score baseline (the avionics mutation-as-divergence ratchet
+# floor — `czap check --ir --mutate`'s committed per-file kill-score; the
+# mutationDivergenceGate folds it to flag a regression). A committed contract, not
+# a regenerated artifact — tracked so the ratchet can only ever rise.
+!benchmarks/mutation-score.json
+# …and the equivalent-mutant registry (the hand-authored, owner-redlinable,
+# content-addressed justifications for the few RUNTIME mutants no test can kill —
+# the ONLY honest way to exclude an equivalent mutant). A source-of-truth contract,
+# not a regenerated artifact: the engine + the meta-proof test read these committed
+# bytes, so it must be present on EVERY CI lane (it was previously ignored, so a
+# fresh macos/windows checkout lacked it and the meta-proof's committed-registry
+# assertion failed with ENOENT — only the linux lane regenerated it pre-test).
+!benchmarks/mutation-equivalents.json
 reports/
 .vitest-attachments/
 lint-report.json
@@ -44,9 +68,8 @@ tests/smoke/.out-*.mp4
 # czap capsule factory scratch (generated MCP manifests, content-addressed cache)
 .czap/
 
-# Local Claude tooling state (per-machine, contains absolute paths)
-.claude/settings.local.json
-.claude/scheduled_tasks.lock
+# Local Claude tooling state (per-machine working notes — NEVER in the repo)
+.claude/
 
 # IDE workspace files (per-developer)
 *.code-workspace

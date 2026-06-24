@@ -2,7 +2,8 @@
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Diagnostics } from '@czap/core';
-import { bootstrapSlots, getSlotRegistry, installSwapReinit, rescanSlots } from '../../../packages/astro/src/runtime/slots.js';
+import { bootstrapSlots, getSlotRegistry, rescanSlots } from '../../../packages/astro/src/runtime/slots.js';
+import { installSwapPipeline } from '../../../packages/astro/src/runtime/swap-pipeline.js';
 import { createStubRegistry } from '../../helpers/define-property-stub.js';
 import { stubWorkerEnvironment } from '../../helpers/mock-worker.js';
 import { captureDiagnosticsAsync } from '../../helpers/diagnostics.js';
@@ -13,7 +14,7 @@ const stubs = createStubRegistry();
 type RuntimeWindow = Window & {
   __CZAP_SLOT_REGISTRY__?: unknown;
   __CZAP_SLOT_BOOTSTRAPPED__?: boolean;
-  __CZAP_SWAP_REINIT__?: boolean;
+  __CZAP_SWAP_PIPELINE__?: boolean;
   __CZAP_SLOTS__?: unknown;
 };
 
@@ -25,7 +26,7 @@ function resetRuntimeWindow(): void {
   const runtimeWindow = window as RuntimeWindow;
   delete runtimeWindow.__CZAP_SLOT_REGISTRY__;
   delete runtimeWindow.__CZAP_SLOT_BOOTSTRAPPED__;
-  delete runtimeWindow.__CZAP_SWAP_REINIT__;
+  delete runtimeWindow.__CZAP_SWAP_PIPELINE__;
   delete runtimeWindow.__CZAP_SLOTS__;
 }
 
@@ -82,7 +83,7 @@ describe('astro runtime slot edge branches', () => {
 
     expect(() => getSlotRegistry()).not.toThrow();
     expect(() => bootstrapSlots()).not.toThrow();
-    expect(() => installSwapReinit()).not.toThrow();
+    expect(() => installSwapPipeline(['satellite'])).not.toThrow();
     expect(() => rescanSlots(document.createDocumentFragment())).not.toThrow();
   });
 });
@@ -243,7 +244,7 @@ describe('astro worker directive edge branches', () => {
     expect(element.getAttribute('data-czap-state')).toBe('compact');
 
     element.dispatchEvent(new CustomEvent('czap:reinit'));
-    element.dispatchEvent(new CustomEvent('czap:dispose'));
+    element.dispatchEvent(new CustomEvent('czap:teardown'));
     expect(disconnect).toHaveBeenCalledTimes(2);
   });
 
@@ -367,7 +368,7 @@ describe('astro worker directive edge branches', () => {
     readyListener?.({ data: { type: 'ready' } } as MessageEvent<{ type?: string }>);
     expect(readyCount).toBe(1);
 
-    element.dispatchEvent(new CustomEvent('czap:dispose'));
+    element.dispatchEvent(new CustomEvent('czap:teardown'));
     expect(disconnect).toHaveBeenCalledTimes(1);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
     expect(hostDispose).toHaveBeenCalledTimes(1);

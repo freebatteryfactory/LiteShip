@@ -1,7 +1,7 @@
 /**
  * Error contract — core errors teach: what happened, which subject, the
  * literal next step. Covers the Composable/Receipt/ecs message rewrites,
- * the CzapValidationError taxonomy swap, and the Token/Style tap-miss
+ * the ValidationError taxonomy swap, and the Token/Style tap-miss
  * diagnostics.
  */
 
@@ -22,21 +22,21 @@ import {
   Style,
   Token,
   World,
-  isValidationError,
 } from '@czap/core';
+import { hasTag } from '@czap/error';
 import type { EntityId } from '@czap/core';
 
 // ---------------------------------------------------------------------------
-// Composable.merge — CzapValidationError with the next step (items 20/21)
+// Composable.merge — ValidationError with the next step (items 20/21)
 // ---------------------------------------------------------------------------
 
 describe('Composable.merge error contract', () => {
-  test('zero entities throws a CzapValidationError naming the fix', () => {
+  test('zero entities throws a ValidationError naming the fix', () => {
     try {
       Composable.merge();
       expect.unreachable('expected merge to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/Composable\.merge/);
       expect(String(error)).toMatch(/pass at least one ComposableEntity/);
     }
@@ -48,7 +48,7 @@ describe('Composable.merge error contract', () => {
       Composable.merge(...sparse);
       expect.unreachable('expected merge to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/entities\[0\] is undefined/);
       expect(String(error)).toMatch(/filter\(Boolean\)/);
     }
@@ -125,7 +125,7 @@ describe('dense store capacity error contract', () => {
       store.set('e-2' as EntityId, 2);
       expect.unreachable('expected set to throw');
     } catch (error) {
-      expect(isValidationError(error)).toBe(true);
+      expect(hasTag(error, 'ValidationError')).toBe(true);
       expect(String(error)).toMatch(/store "physics" at capacity \(1\)/);
       expect(String(error)).toMatch(/Part\.dense\(name, n\)/);
       expect(String(error)).toMatch(/remove entities/);
@@ -134,11 +134,11 @@ describe('dense store capacity error contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// One validation taxonomy — factory validation throws CzapValidationError (item 31)
+// One validation taxonomy — factory validation throws ValidationError (item 31)
 // ---------------------------------------------------------------------------
 
 describe('factory validation taxonomy', () => {
-  test('AVBridge/FrameBudget/DirtyFlags/Easing.spring all throw CzapValidationError', () => {
+  test('AVBridge/FrameBudget/DirtyFlags/Easing.spring all throw ValidationError', () => {
     const throwers = [
       () => AVBridge.make({ sampleRate: 0, fps: 60 }),
       () => Easing.spring({ stiffness: -1 }),
@@ -149,7 +149,7 @@ describe('factory validation taxonomy', () => {
         thrower();
         expect.unreachable('expected validation throw');
       } catch (error) {
-        expect(isValidationError(error)).toBe(true);
+        expect(hasTag(error, 'ValidationError')).toBe(true);
       }
     }
     expect(() => FrameBudget.make({ targetFps: 0 })).toThrow(/FrameBudget\.make/);

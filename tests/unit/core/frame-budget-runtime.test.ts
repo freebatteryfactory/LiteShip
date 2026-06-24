@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { Effect } from 'effect';
-import { FrameBudget } from '@czap/core';
+import { FrameBudget, manualClock } from '@czap/core';
 import { runScopedAsync as runScoped } from '../../helpers/effect-test.js';
 
 describe('FrameBudget runtime behavior', () => {
@@ -16,6 +16,34 @@ describe('FrameBudget runtime behavior', () => {
 
     const budget = await runScoped(FrameBudget.make({ targetFps: 60 }));
 
+    expect(budget.scheduleSync('idle', () => 'skipped')).toBeNull();
+    expect(budget.scheduleSync('critical', () => 'ran')).toBe('ran');
+  });
+
+  test('remaining() decays against an INJECTED clock (replayable, no ambient performance.now)', async () => {
+    // No rAF, no performance — but an injected manualClock IS a real time source, so
+    // remaining() decays deterministically against the advances the test makes.
+    vi.stubGlobal('requestAnimationFrame', undefined as never);
+    vi.stubGlobal('cancelAnimationFrame', undefined as never);
+    vi.stubGlobal('performance', undefined as never);
+
+    const clock = manualClock(1_000);
+    // 60fps → a 16.666ms frame budget. Construction reads now() at t=1000 (frameStart).
+    const budget = await runScoped(FrameBudget.make({ targetFps: 60, clock }));
+
+    // No time elapsed yet → full budget.
+    expect(budget.remaining()).toBeCloseTo(1000 / 60, 3);
+
+    // Advance 10ms → ~6.67ms remaining in the frame; high lane (2ms) still runs,
+    // idle lane (12ms) does not.
+    clock.advance(10);
+    expect(budget.remaining()).toBeCloseTo(1000 / 60 - 10, 3);
+    expect(budget.canRun('high')).toBe(true);
+    expect(budget.canRun('idle')).toBe(false);
+
+    // Advance past the frame → clamped at 0, only critical runs.
+    clock.advance(100);
+    expect(budget.remaining()).toBe(0);
     expect(budget.scheduleSync('idle', () => 'skipped')).toBeNull();
     expect(budget.scheduleSync('critical', () => 'ran')).toBe('ran');
   });

@@ -1,7 +1,7 @@
 /**
  * Escalation chooser (P5c) — the READER of PolicyNode.
  *
- * Confirms `chooseRung` picks the MINIMAL CapLevel rung a policy admits on a
+ * Confirms `chooseRung` picks the MINIMAL CapTier rung a policy admits on a
  * runtime site: site-gated, budget-downgraded, grants-bounded, and stable under
  * memoization.
  *
@@ -9,7 +9,7 @@
  */
 import { describe, test, expect } from 'vitest';
 import { chooseRung, sealNode, Cap } from '@czap/core';
-import type { PolicyNode, RuntimeSite, CapLevel, CapSet, CellMeta } from '@czap/core';
+import type { PolicyNode, RuntimeSite, CapTier, CapSet, CellMeta } from '@czap/core';
 
 const META: CellMeta = {
   created: { wall_ms: 0, counter: 0, node_id: 't' },
@@ -19,7 +19,7 @@ const META: CellMeta = {
 
 /** A sealed PolicyNode keyed by its (requires, grants, sites, budgets) payload. */
 function policy(opts: {
-  requires: CapLevel;
+  requires: CapTier;
   grants: CapSet;
   sites: readonly RuntimeSite[];
   budgets?: PolicyNode['budgets'];
@@ -39,12 +39,12 @@ function policy(opts: {
 }
 
 /** Grant every rung up to and including `top` (so `requires` is always reachable). */
-const grantUpTo = (top: CapLevel): CapSet => {
-  const ALL: readonly CapLevel[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
+const grantUpTo = (top: CapTier): CapSet => {
+  const ALL: readonly CapTier[] = ['static', 'styled', 'reactive', 'animated', 'gpu'];
   return Cap.from(ALL.filter((l) => Cap.ordinal(l) <= Cap.ordinal(top)));
 };
 
-const isChoice = (r: ReturnType<typeof chooseRung>): r is { rung: CapLevel; admittedTargets: ReadonlySet<string> } =>
+const isChoice = (r: ReturnType<typeof chooseRung>): r is { rung: CapTier; admittedTargets: ReadonlySet<string> } =>
   'rung' in r;
 
 describe('chooseRung — escalation chooser (P5c)', () => {

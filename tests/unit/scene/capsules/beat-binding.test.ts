@@ -19,9 +19,9 @@ import {
 } from '../../../../packages/scene/src/capsules/beat-binding.js';
 
 const sample: readonly BeatComponent[] = [
-  { kind: 'beat', timeMs: 0, strength: 1 },
-  { kind: 'beat', timeMs: 500, strength: 0.7, anchorTrackId: 'intro-bed' },
-  { kind: 'beat', timeMs: 1000, strength: 0.9 },
+  { _tag: 'beat', timeMs: 0, strength: 1 },
+  { _tag: 'beat', timeMs: 500, strength: 0.7, anchorTrackId: 'intro-bed' },
+  { _tag: 'beat', timeMs: 1000, strength: 0.9 },
 ];
 
 describe('bindBeats — pure beat → spawn transform', () => {
@@ -73,16 +73,16 @@ describe('beatBindingCapsule — invariants', () => {
     ).toBe(false);
   });
 
-  it('all-spawns-are-beat-components fails when a kind is wrong', () => {
+  it('all-spawns-are-beat-components fails when a tag is wrong', () => {
     const inv = invByName.get('all-spawns-are-beat-components')!;
     expect(
       inv.check({}, {
-        spawns: [{ components: { kind: 'beat' } }],
+        spawns: [{ components: { _tag: 'beat' } }],
       } as unknown),
     ).toBe(true);
     expect(
       inv.check({}, {
-        spawns: [{ components: { kind: 'note' } }],
+        spawns: [{ components: { _tag: 'note' } }],
       } as unknown),
     ).toBe(false);
   });

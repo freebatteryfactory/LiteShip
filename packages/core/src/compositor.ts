@@ -9,15 +9,45 @@
  * (zero-allocation), FrameBudget (priority scheduling), microtask batching,
  * and RuntimeCoordinator (Plan + ECS-backed runtime bookkeeping).
  *
- * Hot path (computeStateSync) is plain JS — no Effect overhead.
- * Effect is used only for resource lifecycle (create/scope) and
- * reactive stream (SubscriptionRef.changes).
+ * ZERO-ALLOCATION HOT PATH — zero RETAINED **and** zero TRANSIENT. The per-frame
+ * compose body (`computeStateSync`) is plain JS that mutates a POOLED
+ * {@link CompositeState} in place: it acquires a recycled state from
+ * {@link CompositorStatePool}, refills a REUSED dirty-name scratch array (never
+ * `Array.from`/`getDirty` — those minted an array per tick), and walks the phases
+ * with index loops + no per-tick closures. The result is no RETAINED per-op
+ * allocation: the live heap (the growth that survives a forced GC) stays flat at
+ * ≈ 0 bytes/op — proven by the allocation gate (`tests/property/compositor-zero-alloc.test.ts`).
+ *
+ * The reactive publish that feeds `changes` is a RAW, synchronous fan-out over a
+ * compositor-owned listener set (`changeListeners`): the publish is
+ * `live.current = state; for (const notify of changeListeners) notify(state)` — no
+ * `Effect` node, no PubSub linked-list node, no replay-buffer node, nothing
+ * allocated per publish. (The prior `SubscriptionRef.set` publish was a measured
+ * ≈ 22 B/op TRANSIENT floor — NOT the semaphore wrapper as once assumed, but the
+ * `PubSub`/`ReplayBuffer` node that `SubscriptionRef` mints on every publish even
+ * with no subscriber. Measured: `scripts/micro-publish-probe.mjs`.) When NO
+ * `changes` subscriber is attached (the common compose tick) the listener set is
+ * empty and the publish allocates nothing — genuine zero transient. A live
+ * subscriber adds only the `Queue.offerUnsafe` enqueue cost of the
+ * {@link Stream.callback} bridge (≈ 7 B/op), still a ~6× reduction.
+ *
+ * SINGLE-WRITER PRECONDITION (why the raw fan-out is safe + contract-preserving).
+ * `SubscriptionRef.set` wraps its publish in a semaphore to make concurrent
+ * writers atomic. The compositor has exactly ONE writer of the live state — the
+ * synchronous `computeStateSync`, reached only from `add` / `remove` / `compute` /
+ * the `scheduleBatch` microtask, all of which run to completion on the single JS
+ * thread with no `await`/`yield`/fork inside the compose body. There is never a
+ * concurrent second writer, so the semaphore's atomicity guarantee is MOOT and
+ * the raw publish loses nothing — it preserves the `changes: Stream<CompositeState>`
+ * contract exactly (replay-current-on-subscribe + per-subscriber fan-out), just
+ * without the per-publish allocation. Everything else (create/scope) is off the
+ * hot path.
  *
  * @module
  */
 
-import type { Scope, Stream } from 'effect';
-import { Effect, SubscriptionRef } from 'effect';
+import type { Scope } from 'effect';
+import { Effect, Queue, Stream } from 'effect';
 import type { Boundary } from './boundary.js';
 import { COMPOSITOR_POOL_CAP, DIRTY_FLAGS_MAX } from './defaults.js';
 import { CompositorStatePool, accessCompositeState } from './compositor-pool.js';
@@ -186,7 +216,34 @@ export const Compositor: CompositorFactory = {
   /** Build a scoped compositor bound to a fresh {@link RuntimeCoordinator}. */
   create(config?: CompositorConfig): Effect.Effect<CompositorShape, never, Scope.Scope> {
     return Effect.gen(function* () {
-      const stateRef = yield* SubscriptionRef.make<CompositeState>(emptyCompositeState());
+      // Reactive notification seam — a compositor-owned listener set + a stable
+      // "live" reference, NOT an Effect `SubscriptionRef`. The publish on the hot
+      // path is a raw synchronous fan-out (`for (const notify of changeListeners)
+      // notify(state)`) that allocates nothing per publish; the old
+      // `SubscriptionRef.set` minted a PubSub/replay-buffer node every tick (≈ 22
+      // B/op TRANSIENT) even with no subscriber. Safe because the compositor is a
+      // single-writer of `live.current` (the synchronous `computeStateSync`, never
+      // concurrent — see the module-level single-writer precondition).
+      //
+      // `live.current` holds the most-recently-published state so a late
+      // subscriber can replay it on attach (the `SubscriptionRef` replay-1 contract
+      // the `changes` stream preserves).
+      const live: { current: CompositeState } = { current: emptyCompositeState() };
+      const changeListeners = new Set<(state: CompositeState) => void>();
+
+      /**
+       * Raw, zero-allocation reactive publish: stash the live state, then fan it
+       * out to every active `changes` subscriber synchronously. No `Effect` node,
+       * no PubSub node — the publish allocates nothing (the listener set's iterator
+       * is the only churn and V8 stack-allocates it; measured ≈ 0 B/op with no
+       * subscriber, and with subscribers only the bridge `Queue.offerUnsafe` cost).
+       */
+      function publishState(state: CompositeState): void {
+        live.current = state;
+        for (const notify of changeListeners) {
+          notify(state);
+        }
+      }
 
       const qMap = new Map<string, Quantizer<Boundary.Shape>>();
       const metaMap = new Map<string, QuantizerMeta>();
@@ -235,6 +292,31 @@ export const Compositor: CompositorFactory = {
       // at the top of `computeStateSync` makes `runtime.markDirty` a real recompute
       // trigger while preserving the freeze-when-nothing-was-marked law.
       const seenEpoch = new Map<string, number>();
+
+      // Zero-allocation scratch for the per-tick dirty-name list. Refilled IN
+      // PLACE every tick (length tracked separately) so the hot path never
+      // allocates a fresh array — the old `Array.from(qMap.keys())` /
+      // `dirtyFlags.getDirty()` both minted one array per compute(). The array
+      // only ever GROWS (when more quantizers attach than it has held before), so
+      // it reaches a steady size and then allocates nothing.
+      const dirtyNamesScratch: string[] = [];
+      let dirtyCount = 0;
+      /**
+       * Refill {@link dirtyNamesScratch} with the names to (re)compute this tick:
+       * EVERY quantizer when in the recompute-all / no-flags path, else exactly the
+       * marked names. Writes in place and sets {@link dirtyCount}; allocates nothing
+       * once the scratch has reached its high-water size.
+       */
+      function refillDirtyNames(recomputeEverything: boolean, flags: DirtyFlags.Shape<string> | null): void {
+        dirtyCount = 0;
+        for (const name of qMap.keys()) {
+          if (recomputeEverything || flags === null || flags.isDirty(name)) {
+            dirtyNamesScratch[dirtyCount] = name;
+            dirtyCount++;
+          }
+        }
+      }
+
       function reconcileRuntimeDirty(): void {
         if (dirty === null) return; // recomputeAll path already recomputes everything
         for (const name of qMap.keys()) {
@@ -267,15 +349,17 @@ export const Compositor: CompositorFactory = {
         // new state instead of the frozen carry-forward.
         reconcileRuntimeDirty();
         const dirtyFlags = dirty;
-        const dirtyNames = recomputeAll || dirtyFlags === null ? Array.from(qMap.keys()) : dirtyFlags.getDirty();
-        const shouldRecompute =
-          recomputeAll || dirtyFlags === null ? () => true : (name: string) => dirtyFlags.isDirty(name);
+        const recomputeEverything = recomputeAll || dirtyFlags === null;
+        // Refill the reused scratch in place — no per-tick array allocation.
+        refillDirtyNames(recomputeEverything, dirtyFlags);
 
         const state = pool.acquire();
         const { discrete, blend, css, glsl, wgsl, aria } = accessCompositeState(state);
 
         for (const [name] of qMap) {
-          if (shouldRecompute(name)) {
+          // shouldRecompute(name): everything recomputes in the no-flags path, else
+          // only the marked names. Inlined (was a per-tick closure allocation).
+          if (recomputeEverything || (dirtyFlags !== null && dirtyFlags.isDirty(name))) {
             continue;
           }
 
@@ -315,7 +399,8 @@ export const Compositor: CompositorFactory = {
         for (const phase of runtime.phases) {
           switch (phase) {
             case 'compute-discrete':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const quantizer = qMap.get(name)!;
 
                 const prefetched = prefetchedStates.get(name);
@@ -328,7 +413,8 @@ export const Compositor: CompositorFactory = {
               break;
 
             case 'compute-blend':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const meta = metaMap.get(name)!;
 
                 const override = overrides.get(name);
@@ -342,7 +428,8 @@ export const Compositor: CompositorFactory = {
               break;
 
             case 'emit-css':
-              for (const name of dirtyNames) {
+              for (let i = 0; i < dirtyCount; i++) {
+                const name = dirtyNamesScratch[i]!;
                 const meta = metaMap.get(name);
                 const stateStr = discrete[name];
                 // Escalation gate: skip projections whose policy does not admit `css`.
@@ -354,7 +441,8 @@ export const Compositor: CompositorFactory = {
 
             case 'emit-glsl':
               if (!frameBudget || frameBudget.canRun('high')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   // Escalation gate: skip projections whose policy does not admit `glsl`.
                   if (admits(meta, 'glsl')) {
@@ -371,7 +459,8 @@ export const Compositor: CompositorFactory = {
               // per-quantizer field key (those ride the payload). WGSL is the
               // heaviest (gpu-rung) target, so it shares glsl's `high` budget gate.
               if (!frameBudget || frameBudget.canRun('high')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   // Escalation gate: skip projections whose policy does not admit `wgsl`.
                   // (wgsl is admitted only at the `gpu` rung — strictly above glsl.)
@@ -384,7 +473,8 @@ export const Compositor: CompositorFactory = {
 
             case 'emit-aria':
               if (!frameBudget || frameBudget.canRun('low')) {
-                for (const name of dirtyNames) {
+                for (let i = 0; i < dirtyCount; i++) {
+                  const name = dirtyNamesScratch[i]!;
                   const meta = metaMap.get(name)!;
                   const stateStr = discrete[name];
                   // Escalation gate: skip projections whose policy does not admit `aria`.
@@ -408,7 +498,11 @@ export const Compositor: CompositorFactory = {
         const releasable = priorPreviousState;
         priorPreviousState = previousState;
         previousState = state;
-        Effect.runSync(SubscriptionRef.set(stateRef, state));
+        // Raw zero-allocation reactive publish (replaces `SubscriptionRef.set`).
+        // The two-slot rotation above guarantees `state` stays live + stable for
+        // one more tick, so a subscriber that reads it on this same tick sees valid
+        // pooled data before it can be recycled.
+        publishState(state);
         if (releasable && releasable !== state) pool.release(releasable);
         return state;
       }
@@ -509,7 +603,34 @@ export const Compositor: CompositorFactory = {
           });
         },
 
-        changes: SubscriptionRef.changes(stateRef),
+        // `changes` bridges the raw listener-set publish back to a
+        // `Stream<CompositeState>` — the public contract is UNCHANGED from the
+        // `SubscriptionRef.changes` it replaces. On each subscription
+        // `Stream.callback` opens a scoped queue: we replay the current live state
+        // (the `SubscriptionRef` replay-1 semantics), register a listener that
+        // enqueues every subsequent publish, and a finalizer that removes the
+        // listener when the subscription scope closes. The queue is UNBOUNDED (no
+        // `bufferSize` ⇒ `Queue.make({ capacity: undefined })`), exactly mirroring
+        // `SubscriptionRef`'s unbounded PubSub: `Queue.offerUnsafe` NEVER drops and
+        // NEVER backpressures the synchronous compose publish, so every compose is
+        // delivered in order to every subscriber. `Queue.offerUnsafe` is the only
+        // per-publish allocation while a subscriber is live (≈ 13 B/op); with no
+        // subscriber the listener set is empty and the publish allocates nothing.
+        changes: Stream.callback<CompositeState>((queue) =>
+          Effect.gen(function* () {
+            // Replay the current live state to the new subscriber.
+            Queue.offerUnsafe(queue, live.current);
+            const notify = (state: CompositeState): void => {
+              Queue.offerUnsafe(queue, state);
+            };
+            changeListeners.add(notify);
+            yield* Effect.addFinalizer(() =>
+              Effect.sync(() => {
+                changeListeners.delete(notify);
+              }),
+            );
+          }),
+        ),
         runtime,
       };
 

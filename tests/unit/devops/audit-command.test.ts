@@ -16,7 +16,8 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@czap/command';
 import { audit } from '../../../packages/cli/src/commands/audit.js';
-import { AUDIT_WARNING_FLOOR, collectWarningInventory } from '../../../scripts/lib/audit-floor.js';
+import { AUDIT_WARNING_FLOOR } from '@czap/command';
+import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 

@@ -2,7 +2,7 @@
 /**
  * Wave-2 default-widening tests for @czap/web:
  * - SSEConfig.reconnect accepts a partial merged over defaultReconnectConfig
- * - Resumption.saveState defaults timestamp to Date.now()
+ * - Resumption.saveState defaults timestamp to the injected clock's now() (systemClock by default)
  * - SlotRegistry.register normalizes mode/mounted defaults and is idempotent
  * - SlotRegistry.observe scans pre-existing DOM before watching mutations
  * - Hints.fromElement warns (instead of staying silent) on invalid id-map JSON
@@ -10,7 +10,7 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { Effect } from 'effect';
-import { Diagnostics, Millis } from '@czap/core';
+import { Diagnostics, Millis, fixedClock } from '@czap/core';
 import { SSE, Resumption, SlotRegistry, SlotAddressing, Hints } from '@czap/web';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 
@@ -62,17 +62,17 @@ describe('SSE.create reconnect defaults', () => {
 // ---------------------------------------------------------------------------
 
 describe('Resumption.saveState timestamp default', () => {
-  test('omitting timestamp stores Date.now() and round-trips through loadState', async () => {
-    const before = Date.now();
+  test('omitting timestamp stamps the injected clock and round-trips through loadState', async () => {
+    // Inject a fixed clock so the persisted timestamp is deterministic; the
+    // production default is systemClock.
     await Effect.runPromise(
-      Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-42', lastSequence: 42 }),
+      Resumption.saveState({ artifactId: 'doc-1', lastEventId: 'evt-42', lastSequence: 42 }, fixedClock(1_700_000_000)),
     );
 
     const loaded = await Effect.runPromise(Resumption.loadState('doc-1'));
     expect(loaded).not.toBeNull();
     expect(loaded!.lastEventId).toBe('evt-42');
-    expect(loaded!.timestamp).toBeGreaterThanOrEqual(before);
-    expect(loaded!.timestamp).toBeLessThanOrEqual(Date.now());
+    expect(loaded!.timestamp).toBe(1_700_000_000);
   });
 
   test('an explicit timestamp is preserved', async () => {

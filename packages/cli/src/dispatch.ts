@@ -16,14 +16,21 @@ import { sceneDev } from './commands/scene-dev.js';
 import { sceneRender } from './commands/scene-render.js';
 import { sceneVerify } from './commands/scene-verify.js';
 import { audit } from './commands/audit.js';
+import { auditFloor } from './commands/audit-floor.js';
+import { plumb } from './commands/plumb.js';
+import { check } from './commands/check.js';
+import { packageSmoke } from './commands/package-smoke.js';
+import { checkInvariants } from './commands/check-invariants.js';
+import { capsuleVerify as capsuleVerifyGate } from './commands/capsule-verify.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
-import { readCliVersion } from './commands/doctor.js';
 import { gauntlet } from './commands/gauntlet.js';
+import { lsp } from './commands/lsp.js';
 import { ship } from './commands/ship.js';
 import { verify } from './commands/ship-verify.js';
-import { version } from './commands/version.js';
+import { sbom } from './commands/sbom.js';
+import { readCliVersion, version } from './commands/version.js';
 import { emitError } from './receipts.js';
 
 /** Run the CLI with the given argv slice. Returns a process exit code. */
@@ -166,6 +173,107 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(findings ? { findings } : {}),
       });
     }
+    case 'audit-floor': {
+      return auditFloor();
+    }
+    case 'plumb': {
+      return plumb();
+    }
+    case 'check': {
+      // `--ir` opts into the CLI-ONLY IR-enriched path (the triangulated
+      // oracle-divergence cross-check + the B2 verdict cache via @czap/audit);
+      // `--no-cache` bypasses that cache. WITHOUT `--ir`, `czap check` stays the
+      // lean, IR-free, MCP-safe six-regex fold (the MCP server exposes only that
+      // lean handler — `--ir` never crosses into @czap/command / @czap/mcp-server).
+      const ir = rest.includes('--ir');
+      const noCache = rest.includes('--no-cache');
+      // `--symbols` adds the heavy symbol-evidenced LanguageService oracle (B3.3) —
+      // only meaningful with `--ir`; the cache key is namespaced by this mode.
+      const symbols = rest.includes('--symbols');
+      // `--supply-chain` composes the avionics-tier supplyChainGate (Slice C, L4) on
+      // + injects the host-computed supply-chain facts — only meaningful with `--ir`;
+      // opt-in (no SBOM cost + no not-evidenced noise on the default `--ir` run); the
+      // cache key is namespaced by this mode (mirrors --symbols).
+      const supplyChain = rest.includes('--supply-chain');
+      // `--mutate` composes the avionics-tier mutationDivergenceGate (Slice C, L4) on
+      // + runs the per-mutant vitest runner over the live effective-L4 trust-spine
+      // seams (each mutant → an isolated subprocess; the score's survivors surface as
+      // findings). Only meaningful with `--ir`; opt-in (a covering-test suite run per
+      // mutant is HEAVY); the cache key is namespaced by this mode. It mutates real
+      // source files IN PLACE (verified-restored), so it must run in ISOLATION.
+      const mutate = rest.includes('--mutate');
+      // `--mcdc` composes the avionics-tier mcdcCoverageGate (L4 — DO-178B Level A's
+      // Modified Condition/Decision Coverage via CONDITION-LEVEL MUTATION) on + runs the
+      // per-pin vitest runner over the live effective-L4 trust-spine seams: each atomic
+      // condition's force-true/force-false pin → an isolated subprocess; a condition whose
+      // independent effect is unobserved (a surviving pin) surfaces as an MC/DC-gap finding
+      // (L4 demands full MC/DC). Only meaningful with `--ir`; opt-in (a covering-test suite
+      // run per pin, two per condition, is HEAVY); the cache key is namespaced by this
+      // mode. It mutates real source files IN PLACE (verified-restored), so it must run in
+      // ISOLATION.
+      const mcdc = rest.includes('--mcdc');
+      // `--simulate` composes the avionics-tier simulationDeterminismGate (L4 — the
+      // determinism spine, DST) on + drives the committed scenario corpus through the
+      // `@czap/core/simulation` seeded world (each scenario replayed twice; a
+      // byte-exact divergence is a real nondeterminism bug surfaced as an L4 finding
+      // carrying the seed). Only meaningful with `--ir`; opt-in (no not-evidenced
+      // advisory on the default `--ir` run); the cache key is namespaced by this mode.
+      const simulate = rest.includes('--simulate');
+      // `--taint` composes the taintFlowGate (the TAINT-ANALYSIS family, L4) on + traces
+      // the source→sink dataflow via @czap/audit's generic taint oracle, classified by
+      // the LiteShip-LOCAL source/sink/sanitizer registry the CLI injects (the shader
+      // fetch→compile, the AI-cast graph-apply, the runtime-URL SSRF seam). An
+      // UNSANITIZED untrusted-value→dangerous-sink flow is a finding. Only meaningful
+      // with `--ir`; opt-in (a whole-corpus ts.Program + checker trace is HEAVY); the
+      // cache key is namespaced by this mode.
+      const taint = rest.includes('--taint');
+      // `--proof` composes the proofPropagationGate (the LOCAL-VS-GLOBAL correctness
+      // family — the lax-functor, L4) on + reads the proof signals (mutation/coverage/
+      // property/invariant), blends a per-module scalar, and propagates it along the dep
+      // DAG (the min-fixpoint): a trust-spine module whose GLOBAL proof drops below its
+      // floor via a weak dependency is a finding. Only meaningful with `--ir`; opt-in
+      // (LIGHT — artifact reads + a corpus scan); the cache key is namespaced by this mode.
+      const proof = rest.includes('--proof');
+      // `--composition` composes the compositionCoverageGate (the LOCAL-VS-GLOBAL family —
+      // "locally green, globally untested interaction", L4) on + derives the interaction
+      // edges from the IR call graph (both endpoints individually tested) and classifies
+      // each integration-covered/uncovered (the sound static-reference proxy): an UNCOVERED
+      // trust-spine interaction edge is a finding. Only meaningful with `--ir`; opt-in
+      // (LIGHT — a corpus scan); the cache key is namespaced by this mode.
+      const composition = rest.includes('--composition');
+      // `--capability-gate` composes the capabilityGateLinkGate (codex round-8, #1b — the
+      // capability-link dataflow proof, L4) on + proves every sanctioned skip's guard DERIVES FROM its
+      // declared capability's probe (the canonical capability symbol table); an unrelated/mislabeled
+      // guard is a finding. Only meaningful with `--ir`; opt-in (a ts.Program over the sanctioned
+      // files + capability modules); the cache key is namespaced by this mode.
+      const capabilityGate = rest.includes('--capability-gate');
+      // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
+      // `--taint` / `--proof` / `--composition` / `--capability-gate` are only meaningful on the IR
+      // path (the lean path has no cache + no IR). A bare flag there is a no-op, never a silent
+      // wrong run.
+      return check({
+        ...(ir ? { ir } : {}),
+        ...(noCache ? { noCache } : {}),
+        ...(symbols ? { symbols } : {}),
+        ...(supplyChain ? { supplyChain } : {}),
+        ...(mutate ? { mutate } : {}),
+        ...(mcdc ? { mcdc } : {}),
+        ...(simulate ? { simulate } : {}),
+        ...(taint ? { taint } : {}),
+        ...(proof ? { proof } : {}),
+        ...(composition ? { composition } : {}),
+        ...(capabilityGate ? { capabilityGate } : {}),
+      });
+    }
+    case 'check-invariants': {
+      return checkInvariants();
+    }
+    case 'package-smoke': {
+      return packageSmoke();
+    }
+    case 'capsule-verify': {
+      return capsuleVerifyGate();
+    }
     case 'gauntlet': {
       return gauntlet(rest);
     }
@@ -174,6 +282,9 @@ export async function run(argv: readonly string[]): Promise<number> {
     }
     case 'verify': {
       return verify(rest);
+    }
+    case 'sbom': {
+      return sbom(rest);
     }
     case 'mcp': {
       // @czap/mcp-server is an optional sibling install, not a dependency of
@@ -201,6 +312,13 @@ export async function run(argv: readonly string[]): Promise<number> {
       const httpFlag = parseFlag(rest, '--http');
       await mcpServer.start(httpFlag !== undefined ? { http: httpFlag } : {});
       return 0;
+    }
+    case 'lsp': {
+      // The THIRD JSON-RPC skin: launch the gauntlet LSP rigor server over stdio
+      // (the editor spawns `czap lsp` as its language server). The runner is built
+      // in the CLI host and injected, so @czap/mcp-server stays lean — see
+      // commands/lsp.ts. `--ir` selects the IR-enriched fold.
+      return lsp({ ir: rest.includes('--ir') });
     }
     default: {
       // No command + no flags: friendly help on stdout, exit 0.

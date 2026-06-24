@@ -1,21 +1,36 @@
 // GENERATED — do not edit by hand
-import { describe, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import * as fc from 'fast-check';
+import { Schema } from 'effect';
+import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
+import { vitestRunnerCapsule } from '../../packages/cli/src/capsules/vitest-runner.js';
 
 describe('cli.vitest-runner', () => {
-  it.skip('contract shape: input and output decode/encode round-trip', () => {
-    // TODO(harness): wire schema round-trip via cap.input / cap.output.
-  });
-
-  it.skip('is idempotent: two identical inputs produce equivalent receipts', () => {
-    // TODO(harness): receipted mutations need a runtime channel to invoke
-    // — until cap exposes a typed mutate handler, skip rather than fake.
-  });
-
-  it.skip('emits audit receipt with declared capabilities', () => {
-    // TODO(harness): same — needs runtime channel to read emitted receipts.
-  });
-
-  it.skip('fault injection: declared faults are reachable', () => {
-    // TODO(harness): faults table not yet on the capsule contract.
+  const cap = vitestRunnerCapsule;
+  // Non-emitted / EXEMPTED checks (documented; deliberately no skipped stand-in):
+//  - idempotent / audit receipt: EXEMPTED — 'cli.vitest-runner' declares the
+//    TYPED escape hatch `receiptKind: 'effect-outcome'`. Its receipt is
+//    the outcome of an effect with no pure core to drive twice, so these
+//    checks are recorded as a declared, machine-readable EXEMPTION (a
+//    waiver with teeth) rather than emitted real — and deliberately NOT a
+//    skip. Declared reason:
+//      receipt is the outcome of spawning an external test process (pnpm exec vitest run); exitCode and stderrTail only exist after the process runs and cannot be driven by a pure core. The sole pure shaping (echoing testFiles) is pinned by the test-files-echoed invariant.
+//  - fault injection: EXEMPTED — 'cli.vitest-runner' declares the TYPED escape
+//    hatch `receiptKind: 'effect-outcome'`; with no pure `mutate` core to
+//    drive, declared faults cannot be injected here. Recorded as a
+//    declared EXEMPTION (not a skip), reason as above.
+  it('contract shape: input and output decode/encode round-trip', () => {
+    for (const schema of [cap.input, cap.output]) {
+      const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
+      const encode = Schema.encodeSync(schema as never);
+      const decode = Schema.decodeUnknownSync(schema as never);
+      fc.assert(
+        fc.property(arb, (value) => {
+          expect(decode(encode(value as never))).toEqual(value);
+          return true;
+        }),
+        { numRuns: 100 },
+      );
+    }
   });
 });

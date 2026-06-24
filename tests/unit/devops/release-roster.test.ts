@@ -11,8 +11,9 @@
  *
  * This guard DERIVES the publishable set from the manifests on disk (release.yml's own
  * predicate: `private != true`) and asserts BOTH facts match it — release.yml is the
- * 4th roster location alongside `liteship` deps, `scripts/package-smoke.ts`, and
- * `scripts/lib/capsule-detector.ts`. Pins the LAW (loop == workspace, count == length),
+ * 4th roster location alongside `liteship` deps, the `package-smoke` command's
+ * `PACKAGES` roster (in `@czap/command`), and `scripts/lib/capsule-detector.ts`.
+ * Pins the LAW (loop == workspace, count == length),
  * not a number, so caret-clean promotions need no churn here but omissions fail loud.
  *
  * @module

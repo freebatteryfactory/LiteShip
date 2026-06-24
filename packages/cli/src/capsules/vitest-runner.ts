@@ -51,6 +51,19 @@ export const vitestRunnerCapsule = defineCapsule({
   input: VitestRunnerInput,
   output: VitestRunnerOutput,
   budgets: { p95Ms: 300_000, allocClass: 'unbounded' },
+  // TYPED escape hatch (mandatory-`mutate` rule): the receipt here is the
+  // OUTCOME of spawning an external test process. `exitCode` and `stderrTail`
+  // exist only once `pnpm exec vitest run` has actually run — they are not
+  // derivable from `testFiles` by any pure function. The only pure shaping is
+  // echoing `testFiles` verbatim (pinned by the `test-files-echoed` invariant),
+  // which is too thin to constitute a receipt-producing core worth driving
+  // idempotently. So this declares `effect-outcome` with a reason rather than a
+  // vacuous `mutate`. The contract round-trip still proves the receipt schema.
+  receiptKind: 'effect-outcome',
+  reason:
+    'receipt is the outcome of spawning an external test process (pnpm exec vitest run); ' +
+    'exitCode and stderrTail only exist after the process runs and cannot be driven by a pure ' +
+    'core. The sole pure shaping (echoing testFiles) is pinned by the test-files-echoed invariant.',
   invariants: [
     {
       name: 'shell-disabled',

@@ -7,12 +7,49 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, systemClock, wallClock, type CapsuleCommandResult } from '@czap/core';
 import { capabilityUnavailable, type CommandCapability, type HandledCommand } from '../registry.js';
 import { loadManifest, manifestUnavailable } from './manifest.js';
 
+/** `<verb> <scene.ts>` args — the single source of the verify/compile `inputSchema`. */
+const SceneArgsSchema = Schema.Struct({ scene: Schema.String });
+
+/** scene.verify output — the scene id + count of generated tests run. */
+const SceneVerifyPayloadSchema = Schema.Struct({
+  sceneId: Schema.String,
+  generatedTests: Schema.Number,
+});
+
+/** scene.compile output — the scene id, track count, and elapsed compile duration. */
+const SceneCompilePayloadSchema = Schema.Struct({
+  sceneId: Schema.String,
+  trackCount: Schema.Number,
+  durationMs: Schema.Number,
+});
+
+/**
+ * scene.render output — the rendered scene id, output path, frame count, elapsed
+ * render duration, and the optional `fps`/`cached` echoes (receipts replayed from
+ * a pre-fps cache lack `fps`; `cached` rides the live/replay split).
+ */
+const SceneRenderPayloadSchema = Schema.Struct({
+  sceneId: Schema.String,
+  output: Schema.String,
+  frameCount: Schema.Number,
+  elapsedMs: Schema.Number,
+  fps: Schema.optional(Schema.Number),
+  cached: Schema.optional(Schema.Boolean),
+});
+
 function failed(command: string, error: string, exitCode: number): CapsuleCommandResult {
-  return { status: 'failed', command, timestamp: new Date().toISOString(), exitCode, payload: { error } };
+  return {
+    status: 'failed',
+    command,
+    timestamp: new Date(wallClock.now()).toISOString(),
+    exitCode,
+    payload: { error },
+  };
 }
 
 interface SceneCapsule {
@@ -57,13 +94,9 @@ export const sceneVerifyCommand: HandledCommand = {
   descriptor: {
     name: 'scene.verify',
     summary: 'Run a scene capsule’s generated tests.',
-    inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    inputSchema: schemaToJsonSchema(SceneArgsSchema),
     requires: ['fileExists', 'loadSceneModule', 'runVitest'] satisfies readonly CommandCapability[],
-    outputSchema: {
-      type: 'object',
-      required: ['sceneId', 'generatedTests'],
-      properties: { sceneId: { type: 'string' }, generatedTests: { type: 'number' } },
-    },
+    outputSchema: schemaToJsonSchema(SceneVerifyPayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -94,7 +127,7 @@ export const sceneVerifyCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'scene.verify',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: { sceneId: cap.id, generatedTests: 2 },
     };
   },
@@ -105,13 +138,9 @@ export const sceneCompileCommand: HandledCommand = {
   descriptor: {
     name: 'scene.compile',
     summary: 'Compile a scene capsule.',
-    inputSchema: { type: 'object', required: ['scene'], properties: { scene: { type: 'string' } } },
+    inputSchema: schemaToJsonSchema(SceneArgsSchema),
     requires: ['fileExists', 'loadSceneModule'] satisfies readonly CommandCapability[],
-    outputSchema: {
-      type: 'object',
-      required: ['sceneId', 'trackCount', 'durationMs'],
-      properties: { sceneId: { type: 'string' }, trackCount: { type: 'number' }, durationMs: { type: 'number' } },
-    },
+    outputSchema: schemaToJsonSchema(SceneCompilePayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -123,7 +152,13 @@ export const sceneCompileCommand: HandledCommand = {
     const contract = mod ? findContract(mod) : undefined;
     if (!cap || !contract) return failed('scene.compile', missingSceneExports(scenePath, cap, contract), 1);
 
-    const start = Date.now();
+    // `durationMs` is an ELAPSED interval → MONOTONIC systemClock (a wall-clock
+    // NTP/DST jump must never corrupt it). The receipt `timestamp` below is a
+    // TIMESTAMP → the sanctioned epoch boundary wallClock (`new Date(wallClock.now())`),
+    // never a raw argless Date read — the two-clock law keeps the full receipt
+    // byte-reproducible under a fixed clock.
+    const clock = context.clock ?? systemClock;
+    const start = clock.now();
     try {
       if (context.runSceneCompile) await context.runSceneCompile(mod!);
     } catch (err) {
@@ -132,11 +167,11 @@ export const sceneCompileCommand: HandledCommand = {
     return {
       status: 'ok',
       command: 'scene.compile',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       payload: {
         sceneId: cap.id,
         trackCount: (contract.tracks as readonly unknown[]).length,
-        durationMs: Date.now() - start,
+        durationMs: clock.now() - start,
       },
     };
   },
@@ -156,25 +191,9 @@ export const sceneRenderCommand: HandledCommand = {
   descriptor: {
     name: 'scene.render',
     summary: 'Render a scene to mp4 (output defaults to <scene>.mp4 beside the scene file).',
-    inputSchema: {
-      type: 'object',
-      required: ['scene'],
-      properties: { scene: { type: 'string' }, output: { type: 'string' } },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({ scene: Schema.String, output: Schema.optional(Schema.String) })),
     requires: ['fileExists', 'loadSceneModule', 'renderScene'] satisfies readonly CommandCapability[],
-    outputSchema: {
-      type: 'object',
-      required: ['sceneId', 'output', 'frameCount', 'elapsedMs'],
-      properties: {
-        sceneId: { type: 'string' },
-        output: { type: 'string' },
-        frameCount: { type: 'number' },
-        elapsedMs: { type: 'number' },
-        // Optional, not required: receipts replayed from a pre-fps cache lack it.
-        fps: { type: 'number' },
-        cached: { type: 'boolean' },
-      },
-    },
+    outputSchema: schemaToJsonSchema(SceneRenderPayloadSchema),
     annotations: { mcpExposed: true, group: 'compose' },
   },
   handler: async (invocation, context): Promise<CapsuleCommandResult> => {
@@ -196,7 +215,7 @@ export const sceneRenderCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'scene.render',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...cached, cached: true },
       };
     }
@@ -243,7 +262,7 @@ export const sceneRenderCommand: HandledCommand = {
       return {
         status: 'ok',
         command: 'scene.render',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(wallClock.now()).toISOString(),
         payload: { ...payload, cached: false },
       };
     } catch (err) {

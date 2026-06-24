@@ -18,6 +18,14 @@ Effect track — applies an intensity curve to a target video track, optionally 
 
 ## Properties
 
+### \_tag
+
+> `readonly` **\_tag**: `"effect"`
+
+Defined in: [scene/src/contract.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L100)
+
+***
+
 ### effectKind
 
 > `readonly` **effectKind**: `"pulse"` \| `"glow"` \| `"shake"` \| `"zoom"` \| `"desaturate"`
@@ -49,14 +57,6 @@ Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"effect"`\>
 
 Defined in: [scene/src/contract.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L101)
-
-***
-
-### kind
-
-> `readonly` **kind**: `"effect"`
-
-Defined in: [scene/src/contract.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L100)
 
 ***
 

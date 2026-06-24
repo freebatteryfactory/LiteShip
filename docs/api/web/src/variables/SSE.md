@@ -53,11 +53,15 @@ Build an SSE endpoint URL with optional artifact ID and lastEventId.
 
 ### calculateDelay
 
-> **calculateDelay**: (`attempt`, `config`) => `number`
+> **calculateDelay**: (`attempt`, `config`, `rng`) => `number`
 
 Re-export of the exponential-backoff delay calculator.
 
 Calculate reconnection delay using exponential backoff with jitter.
+
+The jitter source is injectable: pass a seeded [Rng](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) to make
+reconnection-backoff deterministic in tests; it defaults to `systemRng`
+(live `Math.random`) in production.
 
 #### Parameters
 
@@ -68,6 +72,10 @@ Calculate reconnection delay using exponential backoff with jitter.
 ##### config
 
 [`ReconnectConfig`](../interfaces/ReconnectConfig.md)
+
+##### rng?
+
+[`Rng`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) = `systemRng`
 
 #### Returns
 

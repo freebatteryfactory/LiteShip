@@ -77,7 +77,8 @@ describe('renderScene MCP delegation (fetch stubbed)', () => {
       () => undefined,
       (err: Error) => err.message,
     );
-    expect(failure).toContain(`scene.render delegation to ${URL} failed`);
+    expect(failure).toContain(`browser-context.render (${URL})`);
+    expect(failure).toContain('scene.render delegation failed');
     expect(failure).toContain('"boom"');
     expect(failure).toContain('czap mcp --http=PORT');
   });
@@ -85,6 +86,6 @@ describe('renderScene MCP delegation (fetch stubbed)', () => {
   it('result.isError throws the delegation failure too', async () => {
     stubFetch({ result: { isError: true, structuredContent: { frameCount: 1 } } });
     const context = createBrowserCommandContext({ mcpServerUrl: URL });
-    await expect(context.renderScene!({} as never)).rejects.toThrow(`scene.render delegation to ${URL} failed`);
+    await expect(context.renderScene!({} as never)).rejects.toThrow(`browser-context.render (${URL})`);
   });
 });

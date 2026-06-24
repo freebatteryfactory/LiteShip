@@ -6,6 +6,7 @@
 
 import type { Scope, Result } from 'effect';
 import { Effect, Schedule, Duration } from 'effect';
+import { IoError } from '@czap/error';
 import type { Millis } from './brands.js';
 
 interface OpShape<A, E = never, R = never> {
@@ -195,10 +196,10 @@ const _retry = <A, E, R>(
  * // Will fail with Error('Op timed out after 1000ms') if not resolved in time
  * ```
  */
-const _timeout = <A, E, R>(task: OpShape<A, E, R>, ms: Millis): OpShape<A, E | Error, R> =>
+const _timeout = <A, E, R>(task: OpShape<A, E, R>, ms: Millis): OpShape<A, E | IoError, R> =>
   _make(
     Effect.timeout(task.effect, Duration.millis(ms)).pipe(
-      Effect.catchTag('TimeoutError', () => Effect.fail(new Error(`Op timed out after ${ms}ms`))),
+      Effect.catchTag('TimeoutError', () => Effect.fail(IoError('op.timeout', `Op timed out after ${ms}ms`))),
     ),
   );
 

@@ -1,0 +1,124 @@
+{
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 17 entries below are the branch-local weakenings vs the snapshot's birth commit (d0c214b7): 15 enumerated capability-gate skips (each conditional — the test BODY runs when the capability is present) + 2 relocated no-nondeterminism boundary waivers (the SAME waiver shifted one line, not a new deferral). Derived from the live-vs-birth diff, not hand-guessed.",
+  "signoffs": [
+    {
+      "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (SharedArrayBuffer / cross-origin isolation (COOP/COEP)). describe.skipIf(!canUseSAB) — the real-SharedArrayBuffer SPSCRing test BODY runs when cross-origin isolation is present and skips only when absent (the in-process ring is covered elsewhere); a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/e2e/astro-directives.e2e.ts::test.skip(!built, 'astro example not built — run: pnpm exec tsx tests/integration/astro/test.ts');",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (the built Astro example dist). test.skip(!built, …) — the browser e2e BODY runs when the built Astro example dist is present; the gauntlet runs the integration build before the e2e lane, so CI always exercises it. A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/integration/cli/idempotency.test.ts::const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). FFMPEG_RENDER_CAPABLE ? it : it.skip — the render-idempotency BODY runs when ffmpeg+libx264 is on PATH and skips only when absent (the host context unit covers the encode path). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/integration/cli/scene-dev.test.ts::const conditionalIt = underCoverage ? it.skip : it;",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (absence of v8 coverage instrumentation). underCoverage ? it.skip : it — the spawned tsx→vite-server BODY runs except under v8 coverage (a coverage-vs-vite STATUS_ACCESS_VIOLATION on Windows); the in-process server.test.ts covers the same startDevServer() path under coverage. A runtime instrumentation gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/integration/cli/scene-render.test.ts::const renderIt = FFMPEG_RENDER_CAPABLE ? it : it.skip;",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). FFMPEG_RENDER_CAPABLE ? it : it.skip — the scene-render CLI BODY renders an mp4 through ffmpeg+libx264 when the codec is present and skips only when absent. A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/property/boundary-evaluate-batch.prop.test.ts::describe.skipIf(!wasmPresent)('Boundary.evaluateBatch agrees with scalar evaluate (Rust kernel loaded)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (the loaded Rust WASM kernel). describe.skipIf(!wasmPresent) — the Boundary.evaluateBatch parity property BODY runs when the Rust kernel is loaded and skips only when absent (the scalar evaluate path is covered without it). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/smoke/intro-render.test.ts::it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the end-to-end intro-scene smoke render BODY runs through ffmpeg+libx264 when present; absent the codec the doctor-probe skips (see `czap doctor`). The title names the capability (render probe failed), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/command/error-contract.test.ts::it.runIf(FFMPEG_RENDER_CAPABLE)('a stream failure mentioning stdin/EPIPE surfaces the probe verdict', async () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). it.runIf(FFMPEG_RENDER_CAPABLE) — the stream-failure probe (EPIPE/stdin) BODY runs only when ffmpeg+libx264 is capable. A runtime capability gate (runIf on the real render backend), not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/command/ffmpeg-render-backend.test.ts::test.skip('ffmpeg+libx264 render (skipped — codec not on PATH)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the real ffmpeg+libx264 render backend BODY runs when the codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/command/host-context.test.ts::it.runIf(FFMPEG_RENDER_CAPABLE)('renderScene encodes frames through ffmpeg when libx264 is available', async () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). it.runIf(FFMPEG_RENDER_CAPABLE) — renderScene-through-ffmpeg BODY runs only when libx264 is available. A runtime capability gate (runIf on the real backend), not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (the loaded Rust WASM kernel). describe.skipIf(!wasmPresent) — the WASM/TS kernel parity arm BODY runs when the Rust kernel IS loaded (compares czap-compute against fallbackKernels). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/core/wasm-parity.test.ts::describe.skipIf(wasmPresent)('WASM/TS kernel parity (artifact absent — fallbackKernels is what ships here)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (the wasm artifact being ABSENT). describe.skipIf(wasmPresent) — the INVERSE parity arm BODY runs when the wasm artifact is ABSENT (the fallback is what ships there). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/core/wasm-shipping.test.ts::it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (the staged @czap/core dist wasm artifact). it.skipIf(!staged) — the module-graph resolution of @czap/core dist/czap-compute.wasm BODY runs only when the built artifact is staged (a publish-shape probe). A runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/stage/dual-export-node.test.ts::test.skip('headless dual-export end to end (skipped — codec not on PATH)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the headless dual-export end-to-end BODY runs when the ffmpeg+libx264 codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/stage/ffmpeg-encoder.test.ts::test.skip('ffmpeg+libx264 encode (skipped — codec not on PATH)', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the real ffmpeg+libx264 encode BODY runs when the codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock.ts|60",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary in packages/core/src/clock.ts), RELOCATED one line by an edit above it after the snapshot's birth — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(old line)+add(new line); the corresponding removal is a strengthen. No additional code is waived. Signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "waiver::gauntlet/no-nondeterminism|packages/core/src/clock.ts|77",
+      "weakening": "waiver-added",
+      "owner": "heyoub",
+      "justification": "Same gauntlet/no-nondeterminism boundary waiver (a sanctioned Date.now() entropy boundary in packages/core/src/clock.ts), RELOCATED one line by an edit above it after the snapshot's birth — NOT a new deferral. The waiver key embeds the line number, so a one-line shift surfaces as remove(old line)+add(new line); the corresponding removal is a strengthen. No additional code is waived. Signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    }
+  ]
+}

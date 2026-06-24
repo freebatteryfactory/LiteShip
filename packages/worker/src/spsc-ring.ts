@@ -43,6 +43,8 @@
  * @module
  */
 
+import { HostCapabilityError, InvariantViolationError, ValidationError } from '@czap/error';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -89,6 +91,20 @@ export interface SPSCRingBufferShape {
   readonly count: number;
 }
 
+/**
+ * A matched producer/consumer pair sharing one `SharedArrayBuffer`,
+ * returned by {@link SPSCRing.createPair}. Named (rather than an inline
+ * anonymous object) so the pair shape is a single referenceable type.
+ */
+export interface SPSCRingPair {
+  /** The shared buffer carrying the control header + data slots. Transfer this to the Worker. */
+  readonly buffer: SharedArrayBuffer;
+  /** Producer-side handle (push-only). */
+  readonly producer: SPSCRingBufferShape;
+  /** Consumer-side handle (pop-only). */
+  readonly consumer: SPSCRingBufferShape;
+}
+
 // ---------------------------------------------------------------------------
 // Implementation
 // ---------------------------------------------------------------------------
@@ -117,7 +133,8 @@ function _readGeometry(
   slotSize?: number,
 ): { slotCount: number; slotSize: number } {
   if (sab.byteLength < CONTROL_BYTES) {
-    throw new RangeError(
+    throw ValidationError(
+      'spsc-ring',
       `SPSCRing.${fn}: buffer is only ${sab.byteLength} bytes — too small to carry the ${CONTROL_BYTES}-byte control header. Create it with SPSCRing.createPair(slotCount, slotSize).`,
     );
   }
@@ -125,7 +142,8 @@ function _readGeometry(
   const headerSlotCount = header[SLOT_COUNT_INDEX]!;
   const headerSlotSize = header[SLOT_SIZE_INDEX]!;
   if (headerSlotCount <= 0 || headerSlotSize <= 0) {
-    throw new RangeError(
+    throw ValidationError(
+      'spsc-ring',
       `SPSCRing.${fn}: buffer header carries no ring geometry (slotCount ${headerSlotCount}, slotSize ${headerSlotSize}) — the buffer was not created by SPSCRing.createPair, or predates the 16-byte header layout. Recreate it with SPSCRing.createPair(slotCount, slotSize).`,
     );
   }
@@ -133,7 +151,8 @@ function _readGeometry(
     (slotCount !== undefined && slotCount !== headerSlotCount) ||
     (slotSize !== undefined && slotSize !== headerSlotSize)
   ) {
-    throw new RangeError(
+    throw ValidationError(
+      'spsc-ring',
       `SPSCRing.${fn}: this buffer was created with slotCount ${headerSlotCount} / slotSize ${headerSlotSize}, but you passed slotCount ${slotCount ?? headerSlotCount} / slotSize ${slotSize ?? headerSlotSize}. Drop the extra arguments — the buffer header carries the geometry — or pass the exact values given to createPair.`,
     );
   }
@@ -147,10 +166,13 @@ function _makeRing(
   role: 'producer' | 'consumer',
 ): SPSCRingBufferShape {
   if (slotCount <= 0 || !Number.isInteger(slotCount)) {
-    throw new RangeError(`SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`);
+    throw InvariantViolationError(
+      'spsc-ring',
+      `SPSCRingBuffer: slotCount must be a positive integer, got ${slotCount}`,
+    );
   }
   if (slotSize <= 0 || !Number.isInteger(slotSize)) {
-    throw new RangeError(`SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
+    throw InvariantViolationError('spsc-ring', `SPSCRingBuffer: slotSize must be a positive integer, got ${slotSize}`);
   }
   const control = new Int32Array(sab, 0, 2);
   const data = new Float64Array(sab, CONTROL_BYTES);
@@ -158,12 +180,14 @@ function _makeRing(
   return {
     push(input: Float64Array): boolean {
       if (role !== 'producer') {
-        throw new Error(
+        throw InvariantViolationError(
+          'spsc-ring',
           'SPSCRing: this handle is the consumer side — push() is producer-only. Inside the worker, call SPSCRing.attachProducer(buffer) and push on that handle.',
         );
       }
       if (input.length !== slotSize) {
-        throw new RangeError(
+        throw ValidationError(
+          'spsc-ring',
           `SPSCRing: this ring was created with slotSize ${slotSize} but you pushed a Float64Array of length ${input.length}. Allocate your scratch array once with new Float64Array(${slotSize}) and reuse it.`,
         );
       }
@@ -191,12 +215,14 @@ function _makeRing(
 
     pop(out: Float64Array): boolean {
       if (role !== 'consumer') {
-        throw new Error(
+        throw InvariantViolationError(
+          'spsc-ring',
           'SPSCRing: this handle is the producer side — pop() is consumer-only. On the consuming thread, call SPSCRing.attachConsumer(buffer) and pop on that handle.',
         );
       }
       if (out.length !== slotSize) {
-        throw new RangeError(
+        throw ValidationError(
+          'spsc-ring',
           `SPSCRing: this ring was created with slotSize ${slotSize} but you popped into a Float64Array of length ${out.length}. Allocate your scratch array once with new Float64Array(${slotSize}) and reuse it.`,
         );
       }
@@ -254,18 +280,20 @@ function _makeRing(
  * worker.postMessage({ buffer });
  * ```
  *
- * @param slotCount - Number of slots in the ring (power of 2 recommended)
- * @param slotSize  - Number of Float64 values per slot
- * @returns An object with the shared buffer and producer/consumer ring handles
+ * The two arguments are both bare positive integers and are NOT
+ * interchangeable: `slotCount` is the ring depth (how many entries),
+ * `slotSize` the entry width (Float64 lanes per entry). Transposing them
+ * silently produces a different geometry rather than an error, so the
+ * order is `(depth, width)` — same order as the memory-layout header
+ * above (`[2]: slotCount`, `[3]: slotSize`). Each is guarded as a positive
+ * integer ({@link _makeRing} throws otherwise), so `0`/negative/fractional
+ * values fail loudly.
+ *
+ * @param slotCount - Ring depth: number of slots (power of 2 recommended)
+ * @param slotSize  - Entry width: number of Float64 values per slot
+ * @returns A {@link SPSCRingPair}: the shared buffer + producer/consumer handles
  */
-function _createPair(
-  slotCount: number,
-  slotSize: number,
-): {
-  buffer: SharedArrayBuffer;
-  producer: SPSCRingBufferShape;
-  consumer: SPSCRingBufferShape;
-} {
+function _createPair(slotCount: number, slotSize: number): SPSCRingPair {
   // Preflight the environment so the failure teaches the COOP/COEP
   // requirement instead of surfacing the browser's bare ReferenceError /
   // constructor TypeError. The crossOriginIsolated probe only applies
@@ -275,7 +303,8 @@ function _createPair(
     typeof SharedArrayBuffer === 'undefined' ||
     (typeof crossOriginIsolated !== 'undefined' && !crossOriginIsolated)
   ) {
-    throw new Error(
+    throw HostCapabilityError(
+      'SharedArrayBuffer',
       'SPSCRing.createPair: SharedArrayBuffer is unavailable because this page is not cross-origin isolated. Serve it with "Cross-Origin-Opener-Policy: same-origin" and "Cross-Origin-Embedder-Policy: require-corp" — @czap/astro sets these headers for you.',
     );
   }

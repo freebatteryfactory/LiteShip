@@ -6,15 +6,22 @@
  *
  * @module
  */
-import type { CapsuleCommandResult } from '@czap/core';
+import { Schema } from 'effect';
+import { schemaToJsonSchema, wallClock, type CapsuleCommandResult } from '@czap/core';
 import type { CommandContext, HandledCommand } from '../registry.js';
 
+/**
+ * Structured payload returned by the version command — ONE Effect Schema is the
+ * source of both {@link VersionPayload} and the descriptor's `outputSchema`.
+ */
+export const VersionPayloadSchema = Schema.Struct({
+  czap: Schema.String,
+  node: Schema.String,
+  pnpm: Schema.NullOr(Schema.String),
+});
+
 /** Structured payload returned by the version command. */
-export interface VersionPayload {
-  readonly czap: string;
-  readonly node: string;
-  readonly pnpm: string | null;
-}
+export type VersionPayload = Schema.Schema.Type<typeof VersionPayloadSchema>;
 
 /** Probe pnpm via the injected spawn capability. Returns null when unavailable. */
 async function probePnpm(context: CommandContext): Promise<string | null> {
@@ -29,18 +36,14 @@ export const versionCommand: HandledCommand = {
   descriptor: {
     name: 'version',
     summary: 'Report czap, Node, and pnpm versions.',
-    inputSchema: { type: 'object', properties: {}, required: [] },
-    outputSchema: {
-      type: 'object',
-      required: ['czap', 'node', 'pnpm'],
-      properties: { czap: { type: 'string' }, node: { type: 'string' }, pnpm: { type: ['string', 'null'] } },
-    },
+    inputSchema: schemaToJsonSchema(Schema.Struct({})),
+    outputSchema: schemaToJsonSchema(VersionPayloadSchema),
     annotations: { readOnly: true, group: 'castoff' },
   },
   handler: async (_invocation, context): Promise<CapsuleCommandResult<VersionPayload>> => ({
     status: 'ok',
     command: 'version',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(wallClock.now()).toISOString(),
     payload: {
       czap: context.hostVersion?.() ?? '0.0.0-unknown',
       node: process.versions.node,

@@ -1,21 +1,24 @@
 /**
  * CUT B6a — the release gate cannot silently skip a publishable package.
  *
- * `scripts/package-smoke.ts` pack/install/import-smokes every publishable `@czap/*`
- * scope before release. Its PACKAGES roster is hand-maintained, so a newly-published
- * package can land WITHOUT being added — the gate then passes while never proving the
- * new package installs or imports. (That is exactly how `@czap/command` slipped the
- * net.) This guard DERIVES the publishable set from the package manifests on disk and
- * asserts the smoke roster covers exactly that set — so the gate can't lie again.
+ * The `package-smoke` command (migrated out of `scripts/package-smoke.ts`, CUT A5)
+ * pack/install/import-smokes every publishable `@czap/*` scope before release. Its
+ * `PACKAGES` roster is hand-maintained, so a newly-published package can land
+ * WITHOUT being added — the gate then passes while never proving the new package
+ * installs or imports. (That is exactly how `@czap/command` slipped the net.) This
+ * guard DERIVES the publishable set from the package manifests on disk and asserts
+ * the smoke roster covers exactly that set — so the gate can't lie again.
  *
- * package-smoke.ts self-executes (`void main()` on import), so the roster is read from
- * source (the B1/B2/B5 source-guard idiom), never imported.
+ * The roster is now pure data exported from `@czap/command` (the
+ * `package-smoke-registry` module), so it is imported directly rather than read
+ * from a self-executing script source.
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
+import { PACKAGES } from '@czap/command';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 const PACKAGES_DIR = resolve(REPO, 'packages');
@@ -38,12 +41,9 @@ function derivePublishableScopes(): string[] {
   return names.sort();
 }
 
-/** The names listed in the package-smoke PACKAGES roster, read from source (it self-runs on import). */
+/** The names listed in the package-smoke PACKAGES roster (the data exported from @czap/command). */
 function smokeRosterScopes(): string[] {
-  const src = readFileSync(resolve(REPO, 'scripts/package-smoke.ts'), 'utf8');
-  // Anchor on the roster-entry shape (dir + name) so unscoped names like
-  // `liteship` count but unrelated `name:` literals in the script don't.
-  return [...src.matchAll(/dir:\s*'packages\/[^']+',\s*name:\s*'([^']+)'/g)].map((m) => m[1]!).sort();
+  return PACKAGES.map((pkg) => pkg.name).sort();
 }
 
 describe('B6a — package-smoke covers exactly the publishable @czap/* roster', () => {

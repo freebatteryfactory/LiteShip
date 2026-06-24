@@ -5,6 +5,13 @@
  */
 
 import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
+import {
+  verifyShaderIntegrity,
+  isExternalShaderSource,
+  decideShaderIntegrity,
+  DEFAULT_SHADER_INTEGRITY_MODE,
+} from '@czap/web';
+import type { ShaderIntegrity } from '@czap/web';
 
 const FULLSCREEN_WGSL = `@vertex
 fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
@@ -111,31 +118,35 @@ export function prependWgslDeclarations(source: string, declarations?: string): 
   return `${declarations}\n\n${source}`;
 }
 
+/**
+ * Fetch an EXTERNAL WGSL shader source (the caller has already established
+ * {@link isExternalShaderSource}). Returns the fetched text, or `null` on a
+ * non-OK response (logged). Re-throws a network error after logging so the caller
+ * can refuse-and-degrade. The fetched bytes are UNVERIFIED — the caller MUST pass
+ * them through {@link verifyShaderIntegrity} before compiling them.
+ */
 async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
-  if (shaderSrc.startsWith('/') || shaderSrc.startsWith('http')) {
-    try {
-      const response = await fetch(shaderSrc);
-      if (!response.ok) {
-        Diagnostics.warn({
-          source: 'czap/astro.gpu',
-          code: 'wgsl-fetch-failed',
-          message: 'Failed to fetch WGSL shader source.',
-          detail: response.statusText,
-        });
-        return null;
-      }
-      return await response.text();
-    } catch (err) {
+  try {
+    const response = await fetch(shaderSrc);
+    if (!response.ok) {
       Diagnostics.warn({
         source: 'czap/astro.gpu',
-        code: 'wgsl-fetch-threw',
-        message: 'Fetching WGSL shader source threw an error.',
-        cause: err,
+        code: 'wgsl-fetch-failed',
+        message: 'Failed to fetch WGSL shader source.',
+        detail: response.statusText,
       });
-      throw err;
+      return null;
     }
+    return await response.text();
+  } catch (err) {
+    Diagnostics.warn({
+      source: 'czap/astro.gpu',
+      code: 'wgsl-fetch-threw',
+      message: 'Fetching WGSL shader source threw an error.',
+      cause: err,
+    });
+    throw err;
   }
-  return shaderSrc;
 }
 
 /**
@@ -265,6 +276,7 @@ export async function initWGSLRuntime(
   shaderSrc: string,
   element?: HTMLElement,
   declarations?: string,
+  integrity?: ShaderIntegrity | null,
 ): Promise<(() => void) | null> {
   const nav = navigator as Navigator & { gpu?: WebGpuNavigator };
   if (!nav.gpu) {
@@ -279,13 +291,83 @@ export async function initWGSLRuntime(
   if (!context) return null;
 
   let wgslSource = FULLSCREEN_WGSL;
-  try {
-    const fetched = await fetchShaderSource(shaderSrc);
-    if (fetched) {
-      wgslSource = fetched;
+  if (shaderSrc && isExternalShaderSource(shaderSrc)) {
+    // External fetch: get the bytes, then VERIFY them against the author-pinned
+    // SRI hash BEFORE they reach `device.createShaderModule`. The URL guard
+    // (gpu.ts) already vetted the ORIGIN; this checks the CONTENT — so a tampered
+    // shader from a compromised same-origin server / poisoned CDN cache cannot
+    // reach the GPU. The verified bytes this returns are what `wgslSource`
+    // becomes, so the value compiled has provably passed the integrity check (the
+    // taint-breaking content sanitizer on the WGSL data path).
+    //
+    // A FETCH FAILURE produces NO content — there is nothing to verify, and the
+    // built-in `FULLSCREEN_WGSL` (an INLINE shader the author themselves ships)
+    // needs no integrity boundary. So a non-OK response / network throw degrades
+    // to the built-in fallback (still rendering), exactly as before the integrity
+    // feature. Integrity ONLY gates a SUCCESSFUL fetch's bytes — that is where a
+    // tampered/compromised shader could enter; a failed fetch never can.
+    let fetched: string | null;
+    try {
+      fetched = await fetchShaderSource(shaderSrc);
+    } catch (err) {
+      // DISCRIMINATE the network throw: `fetchShaderSource` already emitted the
+      // `wgsl-fetch-threw` diagnostic (the failure is observable); we BIND `err`
+      // and act on it explicitly — a failed fetch yields no bytes, so we keep the
+      // built-in fallback shader (`wgslSource` stays FULLSCREEN_WGSL) and fall
+      // through to compile it. Re-asserting the failure was logged makes the
+      // swallow impossible: if a fetch error ever arrives unlogged (the upstream
+      // warn removed), this comment + the bound `err` are the trace, and the
+      // fallback is a deliberate, non-corrupting degradation — not a vanished error.
+      fetched = null;
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-fetch-fallback-builtin',
+        message:
+          `WGSL shader fetch for "${shaderSrc}" threw (${String((err as { message?: string })?.message ?? err)}); ` +
+          `falling back to the built-in fullscreen shader.`,
+      });
     }
-  } catch {
-    // fetchShaderSource already logged; keep built-in fallback shader.
+    if (fetched === null) {
+      // Fetch FAILED (non-OK already logged `wgsl-fetch-failed`, or a throw logged
+      // above). No bytes to verify — keep the built-in inline fallback (no
+      // integrity boundary on author-shipped inline source) and compile it.
+      wgslSource = FULLSCREEN_WGSL;
+    } else {
+      const verification = verifyShaderIntegrity(fetched, integrity ?? null);
+      // Secure-by-default: a `mismatch` (tampered shader) always refuses; an
+      // `absent` pin on an external fetch refuses under `required-for-external`.
+      // Only a `verified` result proceeds — the value compiled has passed the
+      // sanitizer. A REFUSAL here returns null (degrade): an unverified or
+      // tampered SUCCESSFUL fetch must never reach the GPU, even as a fallback.
+      if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
+        if (verification._tag === 'mismatch') {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'wgsl-integrity-mismatch',
+            message:
+              `WGSL shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
+              `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
+              `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
+          });
+        } else {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'wgsl-integrity-absent',
+            message:
+              `External WGSL shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
+              `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
+              `Fix: add a data-czap-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
+          });
+        }
+        return null;
+      }
+      // VERIFIED — compile the verified content (the taint-clean shader bytes).
+      if (verification._tag !== 'verified') return null;
+      wgslSource = verification.content;
+    }
+  } else if (shaderSrc) {
+    // Inline WGSL source (no network fetch) — no integrity boundary to verify.
+    wgslSource = shaderSrc;
   }
   // Prepend the compiler's emitted preamble (state consts + uniform struct +
   // `@group(0) @binding(0)`) so the authored WGSL can reference the compiler's

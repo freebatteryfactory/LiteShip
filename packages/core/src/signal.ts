@@ -9,7 +9,8 @@
 import type { Stream, Scope } from 'effect';
 import { Effect, SubscriptionRef, Ref } from 'effect';
 import type { AVBridge } from './av-bridge.js';
-import { CzapValidationError } from './validation-error.js';
+import { wallClock } from './clock.js';
+import { ValidationError } from '@czap/error';
 
 /** Tag of a {@link SignalSource} — the family of live data feed a signal binds to. */
 export type SignalSourceType = 'viewport' | 'time' | 'pointer' | 'scroll' | 'media' | 'custom' | 'audio';
@@ -92,7 +93,9 @@ function initialValueForSource(source: SignalSource): number {
     case 'pointer':
       return 0;
     case 'time':
-      return source.mode === 'absolute' ? Date.now() : 0;
+      // Absolute mode emits the current wall-clock instant as the signal VALUE
+      // (epoch ms) — wallClock, not the monotonic systemClock.
+      return source.mode === 'absolute' ? wallClock.now() : 0;
     case 'media':
       return typeof globalThis.window !== 'undefined' && window.matchMedia(source.query).matches ? 1 : 0;
     case 'custom':
@@ -189,17 +192,20 @@ function _make(rawSource: SignalSource): Effect.Effect<SignalShape<number>, neve
         case 'time': {
           if (source.mode === 'elapsed') {
             if (typeof requestAnimationFrame === 'undefined') return;
-            const start = Date.now();
+            // The time signal is wall-clock by nature (both modes): elapsed since
+            // subscription is measured in epoch ms via wallClock, consistent with
+            // absolute mode and deterministic when the wall clock is mocked.
+            const start = wallClock.now();
             const id = { current: 0 };
             const tick = () => {
-              Effect.runSync(SubscriptionRef.set(ref, Date.now() - start));
+              Effect.runSync(SubscriptionRef.set(ref, wallClock.now() - start));
               id.current = requestAnimationFrame(tick);
             };
             id.current = requestAnimationFrame(tick);
             yield* Effect.addFinalizer(() => Effect.sync(() => cancelAnimationFrame(id.current)));
           } else if (source.mode === 'absolute') {
             const id = setInterval(() => {
-              Effect.runSync(SubscriptionRef.set(ref, Date.now()));
+              Effect.runSync(SubscriptionRef.set(ref, wallClock.now()));
             }, 1000);
             yield* Effect.addFinalizer(() => Effect.sync(() => clearInterval(id)));
           } else {
@@ -306,7 +312,7 @@ interface AudioSignalShape extends SignalShape<number> {
  * In 'sample' mode, returns the raw sample index. In 'normalized' mode,
  * returns a 0..1 progress value based on totalDurationSec — omitting
  * `totalDurationSec` (or passing a non-positive value) in 'normalized'
- * mode throws a `CzapValidationError`. Call `.poll()` to read the latest
+ * mode throws a `ValidationError`. Call `.poll()` to read the latest
  * sample from the bridge and update the signal.
  *
  * @example
@@ -327,7 +333,7 @@ function _audio(
   totalDurationSec?: number,
 ): Effect.Effect<AudioSignalShape, never, Scope.Scope> {
   if (mode === 'normalized' && !(totalDurationSec !== undefined && totalDurationSec > 0)) {
-    throw new CzapValidationError(
+    throw ValidationError(
       'Signal.audio',
       `normalized mode requires totalDurationSec > 0, got ${totalDurationSec} — pass Signal.audio(bridge, "normalized", durationSec)`,
     );

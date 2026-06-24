@@ -22,7 +22,7 @@ import { COMMAND_CATALOG, GLOSSARY_ENTRIES } from '@czap/command';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { serverInfo } from './server-info.js';
 import { PROTOCOL_VERSION, SERVER_CAPABILITIES } from './capabilities.js';
-import { ResourceNotFoundError } from './errors.js';
+import { NotFoundError } from '@czap/error';
 
 /** Product-owned resource URI scheme (no maintainer identity). */
 const SCHEME = 'liteship://';
@@ -121,9 +121,9 @@ export function listResources(): readonly McpResource[] {
   return REGISTRY.map((entry) => entry.resource);
 }
 
-/** Read one resource by exact URI. Throws {@link ResourceNotFoundError} (→ -32002) for an unknown URI. */
+/** Read one resource by exact URI. Throws `NotFoundError` (→ -32002) for an unknown URI. */
 export function readResource(uri: string): McpResourceContents {
   const entry = BY_URI.get(uri);
-  if (!entry) throw new ResourceNotFoundError(uri);
+  if (!entry) throw NotFoundError('resource', uri);
   return { contents: [{ uri, mimeType: entry.resource.mimeType, text: entry.read() }] };
 }

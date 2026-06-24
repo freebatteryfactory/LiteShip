@@ -46,6 +46,7 @@ separate worker entry files or bundler configuration.
 - [QuantizerBoundarySource](interfaces/QuantizerBoundarySource.md)
 - [RenderWorkerShape](interfaces/RenderWorkerShape.md)
 - [SPSCRingBufferShape](interfaces/SPSCRingBufferShape.md)
+- [SPSCRingPair](interfaces/SPSCRingPair.md)
 - [TransferableCanvas](interfaces/TransferableCanvas.md)
 - [WorkerConfig](interfaces/WorkerConfig.md)
 - [WorkerHostRenderConfig](interfaces/WorkerHostRenderConfig.md)
@@ -57,6 +58,7 @@ separate worker entry files or bundler configuration.
 - [CompositorWorkerState](type-aliases/CompositorWorkerState.md)
 - [FromWorkerMessage](type-aliases/FromWorkerMessage.md)
 - [ToWorkerMessage](type-aliases/ToWorkerMessage.md)
+- [WorkerMetrics](type-aliases/WorkerMetrics.md)
 
 ## Variables
 

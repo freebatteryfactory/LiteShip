@@ -21,7 +21,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { hostname } from 'node:os';
 import { Cause, Effect, Result } from 'effect';
-import { HLC, ShipCapsule, type AddressedDigest } from '@czap/core';
+import { HLC, ShipCapsule, wallClock, type AddressedDigest } from '@czap/core';
 import {
   packageSlug,
   selectTargets,
@@ -290,7 +290,8 @@ export async function ship(args: readonly string[]): Promise<number> {
   }
 
   const node = hostname();
-  const seedHlc = HLC.increment(HLC.create(node), Date.now());
+  // HLC wall_ms is epoch milliseconds — seed it from the wall clock, never the monotonic one.
+  const seedHlc = HLC.increment(HLC.create(node), wallClock.now());
 
   // Per-package emission loop. Any failure aborts before we hand off to
   // `pnpm publish` — we never publish without a capsule.
@@ -385,7 +386,7 @@ export async function ship(args: readonly string[]): Promise<number> {
         const skipped: ShipSkippedReceipt = {
           status: 'ok',
           command: 'ship',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(wallClock.now()).toISOString(),
           package_name: name,
           package_version: version,
           already_published: true,
@@ -411,7 +412,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     // Each capsule advances the seed HLC so a multi-package ship batch
     // carries strictly-monotone generated_at values. Named generatedHlc — it is an
     // HLC (causal, identity-bearing), NOT a wall-clock string (CUT generated-time).
-    const generatedHlc = HLC.increment(i === 0 ? seedHlc : seedHlc, Date.now() + i);
+    const generatedHlc = HLC.increment(i === 0 ? seedHlc : seedHlc, wallClock.now() + i);
 
     const input: ShipCapsule.Input = {
       _kind: 'shipCapsule',
@@ -452,7 +453,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     const receipt: ShipReceipt = {
       status: 'ok',
       command: 'ship',
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(wallClock.now()).toISOString(),
       package_name: name,
       package_version: version,
       capsule_id: capsule.id,

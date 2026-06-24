@@ -6,13 +6,18 @@
 
 # Function: WaveformProjection()
 
-> **WaveformProjection**(`audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
+> **WaveformProjection**(`registry`, `audioAssetId`, `opts?`): `CapsuleDef`\<`"cachedProjection"`, `unknown`, readonly `number`[], `unknown`\>
 
-Defined in: [assets/src/analysis/waveform.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L42)
+Defined in: [assets/src/analysis/waveform.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/waveform.ts#L45)
 
-Build a WaveformProjection cachedProjection capsule for a named audio asset.
+Build a WaveformProjection cachedProjection capsule for a named audio asset,
+validated against the explicit [AssetRegistry](../variables/AssetRegistry.md) the caller assembled.
 
 ## Parameters
+
+### registry
+
+[`AssetRegistry`](../interfaces/AssetRegistry.md)
 
 ### audioAssetId
 

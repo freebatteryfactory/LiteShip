@@ -1,4 +1,12 @@
-import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent } from '@czap/core';
+import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT, glslIdent, systemClock } from '@czap/core';
+import {
+  parseShaderIntegrity,
+  verifyShaderIntegrity,
+  isExternalShaderSource,
+  decideShaderIntegrity,
+  DEFAULT_SHADER_INTEGRITY_MODE,
+} from '@czap/web';
+import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
@@ -190,6 +198,13 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     },
     readRuntimeEndpointPolicy(),
   );
+  // The author-pinned content integrity hash (SRI `sha256-<base64>`), parsed
+  // alongside the URL. The URL guard above decides WHICH origin may serve the
+  // shader; this pin verifies WHAT BYTES come back — so a compromised same-origin
+  // server (or a poisoned CDN cache) cannot slip a tampered shader past the URL
+  // guard into the GPU. `null` = no pin (the secure-by-default policy refuses an
+  // external fetch with no pin; an inline shader needs none).
+  const shaderIntegrity = parseShaderIntegrity(el.getAttribute('data-czap-shader-integrity'));
 
   // Force escape hatch: `client:gpu={{ force: true }}` or a `data-czap-gpu-force`
   // attr bypasses the perf-tier gate so headless/CI (SwiftShader → gpuTier 0,
@@ -212,23 +227,23 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
   };
   if (!forced && !tierAdmitsGpu()) {
     load();
-    // Re-boot once the async probe settles a GPU-admitting tier. detect-ready is
-    // guaranteed to fire (success AND error paths dispatch it), so { once: true }
-    // self-removes — no leak even if it lands after a swap. The el.isConnected
-    // guard is the safety net: a detached host (replaced by a VT swap, torn
-    // down) never re-inits into orphan GPU resources. We deliberately do NOT
-    // drop this on czap:dispose — slots.ts fires dispose on LIVE reinit too
-    // (still-connected roots, before czap:reinit), and the bail path returns
-    // before the main czap:reinit re-registration, so removing here would
-    // strand a persisted host that upgrades right after a swap. Surviving the
-    // reinit is correct: tierAdmitsGpu re-reads the fresh data-czap-tier.
-    const onDetectReady = (): void => {
+    // Re-boot once the async probe settles a GPU-admitting tier. `onDetectReady`
+    // (owned by @czap/detect) wraps the event-name + the dual-dispatch invariant:
+    // detect-ready fires on BOTH the success AND error paths, so the one-shot
+    // subscription self-removes — no leak even if it lands after a swap. The
+    // el.isConnected guard is the safety net: a detached host (replaced by a VT
+    // swap, torn down) never re-inits into orphan GPU resources. We deliberately
+    // do NOT drop this on czap:reinit — slots.ts fires reinit on LIVE re-init too
+    // (still-connected roots), and the bail path returns before the main
+    // czap:reinit teardown registration, so removing here would strand a persisted
+    // host that upgrades right after a swap. Surviving the reinit is correct:
+    // tierAdmitsGpu re-reads the fresh data-czap-tier.
+    onDetectReady(() => {
       if (!el.isConnected) return;
       if (tierAdmitsGpu()) {
         initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
       }
-    };
-    document.addEventListener('czap:detect-ready', onDetectReady, { once: true });
+    });
     return;
   }
 
@@ -245,11 +260,27 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       el.appendChild(canvas);
     }
 
+    // F-3: arm the reinit teardown SYNCHRONOUSLY, before the first await, through
+    // a mutable Disposer cell. `initWGSLRuntime` is async, so a `czap:reinit` that
+    // lands DURING its await would otherwise find no listener and strand the WGSL
+    // runtime allocated right after. The listener invokes whatever the cell holds
+    // — a no-op until the runtime exists — AND flips a `disposed` flag so a reinit
+    // that fired mid-await makes the resolved runtime tear ITSELF down instead of
+    // leaking. One settle either way: the listener self-removes after firing.
+    let wgslDisposer: () => void = () => {};
+    let wgslDisposed = false;
+    const onWgslReinit = (): void => {
+      el.removeEventListener('czap:reinit', onWgslReinit);
+      wgslDisposed = true;
+      wgslDisposer();
+    };
+    el.addEventListener('czap:reinit', onWgslReinit);
+
     void (async () => {
       // Pass `el` (the satellite) so the runtime subscribes to its
       // `czap:uniform-update` and binds `detail.wgsl` into the uniform buffer
       // live on every crossing.
-      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations);
+      const dispose = await initWGSLRuntime(canvas, shaderSrc ?? '', el, shaderDeclarations, shaderIntegrity);
       if (!dispose) {
         warnWebGpuUnavailable();
         const gl = canvas.getContext('webgl2');
@@ -260,9 +291,13 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
             message: 'WebGPU unavailable; WGSL directive fell back to WebGL2 default shader.',
           });
         }
+      } else if (wgslDisposed) {
+        // A reinit already landed during the await and ran the no-op cell; the
+        // runtime that just resolved is orphaned, so tear it down immediately.
+        dispose();
       } else {
         el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
-        el.addEventListener('czap:reinit', dispose, { once: true });
+        wgslDisposer = dispose;
       }
     })();
     load();
@@ -294,10 +329,28 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
 
   const webgl = gl;
 
+  // F-3: arm the reinit teardown SYNCHRONOUSLY, before `initShader` runs any
+  // await (the shader `fetch`). The teardown used to be registered at the END of
+  // initShader, so a `czap:reinit` landing DURING the fetch found no listener and
+  // orphaned the GL program + render loop created right after. The cell holds a
+  // no-op until the program exists; the listener invokes whatever it currently
+  // holds and flips `disposed` so a reinit that fired mid-fetch makes the resolved
+  // shader tear ITSELF down. The listener self-removes after firing (gpu treats
+  // reinit as a one-shot teardown — directive-boot re-activates only fresh nodes).
+  let glDisposer: () => void = () => {};
+  let glDisposed = false;
+  const onGlReinit = (): void => {
+    el.removeEventListener('czap:reinit', onGlReinit);
+    glDisposed = true;
+    glDisposer();
+  };
+  el.addEventListener('czap:reinit', onGlReinit);
+
   async function initShader(): Promise<void> {
     let fragSource: string;
 
-    if (shaderSrc && (shaderSrc.startsWith('/') || shaderSrc.startsWith('http'))) {
+    if (shaderSrc && isExternalShaderSource(shaderSrc)) {
+      let fetchedSource: string;
       try {
         const response = await fetch(shaderSrc);
         if (!response.ok) {
@@ -309,7 +362,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
           });
           return;
         }
-        fragSource = await response.text();
+        fetchedSource = await response.text();
       } catch (err) {
         Diagnostics.warn({
           source: 'czap/astro.gpu',
@@ -319,6 +372,47 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         });
         return;
       }
+
+      // CONTENT INTEGRITY (defense-in-depth): the URL guard already vetted the
+      // ORIGIN; now verify the fetched BYTES against the author-pinned SRI hash
+      // BEFORE they reach `gl.shaderSource`. The compiled `fragSource` is the
+      // VERIFIED content this returns — a value that reaches the GPU has provably
+      // passed this check (the taint-breaking content sanitizer on the data path).
+      // On a mismatch (a tampered / compromised shader) or a missing pin under the
+      // secure-by-default policy, REFUSE: log a security diagnostic and return
+      // before any compile. Never compile unverified external bytes.
+      const verification = verifyShaderIntegrity(fetchedSource, shaderIntegrity);
+      // The secure-by-default decision: a `mismatch` (tampered shader) ALWAYS
+      // refuses; an `absent` pin on an external fetch refuses under
+      // `required-for-external` (the runtime's fixed, secure-by-default mode).
+      // Only a `verified` result proceeds — so the value compiled below has
+      // provably passed the integrity sanitizer.
+      if (!decideShaderIntegrity(verification, DEFAULT_SHADER_INTEGRITY_MODE).proceed) {
+        if (verification._tag === 'mismatch') {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'shader-integrity-mismatch',
+            message:
+              `Shader content integrity check FAILED for "${shaderSrc}" — the fetched bytes do not match the ` +
+              `author-pinned hash (a tampered or compromised shader). Refusing to compile. ` +
+              `expected sha256 ${verification.expectedHex}, got ${verification.actualHex}.`,
+          });
+        } else {
+          Diagnostics.error({
+            source: 'czap/astro.gpu',
+            code: 'shader-integrity-absent',
+            message:
+              `External shader "${shaderSrc}" was fetched with NO integrity hash. An unverified external ` +
+              `shader cannot be loaded (secure-by-default). Refusing to compile. ` +
+              `Fix: add a data-czap-shader-integrity="sha256-<base64>" attribute pinning the shader content.`,
+          });
+        }
+        return;
+      }
+      // VERIFIED — compile the verified content (the value that passed the
+      // integrity sanitizer; the taint-clean shader bytes reach the GPU).
+      if (verification._tag !== 'verified') return;
+      fragSource = verification.content;
     } else if (shaderSrc) {
       fragSource = shaderSrc;
     } else {
@@ -385,7 +479,11 @@ void main() {
       else webgl.uniform1f(loc, num);
     };
 
-    const startTime = performance.now();
+    // Animation epoch for the `u_time` uniform. The live render loop is an
+    // inherently real-time boundary with no injection seam, so both the epoch
+    // and the per-frame read route through `systemClock` (the single declared
+    // entropy boundary) — `u_time` is their monotonic elapsed-seconds delta.
+    const startTime = systemClock.now();
     let animFrame = 0;
 
     function render(): void {
@@ -399,7 +497,7 @@ void main() {
 
       const timeLoc = uniforms.get('u_time');
       if (timeLoc) {
-        webgl.uniform1f(timeLoc, (performance.now() - startTime) / 1000);
+        webgl.uniform1f(timeLoc, (systemClock.now() - startTime) / 1000);
       }
 
       const resLoc = uniforms.get('u_resolution');
@@ -496,18 +594,28 @@ void main() {
       }
     };
 
+    const teardown = (): void => {
+      cancelAnimationFrame(animFrame);
+      el.removeEventListener('czap:uniform-update', onElementUniformUpdate);
+      document.removeEventListener('czap:uniform-update', onDocumentUniformUpdate);
+      webgl.deleteProgram(program);
+    };
+
+    // A reinit that ALREADY fired during the shader fetch ran the no-op cell and
+    // self-removed; the program just compiled is orphaned, so tear it down now
+    // (and never subscribe to uniform updates or start the render loop).
+    if (glDisposed) {
+      webgl.deleteProgram(program);
+      return;
+    }
+
     el.addEventListener('czap:uniform-update', onElementUniformUpdate);
     document.addEventListener('czap:uniform-update', onDocumentUniformUpdate);
 
     el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
     render();
 
-    el.addEventListener('czap:reinit', () => {
-      cancelAnimationFrame(animFrame);
-      el.removeEventListener('czap:uniform-update', onElementUniformUpdate);
-      document.removeEventListener('czap:uniform-update', onDocumentUniformUpdate);
-      webgl.deleteProgram(program);
-    });
+    glDisposer = teardown;
   }
 
   void initShader();

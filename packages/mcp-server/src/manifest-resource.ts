@@ -24,7 +24,7 @@ import type { McpResource, McpResourceContents } from './resources.js';
 import { listUiResources } from './ui-resources.js';
 import { listAppResources } from './app-resources.js';
 import { listPrompts } from './prompts.js';
-import { ResourceNotFoundError } from './errors.js';
+import { NotFoundError } from '@czap/error';
 
 /** The single top-level app-manifest resource URI (product-owned; distinct from registry/*). */
 const MANIFEST_URI = 'liteship://mcp-app/manifest';
@@ -56,8 +56,8 @@ export function listManifestResources(): readonly McpResource[] {
   ];
 }
 
-/** Read the manifest resource. Any other `liteship://mcp-app/…` URI → {@link ResourceNotFoundError} (→ -32002). */
+/** Read the manifest resource. Any other `liteship://mcp-app/…` URI → `NotFoundError` (→ -32002). */
 export function readManifestResource(uri: string): McpResourceContents {
-  if (uri !== MANIFEST_URI) throw new ResourceNotFoundError(uri);
+  if (uri !== MANIFEST_URI) throw NotFoundError('resource', uri);
   return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(mcpAppManifest(), null, 2) }] };
 }

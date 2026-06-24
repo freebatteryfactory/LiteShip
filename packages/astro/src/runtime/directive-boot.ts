@@ -26,7 +26,7 @@ import { Diagnostics } from '@czap/core';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 /** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm';
+export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'svg';
 
 const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
   stream: 'stream',
@@ -34,6 +34,7 @@ const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
   worker: 'workers',
   gpu: 'gpu',
   wasm: 'wasm',
+  graph: 'graph',
 };
 
 function directiveEnableFix(name: DirectiveName): string {
@@ -45,7 +46,16 @@ function directiveEnableFix(name: DirectiveName): string {
   return `Fix: czap({ ${configKey}: { enabled: true } }).${coepNote}`;
 }
 
-const DIRECTIVE_NAMES: readonly DirectiveName[] = ['satellite', 'stream', 'llm', 'worker', 'gpu', 'wasm'];
+const DIRECTIVE_NAMES: readonly DirectiveName[] = [
+  'satellite',
+  'stream',
+  'llm',
+  'worker',
+  'gpu',
+  'wasm',
+  'graph',
+  'svg',
+];
 
 /** Tracks which directives already initialized an element across re-scans. */
 const BOUND_ATTRIBUTE = 'data-czap-directive-bound';
@@ -61,6 +71,8 @@ const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: Directive
   worker: () => import('../client-directives/worker.js'),
   gpu: () => import('../client-directives/gpu.js'),
   wasm: () => import('../client-directives/wasm.js'),
+  graph: () => import('../client-directives/graph.js'),
+  svg: () => import('../client-directives/svg.js'),
 };
 
 function isDirectiveName(value: string): value is DirectiveName {
@@ -171,16 +183,16 @@ export async function scanAndBootDirectives(
 }
 
 /**
- * One-shot page bootstrap: scan for directive markers on
- * `DOMContentLoaded` (or immediately if the document is already ready)
- * and re-scan after every Astro View Transitions `after-swap`. Swapped-in
- * DOM is fresh server HTML -- it never carries the bound attribute -- so
- * new elements activate while `transition:persist` elements are skipped
- * (their directives re-read attributes via the existing `czap:reinit`
- * path installed by `installSwapReinit()`).
- *
+ * One-shot INITIAL page bootstrap: scan for directive markers on
+ * `DOMContentLoaded` (or immediately if the document is already ready).
  * Idempotent across repeated module loads via a window global, matching
  * `bootstrapSlots()`.
+ *
+ * The post-swap re-scan is NOT registered here: it is the second step of the
+ * single ordered swap pipeline (`./swap-pipeline.ts`, F-1). On a swap, fresh
+ * server HTML never carries the bound attribute, so new elements activate while
+ * `transition:persist` elements are skipped (their directives re-read attributes
+ * via the `czap:reinit` step of the same pipeline).
  */
 export function bootstrapDirectives(enabled: readonly DirectiveName[]): void {
   if (typeof window === 'undefined') {
@@ -201,6 +213,4 @@ export function bootstrapDirectives(enabled: readonly DirectiveName[]): void {
   } else {
     scan();
   }
-
-  document.addEventListener('astro:after-swap', scan);
 }

@@ -8,7 +8,7 @@
 
 > **partitionAllowlistedFindings**(`findings`, `profile`): `object`
 
-Defined in: [audit/src/shared.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L244)
+Defined in: [audit/src/shared.ts:247](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L247)
 
 ## Parameters
 

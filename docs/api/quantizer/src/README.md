@@ -23,6 +23,7 @@ the working line.
 - [QuantizerConfig](interfaces/QuantizerConfig.md)
 - [QuantizerFromOptions](interfaces/QuantizerFromOptions.md)
 - [QuantizerOutputs](interfaces/QuantizerOutputs.md)
+- [QuantizerRuntime](interfaces/QuantizerRuntime.md)
 - [SpringConfig](interfaces/SpringConfig.md)
 - [Transition](interfaces/Transition.md)
 - [TransitionConfig](interfaces/TransitionConfig.md)

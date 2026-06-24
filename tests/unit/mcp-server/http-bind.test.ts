@@ -4,6 +4,7 @@
  * resolution, so no server process is ever spawned.
  */
 import { describe, it, expect } from 'vitest';
+import { hasTag } from '@czap/error';
 import { parseHttpBind } from '../../../packages/mcp-server/src/http-server.js';
 
 describe('parseHttpBind — accepted bind shapes', () => {
@@ -41,5 +42,20 @@ describe('parseHttpBind — invalid binds throw a teaching error before the serv
     expect(() => parseHttpBind('99999')).toThrow(SHAPES);
     expect(() => parseHttpBind(-1)).toThrow(SHAPES);
     expect(() => parseHttpBind(1.5)).toThrow(SHAPES);
+  });
+
+  it('throws a tagged ValidationError (the algebra value), not a bare Error', () => {
+    // Defect-1 guard: invalidBind must construct a `@czap/error` tagged variant
+    // so the failure narrows via `hasTag` and carries structured fields — never
+    // a laundered `new Error(...)`.
+    let thrown: unknown;
+    try {
+      parseHttpBind('localhost');
+    } catch (e) {
+      thrown = e;
+    }
+    expect(hasTag(thrown, 'ValidationError')).toBe(true);
+    expect((thrown as { module: string }).module).toBe('parseHttpBind');
+    expect((thrown as { detail: string }).detail).toContain('invalid --http bind "localhost"');
   });
 });

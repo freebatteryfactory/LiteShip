@@ -10,7 +10,7 @@
 
 Defined in: [mcp-server/src/manifest-resource.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/manifest-resource.ts#L60)
 
-Read the manifest resource. Any other `liteship://mcp-app/…` URI → [ResourceNotFoundError](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts) (→ -32002).
+Read the manifest resource. Any other `liteship://mcp-app/…` URI → `NotFoundError` (→ -32002).
 
 ## Parameters
 

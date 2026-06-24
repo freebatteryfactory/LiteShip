@@ -12,6 +12,7 @@
 
 import { Boundary } from './boundary.js';
 import type { StateUnion } from './type-utils.js';
+import { type Clock, systemClock } from './clock.js';
 
 // Speculative pre-computation: when signal velocity indicates an imminent threshold crossing, pre-evaluate the predicted next state.
 
@@ -43,7 +44,7 @@ interface SpeculativeEvaluatorShape<B extends Boundary.Shape> {
  * result.confidence;  // 0.0-1.0 likelihood of crossing
  * ```
  */
-function _make<B extends Boundary.Shape>(boundary: B): SpeculativeEvaluatorShape<B> {
+function _make<B extends Boundary.Shape>(boundary: B, clock: Clock = systemClock): SpeculativeEvaluatorShape<B> {
   const thresholds = boundary.thresholds as readonly number[];
   const hysteresis = boundary.hysteresis ?? 0;
   const prefetchWindow = Math.max(hysteresis, 1); // Use hysteresis as window, min 1
@@ -103,7 +104,7 @@ function _make<B extends Boundary.Shape>(boundary: B): SpeculativeEvaluatorShape
 
   return {
     evaluate(value: number, velocity?: number): SpeculativeResult<B> {
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const now = clock.now();
       history.push({ value, time: now });
       if (history.length > HISTORY_SIZE) history.shift();
 

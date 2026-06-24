@@ -8,7 +8,7 @@
 
 > `const` **tokenBufferCapsule**: [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`"stateMachine"`, \{ `_tag`: `"push"`; `token`: `string`; \} \| \{ `_tag`: `"flush"`; \} \| \{ `_tag`: `"reset"`; \}, \{ `phase`: `"idle"` \| `"buffering"` \| `"draining"`; `tokens`: readonly `string`[]; `totalBytes`: `number`; \}, `unknown`\>
 
-Defined in: [core/src/capsules/token-buffer.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/token-buffer.ts#L78)
+Defined in: [core/src/capsules/token-buffer.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/token-buffer.ts#L87)
 
 Declared capsule for TokenBuffer. Registered in the module-level
 catalog at import time; walked by the factory compiler.

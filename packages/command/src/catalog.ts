@@ -20,6 +20,12 @@ import { assetAnalyzeCommand, assetVerifyCommand } from './commands/asset.js';
 import { sceneVerifyCommand, sceneCompileCommand, sceneRenderCommand } from './commands/scene.js';
 import { verifyCommand } from './commands/verify.js';
 import { auditCommand } from './commands/audit.js';
+import { auditFloorCommand } from './commands/audit-floor.js';
+import { plumbCommand } from './commands/plumb.js';
+import { packageSmokeCommand } from './commands/package-smoke.js';
+import { checkInvariantsCommand } from './commands/check-invariants.js';
+import { capsuleVerifyGateCommand } from './commands/capsule-verify.js';
+import { checkCommand } from './commands/check.js';
 
 /**
  * Descriptors for commands whose execution is owned by the CLI (terminal
@@ -90,9 +96,25 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { destructive: true, group: 'ship' },
   },
   {
+    name: 'sbom',
+    summary:
+      'Emit the deterministic, content-addressed CycloneDX SBOM over the lockfile + workspace; fail on a lockfile-policy or completeness violation.',
+    inputSchema: { type: 'object', properties: {} },
+    // NOT mcpExposed: sbom writes a reviewable artifact to the working tree
+    // (reports/sbom.json) — a host/file-orchestration verb, not an MCP tool.
+    annotations: { group: 'ship' },
+  },
+  {
     name: 'mcp',
     summary: 'Start the MCP server (stdio default; --http=PORT for HTTP).',
     inputSchema: { type: 'object', properties: { http: { type: 'string' } } },
+    annotations: { longRunning: true, cliOnly: true, group: 'servers' },
+  },
+  {
+    name: 'lsp',
+    summary:
+      'Start the gauntlet LSP server over stdio — publishes Findings as live diagnostics + code actions (--ir for the IR-enriched fold).',
+    inputSchema: { type: 'object', properties: { ir: { type: 'boolean' } } },
     annotations: { longRunning: true, cliOnly: true, group: 'servers' },
   },
 ];
@@ -111,6 +133,12 @@ const HANDLER_COMMANDS: readonly RegisteredCommand[] = [
   sceneRenderCommand,
   verifyCommand,
   auditCommand,
+  auditFloorCommand,
+  plumbCommand,
+  packageSmokeCommand,
+  checkInvariantsCommand,
+  capsuleVerifyGateCommand,
+  checkCommand,
 ];
 
 /**

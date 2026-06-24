@@ -142,7 +142,7 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Codec: { methods: ['make'] },
   Plan: { methods: ['make', 'validate', 'topoSort'] },
   // GraphPatch — typed graph mutation + structural differ (P5b).
-  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'patchId', 'receipt', 'forkOf'] },
+  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'decode', 'patchId', 'receipt', 'forkOf'] },
   RuntimeCoordinator: { methods: ['create'] },
   Diagnostics: {
     methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
@@ -212,7 +212,15 @@ const STANDALONE_FUNCTIONS = [
   'isWire',
   'fnv1a',
   'fnv1aBytes',
-  'isValidationError',
+  // JSON-Schema deriver (single-source-of-truth migration): derives a command
+  // descriptor's JSON-Schema from ONE Effect Schema (Schema.Type + outputSchema
+  // from one source), killing the hand-maintained-JSON-Schema-beside-the-type
+  // drift. Production module (NOT harness/) so @czap/command imports it without
+  // pulling fast-check into its runtime.
+  'schemaToJsonSchema',
+  // `isValidationError` removed from the main entry — core migrated to the
+  // `@czap/error` algebra; consumers use `hasTag(e, 'ValidationError')` from
+  // `@czap/error` (no per-package guard re-export, no compat shim).
   'defineConfig',
   'tupleMap',
   // The single f32-canonical boundary state-index kernel (Phase-0 evaluator
@@ -235,13 +243,30 @@ const STANDALONE_FUNCTIONS = [
   // DocumentGraph IR kernel (P2): the one content-addressing primitive + the
   // node/graph seal/validate/linearize surface.
   'contentAddressOf',
+  // The canonical-CBOR byte serializer behind `contentAddressOf` — surfaced so the
+  // capsule generator-provenance digests (@czap/command) hash the SAME canonical
+  // bytes the content-address kernel does (one canonicalization, no fork).
+  'canonicalAddressBytes',
   'sealNode',
   'sealGraph',
   'validateGraph',
   'linearizeGraph',
+  // Version-aware, fail-closed reader for an untrusted DocumentGraph value
+  // (Slice C artifact-migration): gates `_tag`/`_version` + per-node
+  // well-formedness, rejecting a future-version/malformed graph with one tagged
+  // ParseError instead of silently misparsing it into a v1 shape.
+  'decodeDocumentGraph',
+  // DocumentGraph node well-formedness — the ONE trust gate shared by the AI
+  // proposal validator and the @czap/astro runtime graph loader (0.4.0 item B).
+  'isWellFormedNode',
   // Escalation chooser (P5c): the reader of PolicyNode — picks the minimal
-  // CapLevel rung a policy admits on a runtime site.
+  // CapTier rung a policy admits on a runtime site.
   'chooseRung',
+  // Capability-admissibility ladder projector (cap-axes rename): projects the
+  // single index-keyed `LADDER_TARGETS` ladder onto a vocabulary's rung order.
+  // The core escalation `RUNG_TARGETS` (CapTier) and the quantizer's
+  // `TIER_TARGETS` (MotionTier) both derive from it, so the two cannot drift.
+  'projectLadder',
   // AI cast validated-output envelope (the shared discipline for GraphPatch AND
   // genui GeneratedUITree proposals). `mintValidated` (the sole token mint site)
   // is intentionally NOT exported, so the envelope stays un-forgeable. These are
@@ -261,13 +286,35 @@ const STANDALONE_FUNCTIONS = [
   // lockfileAddress, workspaceManifestAddress, normalizedDryRunAddress,
   // normalizeDryRunOutput) live in @czap/cli per ADR-0011 — they import
   // node:zlib and must stay out of the browser-bundleable @czap/core.
+  // The determinism substrate (0.4.0) — the FUNCTION half: deterministic clock/rng
+  // factories. `fixedClock`/`manualClock` build injectable test clocks; `seededRng`
+  // a replayable RNG. (The singleton boundaries systemClock/wallClock/systemRng are
+  // value-objects → STANDALONE_OBJECTS.)
+  'fixedClock',
+  'manualClock',
+  'seededRng',
+  // The deterministic frame-state -> RGBA painter (0.4.0 stage/render): the single
+  // source of truth both ffmpeg backends composite through, so a given CompositeState
+  // always yields byte-identical, content-addressable pixels. Pure function.
+  'compositeStateToRgba',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
-const ERROR_CLASSES = ['CzapValidationError'];
+// Empty: core migrated to the `@czap/error` algebra. `CzapValidationError`
+// (the old ad-hoc class) was deleted — validation failures are now the tagged
+// `ValidationError` value from `@czap/error`, never re-exported from core.
+const ERROR_CLASSES: string[] = [];
 
 // Namespace objects that aren't in the main API_REGISTRY (utility re-exports)
 const STANDALONE_OBJECTS = [
+  // The determinism substrate (0.4.0) — the SINGLETON boundaries: the only two
+  // sanctioned ambient time reads (`systemClock` monotonic perf.now for durations,
+  // `wallClock` epoch Date.now for timestamps/HLC) + the sanctioned Math.random
+  // read (`systemRng`). Every other runtime path threads an injected clock/rng
+  // defaulting to these. Value-objects ({now}/{next}), not functions.
+  'systemClock',
+  'wallClock',
+  'systemRng',
   'fallbackKernels',
   'VIEWPORT',
   'boundaryEvaluateCapsule',
@@ -277,8 +324,9 @@ const STANDALONE_OBJECTS = [
   // GraphPatch round-trip identity capsule (F): proves encode→decode→diff→patch
   // →re-encode holds under the content-addressed multiset law.
   'graphPatchIdentityCapsule',
-  // Escalation chooser capsule: locks chooseRung's minimal-downgrade / site-gate /
-  // determinism / fresh-Set laws as a standing pureTransform contract.
+  // Escalation chooser capsule: the FIRST policyGate instance (ADR-0008). Locks
+  // chooseRung's allow/deny + reason-chain + minimal-downgrade / site-gate laws as
+  // a standing policyGate contract — the canonical permission/authz check.
   'escalationChooseRungCapsule',
   // DocumentGraph addressing capsule: locks addressDocumentGraph's determinism /
   // fnv1a format / order-independence (CUT B1 code-unit guard).
@@ -290,6 +338,9 @@ const STANDALONE_OBJECTS = [
   // no-bypass (tampered proposal refused at apply), apply-accepts-only-minted-token,
   // validated-proposal determinism, valid-applies-and-re-addresses, rejection-never-mints.
   'aiCastProposalCapsule',
+  // DocumentGraph node schema: the effect/Schema union (the single source of
+  // truth `isWellFormedNode` reads) surfaced so hosts can decode/validate nodes.
+  'DocumentGraphNodeSchema',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────
@@ -314,6 +365,11 @@ const DEFAULT_CONSTANTS = [
   'EVALUATE_THRESHOLDS_SOURCE',
   // Worker-blob twin of projectionKeys as an inlinable JS source string (Phase-1).
   'PROJECTION_KEYS_SOURCE',
+  // The single index-keyed capability-admissibility ladder + its rung count, the
+  // shared source `RUNG_TARGETS` (CapTier) and `TIER_TARGETS` (MotionTier) both
+  // project from via `projectLadder` (cap-axes rename).
+  'LADDER_TARGETS',
+  'LADDER_RUNGS',
 ];
 
 // ── Branded type constructors (re-exported from brands.ts) ──────────
@@ -406,6 +462,16 @@ describe('API health canary', () => {
         expect(typeof val).toBe('function');
       });
     }
+
+    // Footgun gate: the old ad-hoc error classes were deleted when core moved
+    // to the `@czap/error` algebra. They must NOT reappear on the surface —
+    // validation/guard helpers now live in `@czap/error` (`ValidationError`,
+    // `hasTag(e, 'ValidationError')`), never re-exported here.
+    test('the deleted ad-hoc error classes are NOT on the main entry', () => {
+      const core = Core as Record<string, unknown>;
+      expect(core.CzapValidationError).toBeUndefined();
+      expect(core.isValidationError).toBeUndefined();
+    });
   });
 
   describe('registry completeness', () => {

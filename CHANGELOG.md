@@ -4,6 +4,49 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.4.0] - 2026-06-19
+
+The **live-runtime cut**: the framework primitives that 0.3.0 left built-but-test-only
+are now plumbed into the live cast pipeline — and a new gate makes "built-not-plumbed"
+a CI failure so it can't happen silently again.
+
+### Added
+
+- `@czap/astro` — **runtime DocumentGraph loader.** `loadGraphRuntime(serialized, resolve)`
+  lowers a sealed `DocumentGraph` onto the live boundary cast pipeline (CSS/ARIA/GPU),
+  with a surgical `castGraphDelta` re-cast seam (only changed cells re-lower; untouched
+  observers survive). New `client:graph` directive. The loader is the seam an authoring
+  producer feeds; the producer itself is downstream.
+- `@czap/astro` — **scene→live-runtime bridge.** `bridgeSceneToGraph(scene, handle, …)`
+  drives a signal-indexed `@czap/scene` against the live runtime: a DISCRETE state crossing
+  emits a `GraphPatch` → `recast`, while the CONTINUOUS tween writes a leaf CSS var / GPU
+  uniform each frame and **never patches the graph**. `@czap/scene` is now a live runtime
+  consumer (was video/offline-only).
+- `@czap/astro` — **AI-apply seam.** `castGraphContext` (cast the live graph OUT to a
+  model-facing `AIContext`) + `admitGraphPatchProposal` (admit a candidate IN through the
+  un-bypassable `validateGraphPatchProposal` → `applyValidatedPatch` token-witness chain,
+  then re-cast the delta). LiteShip exposes the seam; the model producer is downstream.
+- `@czap/astro` — **SVG last-mile directive** (`client:svg`): resolves `data-czap-entity →
+  SVGElement` and applies `@czap/scene`'s `applySvgAttrs` to the live DOM each frame.
+- `@czap/stage` — **headless node video encode.** `dualExportNode(graph, ffmpegFrameEncoder())`
+  runs the graph→page+video dual-export proof in node/CI via an injected ffmpeg/libx264
+  `FrameEncoder` (was browser/WebCodecs-gated). The frame-source digest == page digest
+  invariant holds headless (frames addressed, bytes injected).
+- **Plumb-completeness gate** (`plumb:gate`, gauntlet phase 37). A package-plumb ledger
+  classifies every published package `runtime`/`tooling`/`deferred` (an unclassified package
+  fails CI, so a test-only subsystem can't ship hidden) + an unwired-capsule floor. Closes
+  the hole where built-not-plumbed primitives passed green (the audit's orphan findings were
+  `info`-only; no phase asserted producer→consumer plumbing).
+- **Determinism hardening:** an ast-grep guard banning re-implemented threshold reverse-scans
+  outside the canonical f32 kernels, + a `BlendTree.computeBlend` accumulation-order-independence
+  property test (run against the fresh wasm in CI).
+
+### Changed
+
+- `@czap/core` — factored the DocumentGraph node well-formedness reader (`isWellFormedNode`,
+  `DocumentGraphNodeSchema`) out of `ai-cast.ts` into `document-graph-schema.ts` so the
+  runtime loader and the AI seam share one trust gate.
+
 ## [0.3.1] - 2026-06-19
 
 ### Fixed

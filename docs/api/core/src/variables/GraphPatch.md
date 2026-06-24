@@ -8,7 +8,7 @@
 
 > **GraphPatch**: `object`
 
-Defined in: [core/src/graph-patch.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L65)
+Defined in: [core/src/graph-patch.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L66)
 
 GraphPatch namespace — the tagged-delta mutation surface over
 [DocumentGraph](../interfaces/DocumentGraph.md). Propose a delta, apply/preview it (re-addressing through
@@ -41,6 +41,34 @@ existing one dedups.
 #### Returns
 
 [`DocumentGraph`](../interfaces/DocumentGraph.md)
+
+### decode
+
+> **decode**: (`value`) => [`GraphPatch`](../interfaces/GraphPatch.md)
+
+VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED GraphPatch value (a patch
+lowered from persisted JSON / a model proposal). [apply](#apply) trusts its
+`patch` argument's `_version`; a host that reconstructs a patch from outside
+the program must run it through THIS gate first, so a future-version
+(`_version: 2`) patch is rejected with ONE canonical tagged [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)
+— never silently misparsed and replayed as a v1 delta. Scope is intentionally
+the `_tag`/`_version` ENVELOPE only (the deeper op-shape validation lives in
+[validate](#validate), which re-runs structural integrity on the apply result).
+
+#### Parameters
+
+##### value
+
+`unknown`
+
+#### Returns
+
+[`GraphPatch`](../interfaces/GraphPatch.md)
+
+#### Throws
+
+ParseError (`source: 'GraphPatch'`) when the value is not a
+  record, carries the wrong `_tag`, or an unsupported `_version`.
 
 ### diff
 

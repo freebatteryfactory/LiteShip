@@ -18,7 +18,7 @@
  */
 import { COMMAND_CATALOG, mcpExposedDescriptors } from '@czap/command';
 import type { CapsuleCommandDescriptor } from '@czap/core';
-import { InvalidParamsError } from './errors.js';
+import { ValidationError } from '@czap/error';
 
 /** An MCP prompt argument descriptor. */
 export interface McpPromptArgument {
@@ -63,7 +63,7 @@ export function listPrompts(): readonly McpPrompt[] {
   return PROMPTS;
 }
 
-/** Resolve a prompt by name. Unknown prompt / missing / invalid argument → {@link InvalidParamsError} (-32602). */
+/** Resolve a prompt by name. Unknown prompt / missing / invalid argument → `ValidationError` (-32602). */
 export function getPrompt(name: string, args: Readonly<Record<string, unknown>>): GetPromptResult {
   switch (name) {
     case 'liteship.command.inspect':
@@ -71,9 +71,9 @@ export function getPrompt(name: string, args: Readonly<Record<string, unknown>>)
     case 'liteship.tool.use':
       return useTool(args);
     default:
-      throw new InvalidParamsError(
+      throw ValidationError(
+        'prompts/get',
         `unknown prompt: ${name}. Available prompts: ${PROMPTS.map((p) => p.name).join(', ')} (see prompts/list).`,
-        { name },
       );
   }
 }
@@ -85,13 +85,13 @@ function userMessage(text: string): GetPromptResult['messages'][number] {
 function inspectCommand(args: Readonly<Record<string, unknown>>): GetPromptResult {
   const command = typeof args.command === 'string' ? args.command : undefined;
   if (command === undefined) {
-    throw new InvalidParamsError('liteship.command.inspect requires { command: string }', { received: args });
+    throw ValidationError('liteship.command.inspect', 'liteship.command.inspect requires { command: string }');
   }
   const descriptor = COMMAND_CATALOG.find((d) => d.name === command);
   if (!descriptor) {
-    throw new InvalidParamsError(
+    throw ValidationError(
+      'liteship.command.inspect',
       `unknown command: ${command}. The full catalog is the resource liteship://registry/commands.`,
-      { command },
     );
   }
   return {
@@ -103,7 +103,7 @@ function inspectCommand(args: Readonly<Record<string, unknown>>): GetPromptResul
 function useTool(args: Readonly<Record<string, unknown>>): GetPromptResult {
   const tool = typeof args.tool === 'string' ? args.tool : undefined;
   if (tool === undefined) {
-    throw new InvalidParamsError('liteship.tool.use requires { tool: string }', { received: args });
+    throw ValidationError('liteship.tool.use', 'liteship.tool.use requires { tool: string }');
   }
   // Only MCP-exposed tools are callable over MCP — an unknown name OR a CLI-owned
   // (non-exposed) command both fail here as invalid params, with the remedy split
@@ -111,11 +111,11 @@ function useTool(args: Readonly<Record<string, unknown>>): GetPromptResult {
   const descriptor = mcpExposedDescriptors().find((d) => d.name === tool);
   if (!descriptor) {
     const cliOwned = COMMAND_CATALOG.some((d) => d.name === tool);
-    throw new InvalidParamsError(
+    throw ValidationError(
+      'liteship.tool.use',
       cliOwned
         ? `"${tool}" is not callable over MCP — it is CLI-owned. Run it as \`czap ${tool}\`; MCP-callable tools are listed by tools/list.`
         : `"${tool}" is not callable over MCP and is not in the command catalog. MCP-callable tools are listed by tools/list.`,
-      { tool },
     );
   }
   return { description: `How to call the MCP tool ${tool}.`, messages: [userMessage(renderTool(descriptor))] };

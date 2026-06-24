@@ -8,9 +8,9 @@
 
 > **ContentAddress**: (`value`) => `ContentAddress`
 
-Defined in: [core/src/brands.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L41)
+Defined in: [core/src/brands.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L42)
 
-Wrap a plain string as a ContentAddress — the one sanctioned cast site for this brand.
+Wrap a plain string as a ContentAddress.
 
 ## Parameters
 
@@ -21,3 +21,7 @@ Wrap a plain string as a ContentAddress — the one sanctioned cast site for thi
 ## Returns
 
 `ContentAddress`
+
+## Throws
+
+ValidationError when `value` is not `fnv1a:` + 8 lowercase hex.

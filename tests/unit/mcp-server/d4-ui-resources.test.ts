@@ -160,6 +160,24 @@ describe('D4 — projection drift pin', () => {
     // Gauntlet hardening: the `gauntlet` glossary definition moved 32 -> 34 phases
     // (rig-check + audit:floor), re-pinning the glossary UI body.
     // 0.2.0 framework primitives: added ui://liteship/registry/components static twin.
-    expect(address).toBe('fnv1a:8be0662b');
+    // CUT A2: `plumb` (migrated from scripts/plumb-gate.ts) joined COMMAND_CATALOG,
+    // so the registry/commands UI body changed, re-pinning the digest.
+    // CUT A3: `check-invariants` (migrated from scripts/check-invariants.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    // CUT A4: `audit-floor` (migrated from scripts/audit-floor.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    // CUT A5: `package-smoke` (migrated from scripts/package-smoke.ts) joined
+    // COMMAND_CATALOG, re-pinning the registry/commands UI body digest again.
+    // B5b CLI-only: `check-invariants` went MCP-exposed → CLI-only (its scan needs
+    // @czap/audit's normalizeRepoPath), flipping its annotations (mcpExposed dropped,
+    // cliOnly added) in COMMAND_CATALOG → the registry/commands UI body shifted.
+    // Re-pinned again when the capsule-verify handler command (CLI-only) joined
+    // the registry, growing the commands UI projection by one entry.
+    // Re-pinned again when `check` (the PURE gauntlet gate fold, litelaunchGauntlet)
+    // joined COMMAND_CATALOG as a handler-backed, MCP-exposed command — the
+    // registry/commands UI body grew by one entry, re-pinning the digest.
+    // Re-pinned again when `lsp` (the LSP rigor skin launcher, B3) joined
+    // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
+    expect(address).toBe('fnv1a:dd3a1110');
   });
 });

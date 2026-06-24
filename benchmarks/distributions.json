@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "distributions": [
+    {
+      "name": "Boundary.make() -- 3 thresholds",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "Boundary.evaluate -- 3 thresholds",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "Boundary.evaluate -- 5 thresholds",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 5,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "Boundary.evaluate -- 10 thresholds",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 10,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "Boundary.evaluateWithHysteresis -- 3 thresholds",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "Token.make() + FNV-1a",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "BlendTree.compute() -- 4 nodes",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 4,
+      "shape": "blend-nodes",
+      "replicates": 1
+    },
+    {
+      "name": "Compositor.compute() -- empty",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "ECS World tick -- 100 entities, 1 system",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 100,
+      "shape": "ecs-entities",
+      "replicates": 1
+    },
+    {
+      "name": "ECS World tick -- 100 entities, 1 system (dense)",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 100,
+      "shape": "ecs-entities",
+      "replicates": 1
+    },
+    {
+      "name": "Config.make() -- empty config",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Config.make() -- with boundaries",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Config.toViteConfig() -- projection",
+      "file": "tests/bench/core.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "direct boundary evaluation",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Composable.make -- boundary only",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Composable.make -- boundary + token + style",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 3,
+      "shape": "composition-components",
+      "replicates": 1
+    },
+    {
+      "name": "Composable.compose -- two entities",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 2,
+      "shape": "composition-entities",
+      "replicates": 1
+    },
+    {
+      "name": "Composable.merge -- three entities",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 3,
+      "shape": "composition-entities",
+      "replicates": 1
+    },
+    {
+      "name": "ComposableWorld.spawn -- single entity",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "ComposableWorld.evaluate -- boundary + token + style",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 3,
+      "shape": "composition-components",
+      "replicates": 1
+    },
+    {
+      "name": "DenseStore get -- hot lookup",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "DenseStore set -- overwrite hot slot",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "DenseStore delete + reinsert",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "World.tick -- regular system",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "World.tick -- dense system",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "ComposableWorld.query -- existing world",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "baseline object construction",
+      "file": "tests/bench/ecs-composition.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "CSSCompiler.compile() -- boundary",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "GLSLCompiler.compile() -- boundary",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "TokenCSSCompiler.compile() -- token",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "TokenTailwindCompiler.compile() -- tokens",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 2,
+      "shape": "token-set",
+      "replicates": 1
+    },
+    {
+      "name": "ThemeCSSCompiler.compile() -- theme",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "StyleCSSCompiler.compile() -- style",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "dispatch() -- CSSCompiler tag",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "CSSCompiler.compile() -- direct",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "Full pipeline: boundary + token + theme + style",
+      "file": "tests/bench/compiler.bench.ts",
+      "inputSize": 3,
+      "shape": "composition-components",
+      "replicates": 1
+    },
+    {
+      "name": "FixedStepScheduler -- 1000 steps @ 60fps",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 1000,
+      "shape": "scheduler-steps",
+      "replicates": 1
+    },
+    {
+      "name": "VideoRenderer -- 30 frames @ 30fps",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 30,
+      "shape": "video-frames",
+      "replicates": 1
+    },
+    {
+      "name": "VideoRenderer -- 300 frames @ 60fps",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 300,
+      "shape": "video-frames",
+      "replicates": 1
+    },
+    {
+      "name": "Compositor.compute() -- hot loop (100 calls)",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 100,
+      "shape": "compute-calls",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] Boundary.evaluate -- 3 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] Boundary.evaluateWithHysteresis -- 3 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] core Boundary.evaluate -- 5 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 5,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] quantizer evaluate() -- 5 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 5,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] TokenBuffer.push -- single token",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] SPSCRing.push -- single slot",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[OVERHEAD] SpeculativeEvaluator.evaluate -- near threshold",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[OVERHEAD] SpeculativeEvaluator.evaluate -- far from threshold",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[SCALE] Compositor.compute -- empty",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] satellite inline evaluate -- 3 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] core Boundary.evaluate (for satellite) -- 3 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] satellite inline hysteresis -- near threshold",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[COMPETE] core evaluateWithHysteresis (for satellite) -- near threshold",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] stream inline parseMessage -- patch",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] worker fallback evaluate -- 3 thresholds",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 3,
+      "shape": "boundary-thresholds",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] llm inline chunk parse -- text",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] llm inline chunk parse -- tool-call-delta",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] satellite full cycle -- parse + evaluate",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[DIRECTIVE] worker inline composite build -- 1 quantizer",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[OVERHEAD] SSE parseMessage -- valid patch",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[OVERHEAD] SSE parseMessage -- valid heartbeat",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "[OVERHEAD] SSE parseMessage -- invalid JSON",
+      "file": "tests/bench/self-measure.bench.ts",
+      "inputSize": 1,
+      "shape": "single-call",
+      "replicates": 1
+    },
+    {
+      "name": "alloc -- compositor compute (selective recompute)",
+      "file": "tests/bench/allocation.bench.ts",
+      "inputSize": 250000,
+      "shape": "alloc-batches-x-ops-forced-gc",
+      "replicates": 50
+    },
+    {
+      "name": "alloc -- token-buffer push+drainInto",
+      "file": "tests/bench/allocation.bench.ts",
+      "inputSize": 250000,
+      "shape": "alloc-batches-x-ops-forced-gc",
+      "replicates": 50
+    }
+  ]
+}

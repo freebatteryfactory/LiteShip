@@ -10,6 +10,7 @@
  * @module
  */
 
+import { ParseError } from '@czap/error';
 import type { ContentAddress, MotionTier } from '@czap/core';
 import type { DesignTier } from '@czap/detect';
 import type { EdgeTierResult } from './edge-tier.js';
@@ -163,21 +164,25 @@ export function resolveOutputsByTier(
   // caller gets a bare TypeError instead of the rebuild guidance.
   const pool = entry.outputs;
   if (!Array.isArray(pool)) {
-    throw new Error(
+    throw ParseError(
+      'manifest',
       'Boundary manifest entry has no `outputs` pool — the manifest predates the deduplicated v2 format ' +
         '(cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
         'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+      { code: 'malformed' },
     );
   }
   const resolved: Partial<Record<TierKey, CompiledOutputs>> = {};
   for (const [key, index] of Object.entries(entry.outputsByTier) as readonly (readonly [TierKey, number])[]) {
     const outputs = typeof index === 'number' ? pool[index] : undefined;
     if (!outputs) {
-      throw new Error(
+      throw ParseError(
+        'manifest',
         `Boundary manifest cell "${key}" references outputs[${String(index)}], but the entry's outputs pool has ` +
           `${pool.length} item(s), so the tier cannot be resolved. ` +
           'Why: the manifest predates the deduplicated v2 format (cells held CompiledOutputs objects, not pool indices) or was edited by hand. ' +
           'Fix: rebuild the project so collectBoundaryManifest emits the v2 shape (czap-boundary-manifest.json with `_version: 2`).',
+        { code: 'malformed' },
       );
     }
     resolved[key] = outputs;

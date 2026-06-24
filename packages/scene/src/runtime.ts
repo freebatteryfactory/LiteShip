@@ -26,6 +26,7 @@
 import { Effect, Schema, Scope, Exit } from 'effect';
 import type { System, World as WorldNS } from '@czap/core';
 import { defineCapsule, World } from '@czap/core';
+import { InvariantViolationError } from '@czap/error';
 import type { CompiledScene } from './compile.js';
 import { BeatBinding } from './capsules/beat-binding.js';
 import { VideoSystem } from './systems/video.js';
@@ -247,7 +248,8 @@ async function build(compiled: CompiledScene, opts: SceneRuntimeOptions = {}): P
     svgAttrs: () => svgFrame,
     tick: async (dtMs: number) => {
       if (released) {
-        throw new Error(
+        throw InvariantViolationError(
+          'scene.runtime',
           "SceneRuntime: tick() was called after release(). release() closes the world's scope, so entities and systems are gone — call SceneRuntime.build(compiledScene) again to get a fresh handle.",
         );
       }

@@ -8,6 +8,6 @@
 
 > **ChainError** = [`ChainValidationError`](../../../type-aliases/ChainValidationError.md)
 
-Defined in: [core/src/receipt.ts:460](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L460)
+Defined in: [core/src/receipt.ts:461](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L461)
 
 Alias for [ChainValidationError](../../../type-aliases/ChainValidationError.md).

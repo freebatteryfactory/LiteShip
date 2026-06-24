@@ -8,13 +8,16 @@
  * {@link ShipCapsule.Shape} and call into the capsule's surface
  * directly. This file covers:
  *
- *   - `ShipEmit.run` write-path success (ship-emit.ts:82-91) and
+ *   - `ShipEmit.run` write-path success (the fs-write EFFECT) and
  *     `writeFileSync` failure (ENOENT on a missing parent directory).
  *   - `shipEmitCapsule.input` / `shipEmitCapsule.output` Schema
- *     accept + reject (ship-emit.ts:21-30).
- *   - The two invariant `check` functions (ship-emit.ts:58-74):
- *     `id-matches-bytes` (true / id-drift / path-drift) and
- *     `bytes-positive` (positive / zero / non-number).
+ *     accept + reject (the publishable-snapshot input + receipt output).
+ *   - The PURE `mutate` core: deterministic receipt derivation
+ *     (idempotency) plus its two declared, reachable faults
+ *     (`empty-target-path`, `empty-version` → status `rejected`).
+ *   - The two invariant `check` functions: `id-matches-bytes`
+ *     (path echo / path-drift) and `bytes-positive-when-emitted`
+ *     (emitted > 0 / rejected = 0 / non-number).
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -104,16 +107,23 @@ describe('ShipEmit.run write-path', () => {
   });
 });
 
+const sampleSnapshot = () => ({
+  capsule_path: '/tmp/x.shipcapsule.cbor',
+  capsule_id: 'fnv1a:deadbeef',
+  package_name: '@czap/_spine',
+  package_version: '0.1.0',
+  source_commit: '0123456789abcdef0123456789abcdef01234567',
+  lifecycle_scripts_observed: [] as string[],
+});
+
 describe('shipEmitCapsule schema validation', () => {
   it('input / output Schemas accept well-formed shapes and reject malformed ones', async () => {
-    // input Schema accept branch (ship-emit.ts:21-24).
+    // input Schema accept branch — the publishable snapshot.
     const okIn = await Effect.runPromise(
-      Schema.decodeUnknownEffect(shipEmitCapsule.input)({
-        capsule_path: '/tmp/x.shipcapsule.cbor',
-        capsule_id: 'fnv1a:deadbeef',
-      }),
+      Schema.decodeUnknownEffect(shipEmitCapsule.input)(sampleSnapshot()),
     );
     expect(okIn.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
+    expect(okIn.package_version).toBe('0.1.0');
 
     // input Schema reject branches: missing field, then wrong type.
     const missingField = await Effect.runPromiseExit(
@@ -122,58 +132,77 @@ describe('shipEmitCapsule schema validation', () => {
     expect(missingField._tag).toBe('Failure');
     const wrongType = await Effect.runPromiseExit(
       Schema.decodeUnknownEffect(shipEmitCapsule.input)({
+        ...sampleSnapshot(),
         capsule_path: 42,
-        capsule_id: 'fnv1a:deadbeef',
       } as unknown),
     );
     expect(wrongType._tag).toBe('Failure');
 
-    // output Schema accept branch (ship-emit.ts:26-30), fed by a real run() result.
-    const capsulePath = join(workDir, 'output-schema.shipcapsule.cbor');
-    const output = ShipEmit.run({ capsule, capsule_path: capsulePath });
-    const okOut = await Effect.runPromise(Schema.decodeUnknownEffect(shipEmitCapsule.output)(output));
-    expect(okOut.bytes_written).toBe(output.bytes_written);
-    expect(okOut.capsule_path).toBe(output.capsule_path);
-    expect(okOut.capsule_id).toBe(output.capsule_id);
+    // output Schema accept branch, fed by the pure `mutate` core's receipt.
+    const receipt = shipEmitCapsule.mutate!(sampleSnapshot());
+    const okOut = await Effect.runPromise(Schema.decodeUnknownEffect(shipEmitCapsule.output)(receipt));
+    expect(okOut.status).toBe('emitted');
+    expect(okOut.bytes_written).toBeGreaterThan(0);
+    expect(okOut.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
+  });
+});
+
+describe('shipEmitCapsule pure mutate core', () => {
+  it('derives an emission receipt deterministically (idempotent) and rejects unshippable snapshots', () => {
+    const mutate = shipEmitCapsule.mutate!;
+    // Idempotency: same snapshot → deep-equal receipt, no fs/clock/spawn.
+    const a = mutate(sampleSnapshot());
+    const b = mutate(sampleSnapshot());
+    expect(b).toEqual(a);
+    expect(a.status).toBe('emitted');
+    expect(a.bytes_written).toBeGreaterThan(0);
+
+    // Declared fault `empty-target-path` → status 'rejected', zero bytes.
+    const noPath = mutate({ ...sampleSnapshot(), capsule_path: '' });
+    expect(noPath.status).toBe('rejected');
+    expect(noPath.bytes_written).toBe(0);
+
+    // Declared fault `empty-version` → status 'rejected', zero bytes.
+    const noVersion = mutate({ ...sampleSnapshot(), package_version: '' });
+    expect(noVersion.status).toBe('rejected');
+    expect(noVersion.bytes_written).toBe(0);
+  });
+
+  it('declares exactly the two reachable faults the harness injects', () => {
+    expect(shipEmitCapsule.faults!.map((f) => f.name)).toEqual([
+      'empty-target-path',
+      'empty-version',
+    ]);
+    for (const fault of shipEmitCapsule.faults!) {
+      // Each fault's trigger drives the pure core to its declared status.
+      const receipt = shipEmitCapsule.mutate!(fault.trigger());
+      expect(receipt.status).toBe(fault.status);
+    }
   });
 });
 
 describe('shipEmitCapsule invariants', () => {
-  it('`id-matches-bytes` and `bytes-positive` check functions cover their true and false branches', () => {
+  it('`id-matches-bytes` and `bytes-positive-when-emitted` check functions cover their true and false branches', () => {
     const idMatches = shipEmitCapsule.invariants.find((i) => i.name === 'id-matches-bytes');
-    const bytesPositive = shipEmitCapsule.invariants.find((i) => i.name === 'bytes-positive');
+    const bytesPositive = shipEmitCapsule.invariants.find(
+      (i) => i.name === 'bytes-positive-when-emitted',
+    );
     expect(idMatches).toBeDefined();
     expect(bytesPositive).toBeDefined();
-    const input = { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:deadbeef' };
+    const input = { capsule_path: '/a/b.cbor' };
 
-    // id-matches-bytes (ship-emit.ts:60-63): true when both echo through,
-    // false when either id or path mutates in flight.
-    expect(
-      idMatches!.check!(input, { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:deadbeef', bytes_written: 42 }),
-    ).toBe(true);
-    expect(
-      idMatches!.check!(input, { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:cafef00d', bytes_written: 42 }),
-    ).toBe(false);
-    expect(
-      idMatches!.check!(input, { capsule_path: '/a/different.cbor', capsule_id: 'fnv1a:deadbeef', bytes_written: 42 }),
-    ).toBe(false);
+    // id-matches-bytes: true when the path echoes through, false on path drift.
+    expect(idMatches!.check!(input, { capsule_path: '/a/b.cbor' })).toBe(true);
+    expect(idMatches!.check!(input, { capsule_path: '/a/different.cbor' })).toBe(false);
 
-    // bytes-positive (ship-emit.ts:68-72): exercises both conjuncts of
-    // `typeof === 'number' && > 0` — positive (true), zero (false),
-    // negative (false), and non-number (false).
-    expect(
-      bytesPositive!.check!(input, { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:deadbeef', bytes_written: 1 }),
-    ).toBe(true);
-    expect(
-      bytesPositive!.check!(input, { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:deadbeef', bytes_written: 0 }),
-    ).toBe(false);
-    expect(
-      bytesPositive!.check!(input, { capsule_path: '/a/b.cbor', capsule_id: 'fnv1a:deadbeef', bytes_written: -1 }),
-    ).toBe(false);
+    // bytes-positive-when-emitted: emitted needs > 0 bytes; rejected needs 0.
+    expect(bytesPositive!.check!(input, { status: 'emitted', bytes_written: 1 })).toBe(true);
+    expect(bytesPositive!.check!(input, { status: 'emitted', bytes_written: 0 })).toBe(false);
+    expect(bytesPositive!.check!(input, { status: 'rejected', bytes_written: 0 })).toBe(true);
+    expect(bytesPositive!.check!(input, { status: 'rejected', bytes_written: 5 })).toBe(false);
     expect(
       bytesPositive!.check!(input, {
-        capsule_path: '/a/b.cbor',
-        capsule_id: 'fnv1a:deadbeef',
+        status: 'emitted',
         bytes_written: 'oops' as unknown as number,
       }),
     ).toBe(false);

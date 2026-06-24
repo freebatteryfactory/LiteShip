@@ -38,7 +38,7 @@ export type TrackId<K extends TrackKind> = string & {
  */
 export interface BeatHandle {
   /** Discriminant tag. */
-  readonly _t: 'beat';
+  readonly _tag: 'beat';
   /** Number of beats (may be fractional). */
   readonly count: number;
 }
@@ -52,7 +52,7 @@ export interface BeatHandle {
  */
 export interface FrameMarkSum {
   /** Discriminant tag. */
-  readonly _t: 'mark-sum';
+  readonly _tag: 'mark-sum';
   /** Frame-space portion of the mark. */
   readonly frames: number;
   /** Beat-space portion of the mark, resolved against scene BPM/fps at compile time. */
@@ -70,7 +70,7 @@ export type FrameMark = number | BeatHandle | FrameMarkSum;
 /** Fade envelope (linear over a beat span). Authored via `fade.in` / `fade.out`. */
 export interface FadeEnvelope {
   /** Discriminant tag. */
-  readonly _t: 'envelope';
+  readonly _tag: 'envelope';
   /** Curve kind — linear-in or linear-out. */
   readonly curve: 'linear-in' | 'linear-out';
   /** Duration of the fade in beats. */
@@ -80,7 +80,7 @@ export interface FadeEnvelope {
 /** Pulse envelope (periodic, amplitude-scaled). Authored via `pulse.every`. */
 export interface PulseEnvelope {
   /** Discriminant tag. */
-  readonly _t: 'envelope';
+  readonly _tag: 'envelope';
   /** Curve kind — pulse. */
   readonly curve: 'pulse';
   /** Period of the pulse in beats. */

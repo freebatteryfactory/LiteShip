@@ -34,11 +34,16 @@ export type { ToWorkerMessage, FromWorkerMessage, WorkerConfig, WorkerLike } fro
 
 // SPSC Ring Buffer
 export { SPSCRing } from './spsc-ring.js';
-export type { SPSCRingBufferShape } from './spsc-ring.js';
+export type { SPSCRingBufferShape, SPSCRingPair } from './spsc-ring.js';
 
 // Compositor Worker
 export { CompositorWorker } from './compositor-worker.js';
-export type { CompositorWorkerShape, CompositorWorkerState, QuantizerBoundarySource } from './compositor-types.js';
+export type {
+  CompositorWorkerShape,
+  CompositorWorkerState,
+  QuantizerBoundarySource,
+  WorkerMetrics,
+} from './compositor-types.js';
 
 // Render Worker
 export { RenderWorker } from './render-worker.js';

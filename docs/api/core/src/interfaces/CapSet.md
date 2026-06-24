@@ -8,7 +8,7 @@
 
 Defined in: [core/src/caps.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/caps.ts#L24)
 
-Immutable set of [CapLevel](../type-aliases/CapLevel.md)s — the tagged value returned by [Cap](../variables/Cap.md) combinators.
+Immutable set of [CapTier](../type-aliases/CapTier.md)s — the tagged value returned by [Cap](../variables/Cap.md) combinators.
 
 ## Properties
 
@@ -22,6 +22,6 @@ Defined in: [core/src/caps.ts:25](https://github.com/heyoub/LiteShip/blob/main/p
 
 ### levels
 
-> `readonly` **levels**: `ReadonlySet`\<[`CapLevel`](../type-aliases/CapLevel.md)\>
+> `readonly` **levels**: `ReadonlySet`\<[`CapTier`](../type-aliases/CapTier.md)\>
 
 Defined in: [core/src/caps.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/caps.ts#L26)

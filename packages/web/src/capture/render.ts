@@ -10,6 +10,7 @@
  */
 
 import type { CompositeState } from '@czap/core';
+import { HostCapabilityError } from '@czap/error';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,7 +67,7 @@ const defaultRenderFn: RenderFn = (ctx, state, canvas) => {
  */
 export function renderToCanvas(state: CompositeState, canvas: Canvas2DTarget, renderFn?: RenderFn): void {
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Failed to get 2D context from OffscreenCanvas');
+  if (!ctx) throw HostCapabilityError('Canvas2D', 'Failed to get 2D context from OffscreenCanvas');
 
   const fn = renderFn ?? defaultRenderFn;
   fn(ctx, state, canvas);

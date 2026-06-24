@@ -40,16 +40,16 @@ export type ResolvedEnvelope = _ResolvedEnvelope;
 /** Fade constructors. */
 export const fade = {
   /** Linear fade-in over the given span. */
-  in: (span: BeatHandle): FadeEnvelope => ({ _t: 'envelope', curve: 'linear-in', span }),
+  in: (span: BeatHandle): FadeEnvelope => ({ _tag: 'envelope', curve: 'linear-in', span }),
   /** Linear fade-out over the given span. */
-  out: (span: BeatHandle): FadeEnvelope => ({ _t: 'envelope', curve: 'linear-out', span }),
+  out: (span: BeatHandle): FadeEnvelope => ({ _tag: 'envelope', curve: 'linear-out', span }),
 } as const;
 
 /** Pulse constructors. */
 export const pulse = {
   /** Periodic pulse with amplitude and period. */
   every: (period: BeatHandle, opts: { amplitude: number }): PulseEnvelope => ({
-    _t: 'envelope',
+    _tag: 'envelope',
     curve: 'pulse',
     period,
     amplitude: opts.amplitude,

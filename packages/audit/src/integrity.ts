@@ -29,8 +29,73 @@ export interface IntegritySummary {
   readonly reimplementationCount: number;
 }
 
-const PLACEHOLDER_PATTERN = /\b(TODO|FIXME|DEBUG|placeholder|lorem ipsum)\b/i;
 const NOT_IMPLEMENTED_PATTERN = /\b(not implemented|not-yet-supported)\b/i;
+
+/**
+ * Placeholder detection is by FORM, not by any prose that merely NAMES the
+ * forbidden words. The anti-placeholder machinery (rule ids, gate summaries,
+ * diagnostic copy, and the gauntlet `no-placeholder` gate's OWN docstrings +
+ * red/green fixtures) is full of the marker words while being the OPPOSITE of a
+ * placeholder — flagging those is a false positive the precise detector must
+ * never make. The discrimination MIRRORS that gate's proven design
+ * (`packages/gauntlet/src/gates/no-placeholder.ts` + `code-only.ts`), the repo's
+ * source of truth for "is this a real placeholder?":
+ *
+ *   • COMMENTS — a genuine task marker is a DIRECTIVE: a marker keyword that is
+ *     the LEADING token of a comment LINE (after the opener `//`/`/*`/jsdoc `*`
+ *     and whitespace only). A marker mid-prose, fused into an identifier
+ *     (`ADR-`+keyword), in a slash-enumeration of the marker NAMES
+ *     (`<kw> / <kw> / …`), or quoted as an EXAMPLE deeper inside a docblock line
+ *     (`* - \`// <kw>: …\``) is NOT a directive — its line does not LEAD with the
+ *     marker. (This is exactly why the gate scans per comment line, not anywhere.)
+ *   • STRING LITERALS — a marker keyword inside a STRING is description, a
+ *     fixture, or data, never a runtime placeholder (the gate blanks strings for
+ *     precisely this reason). The ONE genuine string placeholder is lorem-ipsum
+ *     FILLER COPY shipped as real text — that, and only that, is flagged in a
+ *     literal. (A thrown "not implemented" stub is caught separately, in CODE,
+ *     by {@link NOT_IMPLEMENTED_PATTERN}.)
+ *
+ * This module deliberately never writes a marker keyword as the leading token of
+ * one of its own comment lines, the same self-discipline the gate keeps, so the
+ * detector stays clean against itself.
+ */
+const MARKER = '(?:TODO|FIXME|XXX|HACK)';
+
+/**
+ * A placeholder DIRECTIVE on a single comment line: line start, optional
+ * whitespace, a comment opener (`//`, `/*`, or a leading jsdoc `*`), whitespace,
+ * then a marker keyword as a whole word — but NOT immediately followed by a
+ * `/` or `|` (a slash/pipe enumeration of the marker NAMES) nor a second marker
+ * keyword. Applied with the `m` flag to a comment's full text, so a marker that
+ * merely LEADS some line of a block comment is caught while one quoted mid-line
+ * (an example, prose, or an identifier suffix) is not.
+ */
+const DIRECTIVE_MARKER_LINE = new RegExp(
+  `^\\s*(?:\\/\\/+|\\/\\*+|\\*+)\\s*${MARKER}\\b(?!\\s*[/|])(?!\\s*${MARKER}\\b)`,
+  'm',
+);
+
+/** Lorem-ipsum filler — the one genuine placeholder a string literal can carry. */
+const LOREM_IPSUM_PATTERN = /\blorem ipsum\b/i;
+
+/**
+ * Enumerate every comment in a source file (single- and multi-line, leading and
+ * trailing) without misreading `//` or `/* *\/` sequences inside string/template
+ * literals — the scanner tokenises, so literal contents are never seen as
+ * comments. Returns each comment's text and its absolute start offset.
+ */
+function collectComments(text: string): ReadonlyArray<{ readonly text: string; readonly pos: number }> {
+  const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, text);
+  const comments: Array<{ readonly text: string; readonly pos: number }> = [];
+  let token = scanner.scan();
+  while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (token === ts.SyntaxKind.SingleLineCommentTrivia || token === ts.SyntaxKind.MultiLineCommentTrivia) {
+      comments.push({ text: scanner.getTokenText(), pos: scanner.getTokenStart() });
+    }
+    token = scanner.scan();
+  }
+  return comments;
+}
 
 function isConsoleCall(node: ts.CallExpression): boolean {
   return (
@@ -297,10 +362,9 @@ export function runIntegrityAudit(
         }
       }
 
-      if (
-        ts.isDebuggerStatement(node) ||
-        (getStringLikeText(node) && PLACEHOLDER_PATTERN.test(getStringLikeText(node)!))
-      ) {
+      const literalText = getStringLikeText(node);
+      const literalHasLorem = literalText !== null && LOREM_IPSUM_PATTERN.test(literalText);
+      if (ts.isDebuggerStatement(node) || literalHasLorem) {
         const { line, column } = lineAndColumn(record.sourceFile, node.getStart());
         placeholderCount += 1;
         rawFindings.push({
@@ -311,7 +375,7 @@ export function runIntegrityAudit(
           title: 'Placeholder or debug marker found',
           summary: ts.isDebuggerStatement(node)
             ? 'Debugger statement should not survive in runtime package source.'
-            : `String literal still contains a placeholder/debug marker: "${getStringLikeText(node)!}".`,
+            : `String literal ships lorem-ipsum filler copy as real content: "${literalText!}".`,
           location: {
             file: record.relativePath,
             line,
@@ -324,6 +388,32 @@ export function runIntegrityAudit(
     };
 
     visit(record.sourceFile);
+
+    // Comments are trivia — the AST visit above never sees them, so a real
+    // placeholder directive in a `//` or block comment would ship undetected.
+    // Scan every comment for a leading-token marker on one of its lines, locating
+    // the marker precisely (a directive on line 3 of a block comment reports line 3,
+    // not the comment's opening line).
+    for (const comment of collectComments(record.text)) {
+      const match = DIRECTIVE_MARKER_LINE.exec(comment.text);
+      if (!match) continue;
+      const markerOffset = comment.pos + match.index;
+      const { line, column } = lineAndColumn(record.sourceFile, markerOffset);
+      placeholderCount += 1;
+      rawFindings.push({
+        id: `integrity/placeholder/${record.relativePath}:${line}:${column}`,
+        section: 'integrity',
+        rule: 'placeholder-content',
+        severity: 'warning',
+        title: 'Placeholder or debug marker found',
+        summary: `Comment line leads with an unresolved task marker (TODO/FIXME/XXX/HACK): "${match[0].trim()}".`,
+        location: {
+          file: record.relativePath,
+          line,
+          column,
+        },
+      });
+    }
 
     const unusedInternalImports = [...internalImports.keys()].filter((name) => (identifierUsage.get(name) ?? 0) <= 1);
     if (unusedInternalImports.length > 0 && localImplementationCount > 0) {

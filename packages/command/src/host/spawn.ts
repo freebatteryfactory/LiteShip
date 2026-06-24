@@ -22,6 +22,34 @@
  */
 
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
+import { IoError } from '@czap/error';
+
+/**
+ * Discriminate a "the process is already gone" kill failure (the designed
+ * best-effort case — every kill site below races the child's own natural exit)
+ * from a genuinely unexpected fault that must NOT be silently masked.
+ *
+ * The recognized best-effort codes:
+ *   - `ESRCH` — POSIX `kill(2)`: no such process. The child exited between our
+ *     liveness check and the signal — exactly the race these kills tolerate.
+ *   - `EPERM` — POSIX: we lost permission to signal it (it re-parented / changed
+ *     credentials as it died). Non-actionable here; the child is leaving our
+ *     control, which is the outcome the kill wanted anyway.
+ *   - On Windows `taskkill` (run via `execSync`) the "PID not found" exit is
+ *     surfaced as a thrown error whose `status` is `128`; treat that one exit
+ *     code as the already-gone case.
+ *
+ * Anything else (e.g. POSIX `EIO`, a Windows access-denied `status: 1`) is a
+ * real fault: the caller raised a tagged {@link IoError} instead of swallowing.
+ */
+function isProcessGoneError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === 'ESRCH' || code === 'EPERM') return true;
+  // execSync surfaces the child's nonzero exit as `status`; taskkill's
+  // process-not-found exit is 128 (our already-gone case).
+  const status = (err as { status?: number }).status;
+  return status === 128;
+}
 
 /** Result of a one-shot spawnArgv invocation. */
 export interface SpawnResult {
@@ -245,15 +273,21 @@ export function spawnArgvCapture(
       if (process.platform === 'win32') {
         try {
           execSync(`taskkill /T /F /PID ${proc.pid}`, { stdio: 'ignore' });
-        } catch {
-          /* already dead */
+        } catch (err) {
+          if (!isProcessGoneError(err)) {
+            throw IoError('spawn.killNow', `taskkill failed for pid ${proc.pid}`, { cause: err });
+          }
+          // already gone — the timeout raced the child's own exit.
         }
         return;
       }
       try {
         proc.kill('SIGKILL');
-      } catch {
-        /* already dead */
+      } catch (err) {
+        if (!isProcessGoneError(err)) {
+          throw IoError('spawn.killNow', `SIGKILL failed for pid ${proc.pid}`, { cause: err });
+        }
+        // already gone — the timeout raced the child's own exit.
       }
     };
 
@@ -366,8 +400,11 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
         // path was already a lie on Windows (no signal was ever delivered).
         try {
           execSync(`taskkill /T /F /PID ${child.pid}`, { stdio: 'ignore' });
-        } catch {
-          /* already dead */
+        } catch (err) {
+          if (!isProcessGoneError(err)) {
+            throw IoError('spawn.dispose', `taskkill failed for pid ${child.pid}`, { cause: err });
+          }
+          // already gone — disposal raced the tree's own exit.
         }
         return;
       }
@@ -394,8 +431,11 @@ function startSpawn(command: string, args: readonly string[], opts: SpawnArgvOpt
       ]);
       try {
         signalGroup('SIGKILL');
-      } catch {
-        /* already dead between check and kill */
+      } catch (err) {
+        if (!isProcessGoneError(err)) {
+          throw IoError('spawn.dispose', `SIGKILL failed for pid ${child.pid}`, { cause: err });
+        }
+        // already dead between the liveness check and this kill — the designed race.
       }
     },
   };

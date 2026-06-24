@@ -4,7 +4,15 @@ import type { WallClockTimestamp } from '@czap/core';
 import libCoverage from 'istanbul-lib-coverage';
 import { verifyRuntimeSeamsReport, type RuntimeSeamsReportArtifact } from '../artifact-integrity.js';
 import { ensureArtifactContext } from '../artifact-context.js';
-import { INVARIANTS, findViolations } from '../check-invariants.js';
+// CUT A3 — the invariant rule set is now `@czap/command` data; the scan engine is
+// the CLI-only adapter (B5b: it imports @czap/audit's normalizeRepoPath, so it
+// cannot live in @czap/command/@czap/mcp-server — see check-invariants CLI-only).
+// Imported via the source path (not the `@czap/command` package name): this script
+// runs under tsx, which resolves through node_modules, and @czap/command is NOT a
+// root devDep / linked there (app-layer, like @czap/cli on the next line) — only the
+// vitest alias resolves the package name, which a plain tsx script does not have.
+import { INVARIANTS } from '../../packages/command/src/commands/check-invariants-registry.js';
+import { findViolations } from '../../packages/cli/src/commands/check-invariants.js';
 import {
   criticalityForInventoryPath,
   fileClassForInventoryPath,
@@ -32,8 +40,8 @@ import {
 } from './shared.js';
 import { runIntegrityAudit } from './integrity.js';
 import { runStructureAudit } from './structure.js';
-import { liteshipDevopsProfile } from '../config/devops-profile.js';
-import type { DevopsProfile } from '../config/devops-profile.js';
+import { liteshipDevopsProfile } from '@czap/audit';
+import type { DevopsProfile } from '@czap/audit';
 import { runSurfaceAudit } from './surface.js';
 import type {
   AuditArtifactStatus,

@@ -8,13 +8,14 @@
 
 > **decode**(`bytes`): `unknown`
 
-Defined in: [canonical/src/cbor-decode.ts:281](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L281)
+Defined in: [canonical/src/cbor-decode.ts:272](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/cbor-decode.ts#L272)
 
 Decode a canonical CBOR byte sequence produced by [CanonicalCbor.encode](../variables/CanonicalCbor.md#encode).
 
 Strict: any deviation from the RFC 8949 §4.2.1 deterministic subset the
 encoder emits (non-shortest forms, float16/32, indefinite lengths,
-out-of-order map keys, trailing bytes) raises a typed [CborDecodeError](../classes/CborDecodeError.md).
+out-of-order map keys, trailing bytes) raises a typed [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)
+(source `'cbor'`, `code` = the reason discriminant).
 
 ## Parameters
 
@@ -27,3 +28,5 @@ out-of-order map keys, trailing bytes) raises a typed [CborDecodeError](../class
 `unknown`
 
 ## Throws
+
+A `@czap/error` [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) (`source` `'cbor'`).

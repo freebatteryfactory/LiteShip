@@ -35,7 +35,7 @@ function createSpyKV(): KVNamespace & {
 
 const boundaryId = 'fnv1a:abc12345' as ContentAddress;
 const tierResult = {
-  capLevel: 'reactive' as const,
+  capTier: 'reactive' as const,
   motionTier: 'animations' as const,
   designTier: 'enhanced' as const,
 };

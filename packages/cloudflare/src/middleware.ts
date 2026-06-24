@@ -14,6 +14,7 @@ import type {
 } from '@czap/edge';
 import { resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
+import { ValidationError } from '@czap/error';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
 
 export interface CloudflareMiddlewareConfig {
@@ -146,7 +147,8 @@ function resolveCacheSource(
     const manifest = normalizeManifest(config.manifest);
     const names = Object.keys(manifest);
     if (names.length === 0) {
-      throw new Error(
+      throw ValidationError(
+        'cloudflare.middleware',
         'cloudflareMiddleware received an empty boundary manifest, so there is no boundary to cache. ' +
           'Why: the build found no boundaries.ts / *.boundaries.ts exports in the project. ' +
           'Fix: add `export const myBoundary = Boundary.make({ ... })` to a boundary module (plus a @quantize CSS block ' +
@@ -156,7 +158,8 @@ function resolveCacheSource(
     const selected =
       config.boundary === undefined ? names : typeof config.boundary === 'string' ? [config.boundary] : config.boundary;
     if (selected.length === 0) {
-      throw new Error(
+      throw ValidationError(
+        'cloudflare.middleware',
         'cloudflareMiddleware got an empty `boundary` list, so there is no boundary to serve. ' +
           `Fix: list some of the manifest's boundaries (${names.join(', ')}), or omit \`boundary\` to serve all of them.`,
       );
@@ -165,7 +168,8 @@ function resolveCacheSource(
     for (const name of selected) {
       const entry = manifest[name];
       if (!entry) {
-        throw new Error(
+        throw ValidationError(
+          'cloudflare.middleware',
           `cloudflareMiddleware was told to serve boundary "${name}", but the manifest only has: ${names.join(', ')}. ` +
             'Why: the name must match the boundary module export. Fix: pass one of the listed names, or export ' +
             `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
@@ -182,7 +186,8 @@ function resolveCacheSource(
     return { boundaryId: config.boundaryId, compile: config.compile };
   }
 
-  throw new Error(
+  throw ValidationError(
+    'cloudflare.middleware',
     'cloudflareMiddleware needs either a build-derived `manifest` (import { boundaries } from "virtual:czap/boundaries") ' +
       'or the hand-built escape hatch (`boundaryId` from Boundary.make plus a `compile` callback). ' +
       'Neither was provided completely. Fix: pass `manifest: boundaries` -- the build derives the id and outputs for you.',

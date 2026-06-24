@@ -6,7 +6,7 @@
 
 # Interface: DecodedVideo
 
-Defined in: [assets/src/decoders/video.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L18)
+Defined in: [assets/src/decoders/video.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L20)
 
 Decoded video container + codec metadata.
 
@@ -16,7 +16,7 @@ Decoded video container + codec metadata.
 
 > `readonly` `optional` **codec?**: `string`
 
-Defined in: [assets/src/decoders/video.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L20)
+Defined in: [assets/src/decoders/video.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L22)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [assets/src/decoders/video.ts:20](https://github.com/heyoub/LiteShip
 
 > `readonly` **container**: `string`
 
-Defined in: [assets/src/decoders/video.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L19)
+Defined in: [assets/src/decoders/video.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L21)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [assets/src/decoders/video.ts:19](https://github.com/heyoub/LiteShip
 
 > `readonly` `optional` **durationSec?**: `number`
 
-Defined in: [assets/src/decoders/video.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L23)
+Defined in: [assets/src/decoders/video.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L25)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [assets/src/decoders/video.ts:23](https://github.com/heyoub/LiteShip
 
 > `readonly` `optional` **fps?**: `number`
 
-Defined in: [assets/src/decoders/video.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L24)
+Defined in: [assets/src/decoders/video.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L26)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [assets/src/decoders/video.ts:24](https://github.com/heyoub/LiteShip
 
 > `readonly` `optional` **height?**: `number`
 
-Defined in: [assets/src/decoders/video.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L22)
+Defined in: [assets/src/decoders/video.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L24)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [assets/src/decoders/video.ts:22](https://github.com/heyoub/LiteShip
 
 > `readonly` `optional` **width?**: `number`
 
-Defined in: [assets/src/decoders/video.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L21)
+Defined in: [assets/src/decoders/video.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/video.ts#L23)

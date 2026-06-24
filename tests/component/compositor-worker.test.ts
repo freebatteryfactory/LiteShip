@@ -625,7 +625,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     const received: Array<{ fps: number; budgetUsed: number }> = [];
-    cw.onMetrics((fps, budgetUsed) => received.push({ fps, budgetUsed }));
+    cw.onMetrics((metrics) => received.push({ fps: metrics.fps, budgetUsed: metrics.budgetUsed }));
 
     worker.simulateMessage({ type: 'metrics', fps: 60, budgetUsed: 8.5 });
 
@@ -638,7 +638,7 @@ describe('CompositorWorker', () => {
     const worker = MockWorker.instances[0]!;
 
     const received: Array<{ fps: number; budgetUsed: number }> = [];
-    const unsub = cw.onMetrics((fps, budgetUsed) => received.push({ fps, budgetUsed }));
+    const unsub = cw.onMetrics((metrics) => received.push({ fps: metrics.fps, budgetUsed: metrics.budgetUsed }));
 
     worker.simulateMessage({ type: 'metrics', fps: 60, budgetUsed: 8.5 });
     expect(received).toEqual([{ fps: 60, budgetUsed: 8.5 }]);
@@ -1687,7 +1687,7 @@ describe('CompositorWorker', () => {
       worker.simulateMessage({ type: 'error', message: 'side-channel only' });
       cw.requestCompute();
 
-      expect(metricsSpy).toHaveBeenCalledWith(60, 1.5);
+      expect(metricsSpy).toHaveBeenCalledWith({ type: 'metrics', fps: 60, budgetUsed: 1.5 });
       expect(worker.postedMessages.at(-1)?.data).toEqual({
         type: 'startup-compute',
         packet: {

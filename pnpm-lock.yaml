@@ -33,6 +33,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:packages/edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:packages/error
       '@czap/quantizer':
         specifier: workspace:*
         version: link:packages/quantizer
@@ -308,6 +311,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
@@ -326,6 +332,9 @@ importers:
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui
+      '@czap/scene':
+        specifier: workspace:*
+        version: link:../scene
       '@czap/vite':
         specifier: workspace:*
         version: link:../vite
@@ -345,6 +354,15 @@ importers:
 
   packages/audit:
     dependencies:
+      '@czap/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -354,6 +372,9 @@ importers:
 
   packages/canonical:
     dependencies:
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -372,6 +393,12 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       '@czap/scene':
         specifier: workspace:*
         version: link:../scene
@@ -390,6 +417,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
@@ -402,8 +432,14 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: '>=4.0.0-beta.32 <5'
         version: 4.0.0-beta.32
 
   packages/compiler:
@@ -411,6 +447,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
@@ -423,6 +462,9 @@ importers:
       '@czap/canonical':
         specifier: workspace:*
         version: link:../canonical
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -433,7 +475,11 @@ importers:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
 
-  packages/create-liteship: {}
+  packages/create-liteship:
+    dependencies:
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
 
   packages/detect:
     dependencies:
@@ -452,9 +498,23 @@ importers:
       '@czap/detect':
         specifier: workspace:*
         version: link:../detect
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
+
+  packages/error: {}
+
+  packages/gauntlet:
+    dependencies:
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
 
   packages/genui:
     dependencies:
@@ -464,6 +524,9 @@ importers:
       '@czap/canonical':
         specifier: workspace:*
         version: link:../canonical
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
 
   packages/liteship:
     dependencies:
@@ -542,6 +605,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui
@@ -554,6 +620,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
@@ -581,6 +650,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       effect:
         specifier: '>=4.0.0-beta.0'
         version: 4.0.0-beta.32
@@ -596,6 +668,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@czap/web':
         specifier: workspace:*
         version: link:../web
@@ -614,6 +689,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -627,6 +705,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui
@@ -642,6 +723,9 @@ importers:
       '@czap/core':
         specifier: workspace:*
         version: link:../core
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
 
   tests/integration/astro:
     dependencies:

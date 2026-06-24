@@ -2,7 +2,7 @@
  * @czap/edge type spine -- CDN-edge tier detection, boundary caching, theme compilation.
  */
 
-import type { CapLevel, ContentAddress } from './core.d.ts';
+import type { CapTier, ContentAddress } from './core.d.ts';
 import type { DeviceCapabilities, DesignTier, MotionTier, ExtendedDeviceCapabilities } from './detect.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -38,7 +38,7 @@ export declare namespace ClientHints {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface EdgeTierResult {
-  readonly capLevel: CapLevel;
+  readonly capTier: CapTier;
   readonly motionTier: MotionTier;
   readonly designTier: DesignTier;
 }

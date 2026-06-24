@@ -6,7 +6,7 @@
 
 # Interface: QuantizerBoundarySource
 
-Defined in: [worker/src/compositor-types.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L50)
+Defined in: [worker/src/compositor-types.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L59)
 
 The boundary surface [CompositorWorkerShape.addQuantizer](CompositorWorkerShape.md#addquantizer) derives
 a registration from — structurally satisfied by a `Boundary.make`
@@ -19,7 +19,7 @@ name make hand-assembled registrations unnecessary.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [worker/src/compositor-types.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L52)
+Defined in: [worker/src/compositor-types.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L61)
 
 Content address computed by `Boundary.make` (ADR-0003).
 
@@ -29,7 +29,7 @@ Content address computed by `Boundary.make` (ADR-0003).
 
 > `readonly` **input**: `string`
 
-Defined in: [worker/src/compositor-types.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L54)
+Defined in: [worker/src/compositor-types.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L63)
 
 Signal input name — used as the quantizer name when none is given.
 
@@ -39,7 +39,7 @@ Signal input name — used as the quantizer name when none is given.
 
 > `readonly` **states**: readonly `string`[]
 
-Defined in: [worker/src/compositor-types.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L56)
+Defined in: [worker/src/compositor-types.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L65)
 
 Ordered discrete state labels (plain strings — `BoundaryDef.states` is unbranded).
 
@@ -49,6 +49,6 @@ Ordered discrete state labels (plain strings — `BoundaryDef.states` is unbrand
 
 > `readonly` **thresholds**: readonly `number`[]
 
-Defined in: [worker/src/compositor-types.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L58)
+Defined in: [worker/src/compositor-types.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/compositor-types.ts#L67)
 
 Lower-bound thresholds, one per state.

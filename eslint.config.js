@@ -222,12 +222,15 @@ export default tseslint.config(
       'scripts/gauntlet.ts', // reason: gauntlet phase orchestration (predates this work, has its own drift guards)
       // (2) Sync-spawn CI/script callers — execFileSync / spawnSync / execSync.
       'scripts/audit/shared.ts', // reason: execFileSync('git', ['ls-files']) — sync, no code under test
-      'scripts/capsule-verify.ts', // reason: execSync('pnpm exec vitest run tests/generated/') — CI script
       'scripts/check-invariants.ts', // reason: execFileSync('git', ['ls-files', '--eol']) — sync
       'scripts/docs-check.ts', // reason: spawnSync for typedoc + git diff — sync CI gate
       'scripts/flex-verify.ts', // reason: spawnSync with shell:true for arbitrary verifier commands
       'scripts/link-pre-commit.ts', // reason: spawnSync('git rev-parse') from prepare hook before tsc --build; cannot import spawn shim (@czap/command dist)
-      'scripts/package-smoke.ts', // reason: execFileSync — sync packaging smoke test
+      'packages/cli/src/commands/package-smoke.ts', // reason: execFileSync (sync packaging smoke test) — migrated from scripts/package-smoke.ts (CUT A5); the runPackageSmoke engine is CLI-only, spawns sync pnpm pack/install/tar/node with no code under test
+      'packages/cli/src/commands/capsule-verify.ts', // reason: execSync('pnpm run capsule:compile' / 'pnpm exec vitest run tests/generated/') — migrated from scripts/capsule-verify.ts; the runCapsuleGate engine is CLI-only, spawns the freshness-confirm compile + the generated-suite run, no code under test
+      'packages/cli/src/lib/mutation-runner.ts', // reason: spawnSync('pnpm exec vitest run <coveringTests>') — the per-mutant mutation runner (czap check --ir --mutate). The @czap/audit evaluateMutant contract is SYNCHRONOUS (runner => {failed}), so the async spawn helper is inapplicable; the subprocess runs the COVERING TESTS under their own coverage (not the runner's code), and the clean process per mutant IS the determinism/isolation boundary
+      'packages/cli/src/lib/seam-execution-coverage.ts', // reason: spawnSync('pnpm exec vitest run <test> --coverage.include=<seam> --coverage.reportsDirectory=<tmp>') — the execution-coverage probe for the mutation cannon's barrel-problem fix (czap check --ir --mutate). The probe is SYNCHRONOUS (called inside the sync buildSeamCoverageMap → buildMutationFacts fold), so the async helper is inapplicable; it DELIBERATELY scopes coverage to one seam via explicit --coverage.* flags + a per-probe reportsDirectory (NOT the inherited NODE_V8_COVERAGE the helper preserves — that would conflict with the scoping), the single test file per fork IS the determinism boundary, and the result is read from the seam-scoped report only
+      'packages/cli/src/lib/standards-surface.ts', // reason: execFileSync('git', ['show', '<base>:traceability/standards-snapshot.json']) — the raccoon-rule backstop reads the PRIOR baseline snapshot AS COMMITTED ON THE BASE REF (defeats a same-commit code+snapshot weakening). Sync content read (git content-addresses → deterministic), no code under test, so coverage inheritance is moot; the injection seam (GitShowReader) keeps the heavy I/O testable
       // (3) Specialized async-spawn callers needing raw stdio / shell.
       'packages/assets/src/decoders/video.ts', // reason: spawnSync('ffprobe') — sync decoder API surface
       'packages/command/src/host/ffmpeg.ts', // reason: spawn('ffmpeg') with raw stdin pipe for frame streaming (moved from cli in CUT A1 capstone-1)
@@ -237,6 +240,8 @@ export default tseslint.config(
       // (3) Sync ffmpeg/ffprobe probes in smoke tests.
       'tests/smoke/intro-render.test.ts', // reason: spawnSync for ffmpeg/ffprobe binary availability probes
       'tests/unit/stage/ffmpeg-encoder.test.ts', // reason: execFileSync('ffprobe') validates the encoded MP4 byte stream (sync, no code under test)
+      'tests/unit/command/ffmpeg-render-backend.test.ts', // reason: execFileSync('ffmpeg') decodes the encoded MP4 back to raw RGB to prove the render backend paints real (non-black) pixels from frame state (sync, no code under test)
+      'tests/unit/stage/dual-export-node.test.ts', // reason: execFileSync('ffprobe') validates the headless dualExportNode MP4 byte stream (sync, no code under test)
       // (4) Spike file scheduled for deletion in Task 21 of subprocess-coverage plan.
       'tests/scratch/spike-subprocess-coverage.test.ts',
     ],

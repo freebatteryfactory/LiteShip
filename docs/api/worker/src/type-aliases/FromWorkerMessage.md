@@ -6,9 +6,9 @@
 
 # Type Alias: FromWorkerMessage
 
-> **FromWorkerMessage** = `ReadyMessage` \| `StateMessage` \| `ResolvedStateAckMessage` \| `FrameMessage` \| `RenderCompleteMessage` \| `ErrorMessage` \| `MetricsMessage`
+> **FromWorkerMessage** = `ReadyMessage` \| `StateMessage` \| `ResolvedStateAckMessage` \| `FrameMessage` \| `RenderCompleteMessage` \| `ErrorMessage` \| [`MetricsMessage`](https://github.com/heyoub/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md)
 
-Defined in: [worker/src/messages.ts:320](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L320)
+Defined in: [worker/src/messages.ts:328](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L328)
 
 Every message a worker may send back to the main thread. Discriminated
 on the `type` field. Includes readiness, state updates, frame output,

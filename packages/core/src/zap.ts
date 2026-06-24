@@ -4,7 +4,7 @@
  * @module
  */
 
-import { Effect, Stream, PubSub, Fiber, Duration } from 'effect';
+import { Effect, Stream, PubSub, Fiber, Duration, Clock } from 'effect';
 import type { Scope } from 'effect';
 import type { Millis } from './brands.js';
 
@@ -199,7 +199,9 @@ const _throttle = <T>(event: ZapShape<T>, ms: Millis): Effect.Effect<ZapShape<T>
     yield* Effect.forkScoped(
       Stream.runForEach(event.stream, (value) =>
         Effect.gen(function* () {
-          const now = Date.now();
+          // Effect's Clock service — live by default, TestClock under test, so
+          // the throttle window is replayable without an ambient Date.now().
+          const now = yield* Clock.currentTimeMillis;
           if (now - lastEmitTime >= ms) {
             lastEmitTime = now;
             yield* throttled.emit(value);

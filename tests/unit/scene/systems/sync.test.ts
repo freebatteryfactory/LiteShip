@@ -21,9 +21,9 @@ describe('SyncSystem (world-query path)', () => {
         TargetEntity: 'hero',
       });
       // Beat entities the system queries for. Frame 30 at 60fps = 500 ms.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 0, strength: 1 } });
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 1000, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 0, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 1000, strength: 1 } });
       // frameIndex=30 at 60fps → currentTimeMs = 500 → lastBeat = 500 → exp(0) = 1.
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
@@ -45,8 +45,8 @@ describe('SyncSystem (world-query path)', () => {
       // Beats at t=0 and t=1000 ms. At frameIndex=30, fps=60 we are at
       // 500 ms — half-way between beats — so intensity should be
       // exp(-500/250) = exp(-2) ≈ 0.135, well under 0.5.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 0, strength: 1 } });
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 1000, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 0, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 1000, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');
@@ -62,7 +62,7 @@ describe('SyncSystem (world-query path)', () => {
       const world = yield* World.make();
       yield* world.spawn({ SyncAnchor: { anchor: 'bed', mode: 'beat' } });
       // Future beat only — current frame is before it.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 5000, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 5000, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60)); // currentTimeMs = 500
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');
@@ -88,7 +88,7 @@ describe('SyncSystem (world-query path)', () => {
         FrameRange: { from: 0, to: 60 },
       });
       // Beat exactly at frame 30 (500 ms @ 60fps) → decay = exp(0) = 1.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 500, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');
@@ -110,8 +110,8 @@ describe('SyncSystem (world-query path)', () => {
         FrameRange: { from: 0, to: 60 },
       });
       // Beats at 0 and 1000 ms; frame 30 (500 ms) → decay = exp(-2).
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 0, strength: 1 } });
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 1000, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 0, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 1000, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');
@@ -129,7 +129,7 @@ describe('SyncSystem (world-query path)', () => {
         Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
         // no FrameRange — nothing to evaluate the envelope against.
       });
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 500, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');
@@ -161,7 +161,7 @@ describe('SyncSystem (world-query path)', () => {
               Envelope: { curve: 'pulse', periodFrames: 30, amplitude: 0.5 },
               FrameRange: range,
             });
-            yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+            yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 500, strength: 1 } });
             yield* world.addSystem(SyncSystem(30, 60));
             yield* world.tick();
             const fx = yield* world.query('SyncAnchor');
@@ -204,9 +204,9 @@ describe('SyncSystem (world-query path)', () => {
       // Entity spawned via the queryable id 'Beat' but with no Beat field.
       yield* world.spawn({ Beat: undefined as unknown as Record<string, unknown> });
       // Entity with a Beat object whose timeMs is the wrong type.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 'oops', strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 'oops', strength: 1 } });
       // One real beat at t=500ms.
-      yield* world.spawn({ Beat: { kind: 'beat', timeMs: 500, strength: 1 } });
+      yield* world.spawn({ Beat: { _tag: 'beat', timeMs: 500, strength: 1 } });
       yield* world.addSystem(SyncSystem(30, 60));
       yield* world.tick();
       const fx = yield* world.query('SyncAnchor');

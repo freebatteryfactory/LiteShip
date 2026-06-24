@@ -12,7 +12,7 @@ Defined in: [core/src/caps.ts:74](https://github.com/heyoub/LiteShip/blob/main/p
 
 Cap — algebra over [CapSet](../interfaces/CapSet.md).
 Pure, immutable helpers for building, combining, and comparing capability
-sets; the underlying `CapLevel` lattice is totally ordered via [Cap.ordinal](#ordinal).
+sets; the underlying `CapTier` lattice is totally ordered via [Cap.ordinal](#ordinal).
 
 ## Type Declaration
 
@@ -26,11 +26,11 @@ Whether `a` ranks `>=` `b` on the underlying ordered ladder.
 
 ##### a
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 ##### b
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 #### Returns
 
@@ -50,13 +50,13 @@ The empty [CapSet](../interfaces/CapSet.md).
 
 > **from**: (`levels`) => [`CapSet`](../interfaces/CapSet.md) = `_from`
 
-Build a [CapSet](../interfaces/CapSet.md) from an array of [CapLevel](../type-aliases/CapLevel.md)s.
+Build a [CapSet](../interfaces/CapSet.md) from an array of [CapTier](../type-aliases/CapTier.md)s.
 
 #### Parameters
 
 ##### levels
 
-readonly [`CapLevel`](../type-aliases/CapLevel.md)[]
+readonly [`CapTier`](../type-aliases/CapTier.md)[]
 
 #### Returns
 
@@ -76,7 +76,7 @@ Return a new [CapSet](../interfaces/CapSet.md) with the given level added.
 
 ##### level
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 #### Returns
 
@@ -96,7 +96,7 @@ Whether a [CapSet](../interfaces/CapSet.md) contains the given level.
 
 ##### level
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 #### Returns
 
@@ -126,13 +126,13 @@ Set intersection of two [CapSet](../interfaces/CapSet.md)s.
 
 > **ordinal**: (`level`) => `number` = `_ordinal`
 
-Integer ordinal for a [CapLevel](../type-aliases/CapLevel.md) — useful for sorting / comparison.
+Integer ordinal for a [CapTier](../type-aliases/CapTier.md) — useful for sorting / comparison.
 
 #### Parameters
 
 ##### level
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 #### Returns
 
@@ -152,7 +152,7 @@ Return a new [CapSet](../interfaces/CapSet.md) with the given level removed.
 
 ##### level
 
-[`CapLevel`](../type-aliases/CapLevel.md)
+[`CapTier`](../type-aliases/CapTier.md)
 
 #### Returns
 

@@ -31,7 +31,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      # fetch-depth: 0 brings the FULL history so the standards:gate phase can run
+      # `git show <base>:traceability/standards-snapshot.json` against the review base
+      # (the raccoon-rule backstop diffs the LIVE surface against the PRIOR, INDEPENDENT
+      # baseline — never the working-tree snapshot). A shallow checkout has neither the
+      # parent commit nor the fetched base branch, so the gate would fail CLOSED.
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -45,6 +52,58 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
+      # Resolve the standards-integrity base ref DETERMINISTICALLY (the snapshot the
+      # change is REVIEWED against). The raccoon-rule backstop (gauntlet:full's
+      # `standards:gate` phase) diffs the LIVE standards surface against the snapshot AS
+      # COMMITTED ON THIS REF — so a same-commit weaken+regenerate still diffs as a
+      # weakening versus the base. Two cases, both choosing a ref that HAS the snapshot:
+      #   - pull_request: the PR base BRANCH, fetched and named as `origin/<base>`. The
+      #     diff is exactly "this PR vs what it merges into" (the true review base). The
+      #     checkout above already created `refs/remotes/pull/<n>/merge`; we fetch the
+      #     base branch tip explicitly so `git show origin/<base>:…` resolves.
+      #   - push (to main or a feature branch): `github.event.before` — the SHA the ref
+      #     pointed at BEFORE this push. This covers the ENTIRE pushed range, NOT just the
+      #     last commit. (`HEAD~1` only diffed the last commit's parent, so a weakening
+      #     introduced EARLIER in a multi-commit push — already present at HEAD~1 — sailed
+      #     through. `before` is the true range base, so an earlier-commit weakening is
+      #     diffed and caught.) `before` is the prior tip, which HAS the snapshot; we fetch
+      #     it explicitly so `git show <before>:…` resolves even on a non-default checkout.
+      #     BOOTSTRAP: the FIRST push of a brand-new branch has no prior tip, so `before`
+      #     is the all-zeros sentinel. We then fall back to the merge-base with the
+      #     integration branch (main) — the true divergence point — IF main carries the
+      #     snapshot; otherwise we leave the zero-SHA in place and the resolver +
+      #     readBaseSnapshot FAIL CLOSED (the gate THROWS, never a silent pass).
+      # FAIL-CLOSED is preserved throughout: if the chosen ref has no snapshot, the gate
+      # THROWS rather than fall back to the working-tree snapshot.
+      - name: Resolve standards-integrity base ref
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            echo "CZAP_STANDARDS_BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          else
+            ZERO="0000000000000000000000000000000000000000"
+            BASE="$PUSH_BEFORE"
+            if [ "$BASE" = "$ZERO" ] || [ -z "$BASE" ]; then
+              # Brand-new-branch bootstrap: no prior tip. Use the merge-base with main as
+              # the range base (the divergence point) IF main has the snapshot; else keep
+              # the zero-SHA so the gate fails CLOSED rather than silently passing.
+              git fetch --no-tags origin main || true
+              if MB="$(git merge-base origin/main HEAD 2>/dev/null)" \
+                 && git cat-file -e "$MB:traceability/standards-snapshot.json" 2>/dev/null; then
+                BASE="$MB"
+              else
+                BASE="$ZERO"
+              fi
+            else
+              # The prior tip the ref pointed at before this push — fetch it so
+              # `git show <before>:…` resolves over the whole pushed range.
+              git fetch --no-tags origin "$BASE" || true
+            fi
+            echo "CZAP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
+          fi
       - run: pnpm run gauntlet:full
         env:
           CI: true
@@ -136,7 +195,14 @@ jobs:
       - run: pnpm run build
       - name: Artifact must exist — otherwise the parity suite self-skips
         run: test -f crates/czap-compute/target/wasm32-unknown-unknown/release/czap_compute.wasm
-      - run: pnpm exec vitest run tests/unit/core/wasm-parity.test.ts
+      # Run the WASM/TS kernel parity suite AND the float-determinism property
+      # tests against the freshly-built wasm artifact — the blend kernel has no
+      # WASM twin but is accumulation-order-sensitive, so its determinism proof
+      # belongs on the one runner that exercises the real compiled kernels.
+      - run: >-
+          pnpm exec vitest run
+          tests/unit/core/wasm-parity.test.ts
+          tests/property/blend-determinism.prop.test.ts
         env:
           CI: true
       # 0.2.1 shipping path: stage the freshly-built kernel into @czap/core's
@@ -166,7 +232,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx scripts/check-invariants.ts
+      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro
@@ -197,7 +263,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run typecheck
       - run: pnpm run lint
-      - run: pnpm exec tsx scripts/check-invariants.ts
+      - run: pnpm exec tsx packages/cli/src/bin.ts check-invariants
       - run: pnpm test
       - run: pnpm run test:vite
       - run: pnpm run test:astro

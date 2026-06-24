@@ -8,7 +8,7 @@
 
 > **readJsonFile**\<`T`\>(`filePath`): `T`
 
-Defined in: [audit/src/shared.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L45)
+Defined in: [audit/src/shared.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L46)
 
 ## Type Parameters
 

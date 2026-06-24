@@ -1,6 +1,6 @@
 {
   "name": "@czap/cli",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "czap CLI — AI-first JSON I/O with human-pretty TTY mode",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
@@ -49,6 +49,8 @@
     "@czap/scene": "workspace:*",
     "@czap/assets": "workspace:*",
     "@czap/audit": "workspace:*",
+    "@czap/gauntlet": "workspace:*",
+    "@czap/error": "workspace:*",
     "effect": ">=4.0.0-beta.32 <5"
   },
   "engines": {

@@ -31,6 +31,14 @@ export type {
 // FNV-1a hash utility
 export { fnv1a, fnv1aBytes } from './fnv.js';
 
+// JSON-Schema deriver (single-source-of-truth migration): derive a command
+// descriptor's JSON-Schema (`inputSchema`/`outputSchema`) from ONE Effect Schema,
+// killing the hand-maintained-JSON-Schema-beside-the-TS-type drift. PRODUCTION
+// module (NOT under harness/) so @czap/command can import it without pulling
+// fast-check into its runtime — it depends only on `effect` + `@czap/error`.
+export { schemaToJsonSchema } from './json-schema-from-schema.js';
+export type { JsonSchemaObject, JsonSchemaFragment } from './json-schema-from-schema.js';
+
 // Canonical CBOR encoder (RFC 8949 §4.2.1) — content-address kernel
 export { CanonicalCbor } from './cbor.js';
 
@@ -54,6 +62,14 @@ export { tupleMap } from './tuple.js';
 // namespace-object pattern in ADR-0001); consumers who want only the type
 // can `import type { BoundarySpec } from '@czap/core'`.
 export { Boundary, BoundarySpec } from './boundary.js';
+
+// The determinism substrate: the one injectable shape time + randomness are read
+// through, so the ONLY ambient wall-clock / Math.random read in the runtime lives
+// in `systemClock` / `systemRng` (the single declared entropy boundary). Every
+// other runtime path threads an injected clock/rng defaulting to the system one.
+export { type Clock, type ManualClock, systemClock, wallClock, fixedClock, manualClock } from './clock.js';
+export { type Rng, systemRng, seededRng } from './rng.js';
+
 // The single f32-canonical state-index kernel and its worker-blob twin string.
 // `rawIndexF32` is THE numeric semantics for boundary evaluation; the host
 // startup path (@czap/worker) delegates to it, and `EVALUATE_THRESHOLDS_SOURCE`
@@ -128,7 +144,7 @@ export { GenFrame } from './gen-frame.js';
 export type { UIFrame, FrameType, MorphStrategy, GapStrategy } from './gen-frame.js';
 
 // Video
-export { VideoRenderer } from './video.js';
+export { VideoRenderer, compositeStateToRgba } from './video.js';
 export type { VideoConfig, VideoFrameOutput } from './video.js';
 
 // Capture
@@ -175,13 +191,20 @@ export type { WireSocket } from './wire.js';
 export { Op } from './op.js';
 
 // Cap
-export type { CapLevel, CapSet } from './caps.js';
+export type { CapTier, CapSet } from './caps.js';
 export { Cap } from './caps.js';
 
+// Capability-admissibility ladder — the SINGLE index-keyed source both the core
+// escalation chooser's `RUNG_TARGETS` (CapTier-keyed) and the quantizer's
+// `TIER_TARGETS` (MotionTier-keyed) project from, so the two cannot drift.
+export { LADDER_TARGETS, LADDER_RUNGS, projectLadder } from './cap-ladder.js';
+export type { LadderTarget } from './cap-ladder.js';
+
 // Escalation chooser (P5c) — the READER of PolicyNode (P2). Picks the minimal
-// CapLevel rung a policy admits on a runtime site, gated by site/budgets/grants
-// and the locally-encoded CapLevel↔target admissibility table (no quantizer
-// import — that would close a core→quantizer cycle).
+// CapTier rung a policy admits on a runtime site, gated by site/budgets/grants
+// and the CapTier↔target admissibility table projected from the shared
+// `cap-ladder.ts` ladder (no quantizer import — that would close a
+// core→quantizer cycle; both project the same ladder instead).
 export { chooseRung } from './escalation.js';
 export type { RungChoice, EscalationResult } from './escalation.js';
 
@@ -227,10 +250,18 @@ export type {
 // The DocumentGraph kernel — seal (mint ids), validate, and linearize (reused
 // from the Plan kernel). `addressNode`/`addressDocumentGraph` stay module-local
 // (sealNode/sealGraph wrap them; in-core consumers import them by relative path).
-export { sealNode, sealGraph, validateGraph, linearizeGraph } from './document-graph-address.js';
+// `decodeDocumentGraph` is the VERSION-AWARE, FAIL-CLOSED reader for an untrusted
+// graph value (persisted JSON / wire payload): it gates `_tag`/`_version` + per-node
+// well-formedness, rejecting a future-version or malformed graph with ONE tagged
+// ParseError instead of silently misparsing it into a v1 shape.
+export { sealNode, sealGraph, validateGraph, linearizeGraph, decodeDocumentGraph } from './document-graph-address.js';
+// The one node well-formedness trust gate, shared by the AI proposal validator
+// (ai-cast.ts) and the runtime graph loader (@czap/astro) — untrusted JSON, one
+// schema. Factored out of ai-cast.ts so neither seam owns a drifting copy.
+export { isWellFormedNode, DocumentGraphNodeSchema } from './document-graph-schema.js';
 // The one content-addressing kernel (canonicalize → CanonicalCbor → fnv1a),
 // shared by EntityId, DocumentGraph ids, and downstream GraphPatch re-addressing.
-export { contentAddressOf } from './content-address.js';
+export { contentAddressOf, canonicalAddressBytes } from './content-address.js';
 
 // ── GraphPatch — typed graph mutation + structural differ (P5b) ─────────────
 // Tagged-delta over DocumentGraph: propose/apply (re-address via sealGraph) /
@@ -321,9 +352,6 @@ export {
   VIEWPORT,
 } from './defaults.js';
 
-// Validation error
-export { CzapValidationError, isValidationError } from './validation-error.js';
-
 // Diagnostics
 export { Diagnostics } from './diagnostics.js';
 export type { DiagnosticEvent, DiagnosticLevel, DiagnosticPayload, DiagnosticsSink } from './diagnostics.js';
@@ -365,6 +393,8 @@ export type {
   Invariant,
   AttributionDecl,
   CapsuleContract,
+  Reason,
+  Decision,
 } from './capsule.js';
 
 export { TypeValidator } from './capsule.js';

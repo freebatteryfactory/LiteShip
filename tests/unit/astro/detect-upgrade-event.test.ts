@@ -14,7 +14,7 @@
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DETECT_UPGRADE_SCRIPT } from '../../../packages/astro/src/detect-upgrade.js';
-import { motionTierFromCapabilities, tierFromCapabilities } from '../../../packages/detect/src/tiers.js';
+import { motionTierFromCapabilities, capTierFromCapabilities } from '../../../packages/detect/src/tiers.js';
 import { classifyGPURenderer } from '../../../packages/detect/src/detect.js';
 
 function defineNavigator(props: Record<string, unknown>): void {
@@ -112,7 +112,7 @@ describe('detect-upgrade fires czap:detect-ready', () => {
 
             // Single source of truth: canonical classify + map/tier on the SAME
             // inputs. Expected is computed from canonical, never hardcoded — so
-            // drift in the inline classifier, the motion mapping, OR the capLevel
+            // drift in the inline classifier, the motion mapping, OR the capTier
             // ladder fails here instead of silently mis-granting via CSS.
             const caps = {
               gpu: classifyGPURenderer(renderer),
@@ -122,14 +122,14 @@ describe('detect-upgrade fires czap:detect-ready', () => {
               prefersReducedMotion: false,
             } as Parameters<typeof motionTierFromCapabilities>[0];
             expect(document.documentElement.getAttribute('data-czap-motion')).toBe(motionTierFromCapabilities(caps));
-            expect(document.documentElement.getAttribute('data-czap-tier')).toBe(tierFromCapabilities(caps));
+            expect(document.documentElement.getAttribute('data-czap-tier')).toBe(capTierFromCapabilities(caps));
           });
         }
       }
     }
   }
 
-  // reduced-motion: motion short-circuits to 'none', and the capLevel ladder's
+  // reduced-motion: motion short-circuits to 'none', and the capTier ladder's
   // reduced-motion branches (static/reactive/animated) must still mirror canonical.
   for (const renderer of ['SwiftShader', 'Intel(R) UHD Graphics 620', 'Apple M1', 'NVIDIA GeForce RTX 4090'] as const) {
     test(`reduced-motion mirrors canonical tier+motion for ${renderer}`, () => {
@@ -150,9 +150,9 @@ describe('detect-upgrade fires czap:detect-ready', () => {
         memory: 8,
         webgpu: true,
         prefersReducedMotion: true,
-      } as Parameters<typeof tierFromCapabilities>[0];
+      } as Parameters<typeof capTierFromCapabilities>[0];
       expect(document.documentElement.getAttribute('data-czap-motion')).toBe('none');
-      expect(document.documentElement.getAttribute('data-czap-tier')).toBe(tierFromCapabilities(caps));
+      expect(document.documentElement.getAttribute('data-czap-tier')).toBe(capTierFromCapabilities(caps));
     });
   }
 

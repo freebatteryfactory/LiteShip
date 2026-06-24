@@ -9,14 +9,15 @@
  * @module
  */
 import { describe, it, expect, afterEach } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { runStructureAudit } from '../../../scripts/audit/structure.js';
 import { repoRoot } from '../../../scripts/audit/shared.js';
 import { packageTopology, surfacePolicy, dynamicImportExemptions } from '../../../scripts/audit/policy.js';
-import { liteshipDevopsProfile } from '../../../scripts/config/devops-profile.js';
-import type { DevopsProfile } from '../../../scripts/config/devops-profile.js';
+import { liteshipDevopsProfile } from '@czap/audit';
+import type { DevopsProfile } from '@czap/audit';
 
 const fixtures: string[] = [];
 afterEach(() => {
@@ -69,7 +70,10 @@ describe('D7 — default profile reproduces current audit behavior (no drift)', 
     expect(explicit.suppressed).toEqual(implicit.suppressed);
     expect(explicit.summary.coverageClassification).toEqual(implicit.summary.coverageClassification);
     expect(explicit.summary.packageEdges).toEqual(implicit.summary.packageEdges);
-  });
+    // Two full-repo ts.Program structure audits — load-sensitive; scale the
+    // timeout like the audit-profile-seam sibling so a busy suite never flakes
+    // this on the default 10s (testing-philosophy: anti-fragile, never flaky).
+  }, scaledTimeout(60_000));
 });
 
 describe('D7 — a synthetic @acme/ profile drives the audit (decoupling proof)', () => {

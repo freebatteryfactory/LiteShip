@@ -8,6 +8,6 @@
 
 > **MorphStrategy** = `"replace"` \| `"patch"` \| `"css-only"`
 
-Defined in: [core/src/gen-frame.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L32)
+Defined in: [core/src/gen-frame.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L33)
 
 How a [UIFrame](../interfaces/UIFrame.md) is applied to the DOM: full replace, patch, or CSS-only motion.

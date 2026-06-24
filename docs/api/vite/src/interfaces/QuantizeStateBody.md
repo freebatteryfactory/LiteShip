@@ -50,7 +50,7 @@ Authored per-state non-CSS cast attributes, keyed by cast target. Each
 entry holds the raw `{ key: value }` declarations from a nested
 `@<target> { … }` segment (quotes stripped). Generalized from the
 original `@aria`-only form so adding a cast target is a registration in
-CAST\_TARGETS, not a new field. Targets the state did not author
+[CAST\_TARGETS](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts), not a new field. Targets the state did not author
 are absent; the field itself is absent when no cast segment was authored.
 
 Downstream each target routes through its compiler arm via `dispatch`

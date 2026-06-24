@@ -8,6 +8,6 @@
 
 > **BoundaryResolution** = [`EdgeHostBoundaryResolution`](../../../interfaces/EdgeHostBoundaryResolution.md)
 
-Defined in: [edge/src/host-adapter.ts:457](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L457)
+Defined in: [edge/src/host-adapter.ts:463](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L463)
 
 Alias for [EdgeHostBoundaryResolution](../../../interfaces/EdgeHostBoundaryResolution.md).

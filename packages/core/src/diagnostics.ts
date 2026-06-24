@@ -8,6 +8,8 @@
  * @module
  */
 
+import { type Clock, wallClock } from './clock.js';
+
 /** Severity level for a {@link DiagnosticEvent}. */
 export type DiagnosticLevel = 'warn' | 'error';
 
@@ -86,11 +88,20 @@ const defaultSink: DiagnosticsSink = {
 let currentSink: DiagnosticsSink = defaultSink;
 const onceKeys = new Set<string>();
 
+/**
+ * The clock the emission TIMESTAMP is read from. A `DiagnosticEvent.timestamp` is
+ * an absolute point in time (epoch ms) — a TIMESTAMP, not a duration — so it
+ * defaults to {@link wallClock} (`Date.now`). Swappable via {@link setClock} so a
+ * test or deterministic replay can pin every diagnostic's timestamp with a
+ * `fixedClock`/`manualClock` (the same cake-and-eat-it discipline as {@link setSink}).
+ */
+let currentClock: Clock = wallClock;
+
 function toEvent(level: DiagnosticLevel, payload: DiagnosticPayload): DiagnosticEvent {
   return {
     ...payload,
     level,
-    timestamp: Date.now(),
+    timestamp: currentClock.now(),
   };
 }
 
@@ -132,12 +143,23 @@ function resetSink(): void {
   currentSink = defaultSink;
 }
 
+function setClock(clock: Clock): Clock {
+  const previous = currentClock;
+  currentClock = clock;
+  return previous;
+}
+
+function resetClock(): void {
+  currentClock = wallClock;
+}
+
 function clearOnce(): void {
   onceKeys.clear();
 }
 
 function reset(): void {
   resetSink();
+  resetClock();
   clearOnce();
 }
 
@@ -168,6 +190,14 @@ export const Diagnostics = {
   setSink,
   /** Restore the default sink that writes through `console`. */
   resetSink,
+  /**
+   * Replace the clock the emission `timestamp` (a wall-clock TIMESTAMP) is read
+   * from; returns the previous clock. Pass a `fixedClock`/`manualClock` for
+   * deterministic, replayable diagnostic timestamps.
+   */
+  setClock,
+  /** Restore the default {@link wallClock} timestamp source. */
+  resetClock,
   /** Clear the deduplication set used by {@link Diagnostics.warnOnce}. */
   clearOnce,
   /** Convenience for `resetSink()` + `clearOnce()` — mostly for test teardown. */
