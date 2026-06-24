@@ -249,6 +249,11 @@
           "signature": "(0)"
         },
         {
+          "name": "detectSkipsAST",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "discoverInstalledPackageRoots",
           "kind": "function",
           "signature": "(2)"
@@ -2220,7 +2225,7 @@
         {
           "name": "sanctionedSkipFor",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "scopeContextByLevel",
@@ -2240,7 +2245,7 @@
         {
           "name": "siteConsistentWithCapability",
           "kind": "function",
-          "signature": "(2)"
+          "signature": "(3)"
         },
         {
           "name": "sortSurfaceElements",

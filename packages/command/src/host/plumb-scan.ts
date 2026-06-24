@@ -11,9 +11,18 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ParseError } from '@czap/error';
-import { detectSkips } from '@czap/gauntlet';
+import { detectSkips, type SkipMatch } from '@czap/gauntlet';
 import { PACKAGE_PLUMB } from '../commands/plumb-registry.js';
 import type { PlumbGateSummary, PlumbSkip } from '../registry.js';
+
+/**
+ * The skip detector the scan folds — a `(source) => SkipMatch[]`. INJECTED by the caller so the
+ * SOUND AST detector (`@czap/audit`'s `detectSkipsAST`, line-agnostic + the structural
+ * conditionality) can be used WITHOUT `@czap/command` gaining a `typescript`/`@czap/audit` edge
+ * (the boundary LAW: the lean token `detectSkips` is the FALLBACK; the CLI host — which deps
+ * `@czap/audit` — injects the AST detector). Defaults to the dependency-free token `detectSkips`.
+ */
+export type PlumbSkipDetector = (source: string) => readonly SkipMatch[];
 
 // The first quoted string after the matched skip token — the human-readable reason —
 // used for the work-list line (escape-aware; tolerates a leading ternary condition).
@@ -30,7 +39,7 @@ const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
  * alias forms over `codeOnly`-stripped text, so a prose mention is never flagged) — ONE
  * owner, the FULL detector. A generated test must NEVER skip in ANY form.
  */
-function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boolean } {
+function collectGeneratedSkips(root: string, detect: PlumbSkipDetector): { skips: PlumbSkip[]; present: boolean } {
   const dir = resolve(root, 'tests', 'generated');
   if (!existsSync(dir)) return { skips: [], present: false };
   const skips: PlumbSkip[] = [];
@@ -45,7 +54,7 @@ function collectGeneratedSkips(root: string): { skips: PlumbSkip[]; present: boo
     sawGenerated = true;
     const src = readFileSync(resolve(dir, rel), 'utf8');
     const lines = src.split('\n');
-    for (const skip of detectSkips(src)) {
+    for (const skip of detect(src)) {
       // The human-readable reason: the first string literal at/after the matched line
       // (the title for a call form, the guard's reason for a conditional). Scan from the
       // raw source line so a computed/ternary message is still surfaced as best effort.
@@ -92,9 +101,14 @@ function publishedPackages(root: string): string[] {
  * Run the plumb-completeness gate over `root` (the host's `cwd`). Pure scan:
  * `ok` ⟺ no `*.skip` placeholders in `tests/generated/` AND every published
  * package classified in `PACKAGE_PLUMB`.
+ *
+ * The optional `skipDetector` (a `(source) => SkipMatch[]`) is the INJECTED SOUND AST detector
+ * (`@czap/audit`'s `detectSkipsAST`); the CLI host passes it so a generated multi-line / ASI /
+ * inner-describe skip the token scanner would miss is caught here too — `(skipDetector ??
+ * detectSkips)`. Omitted (a lean caller) ⇒ the dependency-free token `detectSkips` fallback runs.
  */
-export function runPlumbScan(root: string): PlumbGateSummary {
-  const { skips, present } = collectGeneratedSkips(root);
+export function runPlumbScan(root: string, skipDetector?: PlumbSkipDetector): PlumbGateSummary {
+  const { skips, present } = collectGeneratedSkips(root, skipDetector ?? detectSkips);
   const unclassified = publishedPackages(root).filter((name) => !(name in PACKAGE_PLUMB));
   return {
     ok: skips.length === 0 && unclassified.length === 0,

@@ -29,6 +29,7 @@ import type { TaintFacts } from './taint-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
+import type { SkipMatch } from './gates/skip-detect.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -61,6 +62,19 @@ export interface GateContext {
    * still `files()` (scoped); only the confirmer EVIDENCE reads `allFiles()`.
    */
   allFiles?(): readonly string[];
+  /**
+   * The SOUND skip detector — an INJECTED capability (the AST detector, the cure that ends the
+   * token-scanner whack-a-mole). OPTIONAL by design, the SAME lean-engine pattern as {@link ir}:
+   * `@czap/gauntlet` carries NO `typescript` dep, so the dependency-free token `detectSkips` is its
+   * FALLBACK; the host (the CLI, which deps `@czap/audit`) builds `detectSkipsAST` (a real
+   * `ts.createSourceFile` AST walk + local binding analysis + conditionality classification) and
+   * injects it here. A skip-reading gate / scan calls `(context.skipDetector ?? detectSkips)(text)`
+   * — the AST detector when injected (line-agnostic, catches every multi-line/ASI/inner-describe
+   * spelling, and produces the `conditional` F2 discriminant), the token fallback otherwise. When
+   * ABSENT the token detector runs unchanged (back-compat; the lean `czap check` path). See
+   * {@link SkipMatch}.
+   */
+  readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
    * The triangulated repo-IR — an INJECTED capability (Slice B). OPTIONAL by
    * design: `@czap/gauntlet` is the lean engine and the IR is built+injected by

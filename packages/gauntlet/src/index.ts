@@ -254,7 +254,7 @@ export { noPlaceholderGate } from './gates/no-placeholder.js';
 // standards-surface extractor can fold the allowlist into the content-addressed snapshot
 // (a sanctioned skip is a visible, snapshot-pinned standards element; adding one is a
 // WEAKEN the raccoon-rule diff surfaces) and a host/test can reuse the ONE detector.
-export { type SkipForm, type SkipMatch, detectSkips } from './gates/skip-detect.js';
+export { type SkipForm, type SkipMatch, type SkipConditionality, detectSkips } from './gates/skip-detect.js';
 export {
   type SkipCapability,
   type SanctionedSkip,

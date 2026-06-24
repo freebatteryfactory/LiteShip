@@ -157,6 +157,24 @@ describe('plumb gate — mechanism', () => {
     expect(runPlumbGate(root).ok).toBe(true);
   });
 
+  it('CATCHES an inner-describe skip via the INJECTED AST detector (a multi-line shape the token scanner misses)', async () => {
+    // The CLI host injects `@czap/audit`'s SOUND `detectSkipsAST` as the second arg of
+    // `runPlumbScan` (the boundary LAW: `@czap/command` stays lean, the host owns the AST). An
+    // inner-describe + multi-line `.each` skip — the kind the token char/scanner could not parse —
+    // is caught when the AST detector is injected. Proves the injection path end-to-end.
+    const { detectSkipsAST } = await import('@czap/audit');
+    const root = fixtureRoot({
+      generated: {
+        'inner.test.ts': `describe('outer', () => {\n  it.each([\n    1,\n    2,\n  ]).skip('multiline inner skip', () => {});\n});\n`,
+      },
+    });
+    const r = runPlumbScan(root, detectSkipsAST);
+    expect(r.ok).toBe(false);
+    expect(r.skips.length).toBeGreaterThan(0);
+    // The token fallback (no injected detector) does NOT see this inner multi-line `.each().skip`.
+    expect(runPlumbScan(root).skips).toEqual([]);
+  });
+
   it('FAILS on a published package missing a PACKAGE_PLUMB classification', () => {
     const root = fixtureRoot({ packages: { mystery: { name: '@czap/mystery-unclassified' } } });
     const r = runPlumbGate(root);

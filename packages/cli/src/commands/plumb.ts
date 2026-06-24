@@ -11,6 +11,7 @@
 import { plumbCommand, type PlumbPayload } from '@czap/command';
 import type { CommandContext } from '@czap/command';
 import { runPlumbScan } from '@czap/command/host';
+import { detectSkipsAST } from '@czap/audit';
 import { emit, type WallClockTimestamp } from '../receipts.js';
 
 /** Receipt emitted by `czap plumb`. */
@@ -24,7 +25,10 @@ export interface PlumbReceipt extends PlumbPayload {
 export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}): Promise<number> {
   const cwd = opts.cwd ?? process.cwd();
 
-  const context: CommandContext = { cwd, runPlumb: async () => runPlumbScan(cwd) };
+  // Inject the SOUND AST skip detector (the CLI host deps `@czap/audit`) so a generated multi-line /
+  // ASI / inner-describe skip the token scanner would miss is caught in the plumb scan too. The lean
+  // `@czap/command/host` keeps the dependency-free token `detectSkips` as its fallback.
+  const context: CommandContext = { cwd, runPlumb: async () => runPlumbScan(cwd, detectSkipsAST) };
 
   const result = await plumbCommand.handler({ name: 'plumb', args: {} }, context);
   const payload = result.payload as PlumbPayload;

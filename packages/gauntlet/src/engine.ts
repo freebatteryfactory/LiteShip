@@ -155,6 +155,12 @@ export function scopeContextByLevel(
     // survives level-scoping exactly as `readFile` does. Fall back to the scoped (well,
     // pre-scope) `files()` when the underlying context predates this accessor.
     allFiles: (): readonly string[] => (context.allFiles !== undefined ? context.allFiles() : context.files()),
+    // Pass the injected SOUND skip detector through unchanged — file-scoping never narrows a
+    // detector capability (it is a pure `(source) => SkipMatch[]` function, not a file set). Omit
+    // the key when absent (the lean token-fallback path). WITHOUT this pass-through the
+    // no-skipped-test gate (an L2 gate, so scoped under propagation) would lose the AST detector
+    // after scoping and silently fall back to the token scanner — re-opening the whack-a-mole.
+    ...(context.skipDetector !== undefined ? { skipDetector: context.skipDetector } : {}),
     // Pass the injected IR through unchanged — scoping narrows `files()`, not the
     // IR (a gate that folds the IR sees the full graph; it scopes itself). Omit
     // the key entirely when no IR was injected, so the shape stays minimal.

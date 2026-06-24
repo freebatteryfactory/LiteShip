@@ -211,16 +211,42 @@ function siteIsConditionalForm(site: string): boolean {
 }
 
 /**
- * Is the sanctioned skip at `site` SELF-CONSISTENT with its declared `capability`? True iff the
- * site is a visible CONDITIONAL FORM ({@link siteIsConditionalForm}) OR its text references the
- * capability's domain keywords ({@link CAPABILITY_KEYWORDS}). An UNCONDITIONAL `it.skip(<title>)`
- * whose title references neither is the marker-free placeholder (`it.skip("later")`) — NOT
- * consistent → not auto-sanctionable. Case-insensitive; pure + dependency-free.
- *
- * An UNKNOWN capability string (one not in the map — should never happen, the type is closed)
- * conservatively requires the conditional form (no keyword set to match against).
+ * The CONDITIONALITY classification an AST detector attaches to a skip — the SOUND F2 discriminant
+ * (mirrors `@czap/gauntlet`'s `SkipConditionality`). Re-declared here (the lean engine keeps the
+ * type local; the gauntlet's public `SkipConditionality` is the same string union) so the allowlist
+ * matcher can accept it WITHOUT a circular import. `undefined` ⇒ the TOKEN fallback (no AST).
  */
-export function siteConsistentWithCapability(site: string, capability: SkipCapability): boolean {
+export type SiteConditionality = 'skipIf' | 'runIf' | 'ternary' | 'enclosing-if' | 'unconditional';
+
+/**
+ * Is the sanctioned skip at `site` SELF-CONSISTENT with its declared `capability`?
+ *
+ * TWO PATHS — the AST (sound) path and the token (heuristic) fallback path, selected by whether the
+ * caller supplies the STRUCTURAL `conditional` classification:
+ *
+ *  - STRUCTURAL (AST) PATH — when `conditional` is provided (the host injected `detectSkipsAST`), it
+ *    is the SOUND proof: an `'unconditional'` skip is a placeholder (NOT consistent → non-sanctionable,
+ *    regardless of title — this is the real fix for `it.skip("ffmpeg probe")` faked-as-a-gate); ANY
+ *    other value (`skipIf`/`runIf`/`ternary`/`enclosing-if`) is a genuine runtime gate → consistent.
+ *    The capability-KEYWORD heuristic is REPLACED by the conditionality proof on this path.
+ *
+ *  - TOKEN (FALLBACK) PATH — when `conditional` is `undefined` (the lean token `detectSkips`, no AST),
+ *    the original heuristic stands: consistent iff the site is a visible CONDITIONAL FORM
+ *    ({@link siteIsConditionalForm}) OR its text references the capability's domain keywords
+ *    ({@link CAPABILITY_KEYWORDS}). This is the documented best-effort the token level can manage.
+ *
+ * Case-insensitive; pure + dependency-free. An UNKNOWN capability (not in the map — the type is
+ * closed, so never) conservatively requires the conditional form on the token path.
+ */
+export function siteConsistentWithCapability(
+  site: string,
+  capability: SkipCapability,
+  conditional?: SiteConditionality,
+): boolean {
+  // STRUCTURAL path: the AST conditionality is the sound proof — unconditional is non-sanctionable,
+  // any conditional form is signable. The keyword heuristic is not consulted.
+  if (conditional !== undefined) return conditional !== 'unconditional';
+  // TOKEN fallback path: the keyword heuristic.
   if (siteIsConditionalForm(site)) return true;
   const keywords = CAPABILITY_KEYWORDS.get(capability);
   if (keywords === undefined) return false;
@@ -376,13 +402,26 @@ const SANCTIONED_BY_SITE: ReadonlyMap<string, ReadonlyMap<string, SanctionedSkip
  * a visible conditional (skipIf/runIf/ternary) or names its capability, so this only ever rejects
  * the disguised placeholder, never one of the 15 legit sanctioned sites (each does one or the
  * other). The SOUND conditionality proof (the enclosing `if (!CAP) {…}` the token level can't see)
- * is the AST follow-up.
+ * is now DELIVERED via the optional `conditional` argument: when the caller (the no-skip gate with
+ * the AST `detectSkipsAST` injected) passes the structural classification, an `'unconditional'` skip
+ * is refused regardless of title (the real cure for `it.skip("ffmpeg probe")` faked as a gate), and
+ * any genuine conditional form (`skipIf`/`runIf`/`ternary`/`enclosing-if`) is honored. Absent it (the
+ * token-fallback path) the keyword heuristic stands, exactly as before.
+ *
+ * @param conditional The AST conditionality (the sound F2 proof) when available; `undefined` ⇒ token path.
  */
-export function sanctionedSkipFor(file: string, siteLine: string): SanctionedSkip | undefined {
+export function sanctionedSkipFor(
+  file: string,
+  siteLine: string,
+  conditional?: SiteConditionality,
+): SanctionedSkip | undefined {
   if (siteCarriesPlaceholderMarker(siteLine)) return undefined;
   const entry = SANCTIONED_BY_SITE.get(file)?.get(normalizeSiteLine(siteLine));
   if (entry === undefined) return undefined;
-  if (!siteConsistentWithCapability(siteLine, entry.capability)) return undefined;
+  // The STRUCTURAL conditionality (from the AST detector) is the SOUND consistency proof when
+  // supplied; absent it (token fallback) the keyword heuristic decides. Either way an
+  // unconditional / keyword-free placeholder is refused — never sanctioned past the floor.
+  if (!siteConsistentWithCapability(siteLine, entry.capability, conditional)) return undefined;
   return entry;
 }
 

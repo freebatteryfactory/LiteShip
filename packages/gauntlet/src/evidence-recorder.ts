@@ -110,7 +110,10 @@ type OptionalFactKeys = Exclude<
   {
     [K in keyof GateContext]-?: undefined extends GateContext[K] ? K : never;
   }[keyof GateContext],
-  'ir' | 'allFiles'
+  // `ir` (structural, tracked via ir.facts/ir.refs), `allFiles` (the file-list channel), and
+  // `skipDetector` (a CAPABILITY function, not evidence — the AST-vs-token choice is part of the
+  // toolchain digest the host folds, not a per-run fact channel) are NOT fact channels.
+  'ir' | 'allFiles' | 'skipDetector'
 >;
 type _factChannelsCoverContext = FactChannel extends OptionalFactKeys ? true : never;
 type _contextFactsAreChannels = OptionalFactKeys extends FactChannel ? true : never;

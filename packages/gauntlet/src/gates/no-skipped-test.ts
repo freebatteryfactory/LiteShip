@@ -89,11 +89,16 @@ function formLabel(form: SkipMatch['form']): string {
 
 /** Scan the governed corpus; a skip is a finding UNLESS its EXACT SITE is sanctioned. */
 function scan(context: GateContext): readonly Finding[] {
+  // The SOUND AST detector when the host injected it (line-agnostic, every multi-line/ASI/
+  // inner-describe spelling, AND the structural `conditional` F2 discriminant); the
+  // dependency-free token detector as the lean fallback. The lean engine never reaches for
+  // `typescript` — the host (CLI, which deps `@czap/audit`) provides `detectSkipsAST`.
+  const detect = context.skipDetector ?? detectSkips;
   const findings: Finding[] = [];
   for (const file of governedFiles(context)) {
     const text = context.readFile(file);
     if (text === undefined) continue;
-    const skips = detectSkips(text);
+    const skips = detect(text);
     if (skips.length === 0) continue;
     const rawLines = text.split('\n');
     for (const skip of skips) {
@@ -102,8 +107,14 @@ function scan(context: GateContext): readonly Finding[] {
       // different/new/unrelated skip in the SAME file is NOT sanctioned — a sanctioned
       // file is no longer a blind spot. The allowlist is the visible record (the standards
       // surface folds it), so this is a waiver-with-teeth, never a silent ignore.
+      //
+      // STRUCTURAL F2: when the AST detector produced a `conditional` classification, it is
+      // the SOUND sanctioning proof — an UNCONDITIONAL skip is a placeholder (non-sanctionable
+      // regardless of title), a CONDITIONAL one is signable. We thread it into `sanctionedSkipFor`,
+      // which uses it in place of the capability-KEYWORD heuristic; absent it (token fallback),
+      // the keyword heuristic stands. See skip-allowlist.ts.
       const rawLine = rawLines[skip.line - 1] ?? '';
-      if (sanctionedSkipFor(file, rawLine) !== undefined) continue;
+      if (sanctionedSkipFor(file, rawLine, skip.conditional) !== undefined) continue;
       findings.push(
         finding({
           ruleId: 'gauntlet/no-skipped-test',

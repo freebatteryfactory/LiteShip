@@ -120,12 +120,37 @@ export type SkipForm =
   | 'computed' // a COMPUTED member access on a test root — `it[cond ? "skip" : "only"]` / `it[v]` — could resolve to skip
   | 'aliased'; // a SUSPICIOUS rebind to a non-literal RHS that mentions a runner — `const t = cond ? it : x; t.skip(` — statically undecidable, flagged not passed
 
+/**
+ * The CONDITIONALITY classification of a detected skip — whether the skip's reachability is
+ * GUARDED by a runtime condition (a capability gate) or is UNCONDITIONAL (a placeholder).
+ *
+ * This is the F2-soundness discriminant. The TOKEN {@link detectSkips} cannot decide it (it
+ * cannot see an enclosing `if (<cond>) { … }` ancestor), so it leaves it `undefined`; the
+ * AST detector ({@link detectSkipsAST}, in `@czap/audit`) sets it from a real ancestor walk:
+ *  - `'skipIf'` / `'runIf'` — the call member IS the runtime gate (`it.skipIf(cond)(…)`);
+ *  - `'ternary'` — the skip accessor is a TERNARY ARM (`cond ? it : it.skip`);
+ *  - `'enclosing-if'` — the skip CALL sits inside an `if (<cond>) { … }` whose body holds it
+ *    (the ancestor walk the token level cannot do — the soundness win);
+ *  - `'unconditional'` — none of the above; the skip is ALWAYS reached (a placeholder).
+ *
+ * Optional on {@link SkipMatch}: the lean token detector omits it (the keyword-heuristic
+ * fallback path decides sanctioning), the AST detector always sets it (the structural path).
+ */
+export type SkipConditionality = 'skipIf' | 'runIf' | 'ternary' | 'enclosing-if' | 'unconditional';
+
 /** One detected skip — its 1-based line, the form it took, and the matched token. */
 export interface SkipMatch {
   readonly line: number;
   readonly form: SkipForm;
   /** The matched skip token (e.g. `it.skip`, `describe.skipIf`, `xit`, `it["skip"]`) — for the detail. */
   readonly token: string;
+  /**
+   * The CONDITIONALITY classification — present ONLY when a structural (AST) detector produced
+   * this match ({@link detectSkipsAST}); the token {@link detectSkips} omits it (`undefined`).
+   * When present it is the SOUND F2 discriminant: an `'unconditional'` skip is a non-sanctionable
+   * placeholder regardless of its title; any other value is a signable capability gate.
+   */
+  readonly conditional?: SkipConditionality;
 }
 
 /**

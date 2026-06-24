@@ -41,10 +41,13 @@ describe('czap plumb — clean gate (exit 0, ok receipt, no work-list)', () => {
     expect(stderr).toBe('');
   });
 
-  it('threads cwd into the injected runPlumb capability', async () => {
+  it('threads cwd + the injected SOUND AST skip detector into the injected runPlumb capability', async () => {
     runPlumbScanMock.mockResolvedValue(CLEAN);
     await captureCli(() => plumb({ cwd: '/tmp/some-repo', pretty: false }));
-    expect(runPlumbScanMock).toHaveBeenCalledWith('/tmp/some-repo');
+    // The CLI host injects `detectSkipsAST` (the AST detector) as the second arg so a generated
+    // multi-line / ASI / inner-describe skip the token scanner would miss is caught in the plumb
+    // scan too — the lean `@czap/command/host` keeps the token `detectSkips` as its fallback.
+    expect(runPlumbScanMock).toHaveBeenCalledWith('/tmp/some-repo', expect.any(Function));
   });
 });
 

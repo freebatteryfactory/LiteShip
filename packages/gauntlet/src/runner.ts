@@ -19,6 +19,7 @@
  */
 
 import type { Gate } from './gate.js';
+import type { SkipMatch } from './gates/skip-detect.js';
 import type { RepoIR } from './repo-ir.js';
 import type { SupplyChainFacts } from './supply-chain-facts.js';
 import type { MutationFacts } from './mutation-facts.js';
@@ -123,6 +124,14 @@ export interface RunGauntletOnRepoOptions {
   readonly repoRoot: string;
   /** Repo-relative glob patterns selecting the files the gates consider. */
   readonly globs: readonly string[];
+  /**
+   * The INJECTED SOUND skip detector (the AST detector) — OPTIONAL. The gauntlet is the lean
+   * engine and never deps `typescript`; a host (the CLI, which deps `@czap/audit`) builds
+   * `detectSkipsAST` and threads it here, where it lands on the {@link GateContext} for the
+   * no-skipped-test gate to use via `(context.skipDetector ?? detectSkips)`. Omit it (the lean
+   * path: `czap check` / MCP) and the token `detectSkips` fallback runs unchanged.
+   */
+  readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
    * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
    * and never builds an IR; a host (the CLI, via `@czap/audit`'s `ts.Program`)
@@ -265,12 +274,18 @@ export function runGauntletOnRepo(
     opts.fuzzCorpus,
   );
   const context =
-    opts.proof !== undefined || opts.composition !== undefined || opts.taint !== undefined
+    opts.proof !== undefined ||
+    opts.composition !== undefined ||
+    opts.taint !== undefined ||
+    opts.skipDetector !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
           ...(opts.composition !== undefined ? { composition: opts.composition } : {}),
           ...(opts.taint !== undefined ? { taint: opts.taint } : {}),
+          // The SOUND AST skip detector (injected by the CLI host); spread additively so the
+          // brittle positional nodeContext signature is not widened. Omitted ⇒ token fallback.
+          ...(opts.skipDetector !== undefined ? { skipDetector: opts.skipDetector } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -413,6 +428,11 @@ export function litelaunchGauntletWithIR(
       // analysis) when supplied — `compositionCoverageGate` folds them. Omitted ⇒
       // absent ⇒ the gate is not in the set (composition is opt-in: `--composition`).
       ...(cacheOpts.composition !== undefined ? { composition: cacheOpts.composition } : {}),
+      // Inject the host-built SOUND AST skip detector (`detectSkipsAST`) when supplied — the
+      // no-skipped-test gate uses it via `(context.skipDetector ?? detectSkips)`, gaining the
+      // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
+      // Omitted ⇒ the token `detectSkips` fallback runs unchanged (the lean path).
+      ...(cacheOpts.skipDetector !== undefined ? { skipDetector: cacheOpts.skipDetector } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -528,4 +548,13 @@ export interface LitelaunchCacheOptions {
    * gate. The composition MODE namespaces the verdict cache key.
    */
   readonly composition?: CompositionFacts;
+  /**
+   * OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s `detectSkipsAST`) threaded onto
+   * the {@link GateContext} as `skipDetector`. The no-skipped-test gate uses it via
+   * `(context.skipDetector ?? detectSkips)` — gaining line-agnostic multi-line/ASI/inner-describe
+   * detection + the structural F2 conditionality the token scanner cannot produce. Supplied
+   * ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the parse is cheap); omitted on the
+   * lean `czap check` / MCP path, where the token `detectSkips` fallback runs unchanged.
+   */
+  readonly skipDetector?: (source: string) => readonly SkipMatch[];
 }

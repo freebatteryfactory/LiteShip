@@ -25,7 +25,14 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildRepoIR, withRepoRoot, liteshipDevopsProfile, normalizeRepoPath, type FactOracle } from '@czap/audit';
+import {
+  buildRepoIR,
+  withRepoRoot,
+  liteshipDevopsProfile,
+  normalizeRepoPath,
+  detectSkipsAST,
+  type FactOracle,
+} from '@czap/audit';
 import { INVARIANTS, type CheckInvariantEntry } from '@czap/command/invariants';
 import { currentEnvFingerprint } from '@czap/command/host';
 import { InvariantViolationError } from '@czap/error';
@@ -426,6 +433,12 @@ export async function runGauntletWithRepoIR(
 
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
+    // The SOUND AST skip detector — ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the
+    // `ts.createSourceFile` parse is cheap). The no-skipped-test gate uses it via
+    // `(context.skipDetector ?? detectSkips)`, gaining line-agnostic multi-line/ASI/inner-describe
+    // detection + the structural F2 conditionality the token scanner cannot produce — the cure that
+    // ends the token-scanner whack-a-mole. The lean `czap check`/MCP path keeps the token fallback.
+    skipDetector: detectSkipsAST,
     // The gate set ALWAYS carries `traceabilityBridgeGate` (always-on) plus any
     // opt-in gates, so it always exceeds the bare LITESHIP_IR_GATES set — the engine
     // runs exactly this composed set, never its own default. (The default is now only
