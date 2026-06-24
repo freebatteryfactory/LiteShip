@@ -63,6 +63,7 @@ export const FACT_CHANNELS = [
   'standards',
   'declaredFix',
   'taint',
+  'capabilityLink',
   'fuzzCorpus',
   'proof',
   'composition',

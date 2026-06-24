@@ -26,6 +26,7 @@ import type { MutationFacts } from './mutation-facts.js';
 import type { McdcFacts } from './mcdc-facts.js';
 import type { SimulationFacts } from './simulation-facts.js';
 import type { TaintFacts } from './taint-facts.js';
+import type { CapabilityLinkFacts } from './capability-link-facts.js';
 import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
@@ -213,6 +214,14 @@ export interface RunGauntletOnRepoOptions {
    */
   readonly taint?: TaintFacts;
   /**
+   * The INJECTED capability-link facts (codex round-8, #1b) — OPTIONAL. A host (the CLI's
+   * `czap check --ir --capability-gate` path) resolves each sanctioned skip's guard against the
+   * canonical capability symbol table via `@czap/audit`'s capability-link oracle and threads the
+   * decided {@link CapabilityLinkFacts} here for `capabilityGateLinkGate` to fold. Omit them ⇒ the
+   * gate is not in the set.
+   */
+  readonly capabilityLink?: CapabilityLinkFacts;
+  /**
    * The INJECTED decode-fuzz facts (the untrusted-byte decode-surface hardening) —
    * OPTIONAL. A host (the `tests/fuzz` decode fuzzer, driven by the CLI fuzz path)
    * hammers every L4 decoder with the committed `tests/fixtures/fuzz-corpus` seeds +
@@ -277,12 +286,14 @@ export function runGauntletOnRepo(
     opts.proof !== undefined ||
     opts.composition !== undefined ||
     opts.taint !== undefined ||
+    opts.capabilityLink !== undefined ||
     opts.skipDetector !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
           ...(opts.composition !== undefined ? { composition: opts.composition } : {}),
           ...(opts.taint !== undefined ? { taint: opts.taint } : {}),
+          ...(opts.capabilityLink !== undefined ? { capabilityLink: opts.capabilityLink } : {}),
           // The SOUND AST skip detector (injected by the CLI host); spread additively so the
           // brittle positional nodeContext signature is not widened. Omitted ⇒ token fallback.
           ...(opts.skipDetector !== undefined ? { skipDetector: opts.skipDetector } : {}),
@@ -424,6 +435,10 @@ export function litelaunchGauntletWithIR(
       // supplied — `taintFlowGate` folds them. Omitted ⇒ absent ⇒ the gate is not in
       // the set at all on the default `--ir` run (taint is opt-in: `--taint`).
       ...(cacheOpts.taint !== undefined ? { taint: cacheOpts.taint } : {}),
+      // Inject the host-computed capability-link facts (codex round-8, #1b) when supplied —
+      // `capabilityGateLinkGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the set on the
+      // default `--ir` run (capability-link is opt-in: `--capability-gate`).
+      ...(cacheOpts.capabilityLink !== undefined ? { capabilityLink: cacheOpts.capabilityLink } : {}),
       // Inject the host-computed requirements-traceability facts when supplied —
       // `traceabilityBridgeGate` folds them. Omitted ⇒ absent ⇒ the gate is not in the
       // set at all. The CLI composes the gate + injects these always-on on the `--ir`
@@ -526,6 +541,14 @@ export interface LitelaunchCacheOptions {
    * lesson.
    */
   readonly taint?: TaintFacts;
+  /**
+   * OPTIONAL host-computed capability-link facts (codex round-8, #1b) threaded onto the
+   * {@link GateContext} for `capabilityGateLinkGate` to fold. Supplied ONLY on the
+   * `czap check --ir --capability-gate` run, alongside a `gates` override that includes the gate. The
+   * cache key is namespaced by the capability-gate mode (a capability-gate verdict never serves a
+   * non-capability-gate run).
+   */
+  readonly capabilityLink?: CapabilityLinkFacts;
   /**
    * OPTIONAL host-computed requirements-traceability facts (the avionics-tier ledger)
    * threaded onto the {@link GateContext} for `traceabilityBridgeGate` to fold.

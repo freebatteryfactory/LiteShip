@@ -241,9 +241,15 @@ export async function run(argv: readonly string[]): Promise<number> {
       // trust-spine interaction edge is a finding. Only meaningful with `--ir`; opt-in
       // (LIGHT — a corpus scan); the cache key is namespaced by this mode.
       const composition = rest.includes('--composition');
+      // `--capability-gate` composes the capabilityGateLinkGate (codex round-8, #1b — the
+      // capability-link dataflow proof, L4) on + proves every sanctioned skip's guard DERIVES FROM its
+      // declared capability's probe (the canonical capability symbol table); an unrelated/mislabeled
+      // guard is a finding. Only meaningful with `--ir`; opt-in (a ts.Program over the sanctioned
+      // files + capability modules); the cache key is namespaced by this mode.
+      const capabilityGate = rest.includes('--capability-gate');
       // `--no-cache` / `--symbols` / `--supply-chain` / `--mutate` / `--simulate` /
-      // `--taint` / `--proof` / `--composition` are only meaningful on the IR path (the
-      // lean path has no cache + no IR). A bare flag there is a no-op, never a silent
+      // `--taint` / `--proof` / `--composition` / `--capability-gate` are only meaningful on the IR
+      // path (the lean path has no cache + no IR). A bare flag there is a no-op, never a silent
       // wrong run.
       return check({
         ...(ir ? { ir } : {}),
@@ -256,6 +262,7 @@ export async function run(argv: readonly string[]): Promise<number> {
         ...(taint ? { taint } : {}),
         ...(proof ? { proof } : {}),
         ...(composition ? { composition } : {}),
+        ...(capabilityGate ? { capabilityGate } : {}),
       });
     }
     case 'check-invariants': {

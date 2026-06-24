@@ -26,6 +26,7 @@ import type { TraceabilityFacts } from './traceability-facts.js';
 import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { DeclaredFixFacts } from './declared-fix.js';
 import type { TaintFacts } from './taint-facts.js';
+import type { CapabilityLinkFacts } from './capability-link-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
@@ -216,6 +217,17 @@ export interface GateContext {
    * trust-spine sink. See {@link TaintFacts}.
    */
   readonly taint?: TaintFacts;
+  /**
+   * The host-supplied {@link CapabilityLinkFacts} (codex round-8, #1b) — the dataflow proof that every
+   * sanctioned capability-gated skip's GUARD DERIVES FROM its declared capability's probe. The heavy
+   * `ts.Program`/checker `linker` lives in a HOST (`@czap/audit`'s capability-link oracle, fed the
+   * canonical capability-module SET + the sanctioned sites the `@czap/cli` host injects — the audit
+   * engine names no LiteShip capability, ADR-0012/D7b). The {@link capabilityGateLinkGate} reads ONLY
+   * through this; fixtures supply a literal facts record. When ABSENT the gate is not in the set
+   * (capability-link is opt-in: `czap check --ir --capability-gate`). A skip whose guard derives from
+   * NO capability probe (`if (Math.random())`) — or the WRONG one (a mislabel) — folds to an L4 finding.
+   */
+  readonly capabilityLink?: CapabilityLinkFacts;
   /**
    * Pre-computed DECODE-FUZZ evidence — an INJECTED capability (the
    * UNTRUSTED-BYTE DECODE-SURFACE hardening), the same lean-engine pattern as
@@ -463,4 +475,19 @@ export function requireTaint(context: GateContext, gateId: string): TaintFacts {
     );
   }
   return context.taint;
+}
+
+/**
+ * Read the injected {@link CapabilityLinkFacts} from a context, or throw a clear tagged
+ * {@link HostCapabilityError} (never silently no-ops the gate whose whole job is the capability-link
+ * dataflow proof). The same shape as {@link requireTaint}.
+ */
+export function requireCapabilityLink(context: GateContext, gateId: string): CapabilityLinkFacts {
+  if (context.capabilityLink === undefined) {
+    throw HostCapabilityError(
+      'capability-link-facts',
+      `gate "${gateId}" requires the injected capability-link facts, but none were supplied on the GateContext — a host (the CLI) must resolve each sanctioned skip's guard against the canonical capability symbol table via @czap/audit's capability-link oracle and inject the decided CapabilityLinkFacts as context.capabilityLink (the opt-in \`czap check --ir --capability-gate\` path)`,
+    );
+  }
+  return context.capabilityLink;
 }

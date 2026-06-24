@@ -42,9 +42,11 @@ import {
   makeEquivalentMutantRegistry,
   parseEquivalentMutants,
   buildRepoIRTaint,
+  buildCapabilityLinkFacts,
   type EquivalentMutantRegistry,
 } from '@czap/audit';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
+import { LITESHIP_CAPABILITY_MODULES, LITESHIP_CAPABILITY_IDS, resolveCapabilitySites } from './capability-policy.js';
 import {
   litelaunchGauntletWithIR,
   supplyChainGate,
@@ -54,6 +56,7 @@ import {
   traceabilityBridgeGate,
   standardsIntegrityGate,
   taintFlowGate,
+  capabilityGateLinkGate,
   proofPropagationGate,
   compositionCoverageGate,
   LITESHIP_IR_GATES,
@@ -68,6 +71,7 @@ import {
   type SimulationFacts,
   type SupplyChainFacts,
   type TaintFacts,
+  type CapabilityLinkFacts,
   type TraceabilityFacts,
   type StandardsIntegrityFacts,
   type ProofFacts,
@@ -296,6 +300,7 @@ export async function runGauntletWithRepoIR(
   let mcdcFacts: McdcFacts | undefined;
   let simulationFacts: SimulationFacts | undefined;
   let taintFacts: TaintFacts | undefined;
+  let capabilityLinkFacts: CapabilityLinkFacts | undefined;
   let proofFacts: ProofFacts | undefined;
   let compositionFacts: CompositionFacts | undefined;
 
@@ -403,6 +408,23 @@ export async function runGauntletWithRepoIR(
     taintFacts = buildRepoIRTaint(LITESHIP_TAINT_REGISTRY, { profile: withRepoRoot(liteshipDevopsProfile, repoRoot) });
   }
 
+  // The `--capability-gate` opt-in (codex round-8, #1b — the capability-link dataflow proof). The host
+  // resolves each sanctioned skip's guard against the canonical capability symbol table (the
+  // LiteShip-LOCAL module SET + ids, injected — the audit oracle names no capability) and proves it
+  // DERIVES FROM its declared capability's probe; an unrelated / mislabeled guard folds into a finding
+  // via `capabilityGateLinkGate`. It builds a ts.Program over the sanctioned files + capability modules
+  // (opt-in). The capability-gate cache mode is namespaced in the toolchain digest (see
+  // resolveVerdictCache) so a capability-gate verdict never serves a non-capability-gate run.
+  if (cacheOpts.withCapabilityGate === true) {
+    gateSet.push(capabilityGateLinkGate);
+    capabilityLinkFacts = buildCapabilityLinkFacts({
+      repoRoot,
+      capabilityModules: LITESHIP_CAPABILITY_MODULES,
+      capabilityIds: LITESHIP_CAPABILITY_IDS,
+      sites: resolveCapabilitySites(repoRoot),
+    });
+  }
+
   // The `--proof` opt-in (the LOCAL-VS-GLOBAL correctness family — the lax-functor):
   // read the proof SIGNALS (the committed mutation-score ratchet, the coverage report,
   // per-file property-test presence, the enrolled-invariant ledger), blend them into a
@@ -451,6 +473,7 @@ export async function runGauntletWithRepoIR(
     ...(mcdcFacts !== undefined ? { mcdc: mcdcFacts } : {}),
     ...(simulationFacts !== undefined ? { simulation: simulationFacts } : {}),
     ...(taintFacts !== undefined ? { taint: taintFacts } : {}),
+    ...(capabilityLinkFacts !== undefined ? { capabilityLink: capabilityLinkFacts } : {}),
     ...(proofFacts !== undefined ? { proof: proofFacts } : {}),
     ...(compositionFacts !== undefined ? { composition: compositionFacts } : {}),
   };
@@ -776,6 +799,17 @@ export interface RepoIRGauntletCacheOptions {
    */
   readonly withTaint?: boolean;
   /**
+   * Compose the `capabilityGateLinkGate` (codex round-8, #1b — the capability-link dataflow proof, L4)
+   * onto the run and inject the host-computed {@link CapabilityLinkFacts} (`czap check --ir
+   * --capability-gate`). The host resolves each sanctioned skip's guard against the canonical
+   * capability symbol table (the LiteShip-LOCAL module SET + ids injected — the audit oracle names no
+   * capability) and proves it DERIVES FROM its declared capability's probe; an unrelated/mislabeled
+   * guard is a finding. It changes BOTH which gates run AND the injected facts, so the verdict cache is
+   * NAMESPACED by this mode (see {@link resolveVerdictCache}). HEAVY (a ts.Program over the sanctioned
+   * files + capability modules) — opt-in.
+   */
+  readonly withCapabilityGate?: boolean;
+  /**
    * Compose the `proofPropagationGate` (the LOCAL-VS-GLOBAL correctness family — the
    * lax-functor, L4) onto the run and inject the host-computed {@link ProofFacts}
    * (`czap check --ir --proof`). The host reads the proof signals (mutation score /
@@ -860,6 +894,11 @@ function resolveVerdictCache(repoRoot: string, opts: RepoIRGauntletCacheOptions)
     // the key — else a taint-run verdict could be served to a non-taint run (the same
     // stale-serve LIE the --symbols namespacing fixes).
     ...(opts.withTaint === true ? { taintMode: 'taint' } : {}),
+    // The capability-gate MODE changes BOTH the gate set (capabilityGateLinkGate composed
+    // on) AND the injected facts WITHOUT changing any file's content digest, so it must
+    // namespace the key — else a capability-gate verdict could be served to a
+    // non-capability-gate run (the same stale-serve LIE the --symbols namespacing fixes).
+    ...(opts.withCapabilityGate === true ? { capabilityGateMode: 'capability-gate' } : {}),
     // The proof MODE changes BOTH the gate set (proofPropagationGate composed on) AND
     // the injected facts WITHOUT changing any file's content digest, so it must
     // namespace the key — else a proof-run verdict could be served to a non-proof run

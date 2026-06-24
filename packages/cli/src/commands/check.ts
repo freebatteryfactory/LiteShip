@@ -132,6 +132,15 @@ export interface CheckOptions {
    * mode (a composition verdict never serves a non-composition run).
    */
   readonly composition?: boolean;
+  /**
+   * `--capability-gate`: also run the `capabilityGateLinkGate` (codex round-8, #1b — the
+   * capability-link dataflow proof, L4). The host resolves each sanctioned skip's guard against the
+   * canonical capability symbol table and proves it DERIVES FROM its declared capability's probe (not
+   * merely that it is conditional); an unrelated/mislabeled guard is a finding. Only meaningful with
+   * `--ir`; opt-in (a ts.Program over the sanctioned files + capability modules). The cache key is
+   * namespaced by this mode (a capability-gate verdict never serves a non-capability-gate run).
+   */
+  readonly capabilityGate?: boolean;
 }
 
 /** Execute `czap check` — run the gauntlet gate fold in-process; emit the verdict + Finding[]. */
@@ -151,6 +160,7 @@ export async function check(opts: CheckOptions = {}): Promise<number> {
           opts.taint === true,
           opts.proof === true,
           opts.composition === true,
+          opts.capabilityGate === true,
         )
       : await runLeanPath(cwd);
 
@@ -221,6 +231,7 @@ async function runIrPath(
   taint: boolean,
   proof: boolean,
   composition: boolean,
+  capabilityGate: boolean,
 ): Promise<CheckPayload> {
   const now = new Date(wallClock.now());
   const result = await runGauntletWithRepoIR(cwd, now, undefined, {
@@ -233,6 +244,7 @@ async function runIrPath(
     withTaint: taint,
     withProof: proof,
     withComposition: composition,
+    withCapabilityGate: capabilityGate,
   });
   const findings = result.findings;
   return {

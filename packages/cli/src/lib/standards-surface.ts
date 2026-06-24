@@ -59,6 +59,7 @@ import {
   simulationDeterminismGate,
   traceabilityBridgeGate,
   standardsIntegrityGate,
+  capabilityGateLinkGate,
   sortSurfaceElements,
   surfaceElementKey,
   diffStandardsSurface,
@@ -102,6 +103,7 @@ const GATE_SETS: readonly { readonly set: string; readonly gates: readonly Gate[
       simulationDeterminismGate,
       traceabilityBridgeGate,
       standardsIntegrityGate,
+      capabilityGateLinkGate,
     ],
   },
 ];

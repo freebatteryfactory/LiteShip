@@ -77,6 +77,7 @@ export {
   requireMutation,
   requireMcdc,
   requireTaint,
+  requireCapabilityLink,
 } from './gate.js';
 
 export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
@@ -412,6 +413,7 @@ export { fuzzCorpusGate } from './gates/fuzz-corpus.js';
 // default run. The integrator composes it on like supplyChainGate (a ~3-line
 // wiring).
 export { taintFlowGate } from './gates/taint-flow.js';
+export { capabilityGateLinkGate } from './gates/capability-gate-link.js';
 
 // The avionics-tier requirements-traceability bridge gate (DO-178B-style). It folds
 // the host-supplied TraceabilityFacts — an UNTRACED invariant, an EXPIRED waiver, or

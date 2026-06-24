@@ -1947,6 +1947,11 @@
           "signature": "(2)"
         },
         {
+          "name": "capabilityGateLinkGate",
+          "kind": "namespace",
+          "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
           "name": "claimPropertyGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2205,6 +2210,11 @@
           "name": "recordingContext",
           "kind": "function",
           "signature": "(1)"
+        },
+        {
+          "name": "requireCapabilityLink",
+          "kind": "function",
+          "signature": "(2)"
         },
         {
           "name": "requireIR",

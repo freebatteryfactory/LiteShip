@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:cab3fe48",
+  "address": "fnv1a:b8e144d1",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -188,6 +188,15 @@
       "name": "mutation-score::packages/canonical/src/fnv.ts",
       "value": 1,
       "direction": "higher-is-stronger"
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/capability-gate-link",
+      "set": "HOST_GATES",
+      "level": "L4",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
     },
     {
       "_tag": "gate",
