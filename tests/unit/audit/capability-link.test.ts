@@ -115,7 +115,11 @@ describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTION
   // MENTIONS the capability (mixed with an unrelated condition) or REIMPLEMENTS the probe (sharing the
   // low-level `process` symbol) laundered as gated. The fix: the guard must be PURE (route only through
   // capability-module EXPORTS) AND reach its declared capability. These pin both holes closed.
-  const COV_EXPORT = resolve(REPO_ROOT, 'tests/helpers/capabilities.ts');
+  // Forward slashes: this path is embedded in an `import "…"` string. On Windows `resolve` yields
+  // backslashes, which are invalid escapes inside a module specifier — the import would break and
+  // `coverageInstrumentation` would not resolve (every positive link test then falsely reds). Module
+  // specifiers accept forward slashes on every platform.
+  const COV_EXPORT = resolve(REPO_ROOT, 'tests/helpers/capabilities.ts').replace(/\\/g, '/');
 
   function linkOne(src: string, declared = 'coverage-instrumentation'): boolean {
     const dir = mkdtempSync(join(tmpdir(), 'caplink-r9-'));
