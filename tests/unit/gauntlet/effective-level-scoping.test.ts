@@ -109,6 +109,20 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
       ).toBe(sentinel);
     }
   });
+
+  it('preserves the injected CAPABILITY functions (skipDetector, codeOnly) through L4 scoping', () => {
+    // Capabilities are EXCLUDED from FACT_CHANNELS, so the class guard above does NOT cover them — yet
+    // scopeContextByLevel must carry them or a scoped (assurance-map) run silently falls back to the
+    // lean implementations. `codeOnly` was dropped exactly this way (codex review, PR #60), making the
+    // injected sound scanner inert on the production `litelaunchGauntlet*` path; `skipDetector` would
+    // re-open the whack-a-mole. Pin both — adding a capability without teaching the scoper reds HERE.
+    const skipSentinel = ((): readonly never[] => []) as GateContext['skipDetector'];
+    const codeSentinel = ((source: string): string => source) as GateContext['codeOnly'];
+    const withCaps = { ...ctx, skipDetector: skipSentinel, codeOnly: codeSentinel } as GateContext;
+    const scoped = scopeContextByLevel(withCaps, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
+    expect(scoped.skipDetector).toBe(skipSentinel);
+    expect(scoped.codeOnly).toBe(codeSentinel);
+  });
 });
 
 // ── runGates: a gate scoped by effective levels sees the pulled-in file ───────
@@ -123,7 +137,9 @@ function probeGate(id: string, level: AssuranceLevel): Gate {
       c
         .files()
         .filter((f) => f.startsWith('packages/'))
-        .map((f) => finding({ ruleId: id, severity: 'error', level, title: id, detail: f, location: { file: f, line: 1 } })),
+        .map((f) =>
+          finding({ ruleId: id, severity: 'error', level, title: id, detail: f, location: { file: f, line: 1 } }),
+        ),
     fixtures: {
       red: { name: 'red', context: memoryContext({ 'packages/x/src/bad.ts': 'x' }) },
       green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
@@ -163,7 +179,16 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
         c
           .files()
           .filter((f) => f === PULLED_FILE)
-          .map((f) => finding({ ruleId: 'test/l1-flagger', severity: 'error', level: 'L1', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+          .map((f) =>
+            finding({
+              ruleId: 'test/l1-flagger',
+              severity: 'error',
+              level: 'L1',
+              title: 't',
+              detail: 'd',
+              location: { file: f, line: 1 },
+            }),
+          ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ [PULLED_FILE]: 'x' }) },
         green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },
@@ -195,7 +220,16 @@ describe('runGates — a finding on a pulled-in file is elevated to its effectiv
         c
           .files()
           .filter((f) => f === PLAIN_L1_FILE)
-          .map((f) => finding({ ruleId: 'test/l4-emit', severity: 'error', level: 'L4', title: 't', detail: 'd', location: { file: f, line: 1 } })),
+          .map((f) =>
+            finding({
+              ruleId: 'test/l4-emit',
+              severity: 'error',
+              level: 'L4',
+              title: 't',
+              detail: 'd',
+              location: { file: f, line: 1 },
+            }),
+          ),
       fixtures: {
         red: { name: 'red', context: memoryContext({ [PLAIN_L1_FILE]: 'x' }) },
         green: { name: 'green', context: memoryContext({ 'packages/x/src/good.ts': '' }) },

@@ -14,6 +14,7 @@ export * from './shared.js';
 export * from './devops-profile.js';
 export * from './consumer.js';
 export * from './ts-program.js';
+export * from './code-ranges.js';
 export * from './repo-ir-build.js';
 export * from './repo-ir-language-service.js';
 export * from './repo-ir-taint.js';

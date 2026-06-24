@@ -24,8 +24,9 @@ function scan(context: GateContext): readonly Finding[] {
     if (!file.endsWith('.ts')) continue;
     const text = context.readFile(file);
     if (text === undefined) continue;
-    // Scan CODE only — never a throw that lives inside a comment or string.
-    const lines = codeOnly(text).split('\n');
+    // Scan CODE only — never a throw that lives inside a comment or string. Prefer the host-injected
+    // sound scanner; fall back to the lean char-machine (pinned equivalent by the differential test).
+    const lines = (context.codeOnly ?? codeOnly)(text).split('\n');
     for (let i = 0; i < lines.length; i++) {
       if (BARE_THROW.test(lines[i] ?? '')) {
         findings.push(

@@ -50,8 +50,9 @@ function scan(context: GateContext): readonly Finding[] {
     if (!file.endsWith('.ts')) continue;
     const text = context.readFile(file);
     if (text === undefined) continue;
-    // Scan CODE only — a clock inside a comment or string is not a hazard.
-    const lines = codeOnly(text).split('\n');
+    // Scan CODE only — a clock inside a comment or string is not a hazard. Host-injected sound scanner
+    // when present; the lean char-machine fallback otherwise (pinned equivalent by the differential test).
+    const lines = (context.codeOnly ?? codeOnly)(text).split('\n');
     for (let i = 0; i < lines.length; i++) {
       if (NONDETERMINISM.test(lines[i] ?? '')) {
         findings.push(

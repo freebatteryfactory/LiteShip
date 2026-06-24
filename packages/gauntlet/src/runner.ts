@@ -134,6 +134,12 @@ export interface RunGauntletOnRepoOptions {
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
   /**
+   * The INJECTED SOUND `codeOnly` floor (the @czap/audit scanner `codeOnlyAST`) — OPTIONAL, same
+   * pattern as {@link skipDetector}. Lands on the {@link GateContext} for code-scanning gates to use
+   * via `(context.codeOnly ?? codeOnly)`. Omit it (the lean path) and the char-machine fallback runs.
+   */
+  readonly codeOnly?: (source: string) => string;
+  /**
    * The INJECTED repo-IR (Slice B) — OPTIONAL. The gauntlet is the lean engine
    * and never builds an IR; a host (the CLI, via `@czap/audit`'s `ts.Program`)
    * builds it and threads it here, where it lands on the {@link GateContext} for
@@ -287,7 +293,8 @@ export function runGauntletOnRepo(
     opts.composition !== undefined ||
     opts.taint !== undefined ||
     opts.capabilityLink !== undefined ||
-    opts.skipDetector !== undefined
+    opts.skipDetector !== undefined ||
+    opts.codeOnly !== undefined
       ? {
           ...baseContext,
           ...(opts.proof !== undefined ? { proof: opts.proof } : {}),
@@ -297,6 +304,8 @@ export function runGauntletOnRepo(
           // The SOUND AST skip detector (injected by the CLI host); spread additively so the
           // brittle positional nodeContext signature is not widened. Omitted ⇒ token fallback.
           ...(opts.skipDetector !== undefined ? { skipDetector: opts.skipDetector } : {}),
+          // The SOUND scanner codeOnly floor (injected by the host); omitted ⇒ char-machine fallback.
+          ...(opts.codeOnly !== undefined ? { codeOnly: opts.codeOnly } : {}),
         }
       : baseContext;
   return runGates(gates, context, runOpts);
@@ -358,6 +367,7 @@ export function litelaunchGauntlet(
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
   ir?: RepoIR,
   skipDetector?: (source: string) => readonly SkipMatch[],
+  codeOnly?: (source: string) => string,
 ): GauntletResult {
   return runGauntletOnRepo(
     LITESHIP_GATES,
@@ -366,6 +376,7 @@ export function litelaunchGauntlet(
       globs,
       ...(ir !== undefined ? { ir } : {}),
       ...(skipDetector !== undefined ? { skipDetector } : {}),
+      ...(codeOnly !== undefined ? { codeOnly } : {}),
     },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },
   );
@@ -462,6 +473,8 @@ export function litelaunchGauntletWithIR(
       // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
       // Omitted ⇒ the token `detectSkips` fallback runs unchanged (the lean path).
       ...(cacheOpts.skipDetector !== undefined ? { skipDetector: cacheOpts.skipDetector } : {}),
+      // The SOUND scanner codeOnly floor (host-injected `codeOnlyAST`); omitted ⇒ char-machine fallback.
+      ...(cacheOpts.codeOnly !== undefined ? { codeOnly: cacheOpts.codeOnly } : {}),
     },
     {
       assuranceMap: LITESHIP_ASSURANCE_MAP,
@@ -594,4 +607,10 @@ export interface LitelaunchCacheOptions {
    * lean `czap check` / MCP path, where the token `detectSkips` fallback runs unchanged.
    */
   readonly skipDetector?: (source: string) => readonly SkipMatch[];
+  /**
+   * OPTIONAL host-built SOUND scanner codeOnly floor (`@czap/audit`'s `codeOnlyAST`) threaded onto the
+   * {@link GateContext} as `codeOnly`. Code-scanning gates use it via `(context.codeOnly ?? codeOnly)`.
+   * Supplied on the `--ir` path; omitted on the lean path (char-machine fallback, pinned equivalent).
+   */
+  readonly codeOnly?: (source: string) => string;
 }
