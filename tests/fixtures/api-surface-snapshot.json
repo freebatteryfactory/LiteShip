@@ -233,6 +233,11 @@
           "signature": "(2)"
         },
         {
+          "name": "constTruthiness",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "consumerDevopsProfile",
           "kind": "function",
           "signature": "(0)"

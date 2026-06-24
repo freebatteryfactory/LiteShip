@@ -838,8 +838,12 @@ function followedByCall(node: ts.PropertyAccessExpression | ts.ElementAccessExpr
  * for a literal-constant expression, so it can never mis-judge a real gate as vacuous (no false
  * "unconditional"); the residual is the reverse (a contrived all-literal comparison like `1 === 1` is
  * left as `undefined` → treated as a gate), which is harmless and far rarer than `if (true)`.
+ *
+ * EXPORTED for the capability-link oracle (codex round-9 sweep): a vacuously-true guard
+ * (`true || capabilityProbe`) is unconditional, so it is NOT gated by the capability — the oracle skips
+ * any guard whose `constTruthiness` is decided, mirroring this conditionality floor.
  */
-function constTruthiness(expr: ts.Expression): boolean | undefined {
+export function constTruthiness(expr: ts.Expression): boolean | undefined {
   const e = unwrapExpr(expr);
   if (e.kind === ts.SyntaxKind.TrueKeyword) return true;
   if (e.kind === ts.SyntaxKind.FalseKeyword) return false;

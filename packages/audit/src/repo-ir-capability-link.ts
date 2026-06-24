@@ -48,7 +48,7 @@
 import ts from 'typescript';
 import { resolve } from 'node:path';
 import type { CapabilityLinkFacts, CapabilityLinkResult } from '@czap/gauntlet';
-import { guardExpressionsOf } from './skip-detect-ast.js';
+import { guardExpressionsOf, constTruthiness } from './skip-detect-ast.js';
 import { createTypeDirectedProgram } from './ts-program.js';
 
 /** The oracle id every capability-link fact is tagged with (traceability). */
@@ -187,15 +187,22 @@ export function buildCapabilityLinkFacts(opts: CapabilityLinkOptions): Capabilit
     }
     const guards = guardExpressionsOf(skipNode);
     let pure = true;
+    let gatedGuardCount = 0;
     const reached = new Set<ts.Symbol>();
     for (const g of guards) {
+      // A VACUOUS guard (`true || probe`, `false && …`) is a compile-time constant — the skip fires
+      // (or not) unconditionally, so it contributes NO gating (codex round-9 sweep). It is skipped, not
+      // counted; the conditionality gate independently rejects such a placeholder skip.
+      if (constTruthiness(g) !== undefined) continue;
+      gatedGuardCount++;
       const a = analyzeGuard(checker, capExports, deAlias, g);
       if (!a.pure) pure = false;
       for (const s of a.reached) reached.add(s);
     }
-    // An impure guard (or none) links to NOTHING — it can fire on a non-capability condition.
+    // Links ONLY when every runtime (non-vacuous) guard is PURE and at least one reaches a capability —
+    // an impure guard, no runtime guard at all, or a vacuous one links to NOTHING.
     const linkedCapabilities =
-      pure && guards.length > 0
+      pure && gatedGuardCount > 0
         ? [...capabilitySymbols.keys()]
             .filter((capId) => [...capabilitySymbols.get(capId)!].some((s) => reached.has(s)))
             .sort()

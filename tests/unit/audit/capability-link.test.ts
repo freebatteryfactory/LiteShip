@@ -140,6 +140,12 @@ describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTION
   it('a REIMPLEMENTED probe (not routed through the export) is REJECTED', () => {
     expect(linkOne(`import { it } from "vitest";\nif (process.env.NODE_V8_COVERAGE !== undefined) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
   });
+  it('a VACUOUS `true || capability` guard is REJECTED (the skip fires unconditionally)', () => {
+    expect(linkOne(`${imp}if (true || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
+  it('a `false || capability` guard links (it is EQUIVALENT to the capability)', () => {
+    expect(linkOne(`${imp}if (false || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
+  });
 
   it('an UNRESOLVED sanctioned site (allowlist drift) is FAIL-CLOSED to a finding, never dropped', () => {
     const facts = buildCapabilityLinkFacts({
