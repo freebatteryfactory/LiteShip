@@ -14,6 +14,7 @@ import {
   memoryContext,
   finding,
   defineGate,
+  FACT_CHANNELS,
   LITESHIP_ASSURANCE_MAP,
   type AssuranceLevel,
   type FileId,
@@ -88,6 +89,25 @@ describe('scopeContextByLevel — effective levels override the glob for scoping
     };
     const scoped = scopeContextByLevel(withFacts, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
     expect(scoped.mutation).toBe(withFacts.mutation);
+  });
+
+  it('preserves EVERY injected fact channel through L4 scoping (the FACT_CHANNELS class — no hand-list drift)', () => {
+    // REGRESSION GUARD (codex round-8, #1b): scopeContextByLevel HAND-LISTS the fact channels it
+    // carries forward, and that list can DRIFT from FACT_CHANNELS. It did: `capabilityLink` was added
+    // to GateContext + FACT_CHANNELS but NOT to the scoping carry-list, so the L4 capabilityGateLinkGate
+    // (always scoped) saw NO facts and threw on the real `czap check --ir --capability-gate` path —
+    // invisible to the unit gate tests, which inject facts into an UNSCOPED context. Pin the whole
+    // class: a sentinel on EVERY channel must survive L4 scoping, so adding a channel to FACT_CHANNELS
+    // without teaching the scoper reds HERE, not in a far-downstream `--ir` run.
+    for (const channel of FACT_CHANNELS) {
+      const sentinel = { __sentinel: channel } as never;
+      const withChannel = { ...ctx, [channel]: sentinel } as GateContext;
+      const scoped = scopeContextByLevel(withChannel, 'L4', LITESHIP_ASSURANCE_MAP, effectiveLevels);
+      expect(
+        scoped[channel],
+        `scopeContextByLevel dropped the '${channel}' fact channel — add it to the carry-list in engine.ts`,
+      ).toBe(sentinel);
+    }
   });
 });
 
