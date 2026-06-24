@@ -5,8 +5,10 @@ import {
   DIRECTIVE_BENCH_TASKS,
   HARD_GATE_OVERHEAD_THRESHOLD,
   WORKER_STARTUP_BREAKDOWN_STAGES,
+  applyInterleavedGateOverrides,
   buildDirectiveBenchConfig,
   collectBenchResults,
+  measurePairedOverhead,
   evaluateBenchPairsAcrossReplicates,
   formatDiagnosticWatchReport,
   formatPairReport,
@@ -20,6 +22,7 @@ import {
   type ReplicateResult,
 } from '../../../scripts/bench/directive-suite.ts';
 import { LLM_STEADY_REPLICATE_EXCEEDANCE_MAX } from '../../../scripts/bench/flex-policy.ts';
+import { scaledTimeout } from '../../../vitest.shared.js';
 
 function makeBenchResult(name: string, meanNs: number): BenchResult {
   return {
@@ -60,7 +63,10 @@ function makePairEvaluation(pair: BenchPair, overhead: number | null): PairEvalu
 function makeReplicates(pair: BenchPair, overheads: readonly (number | null)[]): ReplicateResult[] {
   return overheads.map((overhead, replicate) => ({
     replicate,
-    results: overhead === null ? [] : [makeBenchResult(pair.directive, 100 * (1 + overhead)), makeBenchResult(pair.baseline, 100)],
+    results:
+      overhead === null
+        ? []
+        : [makeBenchResult(pair.directive, 100 * (1 + overhead)), makeBenchResult(pair.baseline, 100)],
     pairs: [makePairEvaluation(pair, overhead)],
     startupBreakdown: [],
     workerStartupAudit: {
@@ -191,13 +197,12 @@ describe('directive benchmark suite', () => {
     const workerPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker')!;
     const workerEnvelopePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker-envelope')!;
     const [satellite] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(satellitePair, [0.18, 0.19, 0.17, 0.20, 0.12]),
+      makeReplicates(satellitePair, [0.18, 0.19, 0.17, 0.2, 0.12]),
       [satellitePair],
     );
-    const [worker] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(workerPair, [0.3, 0.28, 0.27, 0.31, 0.29]),
-      [workerPair],
-    );
+    const [worker] = evaluateBenchPairsAcrossReplicates(makeReplicates(workerPair, [0.3, 0.28, 0.27, 0.31, 0.29]), [
+      workerPair,
+    ]);
     const [workerEnvelope] = evaluateBenchPairsAcrossReplicates(
       makeReplicates(workerEnvelopePair, [0.3, 0.28, 0.27, 0.31, 0.29]),
       [workerEnvelopePair],
@@ -219,10 +224,9 @@ describe('directive benchmark suite', () => {
 
   test('does not fail a hard gate on a noisy minority of regressions', () => {
     const satellitePair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
-    const [satellite] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(satellitePair, [0.2, 0.2, 0.2, 0.05, 0.05]),
-      [satellitePair],
-    );
+    const [satellite] = evaluateBenchPairsAcrossReplicates(makeReplicates(satellitePair, [0.2, 0.2, 0.2, 0.05, 0.05]), [
+      satellitePair,
+    ]);
 
     expect(satellite.medianOverhead).toBe(0.2);
     expect(satellite.exceedances).toBe(3);
@@ -232,10 +236,9 @@ describe('directive benchmark suite', () => {
 
   test('fails closed when a required pair is missing in any replicate', () => {
     const streamPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'stream')!;
-    const [stream] = evaluateBenchPairsAcrossReplicates(
-      makeReplicates(streamPair, [0.01, 0.02, null, 0.03, 0.01]),
-      [streamPair],
-    );
+    const [stream] = evaluateBenchPairsAcrossReplicates(makeReplicates(streamPair, [0.01, 0.02, null, 0.03, 0.01]), [
+      streamPair,
+    ]);
 
     expect(stream.missing).toBe(true);
     expect(stream.missingReplicates).toBe(1);
@@ -289,10 +292,7 @@ describe('directive benchmark suite', () => {
     expect(edgeRequest.pass).toBe(true);
     expect(edgeRequest.watch).toBe(true);
     expect(lines).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('worker-envelope'),
-        expect.stringContaining('edge-request'),
-      ]),
+      expect.arrayContaining([expect.stringContaining('worker-envelope'), expect.stringContaining('edge-request')]),
     );
   });
 
@@ -309,7 +309,9 @@ describe('directive benchmark suite', () => {
   });
 
   test('formats worker startup seam context for operator-facing output', () => {
-    const lines = formatWorkerStartupSeamReport(makeReplicates(DIRECTIVE_BENCH_PAIRS[0]!, [0.1])[0]!.workerStartupSplit);
+    const lines = formatWorkerStartupSeamReport(
+      makeReplicates(DIRECTIVE_BENCH_PAIRS[0]!, [0.1])[0]!.workerStartupSplit,
+    );
 
     expect(lines).toEqual([
       '        dominant seam: state-delivery:message-receipt',
@@ -322,9 +324,13 @@ describe('directive benchmark suite', () => {
     const workerRuntimeStartupPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'worker-runtime-startup')!;
     const breakdown = await measureWorkerStartupBreakdown(2);
 
-    expect(workerRuntimeStartupPair.directive).toBe('[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute');
+    expect(workerRuntimeStartupPair.directive).toBe(
+      '[DIAGNOSTIC] worker-runtime-startup -- host bootstrap + first compute',
+    );
     expect(workerRuntimeStartupPair.baseline).toBe('[BASELINE] worker-runtime-startup -- in-process parity bootstrap');
-    expect(breakdown.map((entry) => ({ stage: entry.stage, label: entry.label }))).toEqual(WORKER_STARTUP_BREAKDOWN_STAGES);
+    expect(breakdown.map((entry) => ({ stage: entry.stage, label: entry.label }))).toEqual(
+      WORKER_STARTUP_BREAKDOWN_STAGES,
+    );
     expect(breakdown.every((entry) => entry.modeled)).toBe(true);
     expect(
       breakdown.every(
@@ -361,18 +367,67 @@ describe('directive benchmark suite', () => {
 
   test('flex LLM steady exceedance policy matches directive-suite (> max elevated, <= max ok)', () => {
     const steadyPair = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'llm-runtime-steady')!;
-    const atCeiling = summarizeLLMRuntimeSteadySignals(
-      makeReplicates(steadyPair, [0.26, 0.1, 0.1, 0.1, 0.1]),
-    );
+    const atCeiling = summarizeLLMRuntimeSteadySignals(makeReplicates(steadyPair, [0.26, 0.1, 0.1, 0.1, 0.1]));
     expect(atCeiling.replicateExceedanceRate).toBe(0.2);
     expect(atCeiling.replicateExceedanceRate <= LLM_STEADY_REPLICATE_EXCEEDANCE_MAX).toBe(true);
     expect(atCeiling.conclusion.includes('threshold flirtation')).toBe(false);
 
-    const elevated = summarizeLLMRuntimeSteadySignals(
-      makeReplicates(steadyPair, [0.26, 0.26, 0.1, 0.1, 0.1]),
-    );
+    const elevated = summarizeLLMRuntimeSteadySignals(makeReplicates(steadyPair, [0.26, 0.26, 0.1, 0.1, 0.1]));
     expect(elevated.replicateExceedanceRate).toBe(0.4);
     expect(elevated.replicateExceedanceRate > LLM_STEADY_REPLICATE_EXCEEDANCE_MAX).toBe(true);
     expect(elevated.conclusion.includes('threshold flirtation')).toBe(true);
+  });
+});
+
+describe('interleaved paired measurement — window-invariant hot-path ratio (CI flake cure)', () => {
+  // The hot-path ratio pairs flaked on contended CI runners because the directive and baseline were
+  // timed in SEPARATE windows. measurePairedOverhead times them ADJACENTLY per sample (alternating
+  // order). These pin the two halves of the contract: it does NOT invent overhead on identical work,
+  // and — the load-bearing one — it STILL reports a real regression (it is not blind).
+  let sink = 0;
+  const work = (units: number) => () => {
+    for (let i = 0; i < units; i++) sink += Math.sqrt(i + 1);
+  };
+
+  test('identical work measures ~0 overhead — no false positive (stays under the hard-gate threshold)', () => {
+    const fn = work(400);
+    const { overhead } = measurePairedOverhead(fn, fn);
+    expect(Math.abs(overhead)).toBeLessThan(HARD_GATE_OVERHEAD_THRESHOLD);
+  });
+
+  test('a genuinely slower directive STILL exceeds the threshold — the method is not blind', () => {
+    // 3x the work: a real abstraction-tax regression must surface as a real ratio, paired method or not.
+    const { overhead } = measurePairedOverhead(work(1200), work(400));
+    expect(overhead).toBeGreaterThan(HARD_GATE_OVERHEAD_THRESHOLD);
+    expect(sink).toBeGreaterThan(0); // guard against dead-code elimination of the measured work
+  });
+
+  test(
+    'applyInterleavedGateOverrides re-measures an interleaved pair, leaves a non-interleaved one untouched',
+    () => {
+      // Use ONE light interleaved pair (satellite) + one non-interleaved pair — measuring all four real
+      // pairs (stream runs 5000 inner iters/call) would blow the test timeout for no extra coverage.
+      const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
+      const nonInterleaved = DIRECTIVE_BENCH_PAIRS.find(
+        (pair) => !['satellite', 'stream', 'llm', 'worker'].includes(pair.label),
+      )!;
+      const inputs = [makePairEvaluation(satellite, 0.999), makePairEvaluation(nonInterleaved, 0.999)];
+      const [satelliteOut, otherOut] = applyInterleavedGateOverrides(inputs);
+      // The interleaved pair is re-measured live (sentinel 0.999 replaced by a real, finite paired ratio).
+      expect(satelliteOut!.overhead).not.toBe(0.999);
+      expect(Number.isFinite(satelliteOut!.overhead)).toBe(true);
+      // The non-interleaved pair is returned untouched — same reference, sentinel intact.
+      expect(otherOut).toBe(inputs[1]);
+      expect(otherOut!.overhead).toBe(0.999);
+    },
+    scaledTimeout(15000),
+  );
+
+  test('a MISSING interleaved pair stays missing — fail-closed, never re-measured into a false pass', () => {
+    const satellite = DIRECTIVE_BENCH_PAIRS.find((pair) => pair.label === 'satellite')!;
+    const missingPair = makePairEvaluation(satellite, null); // directiveResult/baselineResult undefined, missing: true
+    const [out] = applyInterleavedGateOverrides([missingPair]);
+    expect(out!.missing).toBe(true); // NOT flipped to false
+    expect(out).toBe(missingPair); // returned untouched — no deref of the absent results
   });
 });

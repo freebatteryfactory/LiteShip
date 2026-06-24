@@ -228,11 +228,17 @@ const llmStartupChunks = {
   simple: collectNormalizedLLMStartupChunks('simple'),
   promoted: collectNormalizedLLMStartupChunks('promoted'),
 } as const;
-const llmFastRuntimeMessages = llmStartupScenarios.simple.messages.map((data) => ({ type: 'patch', data })) as readonly {
+const llmFastRuntimeMessages = llmStartupScenarios.simple.messages.map((data) => ({
+  type: 'patch',
+  data,
+})) as readonly {
   readonly type: 'patch';
   readonly data: string;
 }[];
-const llmPromotedRuntimeMessages = llmStartupScenarios.promoted.messages.map((data) => ({ type: 'patch', data })) as readonly {
+const llmPromotedRuntimeMessages = llmStartupScenarios.promoted.messages.map((data) => ({
+  type: 'patch',
+  data,
+})) as readonly {
   readonly type: 'patch';
   readonly data: string;
 }[];
@@ -274,9 +280,7 @@ let benchCanarySink = 0;
 
 export const WORKER_STARTUP_BREAKDOWN_STAGES = WORKER_STARTUP_STAGE_LABELS;
 
-export function buildDirectiveBenchConfig(
-  replicates = DEFAULT_GATE_REPLICATES,
-): DirectiveBenchConfig {
+export function buildDirectiveBenchConfig(replicates = DEFAULT_GATE_REPLICATES): DirectiveBenchConfig {
   return {
     warmupIterations: 200,
     iterations: 1000,
@@ -405,7 +409,10 @@ class BenchWorker {
       }
       case 'bootstrap-quantizers': {
         const registrations = Array.isArray(message.registrations)
-          ? message.registrations.filter((registration): registration is { name?: unknown; states?: unknown } => !!registration && typeof registration === 'object')
+          ? message.registrations.filter(
+              (registration): registration is { name?: unknown; states?: unknown } =>
+                !!registration && typeof registration === 'object',
+            )
           : [];
         for (const registration of registrations) {
           this.registerQuantizer(registration);
@@ -419,7 +426,10 @@ class BenchWorker {
             ? (message.packet as { registrations?: unknown; updates?: unknown })
             : { registrations: [], updates: [] };
         const registrations = Array.isArray(packet.registrations)
-          ? packet.registrations.filter((registration): registration is { name?: unknown; states?: unknown } => !!registration && typeof registration === 'object')
+          ? packet.registrations.filter(
+              (registration): registration is { name?: unknown; states?: unknown } =>
+                !!registration && typeof registration === 'object',
+            )
           : [];
         for (const registration of registrations) {
           this.registerQuantizer(registration);
@@ -502,8 +512,8 @@ class BenchWorker {
         ];
         this.dispatchMessageAsync(
           {
-          type: 'state',
-          state: buildWorkerCompositeState(name, state.currentState),
+            type: 'state',
+            state: buildWorkerCompositeState(name, state.currentState),
           },
           1,
         );
@@ -545,12 +555,16 @@ class BenchWorker {
     }
   }
 
-  private registerQuantizer(registration: { readonly name?: unknown; readonly states?: unknown; readonly initialState?: unknown }): void {
+  private registerQuantizer(registration: {
+    readonly name?: unknown;
+    readonly states?: unknown;
+    readonly initialState?: unknown;
+  }): void {
     const name = typeof registration.name === 'string' ? registration.name : 'layout';
     const states = Array.isArray(registration.states)
       ? registration.states.filter((state): state is string => typeof state === 'string')
       : [];
-    const initialState = typeof registration.initialState === 'string' ? registration.initialState : states[0] ?? '';
+    const initialState = typeof registration.initialState === 'string' ? registration.initialState : (states[0] ?? '');
     this.states.set(name, {
       currentState: initialState,
       initialState: states[0] ?? initialState,
@@ -1059,13 +1073,10 @@ function resolveBaselineEdgeRequest(): void {
 }
 
 async function runWorkerHostRuntimeStartup(): Promise<void> {
-  await runWorkerStartupScenario(
-    (startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry),
-    {
-      now: currentTimeMs,
-      nowNs: currentTimeNs,
-    },
-  );
+  await runWorkerStartupScenario((startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry), {
+    now: currentTimeMs,
+    nowNs: currentTimeNs,
+  });
 }
 
 async function runWorkerRuntimeStartupParityBaseline(): Promise<void> {
@@ -1155,9 +1166,7 @@ export async function measureWorkerStartupSplit(
   return analysis.split;
 }
 
-async function measureWorkerStartupAnalysis(
-  iterations = WORKER_STARTUP_BREAKDOWN_ITERATIONS,
-): Promise<{
+async function measureWorkerStartupAnalysis(iterations = WORKER_STARTUP_BREAKDOWN_ITERATIONS): Promise<{
   readonly audit: WorkerStartupAuditResult;
   readonly split: WorkerStartupSplitResult;
 }> {
@@ -1165,13 +1174,10 @@ async function measureWorkerStartupAnalysis(
     const scenarios = [];
     for (let iteration = 0; iteration < iterations; iteration++) {
       scenarios.push(
-        await runWorkerStartupScenario(
-          (startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry),
-          {
-            now: currentTimeMs,
-            nowNs: currentTimeNs,
-          },
-        ),
+        await runWorkerStartupScenario((startupTelemetry) => WorkerHost.create({ poolCapacity: 8 }, startupTelemetry), {
+          now: currentTimeMs,
+          nowNs: currentTimeNs,
+        }),
       );
     }
 
@@ -1288,7 +1294,8 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
     threshold: DIAGNOSTIC_OVERHEAD_THRESHOLD,
     gate: false,
     runtimeClass: 'transport',
-    rationale: 'Worker transport diagnostics should isolate envelope overhead from the structured-clone cost of the payload itself.',
+    rationale:
+      'Worker transport diagnostics should isolate envelope overhead from the structured-clone cost of the payload itself.',
   },
   {
     label: 'llm-startup-shared',
@@ -1306,7 +1313,8 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
     threshold: DIAGNOSTIC_OVERHEAD_THRESHOLD,
     gate: true,
     runtimeClass: 'startup',
-    rationale: 'Promoted LLM shared startup parity should keep the second-token boundary slice close to the node support analogue.',
+    rationale:
+      'Promoted LLM shared startup parity should keep the second-token boundary slice close to the node support analogue.',
   },
   {
     label: 'llm-runtime-steady',
@@ -1315,7 +1323,8 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
     threshold: DIAGNOSTIC_OVERHEAD_THRESHOLD,
     gate: false,
     runtimeClass: 'steady-state',
-    rationale: 'LLM runtime steady-state diagnostics should reuse a live session instead of charging setup on every chunk.',
+    rationale:
+      'LLM runtime steady-state diagnostics should reuse a live session instead of charging setup on every chunk.',
   },
   {
     label: 'edge-request',
@@ -1324,7 +1333,8 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
     threshold: DIAGNOSTIC_OVERHEAD_THRESHOLD,
     gate: false,
     runtimeClass: 'steady-state',
-    rationale: 'Edge host diagnostics should measure the full shared host-resolution path, not just the leaf utilities.',
+    rationale:
+      'Edge host diagnostics should measure the full shared host-resolution path, not just the leaf utilities.',
   },
   {
     label: 'worker-runtime-startup',
@@ -1350,7 +1360,8 @@ export const DIRECTIVE_BENCH_PAIRS: readonly BenchPair[] = [
     threshold: DIAGNOSTIC_OVERHEAD_THRESHOLD,
     gate: true,
     runtimeClass: 'startup',
-    rationale: 'Shared worker startup diagnostics should isolate claim, coordinator, listener, bootstrap, and packet-finalize work that has a real in-process analogue before the worker-only seam is considered.',
+    rationale:
+      'Shared worker startup diagnostics should isolate claim, coordinator, listener, bootstrap, and packet-finalize work that has a real in-process analogue before the worker-only seam is considered.',
   },
   {
     label: 'worker-runtime-steady',
@@ -1677,7 +1688,9 @@ function createCanaryBench(options?: Partial<ConstructorParameters<typeof Bench>
   return bench;
 }
 
-async function runCanarySnapshot(options?: Partial<ConstructorParameters<typeof Bench>[0]>): Promise<readonly BenchResult[]> {
+async function runCanarySnapshot(
+  options?: Partial<ConstructorParameters<typeof Bench>[0]>,
+): Promise<readonly BenchResult[]> {
   const bench = createCanaryBench(options);
   await bench.run();
   return collectBenchResults(bench);
@@ -1765,7 +1778,7 @@ export function evaluateBenchPairs(
       const overhead =
         supportMeanNs === null || parityMeanNs === null || parityMeanNs <= 0
           ? null
-          : Number((((supportMeanNs - parityMeanNs) / parityMeanNs)).toFixed(4));
+          : Number(((supportMeanNs - parityMeanNs) / parityMeanNs).toFixed(4));
 
       return {
         ...pair,
@@ -1823,6 +1836,112 @@ export function evaluateBenchPairs(
   });
 }
 
+/**
+ * INTERLEAVED PAIRED MEASUREMENT — the window-invariant overhead method for the hot-path ratio gate
+ * pairs (`satellite`, `stream`, `llm`, `worker`). Each compares two near-equal ~6µs operations. The
+ * per-task pass measures the directive and the baseline as SEPARATE tinybench tasks — each in its own
+ * time window — so the RATIO is sensitive to time-varying CI runner contention: a runner that inflates
+ * the directive window but not the baseline window swings the overhead 4% → 40% even though NEITHER
+ * operation regressed (observed on a contended runner: canonical stable 6.2–6.4µs across runs, directive
+ * 6.4 → 8.5µs, all 5 replicates uniformly skewed — a systematic position/contention bias, not noise the
+ * 4/5-exceedance rule could absorb).
+ *
+ * This re-measures both fns ADJACENTLY per sample (alternating which runs first so neither keeps the
+ * colder first position), so contention in any window hits BOTH sides and cancels in the ratio. The
+ * threshold is UNCHANGED: a genuine directive-abstraction-tax regression still produces a genuine ratio
+ * (pinned by the regression test in tests/unit/meta/bench-gate.test.ts), so this removes the
+ * measurement-window FALSE POSITIVE without going blind to a real one.
+ */
+const INTERLEAVED_GATE_PAIR_LABELS: ReadonlySet<string> = new Set(['satellite', 'stream', 'llm', 'worker']);
+
+/**
+ * A LARGER sample than the per-task pass — the second axis of the hardening (more samples → stabler
+ * median). NOTE the task fns are already BATCHED (each call runs `repeatHotPath` = HOT_LOOP_REPEAT inner
+ * iterations), so one fn call is one work batch; the inner-repeat just widens the timing window above the
+ * `performance.now()` quantization floor. 200 paired samples × 8 = 1600 batches/side — well above the
+ * tinybench pass, cheap because each batch is ~µs.
+ */
+const PAIRED_WARMUP_ITERATIONS = 128;
+const PAIRED_SAMPLE_COUNT = 200;
+const PAIRED_INNER_REPEAT = 8;
+
+const SYNC_DIRECTIVE_TASK_FN_BY_NAME: ReadonlyMap<string, () => void> = new Map(
+  DIRECTIVE_BENCH_TASKS.filter((task) => task.options === syncBenchTaskOptions).map(
+    (task) => [task.name, task.fn as () => void] as const,
+  ),
+);
+
+export interface PairedOverheadResult {
+  readonly overhead: number;
+  readonly directiveNs: number;
+  readonly baselineNs: number;
+}
+
+/** Time `directiveFn` against `baselineFn` adjacently per sample (alternating order) → window-invariant ratio. */
+export function measurePairedOverhead(directiveFn: () => void, baselineFn: () => void): PairedOverheadResult {
+  for (let i = 0; i < PAIRED_WARMUP_ITERATIONS; i++) {
+    directiveFn();
+    baselineFn();
+  }
+  const directiveSamplesNs: number[] = [];
+  const baselineSamplesNs: number[] = [];
+  for (let sample = 0; sample < PAIRED_SAMPLE_COUNT; sample++) {
+    const directiveFirst = (sample & 1) === 0;
+    const first = directiveFirst ? directiveFn : baselineFn;
+    const second = directiveFirst ? baselineFn : directiveFn;
+    const t0 = currentTimeNs();
+    for (let r = 0; r < PAIRED_INNER_REPEAT; r++) first();
+    const t1 = currentTimeNs();
+    for (let r = 0; r < PAIRED_INNER_REPEAT; r++) second();
+    const t2 = currentTimeNs();
+    const firstNs = (t1 - t0) / PAIRED_INNER_REPEAT;
+    const secondNs = (t2 - t1) / PAIRED_INNER_REPEAT;
+    directiveSamplesNs.push(directiveFirst ? firstNs : secondNs);
+    baselineSamplesNs.push(directiveFirst ? secondNs : firstNs);
+  }
+  const directiveNs = median(directiveSamplesNs) ?? 0;
+  const baselineNs = median(baselineSamplesNs) ?? 0;
+  const overhead = baselineNs > 0 ? directiveNs / baselineNs - 1 : 0;
+  return {
+    overhead: Number(overhead.toFixed(4)),
+    directiveNs: Number(directiveNs.toFixed(2)),
+    baselineNs: Number(baselineNs.toFixed(2)),
+  };
+}
+
+/**
+ * Re-measure the hot-path ratio gate pairs with the window-invariant paired method, overriding their
+ * per-task overhead in place. Startup/transport/diagnostic pairs and the special worker-startup-shared
+ * split are untouched; a pair whose fns are not sync-resolvable falls back to its per-task overhead. The
+ * override lives on the per-replicate PairEvaluation, so it flows through the replicate cache unchanged
+ * (`bench:gate` re-aggregates the same per-replicate overhead).
+ */
+export function applyInterleavedGateOverrides(pairs: readonly PairEvaluation[]): PairEvaluation[] {
+  return pairs.map((evaluation) => {
+    if (!INTERLEAVED_GATE_PAIR_LABELS.has(evaluation.label)) return evaluation;
+    const directiveFn = SYNC_DIRECTIVE_TASK_FN_BY_NAME.get(evaluation.directive);
+    const baselineFn = SYNC_DIRECTIVE_TASK_FN_BY_NAME.get(evaluation.baseline);
+    if (directiveFn === undefined || baselineFn === undefined) return evaluation;
+    // FAIL CLOSED (codex PR#59 review): when the per-task pass already marked the pair MISSING (a task
+    // produced no/invalid BenchResult), keep it missing — do NOT flip `missing` to false. Overriding it
+    // would let evaluateBenchPairsAcrossReplicates treat the replicate as valid and dereference the
+    // absent directiveResult/baselineResult, turning the intended missing-benchmark failure into a crash
+    // or a silent pass. Re-measure ONLY a pair the per-task pass produced real results for.
+    if (evaluation.missing || evaluation.directiveResult === undefined || evaluation.baselineResult === undefined) {
+      return evaluation;
+    }
+    const paired = measurePairedOverhead(directiveFn, baselineFn);
+    return {
+      ...evaluation,
+      overhead: paired.overhead,
+      directiveResult: { ...evaluation.directiveResult, meanNs: paired.directiveNs },
+      baselineResult: { ...evaluation.baselineResult, meanNs: paired.baselineNs },
+      missing: false,
+      pass: paired.overhead <= evaluation.threshold,
+    };
+  });
+}
+
 export async function runDirectiveBenchReplicates(
   replicates = DEFAULT_GATE_REPLICATES,
   options?: Partial<ConstructorParameters<typeof Bench>[0]>,
@@ -1840,7 +1959,9 @@ export async function runDirectiveBenchReplicates(
     results.push({
       replicate,
       results: benchResults,
-      pairs: evaluateBenchPairs(benchResults, DIRECTIVE_BENCH_PAIRS, workerStartupAnalysis.split),
+      pairs: applyInterleavedGateOverrides(
+        evaluateBenchPairs(benchResults, DIRECTIVE_BENCH_PAIRS, workerStartupAnalysis.split),
+      ),
       startupBreakdown,
       workerStartupAudit: workerStartupAnalysis.audit,
       workerStartupSplit: workerStartupAnalysis.split,
@@ -1856,12 +1977,15 @@ export function evaluateBenchPairsAcrossReplicates(
   pairs: readonly BenchPair[] = DIRECTIVE_BENCH_PAIRS,
 ): ReplicatedPairEvaluation[] {
   return pairs.map((pair) => {
-    const replicates = replicateResults.map((result) => result.pairs.find((candidate) => candidate.label === pair.label) ?? {
-      ...pair,
-      overhead: null,
-      missing: true,
-      pass: false,
-    });
+    const replicates = replicateResults.map(
+      (result) =>
+        result.pairs.find((candidate) => candidate.label === pair.label) ?? {
+          ...pair,
+          overhead: null,
+          missing: true,
+          pass: false,
+        },
+    );
 
     const valid = replicates.filter(
       (result): result is PairEvaluation & { readonly overhead: number } => !result.missing && result.overhead !== null,
@@ -1874,14 +1998,12 @@ export function evaluateBenchPairsAcrossReplicates(
     const exceedances = valid.filter((result) => result.overhead > pair.threshold).length;
     const requiredExceedances = valid.length > 0 ? Math.max(1, valid.length - 1) : 1;
     const missing = missingReplicates > 0;
-    const failGate = missing || (medianOverhead !== null && medianOverhead > pair.threshold && exceedances >= requiredExceedances);
+    const failGate =
+      missing || (medianOverhead !== null && medianOverhead > pair.threshold && exceedances >= requiredExceedances);
     const warning =
-      !pair.gate &&
-      (pair.warnOnThreshold ?? true) &&
-      medianOverhead !== null &&
-      medianOverhead > pair.threshold;
+      !pair.gate && (pair.warnOnThreshold ?? true) && medianOverhead !== null && medianOverhead > pair.threshold;
     const medianHeadroomPct =
-      medianOverhead === null ? null : Number((((pair.threshold - medianOverhead) * 100)).toFixed(2));
+      medianOverhead === null ? null : Number(((pair.threshold - medianOverhead) * 100).toFixed(2));
     const watch =
       !pair.gate &&
       !missing &&
@@ -1909,9 +2031,7 @@ export function evaluateBenchPairsAcrossReplicates(
   });
 }
 
-export function summarizeWorkerStartupAudit(
-  replicateResults: readonly ReplicateResult[],
-): WorkerStartupAuditResult {
+export function summarizeWorkerStartupAudit(replicateResults: readonly ReplicateResult[]): WorkerStartupAuditResult {
   const audits = replicateResults.map((replicate) => replicate.workerStartupAudit);
   const rows = WORKER_STARTUP_DIAGNOSTIC_STAGE_LABELS.map(({ stage, label, inclusion }) => {
     const supportSamples = audits.map((audit) => audit.rows.find((row) => row.stage === stage)?.supportMeanNs ?? 0);
@@ -1951,10 +2071,10 @@ export function summarizeWorkerStartupAudit(
   };
 }
 
-export function summarizeWorkerStartupSplit(
-  replicateResults: readonly ReplicateResult[],
-): WorkerStartupSplitResult {
-  const visibleFirstPaintSamples = replicateResults.map((replicate) => replicate.workerStartupSplit.visibleFirstPaintMeanNs);
+export function summarizeWorkerStartupSplit(replicateResults: readonly ReplicateResult[]): WorkerStartupSplitResult {
+  const visibleFirstPaintSamples = replicateResults.map(
+    (replicate) => replicate.workerStartupSplit.visibleFirstPaintMeanNs,
+  );
   const workerTakeoverSamples = replicateResults.map((replicate) => replicate.workerStartupSplit.workerTakeoverMeanNs);
   const sharedSupportSamples = replicateResults.map((replicate) => replicate.workerStartupSplit.shared.supportMeanNs);
   const sharedParitySamples = replicateResults.map((replicate) => replicate.workerStartupSplit.shared.parityMeanNs);
@@ -1987,11 +2107,16 @@ export function summarizeWorkerStartupSplit(
 
   const seamComponents = Array.from(
     new Set(
-      replicateResults.flatMap((replicate) => replicate.workerStartupSplit.seam.components.map((component) => component.stage)),
+      replicateResults.flatMap((replicate) =>
+        replicate.workerStartupSplit.seam.components.map((component) => component.stage),
+      ),
     ),
   ).map((stage) => {
     const sampleComponents = replicateResults
-      .map((replicate) => replicate.workerStartupSplit.seam.components.find((component) => component.stage === stage) ?? null)
+      .map(
+        (replicate) =>
+          replicate.workerStartupSplit.seam.components.find((component) => component.stage === stage) ?? null,
+      )
       .filter((component): component is NonNullable<typeof component> => component !== null);
 
     return {
@@ -2001,7 +2126,8 @@ export function summarizeWorkerStartupSplit(
       residualMeanNs: Number((median(sampleComponents.map((component) => component.residualMeanNs)) ?? 0).toFixed(2)),
     };
   });
-  const dominantSeamComponent = [...seamComponents].sort((left, right) => right.residualMeanNs - left.residualMeanNs)[0] ?? null;
+  const dominantSeamComponent =
+    [...seamComponents].sort((left, right) => right.residualMeanNs - left.residualMeanNs)[0] ?? null;
   const sharedOverheadMedian = median(sharedOverheadSamples);
   const messageReceiptShareMedian = median(messageReceiptShareSamples);
   const dispatchSendShareMedian = median(dispatchSendShareSamples);
@@ -2067,15 +2193,17 @@ export function summarizeLLMRuntimeSteadySignals(
   const directiveSteadyResults = replicateResults
     .map(
       (replicate) =>
-        replicate.results.find((result) => result.name === '[DIAGNOSTIC] llm-runtime-steady -- live session frame scheduling')
-          ?? null,
+        replicate.results.find(
+          (result) => result.name === '[DIAGNOSTIC] llm-runtime-steady -- live session frame scheduling',
+        ) ?? null,
     )
     .filter((result): result is NonNullable<typeof result> => result !== null);
   const baselineSteadyResults = replicateResults
     .map(
       (replicate) =>
-        replicate.results.find((result) => result.name === '[BASELINE] llm-runtime-steady -- parse and accumulate text')
-          ?? null,
+        replicate.results.find(
+          (result) => result.name === '[BASELINE] llm-runtime-steady -- parse and accumulate text',
+        ) ?? null,
     )
     .filter((result): result is NonNullable<typeof result> => result !== null);
   const longText64Ns = measureLLMSteadyScenario(buildLongTextRuntimeChunks(64));
@@ -2122,7 +2250,17 @@ export function summarizeLLMRuntimeSteadySignals(
 
 export function formatPairReport(result: ReplicatedPairEvaluation | PairEvaluation): string[] {
   if ('replicates' in result) {
-    const status = result.missing ? (result.gate ? 'FAIL' : 'DIAG') : result.gate ? (result.pass ? 'PASS' : 'FAIL') : result.warning ? 'WARN' : 'DIAG';
+    const status = result.missing
+      ? result.gate
+        ? 'FAIL'
+        : 'DIAG'
+      : result.gate
+        ? result.pass
+          ? 'PASS'
+          : 'FAIL'
+        : result.warning
+          ? 'WARN'
+          : 'DIAG';
     const overheadSummary = result.overheads
       .map((overhead) => (overhead === null ? 'missing' : `${(overhead * 100).toFixed(1)}%`))
       .join(', ');
@@ -2156,8 +2294,7 @@ export function formatPairReport(result: ReplicatedPairEvaluation | PairEvaluati
   }
 
   const status = result.pass ? 'PASS' : result.gate ? 'FAIL' : 'DIAG';
-  const headroomPct =
-    result.overhead === null ? null : Number(((result.threshold - result.overhead) * 100).toFixed(1));
+  const headroomPct = result.overhead === null ? null : Number(((result.threshold - result.overhead) * 100).toFixed(1));
   const marginLine =
     result.gate && headroomPct !== null && headroomPct >= 0 && headroomPct < HARD_GATE_MARGIN_NOTE_PCT
       ? `        margin to threshold: ${headroomPct.toFixed(1)}pp`
@@ -2183,7 +2320,7 @@ export function formatDiagnosticWatchReport(results: readonly ReplicatedPairEval
     .filter((result) => result.watch)
     .map((result) => {
       const headroomPct =
-        result.medianOverhead === null ? null : Number((((result.threshold - result.medianOverhead) * 100)).toFixed(1));
+        result.medianOverhead === null ? null : Number(((result.threshold - result.medianOverhead) * 100).toFixed(1));
       const headroomSummary = headroomPct === null ? 'n/a' : `${headroomPct.toFixed(1)}pp`;
       return `  [WATCH] ${result.label}: headroom ${headroomSummary}, exceedances ${result.exceedances}/${result.validReplicates}, median ${(result.medianOverhead! * 100).toFixed(1)}% vs ${(result.threshold * 100).toFixed(1)}% threshold`;
     });
@@ -2243,8 +2380,7 @@ export const DIRECTIVE_PRODUCTION_PINS: readonly DirectiveProductionPin[] = [
     value: SATELLITE_HOT_VALUE,
     previousState: SATELLITE_PREVIOUS_STATE,
     directiveState: evaluateSatelliteDirectiveState,
-    hysteresisState: (value, previousState) =>
-      evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
+    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
     rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
   },
   {
@@ -2255,8 +2391,7 @@ export const DIRECTIVE_PRODUCTION_PINS: readonly DirectiveProductionPin[] = [
     previousState: SATELLITE_PREVIOUS_STATE,
     // The worker directive closure routes the SAME hysteresis call as satellite.
     directiveState: evaluateSatelliteDirectiveState,
-    hysteresisState: (value, previousState) =>
-      evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
+    hysteresisState: (value, previousState) => evaluateBoundary(requireSharedSatelliteBoundary(), value, previousState),
     rawState: (value) => evaluateBoundary(requireSharedSatelliteBoundary(), value),
   },
 ] as const;
