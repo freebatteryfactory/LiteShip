@@ -1,7 +1,7 @@
 /**
  * CUT D8 — the canonical gauntlet phase profile is the ONE source of truth.
  *
- * Pins the 37-phase order to the executor's real run-order (no drift), proves the
+ * Pins the 39-phase order to the executor's real run-order (no drift), proves the
  * executor + CLI both DERIVE from this list (no hand-maintained copies left), and
  * preserves the coverage:browser watchdog options across the migration.
  *
@@ -14,7 +14,7 @@ import { gauntletPhases, gauntletPhaseLabels } from '../../../packages/cli/src/g
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
-/** The canonical 38 phases, transcribed verbatim from the executor's HEAD run-order. */
+/** The canonical 39 phases, transcribed verbatim from the executor's HEAD run-order. */
 const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'rig-check', command: 'pnpm run doctor -- --preflight --ci' },
   { label: 'build', command: 'pnpm run build' },
@@ -51,15 +51,16 @@ const EXPECTED: ReadonlyArray<{ label: string; command: string }> = [
   { label: 'feedback:verify', command: 'pnpm run feedback:verify' },
   { label: 'runtime:gate', command: 'pnpm run runtime:gate' },
   { label: 'standards:gate', command: 'pnpm run standards:gate' },
+  { label: 'capability:gate', command: 'pnpm run capability:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },
 ];
 
 describe('D8 — canonical gauntlet phase profile', () => {
-  it('has exactly 38 phases', () => {
-    expect(gauntletPhases.length).toBe(38);
-    expect(gauntletPhaseLabels().length).toBe(38);
+  it('has exactly 39 phases', () => {
+    expect(gauntletPhases.length).toBe(39);
+    expect(gauntletPhaseLabels().length).toBe(39);
   });
 
   it('matches the executor HEAD run-order, label + command, in sequence (no drift)', () => {
