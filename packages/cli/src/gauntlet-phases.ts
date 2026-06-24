@@ -94,6 +94,11 @@ export const gauntletPhases: readonly GauntletPhase[] = [
   // `CZAP_STANDARDS_BASE_REF` to a ref that has the snapshot + fetches its history
   // (see .github/workflows/ci.yml); a local run defaults to `main`.
   { label: 'standards:gate', command: 'pnpm run standards:gate' },
+  // The capability-link proof (codex round-8 #1b) — the sanctioned-skip INTEGRITY family, beside
+  // standards:gate/plumb:gate: every sanctioned capability-gated skip's guard must DERIVE FROM its
+  // declared capability's probe (a ts.Program over the sanctioned files + the canonical capability
+  // modules), or the cut reds. Opt-in `czap check --ir --capability-gate` runs the same proof.
+  { label: 'capability:gate', command: 'pnpm run capability:gate' },
   { label: 'plumb:gate', command: 'pnpm run plumb:gate' },
   { label: 'capsule:verify', command: 'pnpm run capsule:verify' },
   { label: 'flex:verify', command: 'pnpm run flex:verify' },

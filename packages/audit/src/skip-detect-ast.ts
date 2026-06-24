@@ -569,7 +569,9 @@ interface PeeledChain {
  * The root is decided by the caller's binding table at the walk site; here we peel structurally and
  * report the literal-or-aliased root NAME (the walk validates it against the bindings).
  */
-function peelAccessChain(expr: ts.Expression): { rootName: string; accesses: ChainAccess[] } | undefined {
+function peelAccessChain(
+  expr: ts.Expression,
+): { rootName: string; rootNode: ts.Identifier; accesses: ChainAccess[] } | undefined {
   const accesses: ChainAccess[] = [];
   let cursor: ts.Expression = expr;
   // Unwind outermost→innermost, collecting each member/element access; step over calls (transparent).
@@ -602,7 +604,34 @@ function peelAccessChain(expr: ts.Expression): { rootName: string; accesses: Cha
   }
   if (!ts.isIdentifier(cursor)) return undefined;
   accesses.reverse(); // root-most first
-  return { rootName: cursor.text, accesses };
+  return { rootName: cursor.text, rootNode: cursor, accesses };
+}
+
+/**
+ * Does `name` resolve to a function/method/arrow PARAMETER that SHADOWS the global runner, at `node`'s
+ * position? PARAM-ONLY (codex round-8 residual): a runner-named parameter (`function f(test) { …
+ * test.skip … }`) is definitively NOT the vitest runner — the parameter shadows it. We do NOT suppress
+ * on a `const`/`let` shadow here (unlike the ternary path's {@link isLocallyShadowed}): a local rebind
+ * of the runner is RESOLVED by the binding fixpoint, and suppressing it could MISS a real aliased
+ * runner. A parameter never aliases the runner, so suppressing it only removes a false positive.
+ */
+function isShadowedByParameter(node: ts.Node, name: string): boolean {
+  let current: ts.Node | undefined = node.parent;
+  while (current !== undefined) {
+    if (
+      ts.isFunctionDeclaration(current) ||
+      ts.isFunctionExpression(current) ||
+      ts.isArrowFunction(current) ||
+      ts.isMethodDeclaration(current) ||
+      ts.isConstructorDeclaration(current)
+    ) {
+      for (const param of current.parameters) {
+        if (ts.isIdentifier(param.name) && param.name.text === name) return true;
+      }
+    }
+    current = current.parent;
+  }
+  return false;
 }
 
 /** Classify a `.member` dotted access into a chain step. */
@@ -736,6 +765,11 @@ function recognizeChain(
 ): void {
   const peeled = peelAccessChain(node);
   if (peeled === undefined) return;
+
+  // A runner-named PARAMETER (`function f(test){ test.skip }`) shadows the global runner — it is NOT
+  // the vitest runner, so its `.skip` access is not a real skip (codex round-8 residual). Param-only:
+  // a `const`/`let` rebind is resolved by the binding fixpoint, never suppressed here.
+  if (isShadowedByParameter(peeled.rootNode, peeled.rootName)) return;
 
   // Decide the runner root: a literal/aliased root identifier, OR a namespace head `<ns>.<runner>`.
   let rootToken: string;

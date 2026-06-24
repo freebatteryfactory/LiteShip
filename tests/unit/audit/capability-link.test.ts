@@ -100,3 +100,57 @@ describe('capability-link oracle — the dataflow proof', () => {
     expect(facts.results[0]?.linkedCapabilities).toEqual(['ffmpeg-absent']);
   });
 });
+
+describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTIONS', () => {
+  // The R8 linker linked on "shares any symbol unique to a capability's closure" — so a guard that
+  // MENTIONS the capability (mixed with an unrelated condition) or REIMPLEMENTS the probe (sharing the
+  // low-level `process` symbol) laundered as gated. The fix: the guard must be PURE (route only through
+  // capability-module EXPORTS) AND reach its declared capability. These pin both holes closed.
+  const COV_EXPORT = resolve(REPO_ROOT, 'tests/helpers/capabilities.ts');
+
+  function linkOne(src: string, declared = 'coverage-instrumentation'): boolean {
+    const dir = mkdtempSync(join(tmpdir(), 'caplink-r9-'));
+    try {
+      const file = join(dir, 'g.test.ts');
+      writeFileSync(file, src);
+      const line = src.split('\n').findIndex((l) => l.includes('it.skip')) + 1;
+      const facts = buildCapabilityLinkFacts({
+        repoRoot: REPO_ROOT,
+        capabilityModules: CAPABILITY_MODULES.map((m) => resolve(REPO_ROOT, m)),
+        capabilityIds: CAPABILITY_IDS,
+        sites: [{ file, line, declaredCapability: declared }],
+      });
+      return facts.results[0]?.linked ?? false;
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  const imp = `import { it } from "vitest";\nimport { coverageInstrumentation } from "${COV_EXPORT}";\n`;
+
+  it('a CLEAN guard routed through the canonical export links', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(true);
+  });
+  it('a MIXED `capability || unrelated` guard is REJECTED (skip can fire on the unrelated condition)', () => {
+    expect(linkOne(`${imp}if (Math.random() > 0.5 || coverageInstrumentation) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
+  it('a MIXED `capability && unrelated` guard is REJECTED (impure)', () => {
+    expect(linkOne(`${imp}if (coverageInstrumentation && Math.random() > 0.5) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
+  it('a REIMPLEMENTED probe (not routed through the export) is REJECTED', () => {
+    expect(linkOne(`import { it } from "vitest";\nif (process.env.NODE_V8_COVERAGE !== undefined) {\n  it.skip("x", () => {});\n}\n`)).toBe(false);
+  });
+
+  it('an UNRESOLVED sanctioned site (allowlist drift) is FAIL-CLOSED to a finding, never dropped', () => {
+    const facts = buildCapabilityLinkFacts({
+      repoRoot: REPO_ROOT,
+      capabilityModules: CAPABILITY_MODULES,
+      capabilityIds: CAPABILITY_IDS,
+      // A site whose line cannot be located (line -1) — the production resolver passes these through.
+      sites: [{ file: 'tests/helpers/ffmpeg.ts', line: -1, declaredCapability: 'ffmpeg-absent' }],
+    });
+    expect(facts.results).toHaveLength(1);
+    expect(facts.results[0]?.linked).toBe(false);
+    expect(facts.results[0]?.guardText).toMatch(/not located/i);
+  });
+});

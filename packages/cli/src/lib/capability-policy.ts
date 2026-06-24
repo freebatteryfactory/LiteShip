@@ -31,14 +31,18 @@ export const LITESHIP_CAPABILITY_MODULES: readonly string[] = [
 export const LITESHIP_CAPABILITY_IDS: readonly string[] = [...SKIP_CAPABILITIES];
 
 /**
- * Resolve every enumerated `SANCTIONED_SKIPS` entry to a {@link CapabilitySkipSite} — its file, the
+ * Resolve EVERY enumerated `SANCTIONED_SKIPS` entry to a {@link CapabilitySkipSite} — its file, the
  * 1-based line of the skip (matched by the normalized site text via the sound AST detector), and the
- * capability it declares. A site whose text cannot be located in its file resolves `line: -1` and is
- * dropped (the realrepo-skip-proof independently guards that every sanctioned site IS locatable).
+ * capability it declares.
+ *
+ * FAIL-CLOSED (codex round-9): a site whose text cannot be located in its file resolves `line: -1` and
+ * is STILL returned (NEVER dropped) — the oracle then surfaces it as an unlinked finding ("sanctioned
+ * skip not located — allowlist drift"). Dropping it would silently shrink the proven corpus, so a
+ * drifted allowlist entry could vanish from the gate instead of reding. The count of returned sites
+ * therefore always equals `SANCTIONED_SKIPS.length`, so the gate proves the WHOLE allowlist or reds.
  */
 export function resolveCapabilitySites(repoRoot: string): CapabilitySkipSite[] {
-  const out: CapabilitySkipSite[] = [];
-  for (const s of SANCTIONED_SKIPS) {
+  return SANCTIONED_SKIPS.map((s) => {
     const lines = readFileSync(resolve(repoRoot, s.file), 'utf8').split('\n');
     let line = -1;
     for (const m of detectSkipsAST(lines.join('\n'))) {
@@ -47,7 +51,6 @@ export function resolveCapabilitySites(repoRoot: string): CapabilitySkipSite[] {
         break;
       }
     }
-    if (line > 0) out.push({ file: s.file, line, declaredCapability: s.capability });
-  }
-  return out;
+    return { file: s.file, line, declaredCapability: s.capability };
+  });
 }

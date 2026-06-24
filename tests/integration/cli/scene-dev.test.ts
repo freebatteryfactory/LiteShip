@@ -11,7 +11,10 @@ import { coverageInstrumentation } from '../../helpers/capabilities.js';
 // the same startDevServer() path with full coverage and no subprocess
 // crash surface, so this integration test is redundant under coverage
 // and gets skipped there to keep the gauntlet stable.
-const underCoverage = process.env.NODE_V8_COVERAGE !== undefined;
+// Single-sourced in the canonical capability symbol table so the capability-gate linker can prove this
+// guard derives from the `coverage-instrumentation` probe (codex R8 #1b; the R9 linker requires the
+// guard to ROUTE THROUGH the canonical export, not reimplement `process.env.NODE_V8_COVERAGE`).
+const underCoverage = coverageInstrumentation;
 const conditionalIt = underCoverage ? it.skip : it;
 
 describe('czap scene dev', () => {

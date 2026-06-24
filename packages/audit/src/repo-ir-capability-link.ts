@@ -122,7 +122,16 @@ export function buildCapabilityLinkFacts(opts: CapabilityLinkOptions): Capabilit
     return out;
   };
 
-  // ── 1. SYMBOL TABLE: capability id → export symbol + closure (exports matching a known capability id).
+  // ── 1. SYMBOL TABLE.
+  //  - `capExports`: EVERY top-level export of the capability modules — the TRUSTED single-source probe
+  //    surface. A guard may route through any of them; the PURITY walk stops AT a capExport (never
+  //    descending into its low-level internals like `process`/`existsSync`), so the export is the
+  //    reviewable boundary. This is what makes the proof "routes through the canonical export", NOT
+  //    "shares a low-level symbol" (codex round-9: linking on a shared `process` let a reimplemented /
+  //    mixed guard launder as gated).
+  //  - `exportSym` / `exportClosure`: the cap-id-NAMED export per capability (the link target) + its
+  //    closure (for finding a capability's OTHER unique export, e.g. `FFMPEG_RENDER_CAPABLE`).
+  const capExports = new Set<ts.Symbol>();
   const exportSym = new Map<string, ts.Symbol>();
   const exportClosure = new Map<string, Set<ts.Symbol>>();
   for (const abs of moduleAbs) {
@@ -131,46 +140,76 @@ export function buildCapabilityLinkFacts(opts: CapabilityLinkOptions): Capabilit
     const modSym = checker.getSymbolAtLocation(sf);
     if (modSym === undefined) continue;
     for (const exp of checker.getExportsOfModule(modSym)) {
-      const capId = camelToKebab(exp.getName());
-      if (!capIds.has(capId)) continue;
       const sym = deAlias(exp);
-      exportSym.set(capId, sym);
-      exportClosure.set(capId, closureOf(sym.valueDeclaration ?? sf));
+      capExports.add(sym);
+      const capId = camelToKebab(exp.getName());
+      if (capIds.has(capId)) {
+        exportSym.set(capId, sym);
+        exportClosure.set(capId, closureOf(sym.valueDeclaration ?? sf));
+      }
     }
   }
 
-  // ── 2. PROBE SYMBOLS: export symbol ∪ symbols unique to that one capability's closure.
+  // ── 2. CAPABILITY SYMBOLS per capability: its cap-id export ∪ OTHER capability-module EXPORTS uniquely
+  //  in its closure (e.g. `FFMPEG_RENDER_CAPABLE` for `ffmpeg-absent`, since `ffmpegAbsent = !FFMPEG_…`).
+  //  RESTRICTED to `capExports` — a shared low-level symbol (`existsSync`, in 3 capabilities; `process`,
+  //  in coverage's closure) is EXCLUDED, so a guard links ONLY by referencing a named capability EXPORT,
+  //  never by sharing a probe's internals.
   const multiplicity = new Map<ts.Symbol, number>();
   for (const cl of exportClosure.values()) for (const s of cl) multiplicity.set(s, (multiplicity.get(s) ?? 0) + 1);
-  const probeSymbols = new Map<string, Set<ts.Symbol>>();
+  const capabilitySymbols = new Map<string, Set<ts.Symbol>>();
   for (const [capId, cl] of exportClosure) {
-    const probes = new Set<ts.Symbol>([exportSym.get(capId)!]);
-    for (const s of cl) if (multiplicity.get(s) === 1) probes.add(s);
-    probeSymbols.set(capId, probes);
+    const syms = new Set<ts.Symbol>([exportSym.get(capId)!]);
+    for (const s of cl) if (capExports.has(s) && multiplicity.get(s) === 1) syms.add(s);
+    capabilitySymbols.set(capId, syms);
   }
 
-  // ── 3. LINK each sanctioned site's guard against the probe symbols.
+  // ── 3. LINK each sanctioned site. The guard must (a) be PURE — every runtime symbol it references is a
+  //  capability-module export or a local that resolves purely to one (no free global like `Math`, no
+  //  reimplemented low-level probe, no `||` to an unrelated condition), so the skip fires ONLY when a
+  //  capability holds — AND (b) reach a capability symbol of its DECLARED capability.
   const results: CapabilityLinkResult[] = [];
   for (const site of opts.sites) {
     const sf = program.getSourceFile(resolve(opts.repoRoot, site.file));
-    const skipNode = sf !== undefined ? findSkipNodeAtLine(sf, site.line) : undefined;
-    const guards = skipNode !== undefined ? guardExpressionsOf(skipNode) : [];
-    const guardClosure = new Set<ts.Symbol>();
-    for (const g of guards) for (const s of closureOf(g)) guardClosure.add(s);
-    const linkedCapabilities = [...probeSymbols.keys()]
-      .filter((capId) => [...probeSymbols.get(capId)!].some((s) => guardClosure.has(s)))
-      .sort();
-    const guardText = guards
-      .map((g) => g.getText(sf).replace(/\s+/g, ' ').trim())
-      .join(' && ')
-      .slice(0, 200);
+    const skipNode = sf !== undefined && site.line > 0 ? findSkipNodeAtLine(sf, site.line) : undefined;
+    // FAIL-CLOSED (codex round-9): a sanctioned site that cannot be located (allowlist drift — the line
+    // did not resolve, or the skip is gone) is NOT silently dropped; it surfaces as an unlinked result.
+    if (skipNode === undefined) {
+      results.push({
+        file: site.file,
+        line: site.line,
+        declaredCapability: site.declaredCapability,
+        linkedCapabilities: [],
+        linked: false,
+        guardText: '(sanctioned skip not located — allowlist drift or the skip was removed)',
+      });
+      continue;
+    }
+    const guards = guardExpressionsOf(skipNode);
+    let pure = true;
+    const reached = new Set<ts.Symbol>();
+    for (const g of guards) {
+      const a = analyzeGuard(checker, capExports, deAlias, g);
+      if (!a.pure) pure = false;
+      for (const s of a.reached) reached.add(s);
+    }
+    // An impure guard (or none) links to NOTHING — it can fire on a non-capability condition.
+    const linkedCapabilities =
+      pure && guards.length > 0
+        ? [...capabilitySymbols.keys()]
+            .filter((capId) => [...capabilitySymbols.get(capId)!].some((s) => reached.has(s)))
+            .sort()
+        : [];
     results.push({
       file: site.file,
       line: site.line,
       declaredCapability: site.declaredCapability,
       linkedCapabilities,
       linked: linkedCapabilities.includes(site.declaredCapability),
-      guardText,
+      guardText: guards
+        .map((g) => g.getText(sf).replace(/\s+/g, ' ').trim())
+        .join(' && ')
+        .slice(0, 200),
     });
   }
   results.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : a.line - b.line));
@@ -180,6 +219,69 @@ export function buildCapabilityLinkFacts(opts: CapabilityLinkOptions): Capabilit
     definedCapabilities: [...exportSym.keys()].sort(),
     results,
   };
+}
+
+/** Neutral identifiers — JS constants, not free runtime references. */
+const NEUTRAL_IDENTIFIERS: ReadonlySet<string> = new Set(['undefined', 'NaN', 'Infinity']);
+
+/**
+ * Walk a guard expression, returning the capability-module EXPORTS it reaches (through pure local
+ * aliases) and whether it is PURE. PURE iff EVERY runtime identifier it references is a capability-module
+ * export (the trusted single-source leaf — never descended into) or a local `const` that resolves purely
+ * to one. A free global (`Math`), a non-capability import (`existsSync` used directly), a parameter, or a
+ * reimplemented low-level probe (`process.env.…`) makes it IMPURE — the skip could then fire on a
+ * condition OTHER than a capability, so it is not genuinely capability-gated.
+ *
+ * Codex round-9: this replaces "the guard shares any symbol unique to a capability's closure", which
+ * linked a MIXED guard (`Math.random() || coverageInstrumentation`) and a REIMPLEMENTED probe
+ * (`process.env.NODE_V8_COVERAGE !== undefined`, sharing the low-level `process` symbol) as gated.
+ */
+function analyzeGuard(
+  checker: ts.TypeChecker,
+  capExports: ReadonlySet<ts.Symbol>,
+  deAlias: (s: ts.Symbol) => ts.Symbol,
+  expr: ts.Expression,
+): { reached: Set<ts.Symbol>; pure: boolean } {
+  const reached = new Set<ts.Symbol>();
+  let pure = true;
+  const seen = new Set<ts.Symbol>();
+  const visit = (node: ts.Node): void => {
+    // The property NAME in `a.b` / `a["b"]` is not a free symbol — only the receiver / computed key is.
+    if (ts.isPropertyAccessExpression(node)) {
+      visit(node.expression);
+      return;
+    }
+    if (ts.isElementAccessExpression(node)) {
+      visit(node.expression);
+      visit(node.argumentExpression);
+      return;
+    }
+    if (ts.isIdentifier(node)) {
+      if (NEUTRAL_IDENTIFIERS.has(node.text)) return;
+      const sym = checker.getSymbolAtLocation(node);
+      if (sym === undefined) {
+        pure = false;
+        return;
+      }
+      const real = deAlias(sym);
+      if (capExports.has(real)) {
+        reached.add(real); // the trusted single-source leaf — STOP (never descend into its internals)
+        return;
+      }
+      if (seen.has(real)) return;
+      seen.add(real);
+      const decl = real.valueDeclaration;
+      if (decl !== undefined && ts.isVariableDeclaration(decl) && decl.initializer !== undefined) {
+        visit(decl.initializer); // a local alias — pure iff its initializer is pure
+      } else {
+        pure = false; // a global / non-capability import / parameter — NOT capability-derived
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(expr);
+  return { reached, pure };
 }
 
 /**

@@ -258,3 +258,28 @@ describe('detectSkipsAST — codex round-8 residuals (#2 chain unwrap, #3 namesp
     expect(m?.conditional).toBe('enclosing-if');
   });
 });
+
+describe('detectSkipsAST — a runner-named PARAMETER shadows the global runner (the chain walk, param-only)', () => {
+  // A parameter named like a runner (`function f(test){ … test.skip … }`) is NOT the vitest runner — the
+  // parameter shadows it. The chain walk now resolves the shadow (param-only) so its `.skip` access is
+  // not a false positive. A `const`/`let` rebind is NOT suppressed (it is resolved by the binding
+  // fixpoint) — only a PARAMETER, which can never alias the runner.
+  const SHADOWED_CLEAN: ReadonlyArray<readonly [string, string]> = [
+    ['function f(test) { return test.skip; }', 'a function param named `test`'],
+    ['const f = (it) => it.skip;', 'an arrow param named `it`'],
+    ['function f(describe) { describe.skip("x", () => {}); }', 'a param named `describe` calling .skip'],
+    ['const o = { m(suite) { return suite.skipIf; } };', 'a method param named `suite`'],
+  ];
+  for (const [source, label] of SHADOWED_CLEAN) {
+    it(`is clean for ${label}`, () => {
+      expect(detectSkipsAST(source), JSON.stringify(detectSkipsAST(source))).toEqual([]);
+    });
+  }
+
+  it('still DETECTS a real global `it.skip` (not shadowed by any param)', () => {
+    expect(detectSkipsAST('it.skip("x", () => {});').length).toBe(1);
+  });
+  it('still DETECTS a global skip inside a function whose params are NOT runner-named', () => {
+    expect(detectSkipsAST('function f(a, b) { it.skip("x", () => {}); }').length).toBe(1);
+  });
+});
