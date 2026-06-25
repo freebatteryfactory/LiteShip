@@ -497,14 +497,17 @@ export function defineGate(spec: Gate): Gate {
 }
 
 /**
- * The UNFORGEABLE FactGate brand — a module-private symbol stamped ONLY by
- * {@link defineFactGate}. {@link isFactGate} checks THIS, never the public `form` string,
- * so a hand-built `{ form: 'fact', run: ctx => … }` forgery (which `defineGate` already
- * rejects, but a raw object literal could still claim) cannot pass as a fact gate. This is
- * the difference between a discriminant that is "honor-system" and one that is structural:
- * the brand cannot be set from outside this module, so `isFactGate` IS a boundary.
+ * The UNFORGEABLE FactGate membership set — a module-private {@link WeakSet} that ONLY
+ * {@link defineFactGate} adds to. {@link isFactGate} checks membership, never the public
+ * `form` string and never an on-object brand. A side-table is the only TRUE boundary here:
+ * a symbol brand stamped on the gate object is harvestable (`Object.getOwnPropertySymbols`
+ * returns it, enumerable or not) and rides an object spread, so a holder of any one fact gate
+ * could copy the symbol onto a forgery (or a `{ ...factGate, run: smuggle }` spread would keep
+ * it). This WeakSet is never exported, so it cannot be read or written from outside this
+ * module; and it is IDENTITY-bound, so a derived/spread object (a different identity) is
+ * correctly NOT a fact gate — its `run` was not synthesized here from a context-free `decide`.
  */
-const FACT_GATE_BRAND: unique symbol = Symbol('czap.gauntlet.factGate');
+const FACT_GATES = new WeakSet<Gate>();
 
 /** The author surface of a {@link FactGate} — context-free by construction (no `run`). */
 export interface FactGateSpec {
@@ -616,22 +619,25 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     evidenceDigest,
     fixtures: spec.fixtures,
   };
-  // Stamp the unforgeable brand (enumerable, so a derived `{ ...factGate, … }` — e.g. the
-  // mutation operator — stays branded). Only this module can set it; that is what makes
-  // {@link isFactGate} a real boundary rather than an honor-system string check.
-  Object.defineProperty(gate, FACT_GATE_BRAND, { value: true, enumerable: true, configurable: false, writable: false });
+  // Record membership in the module-private side-table — the unforgeable, identity-bound brand.
+  // Only THIS object (the one whose run was synthesized above from a context-free decide) is a
+  // fact gate; a later `{ ...gate, run: x }` spread is a NEW identity and is correctly NOT a
+  // member, so it cannot wear the discriminant while smuggling an arbitrary run.
+  FACT_GATES.add(gate);
   return gate;
 }
 
 /**
- * Narrow a {@link Gate} to the {@link FactGate} variant — by the UNFORGEABLE {@link FACT_GATE_BRAND},
- * NOT the public `form` string. A hand-built `{ form: 'fact', run: ctx => readSecret(ctx) }`
- * forgery (which `defineGate` rejects outright, but a raw object could still claim) is NOT a fact
- * gate: it lacks the brand only {@link defineFactGate} can stamp. So a caller that trusts
- * `isFactGate` to mean "this gate's decision cannot read undeclared evidence" is not being lied to.
+ * Narrow a {@link Gate} to the {@link FactGate} variant — by UNFORGEABLE {@link FACT_GATES}
+ * membership, NOT the public `form` string and NOT an on-object brand. A hand-built
+ * `{ form: 'fact', run: ctx => readSecret(ctx) }` forgery (which `defineGate` rejects outright,
+ * but a raw object could still claim), a symbol harvested off a real fact gate, or a
+ * `{ ...factGate, run: smuggle }` spread are all NON-members: only the exact object
+ * {@link defineFactGate} minted is in the set. So a caller that trusts `isFactGate` to mean
+ * "this gate's decision cannot read undeclared evidence" is not being lied to.
  */
 export function isFactGate(gate: Gate): gate is FactGate {
-  return (gate as { readonly [FACT_GATE_BRAND]?: boolean })[FACT_GATE_BRAND] === true;
+  return FACT_GATES.has(gate);
 }
 
 /**

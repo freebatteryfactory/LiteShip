@@ -390,10 +390,29 @@ describe('FactGate #1b — isFactGate is a boundary, not an honor-system string 
     expect(isFactGate(forgery)).toBe(false); // …but isFactGate is not fooled
   });
 
-  it('isFactGate ACCEPTS the genuinely-minted gate (and a derived spread stays branded)', () => {
+  it('isFactGate ACCEPTS only the minted object — identity-bound; a spread with an arbitrary run is NOT a fact gate', () => {
     expect(isFactGate(noSkippedTestFactGate)).toBe(true);
-    const derived = { ...noSkippedTestFactGate, describe: 'renamed' } as Gate;
-    expect(isFactGate(derived)).toBe(true); // the enumerable brand survives the spread
+    // The soundness property the WeakSet buys: a `{ ...factGate, run: smuggle }` is a NEW
+    // identity → not a member → NOT a fact gate. The discriminant cannot ride a swapped run.
+    const spreadWithArbitraryRun = {
+      ...noSkippedTestFactGate,
+      run: (ctx: GateContext): readonly Finding[] => {
+        ctx.readFile('secret.ts');
+        return [];
+      },
+    } as Gate;
+    expect(isFactGate(spreadWithArbitraryRun)).toBe(false);
+  });
+
+  it('the brand cannot be HARVESTED off a real fact gate (no on-object symbol to copy onto a forgery)', () => {
+    // The prior cure stamped an enumerable symbol — harvestable via getOwnPropertySymbols and
+    // re-stampable onto a forgery (the re-review's ATTACK 1). The WeakSet leaves NO own brand to
+    // copy: harvest every own symbol off a real fact gate, stamp them onto a forgery, still false.
+    const forgery = { ...noSkippedTestFactGate } as Record<string | symbol, unknown>;
+    for (const s of Object.getOwnPropertySymbols(noSkippedTestFactGate)) {
+      forgery[s] = (noSkippedTestFactGate as unknown as Record<symbol, unknown>)[s];
+    }
+    expect(isFactGate(forgery as unknown as Gate)).toBe(false);
   });
 });
 
