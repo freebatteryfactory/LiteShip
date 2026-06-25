@@ -133,3 +133,33 @@ Every rule passes clean on the current tree. To add one: drop a rule file in `sg
 prove it stays green, and (if it guards a behavior a meta-test already pins) note the test
 it backstops in the rule comment. This is the structural-regression net; the meta-tests
 remain the semantic truth.
+
+## Gauntlet gates & FactGate
+
+Above the advisory audit and the structural lint sits the **gauntlet** (`@czap/gauntlet`,
+[ADR-0023](./docs/adr/0023-gauntlet-rigor-engine.md)) — the self-proving rigor engine the
+`gauntlet:full` phases run. A `Gate` is a `(context) => Finding[]` fitness function that
+earns *blocking* authority only by self-proving against its own red/green/mutation fixtures
+(the authority ratchet); `AssuranceLevel` (L0–L4) aims its rigor by the hazard it governs,
+not by folder location. The engine is lean — the triangulated repo-IR and the
+mutation/MC-DC/taint/fuzz oracles are built by the `@czap/audit` host and injected through
+`GateContext` ([ADR-0012](./docs/adr/0012-devops-profile-boundary.md)), so the gauntlet
+never carries the heavy `typescript` dep.
+
+Two gate **forms**:
+
+- **Closure gate** (`defineGate`) — an arbitrary `run(context)` body. Flexible, but it can
+  read any surface on the context, so cache soundness depends on the gate correctly folding
+  its out-of-IR reads into the verdict-cache `evidenceDigest`.
+- **FactGate** (`defineFactGate`, [ADR-0019](./docs/adr/0019-factgate-evidence-bound-gates.md))
+  — the decision is DATA over a *declared* FactPack (`requires` + a context-free `decide`). A
+  host-side **producer** does acquisition + normalization; a bounded, data-only **kernel**
+  decides. The gate cannot read undeclared evidence (there is no body to hide a read in), and
+  its cache identity derives from the declared channels by construction. The always-blocking
+  no-skipped-test rule has a proven-equivalent FactGate form.
+
+The **plumb-completeness gate** (`plumb:gate`) is a classifier: every published package is
+declared `runtime` / `tooling` / `deferred`, and an unclassified package or an unwired capsule
+fails CI — the gate that makes "built-not-plumbed" impossible to ship silently. The governing
+discipline throughout is **"green is not clean"**: a passing gauntlet means only that the
+gates that ran, on the surfaces they scanned, found nothing.
