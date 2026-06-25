@@ -28,6 +28,11 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0016](./0016-signal-vocabulary.md) | Unified signal vocabulary (SignalSource source of truth) | Accepted |
 | [0017](./0017-cache-content-version.md) | Conditional cache: content-version beyond the boundary address | Accepted |
 | [0018](./0018-cap-axes-attribute-contract.md) | CAP_AXES capability-attribute contract | Accepted |
+| [0019](./0019-factgate-evidence-bound-gates.md) | FactGate: evidence-bound gate definitions | Accepted |
+| [0020](./0020-document-graph-runtime.md) | DocumentGraph runtime lifecycle | Accepted |
+| [0021](./0021-scene-live-bridge.md) | Scene → live bridge (discrete crossing vs continuous tween) | Accepted |
+| [0022](./0022-ai-apply-seam.md) | AI-apply seam: the un-bypassable validate→apply token witness | Accepted |
+| [0023](./0023-gauntlet-rigor-engine.md) | The gauntlet: self-proving rigor engine + authority model | Accepted |
 
 ## Template
 
