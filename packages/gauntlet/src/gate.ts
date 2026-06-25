@@ -473,8 +473,8 @@ export function defineGate(spec: Gate): Gate {
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
   }
-  // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (see
-  // {@link FACT_GATE_BRAND}). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
+  // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (the module-private
+  // `FACT_GATES` WeakSet). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
   // forgery — it would carry an arbitrary context-reading `run` while CLAIMING the data-only
   // contract. Reject it LOUD: a fact gate must be minted by {@link defineFactGate}.
   if (spec.form === 'fact') {
@@ -628,7 +628,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
 }
 
 /**
- * Narrow a {@link Gate} to the {@link FactGate} variant — by UNFORGEABLE {@link FACT_GATES}
+ * Narrow a {@link Gate} to the {@link FactGate} variant — by UNFORGEABLE `FACT_GATES`
  * membership, NOT the public `form` string and NOT an on-object brand. A hand-built
  * `{ form: 'fact', run: ctx => readSecret(ctx) }` forgery (which `defineGate` rejects outright,
  * but a raw object could still claim), a symbol harvested off a real fact gate, or a

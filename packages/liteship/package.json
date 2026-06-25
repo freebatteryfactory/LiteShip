@@ -52,6 +52,8 @@
     "@czap/core": "workspace:*",
     "@czap/detect": "workspace:*",
     "@czap/edge": "workspace:*",
+    "@czap/error": "workspace:*",
+    "@czap/gauntlet": "workspace:*",
     "@czap/genui": "workspace:*",
     "@czap/mcp-server": "workspace:*",
     "@czap/quantizer": "workspace:*",
