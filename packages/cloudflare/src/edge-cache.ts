@@ -73,5 +73,24 @@ export function createCloudflareEdgeCache(
       }
       await kv.put(key, value, putOptions);
     },
+    // Workers KV implements delete/list, so the adapter forwards them — this is
+    // what powers active cache invalidation (BoundaryCache.invalidateByPath /
+    // invalidateByTag) on Cloudflare.
+    async delete(key: string): Promise<void> {
+      const kv = resolveKvBinding(envSource(), options.binding);
+      if (!kv) {
+        warnMissingBinding(envSource, options.binding);
+        return;
+      }
+      await kv.delete?.(key);
+    },
+    async list(listOptions: { prefix: string; cursor?: string }) {
+      const kv = resolveKvBinding(envSource(), options.binding);
+      if (!kv?.list) {
+        if (!kv) warnMissingBinding(envSource, options.binding);
+        return { keys: [], list_complete: true };
+      }
+      return kv.list(listOptions);
+    },
   };
 }

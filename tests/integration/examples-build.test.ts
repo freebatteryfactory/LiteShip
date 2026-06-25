@@ -39,6 +39,28 @@ function distContainsInspectorChunk(distDir: string): string | null {
 }
 
 /**
+ * Classify an `astro build` failure against Astro 7's strict Rust compiler.
+ *
+ * Astro 7 dropped the lenient Go/WASM compiler for a strict Rust one that
+ * rejects malformed HTML (unclosed tags, bad attributes) outright — exactly
+ * the class of breakage the version bump risks in authored example markup.
+ * Naming the class turns "exit 1" into "fix the unclosed tag in this example",
+ * so the build gate doubles as the strict-compiler smoke.
+ */
+function classifyStrictCompilerFailure(output: string): string | null {
+  const signatures: ReadonlyArray<readonly [RegExp, string]> = [
+    [/unclosed|expected a closing tag|did not expect.*closing tag/i, 'unclosed / mismatched tag'],
+    [/unterminated/i, 'unterminated token'],
+    [/unable to assign attributes|invalid attribute/i, 'invalid attribute'],
+    [/unexpected (token|character|eof|end of)/i, 'unexpected token'],
+  ];
+  for (const [pattern, label] of signatures) {
+    if (pattern.test(output)) return label;
+  }
+  return null;
+}
+
+/**
  * Every example with a `build` script must actually build. Examples are
  * teaching artifacts consumed verbatim by new users, and nothing else in
  * CI exercises them — examples/tutorial shipped a page that failed
@@ -86,8 +108,11 @@ describe.sequential('examples build', () => {
         if (result.exitCode !== 0) {
           // Surface the tail of the build log — the assertion alone says
           // nothing about WHICH page or import broke.
-          const tail = (result.stderr || result.stdout).split('\n').slice(-30).join('\n');
-          expect.fail(`examples/${name} build exited ${result.exitCode}:\n${tail}`);
+          const output = result.stderr || result.stdout;
+          const tail = output.split('\n').slice(-30).join('\n');
+          const strict = classifyStrictCompilerFailure(output);
+          const banner = strict ? `STRICT COMPILER (Astro 7): ${strict} — fix the markup in examples/${name}\n` : '';
+          expect.fail(`${banner}examples/${name} build exited ${result.exitCode}:\n${tail}`);
         }
       },
       scaledTimeout(180_000),

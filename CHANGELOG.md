@@ -56,6 +56,22 @@ a CI failure so it can't happen silently again.
   proven-equivalent FactGate form.
 - **API-docs source-of-truth.** Every publishable package is in the TypeDoc roster (guarded), and
   a broken `{@link}` now fails the build (`treatWarningsAsErrors`) — zero dead links, enforced.
+- **Astro 7 (hard-cut).** The workspace targets Astro 7 + `@astrojs/cloudflare` v14 (Vite 8 /
+  Rolldown). `@czap/astro` needs no code changes — the integration hooks, middleware, and
+  `client:*` contracts are unchanged — and the batteries Astro 7 ships are now consumed:
+  - `@czap/astro` — **`czapFetchLayer()` (ADR-0024):** request-time adaptation as a layer in
+    FRONT of Astro via `src/fetch.ts`. Shares the one `createEdgeHostAdapter().resolve()` with
+    `czapMiddleware`; on an opt-in `serveFromEdge` path it serves boundary CSS from the edge and skips Astro
+    entirely. `serializeBoundaryCss` exposed. Astro's `Fetchable` / Hono-compatible.
+  - `@czap/astro` — **Diagnostics → Astro logger bridge.** `bridgeDiagnosticsToAstroLogger` /
+    `installDiagnosticsBridge` route `@czap/*` runtime diagnostics through Astro's logger
+    (structured `astro dev --json` output); wired in `astro:config:setup`.
+  - `@czap/edge` / `@czap/cloudflare` — **active cache invalidation.** `BoundaryCache.invalidateByPath`
+    (purge by content address) + `invalidateByTag` (Astro.cache tag parity, index-backed) close
+    ADR-0017's passive-TTL gap; `KVNamespace` gains optional `delete`/`list`, forwarded by the
+    Cloudflare adapter, degrading to a diagnostic when a provider omits them.
+  - `@czap/cli` — **`czap doctor --target astro`:** an Astro 7 `/_astro/status` dev-server
+    liveness probe, also reachable over MCP.
 
 ### Changed
 

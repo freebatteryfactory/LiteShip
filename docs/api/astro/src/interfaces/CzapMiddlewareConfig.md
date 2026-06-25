@@ -13,6 +13,10 @@ Options accepted by [czapMiddleware](../functions/czapMiddleware.md).
 Omit `edge` to run in pure Client-Hints mode. Pass `edge` when you
 have an `@czap/edge` host adapter (KV cache, theme compilation).
 
+## Extended by
+
+- [`CzapFetchLayerConfig`](CzapFetchLayerConfig.md)
+
 ## Properties
 
 ### detect?

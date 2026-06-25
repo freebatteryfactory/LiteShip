@@ -1,7 +1,7 @@
 {
   "name": "@czap/astro",
   "version": "0.4.0",
-  "description": "Astro 6 integration with adaptive directives",
+  "description": "Astro 7 integration with adaptive directives",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -80,6 +80,11 @@
       "import": "./dist/middleware-entry.js",
       "development": "./src/middleware-entry.ts"
     },
+    "./fetch-layer": {
+      "types": "./dist/fetch-layer.d.ts",
+      "import": "./dist/fetch-layer.js",
+      "development": "./src/fetch-layer.ts"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",
@@ -113,11 +118,11 @@
     "@czap/worker": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=6.0.0",
+    "astro": ">=7.0.0 <8",
     "effect": ">=4.0.0-beta.0"
   },
   "devDependencies": {
-    "astro": "^6.0.0",
+    "astro": "^7.0.0",
     "effect": "4.0.0-beta.32"
   },
   "engines": {

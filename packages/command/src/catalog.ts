@@ -46,7 +46,7 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
         fix: { type: 'boolean' },
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
-        target: { type: 'string', enum: ['cloudflare'] },
+        target: { type: 'string', enum: ['cloudflare', 'astro'] },
       },
     },
     annotations: { group: 'castoff' },

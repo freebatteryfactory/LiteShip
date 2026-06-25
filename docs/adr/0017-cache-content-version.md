@@ -38,3 +38,15 @@ The cache key folds every per-request input to the cached value. The KV key gain
 - [ADR-0003](./0003-content-addressing.md) — the content-addressing doctrine this conditions (amended there).
 - [ADR-0013](./0013-canonical-package.md) — the canonical-bytes kernel the fingerprint builds on.
 - `HOSTING.md` §KV trust boundary; `PACKAGE-SURFACES.md` `@czap/edge`.
+
+## Amendment (0.4.0) — active invalidation
+
+The original Consequences accepted PASSIVE purge: a superseded entry is "orphaned by the new key shape … and TTL-reclaimed." That was the one honest gap — until TTL elapses (or forever, when no TTL is set), a stale-but-still-keyed entry survives, and there was no way to evict it on demand. 0.4.0 closes it with an ACTIVE primitive, paired with Astro 7's stabilized `Astro.cache` / `cache.invalidate`:
+
+- `BoundaryCache.invalidateByPath(boundaryId)` — purge by content address: list-scan `{prefix}:boundary:{boundaryId}:` (every tier × theme × qualifier variant shares that prefix) and delete them. The active form of "mint a new address, wait for TTL."
+- `BoundaryCache.invalidateByTag(tag)` — purge by external label (Astro.cache tag parity), backed by a `{prefix}:tag:{tag}` index that `putCompiledOutputs` maintains when given `tags`.
+
+`KVNamespace.delete`/`list` are OPTIONAL: a provider without them still caches correctly and invalidation degrades to a one-time diagnostic + the original passive TTL behavior — never a silent no-op. The content-addressed key model is unchanged; this adds an eviction verb, it does not alter identity.
+
+- `packages/edge/src/kv-cache.ts` — `invalidateByPath` / `invalidateByTag`, the tag index, the degradation diagnostic.
+- `tests/unit/edge/kv-invalidation.test.ts` — purge-all-variants, list pagination, tag purge + index cleanup, graceful degradation.

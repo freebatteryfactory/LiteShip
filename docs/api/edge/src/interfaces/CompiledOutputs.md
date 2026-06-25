@@ -6,7 +6,7 @@
 
 # Interface: CompiledOutputs
 
-Defined in: [edge/src/kv-cache.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L32)
+Defined in: [edge/src/kv-cache.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L48)
 
 Precompiled outputs for a single boundary at a given tier.
 
@@ -16,7 +16,7 @@ Precompiled outputs for a single boundary at a given tier.
 
 > `readonly` `optional` **aria?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `string`\>\>\>\>
 
-Defined in: [edge/src/kv-cache.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L42)
+Defined in: [edge/src/kv-cache.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L58)
 
 Authored per-state ARIA/data attributes (`@aria` blocks), keyed by state
 name then attribute (`ARIACompileResult.stateAttributes`). Tier-invariant.
@@ -29,7 +29,7 @@ resolves `aria[currentState]` so authored attributes update on crossings.
 
 > `readonly` **containerQueries**: `string`
 
-Defined in: [edge/src/kv-cache.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L35)
+Defined in: [edge/src/kv-cache.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L51)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [edge/src/kv-cache.ts:35](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **css**: `string`
 
-Defined in: [edge/src/kv-cache.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L33)
+Defined in: [edge/src/kv-cache.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L49)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [edge/src/kv-cache.ts:33](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **glsl?**: `CompiledGLSLOutput`
 
-Defined in: [edge/src/kv-cache.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L51)
+Defined in: [edge/src/kv-cache.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L67)
 
 Compiled GLSL cast (`@glsl` blocks): the shader preamble `declarations`
 the runtime prepends to a fragment shader plus the default `uniformValues`
@@ -60,7 +60,7 @@ D0 only carries this field end to end.
 
 > `readonly` **propertyRegistrations**: `string`
 
-Defined in: [edge/src/kv-cache.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L34)
+Defined in: [edge/src/kv-cache.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L50)
 
 ***
 
@@ -68,7 +68,7 @@ Defined in: [edge/src/kv-cache.ts:34](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **wgsl?**: `CompiledWGSLOutput`
 
-Defined in: [edge/src/kv-cache.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L59)
+Defined in: [edge/src/kv-cache.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L75)
 
 Compiled WGSL cast (`@wgsl` blocks): the WebGPU preamble `declarations`
 (state consts + uniform struct + binding) plus the default `bindingValues`

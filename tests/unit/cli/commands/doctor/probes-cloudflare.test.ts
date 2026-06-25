@@ -53,11 +53,11 @@ function writeInstalled(dir: string, name: string, version: string): void {
 }
 
 describe('doctor/probes-cloudflare — probeCloudflareAstro()', () => {
-  it('ok when a >= 6 astro is installed', () => {
+  it('ok when a >= 7 astro is installed', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { astro: '^6' } });
-    writeInstalled(dir, 'astro', '6.0.5');
-    expect(probeCloudflareAstro(dir)).toMatchObject({ status: 'ok', detail: '6.0.5' });
+    writePkg(dir, { dependencies: { astro: '^7' } });
+    writeInstalled(dir, 'astro', '7.0.3');
+    expect(probeCloudflareAstro(dir)).toMatchObject({ status: 'ok', detail: '7.0.3' });
   });
 
   it('fail when astro is not declared or installed', () => {
@@ -66,13 +66,13 @@ describe('doctor/probes-cloudflare — probeCloudflareAstro()', () => {
     expect(probeCloudflareAstro(dir)).toMatchObject({ status: 'fail' });
   });
 
-  it('fail when the installed major is < 6', () => {
+  it('fail when the installed major is < 7', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { astro: '^5' } });
-    writeInstalled(dir, 'astro', '5.9.0');
+    writePkg(dir, { dependencies: { astro: '^6' } });
+    writeInstalled(dir, 'astro', '6.9.0');
     const r = probeCloudflareAstro(dir);
     expect(r.status).toBe('fail');
-    expect(r.detail).toContain('need >= 6');
+    expect(r.detail).toContain('need >= 7');
   });
 
   it('warn (not fail) when package.json is unreadable', () => {
@@ -85,7 +85,7 @@ describe('doctor/probes-cloudflare — probeCloudflareAstro()', () => {
 
   it('warn when declared but the installed manifest is absent', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { astro: '^6' } });
+    writePkg(dir, { dependencies: { astro: '^7' } });
     const r = probeCloudflareAstro(dir);
     expect(r.status).toBe('warn');
     expect(r.detail).toMatch(/not resolved in node_modules/);
@@ -93,7 +93,7 @@ describe('doctor/probes-cloudflare — probeCloudflareAstro()', () => {
 
   it('warn when the installed astro manifest is unreadable', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { astro: '^6' } });
+    writePkg(dir, { dependencies: { astro: '^7' } });
     const d = resolve(dir, 'node_modules', 'astro');
     mkdirSync(d, { recursive: true });
     writeFileSync(resolve(d, 'package.json'), '<<bad>>');
@@ -104,18 +104,18 @@ describe('doctor/probes-cloudflare — probeCloudflareAstro()', () => {
 
   it('fail when the installed version is unparseable (major null)', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { astro: '^6' } });
+    writePkg(dir, { dependencies: { astro: '^7' } });
     writeInstalled(dir, 'astro', 'garbage');
     expect(probeCloudflareAstro(dir).status).toBe('fail');
   });
 });
 
 describe('doctor/probes-cloudflare — probeCloudflareAdapter()', () => {
-  it('ok when a >= 13 adapter is installed', () => {
+  it('ok when a >= 14 adapter is installed', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^13' } });
-    writeInstalled(dir, '@astrojs/cloudflare', '13.0.0');
-    expect(probeCloudflareAdapter(dir)).toMatchObject({ status: 'ok', detail: '13.0.0' });
+    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^14' } });
+    writeInstalled(dir, '@astrojs/cloudflare', '14.0.1');
+    expect(probeCloudflareAdapter(dir)).toMatchObject({ status: 'ok', detail: '14.0.1' });
   });
 
   it('fail when the adapter is missing', () => {
@@ -124,13 +124,13 @@ describe('doctor/probes-cloudflare — probeCloudflareAdapter()', () => {
     expect(probeCloudflareAdapter(dir)).toMatchObject({ status: 'fail' });
   });
 
-  it('warn when the installed major is < 13', () => {
+  it('warn when the installed major is < 14', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^12' } });
-    writeInstalled(dir, '@astrojs/cloudflare', '12.5.0');
+    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^13' } });
+    writeInstalled(dir, '@astrojs/cloudflare', '13.6.1');
     const r = probeCloudflareAdapter(dir);
     expect(r.status).toBe('warn');
-    expect(r.detail).toContain('v13+');
+    expect(r.detail).toContain('v14+');
   });
 
   it('warn when package.json is unreadable', () => {
@@ -141,13 +141,13 @@ describe('doctor/probes-cloudflare — probeCloudflareAdapter()', () => {
 
   it('warn when declared but not resolved in node_modules', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^13' } });
+    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^14' } });
     expect(probeCloudflareAdapter(dir).detail).toMatch(/not resolved in node_modules/);
   });
 
   it('warn when the installed adapter manifest is unreadable', () => {
     const dir = mkTmp();
-    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^13' } });
+    writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^14' } });
     const d = resolve(dir, 'node_modules', '@astrojs', 'cloudflare');
     mkdirSync(d, { recursive: true });
     writeFileSync(resolve(d, 'package.json'), '<<bad>>');
