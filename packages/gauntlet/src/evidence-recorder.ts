@@ -67,6 +67,7 @@ export const FACT_CHANNELS = [
   'fuzzCorpus',
   'proof',
   'composition',
+  'skipSites',
 ] as const;
 
 /** One injected-fact channel name — derived from {@link FACT_CHANNELS}, never re-typed. */

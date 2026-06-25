@@ -429,3 +429,21 @@ export function sanctionedSkipFor(
 export function fileHasSanctionedSkip(file: string): boolean {
   return SANCTIONED_BY_SITE.has(file);
 }
+
+/**
+ * The PRE-FLOOR registry match — the bare `(file, normalized-site)` lookup into the ONE
+ * {@link SANCTIONED_BY_SITE} map, WITHOUT the placeholder / capability-consistency floors
+ * {@link sanctionedSkipFor} layers on top. Returns the enumerated entry whose site matches,
+ * or `undefined` when the file/line is not enumerated.
+ *
+ * This is the seam the FactGate skip-site PRODUCER folds against: the producer emits the
+ * three orthogonal floor inputs as DATA (`carriesPlaceholder`, `sanctionMatched`,
+ * `capabilityConsistent`) so the per-site decision KERNEL composes them with no string/Map
+ * work of its own. Decomposing the decision this way reuses the canonical map (no mirror) —
+ * `sanctionedSkipFor` itself is exactly `match && !placeholder(site) && consistent(site, …)`,
+ * and the FactGate's kernel must reproduce that law over the producer's precomputed booleans.
+ * The shadow-diff test pins the decomposition equivalent to {@link sanctionedSkipFor}.
+ */
+export function sanctionEntryFor(file: string, siteLine: string): SanctionedSkip | undefined {
+  return SANCTIONED_BY_SITE.get(file)?.get(normalizeSiteLine(siteLine));
+}

@@ -2006,9 +2006,24 @@
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "decideSkipSite",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "decideSkips",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "declaredFixProtocolGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "defineFactGate",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "defineGate",
@@ -2032,6 +2047,11 @@
         },
         {
           "name": "factAccessEvidenceDigest",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "factBundleDigest",
           "kind": "function",
           "signature": "(2)"
         },
@@ -2066,7 +2086,22 @@
           "signature": "(1)"
         },
         {
+          "name": "governedFiles",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isFactGate",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "isFinding",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "isGoverned",
           "kind": "function",
           "signature": "(1)"
         },
@@ -2166,6 +2201,11 @@
           "signature": "describe:const,fixtures:const,id:const,level:const,run:function"
         },
         {
+          "name": "noSkippedTestFactGate",
+          "kind": "namespace",
+          "signature": "decide:function,describe:const,evidenceDigest:function,fixtures:const,form:const,id:const,level:const,requires:const,run:function"
+        },
+        {
           "name": "noSkippedTestGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
@@ -2199,6 +2239,21 @@
           "name": "performanceContractsGate",
           "kind": "namespace",
           "signature": "describe:const,evidenceDigest:function,fixtures:const,id:const,level:const,run:function"
+        },
+        {
+          "name": "pickFacts",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "produceSkipSiteFacts",
+          "kind": "function",
+          "signature": "(2)"
+        },
+        {
+          "name": "produceSkipSiteFactsFromContext",
+          "kind": "function",
+          "signature": "(1)"
         },
         {
           "name": "proofPropagationGate",
