@@ -82,8 +82,13 @@ export const PACKAGES: readonly PackageSmokeSpec[] = [
 /** External peer set the consumer fixture installs alongside the packed `@czap/*` tarballs. */
 export const PEER_INSTALLS: readonly string[] = [
   'effect@4.0.0-beta.32',
-  'vite@8.0.0',
-  'astro@6.0.0',
+  // vite must be >= 8.1.0: astro@7 depends on esbuild ^0.28, and vite@8.0.0
+  // peered esbuild ^0.27.0 only (→ strict-peer install failure in the smoke
+  // consumer). vite@8.1.0 widened the peer to `^0.27.0 || ^0.28.0`.
+  'vite@8.1.0',
+  // Must satisfy @czap/astro's `astro >=7.0.0 <8` peer (a stale `astro@6.0.0`
+  // here failed the consumer install under strict-peer once we hard-cut to 7).
+  'astro@7.0.0',
   'react@19.2.0',
   'react-dom@19.2.0',
   'remotion@4.0.440',
