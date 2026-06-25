@@ -37,12 +37,17 @@ edge + astro -> cloudflare
 web + worker -> astro
 scene -> astro                                     (0.4.0: scene->live bridge + the client:svg egress, on the live runtime)
 core + assets -> command -> cli -> mcp-server   (command also -> mcp-server directly)
-@czap/audit                                       (standalone: zero @czap/* deps; consumed by cli + the gauntlet)
+@czap/error                                        (foundational tagged-error leaf; adopted stack-wide, zero @czap/* deps)
+error -> @czap/gauntlet                            (lean rigor engine: gates/findings/assurance; NO typescript — oracles host-injected)
+canonical + error + gauntlet -> @czap/audit        (builds the gauntlet's repo-IR + injects LiteShip oracles; deps typescript)
 ```
 
 `@czap/command` is the shared command registry both `@czap/cli` and `@czap/mcp-server`
-dispatch through — not a direct `cli -> mcp-server` edge. `@czap/audit`
-is a standalone leaf with no `@czap/*` dependencies.
+dispatch through — not a direct `cli -> mcp-server` edge. `@czap/error` is the
+foundational tagged-error leaf the stack adopts (its own zero-`@czap`-dep leaf). The
+lean `@czap/gauntlet` (the rigor engine, ADR-0023) carries no `typescript`; `@czap/audit`
+builds the IR it defines and injects the LiteShip oracles (ADR-0012), so audit deps
+`@czap/canonical` / `@czap/error` / `@czap/gauntlet`.
 
 Plus `crates/czap-compute/`, the Rust `#![no_std]` WASM hot-path kernels.
 
