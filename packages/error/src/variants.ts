@@ -243,7 +243,7 @@ export const IntegrityError = (
  *
  * This is the algebra's CLOSED set. Downstream projects extend by composing,
  * not editing: `type AppError = LiteShipError | MyDomainError`. Every helper
- * in {@link module:contract} operates on the open {@link TaggedError} contract,
+ * in the `contract` module operates on the open {@link TaggedError} contract,
  * so a widened union keeps full `matchTag`/`hasTag`/`raise` support.
  */
 export type LiteShipError =

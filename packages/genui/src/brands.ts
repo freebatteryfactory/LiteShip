@@ -2,7 +2,7 @@
  * Spine-reanchored brand constructors for `@czap/genui`.
  *
  * The {@link ContentAddress} constructor VALIDATES (parse-don't-validate): it
- * throws {@link ValidationError} on input that is not the canonical `fnv1a:` +
+ * throws `ValidationError` on input that is not the canonical `fnv1a:` +
  * 8-lowercase-hex shape, so a branded value proves its shape. `@czap/error` is
  * zero-dep and foundational, so this import introduces no cycle.
  *
@@ -25,7 +25,7 @@ export const isContentAddress = (s: string): s is ContentAddress => CONTENT_ADDR
 
 /**
  * Wrap canonical fnv1a bytes as a spine {@link ContentAddress}.
- * @throws {@link ValidationError} when `value` is not `fnv1a:` + 8 lowercase hex.
+ * @throws `ValidationError` when `value` is not `fnv1a:` + 8 lowercase hex.
  */
 export const ContentAddress = (value: string): ContentAddress => {
   if (!isContentAddress(value)) {

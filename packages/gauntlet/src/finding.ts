@@ -8,7 +8,7 @@
  * last field is what lets an agent act on a Finding without a human in the loop,
  * and what lets a human read the same record and understand it.
  *
- * Findings deliberately mirror the {@link @czap/error} algebra: a `LiteShipError`
+ * Findings deliberately mirror the `@czap/error` algebra: a `LiteShipError`
  * (a tagged failure value) projects to a Finding via {@link fromError}, so the
  * error a gate catches and the finding it reports are the same vocabulary.
  *
@@ -117,7 +117,7 @@ export function isFinding(u: unknown): u is Finding {
 }
 
 /**
- * Project a tagged error (any {@link @czap/error} variant or downstream
+ * Project a tagged error (any `@czap/error` variant or downstream
  * variant) into a Finding — the bridge that keeps the error a gate CATCHES and
  * the finding it REPORTS in one vocabulary. The error's `_tag` seeds the title
  * and the `ruleId` namespace; its `message` becomes the detail.

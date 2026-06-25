@@ -31,7 +31,7 @@
  *     `PropertyAccessExpression` / `ElementAccessExpression`, peels the access chain to its runner
  *     ROOT and recognises a terminal skip/disable member, a conditional member, a passthrough
  *     modifier, a bracket-string member, or a computed (suspicious) member.
- *  3. CONDITIONALITY ({@link classifyConditional}) — for each detected skip, an ANCESTOR walk that
+ *  3. CONDITIONALITY (`classifyConditional`) — for each detected skip, an ANCESTOR walk that
  *     classifies it `skipIf`/`runIf` (the call member), `ternary` (a `?:` arm), `enclosing-if` (the
  *     skip is inside an `if (<cond>) { … }` body — the ancestor walk the token CANNOT do), or
  *     `unconditional`.
@@ -992,7 +992,7 @@ function classifyConditional(node: ts.Node): SkipConditionality {
  *  - every enclosing `?:` condition on the value spine (`cond ? it : it.skip`);
  *  - every enclosing `if (<cond>) { … }` condition up to the function boundary.
  *
- * This is the syntactic counterpart of {@link classifyConditional} that returns the guard NODES rather
+ * This is the syntactic counterpart of `classifyConditional` that returns the guard NODES rather
  * than a classification — the CAPABILITY-GATE LINKER (`@czap/audit`'s capability-link oracle) resolves
  * the symbols of these expressions through the checker to PROVE the skip's guard derives from its
  * declared capability's probe (codex round-8 #1b: conditional ≠ gated-by-the-declared-capability).

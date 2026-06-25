@@ -14,4 +14,4 @@ Wrap canonical fnv1a bytes as a spine [ContentAddress](../variables/ContentAddre
 
 ## Throws
 
-ValidationError when `value` is not `fnv1a:` + 8 lowercase hex.
+`ValidationError` when `value` is not `fnv1a:` + 8 lowercase hex.

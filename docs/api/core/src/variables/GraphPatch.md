@@ -50,7 +50,7 @@ VERSION-AWARE, FAIL-CLOSED reader for an UNTRUSTED GraphPatch value (a patch
 lowered from persisted JSON / a model proposal). [apply](#apply) trusts its
 `patch` argument's `_version`; a host that reconstructs a patch from outside
 the program must run it through THIS gate first, so a future-version
-(`_version: 2`) patch is rejected with ONE canonical tagged [ParseError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)
+(`_version: 2`) patch is rejected with ONE canonical tagged `ParseError`
 — never silently misparsed and replayed as a v1 delta. Scope is intentionally
 the `_tag`/`_version` ENVELOPE only (the deeper op-shape validation lives in
 [validate](#validate), which re-runs structural integrity on the apply result).
@@ -67,7 +67,7 @@ the `_tag`/`_version` ENVELOPE only (the deeper op-shape validation lives in
 
 #### Throws
 
-ParseError (`source: 'GraphPatch'`) when the value is not a
+`ParseError` (`source: 'GraphPatch'`) when the value is not a
   record, carries the wrong `_tag`, or an unsupported `_version`.
 
 ### diff

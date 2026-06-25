@@ -252,7 +252,7 @@ function malformedResolution(
  * classifier uses this as a DELIBERATE policy choice, not as a parse-impossibility:
  * a multi-line value is treated as an inline body and is never fetched. (The bytes
  * the URL parser would have salvaged after stripping the newline are intentionally
- * NOT followed — see {@link isInlineShaderBody}.)
+ * NOT followed — see `isInlineShaderBody`.)
  *
  * This is the ONLY content test the classifier makes. Every in-content CHARACTER
  * heuristic (`{`/`}`/`;`/`fn `/`#version`/…) is unsound because those characters are
@@ -308,7 +308,7 @@ function isInlineShaderBody(value: string): boolean {
  * truth that the shader-integrity classifier ({@link isExternalShaderSource})
  * DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
  *
- *   1. it is NOT a genuine inline shader BODY ({@link isInlineShaderBody}) — i.e. it
+ *   1. it is NOT a genuine inline shader BODY (`isInlineShaderBody`) — i.e. it
  *      is not MULTI-LINE program text (a raw newline). A URL/path CAN contain a space
  *      (`shader file.wgsl`) AND legal-but-shader-looking characters (`shader{1}.wgsl`,
  *      `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), so NEITHER inner

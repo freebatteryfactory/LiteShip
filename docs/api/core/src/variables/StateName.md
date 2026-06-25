@@ -34,4 +34,4 @@ whitespace (e.g. `mobile`, `sm`, `desktop`).
 
 ## Throws
 
-ValidationError when `value` is empty or contains whitespace.
+`ValidationError` when `value` is empty or contains whitespace.

@@ -74,4 +74,12 @@ describe('typedoc roster soundness — every publishable package has API docs (c
       );
     }
   });
+
+  it('every roster entryPoint resolves to a real, non-private package (no stale/typo/private entry sneaks IN)', () => {
+    const pubDirs = new Set(publishablePackages().map((p) => p.dir));
+    const stray = [...rosterDirs()].filter((dir) => !pubDirs.has(dir)).sort();
+    expect(stray, `typedoc.json entryPoints reference non-publishable/nonexistent package dirs: ${stray.join(', ')}`).toEqual(
+      [],
+    );
+  });
 });

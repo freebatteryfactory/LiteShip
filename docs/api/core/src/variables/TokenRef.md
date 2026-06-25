@@ -34,4 +34,4 @@ name, so it must be a non-empty token with no whitespace (e.g. `primary`,
 
 ## Throws
 
-ValidationError when `value` is empty or contains whitespace.
+`ValidationError` when `value` is empty or contains whitespace.

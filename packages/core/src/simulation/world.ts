@@ -91,7 +91,7 @@ export const DEFAULT_SIM_EPOCH_MS = 1_735_689_600_000;
  * function of the declared steps). With no options this is a zero-fault, real-loop,
  * fixed-epoch world — the simplest deterministic substrate.
  *
- * @throws {@link ValidationError} when `seed` is not a finite integer (a
+ * @throws `ValidationError` when `seed` is not a finite integer (a
  * non-integer / non-finite seed cannot drive the 32-bit mulberry32 stream
  * reproducibly — parse-don't-validate, fail loud at the boundary).
  */

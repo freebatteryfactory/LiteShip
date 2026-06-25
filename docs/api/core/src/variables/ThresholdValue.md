@@ -29,4 +29,4 @@ is the real generic invariant.
 
 ## Throws
 
-ValidationError when `value` is not finite.
+`ValidationError` when `value` is not finite.

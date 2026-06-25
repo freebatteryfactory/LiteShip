@@ -34,6 +34,7 @@
   "excludePrivate": true,
   "excludeInternal": true,
   "excludeExternals": true,
+  "treatWarningsAsErrors": true,
   "gitRevision": "main",
   "hideBreadcrumbs": false,
   "hidePageHeader": false,

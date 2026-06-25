@@ -3,7 +3,7 @@
  *
  * Reads ONLY the RFC 8949 §4.2.1 deterministic subset that the sibling
  * encoder (`./cbor.ts`) emits, and rejects everything else with a typed
- * {@link ParseError} (source `'cbor'`, `code` = the reason discriminant,
+ * `ParseError` (source `'cbor'`, `code` = the reason discriminant,
  * `offset` = the byte position). This is the reader the encoder's bytes
  * have lacked: a persisted DocumentGraph (content-addressed via the encoder)
  * can now be re-read without a third-party CBOR library that would accept
@@ -33,12 +33,12 @@
 import { ParseError } from '@czap/error';
 
 /**
- * The reason a canonical-CBOR {@link ParseError} was raised. Carried in the
+ * The reason a canonical-CBOR `ParseError` was raised. Carried in the
  * error's `code` field; kept local to constrain the value at every throw site.
  */
 type CborDecodeErrorReason = 'non_canonical' | 'malformed' | 'unexpected_eof';
 
-/** Raise a canonical-CBOR {@link ParseError}: `code` = reason, `offset` = byte position. */
+/** Raise a canonical-CBOR `ParseError`: `code` = reason, `offset` = byte position. */
 function fail(reason: CborDecodeErrorReason, message: string, offset: number): never {
   throw ParseError('cbor', message, { code: reason, offset });
 }
@@ -264,10 +264,10 @@ function decodeItem(r: Reader): unknown {
  *
  * Strict: any deviation from the RFC 8949 §4.2.1 deterministic subset the
  * encoder emits (non-shortest forms, float16/32, indefinite lengths,
- * out-of-order map keys, trailing bytes) raises a typed {@link ParseError}
+ * out-of-order map keys, trailing bytes) raises a typed `ParseError`
  * (source `'cbor'`, `code` = the reason discriminant).
  *
- * @throws A `@czap/error` {@link ParseError} (`source` `'cbor'`).
+ * @throws A `@czap/error` `ParseError` (`source` `'cbor'`).
  */
 export function decode(bytes: Uint8Array): unknown {
   if (!(bytes instanceof Uint8Array)) {
