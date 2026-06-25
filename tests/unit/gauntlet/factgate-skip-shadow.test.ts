@@ -15,9 +15,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import {
   noSkippedTestGate,
   noSkippedTestFactGate,
+  nodeContext,
   defineGate,
   defineFactGate,
   isFactGate,
@@ -436,6 +439,48 @@ describe('FactGate #6b — shadow-diff over the INJECTED AST detector (condition
       expect(fact.length > 0).toBe(c.expectFindings);
     });
   }
+});
+
+// ── #11 — belt-and-suspenders: real-repo equivalence + producer teeth ────────
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(HERE, '..', '..', '..');
+const GLOBS = ['packages/*/src/**/*.ts'] as const;
+
+describe('FactGate #11 — belt-and-suspenders (real-repo equivalence + producer mutation teeth)', () => {
+  it('SUSPENDER 1 — closure ≡ fact over the ACTUAL repo (the shadow-diff as a real-repo invariant)', () => {
+    // Not a synthetic corpus: the real package source + tests/ tree, with its real sanctioned
+    // skips, prose mentions, and exotic forms. Both gates use the token detector (no host AST
+    // injected here). If the fact gate ever diverges from the battle-tested closure gate on a
+    // real file, this reds — the production-readiness proof the swap-to-production rests on.
+    const ctx = nodeContext(REPO_ROOT, [...GLOBS]);
+    const factCtx = { ...ctx, skipSites: produceSkipSiteFactsFromContext(ctx) };
+    const closure = normSet(noSkippedTestGate.run(ctx));
+    const fact = normSet(noSkippedTestFactGate.run(factCtx));
+    expect(fact).toEqual(closure);
+  });
+
+  it('SUSPENDER 2 — the producer detector is LOAD-BEARING (mutating it changes the verdict — producer teeth)', () => {
+    // The review (MEDIUM-2) noted the fact gate's own mutation tests only the KERNEL; the
+    // producer's detector had no teeth of its own. This is that guard: a WEAKENED producer (a
+    // literal `.skip(`-only detector — the exact pre-AST blind spot) MISSES the alias/bracket/
+    // computed forms the full detector catches, so the fact gate's verdict genuinely DROPS. And
+    // the full producer matches the closure reference. Mutate the producer → the verdict moves.
+    const corpus = SHADOW_CORPORA['exotic + aliased UNSANCTIONED forms']!;
+    const fullCtx = dualCtx(corpus); // token detectSkips — the full detector
+    const literalOnly: SkipDetector = (src: string): readonly SkipMatch[] => {
+      const out: SkipMatch[] = [];
+      src.split('\n').forEach((line, i) => {
+        if (/\b(?:it|test|describe|bench)\.skip\s*\(/.test(line)) out.push({ line: i + 1, form: 'call', token: 'literal.skip' });
+      });
+      return out;
+    };
+    const weakFacts = produceSkipSiteFacts(governedFiles(fullCtx), (f) => fullCtx.readFile(f), literalOnly);
+    const full = normSet(noSkippedTestFactGate.run(fullCtx));
+    const weak = normSet(noSkippedTestFactGate.run({ ...fullCtx, skipSites: weakFacts }));
+    expect(full.length).toBeGreaterThan(weak.length); // the weakened producer misses the exotic forms
+    expect(full).toEqual(normSet(noSkippedTestGate.run(fullCtx))); // the full producer matches the reference
+  });
 });
 
 // ── #6c — governedFiles union + exclusion, differentially (review MEDIUM-1) ───
