@@ -65,7 +65,7 @@ export function probeCloudflareAstro(cwd: string): DoctorCheck {
       label: 'Astro',
       status: 'fail',
       detail: 'astro not in package.json or node_modules',
-      hint: 'Add Astro 6+: pnpm add astro@^6',
+      hint: 'Add Astro 7+: pnpm add astro@^7',
     };
   }
   const installed = readInstalledVersion(cwd, 'astro');
@@ -89,13 +89,13 @@ export function probeCloudflareAstro(cwd: string): DoctorCheck {
   }
   const version = installed.value;
   const major = parseMajor(version);
-  if (major === null || major < 6) {
+  if (major === null || major < 7) {
     return {
       id: 'cloudflare.astro',
       label: 'Astro',
       status: 'fail',
-      detail: `${version} (need >= 6 for @astrojs/cloudflare v13+)`,
-      hint: 'Upgrade: pnpm add astro@^6',
+      detail: `${version} (need >= 7 for @astrojs/cloudflare v14+)`,
+      hint: 'Upgrade: pnpm add astro@^7',
     };
   }
   return { id: 'cloudflare.astro', label: 'Astro', status: 'ok', detail: version };
@@ -118,7 +118,7 @@ export function probeCloudflareAdapter(cwd: string): DoctorCheck {
       label: '@astrojs/cloudflare',
       status: 'fail',
       detail: '@astrojs/cloudflare not in package.json or node_modules',
-      hint: 'Add the adapter: pnpm add @astrojs/cloudflare@^13',
+      hint: 'Add the adapter: pnpm add @astrojs/cloudflare@^14',
     };
   }
   const installed = readInstalledVersion(cwd, '@astrojs/cloudflare');
@@ -142,13 +142,13 @@ export function probeCloudflareAdapter(cwd: string): DoctorCheck {
   }
   const version = installed.value;
   const major = parseMajor(version);
-  if (major === null || major < 13) {
+  if (major === null || major < 14) {
     return {
       id: 'cloudflare.adapter',
       label: '@astrojs/cloudflare',
       status: 'warn',
-      detail: `${version} (Astro 6 requires @astrojs/cloudflare v13+)`,
-      hint: 'Upgrade: pnpm add @astrojs/cloudflare@^13',
+      detail: `${version} (Astro 7 requires @astrojs/cloudflare v14+)`,
+      hint: 'Upgrade: pnpm add @astrojs/cloudflare@^14',
     };
   }
   return { id: 'cloudflare.adapter', label: '@astrojs/cloudflare', status: 'ok', detail: version };

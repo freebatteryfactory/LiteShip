@@ -1,5 +1,5 @@
 /**
- * `@czap/astro` — **LiteShip** on Astro 6: constraint-shaped adaptive
+ * `@czap/astro` — **LiteShip** on Astro 7: constraint-shaped adaptive
  * projection hosted as islands and directives.
  *
  * Provides the Astro `Integration` that registers `@czap/vite`,

@@ -6,7 +6,7 @@
 
 # Interface: BoundaryCache
 
-Defined in: [edge/src/kv-cache.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L107)
+Defined in: [edge/src/kv-cache.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L123)
 
 Content-addressed cache for boundary compilation results keyed by
 tier combination.
@@ -17,7 +17,7 @@ tier combination.
 
 > **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`, `themeFp?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L116)
+Defined in: [edge/src/kv-cache.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L132)
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
@@ -50,11 +50,57 @@ themes (a per-request theme is a real input to the cached CSS).
 
 ***
 
+### invalidateByPath()
+
+> **invalidateByPath**(`boundaryId`): `Promise`\<`number`\>
+
+Defined in: [edge/src/kv-cache.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L154)
+
+Active purge by content address: delete every cached tier × theme variant of
+one boundary (the passive answer is to mint a new `ContentAddress` and wait
+for TTL — see ADR-0017). Requires `KVNamespace.list` + `delete`; without them
+it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
+
+#### Parameters
+
+##### boundaryId
+
+`ContentAddress`
+
+#### Returns
+
+`Promise`\<`number`\>
+
+***
+
+### invalidateByTag()
+
+> **invalidateByTag**(`tag`): `Promise`\<`number`\>
+
+Defined in: [edge/src/kv-cache.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L162)
+
+Active purge by tag (Astro 7 `Astro.cache` tag parity): delete every entry
+stored with `tag` via [putCompiledOutputs](#putcompiledoutputs)'s `tags`, across all of their
+tier/theme variants. Requires `KVNamespace.delete`; without it emits a
+diagnostic and returns 0. Resolves to the number of keys deleted.
+
+#### Parameters
+
+##### tag
+
+`string`
+
+#### Returns
+
+`Promise`\<`number`\>
+
+***
+
 ### putCompiledOutputs()
 
-> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`, `themeFp?`): `Promise`\<`void`\>
+> **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`, `themeFp?`, `tags?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L123)
+Defined in: [edge/src/kv-cache.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L139)
 
 #### Parameters
 
@@ -77,6 +123,10 @@ Defined in: [edge/src/kv-cache.ts:123](https://github.com/heyoub/LiteShip/blob/m
 ##### themeFp?
 
 `string`
+
+##### tags?
+
+readonly `string`[]
 
 #### Returns
 

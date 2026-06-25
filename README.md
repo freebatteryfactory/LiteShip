@@ -110,7 +110,7 @@ Add a host integration when you wire LiteShip into a build pipeline:
 | Package | Description |
 | --- | --- |
 | [`@czap/vite`](./packages/vite) | Vite 8 plugin: `@token` / `@theme` / `@style` / `@quantize` CSS transforms + HMR |
-| [`@czap/astro`](./packages/astro) | Astro 6 integration: `Satellite` component + `client:satellite` directive |
+| [`@czap/astro`](./packages/astro) | Astro 7 integration: `Satellite` component, `client:satellite` directive, `czapFetchLayer` edge layer |
 | [`@czap/edge`](./packages/edge) | CDN-edge: Client Hints, tier detection, KV boundary cache, theme compilation |
 | [`@czap/cloudflare`](./packages/cloudflare) | Cloudflare Workers siteAdapter: KV boundary cache + Astro middleware glue |
 
@@ -141,7 +141,7 @@ Plus `crates/czap-compute/`: a Rust `#![no_std]` WASM crate (spring, boundary, b
 
 ## Frameworks and stacks
 
-LiteShip's primary host integration is Astro 6 (`@czap/astro`). The core authoring layer (`@czap/core`, `@czap/quantizer`, `@czap/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@czap/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Satellite` component, `client:satellite` directive, `czapMiddleware`) are additive — you don't need them to use the authoring + casting layer.
+LiteShip's primary host integration is Astro 7 (`@czap/astro`). The core authoring layer (`@czap/core`, `@czap/quantizer`, `@czap/compiler`) is framework-portable: it produces CSS strings, GLSL preambles, ARIA records, and TypeScript unions from boundary definitions, and any framework can spread those onto its own elements. `@czap/vite` plugs the same `@token` / `@theme` / `@style` / `@quantize` CSS transforms into any Vite-based stack (React, Solid, Svelte, Vue, vanilla). The Astro-specific surfaces (the `Satellite` component, `client:satellite` directive, `czapMiddleware`) are additive — you don't need them to use the authoring + casting layer.
 
 Mobile and PWA: viewport, motion-preference, GPU tier, and network-condition signals all flow through the same boundary primitive. The framework is presentation-focused and doesn't ship offline-first / service-worker / manifest tooling; pair LiteShip with whatever PWA stack your host already uses.
 

@@ -33,6 +33,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0021](./0021-scene-live-bridge.md) | Scene → live bridge (discrete crossing vs continuous tween) | Accepted |
 | [0022](./0022-ai-apply-seam.md) | AI-apply seam: the un-bypassable validate→apply token witness | Accepted |
 | [0023](./0023-gauntlet-rigor-engine.md) | The gauntlet: self-proving rigor engine + authority model | Accepted |
+| [0024](./0024-fetch-layer-edge-adaptation.md) | Fetch layer: request-time adaptation in front of Astro | Accepted |
 
 ## Template
 

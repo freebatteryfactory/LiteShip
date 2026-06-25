@@ -6,7 +6,7 @@
 
 # astro/src
 
-`@czap/astro` — **LiteShip** on Astro 6: constraint-shaped adaptive
+`@czap/astro` — **LiteShip** on Astro 7: constraint-shaped adaptive
 projection hosted as islands and directives.
 
 Provides the Astro `Integration` that registers `@czap/vite`,
@@ -27,6 +27,8 @@ const config = defineConfig({
 
 ## Interfaces
 
+- [AstroLoggerLike](interfaces/AstroLoggerLike.md)
+- [CzapFetchLayerConfig](interfaces/CzapFetchLayerConfig.md)
 - [CzapLocals](interfaces/CzapLocals.md)
 - [CzapMiddlewareConfig](interfaces/CzapMiddlewareConfig.md)
 - [IntegrationConfig](interfaces/IntegrationConfig.md)
@@ -37,14 +39,20 @@ const config = defineConfig({
 ## Type Aliases
 
 - [CrossOriginEmbedderPolicy](type-aliases/CrossOriginEmbedderPolicy.md)
+- [CzapFetchLayer](type-aliases/CzapFetchLayer.md)
+- [FetchLayerNext](type-aliases/FetchLayerNext.md)
 
 ## Functions
 
+- [bridgeDiagnosticsToAstroLogger](functions/bridgeDiagnosticsToAstroLogger.md)
+- [czapFetchLayer](functions/czapFetchLayer.md)
 - [czapMiddleware](functions/czapMiddleware.md)
+- [installDiagnosticsBridge](functions/installDiagnosticsBridge.md)
 - [integration](functions/integration.md)
 - [resolveInitialState](functions/resolveInitialState.md)
 - [resolveInitialStateFallback](functions/resolveInitialStateFallback.md)
 - [satelliteAttrs](functions/satelliteAttrs.md)
+- [serializeBoundaryCss](functions/serializeBoundaryCss.md)
 
 ## References
 

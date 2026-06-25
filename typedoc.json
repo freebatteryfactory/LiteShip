@@ -41,6 +41,8 @@
   "hideGenerator": true,
   "externalSymbolLinkMappings": {
     "@czap/core": {
+      "Diagnostics": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
+      "DiagnosticsSink": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
       "Boundary.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
       "Token.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
       "Theme.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",

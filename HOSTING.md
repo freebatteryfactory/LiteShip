@@ -11,7 +11,7 @@ For the security architecture this checklist enforces, see [SECURITY.md](./SECUR
 | Node | `>= 22` | Built-in `crypto.subtle`, modern stream primitives, `import.meta.dirname` |
 | pnpm | `>= 10` | Workspace protocol behavior, `pnpm-workspace.yaml` settings discipline |
 | Vite | `8.x` | The `@czap/vite` plugin targets Vite 8's plugin API |
-| Astro | `6.x` | The `@czap/astro` integration targets Astro 6's middleware + bootstrap surface |
+| Astro | `7.x` | The `@czap/astro` integration targets Astro 7's middleware + bootstrap surface |
 
 ## Required CSP directives
 
@@ -89,7 +89,7 @@ Note that the hostname blocklist rejects literal private-IP strings (`127.0.0.1`
 
 ## Cloudflare Workers
 
-LiteShip runs on Cloudflare Workers via Astro 6 + `@astrojs/cloudflare` v13+. The `@czap/cloudflare` package wires Workers KV to `@czap/edge` boundary caching through `@czap/astro` middleware.
+LiteShip runs on Cloudflare Workers via Astro 7 + `@astrojs/cloudflare` v14+. The `@czap/cloudflare` package wires Workers KV to `@czap/edge` boundary caching through `@czap/astro` middleware.
 
 ### Minimum versions (Cloudflare-specific)
 
@@ -97,12 +97,12 @@ On top of Node `>= 22` and pnpm `>= 10` from the table above:
 
 | Tool | Version | Notes |
 | --- | --- | --- |
-| Astro | `6.3+` | Required by `@astrojs/cloudflare` v13 peer |
-| `@astrojs/cloudflare` | `13+` | workerd in `astro dev` via `@cloudflare/vite-plugin` |
+| Astro | `7.x` | Required by `@astrojs/cloudflare` v14 peer |
+| `@astrojs/cloudflare` | `14+` | workerd in `astro dev` via `@cloudflare/vite-plugin` |
 | Wrangler | `4.x` | Deploy + local KV preview |
 | `@czap/cloudflare` | workspace / npm | siteAdapter + middleware glue |
 
-**Vite note:** LiteShip's `@czap/vite` plugin targets Vite 8. Astro 6 bundles Vite 7 internally for its toolchain; both coexist — the Cloudflare adapter owns the workerd dev server.
+**Vite note:** LiteShip's `@czap/vite` plugin targets Vite 8. Astro 7 bundles Vite 8 internally (Rolldown-backed), so `@czap/vite` and Astro now share the Vite 8 major — the Cloudflare adapter owns the workerd dev server.
 
 ### Quick start
 
@@ -149,7 +149,7 @@ Declare KV for boundary caching and Node.js compatibility:
 }
 ```
 
-Astro 6 may also emit `dist/server/wrangler.json` on build; keep your source `wrangler.jsonc` as the deploy source of truth when you need custom bindings.
+Astro 7 may also emit `dist/server/wrangler.json` on build; keep your source `wrangler.jsonc` as the deploy source of truth when you need custom bindings.
 
 ### Middleware (KV wiring)
 
@@ -177,7 +177,7 @@ The build also emits `czap-boundary-manifest.json` into the output directory (vi
 
 **Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
 
-Bindings are read from `cloudflare:workers` `env` at request time (Astro 6 removed `Astro.locals.runtime`).
+Bindings are read from the `cloudflare:workers` `env` at request time.
 
 ### Preflight
 
@@ -185,7 +185,7 @@ Bindings are read from `cloudflare:workers` `env` at request time (Astro 6 remov
 czap doctor --target cloudflare --ci
 ```
 
-Run from your app directory. Checks Astro 6, `@astrojs/cloudflare` v13+, Wrangler, wrangler config, and output mode.
+Run from your app directory. Checks Astro 7, `@astrojs/cloudflare` v14+, Wrangler, wrangler config, and output mode.
 
 ### Deploy
 

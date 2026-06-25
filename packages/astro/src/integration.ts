@@ -1,5 +1,5 @@
 /**
- * Astro 6 `AstroIntegration` for czap.
+ * Astro 7 `AstroIntegration` for czap.
  *
  * Registers the `@czap/vite` plugin, injects the detect/boot scripts,
  * registers every client directive (`client:satellite`,
@@ -62,7 +62,7 @@ export interface IntegrationConfig {
   readonly detect?: boolean;
   /**
    * @deprecated No-op. Server Islands is stable in Astro (since v5); there is
-   * no experimental flag to toggle on Astro 6. Using `server:defer` with a
+   * no experimental flag to toggle on Astro 7. Using `server:defer` with a
    * configured adapter is all that's needed — czap does nothing here. This
    * option is retained only so existing configs keep type-checking; it will
    * be removed in a future major.

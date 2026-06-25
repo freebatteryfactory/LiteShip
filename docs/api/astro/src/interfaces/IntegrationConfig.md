@@ -6,7 +6,7 @@
 
 # Interface: IntegrationConfig
 
-Defined in: [astro/src/integration.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L43)
+Defined in: [astro/src/integration.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L44)
 
 Options passed to [integration](../functions/integration.md) from `astro.config.mjs`. Every
 field is optional; omitted features fall back to conservative
@@ -19,7 +19,7 @@ opt-in).
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/integration.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L61)
+Defined in: [astro/src/integration.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L62)
 
 Enable the inline detect script (default `true`).
 
@@ -29,7 +29,7 @@ Enable the inline detect script (default `true`).
 
 > `readonly` `optional` **exclude?**: readonly `string`[]
 
-Defined in: [astro/src/integration.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L59)
+Defined in: [astro/src/integration.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L60)
 
 Route globs on which czap's costly runtime scripts (detect, the GPU probe,
 wasm, the dev inspector) should NOT run. For embedding czap alongside another
@@ -49,7 +49,7 @@ runs everywhere).
 
 > `readonly` `optional` **gpu?**: `object`
 
-Defined in: [astro/src/integration.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L73)
+Defined in: [astro/src/integration.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L74)
 
 GPU runtime configuration.
 
@@ -67,7 +67,7 @@ GPU runtime configuration.
 
 > `readonly` `optional` **inspector?**: `boolean`
 
-Defined in: [astro/src/integration.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L90)
+Defined in: [astro/src/integration.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L91)
 
 Dev-only boundary inspector (default enabled in `astro dev`). Registered
 as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
@@ -79,7 +79,7 @@ as an Astro dev-toolbar app — toggle it from the toolbar icon. Pass
 
 > `readonly` `optional` **llm?**: `object`
 
-Defined in: [astro/src/integration.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L84)
+Defined in: [astro/src/integration.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L85)
 
 LLM streaming runtime configuration.
 
@@ -93,7 +93,7 @@ LLM streaming runtime configuration.
 
 > `readonly` `optional` **middleware?**: `boolean`
 
-Defined in: [astro/src/integration.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L100)
+Defined in: [astro/src/integration.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L101)
 
 Opt in (`true`) to auto-register a zero-config capability-detection
 middleware, so a consumer needs no `src/middleware.ts` for the common case;
@@ -109,7 +109,7 @@ refines the same locals. Default off (wire middleware yourself).
 
 > `readonly` `optional` **security?**: `object`
 
-Defined in: [astro/src/integration.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L102)
+Defined in: [astro/src/integration.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L103)
 
 Security policies applied to runtime fetch/HTML boundaries.
 
@@ -127,12 +127,12 @@ Security policies applied to runtime fetch/HTML boundaries.
 
 > `readonly` `optional` **serverIslands?**: `boolean`
 
-Defined in: [astro/src/integration.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L69)
+Defined in: [astro/src/integration.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L70)
 
 #### Deprecated
 
 No-op. Server Islands is stable in Astro (since v5); there is
-no experimental flag to toggle on Astro 6. Using `server:defer` with a
+no experimental flag to toggle on Astro 7. Using `server:defer` with a
 configured adapter is all that's needed — czap does nothing here. This
 option is retained only so existing configs keep type-checking; it will
 be removed in a future major.
@@ -143,7 +143,7 @@ be removed in a future major.
 
 > `readonly` `optional` **stream?**: `object`
 
-Defined in: [astro/src/integration.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L82)
+Defined in: [astro/src/integration.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L83)
 
 SSE streaming runtime configuration.
 
@@ -157,7 +157,7 @@ SSE streaming runtime configuration.
 
 > `readonly` `optional` **vite?**: `PluginConfig`
 
-Defined in: [astro/src/integration.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L45)
+Defined in: [astro/src/integration.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L46)
 
 Overrides passed through to `@czap/vite`'s plugin.
 
@@ -167,7 +167,7 @@ Overrides passed through to `@czap/vite`'s plugin.
 
 > `readonly` `optional` **wasm?**: `object`
 
-Defined in: [astro/src/integration.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L71)
+Defined in: [astro/src/integration.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L72)
 
 WASM runtime configuration.
 
@@ -185,7 +185,7 @@ WASM runtime configuration.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/integration.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L80)
+Defined in: [astro/src/integration.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/integration.ts#L81)
 
 Off-thread worker runtime configuration. `coep` selects the
 Cross-Origin-Embedder-Policy value emitted with COOP (default
