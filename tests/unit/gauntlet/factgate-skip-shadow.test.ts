@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest';
 import {
   noSkippedTestGate,
   noSkippedTestFactGate,
+  defineGate,
   defineFactGate,
   isFactGate,
   factBundleDigest,
@@ -30,11 +31,15 @@ import {
   runGates,
   makeRepoIR,
   memoryContext,
+  type Gate,
   type GateContext,
   type Finding,
   type FactBundle,
   type SkipSiteFact,
   type SkipSiteFacts,
+  type SkipMatch,
+  type SkipConditionality,
+  type SkipDetector,
 } from '@czap/gauntlet';
 
 // ── scaffolding ──────────────────────────────────────────────────────────────
@@ -50,6 +55,46 @@ function dualCtx(corpus: Record<string, string>): GateContext {
     readFile: (p: string): string | undefined => corpus[p],
     files: (): readonly string[] => Object.keys(corpus),
     allFiles: (): readonly string[] => Object.keys(corpus),
+  };
+  return { ...base, skipSites: produceSkipSiteFactsFromContext(base) };
+}
+
+/**
+ * A context whose `files()` and `allFiles()` are DISJOINT (the real nodeContext shape: IR
+ * source is judged, the tests/ tree rides allFiles), with the pack produced onto it. Exercises
+ * `governedFiles`' union + the `tests/generated/` exclusion — the duplicated-helper surface the
+ * `dualCtx` (files==allFiles) corpora never hit (review finding MEDIUM-1).
+ */
+function splitCtx(judged: Record<string, string>, extra: Record<string, string>): GateContext {
+  const corpus: Record<string, string> = { ...judged, ...extra };
+  const base: GateContext = {
+    repoRoot: '/virtual',
+    readFile: (p: string): string | undefined => corpus[p],
+    files: (): readonly string[] => Object.keys(judged),
+    allFiles: (): readonly string[] => Object.keys(corpus),
+  };
+  return { ...base, skipSites: produceSkipSiteFactsFromContext(base) };
+}
+
+/** A STUB "AST" detector that tags every `it.skip(` line with a fixed conditionality. */
+function stubAstDetector(conditional: SkipConditionality): SkipDetector {
+  return (source: string): readonly SkipMatch[] => {
+    const out: SkipMatch[] = [];
+    source.split('\n').forEach((line, i) => {
+      if (/\bit\.skip\s*\(/.test(line)) out.push({ line: i + 1, form: 'call', token: 'it.skip', conditional });
+    });
+    return out;
+  };
+}
+
+/** A context with an injected (stub AST) skipDetector — BOTH gates consult it — and the pack produced with it. */
+function astDualCtx(corpus: Record<string, string>, detector: SkipDetector): GateContext {
+  const base: GateContext = {
+    repoRoot: '/virtual',
+    readFile: (p: string): string | undefined => corpus[p],
+    files: (): readonly string[] => Object.keys(corpus),
+    allFiles: (): readonly string[] => Object.keys(corpus),
+    skipDetector: detector,
   };
   return { ...base, skipSites: produceSkipSiteFactsFromContext(base) };
 }
@@ -307,5 +352,90 @@ describe('FactGate #10 — the FactPack is pure, serializable data (no escape ha
     expect(governedFiles(empty)).toEqual([]);
     // memoryContext is also accepted (no skipSites) → silent, not a crash.
     expect(noSkippedTestFactGate.run(memoryContext({}))).toEqual([]);
+  });
+});
+
+// ── #1b — the fact discriminant is UNFORGEABLE (review CRITICAL-1) ────────────
+
+describe('FactGate #1b — isFactGate is a boundary, not an honor-system string check', () => {
+  it('defineGate REJECTS a hand-set form:fact (only defineFactGate may mint a fact gate)', () => {
+    expect(() =>
+      defineGate({
+        id: 'x/forge',
+        level: 'L2',
+        describe: 'a closure gate falsely claiming the data-only contract',
+        form: 'fact',
+        run: (): readonly Finding[] => [],
+        fixtures: noSkippedTestFactGate.fixtures,
+      }),
+    ).toThrow();
+  });
+
+  it('isFactGate REJECTS a raw object claiming form:fact (it lacks the brand)', () => {
+    // The exact forgery the review built: a context-reading run wearing the fact discriminant.
+    const forgery = {
+      id: 'x/forge',
+      level: 'L2',
+      describe: 'd',
+      form: 'fact',
+      requires: ['skipSites'],
+      decide: (): readonly Finding[] => [],
+      run: (ctx: GateContext): readonly Finding[] => {
+        ctx.readFile('secret.ts'); // would smuggle — but this is NOT a fact gate
+        return [];
+      },
+      fixtures: noSkippedTestFactGate.fixtures,
+    } as unknown as Gate;
+    expect(forgery.form).toBe('fact'); // it CLAIMS the discriminant…
+    expect(isFactGate(forgery)).toBe(false); // …but isFactGate is not fooled
+  });
+
+  it('isFactGate ACCEPTS the genuinely-minted gate (and a derived spread stays branded)', () => {
+    expect(isFactGate(noSkippedTestFactGate)).toBe(true);
+    const derived = { ...noSkippedTestFactGate, describe: 'renamed' } as Gate;
+    expect(isFactGate(derived)).toBe(true); // the enumerable brand survives the spread
+  });
+});
+
+// ── #6b — the AST (detectSkipsAST) path is exercised (review HIGH-1) ──────────
+
+describe('FactGate #6b — shadow-diff over the INJECTED AST detector (conditional ≠ undefined)', () => {
+  const cases: { name: string; conditional: SkipConditionality; corpus: Record<string, string>; expectFindings: boolean }[] = [
+    // The sanctioned ffmpeg site, but the AST proves it UNCONDITIONAL → non-sanctionable → BLOCK.
+    { name: 'sanctioned site proven unconditional → both block', conditional: 'unconditional', corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE }, expectFindings: true },
+    // The same site proven enclosing-if conditional → consistent → ALLOW.
+    { name: 'sanctioned site proven enclosing-if → both allow', conditional: 'enclosing-if', corpus: { [SANCTIONED_FILE]: SANCTIONED_LINE }, expectFindings: false },
+    // An unsanctioned conditional skip → not enumerated → BLOCK regardless of conditionality.
+    { name: 'unsanctioned conditional skip → both block', conditional: 'enclosing-if', corpus: { 'tests/unit/widget/cond.test.ts': "it.skip('gated but unenumerated', () => {});\n" }, expectFindings: true },
+  ];
+  for (const c of cases) {
+    it(`closure ≡ fact on the AST path: ${c.name}`, () => {
+      const ctx = astDualCtx(c.corpus, stubAstDetector(c.conditional));
+      const closure = normSet(noSkippedTestGate.run(ctx));
+      const fact = normSet(noSkippedTestFactGate.run(ctx));
+      expect(fact).toEqual(closure);
+      expect(fact.length > 0).toBe(c.expectFindings);
+    });
+  }
+});
+
+// ── #6c — governedFiles union + exclusion, differentially (review MEDIUM-1) ───
+
+describe('FactGate #6c — shadow-diff over DISJOINT files()/allFiles() + tests/generated exclusion', () => {
+  it('both gates union judged∪allFiles AND exclude tests/generated identically', () => {
+    const ctx = splitCtx(
+      { 'packages/widget/src/widget.ts': 'export const x = 1;\n' }, // judged (IR) source — no skips
+      {
+        'tests/unit/widget/probe.test.ts': "it.skip('out-of-IR unsanctioned skip', () => {});\n", // governed via allFiles
+        'tests/generated/capsule.test.ts': "it.skip('generated — the plumb-gate owns this', () => {});\n", // EXCLUDED
+      },
+    );
+    const closure = normSet(noSkippedTestGate.run(ctx));
+    const fact = normSet(noSkippedTestFactGate.run(ctx));
+    expect(fact).toEqual(closure);
+    // Exactly the out-of-IR tests/ skip is flagged; the tests/generated one is excluded by BOTH.
+    expect(fact.length).toBe(1);
+    expect(fact[0]).toContain('tests/unit/widget/probe.test.ts');
+    expect(JSON.stringify(fact)).not.toContain('tests/generated');
   });
 });

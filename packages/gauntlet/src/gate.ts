@@ -473,6 +473,16 @@ export function defineGate(spec: Gate): Gate {
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
   }
+  // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (see
+  // {@link FACT_GATE_BRAND}). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
+  // forgery — it would carry an arbitrary context-reading `run` while CLAIMING the data-only
+  // contract. Reject it LOUD: a fact gate must be minted by {@link defineFactGate}.
+  if (spec.form === 'fact') {
+    throw ValidationError(
+      'defineGate',
+      `gate "${spec.id}" sets form:'fact' but was built with defineGate — a fact gate must be constructed with defineFactGate (the constructor that synthesizes the data-only run + brands the gate). defineGate cannot mint the fact discriminant.`,
+    );
+  }
   const f = spec.fixtures;
   if (f === undefined || f.red === undefined || f.green === undefined || f.mutation === undefined) {
     throw ValidationError(
@@ -485,6 +495,16 @@ export function defineGate(spec: Gate): Gate {
   }
   return spec;
 }
+
+/**
+ * The UNFORGEABLE FactGate brand — a module-private symbol stamped ONLY by
+ * {@link defineFactGate}. {@link isFactGate} checks THIS, never the public `form` string,
+ * so a hand-built `{ form: 'fact', run: ctx => … }` forgery (which `defineGate` already
+ * rejects, but a raw object literal could still claim) cannot pass as a fact gate. This is
+ * the difference between a discriminant that is "honor-system" and one that is structural:
+ * the brand cannot be set from outside this module, so `isFactGate` IS a boundary.
+ */
+const FACT_GATE_BRAND: unique symbol = Symbol('czap.gauntlet.factGate');
 
 /** The author surface of a {@link FactGate} — context-free by construction (no `run`). */
 export interface FactGateSpec {
@@ -509,7 +529,17 @@ export interface FactGateSpec {
 export function pickFacts(context: GateContext, requires: readonly FactKind[]): FactBundle {
   const bundle: { skipSites?: SkipSiteFacts } = {};
   for (const kind of requires) {
-    if (kind === 'skipSites') bundle.skipSites = context.skipSites;
+    switch (kind) {
+      case 'skipSites':
+        bundle.skipSites = context.skipSites;
+        break;
+      default: {
+        // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
+        // (the `never` assignment), never silently drops the channel.
+        const _exhaustive: never = kind;
+        void _exhaustive;
+      }
+    }
   }
   return bundle;
 }
@@ -523,7 +553,19 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
  */
 export function factBundleDigest(context: GateContext, requires: readonly FactKind[]): string {
   const perKind = [...requires].sort().map((kind): readonly [string, string] => {
-    const fact: unknown = kind === 'skipSites' ? context.skipSites : undefined;
+    let fact: unknown;
+    switch (kind) {
+      case 'skipSites':
+        fact = context.skipSites;
+        break;
+      default: {
+        // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a
+        // silent `undefined` fold (which would key a PRESENT channel as absent: a stale-serve bug).
+        const _exhaustive: never = kind;
+        void _exhaustive;
+        fact = undefined;
+      }
+    }
     return [kind, factAccessEvidenceDigest(kind, fact)];
   });
   return stableEvidenceDigest(perKind);
@@ -562,7 +604,7 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   const decide = spec.decide;
   const run = (context: GateContext): readonly Finding[] => decide(pickFacts(context, requires));
   const evidenceDigest = (context: GateContext): string => factBundleDigest(context, requires);
-  return {
+  const gate: FactGate = {
     id: spec.id,
     level: spec.level,
     describe: spec.describe,
@@ -574,11 +616,22 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     evidenceDigest,
     fixtures: spec.fixtures,
   };
+  // Stamp the unforgeable brand (enumerable, so a derived `{ ...factGate, … }` — e.g. the
+  // mutation operator — stays branded). Only this module can set it; that is what makes
+  // {@link isFactGate} a real boundary rather than an honor-system string check.
+  Object.defineProperty(gate, FACT_GATE_BRAND, { value: true, enumerable: true, configurable: false, writable: false });
+  return gate;
 }
 
-/** Narrow a {@link Gate} to the {@link FactGate} variant (the `form: 'fact'` discriminant). */
+/**
+ * Narrow a {@link Gate} to the {@link FactGate} variant — by the UNFORGEABLE {@link FACT_GATE_BRAND},
+ * NOT the public `form` string. A hand-built `{ form: 'fact', run: ctx => readSecret(ctx) }`
+ * forgery (which `defineGate` rejects outright, but a raw object could still claim) is NOT a fact
+ * gate: it lacks the brand only {@link defineFactGate} can stamp. So a caller that trusts
+ * `isFactGate` to mean "this gate's decision cannot read undeclared evidence" is not being lied to.
+ */
 export function isFactGate(gate: Gate): gate is FactGate {
-  return gate.form === 'fact';
+  return (gate as { readonly [FACT_GATE_BRAND]?: boolean })[FACT_GATE_BRAND] === true;
 }
 
 /**
