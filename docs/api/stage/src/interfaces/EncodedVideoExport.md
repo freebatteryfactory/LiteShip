@@ -34,8 +34,8 @@ The real encoded video the injected [FrameEncoder](../type-aliases/FrameEncoder.
 
 ### node
 
-> `readonly` **node**: `ExportNode`
+> `readonly` **node**: [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:385](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L385)
 
-The sealed video ExportNode; its `artifactDigest` pins the byte digest.
+The sealed video [ExportNode](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts); its `artifactDigest` pins the byte digest.

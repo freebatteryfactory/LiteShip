@@ -19,7 +19,7 @@ One detected skip — its 1-based line, the form it took, and the matched token.
 Defined in: [gauntlet/src/gates/skip-detect.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-detect.ts#L153)
 
 The CONDITIONALITY classification — present ONLY when a structural (AST) detector produced
-this match (detectSkipsAST); the token [detectSkips](../functions/detectSkips.md) omits it (`undefined`).
+this match (`detectSkipsAST`); the token [detectSkips](../functions/detectSkips.md) omits it (`undefined`).
 When present it is the SOUND F2 discriminant: an `'unconditional'` skip is a non-sanctionable
 placeholder regardless of its title; any other value is a signable capability gate.
 

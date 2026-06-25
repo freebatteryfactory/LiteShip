@@ -232,8 +232,8 @@ export type SiteConditionality = 'skipIf' | 'runIf' | 'ternary' | 'enclosing-if'
  *
  *  - TOKEN (FALLBACK) PATH — when `conditional` is `undefined` (the lean token `detectSkips`, no AST),
  *    the original heuristic stands: consistent iff the site is a visible CONDITIONAL FORM
- *    ({@link siteIsConditionalForm}) OR its text references the capability's domain keywords
- *    ({@link CAPABILITY_KEYWORDS}). This is the documented best-effort the token level can manage.
+ *    (`siteIsConditionalForm`) OR its text references the capability's domain keywords
+ *    (`CAPABILITY_KEYWORDS`). This is the documented best-effort the token level can manage.
  *
  * Case-insensitive; pure + dependency-free. An UNKNOWN capability (not in the map — the type is
  * closed, so never) conservatively requires the conditional form on the token path.

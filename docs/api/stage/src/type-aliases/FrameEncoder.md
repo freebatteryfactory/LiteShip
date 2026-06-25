@@ -10,7 +10,7 @@
 
 Defined in: [stage/src/dual-export.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L94)
 
-The byte-encode seam: turn the produced per-frame CompositeState
+The byte-encode seam: turn the produced per-frame [CompositeState](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 snapshots into real encoded video bytes. Stage's CORE owns no encoder — this
 is INJECTED at the call site so the pure graph-walk never imports a codec:
 
@@ -23,7 +23,7 @@ Both are real backends of this one shape; neither lives in `dual-export.ts`.
 
 ### frames
 
-readonly `CompositeState`[]
+readonly [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)[]
 
 ### config
 

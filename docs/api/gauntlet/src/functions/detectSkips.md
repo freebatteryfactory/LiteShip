@@ -14,7 +14,7 @@ Scan ONE file's text for EVERY skip form, over [codeOnly](codeOnly.md) text (com
 string literals blanked) so a prose/fixture mention of `it.skip` is never flagged. Returns
 one [SkipMatch](../interfaces/SkipMatch.md) per matched line/form, de-duplicated. PURE — no I/O.
 
-FILE-AWARE: a per-file resolveAliases PRE-PASS runs first (over the same `codeOnly`
+FILE-AWARE: a per-file `resolveAliases` PRE-PASS runs first (over the same `codeOnly`
 text) so a runner rebind / import-rename / `.skip`-capture / destructured skip member is
 resolved to a real root BEFORE the line-by-line token walk — closing the codex round-4
 aliased-root evasion. See the module docstring for the resolved vs flagged vs undecidable

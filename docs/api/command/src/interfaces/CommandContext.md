@@ -408,14 +408,14 @@ therefore available to BOTH the CLI and the MCP host — an agent can call
 
 ### runGauntlet?
 
-> `readonly` `optional` **runGauntlet?**: (`globs?`) => `Promise`\<`GauntletResult`\>
+> `readonly` `optional` **runGauntlet?**: (`globs?`) => `Promise`\<[`GauntletResult`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
 
 Defined in: [command/src/registry.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L164)
 
 Run the PURE gauntlet engine fold (`litelaunchGauntlet`) over the repo at
 `cwd`, IN-PROCESS — no subprocess, no terminal streaming. Binds the built-in
 LiteShip gates, the committed assurance map, and the committed waivers, runs
-the authority ratchet, and returns the structured GauntletResult
+the authority ratchet, and returns the structured [GauntletResult](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)
 (findings + per-gate outcomes + a single blocking verdict). This is the
 tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
 FOLD, whereas the CLI-owned `gauntlet` command spawns the 28-phase
@@ -437,7 +437,7 @@ readonly `string`[]
 
 #### Returns
 
-`Promise`\<`GauntletResult`\>
+`Promise`\<[`GauntletResult`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
 
 ***
 

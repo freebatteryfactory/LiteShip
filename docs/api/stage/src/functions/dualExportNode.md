@@ -31,7 +31,7 @@ Stage's core imports no codec: `encode` is injected. In node, wire
 
 ### graph
 
-`DocumentGraph`
+[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ### encode
 

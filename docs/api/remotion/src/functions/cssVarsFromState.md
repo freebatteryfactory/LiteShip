@@ -20,7 +20,7 @@ or a Remotion `style` prop -- every key is a CSS variable name (e.g.
 
 ### state
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 A composite state produced by a `VideoRenderer` frame.
 

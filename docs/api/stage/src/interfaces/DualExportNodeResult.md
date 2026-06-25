@@ -19,7 +19,7 @@ PLUS the real encoded video the injected [FrameEncoder](../type-aliases/FrameEnc
 
 ### astro
 
-> `readonly` **astro**: `ExportNode`
+> `readonly` **astro**: [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:444](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L444)
 
@@ -100,7 +100,7 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 ### video
 
-> `readonly` **video**: `ExportNode`
+> `readonly` **video**: [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:446](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L446)
 

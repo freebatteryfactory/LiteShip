@@ -49,7 +49,7 @@ import type { FileId } from './repo-ir.js';
  *
  * A TypeScript type cannot be reflected into a runtime array, so this tuple is the
  * canonical runtime list; it is PINNED to {@link GateContext} by the compile-time
- * {@link _factChannelsExhaustive} conformance assertion below — adding a fact key to
+ * `_factChannelsExhaustive` conformance assertion below — adding a fact key to
  * `GateContext` WITHOUT adding it here (or vice versa) is a BUILD ERROR, so the list
  * cannot silently drift from the context shape. This closes the residual where the
  * recorder hand-maintained a copy that could fall behind the context.

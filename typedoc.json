@@ -60,12 +60,18 @@
       "FaultDecl.trigger": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts",
       "EscalationSubject": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
       "mintValidated": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts",
-      "__type.evaluateResult": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary-f32.ts"
+      "__type.evaluateResult": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary-f32.ts",
+      "ComponentNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "ExportNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "ProjectionNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "DocumentGraph": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "CompositeState": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts"
     },
     "@czap/error": {
       "ValidationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
       "ParseError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
-      "InvariantViolationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts"
+      "InvariantViolationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
+      "HostCapabilityError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts"
     },
     "@czap/gauntlet": {
       "RepoIR": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
@@ -76,7 +82,13 @@
       "TaintFacts.interproceduralDepth": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
       "MutationFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts",
       "McdcFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
-      "McdcConditionOutcome": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts"
+      "McdcConditionOutcome": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
+      "Finding": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts",
+      "GauntletResult": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
+      "CapabilityLinkFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
+    },
+    "@czap/command": {
+      "AuditEngineFinding": "https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts"
     },
     "@czap/_spine": {
       "GeneratedUINode": "https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts",

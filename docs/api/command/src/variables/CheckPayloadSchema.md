@@ -11,7 +11,7 @@
 Defined in: [command/src/commands/check.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check.ts#L77)
 
 Structured payload returned by `check` — the WELD-2 Finding-carrying shape. The
-`findings` ARE plain JSON-serializable Finding data (ruleId, severity,
+`findings` ARE plain JSON-serializable [Finding](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts) data (ruleId, severity,
 level, title, detail, location?, remediation?), so they ride the
 `CapsuleCommandResult` payload straight through the MCP dispatch's
 `structuredContent` and the CLI receipt with no separate adapter. `blocked`

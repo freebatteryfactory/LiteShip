@@ -24,7 +24,7 @@ node's digest is a content address OF those bytes, not just the frames.
 
 ### graph
 
-`DocumentGraph`
+[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ### encode
 

@@ -21,4 +21,4 @@ superset on exactly that one field.
 
 ### findings
 
-> `readonly` **findings**: readonly `Finding`[]
+> `readonly` **findings**: readonly [`Finding`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts)[]

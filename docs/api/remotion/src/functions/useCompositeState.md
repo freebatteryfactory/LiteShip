@@ -6,7 +6,7 @@
 
 # Function: useCompositeState()
 
-> **useCompositeState**(`frames`): `CompositeState`
+> **useCompositeState**(`frames`): [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 Defined in: [remotion/src/hooks.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L119)
 
@@ -31,7 +31,7 @@ Precomputed frames (see [precomputeFrames](precomputeFrames.md)).
 
 ## Returns
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 State for the current Remotion frame.
 

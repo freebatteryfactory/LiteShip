@@ -15,7 +15,7 @@ the same parts always yield the same key (determinism is itself a tested law).
 
 The key is a plain STABLE STRING — NOT a crypto hash (the engine carries no
 crypto dep; the host hashes the key into a short filename slug). It composes
-the four segments with the RECORD separator, and folds the env
+the four segments with the `RECORD` separator, and folds the env
 fingerprint by its SORTED keys so two structurally-equal env maps with
 different insertion order key identically (the canonicalization the idempotency
 CBOR layer gets for free, done here over a flat string map without a dep).

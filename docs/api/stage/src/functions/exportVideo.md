@@ -6,7 +6,7 @@
 
 # Function: exportVideo()
 
-> **exportVideo**(`graph`, `encode?`): `ExportNode`
+> **exportVideo**(`graph`, `encode?`): [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 Defined in: [stage/src/dual-export.ts:355](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L355)
 
@@ -21,7 +21,7 @@ stays sync + codec-free so the dual-export proof never depends on a codec.
 
 ### graph
 
-`DocumentGraph`
+[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ### encode?
 
@@ -29,4 +29,4 @@ stays sync + codec-free so the dual-export proof never depends on a codec.
 
 ## Returns
 
-`ExportNode`
+[`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)

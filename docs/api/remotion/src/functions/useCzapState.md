@@ -6,7 +6,7 @@
 
 # Function: useCzapState()
 
-> **useCzapState**(): `CompositeState`
+> **useCzapState**(): [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 Defined in: [remotion/src/composition.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L143)
 
@@ -25,7 +25,7 @@ structurally-empty `CompositeState`.
 
 ## Returns
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 ## See
 

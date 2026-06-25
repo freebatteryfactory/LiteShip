@@ -15,7 +15,7 @@ A deterministic STRING fold over a gate's OUT-OF-IR evidence — the helper a
 `["tests/foo.test.ts", "<file body>"]` for a confirmer corpus, or
 `["fact", stableSerialize(facts)]` for an injected fact). The pairs are SORTED by
 label so the fold is order-independent (the same canonical-key-order doctrine
-[coverageDigestOf](coverageDigestOf.md) uses), then concatenated with the UNIT/RECORD
+[coverageDigestOf](coverageDigestOf.md) uses), then concatenated with the `UNIT`/`RECORD`
 control bytes. PURE + lean: no crypto, no fs — it stably concatenates the bytes the
 gate already read through the [GateContext](../interfaces/GateContext.md); the HOST hashes the resulting
 key into a short filename slug. The `ev:` scheme prefix marks the result a REAL

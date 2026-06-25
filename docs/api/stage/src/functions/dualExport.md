@@ -10,7 +10,7 @@
 
 Defined in: [stage/src/dual-export.ts:495](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L495)
 
-THE JEWEL. Cast one DocumentGraph to a static Astro page AND a video,
+THE JEWEL. Cast one [DocumentGraph](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts) to a static Astro page AND a video,
 then prove both derive from one source.
 
 1. `sharedSourceDigest = graph.digest` — the graph's own integrity digest,
@@ -25,7 +25,7 @@ then prove both derive from one source.
 
 ### graph
 
-`DocumentGraph`
+[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ## Returns
 

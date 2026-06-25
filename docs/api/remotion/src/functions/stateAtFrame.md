@@ -6,7 +6,7 @@
 
 # Function: stateAtFrame()
 
-> **stateAtFrame**(`frames`, `frameIndex`): `CompositeState`
+> **stateAtFrame**(`frames`, `frameIndex`): [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 Defined in: [remotion/src/hooks.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L63)
 
@@ -36,7 +36,7 @@ Zero-based frame index (typically from Remotion's
 
 ## Returns
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 The state at the clamped frame.
 

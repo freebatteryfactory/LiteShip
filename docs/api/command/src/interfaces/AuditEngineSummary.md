@@ -32,7 +32,7 @@ Defined in: [command/src/registry.ts:263](https://github.com/heyoub/LiteShip/blo
 
 ### findings?
 
-> `readonly` `optional` **findings?**: readonly `AuditEngineFinding`[]
+> `readonly` `optional` **findings?**: readonly [`AuditEngineFinding`](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts)[]
 
 Defined in: [command/src/registry.ts:273](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L273)
 
