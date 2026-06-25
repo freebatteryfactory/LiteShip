@@ -150,7 +150,28 @@
   "pnpm": {
     "overrides": {
       "@remotion/*": "4.0.440",
-      "remotion": "4.0.440"
+      "remotion": "4.0.440",
+      "vitest": ">=4.1.8 <5",
+      "@vitest/browser": ">=4.1.8 <5",
+      "@vitest/coverage-v8": ">=4.1.8 <5",
+      "@vitest/browser-playwright": ">=4.1.8 <5",
+      "@vitest/browser-preview": ">=4.1.8 <5",
+      "astro": ">=6.4.6 <7",
+      "devalue": ">=5.8.1 <6",
+      "esbuild": ">=0.28.1 <0.29",
+      "fast-uri": ">=3.1.2 <4",
+      "js-yaml": ">=4.2.0 <5",
+      "loader-utils": ">=2.0.4 <3",
+      "markdown-it": ">=14.2.0 <15",
+      "picomatch@2": ">=2.3.2 <3",
+      "picomatch@4": ">=4.0.4 <5",
+      "postcss": ">=8.5.10 <9",
+      "smol-toml": ">=1.6.1 <2",
+      "undici": ">=7.28.0 <8",
+      "uuid": ">=13.0.1 <14",
+      "vite@7": ">=7.3.5 <8",
+      "vite@8": ">=8.0.16 <9",
+      "ws": ">=8.21.0 <9"
     }
   }
 }
