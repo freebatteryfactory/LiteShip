@@ -95,6 +95,11 @@
       "version": "0.4.0",
       "exports": [
         {
+          "name": "bridgeDiagnosticsToAstroLogger",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
           "name": "czap",
           "kind": "function",
           "signature": "(1)"
@@ -106,6 +111,11 @@
         },
         {
           "name": "czapMiddleware",
+          "kind": "function",
+          "signature": "(1)"
+        },
+        {
+          "name": "installDiagnosticsBridge",
           "kind": "function",
           "signature": "(1)"
         },

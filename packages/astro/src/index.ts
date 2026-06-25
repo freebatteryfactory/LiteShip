@@ -31,4 +31,6 @@ export { czapMiddleware } from './middleware.js';
 export type { CzapLocals, CzapMiddlewareConfig } from './middleware.js';
 export { czapFetchLayer, serializeBoundaryCss } from './fetch-layer.js';
 export type { CzapFetchLayer, CzapFetchLayerConfig, FetchLayerNext } from './fetch-layer.js';
+export { bridgeDiagnosticsToAstroLogger, installDiagnosticsBridge } from './diagnostics-bridge.js';
+export type { AstroLoggerLike } from './diagnostics-bridge.js';
 export type { CrossOriginEmbedderPolicy } from './headers.js';

@@ -24,6 +24,7 @@ import type { CrossOriginEmbedderPolicy } from './headers.js';
 import type { RuntimeEndpointPolicy } from '@czap/web';
 import type { DirectiveName } from './runtime/directive-boot.js';
 import { publishIntegrationToggles, resolveIntegrationToggles } from './integration-toggles.js';
+import { installDiagnosticsBridge } from './diagnostics-bridge.js';
 import {
   normalizeRuntimeSecurityPolicy,
   type RuntimeHtmlPolicy,
@@ -283,6 +284,11 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
       }) => {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
         logger.info('Setting up @czap integration');
+
+        // Route @czap/* runtime diagnostics through Astro's logger so they carry
+        // the czap label and flow into `astro dev --json` structured output —
+        // one log stream the host (and CI / agents) already parse.
+        installDiagnosticsBridge(logger);
 
         // Astro may carry a different Vite type graph than @czap/vite. The plugin
         // runtime contract is still compatible, so the host integration owns the
