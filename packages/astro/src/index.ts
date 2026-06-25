@@ -29,4 +29,6 @@ export { satelliteAttrs, resolveInitialStateFallback } from './Satellite.js';
 export type { SatelliteProps } from './Satellite.js';
 export { czapMiddleware } from './middleware.js';
 export type { CzapLocals, CzapMiddlewareConfig } from './middleware.js';
+export { czapFetchLayer, serializeBoundaryCss } from './fetch-layer.js';
+export type { CzapFetchLayer, CzapFetchLayerConfig, FetchLayerNext } from './fetch-layer.js';
 export type { CrossOriginEmbedderPolicy } from './headers.js';

@@ -80,6 +80,11 @@
       "import": "./dist/middleware-entry.js",
       "development": "./src/middleware-entry.ts"
     },
+    "./fetch-layer": {
+      "types": "./dist/fetch-layer.d.ts",
+      "import": "./dist/fetch-layer.js",
+      "development": "./src/fetch-layer.ts"
+    },
     "./runtime": {
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js",
