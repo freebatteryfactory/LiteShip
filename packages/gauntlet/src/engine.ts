@@ -266,6 +266,13 @@ export function scopeContextByLevel(
     // gate, so always scoped) would see no facts and fold NOTHING even though the host
     // injected them — the same scoped-context drop the pass-throughs above fix.
     ...(context.composition !== undefined ? { composition: context.composition } : {}),
+    // Likewise the injected SkipSite FactPack (the FactGate PoC): each site carries its own
+    // file id + precomputed floor inputs, so file-scoping never narrows them — they pass
+    // through unchanged. Omit the key when absent. WITHOUT this pass-through a level-scoped
+    // FactGate would see no facts and fold an empty verdict even though the host produced
+    // them — the same scoped-context drop (the codeOnly drop, the mutation drop) the
+    // pass-throughs above fix.
+    ...(context.skipSites !== undefined ? { skipSites: context.skipSites } : {}),
   };
 }
 

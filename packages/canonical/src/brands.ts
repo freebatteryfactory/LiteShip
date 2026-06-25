@@ -6,7 +6,7 @@
  * export boundary (ADR-0012).
  *
  * The constructors are VALIDATING smart constructors (parse-don't-validate):
- * each throws {@link ValidationError} on input that does not match the brand's
+ * each throws `ValidationError` on input that does not match the brand's
  * real runtime shape, so a branded value is a proof of that shape. `@czap/error`
  * is a zero-dep foundational package, so importing it here introduces no cycle.
  *
@@ -43,7 +43,7 @@ export const isIntegrityDigest = (s: string): s is IntegrityDigest => INTEGRITY_
 
 /**
  * Parse a plain string into a {@link ContentAddress}.
- * @throws {@link ValidationError} when `value` is not `fnv1a:` + 8 lowercase hex.
+ * @throws `ValidationError` when `value` is not `fnv1a:` + 8 lowercase hex.
  */
 export const ContentAddress = (value: string): ContentAddress => {
   if (!isContentAddress(value)) {
@@ -54,7 +54,7 @@ export const ContentAddress = (value: string): ContentAddress => {
 
 /**
  * Parse a plain string into an {@link IntegrityDigest}.
- * @throws {@link ValidationError} when `value` is not `sha256:`/`blake3:` + 64 lowercase hex.
+ * @throws `ValidationError` when `value` is not `sha256:`/`blake3:` + 64 lowercase hex.
  */
 export const IntegrityDigest = (value: string): IntegrityDigest => {
   if (!isIntegrityDigest(value)) {

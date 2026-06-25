@@ -13,7 +13,7 @@ The prior `AddressedDigest.of` implementation used Effect and async `crypto.subt
 ## Decision
 
 - Extract a new publishable package `@czap/canonical` at `packages/canonical/`.
-- **Sole runtime dependency:** `@noble/hashes` (sync SHA-256 and BLAKE3).
+- **Runtime dependencies:** `@noble/hashes` (sync SHA-256 and BLAKE3). *(Amendment, 0.4.0: also `@czap/error` — the foundational zero-dep tagged-error leaf the whole stack adopts. The decision's intent holds: `@czap/canonical` stays independent of the HEAVY stack; `@czap/error` is itself a leaf with no `@czap/*` deps.)*
 - **No peer dependencies.** No `@czap/_spine`, `@czap/core`, or Effect imports inside the package.
 - Local brand types (`ContentAddress`, `IntegrityDigest`, `AddressedDigest`) live in-package and remain byte-compatible with spine/core.
 - `@czap/core` re-exports the kernel (`CanonicalCbor`, `fnv1a`, `fnv1aBytes`, `AddressedDigest.of`) and re-anchors exported types to `@czap/_spine` at its export boundary (ADR-0010 pattern in `packages/core/src/brands.ts` and `addressed-digest.ts`).

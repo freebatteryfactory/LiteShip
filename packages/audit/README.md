@@ -10,7 +10,7 @@ Runs structure, integrity, and surface checks over `@czap/*` packages and report
 pnpm add -D @czap/audit
 ```
 
-No peer dependencies and no other `@czap/*` dependencies — it works on its own.
+No peer dependencies. It depends on `@czap/canonical`, `@czap/error`, and `@czap/gauntlet` (it builds the triangulated `RepoIR` the gauntlet defines, and injects the LiteShip oracles — ADR-0012/ADR-0023) plus `typescript`.
 
 ## 30 seconds
 

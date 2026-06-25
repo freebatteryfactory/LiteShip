@@ -22,7 +22,7 @@ dimension reads).
 
 ### state
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 ### canvas
 

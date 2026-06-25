@@ -587,6 +587,12 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
+      '@czap/gauntlet':
+        specifier: workspace:*
+        version: link:../gauntlet
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui

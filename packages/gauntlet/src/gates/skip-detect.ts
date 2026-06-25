@@ -39,7 +39,7 @@
  * starts ONLY from the literal runner names (`it`/`test`/…), so ANY rebinding hid a skip from
  * BOTH consumers (proven `[]` misses: `import { it as spec } from "vitest"; spec.skip(...)`,
  * `const t = it; t.skip(...)`, `const { skip } = it; skip(...)`, `const skipIt = it.skip;
- * skipIt(...)`). The cure is a per-file PRE-PASS ({@link resolveAliases}) over the SAME
+ * skipIt(...)`). The cure is a per-file PRE-PASS (`resolveAliases`) over the SAME
  * `codeOnly`-stripped text that, before the token walk, resolves runner aliases and feeds them
  * into the root set.
  *
@@ -102,7 +102,7 @@
  *    enough to catch them floods a real repo with false positives on ordinary `v`/`x`/`w` names.
  * The TRULY-complete fix for ALL of these is host-side binding resolution via the `ts.Program`
  * (the IR already carries it) — deliberately NOT built here (the lean engine has no `typescript`
- * dep); left as a documented host follow-up. See {@link resolveAliases}.
+ * dep); left as a documented host follow-up. See `resolveAliases`.
  *
  * Composition over inheritance: a match is a flat `_tag`-discriminated DATA record (the skip
  * FORM + the line + the matched text); the scan is a standalone fold. No classes.
@@ -126,7 +126,7 @@ export type SkipForm =
  *
  * This is the F2-soundness discriminant. The TOKEN {@link detectSkips} cannot decide it (it
  * cannot see an enclosing `if (<cond>) { … }` ancestor), so it leaves it `undefined`; the
- * AST detector ({@link detectSkipsAST}, in `@czap/audit`) sets it from a real ancestor walk:
+ * AST detector (`detectSkipsAST`, in `@czap/audit`) sets it from a real ancestor walk:
  *  - `'skipIf'` / `'runIf'` — the call member IS the runtime gate (`it.skipIf(cond)(…)`);
  *  - `'ternary'` — the skip accessor is a TERNARY ARM (`cond ? it : it.skip`);
  *  - `'enclosing-if'` — the skip CALL sits inside an `if (<cond>) { … }` whose body holds it
@@ -146,7 +146,7 @@ export interface SkipMatch {
   readonly token: string;
   /**
    * The CONDITIONALITY classification — present ONLY when a structural (AST) detector produced
-   * this match ({@link detectSkipsAST}); the token {@link detectSkips} omits it (`undefined`).
+   * this match (`detectSkipsAST`); the token {@link detectSkips} omits it (`undefined`).
    * When present it is the SOUND F2 discriminant: an `'unconditional'` skip is a non-sanctionable
    * placeholder regardless of its title; any other value is a signable capability gate.
    */
@@ -453,7 +453,7 @@ function isIdentPart(c: string): boolean {
 
 /**
  * The per-file ALIAS resolution — runner roots, direct skip-callers, destructured skip members,
- * and the suspicious (undecidable) rebinds — resolved by {@link resolveAliases} from the whole
+ * and the suspicious (undecidable) rebinds — resolved by `resolveAliases` from the whole
  * file's `codeOnly` text, then handed to {@link scanLine} so the token walk treats `spec.skip`,
  * `t.skip`, `skipIt(...)`, and a bare `skip(...)` exactly like their literal-root equivalents.
  */
@@ -477,7 +477,7 @@ interface AliasTable {
  * string literals blanked) so a prose/fixture mention of `it.skip` is never flagged. Returns
  * one {@link SkipMatch} per matched line/form, de-duplicated. PURE — no I/O.
  *
- * FILE-AWARE: a per-file {@link resolveAliases} PRE-PASS runs first (over the same `codeOnly`
+ * FILE-AWARE: a per-file `resolveAliases` PRE-PASS runs first (over the same `codeOnly`
  * text) so a runner rebind / import-rename / `.skip`-capture / destructured skip member is
  * resolved to a real root BEFORE the line-by-line token walk — closing the codex round-4
  * aliased-root evasion. See the module docstring for the resolved vs flagged vs undecidable

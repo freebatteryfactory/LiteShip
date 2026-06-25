@@ -14,7 +14,7 @@ The CANONICAL "is this a fetchable runtime URL?" predicate — the single source
 truth that the shader-integrity classifier ([isExternalShaderSource](isExternalShaderSource.md))
 DELEGATES to, so the two can never drift. A token is a fetchable runtime URL IFF:
 
-  1. it is NOT a genuine inline shader BODY (isInlineShaderBody) — i.e. it
+  1. it is NOT a genuine inline shader BODY (`isInlineShaderBody`) — i.e. it
      is not MULTI-LINE program text (a raw newline). A URL/path CAN contain a space
      (`shader file.wgsl`) AND legal-but-shader-looking characters (`shader{1}.wgsl`,
      `./shader;v=1.wgsl`, `shader?x={y}`, `shaders/fn file.wgsl`), so NEITHER inner

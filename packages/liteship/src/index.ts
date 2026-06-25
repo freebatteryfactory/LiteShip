@@ -20,6 +20,7 @@
  */
 export const LITESHIP_PACKAGES = [
   '@czap/_spine',
+  '@czap/error',
   '@czap/canonical',
   '@czap/core',
   '@czap/genui',
@@ -36,6 +37,7 @@ export const LITESHIP_PACKAGES = [
   '@czap/scene',
   '@czap/stage',
   '@czap/assets',
+  '@czap/gauntlet',
   '@czap/audit',
   '@czap/command',
   '@czap/cli',

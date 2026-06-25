@@ -43,6 +43,8 @@ After the host connects, its `tools/list` call returns the czap command catalog.
 | `scene.verify` | Verify a scene contract resolves |
 | `asset.analyze` | Run analysis projections on an asset (beats / onsets / waveform) |
 | `asset.verify` | Verify an asset declaration decodes |
+| `check` | Run the gauntlet gate fold in-process — structured findings + a blocking verdict |
+| `plumb` | Plumb-completeness gate — `tests/generated/` placeholder skips + unclassified published packages |
 
 Each tool runs the **same handler** as the matching `czap <verb>` (one registry, two skins — `@czap/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are in the [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/mcp-server/src/).
 

@@ -19,7 +19,7 @@ CSS vars from CompositeState.outputs.css as basic canvas fills.
 
 ### state
 
-`CompositeState`
+[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 ### canvas
 

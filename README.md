@@ -100,6 +100,7 @@ The Quick Start installs the smallest useful set: `@czap/core` (the snippet's on
 | --- | --- |
 | [`@czap/core`](./packages/core) | Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge |
 | [`@czap/canonical`](./packages/canonical) | Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package) |
+| [`@czap/error`](./packages/error) | Composable tagged-error algebra: a closed variant coproduct over an open `TaggedError` contract — value AND type, Effect- and throw-compatible (the foundational zero-dep leaf) |
 | [`@czap/genui`](./packages/genui) | Host-owned generated UI catalog: validate structured trees, render trusted components only (`genui:interaction` for actions) |
 | [`@czap/quantizer`](./packages/quantizer) | `Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating |
 | [`@czap/compiler`](./packages/compiler) | Multi-target output: CSS, GLSL, WGSL, ARIA, AI, Tailwind v4 |
@@ -133,7 +134,8 @@ You don't install these directly — they back the CLI, the MCP server, and the 
 | Package | Description |
 | --- | --- |
 | [`@czap/command`](./packages/command) | Shared capsule command registry + dispatcher — one command truth for the CLI and MCP adapters |
-| [`@czap/audit`](./packages/audit) | Profile-driven structure / integrity / surface audit engine (standalone — zero `@czap/*` dependencies) |
+| [`@czap/audit`](./packages/audit) | Profile-driven structure / integrity / surface audit engine + the host that builds the gauntlet's repo-IR + oracles (deps `@czap/canonical` / `@czap/error` / `@czap/gauntlet` / `typescript`) |
+| [`@czap/gauntlet`](./packages/gauntlet) | Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected) |
 
 Plus `crates/czap-compute/`: a Rust `#![no_std]` WASM crate (spring, boundary, blend kernels) for the working-line compute escape hatch.
 

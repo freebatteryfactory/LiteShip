@@ -36,4 +36,4 @@ that a signal must NAME something — the empty string addresses no signal.
 
 ## Throws
 
-ValidationError when `value` is the empty string.
+`ValidationError` when `value` is the empty string.

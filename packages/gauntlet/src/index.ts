@@ -78,7 +78,39 @@ export {
   requireMcdc,
   requireTaint,
   requireCapabilityLink,
+  // The FactGate variant (the "gate-as-data" PoC): a gate whose decision is DATA over a
+  // declared, host-produced FactPack — it cannot read undeclared evidence, and its cache
+  // identity derives from the declared channels, not a hand-authored evidenceDigest.
+  type FactKind,
+  FACT_KINDS,
+  type FactBundle,
+  type FactGate,
+  type FactGateSpec,
+  defineFactGate,
+  isFactGate,
+  pickFacts,
+  factBundleDigest,
 } from './gate.js';
+
+// The SkipSite FactPack + its producer + the bounded per-site decision kernel — the data
+// spine the FactGate decides over. The producer (host-side) wraps the canonical skip
+// detector + sanction primitives; the kernel is regex/Map/IO-free.
+export {
+  type SkipSiteFact,
+  type SkipSiteFacts,
+  type SkipDetector,
+  type SkipVerdict,
+  isGoverned,
+  governedFiles,
+  produceSkipSiteFacts,
+  produceSkipSiteFactsFromContext,
+  decideSkipSite,
+} from './skip-site-facts.js';
+
+// The FactGate form of the always-blocking no-skipped-test rule (same ruleId, same findings
+// as the closure noSkippedTestGate) — proven equivalent over the adversarial corpus by the
+// shadow-diff before any promotion to the production gate set.
+export { noSkippedTestFactGate, decideSkips } from './gates/no-skipped-test-fact.js';
 
 export { type MutationFacts, type MutantOutcome, type MutantVerdictTag } from './mutation-facts.js';
 

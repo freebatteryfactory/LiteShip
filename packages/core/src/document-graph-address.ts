@@ -143,11 +143,11 @@ export function linearizeGraph(graph: {
  * does NOT verify the envelope `_tag`/`_version` or that every node is well-formed.
  * A host that reconstructs a graph from outside the program must run it through
  * THIS gate first, so a future-version (`_version: 2`) or malformed graph is
- * rejected with ONE canonical tagged {@link ParseError} — never silently misparsed
+ * rejected with ONE canonical tagged `ParseError` — never silently misparsed
  * into a v1 shape. "Written data needs a reader": this is the graph envelope's
  * fail-closed reader, the twin of {@link isWellFormedNode}'s per-node gate.
  *
- * @throws {@link ParseError} (`source: 'DocumentGraph'`) when the value is not a
+ * @throws `ParseError` (`source: 'DocumentGraph'`) when the value is not a
  *   record, carries the wrong `_tag`, an unsupported `_version`, or a node that
  *   fails the {@link isWellFormedNode} trust gate.
  */

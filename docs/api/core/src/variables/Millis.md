@@ -28,4 +28,4 @@ are allowed (sub-millisecond timing). Use `Millis(0)` for immediate.
 
 ## Throws
 
-ValidationError when `value` is negative or not finite.
+`ValidationError` when `value` is negative or not finite.

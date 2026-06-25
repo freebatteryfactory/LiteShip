@@ -40,6 +40,22 @@ a CI failure so it can't happen silently again.
 - **Determinism hardening:** an ast-grep guard banning re-implemented threshold reverse-scans
   outside the canonical f32 kernels, + a `BlendTree.computeBlend` accumulation-order-independence
   property test (run against the fresh wasm in CI).
+- **New package `@czap/error`** — a composable tagged-error algebra (a closed variant coproduct
+  over an open `TaggedError` contract, value AND type, Effect- and throw-compatible) the whole
+  stack now adopts as its foundational zero-dep leaf.
+- **New package `@czap/gauntlet`** — the self-proving rigor engine (ADR-0023): gates, findings,
+  assurance levels (L0–L4), and the authority ratchet (a gate earns blocking power only by
+  self-proving against its own red/green/mutation fixtures). Lean (no `typescript`; the
+  triangulated repo-IR + the mutation / MC-DC / taint / coverage-guided-fuzz / claim-vs-reality /
+  traceability / agent-safety gate families are host-injected via `@czap/audit`, ADR-0012). This
+  is the rigor work the small live-runtime cut grew into when it exposed the gaps.
+- **FactGate — evidence-bound gates (ADR-0019).** Gates can be defined as DATA (`defineFactGate` —
+  `requires` + `decide`) instead of arbitrary closures, closing the stale-green hole where a `run`
+  body could read undeclared evidence. Cache identity derives from the declared facts; the
+  discriminant is an unforgeable `WeakSet`. The always-blocking no-skipped-test gate has a
+  proven-equivalent FactGate form.
+- **API-docs source-of-truth.** Every publishable package is in the TypeDoc roster (guarded), and
+  a broken `{@link}` now fails the build (`treatWarningsAsErrors`) — zero dead links, enforced.
 
 ### Changed
 

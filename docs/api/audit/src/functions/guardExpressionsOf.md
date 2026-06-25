@@ -16,7 +16,7 @@ Collect EVERY guard CONDITION expression governing the skip at `node` (the skip 
  - every enclosing `?:` condition on the value spine (`cond ? it : it.skip`);
  - every enclosing `if (<cond>) { … }` condition up to the function boundary.
 
-This is the syntactic counterpart of classifyConditional that returns the guard NODES rather
+This is the syntactic counterpart of `classifyConditional` that returns the guard NODES rather
 than a classification — the CAPABILITY-GATE LINKER (`@czap/audit`'s capability-link oracle) resolves
 the symbols of these expressions through the checker to PROVE the skip's guard derives from its
 declared capability's probe (codex round-8 #1b: conditional ≠ gated-by-the-declared-capability).

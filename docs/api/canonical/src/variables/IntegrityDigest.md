@@ -24,4 +24,4 @@ Parse a plain string into an IntegrityDigest.
 
 ## Throws
 
-ValidationError when `value` is not `sha256:`/`blake3:` + 64 lowercase hex.
+`ValidationError` when `value` is not `sha256:`/`blake3:` + 64 lowercase hex.

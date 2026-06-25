@@ -31,6 +31,8 @@ import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
 import type { SkipMatch } from './gates/skip-detect.js';
+import type { SkipSiteFacts } from './skip-site-facts.js';
+import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
 
 /**
  * What a gate runs against. Slice A keeps it minimal + extensible; Slice B
@@ -292,6 +294,21 @@ export interface GateContext {
    * {@link CompositionFacts}.
    */
   readonly composition?: CompositionFacts;
+  /**
+   * Pre-computed SKIP-SITE evidence — an INJECTED FactPack (the FactGate PoC, the
+   * "gate-as-data" ratchet). The PRODUCER (the O(n) repo scan: enumerate the governed
+   * corpus, read each file, run the skip detector, and precompute each site's three
+   * orthogonal floor inputs — `carriesPlaceholder` / `sanctionMatched` /
+   * `capabilityConsistent`) is a HOST-side fold ({@link produceSkipSiteFactsFromContext},
+   * wrapping the injected `detectSkipsAST` when present, the token `detectSkips`
+   * otherwise). The {@link noSkippedTestFactGate}'s per-site decision KERNEL reads ONLY
+   * this — never the file system — so the author surface (`decide(facts)`) physically
+   * cannot read undeclared evidence (the structural cure the closure-shaped
+   * {@link noSkippedTestGate} could not give: there is no `run(context)` body to hide a
+   * read in). When ABSENT the fact gate folds an empty verdict (no facts, nothing judged);
+   * the original closure gate is unaffected. See {@link SkipSiteFacts}.
+   */
+  readonly skipSites?: SkipSiteFacts;
 }
 
 /**
@@ -390,6 +407,64 @@ export interface Gate {
   readonly evidenceDigest?: (context: GateContext) => string | undefined;
   /** The self-proof evidence — required, by construction. */
   readonly fixtures: GateFixtures;
+  /**
+   * The gate's EXECUTION FORM — the discriminant of the {@link FactGate} variant. Absent
+   * (or `'hosted'`) is the default closure gate: an arbitrary {@link run} body that may
+   * read anything on the {@link GateContext}. `'fact'` marks a {@link FactGate}: its
+   * decision is DATA over a declared, host-produced FactPack, so it cannot read undeclared
+   * evidence. Built by {@link defineFactGate}; never hand-set on a hosted gate.
+   */
+  readonly form?: 'hosted' | 'fact';
+  /**
+   * (FactGate only) The fact channels this gate's decision DECLARES it consumes — the
+   * data analogue of "what evidence does this gate read". The engine folds exactly these
+   * channels into the cache key ({@link factBundleDigest}), so cache soundness is
+   * STRUCTURAL (not a gate-authored {@link evidenceDigest} you must remember to write).
+   */
+  readonly requires?: readonly FactKind[];
+  /**
+   * (FactGate only) The bounded, DATA-ONLY decision: maps the declared FactPack to
+   * findings with NO {@link GateContext} access. Set by {@link defineFactGate}; the
+   * synthesized {@link run} is `decide(pickFacts(context, requires))`.
+   */
+  readonly decide?: (facts: FactBundle) => readonly Finding[];
+}
+
+/**
+ * The runtime tuple of FactKinds a {@link FactGate} may require — the SINGLE SOURCE for the
+ * {@link FactKind} type (derived below, never re-typed) AND the runtime allowlist
+ * {@link defineFactGate} validates `requires` against (so a misspelled `'skipSite'` fails LOUD
+ * at construction instead of silently branding a gate that folds empty facts). Each kind names a
+ * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
+ * {@link GateContext}.
+ */
+export const FACT_KINDS = ['skipSites'] as const;
+
+/** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
+export type FactKind = (typeof FACT_KINDS)[number];
+
+/**
+ * The bundle a {@link FactGate}'s {@link FactGate.decide} receives — ONLY the declared
+ * FactPacks, picked off the context by the engine ({@link pickFacts}). It carries no
+ * `readFile`, no `allFiles`, no undeclared channel: the decision is data-in, findings-out.
+ */
+export interface FactBundle {
+  readonly skipSites?: SkipSiteFacts;
+}
+
+/**
+ * A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
+ * {@link Gate.run} closure with two data-shaped halves: a DECLARATION of which host-produced
+ * FactPacks it consumes ({@link requires}) and a bounded, context-free {@link decide} over
+ * exactly those facts. {@link defineFactGate} synthesizes the {@link Gate.run} +
+ * {@link Gate.evidenceDigest} the engine dispatches, so a FactGate is structurally a
+ * {@link Gate} (no engine/authority/cache changes) while its AUTHOR surface physically
+ * cannot read undeclared evidence — there is no `run(context)` body to smuggle a read in.
+ */
+export interface FactGate extends Gate {
+  readonly form: 'fact';
+  readonly requires: readonly FactKind[];
+  readonly decide: (facts: FactBundle) => readonly Finding[];
 }
 
 /**
@@ -404,6 +479,16 @@ export function defineGate(spec: Gate): Gate {
   if (typeof spec.run !== 'function') {
     throw ValidationError('defineGate', `gate "${spec.id}" must supply a run function`);
   }
+  // A fact gate is the SMUGGLING-FREE form; its discriminant is unforgeable (the module-private
+  // `FACT_GATES` WeakSet). A gate built with `defineGate` that hand-sets `form: 'fact'` is a
+  // forgery — it would carry an arbitrary context-reading `run` while CLAIMING the data-only
+  // contract. Reject it LOUD: a fact gate must be minted by {@link defineFactGate}.
+  if (spec.form === 'fact') {
+    throw ValidationError(
+      'defineGate',
+      `gate "${spec.id}" sets form:'fact' but was built with defineGate — a fact gate must be constructed with defineFactGate (the constructor that synthesizes the data-only run + brands the gate). defineGate cannot mint the fact discriminant.`,
+    );
+  }
   const f = spec.fixtures;
   if (f === undefined || f.red === undefined || f.green === undefined || f.mutation === undefined) {
     throw ValidationError(
@@ -415,6 +500,167 @@ export function defineGate(spec: Gate): Gate {
     throw ValidationError('defineGate', `gate "${spec.id}" mutation fixture must supply a mutate(gate) operator`);
   }
   return spec;
+}
+
+/**
+ * The UNFORGEABLE FactGate membership set — a module-private {@link WeakSet} that ONLY
+ * {@link defineFactGate} adds to. {@link isFactGate} checks membership, never the public
+ * `form` string and never an on-object brand. A side-table is the only TRUE boundary here:
+ * a symbol brand stamped on the gate object is harvestable (`Object.getOwnPropertySymbols`
+ * returns it, enumerable or not) and rides an object spread, so a holder of any one fact gate
+ * could copy the symbol onto a forgery (or a `{ ...factGate, run: smuggle }` spread would keep
+ * it). This WeakSet is never exported, so it cannot be read or written from outside this
+ * module; and it is IDENTITY-bound, so a derived/spread object (a different identity) is
+ * correctly NOT a fact gate — its `run` was not synthesized here from a context-free `decide`.
+ */
+const FACT_GATES = new WeakSet<Gate>();
+
+/** The author surface of a {@link FactGate} — context-free by construction (no `run`). */
+export interface FactGateSpec {
+  readonly id: string;
+  readonly level: AssuranceLevel;
+  readonly describe: string;
+  readonly coverage?: (ir: RepoIR) => readonly FileId[];
+  /** The fact channels the decision consumes (≥1). Folded into the cache key. */
+  readonly requires: readonly FactKind[];
+  /** The bounded, data-only decision — no {@link GateContext} parameter, by design. */
+  readonly decide: (facts: FactBundle) => readonly Finding[];
+  readonly fixtures: GateFixtures;
+}
+
+/**
+ * Pick EXACTLY the declared FactPacks off a context into a {@link FactBundle} — the engine
+ * seam that hands a {@link FactGate}'s {@link FactGate.decide} only what it declared. A
+ * channel the host did not inject arrives as `undefined` (the decision folds it as "absent
+ * → nothing to judge"); an UNDECLARED channel is simply never read. This is the physical
+ * boundary: `decide` sees this bundle, never the context.
+ */
+export function pickFacts(context: GateContext, requires: readonly FactKind[]): FactBundle {
+  const bundle: { skipSites?: SkipSiteFacts } = {};
+  for (const kind of requires) {
+    switch (kind) {
+      case 'skipSites':
+        bundle.skipSites = context.skipSites;
+        break;
+      default: {
+        // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
+        // (the `never` assignment), never silently drops the channel.
+        const _exhaustive: never = kind;
+        void _exhaustive;
+      }
+    }
+  }
+  return bundle;
+}
+
+/**
+ * The out-of-IR evidence digest for a {@link FactGate} — the cache-soundness keystone,
+ * derived from the DECLARED fact channels (not hand-authored). Folds each required
+ * channel's content via {@link factAccessEvidenceDigest} (absence-aware: an absent declared
+ * fact folds a distinct marker, so a verdict that DEPENDS on absence still re-keys). Changing
+ * a FactPack's content — or the sanction registry the producer folds into it — flips the key.
+ */
+export function factBundleDigest(context: GateContext, requires: readonly FactKind[]): string {
+  const perKind = [...requires].sort().map((kind): readonly [string, string] => {
+    let fact: unknown;
+    switch (kind) {
+      case 'skipSites':
+        fact = context.skipSites;
+        break;
+      default: {
+        // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a
+        // silent `undefined` fold (which would key a PRESENT channel as absent: a stale-serve bug).
+        const _exhaustive: never = kind;
+        void _exhaustive;
+        fact = undefined;
+      }
+    }
+    return [kind, factAccessEvidenceDigest(kind, fact)];
+  });
+  return stableEvidenceDigest(perKind);
+}
+
+/**
+ * Define a FACT GATE — the gate-as-data constructor. The author supplies a DECLARATION
+ * ({@link FactGateSpec.requires}) and a context-free decision ({@link FactGateSpec.decide});
+ * this synthesizes the {@link Gate.run} (`decide(pickFacts(context, requires))`) and the
+ * {@link Gate.evidenceDigest} ({@link factBundleDigest}) the engine dispatches — so the
+ * returned value is a structural {@link Gate} (it runs, caches, and self-proves through the
+ * SAME engine path as every closure gate) whose decision physically cannot read undeclared
+ * evidence. Validates eagerly, exactly like {@link defineGate}, plus a non-empty `requires`.
+ */
+export function defineFactGate(spec: FactGateSpec): FactGate {
+  if (spec.id.trim() === '') {
+    throw ValidationError('defineFactGate', 'gate id must be a non-empty string');
+  }
+  if (!Array.isArray(spec.requires) || spec.requires.length === 0) {
+    throw ValidationError('defineFactGate', `fact gate "${spec.id}" must declare at least one required fact kind`);
+  }
+  // Each required kind must be a REAL FactKind. A misspelled / `as any`-smuggled channel (e.g.
+  // `['skipSite']`) would otherwise brand the gate and silently fold EMPTY facts (the pickFacts /
+  // factBundleDigest switch defaults handle the unknown kind as a no-op). Fail LOUD at construction
+  // — an undeclared channel is a malformed gate, caught here, not a quiet always-clean verdict.
+  const unknownKinds = spec.requires.filter((k) => !(FACT_KINDS as readonly string[]).includes(k));
+  if (unknownKinds.length > 0) {
+    throw ValidationError(
+      'defineFactGate',
+      `fact gate "${spec.id}" requires unknown fact kind(s) [${unknownKinds.join(', ')}] — valid kinds: ${FACT_KINDS.join(', ')}`,
+    );
+  }
+  if (typeof spec.decide !== 'function') {
+    throw ValidationError('defineFactGate', `fact gate "${spec.id}" must supply a decide(facts) function`);
+  }
+  const f = spec.fixtures;
+  if (f === undefined || f.red === undefined || f.green === undefined || f.mutation === undefined) {
+    throw ValidationError(
+      'defineFactGate',
+      `gate "${spec.id}" must ship red + green + mutation fixtures (the authority ratchet) — no fixtures, no blocking authority`,
+    );
+  }
+  if (typeof f.mutation.mutate !== 'function') {
+    throw ValidationError('defineFactGate', `gate "${spec.id}" mutation fixture must supply a mutate(gate) operator`);
+  }
+  const requires = spec.requires;
+  const decide = spec.decide;
+  const run = (context: GateContext): readonly Finding[] => decide(pickFacts(context, requires));
+  const evidenceDigest = (context: GateContext): string => factBundleDigest(context, requires);
+  const gate: FactGate = {
+    id: spec.id,
+    level: spec.level,
+    describe: spec.describe,
+    ...(spec.coverage !== undefined ? { coverage: spec.coverage } : {}),
+    form: 'fact',
+    requires,
+    decide,
+    run,
+    evidenceDigest,
+    fixtures: spec.fixtures,
+  };
+  // FREEZE before branding (codex P1): the WeakSet brands the object IDENTITY, but an unfrozen
+  // gate could be mutated IN PLACE — `realFactGate.run = ctx => readSecret(ctx)` keeps the same
+  // identity (still a member) while swapping in a context-reading closure. Freezing makes the
+  // synthesized `run`/`decide` immutable, so the brand and the data-only decision cannot drift
+  // apart. Combined with the identity brand, BOTH attacks are closed: a `{ ...gate, run: x }`
+  // spread is a new identity (not a member), and an in-place `gate.run = x` throws (frozen).
+  Object.freeze(gate);
+  // Record membership in the module-private side-table — the unforgeable, identity-bound brand.
+  // Only THIS object (the one whose run was synthesized above from a context-free decide) is a
+  // fact gate.
+  FACT_GATES.add(gate);
+  return gate;
+}
+
+/**
+ * Narrow a {@link Gate} to the {@link FactGate} variant — by UNFORGEABLE `FACT_GATES`
+ * membership, NOT the public `form` string and NOT an on-object brand. A hand-built
+ * `{ form: 'fact', run: ctx => readSecret(ctx) }` forgery (which `defineGate` rejects outright,
+ * but a raw object could still claim), a symbol harvested off a real fact gate, or a
+ * `{ ...factGate, run: smuggle }` spread are all NON-members: only the exact object
+ * {@link defineFactGate} minted is in the set. So a caller that trusts `isFactGate` to mean
+ * "this gate's decision cannot read undeclared evidence" is not being lied to.
+ */
+export function isFactGate(gate: Gate): gate is FactGate {
+  return FACT_GATES.has(gate);
 }
 
 /**

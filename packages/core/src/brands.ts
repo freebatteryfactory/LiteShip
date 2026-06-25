@@ -106,7 +106,7 @@ export const isIntegrityDigest = (s: string): s is IntegrityDigest => INTEGRITY_
  * character-grammar would reject genuine inputs. The one real invariant is
  * that a signal must NAME something — the empty string addresses no signal.
  *
- * @throws {@link ValidationError} when `value` is the empty string.
+ * @throws `ValidationError` when `value` is the empty string.
  */
 export const SignalInput = <I extends string>(value: I): SignalInput<I> => {
   if (value.length === 0) {
@@ -123,7 +123,7 @@ export const SignalInput = <I extends string>(value: I): SignalInput<I> => {
  * comparison with `NaN` is false). The range is signal-specific, so finiteness
  * is the real generic invariant.
  *
- * @throws {@link ValidationError} when `value` is not finite.
+ * @throws `ValidationError` when `value` is not finite.
  */
 export const ThresholdValue = (value: number): ThresholdValue => {
   if (!Number.isFinite(value)) {
@@ -139,7 +139,7 @@ export const ThresholdValue = (value: number): ThresholdValue => {
  * CSS/selector-addressable label, so it must be a non-empty token with no
  * whitespace (e.g. `mobile`, `sm`, `desktop`).
  *
- * @throws {@link ValidationError} when `value` is empty or contains whitespace.
+ * @throws `ValidationError` when `value` is empty or contains whitespace.
  */
 export const StateName = <S extends string>(value: S): StateName<S> => {
   if (value.length === 0 || /\s/.test(value)) {
@@ -153,7 +153,7 @@ export const StateName = <S extends string>(value: S): StateName<S> => {
 
 /**
  * Wrap a plain string as a {@link ContentAddress}.
- * @throws {@link ValidationError} when `value` is not `fnv1a:` + 8 lowercase hex.
+ * @throws `ValidationError` when `value` is not `fnv1a:` + 8 lowercase hex.
  */
 export const ContentAddress = (value: string): ContentAddress => {
   if (!isContentAddress(value)) {
@@ -164,7 +164,7 @@ export const ContentAddress = (value: string): ContentAddress => {
 
 /**
  * Wrap a plain string as an {@link IntegrityDigest}.
- * @throws {@link ValidationError} when `value` is not `(sha256|blake3):` + 64 lowercase hex.
+ * @throws `ValidationError` when `value` is not `(sha256|blake3):` + 64 lowercase hex.
  */
 export const IntegrityDigest = (value: string): IntegrityDigest => {
   if (!isIntegrityDigest(value)) {
@@ -183,7 +183,7 @@ export const IntegrityDigest = (value: string): IntegrityDigest => {
  * name, so it must be a non-empty token with no whitespace (e.g. `primary`,
  * `color-surface`, `font-size-lg`).
  *
- * @throws {@link ValidationError} when `value` is empty or contains whitespace.
+ * @throws `ValidationError` when `value` is empty or contains whitespace.
  */
 export const TokenRef = <N extends string>(value: N): TokenRef<N> => {
   if (value.length === 0 || /\s/.test(value)) {
@@ -202,7 +202,7 @@ export const TokenRef = <N extends string>(value: N): TokenRef<N> => {
  * delays, so the real invariant is finite and non-negative. Fractional values
  * are allowed (sub-millisecond timing). Use `Millis(0)` for immediate.
  *
- * @throws {@link ValidationError} when `value` is negative or not finite.
+ * @throws `ValidationError` when `value` is negative or not finite.
  */
 export const Millis = (value: number): Millis => {
   if (!Number.isFinite(value) || value < 0) {
