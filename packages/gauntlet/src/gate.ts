@@ -431,11 +431,17 @@ export interface Gate {
 }
 
 /**
- * The FactKinds a {@link FactGate} may require — the names of the host-produced FactPack
- * channels on the {@link GateContext}. A subset of the fact channels; each maps to a
- * field on {@link FactBundle} and an optional field on {@link GateContext}.
+ * The runtime tuple of FactKinds a {@link FactGate} may require — the SINGLE SOURCE for the
+ * {@link FactKind} type (derived below, never re-typed) AND the runtime allowlist
+ * {@link defineFactGate} validates `requires` against (so a misspelled `'skipSite'` fails LOUD
+ * at construction instead of silently branding a gate that folds empty facts). Each kind names a
+ * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
+ * {@link GateContext}.
  */
-export type FactKind = 'skipSites';
+export const FACT_KINDS = ['skipSites'] as const;
+
+/** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
+export type FactKind = (typeof FACT_KINDS)[number];
 
 /**
  * The bundle a {@link FactGate}'s {@link FactGate.decide} receives — ONLY the declared
@@ -590,6 +596,17 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
   if (!Array.isArray(spec.requires) || spec.requires.length === 0) {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must declare at least one required fact kind`);
   }
+  // Each required kind must be a REAL FactKind. A misspelled / `as any`-smuggled channel (e.g.
+  // `['skipSite']`) would otherwise brand the gate and silently fold EMPTY facts (the pickFacts /
+  // factBundleDigest switch defaults handle the unknown kind as a no-op). Fail LOUD at construction
+  // — an undeclared channel is a malformed gate, caught here, not a quiet always-clean verdict.
+  const unknownKinds = spec.requires.filter((k) => !(FACT_KINDS as readonly string[]).includes(k));
+  if (unknownKinds.length > 0) {
+    throw ValidationError(
+      'defineFactGate',
+      `fact gate "${spec.id}" requires unknown fact kind(s) [${unknownKinds.join(', ')}] — valid kinds: ${FACT_KINDS.join(', ')}`,
+    );
+  }
   if (typeof spec.decide !== 'function') {
     throw ValidationError('defineFactGate', `fact gate "${spec.id}" must supply a decide(facts) function`);
   }
@@ -619,10 +636,16 @@ export function defineFactGate(spec: FactGateSpec): FactGate {
     evidenceDigest,
     fixtures: spec.fixtures,
   };
+  // FREEZE before branding (codex P1): the WeakSet brands the object IDENTITY, but an unfrozen
+  // gate could be mutated IN PLACE — `realFactGate.run = ctx => readSecret(ctx)` keeps the same
+  // identity (still a member) while swapping in a context-reading closure. Freezing makes the
+  // synthesized `run`/`decide` immutable, so the brand and the data-only decision cannot drift
+  // apart. Combined with the identity brand, BOTH attacks are closed: a `{ ...gate, run: x }`
+  // spread is a new identity (not a member), and an in-place `gate.run = x` throws (frozen).
+  Object.freeze(gate);
   // Record membership in the module-private side-table — the unforgeable, identity-bound brand.
   // Only THIS object (the one whose run was synthesized above from a context-free decide) is a
-  // fact gate; a later `{ ...gate, run: x }` spread is a NEW identity and is correctly NOT a
-  // member, so it cannot wear the discriminant while smuggling an arbitrary run.
+  // fact gate.
   FACT_GATES.add(gate);
   return gate;
 }

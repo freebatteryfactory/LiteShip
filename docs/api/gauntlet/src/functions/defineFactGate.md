@@ -8,7 +8,7 @@
 
 > **defineFactGate**(`spec`): [`FactGate`](../interfaces/FactGate.md)
 
-Defined in: [gauntlet/src/gate.ts:586](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L586)
+Defined in: [gauntlet/src/gate.ts:592](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L592)
 
 Define a FACT GATE — the gate-as-data constructor. The author supplies a DECLARATION
 ([FactGateSpec.requires](../interfaces/FactGateSpec.md#requires)) and a context-free decision ([FactGateSpec.decide](../interfaces/FactGateSpec.md#decide));

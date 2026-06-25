@@ -8,7 +8,7 @@
 
 > **factBundleDigest**(`context`, `requires`): `string`
 
-Defined in: [gauntlet/src/gate.ts:557](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L557)
+Defined in: [gauntlet/src/gate.ts:563](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L563)
 
 The out-of-IR evidence digest for a [FactGate](../interfaces/FactGate.md) — the cache-soundness keystone,
 derived from the DECLARED fact channels (not hand-authored). Folds each required

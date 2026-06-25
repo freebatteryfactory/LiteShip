@@ -8,7 +8,7 @@
 
 > **requireTaint**(`context`, `gateId`): [`TaintFacts`](../interfaces/TaintFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:703](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L703)
+Defined in: [gauntlet/src/gate.ts:726](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L726)
 
 Read the injected [TaintFacts](../interfaces/TaintFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

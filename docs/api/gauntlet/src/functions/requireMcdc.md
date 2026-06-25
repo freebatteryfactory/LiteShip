@@ -8,7 +8,7 @@
 
 > **requireMcdc**(`context`, `gateId`): [`McdcFacts`](../interfaces/McdcFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:685](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L685)
+Defined in: [gauntlet/src/gate.ts:708](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L708)
 
 Read the injected [McdcFacts](../interfaces/McdcFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) when none were injected — the guard the

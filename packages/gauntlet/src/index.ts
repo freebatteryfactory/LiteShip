@@ -82,6 +82,7 @@ export {
   // declared, host-produced FactPack — it cannot read undeclared evidence, and its cache
   // identity derives from the declared channels, not a hand-authored evidenceDigest.
   type FactKind,
+  FACT_KINDS,
   type FactBundle,
   type FactGate,
   type FactGateSpec,

@@ -174,6 +174,7 @@ change underneath them.
 - [declaredFixProtocolGate](variables/declaredFixProtocolGate.md)
 - [DEFAULT\_GAUNTLET\_GLOBS](variables/DEFAULT_GAUNTLET_GLOBS.md)
 - [FACT\_CHANNELS](variables/FACT_CHANNELS.md)
+- [FACT\_KINDS](variables/FACT_KINDS.md)
 - [fuzzCorpusGate](variables/fuzzCorpusGate.md)
 - [HEATMAP\_FORMAT](variables/HEATMAP_FORMAT.md)
 - [KILL\_FLOOR\_BY\_LEVEL](variables/KILL_FLOOR_BY_LEVEL.md)

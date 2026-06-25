@@ -8,7 +8,7 @@
 
 > **requireMutation**(`context`, `gateId`): [`MutationFacts`](../interfaces/MutationFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:668](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L668)
+Defined in: [gauntlet/src/gate.ts:691](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L691)
 
 Read the injected [MutationFacts](../interfaces/MutationFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) when none was injected — the guard the

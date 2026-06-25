@@ -1848,6 +1848,10 @@
           "kind": "const"
         },
         {
+          "name": "FACT_KINDS",
+          "kind": "const"
+        },
+        {
           "name": "HEATMAP_FORMAT",
           "kind": "const"
         },

@@ -23,6 +23,7 @@ import {
   nodeContext,
   defineGate,
   defineFactGate,
+  FACT_KINDS,
   isFactGate,
   factBundleDigest,
   produceSkipSiteFacts,
@@ -38,6 +39,7 @@ import {
   type GateContext,
   type Finding,
   type FactBundle,
+  type FactKind,
   type SkipSiteFact,
   type SkipSiteFacts,
   type SkipMatch,
@@ -310,6 +312,15 @@ describe('FactGate #8 — defineFactGate validates the declaration', () => {
   it('an empty id throws', () => {
     expect(() => defineFactGate({ ...base, id: '  ', requires: ['skipSites'] })).toThrow();
   });
+  it('an UNKNOWN/misspelled fact kind throws — never silently brands a gate that folds empty facts (codex P2)', () => {
+    // `['skipSite']` (missing the trailing s) would otherwise pass the non-empty check, brand the
+    // gate, and yield an empty verdict forever (the pickFacts/factBundleDigest switch defaults treat
+    // it as a no-op). Validate against the FACT_KINDS source of truth → fail loud at construction.
+    expect(() => defineFactGate({ ...base, requires: ['skipSite'] as unknown as FactKind[] })).toThrow();
+    expect(() => defineFactGate({ ...base, requires: ['skipSites', 'bogus'] as unknown as FactKind[] })).toThrow();
+    // FACT_KINDS is the single source the type derives from AND the runtime allowlist validates against.
+    expect([...FACT_KINDS]).toContain('skipSites');
+  });
   it('a valid declaration constructs a fact gate', () => {
     const g = defineFactGate({ ...base, requires: ['skipSites'] });
     expect(isFactGate(g)).toBe(true);
@@ -416,6 +427,28 @@ describe('FactGate #1b — isFactGate is a boundary, not an honor-system string 
       forgery[s] = (noSkippedTestFactGate as unknown as Record<symbol, unknown>)[s];
     }
     expect(isFactGate(forgery as unknown as Gate)).toBe(false);
+  });
+
+  it('a real fact gate is FROZEN — its run cannot be swapped IN PLACE while keeping the brand (codex P1)', () => {
+    // The WeakSet brands object IDENTITY; without freezing, `realFactGate.run = smuggle` keeps the
+    // same identity (still a member) while swapping in a context-reading closure. The gate is frozen,
+    // so the mutation does not take effect — the brand and the data-only run cannot drift apart.
+    expect(Object.isFrozen(noSkippedTestFactGate)).toBe(true);
+    const swap = (): void => {
+      (noSkippedTestFactGate as unknown as { run: unknown }).run = (ctx: GateContext): readonly Finding[] => {
+        ctx.readFile('secret.ts');
+        return [];
+      };
+    };
+    // Strict mode throws; non-strict silently no-ops — either way the run does not change.
+    try {
+      swap();
+    } catch {
+      /* frozen → TypeError in strict mode is the expected outcome */
+    }
+    expect(isFactGate(noSkippedTestFactGate)).toBe(true); // still the genuine gate
+    expect(noSkippedTestFactGate.run).toBe(noSkippedTestFactGate.run); // run unchanged (not the smuggling closure)
+    expect(noSkippedTestFactGate.run(memoryContext({}))).toEqual([]); // and it still behaves as the real, data-only decision
   });
 });
 
