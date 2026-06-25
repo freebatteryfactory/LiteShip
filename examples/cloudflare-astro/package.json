@@ -8,13 +8,13 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.0.0",
+    "@astrojs/cloudflare": "^14.0.0",
     "@czap/astro": "workspace:*",
     "@czap/cloudflare": "workspace:*",
     "@czap/core": "workspace:*",
     "@czap/edge": "workspace:*",
     "@czap/vite": "workspace:*",
-    "astro": "^6.3.0"
+    "astro": "^7.0.0"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

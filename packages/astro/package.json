@@ -1,7 +1,7 @@
 {
   "name": "@czap/astro",
   "version": "0.4.0",
-  "description": "Astro 6 integration with adaptive directives",
+  "description": "Astro 7 integration with adaptive directives",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
@@ -113,11 +113,11 @@
     "@czap/worker": "workspace:*"
   },
   "peerDependencies": {
-    "astro": ">=6.0.0",
+    "astro": ">=7.0.0 <8",
     "effect": ">=4.0.0-beta.0"
   },
   "devDependencies": {
-    "astro": "^6.0.0",
+    "astro": "^7.0.0",
     "effect": "4.0.0-beta.32"
   },
   "engines": {
