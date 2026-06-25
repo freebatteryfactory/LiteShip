@@ -96,6 +96,20 @@ The two generated-time names follow the same rule by their TYPE, not by being re
 
 For *same-run coherence* of gauntlet artifacts, the authoritative signal is **`gauntletRunId`** (a per-run UUID stamped into every artifact), NOT a `generatedAt` comparison. Any `Date.parse(generatedAt)` vs file-mtime check is a secondary wall-clock heuristic, not causal proof.
 
+## Gauntlet & rigor engine (prose register)
+
+The vocabulary of `@czap/gauntlet` ([AUDIT.md](./AUDIT.md), [ADR-0023](./docs/adr/0023-gauntlet-rigor-engine.md)).
+
+- **gauntlet** — the self-proving rigor engine; the gate set + the runner that qualifies them.
+- **gate** — a `(context) → Finding[]` fitness function; earns blocking authority only by self-proof.
+- **FactGate** — a gate whose decision is DATA over a declared FactPack (vs a closure), so it cannot read undeclared evidence ([ADR-0019](./docs/adr/0019-factgate-evidence-bound-gates.md)). Built by `defineFactGate`; the discriminant is an unforgeable `WeakSet`, not a string.
+- **producer / kernel** — a FactGate's two halves: the producer does acquisition + normalization (host-side); the kernel is the bounded, data-only decision.
+- **assurance level** — L0–L4; the hazard model that aims a gate's rigor. Authority decides the level, not folder location.
+- **finding** — a gate's emitted result (`ruleId`, severity, level, location, remediation).
+- **authority ratchet** — a gate is `advisory` until it self-proves red/green/mutation, then `blocking`. Authority is earned, not granted.
+- **evidence digest** — the out-of-IR bytes a gate's verdict depends on, folded into the verdict-cache key. A FactGate derives it from its declared channels; a closure gate must author it.
+- **green is not clean** — the standing discipline: a passing gauntlet means only that the gates that ran, on the surfaces they scanned, found nothing — never that the repo is correct.
+
 ## Drift check
 
 After editing docs, run the sweep: mixed boundary verbs (*wire* vs *rig*), banned words, accidental rename of `@czap/*` or public APIs. The glossary holds; the prose comes back to it.

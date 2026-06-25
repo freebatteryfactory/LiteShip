@@ -40,6 +40,19 @@ Main surfaces:
 
 ---
 
+## `@czap/error`
+
+Source: [`packages/error/src/index.ts`](./packages/error/src/index.ts)
+
+The composable tagged-error algebra — the foundational leaf the rest of the stack now adopts. Runtime status: `standalone` (zero `@czap/*` deps). A closed coproduct of built-in variants (`ValidationError`, `ParseError`, `InvariantViolationError`, `HostCapabilityError`, …) over an open `TaggedError` contract: every variant is a value AND a type (`throw ValidationError(…)` / `Effect.fail(ValidationError(…))`; `hasTag(e, 'ValidationError')` / `catchTag`). Downstream extends by composing, never editing: `type AppError = LiteShipError | MyDomainError` keeps full `matchTag`/`hasTag`/`raise` support. Composition over inheritance — no class hierarchy.
+
+Main surfaces:
+
+- `ValidationError`, `ParseError`, `InvariantViolationError`, `HostCapabilityError`
+- `LiteShipError`, `TaggedError`, `matchTag`, `hasTag`, `raise`
+
+---
+
 ## `@czap/genui`
 
 Source: [`packages/genui/src/index.ts`](./packages/genui/src/index.ts)
@@ -542,12 +555,25 @@ Entry: `pnpm exec czap <verb>` in a LiteShip checkout. `czap help` prints the ch
 
 Source: [`packages/audit/src/index.ts`](./packages/audit/src/index.ts)
 
-The profile-driven structure / integrity / surface audit engine. Runtime status: `standalone` (zero `@czap/*` deps). Consumed by `@czap/cli` and the gauntlet; see [AUDIT.md](./AUDIT.md).
+The profile-driven structure / integrity / surface audit engine, and the host that builds the gauntlet's triangulated repo-IR + oracles (ADR-0012/ADR-0023). Runtime status: deps `@czap/canonical` + `@czap/error` + `@czap/gauntlet` (it builds the `RepoIR` the gauntlet defines) and `typescript`. Consumed by `@czap/cli`; see [AUDIT.md](./AUDIT.md).
 
 Main surfaces:
 
 - `runAuditPasses`
 - `AuditPassResult`
+
+---
+
+## `@czap/gauntlet`
+
+Source: [`packages/gauntlet/src/index.ts`](./packages/gauntlet/src/index.ts)
+
+The self-proving rigor engine — gates, findings, assurance levels, and the authority ratchet (ADR-0023). Runtime status: lean (deps `@czap/error` + `fast-glob`; **no** `typescript` — the heavy IR/oracles are host-injected via `GateContext`, ADR-0012). A `Gate` is a `(context) => Finding[]` fitness function that earns BLOCKING authority only by self-proving against its own red/green/mutation fixtures (`verifyGate`); `AssuranceLevel` (L0–L4) aims its rigor. Two gate forms: the closure `defineGate` and the evidence-bound `defineFactGate` (the decision is DATA over a declared FactPack — it cannot read undeclared evidence; ADR-0019). A downstream registers its own gate the same way LiteShip registers its built-ins — no fork, no rebuild. See [AUDIT.md](./AUDIT.md).
+
+Main surfaces:
+
+- `defineGate`, `defineFactGate`, `isFactGate`, `runGates`, `verifyGate`
+- `Gate`, `FactGate`, `GateContext`, `Finding`, `AssuranceLevel`
 
 ---
 
@@ -577,4 +603,6 @@ If the problem is:
 - timeline / ECS scene composition: `@czap/scene`
 - asset loading + analysis projections: `@czap/assets`
 - the `czap` CLI or codebase auditing: `@czap/cli`, `@czap/audit`
+- rigor gates / audit criteria / FactGate: `@czap/gauntlet`
+- a composable tagged-error algebra: `@czap/error`
 - an MCP server for AI tooling: `@czap/mcp-server`
