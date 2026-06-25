@@ -18,7 +18,7 @@ export type DoctorBearing = 'ok' | 'warn' | 'fail';
 export type DoctorVerdict = 'ready' | 'caution' | 'blocked';
 
 /** Host deployment target for focused probe profiles. */
-export type DoctorTarget = 'cloudflare';
+export type DoctorTarget = 'cloudflare' | 'astro';
 
 /** One probe outcome. */
 export interface DoctorCheck {

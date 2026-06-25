@@ -153,7 +153,7 @@ describe('@czap/command canonical catalog', () => {
         fix: { type: 'boolean' },
         ci: { type: 'boolean' },
         preflight: { type: 'boolean' },
-        target: { type: 'string', enum: ['cloudflare'] },
+        target: { type: 'string', enum: ['cloudflare', 'astro'] },
       },
     });
   });

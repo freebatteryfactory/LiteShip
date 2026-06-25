@@ -34,10 +34,22 @@ import {
   probeWasmToolchain,
   probeWorkspaceInstalled,
 } from './probes-workspace.js';
+import { probeAstroDevStatus } from './probes-astro.js';
 import type { DoctorCheck, DoctorTarget } from './types.js';
 
 interface RunProbesOptions {
   readonly target?: DoctorTarget;
+}
+
+/**
+ * Astro dev-server profile (`--target astro`) — environment minima plus the
+ * Astro 7 `/_astro/status` liveness probe, for verifying a background dev server
+ * an agent (or CI) started.
+ */
+export async function runAstroProbes(cwd: string): Promise<readonly DoctorCheck[]> {
+  const minima = loadEngineMinima(cwd);
+  const [pnpm, devStatus] = await Promise.all([probePnpm(minima), probeAstroDevStatus()]);
+  return [probeNode(minima), pnpm, devStatus];
 }
 
 export async function runCloudflareProbes(cwd: string): Promise<readonly DoctorCheck[]> {
@@ -83,6 +95,7 @@ export async function runConsumerProbes(cwd: string): Promise<readonly DoctorChe
 
 export async function runAllProbes(cwd: string, opts: RunProbesOptions = {}): Promise<readonly DoctorCheck[]> {
   if (opts.target === 'cloudflare') return runCloudflareProbes(cwd);
+  if (opts.target === 'astro') return runAstroProbes(cwd);
   if (!isLiteShipWorkspace(cwd)) return runConsumerProbes(cwd);
   const minima = loadEngineMinima(cwd);
   // The three external (spawn-bearing) probes are independent — run them
