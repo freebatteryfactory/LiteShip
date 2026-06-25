@@ -38,6 +38,10 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 | `czap asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
 | `czap capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |
 | `czap audit [--consumer\|--profile <p>] [--findings]` | Run the `@czap/audit` engine; receipt carries the counts. |
+| `czap check [--ir]` | Run the gauntlet gate fold in-process (`litelaunchGauntlet`) — structured findings + a blocking verdict, no subprocess. `--ir` selects the IR-enriched fold. |
+| `czap plumb` | Plumb-completeness gate: fail on any `tests/generated/` placeholder skip or any published package not classified runtime/tooling/deferred. |
+| `czap sbom` | Emit the deterministic, content-addressed SBOM (lockfile policy + CycloneDX + completeness) as a reviewable working-tree artifact. |
+| `czap lsp [--ir]` | Launch the gauntlet rigor language server over stdio (an editor spawns it) — gauntlet findings as live LSP diagnostics. |
 | `czap gauntlet` · `czap ship <pkg>` · `czap verify` | Release gate, npm publish, post-publish verification. |
 
 Renders and analyses are cached by a hash of their inputs; pass `--force` to re-run. Unknown verbs exit 1 with a trailing `{"error":"unknown_command"}` line on stderr.

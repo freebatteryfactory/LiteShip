@@ -4,6 +4,8 @@ Operator vocabulary: [GLOSSARY.md](./GLOSSARY.md). LiteShip (product), CZAP (eng
 
 Operator checklist for public npm and GitHub releases. Run destructive git steps locally.
 
+> The example commands below use `vX.Y.Z` / `X.Y.Z` as a placeholder for the release version — substitute the real version (e.g. the one in `package.json`) when you run them.
+
 ## Preconditions
 
 - Release-blocking gates (for example `pnpm run gauntlet:full`) are green on the ship commit.
@@ -13,7 +15,7 @@ Operator checklist for public npm and GitHub releases. Run destructive git steps
   `workspace:*`.
 - Publish with pnpm workspace tooling only. Plain `npm publish` does not rewrite
   `workspace:*` specs for downstream consumers.
-- Run `pnpm run release:notes` so `RELEASE_NOTES_v0.1.0.md` matches the canonical `## [0.1.0]` block in `CHANGELOG.md`. Do not paste the full changelog into GitHub Releases.
+- Run `pnpm run release:notes` so `RELEASE_NOTES_vX.Y.Z.md` matches the canonical `## [X.Y.Z]` block in `CHANGELOG.md`. Do not paste the full changelog into GitHub Releases.
 
 ## Build the WASM artifact (0.2.1+)
 
@@ -35,7 +37,7 @@ pnpm run release:notes
 Create the GitHub release:
 
 ```bash
-gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE_NOTES_v0.1.0.md
+gh release create vX.Y.Z --title "vX.Y.Z" --notes-file RELEASE_NOTES_vX.Y.Z.md
 ```
 
 ## Publish packages
@@ -62,13 +64,13 @@ To publish a single package (e.g. a hotfix), pass its name or path: `pnpm run sh
 After publish, attach every capsule to the GitHub release so downstream consumers can verify their npm-downloaded tarballs against a non-npm-hosted receipt:
 
 ```bash
-gh release upload v0.1.0 packages/*/czap-*-0.1.0.shipcapsule.cbor
+gh release upload vX.Y.Z packages/*/czap-*-X.Y.Z.shipcapsule.cbor
 ```
 
 The `.tgz` files in `packages/*/` after ship are intermediate (npm has the canonical copy). Clean them up once the release is final:
 
 ```bash
-rm -f packages/*/czap-*-0.1.0.tgz
+rm -f packages/*/czap-*-X.Y.Z.tgz
 ```
 
 ## Verifying a published package (consumer side)
@@ -76,9 +78,9 @@ rm -f packages/*/czap-*-0.1.0.tgz
 Anyone with the published `.tgz` and the GitHub-attached `.shipcapsule.cbor` can verify locally:
 
 ```bash
-npm pack @czap/core@0.1.0   # or download the .tgz from npm directly
-gh release download v0.1.0 -p 'czap-core-0.1.0.shipcapsule.cbor'
-npx @czap/cli verify czap-core-0.1.0.tgz --capsule czap-core-0.1.0.shipcapsule.cbor
+npm pack @czap/core@X.Y.Z   # or download the .tgz from npm directly
+gh release download vX.Y.Z -p 'czap-core-X.Y.Z.shipcapsule.cbor'
+npx @czap/cli verify czap-core-X.Y.Z.tgz --capsule czap-core-X.Y.Z.shipcapsule.cbor
 ```
 
 Verdicts and exit codes:
@@ -93,8 +95,8 @@ Verdicts and exit codes:
 ## Tag
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
 Use `git push --force-with-lease` only after a coordinated history rewrite.
