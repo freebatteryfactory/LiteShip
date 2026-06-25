@@ -32,7 +32,7 @@ import { czapFetchLayer } from '@czap/astro/fetch-layer';
 
 const layer = czapFetchLayer({
   edge: { cache: { kv: env.CZAP_BOUNDARY_CACHE, boundaries } },
-  hotPath: (req) => req.headers.get('Sec-Fetch-Dest') === 'style',
+  serveFromEdge: (req) => req.headers.get('Sec-Fetch-Dest') === 'style',
 });
 
 const handler = {

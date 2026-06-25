@@ -13,9 +13,9 @@
  * fetch layer adds NO cache code, so ADR-0017's key/identity invariants are
  * untouched by construction), and then either:
  *
- *  - **hot path** — serves the compiled boundary CSS straight from the edge and
+ *  - **edge serve** — serves the compiled boundary CSS straight from the edge and
  *    returns WITHOUT calling `next()`, so Astro is skipped entirely on the
- *    hottest adaptive responses; or
+ *    most frequent adaptive responses; or
  *  - **pass through** — calls `next(request)` and decorates the response with
  *    the Client-Hints / COOP-COEP headers, exactly as the middleware does.
  *
@@ -52,15 +52,15 @@ export type CzapFetchLayer = (request: Request, next: FetchLayerNext) => Promise
  */
 export interface CzapFetchLayerConfig extends CzapMiddlewareConfig {
   /**
-   * Hot-path predicate. Given the request and the resolution, decide whether to
+   * Edge-serve predicate. Given the request and the resolution, decide whether to
    * serve the boundary CSS straight from the edge (returning WITHOUT invoking
    * Astro) instead of passing through to `next()`. Default: never — the layer
-   * always passes through until a consumer opts a hot path in (e.g.
+   * always passes through until a consumer opts edge serve in (e.g.
    * `(req) => req.headers.get('Sec-Fetch-Dest') === 'style'`).
    */
-  readonly hotPath?: (request: Request, resolution: EdgeHostResolution) => boolean;
+  readonly serveFromEdge?: (request: Request, resolution: EdgeHostResolution) => boolean;
   /**
-   * How to render the hot-path Response from a resolution. Default:
+   * How to render the edge-served Response from a resolution. Default:
    * {@link serializeBoundaryCss} wrapped in a `text/css` Response. Override to
    * match a specific page's exact inlining.
    */
@@ -76,7 +76,7 @@ export interface CzapFetchLayerConfig extends CzapMiddlewareConfig {
  * multi-boundary (`boundaries`) resolution forms.
  *
  * This is the edge-served form of the same outputs a page inlines; exposed and
- * tested directly so the hot-path render is not a hidden mirror.
+ * tested directly so the edge-served render is not a hidden mirror.
  */
 export function serializeBoundaryCss(resolution: EdgeHostResolution): string {
   const parts: string[] = [];
@@ -99,7 +99,7 @@ export function serializeBoundaryCss(resolution: EdgeHostResolution): string {
   return parts.join('\n');
 }
 
-/** Default hot-path render: the serialized boundary CSS as a `text/css` document. */
+/** Default edge-serve render: the serialized boundary CSS as a `text/css` document. */
 function defaultRender(resolution: EdgeHostResolution): Response {
   return new Response(serializeBoundaryCss(resolution), {
     status: 200,
@@ -109,7 +109,7 @@ function defaultRender(resolution: EdgeHostResolution): Response {
 
 /**
  * Re-emit `response` with the czap Client-Hints / COOP-COEP headers applied, so
- * both the hot-path and pass-through responses ask the browser for the hints
+ * both the edge-serve and pass-through responses ask the browser for the hints
  * tier detection needs next navigation. Mirrors {@link czapMiddleware}'s
  * response decoration; the resolution's `responseHeaders` win when present.
  */
@@ -144,7 +144,7 @@ function withCzapHeaders(
  *
  * const layer = czapFetchLayer({
  *   edge: { cache: { kv: env.CZAP_BOUNDARY_CACHE, boundaries } },
- *   hotPath: (req) => req.headers.get('Sec-Fetch-Dest') === 'style',
+ *   serveFromEdge: (req) => req.headers.get('Sec-Fetch-Dest') === 'style',
  * });
  *
  * const handler = {
@@ -157,14 +157,14 @@ export function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer {
   const edgeConfig = config?.edge;
   const edgeAdapter = edgeConfig ? createEdgeHostAdapter(edgeConfig) : null;
   const toggles = consumeIntegrationToggles(config);
-  const hotPath = config?.hotPath;
+  const serveFromEdge = config?.serveFromEdge;
   const render = config?.render ?? defaultRender;
 
   return async (request: Request, next: FetchLayerNext): Promise<Response> => {
     const resolution = edgeAdapter ? await edgeAdapter.resolve(request.headers) : null;
 
-    // Hot path: serve the boundary CSS from the edge and skip Astro entirely.
-    if (resolution && hotPath?.(request, resolution)) {
+    // Edge serve: serve the boundary CSS from the edge and skip Astro entirely.
+    if (resolution && serveFromEdge?.(request, resolution)) {
       return withCzapHeaders(render(resolution), resolution, toggles);
     }
 

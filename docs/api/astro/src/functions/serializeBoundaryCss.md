@@ -18,7 +18,7 @@ boundary CSS. Handles both the sole-boundary (`compiledOutputs`) and
 multi-boundary (`boundaries`) resolution forms.
 
 This is the edge-served form of the same outputs a page inlines; exposed and
-tested directly so the hot-path render is not a hidden mirror.
+tested directly so the edge-served render is not a hidden mirror.
 
 ## Parameters
 

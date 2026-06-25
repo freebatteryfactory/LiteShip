@@ -61,7 +61,7 @@ a CI failure so it can't happen silently again.
   `client:*` contracts are unchanged — and the batteries Astro 7 ships are now consumed:
   - `@czap/astro` — **`czapFetchLayer()` (ADR-0024):** request-time adaptation as a layer in
     FRONT of Astro via `src/fetch.ts`. Shares the one `createEdgeHostAdapter().resolve()` with
-    `czapMiddleware`; on the hot path it serves boundary CSS from the edge and skips Astro
+    `czapMiddleware`; on an opt-in `serveFromEdge` path it serves boundary CSS from the edge and skips Astro
     entirely. `serializeBoundaryCss` exposed. Astro's `Fetchable` / Hono-compatible.
   - `@czap/astro` — **Diagnostics → Astro logger bridge.** `bridgeDiagnosticsToAstroLogger` /
     `installDiagnosticsBridge` route `@czap/*` runtime diagnostics through Astro's logger

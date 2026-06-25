@@ -69,14 +69,14 @@ describe('czapFetchLayer', () => {
     expect(await res.text()).toBe('OK');
   });
 
-  test('hot path: serves boundary CSS and never invokes the downstream', async () => {
-    const layer = czapFetchLayer({ edge: themeEdge, hotPath: () => true });
+  test('edge serve: serves boundary CSS and never invokes the downstream', async () => {
+    const layer = czapFetchLayer({ edge: themeEdge, serveFromEdge: () => true });
     const next = vi.fn(nextOk());
     const res = await layer(makeRequest(), next);
 
     expect(next).not.toHaveBeenCalled();
     expect(res.headers.get('content-type')).toContain('text/css');
-    // The hot-path response still asks the browser for hints next navigation.
+    // The edge-serve response still asks the browser for hints next navigation.
     expect(res.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
     expect(typeof (await res.text())).toBe('string');
   });

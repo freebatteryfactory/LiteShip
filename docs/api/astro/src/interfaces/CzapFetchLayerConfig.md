@@ -46,16 +46,38 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 ***
 
-### hotPath?
+### render?
 
-> `readonly` `optional` **hotPath?**: (`request`, `resolution`) => `boolean`
+> `readonly` `optional` **render?**: (`resolution`) => `Response`
+
+Defined in: [astro/src/fetch-layer.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L67)
+
+How to render the edge-served Response from a resolution. Default:
+[serializeBoundaryCss](../functions/serializeBoundaryCss.md) wrapped in a `text/css` Response. Override to
+match a specific page's exact inlining.
+
+#### Parameters
+
+##### resolution
+
+`EdgeHostResolution`
+
+#### Returns
+
+`Response`
+
+***
+
+### serveFromEdge?
+
+> `readonly` `optional` **serveFromEdge?**: (`request`, `resolution`) => `boolean`
 
 Defined in: [astro/src/fetch-layer.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L61)
 
-Hot-path predicate. Given the request and the resolution, decide whether to
+Edge-serve predicate. Given the request and the resolution, decide whether to
 serve the boundary CSS straight from the edge (returning WITHOUT invoking
 Astro) instead of passing through to `next()`. Default: never — the layer
-always passes through until a consumer opts a hot path in (e.g.
+always passes through until a consumer opts edge serve in (e.g.
 `(req) => req.headers.get('Sec-Fetch-Dest') === 'style'`).
 
 #### Parameters
@@ -71,28 +93,6 @@ always passes through until a consumer opts a hot path in (e.g.
 #### Returns
 
 `boolean`
-
-***
-
-### render?
-
-> `readonly` `optional` **render?**: (`resolution`) => `Response`
-
-Defined in: [astro/src/fetch-layer.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L67)
-
-How to render the hot-path Response from a resolution. Default:
-[serializeBoundaryCss](../functions/serializeBoundaryCss.md) wrapped in a `text/css` Response. Override to
-match a specific page's exact inlining.
-
-#### Parameters
-
-##### resolution
-
-`EdgeHostResolution`
-
-#### Returns
-
-`Response`
 
 ***
 

@@ -233,12 +233,18 @@ function tagIndexKey(prefix: string, tag: string): string {
 /** Parse a tag-index value into a unique key list (lenient: a corrupt index reads as empty). */
 function parseTagIndex(raw: string | null): string[] {
   if (raw === null) return [];
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
-  } catch {
-    return [];
+    parsed = JSON.parse(raw);
+  } catch (cause) {
+    // A corrupt/foreign tag index reads as empty — the conservative direction
+    // (invalidation finds no keys rather than throwing). A non-syntax error is a
+    // real fault, never laundered into an empty result: bind it, inspect it,
+    // rethrow it (the same discipline as tryParseJson below).
+    if (cause instanceof SyntaxError) return [];
+    throw cause;
   }
+  return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
 }
 
 /** One-time diagnostic when invalidation can't run because the KV provider lacks a capability. */
