@@ -20,10 +20,26 @@ import { tierKey } from './manifest.js';
 /**
  * Minimal KV namespace interface -- compatible with Cloudflare Workers KV,
  * Deno KV, or any adapter that implements get/put with string values.
+ *
+ * `delete` and `list` are OPTIONAL: they power active invalidation
+ * ({@link BoundaryCache.invalidateByPath} / {@link BoundaryCache.invalidateByTag}).
+ * A provider that omits them still caches correctly — invalidation then degrades
+ * to the passive TTL-orphaning the content-addressed keyspace already relies on,
+ * with a one-time diagnostic instead of a silent no-op.
  */
 export interface KVNamespace {
   get(key: string): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  /** Delete a single key. Optional — required for active invalidation. */
+  delete?(key: string): Promise<void>;
+  /**
+   * List keys under a prefix (Cloudflare Workers KV shape, paginated). Optional —
+   * required for {@link BoundaryCache.invalidateByPath} (prefix-scan purge).
+   */
+  list?(options: {
+    prefix: string;
+    cursor?: string;
+  }): Promise<{ keys: ReadonlyArray<{ name: string }>; list_complete: boolean; cursor?: string }>;
 }
 
 /**
@@ -126,7 +142,24 @@ export interface BoundaryCache {
     outputs: CompiledOutputs,
     qualifier?: string,
     themeFp?: string,
+    tags?: readonly string[],
   ): Promise<void>;
+
+  /**
+   * Active purge by content address: delete every cached tier × theme variant of
+   * one boundary (the passive answer is to mint a new `ContentAddress` and wait
+   * for TTL — see ADR-0017). Requires `KVNamespace.list` + `delete`; without them
+   * it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
+   */
+  invalidateByPath(boundaryId: ContentAddress): Promise<number>;
+
+  /**
+   * Active purge by tag (Astro 7 `Astro.cache` tag parity): delete every entry
+   * stored with `tag` via {@link putCompiledOutputs}'s `tags`, across all of their
+   * tier/theme variants. Requires `KVNamespace.delete`; without it emits a
+   * diagnostic and returns 0. Resolves to the number of keys deleted.
+   */
+  invalidateByTag(tag: string): Promise<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +209,86 @@ function buildCacheKey(
       ? `${prefix}:boundary:${boundaryId}:${tierKey(tierResult)}`
       : `${prefix}:boundary:${boundaryId}:${qualifier}:${tierKey(tierResult)}`;
   return themeFp === undefined ? base : `${base}:t:${themeFp}`;
+}
+
+/**
+ * Key prefix covering EVERY cached variant of one boundary — both qualified and
+ * unqualified, across all tier and theme suffixes — since every variant key
+ * starts `{prefix}:boundary:{boundaryId}:`. The list-scan target for
+ * {@link BoundaryCache.invalidateByPath}.
+ */
+function boundaryKeyPrefix(prefix: string, boundaryId: ContentAddress): string {
+  return `${prefix}:boundary:${boundaryId}:`;
+}
+
+/**
+ * Tag-index key. A tag is an EXTERNAL label, not derivable from a content key, so
+ * tag invalidation needs a maintained index: `{prefix}:tag:{tag}` stores the JSON
+ * array of content keys written under that tag.
+ */
+function tagIndexKey(prefix: string, tag: string): string {
+  return `${prefix}:tag:${tag}`;
+}
+
+/** Parse a tag-index value into a unique key list (lenient: a corrupt index reads as empty). */
+function parseTagIndex(raw: string | null): string[] {
+  if (raw === null) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** One-time diagnostic when invalidation can't run because the KV provider lacks a capability. */
+function warnInvalidationUnsupported(operation: string, missing: 'delete' | 'list'): void {
+  Diagnostics.warnOnce({
+    source: 'czap/edge.kv-cache',
+    code: 'invalidation-unsupported',
+    message:
+      `${operation} requires KVNamespace.${missing}, which this KV provider does not implement — ` +
+      'returning 0 without purging. Entries are reclaimed by TTL instead (set CacheOptions.ttl). ' +
+      'Cloudflare Workers KV implements delete/list; some KV adapters do not.',
+  });
+}
+
+/** Append `key` to each tag's index (read-merge-write, deduplicated). Uses get/put only. */
+async function addKeyToTagIndexes(
+  kv: KVNamespace,
+  prefix: string,
+  key: string,
+  tags: readonly string[],
+  ttl: number | undefined,
+): Promise<void> {
+  await Promise.all(
+    tags.map(async (tag) => {
+      const idxKey = tagIndexKey(prefix, tag);
+      const existing = parseTagIndex(await kv.get(idxKey));
+      if (existing.includes(key)) return;
+      existing.push(key);
+      await kv.put(idxKey, JSON.stringify(existing), ttl !== undefined ? { expirationTtl: ttl } : undefined);
+    }),
+  );
+}
+
+/** Collect every key under `prefix`, following Cloudflare KV list pagination to completion. */
+async function listAllKeys(kv: Required<Pick<KVNamespace, 'list'>>, prefix: string): Promise<string[]> {
+  const names: string[] = [];
+  let cursor: string | undefined;
+  // Bounded by list_complete; the cursor advances each page (Workers KV pages at 1000).
+  for (;;) {
+    const page = await kv.list(cursor === undefined ? { prefix } : { prefix, cursor });
+    for (const entry of page.keys) names.push(entry.name);
+    if (page.list_complete || page.cursor === undefined) break;
+    cursor = page.cursor;
+  }
+  return names;
+}
+
+/** Delete every key concurrently. Caller guarantees `kv.delete` is present. */
+async function deleteAll(kv: Required<Pick<KVNamespace, 'delete'>>, keys: readonly string[]): Promise<void> {
+  await Promise.all(keys.map((key) => kv.delete(key)));
 }
 
 /**
@@ -368,6 +481,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       outputs: CompiledOutputs,
       qualifier?: string,
       themeFp?: string,
+      tags?: readonly string[],
     ): Promise<void> {
       const key = buildCacheKey(prefix, boundaryId, tierResult, qualifier, themeFp);
       const value = JSON.stringify({
@@ -380,6 +494,39 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       });
 
       await kv.put(key, value, ttl !== undefined ? { expirationTtl: ttl } : undefined);
+
+      // Maintain the tag→keys index so invalidateByTag can find this entry later.
+      if (tags && tags.length > 0) {
+        await addKeyToTagIndexes(kv, prefix, key, tags, ttl);
+      }
+    },
+
+    async invalidateByPath(boundaryId: ContentAddress): Promise<number> {
+      if (kv.list === undefined) {
+        warnInvalidationUnsupported('invalidateByPath', 'list');
+        return 0;
+      }
+      if (kv.delete === undefined) {
+        warnInvalidationUnsupported('invalidateByPath', 'delete');
+        return 0;
+      }
+      const keys = await listAllKeys({ list: kv.list.bind(kv) }, boundaryKeyPrefix(prefix, boundaryId));
+      await deleteAll({ delete: kv.delete.bind(kv) }, keys);
+      return keys.length;
+    },
+
+    async invalidateByTag(tag: string): Promise<number> {
+      if (kv.delete === undefined) {
+        warnInvalidationUnsupported('invalidateByTag', 'delete');
+        return 0;
+      }
+      const del = { delete: kv.delete.bind(kv) };
+      const idxKey = tagIndexKey(prefix, tag);
+      const keys = parseTagIndex(await kv.get(idxKey));
+      await deleteAll(del, keys);
+      // Drop the index entry itself so a re-tagged boundary starts clean.
+      await del.delete(idxKey);
+      return keys.length;
     },
   };
 }
