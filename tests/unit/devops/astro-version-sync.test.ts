@@ -49,7 +49,9 @@ function astroPinsIn(manifestPath: string): Pin[] {
     const deps = pkg[field] as Record<string, string> | undefined;
     const range = deps?.astro;
     if (typeof range === 'string') {
-      pins.push({ file: relative(REPO_ROOT, manifestPath), field, range });
+      // Normalize to forward slashes so the POSIX-style assertions below
+      // (`packages/astro/...`) hold on Windows, where `relative` yields backslashes.
+      pins.push({ file: relative(REPO_ROOT, manifestPath).replace(/\\/g, '/'), field, range });
     }
   }
   return pins;
