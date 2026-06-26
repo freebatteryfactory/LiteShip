@@ -164,6 +164,7 @@ export const onRequest = cloudflareMiddleware({
   binding: 'CZAP_BOUNDARY_CACHE',
   manifest: boundaries,
   boundary: 'viewport', // optional when the manifest has exactly one boundary
+  tags: ['products'],   // match Astro routeRules.tags when using cache.invalidate()
 });
 ```
 
@@ -178,6 +179,65 @@ The build also emits `czap-boundary-manifest.json` into the output directory (vi
 **Escape hatch:** custom hosts can still pass `boundaryId` + `compile` directly. `boundaryId` must be a real minted address (`Boundary.make(...).id`) — the KV keyspace is content-addressed, so a fabricated id breaks content-addressing (the cache could then serve another boundary's CSS). A `compile` callback may also be combined with `manifest` as a fallback for tiers the manifest does not cover.
 
 Bindings are read from the `cloudflare:workers` `env` at request time.
+
+### Astro 7 fetch layer
+
+Astro 7 hosts can put CZAP before Astro's own request handlers with `src/fetch.ts`:
+
+```typescript
+import { FetchState, astro } from 'astro/fetch';
+import { czapFetchLayer } from '@czap/astro/fetch-layer';
+import { resolveOutputsByTier } from '@czap/edge';
+import { boundaries } from 'virtual:czap/boundaries';
+import { env } from 'cloudflare:workers';
+
+const layer = czapFetchLayer({
+  edge: {
+    cache: {
+      kv: env.CZAP_BOUNDARY_CACHE,
+      boundaries: {
+        viewport: {
+          boundaryId: boundaries.viewport.id,
+          precompiled: resolveOutputsByTier(boundaries.viewport),
+          tags: ['products'],
+        },
+      },
+    },
+  },
+});
+
+export default {
+  fetch: (request: Request) => layer(request, (req) => astro(new FetchState(req))),
+};
+```
+
+The layer and `czapMiddleware()` share the same edge resolver; do not build a second KV key or cache lookup in `src/fetch.ts`.
+
+### Astro cache provider
+
+Use `@czap/cloudflare/cache-provider` when Astro route-cache invalidation should purge CZAP boundary CSS too:
+
+```typescript
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import { cloudflareCacheProvider } from '@czap/cloudflare/cache-provider';
+
+export default defineConfig({
+  cache: {
+    provider: cloudflareCacheProvider({
+      binding: 'CZAP_BOUNDARY_CACHE',
+      prefix: 'my-deploy',
+      // Optional exact route path -> boundary id map for native path invalidation.
+      pathBoundaries: { '/products': '<Boundary.make(...).id>' },
+    }),
+  },
+  routeRules: {
+    '/products': { cache: { maxAge: 300, tags: ['products'] } },
+  },
+});
+```
+
+For tag invalidation, use the same tag names in `routeRules.tags` and `cloudflareMiddleware({ tags })` / `czapFetchLayer({ edge: { cache: { tags } } })`. A compile fallback writes those tags into the boundary KV index, and `cache.invalidate({ tags: 'products' })` purges every tier/theme variant under that tag. For path invalidation, the provider also purges Astro's path tag (`astro-path:/products`) and, when `pathBoundaries` is supplied, actively lists/deletes every KV variant for that boundary id.
 
 ### Preflight
 

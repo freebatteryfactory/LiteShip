@@ -73,6 +73,15 @@ describe('czap dispatch — dev-experience verbs', () => {
     expect(ids.has('core.built')).toBe(false);
   });
 
+  it('`czap doctor --target=astro` records target and runs Astro probes', async () => {
+    const { stdout } = await captureCli(() => run(['doctor', '--target=astro']));
+    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    expect(receipt.target).toBe('astro');
+    const ids = new Set<string>(receipt.checks.map((c: { id: string }) => c.id));
+    expect(ids).toContain('astro.dev-status');
+    expect(ids.has('cloudflare.astro')).toBe(false);
+  });
+
   it('`czap glossary` with no term returns the full catalog', async () => {
     const { exit, stdout } = await captureCli(() => run(['glossary']));
     expect(exit).toBe(0);

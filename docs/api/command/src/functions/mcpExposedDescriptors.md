@@ -8,7 +8,7 @@
 
 > **mcpExposedDescriptors**(): readonly `CapsuleCommandDescriptor`[]
 
-Defined in: [command/src/catalog.ts:168](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/catalog.ts#L168)
+Defined in: [command/src/catalog.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/catalog.ts#L186)
 
 The MCP-exposed subset of the catalog (explicit opt-in via `annotations.mcpExposed`).
 

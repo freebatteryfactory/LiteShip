@@ -1,5 +1,5 @@
 /**
- * @czap/astro type spine -- Astro 6 integration + <Quantize> component.
+ * @czap/astro type spine -- Astro 7 integration + <Quantize> component.
  */
 
 import type { Boundary, Quantizer, CapTier } from './core.d.ts';

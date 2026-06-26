@@ -46,6 +46,16 @@ function warnMissingBinding(envSource: () => CloudflareWorkersEnv, binding: stri
   });
 }
 
+function warnMissingCapability(binding: string, capability: 'delete' | 'list'): void {
+  Diagnostics.warnOnce({
+    source: 'czap/cloudflare.edge-cache',
+    code: 'kv-binding-capability-missing',
+    message:
+      `KV binding "${binding}" does not implement ${capability}(), so active cache invalidation cannot use it. ` +
+      'Cloudflare Workers KV implements get/put/delete/list; custom test doubles and KV adapters must expose the same methods.',
+  });
+}
+
 /**
  * Create a lazy {@link KVNamespace} adapter backed by a Workers env binding.
  *
@@ -73,24 +83,54 @@ export function createCloudflareEdgeCache(
       }
       await kv.put(key, value, putOptions);
     },
-    // Workers KV implements delete/list, so the adapter forwards them — this is
-    // what powers active cache invalidation (BoundaryCache.invalidateByPath /
-    // invalidateByTag) on Cloudflare.
-    async delete(key: string): Promise<void> {
-      const kv = resolveKvBinding(envSource(), options.binding);
-      if (!kv) {
+    // Workers KV implements delete/list, so expose them only when the live
+    // binding really has them. This keeps @czap/edge's capability checks honest
+    // for tests/custom adapters while still allowing late-bound workerd env.
+    get delete() {
+      const current = resolveKvBinding(envSource(), options.binding);
+      if (!current) {
         warnMissingBinding(envSource, options.binding);
-        return;
+        return undefined;
       }
-      await kv.delete?.(key);
+      if (typeof current.delete !== 'function') {
+        warnMissingCapability(options.binding, 'delete');
+        return undefined;
+      }
+      return async (key: string): Promise<void> => {
+        const kv = resolveKvBinding(envSource(), options.binding);
+        if (!kv) {
+          warnMissingBinding(envSource, options.binding);
+          return;
+        }
+        if (typeof kv.delete !== 'function') {
+          warnMissingCapability(options.binding, 'delete');
+          return;
+        }
+        await kv.delete(key);
+      };
     },
-    async list(listOptions: { prefix: string; cursor?: string }) {
-      const kv = resolveKvBinding(envSource(), options.binding);
-      if (!kv?.list) {
-        if (!kv) warnMissingBinding(envSource, options.binding);
-        return { keys: [], list_complete: true };
+    get list() {
+      const current = resolveKvBinding(envSource(), options.binding);
+      if (!current) {
+        warnMissingBinding(envSource, options.binding);
+        return undefined;
       }
-      return kv.list(listOptions);
+      if (typeof current.list !== 'function') {
+        warnMissingCapability(options.binding, 'list');
+        return undefined;
+      }
+      return async (listOptions: { prefix: string; cursor?: string }) => {
+        const kv = resolveKvBinding(envSource(), options.binding);
+        if (!kv) {
+          warnMissingBinding(envSource, options.binding);
+          return { keys: [], list_complete: true };
+        }
+        if (typeof kv.list !== 'function') {
+          warnMissingCapability(options.binding, 'list');
+          return { keys: [], list_complete: true };
+        }
+        return kv.list(listOptions);
+      };
     },
   };
 }

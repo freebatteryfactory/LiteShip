@@ -35,9 +35,16 @@
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js",
       "development": "./src/testing.ts"
+    },
+    "./cache-provider": {
+      "types": "./dist/cache-provider.d.ts",
+      "import": "./cache-provider.mjs",
+      "development": "./cache-provider.dev.mjs"
     }
   },
   "files": [
+    "cache-provider.mjs",
+    "cache-provider.dev.mjs",
     "dist",
     "src",
     "LICENSE"

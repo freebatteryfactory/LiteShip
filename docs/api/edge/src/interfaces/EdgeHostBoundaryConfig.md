@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryConfig
 
-Defined in: [edge/src/host-adapter.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L65)
+Defined in: [edge/src/host-adapter.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L70)
 
 Outputs source for one boundary -- the per-boundary slice of
 [EdgeHostCacheConfig](EdgeHostCacheConfig.md). Resolution order per boundary is
@@ -20,7 +20,7 @@ required.
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L67)
+Defined in: [edge/src/host-adapter.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L72)
 
 Content address of the boundary being compiled (`Boundary.make`'s `id`).
 
@@ -30,7 +30,7 @@ Content address of the boundary being compiled (`Boundary.make`'s `id`).
 
 > `readonly` `optional` **compile?**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
 
-Defined in: [edge/src/host-adapter.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L74)
+Defined in: [edge/src/host-adapter.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L79)
 
 Compile function invoked when neither `precompiled` nor KV has the tier.
 
@@ -50,7 +50,19 @@ Compile function invoked when neither `precompiled` nor KV has the tier.
 
 > `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`"none:standard"` \| `"none:minimal"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:standard"` \| `"transitions:minimal"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:standard"` \| `"animations:minimal"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:standard"` \| `"physics:minimal"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:standard"` \| `"compute:minimal"` \| `"compute:enhanced"` \| `"compute:rich"`, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
 
-Defined in: [edge/src/host-adapter.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L72)
+Defined in: [edge/src/host-adapter.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L77)
 
 Build-derived outputs keyed by [TierKey](../type-aliases/TierKey.md) -- the `outputsByTier`
 field of a boundary manifest entry. Checked before KV.
+
+***
+
+### tags?
+
+> `readonly` `optional` **tags?**: [`EdgeHostCacheTags`](../type-aliases/EdgeHostCacheTags.md)
+
+Defined in: [edge/src/host-adapter.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L85)
+
+Tags written into the boundary cache index when `compile` fills a KV miss.
+Use the same values as Astro `routeRules.tags` when `cache.invalidate({ tags })`
+should purge the corresponding CZAP boundary CSS variants.

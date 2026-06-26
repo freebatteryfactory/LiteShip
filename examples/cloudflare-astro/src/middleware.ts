@@ -10,4 +10,7 @@ export const onRequest = cloudflareMiddleware({
   // kv_namespaces binding name) — omit it unless you override that name.
   manifest: boundaries,
   boundary: 'viewport',
+  // Match astro.config.mjs routeRules.tags so Astro cache.invalidate({ tags })
+  // and CZAP boundary invalidation address the same KV tag index.
+  tags: ['viewport'],
 });

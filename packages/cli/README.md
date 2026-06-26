@@ -29,11 +29,12 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 
 | Verb | What it does |
 | --- | --- |
-| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare]` | Environment preflight: Node, pnpm, install, build artifacts, git hooks. `--fix` applies cheap remediations. |
+| `czap doctor [--fix] [--ci] [--preflight] [--target cloudflare\|astro]` | Environment preflight: Node, pnpm, install, build artifacts, git hooks, or focused Cloudflare/Astro host probes. `--fix` applies cheap remediations. |
 | `czap help` · `czap version` · `czap glossary [term]` | Help chart, version receipt, vocabulary lookup. |
 | `czap completion <bash\|zsh\|fish>` | Tab-completion script — the one verb that writes a raw script, not JSON, to stdout. |
 | `czap describe [--format json\|mcp]` | Machine-readable description of every verb and schema. |
 | `czap mcp [--http :3838]` | Start the MCP server (requires `@czap/mcp-server` installed). |
+| `czap astro dev\|status\|stop` | Delegate to Astro 7 background dev-server management and emit a JSON receipt. |
 | `czap scene compile\|dev\|render\|verify <path>` | Compile, watch, render, or check a scene definition. |
 | `czap asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
 | `czap capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |

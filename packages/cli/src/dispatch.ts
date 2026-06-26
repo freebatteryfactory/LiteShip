@@ -24,6 +24,7 @@ import { checkInvariants } from './commands/check-invariants.js';
 import { capsuleVerify as capsuleVerifyGate } from './commands/capsule-verify.js';
 import { assetAnalyze } from './commands/asset-analyze.js';
 import { assetVerify } from './commands/asset-verify.js';
+import { astroDev } from './commands/astro-dev.js';
 import { capsuleInspect, capsuleList, capsuleVerify } from './commands/capsule.js';
 import { gauntlet } from './commands/gauntlet.js';
 import { lsp } from './commands/lsp.js';
@@ -49,16 +50,15 @@ export async function run(argv: readonly string[]): Promise<number> {
       const targetRaw = targetEq ?? (targetIdx >= 0 ? rest[targetIdx + 1] : undefined);
       // A typo'd target must not silently fall back to the default profile —
       // that runs the wrong checks with no warning.
-      if ((targetEq !== undefined || targetIdx >= 0) && targetRaw !== 'cloudflare') {
-        emitError('doctor', `expected target: cloudflare (got: ${targetRaw ?? '<missing>'})`);
+      if ((targetEq !== undefined || targetIdx >= 0) && targetRaw !== 'cloudflare' && targetRaw !== 'astro') {
+        emitError('doctor', `expected target: cloudflare | astro (got: ${targetRaw ?? '<missing>'})`);
         return 1;
       }
-      const target = targetRaw === 'cloudflare' ? ('cloudflare' as const) : undefined;
       return doctor({
         fix: rest.includes('--fix'),
         ci: rest.includes('--ci'),
         preflight: rest.includes('--preflight'),
-        ...(target ? { target } : {}),
+        ...(targetRaw === 'cloudflare' || targetRaw === 'astro' ? { target: targetRaw } : {}),
       });
     }
     case 'glossary': {
@@ -112,6 +112,14 @@ export async function run(argv: readonly string[]): Promise<number> {
       }
       if (sub === 'verify') return sceneVerify(scene ?? '');
       emitError('scene', `unknown subcommand: ${sub ?? '<missing>'}`);
+      return 1;
+    }
+    case 'astro': {
+      const [sub] = rest;
+      if (sub === 'dev' || sub === 'status' || sub === 'stop') {
+        return astroDev(sub);
+      }
+      emitError('astro', `unknown subcommand: ${sub ?? '<missing>'}`);
       return 1;
     }
     case 'asset': {

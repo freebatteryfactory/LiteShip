@@ -38,6 +38,7 @@ function expectedDescribeNamesFor(verb: string): readonly string[] {
   switch (verb) {
     case 'scene':   return ['scene.compile', 'scene.render', 'scene.verify', 'scene.dev'];
     case 'asset':   return ['asset.analyze', 'asset.verify'];
+    case 'astro':   return ['astro.dev', 'astro.status', 'astro.stop'];
     case 'capsule': return ['capsule.inspect', 'capsule.verify', 'capsule.list'];
     default:        return [verb]; // describe, gauntlet, mcp — single command
   }

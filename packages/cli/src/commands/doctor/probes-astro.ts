@@ -5,7 +5,7 @@
  * `/_astro/status` liveness endpoint. This probe folds that endpoint into
  * `czap doctor` so an agent (or CI) can verify a running dev server through the
  * same evidence loop as every other environment check — `czap doctor --target
- * astro` (also reachable over MCP).
+ * astro`.
  *
  * A refused connection is a `warn`, not a `fail`: "no dev server running" is the
  * expected state most of the time, not a broken environment.

@@ -178,6 +178,8 @@ describe('D4 — projection drift pin', () => {
     // registry/commands UI body grew by one entry, re-pinning the digest.
     // Re-pinned again when `lsp` (the LSP rigor skin launcher, B3) joined
     // COMMAND_CATALOG — the registry/commands UI body grew by one entry.
-    expect(address).toBe('fnv1a:dd3a1110');
+    // Re-pinned again when Astro 7 background-dev commands (`astro.dev`,
+    // `astro.status`, `astro.stop`) joined COMMAND_CATALOG.
+    expect(address).toBe('fnv1a:d57167cb');
   });
 });

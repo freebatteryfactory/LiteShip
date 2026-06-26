@@ -1,9 +1,9 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-06-13
+Last updated: 2026-06-25
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: **4240 tests** across **364 files** (4208 passed, 31 skipped, 10 files skipped; baseline 2026-06-13).
+Current node lane: **6903 tests** across **559 files** (6896 passed, 7 skipped; baseline 2026-06-25).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
 
 Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
@@ -11,7 +11,7 @@ Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below s
 Current first-class support target (tier-1, CI-gated):
 
 - Node 22 + pnpm 10
-- Vite 8 + Astro 6 + Cloudflare Workers (`@astrojs/cloudflare` v13+, Wrangler 4)
+- Vite 8 + Astro 7 + Cloudflare Workers (`@astrojs/cloudflare` v14+, Wrangler 4)
 - Windows + Linux (`windows-latest` smoke sweep + `ubuntu-latest` full gauntlet via `.github/workflows/ci.yml`)
 - PowerShell + bash
 - Chromium + Firefox + WebKit shared-runtime browser lane
@@ -64,10 +64,10 @@ Current browser-security posture:
 | `pnpm run typecheck:scripts` | green, standalone script lane for CI/runtime tooling    | any                |
 | `pnpm run typecheck:spine`  | green                                                   | any                |
 | `pnpm run check`            | green                                                   | any                |
-| `pnpm test`                 | green, 4240 tests / 364 files (4208 passed, 31 skipped) | any                |
+| `pnpm test`                 | green, 6903 tests / 559 files (6896 passed, 7 skipped)  | any                |
 | `pnpm run test:vite`        | green                                                   | PowerShell + bash  |
 | `pnpm run test:astro`       | green                                                   | PowerShell + bash  |
-| `pnpm run test:cloudflare`  | green, Astro 6 + Cloudflare adapter + KV middleware     | PowerShell + bash  |
+| `pnpm run test:cloudflare`  | green, Astro 7 + Cloudflare adapter v14 + KV middleware/cache provider | PowerShell + bash  |
 | `pnpm run test:tailwind`    | green                                                   | PowerShell + bash  |
 | `pnpm run test:e2e`         | green, `retries: 0`                                     | any                |
 | `pnpm run test:e2e:stress`  | green, 10x repeated WebCodecs capture run               | any                |
@@ -688,7 +688,7 @@ Lens C/E micro-cuts, D10 interactivity, MCP Apps spec-completeness, and Lens W (
 - **`@czap/core` shim** — re-exports the canonical kernel at its export boundary; byte parity pinned in `tests/unit/canonical/core-shim-conformance.test.ts`.
 - **Golden vectors** — encoder and digest output pinned under `tests/unit/canonical/` (ADR-0013).
 - **GenUI stream discriminator** — catalog trees arrive as `{ "_genui": true, name, props, ... }`; legacy token/text/HTML streaming unchanged when the marker is absent (ADR-0014).
-- **23 publishable packages** — 21 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
+- **25 publishable packages** — 23 `@czap/*` scopes plus `create-liteship` and `liteship`; `package:smoke` roster derived from manifests; B6a guard in `tests/unit/devops/package-smoke-roster.test.ts` prevents silent skips.
 
 ---
 

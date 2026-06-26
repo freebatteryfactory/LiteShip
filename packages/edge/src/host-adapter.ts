@@ -55,6 +55,11 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
   readonly boundaryName?: string;
 }
 
+/** Tags attached to a boundary cache write for active invalidation. */
+export type EdgeHostCacheTags =
+  | readonly string[]
+  | ((context: EdgeHostCompileContext) => readonly string[] | null | undefined);
+
 /**
  * Outputs source for one boundary -- the per-boundary slice of
  * {@link EdgeHostCacheConfig}. Resolution order per boundary is
@@ -72,6 +77,12 @@ export interface EdgeHostBoundaryConfig {
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  /**
+   * Tags written into the boundary cache index when `compile` fills a KV miss.
+   * Use the same values as Astro `routeRules.tags` when `cache.invalidate({ tags })`
+   * should purge the corresponding CZAP boundary CSS variants.
+   */
+  readonly tags?: EdgeHostCacheTags;
 }
 
 /**
@@ -104,6 +115,8 @@ export interface EdgeHostCacheConfig {
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  /** Tags for the single-boundary form, passed through to the normalized boundary source. */
+  readonly tags?: EdgeHostCacheTags;
   /**
    * Multi-boundary form: outputs sources keyed by boundary name (the
    * manifest export name). Exclusive with the top-level
@@ -276,7 +289,9 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
         'or supply a `compile` callback to build outputs on KV cache miss.',
     );
   }
-  return [[null, { boundaryId: cache.boundaryId, precompiled: cache.precompiled, compile: cache.compile }]];
+  return [
+    [null, { boundaryId: cache.boundaryId, precompiled: cache.precompiled, compile: cache.compile, tags: cache.tags }],
+  ];
 }
 
 /** Badness order for the top-level aggregate: a miss anywhere wins. */
@@ -292,6 +307,15 @@ function themeFingerprint(theme: ThemeCompileResult): string {
   return contentAddressOf(theme)
     .replace(/^fnv1a:/, '')
     .slice(0, 12);
+}
+
+function resolveBoundaryTags(
+  tags: EdgeHostCacheTags | undefined,
+  context: EdgeHostCompileContext,
+): readonly string[] | undefined {
+  const resolved = typeof tags === 'function' ? tags(context) : tags;
+  if (!resolved || resolved.length === 0) return undefined;
+  return [...new Set(resolved.filter((tag) => tag.length > 0))];
 }
 
 async function resolveBoundaryOutputs(
@@ -316,12 +340,14 @@ async function resolveBoundaryOutputs(
     return { boundaryId: source.boundaryId, compiledOutputs: cached, cacheStatus: 'hit' };
   }
   if (source.compile) {
-    const compiledOutputs = await source.compile({
+    const compileContext: EdgeHostCompileContext = {
       ...context,
       boundaryId: source.boundaryId,
       ...(name === null ? {} : { boundaryName: name }),
-    });
-    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier, themeFp);
+    };
+    const compiledOutputs = await source.compile(compileContext);
+    const tags = resolveBoundaryTags(source.tags, compileContext);
+    await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier, themeFp, tags);
     return { boundaryId: source.boundaryId, compiledOutputs, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
@@ -459,6 +485,8 @@ export declare namespace EdgeHostAdapter {
   export type CompileContext = EdgeHostCompileContext;
   /** Alias for {@link EdgeHostBoundaryConfig}. */
   export type BoundaryConfig = EdgeHostBoundaryConfig;
+  /** Alias for {@link EdgeHostCacheTags}. */
+  export type CacheTags = EdgeHostCacheTags;
   /** Alias for {@link EdgeHostBoundaryResolution}. */
   export type BoundaryResolution = EdgeHostBoundaryResolution;
 }

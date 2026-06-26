@@ -383,7 +383,7 @@ Main surfaces:
 - `KVCache`
 - `compileTheme`
 
-The default Astro host path now routes through `createEdgeHostAdapter`, which combines `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` into one request-time resolution pass. A KV entry is keyed by boundary id + tier + name + a resolved-theme fingerprint; the cache config's `prefix` doubles as the per-deploy content version for a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover. This is the package for request-time adaptation outside the browser.
+The default Astro host path now routes through `createEdgeHostAdapter`, which combines `ClientHints`, `EdgeTier`, `compileTheme`, and `createBoundaryCache` into one request-time resolution pass. A KV entry is keyed by boundary id + tier + name + a resolved-theme fingerprint; the cache config's `prefix` doubles as the per-deploy content version for a bundled `compile()` whose output depends on build-time content the boundary id doesn't cover. Compile fallback writes can carry tags, and `BoundaryCache.invalidateByTag()` / `invalidateByPath()` actively purge all tier/theme variants when the KV provider supports `delete`/`list`. This is the package for request-time adaptation outside the browser.
 
 ---
 
@@ -397,11 +397,13 @@ Reach for it when you need:
 
 - Workers KV binding glue for `@czap/edge` boundary cache
 - Astro middleware pre-wired for `cloudflare:workers` env
+- Astro 7 cache-provider invalidation that points `cache.invalidate()` at the same KV tag index
 
 Main surfaces:
 
 - `cloudflareMiddleware`
 - `createCloudflareEdgeCache`
+- `@czap/cloudflare/cache-provider`
 - `cloudflareAdapterCapsule`
 
 See [HOSTING.md](./HOSTING.md#cloudflare-workers) for the full deploy guide.

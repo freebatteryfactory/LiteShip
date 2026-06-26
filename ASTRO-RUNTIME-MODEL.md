@@ -39,6 +39,7 @@ The important exports are:
 - `satelliteAttrs`
 - `resolveInitialStateFallback`
 - `czapMiddleware`
+- `czapFetchLayer`
 
 These form the Astro host layer.
 
@@ -83,7 +84,17 @@ The important idea is:
 
 For static visual sites, this keeps the document legible and intentional before client work begins.
 
-`czap({ middleware: true })` auto-wires this detection middleware (`@czap/astro/middleware-entry`), so the common case needs no hand-written `src/middleware.ts`. It populates a typed `Astro.locals.czap` — `{ tiers: { tier, motion, design }, capabilities, edge? }`, augmented onto `App.Locals` — so `Astro.locals.czap.tiers.tier` reads without a cast. The edge boundary cache (whose `theme`/`compile` carry functions) still wants a consumer `src/middleware.ts` calling `czapMiddleware({ edge })`; it runs after the auto entry and refines the same locals.
+`czap({ middleware: true })` auto-wires this detection middleware (`@czap/astro/middleware-entry`), so the common case needs no hand-written `src/middleware.ts`. It populates a typed `Astro.locals.czap` — `{ tiers: { tier, motion, design }, capabilities, edge? }`, augmented onto `App.Locals` — so `Astro.locals.czap.tiers.tier` reads without a cast. The edge boundary cache (whose `theme`/`compile` carry functions) can be wired through a consumer `src/middleware.ts` calling `czapMiddleware({ edge })`, or through Astro 7's fetch pipeline via `czapFetchLayer({ edge })`.
+
+## Fetch layer
+
+`czapFetchLayer()` is the Astro 7 request-pipeline form of the same edge resolution model. It calls the same `createEdgeHostAdapter().resolve(headers)` path as `czapMiddleware()`, but can sit in `src/fetch.ts` before Astro's own `cache`, `middleware`, and `astro` handlers. On the hot path it can return compiled boundary CSS directly and skip the rest of the pipeline; otherwise it annotates the request/locals and lets Astro continue.
+
+Use it when the host wants CZAP adaptation before Astro's route cache, i18n, middleware, or page rendering layers. Keep the invariant: no parallel cache key logic in `src/fetch.ts`; the fetch layer consumes the shared edge resolution result.
+
+## Astro cache bridge
+
+Astro 7's route cache and CZAP's boundary cache share invalidation through `@czap/cloudflare/cache-provider` plus `cloudflareMiddleware({ tags })`. Put the same tag names in Astro `routeRules.tags` and the CZAP middleware `tags` config; compile fallback writes those tags into the KV index, and `cache.invalidate({ tags })` purges all tier/theme variants for the boundary entries carrying that tag. For path invalidation, the provider also uses Astro's `astro-path:/route` tag convention and can map exact paths to boundary ids with `pathBoundaries`.
 
 ---
 

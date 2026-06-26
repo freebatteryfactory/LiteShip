@@ -10,6 +10,7 @@ import type {
   BoundaryManifestFile,
   EdgeHostAdapterConfig,
   EdgeHostBoundaryConfig,
+  EdgeHostCacheTags,
   EdgeHostCacheConfig,
 } from '@czap/edge';
 import { resolveOutputsByTier } from '@czap/edge';
@@ -65,6 +66,13 @@ export interface CloudflareMiddlewareConfig {
   readonly ttl?: number;
   /** Optional KV key prefix. */
   readonly prefix?: string;
+  /**
+   * Tags written with boundary cache entries when a compile fallback fills KV.
+   * Pass the same values as Astro `routeRules.tags` so `cache.invalidate({ tags })`
+   * can purge CZAP boundary variants. A manifest config may use a boundary-name
+   * map; a resolver can branch on `context.boundaryName` / `context.boundaryId`.
+   */
+  readonly tags?: EdgeHostCacheTags | Readonly<Record<string, EdgeHostCacheTags>>;
   /** Whether to parse Client Hints (default `true`). */
   readonly detect?: boolean;
   /** Whether to emit COOP/COEP for `client:worker`. */
@@ -133,16 +141,45 @@ function normalizeManifest(manifest: BoundaryManifest | BoundaryManifestFile): B
   return manifest as BoundaryManifest;
 }
 
+function isBoundaryTagMap(
+  tags: CloudflareMiddlewareConfig['tags'],
+): tags is Readonly<Record<string, EdgeHostCacheTags>> {
+  return typeof tags === 'object' && tags !== null && !Array.isArray(tags);
+}
+
+function resolveTagsForBoundary(
+  tags: CloudflareMiddlewareConfig['tags'],
+  boundaryName: string,
+): EdgeHostCacheTags | undefined {
+  if (tags === undefined) return undefined;
+  if (isBoundaryTagMap(tags)) return tags[boundaryName];
+  return tags;
+}
+
+function resolveSingleBoundaryTags(tags: CloudflareMiddlewareConfig['tags']): EdgeHostCacheTags | undefined {
+  if (tags === undefined) return undefined;
+  if (!isBoundaryTagMap(tags)) return tags;
+  const fallback = tags['default'];
+  if (fallback !== undefined) return fallback;
+  throw ValidationError(
+    'cloudflare.middleware',
+    'cloudflareMiddleware got a per-boundary `tags` map without a manifest boundary name to attach it to. ' +
+      'Fix: pass a tag array/resolver for the `boundaryId` escape hatch, or use a manifest config where names are known.',
+  );
+}
+
 /**
  * Resolve the cache identity + outputs source from the middleware config:
  * manifest-derived (preferred, name-keyed multi-boundary form) or the
  * hand-built single-boundary escape hatch.
  */
-function resolveCacheSource(
-  config: CloudflareMiddlewareConfig,
-):
+function resolveCacheSource(config: CloudflareMiddlewareConfig):
   | { readonly boundaries: Readonly<Record<string, EdgeHostBoundaryConfig>> }
-  | { readonly boundaryId: ContentAddress; readonly compile: EdgeHostCacheConfig['compile'] } {
+  | {
+      readonly boundaryId: ContentAddress;
+      readonly compile: EdgeHostCacheConfig['compile'];
+      readonly tags?: EdgeHostCacheTags;
+    } {
   if (config.manifest) {
     const manifest = normalizeManifest(config.manifest);
     const names = Object.keys(manifest);
@@ -177,13 +214,18 @@ function resolveCacheSource(
       }
       // Inflate the deduplicated v2 entry (outputs pool + index cells) once
       // at construction; per-request lookups stay a plain map access.
-      boundaries[name] = { boundaryId: entry.id, precompiled: resolveOutputsByTier(entry), compile: config.compile };
+      boundaries[name] = {
+        boundaryId: entry.id,
+        precompiled: resolveOutputsByTier(entry),
+        compile: config.compile,
+        tags: resolveTagsForBoundary(config.tags, name),
+      };
     }
     return { boundaries };
   }
 
   if (config.boundaryId && config.compile) {
-    return { boundaryId: config.boundaryId, compile: config.compile };
+    return { boundaryId: config.boundaryId, compile: config.compile, tags: resolveSingleBoundaryTags(config.tags) };
   }
 
   throw ValidationError(

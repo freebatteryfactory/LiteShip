@@ -44,6 +44,7 @@ compilation.
 
 - [BoundaryManifest](type-aliases/BoundaryManifest.md)
 - [EdgeHostCacheStatus](type-aliases/EdgeHostCacheStatus.md)
+- [EdgeHostCacheTags](type-aliases/EdgeHostCacheTags.md)
 - [TierKey](type-aliases/TierKey.md)
 
 ## Variables

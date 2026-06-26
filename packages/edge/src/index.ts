@@ -37,6 +37,7 @@ export type {
   EdgeHostAdapterConfig,
   EdgeHostResolution,
   EdgeHostCacheConfig,
+  EdgeHostCacheTags,
   EdgeHostCacheStatus,
   EdgeHostContext,
   EdgeHostCompileContext,

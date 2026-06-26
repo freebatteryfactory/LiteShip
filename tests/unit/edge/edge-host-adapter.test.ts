@@ -246,6 +246,50 @@ describe('createEdgeHostAdapter', () => {
     expect(store.size).toBe(1);
   });
 
+  test('compile fallback writes configured invalidation tags into the KV index', async () => {
+    const { kv, store } = makeKV();
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ],
+    });
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaryId: boundary.id,
+        tags: ['products'],
+        compile: () => ({ css: '.fallback{}', propertyRegistrations: '', containerQueries: '' }),
+      },
+    });
+
+    await adapter.resolve(makeHeaders());
+
+    expect(store.get('czap:tag:products')).toContain(boundary.id);
+  });
+
+  test('tag resolvers receive the boundary compile context', async () => {
+    const { kv, store } = makeKV();
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaries: {
+          hero: {
+            boundaryId: testBoundary.id,
+            tags: ({ boundaryName, boundaryId }) => [`route:${boundaryName}`, boundaryId],
+            compile: () => ({ css: '.fallback{}', propertyRegistrations: '', containerQueries: '' }),
+          },
+        },
+      },
+    });
+
+    await adapter.resolve(makeHeaders());
+
+    expect(store.get('czap:tag:route:hero')).toContain(testBoundary.id);
+    expect(store.get(`czap:tag:${testBoundary.id}`)).toContain(testBoundary.id);
+  });
+
   test('manifest tier gap without a compile fallback warns once and yields no outputs', async () => {
     const { kv } = makeKV();
     const boundary = Boundary.make({
