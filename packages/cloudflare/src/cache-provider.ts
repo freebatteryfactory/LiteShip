@@ -147,10 +147,3 @@ export function createCloudflareCacheProvider(options: RuntimeOptions = {}): Ast
     },
   };
 }
-
-/** Runtime entrypoint loaded by Astro from `CacheProviderConfig.entrypoint`. */
-function cloudflareCacheProviderFactory(config: Record<string, unknown> | undefined): AstroCacheProvider {
-  return createCloudflareCacheProvider((config ?? {}) as RuntimeOptions);
-}
-
-export { cloudflareCacheProviderFactory as default };
