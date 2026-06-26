@@ -351,8 +351,13 @@ function globMatches(file: string, glob: string): boolean {
     const ch = glob[i]!;
     if (ch === '*') {
       if (glob[i + 1] === '*') {
-        pattern += '.*';
-        i += 1;
+        if (glob[i + 2] === '/') {
+          pattern += '(?:.*/)?';
+          i += 2;
+        } else {
+          pattern += '.*';
+          i += 1;
+        }
       } else {
         pattern += '[^/]*';
       }

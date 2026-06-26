@@ -27,6 +27,22 @@ describe('BeatMarkerProjection', () => {
     expect(markers.beats).toEqual([]);
   });
 
+  it('returns BPM 0 for long silence with no emitted beat markers', () => {
+    const samples = new Float32Array(48000 * 2);
+    const markers = detectBeats({ sampleRate: 48000, samples });
+    expect(markers.bpm).toBe(0);
+    expect(markers.beats).toEqual([]);
+  });
+
+  it('normalizes BPM to 0 when delayed energy emits no beat markers', () => {
+    const sampleRate = 48000;
+    const samples = new Float32Array(4096);
+    for (let i = 2048; i < samples.length; i++) samples[i] = 1;
+    const markers = detectBeats({ sampleRate, samples });
+    expect(markers.bpm).toBe(0);
+    expect(markers.beats).toEqual([]);
+  });
+
   it('handles Int16Array sample buffers (decodeSamples PCM16 path)', () => {
     const sampleRate = 48000;
     const samples = new Int16Array(sampleRate * 2);
