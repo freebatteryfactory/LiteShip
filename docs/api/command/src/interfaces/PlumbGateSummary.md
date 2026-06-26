@@ -15,6 +15,16 @@ to scan (⇒ run capsule:compile).
 
 ## Properties
 
+### generatedCorpusMessage
+
+> `readonly` **generatedCorpusMessage**: `string` \| `null`
+
+Defined in: [command/src/registry.ts:389](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L389)
+
+Human-readable reason when the generated test corpus is missing or empty.
+
+***
+
 ### generatedPresent
 
 > `readonly` **generatedPresent**: `boolean`

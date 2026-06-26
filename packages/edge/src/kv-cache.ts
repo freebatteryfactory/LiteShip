@@ -9,7 +9,7 @@
  * @module
  */
 
-import { Diagnostics, type ContentAddress } from '@czap/core';
+import { Diagnostics, contentAddressOf, type ContentAddress } from '@czap/core';
 import type { EdgeTierResult } from './edge-tier.js';
 import { tierKey } from './manifest.js';
 
@@ -156,7 +156,9 @@ export interface BoundaryCache {
   /**
    * Active purge by tag (Astro 7 `Astro.cache` tag parity): delete every entry
    * stored with `tag` via {@link putCompiledOutputs}'s `tags`, across all of their
-   * tier/theme variants. Requires `KVNamespace.delete`; without it emits a
+   * tier/theme variants. Uses per-entry tag indexes when `KVNamespace.list` is
+   * available, with a legacy JSON-index fallback. Requires `KVNamespace.delete`;
+   * without it emits a
    * diagnostic and returns 0. Resolves to the number of keys deleted.
    */
   invalidateByTag(tag: string): Promise<number>;
@@ -222,12 +224,24 @@ function boundaryKeyPrefix(prefix: string, boundaryId: ContentAddress): string {
 }
 
 /**
- * Tag-index key. A tag is an EXTERNAL label, not derivable from a content key, so
- * tag invalidation needs a maintained index: `{prefix}:tag:{tag}` stores the JSON
- * array of content keys written under that tag.
+ * Legacy tag-index key. Older builds stored `{prefix}:tag:{tag}` as one JSON
+ * array; current builds write per-entry members below this prefix to avoid
+ * read-merge-write lost updates under concurrent first hits.
  */
 function tagIndexKey(prefix: string, tag: string): string {
   return `${prefix}:tag:${tag}`;
+}
+
+function tagMemberPrefix(prefix: string, tag: string): string {
+  return `${tagIndexKey(prefix, tag)}:`;
+}
+
+function tagMemberKey(prefix: string, tag: string, key: string): string {
+  return `${tagMemberPrefix(prefix, tag)}${contentAddressOf(key).replace(/^fnv1a:/, '')}`;
+}
+
+function tagIndexRoot(prefix: string): string {
+  return `${prefix}:tag:`;
 }
 
 /** Parse a tag-index value into a unique key list (lenient: a corrupt index reads as empty). */
@@ -259,7 +273,7 @@ function warnInvalidationUnsupported(operation: string, missing: 'delete' | 'lis
   });
 }
 
-/** Append `key` to each tag's index (read-merge-write, deduplicated). Uses get/put only. */
+/** Add `key` to each tag's per-entry index. One key per KV member avoids lost updates. */
 async function addKeyToTagIndexes(
   kv: KVNamespace,
   prefix: string,
@@ -269,11 +283,7 @@ async function addKeyToTagIndexes(
 ): Promise<void> {
   await Promise.all(
     tags.map(async (tag) => {
-      const idxKey = tagIndexKey(prefix, tag);
-      const existing = parseTagIndex(await kv.get(idxKey));
-      if (existing.includes(key)) return;
-      existing.push(key);
-      await kv.put(idxKey, JSON.stringify(existing), ttl !== undefined ? { expirationTtl: ttl } : undefined);
+      await kv.put(tagMemberKey(prefix, tag, key), key, ttl !== undefined ? { expirationTtl: ttl } : undefined);
     }),
   );
 }
@@ -295,6 +305,52 @@ async function listAllKeys(kv: Required<Pick<KVNamespace, 'list'>>, prefix: stri
 /** Delete every key concurrently. Caller guarantees `kv.delete` is present. */
 async function deleteAll(kv: Required<Pick<KVNamespace, 'delete'>>, keys: readonly string[]): Promise<void> {
   await Promise.all(keys.map((key) => kv.delete(key)));
+}
+
+async function tagKeysForTag(
+  kv: KVNamespace,
+  prefix: string,
+  tag: string,
+): Promise<{
+  readonly dataKeys: readonly string[];
+  readonly memberKeys: readonly string[];
+  readonly legacyIndexKey: string;
+}> {
+  const legacyIndexKey = tagIndexKey(prefix, tag);
+  const dataKeys = new Set(parseTagIndex(await kv.get(legacyIndexKey)));
+  let memberKeys: string[] = [];
+  if (kv.list !== undefined) {
+    memberKeys = await listAllKeys({ list: kv.list.bind(kv) }, tagMemberPrefix(prefix, tag));
+    const memberValues = await Promise.all(memberKeys.map((memberKey) => kv.get(memberKey)));
+    for (const value of memberValues) {
+      if (value !== null && value.length > 0) dataKeys.add(value);
+    }
+  }
+  return { dataKeys: [...dataKeys], memberKeys, legacyIndexKey };
+}
+
+async function deleteTagMembersForDataKeys(
+  kv: KVNamespace,
+  prefix: string,
+  dataKeys: readonly string[],
+): Promise<void> {
+  if (kv.list === undefined || kv.delete === undefined || dataKeys.length === 0) return;
+  const dataKeySet = new Set(dataKeys);
+  const tagIndexKeys = await listAllKeys({ list: kv.list.bind(kv) }, tagIndexRoot(prefix));
+  const staleTagKeys: string[] = [];
+  await Promise.all(
+    tagIndexKeys.map(async (tagKey) => {
+      const value = await kv.get(tagKey);
+      if (value === null) return;
+      if (tagKey.endsWith(value) || value.startsWith(`${prefix}:boundary:`)) {
+        if (dataKeySet.has(value)) staleTagKeys.push(tagKey);
+        return;
+      }
+      const legacyKeys = parseTagIndex(value);
+      if (legacyKeys.some((key) => dataKeySet.has(key))) staleTagKeys.push(tagKey);
+    }),
+  );
+  await deleteAll({ delete: kv.delete.bind(kv) }, staleTagKeys);
 }
 
 /**
@@ -518,6 +574,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       }
       const keys = await listAllKeys({ list: kv.list.bind(kv) }, boundaryKeyPrefix(prefix, boundaryId));
       await deleteAll({ delete: kv.delete.bind(kv) }, keys);
+      await deleteTagMembersForDataKeys(kv, prefix, keys);
       return keys.length;
     },
 
@@ -527,12 +584,12 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         return 0;
       }
       const del = { delete: kv.delete.bind(kv) };
-      const idxKey = tagIndexKey(prefix, tag);
-      const keys = parseTagIndex(await kv.get(idxKey));
-      await deleteAll(del, keys);
-      // Drop the index entry itself so a re-tagged boundary starts clean.
-      await del.delete(idxKey);
-      return keys.length;
+      const { dataKeys, memberKeys, legacyIndexKey } = await tagKeysForTag(kv, prefix, tag);
+      await deleteAll(del, dataKeys);
+      await deleteAll(del, memberKeys);
+      // Drop the legacy index entry itself so a re-tagged boundary starts clean.
+      await del.delete(legacyIndexKey);
+      return dataKeys.length;
     },
   };
 }

@@ -13,7 +13,16 @@
  */
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { sealNode, sealGraph, AddressedDigest, CanonicalCbor, GraphPatch, projectionKeys, HLC } from '@czap/core';
+import {
+  sealNode,
+  sealGraph,
+  AddressedDigest,
+  CanonicalCbor,
+  ContentAddress,
+  GraphPatch,
+  projectionKeys,
+  HLC,
+} from '@czap/core';
 import type {
   DocumentGraph,
   SignalNode,
@@ -21,7 +30,6 @@ import type {
   EntityNode,
   ProjectionNode,
   PoseNode,
-  ContentAddress,
   CellMeta,
 } from '@czap/core';
 import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
@@ -294,7 +302,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     // Tamper: swap one node's id to a WRONG (but well-formed-looking) address.
     // Keep the edges pointing at the forged id so reseal must remap, not reject.
     const realId = graph.nodes.find((n) => n.family === 'signal')!.id;
-    const forgedId = 'f'.repeat(String(realId).length) as unknown as ContentAddress;
+    const forgedId = ContentAddress('fnv1a:ffffffff');
     const tampered: DocumentGraph = {
       ...graph,
       nodes: graph.nodes.map((n) => (n.id === realId ? { ...n, id: forgedId } : n)),
@@ -321,7 +329,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   // dropped.
   test('rejects a graph whose edge references a forged id with no node', () => {
     const graph = buildGraph();
-    const danglingId = 'e'.repeat(String(graph.nodes[0]!.id).length) as unknown as ContentAddress;
+    const danglingId = ContentAddress('fnv1a:eeeeeeee');
     // Add an edge to a node id that does not exist; validateGraph would catch a
     // dangling edge BEFORE reseal, so instead point an EXISTING edge's `to` at the
     // dangling id after the fact — but keep it past validateGraph by also adding a
@@ -343,7 +351,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   test('rejects embedded node refs that point at forged supplied ids', () => {
     const graph = buildGraph();
     const comp = graph.nodes.find((n) => n.family === 'component' && n.name === 'card') as ComponentNode;
-    const forgedCompId = 'c'.repeat(String(comp.id).length) as unknown as ContentAddress;
+    const forgedCompId = ContentAddress('fnv1a:cccccccc');
 
     const tampered: DocumentGraph = {
       ...graph,
@@ -362,6 +370,20 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
         to: edge.to === comp.id ? forgedCompId : edge.to,
         type: edge.type,
       })),
+    };
+
+    expect(loadGraphRuntime(JSON.stringify(tampered), () => null)).toBeNull();
+  });
+
+  test('rejects remapped edges that become invalid after canonical reseal', () => {
+    const graph = buildGraph();
+    const signalNode = graph.nodes.find((n) => n.family === 'signal') as SignalNode;
+    const suppliedA: SignalNode = { ...signalNode, id: ContentAddress('fnv1a:11111111') };
+    const suppliedB: SignalNode = { ...signalNode, id: ContentAddress('fnv1a:22222222') };
+    const tampered: DocumentGraph = {
+      ...graph,
+      nodes: [suppliedA, suppliedB],
+      edges: [{ from: suppliedA.id, to: suppliedB.id, type: 'seq' }],
     };
 
     expect(loadGraphRuntime(JSON.stringify(tampered), () => null)).toBeNull();

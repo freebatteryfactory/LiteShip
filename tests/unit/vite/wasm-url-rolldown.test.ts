@@ -59,7 +59,7 @@ describe('wasmUrl survives the Vite 8 / Rolldown bundler', () => {
 
       const chunks = result.output;
       const wasmAsset = chunks.find((c) => c.type === 'asset' && c.fileName.endsWith('.wasm'));
-      const entryChunk = chunks.find((c) => c.type === 'chunk');
+      const entryChunk = chunks.find((c) => c.type === 'chunk' && c.fileName === 'entry.js');
 
       expect(wasmAsset, 'the czap-compute binary must be emitted as a build asset').toBeDefined();
       expect(entryChunk, 'an entry chunk must be produced').toBeDefined();

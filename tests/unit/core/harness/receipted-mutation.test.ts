@@ -254,6 +254,22 @@ describe('generateReceiptedMutation', () => {
     expect(() =>
       defineCapsule({
         ...base,
+        name: 'demo.nonArrayFaults',
+        faults: {} as never,
+      }),
+    ).toThrow(/expected an array/);
+
+    expect(() =>
+      defineCapsule({
+        ...base,
+        name: 'demo.nonObjectFault',
+        faults: [null as never],
+      }),
+    ).toThrow(/expected an object/);
+
+    expect(() =>
+      defineCapsule({
+        ...base,
         name: 'demo.blankFaultName',
         faults: [{ name: ' ', trigger: () => ({ token: '' }), surfaces: 'throws' as const }],
       }),

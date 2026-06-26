@@ -13,8 +13,8 @@
  *   - `shipEmitCapsule.input` / `shipEmitCapsule.output` Schema
  *     accept + reject (the publishable-snapshot input + receipt output).
  *   - The PURE `mutate` core: deterministic receipt derivation
- *     (idempotency) plus its two declared, reachable faults
- *     (`empty-target-path`, `empty-version` → status `rejected`).
+ *     (idempotency) plus its declared, reachable faults
+ *     (`empty-target-path`, `empty-version`, `empty-capsule-id` → status `rejected`).
  *   - The two invariant `check` functions: `id-matches-bytes`
  *     (path echo / path-drift) and `bytes-positive-when-emitted`
  *     (emitted > 0 / rejected = 0 / non-number).
@@ -167,10 +167,19 @@ describe('shipEmitCapsule pure mutate core', () => {
     const noVersion = mutate({ ...sampleSnapshot(), package_version: '' });
     expect(noVersion.status).toBe('rejected');
     expect(noVersion.bytes_written).toBe(0);
+
+    // Declared fault `empty-capsule-id` → status 'rejected', zero bytes.
+    const noCapsuleId = mutate({ ...sampleSnapshot(), capsule_id: '   ' });
+    expect(noCapsuleId.status).toBe('rejected');
+    expect(noCapsuleId.bytes_written).toBe(0);
   });
 
-  it('declares exactly the two reachable faults the harness injects', () => {
-    expect(shipEmitCapsule.faults!.map((f) => f.name)).toEqual(['empty-target-path', 'empty-version']);
+  it('declares exactly the reachable faults the harness injects', () => {
+    expect(shipEmitCapsule.faults!.map((f) => f.name)).toEqual([
+      'empty-target-path',
+      'empty-version',
+      'empty-capsule-id',
+    ]);
     for (const fault of shipEmitCapsule.faults!) {
       // Each fault's trigger drives the pure core to its declared status.
       const receipt = shipEmitCapsule.mutate!(fault.trigger());

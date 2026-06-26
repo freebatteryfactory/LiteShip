@@ -70,9 +70,10 @@ export interface CzapFetchLayerConfig extends CzapMiddlewareConfig {
 /**
  * Serialize a resolution's compiled boundary outputs into one stylesheet, in
  * CSS-correct order: the theme `:root {}` custom properties first, then per
- * boundary the `@property` registrations (must precede the rules that consume
- * them), the `@container` queries (carry their own containment), and finally the
- * boundary CSS. Handles both the sole-boundary (`compiledOutputs`) and
+ * boundary the canonical compiled CSS payload. `CompiledOutputs.css` already
+ * contains property registrations and container queries in the correct order;
+ * the sibling fields are structured mirrors for consumers, not extra bytes to
+ * prepend. Handles both the sole-boundary (`compiledOutputs`) and
  * multi-boundary (`boundaries`) resolution forms.
  *
  * This is the edge-served form of the same outputs a page inlines; exposed and
@@ -83,18 +84,15 @@ export function serializeBoundaryCss(resolution: EdgeHostResolution): string {
   if (resolution.theme?.css) parts.push(resolution.theme.css);
 
   const appendOutputs = (outputs: CompiledOutputs): void => {
-    if (outputs.propertyRegistrations) parts.push(outputs.propertyRegistrations);
-    if (outputs.containerQueries) parts.push(outputs.containerQueries);
     if (outputs.css) parts.push(outputs.css);
   };
 
-  if (resolution.compiledOutputs) {
-    appendOutputs(resolution.compiledOutputs);
-  }
-  if (resolution.boundaries) {
+  if (resolution.boundaries && Object.keys(resolution.boundaries).length > 0) {
     for (const boundary of Object.values(resolution.boundaries)) {
       if (boundary.compiledOutputs) appendOutputs(boundary.compiledOutputs);
     }
+  } else if (resolution.compiledOutputs) {
+    appendOutputs(resolution.compiledOutputs);
   }
   return parts.join('\n');
 }
@@ -141,6 +139,10 @@ function withCzapHeaders(
  * // Fetchable that runs the layer in front of the Astro pipeline.
  * import { FetchState, astro } from 'astro/fetch';
  * import { czapFetchLayer } from '@czap/astro/fetch-layer';
+ * import type { EdgeHostCacheConfig, KVNamespace } from '@czap/edge';
+ *
+ * declare const env: { CZAP_BOUNDARY_CACHE: KVNamespace };
+ * declare const boundaries: EdgeHostCacheConfig['boundaries'];
  *
  * const layer = czapFetchLayer({
  *   edge: { cache: { kv: env.CZAP_BOUNDARY_CACHE, boundaries } },
@@ -150,7 +152,7 @@ function withCzapHeaders(
  * const handler = {
  *   fetch: (request) => layer(request, (req) => astro(new FetchState(req))),
  * } satisfies import('astro').Fetchable;
- * // `handler` is then the default export of src/fetch.ts.
+ * // Export `handler` from src/fetch.ts.
  * ```
  */
 export function czapFetchLayer(config?: CzapFetchLayerConfig): CzapFetchLayer {

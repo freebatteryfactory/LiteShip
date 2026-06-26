@@ -8,7 +8,7 @@
 
 > `const` **CommandRegistry**: `object`
 
-Defined in: [command/src/registry.ts:512](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L512)
+Defined in: [command/src/registry.ts:514](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L514)
 
 ## Type Declaration
 

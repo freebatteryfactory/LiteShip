@@ -33,10 +33,10 @@ function readJson(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
 }
 
-/** First `N.` in a semver range (`^7.0.0`, `>=7.0.0 <8`, `~7.1.0` → 7). */
+/** First major in a semver range (`^7.0.0`, `>=7`, `7.x`, `~7.1.0` → 7). */
 function majorOf(range: string): number | null {
-  const match = range.match(/(\d+)\./);
-  return match ? Number(match[1]) : null;
+  const match = range.match(/\d+/);
+  return match ? Number(match[0]) : null;
 }
 
 const DEP_FIELDS = ['dependencies', 'devDependencies', 'peerDependencies'] as const;

@@ -422,16 +422,20 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
     remappedEdges.push({ ...edge, from, to });
   }
 
+  const resealedGraph = {
+    _tag: 'DocumentGraph',
+    _version: 1,
+    meta: (candidate as { meta?: DocumentGraph['meta'] }).meta ?? ZERO_META,
+    nodes: resealed,
+    edges: remappedEdges,
+  } satisfies Omit<DocumentGraph, 'id' | 'digest'>;
+  const resealedStructural = validateGraph(resealedGraph);
+  if (!resealedStructural.ok) return null;
+
   // RE-ADDRESS the graph: discard any supplied id/digest, mint from the (now
   // canonically-addressed) node ids + remapped edges.
   try {
-    return sealGraph({
-      _tag: 'DocumentGraph',
-      _version: 1,
-      meta: (candidate as { meta?: DocumentGraph['meta'] }).meta ?? ZERO_META,
-      nodes: resealed,
-      edges: remappedEdges,
-    } as Omit<DocumentGraph, 'id' | 'digest'>);
+    return sealGraph(resealedGraph);
   } catch (err) {
     Diagnostics.warnOnce({
       source: 'czap/astro.graph',

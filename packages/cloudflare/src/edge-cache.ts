@@ -24,6 +24,7 @@ export interface CloudflareEdgeCacheOptions {
 export interface CloudflareCacheApi {
   match(request: Request): Promise<Response | undefined>;
   put(request: Request, response: Response): Promise<void>;
+  delete?(request: Request): Promise<boolean>;
 }
 
 /**
@@ -142,6 +143,9 @@ export function createCloudflareEdgeCache(
           return;
         }
         await kv.delete(key);
+        if (edgeCache && typeof edgeCache.delete === 'function') {
+          await edgeCache.delete(cacheRequest(options.binding, key));
+        }
       };
     },
     get list() {

@@ -108,7 +108,7 @@ describe.sequential('examples build', () => {
         if (result.exitCode !== 0) {
           // Surface the tail of the build log — the assertion alone says
           // nothing about WHICH page or import broke.
-          const output = result.stderr || result.stdout;
+          const output = [result.stdout, result.stderr].filter(Boolean).join('\n');
           const tail = output.split('\n').slice(-30).join('\n');
           const strict = classifyStrictCompilerFailure(output);
           const banner = strict ? `STRICT COMPILER (Astro 7): ${strict} — fix the markup in examples/${name}\n` : '';

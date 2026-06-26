@@ -8,7 +8,7 @@
 
 > **czapFetchLayer**(`config?`): [`CzapFetchLayer`](../type-aliases/CzapFetchLayer.md)
 
-Defined in: [astro/src/fetch-layer.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L156)
+Defined in: [astro/src/fetch-layer.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L158)
 
 Create the czap fetch layer.
 
@@ -29,6 +29,10 @@ Create the czap fetch layer.
 // Fetchable that runs the layer in front of the Astro pipeline.
 import { FetchState, astro } from 'astro/fetch';
 import { czapFetchLayer } from '@czap/astro/fetch-layer';
+import type { EdgeHostCacheConfig, KVNamespace } from '@czap/edge';
+
+declare const env: { CZAP_BOUNDARY_CACHE: KVNamespace };
+declare const boundaries: EdgeHostCacheConfig['boundaries'];
 
 const layer = czapFetchLayer({
   edge: { cache: { kv: env.CZAP_BOUNDARY_CACHE, boundaries } },
@@ -38,5 +42,5 @@ const layer = czapFetchLayer({
 const handler = {
   fetch: (request) => layer(request, (req) => astro(new FetchState(req))),
 } satisfies import('astro').Fetchable;
-// `handler` is then the default export of src/fetch.ts.
+// Export `handler` from src/fetch.ts.
 ```

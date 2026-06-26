@@ -186,7 +186,8 @@ describe('cloudflareMiddleware', () => {
 
     await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
 
-    expect(cacheStore.get('czap:tag:products')).toContain(boundary.id);
+    const tagValue = [...cacheStore.entries()].find(([key]) => key.startsWith('czap:tag:products:'))?.[1];
+    expect(tagValue).toContain(boundary.id);
   });
 
   test('manifest tag map attaches tags to the named boundary compile fallback', async () => {
@@ -205,7 +206,8 @@ describe('cloudflareMiddleware', () => {
 
     await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
 
-    expect(cacheStore.get('czap:tag:hero-route')).toContain(boundary.id);
+    const tagValue = [...cacheStore.entries()].find(([key]) => key.startsWith('czap:tag:hero-route:'))?.[1];
+    expect(tagValue).toContain(boundary.id);
   });
 
   test('per-boundary tag maps require a manifest name or a default entry', () => {

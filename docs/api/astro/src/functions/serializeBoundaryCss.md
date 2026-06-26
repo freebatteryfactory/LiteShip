@@ -8,13 +8,14 @@
 
 > **serializeBoundaryCss**(`resolution`): `string`
 
-Defined in: [astro/src/fetch-layer.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L81)
+Defined in: [astro/src/fetch-layer.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L82)
 
 Serialize a resolution's compiled boundary outputs into one stylesheet, in
 CSS-correct order: the theme `:root {}` custom properties first, then per
-boundary the `@property` registrations (must precede the rules that consume
-them), the `@container` queries (carry their own containment), and finally the
-boundary CSS. Handles both the sole-boundary (`compiledOutputs`) and
+boundary the canonical compiled CSS payload. `CompiledOutputs.css` already
+contains property registrations and container queries in the correct order;
+the sibling fields are structured mirrors for consumers, not extra bytes to
+prepend. Handles both the sole-boundary (`compiledOutputs`) and
 multi-boundary (`boundaries`) resolution forms.
 
 This is the edge-served form of the same outputs a page inlines; exposed and

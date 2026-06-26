@@ -8,6 +8,6 @@
 
 > **PlumbPayload** = `Schema.Schema.Type`\<*typeof* [`PlumbPayloadSchema`](../variables/PlumbPayloadSchema.md)\>
 
-Defined in: [command/src/commands/plumb.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L58)
+Defined in: [command/src/commands/plumb.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L60)
 
 Structured payload returned by `plumb`.

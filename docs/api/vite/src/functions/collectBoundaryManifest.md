@@ -8,7 +8,7 @@
 
 > **collectBoundaryManifest**(`projectRoot`, `options?`): `Promise`\<`Readonly`\<`Record`\<`string`, `BoundaryManifestEntry`\>\>\>
 
-Defined in: [vite/src/boundary-manifest.ts:407](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L407)
+Defined in: [vite/src/boundary-manifest.ts:405](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts#L405)
 
 Derive the `BoundaryManifest` for a project.
 

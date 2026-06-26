@@ -411,14 +411,18 @@ describe('interleaved paired measurement — window-invariant hot-path ratio (CI
       const nonInterleaved = DIRECTIVE_BENCH_PAIRS.find(
         (pair) => !['satellite', 'stream', 'llm', 'worker'].includes(pair.label),
       )!;
-      const inputs = [makePairEvaluation(satellite, 0.999), makePairEvaluation(nonInterleaved, 0.999)];
+      const sentinelOverhead = Number.POSITIVE_INFINITY;
+      const inputs = [
+        makePairEvaluation(satellite, sentinelOverhead),
+        makePairEvaluation(nonInterleaved, sentinelOverhead),
+      ];
       const [satelliteOut, otherOut] = applyInterleavedGateOverrides(inputs);
-      // The interleaved pair is re-measured live (sentinel 0.999 replaced by a real, finite paired ratio).
-      expect(satelliteOut!.overhead).not.toBe(0.999);
+      // The interleaved pair is re-measured live (sentinel replaced by a real, finite paired ratio).
+      expect(satelliteOut!.overhead).not.toBe(sentinelOverhead);
       expect(Number.isFinite(satelliteOut!.overhead)).toBe(true);
       // The non-interleaved pair is returned untouched — same reference, sentinel intact.
       expect(otherOut).toBe(inputs[1]);
-      expect(otherOut!.overhead).toBe(0.999);
+      expect(otherOut!.overhead).toBe(sentinelOverhead);
     },
     scaledTimeout(15000),
   );

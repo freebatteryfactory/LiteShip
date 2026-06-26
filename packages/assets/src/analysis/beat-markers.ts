@@ -118,7 +118,7 @@ export function BeatMarkerProjection(
           if (set.beats.length === 0) return set.bpm === 0;
           return set.bpm >= 40 && set.bpm <= 240;
         },
-        message: 'detected BPM must lie in [40, 240]',
+        message: 'empty beat sets must report BPM 0; non-empty detected BPM must lie in [40, 240]',
       },
     ],
     budgets: { p95Ms: 200 },

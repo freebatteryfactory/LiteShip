@@ -52,6 +52,8 @@ export const PlumbPayloadSchema = Schema.Struct({
   unclassified: Schema.Array(Schema.String),
   /** Whether the generated test corpus was present to scan (false ⇒ run capsule:compile). */
   generatedPresent: Schema.Boolean,
+  /** Human-readable reason when the generated test corpus is missing or empty. */
+  generatedCorpusMessage: Schema.NullOr(Schema.String),
 });
 
 /** Structured payload returned by `plumb`. */
@@ -84,6 +86,7 @@ export const plumbCommand: HandledCommand = {
         skips: summary.skips,
         unclassified: summary.unclassified,
         generatedPresent: summary.generatedPresent,
+        generatedCorpusMessage: summary.generatedCorpusMessage,
       } satisfies PlumbPayload,
     };
   },

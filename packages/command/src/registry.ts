@@ -385,6 +385,8 @@ export interface PlumbGateSummary {
   readonly unclassified: readonly string[];
   /** Whether the generated test corpus was present to scan. */
   readonly generatedPresent: boolean;
+  /** Human-readable reason when the generated test corpus is missing or empty. */
+  readonly generatedCorpusMessage: string | null;
 }
 
 /**

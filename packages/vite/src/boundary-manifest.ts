@@ -373,9 +373,7 @@ function compileOutputsByTier(
  * theme-agnostic and content-hashed.
  */
 export function serializeBoundaryOutput(output: CompiledOutputs): string {
-  return [output.propertyRegistrations, output.containerQueries, output.css]
-    .filter((part) => part.length > 0)
-    .join('\n');
+  return output.css;
 }
 
 /**

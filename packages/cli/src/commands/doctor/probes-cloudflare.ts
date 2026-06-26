@@ -146,7 +146,7 @@ export function probeCloudflareAdapter(cwd: string): DoctorCheck {
     return {
       id: 'cloudflare.adapter',
       label: '@astrojs/cloudflare',
-      status: 'warn',
+      status: 'fail',
       detail: `${version} (Astro 7 requires @astrojs/cloudflare v14+)`,
       hint: 'Upgrade: pnpm add @astrojs/cloudflare@^14',
     };

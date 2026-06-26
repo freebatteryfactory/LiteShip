@@ -85,11 +85,53 @@ describe('createCloudflareEdgeCache', () => {
     expect(store.size).toBe(0);
   });
 
+  it('purges Cache API L1 entries when active invalidation deletes a KV key', async () => {
+    const store = new Map<string, string>();
+    const cacheApi = {
+      match: vi.fn(async () => undefined),
+      put: vi.fn(async () => {}),
+      delete: vi.fn(async () => true),
+    };
+    const env = {
+      KV: {
+        async get(key: string) {
+          return store.get(key) ?? null;
+        },
+        async put(key: string, value: string) {
+          store.set(key, value);
+        },
+        async delete(key: string) {
+          store.delete(key);
+        },
+        async list({ prefix }: { prefix: string }) {
+          return {
+            keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+            list_complete: true,
+          };
+        },
+      },
+    };
+    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
+    const boundaryCache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV', cache: cacheApi }));
+
+    await boundaryCache.putCompiledOutputs(boundary.id, tier, {
+      css: '.x{}',
+      propertyRegistrations: '',
+      containerQueries: '',
+    });
+    await boundaryCache.invalidateByPath(boundary.id);
+
+    expect(cacheApi.delete).toHaveBeenCalledTimes(1);
+    expect(cacheApi.delete.mock.calls[0]?.[0]).toBeInstanceOf(Request);
+  });
+
   it('serves a Cache API L1 hit without reading KV', async () => {
     let kvReads = 0;
     const cache = {
       match: vi.fn(async () => new Response('from-cache')),
       put: vi.fn(async () => {}),
+      delete: vi.fn(async () => true),
     };
     const kv = createCloudflareEdgeCache(
       () => ({
@@ -117,6 +159,7 @@ describe('createCloudflareEdgeCache', () => {
       put: vi.fn(async (_request: Request, response: Response) => {
         expect(await response.text()).toBe('from-kv');
       }),
+      delete: vi.fn(async () => true),
     };
     const ctx = {
       waitUntil: vi.fn((promise: Promise<unknown>) => {
@@ -147,6 +190,7 @@ describe('createCloudflareEdgeCache', () => {
     const cache = {
       match: vi.fn(async () => undefined),
       put: vi.fn(async () => {}),
+      delete: vi.fn(async () => true),
     };
     const kv = createCloudflareEdgeCache(
       () => ({
