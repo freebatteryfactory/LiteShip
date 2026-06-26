@@ -16,6 +16,7 @@ import * as CompilerImpl from '@czap/compiler';
 import type { CompositeState as RtCompositeState } from '../../packages/core/src/compositor.js';
 import type { VideoConfig as RtVideoConfig } from '../../packages/core/src/video.js';
 import type { CaptureResult as RtCaptureResult } from '../../packages/core/src/capture.js';
+import type { CompiledOutputs as RtEdgeCompiledOutputs } from '../../packages/edge/src/kv-cache.js';
 
 // Runtime truth for the @czap/design SPINE mirror (`packages/_spine/design.d.ts`).
 // The runtime `TokenDef`/`ThemeDef`/`StyleDef` interfaces are not exported by name;
@@ -132,6 +133,17 @@ function __designSpineTypeContract(
   void _styleR2S;
 }
 void __designSpineTypeContract;
+
+function __edgeSpineTypeContract(aOutputs: SpineCore.CompiledOutputs, bOutputs: RtEdgeCompiledOutputs): void {
+  // CompiledOutputs — the spine mirror must carry the same JSON-safe GLSL/WGSL
+  // payload shapes as the KV boundary cache, not `unknown`.
+  const _outputsS2R: RtEdgeCompiledOutputs = aOutputs;
+  const _outputsR2S: SpineCore.CompiledOutputs = bOutputs;
+
+  void _outputsS2R;
+  void _outputsR2S;
+}
+void __edgeSpineTypeContract;
 
 // Factory runtime values also satisfy the spine (the original one-way pins, kept
 // so the assertion bites even via the package index, not only the producing

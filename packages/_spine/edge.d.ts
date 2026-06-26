@@ -72,8 +72,20 @@ export interface CompiledOutputs {
   readonly propertyRegistrations: string;
   readonly containerQueries: string;
   readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
-  readonly glsl?: unknown;
-  readonly wgsl?: unknown;
+  readonly glsl?: CompiledGLSLOutput;
+  readonly wgsl?: CompiledWGSLOutput;
+}
+
+export interface CompiledGLSLOutput {
+  readonly declarations: string;
+  readonly uniformValues: Readonly<Record<string, number>>;
+  readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+}
+
+export interface CompiledWGSLOutput {
+  readonly declarations: string;
+  readonly bindingValues: Readonly<Record<string, number>>;
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
 export interface BoundaryCache {

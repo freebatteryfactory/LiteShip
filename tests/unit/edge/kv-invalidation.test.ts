@@ -22,6 +22,13 @@ const boundary = Boundary.make({
     [768, 'wide'],
   ],
 });
+const siblingBoundary = Boundary.make({
+  input: 'scroll.progress',
+  at: [
+    [0, 'intro'],
+    [0.5, 'body'],
+  ],
+});
 const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
 const outputs = { css: '.x{}', propertyRegistrations: '', containerQueries: '' };
 
@@ -107,6 +114,22 @@ describe('invalidateByPath (active purge by content address)', () => {
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
     expect([...store.keys()].some((key) => key.includes(':tag:products:'))).toBe(false);
   });
+
+  test('rewrites legacy JSON tag indexes without orphaning surviving live keys', async () => {
+    const { store, kv } = makeKV();
+    const cache = createBoundaryCache(kv);
+
+    await cache.putCompiledOutputs(boundary.id, tier, outputs);
+    await cache.putCompiledOutputs(siblingBoundary.id, tier, outputs);
+    const purgedKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+    const survivorKey = [...store.keys()].find((key) => key.includes(String(siblingBoundary.id)))!;
+    store.set('czap:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
+
+    expect(await cache.invalidateByPath(boundary.id)).toBe(1);
+    expect(store.has(purgedKey)).toBe(false);
+    expect(store.has(survivorKey)).toBe(true);
+    expect(JSON.parse(store.get('czap:tag:legacy')!)).toEqual([survivorKey]);
+  });
 });
 
 describe('invalidateByTag (Astro.cache tag parity)', () => {
@@ -123,6 +146,23 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
     // The 'other'-tagged entry survives; the products index is gone.
     expect([...store.keys()].some((k) => k.includes(':tag:products'))).toBe(false);
     expect([...store.keys()].some((k) => k.includes(':tag:other'))).toBe(true);
+  });
+
+  test('clears sibling tag-member rows for the same deleted data keys', async () => {
+    const { store, kv } = makeKV();
+    const cache = createBoundaryCache(kv);
+
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products', 'sale']);
+    const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+    expect([...store.keys()].some((key) => key.includes(':tag:sale:'))).toBe(true);
+
+    expect(await cache.invalidateByTag('products')).toBe(1);
+    expect([...store.keys()].some((key) => key.includes(':tag:sale:'))).toBe(false);
+
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
+    expect(store.has(dataKey)).toBe(true);
+    expect(await cache.invalidateByTag('sale')).toBe(0);
+    expect(store.has(dataKey)).toBe(true);
   });
 
   test('the tag index does not double-count a re-put key', async () => {
