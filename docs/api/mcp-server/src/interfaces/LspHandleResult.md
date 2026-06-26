@@ -6,7 +6,7 @@
 
 # Interface: LspHandleResult
 
-Defined in: [mcp-server/src/lsp/server.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L84)
+Defined in: [mcp-server/src/lsp/server.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L94)
 
 The outcome of handling one LSP message: an optional response + any push notifications + a lifecycle signal.
 
@@ -16,7 +16,7 @@ The outcome of handling one LSP message: an optional response + any push notific
 
 > `readonly` **exit**: `boolean`
 
-Defined in: [mcp-server/src/lsp/server.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L90)
+Defined in: [mcp-server/src/lsp/server.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L100)
 
 `true` once `exit` is received — the driver closes the loop.
 
@@ -26,7 +26,7 @@ Defined in: [mcp-server/src/lsp/server.ts:90](https://github.com/heyoub/LiteShip
 
 > `readonly` **notifications**: readonly [`LspNotification`](LspNotification.md)[]
 
-Defined in: [mcp-server/src/lsp/server.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L88)
+Defined in: [mcp-server/src/lsp/server.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L98)
 
 Server→client notifications to emit (e.g. publishDiagnostics after czap/check).
 
@@ -36,6 +36,6 @@ Server→client notifications to emit (e.g. publishDiagnostics after czap/check)
 
 > `readonly` **response**: [`JsonRpcResponse`](../type-aliases/JsonRpcResponse.md) \| `null`
 
-Defined in: [mcp-server/src/lsp/server.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L86)
+Defined in: [mcp-server/src/lsp/server.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L96)
 
 The JSON-RPC response, or `null` for a notification / `exit` (which gets none).
