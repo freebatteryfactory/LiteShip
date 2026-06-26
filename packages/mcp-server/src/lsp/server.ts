@@ -333,10 +333,20 @@ function globMatches(file: string, glob: string): boolean {
   // The CLI/audit host hands the LSP skin repo-relative POSIX paths. Keep this
   // matcher scoped to that contract; slash-normalization lives in the audit package.
   if (!glob.includes('*')) return file === glob;
-  const pattern = glob
-    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-    .replace(/\*\*/g, '.*')
-    .replace(/\*/g, '[^/]*');
+  let pattern = '';
+  for (let i = 0; i < glob.length; i += 1) {
+    const ch = glob[i]!;
+    if (ch === '*') {
+      if (glob[i + 1] === '*') {
+        pattern += '.*';
+        i += 1;
+      } else {
+        pattern += '[^/]*';
+      }
+      continue;
+    }
+    pattern += /[.+?^${}()|[\]\\]/.test(ch) ? `\\${ch}` : ch;
+  }
   return new RegExp(`^${pattern}$`).test(file);
 }
 

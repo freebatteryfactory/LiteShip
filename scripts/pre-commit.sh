@@ -25,7 +25,7 @@ pnpm run lint
 pnpm run format:check
 pnpm exec tsx packages/cli/src/bin.ts check-invariants
 
-if git diff --cached --name-only --diff-filter=ACMR | grep -Eq '^(packages/[^/]+/src/.*\.ts|typedoc\.json|docs/api/)'; then
+if git diff --cached --name-only --diff-filter=ACMRD | grep -Eq '^(packages/[^/]+/src/.*\.ts|packages/_spine/.*\.d\.ts|packages/_spine/typedoc-entry\.ts|typedoc\.json|docs/api/)'; then
   echo "[pre-commit] API docs inputs changed; checking committed docs/api..."
   pnpm run docs:check
 fi
