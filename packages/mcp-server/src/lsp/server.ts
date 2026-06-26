@@ -26,6 +26,13 @@
  */
 
 import { InvariantViolationError, ValidationError, isTaggedError } from '@czap/error';
+import {
+  convertPatternsToRe,
+  convertToPositivePattern,
+  getNegativePatterns,
+  getPositivePatterns,
+  matchAny,
+} from 'fast-glob/out/utils/pattern.js';
 import { parse as parseJsonRpc, errorResponse, successResponse } from '../jsonrpc.js';
 import type { JsonRpcId, JsonRpcResponse } from '../jsonrpc.js';
 import { InvalidParams, InternalError, MethodNotFound } from '../jsonrpc.js';
@@ -50,6 +57,9 @@ const PUBLISH_DIAGNOSTICS_METHOD = 'textDocument/publishDiagnostics' as const;
 
 /** The LSP protocol method the server logs out-of-band over (§window/logMessage). */
 const LOG_MESSAGE_METHOD = 'window/logMessage' as const;
+const FAST_GLOB_IGNORES = ['**/node_modules/**', '**/dist/**'] as const;
+const FAST_GLOB_POSITIVE_OPTIONS = { dot: false } as const;
+const FAST_GLOB_NEGATIVE_OPTIONS = { dot: true } as const;
 
 /**
  * Server capabilities the LSP advertises in the `initialize` response. EXACTLY
@@ -327,7 +337,18 @@ function publishNotificationsFor(
 }
 
 function matchesAnyGlob(file: string, globs: readonly string[]): boolean {
-  return globs.some((glob) => globMatches(file, glob));
+  const patterns = [...globs];
+  const positive = getPositivePatterns(patterns);
+  if (positive.length === 0) return false;
+
+  const negative = [
+    ...getNegativePatterns(patterns).map((pattern) => convertToPositivePattern(pattern)),
+    ...FAST_GLOB_IGNORES,
+  ];
+  return (
+    matchAny(file, convertPatternsToRe(positive, FAST_GLOB_POSITIVE_OPTIONS)) &&
+    !matchAny(file, convertPatternsToRe(negative, FAST_GLOB_NEGATIVE_OPTIONS))
+  );
 }
 
 function mergeFindingsForScope(
@@ -340,32 +361,6 @@ function mergeFindingsForScope(
     (finding) => finding.location === undefined || !matchesAnyGlob(finding.location.file, checkedGlobs),
   );
   return [...previousOutOfScope, ...findings];
-}
-
-function globMatches(file: string, glob: string): boolean {
-  // The CLI/audit host hands the LSP skin repo-relative POSIX paths. Keep this
-  // matcher scoped to that contract; slash-normalization lives in the audit package.
-  if (!glob.includes('*')) return file === glob;
-  let pattern = '';
-  for (let i = 0; i < glob.length; i += 1) {
-    const ch = glob[i]!;
-    if (ch === '*') {
-      if (glob[i + 1] === '*') {
-        if (glob[i + 2] === '/') {
-          pattern += '(?:.*/)?';
-          i += 2;
-        } else {
-          pattern += '.*';
-          i += 1;
-        }
-      } else {
-        pattern += '[^/]*';
-      }
-      continue;
-    }
-    pattern += /[.+?^${}()|[\]\\]/.test(ch) ? `\\${ch}` : ch;
-  }
-  return new RegExp(`^${pattern}$`).test(file);
 }
 
 /**

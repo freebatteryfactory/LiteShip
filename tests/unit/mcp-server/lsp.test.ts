@@ -483,6 +483,95 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     expect(params.diagnostics).toEqual([]);
     expect(scoped.state.lastFindings).toEqual([]);
   });
+
+  it('uses fast-glob brace scope semantics when clearing stale diagnostics', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING, WARN_FINDING]),
+    );
+
+    const scoped = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: CZAP_CHECK_METHOD,
+        params: { globs: ['packages/{x,y}/src/**/*.ts'] },
+      }),
+      first.state,
+      stubRunner([]),
+    );
+
+    const uris = scoped.result.notifications.map((n) => (n.params as { uri: string }).uri).sort();
+    expect(uris).toEqual(['file:///packages/x/src/a.ts', 'file:///packages/x/src/b.ts']);
+    for (const notification of scoped.result.notifications) {
+      expect((notification.params as { diagnostics: readonly LspDiagnostic[] }).diagnostics).toEqual([]);
+    }
+    expect(scoped.state.lastFindings).toEqual([]);
+  });
+
+  it('uses fast-glob character-class scope semantics when clearing stale diagnostics', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING, WARN_FINDING]),
+    );
+
+    const scoped = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: CZAP_CHECK_METHOD,
+        params: { globs: ['packages/[xy]/src/a.ts'] },
+      }),
+      first.state,
+      stubRunner([]),
+    );
+
+    const params = scoped.result.notifications[0]!.params as { uri: string; diagnostics: readonly LspDiagnostic[] };
+    expect(params.uri).toBe('file:///packages/x/src/a.ts');
+    expect(params.diagnostics).toEqual([]);
+    expect(scoped.state.lastFindings).toEqual([WARN_FINDING]);
+  });
+
+  it('honors fast-glob negative scoped patterns when preserving out-of-scope findings', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING, WARN_FINDING]),
+    );
+
+    const scoped = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: CZAP_CHECK_METHOD,
+        params: { globs: ['packages/**/*.ts', '!packages/x/src/a.ts'] },
+      }),
+      first.state,
+      stubRunner([]),
+    );
+
+    const params = scoped.result.notifications[0]!.params as { uri: string; diagnostics: readonly LspDiagnostic[] };
+    expect(params.uri).toBe('file:///packages/x/src/b.ts');
+    expect(params.diagnostics).toEqual([]);
+    expect(scoped.state.lastFindings).toEqual([ERR_FINDING]);
+  });
 });
 
 // ---------- 5. textDocument/codeAction ----------

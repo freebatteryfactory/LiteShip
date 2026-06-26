@@ -452,6 +452,19 @@ export const auditAllowlist: readonly AuditAllowlistEntry[] = [
       'Declaration acceptance probe (_declarationAccepts): a throwing schema parser IS the rejection result (accepted=false); the caught error carries no information beyond the boolean the function returns, so nothing is laundered — the probe result is the contract.',
   },
   {
+    // 0.4.0 — isCanonicalCborBytes is an Effect Schema refinement predicate:
+    // any decoder/encoder throwable (including non-Error throwables) means the
+    // candidate bytes are outside the canonical-CBOR input domain. The false
+    // return is the typed schema rejection signal; surfacing the raw throwable
+    // would defect the decoder instead of producing a parse failure.
+    rule: 'fallback-laundering',
+    package: '@czap/core',
+    filePrefix: 'src/capsules/canonical-cbor-decode.ts',
+    summaryIncludes: 'returns false',
+    reason:
+      'Canonical CBOR schema refinement predicate: any decoder/encoder throwable means the byte array is not canonical input (accepted=false); returning false keeps Effect Schema on its typed parse-failure path instead of leaking defects.',
+  },
+  {
     // CUT A6 — symbol-level orphan: a test-only reset hook. Its only consumers
     // are the astro directive test suites (tests/unit/astro/astro-directives.test.ts,
     // astro-directive-branches.test.ts), which the audit does not scan, so
