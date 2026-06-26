@@ -41,7 +41,7 @@ Delete a single key. Optional — required for active invalidation.
 
 ### get()
 
-> **get**(`key`): `Promise`\<`string` \| `null`\>
+> **get**(`key`, `options?`): `Promise`\<`string` \| `null`\>
 
 Defined in: [edge/src/kv-cache.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L31)
 
@@ -50,6 +50,12 @@ Defined in: [edge/src/kv-cache.ts:31](https://github.com/heyoub/LiteShip/blob/ma
 ##### key
 
 `string`
+
+##### options?
+
+###### cacheTtl?
+
+`number`
 
 #### Returns
 

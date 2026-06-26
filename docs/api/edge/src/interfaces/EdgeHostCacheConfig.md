@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostCacheConfig
 
-Defined in: [edge/src/host-adapter.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L101)
+Defined in: [edge/src/host-adapter.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L107)
 
 Cache configuration for the edge host adapter.
 
@@ -22,11 +22,21 @@ back to KV with the configured `ttl`).
 
 ## Properties
 
+### assetUrlsByTier?
+
+> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`"none:standard"` \| `"none:minimal"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:standard"` \| `"transitions:minimal"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:standard"` \| `"animations:minimal"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:standard"` \| `"physics:minimal"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:standard"` \| `"compute:minimal"` \| `"compute:enhanced"` \| `"compute:rich"`, `string`\>\>\>
+
+Defined in: [edge/src/host-adapter.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L123)
+
+Immutable static-asset URL keyed by [TierKey](../type-aliases/TierKey.md) for the single-boundary form.
+
+***
+
 ### boundaries?
 
 > `readonly` `optional` **boundaries?**: `Readonly`\<`Record`\<`string`, [`EdgeHostBoundaryConfig`](EdgeHostBoundaryConfig.md)\>\>
 
-Defined in: [edge/src/host-adapter.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L125)
+Defined in: [edge/src/host-adapter.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L133)
 
 Multi-boundary form: outputs sources keyed by boundary name (the
 manifest export name). Exclusive with the top-level
@@ -38,7 +48,7 @@ manifest export name). Exclusive with the top-level
 
 > `readonly` `optional` **boundaryId?**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L108)
+Defined in: [edge/src/host-adapter.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L114)
 
 Content address of the boundary being compiled (`Boundary.make`'s
 `id`). Single-boundary form; exclusive with `boundaries`.
@@ -49,7 +59,7 @@ Content address of the boundary being compiled (`Boundary.make`'s
 
 > `readonly` `optional` **compile?**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
 
-Defined in: [edge/src/host-adapter.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L117)
+Defined in: [edge/src/host-adapter.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L125)
 
 Compile function invoked when neither `precompiled` nor KV has the tier.
 
@@ -69,7 +79,7 @@ Compile function invoked when neither `precompiled` nor KV has the tier.
 
 > `readonly` **kv**: [`KVNamespace`](KVNamespace.md)
 
-Defined in: [edge/src/host-adapter.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L103)
+Defined in: [edge/src/host-adapter.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L109)
 
 KV namespace backing the boundary cache.
 
@@ -79,7 +89,7 @@ KV namespace backing the boundary cache.
 
 > `readonly` `optional` **precompiled?**: `Readonly`\<`Partial`\<`Record`\<`"none:standard"` \| `"none:minimal"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:standard"` \| `"transitions:minimal"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:standard"` \| `"animations:minimal"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:standard"` \| `"physics:minimal"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:standard"` \| `"compute:minimal"` \| `"compute:enhanced"` \| `"compute:rich"`, [`CompiledOutputs`](CompiledOutputs.md)\>\>\>
 
-Defined in: [edge/src/host-adapter.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L115)
+Defined in: [edge/src/host-adapter.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L121)
 
 Build-derived outputs keyed by [TierKey](../type-aliases/TierKey.md)
 (`"<motionTier>:<designTier>"`) -- a manifest entry inflated via
@@ -92,7 +102,7 @@ tier never touches the network.
 
 > `readonly` `optional` **prefix?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L143)
+Defined in: [edge/src/host-adapter.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L151)
 
 Optional KV key prefix. Doubles as the per-deploy content version for a
 bundled `compile`: set it to a hash of compile's output (e.g.
@@ -105,7 +115,7 @@ build-time content outside the boundary's own address.
 
 > `readonly` `optional` **tags?**: [`EdgeHostCacheTags`](../type-aliases/EdgeHostCacheTags.md)
 
-Defined in: [edge/src/host-adapter.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L119)
+Defined in: [edge/src/host-adapter.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L127)
 
 Tags for the single-boundary form, passed through to the normalized boundary source.
 
@@ -115,7 +125,7 @@ Tags for the single-boundary form, passed through to the normalized boundary sou
 
 > `readonly` `optional` **ttl?**: `number`
 
-Defined in: [edge/src/host-adapter.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L136)
+Defined in: [edge/src/host-adapter.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L144)
 
 Cache entry TTL in seconds — an eviction/cost knob, not a freshness
 knob. An entry is keyed by boundary content address, tier, name, and

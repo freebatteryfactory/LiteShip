@@ -283,6 +283,42 @@ describe('cloudflareMiddleware', () => {
     expect(cacheStore.size).toBe(0);
   });
 
+  test('manifest assetUrls ride through to Astro locals', async () => {
+    const { kv } = makeKVStore();
+    const { manifest } = makeManifest();
+    const manifestWithAssets: BoundaryManifest = {
+      viewport: {
+        ...manifest.viewport!,
+        assetUrls: { 0: '/_czap/viewport/0.abcd.css' },
+      },
+    };
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      manifest: manifestWithAssets,
+      boundary: 'viewport',
+      env: { KV: kv },
+    });
+
+    const context = {
+      request: new Request('http://localhost/', {
+        headers: new Headers({ 'sec-ch-viewport-width': '1280', 'sec-ch-device-memory': '8' }),
+      }),
+      locals: {} as Record<string, unknown>,
+    };
+    await middleware(context, async () => new Response('ok'));
+
+    const edge = (
+      context.locals.czap as {
+        edge?: {
+          assetUrl?: string;
+          boundaries?: Record<string, { assetUrl?: string }>;
+        };
+      }
+    ).edge;
+    expect(edge?.assetUrl).toBe('/_czap/viewport/0.abcd.css');
+    expect(edge?.boundaries?.viewport?.assetUrl).toBe('/_czap/viewport/0.abcd.css');
+  });
+
   test('single-entry manifest needs no boundary selector', async () => {
     const { kv } = makeKVStore();
     const { manifest } = makeManifest();

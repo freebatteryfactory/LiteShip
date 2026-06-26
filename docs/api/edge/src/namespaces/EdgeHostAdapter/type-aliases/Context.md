@@ -8,6 +8,6 @@
 
 > **Context** = [`EdgeHostContext`](../../../interfaces/EdgeHostContext.md)
 
-Defined in: [edge/src/host-adapter.ts:483](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L483)
+Defined in: [edge/src/host-adapter.ts:510](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L510)
 
 Alias for [EdgeHostContext](../../../interfaces/EdgeHostContext.md).

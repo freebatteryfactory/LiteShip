@@ -214,6 +214,26 @@ describe('createEdgeHostAdapter', () => {
     expect(store.size).toBe(0);
   });
 
+  test('carries the static asset URL for the resolved single-boundary tier', async () => {
+    const { kv } = makeKV();
+    const outputs = { css: '.asset{}', propertyRegistrations: '', containerQueries: '' };
+    const precompiled = Object.fromEntries(enumerateTierKeys().map((key) => [key, outputs]));
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/${key}.css`]));
+    const adapter = createEdgeHostAdapter({
+      cache: {
+        kv,
+        boundaryId: testBoundary.id,
+        precompiled,
+        assetUrlsByTier,
+      },
+    });
+
+    const result = await adapter.resolve(makeHeaders());
+
+    expect(result.assetUrl).toBe('/_czap/animations:enhanced.css');
+    expect(result.compiledOutputs).toEqual(outputs);
+  });
+
   test('falls back to compile (and KV write-back) when the manifest does not cover the tier', async () => {
     const { kv, store } = makeKV();
     const boundary = Boundary.make({
@@ -468,17 +488,20 @@ describe('createEdgeHostAdapter (multi-boundary)', () => {
 
   test('a sole boundaries entry still populates the top-level compiledOutputs', async () => {
     const { kv } = makeKV();
+    const assetUrlsByTier = Object.fromEntries(enumerateTierKeys().map((key) => [key, `/_czap/hero/${key}.css`]));
     const adapter = createEdgeHostAdapter({
       cache: {
         kv,
-        boundaries: { hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{}') } },
+        boundaries: { hero: { boundaryId: heroBoundary.id, precompiled: fullGrid('.hero{}'), assetUrlsByTier } },
       },
     });
 
     const result = await adapter.resolve(makeHeaders());
 
     expect(result.compiledOutputs?.css).toBe('.hero{}');
+    expect(result.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
     expect(result.boundaries?.hero?.compiledOutputs?.css).toBe('.hero{}');
+    expect(result.boundaries?.hero?.assetUrl).toBe('/_czap/hero/animations:enhanced.css');
   });
 
   test('top-level cacheStatus aggregates worst case across boundaries', async () => {

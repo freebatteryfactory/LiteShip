@@ -7,13 +7,15 @@
 import { Diagnostics, type ContentAddress } from '@czap/core';
 import type {
   BoundaryManifest,
+  BoundaryManifestEntry,
   BoundaryManifestFile,
   EdgeHostAdapterConfig,
   EdgeHostBoundaryConfig,
   EdgeHostCacheTags,
   EdgeHostCacheConfig,
+  TierKey,
 } from '@czap/edge';
-import { resolveOutputsByTier } from '@czap/edge';
+import { resolveAssetUrlByTier, resolveOutputsByTier } from '@czap/edge';
 import { czapMiddleware } from '@czap/astro';
 import { ValidationError } from '@czap/error';
 import { createCloudflareEdgeCache, type CloudflareWorkersEnv } from './edge-cache.js';
@@ -168,6 +170,16 @@ function resolveSingleBoundaryTags(tags: CloudflareMiddlewareConfig['tags']): Ed
   );
 }
 
+function resolveAssetUrlsByTier(entry: BoundaryManifestEntry): Readonly<Partial<Record<TierKey, string>>> | undefined {
+  if (!entry.assetUrls || Object.keys(entry.assetUrls).length === 0) return undefined;
+  const urls: Partial<Record<TierKey, string>> = {};
+  for (const key of Object.keys(entry.outputsByTier) as TierKey[]) {
+    const url = resolveAssetUrlByTier(entry, key);
+    if (url) urls[key] = url;
+  }
+  return Object.keys(urls).length > 0 ? urls : undefined;
+}
+
 /**
  * Resolve the cache identity + outputs source from the middleware config:
  * manifest-derived (preferred, name-keyed multi-boundary form) or the
@@ -217,6 +229,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
       boundaries[name] = {
         boundaryId: entry.id,
         precompiled: resolveOutputsByTier(entry),
+        assetUrlsByTier: resolveAssetUrlsByTier(entry),
         compile: config.compile,
         tags: resolveTagsForBoundary(config.tags, name),
       };

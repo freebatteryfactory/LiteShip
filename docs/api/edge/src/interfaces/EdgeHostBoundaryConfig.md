@@ -16,6 +16,18 @@ required.
 
 ## Properties
 
+### assetUrlsByTier?
+
+> `readonly` `optional` **assetUrlsByTier?**: `Readonly`\<`Partial`\<`Record`\<`"none:standard"` \| `"none:minimal"` \| `"none:enhanced"` \| `"none:rich"` \| `"transitions:standard"` \| `"transitions:minimal"` \| `"transitions:enhanced"` \| `"transitions:rich"` \| `"animations:standard"` \| `"animations:minimal"` \| `"animations:enhanced"` \| `"animations:rich"` \| `"physics:standard"` \| `"physics:minimal"` \| `"physics:enhanced"` \| `"physics:rich"` \| `"compute:standard"` \| `"compute:minimal"` \| `"compute:enhanced"` \| `"compute:rich"`, `string`\>\>\>
+
+Defined in: [edge/src/host-adapter.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L83)
+
+Immutable static-asset URL keyed by [TierKey](../type-aliases/TierKey.md), derived from a
+manifest entry's optional `assetUrls`. Metadata only: it never changes
+the cache key or lookup order.
+
+***
+
 ### boundaryId
 
 > `readonly` **boundaryId**: `ContentAddress`
@@ -30,7 +42,7 @@ Content address of the boundary being compiled (`Boundary.make`'s `id`).
 
 > `readonly` `optional` **compile?**: (`context`) => [`CompiledOutputs`](CompiledOutputs.md) \| `Promise`\<[`CompiledOutputs`](CompiledOutputs.md)\>
 
-Defined in: [edge/src/host-adapter.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L79)
+Defined in: [edge/src/host-adapter.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L85)
 
 Compile function invoked when neither `precompiled` nor KV has the tier.
 
@@ -61,7 +73,7 @@ field of a boundary manifest entry. Checked before KV.
 
 > `readonly` `optional` **tags?**: [`EdgeHostCacheTags`](../type-aliases/EdgeHostCacheTags.md)
 
-Defined in: [edge/src/host-adapter.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L85)
+Defined in: [edge/src/host-adapter.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L91)
 
 Tags written into the boundary cache index when `compile` fills a KV miss.
 Use the same values as Astro `routeRules.tags` when `cache.invalidate({ tags })`

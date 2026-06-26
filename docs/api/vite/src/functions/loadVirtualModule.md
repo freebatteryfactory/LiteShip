@@ -8,7 +8,7 @@
 
 > **loadVirtualModule**(`id`, `data?`): `string` \| `undefined`
 
-Defined in: [vite/src/virtual-modules.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L113)
+Defined in: [vite/src/virtual-modules.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L135)
 
 Return the source for a resolved virtual module ID.
 

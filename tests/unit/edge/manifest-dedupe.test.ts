@@ -16,6 +16,7 @@ import {
   MOTION_TIERS,
   dedupeOutputsByTier,
   enumerateTierKeys,
+  resolveAssetUrlByTier,
   resolveOutputsByTier,
   tierKey,
 } from '@czap/edge';
@@ -117,5 +118,23 @@ describe('manifest tier-grid dedupe', () => {
     } as unknown as Parameters<typeof resolveOutputsByTier>[0];
 
     expect(() => resolveOutputsByTier(v1)).toThrowError(/_version: 2/);
+  });
+
+  test('resolveAssetUrlByTier maps tier to pool index to immutable URL', () => {
+    const entry = {
+      ...dedupeOutputsByTier(makePreDedupeGrid()),
+      assetUrls: {
+        0: '/_czap/f6a7/0.abcd.css',
+        1: '/_czap/f6a7/1.ef01.css',
+      },
+    };
+
+    expect(resolveAssetUrlByTier(entry, 'none:standard')).toBe('/_czap/f6a7/0.abcd.css');
+    expect(resolveAssetUrlByTier(entry, 'transitions:standard')).toBe('/_czap/f6a7/1.ef01.css');
+  });
+
+  test('resolveAssetUrlByTier returns undefined when manifest has no asset URLs', () => {
+    const entry = dedupeOutputsByTier(makePreDedupeGrid());
+    expect(resolveAssetUrlByTier(entry, 'transitions:standard')).toBeUndefined();
   });
 });

@@ -75,6 +75,12 @@ export interface EdgeHostBoundaryConfig {
    * field of a boundary manifest entry. Checked before KV.
    */
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  /**
+   * Immutable static-asset URL keyed by {@link TierKey}, derived from a
+   * manifest entry's optional `assetUrls`. Metadata only: it never changes
+   * the cache key or lookup order.
+   */
+  readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   /**
@@ -113,6 +119,8 @@ export interface EdgeHostCacheConfig {
    * tier never touches the network.
    */
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  /** Immutable static-asset URL keyed by {@link TierKey} for the single-boundary form. */
+  readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   /** Compile function invoked when neither `precompiled` nor KV has the tier. */
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   /** Tags for the single-boundary form, passed through to the normalized boundary source. */
@@ -174,6 +182,8 @@ export interface EdgeHostBoundaryResolution {
   readonly boundaryId: ContentAddress;
   /** Compiled per-state outputs; absent on an uncovered tier with no `compile`. */
   readonly compiledOutputs?: CompiledOutputs;
+  /** Immutable static-asset URL for this request's resolved tier, when emitted by the build. */
+  readonly assetUrl?: string;
   /** Where this boundary's outputs came from (`'disabled'` cannot occur per boundary). */
   readonly cacheStatus: Exclude<EdgeHostCacheStatus, 'disabled'>;
 }
@@ -194,6 +204,8 @@ export interface EdgeHostResolution extends EdgeHostContext {
    * {@link boundaries} instead.
    */
   readonly compiledOutputs?: CompiledOutputs;
+  /** Immutable static-asset URL when exactly one boundary is configured and emitted one. */
+  readonly assetUrl?: string;
   /** Per-boundary outcomes, keyed by name; present with the `boundaries` cache form. */
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   /** `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`). */
@@ -290,7 +302,16 @@ function normalizeBoundaries(cache: EdgeHostCacheConfig): readonly NormalizedBou
     );
   }
   return [
-    [null, { boundaryId: cache.boundaryId, precompiled: cache.precompiled, compile: cache.compile, tags: cache.tags }],
+    [
+      null,
+      {
+        boundaryId: cache.boundaryId,
+        precompiled: cache.precompiled,
+        assetUrlsByTier: cache.assetUrlsByTier,
+        compile: cache.compile,
+        tags: cache.tags,
+      },
+    ],
   ];
 }
 
@@ -323,9 +344,12 @@ async function resolveBoundaryOutputs(
   [name, source]: NormalizedBoundary,
   context: Omit<EdgeHostCompileContext, 'boundaryId' | 'boundaryName'>,
 ): Promise<EdgeHostBoundaryResolution> {
-  const precompiled = source.precompiled?.[tierKey(context.tier)];
+  const key = tierKey(context.tier);
+  const assetUrl = source.assetUrlsByTier?.[key];
+  const withAssetUrl = assetUrl ? { assetUrl } : {};
+  const precompiled = source.precompiled?.[key];
   if (precompiled) {
-    return { boundaryId: source.boundaryId, compiledOutputs: precompiled, cacheStatus: 'precompiled' };
+    return { boundaryId: source.boundaryId, compiledOutputs: precompiled, ...withAssetUrl, cacheStatus: 'precompiled' };
   }
   // The boundary NAME qualifies the KV key: two names can share one
   // ContentAddress (same Boundary.make definition) while their @quantize
@@ -337,7 +361,7 @@ async function resolveBoundaryOutputs(
   const themeFp = context.theme ? themeFingerprint(context.theme) : undefined;
   const cached = await cache.getCompiledOutputs(source.boundaryId, context.tier, qualifier, themeFp);
   if (cached) {
-    return { boundaryId: source.boundaryId, compiledOutputs: cached, cacheStatus: 'hit' };
+    return { boundaryId: source.boundaryId, compiledOutputs: cached, ...withAssetUrl, cacheStatus: 'hit' };
   }
   if (source.compile) {
     const compileContext: EdgeHostCompileContext = {
@@ -348,7 +372,7 @@ async function resolveBoundaryOutputs(
     const compiledOutputs = await source.compile(compileContext);
     const tags = resolveBoundaryTags(source.tags, compileContext);
     await cache.putCompiledOutputs(source.boundaryId, context.tier, compiledOutputs, qualifier, themeFp, tags);
-    return { boundaryId: source.boundaryId, compiledOutputs, cacheStatus: 'miss' };
+    return { boundaryId: source.boundaryId, compiledOutputs, ...withAssetUrl, cacheStatus: 'miss' };
   }
   Diagnostics.warnOnce({
     source: 'czap/edge.host-adapter',
@@ -359,7 +383,7 @@ async function resolveBoundaryOutputs(
       'Fix: rebuild so the manifest covers the full tier grid (collectBoundaryManifest enumerates it), ' +
       'or add a `compile` callback as a fallback.',
   });
-  return { boundaryId: source.boundaryId, cacheStatus: 'miss' };
+  return { boundaryId: source.boundaryId, ...withAssetUrl, cacheStatus: 'miss' };
 }
 
 /**
@@ -417,6 +441,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
       }
 
       let compiledOutputs: CompiledOutputs | undefined;
+      let assetUrl: string | undefined;
       let boundaries: Record<string, EdgeHostBoundaryResolution> | undefined;
       let cacheStatus: EdgeHostCacheStatus = boundaryCache ? 'miss' : 'disabled';
 
@@ -437,6 +462,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         );
         if (resolved.length === 1) {
           compiledOutputs = resolved[0]![1].compiledOutputs;
+          assetUrl = resolved[0]![1].assetUrl;
         }
         const named = resolved.filter(
           (entry): entry is readonly [string, EdgeHostBoundaryResolution] => entry[0] !== null,
@@ -451,6 +477,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         tier,
         theme,
         compiledOutputs,
+        ...(assetUrl ? { assetUrl } : {}),
         boundaries,
         htmlAttributes: EdgeTier.tierDataAttributes(tier),
         responseHeaders,

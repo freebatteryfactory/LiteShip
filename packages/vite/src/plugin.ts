@@ -19,11 +19,13 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin } from 'vite';
+import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin, UserConfig } from 'vite';
 import { ValidationError } from '@czap/error';
-import { collectBoundaryManifest } from './boundary-manifest.js';
+import { contentAddressOf } from '@czap/core';
+import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@czap/edge';
+import { collectBoundaryManifest, serializeBoundaryOutput } from './boundary-manifest.js';
 import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
-import { resolveVirtualId, loadVirtualModule } from './virtual-modules.js';
+import { resolveVirtualId, loadVirtualModule, type BoundaryAssetUrlMap } from './virtual-modules.js';
 import { buildEnvironments, type CzapEnvironmentName } from './environments.js';
 import { formatWasmSearchPaths } from './wasm-resolve.js';
 import { transformHTML } from './html-transform.js';
@@ -56,6 +58,12 @@ export interface PluginConfig {
   readonly hmr?: boolean;
   /** Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted. */
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
+  /**
+   * Emit each deduplicated boundary CSS output as an immutable build asset and
+   * add `assetUrls` to `virtual:czap/boundaries`. Default `false`: manifests
+   * still carry compiled strings only.
+   */
+  readonly emitBoundaryAssets?: boolean;
   /**
    * WASM runtime configuration. Omitted (the default) **auto-detects**: the
    * deterministic 3-step search in {@link resolveWASM} runs, and the compute
@@ -94,6 +102,41 @@ function resolveEnvironmentNames(configured?: readonly string[]): readonly CzapE
   return configured as readonly CzapEnvironmentName[];
 }
 
+type EmitAssetFile = (asset: { readonly type: 'asset'; readonly fileName: string; readonly source: string }) => string;
+
+interface BoundaryAssetState {
+  readonly manifest: BoundaryManifest;
+  readonly urls: BoundaryAssetUrlMap;
+}
+
+function boundaryIdShort(id: string): string {
+  return id.replace(/^fnv1a:/, '');
+}
+
+function boundaryAssetFileName(boundaryId: string, index: number, source: string): string {
+  const hash = contentAddressOf({ css: source }).replace(/^fnv1a:/, '');
+  return `_czap/${boundaryIdShort(boundaryId)}/${index}.${hash}.css`;
+}
+
+function publicAssetUrl(fileName: string): string {
+  return `/${fileName.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+}
+
+function attachAssetUrls(
+  manifest: BoundaryManifest,
+  urls: Readonly<Record<string, Readonly<Record<number, string>>>>,
+): BoundaryManifest {
+  const enriched: Record<string, BoundaryManifestEntry> = {};
+  for (const [name, entry] of Object.entries(manifest)) {
+    const assetUrls = urls[name];
+    enriched[name] = {
+      ...entry,
+      ...(assetUrls && Object.keys(assetUrls).length > 0 ? { assetUrls } : {}),
+    };
+  }
+  return enriched;
+}
+
 // ---------------------------------------------------------------------------
 // Plugin
 // ---------------------------------------------------------------------------
@@ -117,6 +160,7 @@ function resolveEnvironmentNames(configured?: readonly string[]): readonly CzapE
  */
 export function plugin(config?: PluginConfig): Plugin {
   const hmrEnabled = config?.hmr !== false;
+  const emitBoundaryAssets = config?.emitBoundaryAssets === true;
 
   // Per-instance state, lifted out of the closure into explicit records:
   //  - `cache`     : resolution + watch caches shared across transform/HMR.
@@ -126,6 +170,41 @@ export function plugin(config?: PluginConfig): Plugin {
 
   let projectRoot = process.cwd();
   let isBuild = false;
+  let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
+
+  function ensureBoundaryManifest(): Promise<BoundaryManifest> {
+    if (!cache.boundaryManifest.value) {
+      cache.boundaryManifest.value = collectBoundaryManifest(projectRoot, {
+        boundaryDir: config?.dirs?.boundary,
+      });
+    }
+    return cache.boundaryManifest.value;
+  }
+
+  function ensureBoundaryAssets(emitAsset: EmitAssetFile): Promise<BoundaryAssetState> {
+    if (!boundaryAssetState) {
+      boundaryAssetState = ensureBoundaryManifest().then((manifest) => {
+        const urls: Record<string, Record<number, string>> = {};
+        for (const [name, entry] of Object.entries(manifest)) {
+          if (entry.outputs.length === 0) continue;
+          const byIndex: Record<number, string> = {};
+          entry.outputs.forEach((output, index) => {
+            const source = serializeBoundaryOutput(output);
+            const fileName = boundaryAssetFileName(entry.id, index, source);
+            emitAsset({
+              type: 'asset',
+              fileName,
+              source,
+            });
+            byIndex[index] = publicAssetUrl(fileName);
+          });
+          urls[name] = byIndex;
+        }
+        return { manifest, urls };
+      });
+    }
+    return boundaryAssetState;
+  }
 
   function invalidateDesignVirtualModules(
     moduleGraph: EnvironmentModuleGraph,
@@ -151,18 +230,9 @@ export function plugin(config?: PluginConfig): Plugin {
     },
 
     buildStart() {
+      boundaryAssetState = null;
       const resolved = refreshWasmAtBuildStart(wasmState, projectRoot);
-      if (wasmState.config.mode === 'off') {
-        return;
-      }
-
-      // `auto` stays silent when no binary exists — it is opt-out, not a
-      // request. Only an explicit `on` warns about a missing binary.
-      if (!resolved && wasmState.config.mode === 'auto') {
-        return;
-      }
-
-      if (!resolved) {
+      if (wasmState.config.mode !== 'off' && !resolved && wasmState.config.mode === 'on') {
         const searched = formatWasmSearchPaths(projectRoot, wasmState.config.path);
         this.warn(
           `WASM support was enabled, but no czap-compute binary could be resolved. Searched: ${searched}. ` +
@@ -172,10 +242,9 @@ export function plugin(config?: PluginConfig): Plugin {
             'Otherwise copy the binary to public/czap-compute.wasm, or point the plugin at it explicitly ' +
             "via czap({ wasm: { path: './path/to.wasm' } }). Runtime will fall back to TypeScript kernels.",
         );
-        return;
       }
 
-      if (isBuild) {
+      if (wasmState.config.mode !== 'off' && resolved && isBuild) {
         setEmittedWasmRef(
           wasmState,
           this.emitFile({
@@ -184,6 +253,10 @@ export function plugin(config?: PluginConfig): Plugin {
             source: readFileSync(resolved.filePath),
           }),
         );
+      }
+
+      if (isBuild && emitBoundaryAssets) {
+        return ensureBoundaryAssets((asset) => this.emitFile(asset)).then(() => undefined);
       }
     },
 
@@ -215,12 +288,12 @@ export function plugin(config?: PluginConfig): Plugin {
       if (id === '\0virtual:czap/boundaries') {
         // Async only on this branch: the manifest scan imports definition
         // modules. Other virtual modules stay synchronous.
-        if (!cache.boundaryManifest.value) {
-          cache.boundaryManifest.value = collectBoundaryManifest(projectRoot, {
-            boundaryDir: config?.dirs?.boundary,
-          });
+        if (isBuild && emitBoundaryAssets) {
+          return ensureBoundaryAssets((asset) => this.emitFile(asset)).then(({ manifest, urls }) =>
+            loadVirtualModule(id, { boundaries: manifest, boundaryAssetUrls: urls }),
+          );
         }
-        return cache.boundaryManifest.value.then((boundaries) => loadVirtualModule(id, { boundaries }));
+        return ensureBoundaryManifest().then((boundaries) => loadVirtualModule(id, { boundaries }));
       }
 
       if (id === '\0virtual:czap/tokens' || id === '\0virtual:czap/tokens.css' || id === '\0virtual:czap/themes') {
@@ -256,6 +329,23 @@ export function plugin(config?: PluginConfig): Plugin {
       }
 
       return loadVirtualModule(id);
+    },
+
+    async generateBundle() {
+      if (!isBuild || !emitBoundaryAssets) return;
+      const { manifest, urls } = await ensureBoundaryAssets((asset) => this.emitFile(asset));
+      if (Object.keys(manifest).length === 0) return;
+
+      const manifestFile: BoundaryManifestFile = {
+        _tag: 'CzapBoundaryManifest',
+        _version: 2,
+        boundaries: attachAssetUrls(manifest, urls),
+      };
+      this.emitFile({
+        type: 'asset',
+        fileName: 'czap-boundary-manifest.json',
+        source: JSON.stringify(manifestFile, null, 2),
+      });
     },
 
     // -----------------------------------------------------------------------
@@ -374,15 +464,15 @@ export function plugin(config?: PluginConfig): Plugin {
       return;
     },
 
-    config() {
+    config(): UserConfig {
       const envNames = resolveEnvironmentNames(config?.environments);
-      if (envNames.length === 0) return {};
+      const next: UserConfig = {};
 
-      const envs = buildEnvironments(envNames);
+      if (envNames.length > 0) {
+        next.environments = buildEnvironments(envNames);
+      }
 
-      return {
-        environments: envs,
-      };
+      return next;
     },
   };
 }

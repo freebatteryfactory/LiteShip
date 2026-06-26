@@ -8,6 +8,6 @@
 
 > **CacheTags** = [`EdgeHostCacheTags`](../../../type-aliases/EdgeHostCacheTags.md)
 
-Defined in: [edge/src/host-adapter.ts:489](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L489)
+Defined in: [edge/src/host-adapter.ts:516](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L516)
 
 Alias for [EdgeHostCacheTags](../../../type-aliases/EdgeHostCacheTags.md).

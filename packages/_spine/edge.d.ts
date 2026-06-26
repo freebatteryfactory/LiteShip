@@ -58,8 +58,13 @@ export declare namespace EdgeTier {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface KVNamespace {
-  get(key: string): Promise<string | null>;
+  get(key: string, options?: { cacheTtl?: number }): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete?(key: string): Promise<void>;
+  list?(options: {
+    prefix: string;
+    cursor?: string;
+  }): Promise<{ keys: ReadonlyArray<{ name: string }>; list_complete: boolean; cursor?: string }>;
 }
 
 export interface CompiledOutputs {
@@ -114,6 +119,7 @@ export interface BoundaryManifestEntry {
   readonly id: ContentAddress;
   readonly outputs: readonly CompiledOutputs[];
   readonly outputsByTier: Readonly<Partial<Record<TierKey, number>>>;
+  readonly assetUrls?: Readonly<Record<number, string>>;
 }
 
 export declare function dedupeOutputsByTier(
@@ -123,6 +129,11 @@ export declare function dedupeOutputsByTier(
 export declare function resolveOutputsByTier(
   entry: Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'>,
 ): Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+
+export declare function resolveAssetUrlByTier(
+  entry: Pick<BoundaryManifestEntry, 'outputsByTier' | 'assetUrls'>,
+  key: TierKey,
+): string | undefined;
 
 export type BoundaryManifest = Readonly<Record<string, BoundaryManifestEntry>>;
 
@@ -166,6 +177,7 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
 export interface EdgeHostBoundaryConfig {
   readonly boundaryId: ContentAddress;
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
 }
 
@@ -173,6 +185,7 @@ export interface EdgeHostCacheConfig {
   readonly kv: KVNamespace;
   readonly boundaryId?: ContentAddress;
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
+  readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryConfig>>;
   readonly ttl?: number;
@@ -184,6 +197,7 @@ export type EdgeHostCacheStatus = 'disabled' | 'precompiled' | 'hit' | 'miss';
 export interface EdgeHostBoundaryResolution {
   readonly boundaryId: ContentAddress;
   readonly compiledOutputs?: CompiledOutputs;
+  readonly assetUrl?: string;
   readonly cacheStatus: Exclude<EdgeHostCacheStatus, 'disabled'>;
 }
 
@@ -197,6 +211,7 @@ export interface EdgeHostAdapterConfig {
 export interface EdgeHostResolution extends EdgeHostContext {
   readonly theme?: ThemeCompileResult;
   readonly compiledOutputs?: CompiledOutputs;
+  readonly assetUrl?: string;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   readonly htmlAttributes: string;
   readonly responseHeaders: {

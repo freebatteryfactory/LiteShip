@@ -26,6 +26,7 @@ export {
   enumerateTierKeys,
   dedupeOutputsByTier,
   resolveOutputsByTier,
+  resolveAssetUrlByTier,
 } from './manifest.js';
 export type { TierKey, BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from './manifest.js';
 

@@ -90,6 +90,7 @@ const config = defineConfig({
 - [resolvePrimitive](functions/resolvePrimitive.md)
 - [resolveVirtualId](functions/resolveVirtualId.md)
 - [resolveWASM](functions/resolveWASM.md)
+- [serializeBoundaryOutput](functions/serializeBoundaryOutput.md)
 - [transformHTML](functions/transformHTML.md)
 - [viewportContainmentRule](functions/viewportContainmentRule.md)
 

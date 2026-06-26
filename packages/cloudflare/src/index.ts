@@ -7,6 +7,7 @@
 export {
   createCloudflareEdgeCache,
   resolveKvBinding,
+  type CloudflareCacheApi,
   type CloudflareEdgeCacheOptions,
   type CloudflareWorkersEnv,
 } from './edge-cache.js';

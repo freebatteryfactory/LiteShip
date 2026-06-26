@@ -10,6 +10,7 @@
 
 ## Interfaces
 
+- [CloudflareCacheApi](interfaces/CloudflareCacheApi.md)
 - [CloudflareEdgeCacheOptions](interfaces/CloudflareEdgeCacheOptions.md)
 - [CloudflareMiddlewareConfig](interfaces/CloudflareMiddlewareConfig.md)
 

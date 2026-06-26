@@ -6,7 +6,7 @@
 
 # Interface: PluginConfig
 
-Defined in: [vite/src/plugin.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L52)
+Defined in: [vite/src/plugin.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L54)
 
 Configuration options for the [plugin](../functions/plugin.md) factory. Every field
 is optional; omitted values use convention-based defaults.
@@ -17,9 +17,21 @@ is optional; omitted values use convention-based defaults.
 
 > `readonly` `optional` **dirs?**: `Partial`\<`Record`\<`"boundary"` \| `"style"` \| `"token"` \| `"theme"`, `string`\>\>
 
-Defined in: [vite/src/plugin.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L54)
+Defined in: [vite/src/plugin.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L56)
 
 Override source directories for each primitive kind.
+
+***
+
+### emitBoundaryAssets?
+
+> `readonly` `optional` **emitBoundaryAssets?**: `boolean`
+
+Defined in: [vite/src/plugin.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L66)
+
+Emit each deduplicated boundary CSS output as an immutable build asset and
+add `assetUrls` to `virtual:czap/boundaries`. Default `false`: manifests
+still carry compiled strings only.
 
 ***
 
@@ -27,7 +39,7 @@ Override source directories for each primitive kind.
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [vite/src/plugin.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L58)
+Defined in: [vite/src/plugin.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L60)
 
 Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted.
 
@@ -37,7 +49,7 @@ Named Vite environments to configure (browser / server / shader). Defaults to br
 
 > `readonly` `optional` **hmr?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L56)
+Defined in: [vite/src/plugin.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L58)
 
 Toggle surgical HMR emission (default `true`).
 
@@ -47,7 +59,7 @@ Toggle surgical HMR emission (default `true`).
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [vite/src/plugin.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L67)
+Defined in: [vite/src/plugin.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L75)
 
 WASM runtime configuration. Omitted (the default) **auto-detects**: the
 deterministic 3-step search in [resolveWASM](../functions/resolveWASM.md) runs, and the compute

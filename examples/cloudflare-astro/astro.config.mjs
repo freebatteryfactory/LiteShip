@@ -6,7 +6,7 @@ import { cloudflareCacheProvider } from '@czap/cloudflare/cache-provider';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare(),
-  integrations: [integration()],
+  integrations: [integration({ vite: { emitBoundaryAssets: true } })],
   cache: {
     provider: cloudflareCacheProvider({ binding: 'CZAP_BOUNDARY_CACHE' }),
   },

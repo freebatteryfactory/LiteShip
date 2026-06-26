@@ -44,6 +44,8 @@ export interface CzapLocals {
     readonly theme?: ThemeCompileResult;
     /** Sole boundary's outputs; undefined when multiple boundaries are configured. */
     readonly compiledOutputs?: CompiledOutputs;
+    /** Sole boundary's immutable static CSS asset URL, when emitted by the build. */
+    readonly assetUrl?: string;
     /** Per-boundary outcomes, keyed by name (multi-boundary cache form). */
     readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
     readonly htmlAttributes: string;
@@ -138,6 +140,7 @@ export function czapMiddleware(
             edge: {
               theme: edgeResolution.theme,
               compiledOutputs: edgeResolution.compiledOutputs,
+              assetUrl: edgeResolution.assetUrl,
               boundaries: edgeResolution.boundaries,
               htmlAttributes: edgeResolution.htmlAttributes,
               cacheStatus: edgeResolution.cacheStatus,
