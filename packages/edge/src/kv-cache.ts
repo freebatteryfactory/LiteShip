@@ -225,8 +225,10 @@ function boundaryKeyPrefix(prefix: string, boundaryId: ContentAddress): string {
 
 /**
  * Legacy tag-index key. Older builds stored `{prefix}:tag:{tag}` as one JSON
- * array; current builds write per-entry members below this prefix to avoid
- * read-merge-write lost updates under concurrent first hits.
+ * array. List-capable providers write per-entry members below this prefix to
+ * avoid read-merge-write lost updates under concurrent first hits; providers
+ * without `list` keep the legacy JSON index so `invalidateByTag` can discover
+ * keys directly.
  */
 function tagIndexKey(prefix: string, tag: string): string {
   return `${prefix}:tag:${tag}`;
@@ -281,11 +283,28 @@ async function addKeyToTagIndexes(
   tags: readonly string[],
   ttl: number | undefined,
 ): Promise<void> {
+  if (kv.list === undefined) {
+    await Promise.all(tags.map((tag) => addKeyToLegacyTagIndex(kv, prefix, tag, key, ttl)));
+    return;
+  }
   await Promise.all(
     tags.map(async (tag) => {
       await kv.put(tagMemberKey(prefix, tag, key), key, ttl !== undefined ? { expirationTtl: ttl } : undefined);
     }),
   );
+}
+
+async function addKeyToLegacyTagIndex(
+  kv: KVNamespace,
+  prefix: string,
+  tag: string,
+  key: string,
+  ttl: number | undefined,
+): Promise<void> {
+  const indexKey = tagIndexKey(prefix, tag);
+  const keys = parseTagIndex(await kv.get(indexKey));
+  const nextKeys = keys.includes(key) ? keys : [...keys, key];
+  await kv.put(indexKey, JSON.stringify(nextKeys), ttl !== undefined ? { expirationTtl: ttl } : undefined);
 }
 
 /** Collect every key under `prefix`, following Cloudflare KV list pagination to completion. */
