@@ -7,7 +7,9 @@ import { introBedMetadata } from '../../examples/scenes/assets.js';
 
 const cap = introBedMetadata;
 const fixtureAbs = resolve('examples/scenes/intro-bed.wav');
-const fixtureBytes = existsSync(fixtureAbs) ? (readFileSync(fixtureAbs).buffer as ArrayBuffer) : undefined;
+const exactArrayBuffer = (bytes: Uint8Array): ArrayBuffer =>
+  bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+const fixtureBytes = existsSync(fixtureAbs) ? exactArrayBuffer(readFileSync(fixtureAbs)) : undefined;
 
 bench(`intro-bed:wav-metadata — decode throughput (budget p95 ${String(cap.budgets.p95Ms ?? 'n/a')}ms)`, async () => {
   if (fixtureBytes === undefined) {

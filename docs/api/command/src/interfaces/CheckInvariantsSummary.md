@@ -6,7 +6,7 @@
 
 # Interface: CheckInvariantsSummary
 
-Defined in: [command/src/registry.ts:414](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L414)
+Defined in: [command/src/registry.ts:415](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L415)
 
 Structured verdict returned by the injected [CommandContext.runCheckInvariants](CommandContext.md#runcheckinvariants)
 capability. `ok` ⟺ no banned-pattern violation in any rule AND no line-ending
@@ -19,7 +19,7 @@ carries the `.gitattributes` eol offenders.
 
 > `readonly` **groups**: readonly [`InvariantViolationGroup`](InvariantViolationGroup.md)[]
 
-Defined in: [command/src/registry.ts:417](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L417)
+Defined in: [command/src/registry.ts:418](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L418)
 
 Banned-pattern violations, grouped by the rule that flagged them.
 
@@ -29,7 +29,7 @@ Banned-pattern violations, grouped by the rule that flagged them.
 
 > `readonly` **lineEndings**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:419](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L419)
+Defined in: [command/src/registry.ts:420](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L420)
 
 Committed text files whose line endings violate the `.gitattributes` policy.
 
@@ -39,4 +39,4 @@ Committed text files whose line endings violate the `.gitattributes` policy.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:415](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L415)
+Defined in: [command/src/registry.ts:416](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L416)

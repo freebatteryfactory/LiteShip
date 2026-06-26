@@ -6,7 +6,7 @@
 
 # Interface: DualExportNodeResult
 
-Defined in: [stage/src/dual-export.ts:544](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L544)
+Defined in: [stage/src/dual-export.ts:563](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L563)
 
 The result of a HEADLESS dual export: the full [DualExportResult](DualExportResult.md) proof
 PLUS the real encoded video the injected [FrameEncoder](../type-aliases/FrameEncoder.md) produced.
@@ -21,7 +21,7 @@ PLUS the real encoded video the injected [FrameEncoder](../type-aliases/FrameEnc
 
 > `readonly` **astro**: [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:444](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L444)
+Defined in: [stage/src/dual-export.ts:463](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L463)
 
 The static-page carrier (`carrier: 'astro-page'`).
 
@@ -35,7 +35,7 @@ The static-page carrier (`carrier: 'astro-page'`).
 
 > `readonly` **astroReceipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:448](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L448)
+Defined in: [stage/src/dual-export.ts:467](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L467)
 
 Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
@@ -49,7 +49,7 @@ Per-cast child receipts (genesis envelopes), kept for replay/audit.
 
 > `readonly` **bytesDigest**: `AddressedDigest`
 
-Defined in: [stage/src/dual-export.ts:553](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L553)
+Defined in: [stage/src/dual-export.ts:572](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L572)
 
 Content address of the encoded container bytes (the mp4 byte stream).
 
@@ -59,7 +59,7 @@ Content address of the encoded container bytes (the mp4 byte stream).
 
 > `readonly` **encoded**: [`EncodedVideo`](EncodedVideo.md)
 
-Defined in: [stage/src/dual-export.ts:551](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L551)
+Defined in: [stage/src/dual-export.ts:570](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L570)
 
 The real encoded video (a validatable MP4 when the ffmpeg adapter is used).
 This rides ALONGSIDE the proof — the proof's `video` carrier remains a
@@ -72,7 +72,7 @@ page-digest == video-source-digest invariant is identical to [dualExport](../fun
 
 > `readonly` **receipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:455](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L455)
+Defined in: [stage/src/dual-export.ts:474](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L474)
 
 The single assertable head: a parent MERGE envelope whose
 `previous = [astroReceipt.hash, videoReceipt.hash]` and whose payload pins
@@ -88,7 +88,7 @@ The single assertable head: a parent MERGE envelope whose
 
 > `readonly` **sharedSourceDigest**: `AddressedDigest`
 
-Defined in: [stage/src/dual-export.ts:442](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L442)
+Defined in: [stage/src/dual-export.ts:461](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L461)
 
 The ONE source digest both casts derive from — `=== graph.digest`.
 
@@ -102,7 +102,7 @@ The ONE source digest both casts derive from — `=== graph.digest`.
 
 > `readonly` **video**: [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:446](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L446)
+Defined in: [stage/src/dual-export.ts:465](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L465)
 
 The video carrier (`carrier: 'video'`).
 
@@ -116,7 +116,7 @@ The video carrier (`carrier: 'video'`).
 
 > `readonly` **videoReceipt**: `ReceiptEnvelope`
 
-Defined in: [stage/src/dual-export.ts:449](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L449)
+Defined in: [stage/src/dual-export.ts:468](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L468)
 
 #### Inherited from
 

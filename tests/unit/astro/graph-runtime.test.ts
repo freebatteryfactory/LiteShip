@@ -275,6 +275,12 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     expect(loadGraphRuntime('{"nodes":[{"bogus":true}],"edges":[]}', () => null)).toBeNull();
   });
 
+  test('returns null for malformed edge entries before validateGraph can throw', () => {
+    const graph = buildGraph();
+    const malformed: DocumentGraph = { ...graph, edges: [null as unknown as DocumentGraph['edges'][number]] };
+    expect(loadGraphRuntime(JSON.stringify(malformed), () => null)).toBeNull();
+  });
+
   // FINDING 1 [P1 SECURITY]: sealGraph only re-addresses the TOP-LEVEL graph id
   // from the supplied node ids — it does NOT re-seal each node, so a payload with
   // a FORGED node id (id ≠ its payload bytes) used to be accepted unchallenged.
@@ -288,7 +294,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     // Tamper: swap one node's id to a WRONG (but well-formed-looking) address.
     // Keep the edges pointing at the forged id so reseal must remap, not reject.
     const realId = graph.nodes.find((n) => n.family === 'signal')!.id;
-    const forgedId = ('f'.repeat(String(realId).length) as unknown) as ContentAddress;
+    const forgedId = 'f'.repeat(String(realId).length) as unknown as ContentAddress;
     const tampered: DocumentGraph = {
       ...graph,
       nodes: graph.nodes.map((n) => (n.id === realId ? { ...n, id: forgedId } : n)),
@@ -306,9 +312,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     const ids = handle!.graph.nodes.map((n) => String(n.id));
     expect(ids).not.toContain(String(forgedId));
     // And the resealed signal id equals the address sealNode mints from its payload.
-    const sealedSignal = sealNode(
-      tampered.nodes.find((n) => n.family === 'signal') as SignalNode,
-    );
+    const sealedSignal = sealNode(tampered.nodes.find((n) => n.family === 'signal') as SignalNode);
     expect(ids).toContain(String(sealedSignal.id));
   });
 
@@ -317,7 +321,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
   // dropped.
   test('rejects a graph whose edge references a forged id with no node', () => {
     const graph = buildGraph();
-    const danglingId = ('e'.repeat(String(graph.nodes[0]!.id).length) as unknown) as ContentAddress;
+    const danglingId = 'e'.repeat(String(graph.nodes[0]!.id).length) as unknown as ContentAddress;
     // Add an edge to a node id that does not exist; validateGraph would catch a
     // dangling edge BEFORE reseal, so instead point an EXISTING edge's `to` at the
     // dangling id after the fact — but keep it past validateGraph by also adding a
@@ -336,6 +340,33 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     expect(loadGraphRuntime(JSON.stringify(tampered), () => null)).toBeNull();
   });
 
+  test('rejects embedded node refs that point at forged supplied ids', () => {
+    const graph = buildGraph();
+    const comp = graph.nodes.find((n) => n.family === 'component' && n.name === 'card') as ComponentNode;
+    const forgedCompId = 'c'.repeat(String(comp.id).length) as unknown as ContentAddress;
+
+    const tampered: DocumentGraph = {
+      ...graph,
+      nodes: graph.nodes.map((node) => {
+        if (node.id === comp.id) return { ...node, id: forgedCompId };
+        if (node.family === 'entity' && node.components.includes(comp.id)) {
+          return { ...node, components: [forgedCompId] };
+        }
+        if (node.family === 'projection' && node.sourceRef === comp.id) {
+          return { ...node, sourceRef: forgedCompId };
+        }
+        return node;
+      }),
+      edges: graph.edges.map((edge) => ({
+        from: edge.from === comp.id ? forgedCompId : edge.from,
+        to: edge.to === comp.id ? forgedCompId : edge.to,
+        type: edge.type,
+      })),
+    };
+
+    expect(loadGraphRuntime(JSON.stringify(tampered), () => null)).toBeNull();
+  });
+
   // FINDING 2 [P2]: an EntityNode with TWO components lowers to TWO bindings that
   // share the same entityId. The registry must keep BOTH (not overwrite/leak the
   // first), seed both, and release() must detach BOTH.
@@ -346,6 +377,16 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
     Object.defineProperty(document.documentElement, 'scrollHeight', { value: 1000, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+
+    const disconnectSpy = vi.fn();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class MockResizeObserver {
+        constructor(_callback: () => void) {}
+        observe = (): void => {};
+        disconnect = disconnectSpy;
+      },
+    );
 
     const sig1 = signal('viewport.width');
     const comp1 = component('card', [0, 768], ['mobile', 'desktop']);
@@ -400,6 +441,7 @@ describe('loadGraphRuntime — lower a graph onto the live cast pipeline', () =>
     const removeSpy = vi.spyOn(window, 'removeEventListener');
     expect(() => handle.release()).not.toThrow();
     const detachedScroll = removeSpy.mock.calls.some(([type]) => type === 'scroll');
+    expect(disconnectSpy).toHaveBeenCalled();
     expect(detachedScroll).toBe(true); // the 2nd (scroll) binding's observer WAS tracked + detached.
     removeSpy.mockRestore();
   });

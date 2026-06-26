@@ -115,6 +115,7 @@ export function BeatMarkerProjection(
         name: 'bpm-in-range',
         check: (_i, o) => {
           const set = o as BeatMarkerSet;
+          if (set.beats.length === 0) return set.bpm === 0;
           return set.bpm >= 40 && set.bpm <= 240;
         },
         message: 'detected BPM must lie in [40, 240]',

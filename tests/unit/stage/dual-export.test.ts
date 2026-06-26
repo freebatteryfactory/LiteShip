@@ -8,15 +8,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import {
-  sealNode,
-  sealGraph,
-  CanonicalCbor,
-  AddressedDigest,
-  projectionKeys,
-  HLC,
-  Receipt,
-} from '@czap/core';
+import { sealNode, sealGraph, CanonicalCbor, AddressedDigest, projectionKeys, HLC, Receipt } from '@czap/core';
 import type {
   DocumentGraph,
   ComponentNode,
@@ -218,6 +210,49 @@ describe('dualExport — one graph, two casts, one source (P4)', () => {
     for (const ref of [...astro.sourceRefs, ...video.sourceRefs]) {
       expect(ids.has(ref)).toBe(true);
     }
+  });
+
+  test('Astro page CSS only reads poses owned by the projection component entity', () => {
+    const graph = buildGraph();
+    const baseline = exportAstroPage(graph);
+
+    const unrelatedComponent = sealNode<ComponentNode>({
+      _tag: 'DocGraphComponentNode',
+      _version: 1,
+      family: 'component',
+      id: '' as ContentAddress,
+      meta,
+      name: 'sidebar',
+      thresholds: [0],
+      states: ['mobile'],
+    });
+    const unrelatedEntity = sealNode<EntityNode>({
+      _tag: 'DocGraphEntityNode',
+      _version: 1,
+      family: 'entity',
+      id: '' as ContentAddress,
+      meta,
+      components: [unrelatedComponent.id],
+    });
+    const unrelatedPose = sealNode<PoseNode>({
+      _tag: 'DocGraphPoseNode',
+      _version: 1,
+      family: 'pose',
+      id: '' as ContentAddress,
+      meta,
+      entityRef: unrelatedEntity.id,
+      state: 'mobile',
+      bindings: { 'font-size': 99 },
+    });
+    const noisy = sealGraph({
+      _tag: 'DocumentGraph',
+      _version: 1,
+      meta,
+      nodes: [...graph.nodes, unrelatedComponent, unrelatedEntity, unrelatedPose],
+      edges: [...graph.edges, { from: unrelatedEntity.id, to: unrelatedComponent.id, type: 'seq' }],
+    });
+
+    expect(exportAstroPage(noisy).artifactDigest.display_id).toBe(baseline.artifactDigest.display_id);
   });
 
   test('artifacts differ but derive from one source; digests are real content addresses', async () => {

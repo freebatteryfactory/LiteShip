@@ -10,9 +10,13 @@
 
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
+import { Effect, Schema } from 'effect';
 import { CanonicalCbor, decode } from '@czap/canonical';
 import { hasTag } from '@czap/error';
-import { _canonicalCborDecodeInternals } from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
+import {
+  canonicalCborDecodeCapsule,
+  _canonicalCborDecodeInternals,
+} from '../../../packages/core/src/capsules/canonical-cbor-decode.js';
 
 const { normalize } = _canonicalCborDecodeInternals;
 
@@ -23,9 +27,7 @@ describe('decode — RFC 8949 Appendix A round-trips', () => {
     expect(decode(new Uint8Array([0x18, 0x18]))).toBe(24);
     expect(decode(new Uint8Array([0x19, 0x03, 0xe8]))).toBe(1000);
     expect(decode(new Uint8Array([0x1a, 0x00, 0x0f, 0x42, 0x40]))).toBe(1000000);
-    expect(decode(new Uint8Array([0x1b, 0x00, 0x00, 0x00, 0xe8, 0xd4, 0xa5, 0x10, 0x00]))).toBe(
-      1_000_000_000_000,
-    );
+    expect(decode(new Uint8Array([0x1b, 0x00, 0x00, 0x00, 0xe8, 0xd4, 0xa5, 0x10, 0x00]))).toBe(1_000_000_000_000);
   });
 
   it('decodes negative integers via -1-n form', () => {
@@ -168,6 +170,20 @@ describe('decode — strict rejection of non-canonical input', () => {
       expect(hasTag(e, 'ParseError')).toBe(true);
       expect((e as { code: string }).code).toBe('malformed');
     }
+  });
+});
+
+describe('canonicalCborDecodeCapsule input schema', () => {
+  it('accepts canonical encoder bytes and rejects non-canonical Uint8Array input at parse time', async () => {
+    const canonical = CanonicalCbor.encode({ ok: true });
+    const parsed = await Effect.runPromise(Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(canonical));
+    expect(parsed).toBeInstanceOf(Uint8Array);
+
+    const trailing = new Uint8Array([0x00, 0x00]);
+    const rejected = await Effect.runPromiseExit(
+      Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(trailing),
+    );
+    expect(rejected._tag).toBe('Failure');
   });
 });
 

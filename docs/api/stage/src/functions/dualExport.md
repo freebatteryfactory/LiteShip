@@ -8,7 +8,7 @@
 
 > **dualExport**(`graph`): `Promise`\<[`DualExportResult`](../interfaces/DualExportResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:495](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L495)
+Defined in: [stage/src/dual-export.ts:514](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L514)
 
 THE JEWEL. Cast one [DocumentGraph](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts) to a static Astro page AND a video,
 then prove both derive from one source.

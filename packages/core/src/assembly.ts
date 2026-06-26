@@ -20,6 +20,67 @@ export interface CapsuleDef<K extends AssemblyKind, In, Out, R> extends CapsuleC
 
 const catalog: CapsuleDef<AssemblyKind, unknown, unknown, unknown>[] = [];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
+function validateReceiptedMutationFaults(
+  name: string,
+  hasMutate: boolean,
+  faults: unknown,
+): asserts faults is readonly unknown[] | undefined {
+  if (faults === undefined) return;
+  if (!Array.isArray(faults)) {
+    throw InvariantViolationError(
+      'assembly.contract',
+      `receiptedMutation capsule "${name}" declares malformed \`faults\`: expected an array.`,
+    );
+  }
+  if (faults.length > 0 && !hasMutate) {
+    throw InvariantViolationError(
+      'assembly.contract',
+      `receiptedMutation capsule "${name}" declares faults but exposes no pure \`mutate\` core. ` +
+        `Fault injection can only be proven against the pure mutation channel; either add \`mutate\` ` +
+        `or remove the fault declarations.`,
+    );
+  }
+  for (let i = 0; i < faults.length; i++) {
+    const fault = faults[i];
+    if (!isRecord(fault)) {
+      throw InvariantViolationError(
+        'assembly.contract',
+        `receiptedMutation capsule "${name}" declares malformed fault #${i}: expected an object.`,
+      );
+    }
+    if (typeof fault.name !== 'string' || fault.name.trim().length === 0) {
+      throw InvariantViolationError(
+        'assembly.contract',
+        `receiptedMutation capsule "${name}" declares malformed fault #${i}: \`name\` must be non-empty.`,
+      );
+    }
+    if (typeof fault.trigger !== 'function') {
+      throw InvariantViolationError(
+        'assembly.contract',
+        `receiptedMutation capsule "${name}" declares malformed fault "${fault.name}": \`trigger\` must be a function.`,
+      );
+    }
+    if (fault.surfaces !== 'throws' && fault.surfaces !== 'receipt-status') {
+      throw InvariantViolationError(
+        'assembly.contract',
+        `receiptedMutation capsule "${name}" declares malformed fault "${fault.name}": ` +
+          `\`surfaces\` must be 'throws' or 'receipt-status'.`,
+      );
+    }
+    if (fault.surfaces === 'receipt-status' && (typeof fault.status !== 'string' || fault.status.trim().length === 0)) {
+      throw InvariantViolationError(
+        'assembly.contract',
+        `receiptedMutation capsule "${name}" declares malformed fault "${fault.name}": ` +
+          `receipt-status faults require a non-empty \`status\`.`,
+      );
+    }
+  }
+}
+
 function computeId(contract: Omit<CapsuleContract<AssemblyKind, unknown, unknown, unknown>, 'id'>): ContentAddress {
   // ADR-0003: route through CanonicalCbor to obtain a deterministic byte
   // sequence (RFC 8949 §4.2.1) before hashing. Stable across key order,
@@ -69,6 +130,7 @@ export function defineCapsule<K extends AssemblyKind, In, Out, R>(
     const hasMutate = typeof decl.mutate === 'function';
     const exemptsAsEffect = decl.receiptKind === 'effect-outcome';
     const hasReason = typeof decl.reason === 'string' && decl.reason.trim().length > 0;
+    validateReceiptedMutationFaults(decl.name, hasMutate, decl.faults);
     if (!hasMutate && !exemptsAsEffect) {
       throw InvariantViolationError(
         'assembly.contract',

@@ -90,6 +90,21 @@ function deepEquals(a: unknown, b: unknown): boolean {
   return false;
 }
 
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Array<ArrayBuffer> {
+  try {
+    return bytesEqual(CanonicalCbor.encode(decode(bytes)), bytes);
+  } catch (cause) {
+    if (cause instanceof Error) return false;
+    throw cause;
+  }
+}
+
 /**
  * Branded input schema for the decoder: NOT "any `Uint8Array`" but the narrow
  * domain "canonical CBOR bytes". Structurally it is still a `Uint8Array`
@@ -106,8 +121,9 @@ function deepEquals(a: unknown, b: unknown): boolean {
  * the round-trip invariant (`encode(decode(bytes)) === bytes`) holds because
  * the canonical encoder is idempotent under `decode`.
  */
-export const CanonicalCborBytes: Schema.Schema<Uint8Array> = withArbitrary(Schema.instanceOf(Uint8Array), () =>
-  fc.anything().map((value) => CanonicalCbor.encode(value)),
+export const CanonicalCborBytes: Schema.Schema<Uint8Array> = withArbitrary(
+  Schema.instanceOf(Uint8Array).pipe(Schema.refine(isCanonicalCborBytes)),
+  () => fc.anything().map((value) => CanonicalCbor.encode(value)),
 );
 
 /**

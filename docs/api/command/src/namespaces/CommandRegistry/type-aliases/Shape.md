@@ -8,4 +8,4 @@
 
 > **Shape** = `CommandRegistryShape`
 
-Defined in: [command/src/registry.ts:513](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L513)
+Defined in: [command/src/registry.ts:514](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L514)

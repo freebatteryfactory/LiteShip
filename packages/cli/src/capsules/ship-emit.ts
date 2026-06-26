@@ -26,7 +26,7 @@
 
 import { writeFileSync } from 'node:fs';
 import { Schema } from 'effect';
-import { CanonicalCbor, contentAddressOf, defineCapsule, ShipCapsule, type ContentAddress } from '@czap/core';
+import { CanonicalCbor, defineCapsule, ShipCapsule, type ContentAddress } from '@czap/core';
 
 /**
  * The publishable workspace snapshot the emission receipt is PURELY derived
@@ -72,13 +72,13 @@ interface ShipEmitRunOutput {
 
 /**
  * Pure receipt-producing core for the ship-emit capsule (the `mutate` channel
- * the harness drives). Deterministic over the publishable snapshot: it derives
- * the content-addressed `capsule_id` from the snapshot, computes the canonical
- * byte length the emission would occupy, and returns an `emitted` / `rejected`
- * receipt. NO filesystem, NO clock, NO spawn — driving it twice with the same
- * snapshot yields a deep-equal receipt (idempotency), and a structurally
- * unshippable snapshot (empty path / empty version) surfaces as `rejected`
- * (the declared faults).
+ * the harness drives). Deterministic over the publishable snapshot: it includes
+ * the assembled capsule id in the canonical snapshot bytes, computes the byte
+ * length the emission receipt would occupy, and returns an `emitted` /
+ * `rejected` receipt. NO filesystem, NO clock, NO spawn — driving it twice with
+ * the same snapshot yields a deep-equal receipt (idempotency), and a
+ * structurally unshippable snapshot (empty path / empty version) surfaces as
+ * `rejected` (the declared faults).
  */
 function deriveEmissionReceipt(input: ShipEmitDecodedInput): ShipEmitDecodedOutput {
   // Structural rejection: an empty target path or an empty version cannot
@@ -89,12 +89,12 @@ function deriveEmissionReceipt(input: ShipEmitDecodedInput): ShipEmitDecodedOutp
   // (canonicalize → CanonicalCbor → fnv1a) so the receipt id is the snapshot's
   // identity, not a proxy beside it.
   const snapshot = {
+    capsule_id: input.capsule_id,
     package_name: input.package_name,
     package_version: input.package_version,
     source_commit: input.source_commit,
     lifecycle_scripts_observed: input.lifecycle_scripts_observed,
   };
-  const derivedId = contentAddressOf(snapshot) as string;
   // Byte length the canonical-CBOR encoding of the snapshot occupies —
   // deterministic for a given snapshot (same kernel `ShipEmit.run` uses for
   // the assembled capsule). Zero on rejection (nothing is emitted).
@@ -104,10 +104,7 @@ function deriveEmissionReceipt(input: ShipEmitDecodedInput): ShipEmitDecodedOutp
     status: rejected ? 'rejected' : 'emitted',
     bytes_written: bytes,
     capsule_path: input.capsule_path,
-    // On the happy path the receipt echoes the assembled capsule id verbatim;
-    // when the snapshot carried none (empty), fall back to the derived id so the
-    // receipt is always self-describing.
-    capsule_id: input.capsule_id.trim().length > 0 ? input.capsule_id : derivedId,
+    capsule_id: input.capsule_id,
     package_name: input.package_name,
     package_version: input.package_version,
   };

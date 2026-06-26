@@ -53,6 +53,9 @@ describe('BeatMarkerProjection', () => {
     expect(orderedInv!.check(undefined, { bpm: 120, beats: [0, 100, 50] })).toBe(false);
     expect(orderedInv!.check(undefined, { bpm: 120, beats: [0, 100, 200] })).toBe(true);
     expect(bpmInv!.check(undefined, { bpm: 30, beats: [] })).toBe(false);
-    expect(bpmInv!.check(undefined, { bpm: 120, beats: [] })).toBe(true);
+    expect(bpmInv!.check(undefined, { bpm: 0, beats: [] })).toBe(true);
+    expect(bpmInv!.check(undefined, { bpm: 120, beats: [] })).toBe(false);
+    expect(bpmInv!.check(undefined, { bpm: 30, beats: [0] })).toBe(false);
+    expect(bpmInv!.check(undefined, { bpm: 120, beats: [0] })).toBe(true);
   });
 });

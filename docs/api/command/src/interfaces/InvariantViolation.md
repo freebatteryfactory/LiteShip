@@ -6,7 +6,7 @@
 
 # Interface: InvariantViolation
 
-Defined in: [command/src/registry.ts:395](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L395)
+Defined in: [command/src/registry.ts:396](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L396)
 
 One banned-pattern hit: a repo-relative `file`, 1-based `line`, and the trimmed
 source `content`. A structural mirror of the host scan's result item, declared
@@ -19,7 +19,7 @@ without a host import.
 
 > `readonly` **content**: `string`
 
-Defined in: [command/src/registry.ts:398](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L398)
+Defined in: [command/src/registry.ts:399](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L399)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [command/src/registry.ts:398](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **file**: `string`
 
-Defined in: [command/src/registry.ts:396](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L396)
+Defined in: [command/src/registry.ts:397](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L397)
 
 ***
 
@@ -35,4 +35,4 @@ Defined in: [command/src/registry.ts:396](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **line**: `number`
 
-Defined in: [command/src/registry.ts:397](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L397)
+Defined in: [command/src/registry.ts:398](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L398)

@@ -25,13 +25,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Effect, Schema } from 'effect';
-import {
-  ContentAddress,
-  IntegrityDigest,
-  ShipCapsule,
-  type AddressedDigest,
-  type HLCBrand as HLC,
-} from '@czap/core';
+import { ContentAddress, IntegrityDigest, ShipCapsule, type AddressedDigest, type HLCBrand as HLC } from '@czap/core';
 import { ShipEmit, shipEmitCapsule } from '../../packages/cli/src/capsules/ship-emit.js';
 
 const run = <A, E>(eff: Effect.Effect<A, E>) => Effect.runPromise(eff);
@@ -119,9 +113,7 @@ const sampleSnapshot = () => ({
 describe('shipEmitCapsule schema validation', () => {
   it('input / output Schemas accept well-formed shapes and reject malformed ones', async () => {
     // input Schema accept branch — the publishable snapshot.
-    const okIn = await Effect.runPromise(
-      Schema.decodeUnknownEffect(shipEmitCapsule.input)(sampleSnapshot()),
-    );
+    const okIn = await Effect.runPromise(Schema.decodeUnknownEffect(shipEmitCapsule.input)(sampleSnapshot()));
     expect(okIn.capsule_path).toBe('/tmp/x.shipcapsule.cbor');
     expect(okIn.package_version).toBe('0.1.0');
 
@@ -156,6 +148,15 @@ describe('shipEmitCapsule pure mutate core', () => {
     expect(b).toEqual(a);
     expect(a.status).toBe('emitted');
     expect(a.bytes_written).toBeGreaterThan(0);
+    expect(a.capsule_id).toBe('fnv1a:deadbeef');
+
+    // The assembled capsule id is part of the canonical snapshot bytes, and the
+    // receipt reports that assembled id verbatim rather than deriving a fallback.
+    const shortId = mutate({ ...sampleSnapshot(), capsule_id: 'fnv1a:a' });
+    const longId = mutate({ ...sampleSnapshot(), capsule_id: 'fnv1a:aaaaaaaaaaaaaaaa' });
+    expect(shortId.capsule_id).toBe('fnv1a:a');
+    expect(longId.capsule_id).toBe('fnv1a:aaaaaaaaaaaaaaaa');
+    expect(longId.bytes_written).toBeGreaterThan(shortId.bytes_written);
 
     // Declared fault `empty-target-path` → status 'rejected', zero bytes.
     const noPath = mutate({ ...sampleSnapshot(), capsule_path: '' });
@@ -169,10 +170,7 @@ describe('shipEmitCapsule pure mutate core', () => {
   });
 
   it('declares exactly the two reachable faults the harness injects', () => {
-    expect(shipEmitCapsule.faults!.map((f) => f.name)).toEqual([
-      'empty-target-path',
-      'empty-version',
-    ]);
+    expect(shipEmitCapsule.faults!.map((f) => f.name)).toEqual(['empty-target-path', 'empty-version']);
     for (const fault of shipEmitCapsule.faults!) {
       // Each fault's trigger drives the pure core to its declared status.
       const receipt = shipEmitCapsule.mutate!(fault.trigger());
@@ -184,9 +182,7 @@ describe('shipEmitCapsule pure mutate core', () => {
 describe('shipEmitCapsule invariants', () => {
   it('`id-matches-bytes` and `bytes-positive-when-emitted` check functions cover their true and false branches', () => {
     const idMatches = shipEmitCapsule.invariants.find((i) => i.name === 'id-matches-bytes');
-    const bytesPositive = shipEmitCapsule.invariants.find(
-      (i) => i.name === 'bytes-positive-when-emitted',
-    );
+    const bytesPositive = shipEmitCapsule.invariants.find((i) => i.name === 'bytes-positive-when-emitted');
     expect(idMatches).toBeDefined();
     expect(bytesPositive).toBeDefined();
     const input = { capsule_path: '/a/b.cbor' };

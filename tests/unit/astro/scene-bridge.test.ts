@@ -134,7 +134,10 @@ function buildSceneGraph(): { graph: DocumentGraph; entityId: ContentAddress } {
  * lands deterministically at the half-duration frame. The world exposes the
  * track's `_blend` via `query('_blend')`, matching the shape the bridge reads.
  */
-function makeFakeScene(trackId: string, durationMs: number): {
+function makeFakeScene(
+  trackId: string,
+  durationMs: number,
+): {
   scene: BridgeableScene;
   ticks: number;
   blend: () => number;
@@ -165,7 +168,9 @@ function makeFakeScene(trackId: string, durationMs: number): {
 }
 
 /** Resolve the fake scene's query marker to the bridge's entity shape, reading the live blend. */
-function runFakeQuery(query: SceneQueryEffect): Promise<readonly { trackId: unknown; components: ReadonlyMap<string, unknown> }[]> {
+function runFakeQuery(
+  query: SceneQueryEffect,
+): Promise<readonly { trackId: unknown; components: ReadonlyMap<string, unknown> }[]> {
   const marker = query as unknown as { __track: string; __blend: () => number };
   return Promise.resolve([
     { trackId: marker.__track, components: new Map<string, unknown>([['_blend', marker.__blend()]]) },
@@ -227,10 +232,16 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     el.addEventListener('czap:uniform-update', uniformSpy);
     const setPropSpy = vi.spyOn(el.style, 'setProperty');
 
-    const bridge = bridgeSceneToGraph(fake.scene, handle, () => el, { kind: 'time' }, {
-      projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-      runQuery: runFakeQuery,
-    });
+    const bridge = bridgeSceneToGraph(
+      fake.scene,
+      handle,
+      () => el,
+      { kind: 'time' },
+      {
+        projectTrack: (t) => (t === 'fx' ? entityId : undefined),
+        runQuery: runFakeQuery,
+      },
+    );
 
     // Pump frames staying BELOW the crossing: ts 0, 100, 200 → blend 0, 0.1, 0.3.
     await pump(0);
@@ -248,6 +259,8 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     expect(lastBlend).toBeGreaterThan(0);
     expect(lastBlend).toBeLessThan(0.5);
     expect(uniformSpy).toHaveBeenCalled();
+    const uniformDetail = uniformSpy.mock.calls.at(-1)![0].detail as { css: Record<string, string> };
+    expect(typeof uniformDetail.css['--czap-blend']).toBe('string');
 
     bridge.stop();
   });
@@ -260,10 +273,16 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     const durationMs = 1000;
     const fake = makeFakeScene('fx', durationMs);
 
-    const bridge = bridgeSceneToGraph(fake.scene, handle, () => el, { kind: 'time' }, {
-      projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-      runQuery: runFakeQuery,
-    });
+    const bridge = bridgeSceneToGraph(
+      fake.scene,
+      handle,
+      () => el,
+      { kind: 'time' },
+      {
+        projectTrack: (t) => (t === 'fx' ? entityId : undefined),
+        runQuery: runFakeQuery,
+      },
+    );
 
     // Seed below the crossing, then advance PAST it. dt between frames is ts-delta.
     await pump(0); // blend 0 → seeds discrete 'from', no recast (seed is not a crossing).
@@ -277,11 +296,48 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     expect(recastSpy).toHaveBeenCalledTimes(1);
     // The discrete pose flipped through the cast pipeline.
     expect(el.getAttribute('data-czap-state')).toBe('to');
+    expect(el.style.getPropertyValue('--czap-fx')).toBe('1');
 
     // Staying past the crossing does NOT recast again (no new crossing).
     await pump(700); // blend 0.7, still 'to' side.
     await pump(800);
     expect(recastSpy).toHaveBeenCalledTimes(1);
+
+    bridge.stop();
+  });
+
+  test('signal clock uses signed deltas so reverse scrubbing moves the scene backward', async () => {
+    const { graph, entityId } = buildSceneGraph();
+    const handle = loadGraphRuntime(graph, () => el)!;
+    const fake = makeFakeScene('fx', 1000);
+
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 2000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+
+    const bridge = bridgeSceneToGraph(
+      fake.scene,
+      handle,
+      () => el,
+      {
+        kind: 'signal',
+        input: 'scroll.progress',
+        durationMs: 1000,
+      },
+      {
+        projectTrack: (t) => (t === 'fx' ? entityId : undefined),
+        runQuery: runFakeQuery,
+      },
+    );
+
+    Object.defineProperty(window, 'scrollY', { value: 800, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+    await pump(0);
+    expect(fake.blend()).toBeCloseTo(0.8, 5);
+
+    Object.defineProperty(window, 'scrollY', { value: 200, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+    await pump(16);
+    expect(fake.blend()).toBeCloseTo(0.2, 5);
 
     bridge.stop();
   });
@@ -293,10 +349,16 @@ describe('bridgeSceneToGraph — discrete crossing recasts, continuous tween nev
     const recastSpy = vi.spyOn(handle, 'recast');
 
     const fake = makeFakeScene('fx', 1000);
-    const bridge = bridgeSceneToGraph(fake.scene, handle, () => el, { kind: 'time' }, {
-      projectTrack: (t) => (t === 'fx' ? entityId : undefined),
-      runQuery: runFakeQuery,
-    });
+    const bridge = bridgeSceneToGraph(
+      fake.scene,
+      handle,
+      () => el,
+      { kind: 'time' },
+      {
+        projectTrack: (t) => (t === 'fx' ? entityId : undefined),
+        runQuery: runFakeQuery,
+      },
+    );
 
     await pump(0);
     const ticksBefore = fake.ticks;

@@ -50,6 +50,21 @@ import { lowerGraph, type LoweredBinding } from './graph-lower.js';
 
 /** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
 const DEFAULT_EVENT_NAME = 'czap:graph-state';
+const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
+function isDocumentGraphEdge(value: unknown): value is DocumentGraphEdge {
+  return (
+    isRecord(value) &&
+    typeof value.from === 'string' &&
+    typeof value.to === 'string' &&
+    typeof value.type === 'string' &&
+    EDGE_TYPES.has(value.type)
+  );
+}
 
 /**
  * Host callback mapping an entity's content address to its live DOM element. The
@@ -126,6 +141,24 @@ function applyBindingState(active: ActiveBinding, state: string, eventName: stri
     { discrete: { [active.binding.boundary.name]: state }, ...(css ? { css } : {}) },
     eventName,
   );
+}
+
+function applyEntityState(
+  state: GraphCastState,
+  entityId: ContentAddress,
+  nextState: string,
+  eventName: string,
+): boolean {
+  const entries = state.active.get(entityId);
+  if (!entries) return false;
+  let applied = false;
+  for (const active of entries) {
+    if (!(active.binding.boundary.boundary.states as readonly string[]).includes(nextState)) continue;
+    active.state = nextState;
+    applyBindingState(active, nextState, eventName);
+    applied = true;
+  }
+  return applied;
 }
 
 /** Seed (or re-seed) a binding's initial state from the live signal value and apply it to the element. */
@@ -261,6 +294,42 @@ function bindingsEqual(a: LoweredBinding, b: LoweredBinding): boolean {
   return key(a) === key(b);
 }
 
+function refNamesForgedSuppliedId(ref: ContentAddress, remap: ReadonlyMap<ContentAddress, ContentAddress>): boolean {
+  const canonical = remap.get(ref);
+  return canonical !== undefined && canonical !== ref;
+}
+
+function refsNameForgedSuppliedId(
+  refs: readonly ContentAddress[],
+  remap: ReadonlyMap<ContentAddress, ContentAddress>,
+): boolean {
+  return refs.some((ref) => refNamesForgedSuppliedId(ref, remap));
+}
+
+function nodeReferencesForgedSuppliedId(
+  node: DocumentGraphNode,
+  remap: ReadonlyMap<ContentAddress, ContentAddress>,
+): boolean {
+  switch (node.family) {
+    case 'entity':
+      return refsNameForgedSuppliedId(node.components, remap);
+    case 'component':
+      return node.boundaryRef !== undefined && refNamesForgedSuppliedId(node.boundaryRef, remap);
+    case 'pose':
+      return refNamesForgedSuppliedId(node.entityRef, remap);
+    case 'transition':
+      return refNamesForgedSuppliedId(node.fromPose, remap) || refNamesForgedSuppliedId(node.toPose, remap);
+    case 'projection':
+      return refNamesForgedSuppliedId(node.sourceRef, remap);
+    case 'policy':
+      return refsNameForgedSuppliedId(node.appliesTo, remap);
+    case 'export':
+      return refsNameForgedSuppliedId(node.sourceRefs, remap);
+    case 'signal':
+      return false;
+  }
+}
+
 /**
  * Parse + validate an untrusted serialized graph into a SEALED {@link DocumentGraph},
  * or `null` if it is malformed / structurally invalid / carries a non-conformant
@@ -300,10 +369,15 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
   for (const node of candidate.nodes) {
     if (!isWellFormedNode(node)) return null;
   }
+  const suppliedEdges: DocumentGraphEdge[] = [];
+  for (const edge of candidate.edges) {
+    if (!isDocumentGraphEdge(edge)) return null;
+    suppliedEdges.push(edge);
+  }
 
   const structural = validateGraph({
     nodes: candidate.nodes as DocumentGraph['nodes'],
-    edges: candidate.edges as DocumentGraph['edges'],
+    edges: suppliedEdges,
   });
   if (!structural.ok) return null;
 
@@ -334,7 +408,10 @@ function parseAndSealGraph(serialized: string | DocumentGraph): DocumentGraph | 
     return null;
   }
 
-  const suppliedEdges = candidate.edges as readonly DocumentGraphEdge[];
+  for (const node of suppliedNodes) {
+    if (nodeReferencesForgedSuppliedId(node, remap)) return null;
+  }
+
   const remappedEdges: DocumentGraphEdge[] = [];
   for (const edge of suppliedEdges) {
     const from = remap.get(edge.from);
@@ -393,6 +470,8 @@ export interface GraphRuntimeInternals {
   readonly state: GraphCastState;
   readonly resolve: EntityElementResolver;
   readonly eventName: string;
+  /** Apply one discrete state through the active lowered binding(s) for an entity. */
+  applyState(entityId: ContentAddress, nextState: string): boolean;
   /** Re-cast the delta from the current graph to `next`, then make `next` current. */
   advance(next: DocumentGraph): void;
 }
@@ -446,6 +525,9 @@ export function loadGraphRuntime(
     state,
     resolve,
     eventName,
+    applyState(entityId: ContentAddress, nextState: string): boolean {
+      return applyEntityState(state, entityId, nextState, eventName);
+    },
     advance(next: DocumentGraph): void {
       castGraphDelta(current, next, state, resolve, eventName);
       current = next;
