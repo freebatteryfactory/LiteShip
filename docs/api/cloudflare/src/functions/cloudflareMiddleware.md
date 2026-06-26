@@ -8,7 +8,7 @@
 
 > **cloudflareMiddleware**(`config`): (`context`, `next`) => `Promise`\<`Response`\>
 
-Defined in: [cloudflare/src/middleware.ts:262](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L262)
+Defined in: [cloudflare/src/middleware.ts:260](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/middleware.ts#L260)
 
 Astro middleware factory wired for Cloudflare Workers KV boundary caching.
 
