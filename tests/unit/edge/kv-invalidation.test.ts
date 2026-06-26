@@ -96,6 +96,17 @@ describe('invalidateByPath (active purge by content address)', () => {
     expect(await cache.invalidateByPath(boundary.id)).toBe(0);
     expect(buffer.events.some((e) => e.code === 'invalidation-unsupported')).toBe(true);
   });
+
+  test('also removes tag-index entries that point at path-purged keys', async () => {
+    const { store, kv } = makeKV();
+    const cache = createBoundaryCache(kv);
+
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
+    expect([...store.keys()].some((key) => key.includes(':tag:products:'))).toBe(true);
+
+    expect(await cache.invalidateByPath(boundary.id)).toBe(1);
+    expect([...store.keys()].some((key) => key.includes(':tag:products:'))).toBe(false);
+  });
 });
 
 describe('invalidateByTag (Astro.cache tag parity)', () => {
@@ -120,6 +131,18 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['t']);
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['t']); // same key
     expect(await cache.invalidateByTag('t')).toBe(1);
+  });
+
+  test('purges legacy JSON tag indexes for existing deployments', async () => {
+    const { store, kv } = makeKV();
+    const cache = createBoundaryCache(kv);
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA');
+    const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+    store.set('czap:tag:legacy', JSON.stringify([dataKey]));
+
+    expect(await cache.invalidateByTag('legacy')).toBe(1);
+    expect(store.has(dataKey)).toBe(false);
+    expect(store.has('czap:tag:legacy')).toBe(false);
   });
 
   test('degrades to a diagnostic + 0 when the KV cannot delete', async () => {

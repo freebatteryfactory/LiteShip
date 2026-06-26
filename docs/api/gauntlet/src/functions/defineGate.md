@@ -8,7 +8,7 @@
 
 > **defineGate**(`spec`): [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gate.ts:475](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L475)
+Defined in: [gauntlet/src/gate.ts:536](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L536)
 
 Define a gate — the one constructor. Validates the spec eagerly (a gate with
 an empty id, or missing any of red/green/mutation, is a malformed plugin and

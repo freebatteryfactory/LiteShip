@@ -1,7 +1,8 @@
 /**
  * The FAULT TABLE — declared, seed-driven faults a scenario injects at named
  * points, the generalization of the `receiptedMutation` `faults` concept (a
- * capsule's `cli.ship-emit` declares `empty-target-path` / `empty-version` faults
+ * capsule's `cli.ship-emit` declares `empty-target-path` / `empty-version` /
+ * `empty-capsule-id` faults
  * that drive its receipt to `rejected`).
  *
  * A DST fault is a DATA record (composition, no class): a named point, a kind

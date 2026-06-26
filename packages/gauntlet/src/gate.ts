@@ -452,6 +452,67 @@ export interface FactBundle {
   readonly skipSites?: SkipSiteFacts;
 }
 
+const SKIP_SITE_FORMS = new Set(['call', 'conditional', 'alias', 'computed', 'aliased']);
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function ownDataField(record: Record<string, unknown>, field: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(record, field);
+  return descriptor && 'value' in descriptor ? descriptor.value : undefined;
+}
+
+function assertPlainFactRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
+  if (!isPlainRecord(value)) {
+    throw ValidationError('FactGate', `${label} must be a plain data object`);
+  }
+}
+
+function normalizeSkipSiteFacts(value: SkipSiteFacts | undefined): SkipSiteFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'skipSites');
+  const sites = ownDataField(value, 'sites');
+  if (!Array.isArray(sites)) {
+    throw ValidationError('FactGate', 'skipSites.sites must be an array');
+  }
+  const normalized = sites.map((site, index) => {
+    assertPlainFactRecord(site, `skipSites.sites[${index}]`);
+    const file = ownDataField(site, 'file');
+    const line = ownDataField(site, 'line');
+    const form = ownDataField(site, 'form');
+    const token = ownDataField(site, 'token');
+    const carriesPlaceholder = ownDataField(site, 'carriesPlaceholder');
+    const sanctionMatched = ownDataField(site, 'sanctionMatched');
+    const capabilityConsistent = ownDataField(site, 'capabilityConsistent');
+    if (
+      typeof file !== 'string' ||
+      typeof line !== 'number' ||
+      !Number.isFinite(line) ||
+      typeof form !== 'string' ||
+      !SKIP_SITE_FORMS.has(form) ||
+      typeof token !== 'string' ||
+      typeof carriesPlaceholder !== 'boolean' ||
+      typeof sanctionMatched !== 'boolean' ||
+      typeof capabilityConsistent !== 'boolean'
+    ) {
+      throw ValidationError('FactGate', `skipSites.sites[${index}] is malformed`);
+    }
+    return Object.freeze({
+      file,
+      line,
+      form: form as SkipSiteFacts['sites'][number]['form'],
+      token,
+      carriesPlaceholder,
+      sanctionMatched,
+      capabilityConsistent,
+    });
+  });
+  return Object.freeze({ sites: Object.freeze(normalized) });
+}
+
 /**
  * A FACT GATE — the "gate-as-data" variant (the FactGate PoC). It replaces the arbitrary
  * {@link Gate.run} closure with two data-shaped halves: a DECLARATION of which host-produced
@@ -540,7 +601,7 @@ export function pickFacts(context: GateContext, requires: readonly FactKind[]): 
   for (const kind of requires) {
     switch (kind) {
       case 'skipSites':
-        bundle.skipSites = context.skipSites;
+        bundle.skipSites = normalizeSkipSiteFacts(context.skipSites);
         break;
       default: {
         // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
@@ -565,7 +626,7 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
     let fact: unknown;
     switch (kind) {
       case 'skipSites':
-        fact = context.skipSites;
+        fact = normalizeSkipSiteFacts(context.skipSites);
         break;
       default: {
         // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a

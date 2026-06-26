@@ -118,8 +118,10 @@ function boundaryAssetFileName(boundaryId: string, index: number, source: string
   return `_czap/${boundaryIdShort(boundaryId)}/${index}.${hash}.css`;
 }
 
-function publicAssetUrl(fileName: string): string {
-  return `/${fileName.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+function publicAssetUrl(fileName: string, base: string): string {
+  const normalized = fileName.replace(/\\/g, '/').replace(/^\/+/, '');
+  const normalizedBase = base.length === 0 ? '/' : base.endsWith('/') ? base : `${base}/`;
+  return `${normalizedBase}${normalized}`;
 }
 
 function attachAssetUrls(
@@ -170,6 +172,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
   let projectRoot = process.cwd();
   let isBuild = false;
+  let publicBase = '/';
   let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
 
   function ensureBoundaryManifest(): Promise<BoundaryManifest> {
@@ -196,7 +199,7 @@ export function plugin(config?: PluginConfig): Plugin {
               fileName,
               source,
             });
-            byIndex[index] = publicAssetUrl(fileName);
+            byIndex[index] = publicAssetUrl(fileName, publicBase);
           });
           urls[name] = byIndex;
         }
@@ -226,6 +229,7 @@ export function plugin(config?: PluginConfig): Plugin {
     configResolved(resolvedConfig) {
       projectRoot = resolvedConfig.root;
       isBuild = resolvedConfig.command === 'build';
+      publicBase = resolvedConfig.base;
       resolveWasmForRoot(wasmState, projectRoot);
     },
 

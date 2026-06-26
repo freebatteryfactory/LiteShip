@@ -59,6 +59,9 @@ export async function plumb(opts: { cwd?: string; pretty?: boolean } = {}): Prom
       );
       for (const name of payload.unclassified) process.stderr.write(`  ? ${name}\n`);
     }
+    if (payload.generatedCorpusMessage !== null) {
+      process.stderr.write(`PLUMB GATE FAILED — ${payload.generatedCorpusMessage}\n`);
+    }
   }
 
   return typeof result.exitCode === 'number' ? result.exitCode : payload.ok ? 0 : 1;

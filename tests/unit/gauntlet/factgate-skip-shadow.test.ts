@@ -25,6 +25,7 @@ import {
   defineFactGate,
   FACT_KINDS,
   isFactGate,
+  pickFacts,
   factBundleDigest,
   produceSkipSiteFacts,
   produceSkipSiteFactsFromContext,
@@ -366,6 +367,34 @@ describe('FactGate #10 — the FactPack is pure, serializable data (no escape ha
     expect(governedFiles(empty)).toEqual([]);
     // memoryContext is also accepted (no skipSites) → silent, not a crash.
     expect(noSkippedTestFactGate.run(memoryContext({}))).toEqual([]);
+  });
+
+  it('normalizes FactPacks to frozen plain data before decide', () => {
+    const ctx = dualCtx(SHADOW_CORPORA['exotic + aliased UNSANCTIONED forms']!);
+    const picked = pickFacts(ctx, ['skipSites']);
+    expect(picked.skipSites).toBeDefined();
+    expect(picked.skipSites).not.toBe(ctx.skipSites);
+    expect(Object.isFrozen(picked.skipSites)).toBe(true);
+    expect(Object.isFrozen(picked.skipSites!.sites)).toBe(true);
+    expect(Object.isFrozen(picked.skipSites!.sites[0])).toBe(true);
+  });
+
+  it('rejects malformed or accessor-backed FactPacks before decide can read them', () => {
+    const base: GateContext = {
+      repoRoot: '/v',
+      readFile: () => undefined,
+      files: () => [],
+      allFiles: () => [],
+    };
+    const accessorPack = Object.defineProperty({}, 'sites', {
+      get() {
+        return [];
+      },
+    }) as SkipSiteFacts;
+    expect(() => noSkippedTestFactGate.run({ ...base, skipSites: accessorPack })).toThrow(/plain data|array/);
+    expect(() =>
+      noSkippedTestFactGate.run({ ...base, skipSites: { sites: [{ file: 'a.ts' }] } as unknown as SkipSiteFacts }),
+    ).toThrow(/malformed/);
   });
 });
 

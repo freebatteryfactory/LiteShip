@@ -230,7 +230,7 @@ async function route(
       requireInitialized(state, method);
       const globs = readGlobs(params);
       const { findings } = await runGauntlet(globs);
-      const notifications = publishNotificationsFor(findings, state.lastFindings);
+      const notifications = publishNotificationsFor(findings, state.lastFindings, globs);
       const response: JsonRpcResponse | null = isNotification
         ? null
         : successResponse(id, { findingCount: findings.length, publishedUris: notifications.length });
@@ -300,16 +300,21 @@ function logMessageNotification(err: unknown): LspNotification {
 function publishNotificationsFor(
   findings: readonly FindingLike[],
   previousFindings: readonly FindingLike[] = [],
+  checkedGlobs?: readonly string[],
 ): readonly LspNotification[] {
   const groups = groupDiagnosticsByUri(findings);
   const currentUris = new Set(groups.map((group) => group.uri));
+  const previousInScope =
+    checkedGlobs === undefined
+      ? previousFindings
+      : previousFindings.filter((finding) => finding.location && matchesAnyGlob(finding.location.file, checkedGlobs));
   const notifications: LspNotification[] = groups.map((group) => ({
     method: PUBLISH_DIAGNOSTICS_METHOD,
     params: { uri: group.uri, diagnostics: group.diagnostics } satisfies PublishDiagnosticsParams,
   }));
   // Clear every URI that was published last run and is now finding-free (an empty publish drops the
   // editor squiggles); a URI still in `currentUris` is republished above, never double-cleared.
-  for (const stale of groupDiagnosticsByUri(previousFindings)) {
+  for (const stale of groupDiagnosticsByUri(previousInScope)) {
     if (!currentUris.has(stale.uri)) {
       notifications.push({
         method: PUBLISH_DIAGNOSTICS_METHOD,
@@ -318,6 +323,21 @@ function publishNotificationsFor(
     }
   }
   return notifications;
+}
+
+function matchesAnyGlob(file: string, globs: readonly string[]): boolean {
+  return globs.some((glob) => globMatches(file, glob));
+}
+
+function globMatches(file: string, glob: string): boolean {
+  // The CLI/audit host hands the LSP skin repo-relative POSIX paths. Keep this
+  // matcher scoped to that contract; slash-normalization lives in the audit package.
+  if (!glob.includes('*')) return file === glob;
+  const pattern = glob
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '.*')
+    .replace(/\*/g, '[^/]*');
+  return new RegExp(`^${pattern}$`).test(file);
 }
 
 /**

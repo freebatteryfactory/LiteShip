@@ -6,7 +6,7 @@
 
 # Variable: PlumbPayloadSchema
 
-> `const` **PlumbPayloadSchema**: `Struct`\<\{ `generatedPresent`: `Boolean`; `ok`: `Boolean`; `skips`: `$Array`\<`Struct`\<\{ `file`: `String`; `kind`: `String`; `message`: `String`; \}\>\>; `unclassified`: `$Array`\<`String`\>; \}\>
+> `const` **PlumbPayloadSchema**: `Struct`\<\{ `generatedCorpusMessage`: `NullOr`\<`String`\>; `generatedPresent`: `Boolean`; `ok`: `Boolean`; `skips`: `$Array`\<`Struct`\<\{ `file`: `String`; `kind`: `String`; `message`: `String`; \}\>\>; `unclassified`: `$Array`\<`String`\>; \}\>
 
 Defined in: [command/src/commands/plumb.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L46)
 

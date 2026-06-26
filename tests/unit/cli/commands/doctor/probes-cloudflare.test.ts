@@ -124,12 +124,12 @@ describe('doctor/probes-cloudflare — probeCloudflareAdapter()', () => {
     expect(probeCloudflareAdapter(dir)).toMatchObject({ status: 'fail' });
   });
 
-  it('warn when the installed major is < 14', () => {
+  it('fail when the installed major is < 14', () => {
     const dir = mkTmp();
     writePkg(dir, { dependencies: { '@astrojs/cloudflare': '^13' } });
     writeInstalled(dir, '@astrojs/cloudflare', '13.6.1');
     const r = probeCloudflareAdapter(dir);
-    expect(r.status).toBe('warn');
+    expect(r.status).toBe('fail');
     expect(r.detail).toContain('v14+');
   });
 

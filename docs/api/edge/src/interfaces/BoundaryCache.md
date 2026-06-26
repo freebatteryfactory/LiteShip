@@ -77,11 +77,13 @@ it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
 
 > **invalidateByTag**(`tag`): `Promise`\<`number`\>
 
-Defined in: [edge/src/kv-cache.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L162)
+Defined in: [edge/src/kv-cache.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L164)
 
 Active purge by tag (Astro 7 `Astro.cache` tag parity): delete every entry
 stored with `tag` via [putCompiledOutputs](#putcompiledoutputs)'s `tags`, across all of their
-tier/theme variants. Requires `KVNamespace.delete`; without it emits a
+tier/theme variants. Uses per-entry tag indexes when `KVNamespace.list` is
+available, with a legacy JSON-index fallback. Requires `KVNamespace.delete`;
+without it emits a
 diagnostic and returns 0. Resolves to the number of keys deleted.
 
 #### Parameters

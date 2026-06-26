@@ -20,7 +20,7 @@ vi.mock('@czap/command/host', async (importOriginal) => {
 
 import { plumb } from '../../../../packages/cli/src/commands/plumb.js';
 
-const CLEAN = { ok: true, skips: [], unclassified: [], generatedPresent: true };
+const CLEAN = { ok: true, skips: [], unclassified: [], generatedPresent: true, generatedCorpusMessage: null };
 
 beforeEach(() => {
   runPlumbScanMock.mockReset();
@@ -61,6 +61,7 @@ describe('czap plumb — a failing gate (exit 1) prints the work-list (pretty)',
       ],
       unclassified: [],
       generatedPresent: true,
+      generatedCorpusMessage: null,
     });
     const { exit, stdout, stderr } = await captureCli(() => plumb({ pretty: true }));
     expect(exit).toBe(1);
@@ -79,6 +80,7 @@ describe('czap plumb — a failing gate (exit 1) prints the work-list (pretty)',
       skips: [],
       unclassified: ['@czap/new-thing', '@czap/another'],
       generatedPresent: true,
+      generatedCorpusMessage: null,
     });
     const { exit, stderr } = await captureCli(() => plumb({ pretty: true }));
     expect(exit).toBe(1);
@@ -95,10 +97,27 @@ describe('czap plumb — a failing gate (exit 1) prints the work-list (pretty)',
       skips: [{ file: 'tests/generated/c.test.ts', kind: 'test.skip', message: 'x' }],
       unclassified: [],
       generatedPresent: true,
+      generatedCorpusMessage: null,
     });
     const { exit, stdout, stderr } = await captureCli(() => plumb({ pretty: false }));
     expect(exit).toBe(1);
     expect(lastReceipt(stdout)['status']).toBe('failed');
     expect(stderr).toBe('');
+  });
+
+  it('surfaces a missing generated-corpus failure even when no skips or packages are listed', async () => {
+    runPlumbScanMock.mockResolvedValue({
+      ok: false,
+      skips: [],
+      unclassified: [],
+      generatedPresent: false,
+      generatedCorpusMessage:
+        'tests/generated/ has no generated test corpus; run `pnpm run capsule:compile` before `czap plumb`.',
+    });
+    const { exit, stdout, stderr } = await captureCli(() => plumb({ pretty: true }));
+    expect(exit).toBe(1);
+    expect(lastReceipt(stdout)['status']).toBe('failed');
+    expect(stderr).toContain('PLUMB GATE FAILED');
+    expect(stderr).toContain('tests/generated/ has no generated test corpus');
   });
 });

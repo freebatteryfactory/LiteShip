@@ -71,6 +71,9 @@ export interface CompiledOutputs {
   readonly css: string;
   readonly propertyRegistrations: string;
   readonly containerQueries: string;
+  readonly aria?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly glsl?: unknown;
+  readonly wgsl?: unknown;
 }
 
 export interface BoundaryCache {
@@ -94,7 +97,10 @@ export interface BoundaryCache {
     outputs: CompiledOutputs,
     qualifier?: string,
     themeFp?: string,
+    tags?: readonly string[],
   ): Promise<void>;
+  invalidateByPath(boundaryId: ContentAddress): Promise<number>;
+  invalidateByTag(tag: string): Promise<number>;
 }
 
 export declare function createBoundaryCache(kv: KVNamespace, options?: { ttl?: number; prefix?: string }): BoundaryCache;

@@ -24,10 +24,17 @@ export interface AstroInvalidateOptions {
   readonly tags?: string | readonly string[];
 }
 
+/** Minimal structural cache directives Astro passes to provider.setHeaders(). */
+interface AstroCacheHeaderOptions {
+  readonly tags?: readonly string[];
+  readonly maxAge?: number;
+  readonly swr?: number | boolean;
+}
+
 /** Minimal structural cache-provider shape consumed by Astro 7. */
 export interface AstroCacheProvider {
   readonly name: string;
-  setHeaders?(options: { readonly tags?: readonly string[] }, request: Request): Headers;
+  setHeaders?(options: AstroCacheHeaderOptions, request: Request): Headers;
   invalidate(options: AstroInvalidateOptions): Promise<void>;
 }
 
@@ -80,6 +87,19 @@ function normalizeBoundaryIds(
   return typeof value === 'string' ? [value] : value;
 }
 
+function cacheControlValue(options: AstroCacheHeaderOptions): string | null {
+  const parts: string[] = [];
+  if (typeof options.maxAge === 'number' && Number.isFinite(options.maxAge) && options.maxAge >= 0) {
+    parts.push(`max-age=${Math.floor(options.maxAge)}`);
+  }
+  if (typeof options.swr === 'number' && Number.isFinite(options.swr) && options.swr > 0) {
+    parts.push(`stale-while-revalidate=${Math.floor(options.swr)}`);
+  } else if (options.swr === true && typeof options.maxAge === 'number' && options.maxAge > 0) {
+    parts.push(`stale-while-revalidate=${Math.floor(options.maxAge)}`);
+  }
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
 function resolveEnvSource(options: RuntimeOptions): () => CloudflareWorkersEnv {
   if (typeof options.env === 'function') return options.env;
   if (options.env) return () => options.env as CloudflareWorkersEnv;
@@ -119,6 +139,8 @@ export function createCloudflareCacheProvider(options: RuntimeOptions = {}): Ast
       const tags = new Set(cacheOptions.tags ?? []);
       tags.add(astroPathTag(new URL(request.url).pathname));
       if (tags.size > 0) headers.set('Cache-Tag', [...tags].join(','));
+      const cacheControl = cacheControlValue(cacheOptions);
+      if (cacheControl !== null) headers.set('Cloudflare-CDN-Cache-Control', cacheControl);
       return headers;
     },
     async invalidate(invalidateOptions) {

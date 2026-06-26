@@ -162,10 +162,12 @@ describe('plumb gate — mechanism', () => {
     mkdirSync(join(missingRoot, 'packages'), { recursive: true });
     const missing = runPlumbGate(missingRoot);
     expect(missing.generatedPresent).toBe(false);
+    expect(missing.generatedCorpusMessage).toContain('tests/generated/');
     expect(missing.ok).toBe(false);
 
     const empty = runPlumbGate(fixtureRoot({ generated: {} }));
     expect(empty.generatedPresent).toBe(false);
+    expect(empty.generatedCorpusMessage).toContain('capsule:compile');
     expect(empty.ok).toBe(false);
   });
 

@@ -77,13 +77,16 @@ interface ShipEmitRunOutput {
  * length the emission receipt would occupy, and returns an `emitted` /
  * `rejected` receipt. NO filesystem, NO clock, NO spawn — driving it twice with
  * the same snapshot yields a deep-equal receipt (idempotency), and a
- * structurally unshippable snapshot (empty path / empty version) surfaces as
- * `rejected` (the declared faults).
+ * structurally unshippable snapshot (empty path / empty version / empty
+ * capsule id) surfaces as `rejected` (the declared faults).
  */
 function deriveEmissionReceipt(input: ShipEmitDecodedInput): ShipEmitDecodedOutput {
-  // Structural rejection: an empty target path or an empty version cannot
-  // produce a shippable artifact. These are the two declared, reachable faults.
-  const rejected = input.capsule_path.trim().length === 0 || input.package_version.trim().length === 0;
+  // Structural rejection: an empty target path, version, or capsule id cannot
+  // produce a shippable artifact. These are the declared, reachable faults.
+  const rejected =
+    input.capsule_path.trim().length === 0 ||
+    input.package_version.trim().length === 0 ||
+    input.capsule_id.trim().length === 0;
 
   // Content-address the snapshot through the one canonical kernel
   // (canonicalize → CanonicalCbor → fnv1a) so the receipt id is the snapshot's
@@ -149,6 +152,19 @@ export const shipEmitCapsule = defineCapsule({
         capsule_id: 'fnv1a:deadbeef',
         package_name: '@czap/_spine',
         package_version: '',
+        source_commit: '0123456789abcdef0123456789abcdef01234567',
+        lifecycle_scripts_observed: [],
+      }),
+      surfaces: 'receipt-status',
+      status: 'rejected',
+    },
+    {
+      name: 'empty-capsule-id',
+      trigger: (): ShipEmitDecodedInput => ({
+        capsule_path: '/tmp/x.shipcapsule.cbor',
+        capsule_id: '',
+        package_name: '@czap/_spine',
+        package_version: '0.1.0',
         source_commit: '0123456789abcdef0123456789abcdef01234567',
         lifecycle_scripts_observed: [],
       }),

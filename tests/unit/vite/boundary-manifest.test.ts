@@ -76,19 +76,23 @@ const QUANTIZE_CSS = `
 `;
 
 describe('collectBoundaryManifest', () => {
-  test('serializeBoundaryOutput preserves property, container, css order without theme CSS', () => {
+  test('serializeBoundaryOutput emits the canonical compiled css payload without re-prepending sections', () => {
     expect(
       serializeBoundaryOutput({
         propertyRegistrations: '@property --gap { syntax: "<length>"; inherits: false; initial-value: 0px; }',
         containerQueries: '@container viewport-width (width >= 768px) { .x { --gap: 2rem; } }',
-        css: '.x { gap: var(--gap); }',
+        css: [
+          '@property --gap { syntax: "<length>"; inherits: false; initial-value: 0px; }',
+          '@container viewport-width (width >= 768px) { .x { --gap: 2rem; } }',
+          '.x { gap: var(--gap); }',
+        ].join('\n\n'),
       }),
     ).toBe(
       [
         '@property --gap { syntax: "<length>"; inherits: false; initial-value: 0px; }',
         '@container viewport-width (width >= 768px) { .x { --gap: 2rem; } }',
         '.x { gap: var(--gap); }',
-      ].join('\n'),
+      ].join('\n\n'),
     );
   });
 

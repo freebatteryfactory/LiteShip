@@ -24,11 +24,12 @@ function nextOk(body = 'OK', status = 200): (request: Request) => Promise<Respon
 const themeEdge = { theme: () => ({ prefix: 'b', tokens: { color: 'x' } }) } as const;
 
 describe('serializeBoundaryCss', () => {
-  test('orders theme → propertyRegistrations → containerQueries → css', () => {
+  test('orders theme before the canonical compiled css payload without duplicating structured mirrors', () => {
+    const payload = ['@property --p{}', '@container c (min-width:1px){}', '.x{color:red}'].join('\n\n');
     const resolution = {
       theme: { css: ':root{--a:1}' },
       compiledOutputs: {
-        css: '.x{color:red}',
+        css: payload,
         propertyRegistrations: '@property --p{}',
         containerQueries: '@container c (min-width:1px){}',
       },
@@ -38,6 +39,8 @@ describe('serializeBoundaryCss', () => {
     expect(css.indexOf(':root')).toBeLessThan(css.indexOf('@property'));
     expect(css.indexOf('@property')).toBeLessThan(css.indexOf('@container'));
     expect(css.indexOf('@container')).toBeLessThan(css.indexOf('.x{color'));
+    expect(css.match(/@property/g)).toHaveLength(1);
+    expect(css.match(/@container/g)).toHaveLength(1);
   });
 
   test('concatenates every boundary in the multi-boundary form', () => {
@@ -51,6 +54,16 @@ describe('serializeBoundaryCss', () => {
     const css = serializeBoundaryCss(resolution);
     expect(css).toContain('.a{}');
     expect(css).toContain('.b{}');
+  });
+
+  test('does not append the same single named boundary through both resolution forms', () => {
+    const compiled = { css: '.only{}', propertyRegistrations: '', containerQueries: '' };
+    const resolution = {
+      compiledOutputs: compiled,
+      boundaries: { only: { compiledOutputs: compiled } },
+    } as unknown as EdgeHostResolution;
+
+    expect(serializeBoundaryCss(resolution)).toBe('.only{}');
   });
 });
 

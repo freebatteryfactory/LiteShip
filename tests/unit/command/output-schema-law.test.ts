@@ -36,7 +36,10 @@ describe('D2 — outputSchema registry law', () => {
       if (d.executionKind !== 'handler') continue;
       expect(d.outputSchema, `handler '${d.name}' is missing outputSchema`).toBeDefined();
       expect(d.outputSchema?.type, `handler '${d.name}' outputSchema.type`).toBe('object');
-      expect(Object.keys(d.outputSchema?.properties ?? {}).length, `handler '${d.name}' outputSchema has no properties`).toBeGreaterThan(0);
+      expect(
+        Object.keys(d.outputSchema?.properties ?? {}).length,
+        `handler '${d.name}' outputSchema has no properties`,
+      ).toBeGreaterThan(0);
     }
   });
 
@@ -66,7 +69,9 @@ describe('D2 — tools/list exposes outputSchema for the MCP tools', () => {
     const tools = listTools();
     expect(tools.length).toBe(10);
     for (const t of tools) {
-      expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe('object');
+      expect((t as { outputSchema?: { type?: string } }).outputSchema?.type, `${t.name} tools/list outputSchema`).toBe(
+        'object',
+      );
     }
   });
 });
@@ -100,13 +105,70 @@ describe('D2 — payload conformance + validator teeth', () => {
       },
       mismatches: [],
     },
-    audit: { errorCount: 0, warningCount: 6, infoCount: 282, findingCount: 288, suppressedCount: 15, passFindingCounts: { structure: 1, integrity: 2, surface: 0 }, repoRoot: '/repo', profileSource: 'default' },
-    'audit-floor': { ok: false, expectedWarnings: 0, actualWarnings: 1, errorCount: 0, delta: { added: ['new-rule@packages/x/src/y.ts'], removed: [] }, inventory: ['new-rule@packages/x/src/y.ts'] },
-    'package-smoke': { ok: false, packagesPacked: 3, importsSmoked: 0, failedStep: 'pnpm install in consumer dir', failure: '@czap/web missing from node_modules after install' },
-    plumb: { ok: false, skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }], unclassified: ['@czap/mystery'], generatedPresent: true },
-    'check-invariants': { ok: false, groups: [{ name: 'NO_VAR', message: 'Use const/let, not var.', violations: [{ file: 'packages/x/src/y.ts', line: 3, content: 'var x = 1;' }] }], lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'] },
-    'capsule-verify': { status: 'stale', errors: ['generated bench missing for core.x: tests/generated/core.x.bench.ts'], capsuleCount: 42, benches: { total: 41, real: 30, placeholder: ['core.x'] } },
-    check: { ok: false, blocked: true, findingCount: 1, findings: [{ ruleId: 'gauntlet/no-bare-throw', severity: 'error', level: 'L3', title: 'bare throw', detail: 'throw a tagged @czap/error, not a bare value', location: { file: 'packages/x/src/y.ts', line: 12 } }] },
+    audit: {
+      errorCount: 0,
+      warningCount: 6,
+      infoCount: 282,
+      findingCount: 288,
+      suppressedCount: 15,
+      passFindingCounts: { structure: 1, integrity: 2, surface: 0 },
+      repoRoot: '/repo',
+      profileSource: 'default',
+    },
+    'audit-floor': {
+      ok: false,
+      expectedWarnings: 0,
+      actualWarnings: 1,
+      errorCount: 0,
+      delta: { added: ['new-rule@packages/x/src/y.ts'], removed: [] },
+      inventory: ['new-rule@packages/x/src/y.ts'],
+    },
+    'package-smoke': {
+      ok: false,
+      packagesPacked: 3,
+      importsSmoked: 0,
+      failedStep: 'pnpm install in consumer dir',
+      failure: '@czap/web missing from node_modules after install',
+    },
+    plumb: {
+      ok: false,
+      skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
+      unclassified: ['@czap/mystery'],
+      generatedPresent: true,
+      generatedCorpusMessage: null,
+    },
+    'check-invariants': {
+      ok: false,
+      groups: [
+        {
+          name: 'NO_VAR',
+          message: 'Use const/let, not var.',
+          violations: [{ file: 'packages/x/src/y.ts', line: 3, content: 'var x = 1;' }],
+        },
+      ],
+      lineEndings: ['packages/x/src/z.ts: expected .gitattributes attr eol=lf'],
+    },
+    'capsule-verify': {
+      status: 'stale',
+      errors: ['generated bench missing for core.x: tests/generated/core.x.bench.ts'],
+      capsuleCount: 42,
+      benches: { total: 41, real: 30, placeholder: ['core.x'] },
+    },
+    check: {
+      ok: false,
+      blocked: true,
+      findingCount: 1,
+      findings: [
+        {
+          ruleId: 'gauntlet/no-bare-throw',
+          severity: 'error',
+          level: 'L3',
+          title: 'bare throw',
+          detail: 'throw a tagged @czap/error, not a bare value',
+          location: { file: 'packages/x/src/y.ts', line: 12 },
+        },
+      ],
+    },
   };
 
   it('each handler outputSchema accepts its documented success payload', () => {
@@ -161,8 +223,12 @@ describe('D2 — payload conformance + validator teeth', () => {
     // missing markerCount
     expect(validateStructural(schema, { assetId: 'x', projection: 'beat', cached: false }).length).toBeGreaterThan(0);
     // markerCount wrong type
-    expect(validateStructural(schema, { assetId: 'x', projection: 'beat', markerCount: 'nope', cached: false }).length).toBeGreaterThan(0);
+    expect(
+      validateStructural(schema, { assetId: 'x', projection: 'beat', markerCount: 'nope', cached: false }).length,
+    ).toBeGreaterThan(0);
     // projection out of enum
-    expect(validateStructural(schema, { assetId: 'x', projection: 'tempo', markerCount: 1, cached: false }).length).toBeGreaterThan(0);
+    expect(
+      validateStructural(schema, { assetId: 'x', projection: 'tempo', markerCount: 1, cached: false }).length,
+    ).toBeGreaterThan(0);
   });
 });

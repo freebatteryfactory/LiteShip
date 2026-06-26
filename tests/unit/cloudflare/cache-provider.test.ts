@@ -91,10 +91,14 @@ describe('@czap/cloudflare/cache-provider', () => {
     expect([...store.keys()].filter((key) => key.includes(boundary.id))).toHaveLength(0);
   });
 
-  test('setHeaders exposes route tags plus the path tag', () => {
+  test('setHeaders exposes route tags, the path tag, and Cloudflare cache-control directives', () => {
     const provider = createCloudflareCacheProvider({ env: { KV: makeKV().kv } });
-    const headers = provider.setHeaders?.({ tags: ['products'] }, new Request('https://example.com/products'));
+    const headers = provider.setHeaders?.(
+      { tags: ['products'], maxAge: 300, swr: 60 },
+      new Request('https://example.com/products'),
+    );
     expect(headers?.get('Cache-Tag')).toBe('products,astro-path:/products');
+    expect(headers?.get('Cloudflare-CDN-Cache-Control')).toBe('max-age=300, stale-while-revalidate=60');
   });
 
   test('path invalidation without a path map still purges the path tag and warns', async () => {

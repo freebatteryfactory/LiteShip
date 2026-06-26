@@ -8,7 +8,7 @@
 
 > **requireCapabilityLink**(`context`, `gateId`): [`CapabilityLinkFacts`](../interfaces/CapabilityLinkFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:741](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L741)
+Defined in: [gauntlet/src/gate.ts:802](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L802)
 
 Read the injected [CapabilityLinkFacts](../interfaces/CapabilityLinkFacts.md) from a context, or throw a clear tagged
 [HostCapabilityError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) (never silently no-ops the gate whose whole job is the capability-link

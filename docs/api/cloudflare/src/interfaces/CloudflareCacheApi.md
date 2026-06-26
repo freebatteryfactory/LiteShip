@@ -10,6 +10,24 @@ Defined in: [cloudflare/src/edge-cache.ts:24](https://github.com/heyoub/LiteShip
 
 ## Methods
 
+### delete()?
+
+> `optional` **delete**(`request`): `Promise`\<`boolean`\>
+
+Defined in: [cloudflare/src/edge-cache.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L27)
+
+#### Parameters
+
+##### request
+
+`Request`
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+***
+
 ### match()
 
 > **match**(`request`): `Promise`\<`Response` \| `undefined`\>

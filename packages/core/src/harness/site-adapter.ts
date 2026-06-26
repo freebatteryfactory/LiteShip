@@ -356,7 +356,7 @@ function notWiredOutput(name: string, reason: string): HarnessOutput {
 import { describe, it, expect } from 'vitest';
 
 describe('${escapeSingle(name)} — siteAdapter not wired', () => {
-  it('premise guard: no importable siteAdapter binding was resolved', () => {
+  it('premise guard: siteAdapter checks are not wired', () => {
     expect('${r}'.length).toBeGreaterThan(0);
   });
 });

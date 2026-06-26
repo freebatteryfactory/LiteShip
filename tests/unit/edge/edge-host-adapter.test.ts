@@ -286,7 +286,8 @@ describe('createEdgeHostAdapter', () => {
 
     await adapter.resolve(makeHeaders());
 
-    expect(store.get('czap:tag:products')).toContain(boundary.id);
+    const tagValue = [...store.entries()].find(([key]) => key.startsWith('czap:tag:products:'))?.[1];
+    expect(tagValue).toContain(boundary.id);
   });
 
   test('tag resolvers receive the boundary compile context', async () => {
@@ -306,8 +307,10 @@ describe('createEdgeHostAdapter', () => {
 
     await adapter.resolve(makeHeaders());
 
-    expect(store.get('czap:tag:route:hero')).toContain(testBoundary.id);
-    expect(store.get(`czap:tag:${testBoundary.id}`)).toContain(testBoundary.id);
+    const routeTagValue = [...store.entries()].find(([key]) => key.startsWith('czap:tag:route:hero:'))?.[1];
+    const boundaryTagValue = [...store.entries()].find(([key]) => key.startsWith(`czap:tag:${testBoundary.id}:`))?.[1];
+    expect(routeTagValue).toContain(testBoundary.id);
+    expect(boundaryTagValue).toContain(testBoundary.id);
   });
 
   test('manifest tier gap without a compile fallback warns once and yields no outputs', async () => {

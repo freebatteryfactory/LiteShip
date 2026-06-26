@@ -51,6 +51,7 @@ export const viewport = {
 
       const result = (await build({
         root: dir,
+        base: '/app/',
         logLevel: 'silent',
         plugins: [plugin({ emitBoundaryAssets: true })],
         build: {
@@ -76,7 +77,7 @@ export const viewport = {
       const manifest = JSON.parse(String(manifestAsset!.source)) as BoundaryManifestFile;
       const entryManifest = manifest.boundaries['viewport']!;
       expect(Object.values(entryManifest.assetUrls ?? {}).sort()).toEqual(
-        cssAssets.map((asset) => `/${asset.fileName}`).sort(),
+        cssAssets.map((asset) => `/app/${asset.fileName}`).sort(),
       );
 
       const entryChunk = output.find((item) => item.type === 'chunk' && item.fileName === 'entry.js');

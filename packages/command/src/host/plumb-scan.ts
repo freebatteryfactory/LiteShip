@@ -27,6 +27,8 @@ export type PlumbSkipDetector = (source: string) => readonly SkipMatch[];
 // The first quoted string after the matched skip token — the human-readable reason —
 // used for the work-list line (escape-aware; tolerates a leading ternary condition).
 const FIRST_STRING_RE = /(['"`])((?:\\.|(?!\1).)*)\1/;
+const MISSING_GENERATED_CORPUS_MESSAGE =
+  'tests/generated/ has no generated test corpus; run `pnpm run capsule:compile` before `czap plumb`.';
 
 /**
  * THE GENERATED HANDOFF, detector-UNIFIED. `tests/generated/` is the plumb-gate's
@@ -115,5 +117,6 @@ export function runPlumbScan(root: string, skipDetector?: PlumbSkipDetector): Pl
     skips,
     unclassified,
     generatedPresent: present,
+    generatedCorpusMessage: present ? null : MISSING_GENERATED_CORPUS_MESSAGE,
   };
 }

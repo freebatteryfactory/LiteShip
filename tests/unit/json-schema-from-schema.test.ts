@@ -236,9 +236,7 @@ describe('schemaToJsonSchema ⟂ schemaToArbitrary — the cross-derivation orac
     expectAgreement(
       Schema.Struct({
         ok: Schema.Boolean,
-        skips: Schema.Array(
-          Schema.Struct({ file: Schema.String, kind: Schema.String, message: Schema.String }),
-        ),
+        skips: Schema.Array(Schema.Struct({ file: Schema.String, kind: Schema.String, message: Schema.String })),
         unclassified: Schema.Array(Schema.String),
         generatedPresent: Schema.Boolean,
       }),
@@ -306,9 +304,7 @@ describe('schemaToJsonSchema — teeth (unsupported throws; derived schema rejec
     // missing markerCount
     expect(validateStructural(derived, { assetId: 'x', cached: false }).length).toBeGreaterThan(0);
     // markerCount wrong type
-    expect(
-      validateStructural(derived, { assetId: 'x', markerCount: 'nope', cached: false }).length,
-    ).toBeGreaterThan(0);
+    expect(validateStructural(derived, { assetId: 'x', markerCount: 'nope', cached: false }).length).toBeGreaterThan(0);
     // a fully-conforming value passes
     expect(validateStructural(derived, { assetId: 'x', markerCount: 3, cached: false })).toEqual([]);
   });
@@ -336,11 +332,10 @@ describe('schemaToJsonSchema — reproduction proof (real plumb/check payloads c
   // `{ type:'array' }`.
   const PlumbPayloadSchema = Schema.Struct({
     ok: Schema.Boolean,
-    skips: Schema.Array(
-      Schema.Struct({ file: Schema.String, kind: Schema.String, message: Schema.String }),
-    ),
+    skips: Schema.Array(Schema.Struct({ file: Schema.String, kind: Schema.String, message: Schema.String })),
     unclassified: Schema.Array(Schema.String),
     generatedPresent: Schema.Boolean,
+    generatedCorpusMessage: Schema.NullOr(Schema.String),
   });
 
   // CheckPayload (packages/command/src/commands/check.ts). `findings` is a
@@ -359,6 +354,7 @@ describe('schemaToJsonSchema — reproduction proof (real plumb/check payloads c
     skips: [{ file: 'tests/generated/x.test.ts', kind: 'it.skip', message: 'unwired' }],
     unclassified: ['@czap/mystery'],
     generatedPresent: true,
+    generatedCorpusMessage: null,
   };
   const checkSample = {
     ok: false,
@@ -376,14 +372,14 @@ describe('schemaToJsonSchema — reproduction proof (real plumb/check payloads c
     ],
   };
 
-  it('the derived plumb schema is type:object with the four documented properties + required', () => {
+  it('the derived plumb schema is type:object with the documented properties + required', () => {
     const derived = schemaToJsonSchema(PlumbPayloadSchema);
     expect(derived.type).toBe('object');
     expect(Object.keys(derived.properties).sort()).toEqual(
-      ['generatedPresent', 'ok', 'skips', 'unclassified'].sort(),
+      ['generatedCorpusMessage', 'generatedPresent', 'ok', 'skips', 'unclassified'].sort(),
     );
     expect([...(derived.required ?? [])].sort()).toEqual(
-      ['generatedPresent', 'ok', 'skips', 'unclassified'].sort(),
+      ['generatedCorpusMessage', 'generatedPresent', 'ok', 'skips', 'unclassified'].sort(),
     );
   });
 
