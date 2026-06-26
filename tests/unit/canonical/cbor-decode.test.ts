@@ -8,9 +8,9 @@
  * `ParseError` (source `'cbor'`, `code` = the reason discriminant).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fc from 'fast-check';
-import { Effect, Schema } from 'effect';
+import { Cause, Effect, Result, Schema } from 'effect';
 import { CanonicalCbor, decode } from '@czap/canonical';
 import { hasTag } from '@czap/error';
 import {
@@ -184,6 +184,26 @@ describe('canonicalCborDecodeCapsule input schema', () => {
       Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(trailing),
     );
     expect(rejected._tag).toBe('Failure');
+  });
+
+  it('treats non-Error canonicality throws as schema refinement failures', async () => {
+    const canonical = CanonicalCbor.encode({ ok: true });
+    const encodeSpy = vi.spyOn(CanonicalCbor, 'encode').mockImplementation(() => {
+      throw 'bare encoder failure';
+    });
+
+    try {
+      const rejected = await Effect.runPromiseExit(
+        Schema.decodeUnknownEffect(canonicalCborDecodeCapsule.input)(canonical),
+      );
+
+      expect(rejected._tag).toBe('Failure');
+      if (rejected._tag === 'Failure') {
+        expect(Result.isSuccess(Cause.findError(rejected.cause))).toBe(true);
+      }
+    } finally {
+      encodeSpy.mockRestore();
+    }
   });
 });
 
