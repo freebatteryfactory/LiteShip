@@ -122,10 +122,10 @@ describe('invalidateByPath (active purge by content address)', () => {
     const cache = createBoundaryCache(kv);
 
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
-    expect([...store.keys()].some((key) => key.includes(':tag:products:'))).toBe(true);
+    expect([...store.keys()].some((key) => key.startsWith('czap:tag:'))).toBe(true);
 
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
-    expect([...store.keys()].some((key) => key.includes(':tag:products:'))).toBe(false);
+    expect([...store.keys()].some((key) => key.startsWith('czap:tag:'))).toBe(false);
   });
 
   test('rewrites legacy JSON tag indexes without orphaning surviving live keys', async () => {
@@ -156,9 +156,8 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
 
     const deleted = await cache.invalidateByTag('products');
     expect(deleted).toBe(2);
-    // The 'other'-tagged entry survives; the products index is gone.
-    expect([...store.keys()].some((k) => k.includes(':tag:products'))).toBe(false);
-    expect([...store.keys()].some((k) => k.includes(':tag:other'))).toBe(true);
+    // The 'other'-tagged entry and its index survive the products purge.
+    expect(await cache.invalidateByTag('other')).toBe(1);
   });
 
   test('clears sibling tag-member rows for the same deleted data keys', async () => {
@@ -167,15 +166,25 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
 
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products', 'sale']);
     const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
-    expect([...store.keys()].some((key) => key.includes(':tag:sale:'))).toBe(true);
 
     expect(await cache.invalidateByTag('products')).toBe(1);
-    expect([...store.keys()].some((key) => key.includes(':tag:sale:'))).toBe(false);
 
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
     expect(store.has(dataKey)).toBe(true);
     expect(await cache.invalidateByTag('sale')).toBe(0);
     expect(store.has(dataKey)).toBe(true);
+  });
+
+  test('does not let colon-delimited tag names collide by prefix', async () => {
+    const { store, kv } = makeKV();
+    const cache = createBoundaryCache(kv);
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products:sale']);
+    const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+
+    expect(await cache.invalidateByTag('products')).toBe(0);
+    expect(store.has(dataKey)).toBe(true);
+    expect(await cache.invalidateByTag('products:sale')).toBe(1);
+    expect(store.has(dataKey)).toBe(false);
   });
 
   test('the tag index does not double-count a re-put key', async () => {

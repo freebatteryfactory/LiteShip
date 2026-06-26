@@ -454,6 +454,35 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     const params = scoped.result.notifications[0]!.params as { diagnostics: readonly LspDiagnostic[] };
     expect(params.diagnostics).toEqual([]);
   });
+
+  it('treats globstar slash as matching files directly under the scoped directory', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING]),
+    );
+
+    const scoped = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: CZAP_CHECK_METHOD,
+        params: { globs: ['packages/x/src/**/*.ts'] },
+      }),
+      first.state,
+      stubRunner([]),
+    );
+
+    const params = scoped.result.notifications[0]!.params as { uri: string; diagnostics: readonly LspDiagnostic[] };
+    expect(params.uri).toBe('file:///packages/x/src/a.ts');
+    expect(params.diagnostics).toEqual([]);
+    expect(scoped.state.lastFindings).toEqual([]);
+  });
 });
 
 // ---------- 5. textDocument/codeAction ----------

@@ -235,7 +235,7 @@ function tagIndexKey(prefix: string, tag: string): string {
 }
 
 function tagMemberPrefix(prefix: string, tag: string): string {
-  return `${tagIndexKey(prefix, tag)}:`;
+  return `${prefix}:tag:${contentAddressOf(tag).replace(/^fnv1a:/, '')}:`;
 }
 
 function tagMemberKey(prefix: string, tag: string, key: string): string {

@@ -59,12 +59,13 @@ export function detectBeats(audio: { sampleRate: number; samples: Float32Array |
   const beatSpacing = bestLag * hop;
   const beats: number[] = [];
   const maxEnv = envelopeMax(envelope);
+  if (maxEnv <= 0) return { bpm: 0, beats: [] };
   const threshold = maxEnv * 0.4;
   for (let i = 0; i < audio.samples.length; i += beatSpacing) {
     const envIdx = Math.floor(i / hop);
     if (envIdx < envelope.length && envelope[envIdx]! >= threshold) beats.push(i);
   }
-  return { bpm, beats };
+  return { bpm: beats.length === 0 ? 0 : bpm, beats };
 }
 
 function envelopeMax(env: Float32Array): number {

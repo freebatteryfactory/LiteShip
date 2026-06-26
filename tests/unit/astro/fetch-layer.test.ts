@@ -43,6 +43,21 @@ describe('serializeBoundaryCss', () => {
     expect(css.match(/@container/g)).toHaveLength(1);
   });
 
+  test('preserves split compiled output sections from custom edge compilers', () => {
+    const resolution = {
+      theme: { css: ':root{--a:1}' },
+      compiledOutputs: {
+        css: '.x{color:red}',
+        propertyRegistrations: '@property --p{}',
+        containerQueries: '@container c (min-width:1px){}',
+      },
+    } as unknown as EdgeHostResolution;
+
+    expect(serializeBoundaryCss(resolution)).toBe(
+      [':root{--a:1}', '@property --p{}', '@container c (min-width:1px){}', '.x{color:red}'].join('\n'),
+    );
+  });
+
   test('concatenates every boundary in the multi-boundary form', () => {
     const resolution = {
       boundaries: {
