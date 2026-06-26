@@ -173,6 +173,55 @@ describe('cloudflareMiddleware', () => {
     expect(calls).toBeGreaterThan(0);
   });
 
+  test('single-boundary tag config writes the boundary cache tag index on compile fallback', async () => {
+    const { kv, cacheStore } = makeKVStore();
+    const boundary = makeBoundary();
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      boundaryId: boundary.id,
+      tags: ['products'],
+      compile: async () => ({ css: '.x{}', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+    });
+
+    await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
+
+    expect(cacheStore.get('czap:tag:products')).toContain(boundary.id);
+  });
+
+  test('manifest tag map attaches tags to the named boundary compile fallback', async () => {
+    const { kv, cacheStore } = makeKVStore();
+    const boundary = makeBoundary();
+    const manifest: BoundaryManifest = {
+      hero: { id: boundary.id, outputs: [], outputsByTier: {} },
+    };
+    const middleware = cloudflareMiddleware({
+      binding: 'KV',
+      manifest,
+      tags: { hero: ['hero-route'] },
+      compile: async () => ({ css: '.hero{}', propertyRegistrations: '', containerQueries: '' }),
+      env: { KV: kv },
+    });
+
+    await middleware({ request: new Request('http://localhost/'), locals: {} }, async () => new Response('ok'));
+
+    expect(cacheStore.get('czap:tag:hero-route')).toContain(boundary.id);
+  });
+
+  test('per-boundary tag maps require a manifest name or a default entry', () => {
+    const { kv } = makeKVStore();
+    const boundary = makeBoundary();
+    expect(() =>
+      cloudflareMiddleware({
+        binding: 'KV',
+        boundaryId: boundary.id,
+        tags: { hero: ['products'] },
+        compile: async () => ({ css: '.x{}', propertyRegistrations: '', containerQueries: '' }),
+        env: { KV: kv },
+      }),
+    ).toThrowError(/per-boundary `tags` map/);
+  });
+
   test('primes workerd env on first request when env is omitted', async () => {
     resetWorkersEnvForTesting();
     setWorkersEnvForTesting({

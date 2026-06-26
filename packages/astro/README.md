@@ -1,8 +1,8 @@
 # @czap/astro
 
-Astro 6 integration that compiles your boundary definitions at build time and activates their state evaluators on the client.
+Astro 7 integration that compiles your boundary definitions at build time and activates their state evaluators on the client.
 
-> Install this directly when your site is built on Astro 6 — this is the
+> Install this directly when your site is built on Astro 7 — this is the
 > integration most LiteShip projects install first. The other `@czap/*`
 > runtime packages arrive with it.
 
@@ -46,7 +46,7 @@ import { viewport } from '../boundaries.js';
 
 Drag the window edge across 768px: the wrapper's `data-czap-state` attribute flips between `stacked` and `split` for your CSS to key on. No `client:*` attribute needed — the integration's injected boot script activates the evaluator.
 
-`czap({ middleware: true })` auto-wires capability detection, so the common case needs no `src/middleware.ts`; it populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` (no cast). Boundaries can also bind live `audio.amplitude` / `audio.beat` signals (`driveAudioFromAnalyser` from `@czap/astro/runtime`), and the dev boundary inspector ships as an Astro dev-toolbar app (toggle from the toolbar icon).
+`czap({ middleware: true })` auto-wires capability detection, so the common case needs no `src/middleware.ts`; it populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` (no cast). Astro 7 hosts that need CZAP before Astro's page pipeline can use `czapFetchLayer()` from `@czap/astro/fetch-layer`. Boundaries can also bind live `audio.amplitude` / `audio.beat` signals (`driveAudioFromAnalyser` from `@czap/astro/runtime`), and the dev boundary inspector ships as an Astro dev-toolbar app (toggle from the toolbar icon).
 
 ## Where it sits
 

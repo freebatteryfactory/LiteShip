@@ -8,7 +8,7 @@
 
 > **run**(`argv`): `Promise`\<`number`\>
 
-Defined in: [cli/src/dispatch.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/cli/src/dispatch.ts#L37)
+Defined in: [cli/src/dispatch.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/cli/src/dispatch.ts#L38)
 
 Run the CLI with the given argv slice. Returns a process exit code.
 

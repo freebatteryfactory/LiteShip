@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { satelliteAttrs, resolveInitialStateFallback, resolveInitialState, integration } from '@czap/astro';
 import type { SatelliteProps } from '@czap/astro';
-import { Boundary } from '@czap/core';
+import { Boundary, Diagnostics } from '@czap/core';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -363,6 +363,7 @@ describe('integration', () => {
     expect(integ.hooks['astro:config:setup']).toBeInstanceOf(Function);
     expect(integ.hooks['astro:config:done']).toBeInstanceOf(Function);
     expect(integ.hooks['astro:server:setup']).toBeInstanceOf(Function);
+    expect(integ.hooks['astro:server:done']).toBeInstanceOf(Function);
     expect(integ.hooks['astro:build:done']).toBeInstanceOf(Function);
   });
 
@@ -482,6 +483,27 @@ describe('integration', () => {
     );
     expect(logs).toContain('Registered gpu client directive');
     expect(logs).toContain('Injected GPU probe upgrade');
+  });
+
+  test('diagnostics bridge restores on Astro server teardown', () => {
+    Diagnostics.reset();
+    const integ = integration();
+    const warns: string[] = [];
+
+    integ.hooks['astro:config:setup']({
+      updateConfig: () => undefined,
+      addClientDirective: () => undefined,
+      injectScript: () => undefined,
+      logger: { info() {}, warn(message: string) { warns.push(message); }, error() {} },
+    } as never);
+
+    Diagnostics.warn({ source: 'czap/test', code: 'before', message: 'before teardown' });
+    integ.hooks['astro:server:done']?.({ logger: { info() {}, warn() {}, error() {} } } as never);
+    Diagnostics.warn({ source: 'czap/test', code: 'after', message: 'after teardown' });
+
+    expect(warns).toHaveLength(1);
+    expect(warns[0]).toContain('before teardown');
+    Diagnostics.reset();
   });
 
   test('config:setup auto-wires the detection middleware only when middleware: true (opt-in)', () => {

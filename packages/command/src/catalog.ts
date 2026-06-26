@@ -82,6 +82,24 @@ const CLI_OWNED_DESCRIPTORS: readonly CapsuleCommandDescriptor[] = [
     annotations: { longRunning: true, group: 'compose' },
   },
   {
+    name: 'astro.dev',
+    summary: 'Launch Astro 7 dev in background mode for agent workflows.',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { longRunning: true, group: 'servers' },
+  },
+  {
+    name: 'astro.status',
+    summary: 'Report Astro 7 background dev-server status.',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnly: true, group: 'servers' },
+  },
+  {
+    name: 'astro.stop',
+    summary: 'Stop the Astro 7 background dev server.',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { group: 'servers' },
+  },
+  {
     name: 'gauntlet',
     summary: 'Run the full release-grade gauntlet.',
     inputSchema: { type: 'object', properties: { 'dry-run': { type: 'boolean' } } },

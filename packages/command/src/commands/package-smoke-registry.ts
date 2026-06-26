@@ -41,7 +41,11 @@ export const PACKAGES: readonly PackageSmokeSpec[] = [
   { dir: 'packages/web', name: '@czap/web', imports: ['@czap/web', '@czap/web/lite'] },
   { dir: 'packages/detect', name: '@czap/detect', imports: ['@czap/detect'] },
   { dir: 'packages/edge', name: '@czap/edge', imports: ['@czap/edge'] },
-  { dir: 'packages/cloudflare', name: '@czap/cloudflare', imports: ['@czap/cloudflare', '@czap/cloudflare/testing'] },
+  {
+    dir: 'packages/cloudflare',
+    name: '@czap/cloudflare',
+    imports: ['@czap/cloudflare', '@czap/cloudflare/testing', '@czap/cloudflare/cache-provider'],
+  },
   { dir: 'packages/worker', name: '@czap/worker', imports: ['@czap/worker'] },
   { dir: 'packages/vite', name: '@czap/vite', imports: ['@czap/vite', '@czap/vite/html-transform'] },
   {
@@ -56,6 +60,7 @@ export const PACKAGES: readonly PackageSmokeSpec[] = [
       '@czap/astro/client-directives/gpu',
       '@czap/astro/client-directives/wasm',
       '@czap/astro/middleware',
+      '@czap/astro/fetch-layer',
       '@czap/astro/runtime',
     ],
   },

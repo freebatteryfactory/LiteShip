@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import { Diagnostics } from '@czap/core';
+import { Boundary, Diagnostics } from '@czap/core';
+import { createBoundaryCache, EdgeTier } from '@czap/edge';
 import { createCloudflareEdgeCache, resolveKvBinding } from '@czap/cloudflare';
 
 afterEach(() => {
@@ -51,6 +52,60 @@ describe('createCloudflareEdgeCache', () => {
     });
     await kv.get('k');
     expect(events[0]?.message).toContain('available: OTHER');
+  });
+
+  it('forwards delete/list through active boundary invalidation', async () => {
+    const store = new Map<string, string>();
+    const env = {
+      KV: {
+        async get(key: string) {
+          return store.get(key) ?? null;
+        },
+        async put(key: string, value: string) {
+          store.set(key, value);
+        },
+        async delete(key: string) {
+          store.delete(key);
+        },
+        async list({ prefix }: { prefix: string }) {
+          return {
+            keys: [...store.keys()].filter((key) => key.startsWith(prefix)).map((name) => ({ name })),
+            list_complete: true,
+          };
+        },
+      },
+    };
+    const boundary = Boundary.make({ input: 'viewport.width', at: [[0, 'compact']] });
+    const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
+    const cache = createBoundaryCache(createCloudflareEdgeCache(() => env, { binding: 'KV' }));
+
+    await cache.putCompiledOutputs(boundary.id, tier, { css: '.x{}', propertyRegistrations: '', containerQueries: '' });
+
+    expect(await cache.invalidateByPath(boundary.id)).toBe(1);
+    expect(store.size).toBe(0);
+  });
+
+  it('does not mask missing delete/list capabilities on custom KV-shaped bindings', async () => {
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const store = new Map<string, string>();
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get(key: string) {
+            return store.get(key) ?? null;
+          },
+          async put(key: string, value: string) {
+            store.set(key, value);
+          },
+        },
+      }),
+      { binding: 'KV' },
+    );
+
+    expect(kv.delete).toBeUndefined();
+    expect(kv.list).toBeUndefined();
+    expect(events.some((event) => event.code === 'kv-binding-capability-missing')).toBe(true);
   });
 });
 

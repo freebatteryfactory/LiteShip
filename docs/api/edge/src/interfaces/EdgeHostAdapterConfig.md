@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostAdapterConfig
 
-Defined in: [edge/src/host-adapter.ts:140](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L140)
+Defined in: [edge/src/host-adapter.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L153)
 
 Configuration for [createEdgeHostAdapter](../functions/createEdgeHostAdapter.md).
 
@@ -20,7 +20,7 @@ compile cache keyed by content address + tier.
 
 > `readonly` `optional` **cache?**: [`EdgeHostCacheConfig`](EdgeHostCacheConfig.md)
 
-Defined in: [edge/src/host-adapter.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L144)
+Defined in: [edge/src/host-adapter.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L157)
 
 KV-backed boundary output cache; omit to disable caching.
 
@@ -30,6 +30,6 @@ KV-backed boundary output cache; omit to disable caching.
 
 > `readonly` `optional` **theme?**: [`ThemeCompileConfig`](ThemeCompileConfig.md) \| ((`context`) => [`ThemeCompileConfig`](ThemeCompileConfig.md) \| `null` \| `undefined`)
 
-Defined in: [edge/src/host-adapter.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L142)
+Defined in: [edge/src/host-adapter.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L155)
 
 Static theme config, or a resolver invoked with each request's context.

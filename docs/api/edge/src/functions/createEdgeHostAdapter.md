@@ -8,7 +8,7 @@
 
 > **createEdgeHostAdapter**(`config?`): [`EdgeHostAdapter`](../interfaces/EdgeHostAdapter.md)
 
-Defined in: [edge/src/host-adapter.ts:346](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L346)
+Defined in: [edge/src/host-adapter.ts:375](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L375)
 
 Create an [EdgeHostAdapter](../variables/EdgeHostAdapter.md) with optional theme and boundary cache.
 

@@ -8,6 +8,6 @@
 
 > `const` **COMMAND\_CATALOG**: readonly [`CapsuleCommandDescriptor`](../type-aliases/CapsuleCommandDescriptor.md)[]
 
-Defined in: [command/src/catalog.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/catalog.ts#L165)
+Defined in: [command/src/catalog.ts:183](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/catalog.ts#L183)
 
 The full catalog of descriptors, sorted by name. Mirrors [commandRegistry](commandRegistry.md).list().

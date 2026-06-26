@@ -156,7 +156,7 @@ LiteShip is greenfield-first. There is no migration guide for porting an existin
 | OS | Windows + Linux | macOS |
 | Shell | PowerShell + bash | zsh / bash on macOS |
 | Node.js | 22, pnpm 10 | same — no known gap |
-| Vite / Astro | 8 / 6 | same — no known gap |
+| Vite / Astro | 8 / 7 | same — no known gap |
 | Browsers | Chromium + Firefox + WebKit | same — no known gap |
 
 **Peer dependency on Effect is currently `>=4.0.0-beta.0`.** Effect 4 is still in beta upstream (the `latest` dist-tag points at Effect 3.x). LiteShip's published packages declare a broad beta range so consumers can pick the beta they want to vendor; the workspace dev-pins `4.0.0-beta.32` as the tested baseline. When Effect 4.0 stable ships, LiteShip will tighten the peer range to `^4.0.0` in a minor release with a documented upgrade path. If your procurement process doesn't accept beta runtime dependencies, this is the load-bearing item to evaluate before adopting LiteShip in production.
@@ -238,7 +238,7 @@ Dev-loop ergonomics: `pnpm dev` (vitest watch), `pnpm run clean` (dry-dock), `pn
 
 Other lanes (`test:vite`, `test:astro`, `test:tailwind`, `test:e2e`, `test:e2e:stress`, `test:e2e:stream-stress`, `test:redteam`, `package:smoke`, `bench`, `bench:gate`, `bench:reality`, `coverage:merge`, `report:runtime-seams`, `audit`, `report:satellite-scan`, `feedback:verify`) are documented in [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-seven phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to twenty-two minutes end-to-end depending on cold caches and machine speed (recent local: 14m47s on Linux x64, 8 vCPU). It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
+`pnpm run gauntlet:full` is the full shake-down cruise before a release. Thirty-nine phases (see `STATUS.md` for the full ordered list), starting with an enforced `rig-check` env preflight, fifteen to forty-five minutes end-to-end depending on cold caches, CI load, and machine speed. It ends with `flex:verify PASSED — project is 10/10 by every rating dimension`, or it fails and the vessel returns to dry-dock.
 
 ## Latest gauntlet benchmark snapshot
 

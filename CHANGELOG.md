@@ -4,11 +4,17 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [0.4.0] - 2026-06-19
+## [0.4.0] - 2026-06-25
 
 The **live-runtime cut**: the framework primitives that 0.3.0 left built-but-test-only
 are now plumbed into the live cast pipeline — and a new gate makes "built-not-plumbed"
 a CI failure so it can't happen silently again.
+
+This cut also hard-cuts the Astro host substrate to Astro 7 / `@astrojs/cloudflare` v14:
+`czapFetchLayer()` is the front-of-pipeline fetch layer, `@czap/cloudflare/cache-provider`
+bridges Astro `cache.invalidate()` into the CZAP boundary KV tag index, `czap astro
+dev/status/stop` delegates to Astro background dev-server management, and `czap doctor
+--target astro` probes the Astro dev status endpoint.
 
 ### Added
 
@@ -71,7 +77,7 @@ a CI failure so it can't happen silently again.
     ADR-0017's passive-TTL gap; `KVNamespace` gains optional `delete`/`list`, forwarded by the
     Cloudflare adapter, degrading to a diagnostic when a provider omits them.
   - `@czap/cli` — **`czap doctor --target astro`:** an Astro 7 `/_astro/status` dev-server
-    liveness probe, also reachable over MCP.
+    liveness probe for agent-run background dev sessions.
 
 ### Changed
 
@@ -151,7 +157,7 @@ not a proxy standing beside it. Carries breaking surface (pre-1.0 minor).
 ### Changed
 
 - `@czap/astro` — **the `serverIslands` integration option is a deprecated
-  no-op.** Server Islands are stable in Astro 6 (since v5); the
+  no-op.** Server Islands are stable in Astro (since v5); the
   `experimental.serverIslands` bridge was removed.
 
 ### Fixed

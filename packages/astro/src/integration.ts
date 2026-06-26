@@ -268,6 +268,12 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
   ];
 
   let projectRoot: string | null = null;
+  let restoreDiagnostics: (() => void) | null = null;
+
+  const restoreDiagnosticsBridge = (): void => {
+    restoreDiagnostics?.();
+    restoreDiagnostics = null;
+  };
 
   return {
     name: '@czap/astro',
@@ -288,7 +294,8 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         // Route @czap/* runtime diagnostics through Astro's logger so they carry
         // the czap label and flow into `astro dev --json` structured output —
         // one log stream the host (and CI / agents) already parse.
-        installDiagnosticsBridge(logger);
+        restoreDiagnosticsBridge();
+        restoreDiagnostics = installDiagnosticsBridge(logger);
 
         // Astro may carry a different Vite type graph than @czap/vite. The plugin
         // runtime contract is still compatible, so the host integration owns the
@@ -447,26 +454,34 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         }
       },
 
+      'astro:server:done': () => {
+        restoreDiagnosticsBridge();
+      },
+
       'astro:build:done': async ({ dir, logger }) => {
-        // Emit the build-derived boundary manifest for hosts that read it
-        // from disk instead of importing `virtual:czap/boundaries` (e.g. a
-        // worker entry assembled outside this Vite build).
-        if (projectRoot && dir) {
-          const boundaries = await collectBoundaryManifest(projectRoot, {
-            boundaryDir: config?.vite?.dirs?.boundary,
-          });
-          if (Object.keys(boundaries).length > 0) {
-            const manifestFile: BoundaryManifestFile = {
-              _tag: 'CzapBoundaryManifest',
-              _version: 2,
-              boundaries,
-            };
-            const outPath = path.join(fileURLToPath(dir), 'czap-boundary-manifest.json');
-            writeFileSync(outPath, JSON.stringify(manifestFile, null, 2));
-            logger.info(`Emitted boundary manifest (${Object.keys(boundaries).length} boundaries) to ${outPath}`);
+        try {
+          // Emit the build-derived boundary manifest for hosts that read it
+          // from disk instead of importing `virtual:czap/boundaries` (e.g. a
+          // worker entry assembled outside this Vite build).
+          if (projectRoot && dir) {
+            const boundaries = await collectBoundaryManifest(projectRoot, {
+              boundaryDir: config?.vite?.dirs?.boundary,
+            });
+            if (Object.keys(boundaries).length > 0) {
+              const manifestFile: BoundaryManifestFile = {
+                _tag: 'CzapBoundaryManifest',
+                _version: 2,
+                boundaries,
+              };
+              const outPath = path.join(fileURLToPath(dir), 'czap-boundary-manifest.json');
+              writeFileSync(outPath, JSON.stringify(manifestFile, null, 2));
+              logger.info(`Emitted boundary manifest (${Object.keys(boundaries).length} boundaries) to ${outPath}`);
+            }
           }
+          logger.info('@czap build integration complete');
+        } finally {
+          restoreDiagnosticsBridge();
         }
-        logger.info('@czap build integration complete');
       },
     },
   };
