@@ -37,6 +37,10 @@ export function classifyBenchSource(source: string): 'real' | 'placeholder' {
   return closures.some((m) => m[1]!.trim().length > 0) ? 'real' : 'placeholder';
 }
 
+function normalizeReason(reason: string): string {
+  return reason.replace(/\s+/g, ' ').trim();
+}
+
 /**
  * Honesty verdict for ONE generated bench — the ONE definition the gate
  * (capsule-verify) and its meta-test share. Returns a human-readable error for a
@@ -56,7 +60,9 @@ export function benchHonestyError(
   benchSource: string,
   benchExemption: { readonly reason: string } | undefined,
 ): string | null {
-  const markerReason = BENCH_NOT_APPLICABLE_RE.exec(benchSource)?.[1]?.trim();
+  const markerReason = BENCH_NOT_APPLICABLE_RE.exec(benchSource)?.[1];
+  const normalizedMarkerReason = markerReason !== undefined ? normalizeReason(markerReason) : undefined;
+  const normalizedExemptionReason = benchExemption !== undefined ? normalizeReason(benchExemption.reason) : undefined;
   const hasExemption = benchExemption !== undefined;
   if (classifyBenchSource(benchSource) === 'placeholder') {
     return (
@@ -65,13 +71,17 @@ export function benchHonestyError(
       `line + a real premise-guard body + a manifest benchExemption)`
     );
   }
-  if (markerReason !== undefined && !hasExemption) {
+  if (normalizedMarkerReason !== undefined && !hasExemption) {
     return `bench for ${capName} has a BENCH-NOT-APPLICABLE marker but no manifest benchExemption record`;
   }
-  if (markerReason === undefined && hasExemption) {
+  if (normalizedMarkerReason === undefined && hasExemption) {
     return `bench for ${capName} has a manifest benchExemption but no BENCH-NOT-APPLICABLE marker line`;
   }
-  if (markerReason !== undefined && hasExemption && markerReason !== benchExemption.reason) {
+  if (
+    normalizedMarkerReason !== undefined &&
+    normalizedExemptionReason !== undefined &&
+    normalizedMarkerReason !== normalizedExemptionReason
+  ) {
     return `bench for ${capName}: BENCH-NOT-APPLICABLE marker reason disagrees with the manifest benchExemption reason`;
   }
   return null;

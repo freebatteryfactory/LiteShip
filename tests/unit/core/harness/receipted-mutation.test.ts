@@ -194,9 +194,9 @@ describe('generateReceiptedMutation', () => {
     // The discriminated requirement: silent absence is illegal. A receipted
     // mutation that exposes no pure core AND declares no `effect-outcome`
     // exemption must throw at declaration time — never ship green.
-    expect(() =>
-      defineCapsule({ ...base, mutate: undefined, name: 'demo.naked' }),
-    ).toThrow(/neither a pure `mutate` core nor a `receiptKind: 'effect-outcome'` exemption/);
+    expect(() => defineCapsule({ ...base, mutate: undefined, name: 'demo.naked' })).toThrow(
+      /neither a pure `mutate` core nor a `receiptKind: 'effect-outcome'` exemption/,
+    );
   });
 
   it('defineCapsule REJECTS an effect-outcome exemption without a non-empty reason', () => {
@@ -228,5 +228,66 @@ describe('generateReceiptedMutation', () => {
         reason: 'should not be allowed alongside a pure core',
       }),
     ).toThrow(/mutually exclusive/);
+  });
+
+  it('defineCapsule REJECTS declared faults without a pure mutate core', () => {
+    expect(() =>
+      defineCapsule({
+        ...base,
+        mutate: undefined,
+        name: 'demo.effectFaults',
+        receiptKind: 'effect-outcome' as const,
+        reason: 'receipt only exists after an external effect',
+        faults: [
+          {
+            name: 'empty-token-fails',
+            trigger: () => ({ token: '' }),
+            surfaces: 'receipt-status' as const,
+            status: 'failed',
+          },
+        ],
+      }),
+    ).toThrow(/declares faults but exposes no pure `mutate` core/);
+  });
+
+  it('defineCapsule REJECTS malformed receiptedMutation fault declarations', () => {
+    expect(() =>
+      defineCapsule({
+        ...base,
+        name: 'demo.blankFaultName',
+        faults: [{ name: ' ', trigger: () => ({ token: '' }), surfaces: 'throws' as const }],
+      }),
+    ).toThrow(/name` must be non-empty/);
+
+    expect(() =>
+      defineCapsule({
+        ...base,
+        name: 'demo.missingTrigger',
+        faults: [{ name: 'broken', surfaces: 'throws' } as never],
+      }),
+    ).toThrow(/trigger` must be a function/);
+
+    expect(() =>
+      defineCapsule({
+        ...base,
+        name: 'demo.badSurface',
+        faults: [{ name: 'broken', trigger: () => ({ token: '' }), surfaces: 'other' } as never],
+      }),
+    ).toThrow(/surfaces` must be 'throws' or 'receipt-status'/);
+
+    expect(() =>
+      defineCapsule({
+        ...base,
+        name: 'demo.emptyStatus',
+        faults: [
+          {
+            name: 'broken',
+            trigger: () => ({ token: '' }),
+            surfaces: 'receipt-status' as const,
+            status: ' ',
+          },
+        ],
+      }),
+    ).toThrow(/receipt-status faults require a non-empty `status`/);
   });
 });

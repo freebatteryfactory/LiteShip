@@ -157,6 +157,18 @@ describe('plumb gate — mechanism', () => {
     expect(runPlumbGate(root).ok).toBe(true);
   });
 
+  it('FAILS when the generated corpus is missing or empty', () => {
+    const missingRoot = mkdtempSync(join(tmpdir(), 'czap-plumb-missing-'));
+    mkdirSync(join(missingRoot, 'packages'), { recursive: true });
+    const missing = runPlumbGate(missingRoot);
+    expect(missing.generatedPresent).toBe(false);
+    expect(missing.ok).toBe(false);
+
+    const empty = runPlumbGate(fixtureRoot({ generated: {} }));
+    expect(empty.generatedPresent).toBe(false);
+    expect(empty.ok).toBe(false);
+  });
+
   it('CATCHES an inner-describe skip via the INJECTED AST detector (a multi-line shape the token scanner misses)', async () => {
     // The CLI host injects `@czap/audit`'s SOUND `detectSkipsAST` as the second arg of
     // `runPlumbScan` (the boundary LAW: `@czap/command` stays lean, the host owns the AST). An

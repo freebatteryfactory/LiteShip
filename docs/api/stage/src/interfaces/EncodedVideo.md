@@ -6,7 +6,7 @@
 
 # Interface: EncodedVideo
 
-Defined in: [stage/src/dual-export.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L75)
+Defined in: [stage/src/dual-export.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L76)
 
 The real encoded video bytes a [FrameEncoder](../type-aliases/FrameEncoder.md) produces.
 
@@ -16,7 +16,7 @@ The real encoded video bytes a [FrameEncoder](../type-aliases/FrameEncoder.md) p
 
 > `readonly` **bytes**: `Uint8Array`
 
-Defined in: [stage/src/dual-export.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L77)
+Defined in: [stage/src/dual-export.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L78)
 
 The encoded container bytes (e.g. a real ISO-BMFF/MP4 byte stream).
 
@@ -26,7 +26,7 @@ The encoded container bytes (e.g. a real ISO-BMFF/MP4 byte stream).
 
 > `readonly` **codec**: `string`
 
-Defined in: [stage/src/dual-export.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L79)
+Defined in: [stage/src/dual-export.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L80)
 
 Codec id of the encode (e.g. `'h264'`, `'avc1.42001E'`).
 
@@ -36,6 +36,6 @@ Codec id of the encode (e.g. `'h264'`, `'avc1.42001E'`).
 
 > `readonly` **container**: `string`
 
-Defined in: [stage/src/dual-export.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L81)
+Defined in: [stage/src/dual-export.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L82)
 
 Container/MIME of the bytes (e.g. `'video/mp4'`).

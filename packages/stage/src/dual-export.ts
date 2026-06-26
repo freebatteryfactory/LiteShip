@@ -25,6 +25,7 @@ import type {
   ExportNode,
   ProjectionNode,
   ComponentNode,
+  EntityNode,
   PoseNode,
   CompositeState,
   Quantizer,
@@ -107,9 +108,26 @@ function componentFor(graph: DocumentGraph, ref: ContentAddress): ComponentNode 
   return graph.nodes.find((node): node is ComponentNode => node.family === 'component' && node.id === ref);
 }
 
-/** All pose nodes — the static, design-time keyed variants the casts replay. */
+/** Owning entity for a component node. */
+function entityForComponent(graph: DocumentGraph, componentId: ContentAddress): EntityNode | undefined {
+  return graph.nodes.find(
+    (node): node is EntityNode => node.family === 'entity' && node.components.includes(componentId),
+  );
+}
+
+/** Pose nodes owned by one entity — the static, design-time keyed variants the casts replay. */
+function posesForEntity(graph: DocumentGraph, entityId: ContentAddress): readonly PoseNode[] {
+  return graph.nodes.filter((node): node is PoseNode => node.family === 'pose' && node.entityRef === entityId);
+}
+
+/** All pose nodes — the video cast sweeps every authored pose track. */
 function poses(graph: DocumentGraph): readonly PoseNode[] {
   return graph.nodes.filter((node): node is PoseNode => node.family === 'pose');
+}
+
+/** Escape an HTML attribute value before string interpolation. */
+function escapeAttributeValue(value: unknown): string {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**
@@ -162,12 +180,13 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     sourceRefs.push(projection.id);
     const component = componentFor(graph, projection.sourceRef);
     if (!component) continue;
+    const entity = entityForComponent(graph, component.id);
 
     const boundary = boundaryOf(component);
     // Per-state CSS inputs — drive the REAL CSSCompiler with the bindings the
-    // graph's poses pinned at each state (a flat per-state property map).
+    // owning entity's poses pinned at each state (a flat per-state property map).
     const states: Record<string, Record<string, string>> = {};
-    for (const pose of poses(graph)) {
+    for (const pose of entity ? posesForEntity(graph, entity.id) : []) {
       const props: Record<string, string> = {};
       for (const [key, value] of Object.entries(pose.bindings)) {
         props[`--${key}`] = String(value);
@@ -181,7 +200,7 @@ export function exportAstroPage(graph: DocumentGraph): ExportNode {
     const initialState = resolveInitialState(boundary);
     const attrs = satelliteAttrs({ boundary, initialState, directive: false });
     const attrStr = Object.entries(attrs)
-      .map(([k, v]) => `${k}="${v}"`)
+      .map(([k, v]) => `${k}="${escapeAttributeValue(v)}"`)
       .join(' ');
     shells.push(`<div ${attrStr}></div>`);
   }

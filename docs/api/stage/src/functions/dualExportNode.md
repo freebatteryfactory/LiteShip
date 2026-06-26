@@ -8,7 +8,7 @@
 
 > **dualExportNode**(`graph`, `encode`): `Promise`\<[`DualExportNodeResult`](../interfaces/DualExportNodeResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:586](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L586)
+Defined in: [stage/src/dual-export.ts:605](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L605)
 
 THE JEWEL, HEADLESS. Run the full [dualExport](dualExport.md) proof in node/CI AND run a
 REAL byte-encode through the injected [FrameEncoder](../type-aliases/FrameEncoder.md) so a node caller gets

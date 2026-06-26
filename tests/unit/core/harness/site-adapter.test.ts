@@ -90,6 +90,8 @@ describe('generateSiteAdapter (lane-aware, declared-integration)', () => {
     const out = Harness.generateSiteAdapter(adapterCap('demo.unwired'));
     expect(out.testFile).not.toMatch(SKIP_TOKEN);
     expect(out.testFile.toLowerCase()).toContain('unwired');
+    expect(out.testFile).toContain("it('premise guard: no importable siteAdapter binding was resolved'");
+    expect(out.testFile).toContain('.length).toBeGreaterThan(0)');
     // The not-applicable bench is a real premise guard pinning the recorded
     // exemption reason — never a vacuous typeof-string vanity that is always true.
     expect(out.benchFile).toContain('// BENCH-NOT-APPLICABLE:');

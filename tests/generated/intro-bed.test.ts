@@ -24,7 +24,9 @@ describe('intro-bed', () => {
   }
   const derive = cap.derive;
   const fixtureAbs = resolve('examples/scenes/intro-bed.wav');
-  const fixtureBytes = (): ArrayBuffer => readFileSync(fixtureAbs).buffer as ArrayBuffer;
+  const exactArrayBuffer = (bytes: Uint8Array): ArrayBuffer =>
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  const fixtureBytes = (): ArrayBuffer => exactArrayBuffer(readFileSync(fixtureAbs));
 
   // Content-addressed cache model: a cachedProjection's cache is keyed on the
   // CONTENT ADDRESS of its source bytes (contentAddressOf — the canonical
@@ -67,14 +69,14 @@ describe('intro-bed', () => {
     const mutated = new Uint8Array(original.slice(0));
     const flipAt = Math.max(0, mutated.length - 64);
     mutated[flipAt] = (mutated[flipAt]! ^ 0xff) & 0xff;
-    const keyMutated = sourceKey(mutated.buffer as ArrayBuffer);
+    const keyMutated = sourceKey(exactArrayBuffer(mutated));
 
     expect(keyMutated).not.toBe(keyOriginal); // changed source -> new key
     expect(cache.has(keyMutated)).toBe(false); // -> cache MISS (new entry)
 
     // Recording the new entry leaves the original entry intact: two distinct
     // sources, two distinct content-addressed cache entries.
-    cache.set(keyMutated, await derive(mutated.buffer as never));
+    cache.set(keyMutated, await derive(exactArrayBuffer(mutated) as never));
     expect(cache.size).toBe(2);
     expect(cache.has(keyOriginal)).toBe(true);
   });

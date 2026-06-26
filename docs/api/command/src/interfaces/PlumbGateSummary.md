@@ -6,11 +6,12 @@
 
 # Interface: PlumbGateSummary
 
-Defined in: [command/src/registry.ts:379](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L379)
+Defined in: [command/src/registry.ts:380](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L380)
 
 Structured verdict returned by the injected [CommandContext.runPlumb](CommandContext.md#runplumb)
-capability. `ok` ⟺ no skips AND no unclassified packages. `generatedPresent`
-is false when `tests/generated/` had no corpus to scan (⇒ run capsule:compile).
+capability. `ok` ⟺ generated corpus present AND no skips AND no unclassified
+packages. `generatedPresent` is false when `tests/generated/` had no corpus
+to scan (⇒ run capsule:compile).
 
 ## Properties
 
@@ -18,7 +19,7 @@ is false when `tests/generated/` had no corpus to scan (⇒ run capsule:compile)
 
 > `readonly` **generatedPresent**: `boolean`
 
-Defined in: [command/src/registry.ts:386](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L386)
+Defined in: [command/src/registry.ts:387](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L387)
 
 Whether the generated test corpus was present to scan.
 
@@ -28,7 +29,7 @@ Whether the generated test corpus was present to scan.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:380](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L380)
+Defined in: [command/src/registry.ts:381](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L381)
 
 ***
 
@@ -36,7 +37,7 @@ Defined in: [command/src/registry.ts:380](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **skips**: readonly [`PlumbSkip`](PlumbSkip.md)[]
 
-Defined in: [command/src/registry.ts:382](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L382)
+Defined in: [command/src/registry.ts:383](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L383)
 
 Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking.
 
@@ -46,6 +47,6 @@ Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking.
 
 > `readonly` **unclassified**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:384](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L384)
+Defined in: [command/src/registry.ts:385](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L385)
 
 Published packages with no PACKAGE_PLUMB classification.

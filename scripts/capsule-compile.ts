@@ -182,10 +182,7 @@ interface CapsuleManifest {
  * Generators only use `name`, `_kind`, and `invariants` from the def — all
  * other fields are safe to stub with structural defaults.
  */
-function buildStubDef(
-  kind: AssemblyKind,
-  name: string,
-): CapsuleDef<AssemblyKind, unknown, unknown, unknown> {
+function buildStubDef(kind: AssemblyKind, name: string): CapsuleDef<AssemblyKind, unknown, unknown, unknown> {
   return {
     _kind: kind,
     name,
@@ -370,9 +367,7 @@ async function probeBinding(
     // than the generic non-emission prose. defineCapsule already enforced that
     // a non-empty reason accompanies the exemption.
     const effectOutcomeReason =
-      cap.receiptKind === 'effect-outcome' && typeof cap.reason === 'string'
-        ? cap.reason
-        : undefined;
+      cap.receiptKind === 'effect-outcome' && typeof cap.reason === 'string' ? cap.reason : undefined;
     return {
       arbitraryDerivable: contractRoundTrippable,
       handlersPresent: mutatePresent,
@@ -446,10 +441,7 @@ async function probeBinding(
  * — the same discipline `FACTORY_NAMING` already follows. A factory NOT listed
  * here stays on the harness's honest self-reporting branch (no fixture wired).
  */
-const ASSET_BYTE_PROJECTION_FACTORIES = new Set<string>([
-  'BeatMarkerProjection',
-  'WavMetadataProjection',
-]);
+const ASSET_BYTE_PROJECTION_FACTORIES = new Set<string>(['BeatMarkerProjection', 'WavMetadataProjection']);
 
 /**
  * Scene-driver registry for `sceneComposition` capsules — the sceneComposition
@@ -622,9 +614,10 @@ const SITE_ADAPTER_INTEGRATIONS: Readonly<Record<string, SiteAdapterIntegrationS
  * is non-emittable, a typed not-applicable, never a skip). The round trip proves
  * CanonicalCbor encode/decode preserves the chosen schema's structure.
  */
-function resolveRoundTripSchema(
-  cap: { input?: { ast?: { _tag?: string } }; output?: { ast?: { _tag?: string } } },
-): 'input' | 'output' | undefined {
+function resolveRoundTripSchema(cap: {
+  input?: { ast?: { _tag?: string } };
+  output?: { ast?: { _tag?: string } };
+}): 'input' | 'output' | undefined {
   const isConcreteDerivable = (schema: { ast?: { _tag?: string } } | undefined): boolean => {
     if (schema === undefined) return false;
     // Over-broad top-level schemas (`Unknown`/`Any`) are "derivable" but sample
@@ -665,40 +658,19 @@ function dispatchHarness(
 ): HarnessOutput {
   switch (kind) {
     case 'pureTransform':
-      return generatePureTransform(
-        cap as CapsuleDef<'pureTransform', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generatePureTransform(cap as CapsuleDef<'pureTransform', unknown, unknown, unknown>, ctx);
     case 'receiptedMutation':
-      return generateReceiptedMutation(
-        cap as CapsuleDef<'receiptedMutation', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generateReceiptedMutation(cap as CapsuleDef<'receiptedMutation', unknown, unknown, unknown>, ctx);
     case 'stateMachine':
-      return generateStateMachine(
-        cap as CapsuleDef<'stateMachine', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generateStateMachine(cap as CapsuleDef<'stateMachine', unknown, unknown, unknown>, ctx);
     case 'siteAdapter':
-      return generateSiteAdapter(
-        cap as CapsuleDef<'siteAdapter', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generateSiteAdapter(cap as CapsuleDef<'siteAdapter', unknown, unknown, unknown>, ctx);
     case 'policyGate':
-      return generatePolicyGate(
-        cap as CapsuleDef<'policyGate', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generatePolicyGate(cap as CapsuleDef<'policyGate', unknown, unknown, unknown>, ctx);
     case 'cachedProjection':
-      return generateCachedProjection(
-        cap as CapsuleDef<'cachedProjection', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generateCachedProjection(cap as CapsuleDef<'cachedProjection', unknown, unknown, unknown>, ctx);
     case 'sceneComposition':
-      return generateSceneComposition(
-        cap as CapsuleDef<'sceneComposition', unknown, unknown, unknown>,
-        ctx,
-      );
+      return generateSceneComposition(cap as CapsuleDef<'sceneComposition', unknown, unknown, unknown>, ctx);
     default:
       // Exhaustiveness: every AssemblyKind is handled above. A new kind reaching
       // here is an impossible state — routed through the typed InvariantViolation.
@@ -742,11 +714,8 @@ const FACTORY_NAMING: Readonly<Record<string, (args: readonly unknown[]) => stri
   BeatMarkerProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:beats` : undefined),
   OnsetProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:onsets` : undefined),
   WaveformProjection: (args) =>
-    typeof args[0] === 'string' && typeof args[1] === 'number'
-      ? `${args[0]}:waveform:${args[1]}`
-      : undefined,
-  WavMetadataProjection: (args) =>
-    typeof args[0] === 'string' ? `${args[0]}:wav-metadata` : undefined,
+    typeof args[0] === 'string' && typeof args[1] === 'number' ? `${args[0]}:waveform:${args[1]}` : undefined,
+  WavMetadataProjection: (args) => (typeof args[0] === 'string' ? `${args[0]}:wav-metadata` : undefined),
 };
 
 /** Resolve the capsule's runtime-registered name from a detected call site. */
@@ -775,14 +744,11 @@ async function main(): Promise<void> {
   // same files (CUT T1). Production / gauntlet leave it unset → full compile.
   const manifestOnly =
     process.env.CZAP_CAPSULE_MANIFEST_ONLY === '1' || process.env.CZAP_CAPSULE_MANIFEST_ONLY === 'true';
-  const allFiles = await fastGlob(
-    ['packages/**/src/**/*.ts', 'examples/**/*.ts'],
-    {
-      ignore: ['**/*.d.ts', '**/node_modules/**', '**/dist/**'],
-      absolute: true,
-      cwd,
-    },
-  );
+  const allFiles = await fastGlob(['packages/**/src/**/*.ts', 'examples/**/*.ts'], {
+    ignore: ['**/*.d.ts', '**/node_modules/**', '**/dist/**'],
+    absolute: true,
+    cwd,
+  });
 
   // Pre-filter to files that mention `defineCapsule` or a known capsule
   // factory. The detector's ts.createProgram pulls in transitive
@@ -836,9 +802,7 @@ async function main(): Promise<void> {
 
   for (const d of byKey.values()) {
     if (!isAssemblyKind(d.kind)) {
-      console.warn(
-        `[capsule-compile] ${d.file}: unknown kind "${d.kind}" for capsule "${d.resolvedName}" — skipped`,
-      );
+      console.warn(`[capsule-compile] ${d.file}: unknown kind "${d.kind}" for capsule "${d.resolvedName}" — skipped`);
       continue;
     }
 
@@ -878,11 +842,8 @@ async function main(): Promise<void> {
       ? d.args?.find((v): v is string => typeof v === 'string')
       : undefined;
     const cachedProjectionFixture =
-      cachedProjectionAssetId !== undefined
-        ? assetSourceById.get(cachedProjectionAssetId)
-        : undefined;
-    const cachedProjectionBindable =
-      cachedProjectionFactory && cachedProjectionFixture !== undefined;
+      cachedProjectionAssetId !== undefined ? assetSourceById.get(cachedProjectionAssetId) : undefined;
+    const cachedProjectionBindable = cachedProjectionFactory && cachedProjectionFixture !== undefined;
 
     // ADDITIVE defineAsset real-only branch — the SOURCE-asset analogue of
     // cachedProjectionBindable (which covers the BeatMarker/WavMetadata
@@ -909,22 +870,18 @@ async function main(): Promise<void> {
     // loop scope so it survives the harness-context block and reaches the manifest
     // entry construction below.
     let declaredIntegration: ManifestEntry['declaredIntegration'];
-    if (
-      d.binding !== undefined &&
-      (d.factory === undefined || factoryBindable || cachedProjectionBindable)
-    ) {
+    if (d.binding !== undefined && (d.factory === undefined || factoryBindable || cachedProjectionBindable)) {
       const sourceModule = normalizeRepoPath(relative(dirname(testPath), d.file)).replace(/\.ts$/, '.js');
-      const arbitraryAbs = resolve(
-        'packages/core/src/harness/arbitrary-from-schema.ts',
-      );
+      const arbitraryAbs = resolve('packages/core/src/harness/arbitrary-from-schema.ts');
       const arbitraryModule = normalizeRepoPath(relative(dirname(testPath), arbitraryAbs)).replace(/\.ts$/, '.js');
       // Canonical content-address kernel — the cachedProjection harness keys
       // its cache-hit / invalidation probes on contentAddressOf (never a
       // hand-rolled hash). Resolved as a repo-relative import for the test file.
       const contentAddressAbs = resolve('packages/core/src/content-address.ts');
-      const contentAddressModule = normalizeRepoPath(
-        relative(dirname(testPath), contentAddressAbs),
-      ).replace(/\.ts$/, '.js');
+      const contentAddressModule = normalizeRepoPath(relative(dirname(testPath), contentAddressAbs)).replace(
+        /\.ts$/,
+        '.js',
+      );
       // Compile-time probe: import the real binding and check whether its
       // input schema is arbitrary-derivable and its handlers are present.
       // When both hold the harness emits a FINAL real test rather than an
@@ -934,10 +891,7 @@ async function main(): Promise<void> {
       // (declSource); analysis projection factories name their source asset by
       // id and resolve it from the registry (cachedProjectionFixture). Either
       // way it's a repo-relative byte source the harness decodes.
-      const fixturePath =
-        d.declSource !== undefined
-          ? normalizeRepoPath(d.declSource)
-          : cachedProjectionFixture;
+      const fixturePath = d.declSource !== undefined ? normalizeRepoPath(d.declSource) : cachedProjectionFixture;
 
       // ADDITIVE sceneComposition branch — independent of the probe / fixture
       // paths above. A sceneComposition capsule's binding is a manifest entry
@@ -954,9 +908,7 @@ async function main(): Promise<void> {
         const spec = SCENE_DRIVERS[d.resolvedName];
         if (spec !== undefined) {
           const runtimeAbs = resolve('packages/scene/src/runtime.ts');
-          const runtimeModule = normalizeRepoPath(
-            relative(dirname(testPath), runtimeAbs),
-          ).replace(/\.ts$/, '.js');
+          const runtimeModule = normalizeRepoPath(relative(dirname(testPath), runtimeAbs)).replace(/\.ts$/, '.js');
           const sceneModule = sourceModule.startsWith('.') ? sourceModule : `./${sourceModule}`;
           sceneDriver = {
             compileName: spec.compileExport,
@@ -1024,6 +976,40 @@ async function main(): Promise<void> {
             }
           | undefined;
         const roundTripSchema = cap !== undefined ? resolveRoundTripSchema(cap) : undefined;
+        // Resolve the declared-integration host-capability proof even when the
+        // pure round-trip schema cannot be driven. A registered entry names
+        // real-host coverage links + tracked gaps; an unregistered siteAdapter
+        // records every declared site as a gap rather than losing the host fact.
+        const spec = SITE_ADAPTER_INTEGRATIONS[d.resolvedName];
+        const declaredSites = [...(cap?.site ?? [])];
+        const hostCapability: NonNullable<HarnessContext['siteAdapter']>['hostCapability'] =
+          spec !== undefined
+            ? { kind: 'declared-integration' as const, coverage: spec.coverage, gaps: spec.gaps }
+            : {
+                kind: 'declared-integration' as const,
+                coverage: [],
+                gaps: declaredSites.map((site) => ({
+                  site,
+                  reason:
+                    `'${d.resolvedName}' has no real-host coverage registered in ` +
+                    `SITE_ADAPTER_INTEGRATIONS, so this declared site has no real-host lane proving it.`,
+                })),
+              };
+        // Tracked manifest fact: the declared-integration coverage map (the
+        // waiver-with-teeth recorded as machine-readable data, not just a
+        // generated-test comment). `coverageRef` is the primary real-host suite
+        // (or null when every site is a gap — an honest, visible no-proof state).
+        declaredIntegration = {
+          sites: declaredSites,
+          coverageRef: hostCapability.coverage[0]?.coverageRef ?? null,
+          coverage: hostCapability.coverage.map((c) => ({
+            sites: [...c.sites],
+            coverageRef: c.coverageRef,
+            lane: c.lane,
+          })),
+          gaps: hostCapability.gaps.map((g) => ({ site: g.site, reason: g.reason })),
+        };
+
         if (roundTripSchema !== undefined) {
           // INTEGRATION-lane file dir — one level below tests/generated/.
           const integrationAbs = resolve(generatedDir, 'integration', `${slug}.test.ts`);
@@ -1034,40 +1020,6 @@ async function main(): Promise<void> {
           };
           const cborAbs = resolve('packages/canonical/src/cbor-decode.ts');
           const cborEncodeAbs = resolve('packages/core/src/cbor.ts');
-
-          // Resolve the declared-integration host-capability proof. A registered
-          // entry names real-host coverage links + tracked gaps; an UNregistered
-          // siteAdapter has NO real-host proof at all, so EVERY declared site is an
-          // honest gap (never a fabricated link).
-          const spec = SITE_ADAPTER_INTEGRATIONS[d.resolvedName];
-          const declaredSites = [...(cap?.site ?? [])];
-          const hostCapability: NonNullable<HarnessContext['siteAdapter']>['hostCapability'] =
-            spec !== undefined
-              ? { kind: 'declared-integration' as const, coverage: spec.coverage, gaps: spec.gaps }
-              : {
-                  kind: 'declared-integration' as const,
-                  coverage: [],
-                  gaps: declaredSites.map((site) => ({
-                    site,
-                    reason:
-                      `'${d.resolvedName}' has no real-host coverage registered in ` +
-                      `SITE_ADAPTER_INTEGRATIONS, so this declared site has no real-host lane proving it.`,
-                  })),
-                };
-          // Tracked manifest fact: the declared-integration coverage map (the
-          // waiver-with-teeth recorded as machine-readable data, not just a
-          // generated-test comment). `coverageRef` is the primary real-host suite
-          // (or null when every site is a gap — an honest, visible no-proof state).
-          declaredIntegration = {
-            sites: declaredSites,
-            coverageRef: hostCapability.coverage[0]?.coverageRef ?? null,
-            coverage: hostCapability.coverage.map((c) => ({
-              sites: [...c.sites],
-              coverageRef: c.coverageRef,
-              lane: c.lane,
-            })),
-            gaps: hostCapability.gaps.map((g) => ({ site: g.site, reason: g.reason })),
-          };
 
           siteAdapter = {
             roundTripSchema,
@@ -1092,16 +1044,10 @@ async function main(): Promise<void> {
       }
 
       harnessCtx = {
-        bindingImport: sourceModule.startsWith('.')
-          ? sourceModule
-          : `./${sourceModule}`,
+        bindingImport: sourceModule.startsWith('.') ? sourceModule : `./${sourceModule}`,
         bindingName: d.binding,
-        arbitraryImport: arbitraryModule.startsWith('.')
-          ? arbitraryModule
-          : `./${arbitraryModule}`,
-        contentAddressImport: contentAddressModule.startsWith('.')
-          ? contentAddressModule
-          : `./${contentAddressModule}`,
+        arbitraryImport: arbitraryModule.startsWith('.') ? arbitraryModule : `./${arbitraryModule}`,
+        contentAddressImport: contentAddressModule.startsWith('.') ? contentAddressModule : `./${contentAddressModule}`,
         // Asset decls name their canonical byte source (repo-relative) —
         // the cachedProjection harness uses it for fixture-based
         // determinism tests and the real decode bench.
@@ -1110,16 +1056,12 @@ async function main(): Promise<void> {
         // statically resolved (ASSET_BYTE_PROJECTION_FACTORIES + the asset
         // source map): the harness emits the FINAL real-only cache/determinism
         // probes — zero `it.skip` literals — over the canonical fixture bytes.
-        ...(cachedProjectionBindable || assetDecodeRealOnly
-          ? { cachedProjectionRealOnly: true }
-          : {}),
+        ...(cachedProjectionBindable || assetDecodeRealOnly ? { cachedProjectionRealOnly: true } : {}),
         // sceneComposition: the resolved scene driver (REAL runtime) or the
         // typed not-applicable reason. Mutually exclusive — a capsule either has
         // a tickable scene or it doesn't.
         ...(sceneDriver !== undefined ? { sceneDriver } : {}),
-        ...(sceneDriverNotApplicableReason !== undefined
-          ? { sceneDriverNotApplicableReason }
-          : {}),
+        ...(sceneDriverNotApplicableReason !== undefined ? { sceneDriverNotApplicableReason } : {}),
         // stateMachine: the resolved runtime driver (builder + tick handle) for a
         // contract-only stateMachine. Absent when the capsule has declared
         // step/initialState (the field-driven path) or no registered driver.
@@ -1133,19 +1075,13 @@ async function main(): Promise<void> {
           ? {
               arbitraryDerivable: probe.arbitraryDerivable,
               handlersPresent: probe.handlersPresent,
-              ...(probe.preconditionMismatch !== undefined
-                ? { preconditionMismatch: probe.preconditionMismatch }
-                : {}),
+              ...(probe.preconditionMismatch !== undefined ? { preconditionMismatch: probe.preconditionMismatch } : {}),
               ...(probe.contractRoundTrippable !== undefined
                 ? { contractRoundTrippable: probe.contractRoundTrippable }
                 : {}),
               ...(probe.mutatePresent !== undefined ? { mutatePresent: probe.mutatePresent } : {}),
-              ...(probe.faultsDeclared !== undefined
-                ? { faultsDeclared: probe.faultsDeclared }
-                : {}),
-              ...(probe.effectOutcomeReason !== undefined
-                ? { effectOutcomeReason: probe.effectOutcomeReason }
-                : {}),
+              ...(probe.faultsDeclared !== undefined ? { faultsDeclared: probe.faultsDeclared } : {}),
+              ...(probe.effectOutcomeReason !== undefined ? { effectOutcomeReason: probe.effectOutcomeReason } : {}),
               ...(probe.decidePresent !== undefined ? { decidePresent: probe.decidePresent } : {}),
             }
           : {}),
@@ -1165,9 +1101,7 @@ async function main(): Promise<void> {
     // tests/generated/integration/<slug>.test.ts. The plumb-gate scans
     // tests/generated/ recursively, so nested integration files ARE gate-scanned.
     const integrationPath =
-      integrationFile !== undefined
-        ? resolve(generatedDir, 'integration', `${slug}.test.ts`)
-        : undefined;
+      integrationFile !== undefined ? resolve(generatedDir, 'integration', `${slug}.test.ts`) : undefined;
 
     // Skip the file writes in manifest-only mode; the manifest entry below still
     // records the (committed) testFile/benchFile paths so verify can run them.
@@ -1208,9 +1142,7 @@ async function main(): Promise<void> {
       ...(declaredIntegration !== undefined ? { declaredIntegration } : {}),
       // TYPED not-applicable bench exemption (marker -> manifest), so a gate can
       // tell an honest not-applicable bench from a lazy comment-only placeholder.
-      ...(benchExemptionReason !== undefined
-        ? { benchExemption: { reason: benchExemptionReason } }
-        : {}),
+      ...(benchExemptionReason !== undefined ? { benchExemption: { reason: benchExemptionReason } } : {}),
     };
     // The generated-artifact triple, with the INTEGRATION file recorded only
     // when the arm emitted one (siteAdapter). Tracking it in the manifest makes
@@ -1286,10 +1218,7 @@ async function main(): Promise<void> {
   // tmp+rename protects this write under concurrent test workers — manifest
   // content always changes (generatedAt is a fresh ISO timestamp per spawn),
   // so direct writeFileSync on the shared destination would race.
-  atomicWrite(
-    manifestPath,
-    JSON.stringify(manifest, null, 2),
-  );
+  atomicWrite(manifestPath, JSON.stringify(manifest, null, 2));
 
   console.log(JSON.stringify({ status: 'ok', capsuleCount: capsules.length }));
 }

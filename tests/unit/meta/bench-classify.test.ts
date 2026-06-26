@@ -36,14 +36,9 @@ describe('classifyBenchSource', () => {
   });
 
   it('one real closure among placeholders makes the file real', () => {
-    const src = [
-      "bench('a', () => {",
-      '  // comment only',
-      '});',
-      "bench('b', () => {",
-      '  doWork();',
-      '});',
-    ].join('\n');
+    const src = ["bench('a', () => {", '  // comment only', '});', "bench('b', () => {", '  doWork();', '});'].join(
+      '\n',
+    );
     expect(classifyBenchSource(src)).toBe('real');
   });
 
@@ -68,6 +63,15 @@ describe('benchHonestyError', () => {
 
   it('TYPED not-applicable (marker + premise-guard + matching manifest reason) is honest → null', () => {
     expect(benchHonestyError('demo', `${NA}\n${guardBody}`, { reason: NA_REASON })).toBeNull();
+  });
+
+  it('normalizes marker and manifest reason whitespace before comparing', () => {
+    const marker = '// BENCH-NOT-APPLICABLE: spawns   an external   test process; no pure core';
+    expect(
+      benchHonestyError('demo', `${marker}\n${guardBody}`, {
+        reason: '  spawns an external test process; no pure core  ',
+      }),
+    ).toBeNull();
   });
 
   it('LAZY placeholder (comment-only, no marker) FAILS', () => {

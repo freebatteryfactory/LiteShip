@@ -89,6 +89,10 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     expect(testFile).toContain('cache hit: identical source yields the same derived output');
     expect(testFile).toContain('invalidation: source change produces new cache entry');
     expect(testFile).toContain('contentAddressOf');
+    expect(testFile).toContain('exactArrayBuffer(readFileSync(fixtureAbs))');
+    expect(testFile).toContain('sourceKey(exactArrayBuffer(mutated))');
+    expect(testFile).not.toContain('readFileSync(fixtureAbs).buffer as ArrayBuffer');
+    expect(testFile).not.toContain('mutated.buffer as ArrayBuffer');
     // The derive PREMISE GUARD pins the resolution with real teeth (fails RED if
     // an asset ever loses its decoder) — a structural fact, never a vanity check.
     expect(testFile).toContain('cap.derive === undefined');
@@ -97,6 +101,8 @@ describe('generateCachedProjection (compile-time-resolved)', () => {
     // The bench is REAL: it imports the binding and awaits its derive handler.
     expect(benchFile).toContain("import { introBed } from '../../examples/scenes/assets.js'");
     expect(benchFile).toContain('await cap.derive(fixtureBytes as never)');
+    expect(benchFile).toContain('exactArrayBuffer(readFileSync(fixtureAbs))');
+    expect(benchFile).not.toContain('readFileSync(fixtureAbs).buffer as ArrayBuffer');
     expect(benchFile).toContain('decode throughput');
     expect(benchFile).toContain('{ time: 500 }');
     // Failure paths teach the next step instead of silently no-oping.

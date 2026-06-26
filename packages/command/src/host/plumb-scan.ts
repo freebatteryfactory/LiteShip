@@ -99,8 +99,8 @@ function publishedPackages(root: string): string[] {
 
 /**
  * Run the plumb-completeness gate over `root` (the host's `cwd`). Pure scan:
- * `ok` ⟺ no `*.skip` placeholders in `tests/generated/` AND every published
- * package classified in `PACKAGE_PLUMB`.
+ * `ok` ⟺ a generated corpus is present, no `*.skip` placeholders in
+ * `tests/generated/`, AND every published package classified in `PACKAGE_PLUMB`.
  *
  * The optional `skipDetector` (a `(source) => SkipMatch[]`) is the INJECTED SOUND AST detector
  * (`@czap/audit`'s `detectSkipsAST`); the CLI host passes it so a generated multi-line / ASI /
@@ -111,7 +111,7 @@ export function runPlumbScan(root: string, skipDetector?: PlumbSkipDetector): Pl
   const { skips, present } = collectGeneratedSkips(root, skipDetector ?? detectSkips);
   const unclassified = publishedPackages(root).filter((name) => !(name in PACKAGE_PLUMB));
   return {
-    ok: skips.length === 0 && unclassified.length === 0,
+    ok: present && skips.length === 0 && unclassified.length === 0,
     skips,
     unclassified,
     generatedPresent: present,

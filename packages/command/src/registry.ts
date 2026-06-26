@@ -373,8 +373,9 @@ export interface PlumbSkip {
 
 /**
  * Structured verdict returned by the injected {@link CommandContext.runPlumb}
- * capability. `ok` ⟺ no skips AND no unclassified packages. `generatedPresent`
- * is false when `tests/generated/` had no corpus to scan (⇒ run capsule:compile).
+ * capability. `ok` ⟺ generated corpus present AND no skips AND no unclassified
+ * packages. `generatedPresent` is false when `tests/generated/` had no corpus
+ * to scan (⇒ run capsule:compile).
  */
 export interface PlumbGateSummary {
   readonly ok: boolean;

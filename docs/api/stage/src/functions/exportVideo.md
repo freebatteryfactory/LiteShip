@@ -8,7 +8,7 @@
 
 > **exportVideo**(`graph`, `encode?`): [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:355](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L355)
+Defined in: [stage/src/dual-export.ts:374](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L374)
 
 Cast the graph's Pose/Projection-derived state to a deterministic video,
 content-addressing the produced per-frame `CompositeState` snapshots (NOT the

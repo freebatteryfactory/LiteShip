@@ -40,7 +40,7 @@
 import { GraphPatch, sealNode, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
 import type { SceneRuntime } from '@czap/scene';
 import { attachSignalObserver, readSignalValue } from './boundary.js';
-import type { EntityElementResolver, GraphRuntimeHandle } from './graph-runtime.js';
+import { graphRuntimeInternals, type EntityElementResolver, type GraphRuntimeHandle } from './graph-runtime.js';
 
 /**
  * The minimal `@czap/scene` runtime surface the bridge consumes: a clock-driven
@@ -202,10 +202,11 @@ function crossingPatch(graph: DocumentGraph, entityId: ContentAddress, nextState
  * is the per-frame write that NEVER touches the graph.
  */
 function writeContinuous(element: HTMLElement, cssVar: string, blend: number): void {
-  element.style.setProperty(cssVar, String(blend));
+  const value = String(blend);
+  element.style.setProperty(cssVar, value);
   element.dispatchEvent(
     new CustomEvent('czap:uniform-update', {
-      detail: { css: { [cssVar]: blend } },
+      detail: { css: { [cssVar]: value } },
       bubbles: true,
     }),
   );
@@ -320,13 +321,14 @@ export function bridgeSceneToGraph(
           // reflects the new active pose through the one delta seam (re-addresses).
           const patch = crossingPatch(graphHandle.graph, entityId, nextState);
           graphHandle.recast(patch);
+          const applied = graphRuntimeInternals(graphHandle)?.applyState(entityId, nextState) ?? false;
           // The SCENE is the discrete-state authority (the active pose is the
           // scene's, not a viewport signal's), so flip `data-czap-state` on the
           // leaf directly here. The cast pipeline's signal re-seed would otherwise
           // pull the state back to the signal's quantization; for a scene-driven
           // entity the scene's crossing IS the source of truth. We apply through
           // the same attribute + `czap:graph-state` event the cast pipeline uses.
-          if (element) applyDiscreteState(element, nextState);
+          if (!applied && element) applyDiscreteState(element, nextState);
         }
       }
     }
@@ -339,8 +341,9 @@ export function bridgeSceneToGraph(
 
   if (clock.kind === 'signal') {
     // SIGNAL clock: the scene's timeline position is signal * durationMs. On every
-    // signal change, tick the DELTA to reach the new position (clamped >= 0 so a
-    // backward scrub doesn't run the systems with a negative dt).
+    // signal change, tick the signed DELTA to reach the new position. Negative
+    // deltas are intentional: scroll/signal scrubbing must be able to move the
+    // scene back to an earlier timeline position.
     let lastPositionMs = 0;
     const cleanup =
       typeof window === 'undefined'
@@ -349,7 +352,7 @@ export function bridgeSceneToGraph(
             const value = readSignalValue(clock.input);
             if (value === undefined) return;
             const positionMs = value * clock.durationMs;
-            const dt = Math.max(0, positionMs - lastPositionMs);
+            const dt = positionMs - lastPositionMs;
             lastPositionMs = positionMs;
             void step(dt);
           });

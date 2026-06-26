@@ -6,13 +6,13 @@
 
 # Interface: CapsuleCommandHandler()
 
-Defined in: [command/src/registry.ts:460](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L460)
+Defined in: [command/src/registry.ts:461](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L461)
 
 A command handler: structured invocation in, structured result out. No stdout, no argv.
 
 > **CapsuleCommandHandler**(`invocation`, `context`): `Promise`\<[`CapsuleCommandResult`](../type-aliases/CapsuleCommandResult.md)\>
 
-Defined in: [command/src/registry.ts:461](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L461)
+Defined in: [command/src/registry.ts:462](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L462)
 
 A command handler: structured invocation in, structured result out. No stdout, no argv.
 

@@ -8,7 +8,7 @@
 
 > **exportAstroPage**(`graph`): [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L155)
+Defined in: [stage/src/dual-export.ts:173](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L173)
 
 Cast the graph's css projections to a static Astro page string.
 

@@ -8,7 +8,7 @@
 
 > **exportVideoEncoded**(`graph`, `encode`): `Promise`\<[`EncodedVideoExport`](../interfaces/EncodedVideoExport.md)\>
 
-Defined in: [stage/src/dual-export.ts:403](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L403)
+Defined in: [stage/src/dual-export.ts:422](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L422)
 
 Cast the graph to a video AND run a REAL byte-encode through the injected
 [FrameEncoder](../type-aliases/FrameEncoder.md). Produces the same frame stream as [exportVideo](exportVideo.md),
