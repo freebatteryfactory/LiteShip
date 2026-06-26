@@ -231,10 +231,11 @@ async function route(
       const globs = readGlobs(params);
       const { findings } = await runGauntlet(globs);
       const notifications = publishNotificationsFor(findings, state.lastFindings, globs);
+      const lastFindings = mergeFindingsForScope(findings, state.lastFindings, globs);
       const response: JsonRpcResponse | null = isNotification
         ? null
         : successResponse(id, { findingCount: findings.length, publishedUris: notifications.length });
-      return { state: { ...state, lastFindings: findings }, result: { response, notifications, exit: false } };
+      return { state: { ...state, lastFindings }, result: { response, notifications, exit: false } };
     }
     case 'workspace/diagnostic': {
       // Pull-style diagnostics (§workspace/diagnostic): run the fold + return the
@@ -327,6 +328,18 @@ function publishNotificationsFor(
 
 function matchesAnyGlob(file: string, globs: readonly string[]): boolean {
   return globs.some((glob) => globMatches(file, glob));
+}
+
+function mergeFindingsForScope(
+  findings: readonly FindingLike[],
+  previousFindings: readonly FindingLike[],
+  checkedGlobs?: readonly string[],
+): readonly FindingLike[] {
+  if (checkedGlobs === undefined) return findings;
+  const previousOutOfScope = previousFindings.filter(
+    (finding) => finding.location === undefined || !matchesAnyGlob(finding.location.file, checkedGlobs),
+  );
+  return [...previousOutOfScope, ...findings];
 }
 
 function globMatches(file: string, glob: string): boolean {

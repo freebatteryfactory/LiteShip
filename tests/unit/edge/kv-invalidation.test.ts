@@ -67,6 +67,19 @@ function makeGetPutKV(): { store: Map<string, string>; kv: KVNamespace } {
   };
 }
 
+/** A KV that supports direct deletes but cannot scan by prefix. */
+function makeGetPutDeleteKV(): { store: Map<string, string>; kv: KVNamespace } {
+  const store = new Map<string, string>();
+  return {
+    store,
+    kv: {
+      get: (k) => Promise.resolve(store.get(k) ?? null),
+      put: async (k, v) => void store.set(k, v),
+      delete: async (k) => void store.delete(k),
+    },
+  };
+}
+
 describe('invalidateByPath (active purge by content address)', () => {
   test('deletes every tier/theme variant of one boundary and returns the count', async () => {
     const { store, kv } = makeKV();
@@ -171,6 +184,20 @@ describe('invalidateByTag (Astro.cache tag parity)', () => {
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['t']);
     await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['t']); // same key
     expect(await cache.invalidateByTag('t')).toBe(1);
+  });
+
+  test('purges tagged entries for KV adapters with delete but no list', async () => {
+    const { store, kv } = makeGetPutDeleteKV();
+    const cache = createBoundaryCache(kv);
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
+    await cache.putCompiledOutputs(boundary.id, tier, outputs, undefined, 'themeA', ['products']);
+
+    const dataKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+    expect(JSON.parse(store.get('czap:tag:products')!)).toEqual([dataKey]);
+
+    expect(await cache.invalidateByTag('products')).toBe(1);
+    expect(store.has(dataKey)).toBe(false);
+    expect(store.has('czap:tag:products')).toBe(false);
   });
 
   test('purges legacy JSON tag indexes for existing deployments', async () => {

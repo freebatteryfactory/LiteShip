@@ -392,6 +392,40 @@ describe('LSP — czap/check publishes diagnostics grouped by URI (injected runn
     expect(params.diagnostics).toEqual([]);
   });
 
+  it('preserves out-of-scope findings so a later full clean run can clear them', async () => {
+    const init = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
+      initialLspState(),
+      stubRunner([]),
+    );
+    const first = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 2, method: CZAP_CHECK_METHOD }),
+      init.state,
+      stubRunner([ERR_FINDING, WARN_FINDING]),
+    );
+
+    const scoped = await handle(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        id: 3,
+        method: CZAP_CHECK_METHOD,
+        params: { globs: ['packages/x/src/a.ts'] },
+      }),
+      first.state,
+      stubRunner([]),
+    );
+    expect(scoped.state.lastFindings).toEqual([WARN_FINDING]);
+
+    const clean = await handle(
+      JSON.stringify({ jsonrpc: '2.0', id: 4, method: CZAP_CHECK_METHOD }),
+      scoped.state,
+      stubRunner([]),
+    );
+    expect(clean.result.notifications.map((n) => n.params)).toEqual([
+      { uri: 'file:///packages/x/src/b.ts', diagnostics: [] },
+    ]);
+  });
+
   it('treats double-star scoped globs as deep path matches', async () => {
     const init = await handle(
       JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
