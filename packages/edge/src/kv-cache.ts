@@ -352,6 +352,7 @@ async function deleteTagMembersForDataKeys(
   kv: KVNamespace,
   prefix: string,
   dataKeys: readonly string[],
+  ttl: number | undefined,
 ): Promise<void> {
   if (kv.list === undefined || kv.delete === undefined || dataKeys.length === 0) return;
   const dataKeySet = new Set(dataKeys);
@@ -374,7 +375,9 @@ async function deleteTagMembersForDataKeys(
         staleTagKeys.push(tagKey);
         return;
       }
-      legacyIndexUpdates.push(kv.put(tagKey, JSON.stringify(survivors)));
+      legacyIndexUpdates.push(
+        kv.put(tagKey, JSON.stringify(survivors), ttl !== undefined ? { expirationTtl: ttl } : undefined),
+      );
     }),
   );
   await Promise.all(legacyIndexUpdates);
@@ -602,7 +605,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       }
       const keys = await listAllKeys({ list: kv.list.bind(kv) }, boundaryKeyPrefix(prefix, boundaryId));
       await deleteAll({ delete: kv.delete.bind(kv) }, keys);
-      await deleteTagMembersForDataKeys(kv, prefix, keys);
+      await deleteTagMembersForDataKeys(kv, prefix, keys, ttl);
       return keys.length;
     },
 
@@ -615,7 +618,7 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
       const { dataKeys, memberKeys, legacyIndexKey } = await tagKeysForTag(kv, prefix, tag);
       await deleteAll(del, dataKeys);
       await deleteAll(del, memberKeys);
-      await deleteTagMembersForDataKeys(kv, prefix, dataKeys);
+      await deleteTagMembersForDataKeys(kv, prefix, dataKeys, ttl);
       // Drop the legacy index entry itself so a re-tagged boundary starts clean.
       await del.delete(legacyIndexKey);
       return dataKeys.length;

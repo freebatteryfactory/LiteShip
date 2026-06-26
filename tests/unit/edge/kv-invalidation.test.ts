@@ -31,13 +31,18 @@ const siblingBoundary = Boundary.make({
 });
 const tier = EdgeTier.detectTier(new Headers({ 'sec-ch-viewport-width': '1280' }));
 const outputs = { css: '.x{}', propertyRegistrations: '', containerQueries: '' };
+type PutCall = { readonly key: string; readonly value: string; readonly options?: { readonly expirationTtl?: number } };
 
 /** Full Cloudflare-shaped KV: get/put/delete/list with prefix scan + (optional) paging. */
-function makeKV(pageSize = Infinity): { store: Map<string, string>; kv: KVNamespace } {
+function makeKV(pageSize = Infinity): { store: Map<string, string>; putCalls: PutCall[]; kv: KVNamespace } {
   const store = new Map<string, string>();
+  const putCalls: PutCall[] = [];
   const kv: KVNamespace = {
     get: (k) => Promise.resolve(store.get(k) ?? null),
-    put: async (k, v) => void store.set(k, v),
+    put: async (k, v, options) => {
+      putCalls.push(options === undefined ? { key: k, value: v } : { key: k, value: v, options });
+      store.set(k, v);
+    },
     delete: async (k) => void store.delete(k),
     list: ({ prefix, cursor }) => {
       const all = [...store.keys()].filter((k) => k.startsWith(prefix)).sort();
@@ -52,7 +57,7 @@ function makeKV(pageSize = Infinity): { store: Map<string, string>; kv: KVNamesp
       });
     },
   };
-  return { store, kv };
+  return { store, putCalls, kv };
 }
 
 /** A KV that only implements get/put (no active invalidation possible). */
@@ -142,6 +147,26 @@ describe('invalidateByPath (active purge by content address)', () => {
     expect(store.has(purgedKey)).toBe(false);
     expect(store.has(survivorKey)).toBe(true);
     expect(JSON.parse(store.get('czap:tag:legacy')!)).toEqual([survivorKey]);
+  });
+
+  test('preserves configured TTL when rewriting surviving legacy JSON tag indexes', async () => {
+    const { store, putCalls, kv } = makeKV();
+    const cache = createBoundaryCache(kv, { ttl: 60 });
+
+    await cache.putCompiledOutputs(boundary.id, tier, outputs);
+    await cache.putCompiledOutputs(siblingBoundary.id, tier, outputs);
+    const purgedKey = [...store.keys()].find((key) => key.includes(String(boundary.id)))!;
+    const survivorKey = [...store.keys()].find((key) => key.includes(String(siblingBoundary.id)))!;
+    store.set('czap:tag:legacy', JSON.stringify([purgedKey, survivorKey]));
+    putCalls.length = 0;
+
+    expect(await cache.invalidateByPath(boundary.id)).toBe(1);
+    expect(JSON.parse(store.get('czap:tag:legacy')!)).toEqual([survivorKey]);
+    expect(putCalls).toContainEqual({
+      key: 'czap:tag:legacy',
+      value: JSON.stringify([survivorKey]),
+      options: { expirationTtl: 60 },
+    });
   });
 });
 

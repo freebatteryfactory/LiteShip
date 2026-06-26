@@ -100,8 +100,9 @@ function isCanonicalCborBytes(bytes: Uint8Array<ArrayBuffer>): bytes is Uint8Arr
   try {
     return bytesEqual(CanonicalCbor.encode(decode(bytes)), bytes);
   } catch (cause) {
-    if (cause instanceof Error) return false;
-    throw cause;
+    void cause;
+    // Schema refinement predicates report invalid input with `false`, including non-Error throwables.
+    return false;
   }
 }
 
