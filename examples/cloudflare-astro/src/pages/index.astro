@@ -7,13 +7,17 @@ import '../styles.css';
 // `Astro.locals.czap` is typed by the integration (the App.Locals augmentation
 // / injectTypes) — no cast needed; the fields mirror the data-czap-* attributes.
 const czap = Astro.locals.czap;
+const boundaryResolution = czap?.edge?.boundaries?.viewport;
+const boundaryCssHref = boundaryResolution?.assetUrl ?? czap?.edge?.assetUrl;
+const boundaryCss = boundaryResolution?.compiledOutputs?.css ?? czap?.edge?.compiledOutputs?.css;
 ---
-<Base title="LiteShip Cloudflare Workers">
+<Base title="LiteShip Cloudflare Workers" boundaryCssHref={boundaryCssHref} boundaryCss={boundaryCss}>
   <main {...satelliteAttrs({ boundary: viewport })}>
     <h1>LiteShip on Cloudflare Workers</h1>
     <p>Edge tier: {czap?.tiers.tier ?? 'detecting…'}</p>
     <p>Boundary id: {viewport.id}</p>
     <p>KV cache: {czap?.edge?.cacheStatus ?? 'n/a'}</p>
+    <p>Boundary CSS: {boundaryCssHref ? 'static asset' : 'inline fallback'}</p>
     <p>Precompiled CSS bytes: {czap?.edge?.compiledOutputs?.css?.length ?? 0}</p>
   </main>
 </Base>

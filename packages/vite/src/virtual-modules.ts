@@ -89,10 +89,32 @@ export function isVirtualId(id: string): boolean {
 export interface VirtualModuleData {
   /** Boundary manifest for `virtual:czap/boundaries` (from `collectBoundaryManifest`). */
   readonly boundaries?: BoundaryManifest;
+  /** Public asset URLs per boundary output-pool index. */
+  readonly boundaryAssetUrls?: BoundaryAssetUrlMap;
   /** Token manifest for `virtual:czap/tokens` and `virtual:czap/tokens.css`. */
   readonly tokens?: TokenManifest;
   /** Theme manifest for `virtual:czap/themes`. */
   readonly themes?: ThemeManifest;
+}
+
+/** Public asset URLs keyed by boundary export name and output-pool index. */
+export type BoundaryAssetUrlMap = Readonly<Record<string, Readonly<Record<number, string>>>>;
+
+function renderBoundaryManifestModule(boundaries: BoundaryManifest, urls?: BoundaryAssetUrlMap): string {
+  if (!urls) {
+    return `export const boundaries = ${JSON.stringify(boundaries)};`;
+  }
+
+  const withUrls: Record<string, unknown> = {};
+  for (const [name, entry] of Object.entries(boundaries)) {
+    const assetUrls = urls[name];
+    withUrls[name] = {
+      ...entry,
+      ...(assetUrls && Object.keys(assetUrls).length > 0 ? { assetUrls } : {}),
+    };
+  }
+
+  return `export const boundaries = ${JSON.stringify(withUrls)};`;
 }
 
 /**
@@ -123,7 +145,7 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
       return compileCollectedTokensCss(data?.tokens ?? {});
 
     case 'boundaries':
-      return `export const boundaries = ${JSON.stringify(data?.boundaries ?? {})};`;
+      return renderBoundaryManifestModule(data?.boundaries ?? {}, data?.boundaryAssetUrls);
 
     case 'themes':
       return `export const themes = ${JSON.stringify(data?.themes ?? {})};`;

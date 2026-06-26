@@ -1,4 +1,4 @@
-import { afterEach, describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { Boundary, Diagnostics } from '@czap/core';
 import { createBoundaryCache, EdgeTier } from '@czap/edge';
 import { createCloudflareEdgeCache, resolveKvBinding } from '@czap/cloudflare';
@@ -83,6 +83,99 @@ describe('createCloudflareEdgeCache', () => {
 
     expect(await cache.invalidateByPath(boundary.id)).toBe(1);
     expect(store.size).toBe(0);
+  });
+
+  it('serves a Cache API L1 hit without reading KV', async () => {
+    let kvReads = 0;
+    const cache = {
+      match: vi.fn(async () => new Response('from-cache')),
+      put: vi.fn(async () => {}),
+    };
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get() {
+            kvReads++;
+            return 'from-kv';
+          },
+          async put() {},
+        },
+      }),
+      { binding: 'KV', cache },
+    );
+
+    await expect(kv.get('k')).resolves.toBe('from-cache');
+    expect(kvReads).toBe(0);
+    expect(cache.put).not.toHaveBeenCalled();
+  });
+
+  it('reads KV with cacheTtl and populates Cache API L1 through waitUntil on a miss', async () => {
+    const pending: Promise<unknown>[] = [];
+    let seenOptions: unknown;
+    const cache = {
+      match: vi.fn(async () => undefined),
+      put: vi.fn(async (_request: Request, response: Response) => {
+        expect(await response.text()).toBe('from-kv');
+      }),
+    };
+    const ctx = {
+      waitUntil: vi.fn((promise: Promise<unknown>) => {
+        pending.push(promise);
+      }),
+    };
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get(_key: string, options?: { cacheTtl?: number }) {
+            seenOptions = options;
+            return 'from-kv';
+          },
+          async put() {},
+        },
+      }),
+      { binding: 'KV', cache, ctx, cacheTtl: 120 },
+    );
+
+    await expect(kv.get('k')).resolves.toBe('from-kv');
+    expect(seenOptions).toEqual({ cacheTtl: 120 });
+    expect(ctx.waitUntil).toHaveBeenCalledTimes(1);
+    await Promise.all(pending);
+    expect(cache.put).toHaveBeenCalledTimes(1);
+  });
+
+  it('degrades to KV when Cache API or ctx is absent', async () => {
+    const cache = {
+      match: vi.fn(async () => undefined),
+      put: vi.fn(async () => {}),
+    };
+    const kv = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get() {
+            return 'from-kv';
+          },
+          async put() {},
+        },
+      }),
+      { binding: 'KV', cache },
+    );
+
+    await expect(kv.get('k')).resolves.toBe('from-kv');
+    expect(cache.match).toHaveBeenCalledTimes(1);
+    expect(cache.put).not.toHaveBeenCalled();
+
+    const noCache = createCloudflareEdgeCache(
+      () => ({
+        KV: {
+          async get() {
+            return 'from-kv';
+          },
+          async put() {},
+        },
+      }),
+      { binding: 'KV', cache: null },
+    );
+    await expect(noCache.get('k')).resolves.toBe('from-kv');
   });
 
   it('does not mask missing delete/list capabilities on custom KV-shaped bindings', async () => {

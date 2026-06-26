@@ -28,7 +28,7 @@ import { tierKey } from './manifest.js';
  * with a one-time diagnostic instead of a silent no-op.
  */
 export interface KVNamespace {
-  get(key: string): Promise<string | null>;
+  get(key: string, options?: { cacheTtl?: number }): Promise<string | null>;
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
   /** Delete a single key. Optional — required for active invalidation. */
   delete?(key: string): Promise<void>;

@@ -24,11 +24,21 @@ Boundary manifest for `virtual:czap/boundaries` (from `collectBoundaryManifest`)
 
 ***
 
+### boundaryAssetUrls?
+
+> `readonly` `optional` **boundaryAssetUrls?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`number`, `string`\>\>\>\>
+
+Defined in: [vite/src/virtual-modules.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L93)
+
+Public asset URLs per boundary output-pool index.
+
+***
+
 ### themes?
 
 > `readonly` `optional` **themes?**: `Readonly`\<`Record`\<`string`, [`ThemeManifestEntry`](../type-aliases/ThemeManifestEntry.md)\>\>
 
-Defined in: [vite/src/virtual-modules.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L95)
+Defined in: [vite/src/virtual-modules.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L97)
 
 Theme manifest for `virtual:czap/themes`.
 
@@ -38,6 +48,6 @@ Theme manifest for `virtual:czap/themes`.
 
 > `readonly` `optional` **tokens?**: `Readonly`\<`Record`\<`string`, [`TokenManifestEntry`](../type-aliases/TokenManifestEntry.md)\>\>
 
-Defined in: [vite/src/virtual-modules.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L93)
+Defined in: [vite/src/virtual-modules.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L95)
 
 Token manifest for `virtual:czap/tokens` and `virtual:czap/tokens.css`.

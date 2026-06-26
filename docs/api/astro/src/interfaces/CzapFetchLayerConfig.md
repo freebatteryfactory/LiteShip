@@ -22,7 +22,7 @@ from middleware to layer by swapping the factory, not relearning config.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/middleware.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L77)
+Defined in: [astro/src/middleware.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L79)
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -36,7 +36,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: [astro/src/middleware.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L75)
+Defined in: [astro/src/middleware.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L77)
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -100,7 +100,7 @@ always passes through until a consumer opts edge serve in (e.g.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/middleware.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L84)
+Defined in: [astro/src/middleware.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L86)
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

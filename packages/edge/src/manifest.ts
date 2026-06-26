@@ -96,6 +96,10 @@ export function enumerateTierKeys(): readonly TierKey[] {
  * {@link resolveOutputsByTier} to inflate the per-tier map back to the
  * exact same bytes the build compiled.
  *
+ * `assetUrls`, when present, maps the SAME pooled output indices to immutable
+ * static-asset URLs emitted by the build. It is optional and additive: hosts
+ * that do not opt into static asset emission keep using `outputs` directly.
+ *
  * Both fields are empty when the boundary has no `@quantize` CSS block
  * (nothing to compile) -- the entry still carries the id so hosts can
  * derive cache configuration from it.
@@ -107,6 +111,8 @@ export interface BoundaryManifestEntry {
   readonly outputs: readonly CompiledOutputs[];
   /** Pool index per {@link TierKey}; missing keys mean that tier was never compiled. */
   readonly outputsByTier: Readonly<Partial<Record<TierKey, number>>>;
+  /** Optional immutable static-asset URL per output-pool index. */
+  readonly assetUrls?: Readonly<Record<number, string>>;
 }
 
 /**
@@ -188,6 +194,19 @@ export function resolveOutputsByTier(
     resolved[key] = outputs;
   }
   return resolved;
+}
+
+/**
+ * Resolve the immutable static-asset URL for one tier, when the manifest was
+ * built with boundary asset emission enabled. Missing `assetUrls` means the
+ * host should fall back to inline / Worker-served {@link CompiledOutputs}.
+ */
+export function resolveAssetUrlByTier(
+  entry: Pick<BoundaryManifestEntry, 'outputsByTier' | 'assetUrls'>,
+  key: TierKey,
+): string | undefined {
+  const index = entry.outputsByTier[key];
+  return typeof index === 'number' ? entry.assetUrls?.[index] : undefined;
 }
 
 /**

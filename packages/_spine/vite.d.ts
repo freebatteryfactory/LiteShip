@@ -4,7 +4,7 @@
 
 import type { Boundary } from './core.d.ts';
 import type { Token, Theme, Style } from './design.d.ts';
-import type { BoundaryManifest } from './edge.d.ts';
+import type { BoundaryManifest, CompiledOutputs } from './edge.d.ts';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 0. PRIMITIVE KIND
@@ -33,6 +33,7 @@ export interface PluginConfig {
   readonly dirs?: Partial<Record<PrimitiveKind, string>>;
   readonly hmr?: boolean;
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
+  readonly emitBoundaryAssets?: boolean;
   readonly wasm?: boolean | { readonly enabled?: boolean; readonly path?: string };
 }
 
@@ -163,10 +164,14 @@ export type VirtualModuleId =
   | 'virtual:czap/tokens.css'
   | 'virtual:czap/boundaries'
   | 'virtual:czap/themes'
+  | 'virtual:czap/wasm-url'
   | 'virtual:czap/config';
+
+export type BoundaryAssetUrlMap = Readonly<Record<string, Readonly<Record<number, string>>>>;
 
 export interface VirtualModuleData {
   readonly boundaries?: BoundaryManifest;
+  readonly boundaryAssetUrls?: BoundaryAssetUrlMap;
 }
 
 export declare function resolveVirtualId(id: string): string | undefined;
@@ -185,6 +190,8 @@ export declare function collectBoundaryManifest(
   projectRoot: string,
   options?: CollectBoundaryManifestOptions,
 ): Promise<BoundaryManifest>;
+
+export declare function serializeBoundaryOutput(output: CompiledOutputs): string;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // § 12. HMR

@@ -13,6 +13,17 @@ export type CloudflareWorkersEnv = Record<string, unknown>;
 export interface CloudflareEdgeCacheOptions {
   /** KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`). */
   readonly binding: string;
+  /** Workers ExecutionContext; enables background Cache API population on KV hits. */
+  readonly ctx?: { waitUntil(promise: Promise<unknown>): void };
+  /** Cloudflare KV edge-cache TTL, passed through to `kv.get(key, { cacheTtl })`. */
+  readonly cacheTtl?: number;
+  /** Cache API implementation. Defaults to `globalThis.caches.default` when present. */
+  readonly cache?: CloudflareCacheApi | null;
+}
+
+export interface CloudflareCacheApi {
+  match(request: Request): Promise<Response | undefined>;
+  put(request: Request, response: Response): Promise<void>;
 }
 
 /**
@@ -56,6 +67,19 @@ function warnMissingCapability(binding: string, capability: 'delete' | 'list'): 
   });
 }
 
+function resolveDefaultCache(): CloudflareCacheApi | null {
+  const candidate = (globalThis as { caches?: { default?: CloudflareCacheApi } }).caches?.default;
+  return candidate ?? null;
+}
+
+function cacheRequest(binding: string, key: string): Request {
+  return new Request(`https://czap.invalid/${encodeURIComponent(binding)}/${encodeURIComponent(key)}`);
+}
+
+function kvGetOptions(cacheTtl: number | undefined): { cacheTtl: number } | undefined {
+  return cacheTtl === undefined ? undefined : { cacheTtl };
+}
+
 /**
  * Create a lazy {@link KVNamespace} adapter backed by a Workers env binding.
  *
@@ -66,14 +90,25 @@ export function createCloudflareEdgeCache(
   envSource: () => CloudflareWorkersEnv,
   options: CloudflareEdgeCacheOptions,
 ): KVNamespace {
+  const edgeCache = options.cache === undefined ? resolveDefaultCache() : options.cache;
   return {
     async get(key: string): Promise<string | null> {
+      const request = edgeCache ? cacheRequest(options.binding, key) : null;
+      if (edgeCache && request) {
+        const matched = await edgeCache.match(request);
+        if (matched) return matched.text();
+      }
+
       const kv = resolveKvBinding(envSource(), options.binding);
       if (!kv) {
         warnMissingBinding(envSource, options.binding);
         return null;
       }
-      return kv.get(key);
+      const value = await kv.get(key, kvGetOptions(options.cacheTtl));
+      if (value !== null && edgeCache && request && options.ctx) {
+        options.ctx.waitUntil(edgeCache.put(request, new Response(value)));
+      }
+      return value;
     },
     async put(key: string, value: string, putOptions?: { expirationTtl?: number }): Promise<void> {
       const kv = resolveKvBinding(envSource(), options.binding);

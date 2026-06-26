@@ -63,5 +63,6 @@ compilation.
 - [createEdgeHostAdapter](functions/createEdgeHostAdapter.md)
 - [dedupeOutputsByTier](functions/dedupeOutputsByTier.md)
 - [enumerateTierKeys](functions/enumerateTierKeys.md)
+- [resolveAssetUrlByTier](functions/resolveAssetUrlByTier.md)
 - [resolveOutputsByTier](functions/resolveOutputsByTier.md)
 - [tierKey](functions/tierKey.md)

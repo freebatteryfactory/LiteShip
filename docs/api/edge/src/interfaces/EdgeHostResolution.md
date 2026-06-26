@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostResolution
 
-Defined in: [edge/src/host-adapter.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L188)
+Defined in: [edge/src/host-adapter.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L198)
 
 Full per-request resolution output from [EdgeHostAdapter.resolve](EdgeHostAdapter.md#resolve).
 
@@ -20,11 +20,21 @@ Carries the device context, optional theme and compiled outputs, the
 
 ## Properties
 
+### assetUrl?
+
+> `readonly` `optional` **assetUrl?**: `string`
+
+Defined in: [edge/src/host-adapter.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L208)
+
+Immutable static-asset URL when exactly one boundary is configured and emitted one.
+
+***
+
 ### boundaries?
 
 > `readonly` `optional` **boundaries?**: `Readonly`\<`Record`\<`string`, [`EdgeHostBoundaryResolution`](EdgeHostBoundaryResolution.md)\>\>
 
-Defined in: [edge/src/host-adapter.ts:198](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L198)
+Defined in: [edge/src/host-adapter.ts:210](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L210)
 
 Per-boundary outcomes, keyed by name; present with the `boundaries` cache form.
 
@@ -34,7 +44,7 @@ Per-boundary outcomes, keyed by name; present with the `boundaries` cache form.
 
 > `readonly` **cacheStatus**: [`EdgeHostCacheStatus`](../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [edge/src/host-adapter.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L214)
+Defined in: [edge/src/host-adapter.ts:226](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L226)
 
 Whether boundary outputs came from cache, were computed and stored,
 or caching is off. With multiple boundaries this is the worst case
@@ -61,7 +71,7 @@ Capabilities parsed from Client Hints.
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:196](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L196)
+Defined in: [edge/src/host-adapter.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L206)
 
 Compiled per-state outputs when exactly one boundary is configured
 (either form). Undefined with multiple boundaries -- read
@@ -73,7 +83,7 @@ Compiled per-state outputs when exactly one boundary is configured
 
 > `readonly` **htmlAttributes**: `string`
 
-Defined in: [edge/src/host-adapter.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L200)
+Defined in: [edge/src/host-adapter.ts:212](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L212)
 
 `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`).
 
@@ -83,7 +93,7 @@ Defined in: [edge/src/host-adapter.ts:200](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **responseHeaders**: `object`
 
-Defined in: [edge/src/host-adapter.ts:202](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L202)
+Defined in: [edge/src/host-adapter.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L214)
 
 Response headers to send back so the browser will supply hints next time.
 
@@ -105,7 +115,7 @@ Response headers to send back so the browser will supply hints next time.
 
 > `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
 
-Defined in: [edge/src/host-adapter.ts:190](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L190)
+Defined in: [edge/src/host-adapter.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L200)
 
 Compiled theme result, if a theme config was resolved for this request.
 

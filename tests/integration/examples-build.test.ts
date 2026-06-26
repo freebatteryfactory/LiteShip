@@ -119,6 +119,23 @@ describe.sequential('examples build', () => {
     );
   }
 
+  it('examples/cloudflare-astro emits boundary CSS as static assets', () => {
+    const distClient = join(examplesRoot, 'cloudflare-astro', 'dist', 'client');
+    const normalizedDistClient = distClient.replace(/\\/g, '/');
+    const files = collectFiles(distClient).map((file) => file.replace(/\\/g, '/'));
+    const boundaryCss = files.filter((file) => /\/_czap\/[0-9a-f]{8}\/[0-9]+\.[A-Za-z0-9_-]+\.css$/.test(file));
+    expect(boundaryCss.length).toBeGreaterThan(0);
+
+    const manifestPath = join(distClient, 'czap-boundary-manifest.json');
+    expect(existsSync(manifestPath)).toBe(true);
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      boundaries?: Record<string, { assetUrls?: Record<string, string> }>;
+    };
+    expect(Object.values(manifest.boundaries?.viewport?.assetUrls ?? {})).toEqual(
+      expect.arrayContaining(boundaryCss.map((file) => `/${file.slice(normalizedDistClient.length + 1)}`)),
+    );
+  });
+
   for (const name of ['default', 'tutorial'] as const) {
     it(`examples/${name} production dist excludes dev inspector chunks`, () => {
       const hit = distContainsInspectorChunk(join(examplesRoot, name, 'dist'));

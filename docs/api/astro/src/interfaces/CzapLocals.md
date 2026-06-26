@@ -32,6 +32,12 @@ Defined in: [astro/src/middleware.ts:43](https://github.com/heyoub/LiteShip/blob
 
 Edge-host resolution result, present when an edge adapter is configured.
 
+#### assetUrl?
+
+> `readonly` `optional` **assetUrl?**: `string`
+
+Sole boundary's immutable static CSS asset URL, when emitted by the build.
+
 #### boundaries?
 
 > `readonly` `optional` **boundaries?**: `Readonly`\<`Record`\<`string`, `EdgeHostBoundaryResolution`\>\>

@@ -367,6 +367,18 @@ function compileOutputsByTier(
 }
 
 /**
+ * Serialize one deduplicated boundary output into the bytes emitted as a static
+ * CSS asset. Theme `:root` CSS is deliberately absent: themes are a
+ * request-time axis and stay inline/tiny, while these assets remain
+ * theme-agnostic and content-hashed.
+ */
+export function serializeBoundaryOutput(output: CompiledOutputs): string {
+  return [output.propertyRegistrations, output.containerQueries, output.css]
+    .filter((part) => part.length > 0)
+    .join('\n');
+}
+
+/**
  * Derive the `BoundaryManifest` for a project.
  *
  * Walks `projectRoot` (skipping `node_modules`, build output, and VCS

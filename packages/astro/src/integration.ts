@@ -10,7 +10,7 @@
  * @module
  */
 
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
@@ -204,6 +204,17 @@ function boot() {
 boot();
 document.addEventListener('astro:after-swap', boot);
 `.trim();
+
+const CZAP_ASSET_HEADERS = ['/_czap/*', '  Cache-Control: public, max-age=31536000, immutable'].join('\n');
+
+function ensureCzapAssetHeaders(outDir: string): boolean {
+  const headersPath = path.join(outDir, '_headers');
+  const current = existsSync(headersPath) ? readFileSync(headersPath, 'utf8') : '';
+  if (current.includes('/_czap/*')) return false;
+  const prefix = current.length === 0 || current.endsWith('\n') ? current : `${current}\n`;
+  writeFileSync(headersPath, `${prefix}${CZAP_ASSET_HEADERS}\n`);
+  return true;
+}
 
 // Inline SVG for the dev-toolbar inspector icon (a boundary/threshold glyph).
 // Astro's `addDevToolbarApp` accepts an inline SVG string for `icon`.
@@ -460,6 +471,17 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
 
       'astro:build:done': async ({ dir, logger }) => {
         try {
+          if (config?.vite?.emitBoundaryAssets === true) {
+            if (dir) {
+              const outDir = fileURLToPath(dir);
+              if (ensureCzapAssetHeaders(outDir)) {
+                logger.info(`Added immutable Cache-Control headers for /_czap/* in ${path.join(outDir, '_headers')}`);
+              }
+            }
+            logger.info('@czap/vite emitted the boundary manifest with static asset URLs');
+            return;
+          }
+
           // Emit the build-derived boundary manifest for hosts that read it
           // from disk instead of importing `virtual:czap/boundaries` (e.g. a
           // worker entry assembled outside this Vite build).

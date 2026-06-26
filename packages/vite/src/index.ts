@@ -67,7 +67,7 @@ export { resolveVirtualId, isVirtualId, loadVirtualModule } from './virtual-modu
 
 // Boundary manifest (build-to-edge handoff, ADR-0003)
 export type { CollectBoundaryManifestOptions } from './boundary-manifest.js';
-export { collectBoundaryManifest } from './boundary-manifest.js';
+export { collectBoundaryManifest, serializeBoundaryOutput } from './boundary-manifest.js';
 
 // Token/theme manifests (virtual:czap/tokens, tokens.css, themes)
 export type {

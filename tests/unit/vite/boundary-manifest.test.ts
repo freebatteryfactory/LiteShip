@@ -16,7 +16,7 @@ import type { ContentAddress } from '@czap/core';
 import { Boundary, Diagnostics } from '@czap/core';
 import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
 import type { KVNamespace } from '@czap/edge';
-import { collectBoundaryManifest } from '../../../packages/vite/src/boundary-manifest.js';
+import { collectBoundaryManifest, serializeBoundaryOutput } from '../../../packages/vite/src/boundary-manifest.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js';
 
@@ -76,6 +76,22 @@ const QUANTIZE_CSS = `
 `;
 
 describe('collectBoundaryManifest', () => {
+  test('serializeBoundaryOutput preserves property, container, css order without theme CSS', () => {
+    expect(
+      serializeBoundaryOutput({
+        propertyRegistrations: '@property --gap { syntax: "<length>"; inherits: false; initial-value: 0px; }',
+        containerQueries: '@container viewport-width (width >= 768px) { .x { --gap: 2rem; } }',
+        css: '.x { gap: var(--gap); }',
+      }),
+    ).toBe(
+      [
+        '@property --gap { syntax: "<length>"; inherits: false; initial-value: 0px; }',
+        '@container viewport-width (width >= 768px) { .x { --gap: 2rem; } }',
+        '.x { gap: var(--gap); }',
+      ].join('\n'),
+    );
+  });
+
   test('@aria blocks compile into CompiledOutputs.aria via the dispatch caster', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

@@ -3,6 +3,11 @@
   "name": "cloudflare-astro-liteship-example",
   "compatibility_date": "2026-06-08",
   "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "none",
+    "run_worker_first": ["/*", "!/_czap/*"]
+  },
   "kv_namespaces": [
     {
       "binding": "CZAP_BOUNDARY_CACHE",
