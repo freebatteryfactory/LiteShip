@@ -198,6 +198,12 @@ For agents and grep-first humans, here is where the canonical answer lives:
 
 ---
 
+## Internal design notes
+
+`docs/internal/` holds maintainer-only design and findings documents — the working notes behind decisions, not part of the canon reading path above. Browse the directory directly; it is intentionally not enumerated here, since those files come and go with active work.
+
+---
+
 ## Working Principle
 
 When the docs and the code disagree:

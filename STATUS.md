@@ -190,7 +190,7 @@ or read `gauntlet-phases.ts` directly. The per-phase timing table below is a cap
 
 ### Per-phase wall-time ranges
 
-Total across all 39 phases (the count is pinned by `tests/unit/devops/gauntlet-profile.test.ts` against `gauntletPhases.length` — never hand-counted here): 15–22 minutes end-to-end; recent local datapoint 14m47s on Linux x64, 8 vCPU (per the README's gauntlet snapshot). Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
+Total across all 39 phases (the count is pinned by `tests/unit/devops/gauntlet-profile.test.ts` against `gauntletPhases.length` — never hand-counted here): roughly 15–22 minutes on a fast 8-vCPU local box, ~40 minutes under CI (cold browser-coverage cache). The README's gauntlet snapshot carries the latest CI datapoint, distilled from the `truth-artifacts-linux` artifact by `scripts/refresh-bench-snapshot.ts`. Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 

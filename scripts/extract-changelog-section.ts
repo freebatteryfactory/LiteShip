@@ -11,9 +11,13 @@ for (let i = 2; i < argv.length; i++) {
   else if (a === '--out') out = argv[++i] ?? '';
   else if (a === '--changelog') changelogPath = argv[++i] ?? changelogPath;
 }
-if (!version || !out) {
-  throw new Error('Usage: tsx scripts/extract-changelog-section.ts --version X.Y.Z --out path');
+// Default to the current release: version from root package.json, out path derived
+// from it. Keeps `pnpm run release:notes` correct across version bumps with no
+// hardcoded version in the npm script (which had silently lagged before).
+if (!version) {
+  version = (JSON.parse(readFileSync(resolve('package.json'), 'utf8')) as { version: string }).version;
 }
+if (!out) out = `RELEASE_NOTES_v${version}.md`;
 const heading = `## [${version}]`;
 const md = readFileSync(resolve(changelogPath), 'utf8');
 const idx = md.indexOf(heading);

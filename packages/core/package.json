@@ -1,7 +1,7 @@
 {
   "name": "@czap/core",
   "version": "0.4.0",
-  "description": "Constraint-based adaptive rendering primitives",
+  "description": "Primitives: Boundary, Token, Style, Theme, Signal, DocumentGraph + GraphPatch (the content-addressed IR), AI cast, Compositor, ECS, HLC, DAG, Plan, AVBridge",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {

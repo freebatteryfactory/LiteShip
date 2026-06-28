@@ -11,113 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { color, colorEnabled, header } from '../packages/cli/src/lib/ansi.js';
-
-interface CategorySpec {
-  readonly name: string;
-  readonly description: string;
-  readonly scripts: readonly string[];
-}
-
-const CATEGORIES: readonly CategorySpec[] = [
-  {
-    name: 'dev-experience',
-    description: 'First-run sugar, doctor, clean. Start here on a fresh clone.',
-    scripts: ['setup', 'doctor', 'dev', 'clean', 'scripts', 'glossary', 'fix'],
-  },
-  {
-    name: 'build',
-    description: 'Compile the workspace.',
-    scripts: ['build', 'typecheck', 'typecheck:scripts', 'typecheck:tests', 'typecheck:spine'],
-  },
-  {
-    name: 'test',
-    description: 'Run vitest lanes. `test` is the default fast loop.',
-    scripts: [
-      'test',
-      'test:unit',
-      'test:smoke',
-      'test:property',
-      'test:component',
-      'test:integration',
-      'test:regression',
-      'test:redteam',
-      'test:flake',
-      'test:e2e',
-      'test:e2e:stress',
-      'test:e2e:stream-stress',
-      'test:vite',
-      'test:astro',
-      'test:tailwind',
-    ],
-  },
-  {
-    name: 'coverage',
-    description: 'Coverage lanes — node + browser merge.',
-    scripts: [
-      'coverage',
-      'coverage:node',
-      'coverage:node:tracked',
-      'coverage:browser',
-      'coverage:merge',
-      'coverage:unit',
-      'coverage:smoke',
-      'cover',
-    ],
-  },
-  {
-    name: 'bench',
-    description: 'Tinybench suites + the bench-gate and trend gate.',
-    scripts: ['bench', 'bench:gate', 'bench:trend', 'bench:reality'],
-  },
-  {
-    name: 'lint-format',
-    description: 'ESLint + Prettier.',
-    scripts: ['lint', 'format', 'format:check', 'check'],
-  },
-  {
-    name: 'audit',
-    description: 'Codebase audit lanes — structure, integrity, surface.',
-    scripts: ['audit', 'audit:structure', 'audit:integrity', 'audit:surface', 'audit:report'],
-  },
-  {
-    name: 'reports',
-    description: 'Verification + reporting scripts.',
-    scripts: [
-      'report:runtime-seams',
-      'report:satellite-scan',
-      'feedback:verify',
-      'runtime:gate',
-      'flex:verify',
-      'devx:check',
-    ],
-  },
-  {
-    name: 'capsule',
-    description: 'Capsule manifest compile + verify.',
-    scripts: ['capsule:compile', 'capsule:verify'],
-  },
-  {
-    name: 'release',
-    description: 'Ship + verify + gauntlet (the full release-grade gate).',
-    scripts: [
-      'ship',
-      'verify',
-      'gauntlet:full',
-      'package:smoke',
-      'release:notes',
-    ],
-  },
-  {
-    name: 'docs',
-    description: 'Generate + check docs.',
-    scripts: ['docs:build', 'docs:check'],
-  },
-  {
-    name: 'demos',
-    description: 'Example workspaces.',
-    scripts: ['demo:remotion'],
-  },
-];
+import { CATEGORIES, LIFECYCLE_SCRIPTS } from './lib/script-categories.js';
 
 interface Pkg {
   readonly scripts?: Record<string, string>;
@@ -151,7 +45,8 @@ for (const cat of CATEGORIES) {
 }
 
 // Surface uncategorized scripts so the index stays honest as the manifest grows.
-const other = Object.keys(all).filter((s) => !known.has(s) && s !== 'prepare' && s !== 'postinstall');
+const lifecycle = new Set<string>(LIFECYCLE_SCRIPTS);
+const other = Object.keys(all).filter((s) => !known.has(s) && !lifecycle.has(s));
 if (other.length > 0) {
   process.stdout.write(`${color('yellow', 'other', on)} ${color('dim', '(uncategorized — consider adding to scripts/scripts-index.ts)', on)}\n`);
   for (const s of other) {

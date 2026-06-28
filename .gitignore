@@ -53,6 +53,12 @@ benchmarks/*
 # fresh macos/windows checkout lacked it and the meta-proof's committed-registry
 # assertion failed with ENOENT — only the linux lane regenerated it pre-test).
 !benchmarks/mutation-equivalents.json
+# …and the README bench snapshot: the small, committed distillation of a green CI
+# gauntlet run that the README "Latest CI gauntlet run" block renders from
+# (`scripts/refresh-bench-snapshot.ts` writes it; `scripts/gen-docs.ts` renders
+# it). A committed contract so the front-page numbers ship with the repo, not a
+# regenerated run artifact.
+!benchmarks/readme-snapshot.json
 reports/
 .vitest-attachments/
 lint-report.json
