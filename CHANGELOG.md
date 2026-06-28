@@ -38,6 +38,15 @@ dev/status/stop` delegates to Astro background dev-server management, and `czap 
   runs the graph→page+video dual-export proof in node/CI via an injected ffmpeg/libx264
   `FrameEncoder` (was browser/WebCodecs-gated). The frame-source digest == page digest
   invariant holds headless (frames addressed, bytes injected).
+- `@czap/quantizer` — **AnimatedQuantizer frame-clock injection.** `AnimatedQuantizer.make(…, { scheduler })`
+  takes an optional `@czap/core` `Scheduler.Shape` (`raf` / `fixedStep` / `audioSync`) so the output
+  interpolation rides the display refresh (or a deterministic render/test clock) instead of its internal
+  fixed 16ms sleep. Omitted, the 16ms loop is byte-unchanged — existing callers are untouched.
+- `@czap/astro` — **continuous signal→uniform bridge.** `driveUniformFromSignal(element, input, uniform)`
+  (from `@czap/astro/runtime`) drives the existing `czap:uniform-update` event continuously from a
+  continuous signal (e.g. `scroll.progress`), writing the value into the GLSL/WGSL uniform the GPU runtime
+  already consumes each (rAF-throttled) frame. Replaces the hand-rolled scroll→uniform glue and its
+  0..1-vs-0..100 scale footgun.
 - **Plumb-completeness gate** (`plumb:gate`, gauntlet phase 37). A package-plumb ledger
   classifies every published package `runtime`/`tooling`/`deferred` (an unclassified package
   fails CI, so a test-only subsystem can't ship hidden) + an unwired-capsule floor. Closes

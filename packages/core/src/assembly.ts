@@ -105,10 +105,10 @@ function computeId(contract: Omit<CapsuleContract<AssemblyKind, unknown, unknown
 export function defineCapsule<K extends AssemblyKind, In, Out, R>(
   decl: Omit<CapsuleContract<K, In, Out, R>, 'id'>,
 ): CapsuleDef<K, In, Out, R> {
-  // For pureTransform capsules: omitting `run` downgrades the generated
-  // harness test to `it.skip` (Task 8 honest-skip discipline). Warn so
-  // contributors notice rather than silently skip property tests.
-  // Other arms don't yet have a wired runtime channel — see ADR-TODO.
+  // For pureTransform capsules: omitting `run` leaves the declared invariants
+  // type-only (no runtime validation). The generated harness still emits a REAL
+  // test — never an `it.skip` (no-skip discipline) — so warn here, otherwise a
+  // contributor could assume the invariants are enforced when they aren't.
   if (decl._kind === 'pureTransform' && decl.invariants.length > 0 && decl.run === undefined) {
     Diagnostics.warn({
       source: 'defineCapsule',

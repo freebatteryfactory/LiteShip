@@ -533,3 +533,96 @@ describe('AnimatedQuantizer.make', () => {
   });
 
 });
+
+describe('AnimatedQuantizer.make — injected scheduler', () => {
+  // A deterministic frame clock: each scheduled tick fires on a microtask with a
+  // monotonically increasing timestamp (16ms apart). No real timers — the whole
+  // animation drains synchronously under `runScoped`, proving the cadence is
+  // driven by the injected scheduler rather than the internal 16ms `Effect.sleep`.
+  function microtaskClock() {
+    let id = 0;
+    let calls = 0;
+    return {
+      calls: () => calls,
+      scheduler: {
+        _tag: 'FrameScheduler' as const,
+        schedule(cb: (now: number) => void): number {
+          calls += 1;
+          const myId = (id += 1);
+          queueMicrotask(() => cb(myId * 16));
+          return myId;
+        },
+        cancel(): void {},
+      },
+    };
+  }
+
+  function crossingQuantizer() {
+    const boundary = makeBoundary();
+    return {
+      boundary,
+      state: Effect.succeed<'compact' | 'expanded'>('compact'),
+      changes: Stream.fromIterable([
+        {
+          from: 'compact',
+          to: 'expanded',
+          timestamp: { wall_ms: 0, counter: 0, node_id: 'test' } as BoundaryCrossing<'compact' | 'expanded'>['timestamp'],
+          value: 800,
+        },
+      ]),
+      evaluate: () => 'expanded' as const,
+    } satisfies Quantizer<ReturnType<typeof makeBoundary>>;
+  }
+
+  test('drives the frame cadence from the injected scheduler, not the 16ms loop', async () => {
+    const clock = microtaskClock();
+    const frames = await runScoped(
+      Effect.gen(function* () {
+        const animated = yield* AnimatedQuantizer.make(
+          crossingQuantizer(),
+          { 'compact->expanded': { duration: Millis(64) } },
+          { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+          { scheduler: clock.scheduler },
+        );
+        return Array.from(
+          yield* Stream.runCollect(Stream.takeUntil(animated.interpolated, (f) => f.progress >= 1)),
+        );
+      }),
+    );
+
+    // The scheduler was the cadence source.
+    expect(clock.calls()).toBeGreaterThan(0);
+    // It ran to completion with monotonic, non-decreasing progress.
+    expect(frames.length).toBeGreaterThanOrEqual(2);
+    expect(frames.at(-1)?.progress).toBe(1);
+    expect(frames.at(-1)?.outputs.opacity).toBe(1);
+    for (let i = 1; i < frames.length; i += 1) {
+      expect(frames[i]!.progress).toBeGreaterThanOrEqual(frames[i - 1]!.progress);
+    }
+  });
+
+  test('omitting the scheduler is unchanged — still completes via the default loop', async () => {
+    vi.useFakeTimers();
+    try {
+      const collected = runScoped(
+        Effect.gen(function* () {
+          const animated = yield* AnimatedQuantizer.make(
+            crossingQuantizer(),
+            { 'compact->expanded': { duration: Millis(32) } },
+            { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+            // no options arg — default 16ms path
+          );
+          return Array.from(
+            yield* Stream.runCollect(Stream.takeUntil(animated.interpolated, (f) => f.progress >= 1)),
+          );
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(80);
+      const frames = await collected;
+      expect(frames.at(-1)?.progress).toBe(1);
+      expect(frames.at(-1)?.outputs.opacity).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

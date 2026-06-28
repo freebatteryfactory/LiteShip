@@ -13,6 +13,7 @@ import type {
   Quantizer,
   OutputsFor,
   MotionTier,
+  Scheduler,
 } from './core.d.ts';
 
 // MotionTier canonical declaration lives in core.d.ts; re-exported here so
@@ -134,5 +135,7 @@ export declare namespace AnimatedQuantizer {
     transitions: TransitionMap<StateUnion<B> & string>,
     /** Omitted: derived from a LiveQuantizer's `config.outputs.css` tables. */
     outputs?: Record<string, Record<string, number | string>>,
+    /** Optional frame-clock injection; omitted, drives an internal ~60fps 16ms loop. */
+    options?: { readonly scheduler?: Scheduler.Shape },
   ): Effect.Effect<AnimatedQuantizer<B>, never, Scope.Scope>;
 }

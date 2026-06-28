@@ -8,6 +8,7 @@ export {
 // Live audio producer: wire an AnalyserNode and the audio.* boundary family
 // lights up through the existing source-agnostic carve-path.
 export { driveAudioFromAnalyser, readAudioSignal, attachAudioObserver } from './audio-signal.js';
+export { driveUniformFromSignal } from './uniform-signal.js';
 export { bootstrapSlots, getSlotRegistry, reinitializeDirectives, teardownDirectives, rescanSlots } from './slots.js';
 export { bootstrapDirectives, scanAndBootDirectives } from './directive-boot.js';
 export type { DirectiveName } from './directive-boot.js';
