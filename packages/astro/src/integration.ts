@@ -10,13 +10,13 @@
  * @module
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import type { BoundaryManifestFile } from '@czap/edge';
-import { collectBoundaryManifest, plugin } from '@czap/vite';
-import type { PluginConfig } from '@czap/vite';
+import { collectBoundaryManifest, plugin, primitiveSearchPatterns } from '@czap/vite';
+import type { PluginConfig, PrimitiveKind } from '@czap/vite';
 import { DETECT_UPGRADE_SCRIPT } from './detect-upgrade.js';
 import { DETECT_INLINE_SCRIPT } from './detect-provisional.js';
 import { getCzapHeaderEntries } from './headers.js';
@@ -295,12 +295,26 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
         addClientDirective,
         addDevToolbarApp,
         addMiddleware,
+        addWatchFile,
         injectScript,
         logger,
         command,
+        config: astroConfig,
       }) => {
         type AstroViteConfig = Parameters<typeof updateConfig>[0]['vite'];
         logger.info('Setting up @czap integration');
+
+        // Watch the convention primitive source files so definition edits restart
+        // the dev server and re-collect the manifest (Astro battery: addWatchFile).
+        // Guarded: real Astro always provides these, but keep it null-safe.
+        if (typeof addWatchFile === 'function' && astroConfig?.root && astroConfig.srcDir) {
+          watchConventionPrimitives(
+            addWatchFile,
+            fileURLToPath(astroConfig.root),
+            fileURLToPath(astroConfig.srcDir),
+            config?.vite?.dirs,
+          );
+        }
 
         // Route @czap/* runtime diagnostics through Astro's logger so they carry
         // the czap label and flow into `astro dev --json` structured output —
@@ -507,4 +521,45 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
       },
     },
   };
+}
+
+/**
+ * addWatchFile battery: tell Astro to watch the convention primitive source
+ * files (boundaries / tokens / themes / styles) so editing a definition
+ * restarts the dev server and re-collects the boundary manifest — even for
+ * definitions not yet imported by a CSS `@quantize`/`@token` block, which is
+ * all the Vite transform layer watches. Reuses `primitiveSearchPatterns` (the
+ * resolver's own convention) rather than re-deriving filenames; concrete
+ * convention files that exist are watched (Astro's `addWatchFile` takes a path,
+ * not a glob, so the `*`-globbed per-name patterns are enumerated on disk).
+ */
+function watchConventionPrimitives(
+  addWatchFile: (file: string) => void,
+  projectRoot: string,
+  srcDir: string,
+  dirs: PluginConfig['dirs'],
+): void {
+  const kinds: readonly PrimitiveKind[] = ['boundary', 'token', 'theme', 'style'];
+  const candidates: string[] = [];
+  for (const kind of kinds) {
+    for (const pattern of primitiveSearchPatterns(kind, path.join(srcDir, 'index.ts'), projectRoot, dirs?.[kind])) {
+      if (!pattern.includes('*')) {
+        candidates.push(pattern);
+        continue;
+      }
+      // `<dir>/*<suffix>` — enumerate the existing convention files on disk.
+      const dir = path.dirname(pattern);
+      const suffix = path.basename(pattern).slice(1);
+      if (!existsSync(dir)) continue;
+      for (const entry of readdirSync(dir)) {
+        if (entry.endsWith(suffix)) candidates.push(path.join(dir, entry));
+      }
+    }
+  }
+  const watched = new Set<string>();
+  for (const file of candidates) {
+    if (watched.has(file) || !existsSync(file)) continue;
+    watched.add(file);
+    addWatchFile(file);
+  }
 }

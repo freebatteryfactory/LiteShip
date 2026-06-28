@@ -882,4 +882,35 @@ export const viewport = {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  test('config:setup watches the convention primitive files (addWatchFile battery)', () => {
+    const root = mkdtempSync(join(tmpdir(), 'czap-watch-'));
+    const src = join(root, 'src');
+    mkdirSync(src, { recursive: true });
+    try {
+      writeFileSync(join(src, 'boundaries.ts'), 'export const a = 1;\n');
+      writeFileSync(join(src, 'hero.boundaries.ts'), 'export const b = 1;\n');
+      writeFileSync(join(src, 'tokens.ts'), 'export const c = 1;\n');
+
+      const watched: string[] = [];
+      integration().hooks['astro:config:setup']({
+        updateConfig: () => undefined,
+        addClientDirective: () => undefined,
+        injectScript: () => undefined,
+        addWatchFile: (file: string) => watched.push(file),
+        logger: { info() {} },
+        config: { root: pathToFileURL(root), srcDir: pathToFileURL(src) },
+      } as never);
+
+      // The barrel, a per-name convention file, and a different kind's barrel
+      // are all watched (resolver convention, not hardcoded names).
+      expect(watched).toContain(join(src, 'boundaries.ts'));
+      expect(watched).toContain(join(src, 'hero.boundaries.ts'));
+      expect(watched).toContain(join(src, 'tokens.ts'));
+      // Each file is watched at most once (dedup across kinds/search dirs).
+      expect(new Set(watched).size).toBe(watched.length);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

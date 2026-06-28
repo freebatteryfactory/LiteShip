@@ -56,6 +56,18 @@ export interface PluginConfig {
   readonly dirs?: Partial<Record<'boundary' | 'token' | 'theme' | 'style', string>>;
   /** Toggle surgical HMR emission (default `true`). */
   readonly hmr?: boolean;
+  /**
+   * `@quantize` viewport-containment options.
+   *
+   * `container` is the selector the auto-emitted viewport `@container`
+   * containment is declared on — `:root` by default. Set it to a named
+   * selector (e.g. `'.czap-vp'`) when `:root` can't be a container in your
+   * layout (size containment removes `:root` from its parent's size calc,
+   * which a fixed/absolute viewport-locked wrapper conflicts with); you then
+   * own sizing that element to the viewport. Applies to both the CSS
+   * transform and the emitted boundary assets.
+   */
+  readonly quantize?: { readonly container?: string };
   /** Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted. */
   readonly environments?: readonly ('browser' | 'server' | 'shader')[];
   /**
@@ -179,6 +191,7 @@ export function plugin(config?: PluginConfig): Plugin {
     if (!cache.boundaryManifest.value) {
       cache.boundaryManifest.value = collectBoundaryManifest(projectRoot, {
         boundaryDir: config?.dirs?.boundary,
+        container: config?.quantize?.container,
       });
     }
     return cache.boundaryManifest.value;
@@ -378,6 +391,7 @@ export function plugin(config?: PluginConfig): Plugin {
         cache,
         projectRoot,
         dirs: config?.dirs,
+        quantizeContainer: config?.quantize?.container,
       });
 
       if (transformed === null) return null;

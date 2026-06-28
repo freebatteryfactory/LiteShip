@@ -502,14 +502,23 @@ export function viewportQueryAxis(input: string): 'width' | 'height' | null {
  * Returns `null` when no viewport container names were collected
  * (non-viewport boundaries declare their own containers; see the
  * `container-not-declared` diagnostic).
+ *
+ * `selector` is the element the containment is declared on — `:root` by
+ * default. A host whose layout can't have `:root` be a container (a
+ * size-contained `:root` removes it from its parent's size calc, which a
+ * fixed/absolute viewport-locked wrapper conflicts with) sets the plugin's
+ * `quantize.container` to a named selector (e.g. `.czap-vp`) and is then
+ * responsible for sizing that element to the viewport. Width-only sheets
+ * stay `inline-size`; a `viewport-height` name upgrades to `size` + a
+ * `100dvh` block-size on the chosen selector.
  */
-export function viewportContainmentRule(names: Iterable<string>): string | null {
+export function viewportContainmentRule(names: Iterable<string>, selector: string = ':root'): string | null {
   const unique = [...new Set(names)];
   if (unique.length === 0) return null;
   if (!unique.includes('viewport-height')) {
-    return `:root {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
+    return `${selector} {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
   }
-  return `:root {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: ${unique.join(' ')};\n}`;
+  return `${selector} {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: ${unique.join(' ')};\n}`;
 }
 
 /**

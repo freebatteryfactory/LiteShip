@@ -27,7 +27,7 @@ Override source directories for each primitive kind.
 
 > `readonly` `optional` **emitBoundaryAssets?**: `boolean`
 
-Defined in: [vite/src/plugin.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L66)
+Defined in: [vite/src/plugin.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L78)
 
 Emit each deduplicated boundary CSS output as an immutable build asset and
 add `assetUrls` to `virtual:czap/boundaries`. Default `false`: manifests
@@ -39,7 +39,7 @@ still carry compiled strings only.
 
 > `readonly` `optional` **environments?**: readonly (`"browser"` \| `"server"` \| `"shader"`)[]
 
-Defined in: [vite/src/plugin.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L60)
+Defined in: [vite/src/plugin.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L72)
 
 Named Vite environments to configure (browser / server / shader). Defaults to browser when omitted.
 
@@ -55,11 +55,33 @@ Toggle surgical HMR emission (default `true`).
 
 ***
 
+### quantize?
+
+> `readonly` `optional` **quantize?**: `object`
+
+Defined in: [vite/src/plugin.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L70)
+
+`@quantize` viewport-containment options.
+
+`container` is the selector the auto-emitted viewport `@container`
+containment is declared on — `:root` by default. Set it to a named
+selector (e.g. `'.czap-vp'`) when `:root` can't be a container in your
+layout (size containment removes `:root` from its parent's size calc,
+which a fixed/absolute viewport-locked wrapper conflicts with); you then
+own sizing that element to the viewport. Applies to both the CSS
+transform and the emitted boundary assets.
+
+#### container?
+
+> `readonly` `optional` **container?**: `string`
+
+***
+
 ### wasm?
 
 > `readonly` `optional` **wasm?**: `boolean` \| \{ `enabled?`: `boolean`; `path?`: `string`; \}
 
-Defined in: [vite/src/plugin.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L75)
+Defined in: [vite/src/plugin.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/plugin.ts#L87)
 
 WASM runtime configuration. Omitted (the default) **auto-detects**: the
 deterministic 3-step search in [resolveWASM](../functions/resolveWASM.md) runs, and the compute

@@ -45,6 +45,12 @@ export interface CollectBoundaryManifestOptions {
    * `dirs.boundary` override; scanned in addition to the project walk.
    */
   readonly boundaryDir?: string;
+  /**
+   * Selector the auto-emitted viewport `@container` containment is declared
+   * on (default `:root`) -- mirror of the plugin's `quantize.container`, so
+   * the manifest-served CSS matches the transform layer's containment target.
+   */
+  readonly container?: string;
 }
 
 interface ProjectScan {
@@ -306,6 +312,7 @@ function compileNonCssCasts(boundary: Boundary.Shape, states: Record<string, Qua
 function compileOutputsByTier(
   boundary: Boundary.Shape,
   states: Record<string, QuantizeStateBody>,
+  container?: string,
 ): Pick<BoundaryManifestEntry, 'outputs' | 'outputsByTier'> {
   // Bridge the parser's rule shape (props) to the compiler's (properties),
   // exactly as compileQuantizeBlock does.
@@ -326,7 +333,8 @@ function compileOutputsByTier(
   // follow the transform layer's policy (the consumer declares the
   // container).
   const containerName = boundary.input.replace(/[^a-zA-Z0-9_-]/g, '-');
-  const containment = viewportQueryAxis(boundary.input) !== null ? viewportContainmentRule([containerName]) : null;
+  const containment =
+    viewportQueryAxis(boundary.input) !== null ? viewportContainmentRule([containerName], container) : null;
   // Route the CSS cast through the single build caster (`dispatch`) rather than
   // a direct compile call — the same multiplexer the ARIA cast below uses.
   const cssCast = dispatch({ _tag: 'CSSCompiler', boundary, states: cssStates });
@@ -542,7 +550,7 @@ export async function collectBoundaryManifest(
     const states = statesByBoundary.get(name);
     manifest[name] = {
       id: boundary.id,
-      ...(states ? compileOutputsByTier(boundary, states) : { outputs: [], outputsByTier: {} }),
+      ...(states ? compileOutputsByTier(boundary, states, options?.container) : { outputs: [], outputsByTier: {} }),
     };
   }
   return manifest;
