@@ -6,8 +6,8 @@
 
 import type { Scope } from 'effect';
 import { Effect, Stream, SubscriptionRef, Queue, Fiber, Ref, Duration } from 'effect';
-import type { Boundary, StateUnion, BoundaryCrossing, Quantizer, Easing } from '@czap/core';
-import { Diagnostics, systemClock } from '@czap/core';
+import type { Boundary, StateUnion, BoundaryCrossing, Quantizer, Easing, Scheduler } from '@czap/core';
+import { Diagnostics, systemClock, Animation, Millis as mkMillis } from '@czap/core';
 import type { Transition, TransitionMap } from './transition.js';
 import { Transition as TransitionFactory } from './transition.js';
 
@@ -150,15 +150,23 @@ function deriveInterpolationOutputs<B extends Boundary.Shape>(
  *                      they are derived from the wrapped LiveQuantizer's
  *                      `config.outputs.css` tables (finite-numeric strings are
  *                      coerced to numbers so they lerp)
+ * @param options     - Optional injection bag. `options.scheduler` supplies a
+ *                      `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+ *                      to align frames to the display, or `Scheduler.fixedStep(fps)`
+ *                      for deterministic rendering/tests). Omitted, the animation
+ *                      drives its own internal ~60fps loop via a fixed 16ms sleep
+ *                      (the historical default — existing callers are unchanged).
  * @returns An Effect yielding an {@link AnimatedQuantizerShape} (scoped)
  */
 function makeAnimatedQuantizer<B extends Boundary.Shape>(
   quantizer: Quantizer<B>,
   transitions: TransitionMap<StateUnion<B> & string>,
   outputs?: Record<string, Record<string, number | string>>,
+  options?: { readonly scheduler?: Scheduler.Shape },
 ): Effect.Effect<AnimatedQuantizerShape<B>, never, Scope.Scope> {
   return Effect.gen(function* () {
     const boundary = quantizer.boundary;
+    const scheduler = options?.scheduler;
     const transitionResolver = TransitionFactory.for(quantizer, transitions);
     const effectiveOutputs = outputs ?? deriveInterpolationOutputs(quantizer);
 
@@ -231,19 +239,34 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
                 return;
               }
 
-              // Time-sliced animation loop (~60fps via 16ms sleep)
-              const startTime = nowMs();
-              let progress = 0;
-              while (progress < 1) {
-                const elapsed = nowMs() - startTime;
-                progress = Math.min(elapsed / duration, 1);
-                const eased = easing(progress);
-                const interpolated = lerpOutputs(fromOutputs, toOutputs, eased);
-                yield* Ref.set(currentOutputsRef, interpolated);
-                Queue.offerUnsafe(queue, { state: to, progress, outputs: interpolated });
+              if (scheduler !== undefined) {
+                // Injected frame clock (rAF / fixedStep / audioSync): delegate the
+                // cadence to the proven Animation.run scheduler loop instead of the
+                // fixed 16ms sleep. Each frame still publishes currentOutputsRef so
+                // an interrupting crossing reads the live interpolated value, and
+                // the stream's finalizer cancels the pending tick on interrupt.
+                yield* Stream.runForEach(Animation.run({ duration: mkMillis(duration), easing, scheduler }), (frame) =>
+                  Effect.gen(function* () {
+                    const interpolated = lerpOutputs(fromOutputs, toOutputs, frame.eased);
+                    yield* Ref.set(currentOutputsRef, interpolated);
+                    Queue.offerUnsafe(queue, { state: to, progress: frame.progress, outputs: interpolated });
+                  }),
+                );
+              } else {
+                // Default: self-driven time-sliced animation loop (~60fps via 16ms sleep).
+                const startTime = nowMs();
+                let progress = 0;
+                while (progress < 1) {
+                  const elapsed = nowMs() - startTime;
+                  progress = Math.min(elapsed / duration, 1);
+                  const eased = easing(progress);
+                  const interpolated = lerpOutputs(fromOutputs, toOutputs, eased);
+                  yield* Ref.set(currentOutputsRef, interpolated);
+                  Queue.offerUnsafe(queue, { state: to, progress, outputs: interpolated });
 
-                if (progress < 1) {
-                  yield* Effect.sleep(Duration.millis(16));
+                  if (progress < 1) {
+                    yield* Effect.sleep(Duration.millis(16));
+                  }
                 }
               }
 

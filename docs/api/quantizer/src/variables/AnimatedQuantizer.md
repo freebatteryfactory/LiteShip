@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:317](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L317)
+Defined in: [quantizer/src/animated-quantizer.ts:340](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L340)
 
 Animated quantizer namespace.
 
@@ -22,7 +22,7 @@ the current interpolated output record.
 
 ### make
 
-> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`) => `Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `makeAnimatedQuantizer`
+> `readonly` **make**: \<`B`\>(`quantizer`, `transitions`, `outputs?`, `options?`) => `Effect`\<[`AnimatedQuantizerShape`](../interfaces/AnimatedQuantizerShape.md)\<`B`\>, `never`, [`Scope`](https://effect-ts.github.io/effect/effect/Scope.ts.html)\> = `makeAnimatedQuantizer`
 
 Wrap a quantizer with transition-aware output interpolation.
 
@@ -61,6 +61,19 @@ Per-state numeric output maps for interpolation; omitted,
                      they are derived from the wrapped LiveQuantizer's
                      `config.outputs.css` tables (finite-numeric strings are
                      coerced to numbers so they lerp)
+
+##### options?
+
+Optional injection bag. `options.scheduler` supplies a
+                     `Scheduler.Shape` frame clock (e.g. `Scheduler.raf()`
+                     to align frames to the display, or `Scheduler.fixedStep(fps)`
+                     for deterministic rendering/tests). Omitted, the animation
+                     drives its own internal ~60fps loop via a fixed 16ms sleep
+                     (the historical default — existing callers are unchanged).
+
+###### scheduler?
+
+`SchedulerShape`
 
 #### Returns
 
