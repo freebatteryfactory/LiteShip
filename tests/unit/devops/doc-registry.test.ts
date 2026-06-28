@@ -24,7 +24,9 @@ import {
 } from '../../../scripts/lib/doc-registry.js';
 import { renderBenchBlock } from '../../../scripts/lib/bench-snapshot.js';
 
-const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8');
+// Normalize CRLF so a Windows checkout (autocrlf) doesn't fail the block match
+// against the `\n`-joined render output.
+const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Extract the inner content of a `<!-- BEGIN NAME ... --> ... <!-- END NAME -->` block. */
 function blockInner(name: string): string {
@@ -48,13 +50,19 @@ describe('doc-registry — generated README blocks match their source of truth',
 
 describe('doc-registry — every publishable package is accounted for', () => {
   const publishable = loadPackageManifests().filter((p) => p.publishable);
-  const grouped = new Set(PACKAGE_GROUPS.flatMap((g) => g.members));
+  const groupMembers = PACKAGE_GROUPS.flatMap((g) => g.members);
+  const grouped = new Set(groupMembers);
 
   it('lands in exactly one README package group or the prose-only allowlist', () => {
     for (const pkg of publishable) {
-      const inGroup = grouped.has(pkg.name);
-      const inProse = (PROSE_ONLY as readonly string[]).includes(pkg.name);
-      expect(inGroup !== inProse, `${pkg.name} must be in exactly one of {package group, PROSE_ONLY}`).toBe(true);
+      // Count occurrences (not membership) so a package duplicated across two
+      // groups — which would print twice in the README — fails here too.
+      const groupCount = groupMembers.filter((m) => m === pkg.name).length;
+      const proseCount = (PROSE_ONLY as readonly string[]).includes(pkg.name) ? 1 : 0;
+      expect(
+        groupCount + proseCount,
+        `${pkg.name} must appear EXACTLY once across package groups + PROSE_ONLY (found ${groupCount + proseCount})`,
+      ).toBe(1);
     }
   });
 

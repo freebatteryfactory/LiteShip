@@ -32,7 +32,9 @@ const BLOCKS: readonly Block[] = [
 function applyBlock(source: string, name: string, inner: string): string {
   const re = new RegExp(`(<!-- BEGIN ${name}[^]*?-->\\n)[^]*?(\\n<!-- END ${name} -->)`);
   if (!re.test(source)) throw new Error(`gen-docs: markers for block "${name}" not found`);
-  return source.replace(re, `$1${inner}$2`);
+  // Function replacer so `$1`/`$&`/`$$` inside the generated markdown are written
+  // verbatim, not interpreted as replacement patterns.
+  return source.replace(re, (_match, begin: string, end: string) => `${begin}${inner}${end}`);
 }
 
 const check = process.argv.includes('--check');

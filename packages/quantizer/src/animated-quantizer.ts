@@ -117,7 +117,8 @@ function deriveInterpolationOutputs<B extends Boundary.Shape>(
  * Wraps an existing {@link Quantizer} and applies easing/duration-based
  * interpolation between old and new output values when a boundary crossing
  * occurs. Produces an `interpolated` stream of frames with progress and
- * lerped numeric outputs at ~60fps.
+ * lerped numeric outputs — at ~60fps by default, or on the cadence of an
+ * injected `options.scheduler` (`raf` / `fixedStep` / `audioSync`).
  *
  * @example
  * ```ts
@@ -229,7 +230,15 @@ function makeAnimatedQuantizer<B extends Boundary.Shape>(
 
             const animationLoop = Effect.gen(function* () {
               if (delay > 0) {
-                yield* Effect.sleep(Duration.millis(delay));
+                if (scheduler !== undefined) {
+                  // Honor the pre-roll on the SAME injected clock so a fixedStep
+                  // render/test stays deterministic — a wall-clock `Effect.sleep`
+                  // here would desync the delay from the scheduled frames. Drain a
+                  // delay-length Animation.run on the scheduler (frames discarded).
+                  yield* Stream.runDrain(Animation.run({ duration: mkMillis(delay), easing: linearEasing, scheduler }));
+                } else {
+                  yield* Effect.sleep(Duration.millis(delay));
+                }
               }
 
               if (duration <= 0) {

@@ -135,7 +135,7 @@ async function loadProfileFromPath(profilePath: string, cwd: string): Promise<De
   if (abs.endsWith('.json')) {
     return profileFromJson(JSON.parse(readFileSync(abs, 'utf8')), abs, cwd);
   }
-  if (abs.endsWith('.js') || abs.endsWith('.mjs') || abs.endsWith('.ts')) {
+  if (abs.endsWith('.js') || abs.endsWith('.mjs')) {
     return profileFromModule(abs, cwd);
   }
   throw ValidationError(

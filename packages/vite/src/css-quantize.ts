@@ -515,10 +515,13 @@ export function viewportQueryAxis(input: string): 'width' | 'height' | null {
 export function viewportContainmentRule(names: Iterable<string>, selector: string = ':root'): string | null {
   const unique = [...new Set(names)];
   if (unique.length === 0) return null;
+  // A blank/whitespace-only override would emit an invalid rule head — fall back
+  // to `:root` rather than break the sheet's containment.
+  const sel = selector.trim() === '' ? ':root' : selector;
   if (!unique.includes('viewport-height')) {
-    return `${selector} {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
+    return `${sel} {\n  container-type: inline-size;\n  container-name: ${unique.join(' ')};\n}`;
   }
-  return `${selector} {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: ${unique.join(' ')};\n}`;
+  return `${sel} {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: ${unique.join(' ')};\n}`;
 }
 
 /**

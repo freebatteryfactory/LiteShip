@@ -17,6 +17,7 @@
  * @module
  */
 
+import { Diagnostics } from '@czap/core';
 import type { BoundaryStateDetail } from './boundary.js';
 import { readSignalValue, attachSignalObserver } from './boundary.js';
 
@@ -62,6 +63,16 @@ export function driveUniformFromSignal(element: HTMLElement, input: string, unif
 
   emit(); // seed the initial frame so the uniform is correct before the first change
   const stop = attachSignalObserver(input, emit);
+
+  // No observer attached AND no current value means `input` is not a recognized
+  // signal family (a typo) — it would otherwise no-op forever in silence. Warn once.
+  if (stop === null && readSignalValue(input) === undefined) {
+    Diagnostics.warnOnce({
+      source: 'czap/astro.uniform-signal',
+      code: 'unknown-uniform-signal',
+      message: `driveUniformFromSignal: "${input}" is not a recognized continuous signal — no \`${uniform}\` uniform updates will be emitted (likely a typo; see the SignalSource vocabulary in signal-input.ts).`,
+    });
+  }
 
   return () => {
     stop?.();

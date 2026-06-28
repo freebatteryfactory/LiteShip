@@ -502,6 +502,7 @@ export function integration(config?: IntegrationConfig): AstroIntegration {
           if (projectRoot && dir) {
             const boundaries = await collectBoundaryManifest(projectRoot, {
               boundaryDir: config?.vite?.dirs?.boundary,
+              container: config?.vite?.quantize?.container,
             });
             if (Object.keys(boundaries).length > 0) {
               const manifestFile: BoundaryManifestFile = {
@@ -551,8 +552,8 @@ function watchConventionPrimitives(
       const dir = path.dirname(pattern);
       const suffix = path.basename(pattern).slice(1);
       if (!existsSync(dir)) continue;
-      for (const entry of readdirSync(dir)) {
-        if (entry.endsWith(suffix)) candidates.push(path.join(dir, entry));
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isFile() && entry.name.endsWith(suffix)) candidates.push(path.join(dir, entry.name));
       }
     }
   }

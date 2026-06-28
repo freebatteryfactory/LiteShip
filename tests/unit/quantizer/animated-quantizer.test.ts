@@ -625,4 +625,31 @@ describe('AnimatedQuantizer.make — injected scheduler', () => {
       vi.useRealTimers();
     }
   });
+
+  test('a transition delay is consumed on the injected clock, not wall-clock', async () => {
+    // With a `delay`, the pre-roll must ride the SAME scheduler so a deterministic
+    // render/test stays deterministic — a wall-clock Effect.sleep would hang here
+    // (no real timers) or desync the frames. The microtask clock drives both the
+    // delay and the transition, so the stream completes with the landed frame.
+    const clock = microtaskClock();
+    const frames = await runScoped(
+      Effect.gen(function* () {
+        const animated = yield* AnimatedQuantizer.make(
+          crossingQuantizer(),
+          { 'compact->expanded': { duration: Millis(48), delay: Millis(32) } },
+          { compact: { opacity: 0 }, expanded: { opacity: 1 } },
+          { scheduler: clock.scheduler },
+        );
+        return Array.from(
+          yield* Stream.runCollect(Stream.takeUntil(animated.interpolated, (f) => f.progress >= 1)),
+        );
+      }),
+    );
+
+    // The delay was driven by the scheduler too (extra scheduled ticks beyond the
+    // transition's own), and the transition still lands cleanly.
+    expect(clock.calls()).toBeGreaterThan(0);
+    expect(frames.at(-1)?.progress).toBe(1);
+    expect(frames.at(-1)?.outputs.opacity).toBe(1);
+  });
 });
