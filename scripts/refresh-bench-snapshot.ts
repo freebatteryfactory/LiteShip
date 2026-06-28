@@ -19,7 +19,12 @@ import { resolve } from 'node:path';
 
 function arg(flag: string): string | undefined {
   const i = process.argv.indexOf(flag);
-  return i >= 0 ? process.argv[i + 1] : undefined;
+  if (i < 0) return undefined;
+  const value = process.argv[i + 1];
+  if (value === undefined || value.startsWith('--')) {
+    throw new Error(`${flag} requires a value (got ${value === undefined ? 'nothing' : `the next flag "${value}"`})`);
+  }
+  return value;
 }
 
 const fromDir = arg('--from') ?? 'benchmarks';

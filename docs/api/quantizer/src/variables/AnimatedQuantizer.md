@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:340](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L340)
+Defined in: [quantizer/src/animated-quantizer.ts:349](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L349)
 
 Animated quantizer namespace.
 
@@ -31,7 +31,8 @@ Create an animated quantizer that interpolates outputs during transitions.
 Wraps an existing [Quantizer](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
 occurs. Produces an `interpolated` stream of frames with progress and
-lerped numeric outputs at ~60fps.
+lerped numeric outputs — at ~60fps by default, or on the cadence of an
+injected `options.scheduler` (`raf` / `fixedStep` / `audioSync`).
 
 #### Type Parameters
 

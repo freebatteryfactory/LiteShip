@@ -11,10 +11,30 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { BoundaryStateDetail } from '../../../packages/astro/src/runtime/boundary.js';
 import { driveUniformFromSignal } from '../../../packages/astro/src/runtime/uniform-signal.js';
 
+// Cleanup is collected here and run UNCONDITIONALLY in afterEach, so a failed
+// assertion can't leak a live signal subscription or a patched global descriptor
+// into the next test (which would make this file order-dependent).
+const stops: Array<() => void> = [];
+const restores: Array<() => void> = [];
+
+function track(stop: () => void): () => void {
+  stops.push(stop);
+  return stop;
+}
+
+function defineProp(target: object, prop: string, value: number): void {
+  const original = Object.getOwnPropertyDescriptor(target, prop);
+  restores.push(() => {
+    if (original) Object.defineProperty(target, prop, original);
+    else delete (target as Record<string, unknown>)[prop];
+  });
+  Object.defineProperty(target, prop, { value, configurable: true });
+}
+
 function setScroll(scrollY: number, scrollHeight: number, innerHeight: number): void {
-  Object.defineProperty(window, 'innerHeight', { value: innerHeight, configurable: true });
-  Object.defineProperty(window, 'scrollY', { value: scrollY, configurable: true });
-  Object.defineProperty(document.documentElement, 'scrollHeight', { value: scrollHeight, configurable: true });
+  defineProp(window, 'innerHeight', innerHeight);
+  defineProp(window, 'scrollY', scrollY);
+  defineProp(document.documentElement, 'scrollHeight', scrollHeight);
 }
 
 function capture(el: HTMLElement): BoundaryStateDetail[] {
@@ -25,6 +45,8 @@ function capture(el: HTMLElement): BoundaryStateDetail[] {
 
 describe('driveUniformFromSignal', () => {
   afterEach(() => {
+    for (const stop of stops.splice(0)) stop();
+    for (const restore of restores.splice(0).reverse()) restore();
     vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
@@ -34,7 +56,7 @@ describe('driveUniformFromSignal', () => {
     const el = document.createElement('canvas');
     const events = capture(el);
 
-    const stop = driveUniformFromSignal(el, 'scroll.progress', 'u_progress');
+    track(driveUniformFromSignal(el, 'scroll.progress', 'u_progress'));
 
     expect(events.length).toBeGreaterThanOrEqual(1); // initial frame is synchronous
     const detail = events[0]!;
@@ -43,27 +65,24 @@ describe('driveUniformFromSignal', () => {
     expect(detail.discrete).toEqual({});
     expect(detail.css).toEqual({});
     expect(detail.aria).toEqual({});
-
-    stop();
   });
 
   test('is general over continuous signals (viewport.width)', () => {
-    Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+    defineProp(window, 'innerWidth', 1024);
     const el = document.createElement('canvas');
     const events = capture(el);
 
-    const stop = driveUniformFromSignal(el, 'viewport.width', 'u_w');
+    track(driveUniformFromSignal(el, 'viewport.width', 'u_w'));
 
     expect(events[0]?.glsl.u_w).toBe(1024);
     expect(events[0]?.wgsl.u_w).toBe(1024);
-    stop();
   });
 
   test('an unknown signal family emits nothing and stop() is a safe no-op', () => {
     const el = document.createElement('canvas');
     const events = capture(el);
 
-    const stop = driveUniformFromSignal(el, 'totally.bogus', 'u_x');
+    const stop = track(driveUniformFromSignal(el, 'totally.bogus', 'u_x'));
 
     expect(events).toHaveLength(0);
     expect(() => stop()).not.toThrow();
