@@ -1,0 +1,78 @@
+{
+  "_tag": "ReadmeBenchSnapshot",
+  "_version": 1,
+  "source": {
+    "kind": "ci-truth-linux",
+    "runId": "28268276811",
+    "commit": "5f3d76f60d723e79ac2ae958b762edfb919125d5",
+    "capturedAt": "2026-06-26T22:55:54.620Z",
+    "env": "linux x64, Node 22"
+  },
+  "gauntlet": {
+    "status": "passed",
+    "durationFormatted": "40m7s"
+  },
+  "benchGate": {
+    "hardGateCount": 7,
+    "failedHardGateCount": 0,
+    "replicateCount": 5
+  },
+  "hardGatedPairs": [
+    {
+      "label": "satellite",
+      "medianDirectiveNs": 6240,
+      "medianBaselineNs": 5979,
+      "medianOverheadPct": 4.33,
+      "thresholdPct": 15
+    },
+    {
+      "label": "stream",
+      "medianDirectiveNs": 1727737,
+      "medianBaselineNs": 1738277,
+      "medianOverheadPct": -0.35,
+      "thresholdPct": 15
+    },
+    {
+      "label": "llm",
+      "medianDirectiveNs": 1842488,
+      "medianBaselineNs": 1759985,
+      "medianOverheadPct": 4.73,
+      "thresholdPct": 15
+    },
+    {
+      "label": "worker",
+      "medianDirectiveNs": 6838,
+      "medianBaselineNs": 6660,
+      "medianOverheadPct": 2.58,
+      "thresholdPct": 15
+    },
+    {
+      "label": "llm-startup-shared",
+      "medianDirectiveNs": 143557,
+      "medianBaselineNs": 145402,
+      "medianOverheadPct": -1.33,
+      "thresholdPct": 25
+    },
+    {
+      "label": "llm-promoted-startup-shared",
+      "medianDirectiveNs": 392832,
+      "medianBaselineNs": 393929,
+      "medianOverheadPct": -0.29,
+      "thresholdPct": 25
+    },
+    {
+      "label": "worker-runtime-startup-shared",
+      "medianDirectiveNs": 2270,
+      "medianBaselineNs": 5728,
+      "medianOverheadPct": -58.69,
+      "thresholdPct": 25
+    }
+  ],
+  "diagnosticWatch": {
+    "label": "llm-runtime-steady",
+    "directiveP99Ns": 593692,
+    "absoluteP99BudgetNs": 1000000,
+    "pctOfBudget": 59.37,
+    "p99ToBaselineRatio": 20.36
+  }
+}

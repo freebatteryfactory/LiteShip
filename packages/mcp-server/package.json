@@ -1,7 +1,7 @@
 {
   "name": "@czap/mcp-server",
   "version": "0.4.0",
-  "description": "Thin MCP server over czap's capsule factory dispatch",
+  "description": "Model Context Protocol server for AI tooling integration",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
