@@ -258,7 +258,7 @@ Create the KV namespace first: `pnpm exec wrangler kv namespace create CZAP_BOUN
 
 ### CSP and isolation (Cloudflare)
 
-Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `client:worker` in `@czap/astro`, also emit COOP/COEP on HTML responses (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`). See [SECURITY.md](./SECURITY.md) §Cloudflare Workers.
+Same browser CSP as [Required CSP directives](#required-csp-directives) above. If you enable `workers: { enabled: true }` (the `client:worker` directive) in `@czap/astro`, it emits COOP/COEP (`Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`) automatically on dynamic responses — and you emit the same pair from your CDN for a static build. Note these apply **site-wide** (not per-route), so they can block CORP-less cross-origin images/fonts/iframes across the whole origin; use `workers: { coep: 'credentialless' }` if that bites. See [SECURITY.md](./SECURITY.md) §Cloudflare Workers.
 
 ### KV trust boundary
 

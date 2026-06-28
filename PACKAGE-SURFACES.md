@@ -567,6 +567,7 @@ Main surfaces:
 
 - `runAuditPasses`
 - `AuditPassResult`
+- `consumerDevopsProfile(cwd, base?)` — discover installed packages under `cwd/node_modules` and audit them against a base profile's topology. A downstream runs this via `czap audit --consumer --profile <their-profile>` (the profile is the discovery base, so they audit their own packages, not just `@czap/*`).
 
 ---
 

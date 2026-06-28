@@ -16,6 +16,7 @@ import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { auditCommand, commandRegistry, mcpExposedDescriptors, type CommandContext } from '@czap/command';
 import { audit } from '../../../packages/cli/src/commands/audit.js';
+import { loadProfile } from '../../../packages/cli/src/lib/load-profile.js';
 import { AUDIT_WARNING_FLOOR } from '@czap/command';
 import { collectWarningInventory } from '../../../packages/cli/src/commands/audit-floor.js';
 
@@ -272,10 +273,15 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     expect('findings' in plainReceipt).toBe(false);
   });
 
-  it('--consumer and --profile are mutually exclusive (structured failure)', async () => {
+  it('--consumer + --profile uses the profile as the consumer discovery base', async () => {
+    // A downstream audits THEIR OWN topology in consumer mode: the `--profile`
+    // becomes the discovery base, so the resolved profile carries the acme
+    // identity (internalPackagePrefix / packageTopology), not LiteShip's `@czap/`.
     const { root, profilePath } = acmeFixture('json');
-    const code = await audit({ profile: profilePath, consumer: true, cwd: root, pretty: false });
-    expect(code).toBe(1);
+    const { profile, source } = await loadProfile(profilePath, root, { consumer: true });
+    expect(source).toBe('consumer');
+    expect(profile.internalPackagePrefix).toBe('@acme/');
+    expect(Object.keys(profile.packageTopology).sort()).toEqual(['@acme/app', '@acme/core']);
   });
 
   it('--consumer builds the installed-package profile (profileSource: consumer)', async () => {

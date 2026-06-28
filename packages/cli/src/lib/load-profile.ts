@@ -94,9 +94,12 @@ async function profileFromModule(modPath: string, cwd: string): Promise<DevopsPr
  * Resolve a profile from an explicit path (or the LiteShip default rooted at cwd).
  * Throws a clear Error on an unknown extension, a missing file, or an invalid shape.
  *
- * `consumer: true` (czap audit --consumer) builds the profile from the
- * `@czap/*` packages installed under cwd's node_modules — still explicit,
- * no walk-up magic — and is mutually exclusive with `--profile`.
+ * `consumer: true` (czap audit --consumer) builds the profile by discovering
+ * the installed packages under cwd's node_modules — still explicit, no walk-up
+ * magic. With `--profile`, that profile is the discovery BASE (its
+ * `packageTopology` names which packages to find, its `surfacePolicy` drives the
+ * surface pass), so a downstream can audit THEIR OWN topology; without it, the
+ * base is LiteShip's `@czap/*`.
  */
 export async function loadProfile(
   profilePath: string | undefined,
@@ -104,20 +107,36 @@ export async function loadProfile(
   opts: { readonly consumer?: boolean } = {},
 ): Promise<LoadedProfile> {
   if (opts.consumer) {
-    if (profilePath) throw ValidationError('profile.load', '--consumer and --profile are mutually exclusive');
-    return { profile: consumerDevopsProfile(cwd), source: 'consumer' };
+    // `--consumer` discovers the installed packages under cwd/node_modules and
+    // audits them. With `--profile`, that profile is the discovery BASE — its
+    // `packageTopology` names which packages to discover and its `surfacePolicy`
+    // drives the surface pass — so a downstream can audit THEIR OWN topology, not
+    // just LiteShip's `@czap/*`. Without `--profile`, the base is LiteShip's own.
+    const base = profilePath ? await loadProfileFromPath(profilePath, cwd) : undefined;
+    return {
+      profile: base ? consumerDevopsProfile(cwd, base) : consumerDevopsProfile(cwd),
+      source: 'consumer',
+    };
   }
   if (!profilePath) {
     return { profile: withRepoRoot(liteshipDevopsProfile, cwd), source: 'default' };
   }
+  return { profile: await loadProfileFromPath(profilePath, cwd), source: 'file' };
+}
+
+/**
+ * Load an explicit `--profile <path>` into a {@link DevopsProfile}. Explicit
+ * path only — no walk-up discovery; the file must be `.json`, `.js`, `.mjs`, or
+ * `.ts`. Shared by the default audit and the `--consumer` base.
+ */
+async function loadProfileFromPath(profilePath: string, cwd: string): Promise<DevopsProfile> {
   const abs = resolve(cwd, profilePath);
   if (!existsSync(abs)) throw NotFoundError('file', profilePath, '--profile path not found');
-
   if (abs.endsWith('.json')) {
-    return { profile: profileFromJson(JSON.parse(readFileSync(abs, 'utf8')), abs, cwd), source: 'file' };
+    return profileFromJson(JSON.parse(readFileSync(abs, 'utf8')), abs, cwd);
   }
   if (abs.endsWith('.js') || abs.endsWith('.mjs') || abs.endsWith('.ts')) {
-    return { profile: await profileFromModule(abs, cwd), source: 'file' };
+    return profileFromModule(abs, cwd);
   }
   throw ValidationError(
     'profile.load',

@@ -38,7 +38,7 @@ You should see one JSON line like the above on stdout (shown wrapped here) and, 
 | `czap scene compile\|dev\|render\|verify <path>` | Compile, watch, render, or check a scene definition. |
 | `czap asset analyze\|verify` | Analyze (beats, onsets, waveform) or check an asset. |
 | `czap capsule list\|inspect\|verify` | Work with capsules — self-describing component packages — from the manifest. |
-| `czap audit [--consumer\|--profile <p>] [--findings]` | Run the `@czap/audit` engine; receipt carries the counts. |
+| `czap audit [--profile <p>] [--consumer] [--findings]` | Run the `@czap/audit` structure/integrity/surface engine; receipt carries the counts (exit 1 on any error finding). `--profile <p>` audits a custom topology (`.json`/`.js`/`.mjs`/`.ts`, explicit path, no walk-up); `--consumer` audits the packages installed under `node_modules` instead of the repo source; combine them to audit a downstream's OWN topology — the profile becomes the discovery base. `--findings` adds per-finding detail to the receipt. |
 | `czap check [--ir]` | Run the gauntlet gate fold in-process (`litelaunchGauntlet`) — structured findings + a blocking verdict, no subprocess. `--ir` selects the IR-enriched fold. |
 | `czap plumb` | Plumb-completeness gate: fail on any `tests/generated/` placeholder skip or any published package not classified runtime/tooling/deferred. |
 | `czap sbom` | Emit the deterministic, content-addressed SBOM (lockfile policy + CycloneDX + completeness) as a reviewable working-tree artifact. |
