@@ -55,6 +55,10 @@ dev/status/stop` delegates to Astro background dev-server management, and `czap 
   for the convention primitive sources (boundaries / tokens / themes / styles, via the resolver's own
   `primitiveSearchPatterns`), so editing a definition restarts the dev server and re-collects the
   manifest — even for definitions not yet imported by a CSS block.
+- `@czap/cli` — **`czap audit --consumer --profile <p>` now combines** (was mutually exclusive): the
+  profile becomes the consumer discovery base, so a downstream can run the audit engine against THEIR
+  OWN installed `node_modules` topology, not just LiteShip's `@czap/*`. The engine seam
+  (`consumerDevopsProfile(cwd, base)`) was already there; this wires it to the CLI.
 - **Plumb-completeness gate** (`plumb:gate`, gauntlet phase 37). A package-plumb ledger
   classifies every published package `runtime`/`tooling`/`deferred` (an unclassified package
   fails CI, so a test-only subsystem can't ship hidden) + an unwired-capsule floor. Closes
