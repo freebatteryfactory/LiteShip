@@ -173,7 +173,7 @@ Reach for it when you need:
 - boundary evaluation
 - output-target routing
 - motion-tier filtering
-- animated transitions between named states
+- animated transitions between named states, optionally on an injected frame clock (`AnimatedQuantizer.make(…, { scheduler })` takes a `@czap/core` `Scheduler.Shape` — `raf` / `fixedStep` / `audioSync`; default is an internal 16ms loop)
 
 Main surfaces:
 
@@ -288,6 +288,7 @@ Reach for it when you need:
 - parsing and compiling `@token`, `@theme`, `@style`, and `@quantize`
 - definition resolution
 - HMR behavior
+- viewport `@container` containment, retargetable off `:root` via the `quantize.container` plugin option
 - virtual modules
 
 Main surfaces:
@@ -352,6 +353,7 @@ Host-owned shared runtime surfaces:
 - `@czap/astro/runtime` directive boot scanner (`bootstrapDirectives`, `scanAndBootDirectives`) — activates `data-czap-directive` / legacy `client:*` markers on plain elements and `.astro` output
 - `@czap/astro/runtime` wasm runtime configuration and loading
 - `@czap/astro/runtime` audio-signal producer/readers (`driveAudioFromAnalyser`, `readAudioSignal`, `attachAudioObserver`) — wire a live `AnalyserNode` so `audio.amplitude`/`audio.beat` boundaries carve
+- `@czap/astro/runtime` continuous signal→uniform driver (`driveUniformFromSignal`) — drive the existing `czap:uniform-update` GPU event continuously from a continuous signal (e.g. `scroll.progress`) into a GLSL/WGSL uniform, collapsing the hand-rolled scroll→uniform consumer bridge (0.4.0)
 - `@czap/astro/runtime` runtime DocumentGraph loader (`loadGraphRuntime`, `lowerGraph`, `castGraphDelta`) — lower a serialized `DocumentGraph` onto the live cast pipeline and apply a `GraphPatch` delta at runtime; the `client:graph` directive boots it from `data-czap-graph` (0.4.0)
 - `@czap/astro/runtime` scene→live bridge (`bridgeSceneToGraph`) — drive the live graph from a signal-indexed `@czap/scene`: a discrete crossing re-casts, the continuous tween writes a leaf CSS var / GPU uniform and never patches the graph (0.4.0)
 - `@czap/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, re-cast the delta; the model producer is downstream (0.4.0)

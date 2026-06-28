@@ -47,6 +47,14 @@ dev/status/stop` delegates to Astro background dev-server management, and `czap 
   continuous signal (e.g. `scroll.progress`), writing the value into the GLSL/WGSL uniform the GPU runtime
   already consumes each (rAF-throttled) frame. Replaces the hand-rolled scroll→uniform glue and its
   0..1-vs-0..100 scale footgun.
+- `@czap/vite` — **`@quantize` container-target opt-out.** New `quantize.container` plugin option
+  retargets the auto-emitted viewport `@container` containment off `:root` to a named selector
+  (e.g. `'.czap-vp'`) for hosts whose layout can't have a size-contained `:root`. Default `:root`
+  unchanged; applies to both the CSS transform and emitted boundary assets.
+- `@czap/astro` — **convention-file watch battery.** The integration now calls Astro's `addWatchFile`
+  for the convention primitive sources (boundaries / tokens / themes / styles, via the resolver's own
+  `primitiveSearchPatterns`), so editing a definition restarts the dev server and re-collects the
+  manifest — even for definitions not yet imported by a CSS block.
 - **Plumb-completeness gate** (`plumb:gate`, gauntlet phase 37). A package-plumb ledger
   classifies every published package `runtime`/`tooling`/`deferred` (an unclassified package
   fails CI, so a test-only subsystem can't ship hidden) + an unwired-capsule floor. Closes

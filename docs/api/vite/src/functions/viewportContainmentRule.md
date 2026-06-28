@@ -6,9 +6,9 @@
 
 # Function: viewportContainmentRule()
 
-> **viewportContainmentRule**(`names`): `string` \| `null`
+> **viewportContainmentRule**(`names`, `selector?`): `string` \| `null`
 
-Defined in: [vite/src/css-quantize.ts:506](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L506)
+Defined in: [vite/src/css-quantize.ts:515](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L515)
 
 Build the single `:root` containment rule for a sheet's viewport-based
 boundaries: a `container-type` declaration plus every collected
@@ -28,11 +28,24 @@ Returns `null` when no viewport container names were collected
 (non-viewport boundaries declare their own containers; see the
 `container-not-declared` diagnostic).
 
+`selector` is the element the containment is declared on — `:root` by
+default. A host whose layout can't have `:root` be a container (a
+size-contained `:root` removes it from its parent's size calc, which a
+fixed/absolute viewport-locked wrapper conflicts with) sets the plugin's
+`quantize.container` to a named selector (e.g. `.czap-vp`) and is then
+responsible for sizing that element to the viewport. Width-only sheets
+stay `inline-size`; a `viewport-height` name upgrades to `size` + a
+`100dvh` block-size on the chosen selector.
+
 ## Parameters
 
 ### names
 
 `Iterable`\<`string`\>
+
+### selector?
+
+`string` = `':root'`
 
 ## Returns
 

@@ -1194,6 +1194,20 @@ describe('viewport containment aggregation', () => {
     );
   });
 
+  test('a custom container selector retargets the containment off :root (inline-size)', () => {
+    const containment = viewportContainmentRule(['viewport-width'], '.czap-vp');
+    expect(containment).toBe('.czap-vp {\n  container-type: inline-size;\n  container-name: viewport-width;\n}');
+    // default is unchanged when the selector is omitted
+    expect(viewportContainmentRule(['viewport-width'])).toContain(':root {');
+  });
+
+  test('a custom container selector also retargets the size-containment rule', () => {
+    const containment = viewportContainmentRule(['viewport-height'], '.czap-vp');
+    expect(containment).toBe(
+      '.czap-vp {\n  container-type: size;\n  block-size: 100dvh;\n  container-name: viewport-height;\n}',
+    );
+  });
+
   test('without a sheet context a single viewport.height block inlines its size :root rule', () => {
     const blocks = parseQuantizeBlocks(css, FILE);
     const heightBoundary = makeBoundary('viewport.height', [

@@ -53,6 +53,8 @@ export interface TransformCssContext {
   readonly cache: PrimitiveResolutionCache;
   readonly projectRoot: string;
   readonly dirs?: PrimitiveDirs;
+  /** Selector for the auto-emitted viewport `@container` containment (default `:root`). */
+  readonly quantizeContainer?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +144,7 @@ function watchPrimitiveSource(ctx: TransformCssContext, source: string | undefin
  * and the sheet-level viewport-containment aggregation.
  */
 export async function transformCss(code: string, id: string, ctx: TransformCssContext): Promise<string | null> {
-  const { cache, projectRoot, dirs } = ctx;
+  const { cache, projectRoot, dirs, quantizeContainer } = ctx;
 
   // Quick check -- skip files with no @czap at-rules
   const hasToken = code.includes('@token');
@@ -315,7 +317,7 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
       }
     }
 
-    const containment = viewportContainmentRule(viewportContainerNames);
+    const containment = viewportContainmentRule(viewportContainerNames, quantizeContainer);
     if (containment) {
       // CSS requires `@charset` to be the very first thing in a sheet
       // and `@import` / `@namespace` to precede all style rules —
