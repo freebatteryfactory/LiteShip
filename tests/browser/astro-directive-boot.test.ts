@@ -12,6 +12,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { Diagnostics } from '@czap/core';
 import { bootstrapDirectives, scanAndBootDirectives } from '../../packages/astro/src/runtime/directive-boot.js';
 import { installSwapPipeline } from '../../packages/astro/src/runtime/swap-pipeline.js';
 
@@ -21,6 +22,12 @@ vi.mock('../../packages/astro/src/client-directives/llm.js', () => ({
   default: () => {
     throw new Error('simulated chunk init failure');
   },
+}));
+
+// No-op stand-in: isolates the directive-COLLISION test from real WebGL/WebGPU
+// init so it exercises only the scanner's double-claim detection.
+vi.mock('../../packages/astro/src/client-directives/gpu.js', () => ({
+  default: () => {},
 }));
 
 const boundary = JSON.stringify({
@@ -92,6 +99,26 @@ describe('directive boot scanner', () => {
 
     expect(el.getAttribute('data-czap-state')).toBeNull();
     expect(el.hasAttribute('data-czap-directive-bound')).toBe(false);
+  });
+
+  test('two czap directives on one element warn about the collision (the client:gpu + satellite trap)', async () => {
+    vi.stubGlobal('innerWidth', 500);
+    const warnSpy = vi.spyOn(Diagnostics, 'warnOnce');
+    // One element carrying BOTH a satellite marker and a legacy client:gpu
+    // attribute -- exactly the canvas that booted a satellite and never started
+    // its GPU shader, with no warning.
+    const el = makeMarkedElement({
+      'data-czap-boundary': boundary,
+      'data-czap-directive': 'satellite',
+      'client:gpu': '',
+    });
+
+    await scanAndBootDirectives(['satellite', 'gpu']);
+
+    // satellite (scanned first) claims the element; gpu then sees it already
+    // bound and warns instead of silently fighting over the node.
+    expect(warnSpy).toHaveBeenCalledWith(expect.objectContaining({ code: 'directive-collision:gpu+satellite' }));
+    expect(el.getAttribute('data-czap-directive-bound')).toContain('satellite');
   });
 
   test('re-scanning is idempotent per element', async () => {
