@@ -8,7 +8,7 @@
 
 > `const` **Composable**: `ComposableFactory`
 
-Defined in: [core/src/composable.ts:286](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L286)
+Defined in: [core/src/composable.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L286)
 
 Composable — content-addressed entity algebra over czap primitives.
 

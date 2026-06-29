@@ -6,11 +6,11 @@
 
 # Function: bridgeDiagnosticsToAstroLogger()
 
-> **bridgeDiagnosticsToAstroLogger**(`logger`): [`DiagnosticsSink`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md)
+> **bridgeDiagnosticsToAstroLogger**(`logger`): [`DiagnosticsSink`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md)
 
-Defined in: [astro/src/diagnostics-bridge.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L58)
+Defined in: [astro/src/diagnostics-bridge.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L58)
 
-Build a [DiagnosticsSink](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md) that forwards every event to an Astro logger,
+Build a [DiagnosticsSink](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md) that forwards every event to an Astro logger,
 mapping `error` → `logger.error` and `warn` → `logger.warn`.
 
 ## Parameters
@@ -21,4 +21,4 @@ mapping `error` → `logger.error` and `warn` → `logger.warn`.
 
 ## Returns
 
-[`DiagnosticsSink`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md)
+[`DiagnosticsSink`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md)

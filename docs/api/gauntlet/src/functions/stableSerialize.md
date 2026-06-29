@@ -8,7 +8,7 @@
 
 > **stableSerialize**(`value`): `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:258](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L258)
+Defined in: [gauntlet/src/verdict-cache.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L258)
 
 A deterministic, recursively KEY-SORTED serialization of a plain-data value — the
 fold a fact-reading [Gate.evidenceDigest](../interfaces/Gate.md#evidencedigest) uses to digest its host-injected

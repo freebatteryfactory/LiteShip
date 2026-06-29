@@ -200,7 +200,7 @@ The compile step and the page must share one definition (that's why step 2 put t
 The contributor path (cloning the monorepo, workspace install, Playwright browsers, `pnpm run build` with composite project references, the test loop and the full gauntlet) lives in [CONTRIBUTING.md](./CONTRIBUTING.md). The short version:
 
 ```bash
-git clone https://github.com/heyoub/LiteShip.git
+git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
 pnpm shakedown   # first-run aggregate: doctor → build → test
@@ -228,4 +228,4 @@ pnpm shakedown   # first-run aggregate: doctor → build → test
 
 **Tests hang in browser mode.** Make sure Playwright browsers are installed: `pnpm exec playwright install`.
 
-Found a different issue? Open one at [github.com/heyoub/LiteShip/issues](https://github.com/heyoub/LiteShip/issues).
+Found a different issue? Open one at [github.com/freebatteryfactory/LiteShip/issues](https://github.com/freebatteryfactory/LiteShip/issues).

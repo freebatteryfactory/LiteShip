@@ -6,7 +6,7 @@
 
 # Interface: EvidenceRecorder
 
-Defined in: [gauntlet/src/evidence-recorder.ts:128](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L128)
+Defined in: [gauntlet/src/evidence-recorder.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L128)
 
 A recorder + the wrapped context whose reads it captures.
 
@@ -16,7 +16,7 @@ A recorder + the wrapped context whose reads it captures.
 
 > `readonly` **context**: [`GateContext`](GateContext.md)
 
-Defined in: [gauntlet/src/evidence-recorder.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L130)
+Defined in: [gauntlet/src/evidence-recorder.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L130)
 
 The instrumented context to hand to `gate.run` / `gate.evidenceDigest`.
 
@@ -26,7 +26,7 @@ The instrumented context to hand to `gate.run` / `gate.evidenceDigest`.
 
 > **reads**(): `ReadonlySet`\<`string`\>
 
-Defined in: [gauntlet/src/evidence-recorder.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L132)
+Defined in: [gauntlet/src/evidence-recorder.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L132)
 
 The set of channels read so far (an `out-of-IR readFile` records as `readFile:<path>`).
 
@@ -40,7 +40,7 @@ The set of channels read so far (an `out-of-IR readFile` records as `readFile:<p
 
 > **reset**(): `void`
 
-Defined in: [gauntlet/src/evidence-recorder.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L134)
+Defined in: [gauntlet/src/evidence-recorder.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L134)
 
 Reset the recorded read-set (so `run` and `evidenceDigest` can be observed separately).
 

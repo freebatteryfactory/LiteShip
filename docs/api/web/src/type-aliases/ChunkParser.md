@@ -8,7 +8,7 @@
 
 > **ChunkParser** = (`event`) => [`LLMChunk`](../interfaces/LLMChunk.md) \| `null`
 
-Defined in: [web/src/stream/llm-adapter.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L29)
+Defined in: [web/src/stream/llm-adapter.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L29)
 
 User-provided function that converts a raw SSE message into an
 [LLMChunk](../interfaces/LLMChunk.md) (or `null` to drop it). The adapter calls this

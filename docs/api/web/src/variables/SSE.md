@@ -8,7 +8,7 @@
 
 > `const` **SSE**: `object`
 
-Defined in: [web/src/stream/sse.ts:339](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/sse.ts#L339)
+Defined in: [web/src/stream/sse.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/sse.ts#L339)
 
 SSE client namespace.
 
@@ -59,7 +59,7 @@ Re-export of the exponential-backoff delay calculator.
 
 Calculate reconnection delay using exponential backoff with jitter.
 
-The jitter source is injectable: pass a seeded [Rng](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) to make
+The jitter source is injectable: pass a seeded [Rng](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) to make
 reconnection-backoff deterministic in tests; it defaults to `systemRng`
 (live `Math.random`) in production.
 
@@ -75,7 +75,7 @@ reconnection-backoff deterministic in tests; it defaults to `systemRng`
 
 ##### rng?
 
-[`Rng`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) = `systemRng`
+[`Rng`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md) = `systemRng`
 
 #### Returns
 

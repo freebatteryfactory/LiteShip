@@ -8,7 +8,7 @@
 
 > **conditionSourceDigest**(`file`, `text`): `string`
 
-Defined in: [audit/src/mcdc-engine.ts:370](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L370)
+Defined in: [audit/src/mcdc-engine.ts:370](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L370)
 
 A deterministic display digest of a source file (its id + bytes) — exported so the
 host can fingerprint a seam's bytes for the MC/DC facts without re-deriving the

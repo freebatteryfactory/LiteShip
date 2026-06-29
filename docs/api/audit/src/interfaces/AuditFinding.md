@@ -6,7 +6,7 @@
 
 # Interface: AuditFinding
 
-Defined in: [audit/src/types.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L67)
+Defined in: [audit/src/types.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L67)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:67](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **id**: `string`
 
-Defined in: [audit/src/types.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L68)
+Defined in: [audit/src/types.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L68)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:68](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` `optional` **location?**: [`AuditLocation`](AuditLocation.md)
 
-Defined in: [audit/src/types.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L74)
+Defined in: [audit/src/types.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L74)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/types.ts:74](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` `optional` **metadata?**: `Record`\<`string`, `unknown`\>
 
-Defined in: [audit/src/types.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L75)
+Defined in: [audit/src/types.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L75)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/types.ts:75](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **rule**: `string`
 
-Defined in: [audit/src/types.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L70)
+Defined in: [audit/src/types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L70)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/types.ts:70](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **section**: [`AuditSection`](../type-aliases/AuditSection.md) \| `"support"`
 
-Defined in: [audit/src/types.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L69)
+Defined in: [audit/src/types.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L69)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [audit/src/types.ts:69](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **severity**: [`AuditSeverity`](../type-aliases/AuditSeverity.md)
 
-Defined in: [audit/src/types.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L71)
+Defined in: [audit/src/types.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L71)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [audit/src/types.ts:71](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **summary**: `string`
 
-Defined in: [audit/src/types.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L73)
+Defined in: [audit/src/types.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L73)
 
 ***
 
@@ -70,4 +70,4 @@ Defined in: [audit/src/types.ts:73](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **title**: `string`
 
-Defined in: [audit/src/types.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L72)
+Defined in: [audit/src/types.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L72)

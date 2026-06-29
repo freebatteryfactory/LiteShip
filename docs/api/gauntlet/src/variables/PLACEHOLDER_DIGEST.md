@@ -8,7 +8,7 @@
 
 > `const` **PLACEHOLDER\_DIGEST**: `"placeholder:no-content-address"`
 
-Defined in: [gauntlet/src/repo-ir.ts:287](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L287)
+Defined in: [gauntlet/src/repo-ir.ts:287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L287)
 
 The deterministic placeholder content digest in-memory fixtures use when they
 do not (and need not) compute a real blake3 digest. It is INERT by design —

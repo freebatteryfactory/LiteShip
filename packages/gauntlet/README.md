@@ -43,7 +43,7 @@ console.log(result.findings[0].detail);
 
 ## Where it sits
 
-This is the floor of LiteShip's rigor stack. It owns the vocabulary — `Finding`, `AssuranceLevel`, `Gate`, `Waiver`, `RepoIR` — and the engine that runs and qualifies gates. Its only `@czap` dependency is `@czap/error`, whose tagged failures project to `Finding`s via `fromError`. It carries no parser by design: a `Gate` reads the world only through `GateContext`, so the same gate runs against a `memoryContext` fixture and against the real repo unchanged. `@czap/audit` builds the triangulated `RepoIR` and the AST oracles and injects them; `@czap/cli` hosts the run. For the gate-as-data variant whose decision is bounded to a declared `FactBundle`, see `defineFactGate`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This is the floor of LiteShip's rigor stack. It owns the vocabulary — `Finding`, `AssuranceLevel`, `Gate`, `Waiver`, `RepoIR` — and the engine that runs and qualifies gates. Its only `@czap` dependency is `@czap/error`, whose tagged failures project to `Finding`s via `fromError`. It carries no parser by design: a `Gate` reads the world only through `GateContext`, so the same gate runs against a `memoryContext` fixture and against the real repo unchanged. `@czap/audit` builds the triangulated `RepoIR` and the AST oracles and injects them; `@czap/cli` hosts the run. For the gate-as-data variant whose decision is bounded to a declared `FactBundle`, see `defineFactGate`. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If a gate won't block
 
@@ -51,11 +51,11 @@ The authority ratchet is the usual surprise: a gate whose findings stay `advisor
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [ADR-0023 — the gauntlet rigor engine](https://github.com/heyoub/LiteShip/blob/main/docs/adr/0023-gauntlet-rigor-engine.md) — the design and the authority ratchet
-- [ADR-0019 — FactGate, evidence-bound gates](https://github.com/heyoub/LiteShip/blob/main/docs/adr/0019-factgate-evidence-bound-gates.md)
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/gauntlet/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [ADR-0023 — the gauntlet rigor engine](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0023-gauntlet-rigor-engine.md) — the design and the authority ratchet
+- [ADR-0019 — FactGate, evidence-bound gates](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0019-factgate-evidence-bound-gates.md)
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/gauntlet/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

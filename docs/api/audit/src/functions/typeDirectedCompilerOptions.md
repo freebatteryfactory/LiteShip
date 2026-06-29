@@ -8,7 +8,7 @@
 
 > **typeDirectedCompilerOptions**(`baseUrl`): [`CompilerOptions`](https://www.typescriptlang.org/docs/handbook/compiler-options.html)
 
-Defined in: [audit/src/ts-program.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/ts-program.ts#L64)
+Defined in: [audit/src/ts-program.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L64)
 
 Build the shared [ts.CompilerOptions](https://www.typescriptlang.org/docs/handbook/compiler-options.html) for a type-directed program rooted
 at `baseUrl` (the repo root the `@czap/*` aliases resolve against). The options

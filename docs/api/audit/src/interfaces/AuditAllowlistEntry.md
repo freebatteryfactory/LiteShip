@@ -6,7 +6,7 @@
 
 # Interface: AuditAllowlistEntry
 
-Defined in: [audit/src/policy.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L15)
+Defined in: [audit/src/policy.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L15)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/policy.ts:15](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **filePrefix?**: `string`
 
-Defined in: [audit/src/policy.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L27)
+Defined in: [audit/src/policy.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L27)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/policy.ts:27](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **package?**: `string`
 
-Defined in: [audit/src/policy.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
+Defined in: [audit/src/policy.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L26)
 
 npm package name owning the allowlisted file. When set, `filePrefix` is
 PACKAGE-RELATIVE (e.g. `src/client-directives/satellite.ts`) and matching
@@ -38,7 +38,7 @@ matched against the repo-root-relative finding path verbatim.
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/policy.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L29)
+Defined in: [audit/src/policy.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L29)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/policy.ts:29](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **rule**: `string`
 
-Defined in: [audit/src/policy.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L16)
+Defined in: [audit/src/policy.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L16)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [audit/src/policy.ts:16](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **summaryIncludes?**: `string`
 
-Defined in: [audit/src/policy.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L28)
+Defined in: [audit/src/policy.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L28)

@@ -6,7 +6,7 @@
 
 # Interface: HandledCommand
 
-Defined in: [command/src/registry.ts:483](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L483)
+Defined in: [command/src/registry.ts:483](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L483)
 
 A fully-migrated command: descriptor + a guaranteed handler. Migrated command
 modules type their export as this so adapters can invoke `.handler` directly
@@ -22,7 +22,7 @@ without a presence check. Assignable to [RegisteredCommand](RegisteredCommand.md
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:474](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L474)
+Defined in: [command/src/registry.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L474)
 
 #### Inherited from
 
@@ -34,7 +34,7 @@ Defined in: [command/src/registry.ts:474](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **handler**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:484](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L484)
+Defined in: [command/src/registry.ts:484](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L484)
 
 #### Overrides
 

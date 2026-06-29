@@ -8,7 +8,7 @@
 
 > `const` **SKIP\_CAPABILITIES**: readonly \[`"ffmpeg-absent"`, `"wasm-absent"`, `"wasm-dist-staged"`, `"shared-array-buffer-absent"`, `"coverage-instrumentation"`, `"astro-example-not-built"`\]
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L53)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L53)
 
 The closed set of CAPABILITIES whose absence sanctions a skip. Each names a real,
 environment-detectable resource the skipped test genuinely requires — never a stand-in

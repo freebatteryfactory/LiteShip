@@ -8,7 +8,7 @@
 
 > **applyConditionMutant**(`originalSource`, `mutant`): `string`
 
-Defined in: [audit/src/mcdc-engine.ts:331](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L331)
+Defined in: [audit/src/mcdc-engine.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L331)
 
 Reconstruct the mutated source for ONE condition-mutant — a single precise text
 splice of its `[start, end)` condition span with the `(true)`/`(false)` pin. Reuses

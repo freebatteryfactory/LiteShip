@@ -8,7 +8,7 @@
 
 > **makeEquivalentMutantRegistry**(`entries`): [`EquivalentMutantRegistry`](../interfaces/EquivalentMutantRegistry.md)
 
-Defined in: [audit/src/mutation-equivalents.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L77)
+Defined in: [audit/src/mutation-equivalents.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L77)
 
 Build an [EquivalentMutantRegistry](../interfaces/EquivalentMutantRegistry.md) from a committed entry list. The lookup
 is by `mutantId` (the content address — the anti-drift key). De-duplication is by

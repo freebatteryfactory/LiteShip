@@ -6,11 +6,11 @@
 
 # Interface: LiveQuantizer\<B, O\>
 
-Defined in: [quantizer/src/quantizer.ts:269](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L269)
+Defined in: [quantizer/src/quantizer.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L269)
 
 Runtime-instantiated quantizer with reactive output dispatch.
 
-Extends the core [Quantizer](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) with a reactive outputs table: as
+Extends the core [Quantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) with a reactive outputs table: as
 boundary crossings are detected, `currentOutputs` updates and
 `outputChanges` streams the new per-target record. Consumers typically
 subscribe via `Stream.runForEach(liveQuantizer.outputChanges, …)`.
@@ -37,13 +37,13 @@ Effect.runSync(Effect.scoped(Effect.gen(function* () {
 
 ## Extends
 
-- [`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+- [`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ### O
 
@@ -91,7 +91,7 @@ Defined in: core/dist/quantizer-types.d.ts:25
 
 > `readonly` **config**: [`QuantizerConfig`](QuantizerConfig.md)\<`B`, `O`\>
 
-Defined in: [quantizer/src/quantizer.ts:274](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L274)
+Defined in: [quantizer/src/quantizer.ts:274](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L274)
 
 The config this quantizer was created from.
 
@@ -101,7 +101,7 @@ The config this quantizer was created from.
 
 > `readonly` **currentOutputs**: `Effect`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:276](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L276)
+Defined in: [quantizer/src/quantizer.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L276)
 
 Read the currently-active per-target output record.
 
@@ -111,7 +111,7 @@ Read the currently-active per-target output record.
 
 > `readonly` **outputChanges**: `Stream`\<`Partial`\<\{ `ai`: `Record`\<`string`, `unknown`\>; `aria`: `Record`\<`string`, `unknown`\>; `css`: `Record`\<`string`, `unknown`\>; `glsl`: `Record`\<`string`, `unknown`\>; `wgsl`: `Record`\<`string`, `unknown`\>; \}\>\>
 
-Defined in: [quantizer/src/quantizer.ts:278](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L278)
+Defined in: [quantizer/src/quantizer.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L278)
 
 Stream of per-target output records emitted on each boundary crossing.
 

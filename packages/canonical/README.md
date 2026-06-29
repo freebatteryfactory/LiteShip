@@ -32,7 +32,7 @@ console.log(fnv1a('any string'));     // 'fnv1a:xxxxxxxx'
 
 ## Where it sits
 
-This package is a standalone leaf — it carries no `@czap/core`, no Effect, and no spine imports, which is exactly why upstream and WASM-side code can address content without dragging in the full graph. `@czap/core` re-anchors `ContentAddress` / `IntegrityDigest` to spine brands at its own boundary (ADR-0012); here they are kept local. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This package is a standalone leaf — it carries no `@czap/core`, no Effect, and no spine imports, which is exactly why upstream and WASM-side code can address content without dragging in the full graph. `@czap/core` re-anchors `ContentAddress` / `IntegrityDigest` to spine brands at its own boundary (ADR-0012); here they are kept local. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If encoding throws
 
@@ -40,11 +40,11 @@ Only the JSON-shaped value subset encodes: numbers, strings, booleans, `null`, `
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [ADR-0013 — the canonical package](https://github.com/heyoub/LiteShip/blob/main/docs/adr/0013-canonical-package.md) — why the bytes kernel is a standalone leaf
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/canonical/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [ADR-0013 — the canonical package](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0013-canonical-package.md) — why the bytes kernel is a standalone leaf
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/canonical/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

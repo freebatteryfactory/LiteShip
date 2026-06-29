@@ -8,7 +8,7 @@
 
 > **atLeast**(`level`, `floor`): `boolean`
 
-Defined in: [gauntlet/src/assurance.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L83)
+Defined in: [gauntlet/src/assurance.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L83)
 
 True iff `level` is at least as critical as `floor` (e.g. `atLeast('L4','L3')`).
 

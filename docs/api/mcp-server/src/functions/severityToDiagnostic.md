@@ -8,7 +8,7 @@
 
 > **severityToDiagnostic**(`severity`): [`LspDiagnosticSeverity`](../type-aliases/LspDiagnosticSeverity.md)
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L61)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L61)
 
 Map a finding severity to its LSP diagnostic severity.
  - `error` → Error(1): blocks; the loudest.

@@ -6,7 +6,7 @@
 
 # Interface: ParseError
 
-Defined in: [error/src/variants.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L50)
+Defined in: [error/src/variants.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L50)
 
 Decoding external bytes or text into a typed shape failed. The input came
 from outside the program (a file, a wire payload, a config), and it did not
@@ -26,7 +26,7 @@ Migration target for: `CborDecodeError` (`code` = the reason discriminant,
 
 > `readonly` **\_tag**: `"ParseError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -40,7 +40,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` `optional` **code?**: `string`
 
-Defined in: [error/src/variants.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L56)
+Defined in: [error/src/variants.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L56)
 
 Optional machine-readable reason, for callers that branch on it.
 
@@ -50,7 +50,7 @@ Optional machine-readable reason, for callers that branch on it.
 
 > `readonly` **detail**: `string`
 
-Defined in: [error/src/variants.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L54)
+Defined in: [error/src/variants.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L54)
 
 Why it failed, in human terms.
 
@@ -60,7 +60,7 @@ Why it failed, in human terms.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 
@@ -74,7 +74,7 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 > `readonly` `optional` **offset?**: `number`
 
-Defined in: [error/src/variants.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L58)
+Defined in: [error/src/variants.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L58)
 
 Optional byte/char offset where parsing failed.
 
@@ -84,6 +84,6 @@ Optional byte/char offset where parsing failed.
 
 > `readonly` **source**: `string`
 
-Defined in: [error/src/variants.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L52)
+Defined in: [error/src/variants.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L52)
 
 What was being parsed, e.g. `'cbor'`, `'profile.json'`.

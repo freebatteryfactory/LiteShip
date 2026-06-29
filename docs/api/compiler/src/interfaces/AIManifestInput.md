@@ -6,7 +6,7 @@
 
 # Interface: AIManifestInput
 
-Defined in: [compiler/src/ai-manifest.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L124)
+Defined in: [compiler/src/ai-manifest.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L124)
 
 Authoring-time manifest input accepted by every [AIManifestCompiler](../variables/AIManifestCompiler.md)
 entry point. All fields are optional; omitted fields default to
@@ -20,7 +20,7 @@ is what compile results carry.
 
 > `readonly` `optional` **actions?**: `Record`\<`string`, [`AIAction`](AIAction.md)\>
 
-Defined in: [compiler/src/ai-manifest.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L132)
+Defined in: [compiler/src/ai-manifest.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L132)
 
 Invocable actions; defaults to `{}`.
 
@@ -30,7 +30,7 @@ Invocable actions; defaults to `{}`.
 
 > `readonly` `optional` **constraints?**: readonly [`AIConstraint`](AIConstraint.md)[]
 
-Defined in: [compiler/src/ai-manifest.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L134)
+Defined in: [compiler/src/ai-manifest.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L134)
 
 Cross-cutting invariants; defaults to `[]`.
 
@@ -40,7 +40,7 @@ Cross-cutting invariants; defaults to `[]`.
 
 > `readonly` `optional` **dimensions?**: `Record`\<`string`, [`AIDimension`](AIDimension.md)\>
 
-Defined in: [compiler/src/ai-manifest.ts:128](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L128)
+Defined in: [compiler/src/ai-manifest.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L128)
 
 State-space dimensions; defaults to `{}`.
 
@@ -50,7 +50,7 @@ State-space dimensions; defaults to `{}`.
 
 > `readonly` `optional` **slots?**: `Record`\<`string`, [`AISlot`](AISlot.md)\>
 
-Defined in: [compiler/src/ai-manifest.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L130)
+Defined in: [compiler/src/ai-manifest.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L130)
 
 Content slots; defaults to `{}`.
 
@@ -60,6 +60,6 @@ Content slots; defaults to `{}`.
 
 > `readonly` `optional` **version?**: `string`
 
-Defined in: [compiler/src/ai-manifest.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L126)
+Defined in: [compiler/src/ai-manifest.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L126)
 
 Manifest schema version; defaults to `'1.0'`.

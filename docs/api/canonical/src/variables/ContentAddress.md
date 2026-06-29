@@ -8,7 +8,7 @@
 
 > **ContentAddress**: (`value`) => `` `fnv1a:${string}` ``
 
-Defined in: [canonical/src/brands.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L19)
+Defined in: [canonical/src/brands.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/brands.ts#L19)
 
 Parse a plain string into a ContentAddress.
 

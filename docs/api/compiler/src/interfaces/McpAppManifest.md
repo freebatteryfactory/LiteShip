@@ -6,7 +6,7 @@
 
 # Interface: McpAppManifest
 
-Defined in: [compiler/src/mcp-app-manifest.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L89)
+Defined in: [compiler/src/mcp-app-manifest.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L89)
 
 The MCP-app manifest: a projection over all real MCP / MCP-Apps surfaces.
 
@@ -16,7 +16,7 @@ The MCP-app manifest: a projection over all real MCP / MCP-Apps surfaces.
 
 > `readonly` **appResources**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L98)
+Defined in: [compiler/src/mcp-app-manifest.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L98)
 
 D5 live app resources (`ui://liteship/app/…`).
 
@@ -26,7 +26,7 @@ D5 live app resources (`ui://liteship/app/…`).
 
 > `readonly` **capabilities**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [compiler/src/mcp-app-manifest.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L92)
+Defined in: [compiler/src/mcp-app-manifest.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L92)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:92](https://github.com/heyoub/Lite
 
 > `readonly` **namespacePolicy**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L103)
+Defined in: [compiler/src/mcp-app-manifest.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L103)
 
 The product-owned namespace contract (D3/D4/D5/D6).
 
@@ -56,7 +56,7 @@ The product-owned namespace contract (D3/D4/D5/D6).
 
 > `readonly` **prompts**: readonly [`ManifestPromptView`](ManifestPromptView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L99)
+Defined in: [compiler/src/mcp-app-manifest.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L99)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:99](https://github.com/heyoub/Lite
 
 > `readonly` **protocolVersion**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L91)
+Defined in: [compiler/src/mcp-app-manifest.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L91)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:91](https://github.com/heyoub/Lite
 
 > `readonly` **resources**: readonly [`ManifestResourceView`](ManifestResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L94)
+Defined in: [compiler/src/mcp-app-manifest.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L94)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:94](https://github.com/heyoub/Lite
 
 > `readonly` **resultEnvelope**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L101)
+Defined in: [compiler/src/mcp-app-manifest.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L101)
 
 Named reference to the D1 result-envelope policy (a constant, not re-derived logic).
 
@@ -98,7 +98,7 @@ Named reference to the D1 result-envelope policy (a constant, not re-derived log
 
 > `readonly` **serverInfo**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L90)
+Defined in: [compiler/src/mcp-app-manifest.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L90)
 
 #### name
 
@@ -114,7 +114,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:90](https://github.com/heyoub/Lite
 
 > `readonly` **tools**: readonly [`ManifestToolView`](ManifestToolView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L93)
+Defined in: [compiler/src/mcp-app-manifest.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L93)
 
 ***
 
@@ -122,6 +122,6 @@ Defined in: [compiler/src/mcp-app-manifest.ts:93](https://github.com/heyoub/Lite
 
 > `readonly` **uiResources**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L96)
+Defined in: [compiler/src/mcp-app-manifest.ts:96](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L96)
 
 D4 static UI resources — kept distinct from [appResources](#appresources) (D5 live).

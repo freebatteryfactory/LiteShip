@@ -6,7 +6,7 @@
 
 # Interface: LspDiagnostic
 
-Defined in: [mcp-server/src/lsp/types.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L113)
+Defined in: [mcp-server/src/lsp/types.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L113)
 
 LSP `Diagnostic` (§Diagnostic). `code` carries the gate `ruleId`; `source` is
 the fixed `'czap-gauntlet'` provenance; `data` carries the assurance level +
@@ -19,7 +19,7 @@ back). `message` is the finding's WHY (title + detail).
 
 > `readonly` **code**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L116)
+Defined in: [mcp-server/src/lsp/types.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L116)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [mcp-server/src/lsp/types.ts:116](https://github.com/heyoub/LiteShip
 
 > `readonly` **data**: `object`
 
-Defined in: [mcp-server/src/lsp/types.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L120)
+Defined in: [mcp-server/src/lsp/types.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L120)
 
 Rigor metadata round-tripped to the code-action layer: assurance level + ruleId.
 
@@ -45,7 +45,7 @@ Rigor metadata round-tripped to the code-action layer: assurance level + ruleId.
 
 > `readonly` **message**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L118)
+Defined in: [mcp-server/src/lsp/types.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L118)
 
 ***
 
@@ -53,7 +53,7 @@ Defined in: [mcp-server/src/lsp/types.ts:118](https://github.com/heyoub/LiteShip
 
 > `readonly` **range**: [`LspRange`](LspRange.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L114)
+Defined in: [mcp-server/src/lsp/types.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L114)
 
 ***
 
@@ -61,7 +61,7 @@ Defined in: [mcp-server/src/lsp/types.ts:114](https://github.com/heyoub/LiteShip
 
 > `readonly` **severity**: [`LspDiagnosticSeverity`](../type-aliases/LspDiagnosticSeverity.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L115)
+Defined in: [mcp-server/src/lsp/types.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L115)
 
 ***
 
@@ -69,4 +69,4 @@ Defined in: [mcp-server/src/lsp/types.ts:115](https://github.com/heyoub/LiteShip
 
 > `readonly` **source**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L117)
+Defined in: [mcp-server/src/lsp/types.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L117)

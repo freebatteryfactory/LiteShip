@@ -6,7 +6,7 @@
 
 # Interface: WorkerLike
 
-Defined in: [worker/src/messages.ts:391](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L391)
+Defined in: [worker/src/messages.ts:391](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L391)
 
 The DOM Worker surface czap's hosts actually drive (postMessage with
 transfer, terminate, message listening). Named so the dependency is
@@ -20,7 +20,7 @@ the build.
 
 > **addEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:394](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L394)
+Defined in: [worker/src/messages.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L394)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [worker/src/messages.ts:394](https://github.com/heyoub/LiteShip/blob
 
 > **postMessage**(`message`, `transfer?`): `void`
 
-Defined in: [worker/src/messages.ts:392](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L392)
+Defined in: [worker/src/messages.ts:392](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L392)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [worker/src/messages.ts:392](https://github.com/heyoub/LiteShip/blob
 
 > **removeEventListener**(`type`, `listener`): `void`
 
-Defined in: [worker/src/messages.ts:395](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L395)
+Defined in: [worker/src/messages.ts:395](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L395)
 
 #### Parameters
 
@@ -86,7 +86,7 @@ Defined in: [worker/src/messages.ts:395](https://github.com/heyoub/LiteShip/blob
 
 > **terminate**(): `void`
 
-Defined in: [worker/src/messages.ts:393](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L393)
+Defined in: [worker/src/messages.ts:393](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L393)
 
 #### Returns
 

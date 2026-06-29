@@ -8,7 +8,7 @@
 
 > **SVGSystem**(`frameIndex`): `SystemShape`
 
-Defined in: [scene/src/systems/svg.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L60)
+Defined in: [scene/src/systems/svg.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg.ts#L60)
 
 Build an SVGSystem keyed to a specific frame index.
 

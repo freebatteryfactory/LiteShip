@@ -8,7 +8,7 @@
 
 > **resolveVirtualId**(`id`): `string` \| `undefined`
 
-Defined in: [vite/src/virtual-modules.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L64)
+Defined in: [vite/src/virtual-modules.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/virtual-modules.ts#L64)
 
 Resolve a virtual module ID to its internal null-byte-prefixed form
 (as expected by Vite's module graph). Returns `undefined` when `id`

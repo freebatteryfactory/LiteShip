@@ -8,7 +8,7 @@
 
 > `const` **GPU\_TIER\_PATTERNS**: readonly \[readonly `RegExp`[], readonly `RegExp`[], readonly `RegExp`[], readonly `RegExp`[]\]
 
-Defined in: [detect/src/gpu-patterns.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/gpu-patterns.ts#L30)
+Defined in: [detect/src/gpu-patterns.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/gpu-patterns.ts#L30)
 
 Regex groups indexed by the [GPUTier](../type-aliases/GPUTier.md) they classify (`0`..`3`).
 Each entry is the set of unmasked-renderer-string fragments that mark a

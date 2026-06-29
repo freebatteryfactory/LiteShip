@@ -6,7 +6,7 @@
 
 # Interface: EntityNode
 
-Defined in: [core/src/document-graph.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L64)
+Defined in: [core/src/document-graph.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L64)
 
 2. Entity — ECS identity. Maps to `EntityId`/`ComposableEntity`.
 
@@ -20,7 +20,7 @@ Defined in: [core/src/document-graph.ts:64](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **\_tag**: `"DocGraphEntityNode"`
 
-Defined in: [core/src/document-graph.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L48)
+Defined in: [core/src/document-graph.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L48)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [core/src/document-graph.ts:48](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
+Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [core/src/document-graph.ts:49](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **components**: readonly `ContentAddress`[]
 
-Defined in: [core/src/document-graph.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L66)
+Defined in: [core/src/document-graph.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L66)
 
 Sorted refs to [ComponentNode](ComponentNode.md) ids.
 
@@ -54,7 +54,7 @@ Sorted refs to [ComponentNode](ComponentNode.md) ids.
 
 > `readonly` **family**: `"entity"`
 
-Defined in: [core/src/document-graph.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
+Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
 
 #### Inherited from
 
@@ -66,7 +66,7 @@ Defined in: [core/src/document-graph.ts:50](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L52)
+Defined in: [core/src/document-graph.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L52)
 
 `fnv1a` content address over the node payload (set by `addressNode`/`sealNode`).
 
@@ -80,7 +80,7 @@ Defined in: [core/src/document-graph.ts:52](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L54)
+Defined in: [core/src/document-graph.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L54)
 
 HLC created/updated + version. Excluded from the content address (volatile).
 

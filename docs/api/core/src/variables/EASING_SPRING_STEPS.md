@@ -8,6 +8,6 @@
 
 > `const` **EASING\_SPRING\_STEPS**: `2000` = `2000`
 
-Defined in: [core/src/defaults.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L51)
+Defined in: [core/src/defaults.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/defaults.ts#L51)
 
 Number of sub-steps for spring animation resolution. Used by: easing.ts

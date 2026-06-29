@@ -8,7 +8,7 @@
 
 > **stableEvidenceDigest**(`entries`): `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:236](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L236)
+Defined in: [gauntlet/src/verdict-cache.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L236)
 
 A deterministic STRING fold over a gate's OUT-OF-IR evidence — the helper a
 [Gate.evidenceDigest](../interfaces/Gate.md#evidencedigest) returns. Each entry is a `(label, bytes)` pair (e.g.

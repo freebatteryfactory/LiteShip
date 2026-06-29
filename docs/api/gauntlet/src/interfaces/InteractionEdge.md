@@ -6,7 +6,7 @@
 
 # Interface: InteractionEdge
 
-Defined in: [gauntlet/src/composition-facts.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L70)
+Defined in: [gauntlet/src/composition-facts.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L70)
 
 One interaction edge `from → to` between two individually-tested units, with the
 host's integration-coverage verdict. By construction every edge here has BOTH
@@ -21,7 +21,7 @@ TOGETHER. An `integrationCovered: false` edge is the finding.
 
 > `readonly` **evidence**: [`CoverageEvidence`](../type-aliases/CoverageEvidence.md)
 
-Defined in: [gauntlet/src/composition-facts.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L94)
+Defined in: [gauntlet/src/composition-facts.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L94)
 
 How the integration-coverage verdict was evidenced — the honesty knob. A
 `covered` edge carries the evidence class that decided it; an `uncovered` edge
@@ -34,7 +34,7 @@ looked for and not found).
 
 > `readonly` **fromFile**: `string`
 
-Defined in: [gauntlet/src/composition-facts.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L72)
+Defined in: [gauntlet/src/composition-facts.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L72)
 
 The calling unit's file id — MUST be an IR file (the gate aims the level + reads deps).
 
@@ -44,7 +44,7 @@ The calling unit's file id — MUST be an IR file (the gate aims the level + rea
 
 > `readonly` **integrationCovered**: `boolean`
 
-Defined in: [gauntlet/src/composition-facts.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L87)
+Defined in: [gauntlet/src/composition-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L87)
 
 Whether an integration test exercises BOTH endpoints together. `false` is the
 finding (a locally-green, globally-untested interaction). When `true`, the
@@ -58,7 +58,7 @@ the proxy that produced it.
 
 > `readonly` **toFile**: `string`
 
-Defined in: [gauntlet/src/composition-facts.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L74)
+Defined in: [gauntlet/src/composition-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L74)
 
 The called unit's file id — MUST be an IR file.
 
@@ -68,7 +68,7 @@ The called unit's file id — MUST be an IR file.
 
 > `readonly` **viaSymbol**: `string`
 
-Defined in: [gauntlet/src/composition-facts.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L79)
+Defined in: [gauntlet/src/composition-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/composition-facts.ts#L79)
 
 The symbol in `toFile` that `fromFile` calls/references (names WHAT the
 interaction is, so the finding is concrete — `applyPatch`, not just `to.ts`).

@@ -6,7 +6,7 @@
 
 # Interface: FocusState
 
-Defined in: [web/src/types.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L77)
+Defined in: [web/src/types.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L77)
 
 Focus state with cursor and selection details for input elements.
 
@@ -16,7 +16,7 @@ Focus state with cursor and selection details for input elements.
 
 > `readonly` **cursorPosition**: `number`
 
-Defined in: [web/src/types.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L79)
+Defined in: [web/src/types.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L79)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:79](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **elementId**: `string`
 
-Defined in: [web/src/types.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L78)
+Defined in: [web/src/types.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L78)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:78](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **selectionDirection**: `string`
 
-Defined in: [web/src/types.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L82)
+Defined in: [web/src/types.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L82)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [web/src/types.ts:82](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **selectionEnd**: `number`
 
-Defined in: [web/src/types.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L81)
+Defined in: [web/src/types.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L81)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [web/src/types.ts:81](https://github.com/heyoub/LiteShip/blob/main/p
 
 > `readonly` **selectionStart**: `number`
 
-Defined in: [web/src/types.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L80)
+Defined in: [web/src/types.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L80)

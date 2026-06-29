@@ -8,7 +8,7 @@
 
 > **AssetRegistry**: `object`
 
-Defined in: [assets/src/contract.ts:286](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L286)
+Defined in: [assets/src/contract.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L286)
 
 Assemble an immutable AssetRegistry from the capsules returned by
 [defineAsset](../functions/defineAsset.md). Duplicate ids throw at assembly time. This is the ONE

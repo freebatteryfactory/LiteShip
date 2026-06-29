@@ -8,7 +8,7 @@
 
 > **weakestLinkPath**(`ir`, `from`, `effective`, `localProofOf`): readonly `string`[]
 
-Defined in: [gauntlet/src/proof-propagation.ts:170](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/proof-propagation.ts#L170)
+Defined in: [gauntlet/src/proof-propagation.ts:170](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/proof-propagation.ts#L170)
 
 The WEAKEST-LINK path from a module to the dependency that caps its effective
 proof — a dependency chain `[module, …, weakLink]` where `weakLink`'s local proof

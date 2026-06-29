@@ -8,7 +8,7 @@
 
 > **asSkipCapability**(`value`): `"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"` \| `undefined`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L66)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L66)
 
 Narrow an arbitrary string to a [SkipCapability](../type-aliases/SkipCapability.md) (the runtime guard for a parsed value) — `undefined` if unknown.
 

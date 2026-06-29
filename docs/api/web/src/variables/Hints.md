@@ -8,7 +8,7 @@
 
 > `const` **Hints**: `object`
 
-Defined in: [web/src/morph/hints.ts:289](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/morph/hints.ts#L289)
+Defined in: [web/src/morph/hints.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/hints.ts#L289)
 
 Consolidated namespace export matching the spine contract.
 

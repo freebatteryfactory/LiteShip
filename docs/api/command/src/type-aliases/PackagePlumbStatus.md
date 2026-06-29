@@ -8,4 +8,4 @@
 
 > **PackagePlumbStatus** = `"runtime"` \| `"tooling"` \| `"deferred"`
 
-Defined in: [command/src/commands/plumb-registry.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L22)
+Defined in: [command/src/commands/plumb-registry.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb-registry.ts#L22)

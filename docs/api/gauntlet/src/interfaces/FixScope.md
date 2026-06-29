@@ -6,7 +6,7 @@
 
 # Interface: FixScope
 
-Defined in: [gauntlet/src/declared-fix.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L122)
+Defined in: [gauntlet/src/declared-fix.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L122)
 
 The scope a [DeclaredFix](DeclaredFix.md) is permitted to touch — repo-relative file GLOBS
 (the files it may edit) and the standards-element KEYS it may legitimately change
@@ -20,7 +20,7 @@ lists are explicit allow-lists: empty = the fix may touch NOTHING of that kind.
 
 > `readonly` **fileGlobs**: readonly `string`[]
 
-Defined in: [gauntlet/src/declared-fix.ts:129](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L129)
+Defined in: [gauntlet/src/declared-fix.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L129)
 
 The repo-relative file globs the fix may edit (e.g. `packages/core/src/fnv.ts`,
 `packages/astro/src/**`). A `*` matches within a path segment; `**` matches across
@@ -33,7 +33,7 @@ file matching NONE of these is scope creep.
 
 > `readonly` **standardsElementKeys**: readonly `string`[]
 
-Defined in: [gauntlet/src/declared-fix.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L137)
+Defined in: [gauntlet/src/declared-fix.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L137)
 
 The [StandardsElement](../type-aliases/StandardsElement.md) keys (`surfaceElementKey`) the fix is ALLOWED to
 change — its declared standards footprint. A standards element that CHANGED but is

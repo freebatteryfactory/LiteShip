@@ -8,6 +8,6 @@
 
 > **Node** = [`DAGNode`](../../../interfaces/DAGNode.md)
 
-Defined in: [core/src/dag.ts:522](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L522)
+Defined in: [core/src/dag.ts:522](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L522)
 
 Alias for [DAGNode](../../../interfaces/DAGNode.md).

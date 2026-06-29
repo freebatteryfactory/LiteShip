@@ -6,7 +6,7 @@
 
 # Interface: WebCodecsCaptureOptions
 
-Defined in: [web/src/capture/webcodecs.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L23)
+Defined in: [web/src/capture/webcodecs.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L23)
 
 Options for [WebCodecsCapture.make](../variables/WebCodecsCapture.md#make). All fields are optional;
 omitted values fall back to Baseline H.264 at 4 Mbps.
@@ -17,7 +17,7 @@ omitted values fall back to Baseline H.264 at 4 Mbps.
 
 > `readonly` `optional` **bitrate?**: `number`
 
-Defined in: [web/src/capture/webcodecs.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L27)
+Defined in: [web/src/capture/webcodecs.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L27)
 
 Target bitrate in bits/second. Default: 4_000_000
 
@@ -27,7 +27,7 @@ Target bitrate in bits/second. Default: 4_000_000
 
 > `readonly` `optional` **codec?**: `string`
 
-Defined in: [web/src/capture/webcodecs.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L25)
+Defined in: [web/src/capture/webcodecs.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L25)
 
 Video codec string. Default: 'avc1.42001E' (H.264 Baseline Level 3.0)
 
@@ -37,6 +37,6 @@ Video codec string. Default: 'avc1.42001E' (H.264 Baseline Level 3.0)
 
 > `readonly` `optional` **keyframeInterval?**: `number`
 
-Defined in: [web/src/capture/webcodecs.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L29)
+Defined in: [web/src/capture/webcodecs.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/webcodecs.ts#L29)
 
 Keyframe interval in frames. Default: 30

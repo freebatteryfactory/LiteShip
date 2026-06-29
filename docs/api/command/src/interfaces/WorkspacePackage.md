@@ -6,7 +6,7 @@
 
 # Interface: WorkspacePackage
 
-Defined in: [command/src/commands/ship-planning.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L24)
+Defined in: [command/src/commands/ship-planning.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L24)
 
 A discovered workspace package (the fs walk that produces these stays in the CLI).
 
@@ -16,7 +16,7 @@ A discovered workspace package (the fs walk that produces these stays in the CLI
 
 > `readonly` **absolutePath**: `string`
 
-Defined in: [command/src/commands/ship-planning.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L25)
+Defined in: [command/src/commands/ship-planning.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L25)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [command/src/commands/ship-planning.ts:25](https://github.com/heyoub
 
 > `readonly` **packageJson**: [`PackageJsonLite`](PackageJsonLite.md)
 
-Defined in: [command/src/commands/ship-planning.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L28)
+Defined in: [command/src/commands/ship-planning.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L28)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [command/src/commands/ship-planning.ts:28](https://github.com/heyoub
 
 > `readonly` **packageJsonBytes**: `Uint8Array`
 
-Defined in: [command/src/commands/ship-planning.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L27)
+Defined in: [command/src/commands/ship-planning.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L27)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [command/src/commands/ship-planning.ts:27](https://github.com/heyoub
 
 > `readonly` **relativePath**: `string`
 
-Defined in: [command/src/commands/ship-planning.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L26)
+Defined in: [command/src/commands/ship-planning.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L26)

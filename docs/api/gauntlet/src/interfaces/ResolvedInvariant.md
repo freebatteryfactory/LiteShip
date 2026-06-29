@@ -6,7 +6,7 @@
 
 # Interface: ResolvedInvariant
 
-Defined in: [gauntlet/src/traceability-facts.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L80)
+Defined in: [gauntlet/src/traceability-facts.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L80)
 
 One declared invariant + its resolved lifecycle state (the gate's fold unit).
 
@@ -16,7 +16,7 @@ One declared invariant + its resolved lifecycle state (the gate's fold unit).
 
 > `readonly` **category**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L88)
+Defined in: [gauntlet/src/traceability-facts.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L88)
 
 The grouping category (determinism | crdt | content-address | …).
 
@@ -26,7 +26,7 @@ The grouping category (determinism | crdt | content-address | …).
 
 > `readonly` **id**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L82)
+Defined in: [gauntlet/src/traceability-facts.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L82)
 
 The stable INV-* id (the head-probe key the `PROVES` headers name).
 
@@ -36,7 +36,7 @@ The stable INV-* id (the head-probe key the `PROVES` headers name).
 
 > `readonly` **law**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L84)
+Defined in: [gauntlet/src/traceability-facts.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L84)
 
 The LAW this invariant upholds (one line).
 
@@ -46,7 +46,7 @@ The LAW this invariant upholds (one line).
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/traceability-facts.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L86)
+Defined in: [gauntlet/src/traceability-facts.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L86)
 
 The assurance level — an untraced/expired L3/L4 invariant HARD-FAILS.
 
@@ -56,6 +56,6 @@ The assurance level — an untraced/expired L3/L4 invariant HARD-FAILS.
 
 > `readonly` **state**: [`InvariantState`](../type-aliases/InvariantState.md)
 
-Defined in: [gauntlet/src/traceability-facts.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L90)
+Defined in: [gauntlet/src/traceability-facts.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L90)
 
 The resolved lifecycle state — the deterministic fold's verdict.

@@ -6,9 +6,9 @@
 
 # Function: exportVideo()
 
-> **exportVideo**(`graph`, `encode?`): [`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
+> **exportVideo**(`graph`, `encode?`): [`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
-Defined in: [stage/src/dual-export.ts:374](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L374)
+Defined in: [stage/src/dual-export.ts:374](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L374)
 
 Cast the graph's Pose/Projection-derived state to a deterministic video,
 content-addressing the produced per-frame `CompositeState` snapshots (NOT the
@@ -21,7 +21,7 @@ stays sync + codec-free so the dual-export proof never depends on a codec.
 
 ### graph
 
-[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ### encode?
 
@@ -29,4 +29,4 @@ stays sync + codec-free so the dual-export proof never depends on a codec.
 
 ## Returns
 
-[`ExportNode`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`ExportNode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)

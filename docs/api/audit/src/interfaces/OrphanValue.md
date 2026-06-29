@@ -6,12 +6,12 @@
 
 # Interface: OrphanValue
 
-Defined in: [audit/src/repo-ir-language-service.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L82)
+Defined in: [audit/src/repo-ir-language-service.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L82)
 
 The structured payload of a `symbol-orphan` fact's `value` — the heterogeneous
-[Fact.value](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) for this oracle. It carries the symbol NAME and the resolved
+[Fact.value](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) for this oracle. It carries the symbol NAME and the resolved
 external reference count alongside the orphan boolean, so the divergence gate
-can (a) reconstruct the `<file>#<name>` [SymbolId](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) to join against the
+can (a) reconstruct the `<file>#<name>` [SymbolId](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) to join against the
 IR's `refs` index and (b) report the magnitude. `value` is `unknown` on the
 Fact, so the consumer MUST narrow to this shape before reading it.
 
@@ -21,7 +21,7 @@ Fact, so the consumer MUST narrow to this shape before reading it.
 
 > `readonly` **externalReferenceCount**: `number`
 
-Defined in: [audit/src/repo-ir-language-service.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L88)
+Defined in: [audit/src/repo-ir-language-service.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L88)
 
 The count of references OUTSIDE the declaration file (the external count).
 
@@ -31,7 +31,7 @@ The count of references OUTSIDE the declaration file (the external count).
 
 > `readonly` **isOrphan**: `boolean`
 
-Defined in: [audit/src/repo-ir-language-service.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L86)
+Defined in: [audit/src/repo-ir-language-service.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L86)
 
 True iff the LanguageService resolved ZERO references outside the decl file.
 
@@ -41,6 +41,6 @@ True iff the LanguageService resolved ZERO references outside the decl file.
 
 > `readonly` **name**: `string`
 
-Defined in: [audit/src/repo-ir-language-service.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L84)
+Defined in: [audit/src/repo-ir-language-service.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L84)
 
 The exported symbol's declared name (the `#<name>` half of its SymbolId).

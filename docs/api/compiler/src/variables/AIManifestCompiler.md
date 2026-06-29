@@ -8,7 +8,7 @@
 
 > `const` **AIManifestCompiler**: `object`
 
-Defined in: [compiler/src/ai-manifest.ts:782](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L782)
+Defined in: [compiler/src/ai-manifest.ts:782](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/ai-manifest.ts#L782)
 
 AI manifest compiler namespace.
 

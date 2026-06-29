@@ -8,7 +8,7 @@
 
 > **DesignTier** = `"minimal"` \| `"standard"` \| `"enhanced"` \| `"rich"`
 
-Defined in: [detect/src/tiers.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L69)
+Defined in: [detect/src/tiers.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L69)
 
 Visual fidelity tier derived from device capabilities.
 

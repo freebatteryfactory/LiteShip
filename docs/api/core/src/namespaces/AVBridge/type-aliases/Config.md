@@ -8,6 +8,6 @@
 
 > **Config** = `AVBridgeConfig`
 
-Defined in: [core/src/av-bridge.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/av-bridge.ts#L162)
+Defined in: [core/src/av-bridge.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/av-bridge.ts#L162)
 
 Configuration accepted by [AVBridge.make](../../../variables/AVBridge.md#make): sample rate and fps.

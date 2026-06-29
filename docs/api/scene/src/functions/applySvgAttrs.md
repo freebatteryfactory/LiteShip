@@ -8,7 +8,7 @@
 
 > **applySvgAttrs**(`frame`, `resolve`): `number`
 
-Defined in: [scene/src/systems/svg-egress.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L84)
+Defined in: [scene/src/systems/svg-egress.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L84)
 
 Thin DOM applicator — write a collected [SvgAttrsFrame](../type-aliases/SvgAttrsFrame.md) onto live
 SVG elements. For each entity present in the frame it resolves the target

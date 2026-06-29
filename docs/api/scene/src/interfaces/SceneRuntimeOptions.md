@@ -6,7 +6,7 @@
 
 # Interface: SceneRuntimeOptions
 
-Defined in: [scene/src/runtime.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L103)
+Defined in: [scene/src/runtime.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L103)
 
 Options accepted by [SceneRuntime.build](../variables/SceneRuntime.md#build).
 
@@ -16,10 +16,10 @@ Options accepted by [SceneRuntime.build](../variables/SceneRuntime.md#build).
 
 > `readonly` `optional` **mixSink?**: (`receipt`) => `void`
 
-Defined in: [scene/src/runtime.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L111)
+Defined in: [scene/src/runtime.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L111)
 
 Mix-receipt sink for PassThroughMixer. Defaults to a bounded ring
-(last [DEFAULT\_MIX\_RECEIPT\_CAP](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts) receipts) accessible via
+(last [DEFAULT\_MIX\_RECEIPT\_CAP](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts) receipts) accessible via
 `handle.receipts`. Pass an explicit sink to receive every receipt.
 
 #### Parameters
@@ -38,7 +38,7 @@ Mix-receipt sink for PassThroughMixer. Defaults to a bounded ring
 
 > `readonly` `optional` **sampleRate?**: `number`
 
-Defined in: [scene/src/runtime.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L105)
+Defined in: [scene/src/runtime.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L105)
 
 Audio sample rate fed to AudioSystem. Defaults to 48_000.
 
@@ -48,7 +48,7 @@ Audio sample rate fed to AudioSystem. Defaults to 48_000.
 
 > `readonly` `optional` **svgSink?**: (`frame`) => `void`
 
-Defined in: [scene/src/runtime.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts#L121)
+Defined in: [scene/src/runtime.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts#L121)
 
 SVG-egress sink. Invoked once per [SceneRuntimeHandle.tick](SceneRuntimeHandle.md#tick) AFTER
 every system has run, with the entity-keyed [SvgAttrsFrame](../type-aliases/SvgAttrsFrame.md)

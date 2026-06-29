@@ -8,7 +8,7 @@
 
 > **IntegrityError**: (`subject`, `detail`, `opts`) => [`IntegrityError`](../interfaces/IntegrityError.md)
 
-Defined in: [error/src/variants.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L214)
+Defined in: [error/src/variants.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L214)
 
 Build an IntegrityError. `opts` carries the optional reason + expected/actual.
 

@@ -6,7 +6,7 @@
 
 # Interface: UnsupportedError
 
-Defined in: [error/src/variants.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L189)
+Defined in: [error/src/variants.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L189)
 
 A value or case fell outside the supported set — a known-but-unhandled
 platform, an AST node with no mapping, a reserved encoding.
@@ -24,7 +24,7 @@ the "outside the modelled set" throws across `core` (`harness`), `command`.
 
 > `readonly` **\_tag**: `"UnsupportedError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -38,7 +38,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` **detail**: `string`
 
-Defined in: [error/src/variants.ts:193](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L193)
+Defined in: [error/src/variants.ts:193](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L193)
 
 The unsupported value + what IS supported, in human terms.
 
@@ -48,7 +48,7 @@ The unsupported value + what IS supported, in human terms.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 
@@ -62,6 +62,6 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 > `readonly` **subject**: `string`
 
-Defined in: [error/src/variants.ts:191](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L191)
+Defined in: [error/src/variants.ts:191](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L191)
 
 What was unsupported, e.g. `'schema node'`, `'platform'`.

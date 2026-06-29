@@ -6,7 +6,7 @@
 
 # Interface: LspTextEdit
 
-Defined in: [mcp-server/src/lsp/types.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L157)
+Defined in: [mcp-server/src/lsp/types.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L157)
 
 LSP `TextEdit` (§Text Documents) — replace `range` with `newText`.
 
@@ -16,7 +16,7 @@ LSP `TextEdit` (§Text Documents) — replace `range` with `newText`.
 
 > `readonly` **newText**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L159)
+Defined in: [mcp-server/src/lsp/types.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L159)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/lsp/types.ts:159](https://github.com/heyoub/LiteShip
 
 > `readonly` **range**: [`LspRange`](LspRange.md)
 
-Defined in: [mcp-server/src/lsp/types.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L158)
+Defined in: [mcp-server/src/lsp/types.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L158)

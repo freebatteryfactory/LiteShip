@@ -6,7 +6,7 @@
 
 # Interface: AudioTrack\<M\>
 
-Defined in: [scene/src/contract.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L64)
+Defined in: [scene/src/contract.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L64)
 
 Audio track — plays an asset with optional mix metadata.
 
@@ -22,7 +22,7 @@ Audio track — plays an asset with optional mix metadata.
 
 > `readonly` **\_tag**: `"audio"`
 
-Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
+Defined in: [scene/src/contract.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L65)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [scene/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
 
-Defined in: [scene/src/contract.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L83)
+Defined in: [scene/src/contract.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L83)
 
 Optional gain automation — e.g. `fade.out(Beat(2))`. Compiled to an `Envelope` component AudioSystem reads each tick (written as `_gain`).
 
@@ -40,7 +40,7 @@ Optional gain automation — e.g. `fade.out(Beat(2))`. Compiled to an `Envelope`
 
 > `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L67)
+Defined in: [scene/src/contract.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L67)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [scene/src/contract.ts:67](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"audio"`\>
 
-Defined in: [scene/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L66)
+Defined in: [scene/src/contract.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L66)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [scene/src/contract.ts:66](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **mix?**: `object`
 
-Defined in: [scene/src/contract.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L70)
+Defined in: [scene/src/contract.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L70)
 
 #### pan?
 
@@ -98,7 +98,7 @@ level), 0 is silence. Mixers multiply this by the envelope-driven
 
 > `readonly` **source**: `string`
 
-Defined in: [scene/src/contract.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L69)
+Defined in: [scene/src/contract.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L69)
 
 ***
 
@@ -106,4 +106,4 @@ Defined in: [scene/src/contract.ts:69](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L68)
+Defined in: [scene/src/contract.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L68)

@@ -6,7 +6,7 @@
 
 # Interface: ForkViolation
 
-Defined in: [core/src/dag.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L39)
+Defined in: [core/src/dag.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L39)
 
 Detail record describing a single-writer fork-rule violation.
 
@@ -16,7 +16,7 @@ Detail record describing a single-writer fork-rule violation.
 
 > `readonly` **actor**: `string`
 
-Defined in: [core/src/dag.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L40)
+Defined in: [core/src/dag.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L40)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/dag.ts:40](https://github.com/heyoub/LiteShip/blob/main/pa
 
 > `readonly` **attempted**: `string`
 
-Defined in: [core/src/dag.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L43)
+Defined in: [core/src/dag.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L43)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/dag.ts:43](https://github.com/heyoub/LiteShip/blob/main/pa
 
 > `readonly` **existing**: `string`
 
-Defined in: [core/src/dag.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L42)
+Defined in: [core/src/dag.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L42)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [core/src/dag.ts:42](https://github.com/heyoub/LiteShip/blob/main/pa
 
 > `readonly` **prevHash**: `string`
 
-Defined in: [core/src/dag.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/dag.ts#L41)
+Defined in: [core/src/dag.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L41)

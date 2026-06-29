@@ -6,7 +6,7 @@
 
 # Interface: PolicyNode
 
-Defined in: [core/src/document-graph.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L115)
+Defined in: [core/src/document-graph.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L115)
 
 7. Policy — NET-NEW. A pre-projection capability/constraint gate read by the
 escalation chooser (P5c). Constrains which projection targets are admissible
@@ -22,7 +22,7 @@ given the runtime site, the required [CapTier](../type-aliases/CapTier.md), and 
 
 > `readonly` **\_tag**: `"DocGraphPolicyNode"`
 
-Defined in: [core/src/document-graph.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L48)
+Defined in: [core/src/document-graph.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L48)
 
 #### Inherited from
 
@@ -34,7 +34,7 @@ Defined in: [core/src/document-graph.ts:48](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
+Defined in: [core/src/document-graph.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L49)
 
 #### Inherited from
 
@@ -46,7 +46,7 @@ Defined in: [core/src/document-graph.ts:49](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **appliesTo**: readonly `ContentAddress`[]
 
-Defined in: [core/src/document-graph.ts:116](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L116)
+Defined in: [core/src/document-graph.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L116)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [core/src/document-graph.ts:116](https://github.com/heyoub/LiteShip/
 
 > `readonly` `optional` **budgets?**: `object`
 
-Defined in: [core/src/document-graph.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L120)
+Defined in: [core/src/document-graph.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L120)
 
 #### allocClass?
 
@@ -74,7 +74,7 @@ Defined in: [core/src/document-graph.ts:120](https://github.com/heyoub/LiteShip/
 
 > `readonly` **family**: `"policy"`
 
-Defined in: [core/src/document-graph.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
+Defined in: [core/src/document-graph.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L50)
 
 #### Inherited from
 
@@ -86,7 +86,7 @@ Defined in: [core/src/document-graph.ts:50](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **grants**: [`CapSet`](CapSet.md)
 
-Defined in: [core/src/document-graph.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L118)
+Defined in: [core/src/document-graph.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L118)
 
 ***
 
@@ -94,7 +94,7 @@ Defined in: [core/src/document-graph.ts:118](https://github.com/heyoub/LiteShip/
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L52)
+Defined in: [core/src/document-graph.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L52)
 
 `fnv1a` content address over the node payload (set by `addressNode`/`sealNode`).
 
@@ -108,7 +108,7 @@ Defined in: [core/src/document-graph.ts:52](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L54)
+Defined in: [core/src/document-graph.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L54)
 
 HLC created/updated + version. Excluded from the content address (volatile).
 
@@ -122,7 +122,7 @@ HLC created/updated + version. Excluded from the content address (volatile).
 
 > `readonly` **requires**: [`CapTier`](../type-aliases/CapTier.md)
 
-Defined in: [core/src/document-graph.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L117)
+Defined in: [core/src/document-graph.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L117)
 
 ***
 
@@ -130,4 +130,4 @@ Defined in: [core/src/document-graph.ts:117](https://github.com/heyoub/LiteShip/
 
 > `readonly` **sites**: readonly [`RuntimeSite`](../type-aliases/RuntimeSite.md)[]
 
-Defined in: [core/src/document-graph.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L119)
+Defined in: [core/src/document-graph.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L119)

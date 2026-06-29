@@ -8,7 +8,7 @@
 
 > **computeHeatmap**(`inputs`): [`AmbitionProofHeatmap`](../interfaces/AmbitionProofHeatmap.md)
 
-Defined in: [gauntlet/src/ambition-proof.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L214)
+Defined in: [gauntlet/src/ambition-proof.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L214)
 
 Compute the ambition÷proof heatmap — the ONE pure, deterministic fold. Ranks every
 substantive module hottest-first; the same inputs fold to a byte-identical artifact.

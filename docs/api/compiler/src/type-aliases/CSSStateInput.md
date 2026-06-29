@@ -8,7 +8,7 @@
 
 > **CSSStateInput** = `Record`\<`string`, `string`\> \| [`CSSStateBody`](../interfaces/CSSStateBody.md)
 
-Defined in: [compiler/src/css.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L64)
+Defined in: [compiler/src/css.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L64)
 
 Per-state input accepted by [CSSCompiler.compile](../variables/CSSCompiler.md#compile): either a flat
 property map (the documented bare-props form, back-compat) or a

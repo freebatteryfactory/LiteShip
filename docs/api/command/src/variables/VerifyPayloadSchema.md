@@ -8,7 +8,7 @@
 
 > `const` **VerifyPayloadSchema**: `Struct`\<\{ `capsule_id`: `NullOr`\<`String`\>; `checks`: `Struct`\<\{ `chain_link`: `Literal`\<`"skipped"`\>; `lockfile`: `Literal`\<`"skipped"`\>; `tarball_manifest`: `Union`\<readonly \[`Literal`\<`"match"`\>, `Literal`\<`"mismatch"`\>, `Literal`\<`"skipped"`\>\]\>; `workspace_manifest`: `Literal`\<`"skipped"`\>; \}\>; `mismatches`: `$Array`\<`String`\>; `tarball`: `String`; \}\>
 
-Defined in: [command/src/commands/verify.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/verify.ts#L43)
+Defined in: [command/src/commands/verify.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/verify.ts#L43)
 
 Structured payload returned alongside a verdict — ONE Effect Schema is the
 source of both [VerifyPayload](../type-aliases/VerifyPayload.md) and the descriptor's `outputSchema`.

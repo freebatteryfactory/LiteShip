@@ -8,7 +8,7 @@
 
 > **Shape**\<`B`\> = `StyleDef`\<`B`\>
 
-Defined in: [core/src/style.ts:278](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/style.ts#L278)
+Defined in: [core/src/style.ts:278](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/style.ts#L278)
 
 Structural shape of a style definition parameterized by its governing [Boundary](../../../variables/Boundary.md).
 

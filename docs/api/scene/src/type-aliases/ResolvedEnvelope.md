@@ -8,7 +8,7 @@
 
 > **ResolvedEnvelope** = `_ResolvedEnvelope`
 
-Defined in: [scene/src/sugar/envelope.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L38)
+Defined in: [scene/src/sugar/envelope.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L38)
 
 Compile-time-resolved envelope — the `Envelope` ECS component shape.
 Beat spans are pre-resolved to frame counts so the per-tick read is

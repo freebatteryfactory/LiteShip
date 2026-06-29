@@ -8,7 +8,7 @@
 
 > **applyMutant**(`originalSource`, `mutant`): `string`
 
-Defined in: [audit/src/mutation-engine.ts:264](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L264)
+Defined in: [audit/src/mutation-engine.ts:264](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L264)
 
 Reconstruct the mutated source for ONE mutant — a single precise text splice of
 its `[start, end)` span. Byte-exact everywhere outside the span, so the only

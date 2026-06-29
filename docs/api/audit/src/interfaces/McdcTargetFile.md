@@ -6,7 +6,7 @@
 
 # Interface: McdcTargetFile
 
-Defined in: [audit/src/mcdc-facts-build.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L39)
+Defined in: [audit/src/mcdc-facts-build.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L39)
 
 One source file to condition-mutate — its repo-relative id + its current source text.
 
@@ -16,7 +16,7 @@ One source file to condition-mutate — its repo-relative id + its current sourc
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/mcdc-facts-build.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L40)
+Defined in: [audit/src/mcdc-facts-build.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L40)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [audit/src/mcdc-facts-build.ts:40](https://github.com/heyoub/LiteShi
 
 > `readonly` **text**: `string`
 
-Defined in: [audit/src/mcdc-facts-build.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L41)
+Defined in: [audit/src/mcdc-facts-build.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L41)

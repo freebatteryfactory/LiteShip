@@ -8,7 +8,7 @@
 
 > **isFetchableRuntimeUrl**(`rawUrl`): `boolean`
 
-Defined in: [web/src/security/runtime-url.ts:353](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L353)
+Defined in: [web/src/security/runtime-url.ts:353](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/runtime-url.ts#L353)
 
 The CANONICAL "is this a fetchable runtime URL?" predicate — the single source of
 truth that the shader-integrity classifier ([isExternalShaderSource](isExternalShaderSource.md))

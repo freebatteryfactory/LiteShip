@@ -19,7 +19,7 @@ The `docs/` chain is **sacred**: match house voice, never restructure autonomous
 
 ```bash
 # Clone + install
-git clone https://github.com/heyoub/LiteShip.git
+git clone https://github.com/freebatteryfactory/LiteShip.git
 cd LiteShip
 pnpm install
 

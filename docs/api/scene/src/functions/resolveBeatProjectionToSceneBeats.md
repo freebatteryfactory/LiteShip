@@ -8,7 +8,7 @@
 
 > **resolveBeatProjectionToSceneBeats**(`input`): readonly `BeatComponent`[]
 
-Defined in: [scene/src/beat-projection.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/beat-projection.ts#L37)
+Defined in: [scene/src/beat-projection.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/beat-projection.ts#L37)
 
 Resolve a raw beat-marker projection into scene-ready beat components.
 

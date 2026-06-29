@@ -8,7 +8,7 @@
 
 > **serializeBoundaryCss**(`resolution`): `string`
 
-Defined in: [astro/src/fetch-layer.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L83)
+Defined in: [astro/src/fetch-layer.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L83)
 
 Serialize a resolution's compiled boundary outputs into one stylesheet, in
 CSS-correct order: the theme `:root {}` custom properties first, then per

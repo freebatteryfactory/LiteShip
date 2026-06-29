@@ -6,7 +6,7 @@
 
 # Interface: IntegritySummary
 
-Defined in: [audit/src/integrity.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L22)
+Defined in: [audit/src/integrity.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L22)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/integrity.ts:22](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **consoleCount**: `number`
 
-Defined in: [audit/src/integrity.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L27)
+Defined in: [audit/src/integrity.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L27)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/integrity.ts:27](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **fallbackCount**: `number`
 
-Defined in: [audit/src/integrity.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L26)
+Defined in: [audit/src/integrity.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L26)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/integrity.ts:26](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **missingCapabilityCount**: `number`
 
-Defined in: [audit/src/integrity.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L25)
+Defined in: [audit/src/integrity.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L25)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/integrity.ts:25](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **placeholderCount**: `number`
 
-Defined in: [audit/src/integrity.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L28)
+Defined in: [audit/src/integrity.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L28)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/integrity.ts:28](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **reimplementationCount**: `number`
 
-Defined in: [audit/src/integrity.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L29)
+Defined in: [audit/src/integrity.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L29)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [audit/src/integrity.ts:29](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **runtimeFileCount**: `number`
 
-Defined in: [audit/src/integrity.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L23)
+Defined in: [audit/src/integrity.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L23)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [audit/src/integrity.ts:23](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **stubCount**: `number`
 
-Defined in: [audit/src/integrity.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/integrity.ts#L24)
+Defined in: [audit/src/integrity.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/integrity.ts#L24)

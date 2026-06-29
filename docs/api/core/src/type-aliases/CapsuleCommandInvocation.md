@@ -8,6 +8,6 @@
 
 > **CapsuleCommandInvocation** = `_CapsuleCommandInvocation`
 
-Defined in: [core/src/command.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/command.ts#L29)
+Defined in: [core/src/command.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/command.ts#L29)
 
 Transport-neutral request: a command name + already-parsed args.

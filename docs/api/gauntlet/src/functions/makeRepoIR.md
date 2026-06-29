@@ -8,13 +8,13 @@
 
 > **makeRepoIR**(`parts`): [`RepoIR`](../interfaces/RepoIR.md)
 
-Defined in: [gauntlet/src/repo-ir.ts:319](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L319)
+Defined in: [gauntlet/src/repo-ir.ts:319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L319)
 
 Build a [RepoIR](../interfaces/RepoIR.md) from flat parts — the one pure constructor (the
 `AssetRegistry.make` / `memoryContext` composition style). Frozen, immutable,
 and invariant-checked: it indexes the flat arrays into the keyed tables and
 validates every referential invariant up front, throwing a tagged
-[InvariantViolationError](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts) on the first violation (never a bare throw,
+[InvariantViolationError](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts) on the first violation (never a bare throw,
 never a silent skip). This lets a FIXTURE assemble a literal in-memory IR with
 NO `ts.Program` — the same value a host would inject, minus the real digests.
 

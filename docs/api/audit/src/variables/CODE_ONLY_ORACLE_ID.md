@@ -8,6 +8,6 @@
 
 > `const` **CODE\_ONLY\_ORACLE\_ID**: `"ts-code-only-scanner"` = `'ts-code-only-scanner'`
 
-Defined in: [audit/src/code-ranges.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/code-ranges.ts#L26)
+Defined in: [audit/src/code-ranges.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/code-ranges.ts#L26)
 
 The oracle id for traceability when this floor is the injected `codeOnly` implementation.

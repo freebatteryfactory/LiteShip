@@ -6,11 +6,11 @@
 
 # Function: precomputeFrames()
 
-> **precomputeFrames**(`renderer`): `Promise`\<readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]\>
+> **precomputeFrames**(`renderer`): `Promise`\<readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]\>
 
-Defined in: [remotion/src/composition.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L34)
+Defined in: [remotion/src/composition.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L34)
 
-Precompute every [VideoFrameOutput](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md) from a `VideoRenderer` into
+Precompute every [VideoFrameOutput](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md) from a `VideoRenderer` into
 an in-memory array.
 
 Call this once on the server (or in a Remotion `calculateMetadata`) before
@@ -28,7 +28,7 @@ A `VideoRenderer.Shape` produced by `@czap/core`.
 
 ## Returns
 
-`Promise`\<readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]\>
+`Promise`\<readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]\>
 
 Frames in timeline order.
 

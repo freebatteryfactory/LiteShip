@@ -6,7 +6,7 @@
 
 # Interface: McpUiResourceMeta
 
-Defined in: [mcp-server/src/ui-resources.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L38)
+Defined in: [mcp-server/src/ui-resources.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L38)
 
 MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never on a tool.
 
@@ -16,7 +16,7 @@ MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never 
 
 > `readonly` **ui**: `object`
 
-Defined in: [mcp-server/src/ui-resources.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L39)
+Defined in: [mcp-server/src/ui-resources.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L39)
 
 #### csp
 

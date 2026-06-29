@@ -8,7 +8,7 @@
 
 > **diffInventories**(`expected`, `actual`): `object`
 
-Defined in: [command/src/commands/audit-floor-registry.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit-floor-registry.ts#L30)
+Defined in: [command/src/commands/audit-floor-registry.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor-registry.ts#L30)
 
 Diff two sorted multisets — `added` are in `actual` only, `removed` in `expected` only.
 

@@ -8,7 +8,7 @@
 
 > `const` **ShipCapsule**: `object`
 
-Defined in: [core/src/ship-capsule.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L216)
+Defined in: [core/src/ship-capsule.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ship-capsule.ts#L216)
 
 Public namespace for ShipCapsule (ADR-0011). `make` builds a capsule from
 input, `canonicalize` encodes it as canonical CBOR for transport / hashing,

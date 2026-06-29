@@ -6,7 +6,7 @@
 
 # Interface: FrameReader
 
-Defined in: [mcp-server/src/lsp/framing.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/framing.ts#L36)
+Defined in: [mcp-server/src/lsp/framing.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/framing.ts#L36)
 
 A stateful frame reader. Feed it incoming chunks (`push`); it returns the zero
 or more complete JSON payload strings that became available. Bytes are
@@ -20,7 +20,7 @@ once a full frame is present).
 
 > `readonly` **push**: (`chunk`) => readonly `string`[]
 
-Defined in: [mcp-server/src/lsp/framing.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/framing.ts#L38)
+Defined in: [mcp-server/src/lsp/framing.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/framing.ts#L38)
 
 Feed a chunk; return every complete payload string the buffer now yields.
 

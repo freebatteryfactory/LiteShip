@@ -8,7 +8,7 @@
 
 > **MutantVerdict**\<`M`\> = [`KilledVerdict`](../interfaces/KilledVerdict.md)\<`M`\> \| [`SurvivedVerdict`](../interfaces/SurvivedVerdict.md)\<`M`\> \| [`NoCoverageVerdict`](../interfaces/NoCoverageVerdict.md)\<`M`\> \| [`EquivalentVerdict`](../interfaces/EquivalentVerdict.md)\<`M`\>
 
-Defined in: [audit/src/mutation-verdict.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L155)
+Defined in: [audit/src/mutation-verdict.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L155)
 
 The closed verdict union — a `_tag` data discriminant (composition). Generic over the
 mutant shape `M` (defaulting to the classic [Mutant](../interfaces/Mutant.md)); the MC/DC builder

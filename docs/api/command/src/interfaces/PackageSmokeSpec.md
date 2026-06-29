@@ -6,7 +6,7 @@
 
 # Interface: PackageSmokeSpec
 
-Defined in: [command/src/commands/package-smoke-registry.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L20)
+Defined in: [command/src/commands/package-smoke-registry.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L20)
 
 One publishable scope: its `packages/<dir>`, its package name, and the module specifiers the import-smoke resolves.
 
@@ -16,7 +16,7 @@ One publishable scope: its `packages/<dir>`, its package name, and the module sp
 
 > `readonly` **dir**: `string`
 
-Defined in: [command/src/commands/package-smoke-registry.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L21)
+Defined in: [command/src/commands/package-smoke-registry.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L21)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [command/src/commands/package-smoke-registry.ts:21](https://github.c
 
 > `readonly` **imports**: readonly `string`[]
 
-Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L23)
+Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L23)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [command/src/commands/package-smoke-registry.ts:23](https://github.c
 
 > `readonly` **name**: `string`
 
-Defined in: [command/src/commands/package-smoke-registry.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L22)
+Defined in: [command/src/commands/package-smoke-registry.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L22)

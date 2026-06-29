@@ -8,7 +8,7 @@
 
 > **audioDecoder**(`bytes`): `Promise`\<[`DecodedAudio`](../interfaces/DecodedAudio.md)\>
 
-Defined in: [assets/src/decoders/audio.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/audio.ts#L32)
+Defined in: [assets/src/decoders/audio.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/audio.ts#L32)
 
 Parse a WAV via RIFF chunk walker and return metadata + sample view.
 

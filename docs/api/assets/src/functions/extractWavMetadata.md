@@ -8,7 +8,7 @@
 
 > **extractWavMetadata**(`bytes`): [`WavMetadata`](../interfaces/WavMetadata.md)
 
-Defined in: [assets/src/analysis/wav-metadata.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/wav-metadata.ts#L37)
+Defined in: [assets/src/analysis/wav-metadata.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/wav-metadata.ts#L37)
 
 Walk LIST/INFO sub-chunks and project them onto the canonical
 WavMetadata shape. Unknown tags are ignored. Returns an empty object

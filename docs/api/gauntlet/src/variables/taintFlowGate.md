@@ -8,7 +8,7 @@
 
 > `const` **taintFlowGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/taint-flow.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/taint-flow.ts#L165)
+Defined in: [gauntlet/src/gates/taint-flow.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/taint-flow.ts#L165)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.
 

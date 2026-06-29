@@ -8,7 +8,7 @@
 
 > **ProposalAcceptance**\<`T`\> = `object`
 
-Defined in: [core/src/ai-cast.ts:443](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L443)
+Defined in: [core/src/ai-cast.ts:443](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L443)
 
 A passing validation — carries the minted [ValidatedProposal](../interfaces/ValidatedProposal.md).
 
@@ -24,7 +24,7 @@ A passing validation — carries the minted [ValidatedProposal](../interfaces/Va
 
 > `readonly` **ok**: `true`
 
-Defined in: [core/src/ai-cast.ts:444](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L444)
+Defined in: [core/src/ai-cast.ts:444](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L444)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/ai-cast.ts:444](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **proposal**: [`ValidatedProposal`](../interfaces/ValidatedProposal.md)\<`T`\>
 
-Defined in: [core/src/ai-cast.ts:445](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L445)
+Defined in: [core/src/ai-cast.ts:445](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L445)

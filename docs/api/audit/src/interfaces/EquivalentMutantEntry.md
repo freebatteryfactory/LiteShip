@@ -6,7 +6,7 @@
 
 # Interface: EquivalentMutantEntry
 
-Defined in: [audit/src/mutation-equivalents.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L52)
+Defined in: [audit/src/mutation-equivalents.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L52)
 
 One committed equivalent-mutant entry — the mutant's content-address `id` (the
 load-bearing match key) plus the human-review fields (`file`/`line`/`operator`/the
@@ -19,7 +19,7 @@ reviewer reads them, but the verdict matches on `id` alone (the anti-drift prope
 
 > `readonly` **column**: `number`
 
-Defined in: [audit/src/mutation-equivalents.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L60)
+Defined in: [audit/src/mutation-equivalents.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L60)
 
 1-based column (human review).
 
@@ -29,7 +29,7 @@ Defined in: [audit/src/mutation-equivalents.ts:60](https://github.com/heyoub/Lit
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L56)
+Defined in: [audit/src/mutation-equivalents.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L56)
 
 The repo-relative file (human review).
 
@@ -39,7 +39,7 @@ The repo-relative file (human review).
 
 > `readonly` **justification**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L68)
+Defined in: [audit/src/mutation-equivalents.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L68)
 
 Why this mutation changes no observable behaviour — the justification.
 
@@ -49,7 +49,7 @@ Why this mutation changes no observable behaviour — the justification.
 
 > `readonly` **line**: `number`
 
-Defined in: [audit/src/mutation-equivalents.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L58)
+Defined in: [audit/src/mutation-equivalents.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L58)
 
 1-based line (human review).
 
@@ -59,7 +59,7 @@ Defined in: [audit/src/mutation-equivalents.ts:58](https://github.com/heyoub/Lit
 
 > `readonly` **mutantId**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L54)
+Defined in: [audit/src/mutation-equivalents.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L54)
 
 The mutant's stable content address (blake3) — the load-bearing match key.
 
@@ -69,7 +69,7 @@ The mutant's stable content address (blake3) — the load-bearing match key.
 
 > `readonly` **mutatedText**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L66)
+Defined in: [audit/src/mutation-equivalents.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L66)
 
 The mutated span text (human review).
 
@@ -79,7 +79,7 @@ The mutated span text (human review).
 
 > `readonly` **operator**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L62)
+Defined in: [audit/src/mutation-equivalents.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L62)
 
 The operator id (human review).
 
@@ -89,6 +89,6 @@ The operator id (human review).
 
 > `readonly` **originalText**: `string`
 
-Defined in: [audit/src/mutation-equivalents.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L64)
+Defined in: [audit/src/mutation-equivalents.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-equivalents.ts#L64)
 
 The original span text (human review).

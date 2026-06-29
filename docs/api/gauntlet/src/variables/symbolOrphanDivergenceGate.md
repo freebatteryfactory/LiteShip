@@ -8,7 +8,7 @@
 
 > `const` **symbolOrphanDivergenceGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/symbol-orphan-divergence.ts:332](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/symbol-orphan-divergence.ts#L332)
+Defined in: [gauntlet/src/gates/symbol-orphan-divergence.ts:332](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/symbol-orphan-divergence.ts#L332)
 
 The symbol-orphan-divergence gate — the meta-gauntlet self-proof. Its
 red/green/mutation fixtures are in-memory [RepoIR](../interfaces/RepoIR.md)s where the

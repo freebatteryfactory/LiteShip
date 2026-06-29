@@ -8,7 +8,7 @@
 
 > `const` **SPSCRing**: `object`
 
-Defined in: [worker/src/spsc-ring.ts:404](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L404)
+Defined in: [worker/src/spsc-ring.ts:404](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L404)
 
 SPSC ring buffer namespace.
 
@@ -162,7 +162,7 @@ interchangeable: `slotCount` is the ring depth (how many entries),
 silently produces a different geometry rather than an error, so the
 order is `(depth, width)` — same order as the memory-layout header
 above (`[2]: slotCount`, `[3]: slotSize`). Each is guarded as a positive
-integer ([\_makeRing](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts) throws otherwise), so `0`/negative/fractional
+integer ([\_makeRing](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts) throws otherwise), so `0`/negative/fractional
 values fail loudly.
 
 ## Example

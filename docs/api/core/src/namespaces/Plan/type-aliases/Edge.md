@@ -8,6 +8,6 @@
 
 > **Edge** = `PlanEdge`
 
-Defined in: [core/src/plan.ts:308](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/plan.ts#L308)
+Defined in: [core/src/plan.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/plan.ts#L308)
 
 Alias for `PlanEdge`.

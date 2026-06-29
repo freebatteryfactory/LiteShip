@@ -8,6 +8,6 @@
 
 > `const` **KILL\_FLOOR\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), `number`\>\>
 
-Defined in: [gauntlet/src/gates/mutation-divergence.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L79)
+Defined in: [gauntlet/src/gates/mutation-divergence.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L79)
 
 The kill-FLOOR (minimum acceptable score) per level — the blocking ratchet target.

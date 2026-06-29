@@ -8,7 +8,7 @@
 
 > `const` **compositionCoverageGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/composition-coverage.ts:252](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/composition-coverage.ts#L252)
+Defined in: [gauntlet/src/gates/composition-coverage.ts:252](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/composition-coverage.ts#L252)
 
 The composition-coverage gate — each UNCOVERED interaction edge between two
 individually-tested units becomes a self-explaining Finding at the edge's

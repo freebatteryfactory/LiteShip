@@ -8,7 +8,7 @@
 
 > `const` **SURVIVOR\_SEVERITY\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), [`Severity`](../type-aliases/Severity.md)\>\>
 
-Defined in: [gauntlet/src/gates/mutation-divergence.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L70)
+Defined in: [gauntlet/src/gates/mutation-divergence.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mutation-divergence.ts#L70)
 
 The severity a SURVIVOR earns at a given effective level — the kill-floor
 calibration, exported DATA a downstream owner can redline (sibling to the

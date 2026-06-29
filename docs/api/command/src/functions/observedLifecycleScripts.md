@@ -8,7 +8,7 @@
 
 > **observedLifecycleScripts**(`pkg`): readonly `string`[]
 
-Defined in: [command/src/commands/ship-planning.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L55)
+Defined in: [command/src/commands/ship-planning.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L55)
 
 Report which publish lifecycle scripts a package actually declares.
 

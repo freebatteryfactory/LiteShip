@@ -6,7 +6,7 @@
 
 # Interface: ModuleHotSpot
 
-Defined in: [gauntlet/src/ambition-proof.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L121)
+Defined in: [gauntlet/src/ambition-proof.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L121)
 
 One module's place on the heatmap — its ambition, proof, hotness, and the raw signals.
 
@@ -16,7 +16,7 @@ One module's place on the heatmap — its ambition, proof, hotness, and the raw 
 
 > `readonly` **ambition**: [`ModuleAmbition`](ModuleAmbition.md)
 
-Defined in: [gauntlet/src/ambition-proof.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L123)
+Defined in: [gauntlet/src/ambition-proof.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L123)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/ambition-proof.ts:123](https://github.com/heyoub/LiteS
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/ambition-proof.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L122)
+Defined in: [gauntlet/src/ambition-proof.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L122)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [gauntlet/src/ambition-proof.ts:122](https://github.com/heyoub/LiteS
 
 > `readonly` **hotness**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L136)
+Defined in: [gauntlet/src/ambition-proof.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L136)
 
 AMBITION ÷ max(PROOF, floor) — hottest first when ranked.
 
@@ -42,7 +42,7 @@ AMBITION ÷ max(PROOF, floor) — hottest first when ranked.
 
 > `readonly` **proof**: `object`
 
-Defined in: [gauntlet/src/ambition-proof.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L125)
+Defined in: [gauntlet/src/ambition-proof.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L125)
 
 The PROOF sub-scores + the blended scalar (each in `[0, 1]`).
 

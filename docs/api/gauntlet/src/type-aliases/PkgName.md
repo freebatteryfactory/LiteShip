@@ -8,6 +8,6 @@
 
 > **PkgName** = `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L48)
+Defined in: [gauntlet/src/repo-ir.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L48)
 
 A package name (`@scope/name` or bare) — the stable identity of a package node.

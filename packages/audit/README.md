@@ -33,7 +33,7 @@ Every finding carries a `rule` id — the key you use in a profile's allowlists:
 
 ## Where it sits
 
-Standalone — this package depends on no other `@czap/*` package, only `fast-glob` and the TypeScript compiler API, so you can install it without the rest of the stack. The `czap audit` verb in `@czap/cli` is the only adapter that wires the engine; `@czap/command` and `@czap/mcp-server` see a structured summary of the result, never the engine itself. LiteShip's repo-local scoring and report rendering are not in this package — they compose it from the monorepo's scripts. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+Standalone — this package depends on no other `@czap/*` package, only `fast-glob` and the TypeScript compiler API, so you can install it without the rest of the stack. The `czap audit` verb in `@czap/cli` is the only adapter that wires the engine; `@czap/command` and `@czap/mcp-server` see a structured summary of the result, never the engine itself. LiteShip's repo-local scoring and report rendering are not in this package — they compose it from the monorepo's scripts. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -41,11 +41,11 @@ Consumer discovery walks `node_modules`; if no `@czap/*` packages are installed 
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Audit guide](https://github.com/heyoub/LiteShip/blob/main/AUDIT.md) — profiles, passes, and the receipt contract
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/audit/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Audit guide](https://github.com/freebatteryfactory/LiteShip/blob/main/AUDIT.md) — profiles, passes, and the receipt contract
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/audit/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

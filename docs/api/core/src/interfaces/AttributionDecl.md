@@ -6,7 +6,7 @@
 
 # Interface: AttributionDecl
 
-Defined in: [core/src/capsule.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L86)
+Defined in: [core/src/capsule.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L86)
 
 License and authorship metadata carried for audit receipts.
 
@@ -16,7 +16,7 @@ License and authorship metadata carried for audit receipts.
 
 > `readonly` **author**: `string`
 
-Defined in: [core/src/capsule.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L88)
+Defined in: [core/src/capsule.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L88)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/capsule.ts:88](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **license**: `string`
 
-Defined in: [core/src/capsule.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L87)
+Defined in: [core/src/capsule.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L87)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/capsule.ts:87](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **url?**: `string`
 
-Defined in: [core/src/capsule.ts:89](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L89)
+Defined in: [core/src/capsule.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L89)

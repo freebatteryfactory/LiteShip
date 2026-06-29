@@ -8,4 +8,4 @@
 
 > **AuditSection** = `"structure"` \| `"integrity"` \| `"surface"`
 
-Defined in: [audit/src/types.ts:11](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L11)
+Defined in: [audit/src/types.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L11)

@@ -6,7 +6,7 @@
 
 # Interface: LevelRule
 
-Defined in: [gauntlet/src/assurance-map.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L26)
+Defined in: [gauntlet/src/assurance-map.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L26)
 
 One rule of the assurance map: paths matching `glob` are at `level`.
 
@@ -16,7 +16,7 @@ One rule of the assurance map: paths matching `glob` are at `level`.
 
 > `readonly` **glob**: `string`
 
-Defined in: [gauntlet/src/assurance-map.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L28)
+Defined in: [gauntlet/src/assurance-map.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L28)
 
 A repo-relative glob (dialect: `**`, `*`, `{a,b}` alternation only).
 
@@ -26,6 +26,6 @@ A repo-relative glob (dialect: `**`, `*`, `{a,b}` alternation only).
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/assurance-map.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L30)
+Defined in: [gauntlet/src/assurance-map.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L30)
 
 The assurance level paths matching [glob](#glob) carry.

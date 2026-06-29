@@ -6,7 +6,7 @@
 
 # Interface: MutantCore
 
-Defined in: [audit/src/mutation-engine.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L142)
+Defined in: [audit/src/mutation-engine.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L142)
 
 The OPERATOR-AGNOSTIC core of a content-addressed mutant — every field a runner
 consumes to splice + evaluate a mutant, WITHOUT the `operator` discriminant. Extracted
@@ -28,7 +28,7 @@ runner. The `id` is the content address; `line`/`column` are 1-based (human disp
 
 > `readonly` **column**: `number`
 
-Defined in: [audit/src/mutation-engine.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L150)
+Defined in: [audit/src/mutation-engine.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L150)
 
 1-based column of the mutated span.
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/mutation-engine.ts:150](https://github.com/heyoub/LiteShi
 
 > `readonly` **end**: `number`
 
-Defined in: [audit/src/mutation-engine.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L154)
+Defined in: [audit/src/mutation-engine.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L154)
 
 Absolute end offset of the mutated span (exclusive).
 
@@ -48,7 +48,7 @@ Absolute end offset of the mutated span (exclusive).
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/mutation-engine.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L146)
+Defined in: [audit/src/mutation-engine.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L146)
 
 The repo-relative source file the mutant lives in.
 
@@ -58,7 +58,7 @@ The repo-relative source file the mutant lives in.
 
 > `readonly` **id**: `IntegrityDigest`
 
-Defined in: [audit/src/mutation-engine.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L144)
+Defined in: [audit/src/mutation-engine.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L144)
 
 Stable content address — `addressedDigestOf(...).integrity_digest`.
 
@@ -68,7 +68,7 @@ Stable content address — `addressedDigestOf(...).integrity_digest`.
 
 > `readonly` **line**: `number`
 
-Defined in: [audit/src/mutation-engine.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L148)
+Defined in: [audit/src/mutation-engine.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L148)
 
 1-based line of the mutated span.
 
@@ -78,7 +78,7 @@ Defined in: [audit/src/mutation-engine.ts:148](https://github.com/heyoub/LiteShi
 
 > `readonly` **mutatedText**: `string`
 
-Defined in: [audit/src/mutation-engine.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L158)
+Defined in: [audit/src/mutation-engine.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L158)
 
 The text the span is replaced with.
 
@@ -88,7 +88,7 @@ The text the span is replaced with.
 
 > `readonly` **originalText**: `string`
 
-Defined in: [audit/src/mutation-engine.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L156)
+Defined in: [audit/src/mutation-engine.ts:156](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L156)
 
 The exact original text of the span.
 
@@ -98,6 +98,6 @@ The exact original text of the span.
 
 > `readonly` **start**: `number`
 
-Defined in: [audit/src/mutation-engine.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L152)
+Defined in: [audit/src/mutation-engine.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L152)
 
 Absolute start offset of the mutated span (inclusive).

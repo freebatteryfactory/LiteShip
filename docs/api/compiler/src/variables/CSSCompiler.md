@@ -8,7 +8,7 @@
 
 > `const` **CSSCompiler**: `object`
 
-Defined in: [compiler/src/css.ts:399](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L399)
+Defined in: [compiler/src/css.ts:399](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L399)
 
 CSS compiler namespace.
 
@@ -34,7 +34,7 @@ or a [CSSStateBody](../interfaces/CSSStateBody.md) whose nested rules each becom
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

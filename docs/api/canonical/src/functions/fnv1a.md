@@ -8,7 +8,7 @@
 
 > **fnv1a**(`str`): `` `fnv1a:${string}` ``
 
-Defined in: [canonical/src/fnv.ts:11](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/fnv.ts#L11)
+Defined in: [canonical/src/fnv.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/fnv.ts#L11)
 
 FNV-1a hash of a string, returned as a ContentAddress.
 

@@ -8,7 +8,7 @@
 
 > `const` **ACCESSED\_ABSENT\_MARKER**: `"absent:accessed"`
 
-Defined in: [gauntlet/src/verdict-cache.ts:285](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L285)
+Defined in: [gauntlet/src/verdict-cache.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L285)
 
 The inert marker [factAccessEvidenceDigest](../functions/factAccessEvidenceDigest.md) folds for a channel a gate
 ACCESSED and found ABSENT (`undefined`). DISTINCT from [NO\_EVIDENCE\_MARKER](NO_EVIDENCE_MARKER.md)

@@ -8,7 +8,7 @@
 
 > **decideSkipSite**(`site`): [`SkipVerdict`](../type-aliases/SkipVerdict.md)
 
-Defined in: [gauntlet/src/skip-site-facts.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L154)
+Defined in: [gauntlet/src/skip-site-facts.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/skip-site-facts.ts#L154)
 
 THE KERNEL — the bounded, DATA-ONLY decision for one skip site. Reproduces `sanctionedSkipFor`'s
 law as a pure composition of the producer's three precomputed floors, in the SAME precedence:

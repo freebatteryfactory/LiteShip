@@ -8,7 +8,7 @@
 
 > `const` **capabilityGateLinkGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/capability-gate-link.ts:129](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/capability-gate-link.ts#L129)
+Defined in: [gauntlet/src/gates/capability-gate-link.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/capability-gate-link.ts#L129)
 
 The qualified gate — fixtures included, so it self-proves via the ratchet.
 

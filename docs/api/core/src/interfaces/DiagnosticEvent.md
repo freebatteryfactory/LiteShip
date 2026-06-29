@@ -6,7 +6,7 @@
 
 # Interface: DiagnosticEvent
 
-Defined in: [core/src/diagnostics.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L30)
+Defined in: [core/src/diagnostics.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L30)
 
 A [DiagnosticPayload](DiagnosticPayload.md) enriched with severity and an emission timestamp.
 
@@ -20,7 +20,7 @@ A [DiagnosticPayload](DiagnosticPayload.md) enriched with severity and an emissi
 
 > `readonly` `optional` **cause?**: `unknown`
 
-Defined in: [core/src/diagnostics.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L25)
+Defined in: [core/src/diagnostics.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L25)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [core/src/diagnostics.ts:25](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **code**: `string`
 
-Defined in: [core/src/diagnostics.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L23)
+Defined in: [core/src/diagnostics.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L23)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [core/src/diagnostics.ts:23](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` `optional` **detail?**: `unknown`
 
-Defined in: [core/src/diagnostics.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L26)
+Defined in: [core/src/diagnostics.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L26)
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [core/src/diagnostics.ts:26](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **level**: [`DiagnosticLevel`](../type-aliases/DiagnosticLevel.md)
 
-Defined in: [core/src/diagnostics.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L31)
+Defined in: [core/src/diagnostics.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L31)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [core/src/diagnostics.ts:31](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **message**: `string`
 
-Defined in: [core/src/diagnostics.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L24)
+Defined in: [core/src/diagnostics.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L24)
 
 #### Inherited from
 
@@ -76,7 +76,7 @@ Defined in: [core/src/diagnostics.ts:24](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **source**: `string`
 
-Defined in: [core/src/diagnostics.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L22)
+Defined in: [core/src/diagnostics.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L22)
 
 #### Inherited from
 
@@ -88,4 +88,4 @@ Defined in: [core/src/diagnostics.ts:22](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [core/src/diagnostics.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/diagnostics.ts#L32)
+Defined in: [core/src/diagnostics.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/diagnostics.ts#L32)

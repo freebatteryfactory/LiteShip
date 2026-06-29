@@ -8,7 +8,7 @@
 
 > `const` **LADDER\_TARGETS**: readonly `ReadonlyArray`\<[`LadderTarget`](../type-aliases/LadderTarget.md)\>[]
 
-Defined in: [core/src/cap-ladder.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/cap-ladder.ts#L42)
+Defined in: [core/src/cap-ladder.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cap-ladder.ts#L42)
 
 The admissible targets at each of the 5 ladder rungs, lowest (index 0) to
 highest (index 4). Each rung is a NON-STRICT superset of the one below

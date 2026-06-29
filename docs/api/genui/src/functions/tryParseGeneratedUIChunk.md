@@ -6,9 +6,9 @@
 
 # Function: tryParseGeneratedUIChunk()
 
-> **tryParseGeneratedUIChunk**(`content`): [`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`
+> **tryParseGeneratedUIChunk**(`content`): [`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`
 
-Defined in: [genui/src/parse.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/parse.ts#L47)
+Defined in: [genui/src/parse.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/parse.ts#L47)
 
 Try to parse a text chunk as a generated UI tree.
 Returns `null` for legacy token/text/HTML paths.
@@ -21,4 +21,4 @@ Returns `null` for legacy token/text/HTML paths.
 
 ## Returns
 
-[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`
+[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts) \| `null`

@@ -8,7 +8,7 @@
 
 > **detectSkips**(`text`): readonly [`SkipMatch`](../interfaces/SkipMatch.md)[]
 
-Defined in: [gauntlet/src/gates/skip-detect.ts:486](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-detect.ts#L486)
+Defined in: [gauntlet/src/gates/skip-detect.ts:486](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-detect.ts#L486)
 
 Scan ONE file's text for EVERY skip form, over [codeOnly](codeOnly.md) text (comments + top-level
 string literals blanked) so a prose/fixture mention of `it.skip` is never flagged. Returns

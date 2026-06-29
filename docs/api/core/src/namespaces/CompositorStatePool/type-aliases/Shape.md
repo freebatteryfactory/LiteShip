@@ -8,6 +8,6 @@
 
 > **Shape** = `CompositorStatePoolShape`
 
-Defined in: [core/src/compositor-pool.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts#L164)
+Defined in: [core/src/compositor-pool.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts#L164)
 
 Structural shape of a pool instance: `acquire`, `release`, `size`, `available`.

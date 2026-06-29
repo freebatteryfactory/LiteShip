@@ -8,7 +8,7 @@
 
 > **compileStyleBlock**(`block`, `style`): `string`
 
-Defined in: [vite/src/style-transform.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/style-transform.ts#L146)
+Defined in: [vite/src/style-transform.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/style-transform.ts#L146)
 
 Compile a parsed [StyleBlock](../interfaces/StyleBlock.md) plus a resolved `StyleDef` into
 scoped CSS with `@layer`, `@scope`, and `@starting-style` rules.
@@ -23,7 +23,7 @@ style-to-CSS logic.
 
 ### style
 
-[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
+[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
 
 ## Returns
 

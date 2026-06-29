@@ -8,7 +8,7 @@
 
 > **resolveFrameMark**(`mark`, `ctx`): `number`
 
-Defined in: [scene/src/sugar/beat.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L48)
+Defined in: [scene/src/sugar/beat.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L48)
 
 Resolve any [FrameMark](../type-aliases/FrameMark.md) to a numeric frame index. Numbers pass
 through unchanged; beat handles resolve via [resolveBeat](resolveBeat.md);

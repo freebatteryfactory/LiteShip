@@ -6,7 +6,7 @@
 
 # Interface: CSSContainerRule
 
-Defined in: [compiler/src/css.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L37)
+Defined in: [compiler/src/css.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L37)
 
 A `@container` at-rule grouping rules that apply at a given container query.
 
@@ -19,7 +19,7 @@ is derived from the boundary's `input` identifier.
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/css.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L39)
+Defined in: [compiler/src/css.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L39)
 
 Container name (sanitized from the boundary input).
 
@@ -29,7 +29,7 @@ Container name (sanitized from the boundary input).
 
 > `readonly` **query**: `string`
 
-Defined in: [compiler/src/css.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L41)
+Defined in: [compiler/src/css.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L41)
 
 Condition text like `(width >= 768px)`.
 
@@ -39,6 +39,6 @@ Condition text like `(width >= 768px)`.
 
 > `readonly` **rules**: readonly [`CSSRule`](CSSRule.md)[]
 
-Defined in: [compiler/src/css.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/css.ts#L43)
+Defined in: [compiler/src/css.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/css.ts#L43)
 
 Rules evaluated inside the container query.

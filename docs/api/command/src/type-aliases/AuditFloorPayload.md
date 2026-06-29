@@ -8,6 +8,6 @@
 
 > **AuditFloorPayload** = `Schema.Schema.Type`\<*typeof* [`AuditFloorPayloadSchema`](../variables/AuditFloorPayloadSchema.md)\>
 
-Defined in: [command/src/commands/audit-floor.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L48)
+Defined in: [command/src/commands/audit-floor.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L48)
 
 Structured payload returned by `audit-floor`.

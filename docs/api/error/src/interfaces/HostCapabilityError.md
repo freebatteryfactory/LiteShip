@@ -6,7 +6,7 @@
 
 # Interface: HostCapabilityError
 
-Defined in: [error/src/variants.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L123)
+Defined in: [error/src/variants.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L123)
 
 A required runtime capability is absent in the current environment — the
 code is correct but the host cannot run it (no WebCodecs, no OffscreenCanvas,
@@ -25,7 +25,7 @@ Migration target for: the host-capability/precondition throws across `web`,
 
 > `readonly` **\_tag**: `"HostCapabilityError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -39,7 +39,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` **capability**: `string`
 
-Defined in: [error/src/variants.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L125)
+Defined in: [error/src/variants.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L125)
 
 The missing capability, e.g. `'WebCodecs.VideoEncoder'`.
 
@@ -49,7 +49,7 @@ The missing capability, e.g. `'WebCodecs.VideoEncoder'`.
 
 > `readonly` **detail**: `string`
 
-Defined in: [error/src/variants.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L127)
+Defined in: [error/src/variants.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L127)
 
 Context + remediation, in human terms.
 
@@ -59,7 +59,7 @@ Context + remediation, in human terms.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 

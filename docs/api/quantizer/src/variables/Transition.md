@@ -8,7 +8,7 @@
 
 > **Transition**: `object`
 
-Defined in: [quantizer/src/transition.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L56)
+Defined in: [quantizer/src/transition.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L56)
 
 Transition resolver namespace.
 
@@ -41,13 +41,13 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 ##### Parameters
 
 ###### quantizer
 
-[`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+[`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ###### transitionConfig
 
@@ -73,7 +73,7 @@ Resolution order:
 
 ###### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 ##### Parameters
 

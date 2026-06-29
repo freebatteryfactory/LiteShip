@@ -8,7 +8,7 @@
 
 > `const` **AuditFloorPayloadSchema**: `Struct`\<\{ `actualWarnings`: `Number`; `delta`: `Struct`\<\{ `added`: `$Array`\<`String`\>; `removed`: `$Array`\<`String`\>; \}\>; `errorCount`: `Number`; `expectedWarnings`: `Number`; `inventory`: `$Array`\<`String`\>; `ok`: `Boolean`; \}\>
 
-Defined in: [command/src/commands/audit-floor.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L33)
+Defined in: [command/src/commands/audit-floor.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor.ts#L33)
 
 Structured payload returned by `audit-floor` — ONE Effect Schema is the source
 of both [AuditFloorPayload](../type-aliases/AuditFloorPayload.md) and the descriptor's `outputSchema`. `delta`

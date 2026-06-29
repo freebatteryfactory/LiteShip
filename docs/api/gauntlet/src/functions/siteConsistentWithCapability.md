@@ -8,7 +8,7 @@
 
 > **siteConsistentWithCapability**(`site`, `capability`, `conditional?`): `boolean`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:241](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L241)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L241)
 
 Is the sanctioned skip at `site` SELF-CONSISTENT with its declared `capability`?
 

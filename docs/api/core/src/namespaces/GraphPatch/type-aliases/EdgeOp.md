@@ -8,6 +8,6 @@
 
 > **EdgeOp** = [`EdgePatchOp`](../../../interfaces/EdgePatchOp.md)
 
-Defined in: [core/src/graph-patch.ts:363](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/graph-patch.ts#L363)
+Defined in: [core/src/graph-patch.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-patch.ts#L363)
 
 Alias for [EdgePatchOp](../../../interfaces/EdgePatchOp.md).

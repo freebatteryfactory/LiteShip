@@ -8,7 +8,7 @@
 
 > **renderFromCatalog**(`node`, `options`): `boolean`
 
-Defined in: [genui/src/render.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/render.ts#L130)
+Defined in: [genui/src/render.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L130)
 
 Validate and render a generated UI tree into `target`.
 Returns `false` when validation fails (target left unchanged unless `clear` already ran).
@@ -17,7 +17,7 @@ Returns `false` when validation fails (target left unchanged unless `clear` alre
 
 ### node
 
-[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### options
 

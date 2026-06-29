@@ -6,7 +6,7 @@
 
 # Interface: GateVerdictKeyParts
 
-Defined in: [gauntlet/src/verdict-cache.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L72)
+Defined in: [gauntlet/src/verdict-cache.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L72)
 
 The parts [gateVerdictKey](../functions/gateVerdictKey.md) composes — every input that affects a raw verdict.
 
@@ -16,7 +16,7 @@ The parts [gateVerdictKey](../functions/gateVerdictKey.md) composes — every in
 
 > `readonly` **coverageDigest**: `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L83)
+Defined in: [gauntlet/src/verdict-cache.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L83)
 
 The deterministic digest of the gate's covered `(FileId, contentDigest)` pairs.
 
@@ -26,7 +26,7 @@ The deterministic digest of the gate's covered `(FileId, contentDigest)` pairs.
 
 > `readonly` **env**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [gauntlet/src/verdict-cache.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L97)
+Defined in: [gauntlet/src/verdict-cache.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L97)
 
 The environment fingerprint (node / platform / arch / pm) — host-supplied.
 
@@ -36,7 +36,7 @@ The environment fingerprint (node / platform / arch / pm) — host-supplied.
 
 > `readonly` `optional` **evidenceDigest?**: `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L95)
+Defined in: [gauntlet/src/verdict-cache.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L95)
 
 The OPTIONAL digest of the gate's OUT-OF-IR evidence (see
 [Gate.evidenceDigest](Gate.md#evidencedigest)) — the confirmer test corpus, the `benchmarks/*.json`
@@ -54,7 +54,7 @@ families).
 
 > `readonly` **gateId**: `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L81)
+Defined in: [gauntlet/src/verdict-cache.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L81)
 
 The gate whose verdict this keys — two gates over the same files key apart.
 
@@ -64,7 +64,7 @@ The gate whose verdict this keys — two gates over the same files key apart.
 
 > `readonly` **toolchainDigest**: `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L79)
+Defined in: [gauntlet/src/verdict-cache.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L79)
 
 The host's hash over the gauntlet's BUILT gate logic (its dist bytes + the
 package version + the env fingerprint). CHANGES when a gate's logic changes —

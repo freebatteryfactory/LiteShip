@@ -8,7 +8,7 @@
 
 > **finding**(`input`): [`Finding`](../interfaces/Finding.md)
 
-Defined in: [gauntlet/src/finding.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L95)
+Defined in: [gauntlet/src/finding.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L95)
 
 Build a [Finding](../interfaces/Finding.md) — the one composer. Drops `undefined` optional fields
 so two findings with the same meaning are structurally equal (stable reports,

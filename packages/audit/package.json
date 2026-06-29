@@ -6,11 +6,11 @@
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/heyoub/LiteShip",
+    "url": "https://github.com/freebatteryfactory/LiteShip",
     "directory": "packages/audit"
   },
-  "bugs": "https://github.com/heyoub/LiteShip/issues",
-  "homepage": "https://github.com/heyoub/LiteShip#readme",
+  "bugs": "https://github.com/freebatteryfactory/LiteShip/issues",
+  "homepage": "https://github.com/freebatteryfactory/LiteShip#readme",
   "keywords": [
     "czap",
     "audit",

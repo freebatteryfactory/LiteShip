@@ -6,7 +6,7 @@
 
 # Interface: TraceabilityDivergence
 
-Defined in: [gauntlet/src/traceability-facts.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L100)
+Defined in: [gauntlet/src/traceability-facts.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L100)
 
 A ledger⇔header DIVERGENCE — the two halves of the bidirectional trace disagree.
 Either a test `PROVES` an INV absent from the ledger (`undeclared-proof`), or a
@@ -20,7 +20,7 @@ head-probe LAW).
 
 > `readonly` **detail**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L113)
+Defined in: [gauntlet/src/traceability-facts.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L113)
 
 Human-readable WHY — enough to act on without re-reading the ledger.
 
@@ -30,7 +30,7 @@ Human-readable WHY — enough to act on without re-reading the ledger.
 
 > `readonly` **invariantId**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L111)
+Defined in: [gauntlet/src/traceability-facts.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L111)
 
 The invariant id the divergence concerns.
 
@@ -40,7 +40,7 @@ The invariant id the divergence concerns.
 
 > `readonly` **kind**: `"undeclared-proof"` \| `"unbacked-claim"` \| `"missing-test"`
 
-Defined in: [gauntlet/src/traceability-facts.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L109)
+Defined in: [gauntlet/src/traceability-facts.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L109)
 
 `undeclared-proof`: a `PROVES: INV-X` header names an INV not in invariants.yaml.
 `unbacked-claim`:   a ledger `tests:` ref points at a test whose header does not
@@ -55,6 +55,6 @@ Defined in: [gauntlet/src/traceability-facts.ts:109](https://github.com/heyoub/L
 
 > `readonly` **subject**: `string`
 
-Defined in: [gauntlet/src/traceability-facts.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L115)
+Defined in: [gauntlet/src/traceability-facts.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L115)
 
 The artifact the divergence points at (a test ref or the ledger entry).

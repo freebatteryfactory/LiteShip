@@ -8,6 +8,6 @@
 
 > **Frame** = [`UIFrame`](../../../interfaces/UIFrame.md)
 
-Defined in: [core/src/gen-frame.ts:247](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L247)
+Defined in: [core/src/gen-frame.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L247)
 
 Alias for [UIFrame](../../../interfaces/UIFrame.md).

@@ -8,7 +8,7 @@
 
 > **SiteConditionalityResolver** = (`file`, `site`) => `SiteConditionality` \| `undefined`
 
-Defined in: [gauntlet/src/standards-facts.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L55)
+Defined in: [gauntlet/src/standards-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L55)
 
 Resolve the STRUCTURAL conditionality of a sanctioned skip site (the AST proof), injected by the
 host (which parses the live source via `@czap/audit`'s `detectSkipsAST`). `undefined` ⇒ the site

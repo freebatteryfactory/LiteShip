@@ -8,7 +8,7 @@
 
 > `const` **LITESHIP\_ASSURANCE\_MAP**: readonly [`LevelRule`](../interfaces/LevelRule.md)[]
 
-Defined in: [gauntlet/src/assurance-map.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L75)
+Defined in: [gauntlet/src/assurance-map.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-map.ts#L75)
 
 LiteShip's default assurance map — ORDERED, most-specific FIRST, first match
 wins, default `L1`. Owner-redlinable: the levels here are the criticality

@@ -6,7 +6,7 @@
 
 # Interface: AnimatedQuantizerShape\<B\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L25)
+Defined in: [quantizer/src/animated-quantizer.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L25)
 
 Quantizer augmented with transition-aware output interpolation.
 
@@ -16,13 +16,13 @@ output record. Non-numeric values snap at the 50% mark.
 
 ## Extends
 
-- [`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+- [`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 ## Type Parameters
 
 ### B
 
-`B` *extends* [`Boundary.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+`B` *extends* [`Boundary.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Properties
 
@@ -66,7 +66,7 @@ Defined in: core/dist/quantizer-types.d.ts:25
 
 > `readonly` **interpolated**: `Stream`\<\{ `outputs`: `Record`\<`string`, `number` \| `string`\>; `progress`: `number`; `state`: `StateUnion`\<`B`\>; \}\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L29)
+Defined in: [quantizer/src/animated-quantizer.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L29)
 
 Stream of interpolated animation frames during crossings.
 
@@ -106,7 +106,7 @@ Synchronous state accessor for hot paths (avoids Effect overhead).
 
 > `readonly` **transition**: [`Transition`](Transition.md)\<`B`\>
 
-Defined in: [quantizer/src/animated-quantizer.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L27)
+Defined in: [quantizer/src/animated-quantizer.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L27)
 
 Resolver that maps `from -> to` crossings to [TransitionConfig](TransitionConfig.md).
 

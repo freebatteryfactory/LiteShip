@@ -6,7 +6,7 @@
 
 # Interface: PackageNode
 
-Defined in: [gauntlet/src/repo-ir.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L200)
+Defined in: [gauntlet/src/repo-ir.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L200)
 
 A node in the package table.
 
@@ -16,7 +16,7 @@ A node in the package table.
 
 > `readonly` **manifestDeps**: readonly `string`[]
 
-Defined in: [gauntlet/src/repo-ir.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L206)
+Defined in: [gauntlet/src/repo-ir.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L206)
 
 The package's declared dependencies (manifest `dependencies` keys).
 
@@ -26,7 +26,7 @@ The package's declared dependencies (manifest `dependencies` keys).
 
 > `readonly` **name**: `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:202](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L202)
+Defined in: [gauntlet/src/repo-ir.ts:202](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L202)
 
 Package name — the node's stable identity.
 
@@ -36,6 +36,6 @@ Package name — the node's stable identity.
 
 > `readonly` **srcDir**: `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:204](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L204)
+Defined in: [gauntlet/src/repo-ir.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L204)
 
 Repo-relative source directory (e.g. `packages/core/src`).

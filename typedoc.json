@@ -41,84 +41,84 @@
   "hideGenerator": true,
   "externalSymbolLinkMappings": {
     "@czap/core": {
-      "Diagnostics": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
-      "DiagnosticsSink": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
-      "Boundary.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
-      "Token.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
-      "Theme.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",
-      "Style.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md",
-      "Component.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md",
-      "VideoRenderer.Shape": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md",
-      "VideoFrameOutput": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md",
-      "ContentAddress": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md",
-      "Millis": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
-      "CapLevel": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
-      "CapSet": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
-      "CapTier": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md",
-      "Quantizer": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",
-      "Clock": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md",
-      "Rng": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md",
-      "LadderTarget": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md",
-      "CzapValidationError": "https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md",
-      "FaultDecl.trigger": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts",
-      "EscalationSubject": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
-      "mintValidated": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts",
-      "__type.evaluateResult": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary-f32.ts",
-      "ComponentNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "ExportNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "ProjectionNode": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "DocumentGraph": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts",
-      "CompositeState": "https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts"
+      "Diagnostics": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/variables/Diagnostics.md",
+      "DiagnosticsSink": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/DiagnosticsSink.md",
+      "Boundary.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md",
+      "Token.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md",
+      "Theme.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Theme/type-aliases/Shape.md",
+      "Style.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md",
+      "Component.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md",
+      "VideoRenderer.Shape": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/VideoRenderer/type-aliases/Shape.md",
+      "VideoFrameOutput": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md",
+      "ContentAddress": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/ContentAddress.md",
+      "Millis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md",
+      "CapLevel": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapLevel.md",
+      "CapSet": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md",
+      "CapTier": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md",
+      "Quantizer": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md",
+      "Clock": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md",
+      "Rng": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Rng.md",
+      "LadderTarget": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/LadderTarget.md",
+      "CzapValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/classes/CzapValidationError.md",
+      "FaultDecl.trigger": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts",
+      "EscalationSubject": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsules/escalation-choose-rung.ts",
+      "mintValidated": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts",
+      "__type.evaluateResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-f32.ts",
+      "ComponentNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "ExportNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "ProjectionNode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "DocumentGraph": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts",
+      "CompositeState": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts"
     },
     "@czap/error": {
-      "ValidationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
-      "ParseError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
-      "InvariantViolationError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts",
-      "HostCapabilityError": "https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts"
+      "ValidationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
+      "ParseError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
+      "InvariantViolationError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts",
+      "HostCapabilityError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts"
     },
     "@czap/gauntlet": {
-      "RepoIR": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
-      "Fact": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
-      "Fact.value": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
-      "SymbolId": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
-      "TaintFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
-      "TaintFacts.interproceduralDepth": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
-      "MutationFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts",
-      "McdcFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
-      "McdcConditionOutcome": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
-      "Finding": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts",
-      "GauntletResult": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
-      "CapabilityLinkFacts": "https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
+      "RepoIR": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "Fact": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "Fact.value": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "SymbolId": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts",
+      "TaintFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
+      "TaintFacts.interproceduralDepth": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts",
+      "MutationFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts",
+      "McdcFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
+      "McdcConditionOutcome": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts",
+      "Finding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts",
+      "GauntletResult": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts",
+      "CapabilityLinkFacts": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/capability-link-facts.ts"
     },
     "@czap/command": {
-      "AuditEngineFinding": "https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts"
+      "AuditEngineFinding": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts"
     },
     "@czap/_spine": {
-      "GeneratedUINode": "https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts",
-      "ComponentCatalog.catalogHash": "https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts"
+      "GeneratedUINode": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts",
+      "ComponentCatalog.catalogHash": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts"
     },
     "@czap/worker": {
-      "MetricsMessage": "https://github.com/heyoub/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md",
-      "_makeRing": "https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
+      "MetricsMessage": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/worker/src/interfaces/MetricsMessage.md",
+      "_makeRing": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts"
     },
     "@czap/vite": {
-      "CAST_TARGETS": "https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
+      "CAST_TARGETS": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts"
     },
     "@czap/detect": {
-      "ExtendedDeviceCapabilities": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",
-      "CapAxis": "https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md"
+      "ExtendedDeviceCapabilities": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md",
+      "CapAxis": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md"
     },
     "@czap/scene": {
-      "CANONICAL_SYSTEM_COUNT": "https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts",
-      "DEFAULT_MIX_RECEIPT_CAP": "https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/runtime.ts"
+      "CANONICAL_SYSTEM_COUNT": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts",
+      "DEFAULT_MIX_RECEIPT_CAP": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/runtime.ts"
     },
     "@czap/edge": {
-      "KVNamespace": "https://github.com/heyoub/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md"
+      "KVNamespace": "https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/edge/src/interfaces/KVNamespace.md"
     },
     "@czap/mcp-server": {
-      "ResourceNotFoundError": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
-      "InvalidParamsError": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
-      "RECEIPT_META_KEY": "https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts"
+      "ResourceNotFoundError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
+      "InvalidParamsError": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/errors.ts",
+      "RECEIPT_META_KEY": "https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts"
     },
     "effect": {
       "": "https://effect.website/docs",

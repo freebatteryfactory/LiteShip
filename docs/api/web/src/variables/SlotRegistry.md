@@ -8,7 +8,7 @@
 
 > `const` **SlotRegistry**: `object`
 
-Defined in: [web/src/slot/registry.ts:362](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/slot/registry.ts#L362)
+Defined in: [web/src/slot/registry.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/registry.ts#L362)
 
 Slot registry namespace.
 

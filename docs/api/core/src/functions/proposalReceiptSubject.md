@@ -8,7 +8,7 @@
 
 > **proposalReceiptSubject**\<`T`\>(`proposal`): [`ReceiptSubject`](../interfaces/ReceiptSubject.md)
 
-Defined in: [core/src/validated-output.ts:224](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/validated-output.ts#L224)
+Defined in: [core/src/validated-output.ts:224](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/validated-output.ts#L224)
 
 RESOLVED (open question #7 — receipt integration). A full [ReceiptEnvelope](../interfaces/ReceiptEnvelope.md) is async (it hashes via `crypto.subtle`/SHA-256 inside an
 `Effect`, exactly like `GraphPatch.receipt`). Folding that into the validators

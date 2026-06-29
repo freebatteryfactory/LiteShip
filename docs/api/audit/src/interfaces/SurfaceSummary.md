@@ -6,7 +6,7 @@
 
 # Interface: SurfaceSummary
 
-Defined in: [audit/src/surface.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L19)
+Defined in: [audit/src/surface.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L19)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/surface.ts:19](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **astroDirectiveCount**: `number`
 
-Defined in: [audit/src/surface.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L22)
+Defined in: [audit/src/surface.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L22)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/surface.ts:22](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **astroRuntimeAdapterCount**: `number`
 
-Defined in: [audit/src/surface.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L23)
+Defined in: [audit/src/surface.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L23)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/surface.ts:23](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **capabilityNotes**: readonly `string`[]
 
-Defined in: [audit/src/surface.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L25)
+Defined in: [audit/src/surface.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L25)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/surface.ts:25](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **packageCount**: `number`
 
-Defined in: [audit/src/surface.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L20)
+Defined in: [audit/src/surface.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L20)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/surface.ts:20](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **packageExportCount**: `number`
 
-Defined in: [audit/src/surface.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L21)
+Defined in: [audit/src/surface.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L21)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [audit/src/surface.ts:21](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **viteVirtualModuleCount**: `number`
 
-Defined in: [audit/src/surface.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/surface.ts#L24)
+Defined in: [audit/src/surface.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/surface.ts#L24)

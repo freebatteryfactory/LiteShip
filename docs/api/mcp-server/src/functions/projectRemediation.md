@@ -8,7 +8,7 @@
 
 > **projectRemediation**(`remediation`, `diagnostic`, `uri`): [`LspCodeAction`](../interfaces/LspCodeAction.md) \| `null`
 
-Defined in: [mcp-server/src/lsp/code-action.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/code-action.ts#L54)
+Defined in: [mcp-server/src/lsp/code-action.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/code-action.ts#L54)
 
 Project a finding's remediation to an LSP CodeAction, or `null` when the
 finding carries no remediation. `diagnostic` is the projected diagnostic the

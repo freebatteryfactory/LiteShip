@@ -24,7 +24,7 @@ This compiles and nothing runs — the npm tarball contains no JavaScript, only 
 ## Where it sits
 
 This is the type-only layer under the foundation: `@czap/core`, `@czap/scene`, and `@czap/assets` depend on it so their published `.d.ts` files can reference one shared set of contracts instead of duplicating them. It has no runtime dependencies and ships no JavaScript. The runtime implementations of every type declared here live in the corresponding `@czap/*` package. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -33,11 +33,11 @@ A value import (`import { MotionTier } from '@czap/_spine'`) fails at runtime or
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Architecture index](https://github.com/heyoub/LiteShip/blob/main/ARCHITECTURE.md) — how the layers reference each other
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/@czap/_spine/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Architecture index](https://github.com/freebatteryfactory/LiteShip/blob/main/ARCHITECTURE.md) — how the layers reference each other
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/@czap/_spine/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

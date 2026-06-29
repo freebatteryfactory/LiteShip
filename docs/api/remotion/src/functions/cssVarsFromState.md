@@ -8,7 +8,7 @@
 
 > **cssVarsFromState**(`state`): `Record`\<`string`, `string`\>
 
-Defined in: [remotion/src/hooks.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L31)
+Defined in: [remotion/src/hooks.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/hooks.ts#L31)
 
 Convert `CompositeState.outputs.css` into a flat CSS custom property map.
 
@@ -20,7 +20,7 @@ or a Remotion `style` prop -- every key is a CSS variable name (e.g.
 
 ### state
 
-[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 A composite state produced by a `VideoRenderer` frame.
 

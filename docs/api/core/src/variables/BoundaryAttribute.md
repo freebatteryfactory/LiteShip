@@ -8,7 +8,7 @@
 
 > `const` **BoundaryAttribute**: `object`
 
-Defined in: [core/src/boundary-attribute.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/boundary-attribute.ts#L24)
+Defined in: [core/src/boundary-attribute.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/boundary-attribute.ts#L24)
 
 Shared boundary-attribute policy (ADR-0001 namespace-object style).
 

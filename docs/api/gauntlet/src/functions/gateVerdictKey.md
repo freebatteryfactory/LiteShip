@@ -8,7 +8,7 @@
 
 > **gateVerdictKey**(`parts`): `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L126)
+Defined in: [gauntlet/src/verdict-cache.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L126)
 
 Build the deterministic verdict-cache key from the four soundness inputs. PURE:
 the same parts always yield the same key (determinism is itself a tested law).

@@ -8,7 +8,7 @@
 
 > `const` **Scene**: `object`
 
-Defined in: [scene/src/include.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/include.ts#L24)
+Defined in: [scene/src/include.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/include.ts#L24)
 
 Scene composition helpers.
 

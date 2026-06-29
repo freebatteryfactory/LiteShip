@@ -6,7 +6,7 @@
 
 # Interface: PackagePathResolution
 
-Defined in: [audit/src/policy.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L33)
+Defined in: [audit/src/policy.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L33)
 
 A finding file resolved to its owning package + package-relative path.
 
@@ -16,7 +16,7 @@ A finding file resolved to its owning package + package-relative path.
 
 > `readonly` **packageName**: `string`
 
-Defined in: [audit/src/policy.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L34)
+Defined in: [audit/src/policy.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L34)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [audit/src/policy.ts:34](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **packageRelativePath**: `string`
 
-Defined in: [audit/src/policy.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L35)
+Defined in: [audit/src/policy.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L35)

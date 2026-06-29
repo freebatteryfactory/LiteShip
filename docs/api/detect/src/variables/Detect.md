@@ -8,13 +8,13 @@
 
 > `const` **Detect**: `object`
 
-Defined in: [detect/src/detect.ts:662](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/detect.ts#L662)
+Defined in: [detect/src/detect.ts:662](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/detect.ts#L662)
 
 Device capability detection namespace.
 
 Probes browser APIs for GPU tier, CPU cores, memory, input modality,
 user preferences, and network info. Maps detected capabilities to
-[CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md), [CapSet](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
+[CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md), [CapSet](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/CapSet.md), [DesignTier](../type-aliases/DesignTier.md), and [MotionTier](../../../quantizer/src/type-aliases/MotionTier.md).
 Supports live watching for preference and viewport changes.
 
 You usually never call these yourself — the `@czap/astro` boundary runs

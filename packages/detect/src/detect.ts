@@ -227,7 +227,7 @@ export function classifyGPURenderer(renderer: string): GPUTier {
   Diagnostics.warnOnce({
     source: 'czap/detect',
     code: 'unrecognized-gpu-renderer',
-    message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/heyoub/LiteShip/issues so a pattern can be added.`,
+    message: `unrecognized GPU renderer "${renderer}" — defaulting to tier 1 (integrated). If this is a real GPU, file the renderer string at https://github.com/freebatteryfactory/LiteShip/issues so a pattern can be added.`,
     detail: { renderer },
   });
   return GPU_TIER_DEFAULT;

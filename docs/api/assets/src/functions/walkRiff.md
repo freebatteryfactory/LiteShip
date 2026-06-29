@@ -8,7 +8,7 @@
 
 > **walkRiff**(`buffer`): `Generator`\<[`WavChunk`](../type-aliases/WavChunk.md)\>
 
-Defined in: [assets/src/decoders/riff.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/decoders/riff.ts#L62)
+Defined in: [assets/src/decoders/riff.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/decoders/riff.ts#L62)
 
 Iterate over every chunk in a RIFF buffer. The first yielded value is
 always the RIFF header; subsequent yields are top-level chunks in the

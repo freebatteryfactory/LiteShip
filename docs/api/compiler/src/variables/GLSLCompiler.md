@@ -8,7 +8,7 @@
 
 > `const` **GLSLCompiler**: `object`
 
-Defined in: [compiler/src/glsl.ts:313](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L313)
+Defined in: [compiler/src/glsl.ts:313](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/glsl.ts#L313)
 
 GLSL compiler namespace.
 
@@ -30,7 +30,7 @@ helper function string.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

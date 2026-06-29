@@ -8,7 +8,7 @@
 
 > **dedupeOutputsByTier**(`outputsByTier`): `Pick`\<[`BoundaryManifestEntry`](../interfaces/BoundaryManifestEntry.md), `"outputs"` \| `"outputsByTier"`\>
 
-Defined in: [edge/src/manifest.ts:130](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L130)
+Defined in: [edge/src/manifest.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L130)
 
 Deduplicate a fully-materialized per-tier outputs map into the pooled
 [BoundaryManifestEntry](../interfaces/BoundaryManifestEntry.md) shape (`outputs` + index refs).

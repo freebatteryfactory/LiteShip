@@ -8,6 +8,6 @@
 
 > **TokenManifest** = `Readonly`\<`Record`\<`string`, [`TokenManifestEntry`](TokenManifestEntry.md)\>\>
 
-Defined in: [vite/src/token-manifest.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L36)
+Defined in: [vite/src/token-manifest.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L36)
 
 Token export name → definition for `virtual:czap/tokens`.

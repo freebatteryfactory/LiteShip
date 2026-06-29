@@ -8,7 +8,7 @@
 
 > **rendererFromRemotionConfig**(`config`, `compositor`, `signal?`): `VideoRendererShape`
 
-Defined in: [remotion/src/composition.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L74)
+Defined in: [remotion/src/composition.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L74)
 
 Build a `VideoRenderer` directly from Remotion's video config so timing is
 declared exactly once — in Remotion.

@@ -8,7 +8,7 @@
 
 > `const` **proofPropagationGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/proof-propagation.ts:425](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L425)
+Defined in: [gauntlet/src/gates/proof-propagation.ts:425](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L425)
 
 The proof-propagation gate — each trust-spine module whose EFFECTIVE (global) proof
 drops below its level floor BECAUSE of a weak dependency becomes a self-explaining

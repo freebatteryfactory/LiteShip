@@ -8,7 +8,7 @@
 
 > **capAxisAttr**(`axis`): `"data-czap-tier"` \| `"data-czap-motion"` \| `"data-czap-design"`
 
-Defined in: [detect/src/cap-axes.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L33)
+Defined in: [detect/src/cap-axes.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/cap-axes.ts#L33)
 
 The `<html>` data-attribute name for a capability axis. The suffix IS the
 axis key (a template literal), so an attribute name that disagrees with its

@@ -6,7 +6,7 @@
 
 # Interface: WorkerConfig
 
-Defined in: [worker/src/messages.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L23)
+Defined in: [worker/src/messages.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L23)
 
 Tunable knobs that the main thread sends to a worker at construction time.
 
@@ -19,7 +19,7 @@ Omitted fields fall back to worker-local defaults chosen by
 
 > `readonly` `optional` **poolCapacity?**: `number`
 
-Defined in: [worker/src/messages.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L28)
+Defined in: [worker/src/messages.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L28)
 
 Maximum number of pooled `CompositeState` slots the worker may hold.
 
@@ -35,7 +35,7 @@ Maximum number of pooled `CompositeState` slots the worker may hold.
 
 > `readonly` `optional` **targetFps?**: `number`
 
-Defined in: [worker/src/messages.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L40)
+Defined in: [worker/src/messages.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L40)
 
 Target frames-per-second for the render loop (affects frame pacing).
 

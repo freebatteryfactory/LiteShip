@@ -8,7 +8,7 @@
 
 > **EaseTag** = `_EaseTag`
 
-Defined in: [scene/src/sugar/ease.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/ease.ts#L27)
+Defined in: [scene/src/sugar/ease.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/ease.ts#L27)
 
 Serializable ease reference stored on a TransitionTrack (`ease:` field)
 and emitted as the `Ease` ECS component. Mirror of the `@czap/_spine`

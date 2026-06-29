@@ -8,7 +8,7 @@
 
 > **sourceToInput**(`source`): [`SignalInput`](../type-aliases/SignalInput.md)
 
-Defined in: [core/src/signal-input.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal-input.ts#L54)
+Defined in: [core/src/signal-input.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal-input.ts#L54)
 
 Project a [SignalSource](../type-aliases/SignalSource.md) onto its canonical [SignalInput](../variables/SignalInput.md)
 dot-string. The forward half of the sanctioned bridge — the one place that

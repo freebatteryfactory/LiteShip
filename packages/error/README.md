@@ -42,7 +42,7 @@ Effect.fail(ParseError('profile.json', 'expected object', { offset: 12 }))
 
 ## Where it sits
 
-This is the foundational leaf the rest of the stack adopts — `standalone`, with zero `@czap/*` dependencies, so any package can fail with it. The built-in variants form one CLOSED coproduct (`LiteShipError` = `ValidationError | ParseError | IoError | HostCapabilityError | InvariantViolationError | NotFoundError | UnsupportedError | IntegrityError`) over the open `TaggedError` contract every helper (`hasTag`, `matchTag`, `matchTagOr`, `raise`, `assertNever`) operates on. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This is the foundational leaf the rest of the stack adopts — `standalone`, with zero `@czap/*` dependencies, so any package can fail with it. The built-in variants form one CLOSED coproduct (`LiteShipError` = `ValidationError | ParseError | IoError | HostCapabilityError | InvariantViolationError | NotFoundError | UnsupportedError | IntegrityError`) over the open `TaggedError` contract every helper (`hasTag`, `matchTag`, `matchTagOr`, `raise`, `assertNever`) operates on. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## When a variant doesn't fit
 
@@ -64,11 +64,11 @@ Every helper keeps working on the widened union unchanged — `matchTagOr` handl
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Architecture](https://github.com/heyoub/LiteShip/blob/main/ARCHITECTURE.md) — composition over inheritance, the load-bearing design law
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/error/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Architecture](https://github.com/freebatteryfactory/LiteShip/blob/main/ARCHITECTURE.md) — composition over inheritance, the load-bearing design law
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/error/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

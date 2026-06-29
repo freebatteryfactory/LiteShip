@@ -8,7 +8,7 @@
 
 > **NotFoundError**: (`kind`, `id`, `detail?`) => [`NotFoundError`](../interfaces/NotFoundError.md)
 
-Defined in: [error/src/variants.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L161)
+Defined in: [error/src/variants.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L161)
 
 Build a NotFoundError.
 

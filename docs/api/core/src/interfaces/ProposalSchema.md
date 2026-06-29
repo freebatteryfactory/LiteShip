@@ -6,7 +6,7 @@
 
 # Interface: ProposalSchema
 
-Defined in: [core/src/ai-cast.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L90)
+Defined in: [core/src/ai-cast.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L90)
 
 The output-contract schema the [AIContext](AIContext.md) advertises. Targets share one
 shape: a JSON-Schema-ish descriptor plus the [ProposalTarget](../type-aliases/ProposalTarget.md) tag that
@@ -19,7 +19,7 @@ the SAME `GraphPatch` the framework validates on the way back (closure).
 
 > `readonly` **description**: `string`
 
-Defined in: [core/src/ai-cast.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L97)
+Defined in: [core/src/ai-cast.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L97)
 
 One-line description surfaced to the model.
 
@@ -29,7 +29,7 @@ One-line description surfaced to the model.
 
 > `readonly` **jsonSchema**: `Record`\<`string`, `unknown`\>
 
-Defined in: [core/src/ai-cast.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L95)
+Defined in: [core/src/ai-cast.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L95)
 
 JSON Schema describing the exact payload the model must return.
 
@@ -39,7 +39,7 @@ JSON Schema describing the exact payload the model must return.
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/ai-cast.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L93)
+Defined in: [core/src/ai-cast.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L93)
 
 Human/model-readable name of the output contract.
 
@@ -49,4 +49,4 @@ Human/model-readable name of the output contract.
 
 > `readonly` **target**: [`ProposalTarget`](../type-aliases/ProposalTarget.md)
 
-Defined in: [core/src/ai-cast.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L91)
+Defined in: [core/src/ai-cast.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L91)

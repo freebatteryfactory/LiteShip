@@ -6,14 +6,14 @@
 
 # Type Alias: FactOracle
 
-> **FactOracle** = (`input`) => readonly [`Fact`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]
+> **FactOracle** = (`input`) => readonly [`Fact`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]
 
-Defined in: [audit/src/repo-ir-build.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L104)
+Defined in: [audit/src/repo-ir-build.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L104)
 
 A host-supplied fact oracle — the injection hook that keeps `@czap/audit`
 LiteShip-agnostic (ADR-0012). It is a PURE function the host passes to
 [buildRepoIR](../functions/buildRepoIR.md): given one source file's raw text + path + owning package,
-it returns the [Fact](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)s it observes. `buildRepoIR` invokes each injected
+it returns the [Fact](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)s it observes. `buildRepoIR` invokes each injected
 oracle per file and merges the returned facts into the single IR, knowing
 NOTHING about what they check.
 
@@ -53,4 +53,4 @@ fact lands on a real IR node) — `buildRepoIR` rejects a dangling fact via
 
 ## Returns
 
-readonly [`Fact`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]
+readonly [`Fact`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)[]

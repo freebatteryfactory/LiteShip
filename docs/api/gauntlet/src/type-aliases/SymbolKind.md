@@ -8,7 +8,7 @@
 
 > **SymbolKind** = `"function"` \| `"class"` \| `"const"` \| `"let"` \| `"var"` \| `"type"` \| `"interface"` \| `"enum"` \| `"namespace"` \| `"default-export"` \| `"export-assignment"` \| `"re-export"`
 
-Defined in: [gauntlet/src/repo-ir.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L164)
+Defined in: [gauntlet/src/repo-ir.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L164)
 
 The normalized declaration kinds a symbol node carries — a closed `_tag`-style
 union over the syntactic shapes the host extracts (design: ECS over the audit

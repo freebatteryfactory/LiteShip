@@ -8,7 +8,7 @@
 
 > `const` **LLMAdapter**: `object`
 
-Defined in: [web/src/stream/llm-adapter.ts:174](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L174)
+Defined in: [web/src/stream/llm-adapter.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L174)
 
 LLM adapter namespace.
 

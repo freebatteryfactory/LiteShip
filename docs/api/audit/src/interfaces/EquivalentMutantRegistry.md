@@ -6,7 +6,7 @@
 
 # Interface: EquivalentMutantRegistry
 
-Defined in: [audit/src/mutation-verdict.ts:169](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L169)
+Defined in: [audit/src/mutation-verdict.ts:169](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L169)
 
 The injected EQUIVALENT-MUTANT registry — resolves a mutant's CONTENT ADDRESS to its
 justification, or `null` when the mutant is not a registered equivalent. The host
@@ -24,7 +24,7 @@ a class.
 
 > **justification**(`mutantId`): `string` \| `null`
 
-Defined in: [audit/src/mutation-verdict.ts:171](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L171)
+Defined in: [audit/src/mutation-verdict.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L171)
 
 The justification for `mutantId`, or `null` when it is not a registered equivalent.
 

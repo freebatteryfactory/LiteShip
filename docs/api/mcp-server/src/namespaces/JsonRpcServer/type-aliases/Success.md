@@ -8,6 +8,6 @@
 
 > **Success** = [`JsonRpcSuccess`](../../../interfaces/JsonRpcSuccess.md)
 
-Defined in: [mcp-server/src/jsonrpc.ts:231](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L231)
+Defined in: [mcp-server/src/jsonrpc.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L231)
 
 Wire-shape success response.

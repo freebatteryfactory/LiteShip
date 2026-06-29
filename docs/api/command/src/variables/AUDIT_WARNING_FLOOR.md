@@ -8,7 +8,7 @@
 
 > `const` **AUDIT\_WARNING\_FLOOR**: readonly `string`[] = `[]`
 
-Defined in: [command/src/commands/audit-floor-registry.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit-floor-registry.ts#L27)
+Defined in: [command/src/commands/audit-floor-registry.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit-floor-registry.ts#L27)
 
 Sorted multiset of `rule@file` keys for pinned advisory warnings.
 

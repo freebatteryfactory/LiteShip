@@ -6,7 +6,7 @@
 
 # Interface: BoundaryManifestEntry
 
-Defined in: [edge/src/manifest.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L107)
+Defined in: [edge/src/manifest.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L107)
 
 One boundary's manifest entry: its minted `ContentAddress` (always
 `Boundary.make`'s id -- never hand-typed) plus precompiled
@@ -34,7 +34,7 @@ derive cache configuration from it.
 
 > `readonly` `optional` **assetUrls?**: `Readonly`\<`Record`\<`number`, `string`\>\>
 
-Defined in: [edge/src/manifest.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L115)
+Defined in: [edge/src/manifest.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L115)
 
 Optional immutable static-asset URL per output-pool index.
 
@@ -44,7 +44,7 @@ Optional immutable static-asset URL per output-pool index.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [edge/src/manifest.ts:109](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L109)
+Defined in: [edge/src/manifest.ts:109](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L109)
 
 Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
@@ -54,7 +54,7 @@ Content address minted by `Boundary.make` (`fnv1a:xxxxxxxx`).
 
 > `readonly` **outputs**: readonly [`CompiledOutputs`](CompiledOutputs.md)[]
 
-Defined in: [edge/src/manifest.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L111)
+Defined in: [edge/src/manifest.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L111)
 
 Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into it.
 
@@ -64,6 +64,6 @@ Deduplicated pool of distinct compiled outputs; `outputsByTier` cells index into
 
 > `readonly` **outputsByTier**: `Readonly`\<`Partial`\<`Record`\<[`TierKey`](../type-aliases/TierKey.md), `number`\>\>\>
 
-Defined in: [edge/src/manifest.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L113)
+Defined in: [edge/src/manifest.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L113)
 
 Pool index per [TierKey](../type-aliases/TierKey.md); missing keys mean that tier was never compiled.

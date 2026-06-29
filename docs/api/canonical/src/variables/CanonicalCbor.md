@@ -8,7 +8,7 @@
 
 > `const` **CanonicalCbor**: `object`
 
-Defined in: [canonical/src/cbor.ts:195](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/cbor.ts#L195)
+Defined in: [canonical/src/cbor.ts:195](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/cbor.ts#L195)
 
 Canonical CBOR encoder namespace (ADR-0001 pattern).
 

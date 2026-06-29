@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:407](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L407)
+Defined in: [web/src/stream/resumption.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L407)
 
 SSE resumption protocol namespace.
 
@@ -199,7 +199,7 @@ The resumption state to persist; `timestamp` defaults to the clock's `now()`
 
 ##### clock?
 
-[`Clock`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) = `wallClock`
+[`Clock`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md) = `wallClock`
 
 Time source for the default timestamp; defaults to `wallClock`
                (epoch ms — the persisted timestamp is a real point in time, read

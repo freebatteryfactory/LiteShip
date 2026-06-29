@@ -8,7 +8,7 @@
 
 > **InvariantState** = [`InvariantProven`](../interfaces/InvariantProven.md) \| [`InvariantUntraced`](../interfaces/InvariantUntraced.md) \| [`InvariantWaived`](../interfaces/InvariantWaived.md) \| [`InvariantExpired`](../interfaces/InvariantExpired.md)
 
-Defined in: [gauntlet/src/traceability-facts.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L46)
+Defined in: [gauntlet/src/traceability-facts.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/traceability-facts.ts#L46)
 
 The lifecycle state of one invariant — a `_tag` union, the deterministic fold's
 output. The host's pure state machine assigns exactly one of these per declared

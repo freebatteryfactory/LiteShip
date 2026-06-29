@@ -8,7 +8,7 @@
 
 > **MutantTestRunner** = (`mutatedSource`, `coveringTests`) => `object`
 
-Defined in: [audit/src/mutation-verdict.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L58)
+Defined in: [audit/src/mutation-verdict.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L58)
 
 The injected test runner — run `coveringTests` against `mutatedSource` and report
 whether ANY of them FAILED. `failed: true` ⇒ at least one covering test caught the

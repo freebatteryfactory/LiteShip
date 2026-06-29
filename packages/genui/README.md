@@ -39,7 +39,7 @@ if (node) {
 
 ## Where it sits
 
-Define a catalog with `defineComponentCatalog` — the only components that can ever render. Its only `@czap` dependencies are `@czap/_spine` (the shared genui type vocabulary), `@czap/canonical` (catalog/render bytes), and `@czap/error`. The model proposes a tree; this package validates it against the catalog and renders allowlisted attributes only. `catalogHash` and `renderHash` mint stable [content addresses](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for cache, replay, and tests. What to *generate* is decided elsewhere — `@czap/mcp-server` projects the catalog to a model, hosts own admission and interaction authority.
+Define a catalog with `defineComponentCatalog` — the only components that can ever render. Its only `@czap` dependencies are `@czap/_spine` (the shared genui type vocabulary), `@czap/canonical` (catalog/render bytes), and `@czap/error`. The model proposes a tree; this package validates it against the catalog and renders allowlisted attributes only. `catalogHash` and `renderHash` mint stable [content addresses](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for cache, replay, and tests. What to *generate* is decided elsewhere — `@czap/mcp-server` projects the catalog to a model, hosts own admission and interaction authority.
 
 ## Trust boundary
 
@@ -47,11 +47,11 @@ This package never renders model HTML and never trusts model-controlled keys —
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Generated UI catalog (ADR-0014)](https://github.com/heyoub/LiteShip/blob/main/docs/adr/0014-genui-catalog.md) — the trust model above
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/genui/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Generated UI catalog (ADR-0014)](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0014-genui-catalog.md) — the trust model above
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/genui/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

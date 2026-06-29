@@ -8,4 +8,4 @@
 
 > **GeneratedUIValidationError** = `_GeneratedUIValidationError`
 
-Defined in: [genui/src/types.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/types.ts#L19)
+Defined in: [genui/src/types.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/types.ts#L19)

@@ -8,6 +8,6 @@
 
 > **ThemeManifest** = `Readonly`\<`Record`\<`string`, [`ThemeManifestEntry`](ThemeManifestEntry.md)\>\>
 
-Defined in: [vite/src/token-manifest.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L45)
+Defined in: [vite/src/token-manifest.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L45)
 
 Theme export name → definition for `virtual:czap/themes`.

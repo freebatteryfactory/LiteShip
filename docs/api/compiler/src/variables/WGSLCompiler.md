@@ -8,7 +8,7 @@
 
 > `const` **WGSLCompiler**: `object`
 
-Defined in: [compiler/src/wgsl.ts:270](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L270)
+Defined in: [compiler/src/wgsl.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L270)
 
 WGSL compiler namespace.
 
@@ -29,7 +29,7 @@ WGSL struct definitions, `@group/@binding` declarations, and state constants.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

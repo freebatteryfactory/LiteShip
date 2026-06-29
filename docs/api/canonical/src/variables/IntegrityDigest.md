@@ -8,7 +8,7 @@
 
 > **IntegrityDigest**: (`value`) => [`IntegrityDigest`](../type-aliases/IntegrityDigest.md)
 
-Defined in: [canonical/src/brands.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/brands.ts#L22)
+Defined in: [canonical/src/brands.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/brands.ts#L22)
 
 Parse a plain string into an IntegrityDigest.
 

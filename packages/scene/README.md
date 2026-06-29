@@ -38,7 +38,7 @@ Logs `2` — one spawn per track. `compileScene` resolves each `Beat(n)` mark ag
 
 ## Where it sits
 
-A layered authoring package: it sits on the ECS (entity-component-system) world from `@czap/core`, and shares its timeline contracts with the rest of the stack through `@czap/_spine` types. Beat detection is not here — it lives in `@czap/assets`; bring its sample-space markers into `scene.beats` with `resolveBeatProjectionToSceneBeats`. The Node-only dev server ships at the `@czap/scene/dev` subpath so browser and Worker bundles never touch it. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+A layered authoring package: it sits on the ECS (entity-component-system) world from `@czap/core`, and shares its timeline contracts with the rest of the stack through `@czap/_spine` types. Beat detection is not here — it lives in `@czap/assets`; bring its sample-space markers into `scene.beats` with `resolveBeatProjectionToSceneBeats`. The Node-only dev server ships at the `@czap/scene/dev` subpath so browser and Worker bundles never touch it. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -46,11 +46,11 @@ Beat-synced effect tracks (`syncTo: syncTo.beat(...)`) tick but never pulse when
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Reference scene](https://github.com/heyoub/LiteShip/blob/main/examples/scenes/intro.ts) — a full music-video intro: envelopes, transitions, beat sync
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/scene/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Reference scene](https://github.com/freebatteryfactory/LiteShip/blob/main/examples/scenes/intro.ts) — a full music-video intro: envelopes, transitions, beat sync
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/scene/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

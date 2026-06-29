@@ -8,6 +8,6 @@
 
 > **Config** = `AVRenderConfig`
 
-Defined in: [core/src/av-renderer.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/av-renderer.ts#L115)
+Defined in: [core/src/av-renderer.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/av-renderer.ts#L115)
 
 Configuration accepted by [AVRenderer.make](../../../variables/AVRenderer.md#make).

@@ -8,7 +8,7 @@
 
 > **renderHash**(`node`, `catalog`): `ContentAddress`
 
-Defined in: [genui/src/identity.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/identity.ts#L18)
+Defined in: [genui/src/identity.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/identity.ts#L18)
 
 Stable identity for a validated tree under a catalog — cache/replay/tests.
 
@@ -16,7 +16,7 @@ Stable identity for a validated tree under a catalog — cache/replay/tests.
 
 ### node
 
-[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### catalog
 

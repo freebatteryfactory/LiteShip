@@ -6,7 +6,7 @@
 
 # Interface: CommandContext
 
-Defined in: [command/src/registry.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L23)
+Defined in: [command/src/registry.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L23)
 
 Injected I/O surface for command handlers. Handlers receive their Node-coupled
 dependencies here rather than reaching for globals, so the registry/handler
@@ -18,7 +18,7 @@ boundary stays declarative. Extended as handlers migrate into this package.
 
 > `readonly` `optional` **cache?**: `CommandCache`
 
-Defined in: [command/src/registry.ts:194](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L194)
+Defined in: [command/src/registry.ts:194](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L194)
 
 Content-addressed receipt cache (adapter-backed; fs on the CLI side).
 
@@ -26,9 +26,9 @@ Content-addressed receipt cache (adapter-backed; fs on the CLI side).
 
 ### clock?
 
-> `readonly` `optional` **clock?**: [`Clock`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md)
+> `readonly` `optional` **clock?**: [`Clock`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Clock.md)
 
-Defined in: [command/src/registry.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L33)
+Defined in: [command/src/registry.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L33)
 
 MONOTONIC clock for measuring command DURATIONS (e.g. compile `durationMs`).
 Defaults to `@czap/core`'s `systemClock` (`performance.now`) at the call site.
@@ -42,7 +42,7 @@ HLC (those are TIMESTAMPS and use the wall clock).
 
 > `readonly` `optional` **cwd?**: `string`
 
-Defined in: [command/src/registry.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L25)
+Defined in: [command/src/registry.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L25)
 
 Working directory for path resolution; defaults to `process.cwd()` at the adapter.
 
@@ -52,7 +52,7 @@ Working directory for path resolution; defaults to `process.cwd()` at the adapte
 
 > `readonly` `optional` **decodeShipCapsule?**: (`bytes`) => `Promise`\<\{ `id`: `ContentAddress`; `ok`: `true`; `tarballManifestAddress`: \{ `display_id`: `string`; `integrity_digest`: `string`; \}; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:221](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L221)
+Defined in: [command/src/registry.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L221)
 
 Decode a ShipCapsule from CBOR bytes (adapter runs the Effect). Returns the
 capsule id + its claimed tarball-manifest address, or a decode error string.
@@ -73,7 +73,7 @@ capsule id + its claimed tarball-manifest address, or a decode error string.
 
 > `readonly` `optional` **fileExists?**: (`path`) => `boolean`
 
-Defined in: [command/src/registry.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L166)
+Defined in: [command/src/registry.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L166)
 
 Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`.
 
@@ -93,7 +93,7 @@ Does a file exist? Adapter-backed (fs). Keeps handlers free of `node:fs`.
 
 > `readonly` `optional` **hostVersion?**: () => `string`
 
-Defined in: [command/src/registry.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L48)
+Defined in: [command/src/registry.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L48)
 
 The host adapter's own czap version (its package version). Supplied by the
 adapter because the version is a fact about the host, not this package.
@@ -108,7 +108,7 @@ adapter because the version is a fact about the host, not this package.
 
 > `readonly` `optional` **loadAssetBytes?**: (`assetId`, `source?`) => `ArrayBuffer` \| `null`
 
-Defined in: [command/src/registry.ts:171](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L171)
+Defined in: [command/src/registry.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L171)
 
 Load an asset's raw audio bytes (the adapter resolves source conventions +
 reads the file). Null when no source file is found.
@@ -133,7 +133,7 @@ reads the file). Null when no source file is found.
 
 > `readonly` `optional` **loadSceneModule?**: (`scenePath`) => `Promise`\<`Record`\<`string`, `unknown`\> \| `null`\>
 
-Defined in: [command/src/registry.ts:192](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L192)
+Defined in: [command/src/registry.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L192)
 
 Dynamically load a user scene module (the adapter owns the dynamic import,
 keeping @czap/command free of it — relevant to the A1-T3 dynamic-import
@@ -155,7 +155,7 @@ audit). Null when the module can't be loaded.
 
 > `readonly` `optional` **manifestPath?**: () => `string`
 
-Defined in: [command/src/registry.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L61)
+Defined in: [command/src/registry.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L61)
 
 The resolved capsule-manifest path the adapter looked at (the path behind
 [manifestSource](#manifestsource)). Used by manifest-missing teaching errors to name
@@ -172,7 +172,7 @@ path-less wording.
 
 > `readonly` `optional` **manifestSource?**: () => `string` \| `null`
 
-Defined in: [command/src/registry.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L54)
+Defined in: [command/src/registry.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L54)
 
 Raw capsule-manifest JSON text, or null when absent. The adapter resolves
 the path (honoring CZAP_CAPSULE_MANIFEST) and reads it; the handler parses.
@@ -188,7 +188,7 @@ Keeps path/env policy on the adapter side.
 
 > `readonly` `optional` **readFileBytes?**: (`path`) => `Uint8Array`\<`ArrayBufferLike`\> \| `null`
 
-Defined in: [command/src/registry.ts:216](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L216)
+Defined in: [command/src/registry.ts:216](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L216)
 
 Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
@@ -208,7 +208,7 @@ Read a file's raw bytes (adapter-backed; fs). Null when absent/unreadable.
 
 > `readonly` `optional` **recomputeTarballAddress?**: (`bytes`) => `Promise`\<\{ `display_id`: `string`; `integrity_digest`: `string`; `ok`: `true`; \} \| \{ `error`: `string`; `ok`: `false`; \}\>
 
-Defined in: [command/src/registry.ts:230](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L230)
+Defined in: [command/src/registry.ts:230](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L230)
 
 Recompute a tarball's manifest address (adapter runs the Effect).
 
@@ -228,7 +228,7 @@ Recompute a tarball's manifest address (adapter runs the Effect).
 
 > `readonly` `optional` **renderScene?**: (`params`) => `Promise`\<\{ `elapsedMs`: `number`; `frameCount`: `number`; \}\>
 
-Defined in: [command/src/registry.ts:206](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L206)
+Defined in: [command/src/registry.ts:206](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L206)
 
 Render a scene to the output path via the host's compositor + ffmpeg
 pipeline, returning frame metrics. Adapter-backed (Compositor/VideoRenderer
@@ -272,7 +272,7 @@ Render width in pixels; the host defaults to 1280 when absent.
 
 > `readonly` `optional` **runAudioProjection?**: (`bytes`, `projection`, `assetId?`) => `Promise`\<`number`\>
 
-Defined in: [command/src/registry.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L182)
+Defined in: [command/src/registry.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L182)
 
 Run an audio projection over decoded bytes and return the marker count.
 Adapter-backed by @czap/assets — injected (not imported) so @czap/command
@@ -307,7 +307,7 @@ registry) instead of hardwiring the audio built-in.
 
 > `readonly` `optional` **runAudit?**: (`input`) => `Promise`\<[`AuditEngineSummary`](AuditEngineSummary.md)\>
 
-Defined in: [command/src/registry.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L77)
+Defined in: [command/src/registry.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L77)
 
 Run the profile-driven audit engine (structure/integrity/surface) and return
 a structured summary. Adapter-backed by `@czap/audit`, which is INJECTED here
@@ -342,7 +342,7 @@ absent in the MCP context and the handler degrades to a structured failure.
 
 > `readonly` `optional` **runAuditFloor?**: () => `Promise`\<[`AuditFloorSummary`](AuditFloorSummary.md)\>
 
-Defined in: [command/src/registry.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L92)
+Defined in: [command/src/registry.ts:92](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L92)
 
 Run the audit-floor gate over the repo at `cwd`: run the artifact-independent
 three-pass audit engine, collect the `rule@file` warning inventory, and diff
@@ -363,7 +363,7 @@ absent and the handler degrades to a structured failure (capabilityUnavailable).
 
 > `readonly` `optional` **runCapsuleGate?**: () => `Promise`\<[`CapsuleGateSummary`](CapsuleGateSummary.md)\>
 
-Defined in: [command/src/registry.ts:122](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L122)
+Defined in: [command/src/registry.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L122)
 
 Run the capsule-corpus gate over the repo at `cwd`: read the capsule
 manifest, assert every capsule's generated test+bench files exist, classify
@@ -388,7 +388,7 @@ command is NOT MCP-exposed — over MCP it degrades to a structured
 
 > `readonly` `optional` **runCheckInvariants?**: () => `Promise`\<[`CheckInvariantsSummary`](CheckInvariantsSummary.md)\>
 
-Defined in: [command/src/registry.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L145)
+Defined in: [command/src/registry.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L145)
 
 Run the fast-lane invariant gate over the repo at `cwd`: scan `packages/**`
 source for banned patterns (require / module.exports / `var` / non-sanctioned
@@ -408,14 +408,14 @@ therefore available to BOTH the CLI and the MCP host — an agent can call
 
 ### runGauntlet?
 
-> `readonly` `optional` **runGauntlet?**: (`globs?`) => `Promise`\<[`GauntletResult`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
+> `readonly` `optional` **runGauntlet?**: (`globs?`) => `Promise`\<[`GauntletResult`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
 
-Defined in: [command/src/registry.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L164)
+Defined in: [command/src/registry.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L164)
 
 Run the PURE gauntlet engine fold (`litelaunchGauntlet`) over the repo at
 `cwd`, IN-PROCESS — no subprocess, no terminal streaming. Binds the built-in
 LiteShip gates, the committed assurance map, and the committed waivers, runs
-the authority ratchet, and returns the structured [GauntletResult](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)
+the authority ratchet, and returns the structured [GauntletResult](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts)
 (findings + per-gate outcomes + a single blocking verdict). This is the
 tasks-vs-gates distinction made real: `check` is the fixture-qualified gate
 FOLD, whereas the CLI-owned `gauntlet` command spawns the 28-phase
@@ -437,7 +437,7 @@ readonly `string`[]
 
 #### Returns
 
-`Promise`\<[`GauntletResult`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
+`Promise`\<[`GauntletResult`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts)\>
 
 ***
 
@@ -445,7 +445,7 @@ readonly `string`[]
 
 > `readonly` `optional` **runPackageSmoke?**: () => `Promise`\<[`PackageSmokeSummary`](PackageSmokeSummary.md)\>
 
-Defined in: [command/src/registry.ts:107](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L107)
+Defined in: [command/src/registry.ts:107](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L107)
 
 Run the package-smoke release gate over the repo at `cwd`: `pnpm pack` every
 publishable `@czap/*` scope, install the tarballs into an isolated consumer
@@ -470,7 +470,7 @@ MCP-exposed — over MCP it degrades to a structured `capabilityUnavailable`.
 
 > `readonly` `optional` **runPlumb?**: () => `Promise`\<[`PlumbGateSummary`](PlumbGateSummary.md)\>
 
-Defined in: [command/src/registry.ts:133](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L133)
+Defined in: [command/src/registry.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L133)
 
 Run the plumb-completeness gate over the repo at `cwd`: scan
 `tests/generated/` for `*.skip` placeholders (each is a blocking lie about
@@ -491,7 +491,7 @@ the MCP host — an agent can call `plumb` over MCP and read the work-list.
 
 > `readonly` `optional` **runSceneCompile?**: (`sceneModule`) => `Promise`\<`void`\>
 
-Defined in: [command/src/registry.ts:200](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L200)
+Defined in: [command/src/registry.ts:200](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L200)
 
 Execute a loaded scene module's compile function (the adapter runs it,
 including any Effect). Keeps the `effect` runtime + arbitrary-user-code
@@ -513,7 +513,7 @@ execution out of @czap/command. Throws on compile failure.
 
 > `readonly` `optional` **runVitest?**: (`testFiles`) => `Promise`\<\{ `exitCode`: `number`; `stderrTail`: `string`; \}\>
 
-Defined in: [command/src/registry.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L66)
+Defined in: [command/src/registry.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L66)
 
 Run a capsule's generated test files and report the outcome. Adapters back
 this with their vitest runner; handlers stay free of spawn.
@@ -534,7 +534,7 @@ readonly `string`[]
 
 > `readonly` `optional` **spawnCapture?**: (`command`, `args`) => `Promise`\<\{ `exitCode`: `number`; `stdout`: `string`; \}\>
 
-Defined in: [command/src/registry.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L40)
+Defined in: [command/src/registry.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L40)
 
 Capture a subprocess's stdout + exit code. Adapters back this with their
 own spawn helper (e.g. @czap/cli's `spawnArgvCapture`); handlers stay free

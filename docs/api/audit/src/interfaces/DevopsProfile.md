@@ -6,7 +6,7 @@
 
 # Interface: DevopsProfile
 
-Defined in: [audit/src/devops-profile.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L55)
+Defined in: [audit/src/devops-profile.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L55)
 
 The devops profile that drives the audit engine. `repoRoot` is the single
 AUTHORITATIVE audit target (CUT D9a) — there is no parallel `root` parameter.
@@ -17,7 +17,7 @@ AUTHORITATIVE audit target (CUT D9a) — there is no parallel `root` parameter.
 
 > `readonly` **dynamicImportExemptions**: `ReadonlySet`\<`string`\>
 
-Defined in: [audit/src/devops-profile.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L70)
+Defined in: [audit/src/devops-profile.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L70)
 
 Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`).
 
@@ -27,7 +27,7 @@ Sanctioned manifest-absent dynamic edges (`"<importer> -> <target>"`).
 
 > `readonly` `optional` **foundationalPackages?**: readonly `string`[]
 
-Defined in: [audit/src/devops-profile.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L68)
+Defined in: [audit/src/devops-profile.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L68)
 
 Foundational packages every package may import without an explicit
 `allowedInternalImports` entry (the runtime analogue of `@czap/_spine`).
@@ -40,7 +40,7 @@ listed). Downstream profiles may set their own.
 
 > `readonly` **internalPackagePrefix**: `string`
 
-Defined in: [audit/src/devops-profile.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L59)
+Defined in: [audit/src/devops-profile.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L59)
 
 Internal workspace package prefix — replaces the hardcoded `'@czap/'` import gate.
 
@@ -50,7 +50,7 @@ Internal workspace package prefix — replaces the hardcoded `'@czap/'` import g
 
 > `readonly` `optional` **packageRoots?**: `Readonly`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [audit/src/devops-profile.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L80)
+Defined in: [audit/src/devops-profile.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L80)
 
 Optional explicit package-root map: package name → ABSOLUTE package dir.
 When present, the passes enumerate THESE roots instead of globbing
@@ -64,7 +64,7 @@ the `@czap/*` packages installed in a downstream repo's node_modules.
 
 > `readonly` **packageTopology**: `Record`\<`string`, [`PackagePolicy`](PackagePolicy.md)\>
 
-Defined in: [audit/src/devops-profile.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L61)
+Defined in: [audit/src/devops-profile.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L61)
 
 Package layering law: package → { allowedInternalImports, kind }.
 
@@ -74,7 +74,7 @@ Package layering law: package → { allowedInternalImports, kind }.
 
 > `readonly` **repoRoot**: `string`
 
-Defined in: [audit/src/devops-profile.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L57)
+Defined in: [audit/src/devops-profile.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L57)
 
 Repo root all engine paths resolve against — the authoritative audit target.
 
@@ -84,6 +84,6 @@ Repo root all engine paths resolve against — the authoritative audit target.
 
 > `readonly` **surfacePolicy**: [`SurfacePolicyShape`](SurfacePolicyShape.md)
 
-Defined in: [audit/src/devops-profile.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L72)
+Defined in: [audit/src/devops-profile.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/devops-profile.ts#L72)
 
 Known public-surface files (orphan-detection seed).

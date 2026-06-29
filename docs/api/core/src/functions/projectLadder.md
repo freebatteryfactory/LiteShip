@@ -8,7 +8,7 @@
 
 > **projectLadder**\<`Label`\>(`order`): `Record`\<`Label`, `ReadonlySet`\<[`LadderTarget`](../type-aliases/LadderTarget.md)\>\>
 
-Defined in: [core/src/cap-ladder.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/cap-ladder.ts#L64)
+Defined in: [core/src/cap-ladder.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/cap-ladder.ts#L64)
 
 Project [LADDER\_TARGETS](../variables/LADDER_TARGETS.md) onto a vocabulary's ordered rung labels,
 producing a `Record<Label, ReadonlySet<LadderTarget>>`. The `order` array is

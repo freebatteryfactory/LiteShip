@@ -8,7 +8,7 @@
 
 > **propagateProofStrength**(`ir`, `localProofOf`): `ReadonlyMap`\<`string`, `number`\>
 
-Defined in: [gauntlet/src/proof-propagation.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/proof-propagation.ts#L85)
+Defined in: [gauntlet/src/proof-propagation.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/proof-propagation.ts#L85)
 
 Propagate proof strength along the IR's INTERNAL import edges, returning the
 EFFECTIVE (global) proof of every file in the IR: the fixpoint of

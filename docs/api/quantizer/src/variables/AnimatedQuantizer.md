@@ -8,7 +8,7 @@
 
 > `const` **AnimatedQuantizer**: `object`
 
-Defined in: [quantizer/src/animated-quantizer.ts:349](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L349)
+Defined in: [quantizer/src/animated-quantizer.ts:349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/animated-quantizer.ts#L349)
 
 Animated quantizer namespace.
 
@@ -28,7 +28,7 @@ Wrap a quantizer with transition-aware output interpolation.
 
 Create an animated quantizer that interpolates outputs during transitions.
 
-Wraps an existing [Quantizer](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) and applies easing/duration-based
+Wraps an existing [Quantizer](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md) and applies easing/duration-based
 interpolation between old and new output values when a boundary crossing
 occurs. Produces an `interpolated` stream of frames with progress and
 lerped numeric outputs — at ~60fps by default, or on the cadence of an
@@ -38,13 +38,13 @@ injected `options.scheduler` (`raf` / `fixedStep` / `audioSync`).
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 
 ##### quantizer
 
-[`Quantizer`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
+[`Quantizer`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/Quantizer.md)\<`B`\>
 
 The base quantizer to wrap
 

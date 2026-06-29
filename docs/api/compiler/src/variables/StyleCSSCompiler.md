@@ -8,11 +8,11 @@
 
 > `const` **StyleCSSCompiler**: `object`
 
-Defined in: [compiler/src/style-css.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/style-css.ts#L201)
+Defined in: [compiler/src/style-css.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/style-css.ts#L201)
 
 Style CSS compiler namespace.
 
-Compiles a [Style.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into cascade-layered, scoped CSS using
+Compiles a [Style.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into cascade-layered, scoped CSS using
 `@layer`, `@scope`, `@starting-style`, and `@container` — the modern CSS
 features that let czap deliver component isolation and state-driven
 restyling without runtime class toggling.
@@ -25,7 +25,7 @@ restyling without runtime class toggling.
 
 Compile a style definition into scoped, layered CSS.
 
-Compile a [Style.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into layered, scoped CSS.
+Compile a [Style.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md) into layered, scoped CSS.
 
 When `componentName` is supplied the output is wrapped in an `@scope`
 block targeting `.czap-<name>` and bounded at `[data-czap-slot]`
@@ -36,7 +36,7 @@ via the core [CSSCompiler](CSSCompiler.md).
 
 ##### style
 
-[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
+[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Style/type-aliases/Shape.md)
 
 ##### componentName?
 

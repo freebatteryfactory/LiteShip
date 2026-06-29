@@ -6,7 +6,7 @@
 
 # Interface: GateOutcome
 
-Defined in: [gauntlet/src/engine.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L27)
+Defined in: [gauntlet/src/engine.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L27)
 
 A gate's outcome within a run: its proof, earned authority, and findings.
 
@@ -16,7 +16,7 @@ A gate's outcome within a run: its proof, earned authority, and findings.
 
 > `readonly` **authority**: [`Authority`](../type-aliases/Authority.md)
 
-Defined in: [gauntlet/src/engine.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L30)
+Defined in: [gauntlet/src/engine.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L30)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/engine.ts:30](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **findings**: readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/engine.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L32)
+Defined in: [gauntlet/src/engine.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L32)
 
 Findings KEPT (post-waiver), with authority already applied to severity.
 
@@ -34,7 +34,7 @@ Findings KEPT (post-waiver), with authority already applied to severity.
 
 > `readonly` **gateId**: `string`
 
-Defined in: [gauntlet/src/engine.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L28)
+Defined in: [gauntlet/src/engine.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L28)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [gauntlet/src/engine.ts:28](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **proof**: [`GateProof`](GateProof.md)
 
-Defined in: [gauntlet/src/engine.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L29)
+Defined in: [gauntlet/src/engine.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L29)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [gauntlet/src/engine.ts:29](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **waived**: readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/engine.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L34)
+Defined in: [gauntlet/src/engine.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L34)
 
 Findings a valid waiver suppressed for this gate (audit trail).
 
@@ -60,6 +60,6 @@ Findings a valid waiver suppressed for this gate (audit trail).
 
 > `readonly` **waiverFindings**: readonly [`Finding`](Finding.md)[]
 
-Defined in: [gauntlet/src/engine.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L36)
+Defined in: [gauntlet/src/engine.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L36)
 
 Findings ABOUT this gate's waivers (expired / stale / forbidden).

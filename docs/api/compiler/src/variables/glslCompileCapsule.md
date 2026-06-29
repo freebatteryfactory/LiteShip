@@ -8,7 +8,7 @@
 
 > `const` **glslCompileCapsule**: `CapsuleDef`\<`"pureTransform"`, \{ `fields`: readonly `string`[]; `states`: readonly `string`[]; `values`: readonly readonly `number`[][]; \}, `unknown`, `unknown`\>
 
-Defined in: [compiler/src/capsules/glsl-compile.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/capsules/glsl-compile.ts#L154)
+Defined in: [compiler/src/capsules/glsl-compile.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/capsules/glsl-compile.ts#L154)
 
 Declared capsule for the GLSL compiler. Registered at import time; walked by
 the factory compiler. The generated property test feeds schema-seeds, `run`

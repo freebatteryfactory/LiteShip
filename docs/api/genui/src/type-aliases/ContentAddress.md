@@ -8,7 +8,7 @@
 
 > **ContentAddress** = `_ContentAddress`
 
-Defined in: [genui/src/brands.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/brands.ts#L15)
+Defined in: [genui/src/brands.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/brands.ts#L15)
 
 Wrap canonical fnv1a bytes as a spine [ContentAddress](../variables/ContentAddress.md).
 

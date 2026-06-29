@@ -6,7 +6,7 @@
 
 # Interface: SupplyChainViolation
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L45)
+Defined in: [gauntlet/src/supply-chain-facts.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L45)
 
 A single decided supply-chain violation — a verdict + its WHY + where.
 
@@ -16,7 +16,7 @@ A single decided supply-chain violation — a verdict + its WHY + where.
 
 > `readonly` **code**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L51)
+Defined in: [gauntlet/src/supply-chain-facts.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L51)
 
 Stable sub-rule id, suffixed onto the gate's ruleId namespace (e.g.
 `git-url-dependency`, `floating-resolution`, `prerelease-range`,
@@ -28,7 +28,7 @@ Stable sub-rule id, suffixed onto the gate's ruleId namespace (e.g.
 
 > `readonly` **detail**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L53)
+Defined in: [gauntlet/src/supply-chain-facts.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L53)
 
 Human-readable WHY — enough to act on without re-reading the lockfile.
 
@@ -38,6 +38,6 @@ Human-readable WHY — enough to act on without re-reading the lockfile.
 
 > `readonly` **subject**: `string`
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L55)
+Defined in: [gauntlet/src/supply-chain-facts.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L55)
 
 The artifact the violation points at (a package key, a workflow path, …).

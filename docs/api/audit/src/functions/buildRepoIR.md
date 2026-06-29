@@ -6,11 +6,11 @@
 
 # Function: buildRepoIR()
 
-> **buildRepoIR**(`profile?`, `options?`): [`RepoIR`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)
+> **buildRepoIR**(`profile?`, `options?`): [`RepoIR`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)
 
-Defined in: [audit/src/repo-ir-build.ts:334](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L334)
+Defined in: [audit/src/repo-ir-build.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-build.ts#L334)
 
-Build a real [RepoIR](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) from a [DevopsProfile](../interfaces/DevopsProfile.md) — the host-side
+Build a real [RepoIR](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) from a [DevopsProfile](../interfaces/DevopsProfile.md) — the host-side
 materialization. Pure and deterministic: same source bytes → identical IR.
 
 ## Parameters
@@ -33,4 +33,4 @@ Host-injection surface. `extraFactOracles` are the host-supplied
 
 ## Returns
 
-[`RepoIR`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)
+[`RepoIR`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts)

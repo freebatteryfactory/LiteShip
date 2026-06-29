@@ -8,7 +8,7 @@
 
 > `const` **Messages**: `object`
 
-Defined in: [worker/src/messages.ts:355](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/messages.ts#L355)
+Defined in: [worker/src/messages.ts:355](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/messages.ts#L355)
 
 Runtime type guards and type aliases for the worker message protocol.
 Consumers typically use [Messages.isToWorker](#istoworker) /

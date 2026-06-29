@@ -6,7 +6,7 @@
 
 # Interface: TaintFacts
 
-Defined in: [gauntlet/src/taint-facts.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L41)
+Defined in: [gauntlet/src/taint-facts.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L41)
 
 The host-supplied taint evidence over one run. The taint oracle is HEAVY (a
 whole-corpus `ts.Program` + a checker walk + reference queries), so production
@@ -23,7 +23,7 @@ follow is NOT claimed clean; it is simply not a fact, and the depth says so).
 
 > `readonly` **flows**: readonly [`TaintFlow`](TaintFlow.md)[]
 
-Defined in: [gauntlet/src/taint-facts.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L43)
+Defined in: [gauntlet/src/taint-facts.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L43)
 
 Every traced source→sink flow — the substrate the gate folds.
 
@@ -33,7 +33,7 @@ Every traced source→sink flow — the substrate the gate folds.
 
 > `readonly` **interproceduralDepth**: `number`
 
-Defined in: [gauntlet/src/taint-facts.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L54)
+Defined in: [gauntlet/src/taint-facts.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/taint-facts.ts#L54)
 
 The interprocedural hop depth the oracle's trace actually covered (the honest
 under-approximation bound). `0` ⇒ intra-procedural only (a source and a sink

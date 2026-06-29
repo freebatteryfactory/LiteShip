@@ -8,7 +8,7 @@
 
 > **LspGauntletRunner** = (`globs?`) => `Promise`\<\{ `blocked`: `boolean`; `findings`: readonly [`FindingLike`](../interfaces/FindingLike.md)[]; \}\>
 
-Defined in: [mcp-server/src/lsp/types.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L70)
+Defined in: [mcp-server/src/lsp/types.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L70)
 
 The injected gauntlet runner — the LSP's ONLY door to findings. Mirrors
 `CommandContext.runGauntlet`: the engine fold (and its `node:fs` glob +

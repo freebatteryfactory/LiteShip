@@ -6,7 +6,7 @@
 
 # Interface: CiAuthorityFacts
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L102)
+Defined in: [gauntlet/src/supply-chain-facts.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L102)
 
 CI-authority facts — the no-ambient-publish-authority verdict.
 
@@ -16,7 +16,7 @@ CI-authority facts — the no-ambient-publish-authority verdict.
 
 > `readonly` **violations**: readonly [`SupplyChainViolation`](SupplyChainViolation.md)[]
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L111)
+Defined in: [gauntlet/src/supply-chain-facts.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L111)
 
 Every long-lived publish-secret reference found (an `NPM_TOKEN`,
 `NODE_AUTH_TOKEN`, `npm_config__authToken`, …). EMPTY ⇒ the OIDC
@@ -29,6 +29,6 @@ id-token only.
 
 > `readonly` **workflowsScanned**: readonly `string`[]
 
-Defined in: [gauntlet/src/supply-chain-facts.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L104)
+Defined in: [gauntlet/src/supply-chain-facts.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/supply-chain-facts.ts#L104)
 
 Workflow files scanned (repo-relative).

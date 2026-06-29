@@ -36,16 +36,16 @@ Logs `tablet` (800 sits between the 768 and 1280 thresholds), then the boundary'
 ## Where it sits
 
 This is the foundation layer — every other `@czap/*` package imports its primitives. Its one `@czap` dependency is `@czap/_spine`, the shared type declarations its published types reference. Two things commonly assumed to be here live elsewhere: live evaluation against a changing signal is `@czap/quantizer`, and compiling definitions to CSS text is `@czap/compiler`. It does own the canonical signal-input vocabulary, though: `SignalSource` ⇄ `SignalInput` via `sourceToInput`/`inputToSource` — the source of truth for input strings like `viewport.width`, `scroll.progress`, `audio.amplitude` that every host reads through rather than re-parsing. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
+[package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Authoring model](https://github.com/heyoub/LiteShip/blob/main/AUTHORING-MODEL.md) — what you type, what comes out
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/core/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Authoring model](https://github.com/freebatteryfactory/LiteShip/blob/main/AUTHORING-MODEL.md) — what you type, what comes out
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/core/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

@@ -8,7 +8,7 @@
 
 > **scopeContextByLevel**(`context`, `level`, `map`, `effectiveLevels?`): [`GateContext`](../interfaces/GateContext.md)
 
-Defined in: [gauntlet/src/engine.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L141)
+Defined in: [gauntlet/src/engine.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/engine.ts#L141)
 
 Derive a [GateContext](../interfaces/GateContext.md) scoped to files at-or-above `level`, per `map`.
 

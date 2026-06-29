@@ -6,7 +6,7 @@
 
 # Interface: SourceFileRecord
 
-Defined in: [audit/src/shared.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L33)
+Defined in: [audit/src/shared.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L33)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/shared.ts:33](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **absolutePath**: `string`
 
-Defined in: [audit/src/shared.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L34)
+Defined in: [audit/src/shared.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L34)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/shared.ts:34](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **packageName**: `string` \| `null`
 
-Defined in: [audit/src/shared.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L38)
+Defined in: [audit/src/shared.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L38)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/shared.ts:38](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **relativePath**: `string`
 
-Defined in: [audit/src/shared.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L35)
+Defined in: [audit/src/shared.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L35)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/shared.ts:35](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **sourceFile**: `SourceFile`
 
-Defined in: [audit/src/shared.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L37)
+Defined in: [audit/src/shared.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L37)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [audit/src/shared.ts:37](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **text**: `string`
 
-Defined in: [audit/src/shared.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L36)
+Defined in: [audit/src/shared.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L36)

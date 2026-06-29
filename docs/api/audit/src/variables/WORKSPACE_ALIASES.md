@@ -8,7 +8,7 @@
 
 > `const` **WORKSPACE\_ALIASES**: `Readonly`\<`Record`\<`string`, readonly `string`[]\>\>
 
-Defined in: [audit/src/ts-program.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/ts-program.ts#L25)
+Defined in: [audit/src/ts-program.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/ts-program.ts#L25)
 
 Workspace `@czap/*` → source-tree path map. Mirrors `Config.toTestAliases` so
 the type checker resolves cross-package imports to source `.ts` files, not

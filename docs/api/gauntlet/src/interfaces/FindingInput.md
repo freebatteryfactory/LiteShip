@@ -6,7 +6,7 @@
 
 # Interface: FindingInput
 
-Defined in: [gauntlet/src/finding.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L79)
+Defined in: [gauntlet/src/finding.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L79)
 
 Fields a caller supplies to [finding](../functions/finding.md) (everything but defaults).
 
@@ -16,7 +16,7 @@ Fields a caller supplies to [finding](../functions/finding.md) (everything but d
 
 > `readonly` `optional` **coverageClass?**: [`CoverageClass`](../type-aliases/CoverageClass.md)
 
-Defined in: [gauntlet/src/finding.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L87)
+Defined in: [gauntlet/src/finding.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L87)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/finding.ts:87](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **detail**: `string`
 
-Defined in: [gauntlet/src/finding.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L84)
+Defined in: [gauntlet/src/finding.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L84)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [gauntlet/src/finding.ts:84](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/finding.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L82)
+Defined in: [gauntlet/src/finding.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L82)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [gauntlet/src/finding.ts:82](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` `optional` **location?**: [`SourceLocation`](SourceLocation.md)
 
-Defined in: [gauntlet/src/finding.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L85)
+Defined in: [gauntlet/src/finding.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L85)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [gauntlet/src/finding.ts:85](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` `optional` **remediation?**: [`Remediation`](../type-aliases/Remediation.md)
 
-Defined in: [gauntlet/src/finding.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L86)
+Defined in: [gauntlet/src/finding.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L86)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [gauntlet/src/finding.ts:86](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **ruleId**: `string`
 
-Defined in: [gauntlet/src/finding.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L80)
+Defined in: [gauntlet/src/finding.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L80)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [gauntlet/src/finding.ts:80](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **severity**: [`Severity`](../type-aliases/Severity.md)
 
-Defined in: [gauntlet/src/finding.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L81)
+Defined in: [gauntlet/src/finding.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L81)
 
 ***
 
@@ -72,4 +72,4 @@ Defined in: [gauntlet/src/finding.ts:81](https://github.com/heyoub/LiteShip/blob
 
 > `readonly` **title**: `string`
 
-Defined in: [gauntlet/src/finding.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L83)
+Defined in: [gauntlet/src/finding.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L83)

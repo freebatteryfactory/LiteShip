@@ -6,7 +6,7 @@
 
 # Interface: EquivalentVerdict\<M\>
 
-Defined in: [audit/src/mutation-verdict.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L143)
+Defined in: [audit/src/mutation-verdict.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L143)
 
 A justified-EQUIVALENT mutant — a RUNTIME mutation the engine cannot statically
 exclude (it is not erased type syntax, so the type-position skip does not catch it)
@@ -32,7 +32,7 @@ discipline: the only honest way to mark a genuinely-equivalent mutant.
 
 > `readonly` **\_tag**: `"equivalent"`
 
-Defined in: [audit/src/mutation-verdict.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L144)
+Defined in: [audit/src/mutation-verdict.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L144)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [audit/src/mutation-verdict.ts:144](https://github.com/heyoub/LiteSh
 
 > `readonly` **justification**: `string`
 
-Defined in: [audit/src/mutation-verdict.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L147)
+Defined in: [audit/src/mutation-verdict.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L147)
 
 The justification string from the registry (why this mutation changes nothing).
 
@@ -50,4 +50,4 @@ The justification string from the registry (why this mutation changes nothing).
 
 > `readonly` **mutant**: `M`
 
-Defined in: [audit/src/mutation-verdict.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L145)
+Defined in: [audit/src/mutation-verdict.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L145)

@@ -8,7 +8,7 @@
 
 > **StateName**\<`S`\> = `_StateName`\<`S`\>
 
-Defined in: [core/src/brands.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L36)
+Defined in: [core/src/brands.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L36)
 
 Branded state name -- e.g. 'mobile', 'tablet', 'desktop'
 

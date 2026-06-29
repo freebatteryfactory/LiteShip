@@ -8,7 +8,7 @@
 
 > **relativeToRoot**(`filePath`, `root?`): `string`
 
-Defined in: [audit/src/shared.ts:289](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L289)
+Defined in: [audit/src/shared.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L289)
 
 ## Parameters
 

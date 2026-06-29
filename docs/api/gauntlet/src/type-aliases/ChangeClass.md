@@ -8,7 +8,7 @@
 
 > **ChangeClass** = `"strengthen"` \| `"weaken"` \| `"neutral"`
 
-Defined in: [gauntlet/src/standards-facts.ts:323](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L323)
+Defined in: [gauntlet/src/standards-facts.ts:323](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L323)
 
 The classification of one change between the committed snapshot and the live
 surface:
