@@ -114,7 +114,7 @@ jobs:
       # published @czap/core carries no `.wasm` and an installed consumer's
       # `czap({ wasm: { enabled: true } })` silently runs the TS fallback (the
       # 0.2.1 fix). Build-truth: rebuilt from source here, never committed.
-      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
+      - uses: dtolnay/rust-toolchain@67ef31d5b988238dd797d409d6f9574278e20537 # stable, pinned (2026-03-27)
         with:
           # Pinning to a SHA strips the channel the action otherwise reads from the
           # ref (`@stable`), so name it explicitly or the action errors.
