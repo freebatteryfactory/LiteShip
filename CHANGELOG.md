@@ -6,8 +6,16 @@ break policy is intentionally aggressive — minor version bumps may carry break
 
 ## [0.4.1] - 2026-06-29
 
-A patch release: a consumer-audit scoping fix and a dev-toolchain refresh. No
-runtime-API changes.
+A patch release: a consumer-audit scoping fix, two runtime DX/behavior fixes
+surfaced by downstream dogfooding, and a dev-toolchain refresh.
+
+### Added
+
+- `@czap/astro` — **directive-collision diagnostic.** The client-directive scanner now warns
+  once when an element is claimed by more than one czap directive — e.g. `client:gpu` and
+  `satelliteAttrs()` on the same canvas, where the satellite silently wins and the GPU shader
+  never boots. Activation is unchanged; the warning names both directives and the fix (put each
+  on its own element), turning a silent directive fight into a loud, actionable signal.
 
 ### Fixed
 
@@ -22,6 +30,11 @@ runtime-API changes.
   `runAuditPasses({ repoRoot })` API runs in an unscoped consumer app) now points at
   `czap audit --consumer` as the correct consumer entry point. (A silent no-op prefix is
   deliberately NOT introduced: a clean audit must never mean "nothing was checked".)
+- `@czap/astro` — **WGSL `u_time` is now advanced every frame.** Hand-authored animated WGSL
+  shaders that declare `u_time` were frozen: the WebGPU runtime only wrote the uniform buffer on
+  boundary crossings, never a clock. It now feeds the monotonic elapsed-seconds clock per-frame
+  (merged with the live signal snapshot so signal fields are preserved), at parity with the GLSL
+  path. (`u_resolution` as a `vec2` remains tracked — it needs WGSL-aligned buffer offsets.)
 
 ### Changed
 
