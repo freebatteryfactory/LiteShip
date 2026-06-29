@@ -167,6 +167,14 @@ not a proxy standing beside it. Carries breaking surface (pre-1.0 minor).
 
 ### Breaking
 
+- `@czap/web` / `@czap/astro` — **external shaders now require an integrity pin.** An external
+  shader URL (`data-czap-shader` / `data-czap-shader-src`) must carry a
+  `data-czap-shader-integrity="sha256-…"` pin, or czap refuses to compile it and the boundary
+  falls back to its CSS layer (secure-by-default — an unverified external shader never reaches the
+  GPU). A shader that silently stopped rendering on capable GPUs after upgrading needs the pin
+  added; the runtime logs `shader-integrity-absent` / `wgsl-integrity-absent` ("Refusing to
+  compile. Fix: add a data-czap-shader-integrity…") when this fires. Inline shader sources are
+  unaffected (no fetch boundary to verify).
 - `@czap/edge` / `@czap/astro` — **`data-czap-cap` → `data-czap-tier`.** The edge
   `<html>` capability-tier attribute was emitted as `data-czap-cap` while every
   reader, the probe, and all examples used `data-czap-tier`. It is now one name,
