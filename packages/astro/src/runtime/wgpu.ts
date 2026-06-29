@@ -150,13 +150,40 @@ async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
 }
 
 /**
- * Number of `vec4`-aligned slots in the boundary uniform buffer. WGSL `uniform`
- * buffers stride at 16 bytes; one `vec4f` (16 bytes / 4 floats) holds the
- * `state_index` plus up to three authored scalar fields, which covers the
- * single-`@quantize`-block authoring surface. Bumping this widens the buffer.
+ * Max bytes in the boundary uniform buffer. WGSL uniform buffers stride at 16
+ * bytes; 32 holds `state_index` + the standard `u_time` (f32) / `u_resolution`
+ * (vec2, 8-byte aligned) feeds + a handful of authored scalar fields. Widen to
+ * admit more authored fields.
  */
-const UNIFORM_BUFFER_FLOATS = 4;
-const UNIFORM_BUFFER_BYTES = UNIFORM_BUFFER_FLOATS * 4;
+const UNIFORM_BUFFER_MAX_BYTES = 32;
+
+/** Kind of a WGSL uniform field — drives both its buffer alignment and its write. */
+type WgslUniformKind = 'int' | 'float' | 'vec2' | 'vec3' | 'vec4';
+
+/**
+ * WGSL uniform-struct alignment + size (bytes) per type. Alignment is what a flat
+ * `i*4` layout gets wrong: a `vec2<f32>` must sit on an 8-byte boundary and a
+ * `vec3`/`vec4` on a 16-byte one, so `u_resolution: vec2<f32>` lands correctly.
+ */
+function wgslTypeInfo(type: string): { readonly align: number; readonly size: number; readonly kind: WgslUniformKind } {
+  switch (type) {
+    case 'u32':
+    case 'i32':
+      return { align: 4, size: 4, kind: 'int' };
+    case 'vec2<f32>':
+    case 'vec2f':
+      return { align: 8, size: 8, kind: 'vec2' };
+    case 'vec3<f32>':
+    case 'vec3f':
+      return { align: 16, size: 12, kind: 'vec3' };
+    case 'vec4<f32>':
+    case 'vec4f':
+      return { align: 16, size: 16, kind: 'vec4' };
+    default:
+      // f32 and any unrecognized scalar — a 4-byte float.
+      return { align: 4, size: 4, kind: 'float' };
+  }
+}
 
 /**
  * Live binding between the compositor's `detail.wgsl` map (bare snake_case field
@@ -168,8 +195,12 @@ const UNIFORM_BUFFER_BYTES = UNIFORM_BUFFER_FLOATS * 4;
 export interface WgslUniformBinding {
   readonly buffer: WebGpuBuffer;
   readonly bindGroup: WebGpuBindGroup;
-  /** Write a `czap:uniform-update` `detail.wgsl` snapshot into the buffer. */
-  apply(wgsl: Record<string, number>): void;
+  /**
+   * Write a uniform snapshot into the buffer. Scalar fields take a `number`;
+   * vector fields (e.g. `u_resolution: vec2<f32>`) take a component array
+   * (`[w, h]`). Fields the struct doesn't declare are ignored.
+   */
+  apply(values: Record<string, number | readonly number[]>): void;
 }
 
 /** A parsed WGSL uniform field: its name and declared scalar type, in struct order. */
@@ -208,51 +239,66 @@ function createUniformBinding(
   pipeline: WebGpuPipeline,
   layout: readonly WgslUniformField[],
 ): WgslUniformBinding {
+  // The uniform-buffer layout is FIXED by the WGSL struct declaration (NOT
+  // event-arrival order — that keeps a `{ scale }`-first crossing from writing
+  // into `blur_radius`'s slot). Each field aligns up to its type's WGSL boundary,
+  // so a vec2 `u_resolution` lands on its required 8-byte offset.
+  const slots = new Map<string, { offset: number; kind: WgslUniformKind }>();
+  let cursor = 0;
+  for (const field of layout) {
+    const { align, size, kind } = wgslTypeInfo(field.type);
+    const offset = Math.ceil(cursor / align) * align;
+    if (offset + size > UNIFORM_BUFFER_MAX_BYTES) {
+      // Struct outgrows the buffer — drop the overflowing field.
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-uniform-buffer-full',
+        message:
+          `WGSL uniform buffer holds ${UNIFORM_BUFFER_MAX_BYTES} bytes; field "${field.name}" overflows it. ` +
+          `Fix: reduce @wgsl fields or widen UNIFORM_BUFFER_MAX_BYTES in wgpu.ts.`,
+      });
+      continue;
+    }
+    slots.set(field.name, { offset, kind });
+    cursor = offset + size;
+  }
+  // Uniform buffers stride at 16 bytes; round the struct size up to that.
+  const bufferBytes = Math.max(16, Math.ceil(cursor / 16) * 16);
+
   const buffer = device.createBuffer({
-    size: UNIFORM_BUFFER_BYTES,
+    size: bufferBytes,
     usage: GPU_BUFFER_USAGE_UNIFORM | GPU_BUFFER_USAGE_COPY_DST,
   });
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
     entries: [{ binding: 0, resource: { buffer } }],
   });
-
-  // The uniform-buffer layout is FIXED by the WGSL struct declaration: field i
-  // sits at byte offset i*4 with its declared type (u32/i32 → integer bytes so it
-  // matches the shader's u32 `STATE_*` constants; else f32). Deriving offsets from
-  // the compiled layout — not event-arrival order — is what keeps a `{ scale }`-
-  // first crossing from writing `scale` into `blur_radius`'s slot.
-  const data = new ArrayBuffer(UNIFORM_BUFFER_BYTES);
+  const data = new ArrayBuffer(bufferBytes);
   const bytes = new Uint8Array(data);
   const view = new DataView(data);
-  const slots = new Map<string, { offset: number; isInt: boolean }>();
-  layout.forEach((field, i) => {
-    if (i >= UNIFORM_BUFFER_FLOATS) {
-      // Struct declares more fields than the buffer holds — drop the overflow.
-      Diagnostics.warnOnce({
-        source: 'czap/astro.gpu',
-        code: 'wgsl-uniform-buffer-full',
-        message:
-          `WGSL uniform buffer holds ${UNIFORM_BUFFER_FLOATS} fields; field "${field.name}" overflows it. ` +
-          `Fix: reduce @wgsl fields or widen UNIFORM_BUFFER_FLOATS in wgpu.ts.`,
-      });
-      return;
-    }
-    slots.set(field.name, { offset: i * 4, isInt: field.type === 'u32' || field.type === 'i32' });
-  });
 
   return {
     buffer,
     bindGroup,
-    apply(wgsl: Record<string, number>): void {
+    apply(values: Record<string, number | readonly number[]>): void {
       // Fresh snapshot: zero the struct first so a field dropped by a later state
       // reverts to 0 instead of leaving the shader sampling a stale value.
       bytes.fill(0);
-      for (const [field, value] of Object.entries(wgsl)) {
+      for (const [field, value] of Object.entries(values)) {
         const slot = slots.get(field);
         if (!slot) continue; // not a declared struct field — ignore
-        if (slot.isInt) view.setUint32(slot.offset, value >>> 0, true);
-        else view.setFloat32(slot.offset, value, true);
+        if (slot.kind === 'int') {
+          view.setUint32(slot.offset, (value as number) >>> 0, true);
+        } else if (slot.kind === 'float') {
+          view.setFloat32(slot.offset, value as number, true);
+        } else {
+          // vec2/vec3/vec4: write the provided f32 components (e.g. `[w, h]`).
+          const comps = Array.isArray(value) ? value : [value as number];
+          const count = slot.kind === 'vec2' ? 2 : slot.kind === 'vec3' ? 3 : 4;
+          for (let c = 0; c < count && c < comps.length; c += 1) {
+            view.setFloat32(slot.offset + c * 4, comps[c]!, true);
+          }
+        }
       }
       device.queue.writeBuffer(buffer, 0, bytes);
     },
@@ -415,12 +461,14 @@ export async function initWGSLRuntime(
   }
 
   // Standard-uniform AUTO-FEED, at parity with the GLSL path (gpu.ts:498): a
-  // hand-authored WGSL shader that declares `u_time` gets a live monotonic
-  // elapsed-seconds clock fed EVERY frame, not just on boundary crossings — the
-  // gap that left hand-authored WGSL animations frozen. (`u_state` is already
-  // fed via the compiler's `state_index`; a vec2 `u_resolution` needs
-  // WGSL-aligned offsets the flat scalar buffer can't express yet — tracked.)
-  const feedsTime = uniformLayout.some((field) => field.name === 'u_time');
+  // hand-authored WGSL shader that declares `u_time` (monotonic elapsed-seconds
+  // clock) and/or `u_resolution` (vec2 canvas dimensions) gets them fed EVERY
+  // frame, not just on boundary crossings — the gap that left hand-authored WGSL
+  // animations frozen and resolution dead. (`u_state` is already fed via the
+  // compiler's `state_index`.)
+  const feedsStandard = uniformLayout.some(
+    (field) => field.name === 'u_time' || field.name === 'u_resolution',
+  );
   const startTime = systemClock.now();
   // The latest boundary-crossing signal snapshot. Animated shaders merge it with
   // the per-frame clock so the time feed never clobbers signal fields.
@@ -436,9 +484,9 @@ export async function initWGSLRuntime(
     const wgsl = event.detail?.wgsl as Record<string, number> | undefined;
     if (wgsl) {
       latestSignal = wgsl;
-      // Static shaders apply on the crossing (unchanged). Animated shaders apply
-      // per-frame in the render loop, so the event only refreshes the snapshot.
-      if (!feedsTime) binding?.apply(wgsl);
+      // Static shaders apply on the crossing (unchanged). Standard-uniform shaders
+      // apply per-frame in the render loop, so the event only refreshes the snapshot.
+      if (!feedsStandard) binding?.apply(wgsl);
     }
   };
   element?.addEventListener('czap:uniform-update', onUniformUpdate);
@@ -455,11 +503,15 @@ export async function initWGSLRuntime(
       canvas.height = h;
     }
 
-    // Animated shaders: feed the monotonic clock into u_time every frame, merged
-    // with the latest signal snapshot. apply() ignores u_time when the struct
-    // doesn't declare it, so the merge is harmless for non-time shaders.
-    if (feedsTime && binding) {
-      binding.apply({ ...latestSignal, u_time: (systemClock.now() - startTime) / 1000 });
+    // Standard-uniform shaders: feed the monotonic clock + canvas dimensions every
+    // frame, merged with the latest signal snapshot. apply() ignores a standard
+    // uniform the struct doesn't declare, so the merge is harmless.
+    if (feedsStandard && binding) {
+      binding.apply({
+        ...latestSignal,
+        u_time: (systemClock.now() - startTime) / 1000,
+        u_resolution: [w, h],
+      });
     }
 
     const encoder = device.createCommandEncoder();
