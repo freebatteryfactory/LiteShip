@@ -10,7 +10,7 @@
     "@czap/core": "workspace:*",
     "@czap/quantizer": "workspace:*",
     "@czap/remotion": "workspace:*",
-    "effect": "4.0.0-beta.32",
+    "effect": "4.0.0-beta.92",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "remotion": "^4.0.0",
