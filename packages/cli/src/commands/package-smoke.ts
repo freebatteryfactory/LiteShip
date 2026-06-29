@@ -63,7 +63,13 @@ async function createScratchDir(root: string): Promise<string> {
 
 function run(command: string, args: readonly string[], cwd: string): string {
   const executable = resolveExecutable(command);
-  const commandArgs = command === 'pnpm' && process.env['npm_execpath'] ? [process.env['npm_execpath'], ...args] : args;
+  // Node-wrapper case (JS pnpm CLI): `executable` is node and `npm_execpath` is
+  // the script arg. Native-binary case (@pnpm/exe) or plain command: args go
+  // straight to the executable.
+  const commandArgs =
+    command === 'pnpm' && executable === process.execPath && process.env['npm_execpath']
+      ? [process.env['npm_execpath'], ...args]
+      : args;
   return execFileSync(executable, commandArgs, {
     cwd,
     encoding: 'utf8',
