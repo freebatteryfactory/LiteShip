@@ -57,8 +57,7 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
 
 /** Tags attached to a boundary cache write for active invalidation. */
 export type EdgeHostCacheTags =
-  | readonly string[]
-  | ((context: EdgeHostCompileContext) => readonly string[] | null | undefined);
+  readonly string[] | ((context: EdgeHostCompileContext) => readonly string[] | null | undefined);
 
 /**
  * Outputs source for one boundary -- the per-boundary slice of

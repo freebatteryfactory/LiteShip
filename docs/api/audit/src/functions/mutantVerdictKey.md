@@ -8,7 +8,7 @@
 
 > **mutantVerdictKey**(`mutant`, `coveringTests`, `toolchainDigest`): `string`
 
-Defined in: [audit/src/mutation-verdict.ts:236](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L236)
+Defined in: [audit/src/mutation-verdict.ts:233](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L233)
 
 The deterministic verdict-cache key for a mutant — `mutant.id` bound to the
 digest of its covering tests and the toolchain digest. A change in ANY of the

@@ -60,18 +60,16 @@ function consumerMissingFindings(profile: DevopsProfile): AuditFinding[] {
   return Object.keys(profile.packageTopology)
     .filter((name) => !(name in packageRoots))
     .sort((a, b) => a.localeCompare(b))
-    .map(
-      (name): AuditFinding => ({
-        id: `support/consumer-missing/${name}`,
-        section: 'support',
-        rule: 'consumer-package-missing',
-        severity: 'info',
-        title: 'Topology package is not installed',
-        summary:
-          `${name} is listed in the profile's packageTopology but is not installed under ${profile.repoRoot}, ` +
-          `so it was not audited. Install ${name} to audit it, or remove it from packageTopology if you do not ship it.`,
-      }),
-    );
+    .map((name): AuditFinding => ({
+      id: `support/consumer-missing/${name}`,
+      section: 'support',
+      rule: 'consumer-package-missing',
+      severity: 'info',
+      title: 'Topology package is not installed',
+      summary:
+        `${name} is listed in the profile's packageTopology but is not installed under ${profile.repoRoot}, ` +
+        `so it was not audited. Install ${name} to audit it, or remove it from packageTopology if you do not ship it.`,
+    }));
 }
 
 /**

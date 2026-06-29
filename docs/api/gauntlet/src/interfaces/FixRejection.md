@@ -6,7 +6,7 @@
 
 # Interface: FixRejection
 
-Defined in: [gauntlet/src/declared-fix.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L185)
+Defined in: [gauntlet/src/declared-fix.ts:181](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L181)
 
 One self-explaining rejection reason — its class + the human WHY (REPORT-not-DECIDE).
 
@@ -16,7 +16,7 @@ One self-explaining rejection reason — its class + the human WHY (REPORT-not-D
 
 > `readonly` **class**: [`FixRejectionClass`](../type-aliases/FixRejectionClass.md)
 
-Defined in: [gauntlet/src/declared-fix.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L186)
+Defined in: [gauntlet/src/declared-fix.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L182)
 
 ***
 
@@ -24,6 +24,6 @@ Defined in: [gauntlet/src/declared-fix.ts:186](https://github.com/heyoub/LiteShi
 
 > `readonly` **detail**: `string`
 
-Defined in: [gauntlet/src/declared-fix.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L188)
+Defined in: [gauntlet/src/declared-fix.ts:184](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L184)
 
 Human-readable WHY — enough to act on without re-running the verifier.

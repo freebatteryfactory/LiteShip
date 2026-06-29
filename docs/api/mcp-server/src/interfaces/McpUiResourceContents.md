@@ -6,7 +6,7 @@
 
 # Interface: McpUiResourceContents
 
-Defined in: [mcp-server/src/ui-resources.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L61)
+Defined in: [mcp-server/src/ui-resources.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L57)
 
 The `resources/read` envelope for a UI resource (carries CSP meta alongside the markup).
 
@@ -16,4 +16,4 @@ The `resources/read` envelope for a UI resource (carries CSP meta alongside the 
 
 > `readonly` **contents**: readonly `object`[]
 
-Defined in: [mcp-server/src/ui-resources.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L62)
+Defined in: [mcp-server/src/ui-resources.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L58)

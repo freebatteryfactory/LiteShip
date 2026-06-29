@@ -151,8 +151,7 @@ export interface MorphCallbacks {
  * Result of a morph operation.
  */
 export type MorphResult =
-  | { readonly type: 'success' }
-  | { readonly type: 'rejected'; readonly rejection: MorphRejection };
+  { readonly type: 'success' } | { readonly type: 'rejected'; readonly rejection: MorphRejection };
 
 /**
  * Morph rejection when preserve constraints are violated.

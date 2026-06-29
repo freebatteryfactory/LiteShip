@@ -110,10 +110,7 @@ export interface EffectTrack<M extends FrameMark = FrameMark> {
 
 /** Track union — closed set of four helper-produced shapes. */
 export type Track<M extends FrameMark = FrameMark> =
-  | VideoTrack<M>
-  | AudioTrack<M>
-  | TransitionTrack<M>
-  | EffectTrack<M>;
+  VideoTrack<M> | AudioTrack<M> | TransitionTrack<M> | EffectTrack<M>;
 
 /**
  * Scene invariant — evaluated against the contract at compile time.

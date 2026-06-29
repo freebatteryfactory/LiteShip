@@ -79,8 +79,7 @@ const SRI_SHA256_RE = /^sha256-([A-Za-z0-9+/]+={0,2})$/;
  *     not vanished.
  */
 type Base64Decode =
-  | { readonly _tag: 'ok'; readonly binary: string }
-  | { readonly _tag: 'invalid-base64'; readonly errorName: string };
+  { readonly _tag: 'ok'; readonly binary: string } | { readonly _tag: 'invalid-base64'; readonly errorName: string };
 
 /**
  * Run `atob` over an SRI base64 payload, DISCRIMINATING a malformed payload from a
@@ -309,8 +308,7 @@ export function isExternalShaderSource(shaderSrc: string): boolean {
  *   • a `'verified'` always proceeds.
  */
 export type IntegrityDecision =
-  | { readonly proceed: true }
-  | { readonly proceed: false; readonly reason: 'mismatch' | 'absent-required' };
+  { readonly proceed: true } | { readonly proceed: false; readonly reason: 'mismatch' | 'absent-required' };
 
 /** Decide whether to proceed or refuse, given the verify result and the mode. */
 export function decideShaderIntegrity(result: IntegrityResult, mode: ShaderIntegrityMode): IntegrityDecision {

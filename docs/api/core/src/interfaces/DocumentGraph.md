@@ -6,7 +6,7 @@
 
 # Interface: DocumentGraph
 
-Defined in: [core/src/document-graph.ts:168](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L168)
+Defined in: [core/src/document-graph.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L161)
 
 The top-level addressable graph. Two-law addressing (ADR-0003/0011): `id` is
 the `fnv1a` identity (dedup), `digest` is the paired `fnv1a`+`sha256`
@@ -19,7 +19,7 @@ byte sequence over the sorted node ids + edges, so they cannot disagree.
 
 > `readonly` **\_tag**: `"DocumentGraph"`
 
-Defined in: [core/src/document-graph.ts:169](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L169)
+Defined in: [core/src/document-graph.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L162)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [core/src/document-graph.ts:169](https://github.com/heyoub/LiteShip/
 
 > `readonly` **\_version**: `1`
 
-Defined in: [core/src/document-graph.ts:170](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L170)
+Defined in: [core/src/document-graph.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L163)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [core/src/document-graph.ts:170](https://github.com/heyoub/LiteShip/
 
 > `readonly` **digest**: `AddressedDigest`
 
-Defined in: [core/src/document-graph.ts:172](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L172)
+Defined in: [core/src/document-graph.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L165)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [core/src/document-graph.ts:172](https://github.com/heyoub/LiteShip/
 
 > `readonly` **edges**: readonly [`DocumentGraphEdge`](DocumentGraphEdge.md)[]
 
-Defined in: [core/src/document-graph.ts:175](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L175)
+Defined in: [core/src/document-graph.ts:168](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L168)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [core/src/document-graph.ts:175](https://github.com/heyoub/LiteShip/
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:171](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L171)
+Defined in: [core/src/document-graph.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L164)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [core/src/document-graph.ts:171](https://github.com/heyoub/LiteShip/
 
 > `readonly` **meta**: [`CellMeta`](CellMeta.md)
 
-Defined in: [core/src/document-graph.ts:173](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L173)
+Defined in: [core/src/document-graph.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L166)
 
 ***
 
@@ -67,4 +67,4 @@ Defined in: [core/src/document-graph.ts:173](https://github.com/heyoub/LiteShip/
 
 > `readonly` **nodes**: readonly [`DocumentGraphNode`](../type-aliases/DocumentGraphNode.md)[]
 
-Defined in: [core/src/document-graph.ts:174](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L174)
+Defined in: [core/src/document-graph.ts:167](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L167)

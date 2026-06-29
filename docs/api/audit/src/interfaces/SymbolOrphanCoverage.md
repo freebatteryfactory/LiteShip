@@ -6,7 +6,7 @@
 
 # Interface: SymbolOrphanCoverage
 
-Defined in: [audit/src/types.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L47)
+Defined in: [audit/src/types.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L42)
 
 Symbol-level orphan evidence (CUT A6) — finer than [OrphanCoverage](OrphanCoverage.md).
 
@@ -16,7 +16,7 @@ Symbol-level orphan evidence (CUT A6) — finer than [OrphanCoverage](OrphanCove
 
 > `readonly` **candidateCount**: `number`
 
-Defined in: [audit/src/types.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L54)
+Defined in: [audit/src/types.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L49)
 
 Exported but unreferenced despite the file being reached — the file-proxy gap.
 
@@ -26,7 +26,7 @@ Exported but unreferenced despite the file being reached — the file-proxy gap.
 
 > `readonly` **consumedCount**: `number`
 
-Defined in: [audit/src/types.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L50)
+Defined in: [audit/src/types.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L45)
 
 Exact-name references (incl. barrel re-exports) — proven consumed.
 
@@ -36,7 +36,7 @@ Exact-name references (incl. barrel re-exports) — proven consumed.
 
 > `readonly` **coverage**: `"symbol-evidenced"`
 
-Defined in: [audit/src/types.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L48)
+Defined in: [audit/src/types.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L43)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [audit/src/types.ts:48](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **note**: `string`
 
-Defined in: [audit/src/types.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L55)
+Defined in: [audit/src/types.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L50)
 
 ***
 
@@ -52,6 +52,6 @@ Defined in: [audit/src/types.ts:55](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **starCoveredCount**: `number`
 
-Defined in: [audit/src/types.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L52)
+Defined in: [audit/src/types.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L47)
 
 Covered only by a namespace/`*` import — broad evidence, not exact proof.

@@ -175,11 +175,7 @@ export interface ActualChange {
  * sign-off — only by reversing the weakening).
  */
 export type FixRejectionClass =
-  | 'scope-creep'
-  | 'size-exceeded'
-  | 'unsigned-weakening'
-  | 'forbidden-weakening'
-  | 'forged-receipt';
+  'scope-creep' | 'size-exceeded' | 'unsigned-weakening' | 'forbidden-weakening' | 'forged-receipt';
 
 /** One self-explaining rejection reason — its class + the human WHY (REPORT-not-DECIDE). */
 export interface FixRejection {
@@ -195,8 +191,7 @@ export interface FixRejection {
  * the gate folds on the tag.
  */
 export type FixVerdict =
-  | { readonly _tag: 'admitted' }
-  | { readonly _tag: 'rejected'; readonly reasons: readonly FixRejection[] };
+  { readonly _tag: 'admitted' } | { readonly _tag: 'rejected'; readonly reasons: readonly FixRejection[] };
 
 // ─────────────────────────────── the glob matcher ───────────────────────────
 //

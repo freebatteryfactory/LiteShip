@@ -6,7 +6,7 @@
 
 # Interface: AuditLocation
 
-Defined in: [audit/src/types.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L66)
+Defined in: [audit/src/types.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L61)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:66](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` `optional` **column?**: `number`
 
-Defined in: [audit/src/types.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L69)
+Defined in: [audit/src/types.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L64)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:69](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/types.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L67)
+Defined in: [audit/src/types.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L62)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/types.ts:67](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [audit/src/types.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L68)
+Defined in: [audit/src/types.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L63)

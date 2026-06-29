@@ -207,9 +207,7 @@ export const sceneRenderCommand: HandledCommand = {
     const force = invocation.args.force === true;
     const key = { command: 'scene.render', inputs: { scenePath, output }, force };
     const cached = context.cache?.read(key) as
-      | { sceneId: string; output: string; frameCount: number; elapsedMs: number; fps?: number }
-      | null
-      | undefined;
+      { sceneId: string; output: string; frameCount: number; elapsedMs: number; fps?: number } | null | undefined;
     // A cache hit only counts if the rendered output is still on disk.
     if (cached && typeof cached.output === 'string' && context.fileExists?.(cached.output)) {
       return {

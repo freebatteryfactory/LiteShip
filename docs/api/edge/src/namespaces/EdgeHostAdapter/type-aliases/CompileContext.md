@@ -8,6 +8,6 @@
 
 > **CompileContext** = [`EdgeHostCompileContext`](../../../interfaces/EdgeHostCompileContext.md)
 
-Defined in: [edge/src/host-adapter.ts:512](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L512)
+Defined in: [edge/src/host-adapter.ts:511](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L511)
 
 Alias for [EdgeHostCompileContext](../../../interfaces/EdgeHostCompileContext.md).

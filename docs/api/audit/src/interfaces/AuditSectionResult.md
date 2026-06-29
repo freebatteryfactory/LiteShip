@@ -6,7 +6,7 @@
 
 # Interface: AuditSectionResult\<TSummary\>
 
-Defined in: [audit/src/types.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L95)
+Defined in: [audit/src/types.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L90)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [audit/src/types.ts:95](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **findings**: readonly [`AuditFinding`](AuditFinding.md)[]
 
-Defined in: [audit/src/types.ts:98](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L98)
+Defined in: [audit/src/types.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L93)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [audit/src/types.ts:98](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **section**: [`AuditSection`](../type-aliases/AuditSection.md)
 
-Defined in: [audit/src/types.ts:96](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L96)
+Defined in: [audit/src/types.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L91)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [audit/src/types.ts:96](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **summary**: `TSummary`
 
-Defined in: [audit/src/types.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L97)
+Defined in: [audit/src/types.ts:92](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L92)
 
 ***
 
@@ -44,4 +44,4 @@ Defined in: [audit/src/types.ts:97](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **suppressed**: readonly [`AuditSuppression`](AuditSuppression.md)[]
 
-Defined in: [audit/src/types.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L99)
+Defined in: [audit/src/types.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L94)

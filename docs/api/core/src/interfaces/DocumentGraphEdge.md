@@ -6,7 +6,7 @@
 
 # Interface: DocumentGraphEdge
 
-Defined in: [core/src/document-graph.ts:156](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L156)
+Defined in: [core/src/document-graph.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L149)
 
 A directed edge over node content addresses. This is `PlanEdge` lifted from
 opaque step-id strings to typed node `ContentAddress`es; `EdgeType` is reused
@@ -18,7 +18,7 @@ verbatim from `plan.ts` (both endpoints stay in the fnv1a identity law).
 
 > `readonly` **from**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L157)
+Defined in: [core/src/document-graph.ts:150](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L150)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/document-graph.ts:157](https://github.com/heyoub/LiteShip/
 
 > `readonly` **to**: `ContentAddress`
 
-Defined in: [core/src/document-graph.ts:158](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L158)
+Defined in: [core/src/document-graph.ts:151](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L151)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [core/src/document-graph.ts:158](https://github.com/heyoub/LiteShip/
 
 > `readonly` **type**: [`EdgeType`](../type-aliases/EdgeType.md)
 
-Defined in: [core/src/document-graph.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L159)
+Defined in: [core/src/document-graph.ts:152](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L152)
