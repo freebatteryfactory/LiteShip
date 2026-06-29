@@ -6,7 +6,7 @@ LiteShip / CZAP / `@czap/*` naming: [GLOSSARY.md](./GLOSSARY.md). For Cloudflare
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 22.13+
 - pnpm 10+
 - An Astro 7 project (`pnpm create astro@latest` if you don't have one)
 
