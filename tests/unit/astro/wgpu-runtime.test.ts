@@ -325,6 +325,14 @@ const OVERFLOW_SHADER =
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }';
 
+// Declares `u_time` at slot 1 (after state_index) — an ANIMATED hand-authored
+// shader. The runtime must feed the monotonic clock into u_time every frame.
+const TIME_SHADER =
+  'struct S { state_index: u32, u_time: f32, pad0: f32, pad1: f32 }\n' +
+  '@group(0) @binding(0) var<uniform> s: S;\n' +
+  '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
+  '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(s.u_time); }';
+
 describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
   it('binds detail.wgsl field values into the uniform buffer on every crossing', async () => {
     const harness = makeGpuHarness();
@@ -413,6 +421,50 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
     expect(dv.getFloat32(8, true)).toBe(7.5); // scale → declared slot 2 (offset 8)
     expect(dv.getFloat32(4, true)).toBe(0); // blur_radius slot untouched (not in event)
+    dispose!();
+  });
+
+  it('feeds u_time into the uniform buffer EVERY frame for an animated shader (GLSL-parity auto-feed)', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    const { frames } = stubRaf();
+    const { canvas } = makeCanvas(true);
+    const el = document.createElement('div');
+
+    const dispose = await initWGSLRuntime(canvas, TIME_SHADER, el);
+    expect(dispose).not.toBeNull();
+
+    // A static shader only writes on the seed + crossings; an animated shader
+    // (declaring u_time) re-applies the buffer EVERY frame to advance the clock,
+    // so two frames produce two more buffer writes -- the gap that left
+    // hand-authored WGSL animations frozen.
+    const writesAfterInit = harness.calls.bufferWrites.length;
+    frames[0]!();
+    frames[1]!();
+    expect(harness.calls.bufferWrites.length).toBe(writesAfterInit + 2);
+
+    // u_time lands in its DECLARED slot (offset 4, after the u32 state_index),
+    // as a finite float; the clock never touches the state_index slot.
+    const last = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(last.getUint32(0, true)).toBe(0);
+    expect(Number.isFinite(last.getFloat32(4, true))).toBe(true);
+    dispose!();
+  });
+
+  it('does NOT per-frame-write a static shader (no u_time): writes only on seed + crossing', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    const { frames } = stubRaf();
+    const { canvas } = makeCanvas(true);
+    const el = document.createElement('div');
+
+    // UNIFORM_SHADER declares no u_time, so the per-frame feed stays off and the
+    // event-only write path is preserved (no per-frame perf cost / no churn).
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    const writesAfterInit = harness.calls.bufferWrites.length;
+    frames[0]!();
+    frames[1]!();
+    expect(harness.calls.bufferWrites.length).toBe(writesAfterInit);
     dispose!();
   });
 

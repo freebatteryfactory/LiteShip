@@ -4,7 +4,7 @@
  * @module
  */
 
-import { Diagnostics, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
+import { Diagnostics, systemClock, CANVAS_FALLBACK_WIDTH, CANVAS_FALLBACK_HEIGHT } from '@czap/core';
 import {
   verifyShaderIntegrity,
   isExternalShaderSource,
@@ -414,6 +414,18 @@ export async function initWGSLRuntime(
     }
   }
 
+  // Standard-uniform AUTO-FEED, at parity with the GLSL path (gpu.ts:498): a
+  // hand-authored WGSL shader that declares `u_time` gets a live monotonic
+  // elapsed-seconds clock fed EVERY frame, not just on boundary crossings — the
+  // gap that left hand-authored WGSL animations frozen. (`u_state` is already
+  // fed via the compiler's `state_index`; a vec2 `u_resolution` needs
+  // WGSL-aligned offsets the flat scalar buffer can't express yet — tracked.)
+  const feedsTime = uniformLayout.some((field) => field.name === 'u_time');
+  const startTime = systemClock.now();
+  // The latest boundary-crossing signal snapshot. Animated shaders merge it with
+  // the per-frame clock so the time feed never clobbers signal fields.
+  let latestSignal: Record<string, number> = {};
+
   // Subscribe to boundary crossings: map detail.wgsl → uniform buffer. The rAF
   // loop already redraws every frame, so writing the buffer here is enough — the
   // next frame samples the new values (no manual re-render needed).
@@ -423,7 +435,10 @@ export async function initWGSLRuntime(
     if (!(event instanceof CustomEvent)) return;
     const wgsl = event.detail?.wgsl as Record<string, number> | undefined;
     if (wgsl) {
-      binding?.apply(wgsl);
+      latestSignal = wgsl;
+      // Static shaders apply on the crossing (unchanged). Animated shaders apply
+      // per-frame in the render loop, so the event only refreshes the snapshot.
+      if (!feedsTime) binding?.apply(wgsl);
     }
   };
   element?.addEventListener('czap:uniform-update', onUniformUpdate);
@@ -438,6 +453,13 @@ export async function initWGSLRuntime(
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
+    }
+
+    // Animated shaders: feed the monotonic clock into u_time every frame, merged
+    // with the latest signal snapshot. apply() ignores u_time when the struct
+    // doesn't declare it, so the merge is harmless for non-time shaders.
+    if (feedsTime && binding) {
+      binding.apply({ ...latestSignal, u_time: (systemClock.now() - startTime) / 1000 });
     }
 
     const encoder = device.createCommandEncoder();

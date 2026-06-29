@@ -157,6 +157,25 @@ export async function scanAndBootDirectives(
       if (boundNames(element).has(name)) {
         continue;
       }
+      // Directive COLLISION: this element is already claimed by a DIFFERENT
+      // directive. Each directive takes over the element (a satellite consumes
+      // the very node a GPU shader needs), so two on one element silently fight
+      // and one loses without a trace -- the exact trap where `client:gpu` +
+      // `satelliteAttrs()` on one canvas booted the satellite and the shader
+      // never started. Make it loud (the activation still proceeds as before;
+      // the warning is the fix the author was missing).
+      const alreadyBound = [...boundNames(element)];
+      if (alreadyBound.length > 0) {
+        Diagnostics.warnOnce({
+          source: 'czap/astro.directive-boot',
+          code: `directive-collision:${[...alreadyBound, name].sort().join('+')}`,
+          message:
+            `Element carries conflicting czap directives (${alreadyBound.join(', ')} + ${name}) -- ` +
+            `each directive takes over the element, so they collide and one silently loses ` +
+            `(e.g. a satellite consumes the node a GPU shader needs). ` +
+            `Fix: put each directive on its own element.`,
+        });
+      }
       // Pre-mark so overlapping scans can't double-activate; a failed
       // activation unmarks below so a later re-scan (astro:after-swap)
       // can retry after a transient chunk-load error.
