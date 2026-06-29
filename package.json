@@ -111,7 +111,7 @@
     "@ast-grep/cli": "^0.44.0",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/node": "4",
-    "@types/node": "^22.19.15",
+    "@types/node": "^26.0.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitest/browser": "^4.1.2",
