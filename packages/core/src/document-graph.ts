@@ -139,14 +139,7 @@ export interface ExportNode extends NodeBase<'export'> {
 
 /** The tagged union of all node families. */
 export type DocumentGraphNode =
-  | SignalNode
-  | EntityNode
-  | ComponentNode
-  | PoseNode
-  | TransitionNode
-  | ProjectionNode
-  | PolicyNode
-  | ExportNode;
+  SignalNode | EntityNode | ComponentNode | PoseNode | TransitionNode | ProjectionNode | PolicyNode | ExportNode;
 
 /**
  * A directed edge over node content addresses. This is `PlanEdge` lifted from

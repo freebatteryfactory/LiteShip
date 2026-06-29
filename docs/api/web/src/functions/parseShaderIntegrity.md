@@ -8,7 +8,7 @@
 
 > **parseShaderIntegrity**(`raw`): [`ShaderIntegrity`](../interfaces/ShaderIntegrity.md) \| `null`
 
-Defined in: [web/src/security/shader-integrity.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L146)
+Defined in: [web/src/security/shader-integrity.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L145)
 
 Parse a `sha256-<base64>` SRI integrity string into a [ShaderIntegrity](../interfaces/ShaderIntegrity.md).
 Returns `null` for a missing / empty / malformed value (e.g. an unsupported

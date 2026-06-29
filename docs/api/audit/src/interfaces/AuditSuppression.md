@@ -6,7 +6,7 @@
 
 # Interface: AuditSuppression
 
-Defined in: [audit/src/types.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L83)
+Defined in: [audit/src/types.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L78)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:83](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **finding**: [`AuditFinding`](AuditFinding.md)
 
-Defined in: [audit/src/types.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L86)
+Defined in: [audit/src/types.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L81)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:86](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **reason**: `string`
 
-Defined in: [audit/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L85)
+Defined in: [audit/src/types.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L80)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **rule**: `string`
 
-Defined in: [audit/src/types.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L84)
+Defined in: [audit/src/types.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L79)

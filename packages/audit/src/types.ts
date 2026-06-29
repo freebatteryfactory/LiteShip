@@ -15,12 +15,7 @@ export type AuditSection = 'structure' | 'integrity' | 'surface';
  * of these so a clean result can never be silently confused with an unchecked one.
  */
 export type AuditCoverageClass =
-  | 'clean'
-  | 'symbol-evidenced'
-  | 'file-proxy-only'
-  | 'allowlisted'
-  | 'policy-absent'
-  | 'not-checked';
+  'clean' | 'symbol-evidenced' | 'file-proxy-only' | 'allowlisted' | 'policy-absent' | 'not-checked';
 
 export interface TopologyCoverageEntry {
   readonly package: string;

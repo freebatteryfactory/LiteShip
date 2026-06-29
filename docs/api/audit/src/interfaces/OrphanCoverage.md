@@ -6,7 +6,7 @@
 
 # Interface: OrphanCoverage
 
-Defined in: [audit/src/types.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L38)
+Defined in: [audit/src/types.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L33)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:38](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **candidateCount**: `number`
 
-Defined in: [audit/src/types.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L40)
+Defined in: [audit/src/types.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L35)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:40](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **coverage**: `"file-proxy-only"`
 
-Defined in: [audit/src/types.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L39)
+Defined in: [audit/src/types.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L34)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/types.ts:39](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **note**: `string`
 
-Defined in: [audit/src/types.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L41)
+Defined in: [audit/src/types.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L36)

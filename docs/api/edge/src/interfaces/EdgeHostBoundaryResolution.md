@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostBoundaryResolution
 
-Defined in: [edge/src/host-adapter.ts:180](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L180)
+Defined in: [edge/src/host-adapter.ts:179](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L179)
 
 Per-boundary resolution outcome, reported in
 [EdgeHostResolution.boundaries](EdgeHostResolution.md#boundaries) when the cache is configured with
@@ -18,7 +18,7 @@ the multi-boundary form.
 
 > `readonly` `optional` **assetUrl?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L186)
+Defined in: [edge/src/host-adapter.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L185)
 
 Immutable static-asset URL for this request's resolved tier, when emitted by the build.
 
@@ -28,7 +28,7 @@ Immutable static-asset URL for this request's resolved tier, when emitted by the
 
 > `readonly` **boundaryId**: `ContentAddress`
 
-Defined in: [edge/src/host-adapter.ts:182](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L182)
+Defined in: [edge/src/host-adapter.ts:181](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L181)
 
 Content address the outputs were resolved (and cached) under.
 
@@ -38,7 +38,7 @@ Content address the outputs were resolved (and cached) under.
 
 > `readonly` **cacheStatus**: `"precompiled"` \| `"hit"` \| `"miss"`
 
-Defined in: [edge/src/host-adapter.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L188)
+Defined in: [edge/src/host-adapter.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L187)
 
 Where this boundary's outputs came from (`'disabled'` cannot occur per boundary).
 
@@ -48,6 +48,6 @@ Where this boundary's outputs came from (`'disabled'` cannot occur per boundary)
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:184](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L184)
+Defined in: [edge/src/host-adapter.ts:183](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L183)
 
 Compiled per-state outputs; absent on an uncovered tier with no `compile`.

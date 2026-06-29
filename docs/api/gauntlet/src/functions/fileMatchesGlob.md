@@ -8,7 +8,7 @@
 
 > **fileMatchesGlob**(`path`, `glob`): `boolean`
 
-Defined in: [gauntlet/src/declared-fix.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L246)
+Defined in: [gauntlet/src/declared-fix.ts:241](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L241)
 
 True iff the repo-relative `path` matches the repo-relative `glob`.
 

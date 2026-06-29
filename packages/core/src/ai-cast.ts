@@ -850,8 +850,7 @@ export type GeneratedUIValidator = (
   node: GeneratedUINode,
   catalog: ComponentCatalog,
 ) =>
-  | { readonly ok: true }
-  | { readonly ok: false; readonly error: { readonly message: string; readonly path?: string } };
+  { readonly ok: true } | { readonly ok: false; readonly error: { readonly message: string; readonly path?: string } };
 
 /**
  * Validate a model-proposed {@link GeneratedUINode} against a host catalog using

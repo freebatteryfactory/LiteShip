@@ -8,6 +8,6 @@
 
 > **MatchPriority** = `"semantic"` \| `"dom-id"` \| `"structural"` \| `"none"`
 
-Defined in: [web/src/types.ts:325](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L325)
+Defined in: [web/src/types.ts:324](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L324)
 
 Match priority levels for node comparison.

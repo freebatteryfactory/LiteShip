@@ -7,8 +7,7 @@
 import type { ComponentCatalog, GeneratedUIValidationError, GeneratedUINode } from './types.js';
 
 export type ValidateGeneratedUIResult =
-  | { readonly ok: true }
-  | { readonly ok: false; readonly error: GeneratedUIValidationError };
+  { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

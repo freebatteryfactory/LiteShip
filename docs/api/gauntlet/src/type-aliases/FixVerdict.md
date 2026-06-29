@@ -8,7 +8,7 @@
 
 > **FixVerdict** = \{ `_tag`: `"admitted"`; \} \| \{ `_tag`: `"rejected"`; `reasons`: readonly [`FixRejection`](../interfaces/FixRejection.md)[]; \}
 
-Defined in: [gauntlet/src/declared-fix.ts:197](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L197)
+Defined in: [gauntlet/src/declared-fix.ts:193](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L193)
 
 The verifier's VERDICT — `admitted` (the fix is in-scope, sized, non-weakening, and
 receipted) or `rejected` with the structured reasons + NO admission. A

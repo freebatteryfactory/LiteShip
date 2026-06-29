@@ -103,8 +103,7 @@ interface SceneEntity {
  *     ticks the DELTA needed to reach the new timeline position on every change.
  */
 export type BridgeClock =
-  | { readonly kind: 'time' }
-  | { readonly kind: 'signal'; readonly input: string; readonly durationMs: number };
+  { readonly kind: 'time' } | { readonly kind: 'signal'; readonly input: string; readonly durationMs: number };
 
 /** Handle returned by {@link bridgeSceneToGraph}: stop the clock and release. */
 export interface SceneBridgeHandle {

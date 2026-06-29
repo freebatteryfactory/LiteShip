@@ -8,6 +8,6 @@
 
 > **SSEState** = `"connecting"` \| `"connected"` \| `"reconnecting"` \| `"disconnected"` \| `"error"`
 
-Defined in: [web/src/types.ts:212](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L212)
+Defined in: [web/src/types.ts:211](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L211)
 
 SSE connection state.

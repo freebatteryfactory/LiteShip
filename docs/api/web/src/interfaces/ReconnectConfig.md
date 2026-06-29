@@ -6,7 +6,7 @@
 
 # Interface: ReconnectConfig
 
-Defined in: [web/src/types.ts:243](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L243)
+Defined in: [web/src/types.ts:242](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L242)
 
 Reconnection configuration. Engine defaults live in
 `defaultReconnectConfig` (`./stream/sse-pure.js`); `SSEConfig.reconnect`
@@ -18,7 +18,7 @@ accepts a partial and merges over those defaults.
 
 > `readonly` **factor**: `number`
 
-Defined in: [web/src/types.ts:247](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L247)
+Defined in: [web/src/types.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L246)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [web/src/types.ts:247](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **initialDelay**: `Millis`
 
-Defined in: [web/src/types.ts:245](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L245)
+Defined in: [web/src/types.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L244)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [web/src/types.ts:245](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **maxAttempts**: `number`
 
-Defined in: [web/src/types.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L244)
+Defined in: [web/src/types.ts:243](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L243)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [web/src/types.ts:244](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **maxDelay**: `Millis`
 
-Defined in: [web/src/types.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L246)
+Defined in: [web/src/types.ts:245](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L245)

@@ -39,7 +39,7 @@
     "prepack": "pnpm run build"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.13.0"
   },
   "publishConfig": {
     "access": "public"

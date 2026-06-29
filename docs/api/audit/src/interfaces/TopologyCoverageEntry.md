@@ -6,7 +6,7 @@
 
 # Interface: TopologyCoverageEntry
 
-Defined in: [audit/src/types.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L25)
+Defined in: [audit/src/types.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L20)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:25](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **coverage**: [`AuditCoverageClass`](../type-aliases/AuditCoverageClass.md)
 
-Defined in: [audit/src/types.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L28)
+Defined in: [audit/src/types.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L23)
 
 `clean` when a topology policy governs this package; `policy-absent` when none exists.
 
@@ -24,4 +24,4 @@ Defined in: [audit/src/types.ts:28](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **package**: `string`
 
-Defined in: [audit/src/types.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L26)
+Defined in: [audit/src/types.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L21)

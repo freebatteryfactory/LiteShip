@@ -163,9 +163,11 @@ function waiverElements(): readonly StandardsElement[] {
 
 /** Extract every ASSURANCE-MAP element (glob → level). */
 function assuranceElements(): readonly StandardsElement[] {
-  return LITESHIP_ASSURANCE_MAP.map(
-    (rule): StandardsElement => ({ _tag: 'assurance', glob: rule.glob, level: rule.level }),
-  );
+  return LITESHIP_ASSURANCE_MAP.map((rule): StandardsElement => ({
+    _tag: 'assurance',
+    glob: rule.glob,
+    level: rule.level,
+  }));
 }
 
 /**
@@ -178,14 +180,12 @@ function assuranceElements(): readonly StandardsElement[] {
  * byte-stable regardless of source indentation.
  */
 function skipAllowlistElements(): readonly StandardsElement[] {
-  return SANCTIONED_SKIPS.map(
-    (s): StandardsElement => ({
-      _tag: 'skip-allowlist',
-      file: s.file,
-      site: normalizeSiteLine(s.site),
-      capability: s.capability,
-    }),
-  );
+  return SANCTIONED_SKIPS.map((s): StandardsElement => ({
+    _tag: 'skip-allowlist',
+    file: s.file,
+    site: normalizeSiteLine(s.site),
+    capability: s.capability,
+  }));
 }
 
 /**

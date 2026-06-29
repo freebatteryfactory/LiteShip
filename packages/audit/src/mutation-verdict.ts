@@ -153,10 +153,7 @@ export interface EquivalentVerdict<M extends MutantCore = Mutant> {
  * instantiates it at `ConditionMutant` so the same evaluator serves both paths.
  */
 export type MutantVerdict<M extends MutantCore = Mutant> =
-  | KilledVerdict<M>
-  | SurvivedVerdict<M>
-  | NoCoverageVerdict<M>
-  | EquivalentVerdict<M>;
+  KilledVerdict<M> | SurvivedVerdict<M> | NoCoverageVerdict<M> | EquivalentVerdict<M>;
 
 /**
  * The injected EQUIVALENT-MUTANT registry — resolves a mutant's CONTENT ADDRESS to its

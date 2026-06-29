@@ -6,7 +6,7 @@
 
 # Interface: MutantVerdictCache
 
-Defined in: [audit/src/mutation-verdict.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L186)
+Defined in: [audit/src/mutation-verdict.ts:183](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L183)
 
 The injected verdict store — the B2 content-addressed cache for mutant verdicts,
 mirroring `@czap/gauntlet`'s `GateVerdictCache`. Keys on the mutant's content
@@ -22,7 +22,7 @@ host.
 
 > **read**(`key`): `"killed"` \| `"survived"` \| `"no-coverage"` \| `"equivalent"` \| `null`
 
-Defined in: [audit/src/mutation-verdict.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L188)
+Defined in: [audit/src/mutation-verdict.ts:185](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L185)
 
 The cached verdict tag for `key`, or `null` on a MISS (re-run).
 
@@ -42,7 +42,7 @@ The cached verdict tag for `key`, or `null` on a MISS (re-run).
 
 > **write**(`key`, `tag`): `void`
 
-Defined in: [audit/src/mutation-verdict.ts:190](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L190)
+Defined in: [audit/src/mutation-verdict.ts:187](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L187)
 
 Record the verdict tag produced for `key`.
 

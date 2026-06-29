@@ -8,7 +8,7 @@
 
 > **verifyDeclaredFix**(`fix`, `reality`): [`FixVerdict`](../type-aliases/FixVerdict.md)
 
-Defined in: [gauntlet/src/declared-fix.ts:474](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L474)
+Defined in: [gauntlet/src/declared-fix.ts:469](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/declared-fix.ts#L469)
 
 VERIFY a declared fix against the host-measured reality — the agent-fix admission
 control. Runs the four checks (scope ⊆ declared, size ≤ cap, no unsigned weakening

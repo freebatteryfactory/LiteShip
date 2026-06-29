@@ -31,11 +31,7 @@ export interface McpUiResourceCsp {
 
 /** MCP Apps UI permissions (SEP-1865). Default-deny when empty. */
 export type McpUiPermissions = readonly (
-  | 'camera'
-  | 'microphone'
-  | 'geolocation'
-  | 'clipboard-read'
-  | 'clipboard-write'
+  'camera' | 'microphone' | 'geolocation' | 'clipboard-read' | 'clipboard-write'
 )[];
 
 /** MCP Apps resource metadata — CSP/permissions ride here on the RESOURCE, never on a tool. */

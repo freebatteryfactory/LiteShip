@@ -8,7 +8,7 @@
 
 > **SceneBeat** = [`Component`](../namespaces/BeatBinding/type-aliases/Component.md)
 
-Defined in: [scene/src/contract.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L142)
+Defined in: [scene/src/contract.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L139)
 
 Pre-resolved beat marker on a [SceneContract](../interfaces/SceneContract.md). Aliased to
 `BeatBinding.Component` from `./capsules/beat-binding.ts` — single
