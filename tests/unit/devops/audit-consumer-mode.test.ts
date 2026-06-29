@@ -118,6 +118,25 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.counts.error).toBe(0);
   });
 
+  it('STILL flags a NOT-declared (typo/missing) internal import in consumer mode (Codex P2)', () => {
+    // The suppression must not hide real breakage: an import to an internal
+    // package that ISN'T a declared dependency (a typo, or a genuinely missing
+    // package) won't resolve at the consumer's runtime, so it stays an error
+    // even in consumer mode. Only declared-but-undiscovered deps are suppressed.
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      // @acme/app declares NO deps, yet imports @acme/erorr (a typo).
+      'node_modules/@acme/app/package.json': PKG('@acme/app'),
+      'node_modules/@acme/app/src/index.ts': "import { x } from '@acme/erorr';\nexport const y = x;\n",
+    });
+    const base: DevopsProfile = {
+      ...acmeBase(),
+      packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
+    };
+    const result = runAuditPasses(consumerDevopsProfile(root, base));
+    expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
+  });
+
   it('STILL flags unknown-internal-package in SOURCE mode (the suppression is consumer-specific, not a blanket removal)', () => {
     const srcRoot = makeFixture({
       'packages/app/package.json': PKG('@acme/app'),

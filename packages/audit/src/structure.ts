@@ -409,14 +409,20 @@ export function runStructureAudit(
           internalImportEdges += 1;
           const { line, column } = lineAndColumn(record.sourceFile, node.moduleSpecifier.getStart());
           if (!resolved.targetPackage || !packageByName.has(resolved.targetPackage)) {
-            // In CONSUMER mode (`packageRoots` set) the discovered set is a
-            // SUBSET of what's installed: transitive/pnpm-hoisted `@scope/*`
-            // deps aren't in the discovery seed, so an import to a not-discovered
-            // internal package is expected — it's LiteShip's own published wiring,
-            // which the consumer can't act on and LiteShip's own CI already audits.
-            // Emitting it here is the false-positive a consumer hit (98 of them on
-            // a 0.4.0 upgrade). Only the source monorepo treats it as a real error.
-            if (profile.packageRoots == null) {
+            // In CONSUMER mode (`packageRoots` set) the discovered set is a SUBSET
+            // of what's installed: transitive/pnpm-hoisted `@scope/*` deps aren't
+            // in the discovery seed. Suppress `unknown-internal-package` ONLY when
+            // the target is a DECLARED dependency of the importer — that's a real
+            // package the consumer's install resolves, just not seeded (the 98
+            // false positives a 0.4.0 consumer hit). A target that is NOT a
+            // declared dep — a typo or a genuinely missing package — still won't
+            // resolve at runtime, so keep flagging it even in consumer mode
+            // (Codex P2). The source monorepo flags every unknown internal import.
+            const isUndiscoveredDeclaredDep =
+              profile.packageRoots != null &&
+              resolved.targetPackage != null &&
+              packageInfo.dependencies.includes(resolved.targetPackage);
+            if (!isUndiscoveredDeclaredDep) {
               rawFindings.push({
                 id: `structure/unknown-package/${record.relativePath}:${line}:${column}`,
                 section: 'structure',
