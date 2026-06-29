@@ -286,10 +286,16 @@ export function runStructureAudit(
   // consumer's runtime" — stronger than "is it a declared dependency" (a declared
   // dep can be a devDependency that isn't shipped, or a broken/missing install).
   const consumerInstalled = new Map<string, boolean>();
+  const discoveredSeed = Object.keys(profile.packageRoots ?? {});
   const isInstalledInConsumer = (target: string): boolean => {
     const cached = consumerInstalled.get(target);
     if (cached !== undefined) return cached;
-    const installed = discoverInstalledPackageRoots(profile.repoRoot, [target]).packageRoots[target] != null;
+    // Seed the discovery with the already-discovered package names so its fixpoint
+    // re-seeds from THEIR roots — that's how a pnpm/npm-nested dep that lives only
+    // under the importer's own node_modules (e.g. @czap/error nested under
+    // @czap/core) is reached. A bare [target] lookup from repoRoot would miss it.
+    const installed =
+      discoverInstalledPackageRoots(profile.repoRoot, [...discoveredSeed, target]).packageRoots[target] != null;
     consumerInstalled.set(target, installed);
     return installed;
   };
@@ -452,6 +458,12 @@ export function runStructureAudit(
                   column,
                 },
               });
+            } else if (resolved.targetPackage != null) {
+              // Suppressed but REAL (installed-but-unseeded): still record the
+              // dependency-graph edge so the consumer audit's `packageEdges`
+              // output stays complete (Greptile P1).
+              const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
+              packageEdges.set(edgeKey, (packageEdges.get(edgeKey) ?? 0) + 1);
             }
           } else {
             const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;

@@ -102,10 +102,11 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
       'node_modules/@acme/app/package.json': PKG('@acme/app', { '@acme/error': '0.0.0' }),
       'node_modules/@acme/app/src/index.ts': "import { fail } from '@acme/error';\nexport const appThing = fail;\n",
-      // @acme/error is installed but deliberately NOT in the base topology below,
-      // so discovery never seeds it — reproducing the transitive gap.
-      'node_modules/@acme/error/package.json': PKG('@acme/error'),
-      'node_modules/@acme/error/src/index.ts': 'export const fail = 1;\n',
+      // @acme/error is installed ONLY nested under the importer (pnpm/npm-nested
+      // shape) and is NOT in the base topology — reproducing the transitive gap.
+      // The installed-check must reach it by re-seeding from @acme/app's root.
+      'node_modules/@acme/app/node_modules/@acme/error/package.json': PKG('@acme/error'),
+      'node_modules/@acme/app/node_modules/@acme/error/src/index.ts': 'export const fail = 1;\n',
     });
 
     const base: DevopsProfile = {
@@ -116,6 +117,8 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.structure.summary.packageCount).toBe(1); // only @acme/app discovered
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package')).toHaveLength(0);
     expect(result.counts.error).toBe(0);
+    // The suppressed-but-real edge is still recorded in the graph (Greptile P1).
+    expect(result.structure.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/error', count: 1 });
   });
 
   it('STILL flags a NOT-declared (typo/missing) internal import in consumer mode (Codex P2)', () => {
