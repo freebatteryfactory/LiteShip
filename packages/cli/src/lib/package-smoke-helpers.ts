@@ -25,13 +25,19 @@ import { pathToFileURL } from 'node:url';
 import { IntegrityError } from '@czap/error';
 
 /**
- * Resolve the executable to spawn for `command`. `pnpm` is re-pointed at the
- * current Node when invoked through an `npm_execpath` (the pnpm CLI is a JS
- * entrypoint, not a binary); on Windows the `pnpm.cmd` shim is required.
+ * Resolve the executable to spawn for `command`. `pnpm` invoked through an
+ * `npm_execpath` is re-pointed at the current Node WHEN that entrypoint is a JS
+ * file (the common pnpm CLI). But some setups point `npm_execpath` at a NATIVE
+ * standalone binary (`@pnpm/exe`, e.g. Blacksmith runners' `setup-pnpm`), which
+ * must be run DIRECTLY — `node <binary>` chokes on the ELF/Mach-O/PE header
+ * (`SyntaxError: Invalid or unexpected token`). On Windows the `pnpm.cmd` shim
+ * is required.
  */
 export function resolveExecutable(command: string): string {
-  if (command === 'pnpm' && process.env['npm_execpath']) {
-    return process.execPath;
+  const execpath = process.env['npm_execpath'];
+  if (command === 'pnpm' && execpath) {
+    // JS entrypoint → run via node; native binary → run it directly.
+    return /\.[cm]?js$/i.test(execpath) ? process.execPath : execpath;
   }
   if (process.platform === 'win32' && command === 'pnpm') {
     return 'pnpm.cmd';

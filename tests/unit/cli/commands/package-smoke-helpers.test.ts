@@ -59,11 +59,24 @@ describe('resolveExecutable — platform/npm_execpath executable resolution', ()
     expect(resolveExecutable('tar')).toBe('tar');
   });
 
-  it('pnpm under an npm_execpath resolves to the current Node binary', () => {
+  it('pnpm under a JS npm_execpath resolves to the current Node binary', () => {
     const prev = process.env['npm_execpath'];
     process.env['npm_execpath'] = '/some/pnpm.cjs';
     try {
       expect(resolveExecutable('pnpm')).toBe(process.execPath);
+    } finally {
+      if (prev === undefined) delete process.env['npm_execpath'];
+      else process.env['npm_execpath'] = prev;
+    }
+  });
+
+  it('pnpm under a NATIVE-binary npm_execpath runs the binary directly (@pnpm/exe — Blacksmith runners)', () => {
+    const prev = process.env['npm_execpath'];
+    // No .js/.cjs/.mjs extension → a standalone binary that must NOT be wrapped in
+    // `node <path>` (which chokes on the ELF/Mach-O/PE header).
+    process.env['npm_execpath'] = '/runner/.bin/store/v11/links/@pnpm/exe/pnpm';
+    try {
+      expect(resolveExecutable('pnpm')).toBe('/runner/.bin/store/v11/links/@pnpm/exe/pnpm');
     } finally {
       if (prev === undefined) delete process.env['npm_execpath'];
       else process.env['npm_execpath'] = prev;
