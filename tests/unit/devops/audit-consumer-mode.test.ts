@@ -92,6 +92,47 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.counts.error).toBe(0);
   });
 
+  it('does NOT flag unknown-internal-package for a not-discovered transitive @scope import (consumer-scoping fix)', () => {
+    // The 0.4.0 consumer regression: a discovered package imports an internal
+    // package (e.g. @acme/error, like the new @czap/error) that ISN'T in the
+    // discovery seed — transitive/hoisted, or omitted from the topology. In the
+    // source monorepo that's a real unknown-internal-package error; in a consumer
+    // it's noise the consumer can't act on (it's the vendor's own wiring).
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/app/package.json': PKG('@acme/app', { '@acme/error': '0.0.0' }),
+      'node_modules/@acme/app/src/index.ts': "import { fail } from '@acme/error';\nexport const appThing = fail;\n",
+      // @acme/error is installed but deliberately NOT in the base topology below,
+      // so discovery never seeds it — reproducing the transitive gap.
+      'node_modules/@acme/error/package.json': PKG('@acme/error'),
+      'node_modules/@acme/error/src/index.ts': 'export const fail = 1;\n',
+    });
+
+    const base: DevopsProfile = {
+      ...acmeBase(),
+      packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
+    };
+    const result = runAuditPasses(consumerDevopsProfile(root, base));
+    expect(result.structure.summary.packageCount).toBe(1); // only @acme/app discovered
+    expect(result.findings.filter((f) => f.rule === 'unknown-internal-package')).toHaveLength(0);
+    expect(result.counts.error).toBe(0);
+  });
+
+  it('STILL flags unknown-internal-package in SOURCE mode (the suppression is consumer-specific, not a blanket removal)', () => {
+    const srcRoot = makeFixture({
+      'packages/app/package.json': PKG('@acme/app'),
+      'packages/app/src/index.ts': "import { fail } from '@acme/missing';\nexport const x = fail;\n",
+    });
+    // A SOURCE profile (no packageRoots) audits the monorepo's own packages/* —
+    // a missing internal import is a real structural error here.
+    const sourceResult = runStructureAudit({
+      ...acmeBase(),
+      repoRoot: srcRoot,
+      packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
+    });
+    expect(sourceResult.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
+  });
+
   it('resolves the pnpm virtual-store layout via realpath re-seeding', () => {
     const root = makeFixture({
       'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),

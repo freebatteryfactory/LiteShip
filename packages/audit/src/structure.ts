@@ -409,19 +409,28 @@ export function runStructureAudit(
           internalImportEdges += 1;
           const { line, column } = lineAndColumn(record.sourceFile, node.moduleSpecifier.getStart());
           if (!resolved.targetPackage || !packageByName.has(resolved.targetPackage)) {
-            rawFindings.push({
-              id: `structure/unknown-package/${record.relativePath}:${line}:${column}`,
-              section: 'structure',
-              rule: 'unknown-internal-package',
-              severity: 'error',
-              title: 'Unknown internal package import',
-              summary: `Import "${specifier}" does not resolve to a known workspace package.`,
-              location: {
-                file: record.relativePath,
-                line,
-                column,
-              },
-            });
+            // In CONSUMER mode (`packageRoots` set) the discovered set is a
+            // SUBSET of what's installed: transitive/pnpm-hoisted `@scope/*`
+            // deps aren't in the discovery seed, so an import to a not-discovered
+            // internal package is expected — it's LiteShip's own published wiring,
+            // which the consumer can't act on and LiteShip's own CI already audits.
+            // Emitting it here is the false-positive a consumer hit (98 of them on
+            // a 0.4.0 upgrade). Only the source monorepo treats it as a real error.
+            if (profile.packageRoots == null) {
+              rawFindings.push({
+                id: `structure/unknown-package/${record.relativePath}:${line}:${column}`,
+                section: 'structure',
+                rule: 'unknown-internal-package',
+                severity: 'error',
+                title: 'Unknown internal package import',
+                summary: `Import "${specifier}" does not resolve to a known workspace package.`,
+                location: {
+                  file: record.relativePath,
+                  line,
+                  column,
+                },
+              });
+            }
           } else {
             const edgeKey = `${packageInfo.name} -> ${resolved.targetPackage}`;
             packageEdges.set(edgeKey, (packageEdges.get(edgeKey) ?? 0) + 1);

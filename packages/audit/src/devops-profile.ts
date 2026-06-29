@@ -124,7 +124,10 @@ function deriveInternalPackagePrefix(profile: DevopsProfile): string {
   throw ValidationError(
     'devops-profile',
     `resolveDevopsProfile: internalPackagePrefix was omitted and cannot be derived — ${observed}. ` +
-      `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }).`,
+      `Pass it explicitly, e.g. runAuditPasses({ repoRoot, internalPackagePrefix: '@acme/' }). ` +
+      `If this repo only CONSUMES @czap/* from npm (it has no internal scope of its own), run ` +
+      `\`czap audit --consumer\` instead — it audits the installed packages and never derives a prefix. ` +
+      `(A silent no-op prefix is deliberately NOT the default: a clean audit must never mean "nothing was checked".)`,
   );
 }
 
