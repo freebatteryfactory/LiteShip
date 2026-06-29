@@ -317,10 +317,10 @@ const UNIFORM_SHADER =
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(boundary_state.blur_radius); }';
 
-// Declares 5 fields (state_index + a,b,c,d); the buffer holds 4, so the 5th
-// overflows at binding setup with a warnOnce.
+// Declares 9 scalar fields (36 bytes); the buffer holds 32, so the 9th overflows
+// at binding setup with a warnOnce.
 const OVERFLOW_SHADER =
-  'struct BS { state_index: u32, a: f32, b: f32, c: f32, d: f32 }\n' +
+  'struct BS { state_index: u32, a: f32, b: f32, c: f32, d: f32, e: f32, f: f32, g: f32, h: f32 }\n' +
   '@group(0) @binding(0) var<uniform> bs: BS;\n' +
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }';
@@ -465,6 +465,32 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     frames[0]!();
     frames[1]!();
     expect(harness.calls.bufferWrites.length).toBe(writesAfterInit);
+    dispose!();
+  });
+
+  it('feeds u_resolution (vec2) at its WGSL-aligned 8-byte offset every frame', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    const { canvas } = makeCanvas(true);
+    Object.defineProperty(canvas, 'clientWidth', { value: 320, configurable: true });
+    Object.defineProperty(canvas, 'clientHeight', { value: 200, configurable: true });
+    const el = document.createElement('div');
+
+    // state_index(u32)@0, then u_resolution: vec2<f32>. WGSL aligns a vec2 to 8
+    // bytes, so it lands at offset 8 — NOT offset 4 as a flat i*4 layout would
+    // wrongly place it (the bug that made hand-authored u_resolution unusable).
+    const RES_SHADER =
+      'struct S { state_index: u32, u_resolution: vec2<f32> }\n' +
+      '@group(0) @binding(0) var<uniform> s: S;\n' +
+      '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
+      '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(s.u_resolution, 0.0, 1.0); }';
+
+    const dispose = await initWGSLRuntime(canvas, RES_SHADER, el);
+    expect(dispose).not.toBeNull();
+    const last = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(last.getFloat32(8, true)).toBe(320); // u_resolution.x at aligned offset 8
+    expect(last.getFloat32(12, true)).toBe(200); // u_resolution.y at offset 12
     dispose!();
   });
 

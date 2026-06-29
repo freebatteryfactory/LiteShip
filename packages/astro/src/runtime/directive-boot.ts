@@ -166,11 +166,15 @@ export async function scanAndBootDirectives(
       // the warning is the fix the author was missing).
       const alreadyBound = [...boundNames(element)];
       if (alreadyBound.length > 0) {
+        // Sort the conflicting names ONCE and reuse the ordered list for both the
+        // dedup `code` and the `message`, so the warning is deterministic and
+        // dedupes correctly regardless of which directive bound first (CodeRabbit).
+        const conflicting = [...alreadyBound, name].sort();
         Diagnostics.warnOnce({
           source: 'czap/astro.directive-boot',
-          code: `directive-collision:${[...alreadyBound, name].sort().join('+')}`,
+          code: `directive-collision:${conflicting.join('+')}`,
           message:
-            `Element carries conflicting czap directives (${alreadyBound.join(', ')} + ${name}) -- ` +
+            `Element carries conflicting czap directives (${conflicting.join(', ')}) -- ` +
             `each directive takes over the element, so they collide and one silently loses ` +
             `(e.g. a satellite consumes the node a GPU shader needs). ` +
             `Fix: put each directive on its own element.`,

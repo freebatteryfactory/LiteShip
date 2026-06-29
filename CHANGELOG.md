@@ -34,7 +34,9 @@ surfaced by downstream dogfooding, and a dev-toolchain refresh.
   shaders that declare `u_time` were frozen: the WebGPU runtime only wrote the uniform buffer on
   boundary crossings, never a clock. It now feeds the monotonic elapsed-seconds clock per-frame
   (merged with the live signal snapshot so signal fields are preserved), at parity with the GLSL
-  path. (`u_resolution` as a `vec2` remains tracked — it needs WGSL-aligned buffer offsets.)
+  path. `u_resolution` (a `vec2`) is fed per-frame too — the WGSL uniform buffer now lays fields
+  out by WGSL alignment rules (so a `vec2` lands on its required 8-byte offset) rather than a flat
+  scalar layout. (`u_state` is already fed as the compiler's `state_index`.)
 
 ### Changed
 
