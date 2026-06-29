@@ -4,6 +4,22 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.4.1] - Unreleased
+
+### Fixed
+
+- `@czap/audit` — **consumer-audit scoping regression.** `czap audit --consumer` no longer emits
+  false `unknown-internal-package` errors (98 on a real 0.4.0 upgrade) for a discovered package
+  importing an internal `@scope/*` package that isn't in the discovery seed (transitive/pnpm-hoisted
+  deps like the new `@czap/error`/`@czap/gauntlet`). In consumer mode (`profile.packageRoots` set)
+  the structure pass keeps its dependency-graph output but suppresses that rule — it's the vendor's
+  own published wiring, which a consumer can't act on and LiteShip's own CI already audits. Source-
+  monorepo audits still flag it.
+- `@czap/audit` — the "internalPackagePrefix cannot be derived" error (hit when the direct
+  `runAuditPasses({ repoRoot })` API runs in an unscoped consumer app) now points at
+  `czap audit --consumer` as the correct consumer entry point. (A silent no-op prefix is
+  deliberately NOT introduced: a clean audit must never mean "nothing was checked".)
+
 ## [0.4.0] - 2026-06-25
 
 The **live-runtime cut**: the framework primitives that 0.3.0 left built-but-test-only
