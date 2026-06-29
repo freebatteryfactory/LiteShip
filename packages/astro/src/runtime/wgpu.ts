@@ -466,9 +466,7 @@ export async function initWGSLRuntime(
   // frame, not just on boundary crossings — the gap that left hand-authored WGSL
   // animations frozen and resolution dead. (`u_state` is already fed via the
   // compiler's `state_index`.)
-  const feedsStandard = uniformLayout.some(
-    (field) => field.name === 'u_time' || field.name === 'u_resolution',
-  );
+  const feedsStandard = uniformLayout.some((field) => field.name === 'u_time' || field.name === 'u_resolution');
   const startTime = systemClock.now();
   // The latest boundary-crossing signal snapshot. Animated shaders merge it with
   // the per-frame clock so the time feed never clobbers signal fields.
