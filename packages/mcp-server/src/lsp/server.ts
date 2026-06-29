@@ -77,7 +77,7 @@ export const LSP_SERVER_CAPABILITIES = {
 } as const;
 
 /** Server identity in the `initialize` response (§InitializeResult.serverInfo). */
-const LSP_SERVER_INFO = { name: 'czap-gauntlet-lsp', version: '0.4.0' } as const;
+const LSP_SERVER_INFO = { name: 'czap-gauntlet-lsp', version: '0.4.1' } as const;
 
 /**
  * A message the server emits OUT-OF-BAND (a server→client notification, e.g.
