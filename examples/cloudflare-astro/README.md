@@ -8,7 +8,7 @@ The boundary cache config is build-derived: `src/boundaries.ts` exports the `vie
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 22.13+
 - pnpm 10+
 - Cloudflare account (for deploy)
 
