@@ -137,6 +137,25 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
   });
 
+  it('STILL flags a DECLARED-but-NOT-installed dep in consumer mode (installed-check, not just declared)', () => {
+    // Codex P2 #2: "declared" isn't enough — a dep can be declared yet absent
+    // from the shipped install (e.g. a devDependency, or a broken install), so
+    // the import won't resolve at runtime. Suppression keys on ACTUAL install
+    // presence, so this still flags even though @acme/ghost is in the manifest.
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/app/package.json': PKG('@acme/app', { '@acme/ghost': '0.0.0' }),
+      'node_modules/@acme/app/src/index.ts': "import { g } from '@acme/ghost';\nexport const z = g;\n",
+      // @acme/ghost is declared above but deliberately NOT installed here.
+    });
+    const base: DevopsProfile = {
+      ...acmeBase(),
+      packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
+    };
+    const result = runAuditPasses(consumerDevopsProfile(root, base));
+    expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
+  });
+
   it('STILL flags unknown-internal-package in SOURCE mode (the suppression is consumer-specific, not a blanket removal)', () => {
     const srcRoot = makeFixture({
       'packages/app/package.json': PKG('@acme/app'),

@@ -6,7 +6,7 @@
 
 # Interface: ResolvedImport
 
-Defined in: [audit/src/structure.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L67)
+Defined in: [audit/src/structure.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L68)
 
 A specifier resolved against the package-export targets — the structure pass's
 module-graph edge model. Exported so the Slice-B repo-IR builder
@@ -19,7 +19,7 @@ divergent fork (the drift this slice fights).
 
 > `readonly` **kind**: `"relative"` \| `"internal-package"` \| `"external"`
 
-Defined in: [audit/src/structure.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L71)
+Defined in: [audit/src/structure.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L72)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [audit/src/structure.ts:71](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **specifier**: `string`
 
-Defined in: [audit/src/structure.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L68)
+Defined in: [audit/src/structure.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L69)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [audit/src/structure.ts:68](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **targetFile**: `string` \| `null`
 
-Defined in: [audit/src/structure.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L69)
+Defined in: [audit/src/structure.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L70)
 
 ***
 
@@ -43,4 +43,4 @@ Defined in: [audit/src/structure.ts:69](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **targetPackage**: `string` \| `null`
 
-Defined in: [audit/src/structure.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L70)
+Defined in: [audit/src/structure.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L71)

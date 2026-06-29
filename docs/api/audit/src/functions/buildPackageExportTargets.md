@@ -8,7 +8,7 @@
 
 > **buildPackageExportTargets**(`packageInfos`): [`Map`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)\<`string`, [`PackageExportTarget`](../interfaces/PackageExportTarget.md)\>
 
-Defined in: [audit/src/structure.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L112)
+Defined in: [audit/src/structure.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L113)
 
 ## Parameters
 

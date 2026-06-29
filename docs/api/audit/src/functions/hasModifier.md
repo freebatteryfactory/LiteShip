@@ -8,7 +8,7 @@
 
 > **hasModifier**(`node`, `kind`): `boolean`
 
-Defined in: [audit/src/structure.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L78)
+Defined in: [audit/src/structure.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L79)
 
 ## Parameters
 
