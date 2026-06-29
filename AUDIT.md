@@ -14,6 +14,7 @@ CI failure.
 - `pnpm run audit:integrity` -> runtime hollow-path smells in package source
 - `pnpm run audit:surface` -> package export surface, Astro runtime/directive surface, Vite virtual modules
 - `pnpm run audit:report` -> writes the combined report artifacts
+- `czap audit --consumer [--findings]` -> from a DOWNSTREAM app, audit the installed `@czap/*` packages in its `node_modules` (walks the consumer install, not `packages/*`). `--findings` includes the per-finding array in the JSON receipt (stdout); diagnostics go to stderr, so the receipt stays parseable
 
 ## Artifacts
 

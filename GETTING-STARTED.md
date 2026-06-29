@@ -216,6 +216,8 @@ pnpm shakedown   # first-run aggregate: doctor → build → test
 
 **The CSS doesn't update when the window resizes.** Two usual suspects: the element never got a directive marker (the boot scanner activates `data-czap-directive="satellite"` — emitted automatically by `Satellite` / `satelliteAttrs()` when a boundary is present; Astro's own `client:visible` / `client:idle` won't wire the boundary evaluator), or the CSS was generated against a stale boundary id (rebuild after editing the boundary; content addresses change with the definition, so old emitted CSS keys won't match the new id).
 
+**A GPU shader (or other directive) never starts on an element that also carries `satelliteAttrs`.** Two czap directives on one element collide — each takes over the node, so `satelliteAttrs()` (which stamps `data-czap-directive="satellite"`) and a `client:gpu` on the same canvas silently fight, and one loses (usually the shader). The console warns once (`directive-collision:…`) naming both. Put each directive on its own element.
+
 **The boundary state flickers when dragging the window edge near a threshold.** Add or increase `hysteresis`. The field is optional and the default is zero (no dead-zone). A value of 16–24 px is enough to absorb display jitter on most setups; the algorithm is a half-width dead-zone, so `hysteresis: 20` requires the signal to move 10px past the threshold before committing the transition.
 
 **`Boundary.evaluate` returns the wrong state for a value at exactly a threshold.** That's by design: thresholds are inclusive lower bounds. A boundary with `[[0, 'mobile'], [768, 'tablet']]` returns `'tablet'` for `768`, not `'mobile'`. If you need exclusive bounds, offset the threshold by 1.
