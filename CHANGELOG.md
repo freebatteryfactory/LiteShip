@@ -4,7 +4,10 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
-## [0.4.1] - Unreleased
+## [0.4.1] - 2026-06-29
+
+A patch release: a consumer-audit scoping fix and a dev-toolchain refresh. No
+runtime-API changes.
 
 ### Fixed
 
@@ -19,6 +22,15 @@ break policy is intentionally aggressive — minor version bumps may carry break
   `runAuditPasses({ repoRoot })` API runs in an unscoped consumer app) now points at
   `czap audit --consumer` as the correct consumer entry point. (A silent no-op prefix is
   deliberately NOT introduced: a clean audit must never mean "nothing was checked".)
+
+### Changed
+
+- **Node floor + dev toolchain.** Raised `engines.node` to `>=22.13.0` (the minimum for
+  eslint 10) across all packages; CI continues on Node 22. Bumped eslint 9→10, prettier 3.9,
+  typescript-eslint 8.62, fast-check 4.8, jsdom 29.1, playwright 1.61, and related dev tooling,
+  and aligned the `@remotion/*` override to 4.0.484. Tailwind is held at 4.2.1 (4.3 regresses the
+  showcase example build) and Node 24 is deferred (its V8 breaches `INV-COMPOSITOR-ZERO-ALLOC` via
+  Effect's Queue in the compositor's live-subscriber publish path) — both tracked for a later release.
 
 ## [0.4.0] - 2026-06-25
 

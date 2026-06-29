@@ -1,6 +1,6 @@
 {
   "name": "czap",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Constraint-based adaptive rendering framework — monorepo root",
   "license": "MIT",

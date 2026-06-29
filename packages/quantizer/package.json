@@ -1,6 +1,6 @@
 {
   "name": "@czap/quantizer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "`Q.from()` builder, boundary evaluation, animated transitions, motion-tier gating",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
