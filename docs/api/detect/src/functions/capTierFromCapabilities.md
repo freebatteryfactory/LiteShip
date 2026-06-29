@@ -6,9 +6,9 @@
 
 # Function: capTierFromCapabilities()
 
-> **capTierFromCapabilities**(`caps`): [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> **capTierFromCapabilities**(`caps`): [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
-Defined in: [detect/src/tiers.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/tiers.ts#L35)
+Defined in: [detect/src/tiers.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L35)
 
 Determine the highest capability level the device can support based on
 its detected hardware and preference characteristics.
@@ -25,4 +25,4 @@ from a `detect()` sweep (capsule/edge consumers).
 
 ## Returns
 
-[`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+[`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)

@@ -8,7 +8,7 @@
 
 > `const` **TypedRef**: `object`
 
-Defined in: [core/src/typed-ref.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/typed-ref.ts#L90)
+Defined in: [core/src/typed-ref.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/typed-ref.ts#L90)
 
 TypedRef — schema-plus-content-hash pointer used by the receipt pipeline.
 Lets a receipt reference a payload by its content address without embedding

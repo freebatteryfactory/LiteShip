@@ -6,7 +6,7 @@
 
 # Interface: StartOpts
 
-Defined in: [mcp-server/src/start.ts:11](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/start.ts#L11)
+Defined in: [mcp-server/src/start.ts:11](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L11)
 
 Options for `start`.
 
@@ -16,7 +16,7 @@ Options for `start`.
 
 > `readonly` `optional` **http?**: `string` \| `number`
 
-Defined in: [mcp-server/src/start.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/start.ts#L20)
+Defined in: [mcp-server/src/start.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L20)
 
 HTTP bind. Accepted shapes:
   - a port number — `3838` (binds 127.0.0.1)

@@ -8,6 +8,6 @@
 
 > **Shape** = [`SPSCRingBufferShape`](../../../interfaces/SPSCRingBufferShape.md)
 
-Defined in: [worker/src/spsc-ring.ts:412](https://github.com/heyoub/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L412)
+Defined in: [worker/src/spsc-ring.ts:412](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/worker/src/spsc-ring.ts#L412)
 
 Producer- or consumer-facing view of a SPSC ring buffer.

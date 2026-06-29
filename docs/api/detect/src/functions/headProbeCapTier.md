@@ -6,11 +6,11 @@
 
 # Function: headProbeCapTier()
 
-> **headProbeCapTier**(`caps`): [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> **headProbeCapTier**(`caps`): [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
-Defined in: [detect/src/head-probe.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/detect/src/head-probe.ts#L54)
+Defined in: [detect/src/head-probe.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/head-probe.ts#L54)
 
-Resolve the [CapTier](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) for a device — the SINGLE source of truth for
+Resolve the [CapTier](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md) for a device — the SINGLE source of truth for
 the GPU/cores/memory/reduced-motion → cap-level ladder.
 
 `capTierFromCapabilities` (`tiers.ts`) delegates here for the runtime sweep, and
@@ -28,4 +28,4 @@ closures) so its `.toString()` is valid standalone browser script.
 
 ## Returns
 
-[`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+[`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)

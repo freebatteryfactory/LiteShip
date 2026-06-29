@@ -6,7 +6,7 @@
 
 # Interface: AssuranceSpec
 
-Defined in: [gauntlet/src/assurance.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L27)
+Defined in: [gauntlet/src/assurance.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L27)
 
 Static description of what each level IS and the rigor it demands.
 
@@ -16,7 +16,7 @@ Static description of what each level IS and the rigor it demands.
 
 > `readonly` **level**: [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/assurance.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L28)
+Defined in: [gauntlet/src/assurance.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L28)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/assurance.ts:28](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **rank**: `number`
 
-Defined in: [gauntlet/src/assurance.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L30)
+Defined in: [gauntlet/src/assurance.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L30)
 
 Ordinal for comparison (0 = L0 … 4 = L4).
 
@@ -34,7 +34,7 @@ Ordinal for comparison (0 = L0 … 4 = L4).
 
 > `readonly` **requires**: readonly `string`[]
 
-Defined in: [gauntlet/src/assurance.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L34)
+Defined in: [gauntlet/src/assurance.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L34)
 
 The rigor a gate at this level is expected to bring (cumulative over lower levels).
 
@@ -44,6 +44,6 @@ The rigor a gate at this level is expected to bring (cumulative over lower level
 
 > `readonly` **what**: `string`
 
-Defined in: [gauntlet/src/assurance.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L32)
+Defined in: [gauntlet/src/assurance.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L32)
 
 What kind of code lives here.

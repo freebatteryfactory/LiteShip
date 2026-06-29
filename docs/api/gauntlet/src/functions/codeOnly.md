@@ -8,7 +8,7 @@
 
 > **codeOnly**(`src`): `string`
 
-Defined in: [gauntlet/src/gates/code-only.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L137)
+Defined in: [gauntlet/src/gates/code-only.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L137)
 
 Blank out comment and string-literal CONTENTS (replace with spaces, preserving
 every newline so line numbers still align), leaving only code. A char-level

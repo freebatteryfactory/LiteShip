@@ -6,7 +6,7 @@
 
 # Interface: RepoIR
 
-Defined in: [gauntlet/src/repo-ir.ts:263](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L263)
+Defined in: [gauntlet/src/repo-ir.ts:263](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L263)
 
 The repo-IR — one immutable, content-addressed value per run. ECS-shaped:
 parallel typed tables keyed by stable ids. A gate folds over these tables
@@ -22,7 +22,7 @@ edges" item). B1 ships the IR without it.
 
 > `readonly` **facts**: readonly [`Fact`](Fact.md)[]
 
-Defined in: [gauntlet/src/repo-ir.ts:277](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L277)
+Defined in: [gauntlet/src/repo-ir.ts:277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L277)
 
 The oracle-emitted facts — the substrate the triangulation layer folds.
 
@@ -32,7 +32,7 @@ The oracle-emitted facts — the substrate the triangulation layer folds.
 
 > `readonly` **files**: `ReadonlyMap`\<`string`, [`FileNode`](FileNode.md)\>
 
-Defined in: [gauntlet/src/repo-ir.ts:265](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L265)
+Defined in: [gauntlet/src/repo-ir.ts:265](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L265)
 
 The file table, keyed by [FileId](../type-aliases/FileId.md).
 
@@ -42,7 +42,7 @@ The file table, keyed by [FileId](../type-aliases/FileId.md).
 
 > `readonly` **imports**: readonly [`ImportEdge`](ImportEdge.md)[]
 
-Defined in: [gauntlet/src/repo-ir.ts:269](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L269)
+Defined in: [gauntlet/src/repo-ir.ts:269](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L269)
 
 The import graph as a flat edge list.
 
@@ -52,7 +52,7 @@ The import graph as a flat edge list.
 
 > `readonly` `optional` **levels?**: `ReadonlyMap`\<`string`, [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)\>
 
-Defined in: [gauntlet/src/repo-ir.ts:275](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L275)
+Defined in: [gauntlet/src/repo-ir.ts:275](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L275)
 
 Assurance levels propagated along edges — DEFERRED to B3 (optional).
 
@@ -62,7 +62,7 @@ Assurance levels propagated along edges — DEFERRED to B3 (optional).
 
 > `readonly` **packages**: `ReadonlyMap`\<`string`, [`PackageNode`](PackageNode.md)\>
 
-Defined in: [gauntlet/src/repo-ir.ts:271](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L271)
+Defined in: [gauntlet/src/repo-ir.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L271)
 
 The package table, keyed by [PkgName](../type-aliases/PkgName.md).
 
@@ -72,7 +72,7 @@ The package table, keyed by [PkgName](../type-aliases/PkgName.md).
 
 > `readonly` **refs**: `ReadonlyMap`\<`string`, readonly [`RefSite`](RefSite.md)[]\>
 
-Defined in: [gauntlet/src/repo-ir.ts:273](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L273)
+Defined in: [gauntlet/src/repo-ir.ts:273](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L273)
 
 The reverse-reference index — symbol → the sites that reference it.
 
@@ -82,6 +82,6 @@ The reverse-reference index — symbol → the sites that reference it.
 
 > `readonly` **symbols**: `ReadonlyMap`\<`string`, [`SymbolNode`](SymbolNode.md)\>
 
-Defined in: [gauntlet/src/repo-ir.ts:267](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L267)
+Defined in: [gauntlet/src/repo-ir.ts:267](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L267)
 
 The symbol table, keyed by [SymbolId](../type-aliases/SymbolId.md).

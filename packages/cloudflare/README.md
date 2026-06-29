@@ -4,7 +4,7 @@ Astro middleware glue that serves LiteShip's per-tier compiled boundary CSS from
 
 > Install this directly when you deploy an Astro 7 site on Cloudflare Workers.
 > If you're starting a new project, start with
-> [`@czap/astro`](https://github.com/heyoub/LiteShip/tree/main/packages/astro)
+> [`@czap/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro)
 > and add this package when you pick Cloudflare as the host.
 
 ## Install
@@ -35,8 +35,8 @@ For Astro 7 route-cache invalidation, use `@czap/cloudflare/cache-provider` in `
 
 ## Where it sits
 
-A host adapter — it touches Cloudflare APIs (the `cloudflare:workers` env and KV namespaces) so nothing else has to. It depends on [`@czap/astro`](https://github.com/heyoub/LiteShip/tree/main/packages/astro) for the middleware contract, [`@czap/edge`](https://github.com/heyoub/LiteShip/tree/main/packages/edge) for tier detection and the content-addressed cache, and [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) for the id types. Boundary authoring and compilation live upstream; this package is the Cloudflare glue for middleware, Workers KV, and Astro 7 cache invalidation. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
+A host adapter — it touches Cloudflare APIs (the `cloudflare:workers` env and KV namespaces) so nothing else has to. It depends on [`@czap/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro) for the middleware contract, [`@czap/edge`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/edge) for tier detection and the content-addressed cache, and [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) for the id types. Boundary authoring and compilation live upstream; this package is the Cloudflare glue for middleware, Workers KV, and Astro 7 cache invalidation. See the
+[package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -45,11 +45,11 @@ A mistyped `binding` emits a CZAP diagnostic, KV reads return null, writes no-op
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Cloudflare hosting guide](https://github.com/heyoub/LiteShip/blob/main/HOSTING.md) — wrangler config, KV setup, deploy
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/cloudflare/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Cloudflare hosting guide](https://github.com/freebatteryfactory/LiteShip/blob/main/HOSTING.md) — wrangler config, KV setup, deploy
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/cloudflare/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

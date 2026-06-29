@@ -8,7 +8,7 @@
 
 > **inputToSource**(`input`): [`SignalSource`](../type-aliases/SignalSource.md) \| `undefined`
 
-Defined in: [core/src/signal-input.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal-input.ts#L91)
+Defined in: [core/src/signal-input.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal-input.ts#L91)
 
 Parse a [SignalInput](../variables/SignalInput.md) dot-string back into its typed
 [SignalSource](../type-aliases/SignalSource.md), or `undefined` when the string is not a recognized

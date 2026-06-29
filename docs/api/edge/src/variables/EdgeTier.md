@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L103)
+Defined in: [edge/src/edge-tier.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L103)
 
 Edge tier detection namespace.
 
@@ -68,14 +68,14 @@ tierDataAttributes(result)
 
 Map parsed Client Hints capabilities to an [EdgeTierResult](../interfaces/EdgeTierResult.md).
 
-Map already-parsed [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) to the tier triple
+Map already-parsed [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) to the tier triple
 using the same pure functions as the client runtime.
 
 #### Parameters
 
 ##### caps
 
-[`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+[`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
 #### Returns
 

@@ -6,7 +6,7 @@
 
 # Interface: VideoTrack\<M\>
 
-Defined in: [scene/src/contract.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L42)
+Defined in: [scene/src/contract.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L42)
 
 Video track — renders a quantizer-driven source for its frame range.
 
@@ -22,7 +22,7 @@ Video track — renders a quantizer-driven source for its frame range.
 
 > `readonly` **\_tag**: `"video"`
 
-Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L43)
+Defined in: [scene/src/contract.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L43)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [scene/src/contract.ts:43](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
 
-Defined in: [scene/src/contract.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L60)
+Defined in: [scene/src/contract.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L60)
 
 Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelope` component VideoSystem reads each tick.
 
@@ -40,7 +40,7 @@ Optional opacity automation — e.g. `fade.in(Beat(1))`. Compiled to an `Envelop
 
 > `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L45)
+Defined in: [scene/src/contract.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L45)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [scene/src/contract.ts:45](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
 
-Defined in: [scene/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L44)
+Defined in: [scene/src/contract.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L44)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [scene/src/contract.ts:44](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` `optional` **layer?**: `number`
 
-Defined in: [scene/src/contract.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L58)
+Defined in: [scene/src/contract.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L58)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [scene/src/contract.ts:58](https://github.com/heyoub/LiteShip/blob/m
 
 > `readonly` **source**: `unknown`
 
-Defined in: [scene/src/contract.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L57)
+Defined in: [scene/src/contract.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L57)
 
 Opaque source reference, carried verbatim onto the `VideoSource`
 ECS component — the scene engine never interprets it (VideoSystem
@@ -84,4 +84,4 @@ Track.video('hero', { from: 0, to: 120, source: { _t: 'quantizer', id: 'hero-bou
 
 > `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L46)
+Defined in: [scene/src/contract.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L46)

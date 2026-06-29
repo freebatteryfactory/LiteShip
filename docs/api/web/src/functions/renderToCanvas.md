@@ -8,7 +8,7 @@
 
 > **renderToCanvas**(`state`, `canvas`, `renderFn?`): `void`
 
-Defined in: [web/src/capture/render.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/render.ts#L68)
+Defined in: [web/src/capture/render.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/render.ts#L68)
 
 Render CompositeState to an OffscreenCanvas.
 
@@ -19,7 +19,7 @@ CSS vars from CompositeState.outputs.css as basic canvas fills.
 
 ### state
 
-[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 ### canvas
 

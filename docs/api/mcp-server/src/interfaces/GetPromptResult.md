@@ -6,7 +6,7 @@
 
 # Interface: GetPromptResult
 
-Defined in: [mcp-server/src/prompts.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L38)
+Defined in: [mcp-server/src/prompts.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L38)
 
 The `prompts/get` result: a description + a deterministic message sequence (text content only).
 
@@ -16,7 +16,7 @@ The `prompts/get` result: a description + a deterministic message sequence (text
 
 > `readonly` **description**: `string`
 
-Defined in: [mcp-server/src/prompts.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L39)
+Defined in: [mcp-server/src/prompts.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L39)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/prompts.ts:39](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **messages**: readonly `object`[]
 
-Defined in: [mcp-server/src/prompts.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L40)
+Defined in: [mcp-server/src/prompts.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/prompts.ts#L40)

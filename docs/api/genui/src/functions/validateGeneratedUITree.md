@@ -8,7 +8,7 @@
 
 > **validateGeneratedUITree**(`node`, `catalog`): [`ValidateGeneratedUIResult`](../type-aliases/ValidateGeneratedUIResult.md)
 
-Defined in: [genui/src/validate.ts:192](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/validate.ts#L192)
+Defined in: [genui/src/validate.ts:192](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L192)
 
 Validate a generated UI tree against the host catalog. Unknown names / bad props → reject.
 
@@ -16,7 +16,7 @@ Validate a generated UI tree against the host catalog. Unknown names / bad props
 
 ### node
 
-[`GeneratedUINode`](https://github.com/heyoub/LiteShip/blob/main/packages/_spine/genui.d.ts)
+[`GeneratedUINode`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/_spine/genui.d.ts)
 
 ### catalog
 

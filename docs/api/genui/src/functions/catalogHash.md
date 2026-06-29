@@ -8,7 +8,7 @@
 
 > **catalogHash**(`catalog`): `ContentAddress`
 
-Defined in: [genui/src/identity.ts:13](https://github.com/heyoub/LiteShip/blob/main/packages/genui/src/identity.ts#L13)
+Defined in: [genui/src/identity.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/identity.ts#L13)
 
 Canonical hash of a host catalog definition (same bytes as [defineComponentCatalog](defineComponentCatalog.md)).
 

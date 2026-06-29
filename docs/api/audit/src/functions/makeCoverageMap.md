@@ -8,7 +8,7 @@
 
 > **makeCoverageMap**(`relation`): [`CoverageMap`](../interfaces/CoverageMap.md)
 
-Defined in: [audit/src/mutation-verdict.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L80)
+Defined in: [audit/src/mutation-verdict.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L80)
 
 Build a deterministic [CoverageMap](../interfaces/CoverageMap.md) from a flat `(file, line, testId)`
 relation. The relation is de-duplicated and the per-site test lists are SORTED, so

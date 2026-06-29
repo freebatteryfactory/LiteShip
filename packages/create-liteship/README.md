@@ -1,6 +1,6 @@
 # create-liteship
 
-Scaffold a minimal [Astro](https://astro.build) + [`@czap`](https://github.com/heyoub/LiteShip) project — the "first five minutes" of constraint-based adaptive rendering, working on the first `pnpm dev`.
+Scaffold a minimal [Astro](https://astro.build) + [`@czap`](https://github.com/freebatteryfactory/LiteShip) project — the "first five minutes" of constraint-based adaptive rendering, working on the first `pnpm dev`.
 
 ## One command
 
@@ -42,7 +42,7 @@ pnpm dev       # or npm run dev
 
 Then edit `src/pages/index.astro` — add a state to the boundary in `src/boundaries/layout.boundaries.ts` and both the compiled CSS and the runtime pick it up.
 
-For structured LLM UI (optional), add `@czap/genui` and follow [GETTING-STARTED — Generated UI](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md#generated-ui-with-a-component-catalog). The scaffold's `README.md` repeats the install line.
+For structured LLM UI (optional), add `@czap/genui` and follow [GETTING-STARTED — Generated UI](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md#generated-ui-with-a-component-catalog). The scaffold's `README.md` repeats the install line.
 
 ## License
 

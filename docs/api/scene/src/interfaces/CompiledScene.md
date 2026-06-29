@@ -6,7 +6,7 @@
 
 # Interface: CompiledScene
 
-Defined in: [scene/src/compile.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L52)
+Defined in: [scene/src/compile.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L52)
 
 The descriptor produced by [compileScene](../functions/compileScene.md). Pure data —
 no Effects, no scope, no world. Hand it to [SceneRuntime.build](../variables/SceneRuntime.md#build)
@@ -18,7 +18,7 @@ to obtain a live tickable handle.
 
 > `readonly` **beats**: readonly `BeatComponent`[]
 
-Defined in: [scene/src/compile.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L68)
+Defined in: [scene/src/compile.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L68)
 
 Pre-computed beat markers (Task 9 wired these via the
 `scene.beat-binding` sceneComposition capsule). Each entry becomes
@@ -35,7 +35,7 @@ referenced BeatMarkerProjection asset.
 
 > `readonly` **bpm**: `number`
 
-Defined in: [scene/src/compile.ts:56](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L56)
+Defined in: [scene/src/compile.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L56)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [scene/src/compile.ts:56](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **duration**: `number`
 
-Defined in: [scene/src/compile.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L54)
+Defined in: [scene/src/compile.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L54)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [scene/src/compile.ts:54](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **fps**: `number`
 
-Defined in: [scene/src/compile.ts:55](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L55)
+Defined in: [scene/src/compile.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L55)
 
 ***
 
@@ -59,7 +59,7 @@ Defined in: [scene/src/compile.ts:55](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **name**: `string`
 
-Defined in: [scene/src/compile.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L53)
+Defined in: [scene/src/compile.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L53)
 
 ***
 
@@ -67,4 +67,4 @@ Defined in: [scene/src/compile.ts:53](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **trackSpawns**: readonly [`TrackSpawn`](TrackSpawn.md)[]
 
-Defined in: [scene/src/compile.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/compile.ts#L57)
+Defined in: [scene/src/compile.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/compile.ts#L57)

@@ -6,7 +6,7 @@
 
 # Interface: AuditCounts
 
-Defined in: [audit/src/types.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L84)
+Defined in: [audit/src/types.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L84)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:84](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **error**: `number`
 
-Defined in: [audit/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L85)
+Defined in: [audit/src/types.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L85)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:85](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **info**: `number`
 
-Defined in: [audit/src/types.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L87)
+Defined in: [audit/src/types.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L87)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [audit/src/types.ts:87](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **warning**: `number`
 
-Defined in: [audit/src/types.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L86)
+Defined in: [audit/src/types.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L86)

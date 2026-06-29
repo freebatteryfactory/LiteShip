@@ -6,9 +6,9 @@
 
 # Function: useCzapState()
 
-> **useCzapState**(): [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **useCzapState**(): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
-Defined in: [remotion/src/composition.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L143)
+Defined in: [remotion/src/composition.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L143)
 
 Hook that reads the `CompositeState` for the current Remotion frame
 from the nearest [Provider](Provider.md). Returns a structurally-empty state
@@ -25,7 +25,7 @@ structurally-empty `CompositeState`.
 
 ## Returns
 
-[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 ## See
 

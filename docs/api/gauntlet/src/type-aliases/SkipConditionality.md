@@ -8,7 +8,7 @@
 
 > **SkipConditionality** = `"skipIf"` \| `"runIf"` \| `"ternary"` \| `"enclosing-if"` \| `"unconditional"`
 
-Defined in: [gauntlet/src/gates/skip-detect.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-detect.ts#L139)
+Defined in: [gauntlet/src/gates/skip-detect.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-detect.ts#L139)
 
 The CONDITIONALITY classification of a detected skip — whether the skip's reachability is
 GUARDED by a runtime condition (a capability gate) or is UNCONDITIONAL (a placeholder).

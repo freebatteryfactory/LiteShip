@@ -6,7 +6,7 @@
 
 # Interface: CompileMcpAppManifestInput
 
-Defined in: [compiler/src/mcp-app-manifest.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L72)
+Defined in: [compiler/src/mcp-app-manifest.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L72)
 
 Inputs to [compileMcpAppManifest](../functions/compileMcpAppManifest.md) — all supplied as plain data by the
 caller (server/tests). The four collection surfaces are optional; a server
@@ -18,7 +18,7 @@ with no resources/UI/prompts omits them and the manifest carries `[]`.
 
 > `readonly` `optional` **appResources?**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L83)
+Defined in: [compiler/src/mcp-app-manifest.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L83)
 
 D5 live app resources; defaults to `[]`.
 
@@ -28,7 +28,7 @@ D5 live app resources; defaults to `[]`.
 
 > `readonly` **capabilities**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [compiler/src/mcp-app-manifest.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L75)
+Defined in: [compiler/src/mcp-app-manifest.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L75)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:75](https://github.com/heyoub/Lite
 
 > `readonly` `optional` **prompts?**: readonly [`ManifestPromptView`](ManifestPromptView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L85)
+Defined in: [compiler/src/mcp-app-manifest.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L85)
 
 D3 prompts; defaults to `[]`.
 
@@ -46,7 +46,7 @@ D3 prompts; defaults to `[]`.
 
 > `readonly` **protocolVersion**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L74)
+Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L74)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:74](https://github.com/heyoub/Lite
 
 > `readonly` `optional` **resources?**: readonly [`ManifestResourceView`](ManifestResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L79)
+Defined in: [compiler/src/mcp-app-manifest.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L79)
 
 D3 JSON resources; defaults to `[]`.
 
@@ -64,7 +64,7 @@ D3 JSON resources; defaults to `[]`.
 
 > `readonly` **serverInfo**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L73)
+Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L73)
 
 #### name
 
@@ -80,7 +80,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:73](https://github.com/heyoub/Lite
 
 > `readonly` **toolDescriptors**: readonly `CapsuleCommandDescriptor`[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L77)
+Defined in: [compiler/src/mcp-app-manifest.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L77)
 
 The MCP-exposed command descriptors (e.g. `mcpExposedDescriptors()`).
 
@@ -90,6 +90,6 @@ The MCP-exposed command descriptors (e.g. `mcpExposedDescriptors()`).
 
 > `readonly` `optional` **uiResources?**: readonly [`ManifestUiResourceView`](ManifestUiResourceView.md)[]
 
-Defined in: [compiler/src/mcp-app-manifest.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L81)
+Defined in: [compiler/src/mcp-app-manifest.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L81)
 
 D4 static UI resources; defaults to `[]`.

@@ -6,14 +6,14 @@
 
 # Function: buildMcdcFacts()
 
-> **buildMcdcFacts**(`files`, `options`): [`McdcFacts`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts)
+> **buildMcdcFacts**(`files`, `options`): [`McdcFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts)
 
-Defined in: [audit/src/mcdc-facts-build.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L112)
+Defined in: [audit/src/mcdc-facts-build.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-facts-build.ts#L112)
 
-Build the [McdcFacts](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts) for a set of target files — generate the deterministic
+Build the [McdcFacts](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts) for a set of target files — generate the deterministic
 condition-mutants per file, evaluate each FORCE-TRUE / FORCE-FALSE pin against the
 injected runner (the SAME verdict path the mutation builder uses), and FOLD the two
-pins per atomic condition into one [McdcConditionOutcome](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts). Deterministic: the
+pins per atomic condition into one [McdcConditionOutcome](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts). Deterministic: the
 outcomes are sorted by (file, line, column) so the facts are byte-stable across runs
 over unchanged source + identical runner verdicts. The lean gate folds these.
 
@@ -29,7 +29,7 @@ readonly [`McdcTargetFile`](../interfaces/McdcTargetFile.md)[]
 
 ## Returns
 
-[`McdcFacts`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts)
+[`McdcFacts`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts)
 
 ## Throws
 

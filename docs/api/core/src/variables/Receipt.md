@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:437](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L437)
+Defined in: [core/src/receipt.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L437)
 
 Receipt namespace -- chain validation and envelope construction.
 
@@ -414,7 +414,7 @@ validateChain for the simple Error-channel form.
 
 ### verifyMAC
 
-> **verifyMAC**: (`envelope`, `key`) => `Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)\>
+> **verifyMAC**: (`envelope`, `key`) => `Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
 
 Verify an envelope's HMAC signature against a key.
 
@@ -432,7 +432,7 @@ Returns false if the envelope has no signature.
 
 #### Returns
 
-`Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts)\>
+`Effect`\<`boolean`, `Error` \| [`ParseError`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts)\>
 
 #### Example
 

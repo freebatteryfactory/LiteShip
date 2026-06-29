@@ -8,7 +8,7 @@
 
 > **ProposalRejection** = `object`
 
-Defined in: [core/src/ai-cast.ts:436](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L436)
+Defined in: [core/src/ai-cast.ts:436](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L436)
 
 A validation failure carrying the structured reason the proposal was rejected.
 
@@ -18,7 +18,7 @@ A validation failure carrying the structured reason the proposal was rejected.
 
 > `readonly` **errors**: readonly `string`[]
 
-Defined in: [core/src/ai-cast.ts:439](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L439)
+Defined in: [core/src/ai-cast.ts:439](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L439)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/ai-cast.ts:439](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **ok**: `false`
 
-Defined in: [core/src/ai-cast.ts:437](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L437)
+Defined in: [core/src/ai-cast.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L437)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [core/src/ai-cast.ts:437](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **target**: [`ProposalTarget`](ProposalTarget.md)
 
-Defined in: [core/src/ai-cast.ts:438](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/ai-cast.ts#L438)
+Defined in: [core/src/ai-cast.ts:438](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/ai-cast.ts#L438)

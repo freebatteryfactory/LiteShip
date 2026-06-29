@@ -8,7 +8,7 @@
 
 > `const` **noVarDivergenceGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/no-var-divergence.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/no-var-divergence.ts#L36)
+Defined in: [gauntlet/src/gates/no-var-divergence.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/no-var-divergence.ts#L36)
 
 The oracle-divergence gate for the `var-declaration` property — triangulates the
 AST oracle (a real legacy variable statement) against the NO_VAR

@@ -8,7 +8,7 @@
 
 > **Shape**\<`T`\> = `TokenBufferShape`\<`T`\>
 
-Defined in: [core/src/token-buffer.ts:208](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token-buffer.ts#L208)
+Defined in: [core/src/token-buffer.ts:208](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/token-buffer.ts#L208)
 
 Structural shape of a token buffer: `push`, `drain`, `reset`, stall/rate accessors.
 

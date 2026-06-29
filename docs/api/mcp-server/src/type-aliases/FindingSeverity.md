@@ -8,6 +8,6 @@
 
 > **FindingSeverity** = `"advisory"` \| `"warning"` \| `"error"`
 
-Defined in: [mcp-server/src/lsp/types.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L28)
+Defined in: [mcp-server/src/lsp/types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L28)
 
 Severity vocabulary — structurally identical to `@czap/gauntlet`'s `Severity`.

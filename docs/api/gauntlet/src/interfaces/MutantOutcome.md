@@ -6,7 +6,7 @@
 
 # Interface: MutantOutcome
 
-Defined in: [gauntlet/src/mutation-facts.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L74)
+Defined in: [gauntlet/src/mutation-facts.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L74)
 
 One evaluated mutant's flat, decided outcome — the host's verdict plus the data
 the gate needs to write a self-explaining Finding. A `killed` outcome is adequate
@@ -19,7 +19,7 @@ divergence the gate reports.
 
 > `readonly` **column**: `number`
 
-Defined in: [gauntlet/src/mutation-facts.ts:84](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L84)
+Defined in: [gauntlet/src/mutation-facts.ts:84](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L84)
 
 1-based column of the mutated span.
 
@@ -29,7 +29,7 @@ Defined in: [gauntlet/src/mutation-facts.ts:84](https://github.com/heyoub/LiteSh
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L80)
+Defined in: [gauntlet/src/mutation-facts.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L80)
 
 The repo-relative file the mutant lives in — MUST be an IR file (the gate aims its level).
 
@@ -39,7 +39,7 @@ The repo-relative file the mutant lives in — MUST be an IR file (the gate aims
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/mutation-facts.ts:82](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L82)
+Defined in: [gauntlet/src/mutation-facts.ts:82](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L82)
 
 1-based line of the mutated span (the finding's location).
 
@@ -49,7 +49,7 @@ Defined in: [gauntlet/src/mutation-facts.ts:82](https://github.com/heyoub/LiteSh
 
 > `readonly` **mutantId**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L76)
+Defined in: [gauntlet/src/mutation-facts.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L76)
 
 The mutant's stable content address (the host's blake3 id) — traceability.
 
@@ -59,7 +59,7 @@ The mutant's stable content address (the host's blake3 id) — traceability.
 
 > `readonly` **mutatedText**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:90](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L90)
+Defined in: [gauntlet/src/mutation-facts.ts:90](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L90)
 
 The text the span was replaced with — the `original → mutated` the reader sees.
 
@@ -69,7 +69,7 @@ The text the span was replaced with — the `original → mutated` the reader se
 
 > `readonly` **operator**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L86)
+Defined in: [gauntlet/src/mutation-facts.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L86)
 
 The mutation operator id (e.g. `conditional-boundary`) — names WHAT was mutated.
 
@@ -79,7 +79,7 @@ The mutation operator id (e.g. `conditional-boundary`) — names WHAT was mutate
 
 > `readonly` **originalText**: `string`
 
-Defined in: [gauntlet/src/mutation-facts.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L88)
+Defined in: [gauntlet/src/mutation-facts.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L88)
 
 The exact original source text of the mutated span.
 
@@ -89,6 +89,6 @@ The exact original source text of the mutated span.
 
 > `readonly` **verdict**: [`MutantVerdictTag`](../type-aliases/MutantVerdictTag.md)
 
-Defined in: [gauntlet/src/mutation-facts.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L78)
+Defined in: [gauntlet/src/mutation-facts.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mutation-facts.ts#L78)
 
 The verdict — `killed` (adequate) / `survived` / `no-coverage` (both findings).

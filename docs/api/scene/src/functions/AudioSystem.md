@@ -8,7 +8,7 @@
 
 > **AudioSystem**(`frameIndex`, `fps`, `sampleRate`): `SystemShape`
 
-Defined in: [scene/src/systems/audio.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/audio.ts#L19)
+Defined in: [scene/src/systems/audio.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/audio.ts#L19)
 
 Build an AudioSystem keyed to frame index + fps + sample rate.
 

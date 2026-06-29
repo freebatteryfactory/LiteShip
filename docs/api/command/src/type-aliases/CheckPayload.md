@@ -8,7 +8,7 @@
 
 > **CheckPayload** = `Omit`\<`Schema.Schema.Type`\<*typeof* [`CheckPayloadSchema`](../variables/CheckPayloadSchema.md)\>, `"findings"`\> & `object`
 
-Defined in: [command/src/commands/check.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check.ts#L95)
+Defined in: [command/src/commands/check.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check.ts#L95)
 
 Structured payload returned by `check`. Single-source-derived for every field
 EXCEPT `findings`, which keeps the canonical `@czap/gauntlet` `Finding` type
@@ -21,4 +21,4 @@ superset on exactly that one field.
 
 ### findings
 
-> `readonly` **findings**: readonly [`Finding`](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts)[]
+> `readonly` **findings**: readonly [`Finding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts)[]

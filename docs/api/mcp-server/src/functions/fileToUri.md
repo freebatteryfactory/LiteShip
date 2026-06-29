@@ -8,7 +8,7 @@
 
 > **fileToUri**(`file`): `string`
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L214)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L214)
 
 Convert a repo-relative (or absolute) POSIX file path to a `file://` URI — the
 form LSP `publishDiagnostics` keys on. A path that is already a `file://` URI

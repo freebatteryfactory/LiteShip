@@ -41,7 +41,7 @@ if (ffmpegEncodeAvailable()) {
 
 ## Where it sits
 
-Stage owns no identity kernel and reinvents no caster. It walks the graph and drives what already exists — `CSSCompiler.compile` (`@czap/compiler`), the satellite helpers (`@czap/astro`), `VideoRenderer` over a `Compositor` (`@czap/core`) — and mints every address through `CanonicalCbor` → `AddressedDigest` (the `@czap/core` kernel). Core stays pure nouns; stage is the verbs over it. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md).
+Stage owns no identity kernel and reinvents no caster. It walks the graph and drives what already exists — `CSSCompiler.compile` (`@czap/compiler`), the satellite helpers (`@czap/astro`), `VideoRenderer` over a `Compositor` (`@czap/core`) — and mints every address through `CanonicalCbor` → `AddressedDigest` (the `@czap/core` kernel). Core stays pure nouns; stage is the verbs over it. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md).
 
 ## The byte-encode is injected
 
@@ -49,11 +49,11 @@ The core entry never imports a codec. `exportVideo` content-addresses the produc
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [ADR-0015 — Document graph IR + AI cast envelope](https://github.com/heyoub/LiteShip/blob/main/docs/adr/0015-document-graph-ir.md) — the IR stage casts
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/stage/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [ADR-0015 — Document graph IR + AI cast envelope](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/adr/0015-document-graph-ir.md) — the IR stage casts
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/stage/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

@@ -8,7 +8,7 @@
 
 > **getTag**(`u`): `string` \| `undefined`
 
-Defined in: [error/src/contract.ts:132](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L132)
+Defined in: [error/src/contract.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L132)
 
 The discriminant of `u` if it is a tagged error, else `undefined`.
 

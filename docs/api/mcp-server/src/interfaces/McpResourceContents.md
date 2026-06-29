@@ -6,7 +6,7 @@
 
 # Interface: McpResourceContents
 
-Defined in: [mcp-server/src/resources.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L39)
+Defined in: [mcp-server/src/resources.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L39)
 
 The `resources/read` result envelope.
 
@@ -16,4 +16,4 @@ The `resources/read` result envelope.
 
 > `readonly` **contents**: readonly `object`[]
 
-Defined in: [mcp-server/src/resources.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L40)
+Defined in: [mcp-server/src/resources.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/resources.ts#L40)

@@ -8,7 +8,7 @@
 
 > **runLspStdio**(`runGauntlet`, `input?`, `output?`): `Promise`\<`void`\>
 
-Defined in: [mcp-server/src/lsp/stdio.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/stdio.ts#L42)
+Defined in: [mcp-server/src/lsp/stdio.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/stdio.ts#L42)
 
 Run the LSP stdio loop until the input stream closes OR `exit` is received.
 The gauntlet runner is INJECTED so the engine (and the heavy audit IR build it

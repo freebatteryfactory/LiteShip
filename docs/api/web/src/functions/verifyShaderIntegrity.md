@@ -8,7 +8,7 @@
 
 > **verifyShaderIntegrity**(`content`, `expected`): [`IntegrityResult`](../type-aliases/IntegrityResult.md)
 
-Defined in: [web/src/security/shader-integrity.ts:188](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L188)
+Defined in: [web/src/security/shader-integrity.ts:188](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L188)
 
 Verify that `content` (the fetched shader BYTES, as text) matches the
 author-pinned `expected` digest. The CONTENT sanitizer on the shader data path:

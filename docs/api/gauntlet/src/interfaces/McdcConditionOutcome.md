@@ -6,7 +6,7 @@
 
 # Interface: McdcConditionOutcome
 
-Defined in: [gauntlet/src/mcdc-facts.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L67)
+Defined in: [gauntlet/src/mcdc-facts.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L67)
 
 One atomic CONDITION's folded MC/DC outcome — the two pins' verdicts plus the data the
 gate needs to write a self-explaining Finding. A condition is MC/DC-COVERED iff BOTH
@@ -19,7 +19,7 @@ combination is an MC/DC gap (the gate names which pin(s) failed and at what seve
 
 > `readonly` **column**: `number`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L79)
+Defined in: [gauntlet/src/mcdc-facts.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L79)
 
 1-based column of the atomic condition's source span.
 
@@ -29,7 +29,7 @@ Defined in: [gauntlet/src/mcdc-facts.ts:79](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **condition**: `string`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L83)
+Defined in: [gauntlet/src/mcdc-facts.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L83)
 
 The full source text of THIS atomic condition (the leaf the pins force).
 
@@ -39,7 +39,7 @@ The full source text of THIS atomic condition (the leaf the pins force).
 
 > `readonly` **conditionId**: `string`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L73)
+Defined in: [gauntlet/src/mcdc-facts.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L73)
 
 The stable content address of the condition (the host's blake3 over the
 `(file, line, column, conditionText)` identity, force-independent) — traceability +
@@ -51,7 +51,7 @@ the gate's de-dup key. Distinct from either pin's mutant id (a pin folds INTO th
 
 > `readonly` **decision**: `string`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L81)
+Defined in: [gauntlet/src/mcdc-facts.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L81)
 
 The full source text of the enclosing DECISION (so the reader sees the whole branch).
 
@@ -61,7 +61,7 @@ The full source text of the enclosing DECISION (so the reader sees the whole bra
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L75)
+Defined in: [gauntlet/src/mcdc-facts.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L75)
 
 The repo-relative file the decision lives in — MUST be an IR file (the gate aims its level).
 
@@ -71,7 +71,7 @@ The repo-relative file the decision lives in — MUST be an IR file (the gate ai
 
 > `readonly` **forceFalseVerdict**: [`McdcPinVerdict`](../type-aliases/McdcPinVerdict.md)
 
-Defined in: [gauntlet/src/mcdc-facts.ts:87](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L87)
+Defined in: [gauntlet/src/mcdc-facts.ts:87](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L87)
 
 The verdict of the force-FALSE pin — `killed` ⇒ the false-effect is observed.
 
@@ -81,7 +81,7 @@ The verdict of the force-FALSE pin — `killed` ⇒ the false-effect is observed
 
 > `readonly` **forceTrueVerdict**: [`McdcPinVerdict`](../type-aliases/McdcPinVerdict.md)
 
-Defined in: [gauntlet/src/mcdc-facts.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L85)
+Defined in: [gauntlet/src/mcdc-facts.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L85)
 
 The verdict of the force-TRUE pin — `killed` ⇒ the true-effect is observed.
 
@@ -91,6 +91,6 @@ The verdict of the force-TRUE pin — `killed` ⇒ the true-effect is observed.
 
 > `readonly` **line**: `number`
 
-Defined in: [gauntlet/src/mcdc-facts.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L77)
+Defined in: [gauntlet/src/mcdc-facts.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/mcdc-facts.ts#L77)
 
 1-based line of the atomic condition's source span (the finding's location).

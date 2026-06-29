@@ -6,7 +6,7 @@
 
 # Interface: CzapLocals
 
-Defined in: [astro/src/middleware.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L32)
+Defined in: [astro/src/middleware.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L32)
 
 Shape of `context.locals.czap` injected by [czapMiddleware](../functions/czapMiddleware.md).
 Astro components (and downstream middleware) read this to drive
@@ -16,9 +16,9 @@ adaptive rendering decisions.
 
 ### capabilities
 
-> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [astro/src/middleware.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L41)
+Defined in: [astro/src/middleware.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L41)
 
 Parsed device capabilities.
 
@@ -28,7 +28,7 @@ Parsed device capabilities.
 
 > `readonly` `optional` **edge?**: `object`
 
-Defined in: [astro/src/middleware.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L43)
+Defined in: [astro/src/middleware.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L43)
 
 Edge-host resolution result, present when an edge adapter is configured.
 
@@ -66,11 +66,11 @@ Sole boundary's outputs; undefined when multiple boundaries are configured.
 
 ### tiers
 
-> `readonly` **tiers**: `Readonly`\<`Record`\<[`CapAxis`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md), `string`\>\>
+> `readonly` **tiers**: `Readonly`\<`Record`\<[`CapAxis`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md), `string`\>\>
 
-Defined in: [astro/src/middleware.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L39)
+Defined in: [astro/src/middleware.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L39)
 
 Resolved capability tiers keyed by axis. Each field projects to the
 matching `data-czap-<axis>` attribute on `<html>` — the field name and the
-attribute name are the same [CapAxis](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md) key (one source: `CAP_AXES`),
+attribute name are the same [CapAxis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/type-aliases/CapAxis.md) key (one source: `CAP_AXES`),
 so they can never disagree.

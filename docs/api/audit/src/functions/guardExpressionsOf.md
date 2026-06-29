@@ -8,7 +8,7 @@
 
 > **guardExpressionsOf**(`node`): readonly `Expression`[]
 
-Defined in: [audit/src/skip-detect-ast.ts:1002](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1002)
+Defined in: [audit/src/skip-detect-ast.ts:1002](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L1002)
 
 Collect EVERY guard CONDITION expression governing the skip at `node` (the skip access or its call):
  - the `.skipIf(<cond>)` / `.runIf(<cond>)` member-call argument;

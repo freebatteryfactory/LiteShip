@@ -8,7 +8,7 @@
 
 > `const` **MCDC\_FLOOR\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), `number`\>\>
 
-Defined in: [gauntlet/src/gates/mcdc-coverage.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L77)
+Defined in: [gauntlet/src/gates/mcdc-coverage.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L77)
 
 The MC/DC COVERAGE FLOOR (minimum acceptable covered-condition fraction) per level —
 the blocking target. L4 = 1.0 (FULL MC/DC: every condition's independent effect

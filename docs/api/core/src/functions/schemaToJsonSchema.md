@@ -8,7 +8,7 @@
 
 > **schemaToJsonSchema**\<`T`\>(`schema`): [`JsonSchemaObject`](../interfaces/JsonSchemaObject.md)
 
-Defined in: [core/src/json-schema-from-schema.ts:315](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L315)
+Defined in: [core/src/json-schema-from-schema.ts:315](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L315)
 
 Walk a `Schema` AST and derive the JSON-Schema OBJECT a command descriptor's
 `inputSchema` / `outputSchema` carries. The top-level schema MUST be a

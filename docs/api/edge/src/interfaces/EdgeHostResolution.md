@@ -6,7 +6,7 @@
 
 # Interface: EdgeHostResolution
 
-Defined in: [edge/src/host-adapter.ts:197](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L197)
+Defined in: [edge/src/host-adapter.ts:197](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L197)
 
 Full per-request resolution output from [EdgeHostAdapter.resolve](EdgeHostAdapter.md#resolve).
 
@@ -24,7 +24,7 @@ Carries the device context, optional theme and compiled outputs, the
 
 > `readonly` `optional` **assetUrl?**: `string`
 
-Defined in: [edge/src/host-adapter.ts:207](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L207)
+Defined in: [edge/src/host-adapter.ts:207](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L207)
 
 Immutable static-asset URL when exactly one boundary is configured and emitted one.
 
@@ -34,7 +34,7 @@ Immutable static-asset URL when exactly one boundary is configured and emitted o
 
 > `readonly` `optional` **boundaries?**: `Readonly`\<`Record`\<`string`, [`EdgeHostBoundaryResolution`](EdgeHostBoundaryResolution.md)\>\>
 
-Defined in: [edge/src/host-adapter.ts:209](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L209)
+Defined in: [edge/src/host-adapter.ts:209](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L209)
 
 Per-boundary outcomes, keyed by name; present with the `boundaries` cache form.
 
@@ -44,7 +44,7 @@ Per-boundary outcomes, keyed by name; present with the `boundaries` cache form.
 
 > `readonly` **cacheStatus**: [`EdgeHostCacheStatus`](../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [edge/src/host-adapter.ts:225](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L225)
+Defined in: [edge/src/host-adapter.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L225)
 
 Whether boundary outputs came from cache, were computed and stored,
 or caching is off. With multiple boundaries this is the worst case
@@ -55,9 +55,9 @@ per-boundary statuses live in [boundaries](#boundaries).
 
 ### capabilities
 
-> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [edge/src/host-adapter.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
+Defined in: [edge/src/host-adapter.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
 
 Capabilities parsed from Client Hints.
 
@@ -71,7 +71,7 @@ Capabilities parsed from Client Hints.
 
 > `readonly` `optional` **compiledOutputs?**: [`CompiledOutputs`](CompiledOutputs.md)
 
-Defined in: [edge/src/host-adapter.ts:205](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L205)
+Defined in: [edge/src/host-adapter.ts:205](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L205)
 
 Compiled per-state outputs when exactly one boundary is configured
 (either form). Undefined with multiple boundaries -- read
@@ -83,7 +83,7 @@ Compiled per-state outputs when exactly one boundary is configured
 
 > `readonly` **htmlAttributes**: `string`
 
-Defined in: [edge/src/host-adapter.ts:211](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L211)
+Defined in: [edge/src/host-adapter.ts:211](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L211)
 
 `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`).
 
@@ -93,7 +93,7 @@ Defined in: [edge/src/host-adapter.ts:211](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **responseHeaders**: `object`
 
-Defined in: [edge/src/host-adapter.ts:213](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L213)
+Defined in: [edge/src/host-adapter.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L213)
 
 Response headers to send back so the browser will supply hints next time.
 
@@ -115,7 +115,7 @@ Response headers to send back so the browser will supply hints next time.
 
 > `readonly` `optional` **theme?**: [`ThemeCompileResult`](ThemeCompileResult.md)
 
-Defined in: [edge/src/host-adapter.ts:199](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L199)
+Defined in: [edge/src/host-adapter.ts:199](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L199)
 
 Compiled theme result, if a theme config was resolved for this request.
 
@@ -125,7 +125,7 @@ Compiled theme result, if a theme config was resolved for this request.
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [edge/src/host-adapter.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L36)
+Defined in: [edge/src/host-adapter.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L36)
 
 Derived tier triple (cap, motion, design).
 

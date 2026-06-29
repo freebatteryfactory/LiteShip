@@ -8,7 +8,7 @@
 
 > **addFrameMarks**(`a`, `b`): `FrameMark`
 
-Defined in: [scene/src/sugar/beat.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L62)
+Defined in: [scene/src/sugar/beat.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/beat.ts#L62)
 
 Add two [FrameMark](../type-aliases/FrameMark.md)s without resolving them — frame-space and
 beat-space portions accumulate independently so resolution can stay

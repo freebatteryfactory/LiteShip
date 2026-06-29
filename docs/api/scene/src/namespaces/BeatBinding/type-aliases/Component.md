@@ -8,6 +8,6 @@
 
 > **Component** = [`BeatComponent`](../../../type-aliases/BeatComponent.md)
 
-Defined in: [scene/src/capsules/beat-binding.ts:127](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L127)
+Defined in: [scene/src/capsules/beat-binding.ts:127](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L127)
 
 Beat component shape — what SyncSystem queries.

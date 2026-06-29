@@ -8,7 +8,7 @@
 
 > **FloorDirection** = `"higher-is-stronger"` \| `"lower-is-stronger"`
 
-Defined in: [gauntlet/src/standards-facts.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L147)
+Defined in: [gauntlet/src/standards-facts.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L147)
 
 The DIRECTION of a numeric floor — which way is STRONGER. Captured per-floor so
 the diff knows which way is weakening WITHOUT a hardcoded per-name table:

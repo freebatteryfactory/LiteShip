@@ -8,7 +8,7 @@
 
 > **isExternalShaderSource**(`shaderSrc`): `boolean`
 
-Defined in: [web/src/security/shader-integrity.ts:293](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L293)
+Defined in: [web/src/security/shader-integrity.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/security/shader-integrity.ts#L293)
 
 Does `shaderSrc` denote an EXTERNAL (network-fetched) shader, as opposed to an
 inline source string?

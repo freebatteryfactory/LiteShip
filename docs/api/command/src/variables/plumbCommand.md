@@ -8,6 +8,6 @@
 
 > `const` **plumbCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/plumb.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L63)
+Defined in: [command/src/commands/plumb.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/plumb.ts#L63)
 
 `plumb` — scan for placeholder skips + unclassified packages; emit a structured pass/fail verdict.

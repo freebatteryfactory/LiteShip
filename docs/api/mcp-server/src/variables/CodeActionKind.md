@@ -8,7 +8,7 @@
 
 > `const` **CodeActionKind**: `object`
 
-Defined in: [mcp-server/src/lsp/types.ts:175](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L175)
+Defined in: [mcp-server/src/lsp/types.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L175)
 
 LSP `CodeActionKind` subset (§CodeActionKind). The rigor projection emits only `quickfix`.
 

@@ -8,7 +8,7 @@
 
 > **CoverageClass** = `"symbol-evidenced"` \| `"file-proxy-only"` \| `"text-only"` \| `"runtime-evidenced"`
 
-Defined in: [gauntlet/src/repo-ir.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L70)
+Defined in: [gauntlet/src/repo-ir.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L70)
 
 How a fact was evidenced — the provenance-honesty model carried forward from
 `@czap/audit`'s `coverageClassification`, so "0 findings" can never be read as

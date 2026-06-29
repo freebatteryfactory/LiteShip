@@ -6,7 +6,7 @@
 
 # Interface: CapsuleDef\<K, In, Out, R\>
 
-Defined in: [core/src/assembly.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L17)
+Defined in: [core/src/assembly.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L17)
 
 A capsule declaration plus its content-addressed id.
 
@@ -38,7 +38,7 @@ A capsule declaration plus its content-addressed id.
 
 > `readonly` **\_kind**: `K`
 
-Defined in: [core/src/capsule.ts:134](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L134)
+Defined in: [core/src/capsule.ts:134](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L134)
 
 #### Inherited from
 
@@ -50,7 +50,7 @@ Defined in: [core/src/capsule.ts:134](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **attribution?**: [`AttributionDecl`](AttributionDecl.md)
 
-Defined in: [core/src/capsule.ts:143](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L143)
+Defined in: [core/src/capsule.ts:143](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L143)
 
 #### Inherited from
 
@@ -62,7 +62,7 @@ Defined in: [core/src/capsule.ts:143](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **budgets**: [`BudgetDecl`](BudgetDecl.md)
 
-Defined in: [core/src/capsule.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L141)
+Defined in: [core/src/capsule.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L141)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [core/src/capsule.ts:141](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **capabilities**: [`CapabilityDecl`](CapabilityDecl.md)\<`R`\>
 
-Defined in: [core/src/capsule.ts:139](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L139)
+Defined in: [core/src/capsule.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L139)
 
 #### Inherited from
 
@@ -86,7 +86,7 @@ Defined in: [core/src/capsule.ts:139](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **decide?**: (`subject`) => [`Decision`](Decision.md)
 
-Defined in: [core/src/capsule.ts:250](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L250)
+Defined in: [core/src/capsule.ts:250](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L250)
 
 The decision channel for `policyGate` arms: resolve an `allow`/`deny`
 [Decision](Decision.md) (verdict + reason chain) against a decoded subject (`In`).
@@ -127,7 +127,7 @@ reason against it. Only meaningful for `policyGate` arms.
 
 > `readonly` `optional` **derive?**: (`source`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:171](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L171)
+Defined in: [core/src/capsule.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L171)
 
 Optional projection handler for `cachedProjection` arms: derives the
 decoded output from a decoded source. The harness checks determinism
@@ -156,11 +156,11 @@ Promises, so the harness awaits every probe.
 
 > `readonly` `optional` **faults?**: readonly `FaultDecl`\<`In`\>[]
 
-Defined in: [core/src/capsule.ts:201](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L201)
+Defined in: [core/src/capsule.ts:201](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L201)
 
 Declared faults for `receiptedMutation` arms — failure modes the capsule
 promises are reachable. The harness drives each fault's
-[FaultDecl.trigger](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts) through [CapsuleContract.mutate](CapsuleContract.md#mutate) and
+[FaultDecl.trigger](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts) through [CapsuleContract.mutate](CapsuleContract.md#mutate) and
 asserts it surfaces as declared. Requires `mutate`. Under the mandatory
 `mutate` requirement (see the kind-level rule below) every receipted
 mutation with a pure core declares at least one fault — a capsule with a
@@ -178,7 +178,7 @@ meaningful for `receiptedMutation` arms.
 
 > `readonly` **id**: `ContentAddress`
 
-Defined in: [core/src/assembly.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L18)
+Defined in: [core/src/assembly.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L18)
 
 #### Overrides
 
@@ -190,7 +190,7 @@ Defined in: [core/src/assembly.ts:18](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **initialState?**: `Out`
 
-Defined in: [core/src/capsule.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L162)
+Defined in: [core/src/capsule.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L162)
 
 Optional initial state for `stateMachine` arms — the fold seed for
 [CapsuleContract.step](CapsuleContract.md#step)-driven harness tests.
@@ -205,7 +205,7 @@ Optional initial state for `stateMachine` arms — the fold seed for
 
 > `readonly` **input**: `Schema`\<`In`\>
 
-Defined in: [core/src/capsule.ts:137](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L137)
+Defined in: [core/src/capsule.ts:137](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L137)
 
 #### Inherited from
 
@@ -217,7 +217,7 @@ Defined in: [core/src/capsule.ts:137](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **invariants**: readonly [`Invariant`](Invariant.md)\<`In`, `Out`\>[]
 
-Defined in: [core/src/capsule.ts:140](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L140)
+Defined in: [core/src/capsule.ts:140](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L140)
 
 #### Inherited from
 
@@ -229,7 +229,7 @@ Defined in: [core/src/capsule.ts:140](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **mutate?**: (`input`) => `Out` \| `Promise`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L189)
+Defined in: [core/src/capsule.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L189)
 
 Optional invocation handler for `receiptedMutation` arms: applies the
 mutation for a decoded input (`In`) and returns the decoded audit receipt
@@ -267,7 +267,7 @@ May be async; the harness awaits it. Only meaningful for
 
 > `readonly` **name**: `string`
 
-Defined in: [core/src/capsule.ts:136](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L136)
+Defined in: [core/src/capsule.ts:136](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L136)
 
 #### Inherited from
 
@@ -279,7 +279,7 @@ Defined in: [core/src/capsule.ts:136](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` **output**: `Schema`\<`Out`\>
 
-Defined in: [core/src/capsule.ts:138](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L138)
+Defined in: [core/src/capsule.ts:138](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L138)
 
 #### Inherited from
 
@@ -291,7 +291,7 @@ Defined in: [core/src/capsule.ts:138](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **reason?**: `string`
 
-Defined in: [core/src/capsule.ts:229](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L229)
+Defined in: [core/src/capsule.ts:229](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L229)
 
 REQUIRED when [receiptKind](CapsuleContract.md#receiptkind) is `'effect-outcome'` — a human-readable
 justification for why this receipt cannot be driven by a pure core (and
@@ -309,7 +309,7 @@ harness writes it verbatim into the generated test file and the manifest.
 
 > `readonly` `optional` **receiptKind?**: `"pure-core"` \| `"effect-outcome"`
 
-Defined in: [core/src/capsule.ts:221](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L221)
+Defined in: [core/src/capsule.ts:221](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L221)
 
 The TYPED escape hatch for the `receiptedMutation` mandatory-`mutate` rule.
 
@@ -339,7 +339,7 @@ never needs to be written. Only meaningful for `receiptedMutation` arms.
 
 > `readonly` `optional` **run?**: (`input`) => `Out`
 
-Defined in: [core/src/capsule.ts:149](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L149)
+Defined in: [core/src/capsule.ts:149](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L149)
 
 Optional pure-transform handler: takes a decoded input and returns a
 decoded output. Used by the harness to drive generated property tests
@@ -365,7 +365,7 @@ end-to-end. Only meaningful for `pureTransform` arms today.
 
 > `readonly` **site**: readonly [`Site`](../type-aliases/Site.md)[]
 
-Defined in: [core/src/capsule.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L142)
+Defined in: [core/src/capsule.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L142)
 
 #### Inherited from
 
@@ -377,7 +377,7 @@ Defined in: [core/src/capsule.ts:142](https://github.com/heyoub/LiteShip/blob/ma
 
 > `readonly` `optional` **step?**: (`state`, `event`) => `Out`
 
-Defined in: [core/src/capsule.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/capsule.ts#L157)
+Defined in: [core/src/capsule.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/capsule.ts#L157)
 
 Optional state-machine step handler: folds one decoded event (`In`)
 into a decoded state (`Out`). With [CapsuleContract.initialState](CapsuleContract.md#initialstate)

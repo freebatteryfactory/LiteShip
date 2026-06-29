@@ -8,6 +8,6 @@
 
 > **CapsuleVerifyPayload** = `Schema.Schema.Type`\<*typeof* [`CapsuleVerifyPayloadSchema`](../variables/CapsuleVerifyPayloadSchema.md)\>
 
-Defined in: [command/src/commands/capsule-verify.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L58)
+Defined in: [command/src/commands/capsule-verify.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/capsule-verify.ts#L58)
 
 Structured payload returned by `capsule-verify`.

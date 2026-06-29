@@ -6,7 +6,7 @@
 
 # Interface: StandardsWaiver
 
-Defined in: [gauntlet/src/standards-facts.ts:236](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L236)
+Defined in: [gauntlet/src/standards-facts.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L236)
 
 The OWNER SIGN-OFF — the only honest escape for a weakening. A signed
 authorization that a SPECIFIC weakening is intentional, with the SAME
@@ -24,7 +24,7 @@ weakened) — checked in [diffStandardsSurface](../functions/diffStandardsSurfac
 
 > `readonly` **elementKey**: `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:238](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L238)
+Defined in: [gauntlet/src/standards-facts.ts:238](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L238)
 
 The exact [surfaceElementKey](../functions/surfaceElementKey.md) of the element being weakened.
 
@@ -34,7 +34,7 @@ The exact [surfaceElementKey](../functions/surfaceElementKey.md) of the element 
 
 > `readonly` **expiry**: `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:246](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L246)
+Defined in: [gauntlet/src/standards-facts.ts:246](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L246)
 
 When the sign-off dies (ISO `yyyy-mm-dd`). Past the injected date ⇒ the weakening re-reds.
 
@@ -44,7 +44,7 @@ When the sign-off dies (ISO `yyyy-mm-dd`). Past the injected date ⇒ the weaken
 
 > `readonly` **justification**: `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:244](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L244)
+Defined in: [gauntlet/src/standards-facts.ts:244](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L244)
 
 Why the weakening is sanctioned — the justification of record.
 
@@ -54,7 +54,7 @@ Why the weakening is sanctioned — the justification of record.
 
 > `readonly` **owner**: `string`
 
-Defined in: [gauntlet/src/standards-facts.ts:242](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L242)
+Defined in: [gauntlet/src/standards-facts.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L242)
 
 Who signed off — accountability is mandatory, never anonymous.
 
@@ -64,6 +64,6 @@ Who signed off — accountability is mandatory, never anonymous.
 
 > `readonly` **weakening**: [`WeakeningClass`](../type-aliases/WeakeningClass.md)
 
-Defined in: [gauntlet/src/standards-facts.ts:240](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L240)
+Defined in: [gauntlet/src/standards-facts.ts:240](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L240)
 
 The expected weakening CLASS this sign-off authorizes (a sign-off is class-specific).

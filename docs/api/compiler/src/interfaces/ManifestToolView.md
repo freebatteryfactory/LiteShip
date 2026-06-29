@@ -6,7 +6,7 @@
 
 # Interface: ManifestToolView
 
-Defined in: [compiler/src/mcp-app-manifest.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L59)
+Defined in: [compiler/src/mcp-app-manifest.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L59)
 
 A projected MCP tool — the exact shape `listTools()` emits.
 
@@ -16,7 +16,7 @@ A projected MCP tool — the exact shape `listTools()` emits.
 
 > `readonly` `optional` **\_meta?**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L64)
+Defined in: [compiler/src/mcp-app-manifest.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L64)
 
 #### ui
 
@@ -32,7 +32,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:64](https://github.com/heyoub/Lite
 
 > `readonly` **description**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L61)
+Defined in: [compiler/src/mcp-app-manifest.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L61)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:61](https://github.com/heyoub/Lite
 
 > `readonly` **inputSchema**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L62)
+Defined in: [compiler/src/mcp-app-manifest.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L62)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:62](https://github.com/heyoub/Lite
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L60)
+Defined in: [compiler/src/mcp-app-manifest.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L60)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [compiler/src/mcp-app-manifest.ts:60](https://github.com/heyoub/Lite
 
 > `readonly` `optional` **outputSchema?**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L63)
+Defined in: [compiler/src/mcp-app-manifest.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L63)

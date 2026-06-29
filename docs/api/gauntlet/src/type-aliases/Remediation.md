@@ -8,7 +8,7 @@
 
 > **Remediation** = \{ `description`: `string`; `diff`: `string`; `kind`: `"patch"`; \} \| \{ `description`: `string`; `kind`: `"instruction"`; `steps`: readonly `string`[]; \}
 
-Defined in: [gauntlet/src/finding.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L45)
+Defined in: [gauntlet/src/finding.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/finding.ts#L45)
 
 How to fix a finding. A `patch` is machine-applicable (an agent or the
 `--fix` path can apply the diff under the raccoon rule); an `instruction`

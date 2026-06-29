@@ -6,7 +6,7 @@
 
 # Interface: CapabilitySkipSite
 
-Defined in: [audit/src/repo-ir-capability-link.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L61)
+Defined in: [audit/src/repo-ir-capability-link.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L61)
 
 One sanctioned skip to prove — its file, 1-based line, and the capability its allowlist entry declares.
 
@@ -16,7 +16,7 @@ One sanctioned skip to prove — its file, 1-based line, and the capability its 
 
 > `readonly` **declaredCapability**: `string`
 
-Defined in: [audit/src/repo-ir-capability-link.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L64)
+Defined in: [audit/src/repo-ir-capability-link.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L64)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [audit/src/repo-ir-capability-link.ts:64](https://github.com/heyoub/
 
 > `readonly` **file**: `string`
 
-Defined in: [audit/src/repo-ir-capability-link.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L62)
+Defined in: [audit/src/repo-ir-capability-link.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L62)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [audit/src/repo-ir-capability-link.ts:62](https://github.com/heyoub/
 
 > `readonly` **line**: `number`
 
-Defined in: [audit/src/repo-ir-capability-link.ts:63](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L63)
+Defined in: [audit/src/repo-ir-capability-link.ts:63](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-capability-link.ts#L63)

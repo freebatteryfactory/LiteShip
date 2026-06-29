@@ -8,6 +8,6 @@
 
 > **ImportKind** = `"relative"` \| `"internal-package"` \| `"external"`
 
-Defined in: [gauntlet/src/repo-ir.ts:179](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L179)
+Defined in: [gauntlet/src/repo-ir.ts:179](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L179)
 
 How an import specifier resolves — mirrors `@czap/audit`'s `ResolvedImport.kind`.

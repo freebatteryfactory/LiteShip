@@ -8,7 +8,7 @@
 
 > **CrossOriginEmbedderPolicy** = `"require-corp"` \| `"credentialless"`
 
-Defined in: [astro/src/headers.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/headers.ts#L26)
+Defined in: [astro/src/headers.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/headers.ts#L26)
 
 COEP values czap can emit. Both establish cross-origin isolation
 (required for `SharedArrayBuffer`); `credentialless` loads CORP-less

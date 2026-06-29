@@ -835,7 +835,7 @@ describe('device detection runtime', () => {
     expect(events[0]?.source).toBe('czap/detect');
     expect(events[0]?.message).toContain('"Acme XG-9"');
     expect(events[0]?.message).toContain('tier 1');
-    expect(events[0]?.message).toContain('github.com/heyoub/LiteShip/issues');
+    expect(events[0]?.message).toContain('github.com/freebatteryfactory/LiteShip/issues');
 
     // warn-once: re-classifying the same renderer stays silent.
     resetDetectionCaches();

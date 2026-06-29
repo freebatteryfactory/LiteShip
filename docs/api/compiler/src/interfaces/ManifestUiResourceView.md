@@ -6,7 +6,7 @@
 
 # Interface: ManifestUiResourceView
 
-Defined in: [compiler/src/mcp-app-manifest.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L31)
+Defined in: [compiler/src/mcp-app-manifest.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L31)
 
 A D4/D5 MCP Apps UI resource (structural mirror of mcp-server's `McpUiResource`).
 
@@ -16,7 +16,7 @@ A D4/D5 MCP Apps UI resource (structural mirror of mcp-server's `McpUiResource`)
 
 > `readonly` **\_meta**: `object`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L36)
+Defined in: [compiler/src/mcp-app-manifest.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L36)
 
 #### ui
 
@@ -60,7 +60,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:36](https://github.com/heyoub/Lite
 
 > `readonly` **description**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L34)
+Defined in: [compiler/src/mcp-app-manifest.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L34)
 
 ***
 
@@ -68,7 +68,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:34](https://github.com/heyoub/Lite
 
 > `readonly` **mimeType**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L35)
+Defined in: [compiler/src/mcp-app-manifest.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L35)
 
 ***
 
@@ -76,7 +76,7 @@ Defined in: [compiler/src/mcp-app-manifest.ts:35](https://github.com/heyoub/Lite
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:33](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L33)
+Defined in: [compiler/src/mcp-app-manifest.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L33)
 
 ***
 
@@ -84,4 +84,4 @@ Defined in: [compiler/src/mcp-app-manifest.ts:33](https://github.com/heyoub/Lite
 
 > `readonly` **uri**: `string`
 
-Defined in: [compiler/src/mcp-app-manifest.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L32)
+Defined in: [compiler/src/mcp-app-manifest.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/mcp-app-manifest.ts#L32)

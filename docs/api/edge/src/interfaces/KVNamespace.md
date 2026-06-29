@@ -6,7 +6,7 @@
 
 # Interface: KVNamespace
 
-Defined in: [edge/src/kv-cache.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L30)
+Defined in: [edge/src/kv-cache.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L30)
 
 Minimal KV namespace interface -- compatible with Cloudflare Workers KV,
 Deno KV, or any adapter that implements get/put with string values.
@@ -23,7 +23,7 @@ with a one-time diagnostic instead of a silent no-op.
 
 > `optional` **delete**(`key`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L34)
+Defined in: [edge/src/kv-cache.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L34)
 
 Delete a single key. Optional — required for active invalidation.
 
@@ -43,7 +43,7 @@ Delete a single key. Optional — required for active invalidation.
 
 > **get**(`key`, `options?`): `Promise`\<`string` \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L31)
+Defined in: [edge/src/kv-cache.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L31)
 
 #### Parameters
 
@@ -67,7 +67,7 @@ Defined in: [edge/src/kv-cache.ts:31](https://github.com/heyoub/LiteShip/blob/ma
 
 > `optional` **list**(`options`): `Promise`\<\{ `cursor?`: `string`; `keys`: readonly `object`[]; `list_complete`: `boolean`; \}\>
 
-Defined in: [edge/src/kv-cache.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L39)
+Defined in: [edge/src/kv-cache.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L39)
 
 List keys under a prefix (Cloudflare Workers KV shape, paginated). Optional —
 required for [BoundaryCache.invalidateByPath](BoundaryCache.md#invalidatebypath) (prefix-scan purge).
@@ -94,7 +94,7 @@ required for [BoundaryCache.invalidateByPath](BoundaryCache.md#invalidatebypath)
 
 > **put**(`key`, `value`, `options?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L32)
+Defined in: [edge/src/kv-cache.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L32)
 
 #### Parameters
 

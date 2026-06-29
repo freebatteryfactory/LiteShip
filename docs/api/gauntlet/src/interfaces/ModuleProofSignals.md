@@ -6,7 +6,7 @@
 
 # Interface: ModuleProofSignals
 
-Defined in: [gauntlet/src/ambition-proof.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L69)
+Defined in: [gauntlet/src/ambition-proof.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L69)
 
 The per-module already-decided proof signals the HOST measured (booleans + a score).
 
@@ -16,7 +16,7 @@ The per-module already-decided proof signals the HOST measured (booleans + a sco
 
 > `readonly` **hasBench**: `boolean`
 
-Defined in: [gauntlet/src/ambition-proof.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L75)
+Defined in: [gauntlet/src/ambition-proof.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L75)
 
 A declared/registered bench references the module.
 
@@ -26,7 +26,7 @@ A declared/registered bench references the module.
 
 > `readonly` **hasEnrolledInvariant**: `boolean`
 
-Defined in: [gauntlet/src/ambition-proof.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L77)
+Defined in: [gauntlet/src/ambition-proof.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L77)
 
 An enrolled traceability invariant traces to the module.
 
@@ -36,7 +36,7 @@ An enrolled traceability invariant traces to the module.
 
 > `readonly` **hasPropertyTest**: `boolean`
 
-Defined in: [gauntlet/src/ambition-proof.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L73)
+Defined in: [gauntlet/src/ambition-proof.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L73)
 
 A fast-check PROPERTY test references the module.
 
@@ -46,7 +46,7 @@ A fast-check PROPERTY test references the module.
 
 > `readonly` **hasTestFile**: `boolean`
 
-Defined in: [gauntlet/src/ambition-proof.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L71)
+Defined in: [gauntlet/src/ambition-proof.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L71)
 
 A governed test file references the module (the host scanned the corpus).
 
@@ -56,6 +56,6 @@ A governed test file references the module (the host scanned the corpus).
 
 > `readonly` **mutationScore**: `number` \| `null`
 
-Defined in: [gauntlet/src/ambition-proof.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L79)
+Defined in: [gauntlet/src/ambition-proof.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L79)
 
 The module's committed mutation score in `[0, 1]`, or null when unmeasured.

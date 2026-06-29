@@ -46,11 +46,11 @@ After the host connects, its `tools/list` call returns the czap command catalog.
 | `check` | Run the gauntlet gate fold in-process — structured findings + a blocking verdict |
 | `plumb` | Plumb-completeness gate — `tests/generated/` placeholder skips + unclassified published packages |
 
-Each tool runs the **same handler** as the matching `czap <verb>` (one registry, two skins — `@czap/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are in the [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/mcp-server/src/).
+Each tool runs the **same handler** as the matching `czap <verb>` (one registry, two skins — `@czap/command`), so a tool call and a terminal verb are byte-identical. Input/output schemas are in the [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/mcp-server/src/).
 
 ## Where it sits
 
-This is a protocol adapter over `@czap/command` — the shared command registry the CLI also projects, so a tool call and a terminal verb run the identical handler. `@czap/core` supplies the command and receipt types, and `@czap/compiler` backs the MCP-app manifest resource. It deliberately has no `bin` and never imports `@czap/cli`; the two are sibling skins, connected only by the CLI's dynamic import in `czap mcp`. See the [package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
+This is a protocol adapter over `@czap/command` — the shared command registry the CLI also projects, so a tool call and a terminal verb run the identical handler. `@czap/core` supplies the command and receipt types, and `@czap/compiler` backs the MCP-app manifest resource. It deliberately has no `bin` and never imports `@czap/cli`; the two are sibling skins, connected only by the CLI's dynamic import in `czap mcp`. See the [package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md) for the full layout.
 
 ## If it does nothing
 
@@ -58,11 +58,11 @@ A stdio MCP server prints nothing at startup — silence is normal, not a hang. 
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Capsule factory](https://github.com/heyoub/LiteShip/blob/main/CAPSULE-FACTORY.md) — the dispatch model behind the tools
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/mcp-server/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Capsule factory](https://github.com/freebatteryfactory/LiteShip/blob/main/CAPSULE-FACTORY.md) — the dispatch model behind the tools
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/mcp-server/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

@@ -8,7 +8,7 @@
 
 > **matchTag**\<`E`, `R`\>(`error`, `handlers`): `R`
 
-Defined in: [error/src/contract.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L159)
+Defined in: [error/src/contract.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L159)
 
 Exhaustive match over a closed error union. The `handlers` object MUST
 supply a branch for every `_tag` in `E` — omit one and it is a compile

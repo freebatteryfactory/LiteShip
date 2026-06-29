@@ -8,9 +8,9 @@
 
 > **dualExport**(`graph`): `Promise`\<[`DualExportResult`](../interfaces/DualExportResult.md)\>
 
-Defined in: [stage/src/dual-export.ts:514](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L514)
+Defined in: [stage/src/dual-export.ts:514](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L514)
 
-THE JEWEL. Cast one [DocumentGraph](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts) to a static Astro page AND a video,
+THE JEWEL. Cast one [DocumentGraph](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts) to a static Astro page AND a video,
 then prove both derive from one source.
 
 1. `sharedSourceDigest = graph.digest` — the graph's own integrity digest,
@@ -25,7 +25,7 @@ then prove both derive from one source.
 
 ### graph
 
-[`DocumentGraph`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts)
+[`DocumentGraph`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts)
 
 ## Returns
 

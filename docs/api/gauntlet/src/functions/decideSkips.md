@@ -8,7 +8,7 @@
 
 > **decideSkips**(`facts`, `decide?`): readonly [`Finding`](../interfaces/Finding.md)[]
 
-Defined in: [gauntlet/src/gates/no-skipped-test-fact.ts:80](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/no-skipped-test-fact.ts#L80)
+Defined in: [gauntlet/src/gates/no-skipped-test-fact.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/no-skipped-test-fact.ts#L80)
 
 THE DECISION — data in, findings out, NO context. Maps the declared [SkipSiteFacts](../interfaces/SkipSiteFacts.md)
 pack through the per-site [kernel](decideSkipSite.md) (injectable, so the mutation fixture

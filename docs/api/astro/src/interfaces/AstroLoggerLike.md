@@ -6,7 +6,7 @@
 
 # Interface: AstroLoggerLike
 
-Defined in: [astro/src/diagnostics-bridge.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L26)
+Defined in: [astro/src/diagnostics-bridge.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L26)
 
 Structural shape of Astro's integration logger (`AstroIntegrationLogger`):
 `warn` / `error` each take a single message string. Kept structural so this
@@ -18,7 +18,7 @@ module needs no value import from `astro`.
 
 > **error**(`message`): `void`
 
-Defined in: [astro/src/diagnostics-bridge.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L28)
+Defined in: [astro/src/diagnostics-bridge.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L28)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [astro/src/diagnostics-bridge.ts:28](https://github.com/heyoub/LiteS
 
 > **warn**(`message`): `void`
 
-Defined in: [astro/src/diagnostics-bridge.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L27)
+Defined in: [astro/src/diagnostics-bridge.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/diagnostics-bridge.ts#L27)
 
 #### Parameters
 

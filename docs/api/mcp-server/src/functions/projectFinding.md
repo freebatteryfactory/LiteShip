@@ -8,7 +8,7 @@
 
 > **projectFinding**(`finding`): \{ `diagnostic`: [`LspDiagnostic`](../interfaces/LspDiagnostic.md); `uri`: `string`; \} \| `null`
 
-Defined in: [mcp-server/src/lsp/diagnostic.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L106)
+Defined in: [mcp-server/src/lsp/diagnostic.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/diagnostic.ts#L106)
 
 Project a single Finding to an LSP Diagnostic, or `null` when the finding has
 no source `location` (a Diagnostic must be anchored to a document range — an

@@ -6,7 +6,7 @@
 
 # Interface: CloudflareCacheApi
 
-Defined in: [cloudflare/src/edge-cache.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L24)
+Defined in: [cloudflare/src/edge-cache.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L24)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [cloudflare/src/edge-cache.ts:24](https://github.com/heyoub/LiteShip
 
 > `optional` **delete**(`request`): `Promise`\<`boolean`\>
 
-Defined in: [cloudflare/src/edge-cache.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L27)
+Defined in: [cloudflare/src/edge-cache.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L27)
 
 #### Parameters
 
@@ -32,7 +32,7 @@ Defined in: [cloudflare/src/edge-cache.ts:27](https://github.com/heyoub/LiteShip
 
 > **match**(`request`): `Promise`\<`Response` \| `undefined`\>
 
-Defined in: [cloudflare/src/edge-cache.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L25)
+Defined in: [cloudflare/src/edge-cache.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L25)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [cloudflare/src/edge-cache.ts:25](https://github.com/heyoub/LiteShip
 
 > **put**(`request`, `response`): `Promise`\<`void`\>
 
-Defined in: [cloudflare/src/edge-cache.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L26)
+Defined in: [cloudflare/src/edge-cache.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L26)
 
 #### Parameters
 

@@ -8,6 +8,6 @@
 
 > **PackageSmokePayload** = `Schema.Schema.Type`\<*typeof* [`PackageSmokePayloadSchema`](../variables/PackageSmokePayloadSchema.md)\>
 
-Defined in: [command/src/commands/package-smoke.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L48)
+Defined in: [command/src/commands/package-smoke.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke.ts#L48)
 
 Structured payload returned by `package-smoke`.

@@ -6,7 +6,7 @@
 
 # Interface: MorphCallbacks
 
-Defined in: [web/src/types.ts:144](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L144)
+Defined in: [web/src/types.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L144)
 
 Morph lifecycle callbacks.
 
@@ -16,7 +16,7 @@ Morph lifecycle callbacks.
 
 > `optional` **afterAdd**(`node`): `void`
 
-Defined in: [web/src/types.ts:146](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L146)
+Defined in: [web/src/types.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L146)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [web/src/types.ts:146](https://github.com/heyoub/LiteShip/blob/main/
 
 > `optional` **beforeAttributeUpdate**(`element`, `name`, `value`): `boolean`
 
-Defined in: [web/src/types.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L147)
+Defined in: [web/src/types.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L147)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [web/src/types.ts:147](https://github.com/heyoub/LiteShip/blob/main/
 
 > `optional` **beforeRemove**(`node`): `boolean`
 
-Defined in: [web/src/types.ts:145](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L145)
+Defined in: [web/src/types.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L145)
 
 #### Parameters
 

@@ -8,7 +8,7 @@
 
 > `const` **noDefaultExportDivergenceGate**: [`Gate`](../interfaces/Gate.md)
 
-Defined in: [gauntlet/src/gates/no-default-export-divergence.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/no-default-export-divergence.ts#L43)
+Defined in: [gauntlet/src/gates/no-default-export-divergence.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/no-default-export-divergence.ts#L43)
 
 The oracle-divergence gate for `is-default-export` — the meta-gauntlet
 self-proof, expressed through the shared factory. Its red/green/mutation

@@ -6,7 +6,7 @@
 
 # Interface: GLSLDefine
 
-Defined in: [compiler/src/glsl.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L48)
+Defined in: [compiler/src/glsl.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/glsl.ts#L48)
 
 A single GLSL `#define` produced by [GLSLCompiler.compile](../variables/GLSLCompiler.md#compile).
 
@@ -16,7 +16,7 @@ A single GLSL `#define` produced by [GLSLCompiler.compile](../variables/GLSLComp
 
 > `readonly` `optional` **comment?**: `string`
 
-Defined in: [compiler/src/glsl.ts:54](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L54)
+Defined in: [compiler/src/glsl.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/glsl.ts#L54)
 
 Optional inline comment emitted alongside the `#define`.
 
@@ -26,7 +26,7 @@ Optional inline comment emitted alongside the `#define`.
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/glsl.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L50)
+Defined in: [compiler/src/glsl.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/glsl.ts#L50)
 
 Macro name (`STATE_*` or `STATE_COUNT`).
 
@@ -36,6 +36,6 @@ Macro name (`STATE_*` or `STATE_COUNT`).
 
 > `readonly` **value**: `string`
 
-Defined in: [compiler/src/glsl.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/glsl.ts#L52)
+Defined in: [compiler/src/glsl.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/glsl.ts#L52)
 
 Macro value (always numeric, serialized as a string).

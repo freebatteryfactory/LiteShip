@@ -8,7 +8,7 @@
 
 > **ContentAddress**: (`value`) => `ContentAddress`
 
-Defined in: [core/src/brands.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L42)
+Defined in: [core/src/brands.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L42)
 
 Wrap a plain string as a ContentAddress.
 

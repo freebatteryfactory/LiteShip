@@ -8,7 +8,7 @@
 
 > **assertNever**(`value`, `context?`): `never`
 
-Defined in: [error/src/variants.ts:295](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L295)
+Defined in: [error/src/variants.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L295)
 
 Exhaustiveness guard for `switch` statements over a closed union — the
 statement-level twin of [matchTag](matchTag.md). Put it in the `default:` branch:

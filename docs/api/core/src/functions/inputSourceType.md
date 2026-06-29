@@ -8,7 +8,7 @@
 
 > **inputSourceType**(`input`): `"scroll"` \| `"viewport"` \| `"time"` \| `"pointer"` \| `"media"` \| `"custom"` \| `"audio"` \| `undefined`
 
-Defined in: [core/src/signal-input.ts:141](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/signal-input.ts#L141)
+Defined in: [core/src/signal-input.ts:141](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/signal-input.ts#L141)
 
 The [SignalSourceType](../type-aliases/SignalSourceType.md) family of an input string, or `undefined`.
 

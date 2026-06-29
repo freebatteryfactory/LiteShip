@@ -8,7 +8,7 @@
 
 > `const` **ComponentCSSCompiler**: `object`
 
-Defined in: [compiler/src/component-css.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/component-css.ts#L60)
+Defined in: [compiler/src/component-css.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/component-css.ts#L60)
 
 Component CSS compiler namespace.
 
@@ -26,14 +26,14 @@ satellite-mounted instances participate in container queries.
 
 Compile a component definition into scoped CSS with slot + satellite markers.
 
-Compile a [Component.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md) into scoped CSS with slot and satellite
+Compile a [Component.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md) into scoped CSS with slot and satellite
 markers appended inside the component's `@layer` block.
 
 #### Parameters
 
 ##### component
 
-[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)
+[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)
 
 #### Returns
 

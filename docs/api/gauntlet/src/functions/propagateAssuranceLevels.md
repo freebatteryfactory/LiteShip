@@ -8,7 +8,7 @@
 
 > **propagateAssuranceLevels**(`ir`, `baseLevelOf`): `ReadonlyMap`\<`string`, [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)\>
 
-Defined in: [gauntlet/src/assurance-propagation.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance-propagation.ts#L79)
+Defined in: [gauntlet/src/assurance-propagation.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance-propagation.ts#L79)
 
 Propagate assurance levels along the IR's INTERNAL import edges, returning the
 EFFECTIVE level of every file in the IR: the fixpoint of

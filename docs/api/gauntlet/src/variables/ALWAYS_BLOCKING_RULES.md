@@ -8,7 +8,7 @@
 
 > `const` **ALWAYS\_BLOCKING\_RULES**: readonly `string`[]
 
-Defined in: [gauntlet/src/waiver.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L68)
+Defined in: [gauntlet/src/waiver.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L68)
 
 Rule ids a waiver can NEVER cover — the skip / placeholder family. A waiver
 targeting one of these is VOID (it errors, and the finding it tried to

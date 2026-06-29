@@ -6,7 +6,7 @@
 
 # Interface: NotFoundError
 
-Defined in: [error/src/variants.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L161)
+Defined in: [error/src/variants.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L161)
 
 A referenced resource or identifier was not found.
 
@@ -24,7 +24,7 @@ across `cli`, `mcp-server`, `edge`.
 
 > `readonly` **\_tag**: `"NotFoundError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -38,7 +38,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` `optional` **detail?**: `string`
 
-Defined in: [error/src/variants.ts:167](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L167)
+Defined in: [error/src/variants.ts:167](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L167)
 
 Optional extra context.
 
@@ -48,7 +48,7 @@ Optional extra context.
 
 > `readonly` **id**: `string`
 
-Defined in: [error/src/variants.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L165)
+Defined in: [error/src/variants.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L165)
 
 The identifier that missed, e.g. a path or URI.
 
@@ -58,7 +58,7 @@ The identifier that missed, e.g. a path or URI.
 
 > `readonly` **kind**: `string`
 
-Defined in: [error/src/variants.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L163)
+Defined in: [error/src/variants.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L163)
 
 The kind of thing sought, e.g. `'profile'`, `'resource'`.
 
@@ -68,7 +68,7 @@ The kind of thing sought, e.g. `'profile'`, `'resource'`.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 

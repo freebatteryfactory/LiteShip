@@ -6,7 +6,7 @@
 
 # Interface: ValidationError
 
-Defined in: [error/src/variants.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L30)
+Defined in: [error/src/variants.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L30)
 
 A precondition, argument, or factory-input check failed — the value was
 structurally fine but semantically rejected (out of range, empty, mutually
@@ -25,7 +25,7 @@ argument/config validation throws across `cli`, `core`, `cloudflare`.
 
 > `readonly` **\_tag**: `"ValidationError"`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -39,7 +39,7 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` **detail**: `string`
 
-Defined in: [error/src/variants.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L34)
+Defined in: [error/src/variants.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L34)
 
 What was wrong, in human terms.
 
@@ -49,7 +49,7 @@ What was wrong, in human terms.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.
 
@@ -63,6 +63,6 @@ Human-readable summary. Doubles as the transport `Error.message`.
 
 > `readonly` **module**: `string`
 
-Defined in: [error/src/variants.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L32)
+Defined in: [error/src/variants.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L32)
 
 The unit that rejected the input, e.g. `'Boundary.make'`.

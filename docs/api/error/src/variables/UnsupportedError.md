@@ -8,7 +8,7 @@
 
 > **UnsupportedError**: (`subject`, `detail`) => [`UnsupportedError`](../interfaces/UnsupportedError.md)
 
-Defined in: [error/src/variants.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L189)
+Defined in: [error/src/variants.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L189)
 
 Build an UnsupportedError.
 

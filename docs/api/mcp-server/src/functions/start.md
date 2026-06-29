@@ -8,7 +8,7 @@
 
 > **start**(`opts?`): `Promise`\<`void`\>
 
-Defined in: [mcp-server/src/start.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/start.ts#L24)
+Defined in: [mcp-server/src/start.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/start.ts#L24)
 
 Start the MCP server on the requested transport.
 

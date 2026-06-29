@@ -8,7 +8,7 @@
 
 > **detectSkipsAST**(`source`): readonly `SkipMatch`[]
 
-Defined in: [audit/src/skip-detect-ast.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L112)
+Defined in: [audit/src/skip-detect-ast.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L112)
 
 THE PUBLIC ENTRY — parse `source` with `ts.createSourceFile`, resolve the local runner bindings,
 then walk the tree for EVERY skip/disable form, each carrying its 1-based line + the structural

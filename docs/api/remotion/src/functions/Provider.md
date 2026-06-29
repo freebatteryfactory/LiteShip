@@ -8,7 +8,7 @@
 
 > **Provider**(`props`): `unknown`
 
-Defined in: [remotion/src/composition.ts:123](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/composition.ts#L123)
+Defined in: [remotion/src/composition.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L123)
 
 React context provider that makes precomputed frames available to
 [useCzapState](useCzapState.md) anywhere in the subtree. Use this when you prefer
@@ -24,7 +24,7 @@ implicit frame lookup over threading the `frames` array through props.
 
 #### frames
 
-readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
+readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
 
 ## Returns
 

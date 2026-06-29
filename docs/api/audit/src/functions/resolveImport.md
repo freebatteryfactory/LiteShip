@@ -8,7 +8,7 @@
 
 > **resolveImport**(`specifier`, `containingFile`, `packageExportTargets`, `internalPrefix`): [`ResolvedImport`](../interfaces/ResolvedImport.md)
 
-Defined in: [audit/src/structure.ts:213](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L213)
+Defined in: [audit/src/structure.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L213)
 
 ## Parameters
 

@@ -6,11 +6,11 @@
 
 # Interface: EdgeHostContext
 
-Defined in: [edge/src/host-adapter.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L32)
+Defined in: [edge/src/host-adapter.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L32)
 
 Detected device context available to host callbacks before compile.
 
-Pairs the parsed [ExtendedDeviceCapabilities](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) with the resolved
+Pairs the parsed [ExtendedDeviceCapabilities](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md) with the resolved
 [EdgeTierResult](EdgeTierResult.md) so a host can derive a theme config or compile
 decision without re-parsing headers.
 
@@ -23,9 +23,9 @@ decision without re-parsing headers.
 
 ### capabilities
 
-> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/heyoub/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
+> `readonly` **capabilities**: [`ExtendedDeviceCapabilities`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/detect/src/interfaces/ExtendedDeviceCapabilities.md)
 
-Defined in: [edge/src/host-adapter.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
+Defined in: [edge/src/host-adapter.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L34)
 
 Capabilities parsed from Client Hints.
 
@@ -35,6 +35,6 @@ Capabilities parsed from Client Hints.
 
 > `readonly` **tier**: [`EdgeTierResult`](EdgeTierResult.md)
 
-Defined in: [edge/src/host-adapter.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L36)
+Defined in: [edge/src/host-adapter.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L36)
 
 Derived tier triple (cap, motion, design).

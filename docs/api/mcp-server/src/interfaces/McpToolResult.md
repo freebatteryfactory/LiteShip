@@ -6,11 +6,11 @@
 
 # Interface: McpToolResult
 
-Defined in: [mcp-server/src/dispatch.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L65)
+Defined in: [mcp-server/src/dispatch.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L65)
 
 MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 (what a D2 `outputSchema` will describe); LiteShip result identity rides in
-`_meta` under [RECEIPT\_META\_KEY](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts) (provenance, not the semantic result);
+`_meta` under [RECEIPT\_META\_KEY](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts) (provenance, not the semantic result);
 `content[0].text` is a compatibility JSON mirror of the payload.
 
 ## Properties
@@ -19,7 +19,7 @@ MCP tools/call result envelope. `structuredContent` is the command PAYLOAD
 
 > `readonly` `optional` **\_meta?**: `Readonly`\<`Record`\<`string`, `unknown`\>\>
 
-Defined in: [mcp-server/src/dispatch.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L70)
+Defined in: [mcp-server/src/dispatch.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L70)
 
 MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
@@ -29,7 +29,7 @@ MCP-open metadata; carries the LiteShip receipt under the reverse-DNS key.
 
 > `readonly` **content**: readonly `object`[]
 
-Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L66)
+Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L66)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [mcp-server/src/dispatch.ts:66](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **isError**: `boolean`
 
-Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L68)
+Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L68)
 
 ***
 
@@ -45,4 +45,4 @@ Defined in: [mcp-server/src/dispatch.ts:68](https://github.com/heyoub/LiteShip/b
 
 > `readonly` **structuredContent**: `unknown`
 
-Defined in: [mcp-server/src/dispatch.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L67)
+Defined in: [mcp-server/src/dispatch.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/dispatch.ts#L67)

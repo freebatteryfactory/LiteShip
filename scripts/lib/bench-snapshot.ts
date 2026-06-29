@@ -39,7 +39,7 @@ export function renderBenchBlock(): string {
   const s = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as Snapshot;
   const date = s.source.capturedAt.slice(0, 10);
   const prov = s.source.runId
-    ? `[CI run ${s.source.runId}](https://github.com/heyoub/LiteShip/actions/runs/${s.source.runId})`
+    ? `[CI run ${s.source.runId}](https://github.com/freebatteryfactory/LiteShip/actions/runs/${s.source.runId})`
     : 'a CI run';
   const commit = s.source.commit ? ` (commit \`${s.source.commit.slice(0, 7)}\`)` : '';
 

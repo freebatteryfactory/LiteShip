@@ -8,7 +8,7 @@
 
 > **coverageClassSeverity**(`a`, `b`): `"advisory"` \| `"warning"` \| `"error"`
 
-Defined in: [gauntlet/src/repo-ir.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L111)
+Defined in: [gauntlet/src/repo-ir.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L111)
 
 The severity an oracle-divergence finding carries, calibrated from the
 coverage-class PAIR of the two disagreeing oracles via the redlinable

@@ -6,7 +6,7 @@
 
 # Interface: TaggedError\<Tag\>
 
-Defined in: [error/src/contract.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L27)
+Defined in: [error/src/contract.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L27)
 
 The open structural contract every error in the algebra satisfies.
 
@@ -37,7 +37,7 @@ records carrying a string discriminant (`_tag`) and a human `message`.
 
 > `readonly` **\_tag**: `Tag`
 
-Defined in: [error/src/contract.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L29)
+Defined in: [error/src/contract.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L29)
 
 The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
@@ -47,6 +47,6 @@ The discriminant. Unique per variant; what `matchTag`/`hasTag` key on.
 
 > `readonly` **message**: `string`
 
-Defined in: [error/src/contract.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L31)
+Defined in: [error/src/contract.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L31)
 
 Human-readable summary. Doubles as the transport `Error.message`.

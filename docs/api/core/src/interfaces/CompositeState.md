@@ -6,7 +6,7 @@
 
 # Interface: CompositeState
 
-Defined in: [core/src/compositor.ts:74](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L74)
+Defined in: [core/src/compositor.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L74)
 
 Snapshot of the compositor's output per tick: discrete state names for each
 quantizer, their blend-weight vectors, and the compiled per-target output
@@ -24,7 +24,7 @@ escalation-gated on the `wgsl` target (admitted only at the `gpu` rung).
 
 > `readonly` **blend**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
 
-Defined in: [core/src/compositor.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L76)
+Defined in: [core/src/compositor.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L76)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/compositor.ts:76](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **discrete**: `Record`\<`string`, `string`\>
 
-Defined in: [core/src/compositor.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L75)
+Defined in: [core/src/compositor.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L75)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/compositor.ts:75](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **outputs**: `object`
 
-Defined in: [core/src/compositor.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor.ts#L77)
+Defined in: [core/src/compositor.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor.ts#L77)
 
 #### aria
 

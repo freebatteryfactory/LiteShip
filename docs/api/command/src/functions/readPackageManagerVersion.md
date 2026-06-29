@@ -8,7 +8,7 @@
 
 > **readPackageManagerVersion**(`rootPackageJson`): `string`
 
-Defined in: [command/src/commands/ship-planning.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L61)
+Defined in: [command/src/commands/ship-planning.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L61)
 
 Parse `pnpm@10.32.1(+sha…)` from a `packageManager` field.
 

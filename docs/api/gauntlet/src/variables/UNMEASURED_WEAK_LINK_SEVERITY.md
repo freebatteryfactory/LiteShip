@@ -8,7 +8,7 @@
 
 > `const` **UNMEASURED\_WEAK\_LINK\_SEVERITY**: [`Severity`](../type-aliases/Severity.md) = `'advisory'`
 
-Defined in: [gauntlet/src/gates/proof-propagation.ts:189](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L189)
+Defined in: [gauntlet/src/gates/proof-propagation.ts:189](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L189)
 
 The severity a weak-link finding earns when the capping dependency is itself
 UNMEASURED (a measurement-coverage gap, not a proven-weak link) — a quiet `advisory`

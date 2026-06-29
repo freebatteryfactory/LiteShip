@@ -8,7 +8,7 @@
 
 > **generateMutants**(`sourceFile`, `options?`): readonly [`Mutant`](../interfaces/Mutant.md)[]
 
-Defined in: [audit/src/mutation-engine.ts:212](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L212)
+Defined in: [audit/src/mutation-engine.ts:212](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L212)
 
 Generate the canonical, sorted, content-addressed list of mutants for a parsed
 source file — the deterministic heart of the engine.

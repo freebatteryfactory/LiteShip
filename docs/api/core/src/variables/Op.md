@@ -8,7 +8,7 @@
 
 > `const` **Op**: `object`
 
-Defined in: [core/src/op.ts:219](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/op.ts#L219)
+Defined in: [core/src/op.ts:219](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/op.ts#L219)
 
 Op -- Effect.Effect wrapper providing named factories and combinators
 for async operations with retry, timeout, race, and parallel execution.

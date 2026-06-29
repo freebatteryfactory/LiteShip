@@ -8,7 +8,7 @@
 
 > **selectTargets**(`workspace`, `filter`): [`WorkspacePackage`](../interfaces/WorkspacePackage.md)[]
 
-Defined in: [command/src/commands/ship-planning.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L48)
+Defined in: [command/src/commands/ship-planning.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/ship-planning.ts#L48)
 
 Select the packages to ship. No filter → all non-private packages. A filter
 matches either a relative path (`./packages/core`) or a package name.

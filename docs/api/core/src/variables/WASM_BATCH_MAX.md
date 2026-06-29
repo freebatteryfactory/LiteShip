@@ -8,7 +8,7 @@
 
 > `const` **WASM\_BATCH\_MAX**: `4096` = `4096`
 
-Defined in: [core/src/defaults.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/defaults.ts#L45)
+Defined in: [core/src/defaults.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/defaults.ts#L45)
 
 Max values the WASM `batch_boundary_eval` kernel evaluates per call. The
 crate's static output buffer clamps `values_len` to this (MUST equal

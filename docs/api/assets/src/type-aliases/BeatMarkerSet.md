@@ -8,7 +8,7 @@
 
 > **BeatMarkerSet** = `_BeatMarkerSet`
 
-Defined in: [assets/src/analysis/beat-markers.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L24)
+Defined in: [assets/src/analysis/beat-markers.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L24)
 
 Detected beat markers + overall BPM estimate — the raw asset/sample-space
 projection carried by the `asset:beats` capability. Aliased to the canonical

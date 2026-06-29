@@ -6,7 +6,7 @@
 
 # Interface: Waiver
 
-Defined in: [gauntlet/src/waiver.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L34)
+Defined in: [gauntlet/src/waiver.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L34)
 
 A single waiver — owner-accountable, time-boxed suppression of one finding.
 
@@ -20,7 +20,7 @@ equal. The narrower the waiver, the less it accidentally suppresses.
 
 > `readonly` **blastRadius**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L48)
+Defined in: [gauntlet/src/waiver.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L48)
 
 What breaks if this debt is wrong — the honesty tax on a waiver.
 
@@ -30,7 +30,7 @@ What breaks if this debt is wrong — the honesty tax on a waiver.
 
 > `readonly` **debtScore**: `number`
 
-Defined in: [gauntlet/src/waiver.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L50)
+Defined in: [gauntlet/src/waiver.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L50)
 
 A numeric cost for this debt — feeds debt rollups / ratchets.
 
@@ -40,7 +40,7 @@ A numeric cost for this debt — feeds debt rollups / ratchets.
 
 > `readonly` **expires**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L46)
+Defined in: [gauntlet/src/waiver.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L46)
 
 When the waiver dies (ISO `yyyy-mm-dd`). Past `now` → an `error` finding.
 
@@ -50,7 +50,7 @@ When the waiver dies (ISO `yyyy-mm-dd`). Past `now` → an `error` finding.
 
 > `readonly` `optional` **file?**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L38)
+Defined in: [gauntlet/src/waiver.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L38)
 
 Optional file scope — when set, only findings in this file match.
 
@@ -60,7 +60,7 @@ Optional file scope — when set, only findings in this file match.
 
 > `readonly` `optional` **line?**: `number`
 
-Defined in: [gauntlet/src/waiver.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L40)
+Defined in: [gauntlet/src/waiver.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L40)
 
 Optional line scope — when set, only findings on this line match.
 
@@ -70,7 +70,7 @@ Optional line scope — when set, only findings on this line match.
 
 > `readonly` **owner**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L42)
+Defined in: [gauntlet/src/waiver.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L42)
 
 Who owns this debt — accountability is mandatory, never anonymous.
 
@@ -80,7 +80,7 @@ Who owns this debt — accountability is mandatory, never anonymous.
 
 > `readonly` **reason**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L44)
+Defined in: [gauntlet/src/waiver.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L44)
 
 Why the finding is being suppressed — the justification of record.
 
@@ -90,6 +90,6 @@ Why the finding is being suppressed — the justification of record.
 
 > `readonly` **ruleId**: `string`
 
-Defined in: [gauntlet/src/waiver.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L36)
+Defined in: [gauntlet/src/waiver.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/waiver.ts#L36)
 
 The rule whose finding this waiver suppresses (must equal the finding's `ruleId`).

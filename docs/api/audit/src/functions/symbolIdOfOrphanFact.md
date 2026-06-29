@@ -8,9 +8,9 @@
 
 > **symbolIdOfOrphanFact**(`file`, `value`): `string`
 
-Defined in: [audit/src/repo-ir-language-service.ts:320](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L320)
+Defined in: [audit/src/repo-ir-language-service.ts:320](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L320)
 
-Reconstruct the IR [SymbolId](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) (`<file>#<name>`) a `symbol-orphan` fact
+Reconstruct the IR [SymbolId](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts) (`<file>#<name>`) a `symbol-orphan` fact
 concerns, from the fact's `file` and its structured [OrphanValue](../interfaces/OrphanValue.md) `name`.
 Exported so the divergence gate JOINS the symbol-evidenced facts against the
 IR's `refs` reverse index (which is keyed on the same convention) WITHOUT the

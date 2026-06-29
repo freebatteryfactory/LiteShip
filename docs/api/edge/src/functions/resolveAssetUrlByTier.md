@@ -8,7 +8,7 @@
 
 > **resolveAssetUrlByTier**(`entry`, `key`): `string` \| `undefined`
 
-Defined in: [edge/src/manifest.ts:204](https://github.com/heyoub/LiteShip/blob/main/packages/edge/src/manifest.ts#L204)
+Defined in: [edge/src/manifest.ts:204](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/manifest.ts#L204)
 
 Resolve the immutable static-asset URL for one tier, when the manifest was
 built with boundary asset emission enabled. Missing `assetUrls` means the

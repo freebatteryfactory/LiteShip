@@ -6,9 +6,9 @@
 
 # Type Alias: TokenManifestEntry
 
-> **TokenManifestEntry** = `Pick`\<[`Token.Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md), `"id"` \| `"name"` \| `"category"` \| `"axes"` \| `"values"` \| `"fallback"` \| `"cssProperty"`\> & `object`
+> **TokenManifestEntry** = `Pick`\<[`Token.Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md), `"id"` \| `"name"` \| `"category"` \| `"axes"` \| `"values"` \| `"fallback"` \| `"cssProperty"`\> & `object`
 
-Defined in: [vite/src/token-manifest.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L27)
+Defined in: [vite/src/token-manifest.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/token-manifest.ts#L27)
 
 Serializable token entry exported from `virtual:czap/tokens`.
 

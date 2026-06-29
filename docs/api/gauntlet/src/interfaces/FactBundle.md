@@ -6,7 +6,7 @@
 
 # Interface: FactBundle
 
-Defined in: [gauntlet/src/gate.ts:451](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L451)
+Defined in: [gauntlet/src/gate.ts:451](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L451)
 
 The bundle a [FactGate](FactGate.md)'s [FactGate.decide](FactGate.md#decide) receives — ONLY the declared
 FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFacts.md)). It carries no
@@ -18,4 +18,4 @@ FactPacks, picked off the context by the engine ([pickFacts](../functions/pickFa
 
 > `readonly` `optional` **skipSites?**: [`SkipSiteFacts`](SkipSiteFacts.md)
 
-Defined in: [gauntlet/src/gate.ts:452](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L452)
+Defined in: [gauntlet/src/gate.ts:452](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L452)

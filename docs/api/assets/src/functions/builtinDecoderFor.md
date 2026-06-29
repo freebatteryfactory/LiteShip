@@ -8,7 +8,7 @@
 
 > **builtinDecoderFor**(`kind`): [`AssetDecoder`](../type-aliases/AssetDecoder.md) \| `undefined`
 
-Defined in: [assets/src/contract.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/contract.ts#L160)
+Defined in: [assets/src/contract.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/contract.ts#L160)
 
 Built-in decoder for a media kind. Analysis kinds (beat-markers /
 onsets / waveform) have their own projection factories and no byte

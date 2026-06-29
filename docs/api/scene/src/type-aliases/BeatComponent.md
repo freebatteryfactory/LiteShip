@@ -8,7 +8,7 @@
 
 > **BeatComponent** = `_BeatComponent`
 
-Defined in: [scene/src/capsules/beat-binding.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L31)
+Defined in: [scene/src/capsules/beat-binding.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/capsules/beat-binding.ts#L31)
 
 Component shape for beat entities — what SyncSystem queries via
 `world.query('Beat')`. Aliased to the canonical spine contract (CUT A5):

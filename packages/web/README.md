@@ -3,7 +3,7 @@
 Applies streamed HTML, state-driven re-renders, and LLM output to a live browser document without losing focus, scroll, or form state.
 
 > You usually don't install this directly — it arrives as a dependency of
-> [`@czap/astro`](https://github.com/heyoub/LiteShip/tree/main/packages/astro).
+> [`@czap/astro`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/astro).
 > Install that instead unless you are wiring DOM morphing, SSE streaming, or
 > LLM chunk handling into a host that isn't Astro.
 
@@ -32,8 +32,8 @@ morphPure(card, '<h2>Updated</h2><input name="q" />');
 
 ## Where it sits
 
-The browser runtime layer: `@czap/astro`'s client directives call into this package, and it depends only on [`@czap/core`](https://github.com/heyoub/LiteShip/tree/main/packages/core) (shared state and runtime contracts) plus `mediabunny` for WebCodecs capture. The main entry adds the Effect-scoped surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@czap/web/lite` is the pure subset of all that with no Effect dependency. Off-thread evaluation lives in [`@czap/worker`](https://github.com/heyoub/LiteShip/tree/main/packages/worker), not here. See the
-[package surfaces map](https://github.com/heyoub/LiteShip/blob/main/PACKAGE-SURFACES.md)
+The browser runtime layer: `@czap/astro`'s client directives call into this package, and it depends only on [`@czap/core`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/core) (shared state and runtime contracts) plus `mediabunny` for WebCodecs capture. The main entry adds the Effect-scoped surfaces: `Morph` with physical-state restore, `SlotRegistry` for addressing server-rendered slots in streamed HTML, an `SSE` client with reconnect and cross-tab resumption, and `LLMAdapter` for normalizing OpenAI / Anthropic / AI SDK chunk formats. `@czap/web/lite` is the pure subset of all that with no Effect dependency. Off-thread evaluation lives in [`@czap/worker`](https://github.com/freebatteryfactory/LiteShip/tree/main/packages/worker), not here. See the
+[package surfaces map](https://github.com/freebatteryfactory/LiteShip/blob/main/PACKAGE-SURFACES.md)
 for the full layout.
 
 ## If it does nothing
@@ -42,11 +42,11 @@ Morph parses incoming HTML under a sanitized policy: `<script>` tags, `on*` attr
 
 ## Docs
 
-- [Getting started](https://github.com/heyoub/LiteShip/blob/main/GETTING-STARTED.md)
-- [Hosting guide](https://github.com/heyoub/LiteShip/blob/main/HOSTING.md) — CSP rules for SSE and LLM endpoints
-- [Glossary](https://github.com/heyoub/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
-- [API reference](https://github.com/heyoub/LiteShip/tree/main/docs/api/web/src/) — generated from source
+- [Getting started](https://github.com/freebatteryfactory/LiteShip/blob/main/GETTING-STARTED.md)
+- [Hosting guide](https://github.com/freebatteryfactory/LiteShip/blob/main/HOSTING.md) — CSP rules for SSE and LLM endpoints
+- [Glossary](https://github.com/freebatteryfactory/LiteShip/blob/main/GLOSSARY.md) — the vocabulary used above
+- [API reference](https://github.com/freebatteryfactory/LiteShip/tree/main/docs/api/web/src/) — generated from source
 
 ---
 
-Part of [LiteShip](https://github.com/heyoub/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.
+Part of [LiteShip](https://github.com/freebatteryfactory/LiteShip#readme) — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages.

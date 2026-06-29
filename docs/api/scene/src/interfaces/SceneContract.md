@@ -6,7 +6,7 @@
 
 # Interface: SceneContract\<M\>
 
-Defined in: [scene/src/contract.ts:147](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L147)
+Defined in: [scene/src/contract.ts:147](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L147)
 
 Top-level scene contract — typed declaration shape for an entire
 composition. Only `name`, `fps`, `bpm`, and `tracks` are required;
@@ -25,7 +25,7 @@ hello-world scene never declares layer-4 audit/ship concepts.
 
 > `readonly` `optional` **beats?**: readonly `BeatComponent`[]
 
-Defined in: [scene/src/contract.ts:174](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L174)
+Defined in: [scene/src/contract.ts:174](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L174)
 
 Optional pre-resolved beat markers. When present, the scene
 compiler propagates them onto the [CompiledScene](CompiledScene.md) and the
@@ -39,7 +39,7 @@ each tick to compute beat-decay intensity.
 
 > `readonly` **bpm**: `number`
 
-Defined in: [scene/src/contract.ts:155](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L155)
+Defined in: [scene/src/contract.ts:155](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L155)
 
 ***
 
@@ -47,7 +47,7 @@ Defined in: [scene/src/contract.ts:155](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **budgets?**: `object`
 
-Defined in: [scene/src/contract.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L164)
+Defined in: [scene/src/contract.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L164)
 
 Performance budgets.
 
@@ -71,7 +71,7 @@ Performance budgets.
 
 > `readonly` `optional` **duration?**: `number`
 
-Defined in: [scene/src/contract.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L153)
+Defined in: [scene/src/contract.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L153)
 
 Scene duration in milliseconds.
 
@@ -85,7 +85,7 @@ derived from the tracks — max resolved `to` / fps * 1000
 
 > `readonly` **fps**: `number`
 
-Defined in: [scene/src/contract.ts:154](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L154)
+Defined in: [scene/src/contract.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L154)
 
 ***
 
@@ -93,7 +93,7 @@ Defined in: [scene/src/contract.ts:154](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **height?**: `number`
 
-Defined in: [scene/src/contract.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L159)
+Defined in: [scene/src/contract.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L159)
 
 Optional render height in pixels. Render hosts fall back to 720 when absent.
 
@@ -103,7 +103,7 @@ Optional render height in pixels. Render hosts fall back to 720 when absent.
 
 > `readonly` `optional` **invariants?**: readonly [`SceneInvariant`](SceneInvariant.md)[]
 
-Defined in: [scene/src/contract.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L162)
+Defined in: [scene/src/contract.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L162)
 
 Compile-time checks.
 
@@ -119,7 +119,7 @@ Compile-time checks.
 
 > `readonly` **name**: `string`
 
-Defined in: [scene/src/contract.ts:148](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L148)
+Defined in: [scene/src/contract.ts:148](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L148)
 
 ***
 
@@ -127,7 +127,7 @@ Defined in: [scene/src/contract.ts:148](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **site?**: readonly `Site`[]
 
-Defined in: [scene/src/contract.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L166)
+Defined in: [scene/src/contract.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L166)
 
 Deployment sites the scene targets.
 
@@ -143,7 +143,7 @@ Deployment sites the scene targets.
 
 > `readonly` **tracks**: readonly `Track`\<`M`\>[]
 
-Defined in: [scene/src/contract.ts:160](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L160)
+Defined in: [scene/src/contract.ts:160](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L160)
 
 ***
 
@@ -151,6 +151,6 @@ Defined in: [scene/src/contract.ts:160](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **width?**: `number`
 
-Defined in: [scene/src/contract.ts:157](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L157)
+Defined in: [scene/src/contract.ts:157](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L157)
 
 Optional render width in pixels. Render hosts fall back to 1280 when absent.

@@ -6,7 +6,7 @@
 
 # Interface: SanctionedSkip
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:81](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L81)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:81](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L81)
 
 One sanctioned skip — a `(file, site, capability, why)` record sanctioning a SPECIFIC
 skip SITE, not a whole file.
@@ -24,7 +24,7 @@ standards surface.
 
 > `readonly` **capability**: `"ffmpeg-absent"` \| `"wasm-absent"` \| `"wasm-dist-staged"` \| `"shared-array-buffer-absent"` \| `"coverage-instrumentation"` \| `"astro-example-not-built"`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:93](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L93)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:93](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L93)
 
 The capability whose absence sanctions the skip.
 
@@ -34,7 +34,7 @@ The capability whose absence sanctions the skip.
 
 > `readonly` **file**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:83](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L83)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:83](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L83)
 
 Repo-relative path of the test file whose skip is sanctioned.
 
@@ -44,7 +44,7 @@ Repo-relative path of the test file whose skip is sanctioned.
 
 > `readonly` **site**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L91)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L91)
 
 The SITE discriminator — the whitespace-collapsed raw source line the sanctioned
 skip sits on (the capability-guard expression / test title survive there). Pins the
@@ -58,6 +58,6 @@ entry against the live source so a re-worded skip re-opens the sanction (strengt
 
 > `readonly` **why**: `string`
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:95](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L95)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:95](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L95)
 
 The justification of record — why this skip is honest, not unfinished work.

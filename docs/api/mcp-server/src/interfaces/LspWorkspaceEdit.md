@@ -6,7 +6,7 @@
 
 # Interface: LspWorkspaceEdit
 
-Defined in: [mcp-server/src/lsp/types.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L163)
+Defined in: [mcp-server/src/lsp/types.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L163)
 
 LSP `WorkspaceEdit` (§WorkspaceEdit) — file-keyed text edits.
 
@@ -16,4 +16,4 @@ LSP `WorkspaceEdit` (§WorkspaceEdit) — file-keyed text edits.
 
 > `readonly` **changes**: `Readonly`\<`Record`\<`string`, readonly [`LspTextEdit`](LspTextEdit.md)[]\>\>
 
-Defined in: [mcp-server/src/lsp/types.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L164)
+Defined in: [mcp-server/src/lsp/types.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L164)

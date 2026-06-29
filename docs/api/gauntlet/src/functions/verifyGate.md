@@ -8,7 +8,7 @@
 
 > **verifyGate**(`gate`): [`GateProof`](../interfaces/GateProof.md)
 
-Defined in: [gauntlet/src/authority.ts:43](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L43)
+Defined in: [gauntlet/src/authority.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L43)
 
 Run a gate against its own fixtures and return the proof. Pure: it only
 exercises the gate's `run` over the fixtures' in-memory contexts.

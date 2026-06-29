@@ -8,7 +8,7 @@
 
 > **detectBeats**(`audio`): `BeatMarkerSet`
 
-Defined in: [assets/src/analysis/beat-markers.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L27)
+Defined in: [assets/src/analysis/beat-markers.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/assets/src/analysis/beat-markers.ts#L27)
 
 Detect downbeats on a decoded audio buffer.
 

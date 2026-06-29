@@ -6,7 +6,7 @@
 
 # Interface: PackageExportTarget
 
-Defined in: [audit/src/structure.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L75)
+Defined in: [audit/src/structure.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L75)
 
 ## Indexable
 

@@ -6,7 +6,7 @@
 
 # Interface: PackagePolicy
 
-Defined in: [audit/src/policy.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L40)
+Defined in: [audit/src/policy.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L40)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/policy.ts:40](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **allowedInternalImports**: readonly `string`[]
 
-Defined in: [audit/src/policy.ts:41](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L41)
+Defined in: [audit/src/policy.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L41)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [audit/src/policy.ts:41](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **kind**: `"core"` \| `"layered"` \| `"host-adjacent"` \| `"standalone"`
 
-Defined in: [audit/src/policy.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L42)
+Defined in: [audit/src/policy.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L42)

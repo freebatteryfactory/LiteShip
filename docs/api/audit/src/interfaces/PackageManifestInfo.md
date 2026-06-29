@@ -6,7 +6,7 @@
 
 # Interface: PackageManifestInfo
 
-Defined in: [audit/src/shared.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L23)
+Defined in: [audit/src/shared.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L23)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/shared.ts:23](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **dependencies**: readonly `string`[]
 
-Defined in: [audit/src/shared.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L29)
+Defined in: [audit/src/shared.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L29)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/shared.ts:29](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **dir**: `string`
 
-Defined in: [audit/src/shared.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L25)
+Defined in: [audit/src/shared.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L25)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/shared.ts:25](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **exports**: `Record`\<`string`, `unknown`\>
 
-Defined in: [audit/src/shared.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L30)
+Defined in: [audit/src/shared.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L30)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [audit/src/shared.ts:30](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **name**: `string`
 
-Defined in: [audit/src/shared.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L24)
+Defined in: [audit/src/shared.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L24)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [audit/src/shared.ts:24](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **packageJsonPath**: `string`
 
-Defined in: [audit/src/shared.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L28)
+Defined in: [audit/src/shared.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L28)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [audit/src/shared.ts:28](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **relativeDir**: `string`
 
-Defined in: [audit/src/shared.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L26)
+Defined in: [audit/src/shared.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L26)
 
 ***
 
@@ -62,4 +62,4 @@ Defined in: [audit/src/shared.ts:26](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **srcDir**: `string`
 
-Defined in: [audit/src/shared.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L27)
+Defined in: [audit/src/shared.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L27)

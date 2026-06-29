@@ -6,7 +6,7 @@
 
 # Interface: ServerIslandContext
 
-Defined in: [astro/src/quantize.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L22)
+Defined in: [astro/src/quantize.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L22)
 
 Server-only context that [resolveInitialState](../functions/resolveInitialState.md) consumes. Astro
 builds this from the incoming request (user agent + Client Hints)
@@ -18,7 +18,7 @@ and the tier detected by the edge middleware.
 
 > `readonly` `optional` **clientHints?**: `Record`\<`string`, `string`\>
 
-Defined in: [astro/src/quantize.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L26)
+Defined in: [astro/src/quantize.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L26)
 
 Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
@@ -26,9 +26,9 @@ Flat Client Hints header map (default `{}`). Build from `Astro.request.headers`.
 
 ### detectedCapTier?
 
-> `readonly` `optional` **detectedCapTier?**: [`CapTier`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
+> `readonly` `optional` **detectedCapTier?**: [`CapTier`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/CapTier.md)
 
-Defined in: [astro/src/quantize.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
+Defined in: [astro/src/quantize.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L28)
 
 Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px).
 
@@ -38,6 +38,6 @@ Tier detected by `@czap/edge` (default `'reactive'` → synthetic 960px).
 
 > `readonly` `optional` **userAgent?**: `string`
 
-Defined in: [astro/src/quantize.ts:24](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/quantize.ts#L24)
+Defined in: [astro/src/quantize.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/quantize.ts#L24)
 
 Raw `User-Agent` header (default `''`).

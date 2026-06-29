@@ -8,7 +8,7 @@
 
 > **strongerCoverageClass**(`a`, `b`): [`CoverageClass`](../type-aliases/CoverageClass.md)
 
-Defined in: [gauntlet/src/repo-ir.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L120)
+Defined in: [gauntlet/src/repo-ir.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L120)
 
 The stronger of two coverage classes by [COVERAGE\_CLASSES](../variables/COVERAGE_CLASSES.md) ordering — the
 higher-confidence oracle's class, which a divergence finding carries (so the

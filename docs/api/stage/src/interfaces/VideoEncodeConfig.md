@@ -6,7 +6,7 @@
 
 # Interface: VideoEncodeConfig
 
-Defined in: [stage/src/dual-export.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L68)
+Defined in: [stage/src/dual-export.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L68)
 
 The deterministic spec a [FrameEncoder](../type-aliases/FrameEncoder.md) encodes the frames at.
 
@@ -16,7 +16,7 @@ The deterministic spec a [FrameEncoder](../type-aliases/FrameEncoder.md) encodes
 
 > `readonly` **durationMs**: `number`
 
-Defined in: [stage/src/dual-export.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L72)
+Defined in: [stage/src/dual-export.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L72)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [stage/src/dual-export.ts:72](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **fps**: `number`
 
-Defined in: [stage/src/dual-export.ts:69](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L69)
+Defined in: [stage/src/dual-export.ts:69](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L69)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [stage/src/dual-export.ts:69](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **height**: `number`
 
-Defined in: [stage/src/dual-export.ts:71](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L71)
+Defined in: [stage/src/dual-export.ts:71](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L71)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [stage/src/dual-export.ts:71](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **width**: `number`
 
-Defined in: [stage/src/dual-export.ts:70](https://github.com/heyoub/LiteShip/blob/main/packages/stage/src/dual-export.ts#L70)
+Defined in: [stage/src/dual-export.ts:70](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/stage/src/dual-export.ts#L70)

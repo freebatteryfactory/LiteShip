@@ -8,7 +8,7 @@
 
 > `const` **NEVER\_SIGNABLE\_WEAKENINGS**: readonly [`WeakeningClass`](../type-aliases/WeakeningClass.md)[]
 
-Defined in: [gauntlet/src/standards-facts.ts:726](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L726)
+Defined in: [gauntlet/src/standards-facts.ts:726](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/standards-facts.ts#L726)
 
 The rule ids no STANDARDS WAIVER may ever sign off on — the always-blocking
 floor. A sign-off authorizing the removal of an always-blocking rule, or a

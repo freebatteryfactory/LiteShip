@@ -8,7 +8,7 @@
 
 > `const` **FACT\_CHANNELS**: readonly \[`"supplyChain"`, `"mutation"`, `"mcdc"`, `"simulation"`, `"traceability"`, `"standards"`, `"declaredFix"`, `"taint"`, `"capabilityLink"`, `"fuzzCorpus"`, `"proof"`, `"composition"`, `"skipSites"`\]
 
-Defined in: [gauntlet/src/evidence-recorder.ts:57](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L57)
+Defined in: [gauntlet/src/evidence-recorder.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L57)
 
 The SINGLE SOURCE OF TRUTH for the injected-fact channels — every optional fact key
 a [GateContext](../interfaces/GateContext.md) can carry, as a runtime tuple. The [EvidenceChannel](../type-aliases/EvidenceChannel.md)

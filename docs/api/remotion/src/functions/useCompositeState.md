@@ -6,9 +6,9 @@
 
 # Function: useCompositeState()
 
-> **useCompositeState**(`frames`): [`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+> **useCompositeState**(`frames`): [`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
-Defined in: [remotion/src/hooks.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/remotion/src/hooks.ts#L119)
+Defined in: [remotion/src/hooks.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/hooks.ts#L119)
 
 Remotion-aware hook that returns the `CompositeState` for the current
 frame. Internally calls Remotion's `useCurrentFrame` and defers to
@@ -25,13 +25,13 @@ to the valid frame range and fall back to a structurally-empty
 
 ### frames
 
-readonly [`VideoFrameOutput`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
+readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/interfaces/VideoFrameOutput.md)[]
 
 Precomputed frames (see [precomputeFrames](precomputeFrames.md)).
 
 ## Returns
 
-[`CompositeState`](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
+[`CompositeState`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/compositor-pool.ts)
 
 State for the current Remotion frame.
 

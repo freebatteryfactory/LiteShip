@@ -8,7 +8,7 @@
 
 > **maxLevel**(`a`, `b`): [`AssuranceLevel`](../type-aliases/AssuranceLevel.md)
 
-Defined in: [gauntlet/src/assurance.ts:88](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L88)
+Defined in: [gauntlet/src/assurance.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/assurance.ts#L88)
 
 The more-critical of two levels — the level an edge between them inherits.
 

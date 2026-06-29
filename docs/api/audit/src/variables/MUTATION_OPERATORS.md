@@ -8,7 +8,7 @@
 
 > `const` **MUTATION\_OPERATORS**: readonly [`MutationOperatorId`](../type-aliases/MutationOperatorId.md)[]
 
-Defined in: [audit/src/mutation-engine.ts:94](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L94)
+Defined in: [audit/src/mutation-engine.ts:94](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L94)
 
 The closed, canonically-ordered list of operator ids — the ORDER is the
 deterministic tiebreak the catalogue sort uses when two mutants share a

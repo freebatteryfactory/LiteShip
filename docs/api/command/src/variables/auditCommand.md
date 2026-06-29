@@ -8,6 +8,6 @@
 
 > `const` **auditCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/audit.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit.ts#L78)
+Defined in: [command/src/commands/audit.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L78)
 
 `audit [--profile <path>] [--consumer] [--findings]` — run the engine, emit a structured summary.

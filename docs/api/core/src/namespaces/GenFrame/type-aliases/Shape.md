@@ -8,6 +8,6 @@
 
 > **Shape** = `GenFrameSchedulerShape`
 
-Defined in: [core/src/gen-frame.ts:243](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/gen-frame.ts#L243)
+Defined in: [core/src/gen-frame.ts:243](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/gen-frame.ts#L243)
 
 Structural shape of a scheduler instance returned by [GenFrame.make](../../../variables/GenFrame.md#make).

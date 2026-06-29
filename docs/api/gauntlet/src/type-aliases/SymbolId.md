@@ -8,7 +8,7 @@
 
 > **SymbolId** = `string`
 
-Defined in: [gauntlet/src/repo-ir.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L45)
+Defined in: [gauntlet/src/repo-ir.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L45)
 
 The stable identity of a symbol node. The convention a host follows is
 `"<FileId>#<name>"` (file path, `#`, the exported/declared name), which keeps

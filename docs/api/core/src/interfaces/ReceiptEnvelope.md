@@ -6,7 +6,7 @@
 
 # Interface: ReceiptEnvelope
 
-Defined in: [core/src/receipt.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L26)
+Defined in: [core/src/receipt.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L26)
 
 Single link in a receipt chain: timestamped, content-addressed, and linked
 to its predecessor(s). Merge envelopes carry an array of `previous` hashes;
@@ -18,7 +18,7 @@ optionally MAC-signed via `Receipt.macEnvelope`.
 
 > `readonly` **hash**: `string`
 
-Defined in: [core/src/receipt.ts:38](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L38)
+Defined in: [core/src/receipt.ts:38](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L38)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [core/src/receipt.ts:38](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **kind**: `string`
 
-Defined in: [core/src/receipt.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L27)
+Defined in: [core/src/receipt.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L27)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [core/src/receipt.ts:27](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **payload**: `TypedRefShape`
 
-Defined in: [core/src/receipt.ts:37](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L37)
+Defined in: [core/src/receipt.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L37)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [core/src/receipt.ts:37](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **previous**: `string` \| readonly `string`[]
 
-Defined in: [core/src/receipt.ts:39](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L39)
+Defined in: [core/src/receipt.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L39)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [core/src/receipt.ts:39](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` `optional` **signature?**: `string`
 
-Defined in: [core/src/receipt.ts:40](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L40)
+Defined in: [core/src/receipt.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L40)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [core/src/receipt.ts:40](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **subject**: [`ReceiptSubject`](ReceiptSubject.md)
 
-Defined in: [core/src/receipt.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L36)
+Defined in: [core/src/receipt.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L36)
 
 ***
 
@@ -66,7 +66,7 @@ Defined in: [core/src/receipt.ts:36](https://github.com/heyoub/LiteShip/blob/mai
 
 > `readonly` **timestamp**: [`HLCBrand`](HLCBrand.md)
 
-Defined in: [core/src/receipt.ts:35](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/receipt.ts#L35)
+Defined in: [core/src/receipt.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L35)
 
 Causal clock (CUT B2): an [HLC](HLCBrand.md), NOT a wall-clock string. It is
 INCLUDED in `hashEnvelope` and monotonic-validated by `validateChain`

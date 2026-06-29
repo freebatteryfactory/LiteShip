@@ -8,7 +8,7 @@
 
 > **ContentAddress** = `_ContentAddress`
 
-Defined in: [core/src/brands.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/brands.ts#L42)
+Defined in: [core/src/brands.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/brands.ts#L42)
 
 Content-addressed hash.
 Format: fnv1a:XXXXXXXX (8 hex digits). Computed from CBOR-canonical payload via FNV-1a hash.

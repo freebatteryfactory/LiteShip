@@ -8,7 +8,7 @@
 
 > **captureVideo**(`renderer`, `capture`, `renderFn?`): `Promise`\<`CaptureResult`\>
 
-Defined in: [web/src/capture/pipeline.ts:58](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/capture/pipeline.ts#L58)
+Defined in: [web/src/capture/pipeline.ts:58](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/capture/pipeline.ts#L58)
 
 Capture a video from a VideoRenderer using a FrameCapture backend.
 

@@ -8,7 +8,7 @@
 
 > **Shape**\<`N`, `Axes`\> = `TokenDef`\<`N`, `Axes`\>
 
-Defined in: [core/src/token.ts:282](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/token.ts#L282)
+Defined in: [core/src/token.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/token.ts#L282)
 
 Structural shape of a token definition parameterized by its name `N` and axis tuple `Axes`.
 

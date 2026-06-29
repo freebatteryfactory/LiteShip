@@ -8,4 +8,4 @@
 
 > `const` **PERF\_CLAIM\_BENCH\_RULE\_ID**: `"gauntlet/perf-claim-without-bench"` = `'gauntlet/perf-claim-without-bench'`
 
-Defined in: [gauntlet/src/gates/perf-claim-bench.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/perf-claim-bench.ts#L46)
+Defined in: [gauntlet/src/gates/perf-claim-bench.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/perf-claim-bench.ts#L46)

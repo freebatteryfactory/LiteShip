@@ -8,7 +8,7 @@
 
 > **stringsBlanked**(`src`): `string`
 
-Defined in: [gauntlet/src/gates/code-only.ts:271](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L271)
+Defined in: [gauntlet/src/gates/code-only.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L271)
 
 Blank out string-literal CONTENTS only, leaving COMMENTS and code intact
 (newlines preserved, so line numbers still align). The floor for a gate whose

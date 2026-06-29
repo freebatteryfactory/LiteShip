@@ -8,7 +8,7 @@
 
 > **resolveInitialStateFallback**(`boundary`): `string`
 
-Defined in: [astro/src/Satellite.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/Satellite.ts#L166)
+Defined in: [astro/src/Satellite.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L166)
 
 Resolve initial state from a boundary for SSR.
 
@@ -20,7 +20,7 @@ For smarter resolution with client hints and user agent parsing, use
 
 ### boundary
 
-[`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
+[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)
 
 ## Returns
 

@@ -8,7 +8,7 @@
 
 > `const` **Q**: `object`
 
-Defined in: [quantizer/src/quantizer.ts:628](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L628)
+Defined in: [quantizer/src/quantizer.ts:628](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/quantizer.ts#L628)
 
 Quantizer builder namespace.
 
@@ -34,7 +34,7 @@ reactive `LiveQuantizer` inside an Effect scope.
 
 ##### B
 
-`B` *extends* [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
+`B` *extends* [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
 #### Parameters
 

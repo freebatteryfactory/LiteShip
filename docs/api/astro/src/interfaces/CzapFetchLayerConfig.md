@@ -6,7 +6,7 @@
 
 # Interface: CzapFetchLayerConfig
 
-Defined in: [astro/src/fetch-layer.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L53)
+Defined in: [astro/src/fetch-layer.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L53)
 
 Options for [czapFetchLayer](../functions/czapFetchLayer.md). Extends [CzapMiddlewareConfig](CzapMiddlewareConfig.md) so the
 `edge` / `detect` / `workers` surface is shared verbatim — a consumer migrates
@@ -22,7 +22,7 @@ from middleware to layer by swapping the factory, not relearning config.
 
 > `readonly` `optional` **detect?**: `boolean`
 
-Defined in: [astro/src/middleware.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L79)
+Defined in: [astro/src/middleware.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L79)
 
 Whether to include the Client Hints request headers (default `true`).
 
@@ -36,7 +36,7 @@ Whether to include the Client Hints request headers (default `true`).
 
 > `readonly` `optional` **edge?**: `EdgeHostAdapterConfig`
 
-Defined in: [astro/src/middleware.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L77)
+Defined in: [astro/src/middleware.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L77)
 
 Edge host adapter configuration (KV cache, theme compilation).
 
@@ -50,7 +50,7 @@ Edge host adapter configuration (KV cache, theme compilation).
 
 > `readonly` `optional` **render?**: (`resolution`) => `Response`
 
-Defined in: [astro/src/fetch-layer.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L67)
+Defined in: [astro/src/fetch-layer.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L67)
 
 How to render the edge-served Response from a resolution. Default:
 [serializeBoundaryCss](../functions/serializeBoundaryCss.md) wrapped in a `text/css` Response. Override to
@@ -72,7 +72,7 @@ match a specific page's exact inlining.
 
 > `readonly` `optional` **serveFromEdge?**: (`request`, `resolution`) => `boolean`
 
-Defined in: [astro/src/fetch-layer.ts:61](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L61)
+Defined in: [astro/src/fetch-layer.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/fetch-layer.ts#L61)
 
 Edge-serve predicate. Given the request and the resolution, decide whether to
 serve the boundary CSS straight from the edge (returning WITHOUT invoking
@@ -100,7 +100,7 @@ always passes through until a consumer opts edge serve in (e.g.
 
 > `readonly` `optional` **workers?**: `object`
 
-Defined in: [astro/src/middleware.ts:86](https://github.com/heyoub/LiteShip/blob/main/packages/astro/src/middleware.ts#L86)
+Defined in: [astro/src/middleware.ts:86](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/middleware.ts#L86)
 
 Whether to emit COOP/COEP headers for worker features. `coep`
 selects the embedder policy value (default `'require-corp'`);

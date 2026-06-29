@@ -6,7 +6,7 @@
 
 # Interface: PublishDiagnosticsParams
 
-Defined in: [mcp-server/src/lsp/types.ts:124](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L124)
+Defined in: [mcp-server/src/lsp/types.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L124)
 
 LSP `PublishDiagnosticsParams` (§textDocument/publishDiagnostics).
 
@@ -16,7 +16,7 @@ LSP `PublishDiagnosticsParams` (§textDocument/publishDiagnostics).
 
 > `readonly` **diagnostics**: readonly [`LspDiagnostic`](LspDiagnostic.md)[]
 
-Defined in: [mcp-server/src/lsp/types.ts:126](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L126)
+Defined in: [mcp-server/src/lsp/types.ts:126](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L126)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [mcp-server/src/lsp/types.ts:126](https://github.com/heyoub/LiteShip
 
 > `readonly` **uri**: `string`
 
-Defined in: [mcp-server/src/lsp/types.ts:125](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L125)
+Defined in: [mcp-server/src/lsp/types.ts:125](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L125)

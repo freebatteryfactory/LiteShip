@@ -6,7 +6,7 @@
 
 # Interface: JsonSchemaObject
 
-Defined in: [core/src/json-schema-from-schema.ts:76](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L76)
+Defined in: [core/src/json-schema-from-schema.ts:76](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L76)
 
 The TOP-LEVEL object shape a command descriptor's `inputSchema` /
 `outputSchema` carries. Structurally a `JsonSchemaFragment` pinned to
@@ -23,7 +23,7 @@ The TOP-LEVEL object shape a command descriptor's `inputSchema` /
 
 > `readonly` `optional` **const?**: `string` \| `number` \| `boolean` \| `null`
 
-Defined in: [core/src/json-schema-from-schema.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L66)
+Defined in: [core/src/json-schema-from-schema.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L66)
 
 #### Inherited from
 
@@ -35,7 +35,7 @@ Defined in: [core/src/json-schema-from-schema.ts:66](https://github.com/heyoub/L
 
 > `readonly` `optional` **enum?**: readonly (`string` \| `number` \| `boolean` \| `null`)[]
 
-Defined in: [core/src/json-schema-from-schema.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L65)
+Defined in: [core/src/json-schema-from-schema.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L65)
 
 #### Inherited from
 
@@ -47,7 +47,7 @@ Defined in: [core/src/json-schema-from-schema.ts:65](https://github.com/heyoub/L
 
 > `readonly` `optional` **items?**: [`JsonSchemaFragment`](JsonSchemaFragment.md)
 
-Defined in: [core/src/json-schema-from-schema.ts:67](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L67)
+Defined in: [core/src/json-schema-from-schema.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L67)
 
 #### Inherited from
 
@@ -59,7 +59,7 @@ Defined in: [core/src/json-schema-from-schema.ts:67](https://github.com/heyoub/L
 
 > `readonly` **properties**: `Readonly`\<`Record`\<`string`, [`JsonSchemaFragment`](JsonSchemaFragment.md)\>\>
 
-Defined in: [core/src/json-schema-from-schema.ts:78](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L78)
+Defined in: [core/src/json-schema-from-schema.ts:78](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L78)
 
 #### Overrides
 
@@ -71,7 +71,7 @@ Defined in: [core/src/json-schema-from-schema.ts:78](https://github.com/heyoub/L
 
 > `readonly` `optional` **required?**: readonly `string`[]
 
-Defined in: [core/src/json-schema-from-schema.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L79)
+Defined in: [core/src/json-schema-from-schema.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L79)
 
 #### Overrides
 
@@ -83,7 +83,7 @@ Defined in: [core/src/json-schema-from-schema.ts:79](https://github.com/heyoub/L
 
 > `readonly` **type**: `"object"`
 
-Defined in: [core/src/json-schema-from-schema.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L77)
+Defined in: [core/src/json-schema-from-schema.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/json-schema-from-schema.ts#L77)
 
 #### Overrides
 

@@ -8,7 +8,7 @@
 
 > **defineCapsule**\<`K`, `In`, `Out`, `R`\>(`decl`): [`CapsuleDef`](../interfaces/CapsuleDef.md)\<`K`, `In`, `Out`, `R`\>
 
-Defined in: [core/src/assembly.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/assembly.ts#L105)
+Defined in: [core/src/assembly.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/assembly.ts#L105)
 
 Declare a capsule. Validates shape, computes content address,
 registers in the module-level catalog, returns a typed def.

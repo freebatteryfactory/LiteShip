@@ -8,6 +8,6 @@
 
 > **JsonRpcResponse** = [`JsonRpcSuccess`](../interfaces/JsonRpcSuccess.md) \| [`JsonRpcErrorResponse`](../interfaces/JsonRpcErrorResponse.md)
 
-Defined in: [mcp-server/src/jsonrpc.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L62)
+Defined in: [mcp-server/src/jsonrpc.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/jsonrpc.ts#L62)
 
 Either a success or error response.

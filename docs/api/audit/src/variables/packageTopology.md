@@ -8,4 +8,4 @@
 
 > `const` **packageTopology**: `Record`\<`string`, [`PackagePolicy`](../interfaces/PackagePolicy.md)\>
 
-Defined in: [audit/src/policy.ts:59](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/policy.ts#L59)
+Defined in: [audit/src/policy.ts:59](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/policy.ts#L59)

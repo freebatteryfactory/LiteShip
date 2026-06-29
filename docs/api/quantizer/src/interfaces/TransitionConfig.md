@@ -6,14 +6,14 @@
 
 # Interface: TransitionConfig
 
-Defined in: [quantizer/src/transition.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L21)
+Defined in: [quantizer/src/transition.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L21)
 
 Per-transition animation parameters.
 
 Used by [AnimatedQuantizer](../namespaces/AnimatedQuantizer/README.md) to drive interpolation between two
 state output records. `duration` of `0` produces an instantaneous snap.
 
-Plain `number` literals are accepted alongside branded [Millis](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md);
+Plain `number` literals are accepted alongside branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md);
 the resolver brands internally (the one sanctioned cast site lives in
 `@czap/core` brands), so `{ duration: 300 }` needs no import.
 
@@ -23,9 +23,9 @@ the resolver brands internally (the one sanctioned cast site lives in
 
 > `readonly` `optional` **delay?**: `number` \| `Millis`
 
-Defined in: [quantizer/src/transition.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L27)
+Defined in: [quantizer/src/transition.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L27)
 
-Delay before the animation begins, in milliseconds (plain `number` or branded [Millis](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
+Delay before the animation begins, in milliseconds (plain `number` or branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
 
 ***
 
@@ -33,9 +33,9 @@ Delay before the animation begins, in milliseconds (plain `number` or branded [M
 
 > `readonly` **duration**: `number` \| `Millis`
 
-Defined in: [quantizer/src/transition.ts:23](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L23)
+Defined in: [quantizer/src/transition.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L23)
 
-Animation duration in milliseconds (plain `number` or branded [Millis](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
+Animation duration in milliseconds (plain `number` or branded [Millis](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/type-aliases/Millis.md)).
 
 ***
 
@@ -43,6 +43,6 @@ Animation duration in milliseconds (plain `number` or branded [Millis](https://g
 
 > `readonly` `optional` **easing?**: `EasingFnShape`
 
-Defined in: [quantizer/src/transition.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/quantizer/src/transition.ts#L25)
+Defined in: [quantizer/src/transition.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/quantizer/src/transition.ts#L25)
 
 Easing function applied to progress; defaults to linear.

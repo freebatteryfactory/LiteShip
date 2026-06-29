@@ -8,7 +8,7 @@
 
 > **canonicalAddressBytes**(`value`): `Uint8Array`
 
-Defined in: [core/src/content-address.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/content-address.ts#L53)
+Defined in: [core/src/content-address.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/content-address.ts#L53)
 
 Canonical CBOR bytes for a value — the shared byte sequence both a fnv1a
 identity ([contentAddressOf](contentAddressOf.md)) and a sha256 integrity digest

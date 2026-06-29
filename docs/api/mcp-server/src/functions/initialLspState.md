@@ -8,7 +8,7 @@
 
 > **initialLspState**(): [`LspServerState`](../interfaces/LspServerState.md)
 
-Defined in: [mcp-server/src/lsp/server.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L120)
+Defined in: [mcp-server/src/lsp/server.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L120)
 
 The initial lifecycle state — pre-`initialize`, no findings yet.
 

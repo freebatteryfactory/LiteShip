@@ -8,7 +8,7 @@
 
 > `const` **PROOF\_FLOOR\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), `number`\>\>
 
-Defined in: [gauntlet/src/gates/proof-propagation.ts:110](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L110)
+Defined in: [gauntlet/src/gates/proof-propagation.ts:110](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/proof-propagation.ts#L110)
 
 The minimum acceptable EFFECTIVE proof per level — the floor a global drop must
 clear, exported DATA a downstream owner can redline (sibling to the

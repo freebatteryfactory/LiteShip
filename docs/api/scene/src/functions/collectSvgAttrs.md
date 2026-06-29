@@ -8,7 +8,7 @@
 
 > **collectSvgAttrs**(`world`): `Effect`\<[`SvgAttrsFrame`](../type-aliases/SvgAttrsFrame.md)\>
 
-Defined in: [scene/src/systems/svg-egress.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L49)
+Defined in: [scene/src/systems/svg-egress.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/svg-egress.ts#L49)
 
 Pure egress core — query the world for persisted `_svgAttrs` components
 and collect them into an entity-keyed map. Reads only the persisted ECS

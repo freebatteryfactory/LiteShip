@@ -6,7 +6,7 @@
 
 # Interface: MorphRejection
 
-Defined in: [web/src/types.ts:159](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L159)
+Defined in: [web/src/types.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L159)
 
 Morph rejection when preserve constraints are violated.
 
@@ -16,7 +16,7 @@ Morph rejection when preserve constraints are violated.
 
 > `readonly` `optional` **hint?**: `string`
 
-Defined in: [web/src/types.ts:166](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L166)
+Defined in: [web/src/types.ts:166](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L166)
 
 Literal next step for the consumer rendering the rejection.
 
@@ -26,7 +26,7 @@ Literal next step for the consumer rendering the rejection.
 
 > `readonly` `optional` **missingIds?**: readonly `string`[]
 
-Defined in: [web/src/types.ts:162](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L162)
+Defined in: [web/src/types.ts:162](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L162)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [web/src/types.ts:162](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **reason**: `string`
 
-Defined in: [web/src/types.ts:164](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L164)
+Defined in: [web/src/types.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L164)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [web/src/types.ts:164](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` `optional` **slot?**: [`SlotPath`](../type-aliases/SlotPath.md)
 
-Defined in: [web/src/types.ts:163](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L163)
+Defined in: [web/src/types.ts:163](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L163)
 
 ***
 
@@ -50,6 +50,6 @@ Defined in: [web/src/types.ts:163](https://github.com/heyoub/LiteShip/blob/main/
 
 > `readonly` **type**: `"preserve_violation"`
 
-Defined in: [web/src/types.ts:161](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/types.ts#L161)
+Defined in: [web/src/types.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L161)
 
 Closed union of the rejection kinds the runtime emits.

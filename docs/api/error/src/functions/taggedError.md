@@ -8,7 +8,7 @@
 
 > **taggedError**\<`Tag`, `Fields`\>(`tag`, `message`, `fields`, `options?`): [`TaggedErrorValue`](../type-aliases/TaggedErrorValue.md)\<`Tag`, `Fields`\>
 
-Defined in: [error/src/contract.ts:65](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/contract.ts#L65)
+Defined in: [error/src/contract.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/contract.ts#L65)
 
 The one composer. Builds a tagged error by composing `_tag` + structured
 `fields` onto a fresh platform `Error` (so the result has a stack trace and

@@ -8,7 +8,7 @@
 
 > `const` **MCDC\_SEVERITY\_BY\_LEVEL**: `Readonly`\<`Record`\<[`AssuranceLevel`](../type-aliases/AssuranceLevel.md), [`Severity`](../type-aliases/Severity.md)\>\>
 
-Defined in: [gauntlet/src/gates/mcdc-coverage.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L64)
+Defined in: [gauntlet/src/gates/mcdc-coverage.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/mcdc-coverage.ts#L64)
 
 The severity an UNCOVERED condition earns at a given effective level — the MC/DC-floor
 calibration, exported DATA a downstream owner can redline (sibling to the

@@ -8,6 +8,6 @@
 
 > **GlossaryEntry** = `Schema.Schema.Type`\<*typeof* `GlossaryEntrySchema`\>
 
-Defined in: [command/src/commands/glossary.ts:25](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L25)
+Defined in: [command/src/commands/glossary.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/glossary.ts#L25)
 
 One ontology term. Mirrors a row in GLOSSARY.md.

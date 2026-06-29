@@ -8,7 +8,7 @@
 
 > **nodeContext**(`repoRoot`, `globs`, `ir?`, `supplyChain?`, `mutation?`, `simulation?`, `traceability?`, `standards?`, `mcdc?`, `fuzzCorpus?`): [`GateContext`](../interfaces/GateContext.md)
 
-Defined in: [gauntlet/src/node-context.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/node-context.ts#L112)
+Defined in: [gauntlet/src/node-context.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/node-context.ts#L112)
 
 A [GateContext](../interfaces/GateContext.md) backed by the filesystem at `repoRoot`, scoped to the
 files matched by `globs`.

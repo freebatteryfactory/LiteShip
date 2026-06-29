@@ -8,7 +8,7 @@
 
 > **handleLspMessage**(`rawLine`, `state`, `runGauntlet`): `Promise`\<\{ `result`: [`LspHandleResult`](../interfaces/LspHandleResult.md); `state`: [`LspServerState`](../interfaces/LspServerState.md); \}\>
 
-Defined in: [mcp-server/src/lsp/server.ts:135](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L135)
+Defined in: [mcp-server/src/lsp/server.ts:135](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/server.ts#L135)
 
 Handle one parsed LSP message. PURE over (raw line, state, runner) → next
 state + result — the only effect is invoking the injected `runGauntlet`

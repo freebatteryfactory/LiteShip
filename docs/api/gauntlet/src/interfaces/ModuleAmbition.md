@@ -6,7 +6,7 @@
 
 # Interface: ModuleAmbition
 
-Defined in: [gauntlet/src/ambition-proof.ts:111](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L111)
+Defined in: [gauntlet/src/ambition-proof.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L111)
 
 The AMBITION sub-scores + the blended scalar for one module (each in `[0, 1]`).
 
@@ -16,7 +16,7 @@ The AMBITION sub-scores + the blended scalar for one module (each in `[0, 1]`).
 
 > `readonly` **ambition**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L117)
+Defined in: [gauntlet/src/ambition-proof.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L117)
 
 The mean of the four sub-scores.
 
@@ -26,7 +26,7 @@ The mean of the four sub-scores.
 
 > `readonly` **assurance**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:115](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L115)
+Defined in: [gauntlet/src/ambition-proof.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L115)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [gauntlet/src/ambition-proof.ts:115](https://github.com/heyoub/LiteS
 
 > `readonly` **claimDensity**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:114](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L114)
+Defined in: [gauntlet/src/ambition-proof.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L114)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [gauntlet/src/ambition-proof.ts:114](https://github.com/heyoub/LiteS
 
 > `readonly` **complexity**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:113](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L113)
+Defined in: [gauntlet/src/ambition-proof.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L113)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [gauntlet/src/ambition-proof.ts:113](https://github.com/heyoub/LiteS
 
 > `readonly` **size**: `number`
 
-Defined in: [gauntlet/src/ambition-proof.ts:112](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L112)
+Defined in: [gauntlet/src/ambition-proof.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/ambition-proof.ts#L112)

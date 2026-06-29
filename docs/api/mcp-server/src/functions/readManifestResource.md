@@ -8,7 +8,7 @@
 
 > **readManifestResource**(`uri`): [`McpResourceContents`](../interfaces/McpResourceContents.md)
 
-Defined in: [mcp-server/src/manifest-resource.ts:60](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/manifest-resource.ts#L60)
+Defined in: [mcp-server/src/manifest-resource.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/manifest-resource.ts#L60)
 
 Read the manifest resource. Any other `liteship://mcp-app/…` URI → `NotFoundError` (→ -32002).
 

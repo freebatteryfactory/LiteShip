@@ -8,10 +8,10 @@
 
 > **AuditPayload** = `Omit`\<`Schema.Schema.Type`\<*typeof* [`AuditPayloadSchema`](../variables/AuditPayloadSchema.md)\>, `"findings"`\> & `object`
 
-Defined in: [command/src/commands/audit.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/audit.ts#L73)
+Defined in: [command/src/commands/audit.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/audit.ts#L73)
 
 Structured payload returned by `audit`. Single-source-derived for every field
-EXCEPT `findings`, which keeps the canonical [AuditEngineFinding](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts) type
+EXCEPT `findings`, which keeps the canonical [AuditEngineFinding](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts) type
 (so `metadata` — an open record the outputSchema's dialect can't express —
 stays in the type and is never narrowed away). The `outputSchema` is derived
 from `AuditPayloadSchema` (findings minus metadata); the type is a faithful
@@ -21,4 +21,4 @@ superset on exactly that one field.
 
 ### findings?
 
-> `readonly` `optional` **findings?**: readonly [`AuditEngineFinding`](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts)[]
+> `readonly` `optional` **findings?**: readonly [`AuditEngineFinding`](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts)[]

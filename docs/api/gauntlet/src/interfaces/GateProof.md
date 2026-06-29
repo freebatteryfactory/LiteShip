@@ -6,7 +6,7 @@
 
 # Interface: GateProof
 
-Defined in: [gauntlet/src/authority.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L27)
+Defined in: [gauntlet/src/authority.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L27)
 
 The evidence a gate produced by running against its own fixtures.
 
@@ -16,7 +16,7 @@ The evidence a gate produced by running against its own fixtures.
 
 > `readonly` **gateId**: `string`
 
-Defined in: [gauntlet/src/authority.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L28)
+Defined in: [gauntlet/src/authority.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L28)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [gauntlet/src/authority.ts:28](https://github.com/heyoub/LiteShip/bl
 
 > `readonly` **greenClean**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:32](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L32)
+Defined in: [gauntlet/src/authority.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L32)
 
 Did the green (known-good) fixture produce 0 findings?
 
@@ -34,7 +34,7 @@ Did the green (known-good) fixture produce 0 findings?
 
 > `readonly` **mutationKilled**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:34](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L34)
+Defined in: [gauntlet/src/authority.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L34)
 
 Did mutating the gate's logic make its fixtures fail (mutation killed)?
 
@@ -44,7 +44,7 @@ Did mutating the gate's logic make its fixtures fail (mutation killed)?
 
 > `readonly` **redCaught**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L30)
+Defined in: [gauntlet/src/authority.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L30)
 
 Did the red (known-bad) fixture produce ≥1 finding?
 
@@ -54,6 +54,6 @@ Did the red (known-bad) fixture produce ≥1 finding?
 
 > `readonly` **selfProven**: `boolean`
 
-Defined in: [gauntlet/src/authority.ts:36](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L36)
+Defined in: [gauntlet/src/authority.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/authority.ts#L36)
 
 Fully self-proven iff all three hold.

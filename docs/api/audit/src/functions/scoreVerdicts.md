@@ -8,7 +8,7 @@
 
 > **scoreVerdicts**(`verdicts`): [`MutationScore`](../interfaces/MutationScore.md)
 
-Defined in: [audit/src/mutation-verdict.ts:363](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L363)
+Defined in: [audit/src/mutation-verdict.ts:363](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-verdict.ts#L363)
 
 Summarize a set of verdicts into a [MutationScore](../interfaces/MutationScore.md). Pure + deterministic.
 

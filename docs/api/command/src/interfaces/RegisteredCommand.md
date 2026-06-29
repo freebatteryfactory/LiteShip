@@ -6,7 +6,7 @@
 
 # Interface: RegisteredCommand
 
-Defined in: [command/src/registry.ts:473](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L473)
+Defined in: [command/src/registry.ts:473](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L473)
 
 A descriptor paired with its handler — the unit the registry indexes. The
 handler is optional: a descriptor-only entry declares a command's identity in
@@ -23,7 +23,7 @@ CLI's own dispatch) and pending migration into this package.
 
 > `readonly` **descriptor**: `CapsuleCommandDescriptor`
 
-Defined in: [command/src/registry.ts:474](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L474)
+Defined in: [command/src/registry.ts:474](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L474)
 
 ***
 
@@ -31,4 +31,4 @@ Defined in: [command/src/registry.ts:474](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` `optional` **handler?**: [`CapsuleCommandHandler`](CapsuleCommandHandler.md)
 
-Defined in: [command/src/registry.ts:475](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L475)
+Defined in: [command/src/registry.ts:475](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L475)

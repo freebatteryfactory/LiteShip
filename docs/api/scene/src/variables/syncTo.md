@@ -8,7 +8,7 @@
 
 > `const` **syncTo**: `object`
 
-Defined in: [scene/src/sugar/sync-to.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/sync-to.ts#L21)
+Defined in: [scene/src/sugar/sync-to.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/sync-to.ts#L21)
 
 Typed SyncAnchor constructors for the three supported modes. Each accepts the audio track object or its id.
 

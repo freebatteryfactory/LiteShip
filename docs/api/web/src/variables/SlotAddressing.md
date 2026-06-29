@@ -8,7 +8,7 @@
 
 > `const` **SlotAddressing**: `object`
 
-Defined in: [web/src/slot/addressing.ts:165](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/slot/addressing.ts#L165)
+Defined in: [web/src/slot/addressing.ts:165](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/slot/addressing.ts#L165)
 
 Consolidated namespace export matching the spine contract.
 

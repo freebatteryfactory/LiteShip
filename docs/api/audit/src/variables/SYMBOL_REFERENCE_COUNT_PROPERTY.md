@@ -8,7 +8,7 @@
 
 > `const` **SYMBOL\_REFERENCE\_COUNT\_PROPERTY**: `"symbol-reference-count"` = `'symbol-reference-count'`
 
-Defined in: [audit/src/repo-ir-language-service.ts:72](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L72)
+Defined in: [audit/src/repo-ir-language-service.ts:72](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/repo-ir-language-service.ts#L72)
 
 The `symbol-reference-count` property: a number fact carrying the count of
 references OUTSIDE the symbol's declaration file (the cross-file reference

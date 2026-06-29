@@ -6,7 +6,7 @@
 
 # Interface: McpUiResource
 
-Defined in: [mcp-server/src/ui-resources.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L48)
+Defined in: [mcp-server/src/ui-resources.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L48)
 
 An MCP Apps UI resource descriptor as emitted by `resources/list`.
 
@@ -16,7 +16,7 @@ An MCP Apps UI resource descriptor as emitted by `resources/list`.
 
 > `readonly` **\_meta**: [`McpUiResourceMeta`](McpUiResourceMeta.md)
 
-Defined in: [mcp-server/src/ui-resources.ts:53](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L53)
+Defined in: [mcp-server/src/ui-resources.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L53)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [mcp-server/src/ui-resources.ts:53](https://github.com/heyoub/LiteSh
 
 > `readonly` **description**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:51](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L51)
+Defined in: [mcp-server/src/ui-resources.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L51)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [mcp-server/src/ui-resources.ts:51](https://github.com/heyoub/LiteSh
 
 > `readonly` **mimeType**: `"text/html;profile=mcp-app"`
 
-Defined in: [mcp-server/src/ui-resources.ts:52](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L52)
+Defined in: [mcp-server/src/ui-resources.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L52)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [mcp-server/src/ui-resources.ts:52](https://github.com/heyoub/LiteSh
 
 > `readonly` **name**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:50](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L50)
+Defined in: [mcp-server/src/ui-resources.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L50)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [mcp-server/src/ui-resources.ts:50](https://github.com/heyoub/LiteSh
 
 > `readonly` **uri**: `string`
 
-Defined in: [mcp-server/src/ui-resources.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L49)
+Defined in: [mcp-server/src/ui-resources.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/ui-resources.ts#L49)

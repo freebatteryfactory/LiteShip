@@ -8,7 +8,7 @@
 
 > `const` **NO\_EVIDENCE\_MARKER**: `"evidence:none"`
 
-Defined in: [gauntlet/src/verdict-cache.ts:153](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L153)
+Defined in: [gauntlet/src/verdict-cache.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L153)
 
 The inert marker folded into the key for a gate that declares NO out-of-IR evidence
 (its [Gate.evidenceDigest](../interfaces/Gate.md#evidencedigest) is absent or returns `undefined`). By design NOT a

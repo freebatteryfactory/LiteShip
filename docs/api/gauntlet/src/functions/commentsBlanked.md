@@ -8,7 +8,7 @@
 
 > **commentsBlanked**(`src`): `string`
 
-Defined in: [gauntlet/src/gates/code-only.ts:405](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L405)
+Defined in: [gauntlet/src/gates/code-only.ts:405](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/code-only.ts#L405)
 
 Blank out COMMENT CONTENTS only, leaving STRING LITERALS and code intact
 (newlines preserved, so line numbers still align). The complement of

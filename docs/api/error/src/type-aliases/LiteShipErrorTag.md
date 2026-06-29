@@ -8,6 +8,6 @@
 
 > **LiteShipErrorTag** = *typeof* [`LITESHIP_ERROR_TAGS`](../variables/LITESHIP_ERROR_TAGS.md)\[`number`\]
 
-Defined in: [error/src/variants.ts:272](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L272)
+Defined in: [error/src/variants.ts:272](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L272)
 
 The `_tag` union of the built-in variants.

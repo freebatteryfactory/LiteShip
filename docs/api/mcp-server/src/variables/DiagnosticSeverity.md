@@ -8,7 +8,7 @@
 
 > `const` **DiagnosticSeverity**: `object`
 
-Defined in: [mcp-server/src/lsp/types.ts:97](https://github.com/heyoub/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L97)
+Defined in: [mcp-server/src/lsp/types.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/mcp-server/src/lsp/types.ts#L97)
 
 LSP `DiagnosticSeverity` (§Diagnostic). The rigor mapping (documented on
 [severityToDiagnostic](../functions/severityToDiagnostic.md)): `error` → Error(1), `warning` → Warning(2),

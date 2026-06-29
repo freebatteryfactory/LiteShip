@@ -8,7 +8,7 @@
 
 > **envelopeFactor**(`env`, `frameIndex`, `range`): `number`
 
-Defined in: [scene/src/sugar/envelope.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L85)
+Defined in: [scene/src/sugar/envelope.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/sugar/envelope.ts#L85)
 
 Evaluate a resolved envelope at a frame index within a track's
 frame range, returning a multiplicative factor for the system's

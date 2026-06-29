@@ -8,7 +8,7 @@
 
 > **sealGraph**(`graph`): [`DocumentGraph`](../interfaces/DocumentGraph.md)
 
-Defined in: [core/src/document-graph-address.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L99)
+Defined in: [core/src/document-graph-address.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph-address.ts#L99)
 
 Return a copy of the graph with `id` + `digest` set to the correct addresses.
 

@@ -8,7 +8,7 @@
 
 > **generateConditionMutants**(`sourceFile`, `options?`): readonly [`ConditionMutant`](../interfaces/ConditionMutant.md)[]
 
-Defined in: [audit/src/mcdc-engine.ts:142](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L142)
+Defined in: [audit/src/mcdc-engine.ts:142](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L142)
 
 Generate the canonical, sorted, content-addressed list of CONDITION-mutants for a
 parsed source file — the deterministic heart of the MC/DC engine.

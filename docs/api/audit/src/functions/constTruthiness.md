@@ -8,7 +8,7 @@
 
 > **constTruthiness**(`expr`): `boolean` \| `undefined`
 
-Defined in: [audit/src/skip-detect-ast.ts:846](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L846)
+Defined in: [audit/src/skip-detect-ast.ts:846](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/skip-detect-ast.ts#L846)
 
 The COMPILE-TIME truthiness of a condition expression WHEN it is a constant — `true`/`false`, a
 numeric / string / bigint literal, `null`, the `undefined`/`NaN`/`Infinity` identifiers, a regex

@@ -8,7 +8,7 @@
 
 > **factAccessEvidenceDigest**(`label`, `fact`): `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:319](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L319)
+Defined in: [gauntlet/src/verdict-cache.ts:319](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L319)
 
 The SINGLE OUT-OF-IR evidence digest for an INJECTED-FACT gate — the one-line
 [Gate.evidenceDigest](../interfaces/Gate.md#evidencedigest) for a gate whose verdict folds a single host-injected

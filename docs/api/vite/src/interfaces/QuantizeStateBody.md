@@ -6,7 +6,7 @@
 
 # Interface: QuantizeStateBody
 
-Defined in: [vite/src/css-quantize.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L75)
+Defined in: [vite/src/css-quantize.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L75)
 
 The parsed body of one `@quantize` state: bare declarations that apply
 to the boundary element selector (the documented flat form) plus
@@ -18,7 +18,7 @@ nested per-selector rules (the adaptive per-element form).
 
 > `readonly` `optional` **ariaAttrs?**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L101)
+Defined in: [vite/src/css-quantize.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L101)
 
 Authored per-state ARIA/data attributes from a nested `@aria { … }`
 segment (e.g. `aria-expanded: false; role: button`). Quotes are stripped.
@@ -34,7 +34,7 @@ ARIA consumers/tests read it unchanged.
 
 > `readonly` **bareProps**: `Record`\<`string`, `string`\>
 
-Defined in: [vite/src/css-quantize.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L77)
+Defined in: [vite/src/css-quantize.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L77)
 
 Declarations written directly inside the state (flat form).
 
@@ -44,13 +44,13 @@ Declarations written directly inside the state (flat form).
 
 > `readonly` `optional` **castAttrs?**: `Partial`\<`Record`\<`CastTarget`, `Record`\<`string`, `string`\>\>\>
 
-Defined in: [vite/src/css-quantize.ts:91](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L91)
+Defined in: [vite/src/css-quantize.ts:91](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L91)
 
 Authored per-state non-CSS cast attributes, keyed by cast target. Each
 entry holds the raw `{ key: value }` declarations from a nested
 `@<target> { … }` segment (quotes stripped). Generalized from the
 original `@aria`-only form so adding a cast target is a registration in
-[CAST\_TARGETS](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts), not a new field. Targets the state did not author
+[CAST\_TARGETS](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/boundary-manifest.ts), not a new field. Targets the state did not author
 are absent; the field itself is absent when no cast segment was authored.
 
 Downstream each target routes through its compiler arm via `dispatch`
@@ -62,6 +62,6 @@ Downstream each target routes through its compiler arm via `dispatch`
 
 > `readonly` **rules**: readonly [`QuantizeNestedRule`](QuantizeNestedRule.md)[]
 
-Defined in: [vite/src/css-quantize.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L79)
+Defined in: [vite/src/css-quantize.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L79)
 
 Nested `<selector> { ... }` rules written inside the state.

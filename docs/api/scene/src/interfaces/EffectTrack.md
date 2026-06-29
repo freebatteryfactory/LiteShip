@@ -6,7 +6,7 @@
 
 # Interface: EffectTrack\<M\>
 
-Defined in: [scene/src/contract.ts:99](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L99)
+Defined in: [scene/src/contract.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L99)
 
 Effect track — applies an intensity curve to a target video track, optionally synced to audio.
 
@@ -22,7 +22,7 @@ Effect track — applies an intensity curve to a target video track, optionally 
 
 > `readonly` **\_tag**: `"effect"`
 
-Defined in: [scene/src/contract.ts:100](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L100)
+Defined in: [scene/src/contract.ts:100](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L100)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [scene/src/contract.ts:100](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **effectKind**: `"pulse"` \| `"glow"` \| `"shake"` \| `"zoom"` \| `"desaturate"`
 
-Defined in: [scene/src/contract.ts:104](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L104)
+Defined in: [scene/src/contract.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L104)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [scene/src/contract.ts:104](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **envelope?**: `TrackEnvelope`
 
-Defined in: [scene/src/contract.ts:108](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L108)
+Defined in: [scene/src/contract.ts:108](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L108)
 
 Optional intensity automation — e.g. `pulse.every(Beat(0.5), { amplitude: 0.3 })`. Compiled to an `Envelope` component EffectSystem reads each tick.
 
@@ -48,7 +48,7 @@ Optional intensity automation — e.g. `pulse.every(Beat(0.5), { amplitude: 0.3 
 
 > `readonly` **from**: `M`
 
-Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L102)
+Defined in: [scene/src/contract.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L102)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [scene/src/contract.ts:102](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **id**: [`TrackId`](../type-aliases/TrackId.md)\<`"effect"`\>
 
-Defined in: [scene/src/contract.ts:101](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L101)
+Defined in: [scene/src/contract.ts:101](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L101)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [scene/src/contract.ts:101](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` `optional` **syncTo?**: `object`
 
-Defined in: [scene/src/contract.ts:106](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L106)
+Defined in: [scene/src/contract.ts:106](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L106)
 
 #### anchor
 
@@ -80,7 +80,7 @@ Defined in: [scene/src/contract.ts:106](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **target**: [`TrackId`](../type-aliases/TrackId.md)\<`"video"`\>
 
-Defined in: [scene/src/contract.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L105)
+Defined in: [scene/src/contract.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L105)
 
 ***
 
@@ -88,4 +88,4 @@ Defined in: [scene/src/contract.ts:105](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **to**: `M`
 
-Defined in: [scene/src/contract.ts:103](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L103)
+Defined in: [scene/src/contract.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L103)

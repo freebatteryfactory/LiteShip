@@ -6,7 +6,7 @@
 
 # Interface: CloudflareEdgeCacheOptions
 
-Defined in: [cloudflare/src/edge-cache.ts:13](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L13)
+Defined in: [cloudflare/src/edge-cache.ts:13](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L13)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [cloudflare/src/edge-cache.ts:13](https://github.com/heyoub/LiteShip
 
 > `readonly` **binding**: `string`
 
-Defined in: [cloudflare/src/edge-cache.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L15)
+Defined in: [cloudflare/src/edge-cache.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L15)
 
 KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`).
 
@@ -24,7 +24,7 @@ KV namespace binding name (e.g. `CZAP_BOUNDARY_CACHE`).
 
 > `readonly` `optional` **cache?**: [`CloudflareCacheApi`](CloudflareCacheApi.md) \| `null`
 
-Defined in: [cloudflare/src/edge-cache.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L21)
+Defined in: [cloudflare/src/edge-cache.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L21)
 
 Cache API implementation. Defaults to `globalThis.caches.default` when present.
 
@@ -34,7 +34,7 @@ Cache API implementation. Defaults to `globalThis.caches.default` when present.
 
 > `readonly` `optional` **cacheTtl?**: `number`
 
-Defined in: [cloudflare/src/edge-cache.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L19)
+Defined in: [cloudflare/src/edge-cache.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L19)
 
 Cloudflare KV edge-cache TTL, passed through to `kv.get(key, { cacheTtl })`.
 
@@ -44,7 +44,7 @@ Cloudflare KV edge-cache TTL, passed through to `kv.get(key, { cacheTtl })`.
 
 > `readonly` `optional` **ctx?**: `object`
 
-Defined in: [cloudflare/src/edge-cache.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L17)
+Defined in: [cloudflare/src/edge-cache.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/cloudflare/src/edge-cache.ts#L17)
 
 Workers ExecutionContext; enables background Cache API population on KV hits.
 

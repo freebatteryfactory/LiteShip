@@ -8,7 +8,7 @@
 
 > **coverageDigestOf**(`coveredFiles`, `ir`): `string`
 
-Defined in: [gauntlet/src/verdict-cache.ts:173](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L173)
+Defined in: [gauntlet/src/verdict-cache.ts:173](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L173)
 
 The deterministic COVERAGE DIGEST — a stable string fold over the
 `(FileId, contentDigest)` pairs of a gate's covered files, SORTED by FileId so

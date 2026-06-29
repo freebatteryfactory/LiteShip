@@ -8,7 +8,7 @@
 
 > **allFileIds**(`ir`): readonly `string`[]
 
-Defined in: [gauntlet/src/verdict-cache.ts:214](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L214)
+Defined in: [gauntlet/src/verdict-cache.ts:214](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/verdict-cache.ts#L214)
 
 The conservative DEFAULT coverage when a [Gate](../interfaces/Gate.md) declares none: EVERY file
 in the IR. This is the SAFE FLOOR (design §4) for IN-IR evidence — a gate with no

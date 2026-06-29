@@ -8,7 +8,7 @@
 
 > **primitiveSearchPatterns**(`kind`, `fromFile`, `projectRoot`, `userDir?`): readonly `string`[]
 
-Defined in: [vite/src/primitive-resolve.ts:85](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/primitive-resolve.ts#L85)
+Defined in: [vite/src/primitive-resolve.ts:85](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/primitive-resolve.ts#L85)
 
 The candidate module patterns [resolvePrimitive](resolvePrimitive.md) searches for a
 given lookup, in search order (e.g. `src/tokens.ts`, `src/*.tokens.ts`,

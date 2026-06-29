@@ -6,7 +6,7 @@
 
 # Interface: CheckInvariantEntry
 
-Defined in: [command/src/commands/check-invariants-registry.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L17)
+Defined in: [command/src/commands/check-invariants-registry.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L17)
 
 One banned-pattern rule: a regex scoped to `dirs`, minus `exclude` prefixes.
 
@@ -16,7 +16,7 @@ One banned-pattern rule: a regex scoped to `dirs`, minus `exclude` prefixes.
 
 > `readonly` **dirs**: readonly `string`[]
 
-Defined in: [command/src/commands/check-invariants-registry.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L20)
+Defined in: [command/src/commands/check-invariants-registry.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L20)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [command/src/commands/check-invariants-registry.ts:20](https://githu
 
 > `readonly` `optional` **exclude?**: readonly `string`[]
 
-Defined in: [command/src/commands/check-invariants-registry.ts:21](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L21)
+Defined in: [command/src/commands/check-invariants-registry.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L21)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [command/src/commands/check-invariants-registry.ts:21](https://githu
 
 > `readonly` **message**: `string`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:22](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L22)
+Defined in: [command/src/commands/check-invariants-registry.ts:22](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L22)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [command/src/commands/check-invariants-registry.ts:22](https://githu
 
 > `readonly` **name**: `string`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L18)
+Defined in: [command/src/commands/check-invariants-registry.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L18)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [command/src/commands/check-invariants-registry.ts:18](https://githu
 
 > `readonly` **pattern**: `RegExp`
 
-Defined in: [command/src/commands/check-invariants-registry.ts:19](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L19)
+Defined in: [command/src/commands/check-invariants-registry.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/check-invariants-registry.ts#L19)

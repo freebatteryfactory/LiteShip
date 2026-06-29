@@ -8,7 +8,7 @@
 
 > **exportedNamesFromNode**(`node`): readonly `object`[]
 
-Defined in: [audit/src/structure.ts:231](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/structure.ts#L231)
+Defined in: [audit/src/structure.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/structure.ts#L231)
 
 ## Parameters
 

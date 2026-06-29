@@ -8,7 +8,7 @@
 
 > **MutationOperatorId** = `"conditional-boundary"` \| `"equality"` \| `"arithmetic"` \| `"logical"` \| `"boolean-literal"` \| `"return-value"` \| `"unary-not"` \| `"string-literal"`
 
-Defined in: [audit/src/mutation-engine.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L77)
+Defined in: [audit/src/mutation-engine.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L77)
 
 The closed set of mutation OPERATOR ids — a `_tag` union (composition, not
 inheritance). Each id names a single, documented, behaviour-changing rewrite the

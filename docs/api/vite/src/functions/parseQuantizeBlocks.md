@@ -8,7 +8,7 @@
 
 > **parseQuantizeBlocks**(`css`, `sourceFile`): readonly [`QuantizeBlock`](../interfaces/QuantizeBlock.md)[]
 
-Defined in: [vite/src/css-quantize.ts:371](https://github.com/heyoub/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L371)
+Defined in: [vite/src/css-quantize.ts:371](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/css-quantize.ts#L371)
 
 Parse every `@quantize` block from CSS source text.
 

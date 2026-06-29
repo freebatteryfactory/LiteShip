@@ -6,7 +6,7 @@
 
 # Interface: AddressedDigest
 
-Defined in: [canonical/src/addressed-digest.ts:15](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L15)
+Defined in: [canonical/src/addressed-digest.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L15)
 
 Pair of identity hash + cryptographic digest over the same canonical bytes.
 
@@ -16,7 +16,7 @@ Pair of identity hash + cryptographic digest over the same canonical bytes.
 
 > `readonly` **algo**: `"sha256"` \| `"blake3"`
 
-Defined in: [canonical/src/addressed-digest.ts:18](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L18)
+Defined in: [canonical/src/addressed-digest.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L18)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [canonical/src/addressed-digest.ts:18](https://github.com/heyoub/Lit
 
 > `readonly` **display\_id**: `` `fnv1a:${string}` ``
 
-Defined in: [canonical/src/addressed-digest.ts:16](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L16)
+Defined in: [canonical/src/addressed-digest.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L16)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [canonical/src/addressed-digest.ts:16](https://github.com/heyoub/Lit
 
 > `readonly` **integrity\_digest**: [`IntegrityDigest`](../type-aliases/IntegrityDigest.md)
 
-Defined in: [canonical/src/addressed-digest.ts:17](https://github.com/heyoub/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L17)
+Defined in: [canonical/src/addressed-digest.ts:17](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/canonical/src/addressed-digest.ts#L17)

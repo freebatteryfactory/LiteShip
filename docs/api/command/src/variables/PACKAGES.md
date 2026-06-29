@@ -8,6 +8,6 @@
 
 > `const` **PACKAGES**: readonly [`PackageSmokeSpec`](../interfaces/PackageSmokeSpec.md)[]
 
-Defined in: [command/src/commands/package-smoke-registry.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L27)
+Defined in: [command/src/commands/package-smoke-registry.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/package-smoke-registry.ts#L27)
 
 Mirrors every publishable `@czap/*` scope under `packages/*` (see `pnpm-workspace.yaml`).

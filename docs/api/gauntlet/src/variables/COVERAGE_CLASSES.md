@@ -8,6 +8,6 @@
 
 > `const` **COVERAGE\_CLASSES**: readonly \[`"text-only"`, `"file-proxy-only"`, `"runtime-evidenced"`, `"symbol-evidenced"`\]
 
-Defined in: [gauntlet/src/repo-ir.ts:73](https://github.com/heyoub/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L73)
+Defined in: [gauntlet/src/repo-ir.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/repo-ir.ts#L73)
 
 The coverage classes in ascending evidentiary strength — canonical ordering.

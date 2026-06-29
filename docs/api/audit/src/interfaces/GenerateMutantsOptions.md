@@ -6,7 +6,7 @@
 
 # Interface: GenerateMutantsOptions
 
-Defined in: [audit/src/mutation-engine.ts:175](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L175)
+Defined in: [audit/src/mutation-engine.ts:175](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L175)
 
 Options for [generateMutants](../functions/generateMutants.md).
 
@@ -16,7 +16,7 @@ Options for [generateMutants](../functions/generateMutants.md).
 
 > `readonly` `optional` **budget?**: `number`
 
-Defined in: [audit/src/mutation-engine.ts:190](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L190)
+Defined in: [audit/src/mutation-engine.ts:190](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L190)
 
 A BUDGET cap on the catalogue size — at most `budget` mutants are returned. The
 selection is the DETERMINISTIC PREFIX of the canonical-sorted catalogue after a
@@ -31,7 +31,7 @@ mutants (an explicit no-op, not an error).
 
 > `readonly` `optional` **file?**: `string`
 
-Defined in: [audit/src/mutation-engine.ts:181](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L181)
+Defined in: [audit/src/mutation-engine.ts:181](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mutation-engine.ts#L181)
 
 The repo-relative file id stamped onto every mutant (so the divergence gate
 can locate the mutant at a real IR node). When omitted, the `ts.SourceFile`'s

@@ -6,7 +6,7 @@
 
 # Interface: ComposableWorldShape\<Schema\>
 
-Defined in: [core/src/composable.ts:117](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L117)
+Defined in: [core/src/composable.ts:117](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L117)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [core/src/composable.ts:117](https://github.com/heyoub/LiteShip/blob
 
 > **evaluate**\<`T`\>(`entity`, `input`): `Effect`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/composable.ts:121](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L121)
+Defined in: [core/src/composable.ts:121](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L121)
 
 #### Type Parameters
 
@@ -48,7 +48,7 @@ Defined in: [core/src/composable.ts:121](https://github.com/heyoub/LiteShip/blob
 
 > **query**\<`K`\>(...`componentTypes`): `Effect`\<readonly [`ComposableEntity`](ComposableEntity.md)\<`Pick`\<`Schema`, `K`\>\>[]\>
 
-Defined in: [core/src/composable.ts:120](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L120)
+Defined in: [core/src/composable.ts:120](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L120)
 
 #### Type Parameters
 
@@ -72,7 +72,7 @@ Defined in: [core/src/composable.ts:120](https://github.com/heyoub/LiteShip/blob
 
 > **spawn**\<`T`\>(`components`): `Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
 
-Defined in: [core/src/composable.ts:118](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L118)
+Defined in: [core/src/composable.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L118)
 
 #### Type Parameters
 
@@ -96,7 +96,7 @@ Defined in: [core/src/composable.ts:118](https://github.com/heyoub/LiteShip/blob
 
 > **spawnWith**\<`T`\>(`entity`): `Effect`\<[`ComposableEntity`](ComposableEntity.md)\<`T`\>\>
 
-Defined in: [core/src/composable.ts:119](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/composable.ts#L119)
+Defined in: [core/src/composable.ts:119](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/composable.ts#L119)
 
 #### Type Parameters
 

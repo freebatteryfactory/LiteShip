@@ -8,6 +8,6 @@
 
 > `const` **assetVerifyCommand**: [`HandledCommand`](../interfaces/HandledCommand.md)
 
-Defined in: [command/src/commands/asset.ts:105](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/commands/asset.ts#L105)
+Defined in: [command/src/commands/asset.ts:105](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/commands/asset.ts#L105)
 
 `asset verify <id>` — run the asset's generated test (ok with 0 invariants when none).

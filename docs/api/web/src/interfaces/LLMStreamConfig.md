@@ -6,7 +6,7 @@
 
 # Interface: LLMStreamConfig
 
-Defined in: [web/src/stream/llm-adapter.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L42)
+Defined in: [web/src/stream/llm-adapter.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L42)
 
 Configuration accepted by [LLMAdapter.create](../variables/LLMAdapter.md#create).
 
@@ -20,7 +20,7 @@ in tests.
 
 > `readonly` **parser**: [`ChunkParser`](../type-aliases/ChunkParser.md)
 
-Defined in: [web/src/stream/llm-adapter.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L46)
+Defined in: [web/src/stream/llm-adapter.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L46)
 
 Parser mapping SSE messages to typed LLM chunks.
 
@@ -30,6 +30,6 @@ Parser mapping SSE messages to typed LLM chunks.
 
 > `readonly` **source**: `Stream`\<[`SSEMessage`](../type-aliases/SSEMessage.md)\>
 
-Defined in: [web/src/stream/llm-adapter.ts:44](https://github.com/heyoub/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L44)
+Defined in: [web/src/stream/llm-adapter.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/llm-adapter.ts#L44)
 
 Stream of parsed SSE messages.

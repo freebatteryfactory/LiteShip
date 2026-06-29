@@ -10,7 +10,7 @@ name: Release (OIDC trusted publishing)
 # token (id-token: write below) for a short-lived publish credential at
 # publish time. PREREQUISITE: every publishable package must have a
 # trusted publisher configured at
-# https://www.npmjs.com/package/<name>/access (org: heyoub/LiteShip,
+# https://www.npmjs.com/package/<name>/access (org: freebatteryfactory/LiteShip,
 # workflow: release.yml — see RELEASING.md §Trusted publishing). A
 # package without one fails its publish loudly with an auth error; fix
 # the npm-side config and re-run the workflow — `czap ship` treats

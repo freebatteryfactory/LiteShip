@@ -8,7 +8,7 @@
 
 > `const` **TokenJSCompiler**: `object`
 
-Defined in: [compiler/src/token-js.ts:102](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/token-js.ts#L102)
+Defined in: [compiler/src/token-js.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/token-js.ts#L102)
 
 Token JS compiler namespace.
 
@@ -24,14 +24,14 @@ the build artifact stays 100% generated.
 
 Compile a token array into parallel `.ts` source and `.d.ts` declaration.
 
-Compile a list of [Token.Shape](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md) into a JS object + companion type
+Compile a list of [Token.Shape](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md) into a JS object + companion type
 declaration, grouped by category.
 
 #### Parameters
 
 ##### tokens
 
-readonly [`Shape`](https://github.com/heyoub/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)\<`string`, readonly `string`[]\>[]
+readonly [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Token/type-aliases/Shape.md)\<`string`, readonly `string`[]\>[]
 
 #### Returns
 

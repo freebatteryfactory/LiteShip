@@ -8,7 +8,7 @@
 
 > **defaultRoot**(): `string`
 
-Defined in: [audit/src/shared.ts:42](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/shared.ts#L42)
+Defined in: [audit/src/shared.ts:42](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/shared.ts#L42)
 
 The audit target when no profile/root is supplied — the caller's cwd.
 

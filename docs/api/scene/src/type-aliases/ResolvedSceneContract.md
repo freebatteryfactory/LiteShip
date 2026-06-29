@@ -8,7 +8,7 @@
 
 > **ResolvedSceneContract** = [`SceneContract`](../interfaces/SceneContract.md)\<`number`\> & `object`
 
-Defined in: [scene/src/contract.ts:186](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/contract.ts#L186)
+Defined in: [scene/src/contract.ts:186](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/contract.ts#L186)
 
 A scene contract whose timeline marks have all been resolved to
 numeric frame indices — what `compileScene` hands to every declared

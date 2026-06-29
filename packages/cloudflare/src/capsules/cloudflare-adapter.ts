@@ -53,6 +53,6 @@ export const cloudflareAdapterCapsule = defineCapsule({
   attribution: {
     license: 'MIT',
     author: 'LiteShip (@czap/cloudflare)',
-    url: 'https://github.com/heyoub/LiteShip/tree/main/packages/cloudflare',
+    url: 'https://github.com/freebatteryfactory/LiteShip/tree/main/packages/cloudflare',
   },
 });

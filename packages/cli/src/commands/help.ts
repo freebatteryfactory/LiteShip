@@ -28,7 +28,7 @@ const HINTS = `Hints (a working deck):
   - Releasing? \`czap ship\` ties packages up at the quay; \`czap verify\` checks the receipt before they sail.
 
 Docs:
-  https://github.com/heyoub/LiteShip
+  https://github.com/freebatteryfactory/LiteShip
 `;
 
 /** Render the grouped verb chart from the catalog. */

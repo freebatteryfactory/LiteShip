@@ -6,7 +6,7 @@
 
 # Interface: PlumbGateSummary
 
-Defined in: [command/src/registry.ts:380](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L380)
+Defined in: [command/src/registry.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L380)
 
 Structured verdict returned by the injected [CommandContext.runPlumb](CommandContext.md#runplumb)
 capability. `ok` ⟺ generated corpus present AND no skips AND no unclassified
@@ -19,7 +19,7 @@ to scan (⇒ run capsule:compile).
 
 > `readonly` **generatedCorpusMessage**: `string` \| `null`
 
-Defined in: [command/src/registry.ts:389](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L389)
+Defined in: [command/src/registry.ts:389](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L389)
 
 Human-readable reason when the generated test corpus is missing or empty.
 
@@ -29,7 +29,7 @@ Human-readable reason when the generated test corpus is missing or empty.
 
 > `readonly` **generatedPresent**: `boolean`
 
-Defined in: [command/src/registry.ts:387](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L387)
+Defined in: [command/src/registry.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L387)
 
 Whether the generated test corpus was present to scan.
 
@@ -39,7 +39,7 @@ Whether the generated test corpus was present to scan.
 
 > `readonly` **ok**: `boolean`
 
-Defined in: [command/src/registry.ts:381](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L381)
+Defined in: [command/src/registry.ts:381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L381)
 
 ***
 
@@ -47,7 +47,7 @@ Defined in: [command/src/registry.ts:381](https://github.com/heyoub/LiteShip/blo
 
 > `readonly` **skips**: readonly [`PlumbSkip`](PlumbSkip.md)[]
 
-Defined in: [command/src/registry.ts:383](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L383)
+Defined in: [command/src/registry.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L383)
 
 Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking.
 
@@ -57,6 +57,6 @@ Every `*.skip(...)` placeholder in `tests/generated/` — each one is blocking.
 
 > `readonly` **unclassified**: readonly `string`[]
 
-Defined in: [command/src/registry.ts:385](https://github.com/heyoub/LiteShip/blob/main/packages/command/src/registry.ts#L385)
+Defined in: [command/src/registry.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/command/src/registry.ts#L385)
 
 Published packages with no PACKAGE_PLUMB classification.

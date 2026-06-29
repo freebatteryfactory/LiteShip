@@ -8,7 +8,7 @@
 
 > **BoundaryCrossing**\<`S`\> = `object`
 
-Defined in: [core/src/type-utils.ts:45](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/type-utils.ts#L45)
+Defined in: [core/src/type-utils.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L45)
 
 Discriminated union of boundary crossings
 
@@ -24,7 +24,7 @@ Discriminated union of boundary crossings
 
 > `readonly` **from**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:46](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/type-utils.ts#L46)
+Defined in: [core/src/type-utils.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L46)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [core/src/type-utils.ts:46](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **timestamp**: [`HLCBrand`](../interfaces/HLCBrand.md)
 
-Defined in: [core/src/type-utils.ts:48](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/type-utils.ts#L48)
+Defined in: [core/src/type-utils.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L48)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [core/src/type-utils.ts:48](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **to**: [`StateName`](StateName.md)\<`S`\>
 
-Defined in: [core/src/type-utils.ts:47](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/type-utils.ts#L47)
+Defined in: [core/src/type-utils.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L47)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [core/src/type-utils.ts:47](https://github.com/heyoub/LiteShip/blob/
 
 > `readonly` **value**: `number`
 
-Defined in: [core/src/type-utils.ts:49](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/type-utils.ts#L49)
+Defined in: [core/src/type-utils.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/type-utils.ts#L49)

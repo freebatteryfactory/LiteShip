@@ -8,7 +8,7 @@
 
 > **ConditionForce** = `"force-condition-true"` \| `"force-condition-false"`
 
-Defined in: [audit/src/mcdc-engine.ts:79](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L79)
+Defined in: [audit/src/mcdc-engine.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/mcdc-engine.ts#L79)
 
 The force direction a condition-mutant pins its atomic condition to — a `_tag`-style
 value (composition). `true` splices `(true)` over the condition span; `false` splices

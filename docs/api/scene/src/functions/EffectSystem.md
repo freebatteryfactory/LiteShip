@@ -8,7 +8,7 @@
 
 > **EffectSystem**(`frameIndex`): `SystemShape`
 
-Defined in: [scene/src/systems/effect.ts:20](https://github.com/heyoub/LiteShip/blob/main/packages/scene/src/systems/effect.ts#L20)
+Defined in: [scene/src/systems/effect.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/scene/src/systems/effect.ts#L20)
 
 Build an EffectSystem keyed to a frame index.
 

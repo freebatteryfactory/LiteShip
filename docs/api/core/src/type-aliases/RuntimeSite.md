@@ -8,6 +8,6 @@
 
 > **RuntimeSite** = `"node"` \| `"browser"` \| `"worker"` \| `"edge"`
 
-Defined in: [core/src/document-graph.ts:31](https://github.com/heyoub/LiteShip/blob/main/packages/core/src/document-graph.ts#L31)
+Defined in: [core/src/document-graph.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/document-graph.ts#L31)
 
 The runtime sites a node may be admitted on (distinct from the CapTier lattice).

@@ -6,7 +6,7 @@
 
 # Interface: WGSLCompileResult
 
-Defined in: [compiler/src/wgsl.ts:62](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L62)
+Defined in: [compiler/src/wgsl.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L62)
 
 Output of [WGSLCompiler.compile](../variables/WGSLCompiler.md#compile).
 
@@ -19,7 +19,7 @@ constants, the uniform struct, and its binding declaration.
 
 > `readonly` **bindings**: readonly [`WGSLBinding`](WGSLBinding.md)[]
 
-Defined in: [compiler/src/wgsl.ts:66](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L66)
+Defined in: [compiler/src/wgsl.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L66)
 
 Uniform buffer bindings.
 
@@ -29,7 +29,7 @@ Uniform buffer bindings.
 
 > `readonly` **bindingValues**: `Record`\<`string`, `number`\>
 
-Defined in: [compiler/src/wgsl.ts:68](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L68)
+Defined in: [compiler/src/wgsl.ts:68](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L68)
 
 Default field values keyed by WGSL field name.
 
@@ -39,7 +39,7 @@ Default field values keyed by WGSL field name.
 
 > `readonly` **declarations**: `string`
 
-Defined in: [compiler/src/wgsl.ts:77](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L77)
+Defined in: [compiler/src/wgsl.ts:77](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L77)
 
 Pre-serialized WGSL preamble string.
 
@@ -49,7 +49,7 @@ Pre-serialized WGSL preamble string.
 
 > `readonly` **stateBindings**: `Record`\<`string`, `Record`\<`string`, `number`\>\>
 
-Defined in: [compiler/src/wgsl.ts:75](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L75)
+Defined in: [compiler/src/wgsl.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L75)
 
 Per-state binding values keyed by state name then snake_case field name —
 the WGSL analog of `GLSLCompileResult.stateUniforms`. Built alongside the
@@ -62,6 +62,6 @@ merged `bindingValues` so the live runtime can resolve
 
 > `readonly` **structs**: readonly [`WGSLStruct`](WGSLStruct.md)[]
 
-Defined in: [compiler/src/wgsl.ts:64](https://github.com/heyoub/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L64)
+Defined in: [compiler/src/wgsl.ts:64](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L64)
 
 Declared struct types (currently one: the boundary's state struct).

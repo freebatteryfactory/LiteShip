@@ -6,7 +6,7 @@
 
 # Interface: AllowlistUnexercisedEntry
 
-Defined in: [audit/src/types.ts:26](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L26)
+Defined in: [audit/src/types.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L26)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [audit/src/types.ts:26](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **coverage**: `"allowlisted"`
 
-Defined in: [audit/src/types.ts:29](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L29)
+Defined in: [audit/src/types.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L29)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [audit/src/types.ts:29](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **exercised**: `false`
 
-Defined in: [audit/src/types.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L30)
+Defined in: [audit/src/types.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L30)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [audit/src/types.ts:30](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **package**: `string`
 
-Defined in: [audit/src/types.ts:27](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L27)
+Defined in: [audit/src/types.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L27)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [audit/src/types.ts:27](https://github.com/heyoub/LiteShip/blob/main
 
 > `readonly` **permitted**: `string`
 
-Defined in: [audit/src/types.ts:28](https://github.com/heyoub/LiteShip/blob/main/packages/audit/src/types.ts#L28)
+Defined in: [audit/src/types.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/types.ts#L28)

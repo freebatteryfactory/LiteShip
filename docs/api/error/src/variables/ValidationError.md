@@ -8,7 +8,7 @@
 
 > **ValidationError**: (`module`, `detail`) => [`ValidationError`](../interfaces/ValidationError.md)
 
-Defined in: [error/src/variants.ts:30](https://github.com/heyoub/LiteShip/blob/main/packages/error/src/variants.ts#L30)
+Defined in: [error/src/variants.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/error/src/variants.ts#L30)
 
 Build a ValidationError.
 
