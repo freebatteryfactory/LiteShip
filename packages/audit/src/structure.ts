@@ -10,6 +10,7 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import ts from 'typescript';
 import { normalizeRepoPath } from './policy.js';
+import { discoverInstalledPackageRoots } from './consumer.js';
 import { liteshipDevopsProfile } from './devops-profile.js';
 import type { DevopsProfile } from './devops-profile.js';
 import {
@@ -278,6 +279,20 @@ export function runStructureAudit(
   const packageInfos = listProfilePackageManifests(profile);
   const packageByName = new Map(packageInfos.map((pkg) => [pkg.name, pkg] as const));
   const packageExportTargets = buildPackageExportTargets(packageInfos);
+
+  // Consumer-mode installed-check (memoized): is an internal package that wasn't
+  // in the discovery seed nonetheless actually present in the consumer's
+  // node_modules? This is the GROUND TRUTH for "will the import resolve at the
+  // consumer's runtime" — stronger than "is it a declared dependency" (a declared
+  // dep can be a devDependency that isn't shipped, or a broken/missing install).
+  const consumerInstalled = new Map<string, boolean>();
+  const isInstalledInConsumer = (target: string): boolean => {
+    const cached = consumerInstalled.get(target);
+    if (cached !== undefined) return cached;
+    const installed = discoverInstalledPackageRoots(profile.repoRoot, [target]).packageRoots[target] != null;
+    consumerInstalled.set(target, installed);
+    return installed;
+  };
   // Known-surface seed: profile-listed astro runtime files (resolved against
   // the astro PACKAGE root — the consumer-install seam) plus every non-wildcard
   // export target of every package. Client-directive and middleware sources
@@ -412,17 +427,18 @@ export function runStructureAudit(
             // In CONSUMER mode (`packageRoots` set) the discovered set is a SUBSET
             // of what's installed: transitive/pnpm-hoisted `@scope/*` deps aren't
             // in the discovery seed. Suppress `unknown-internal-package` ONLY when
-            // the target is a DECLARED dependency of the importer — that's a real
-            // package the consumer's install resolves, just not seeded (the 98
-            // false positives a 0.4.0 consumer hit). A target that is NOT a
-            // declared dep — a typo or a genuinely missing package — still won't
-            // resolve at runtime, so keep flagging it even in consumer mode
-            // (Codex P2). The source monorepo flags every unknown internal import.
-            const isUndiscoveredDeclaredDep =
+            // the target is ACTUALLY INSTALLED in the consumer's node_modules —
+            // a real package the import resolves to at runtime, just not seeded
+            // (the 98 false positives a 0.4.0 consumer hit). A target that isn't
+            // installed — a typo, a genuinely missing package, or a declared-but-
+            // -not-shipped devDependency — still fails at runtime, so keep flagging
+            // it even in consumer mode (Codex P2). The source monorepo flags every
+            // unknown internal import.
+            const isUndiscoveredButInstalled =
               profile.packageRoots != null &&
               resolved.targetPackage != null &&
-              packageInfo.dependencies.includes(resolved.targetPackage);
-            if (!isUndiscoveredDeclaredDep) {
+              isInstalledInConsumer(resolved.targetPackage);
+            if (!isUndiscoveredButInstalled) {
               rawFindings.push({
                 id: `structure/unknown-package/${record.relativePath}:${line}:${column}`,
                 section: 'structure',
