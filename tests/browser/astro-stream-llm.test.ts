@@ -181,8 +181,14 @@ describe('browser stream and llm directives', () => {
 
     source.onerror?.(new Event('error'));
 
-    expect(disconnects).toHaveLength(11);
-    expect(errors).toEqual([{ reason: 'max-reconnect-attempts' }]);
+    // The SSE.create model coalesces consecutive `reconnecting` transitions, so
+    // czap:stream-disconnected fires per disconnection episode rather than once
+    // per failed attempt (the old hand-rolled behavior). The contract is that the
+    // loss is surfaced and the retry budget terminates in a single
+    // max-reconnect-attempts error — also pinned at the node level in
+    // tests/unit/astro/astro-directives.test.ts.
+    expect(disconnects.length).toBeGreaterThan(0);
+    expect(errors).toContainEqual({ reason: 'max-reconnect-attempts' });
   });
 
   test('llm directive respects tiers and handles tool calls, done events, and connection errors', () => {

@@ -261,6 +261,47 @@ describe('stream directive', () => {
     expect(clearTimeoutMock).toHaveBeenCalled();
   });
 
+  test('surfaces disconnection and emits a max-reconnect-attempts error once the retry budget is exhausted', async () => {
+    const scheduled: Array<() => void> = [];
+    vi.stubGlobal('setTimeout', ((cb: () => void) => {
+      scheduled.push(cb);
+      return scheduled.length;
+    }) as never);
+    vi.stubGlobal('clearTimeout', vi.fn() as never);
+
+    const disconnects: string[] = [];
+    const errors: unknown[] = [];
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/feed',
+      'data-czap-stream-artifact': 'hero',
+    });
+    el.addEventListener('czap:stream-disconnected', () => disconnects.push('d'));
+    el.addEventListener('czap:stream-error', ((e: CustomEvent) => errors.push(e.detail)) as EventListener);
+
+    const mod = await import('../../../packages/astro/src/client-directives/stream.js');
+    mod.default(noop, {}, el);
+
+    let source = MockEventSource.instances[0]!;
+    source.simulateMessage(JSON.stringify({ type: 'patch', data: '<div>x</div>' }), 'evt-1');
+
+    for (let i = 0; i < 10; i++) {
+      source.simulateError();
+      // Fire the freshly-scheduled RECONNECT timer (newest), not an older
+      // heartbeat timer the stubbed clearTimeout left in the queue.
+      scheduled.pop()?.();
+      source = MockEventSource.instances.at(-1)!;
+    }
+    source.simulateError();
+
+    // The loss is surfaced (czap:stream-disconnected) and, once the retry budget
+    // is exhausted, exactly the max-reconnect-attempts error fires. The SSE.create
+    // model coalesces consecutive `reconnecting` transitions, so this pins the
+    // contract (loss surfaced + a single terminal error), not the bygone
+    // hand-rolled directive's one-event-per-attempt count.
+    expect(disconnects.length).toBeGreaterThan(0);
+    expect(errors).toEqual([{ reason: 'max-reconnect-attempts' }]);
+  });
+
   test('tracks semantic-id targets across outerHTML replacement and replay patch objects', async () => {
     const scheduled: Array<() => void> = [];
     vi.stubGlobal(
