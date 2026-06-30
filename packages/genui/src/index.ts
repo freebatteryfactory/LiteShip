@@ -18,7 +18,7 @@ export type { ComponentCatalogInput } from './catalog.js';
 export { validateGeneratedUITree } from './validate.js';
 export type { ValidateGeneratedUIResult } from './validate.js';
 export { renderFromCatalog } from './render.js';
-export type { RenderFromCatalogOptions } from './render.js';
+export type { RenderFromCatalogOptions, RenderFromCatalogResult } from './render.js';
 export { catalogHash, renderHash } from './identity.js';
 export { tryParseGeneratedUIChunk } from './parse.js';
 export { DEMO_COMPONENT_CATALOG } from './demo-catalog.js';
