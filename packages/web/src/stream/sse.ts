@@ -10,7 +10,7 @@
  * ADR-0005 §Category 4 for the rationale.
  */
 
-import { Effect, Stream, Queue, Exit } from 'effect';
+import { Effect, Stream, Queue } from 'effect';
 import type { Scope } from 'effect';
 import { Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
 import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
@@ -155,9 +155,9 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
     // All SSE state lives in one plain object. Transitions are synchronous
     // mutations — Effect only bridges out at the public accessors.
     //
-    // Buffer occupancy is NO LONGER hand-tracked: `Queue.sizeUnsafe` is the
-    // single source of truth (the queue IS the FIFO backbone). `machine`
-    // only carries the overflow counters + the first-saturation latch.
+    // Pending messages live in a plain JS buffer so overflow can coalesce/drop
+    // without draining an Effect Queue that may already have parked takers.
+    // The queue below is only a wakeup signal for consumers.
     const machine: {
       status: SSEState;
       lastEventId: string | null;
@@ -180,7 +180,9 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       heartbeatHandle: null,
     };
 
-    const messageQueue = yield* Queue.bounded<SSEMessage>(maxBufferSize);
+    const messageQueue = yield* Queue.bounded<true>(maxBufferSize);
+    let pendingMessages: SSEMessage[] = [];
+    let signaledCount = 0;
     // Unbounded edge queue: every status transition is offered here and
     // surfaced as `client.stateChanges`. Unbounded so a transition is never
     // itself dropped under backpressure (edges are control-plane, not data).
@@ -273,25 +275,24 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
     };
 
     /**
-     * Fold an incoming message into the bounded queue under the overflow
-     * policy. The queue is the FIFO backbone; `applyOverflow` is the pure
-     * collapse pass — so we drain the live buffer, run the policy, and
-     * rebuild. Draining is safe because `onmessage` is synchronous: no
-     * consumer fiber interleaves between the drain and the refill, and a
-     * parked taker is satisfied directly by the refill `offerUnsafe`.
+     * Fold an incoming message into the pending buffer under the overflow
+     * policy. The Effect queue is intentionally NOT the buffer: draining and
+     * refilling a live Queue is not safe when Stream consumers are parked on it
+     * (offerUnsafe can synchronously resume them). Instead the Queue carries
+     * one wakeup token per pending message.
      */
     const ingest = (message: SSEMessage): void => {
-      const buffer: SSEMessage[] = [];
-      for (let exit = Queue.takeUnsafe(messageQueue); exit !== undefined; exit = Queue.takeUnsafe(messageQueue)) {
-        if (Exit.isSuccess(exit)) {
-          buffer.push(exit.value);
+      const result = applyOverflow(pendingMessages, message, overflowPolicy, maxBufferSize);
+      pendingMessages = result.buffer;
+
+      for (let index = signaledCount; index < pendingMessages.length; index++) {
+        signaledCount += 1;
+        if (!Queue.offerUnsafe(messageQueue, true)) {
+          signaledCount -= 1;
+          break;
         }
       }
 
-      const result = applyOverflow(buffer, message, overflowPolicy, maxBufferSize);
-      for (const queued of result.buffer) {
-        Queue.offerUnsafe(messageQueue, queued);
-      }
       machine.droppedCount += result.dropped;
       machine.coalescedCount += result.coalesced;
 
@@ -303,7 +304,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
           source: 'czap/web.sse',
           code: 'sse-buffer-saturated',
           message: 'SSE receive buffer saturated; applying overflow policy.',
-          detail: { policy: overflowPolicy, maxBufferSize, bufferSize: Queue.sizeUnsafe(messageQueue) },
+          detail: { policy: overflowPolicy, maxBufferSize, bufferSize: pendingMessages.length },
         });
       }
     };
@@ -314,10 +315,12 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
 
     yield* createConnection;
 
-    // The bounded queue IS the buffer; consumers pull straight from it. The
-    // old `Stream.tap` decrement is retired — `Queue.sizeUnsafe` is now the
-    // backpressure source of truth, so there is nothing to hand-decrement.
-    const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue);
+    const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue).pipe(
+      Stream.map(() => {
+        signaledCount = Math.max(0, signaledCount - 1);
+        return pendingMessages.shift()!;
+      }),
+    );
     const stateChanges: Stream.Stream<SSEState> = Stream.fromQueue(transitionQueue);
 
     const client: SSEClient = {
@@ -330,7 +333,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       lastEventId: Effect.sync(() => machine.lastEventId),
 
       backpressure: Effect.sync(() => {
-        const bufferSize = Queue.sizeUnsafe(messageQueue);
+        const bufferSize = pendingMessages.length;
         const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
         return {
           bufferSize,
@@ -356,6 +359,8 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
           // regardless of whether a live source was present (e.g. the
           // heartbeat watchdog may have already cleared it).
           setStatus('disconnected');
+          pendingMessages = [];
+          signaledCount = 0;
           yield* Queue.shutdown(messageQueue);
           yield* Queue.shutdown(transitionQueue);
         }),
@@ -385,6 +390,8 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
           currentSource.close();
           machine.source = null;
         }
+        pendingMessages = [];
+        signaledCount = 0;
         yield* Queue.shutdown(messageQueue);
         yield* Queue.shutdown(transitionQueue);
       }),

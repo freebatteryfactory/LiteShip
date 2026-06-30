@@ -1,4 +1,4 @@
-import { Effect, Stream, Scope, Exit, Fiber } from 'effect';
+import { Effect, Stream, Scope, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
 import { wallClock } from '@czap/core';
 import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
@@ -6,6 +6,7 @@ import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { makeDirectiveScheduler } from './effect-scheduler.js';
 
 type Locator =
   | { readonly type: 'slot'; readonly value: string }
@@ -214,13 +215,13 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   // `EventSource`, exponential-backoff reconnect, the heartbeat watchdog, and
   // the bounded overflow buffer (default `coalesce-by-id` — stream patches are
   // `data-czap-id`-addressed). This directive owns an explicit `Scope` and
-  // drains `messages` / `stateChanges` through `Effect.runFork` fibers running
-  // on the live default runtime. (A `forkScoped` fiber registered inside a
-  // `runSync(Scope.use(...))` block is NOT pumped by the ambient event loop once
-  // `runSync` returns — the documented imperative-bridge alternative is a
-  // top-level forked drain. `Scope.close` disposes the EventSource + Queue +
-  // timers; the drain fibers are interrupted alongside it.) See ADR-0005
-  // §Category 4 and the imperative-Scope bridge in `packages/scene/src/runtime.ts`.
+  // drains `messages` / `stateChanges` through an owned ManagedRuntime, not the
+  // process-global Effect runtime. Teardown explicitly interrupts the drain
+  // fibers, closes the connection Scope (EventSource + Queue + timers), then
+  // disposes the owned runtime.
+  // See ADR-0005 §Category 4 and the imperative-Scope bridge in
+  // `packages/scene/src/runtime.ts`.
+  let runtime: ManagedRuntime.ManagedRuntime<never, never> | null = null;
   let scope: Scope.Closeable | null = null;
   let client: SSEClient | null = null;
   let drainFibers: Fiber.Fiber<void, never>[] = [];
@@ -387,12 +388,15 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   };
 
   const openClient = (): void => {
-    const next = Effect.runSync(Scope.make());
+    const nextRuntime = ManagedRuntime.make(Layer.empty);
+    const scheduler = makeDirectiveScheduler();
+    const next = nextRuntime.runSync(Scope.make());
+    runtime = nextRuntime;
     scope = next;
-    // `SSE.create` requires a Scope; `Scope.use` builds it and registers its
+    // `SSE.create` requires a Scope; `Scope.provide` builds it and registers its
     // finalizer (EventSource close + Queue shutdown + timer clear) in `next`.
-    const created = Effect.runSync(
-      Scope.use(
+    const created = nextRuntime.runSync(
+      Scope.provide(
         SSE.create({
           url: streamUrl,
           ...(artifactId ? { artifactId } : {}),
@@ -402,22 +406,40 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     );
     client = created;
     drainFibers = [
-      Effect.runFork(Stream.runForEach(created.messages, (m) => Effect.sync(() => handleMessage(m)))),
-      Effect.runFork(Stream.runForEach(created.stateChanges, (s) => Effect.sync(() => handleEdge(s)))),
+      nextRuntime.runFork(
+        Stream.runForEach(created.messages, (m) => Effect.sync(() => handleMessage(m))),
+        { scheduler },
+      ),
+      nextRuntime.runFork(
+        Stream.runForEach(created.stateChanges, (s) => Effect.sync(() => handleEdge(s))),
+        { scheduler },
+      ),
     ];
   };
 
   const closeClient = (): void => {
-    if (scope) {
+    if (scope && runtime) {
       const closing = scope;
+      const closingRuntime = runtime;
       const fibers = drainFibers;
       scope = null;
+      runtime = null;
       client = null;
       drainFibers = [];
-      for (const fiber of fibers) {
-        Effect.runFork(Fiber.interrupt(fiber));
-      }
-      Effect.runFork(Scope.close(closing, Exit.void));
+      void closingRuntime
+        .runPromise(
+          Effect.gen(function* () {
+            for (const fiber of fibers) {
+              yield* Fiber.interrupt(fiber);
+            }
+            yield* Scope.close(closing, Exit.void);
+          }),
+          { scheduler: makeDirectiveScheduler() },
+        )
+        .catch(() => undefined)
+        .finally(() => {
+          void closingRuntime.dispose().catch(() => undefined);
+        });
     }
   };
 
