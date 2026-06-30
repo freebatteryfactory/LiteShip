@@ -4,6 +4,72 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.5.0] - 2026-06-30
+
+A "make-it-loud" release: every fix turns a silent degradation into a loud
+diagnostic through the existing channel, plus a packaging hardening and a
+DAG-compaction feature — surfaced by dogfooding the framework on real apps, and
+hardened by an adversarial review pass.
+
+### Added
+
+- **`@czap/core` — receipt-DAG compaction.** `DAG.checkpoint(dag, { below })` +
+  `DAG.spliceCheckpoint` reclaim a long-lived receipt DAG's dominated prefix into
+  a content-addressed checkpoint attestation (drop-only; the spliced DAG equals a
+  fresh reload). `Receipt.validateChain` gains `ChainValidationOptions { base,
+  checkpoint }` for cross-boundary validation (a compacted tail is verifiable only
+  against its checkpoint). See ADR-0026.
+- **`@czap/web` — SSE overflow policy.** `SSEConfig.overflow`
+  (`drop-newest | drop-oldest | coalesce-by-id`, default `coalesce-by-id`) + an
+  enriched `BackpressureHint` (`policy` / `droppedCount` / `coalescedCount`) + a
+  `stateChanges` edge stream. See ADR-0005 (SSE addendum).
+- **`create-liteship`** now scaffolds `effect` (`^4.0.0-beta.32`), fixing an
+  unmet peer on a fresh project.
+
+### Fixed
+
+- **`client:gpu`** warns once (`canvas-default-size`) when its host has no layout
+  at boot and the canvas falls back to the 300×150 default — previously a silent
+  tiny render.
+- **Signal directives** warn once when a boundary input is recognized but has no
+  live producer on that surface (`signal-input-unserved-here`) — previously a
+  silent freeze; the `uniform-signal` "likely a typo" mislabel is split into two
+  disjoint codes.
+- **`@czap/genui`** rejects an unsupported registered handler prop (`on*` ≠
+  `onClick`, or a non-string `onClick`) at validation instead of silently dropping
+  it at render.
+- **`@czap/web` SSE** no longer silently drop-newests under saturation (see
+  Added), and the heartbeat watchdog now reconnects on timeout.
+- **`client:stream` / `client:llm`** now consume the hardened `SSE.create` with
+  deterministic, disposable-runtime teardown (clean dispose / VT-swap single-boot);
+  `client:llm` terminal frames fully tear down.
+
+### Changed
+
+- **`effect` peer range** capped to `>=4.0.0-beta.32 <5` across all `@czap/*`
+  packages (was an unbounded `>=4.0.0-beta.0`), pinned by `pnpm.overrides.effect`
+  and a drift guard.
+
+### Security
+
+- **`Receipt.validateChainDetailed`** now requires a verified checkpoint to
+  validate a compacted tail; a `base` watermark alone is rejected
+  (`checkpoint_invalid`) — previously a truncated chain could validate with no
+  proof of compaction.
+
+### Internal
+
+- Cell↔DOM boundary committed as a guarded law (ADR-0027). Audit consumer-mode
+  disallowed-edge coverage. Fixed two Effect-beta issues uncovered during review
+  (`Scope.use` finalizing immediately; an overflow-buffer CPU spin). api-surface
+  snapshot regenerated for the new exports.
+
+### Breaking
+
+- **`@czap/genui` `renderFromCatalog`** now returns a tagged
+  `RenderFromCatalogResult` (`{ ok }` union) instead of `boolean`. Callers using
+  `if (renderFromCatalog(...))` must switch to `.ok`.
+
 ## [0.4.1] - 2026-06-29
 
 A patch release: a consumer-audit scoping fix, two runtime DX/behavior fixes
