@@ -137,8 +137,11 @@ export interface TransientResult {
 
 /**
  * Measure the LIVE per-op allocation of `op`. Warms up (so JIT + steady-state
- * scratch growth happen before the window), forces GC, snapshots `heapUsed`, runs
- * K×N ops, forces GC, snapshots again, and returns the surviving delta / op.
+ * scratch growth happen before the window), then REPEATS — force GC, snapshot
+ * `heapUsed`, run K×N ops with a GC between batches, snapshot again — REPS times and
+ * returns the MEDIAN surviving delta / op. The median is robust to the GC-timing
+ * outliers a single before/after snapshot suffers on a loaded runner (the same
+ * anti-fragile method {@link measureTransientBytesPerOp} uses across windows).
  */
 export function measureLiveBytesPerOp(
   label: string,
@@ -151,31 +154,54 @@ export function measureLiveBytesPerOp(
   // (the compositor's dirty-name array, the token ring) reaches steady size — that
   // one-time growth must NOT be counted as per-op allocation.
   for (let i = 0; i < opsPerBatch; i++) op();
-  forceGc();
-  const before = process.memoryUsage().heapUsed;
 
+  // ANTI-FRAGILE method: a SINGLE before/after live delta is GC-timing-sensitive — a
+  // stray background reclaim or a steady-state scratch resize swings the `heapUsed`
+  // snapshots several B/op run-to-run, which flakes this gate on a loaded CI runner.
+  // Repeat the full measurement REPS times and take the MEDIAN per-op survivor — the
+  // SAME robustness `measureTransientBytesPerOp` already applies across windows. A
+  // REAL per-op survivor is consistent across every rep, so the median still
+  // registers it; only the transient GC-timing luck is filtered — never a false pass
+  // for a true leak (the threshold is unchanged; only the measurement is robust).
+  // Spread the SAME total work across the reps so robustness costs nothing extra:
+  // REPS short windows + a median, instead of one long single-shot window. A shorter
+  // window is also individually LESS likely to catch a stray background GC event, and
+  // the median discards the few that do.
+  const REPS = 5;
+  const batchesPerRep = Math.max(1, Math.ceil(batches / REPS));
+  const perOpSamples: number[] = [];
   let totalOps = 0;
-  for (let b = 0; b < batches; b++) {
-    for (let i = 0; i < opsPerBatch; i++) op();
-    totalOps += opsPerBatch;
-    // Force GC between batches too, so transient garbage from one batch never
-    // inflates the next batch's apparent survivors.
+  for (let r = 0; r < REPS; r++) {
     forceGc();
+    const before = process.memoryUsage().heapUsed;
+    let ops = 0;
+    for (let b = 0; b < batchesPerRep; b++) {
+      for (let i = 0; i < opsPerBatch; i++) op();
+      ops += opsPerBatch;
+      // Force GC between batches too, so transient garbage from one batch never
+      // inflates the next batch's apparent survivors.
+      forceGc();
+    }
+    forceGc();
+    const after = process.memoryUsage().heapUsed;
+    perOpSamples.push((after - before) / ops);
+    totalOps = ops;
   }
 
-  forceGc();
-  const after = process.memoryUsage().heapUsed;
-  const liveDeltaBytes = after - before;
-  const liveBytesPerOp = liveDeltaBytes / totalOps;
+  perOpSamples.sort((a, b) => a - b);
+  const mid = Math.floor(perOpSamples.length / 2);
+  const liveBytesPerOp =
+    perOpSamples.length % 2 === 0 ? (perOpSamples[mid - 1]! + perOpSamples[mid]!) / 2 : perOpSamples[mid]!;
   return {
     label,
     batches,
     opsPerBatch,
     totalOps,
-    liveDeltaBytes,
+    // Report the delta consistent with the MEDIAN per-op (not a single rep's outlier).
+    liveDeltaBytes: Math.round(liveBytesPerOp * totalOps),
     liveBytesPerOp,
     budgetBytesPerOp,
-    // A NEGATIVE delta (GC reclaimed more than the window allocated) is trivially
+    // A NEGATIVE median (GC reclaimed more than the window allocated) is trivially
     // within budget — the live heap did not grow. Compare the magnitude upward.
     withinBudget: liveBytesPerOp <= budgetBytesPerOp,
   };
