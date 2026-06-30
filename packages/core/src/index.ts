@@ -218,11 +218,11 @@ export { VectorClock } from './vector-clock.js';
 export { TypedRef } from './typed-ref.js';
 
 // Receipt
-export type { ReceiptSubject, ReceiptEnvelope, ChainValidationError } from './receipt.js';
+export type { ReceiptSubject, ReceiptEnvelope, ChainValidationError, ChainValidationOptions } from './receipt.js';
 export { Receipt } from './receipt.js';
 
 // DAG
-export type { DAGNode, ReceiptDAG, MergeResult, ForkViolation } from './dag.js';
+export type { DAGNode, ReceiptDAG, MergeResult, ForkViolation, CheckpointResult } from './dag.js';
 export { DAG } from './dag.js';
 
 // Plan
