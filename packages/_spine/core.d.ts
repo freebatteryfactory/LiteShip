@@ -790,7 +790,13 @@ export type ChainValidationError =
   | { readonly type: 'not_genesis'; readonly index: 0 }
   | { readonly type: 'hash_mismatch'; readonly index: number; readonly computed: string; readonly stored: string }
   | { readonly type: 'chain_break'; readonly index: number; readonly expected: string; readonly actual: string }
-  | { readonly type: 'hlc_not_increasing'; readonly index: number };
+  | { readonly type: 'hlc_not_increasing'; readonly index: number }
+  | { readonly type: 'checkpoint_invalid'; readonly reason: string };
+
+export interface ChainValidationOptions {
+  readonly base?: string;
+  readonly checkpoint?: ReceiptEnvelope;
+}
 
 export declare const Receipt: {
   readonly GENESIS: string;
@@ -809,14 +815,21 @@ export declare const Receipt: {
    * violation arrives on the `Error` channel as a human-readable message.
    * @see validateChainDetailed for typed ChainValidationError handling.
    */
-  validateChain(chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<boolean, Error>;
+  validateChain(
+    chain: ReadonlyArray<ReceiptEnvelope>,
+    options?: ChainValidationOptions,
+  ): Effect.Effect<boolean, Error>;
   /**
    * Typed taxonomy for programmatic handling: fails with the
    * `ChainValidationError` discriminated union
-   * (not_genesis | hash_mismatch | chain_break | hlc_not_increasing).
+   * (not_genesis | hash_mismatch | chain_break | hlc_not_increasing | checkpoint_invalid).
+   * Pass `options.base`/`options.checkpoint` to validate a compacted tail.
    * @see validateChain for the simple Error-channel form.
    */
-  validateChainDetailed(chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<true, ChainValidationError>;
+  validateChainDetailed(
+    chain: ReadonlyArray<ReceiptEnvelope>,
+    options?: ChainValidationOptions,
+  ): Effect.Effect<true, ChainValidationError>;
   hashEnvelope(envelope: ReceiptEnvelope): Effect.Effect<string>;
   isGenesis(receipt: ReceiptEnvelope): boolean;
   head(chain: ReadonlyArray<ReceiptEnvelope>): ReceiptEnvelope | undefined;
@@ -862,6 +875,12 @@ export interface ForkViolation {
   readonly attempted: string;
 }
 
+export interface CheckpointResult {
+  readonly dag: ReceiptDAG;
+  readonly checkpoint: ReceiptEnvelope;
+  readonly dropped: ReadonlyArray<string>;
+}
+
 export declare const DAG: {
   empty(): ReceiptDAG;
   ingest(dag: ReceiptDAG, envelope: ReceiptEnvelope): ReceiptDAG;
@@ -878,6 +897,14 @@ export declare const DAG: {
   commonAncestor(dag: ReceiptDAG, a: string, b: string): string | null;
   size(dag: ReceiptDAG): number;
   merge(local: ReceiptDAG, remote: ReadonlyArray<ReceiptEnvelope>): MergeResult;
+  /**
+   * Compact the DAG below a watermark (DROP-ONLY), returning the spliced DAG and
+   * a genesis-shaped checkpoint attestation out-of-band. Async — minting hashes
+   * via `crypto.subtle`, off the hot path.
+   */
+  checkpoint(dag: ReceiptDAG, options: { readonly below: string }): Effect.Effect<CheckpointResult>;
+  /** Rebuild the DAG from its survivors after dropping a checkpoint region (pure). */
+  spliceCheckpoint(dag: ReceiptDAG, dropSet: ReadonlySet<string>): ReceiptDAG;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

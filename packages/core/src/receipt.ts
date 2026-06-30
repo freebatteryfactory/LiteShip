@@ -45,7 +45,25 @@ export type ChainValidationError =
   | { readonly type: 'not_genesis'; readonly index: 0 }
   | { readonly type: 'hash_mismatch'; readonly index: number; readonly computed: string; readonly stored: string }
   | { readonly type: 'chain_break'; readonly index: number; readonly expected: string; readonly actual: string }
-  | { readonly type: 'hlc_not_increasing'; readonly index: number };
+  | { readonly type: 'hlc_not_increasing'; readonly index: number }
+  | { readonly type: 'checkpoint_invalid'; readonly reason: string };
+
+/**
+ * Options that let a chain be validated as a COMPACTED TAIL instead of a full
+ * history (see `DAG.checkpoint`). Optional everywhere — omitting them is the
+ * back-compat genesis-rooted check.
+ *
+ * - `base`: a checkpoint watermark hash. The index-0 genesis predicate widens to
+ *   accept `previous === base`, so a retained tail validates without its dropped
+ *   prefix.
+ * - `checkpoint`: the genesis-shaped checkpoint attestation that authorizes
+ *   `base`. When supplied it is integrity-checked (hash + genesis shape +
+ *   `subject.id === "czap/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
+ */
+export interface ChainValidationOptions {
+  readonly base?: string;
+  readonly checkpoint?: ReceiptEnvelope;
+}
 
 /** Sentinel `previous` value marking the root of a receipt chain. */
 export const GENESIS: string = 'genesis';
@@ -159,8 +177,11 @@ export const buildChain = (
  *
  * @see validateChainDetailed for typed `ChainValidationError` handling.
  */
-export const validateChain = (chain: ReadonlyArray<ReceiptEnvelope>): Effect.Effect<boolean, Error> =>
-  validateChainDetailed(chain).pipe(Effect.mapError((error) => new Error(formatChainError(error, chain))));
+export const validateChain = (
+  chain: ReadonlyArray<ReceiptEnvelope>,
+  options?: ChainValidationOptions,
+): Effect.Effect<boolean, Error> =>
+  validateChainDetailed(chain, options).pipe(Effect.mapError((error) => new Error(formatChainError(error, chain))));
 
 /**
  * Render a {@link ChainValidationError} as the human-readable message
@@ -187,6 +208,8 @@ const formatChainError = (error: ChainValidationError, chain: ReadonlyArray<Rece
       );
     case 'hlc_not_increasing':
       return `Envelope ${error.index}: HLC not monotonically increasing — its timestamp does not advance past envelope ${error.index - 1}'s. Re-issue the envelope with a fresh HLC.increment of the predecessor's timestamp.`;
+    case 'checkpoint_invalid':
+      return `Checkpoint attestation invalid: ${error.reason}. The compacted tail cannot be trusted against this checkpoint; re-fetch the checkpoint envelope from its source.`;
   }
 };
 
@@ -210,14 +233,55 @@ const formatChainError = (error: ChainValidationError, chain: ReadonlyArray<Rece
  */
 export const validateChainDetailed = (
   chain: ReadonlyArray<ReceiptEnvelope>,
+  options?: ChainValidationOptions,
 ): Effect.Effect<true, ChainValidationError> =>
   Effect.gen(function* () {
     if (chain.length === 0) return true as const;
 
+    const base = options?.base;
+    const checkpoint = options?.checkpoint;
+
+    // When a checkpoint is supplied, bind it to `base`: verify its content hash,
+    // genesis shape, and that its subject commits exactly this watermark. This is
+    // what authorizes the widened index-0 predicate below.
+    if (checkpoint !== undefined) {
+      if (base === undefined) {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: 'a checkpoint was supplied without a base watermark to bind it to',
+        });
+      }
+      const computedCheckpointHash = yield* hashEnvelope(checkpoint);
+      if (computedCheckpointHash !== checkpoint.hash) {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: `checkpoint hash mismatch (expected "${checkpoint.hash}", computed "${computedCheckpointHash}")`,
+        });
+      }
+      if (!isGenesis(checkpoint)) {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: 'checkpoint is not genesis-shaped (previous must be GENESIS)',
+        });
+      }
+      const expectedSubjectId = `czap/checkpoint:${base}`;
+      if (checkpoint.subject.id !== expectedSubjectId) {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: `checkpoint subject "${checkpoint.subject.id}" does not commit base watermark (expected "${expectedSubjectId}")`,
+        });
+      }
+    }
+
     const first = chain[0]!;
     const firstPrev = first.previous;
+    // Index-0 genesis predicate, widened for a compacted tail: a retained tail's
+    // first envelope points at the dropped watermark (`base`), not GENESIS.
     const firstIsGenesis =
-      firstPrev === GENESIS || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(GENESIS));
+      firstPrev === GENESIS ||
+      (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(GENESIS)) ||
+      (base !== undefined &&
+        (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base))));
     if (!firstIsGenesis) {
       return yield* Effect.fail({ type: 'not_genesis' as const, index: 0 as const });
     }

@@ -6,10 +6,12 @@
  * @module
  */
 
+import { Effect } from 'effect';
 import { InvariantViolationError } from '@czap/error';
-import { compare as hlcCompare } from './hlc.js';
+import { compare as hlcCompare, HLC } from './hlc.js';
+import { TypedRef } from './typed-ref.js';
 import type { ReceiptEnvelope } from './receipt.js';
-import { GENESIS } from './receipt.js';
+import { GENESIS, createEnvelope } from './receipt.js';
 
 /** Single vertex in a {@link ReceiptDAG}: an envelope plus its parent and child hashes. */
 export interface DAGNode {
@@ -41,6 +43,17 @@ export interface ForkViolation {
   readonly prevHash: string;
   readonly existing: string;
   readonly attempted: string;
+}
+
+/**
+ * Result of {@link checkpoint}: the spliced (compacted) DAG, the genesis-shaped
+ * checkpoint attestation envelope (returned OUT-OF-BAND, never an ingested node),
+ * and the hashes that were dropped (watermark + its transitive ancestors).
+ */
+export interface CheckpointResult {
+  readonly dag: ReceiptDAG;
+  readonly checkpoint: ReceiptEnvelope;
+  readonly dropped: ReadonlyArray<string>;
 }
 
 const parentsOf = (envelope: ReceiptEnvelope): ReadonlyArray<string> => {
@@ -483,6 +496,118 @@ export const merge = (local: ReceiptDAG, remote: ReadonlyArray<ReceiptEnvelope>)
 };
 
 /**
+ * Splice a checkpoint out of the DAG by REBUILDING FROM THE SURVIVORS.
+ *
+ * DROP-ONLY — never re-points a retained node's parents (a node's parents are
+ * derived from the content-hash-bearing `previous`, a SHA-256 input; mutating
+ * them would forge identity). We instead collect every retained envelope and
+ * `fromReceipts` them afresh, so the spliced DAG EQUALS a fresh reload by
+ * construction. `genesis` collapses to `null` naturally once the old root is
+ * dropped — `dag.genesis` has no production readers.
+ *
+ * @example
+ * ```ts
+ * const compacted = DAG.spliceCheckpoint(dag, new Set([oldRoot, ...ancestors]));
+ * // compacted deep-equals DAG.fromReceipts(retainedEnvelopes)
+ * ```
+ */
+export const spliceCheckpoint = (dag: ReceiptDAG, dropSet: ReadonlySet<string>): ReceiptDAG => {
+  const retained = [...dag.nodes.values()].map((n) => n.envelope).filter((e) => !dropSet.has(e.hash));
+  return fromReceipts(retained);
+};
+
+/**
+ * Compact the DAG below a watermark, returning a checkpoint attestation.
+ *
+ * DROP-ONLY reclamation: drops the watermark `W` plus all of its transitive
+ * ancestors, leaving every retained node's content-addressed identity intact.
+ * Async because minting the checkpoint hashes via `crypto.subtle` — kept off the
+ * hot path by construction.
+ *
+ * Preconditions:
+ * - `W` must be a known node (`dag.checkpoint.unknown-watermark` otherwise).
+ * - DOMINANCE: every parent edge that crosses the drop boundary (a dropped
+ *   parent of a retained child) must land on `W`, else `W` does not dominate the
+ *   dropped region and reclaiming it would orphan a survivor
+ *   (`dag.checkpoint.not-dominated`).
+ *
+ * The checkpoint is a real genesis-shaped {@link ReceiptEnvelope}
+ * (`previous = GENESIS`, `subject.id = "czap/checkpoint:<W>"` committing the
+ * watermark, `timestamp` = HLC-max over the dropped envelopes), hashed via
+ * `Receipt.hashEnvelope` so two replicas that reach the same `W` mint a
+ * byte-identical attestation. It is RETURNED OUT-OF-BAND, never inserted as a
+ * node (which would spuriously read as a second head / fork).
+ *
+ * @example
+ * ```ts
+ * const { dag: compacted, checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: W });
+ * // compacted has `dropped.length` fewer nodes; `checkpoint.subject.id` commits W
+ * ```
+ */
+export const checkpoint = (dag: ReceiptDAG, options: { readonly below: string }): Effect.Effect<CheckpointResult> =>
+  Effect.gen(function* () {
+    const watermark = options.below;
+    if (!dag.nodes.has(watermark)) {
+      throw InvariantViolationError(
+        'dag.checkpoint.unknown-watermark',
+        `checkpoint watermark "${watermark}" is not a node in the DAG (compact below a hash you have ingested).`,
+      );
+    }
+
+    // dropSet = { W } ∪ ancestors(W) — the region to reclaim.
+    const dropSet = new Set<string>(ancestors(dag, watermark));
+    dropSet.add(watermark);
+
+    // Dominance precondition: the only cross-boundary parent edge (dropped parent
+    // -> retained child) may land on W. Any other dropped parent of a survivor
+    // means W does not dominate the region and the survivor would be orphaned.
+    for (const node of dag.nodes.values()) {
+      const childHash = node.envelope.hash;
+      if (dropSet.has(childHash)) continue;
+      for (const parent of node.parents) {
+        if (dropSet.has(parent) && parent !== watermark) {
+          throw InvariantViolationError(
+            'dag.checkpoint.not-dominated',
+            `watermark "${watermark}" does not dominate the drop region: retained node "${childHash}" ` +
+              `has dropped parent "${parent}". A checkpoint may only reclaim a region whose sole exit edge is the watermark.`,
+          );
+        }
+      }
+    }
+
+    // HLC-max over the dropped envelopes -> the checkpoint's causal stamp
+    // (replica-deterministic: the set is identical given the same W).
+    let maxTs: ReceiptEnvelope['timestamp'] | null = null;
+    for (const hash of dropSet) {
+      const ts = dag.nodes.get(hash)!.envelope.timestamp;
+      if (maxTs === null || hlcCompare(ts, maxTs) > 0) maxTs = ts;
+    }
+
+    const payload = yield* TypedRef.create('czap/checkpoint-summary/v1', {
+      watermark,
+      dropped: [...dropSet].sort(),
+      count: dropSet.size,
+      maxHlc: HLC.encode(maxTs!),
+    });
+
+    // subject.id COMMITS the watermark; previous = GENESIS makes it genesis-shaped
+    // (a sibling-root attestation, NOT an ancestor of any survivor).
+    const checkpointEnvelope = yield* createEnvelope(
+      'checkpoint',
+      { type: 'run', id: `czap/checkpoint:${watermark}` },
+      payload,
+      maxTs!,
+      GENESIS,
+    );
+
+    return {
+      dag: spliceCheckpoint(dag, dropSet),
+      checkpoint: checkpointEnvelope,
+      dropped: [...dropSet],
+    };
+  });
+
+/**
  * DAG namespace -- receipt DAG merge and canonical linearization.
  *
  * Build, query, and merge directed acyclic graphs of receipt envelopes.
@@ -515,6 +640,8 @@ export const DAG = {
   commonAncestor,
   size,
   merge,
+  checkpoint,
+  spliceCheckpoint,
 };
 
 export declare namespace DAG {
@@ -526,4 +653,12 @@ export declare namespace DAG {
   export type Merge = MergeResult;
   /** Alias for {@link ForkViolation}. */
   export type Fork = ForkViolation;
+  /** The genesis-shaped checkpoint attestation a compaction emits out-of-band. */
+  export type Checkpoint = {
+    readonly envelope: ReceiptEnvelope;
+    readonly dropped: readonly string[];
+    readonly watermark: string;
+  };
+  /** Alias for {@link CheckpointResult}. */
+  export type CompactResult = CheckpointResult;
 }
