@@ -18,7 +18,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -36,7 +36,7 @@ jobs:
       # (the raccoon-rule backstop diffs the LIVE surface against the PRIOR, INDEPENDENT
       # baseline — never the working-tree snapshot). A shallow checkout has neither the
       # parent commit nor the fetched base branch, so the gate would fail CLOSED.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
@@ -125,7 +125,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -166,7 +166,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # stable, pinned (2026-03-27)
         with:
           # Pinning to a SHA strips the channel the action otherwise reads from the
@@ -222,7 +222,7 @@ jobs:
     runs-on: blacksmith-4vcpu-windows-2025
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -253,7 +253,7 @@ jobs:
     timeout-minutes: 60
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
