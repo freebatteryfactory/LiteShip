@@ -35,6 +35,8 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0023](./0023-gauntlet-rigor-engine.md) | The gauntlet: self-proving rigor engine + authority model | Accepted |
 | [0024](./0024-fetch-layer-edge-adaptation.md) | Fetch layer: request-time adaptation in front of Astro | Accepted |
 | [0025](./0025-workers-static-assets-boundary-css.md) | Workers Static Assets for boundary CSS | Accepted |
+| [0026](./0026-dag-compaction.md) | Receipt-DAG compaction via checkpoint reclamation | Accepted |
+| [0027](./0027-cell-value-dom-boundary.md) | Reactive primitives are value→wire, never value→DOM | Accepted |
 
 ## Template
 

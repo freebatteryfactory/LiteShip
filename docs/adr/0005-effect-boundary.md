@@ -52,3 +52,40 @@ Phase B §5.7 audit outcome:
 - `packages/web/src/stream/sse.ts`: pure-reducer state machine
 - `packages/core/src/wire.ts`: finalizer seam
 - `packages/quantizer/src/animated-quantizer.ts`: `stateSync` short-circuit
+
+## Addendum (2026-06-30) — SSE overflow policy + the directive SSE bridge
+
+Extends Category 1 (setup/teardown) and Category 4 (state-machine wrapping) to the live `client:stream` / `client:llm` directives.
+
+### Context
+
+`SSE.create`'s bounded receive `Queue` silently drop-newested on saturation — the worst policy for a live tail, and unrecoverable (dropped events fall outside the replay gap window; `lastEventId` has already advanced). The buffer is multiplexed: an LLM token and an id-keyed DOM patch both arrive as `type:'patch'`. And the `client:stream` / `client:llm` directives hand-rolled raw `EventSource`, bypassing `SSE.create` entirely (zero production call sites).
+
+### Decision
+
+**(A3 — the primitive.)** A per-connection `OverflowPolicy` (`drop-newest | drop-oldest | coalesce-by-id`, default `coalesce-by-id`; `'block'` excluded — `onmessage` is a synchronous browser callback that cannot suspend) on `SSEConfig`. `coalesce-by-id` is selective: it supersedes an earlier same-id patch in place over the FIFO `Queue` (the `GraphPatch.diff` shape, not a `Map` store); `extractCoalesceKey` returns `null` for every keyless/ordered message (LLM tokens, `batch`/`snapshot`/`signal`/`receipt`/`heartbeat`), which bypass coalesce and keep strict FIFO — and the saturation fallback evicts the oldest KEYED entry before any ordered token. Backpressure source-of-truth is `Queue.sizeUnsafe`; `BackpressureHint` carries `policy`/`droppedCount`/`coalescedCount`; first saturation emits `Diagnostics.warnOnce('sse-buffer-saturated')`. A `stateChanges: Stream<SSEState>` edge stream is added; the heartbeat watchdog is fixed to actually reconnect (its `close()` never fired `onerror`).
+
+**(A3b — the bridge.)** `client:stream` fully migrates onto `SSE.create`; `client:llm` adopts the same lifecycle but keeps its raw `EventSource` + its own already-guarded `decodeLLMEventData` — the mandatory, red-team-tested `parseMessage` preflight drops the bare-string payloads the LLM token protocol relies on, so the LLM path deliberately does NOT route through `SSE.create.messages` and adds NO public decode bypass to the primitive (the preflight invariant holds by construction). `client:llm` terminal frames (server `error`, `done`) fully tear down (scope + drain fiber), not just the `EventSource`.
+
+Each directive owns a disposable `ManagedRuntime` (not the global default runtime); the drains run on it and are released by `runtime.dispose()` on teardown — deterministic teardown that frees every handle (EventSource, queue, heartbeat timer, fibers), with no leaked process handle. The directive scope is wired with `Scope.provide` (not `Scope.use`, which finalized immediately under this Effect beta), plus a small microtask scheduler to avoid the global Effect scheduler handle.
+
+### Consequences
+
+- The live-tail/morph path (`client:stream`) inherits overflow + unified reconnect/resumption + the heartbeat fix + clean Scope teardown (dispose / VT-swap single-boot).
+- LLM tokens are never dropped/reordered/merged while a redundant keyed patch is evictable; a fully-keyless saturated buffer still drop-oldests (unavoidable — pair with periodic snapshots).
+- The patch-path `parseMessage` security preflight stays non-bypassable.
+- Directive teardown is deterministic — the lifecycle gate runs repeatedly and exits cleanly, closing a flaky process-handle leak.
+
+### Rejected alternatives
+
+- A `Map<id,msg>` coalesce store — collapses all keyless messages into one slot and severs FIFO order.
+- Coalescing by `type === 'patch'` — merges LLM tokens (same discriminant).
+- A public `decode` bypass on `SSE.create` — would let any consumer turn off the security preflight.
+- A `block` overflow policy — would suspend the synchronous `onmessage` seam.
+- Top-level `Effect.runFork` drains on the global runtime + fire-and-forget teardown — leaked a process handle (a flaky test hang); replaced by owned `ManagedRuntime` + `dispose()`.
+
+### Evidence (addendum)
+
+- `packages/web/src/{types,stream/sse-pure,stream/sse}.ts`, `packages/_spine/web.d.ts`; `packages/astro/src/runtime/{stream,llm,effect-scheduler}.ts`.
+- `tests/property/sse-overflow.test.ts`, `tests/component/sse-client.test.ts`, `tests/unit/astro/stream-llm-lifecycle.test.ts`.
+- Precedent: `packages/scene/src/runtime.ts` (imperative Scope bridge).
