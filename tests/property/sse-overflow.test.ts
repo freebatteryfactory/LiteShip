@@ -65,6 +65,18 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(defaultOverflowPolicy).toBe('coalesce-by-id');
   });
 
+  test('coalescing preserves FIFO vs an intervening ordered message (the patch does not jump ahead)', () => {
+    // patch a@v1, then a keyless ordered token, then a newer patch a@v2.
+    const buffer: SSEMessage[] = [patchMessage('a', 1), tokenMessage(7)];
+    const result = applyOverflow(buffer, patchMessage('a', 2), 'coalesce-by-id', 8);
+
+    expect(result.coalesced).toBe(1);
+    // The stale v1 is dropped and v2 lands at the TAIL — its true arrival position —
+    // so the token that arrived BEFORE it still precedes it. Overwriting v1 in place
+    // would have delivered v2 ahead of an earlier ordered message.
+    expect(result.buffer).toEqual([tokenMessage(7), patchMessage('a', 2)]);
+  });
+
   test('a token is never dropped, reordered, or merged while a keyed patch is evictable', () => {
     fc.assert(
       fc.property(fc.array(stepArb, { minLength: 0, maxLength: 200 }), fc.integer({ min: 2, max: 12 }), (steps, max) => {
@@ -77,16 +89,25 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
 
           const keylessBefore = buffer.filter((m) => extractCoalesceKey(m) === null);
           const keyedBefore = buffer.length - keylessBefore.length;
+          const tokensOf = (msgs: readonly SSEMessage[]): Set<number> =>
+            new Set(
+              msgs
+                .filter((m): m is SSEMessage & { data: string } => isTokenData(m.data))
+                .map((m) => Number(m.data.slice('tok:'.length))),
+            );
+          const tokensBefore = tokensOf(buffer);
 
           applyOverflow(buffer, message, 'coalesce-by-id', max);
 
           // Bound holds at every step.
           expect(buffer.length).toBeLessThanOrEqual(max);
 
-          const keylessAfter = buffer.filter((m) => extractCoalesceKey(m) === null);
-          // A token only ever leaves the buffer when there was NOTHING keyed
-          // left to evict — the load-bearing safety invariant.
-          if (keylessAfter.length < keylessBefore.length) {
+          // A token (keyless) leaves the buffer ONLY when there was NOTHING keyed
+          // left to evict — the load-bearing safety invariant. Checked by token
+          // IDENTITY, not count, so a buggy step that drops an older token while
+          // appending the incoming one (leaving the count unchanged) is still caught.
+          const tokensAfter = tokensOf(buffer);
+          if ([...tokensBefore].some((n) => !tokensAfter.has(n))) {
             expect(keyedBefore).toBe(0);
           }
         }

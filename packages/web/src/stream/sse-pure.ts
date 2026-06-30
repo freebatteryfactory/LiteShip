@@ -104,8 +104,14 @@ export const applyOverflow = (
     if (key !== null) {
       for (let i = 0; i < buffer.length; i++) {
         if (extractCoalesceKey(buffer[i]!) === key) {
-          // Supersede in place: keyless neighbors keep their order.
-          buffer[i] = message;
+          // Supersede: drop the stale patch and re-append the replacement at the
+          // TAIL, its true arrival position. Overwriting in place would move the
+          // newer patch AHEAD of any keyless/ordered message (a `signal`, an LLM
+          // token) that arrived between the two patches, so a downstream consumer
+          // would observe a future patch before an earlier ordered message. Size
+          // is unchanged (remove one, add one), so this still never saturates.
+          buffer.splice(i, 1);
+          buffer.push(message);
           return { buffer, dropped: 0, coalesced: 1, saturated: false };
         }
       }

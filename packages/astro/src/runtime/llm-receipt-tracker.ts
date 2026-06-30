@@ -39,6 +39,7 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
   let _pendingFrames: UIFrame[] | null = null;
   let _lastAckReceiptId: UIFrame['receiptId'] | null = null;
   let _compacting = false;
+  let _compactionEpoch = 0;
 
   /**
    * Auto-compact the receipt chain below `lastAck − margin`, OFF the hot path.
@@ -64,14 +65,14 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
     if (watermark === undefined) return;
 
     _compacting = true;
-    Effect.runPromise(chain.compactBelow(watermark)).then(
-      () => {
-        _compacting = false;
-      },
-      () => {
-        _compacting = false;
-      },
-    );
+    const epoch = _compactionEpoch;
+    const settle = (): void => {
+      // Only clear the guard if no reset() opened a new generation while this
+      // compaction was in flight — a stale completion must not unlock (and so
+      // allow overlapping) compaction on the new chain.
+      if (epoch === _compactionEpoch) _compacting = false;
+    };
+    Effect.runPromise(chain.compactBelow(watermark)).then(settle, settle);
   }
 
   function getReceiptChain(): ReturnType<typeof createReceiptChain> {
@@ -138,6 +139,9 @@ export function createLLMReceiptTracker(): LLMReceiptTracker {
       _receiptChain = null;
       _pendingFrames = null;
       _compacting = false;
+      // New generation: an in-flight compaction from the previous chain must not
+      // clear `_compacting` for this one (see compactBelowAck's epoch guard).
+      _compactionEpoch += 1;
     },
   };
 

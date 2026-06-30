@@ -236,8 +236,6 @@ export const validateChainDetailed = (
   options?: ChainValidationOptions,
 ): Effect.Effect<true, ChainValidationError> =>
   Effect.gen(function* () {
-    if (chain.length === 0) return true as const;
-
     const base = options?.base;
     const checkpoint = options?.checkpoint;
 
@@ -270,6 +268,15 @@ export const validateChainDetailed = (
           reason: `checkpoint hash mismatch (expected "${checkpoint.hash}", computed "${computedCheckpointHash}")`,
         });
       }
+      // The attestation must actually be a checkpoint receipt — a different
+      // genesis-shaped receipt that happens to carry the same subject id must NOT
+      // authorize a compacted tail.
+      if (checkpoint.kind !== 'checkpoint') {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: `checkpoint attestation has kind "${checkpoint.kind}" (expected "checkpoint")`,
+        });
+      }
       if (!isGenesis(checkpoint)) {
         return yield* Effect.fail({
           type: 'checkpoint_invalid' as const,
@@ -285,6 +292,11 @@ export const validateChainDetailed = (
       }
     }
 
+    // An empty chain is vacuously valid — but only AFTER any supplied checkpoint
+    // is bound + verified, so `validateChainDetailed([], { base })` cannot pass
+    // without the authorization a non-empty compacted tail requires.
+    if (chain.length === 0) return true as const;
+
     const first = chain[0]!;
     const firstPrev = first.previous;
     // Index-0 genesis predicate, widened for a compacted tail: a retained tail's
@@ -296,6 +308,21 @@ export const validateChainDetailed = (
         (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base))));
     if (!firstIsGenesis) {
       return yield* Effect.fail({ type: 'not_genesis' as const, index: 0 as const });
+    }
+
+    // A compacted tail (its first envelope names `base`, not GENESIS) is a child of
+    // the dropped watermark, so it MUST advance the HLC beyond the checkpoint —
+    // whose timestamp is the HLC-max over the dropped prefix. Otherwise a
+    // self-consistent but stale-HLC envelope naming `base` as `previous` would
+    // validate where the full chain rejects it at the prefix boundary.
+    const firstNamesBase =
+      base !== undefined &&
+      (firstPrev === base || (Array.isArray(firstPrev) && (firstPrev as readonly string[]).includes(base)));
+    if (firstNamesBase && checkpoint !== undefined && HLCOps.compare(first.timestamp, checkpoint.timestamp) <= 0) {
+      return yield* Effect.fail({
+        type: 'checkpoint_invalid' as const,
+        reason: 'compacted tail does not advance the HLC beyond the checkpoint watermark',
+      });
     }
 
     for (let i = 0; i < chain.length; i++) {

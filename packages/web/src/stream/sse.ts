@@ -239,6 +239,11 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
      * `error` and never reconnect.
      */
     const handleConnectionLoss = (): void => {
+      // Cancel any pending reconnect timer first: a duplicate loss signal (an
+      // `onerror` racing the heartbeat watchdog, or two `onerror`s) before the
+      // timer fires would otherwise overwrite `reconnectHandle` and leave the old
+      // timer live, double-opening a source.
+      clearReconnectHandle();
       const currentSource = machine.source;
       machine.source = null;
       currentSource?.close();

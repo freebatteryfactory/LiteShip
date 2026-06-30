@@ -187,11 +187,13 @@ export const checkForkRule = (dag: ReceiptDAG, envelope: ReceiptEnvelope): ForkV
     // stays equal to a fresh reload. O(n) only on the rare missing-parent path;
     // an out-of-order parent simply has no children yet, so no false fork.
     for (const node of dag.nodes.values()) {
-      if (
-        node.envelope.previous === prevHash &&
-        actorOf(node.envelope) === actor &&
-        node.envelope.hash !== attemptedHash
-      ) {
+      // Match BOTH single-parent (`previous` string) and merge children (`previous`
+      // array containing the watermark) — a retained merge child of `W` is in `W`'s
+      // child list before compaction, so it must keep blocking same-actor forks
+      // after `W` is dropped.
+      const previous = node.envelope.previous;
+      const namesParent = Array.isArray(previous) ? previous.includes(prevHash) : previous === prevHash;
+      if (namesParent && actorOf(node.envelope) === actor && node.envelope.hash !== attemptedHash) {
         return { actor, prevHash, existing: node.envelope.hash, attempted: attemptedHash };
       }
     }

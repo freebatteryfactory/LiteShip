@@ -1,20 +1,25 @@
 // @vitest-environment jsdom
 
 /**
- * A3b gate — the `client:stream` + `client:llm` directives are now wired onto
- * the hardened SSE primitive (`@czap/web` `SSE.create`) through the imperative
- * `Scope` bridge (mirrors `packages/scene/src/runtime.ts`).
+ * A3b gate — the `client:stream` + `client:llm` directives consume the hardened
+ * SSE primitive (`@czap/web` `SSE.create`) SYNCHRONOUSLY: `client:stream` through
+ * its `onMessage`/`onStateChange` callbacks (keeping a `Scope` only for the
+ * connection lifecycle, no drain fibers), `client:llm` through its own raw
+ * `EventSource` + already-guarded decoder (no Effect runtime at all).
  *
- * These assertions pin the lifecycle contract the migration introduces:
- *   1. `czap:teardown` closes the connection and the drain fibers stop — no
- *      morph / token survives the teardown (fibers interrupted by `Scope.close`).
+ * These assertions pin the lifecycle contract:
+ *   1. `czap:teardown` closes the connection synchronously — no morph / token
+ *      survives the teardown.
  *   2. `czap:reinit` (the Astro View-Transition swap pipeline) replaces the
- *      connection: exactly ONE live `EventSource` after the swap (single-boot).
+ *      connection: exactly ONE live `EventSource` after the swap (single-boot),
+ *      and the new connection resumes from the last cursor.
  *   3. The heartbeat watchdog reconnects a silent stream (the latent primitive
  *      bug A3 fixed, now live in the directive).
- *   4. A3 overflow policy is inherited: `client:stream` defaults to
- *      `coalesce-by-id` (same-id patch floods never saturate), `client:llm`
- *      ports `drop-oldest` and surfaces the dropped count as a diagnostic.
+ *   4. Overflow is a PRIMITIVE-only feature for buffered async consumers — a
+ *      synchronous directive holds no buffer, so a same-id patch flood never
+ *      engages the primitive's overflow path and an LLM token flood is processed
+ *      in order with nothing dropped (no backpressure diagnostic). See ADR-0005's
+ *      SSE addendum.
  *
  * jsdom (not the browser config) is the host here on purpose — the assertions
  * are environment-independent and the EventSourceMock drives them deterministically.
