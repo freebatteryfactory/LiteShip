@@ -159,6 +159,31 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
   });
 
+  it('STILL flags a DISALLOWED layering edge (package-topology) in consumer mode', () => {
+    // #4: the consumer suppression targets unresolvable/undiscovered imports — it
+    // must NOT swallow a real LAYERING violation between two INSTALLED packages.
+    // @acme/core (a core layer, no allowed internal imports) imports @acme/app:
+    // both resolve, so this is not unknown-internal-package — it is a topology
+    // breach that stays a hard error even in consumer mode. (Wave-2: this was the
+    // one error class the existing suite did not already pin.)
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/app/package.json': PKG('@acme/app', { '@acme/core': '0.0.0' }),
+      'node_modules/@acme/app/src/index.ts': 'export const appThing = 1;\n',
+      // @acme/core declares + imports @acme/app — a real, resolvable edge that
+      // VIOLATES core's empty allowedInternalImports.
+      'node_modules/@acme/core/package.json': PKG('@acme/core', { '@acme/app': '0.0.0' }),
+      'node_modules/@acme/core/src/index.ts':
+        "import { appThing } from '@acme/app';\nexport const coreThing = appThing;\n",
+    });
+    const result = runAuditPasses(consumerDevopsProfile(root, acmeBase()));
+    expect(
+      result.findings.filter((f) => f.rule === 'package-topology').length,
+      'a disallowed @acme/core -> @acme/app edge must red as package-topology in consumer mode',
+    ).toBeGreaterThan(0);
+    expect(result.counts.error).toBeGreaterThan(0);
+  });
+
   it('STILL flags unknown-internal-package in SOURCE mode (the suppression is consumer-specific, not a blanket removal)', () => {
     const srcRoot = makeFixture({
       'packages/app/package.json': PKG('@acme/app'),
