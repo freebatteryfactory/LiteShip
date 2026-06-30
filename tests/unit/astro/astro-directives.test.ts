@@ -253,7 +253,12 @@ describe('stream directive', () => {
 
     expect(resumeSpy).toHaveBeenCalledWith('hero', 'evt-10', {});
     expect(el.innerHTML).toContain('Recovered');
-    expect(clearTimeoutMock).not.toHaveBeenCalled();
+    // The directive now runs on `SSE.create`, whose heartbeat watchdog resets its
+    // OWN timer on every message (clearTimeout + setTimeout) — so timer churn here
+    // is expected and correct, unlike the bygone hand-rolled directive that this
+    // assertion was written against. The reconnect + resumption itself is verified
+    // by the resume spy and the recovered content above.
+    expect(clearTimeoutMock).toHaveBeenCalled();
   });
 
   test('tracks semantic-id targets across outerHTML replacement and replay patch objects', async () => {

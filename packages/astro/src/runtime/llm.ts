@@ -1,12 +1,10 @@
-import { Effect, Stream, Scope, Queue, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
-import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import type { Receipt } from '@czap/core';
 import type { LLMChunk } from '@czap/web';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
-import { makeDirectiveScheduler } from './effect-scheduler.js';
 
 const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-czap-target="[-:A-Za-z0-9_]+"\])$/;
 
@@ -267,28 +265,17 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     genuiCatalog,
   });
 
-  // Lifecycle is Scope-bridged (mirrors `stream.ts` and `packages/scene/src/runtime.ts`):
-  // one owned ManagedRuntime drives one connection Scope; that Scope owns the
-  // per-connection `EventSource` and bounded raw-frame buffer. Teardown
-  // explicitly interrupts the drain fiber, closes the Scope, then disposes the
-  // owned runtime.
+  // Frames are processed SYNCHRONOUSLY in `onmessage` (no Effect Scope, queue, or
+  // drain fiber): the browser serialises `EventSource` message dispatch and
+  // `session.ingest` morphs within the dispatch turn, so there is no buffer to
+  // bound or overflow.
   //
   // SECURITY (owner-locked): `SSE.create`'s mandatory `parseMessage` preflight
   // drops bare-string payloads — and LLM tokens ARE bare strings — so this path
-  // deliberately does NOT route through `SSE.create.messages`. It inherits the
-  // A3 hardening (bounded buffer + overflow policy + `warnOnce`) by composing
-  // its OWN already-guarded `decodeLLMEventData` over RAW frames internally;
-  // there is NO public decode/preflight-bypass knob on the primitive. Overflow
-  // is `drop-oldest` (LLM tokens are distinct, ordered, keyless — coalesce-by-id
-  // would be wrong); saturation is lossy and surfaced via `Diagnostics.warnOnce`
-  // plus a `czap:llm-backpressure` diagnostic carrying the dropped count.
-  let runtime: ManagedRuntime.ManagedRuntime<never, never> | null = null;
-  let scope: Scope.Closeable | null = null;
+  // deliberately does NOT route through `SSE.create`; it decodes RAW frames with
+  // its OWN already-guarded `decodeLLMEventData`. There is NO public
+  // decode/preflight-bypass knob on the primitive.
   let source: EventSource | null = null;
-  let drainFiber: Fiber.Fiber<void, never> | null = null;
-  let offer: ((raw: unknown) => void) | null = null;
-  let droppedCount = 0;
-  let saturated = false;
 
   const cleanupSource = (): void => {
     if (source) {
@@ -298,38 +285,6 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     }
     source?.close();
     source = null;
-  };
-
-  const closeScope = (): void => {
-    if (scope && runtime) {
-      const closing = scope;
-      const closingRuntime = runtime;
-      const fiber = drainFiber;
-      scope = null;
-      runtime = null;
-      drainFiber = null;
-      offer = null;
-      // Stop the live EventSource synchronously BEFORE the async scope close so
-      // a freshly-opened connection (reinit) is never torn down by the previous
-      // generation's teardown.
-      cleanupSource();
-      // Interrupt the drain fiber, shut the buffer queue (scope finalizer), then
-      // dispose the owned runtime.
-      void closingRuntime
-        .runPromise(
-          Effect.gen(function* () {
-            if (fiber) {
-              yield* Fiber.interrupt(fiber);
-            }
-            yield* Scope.close(closing, Exit.void);
-          }),
-          { scheduler: makeDirectiveScheduler() },
-        )
-        .catch(() => undefined)
-        .finally(() => {
-          void closingRuntime.dispose().catch(() => undefined);
-        });
-    }
   };
 
   const handleFrame = (raw: unknown): void => {
@@ -345,27 +300,25 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
             bubbles: true,
           }),
         );
-        // Terminal: a server-sent error ends the stream. Fully tear down (close
-        // the scope + interrupt the drain fiber + shut the queue), not just the
-        // EventSource — otherwise the queue + fiber leak until a later
-        // teardown/reinit. (Codex finding #2.)
-        closeScope();
+        // Terminal: a server-sent error ends the stream — close the live
+        // EventSource so it stops delivering frames. The rendered content stays;
+        // the session is not disposed.
+        cleanupSource();
         return;
       case 'ignored':
         return;
       case 'chunk':
-        // Terminal 'done': the response is complete — fully tear down the scope,
-        // not just the EventSource (Codex finding #2). The rendered content stays
-        // (closeScope does not dispose the session).
+        // Terminal 'done': the response is complete — close the live EventSource.
+        // The rendered content stays (the session is not disposed).
         if (session.ingest(decoded.chunk) === 'done') {
-          closeScope();
+          cleanupSource();
         }
         return;
     }
   };
 
   const cleanup = (): void => {
-    closeScope();
+    cleanupSource();
     session.dispose();
   };
 
@@ -387,61 +340,10 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   };
 
   const connect = (): void => {
-    closeScope();
+    cleanupSource();
     const target = resolveTarget();
     resetTarget(target);
     session.reset(target);
-    droppedCount = 0;
-    saturated = false;
-
-    const nextRuntime = ManagedRuntime.make(Layer.empty);
-    const scheduler = makeDirectiveScheduler();
-    const next = nextRuntime.runSync(Scope.make());
-    runtime = nextRuntime;
-    scope = next;
-
-    // Sliding queue == native drop-oldest: a saturated buffer evicts the oldest
-    // unprocessed frame and never blocks the synchronous `onmessage` callback.
-    // The scope owns its shutdown finalizer; the drain runs on an owned runtime
-    // and closeScope interrupts it before shutting the queue down.
-    const rawQueue = nextRuntime.runSync(
-      Scope.provide(
-        Effect.gen(function* () {
-          const queue = yield* Queue.sliding<unknown>(SSE_BUFFER_SIZE);
-          yield* Effect.addFinalizer(() => Queue.shutdown(queue));
-          return queue;
-        }),
-        next,
-      ),
-    );
-    drainFiber = nextRuntime.runFork(
-      Stream.runForEach(Stream.fromQueue(rawQueue), (raw) => Effect.sync(() => handleFrame(raw))),
-      { scheduler },
-    );
-
-    offer = (raw: unknown): void => {
-      // Source-of-truth occupancy: a full sliding queue means the incoming
-      // frame will evict the oldest one. Count + surface that loss.
-      if (Queue.sizeUnsafe(rawQueue) >= SSE_BUFFER_SIZE) {
-        droppedCount += 1;
-        if (!saturated) {
-          saturated = true;
-          Diagnostics.warnOnce({
-            source: 'czap/astro.llm',
-            code: 'llm-buffer-saturated',
-            message: 'LLM receive buffer saturated; dropping oldest tokens (drop-oldest overflow policy).',
-            detail: { policy: 'drop-oldest', maxBufferSize: SSE_BUFFER_SIZE },
-          });
-        }
-        element.dispatchEvent(
-          new CustomEvent('czap:llm-backpressure', {
-            detail: { policy: 'drop-oldest', droppedCount, maxBufferSize: SSE_BUFFER_SIZE },
-            bubbles: true,
-          }),
-        );
-      }
-      Queue.offerUnsafe(rawQueue, raw);
-    };
 
     source = new EventSource(llmUrl);
 
@@ -450,8 +352,11 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
       element.dispatchEvent(new CustomEvent('czap:llm-start', { bubbles: true }));
     };
 
+    // Process each frame SYNCHRONOUSLY within the dispatch turn: `decodeLLMEventData`
+    // guards the raw payload and `session.ingest` morphs immediately. The browser
+    // serialises `onmessage`, so frames never need buffering or a drain fiber.
     source.onmessage = (event: MessageEvent) => {
-      offer?.(event.data);
+      handleFrame(event.data);
     };
 
     source.onerror = () => {
