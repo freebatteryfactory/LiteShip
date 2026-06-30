@@ -123,4 +123,20 @@ describe('effect version sync', () => {
     expect(exception, 'effect must be a named prerelease exception').toBeDefined();
     expect(exception!.reason, `policy reason must cite the canonical range R (${R})`).toContain(R);
   });
+
+  it('literal-bearing test files embed the current effect floor (no silent rot on a bump)', () => {
+    // These fixtures/assertions hard-code the effect range/floor for their own
+    // reasons; the manifest sweep above does NOT cover them, so a floor bump would
+    // leave them stale. Pin them here — a bump reds these for a coordinated update.
+    const read = (rel: string): string => readFileSync(join(REPO_ROOT, rel), 'utf8');
+    expect(read('tests/unit/cli/supply-chain-lib.test.ts'), 'supply-chain-lib must embed the range R').toContain(R);
+    for (const rel of [
+      'tests/unit/cli/supply-chain-lib.test.ts',
+      'tests/unit/meta/feedback-integrity.test.ts',
+      'tests/unit/meta/codebase-audit.test.ts',
+      'tests/unit/meta/satellite-scan.test.ts',
+    ]) {
+      expect(read(rel), `${rel} embeds the effect floor; bump it together (expected ${V})`).toContain(V);
+    }
+  });
 });
