@@ -300,3 +300,49 @@ describe('DAG.checkpoint — causal stamp (G)', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// (H) the anti-fork rule survives compaction
+// ---------------------------------------------------------------------------
+
+describe('DAG.checkpoint — anti-fork survives compaction (H)', () => {
+  test('a fork off a compacted watermark is still rejected (dropping W must not weaken fork detection)', async () => {
+    const trunk = await buildLinearChain(3); // [G, X, W]
+    const watermark = trunk[2]!.hash;
+
+    // A single retained child of W by actor 'a' (dominance holds: the only edge
+    // crossing the drop boundary lands on W).
+    const c1 = await Effect.runPromise(
+      Receipt.createEnvelope('c1', { type: 'effect', id: 'a' }, payload, {
+        wall_ms: 3000,
+        counter: 0,
+        node_id: 'a',
+      } as HLC.Shape, watermark),
+    );
+    const dag = DAG.fromReceipts([...trunk, c1]);
+
+    // A SECOND child of W by the same actor is a fork — detected pre-compaction.
+    const c2 = await Effect.runPromise(
+      Receipt.createEnvelope('c2', { type: 'effect', id: 'a' }, payload, {
+        wall_ms: 3001,
+        counter: 0,
+        node_id: 'a',
+      } as HLC.Shape, watermark),
+    );
+    expect(DAG.checkForkRule(dag, c2)).not.toBeNull();
+
+    // Compact below W: drops {G, X, W}, retains c1 as a now-rootless node whose
+    // `previous` still names the dropped W.
+    const { dag: spliced, dropped } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
+    expect(dropped).toContain(watermark);
+    expect(spliced.nodes.has(watermark)).toBe(false);
+
+    // The fork is STILL detected after W's node is gone: checkForkRule scans the
+    // retained children that name the missing parent, so dropping a watermark does
+    // not silently weaken the anti-fork rule. `merge` rejects it for the same reason.
+    const violation = DAG.checkForkRule(spliced, c2);
+    expect(violation).not.toBeNull();
+    expect(violation?.existing).toBe(c1.hash);
+    expect(() => DAG.merge(spliced, [c2])).toThrow(/dag\.anti-fork/);
+  });
+});
