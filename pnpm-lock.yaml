@@ -14,6 +14,7 @@ overrides:
   '@vitest/browser-preview': '>=4.1.8 <5'
   astro: '>=7.0.0 <8'
   devalue: '>=5.8.1 <6'
+  effect: 4.0.0-beta.32
   esbuild: '>=0.28.1 <0.29'
   fast-uri: '>=3.1.2 <4'
   js-yaml: '>=4.2.0 <5'
@@ -317,7 +318,7 @@ importers:
         specifier: '>=7.0.0 <8'
         version: 7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
       vite:
         specifier: '>=8.0.16 <9'
@@ -335,7 +336,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/astro:
@@ -423,7 +424,7 @@ importers:
         specifier: workspace:*
         version: link:../scene
       effect:
-        specifier: '>=4.0.0-beta.32 <5'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/cloudflare:
@@ -441,7 +442,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/command:
@@ -459,7 +460,7 @@ importers:
         specifier: workspace:*
         version: link:../gauntlet
       effect:
-        specifier: '>=4.0.0-beta.32 <5'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/compiler:
@@ -471,7 +472,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/core:
@@ -492,7 +493,7 @@ importers:
         specifier: ^4.2.0
         version: 4.5.8
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/create-liteship:
@@ -507,7 +508,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/edge:
@@ -522,7 +523,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/error: {}
@@ -638,7 +639,7 @@ importers:
         specifier: workspace:*
         version: link:../genui
       effect:
-        specifier: '>=4.0.0-beta.32 <5'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
       fast-glob:
         specifier: ^3.3.3
@@ -653,7 +654,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/remotion:
@@ -662,7 +663,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
       react:
         specifier: '>=18'
@@ -683,7 +684,7 @@ importers:
         specifier: workspace:*
         version: link:../error
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/stage:
@@ -704,7 +705,7 @@ importers:
         specifier: workspace:*
         version: link:../web
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
 
   packages/vite:
@@ -741,7 +742,7 @@ importers:
         specifier: workspace:*
         version: link:../genui
       effect:
-        specifier: '>=4.0.0-beta.0'
+        specifier: 4.0.0-beta.32
         version: 4.0.0-beta.32
       mediabunny:
         specifier: ^1.39.2

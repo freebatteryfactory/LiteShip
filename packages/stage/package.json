@@ -52,7 +52,7 @@
     "@czap/web": "workspace:*"
   },
   "peerDependencies": {
-    "effect": ">=4.0.0-beta.0"
+    "effect": ">=4.0.0-beta.32 <5"
   },
   "engines": {
     "node": ">=22.13.0"

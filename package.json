@@ -159,6 +159,7 @@
       "@vitest/browser-preview": ">=4.1.8 <5",
       "astro": ">=7.0.0 <8",
       "devalue": ">=5.8.1 <6",
+      "effect": "4.0.0-beta.32",
       "esbuild": ">=0.28.1 <0.29",
       "fast-uri": ">=3.1.2 <4",
       "js-yaml": ">=4.2.0 <5",
