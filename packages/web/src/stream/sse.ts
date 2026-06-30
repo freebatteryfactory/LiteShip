@@ -197,6 +197,9 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       }
       machine.status = next;
       Queue.offerUnsafe(transitionQueue, next);
+      // Synchronous edge delivery (callback form of `stateChanges`) for
+      // consumers that drive lifecycle within the dispatch turn.
+      config.onStateChange?.(next);
     };
 
     const clearReconnectHandle = (): void => {
@@ -282,6 +285,13 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
      * one wakeup token per pending message.
      */
     const ingest = (message: SSEMessage): void => {
+      if (config.onMessage) {
+        // Synchronous consumer: deliver in-turn and skip the async buffer/Stream
+        // entirely. A synchronous consumer holds no buffer, so there is nothing
+        // to overflow; `parseMessage` already gated this message upstream.
+        config.onMessage(message);
+        return;
+      }
       const result = applyOverflow(pendingMessages, message, overflowPolicy, maxBufferSize);
       pendingMessages = result.buffer;
 

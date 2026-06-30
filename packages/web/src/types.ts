@@ -259,6 +259,22 @@ export interface SSEConfig {
    * knob without restating the rest.
    */
   readonly overflow?: OverflowPolicy;
+  /**
+   * Synchronous message sink. When set, each parsed message is delivered to
+   * this callback *synchronously* inside the `EventSource` `onmessage` handler
+   * (after the mandatory `parseMessage` preflight), and the async `messages`
+   * Stream + overflow buffer are bypassed — a synchronous consumer holds no
+   * buffer, so there is nothing to overflow. Use this when processing must
+   * complete within the dispatch turn (the live morph directives); use
+   * `messages` for buffered async consumption.
+   */
+  readonly onMessage?: (message: SSEMessage) => void;
+  /**
+   * Synchronous state-transition sink — the callback form of `stateChanges`,
+   * fired synchronously as each edge is emitted. Pair with `onMessage` for
+   * fully synchronous directive consumption.
+   */
+  readonly onStateChange?: (state: SSEState) => void;
 }
 
 /**

@@ -40,9 +40,11 @@ hardened by an adversarial review pass.
   it at render.
 - **`@czap/web` SSE** no longer silently drop-newests under saturation (see
   Added), and the heartbeat watchdog now reconnects on timeout.
-- **`client:stream` / `client:llm`** now consume the hardened `SSE.create` with
-  deterministic, disposable-runtime teardown (clean dispose / VT-swap single-boot);
-  `client:llm` terminal frames fully tear down.
+- **`client:stream` / `client:llm`** now run on the hardened `SSE.create`
+  connection (unified reconnect/resumption + the heartbeat reconnect fix),
+  processing each message synchronously in the dispatch turn with clean teardown
+  (dispose / VT-swap single-boot); `client:llm` terminal frames close the live
+  connection.
 
 ### Changed
 

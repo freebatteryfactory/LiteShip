@@ -215,6 +215,15 @@ export interface SSEConfig {
   readonly heartbeatInterval?: number;
   /** Overflow policy applied when the receive buffer saturates (default `coalesce-by-id`). */
   readonly overflow?: OverflowPolicy;
+  /**
+   * Synchronous message sink. When set, each parsed message is delivered to this
+   * callback inside `onmessage` (after the `parseMessage` preflight) and the async
+   * `messages` Stream + overflow buffer are bypassed — a synchronous consumer
+   * holds no buffer. Use for in-dispatch-turn processing (the live directives).
+   */
+  readonly onMessage?: (message: SSEMessage) => void;
+  /** Synchronous state-transition sink — the callback form of `stateChanges`. */
+  readonly onStateChange?: (state: SSEState) => void;
 }
 
 export interface ReconnectConfig {

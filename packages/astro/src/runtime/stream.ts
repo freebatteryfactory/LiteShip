@@ -1,4 +1,4 @@
-import { Effect, Stream, Scope, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
+import { Effect, Scope, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
 import { wallClock } from '@czap/core';
 import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
@@ -389,32 +389,30 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
   const openClient = (): void => {
     const nextRuntime = ManagedRuntime.make(Layer.empty);
-    const scheduler = makeDirectiveScheduler();
     const next = nextRuntime.runSync(Scope.make());
     runtime = nextRuntime;
     scope = next;
     // `SSE.create` requires a Scope; `Scope.provide` builds it and registers its
     // finalizer (EventSource close + Queue shutdown + timer clear) in `next`.
+    //
+    // Messages and connection edges are delivered SYNCHRONOUSLY via callbacks,
+    // not an async Stream drain fiber — so a patch/snapshot/signal is handled
+    // within the same dispatch turn as its `onmessage`. The directive's own rAF
+    // render batching (`enqueueHtml`/`patchScheduler`) owns throttling; an async
+    // buffer would only add latency and could reorder relative to that scheduler.
     const created = nextRuntime.runSync(
       Scope.provide(
         SSE.create({
           url: streamUrl,
           ...(artifactId ? { artifactId } : {}),
+          onMessage: handleMessage,
+          onStateChange: handleEdge,
         }),
         next,
       ),
     );
     client = created;
-    drainFibers = [
-      nextRuntime.runFork(
-        Stream.runForEach(created.messages, (m) => Effect.sync(() => handleMessage(m))),
-        { scheduler },
-      ),
-      nextRuntime.runFork(
-        Stream.runForEach(created.stateChanges, (s) => Effect.sync(() => handleEdge(s))),
-        { scheduler },
-      ),
-    ];
+    drainFibers = [];
   };
 
   const closeClient = (): void => {

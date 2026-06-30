@@ -151,39 +151,33 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(MockEventSource.instances).toHaveLength(2);
   });
 
-  test('stream inherits coalesce-by-id: a same-id patch flood never saturates, distinct ids do', () => {
+  test('stream delivers messages synchronously, bypassing the primitive overflow buffer', () => {
     Diagnostics.reset();
-    const sameId = Diagnostics.createBufferSink();
-    Diagnostics.setSink(sameId.sink);
+    const captured = Diagnostics.createBufferSink();
+    Diagnostics.setSink(captured.sink);
 
     const el = makeEl('div', { 'data-czap-stream-url': '/api/feed' });
     streamDirective(noop, {}, el);
     const source = latestSource();
 
-    // coalesce-by-id supersedes the same `data-czap-id` patch in place, so the
-    // bounded buffer never grows past 1 even far beyond capacity.
+    // The directive consumes via the synchronous `onMessage` callback, NOT the
+    // async Stream + bounded Queue — so each patch is handled in-turn and the
+    // primitive's receive buffer is never engaged. A flood far past capacity
+    // therefore never saturates, whether or not the patches share a
+    // `data-czap-id`. (Overflow is a primitive-only feature — see
+    // `tests/property/sse-overflow.test.ts`; the directive's own rAF batching
+    // owns render throttling.)
     for (let i = 0; i < SSE_BUFFER_SIZE * 2; i++) {
       source.simulateMessage(patchFrame('hero', i));
     }
-    expect(sameId.events.filter((e) => e.code === 'sse-buffer-saturated')).toHaveLength(0);
-
-    // Source-of-truth contrast: distinct ids cannot coalesce, so the identical
-    // flood DOES saturate — proving the coalesce above is load-bearing.
-    Diagnostics.reset();
-    const distinctId = Diagnostics.createBufferSink();
-    Diagnostics.setSink(distinctId.sink);
-
-    const el2 = makeEl('div', { 'data-czap-stream-url': '/api/feed' });
-    streamDirective(noop, {}, el2);
-    const source2 = latestSource();
     for (let i = 0; i < SSE_BUFFER_SIZE * 2; i++) {
-      source2.simulateMessage(patchFrame(`id-${i}`, i));
+      source.simulateMessage(patchFrame(`id-${i}`, i));
     }
-    expect(distinctId.events.filter((e) => e.code === 'sse-buffer-saturated')).toHaveLength(1);
+    expect(captured.events.filter((e) => e.code === 'sse-buffer-saturated')).toHaveLength(0);
   });
 });
 
-describe('A3b — client:llm Scope-bridged with drop-oldest overflow', () => {
+describe('A3b — client:llm synchronous frame processing', () => {
   let restoreES: () => void;
 
   beforeEach(() => {
@@ -203,34 +197,36 @@ describe('A3b — client:llm Scope-bridged with drop-oldest overflow', () => {
     vi.useRealTimers();
   });
 
-  test('llm inherits drop-oldest overflow and surfaces a backpressure diagnostic', () => {
+  test('llm processes a token flood synchronously — every token rendered, nothing dropped', async () => {
     Diagnostics.reset();
     const captured = Diagnostics.createBufferSink();
     Diagnostics.setSink(captured.sink);
 
     const el = makeEl('section', { 'data-czap-llm-url': '/api/chat' });
-    const backpressure: Array<{ policy: string; droppedCount: number; maxBufferSize: number }> = [];
+    const backpressure: unknown[] = [];
     el.addEventListener('czap:llm-backpressure', ((event: CustomEvent) => backpressure.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
     const source = latestSource();
     source.simulateOpen();
 
-    // A synchronous burst larger than the buffer engages drop-oldest before the
-    // drain fiber gets a turn — the overflow is real, not a no-op.
-    const overflow = 25;
-    for (let i = 0; i < SSE_BUFFER_SIZE + overflow; i++) {
+    // Frames are decoded + morphed SYNCHRONOUSLY in `onmessage`; the browser
+    // serialises delivery, so a burst far past the old buffer size is fully
+    // processed in order with nothing dropped and no backpressure surfaced. The
+    // token text accumulates as it arrives.
+    const total = SSE_BUFFER_SIZE + 25;
+    for (let i = 0; i < total; i++) {
       source.simulateMessage(JSON.stringify({ type: 'text', content: `t${i}` }));
     }
 
-    expect(backpressure.length).toBeGreaterThan(0);
-    const last = backpressure.at(-1)!;
-    expect(last.policy).toBe('drop-oldest');
-    expect(last.droppedCount).toBe(overflow);
-    expect(last.maxBufferSize).toBe(SSE_BUFFER_SIZE);
-
-    // The loud-not-silent diagnostic fired exactly once (warnOnce-latched).
-    expect(captured.events.filter((e) => e.code === 'llm-buffer-saturated')).toHaveLength(1);
+    expect(backpressure).toHaveLength(0);
+    expect(captured.events.filter((e) => e.code === 'llm-buffer-saturated')).toHaveLength(0);
+    // Non-vacuous: every frame was accepted in-turn (nothing dropped). The token
+    // text is render-batched, so flush a microtask before reading the morph —
+    // both the first and last token are then present, in order.
+    await Promise.resolve();
+    expect(el.textContent).toContain('t0');
+    expect(el.textContent).toContain(`t${total - 1}`);
   });
 
   test('czap:teardown closes the EventSource and stops draining tokens', async () => {
