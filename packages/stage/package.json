@@ -1,6 +1,6 @@
 {
   "name": "@czap/stage",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Dual-export orchestration: one document graph → static Astro page + headless video, proven same-source (ffmpeg backend on `@czap/stage/ffmpeg`)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

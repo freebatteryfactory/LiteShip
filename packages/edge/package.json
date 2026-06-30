@@ -1,6 +1,6 @@
 {
   "name": "@czap/edge",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "CDN-edge: Client Hints, tier detection, KV boundary cache, theme compilation",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
