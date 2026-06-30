@@ -39,6 +39,7 @@ export type {
   SSEConfig,
   ReconnectConfig,
   BackpressureHint,
+  OverflowPolicy,
   SSEMessage,
   ResumptionConfig,
   ResumptionState,

@@ -10,10 +10,10 @@
  * ADR-0005 §Category 4 for the rationale.
  */
 
-import { Effect, Stream, Queue } from 'effect';
+import { Effect, Stream, Queue, Exit } from 'effect';
 import type { Scope } from 'effect';
-import { SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
-import type { SSEConfig, SSEState, SSEMessage, BackpressureHint } from '../types.js';
+import { Diagnostics, SSE_BUFFER_SIZE, SSE_HEARTBEAT_MS } from '@czap/core';
+import type { SSEConfig, SSEState, SSEMessage, BackpressureHint, OverflowPolicy } from '../types.js';
 
 /**
  * The EventSource surface the SSE client actually drives (assign, onmessage,
@@ -33,6 +33,14 @@ export interface SSEEventSource {
 export interface SSEClient {
   readonly messages: Stream.Stream<SSEMessage>;
   readonly state: Effect.Effect<SSEState>;
+  /**
+   * Edge stream of connection-state *transitions* (one emission per
+   * `connecting`/`reconnecting`/`connected`/`error`/`disconnected` change,
+   * deduplicated). Directive bridges drive resumption off the
+   * `reconnecting -> connected` edge — `state` is the pull accessor,
+   * `stateChanges` is the push edge.
+   */
+  readonly stateChanges: Stream.Stream<SSEState>;
   close(): Effect.Effect<void>;
   reconnect(): Effect.Effect<void>;
   readonly lastEventId: Effect.Effect<string | null>;
@@ -42,9 +50,11 @@ export interface SSEClient {
 // Import pure functions from sse-pure.ts (Effect-free) and re-export
 import {
   defaultReconnectConfig as _defaultReconnectConfig,
+  defaultOverflowPolicy,
   parseMessage as _parseMessage,
   calculateDelay as _calculateDelay,
   buildUrl as _buildUrl,
+  applyOverflow,
 } from './sse-pure.js';
 
 /** Re-export of the default reconnect policy (see `./sse-pure.js`). */
@@ -140,15 +150,22 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
     const reconnectConfig = { ...defaultReconnectConfig, ...config.reconnect };
     const heartbeatInterval = config.heartbeatInterval ?? SSE_HEARTBEAT_MS;
     const maxBufferSize = SSE_BUFFER_SIZE;
+    const overflowPolicy: OverflowPolicy = config.overflow ?? defaultOverflowPolicy;
 
     // All SSE state lives in one plain object. Transitions are synchronous
     // mutations — Effect only bridges out at the public accessors.
+    //
+    // Buffer occupancy is NO LONGER hand-tracked: `Queue.sizeUnsafe` is the
+    // single source of truth (the queue IS the FIFO backbone). `machine`
+    // only carries the overflow counters + the first-saturation latch.
     const machine: {
       status: SSEState;
       lastEventId: string | null;
       source: SSEEventSource | null;
       reconnectAttempt: number;
-      bufferSize: number;
+      droppedCount: number;
+      coalescedCount: number;
+      saturated: boolean;
       reconnectHandle: ReturnType<typeof setTimeout> | null;
       heartbeatHandle: ReturnType<typeof setTimeout> | null;
     } = {
@@ -156,12 +173,29 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       lastEventId: config.lastEventId ?? null,
       source: null,
       reconnectAttempt: 0,
-      bufferSize: 0,
+      droppedCount: 0,
+      coalescedCount: 0,
+      saturated: false,
       reconnectHandle: null,
       heartbeatHandle: null,
     };
 
     const messageQueue = yield* Queue.bounded<SSEMessage>(maxBufferSize);
+    // Unbounded edge queue: every status transition is offered here and
+    // surfaced as `client.stateChanges`. Unbounded so a transition is never
+    // itself dropped under backpressure (edges are control-plane, not data).
+    const transitionQueue = yield* Queue.unbounded<SSEState>();
+
+    // Single writer for `machine.status`: mutate, then emit an EDGE only when
+    // the value actually changed (so `stateChanges` is a transition stream,
+    // not a per-message firehose).
+    const setStatus = (next: SSEState): void => {
+      if (machine.status === next) {
+        return;
+      }
+      machine.status = next;
+      Queue.offerUnsafe(transitionQueue, next);
+    };
 
     const clearReconnectHandle = (): void => {
       if (machine.reconnectHandle !== null) {
@@ -177,13 +211,38 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       }
     };
 
+    /**
+     * Shared lost-connection path: close the dead source, then either
+     * schedule a backoff reconnect or latch `error` once attempts are
+     * exhausted. Driven by BOTH `source.onerror` AND the heartbeat watchdog
+     * — `close()` does not synthesize an `onerror`, so a silent heartbeat
+     * timeout must funnel through here itself or the stream would wedge in
+     * `error` and never reconnect.
+     */
+    const handleConnectionLoss = (): void => {
+      const currentSource = machine.source;
+      machine.source = null;
+      currentSource?.close();
+      clearHeartbeat();
+      setStatus('reconnecting');
+
+      const attempt = machine.reconnectAttempt;
+      machine.reconnectAttempt = attempt + 1;
+      if (attempt < reconnectConfig.maxAttempts) {
+        const delay = calculateDelay(attempt, reconnectConfig);
+        machine.reconnectHandle = setTimeout(setupSource, delay);
+      } else {
+        setStatus('error');
+      }
+    };
+
     const resetHeartbeat = (): void => {
       clearHeartbeat();
       machine.heartbeatHandle = setTimeout(() => {
-        machine.status = 'error';
-        const source = machine.source;
-        machine.source = null;
-        source?.close();
+        // A missed heartbeat means the connection is dead but the browser
+        // never fired `onerror`. Funnel through the SAME reconnect path so
+        // the watchdog actually recovers the stream.
+        handleConnectionLoss();
       }, heartbeatInterval * 2);
     };
 
@@ -200,33 +259,53 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
             machine.lastEventId = event.lastEventId;
           }
 
-          machine.status = 'connected';
+          setStatus('connected');
           machine.reconnectAttempt = 0;
 
-          if (machine.bufferSize < maxBufferSize) {
-            machine.bufferSize += 1;
-            Queue.offerUnsafe(messageQueue, message);
-          }
-
+          ingest(message);
           resetHeartbeat();
         }
       };
 
       source.onerror = () => {
-        source.close();
-        clearHeartbeat();
-        machine.source = null;
-        machine.status = 'reconnecting';
-
-        const attempt = machine.reconnectAttempt;
-        machine.reconnectAttempt = attempt + 1;
-        if (attempt < reconnectConfig.maxAttempts) {
-          const delay = calculateDelay(attempt, reconnectConfig);
-          machine.reconnectHandle = setTimeout(setupSource, delay);
-        } else {
-          machine.status = 'error';
-        }
+        handleConnectionLoss();
       };
+    };
+
+    /**
+     * Fold an incoming message into the bounded queue under the overflow
+     * policy. The queue is the FIFO backbone; `applyOverflow` is the pure
+     * collapse pass — so we drain the live buffer, run the policy, and
+     * rebuild. Draining is safe because `onmessage` is synchronous: no
+     * consumer fiber interleaves between the drain and the refill, and a
+     * parked taker is satisfied directly by the refill `offerUnsafe`.
+     */
+    const ingest = (message: SSEMessage): void => {
+      const buffer: SSEMessage[] = [];
+      for (let exit = Queue.takeUnsafe(messageQueue); exit !== undefined; exit = Queue.takeUnsafe(messageQueue)) {
+        if (Exit.isSuccess(exit)) {
+          buffer.push(exit.value);
+        }
+      }
+
+      const result = applyOverflow(buffer, message, overflowPolicy, maxBufferSize);
+      for (const queued of result.buffer) {
+        Queue.offerUnsafe(messageQueue, queued);
+      }
+      machine.droppedCount += result.dropped;
+      machine.coalescedCount += result.coalesced;
+
+      if (result.saturated && !machine.saturated) {
+        // First saturation only (latched + warnOnce-deduped): the buffer is
+        // overflowing and the policy is now actively shedding load.
+        machine.saturated = true;
+        Diagnostics.warnOnce({
+          source: 'czap/web.sse',
+          code: 'sse-buffer-saturated',
+          message: 'SSE receive buffer saturated; applying overflow policy.',
+          detail: { policy: overflowPolicy, maxBufferSize, bufferSize: Queue.sizeUnsafe(messageQueue) },
+        });
+      }
     };
 
     const createConnection = Effect.sync(() => {
@@ -235,29 +314,32 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
 
     yield* createConnection;
 
-    const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue).pipe(
-      Stream.tap(() =>
-        Effect.sync(() => {
-          machine.bufferSize = Math.max(0, machine.bufferSize - 1);
-        }),
-      ),
-    );
+    // The bounded queue IS the buffer; consumers pull straight from it. The
+    // old `Stream.tap` decrement is retired — `Queue.sizeUnsafe` is now the
+    // backpressure source of truth, so there is nothing to hand-decrement.
+    const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue);
+    const stateChanges: Stream.Stream<SSEState> = Stream.fromQueue(transitionQueue);
 
     const client: SSEClient = {
       messages,
+
+      stateChanges,
 
       state: Effect.sync(() => machine.status),
 
       lastEventId: Effect.sync(() => machine.lastEventId),
 
       backpressure: Effect.sync(() => {
-        const bufferSize = machine.bufferSize;
+        const bufferSize = Queue.sizeUnsafe(messageQueue);
         const percentFull = Math.round((bufferSize / maxBufferSize) * 100);
         return {
           bufferSize,
           maxBufferSize,
           percentFull,
           dropping: bufferSize >= maxBufferSize,
+          policy: overflowPolicy,
+          droppedCount: machine.droppedCount,
+          coalescedCount: machine.coalescedCount,
         };
       }),
 
@@ -269,9 +351,13 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
           if (currentSource) {
             currentSource.close();
             machine.source = null;
-            machine.status = 'disconnected';
           }
+          // `close()` is an intentional teardown — land in `disconnected`
+          // regardless of whether a live source was present (e.g. the
+          // heartbeat watchdog may have already cleared it).
+          setStatus('disconnected');
           yield* Queue.shutdown(messageQueue);
+          yield* Queue.shutdown(transitionQueue);
         }),
 
       reconnect: () =>
@@ -284,7 +370,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
             machine.source = null;
           }
           machine.reconnectAttempt = 0;
-          machine.status = 'connecting';
+          setStatus('connecting');
 
           yield* createConnection;
         }),
@@ -300,6 +386,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
           machine.source = null;
         }
         yield* Queue.shutdown(messageQueue);
+        yield* Queue.shutdown(transitionQueue);
       }),
     );
 

@@ -6,11 +6,141 @@
  * @module
  */
 
-import { Millis, systemRng, type Rng } from '@czap/core';
+import { Millis, SSE_BUFFER_SIZE, systemRng, type Rng } from '@czap/core';
 import { ValidationError } from '@czap/error';
-import type { SSEMessage, ReconnectConfig } from '../types.js';
+import { ATTR as SEMANTIC_ID_ATTR } from '../morph/semantic-id.js';
+import type { SSEMessage, ReconnectConfig, OverflowPolicy } from '../types.js';
 
 const ARTIFACT_ID_PATTERN = /^[A-Za-z0-9:_-]+$/;
+
+/**
+ * Engine default overflow policy. `coalesce-by-id` is the safe default: it
+ * collapses redundant same-id patches first and only ever drops the oldest
+ * keyed (idempotent) patch under saturation, so ordered/keyless streams
+ * (LLM tokens) ride through untouched.
+ */
+export const defaultOverflowPolicy: OverflowPolicy = 'coalesce-by-id';
+
+/**
+ * Sniff the first `data-czap-id="..."` attribute out of a serialized HTML
+ * patch. Built from the canonical {@link SEMANTIC_ID_ATTR} constant so the
+ * coalesce key tracks the same attribute Morph uses for node identity.
+ */
+const COALESCE_ID_ATTR_PATTERN = new RegExp(`${SEMANTIC_ID_ATTR}="([^"]+)"`);
+
+/**
+ * Coalesce key for an SSE message, or `null` when the message is
+ * order-significant and must never be merged.
+ *
+ * ONLY `type === 'patch'` is eligible: a patch addressed by a stable id is
+ * idempotent (a newer patch for the same id fully supersedes the older).
+ * Every other message — LLM text tokens (`patch`-free bare strings never
+ * reach here), `batch`, `snapshot`, `signal`, `receipt`, `heartbeat` —
+ * returns `null` so it keeps strict FIFO order.
+ *
+ * Ambiguity ALWAYS yields `null` (fail-safe: a message we cannot positively
+ * key is treated as order-significant and never coalesced). An object
+ * payload is keyed by a non-empty string `id`/`czapId`; a string payload is
+ * keyed by its first `data-czap-id` attribute.
+ */
+export const extractCoalesceKey = (message: SSEMessage): string | null => {
+  if (message.type !== 'patch') {
+    return null;
+  }
+
+  const data = message.data;
+
+  if (data !== null && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    const id = record['id'] ?? record['czapId'];
+    return typeof id === 'string' && id.length > 0 ? `patch:${id}` : null;
+  }
+
+  if (typeof data === 'string') {
+    const match = COALESCE_ID_ATTR_PATTERN.exec(data);
+    return match ? `patch:${match[1]}` : null;
+  }
+
+  return null;
+};
+
+/** Outcome of a single {@link applyOverflow} step. */
+export interface OverflowResult {
+  /** The buffer after the step (mutated in place and returned for chaining). */
+  readonly buffer: SSEMessage[];
+  /** `1` when a message was evicted/rejected this step, else `0`. */
+  readonly dropped: number;
+  /** `1` when an existing same-id patch was superseded in place, else `0`. */
+  readonly coalesced: number;
+  /** `true` when the buffer was at capacity and the step evicted/rejected. */
+  readonly saturated: boolean;
+}
+
+/**
+ * Pure overflow step: fold `message` into `buffer` under `policy`, returning
+ * the new buffer plus per-step counters. The FIFO backbone (index 0 =
+ * oldest) is preserved; this is the testable target behind the bounded
+ * `Queue` in `sse.ts` (drain → applyOverflow → rebuild).
+ *
+ * The safety invariant lives here: under `coalesce-by-id`, an LLM token
+ * (keyless) is never dropped, reordered, or merged while a keyed patch
+ * remains evictable. Same-id patches collapse to the newest in place;
+ * saturation evicts the oldest keyed patch first, falling back to
+ * drop-oldest only when the buffer holds no keyed entry at all.
+ *
+ * @param maxBufferSize - capacity (defaults to {@link SSE_BUFFER_SIZE});
+ *   assumed `>= 1`.
+ */
+export const applyOverflow = (
+  buffer: SSEMessage[],
+  message: SSEMessage,
+  policy: OverflowPolicy,
+  maxBufferSize: number = SSE_BUFFER_SIZE,
+): OverflowResult => {
+  // coalesce-by-id: an in-place supersede neither grows the buffer nor
+  // saturates it — try it before any capacity check.
+  if (policy === 'coalesce-by-id') {
+    const key = extractCoalesceKey(message);
+    if (key !== null) {
+      for (let i = 0; i < buffer.length; i++) {
+        if (extractCoalesceKey(buffer[i]!) === key) {
+          // Supersede in place: keyless neighbors keep their order.
+          buffer[i] = message;
+          return { buffer, dropped: 0, coalesced: 1, saturated: false };
+        }
+      }
+    }
+  }
+
+  // Room available — plain FIFO append.
+  if (buffer.length < maxBufferSize) {
+    buffer.push(message);
+    return { buffer, dropped: 0, coalesced: 0, saturated: false };
+  }
+
+  // Saturated. Choose the eviction victim by policy.
+  if (policy === 'drop-newest') {
+    // Reject the incoming message; the buffer is unchanged.
+    return { buffer, dropped: 1, coalesced: 0, saturated: true };
+  }
+
+  if (policy === 'coalesce-by-id') {
+    // Evict the oldest KEYED (idempotent) patch before any ordered/keyless
+    // entry, so a token is never dropped while a patch is still evictable.
+    const keyedIndex = buffer.findIndex((m) => extractCoalesceKey(m) !== null);
+    if (keyedIndex !== -1) {
+      buffer.splice(keyedIndex, 1);
+      buffer.push(message);
+      return { buffer, dropped: 1, coalesced: 0, saturated: true };
+    }
+    // Buffer is all keyless/ordered messages -> fall through to drop-oldest.
+  }
+
+  // drop-oldest (also the coalesce fallback when no keyed entry exists).
+  buffer.shift();
+  buffer.push(message);
+  return { buffer, dropped: 1, coalesced: 0, saturated: true };
+};
 
 /**
  * Default reconnection configuration.
