@@ -211,6 +211,26 @@ export interface RuntimeEndpointPolicy {
 export type SSEState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
 
 /**
+ * Policy applied when the SSE receive buffer is saturated.
+ *
+ * A plain string union of policy *labels* — not a `_tag`/`type` value
+ * discriminant. `'block'` is intentionally absent: `EventSource.onmessage`
+ * is a synchronous browser callback that cannot suspend, so there is no
+ * back-channel to pause the producer; backpressure can only ever drop or
+ * collapse, never block.
+ *
+ * - `drop-newest`    — reject the incoming message when full.
+ * - `drop-oldest`    — evict the oldest buffered message, then append.
+ * - `coalesce-by-id` — supersede an earlier same-id `patch` in place;
+ *   keyless/ordered messages (LLM text tokens, `batch`, `snapshot`,
+ *   `signal`, `receipt`, `heartbeat`) bypass coalesce and keep strict FIFO.
+ *   Under saturation the fallback evicts the oldest keyed (idempotent)
+ *   patch before ever touching an ordered/keyless entry, so an LLM token is
+ *   never dropped while a patch is still evictable.
+ */
+export type OverflowPolicy = 'drop-newest' | 'drop-oldest' | 'coalesce-by-id';
+
+/**
  * SSE client configuration.
  */
 export interface SSEConfig {
@@ -232,6 +252,13 @@ export interface SSEConfig {
    */
   readonly reconnect?: Partial<ReconnectConfig>;
   readonly heartbeatInterval?: Millis;
+  /**
+   * Overflow policy applied when the receive buffer saturates. Partial
+   * over the engine default (`coalesce-by-id`, see `defaultOverflowPolicy`
+   * in `./stream/sse-pure.js`) — like `reconnect`, callers override the one
+   * knob without restating the rest.
+   */
+  readonly overflow?: OverflowPolicy;
 }
 
 /**
@@ -254,6 +281,12 @@ export interface BackpressureHint {
   readonly maxBufferSize: number;
   readonly percentFull: number;
   readonly dropping: boolean;
+  /** The active {@link OverflowPolicy} (the rule governing `dropping`). */
+  readonly policy: OverflowPolicy;
+  /** Cumulative count of messages evicted/rejected by the overflow policy. */
+  readonly droppedCount: number;
+  /** Cumulative count of same-id `patch` supersessions (coalesce hits). */
+  readonly coalescedCount: number;
 }
 
 /**

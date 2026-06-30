@@ -212,17 +212,25 @@ describe('SSE reconnection', () => {
 // ---------------------------------------------------------------------------
 
 describe('SSE heartbeat', () => {
-  test('heartbeat timeout triggers close after 2x interval', async () => {
+  test('heartbeat timeout reconnects instead of wedging in error', async () => {
+    // A silent heartbeat timeout means the connection died without an
+    // `onerror`. The watchdog must funnel through the SAME reconnect path —
+    // close the dead source, go `reconnecting`, then re-open on backoff —
+    // rather than latching `error` (the latent primitive bug A3 fixes).
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // zero jitter -> delay === initialDelay
+
     await runScoped(
       Effect.gen(function* () {
         const client = yield* SSE.create(baseConfig);
-        const es = MockEventSource.instances[0]!;
 
-        // No messages for heartbeatInterval * 2 = 10000ms
-        vi.advanceTimersByTime(10_100);
+        // Heartbeat fires at heartbeatInterval * 2 = 10000ms.
+        vi.advanceTimersByTime(10_000);
+        expect(yield* client.state).toBe('reconnecting');
+        expect(MockEventSource.instances).toHaveLength(1);
 
-        const state = yield* client.state;
-        expect(state).toBe('error');
+        // Backoff (initialDelay 100ms, jitter 0) re-opens the source.
+        vi.advanceTimersByTime(100);
+        expect(MockEventSource.instances).toHaveLength(2);
       }),
     );
   });
@@ -246,35 +254,71 @@ describe('SSE heartbeat', () => {
     );
   });
 
-  test('close is a no-op when the heartbeat timeout already cleared the source', async () => {
+  test('close after a heartbeat timeout lands in disconnected and cancels the pending reconnect', async () => {
     await runScoped(
       Effect.gen(function* () {
         const client = yield* SSE.create(baseConfig);
 
-        vi.advanceTimersByTime(10_100);
+        vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting + scheduled reconnect
         yield* client.close();
 
-        const state = yield* client.state;
-        expect(state).toBe('error');
+        expect(yield* client.state).toBe('disconnected');
+
+        // The scheduled reconnect must have been cancelled by close().
+        const countAfterClose = MockEventSource.instances.length;
+        vi.advanceTimersByTime(5000);
+        expect(MockEventSource.instances.length).toBe(countAfterClose);
       }),
     );
   });
 
-  test('reconnect recreates the source after heartbeat timeout cleared it', async () => {
+  test('manual reconnect after a heartbeat timeout supersedes the scheduled one', async () => {
     await runScoped(
       Effect.gen(function* () {
         const client = yield* SSE.create(baseConfig);
 
-        vi.advanceTimersByTime(10_100);
+        vi.advanceTimersByTime(10_000); // heartbeat -> reconnecting (source cleared)
         const countBefore = MockEventSource.instances.length;
 
         yield* client.reconnect();
 
         expect(MockEventSource.instances.length).toBe(countBefore + 1);
-        const state = yield* client.state;
-        expect(state).toBe('connecting');
+        expect(yield* client.state).toBe('connecting');
       }),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// State transition edges
+// ---------------------------------------------------------------------------
+
+describe('SSE stateChanges', () => {
+  test('emits a deduplicated edge per status transition', async () => {
+    vi.useRealTimers();
+    try {
+      await runScoped(
+        Effect.gen(function* () {
+          const client = yield* SSE.create(baseConfig);
+          // Collect the first two edges: connected (first message), then
+          // reconnecting (error). Repeated 'connected' messages must NOT
+          // re-emit — it is a transition stream, not a per-message firehose.
+          const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(client.stateChanges, 2)));
+          yield* Effect.promise(() => Promise.resolve());
+
+          const es = MockEventSource.instances[0]!;
+          es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+          es.simulateMessage(JSON.stringify({ type: 'heartbeat' }));
+          es.simulateError();
+          yield* Effect.promise(() => Promise.resolve());
+
+          const edges = Array.from(yield* Fiber.join(fiber));
+          expect(edges).toEqual(['connected', 'reconnecting']);
+        }),
+      );
+    } finally {
+      vi.useFakeTimers();
+    }
   });
 });
 
@@ -350,7 +394,7 @@ describe('SSE backpressure', () => {
     );
   });
 
-  test('consuming messages drains the buffer accounting through the stream tap', async () => {
+  test('consuming messages drains the buffer (Queue.sizeUnsafe is the source of truth)', async () => {
     vi.useRealTimers();
     try {
       await runScoped(

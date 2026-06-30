@@ -201,6 +201,8 @@ export declare const SlotAddressing: {
 
 export type SSEState = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
 
+export type OverflowPolicy = 'drop-newest' | 'drop-oldest' | 'coalesce-by-id';
+
 export interface SSEConfig {
   readonly url: string;
   readonly artifactId?: string;
@@ -211,6 +213,8 @@ export interface SSEConfig {
    */
   readonly reconnect?: Partial<ReconnectConfig>;
   readonly heartbeatInterval?: number;
+  /** Overflow policy applied when the receive buffer saturates (default `coalesce-by-id`). */
+  readonly overflow?: OverflowPolicy;
 }
 
 export interface ReconnectConfig {
@@ -225,11 +229,15 @@ export interface BackpressureHint {
   readonly maxBufferSize: number;
   readonly percentFull: number;
   readonly dropping: boolean;
+  readonly policy: OverflowPolicy;
+  readonly droppedCount: number;
+  readonly coalescedCount: number;
 }
 
 export interface SSEClient {
   readonly messages: Stream.Stream<SSEMessage>;
   readonly state: Effect.Effect<SSEState>;
+  readonly stateChanges: Stream.Stream<SSEState>;
   close(): Effect.Effect<void>;
   reconnect(): Effect.Effect<void>;
   readonly lastEventId: Effect.Effect<string | null>;

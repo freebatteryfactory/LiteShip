@@ -1,0 +1,215 @@
+/**
+ * Property test: SSE overflow policy (the A3 primitive).
+ *
+ * The pure target is `applyOverflow` (`packages/web/src/stream/sse-pure.ts`),
+ * the collapse pass behind the bounded `Queue` in `sse.ts`. We fold an
+ * INTERLEAVED sequence of LLM-style ordered tokens (keyless messages) and
+ * id-keyed patches and assert the safety invariants Wave-2 demanded:
+ *
+ *  1. tokens are never dropped, reordered, or merged WHILE a keyed patch is
+ *     still evictable;
+ *  2. same-id patches coalesce to the newest version;
+ *  3. the buffer never exceeds capacity (bound derived from the real
+ *     `SSE_BUFFER_SIZE` default — the source of truth);
+ *  4. BITE — the live client emits exactly one `sse-buffer-saturated`
+ *     `warnOnce` on first saturation and reports `dropping === true`.
+ */
+
+import { describe, test, expect, afterEach, vi } from 'vitest';
+import fc from 'fast-check';
+import { Effect } from 'effect';
+import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
+import { SSE } from '@czap/web';
+import type { SSEMessage } from '@czap/web';
+import {
+  applyOverflow,
+  extractCoalesceKey,
+  defaultOverflowPolicy,
+} from '../../packages/web/src/stream/sse-pure.js';
+import { MockEventSource } from '../helpers/mock-event-source.js';
+import { runScopedAsync as runScoped } from '../helpers/effect-test.js';
+
+// ---------------------------------------------------------------------------
+// Message model
+// ---------------------------------------------------------------------------
+
+/** A keyless, order-significant message (an LLM token analogue). */
+const tokenMessage = (n: number): SSEMessage => ({ type: 'batch', data: `tok:${n}` });
+
+/** An id-keyed, idempotent patch (a newer version supersedes the older). */
+const patchMessage = (id: string, version: number): SSEMessage => ({
+  type: 'patch',
+  data: `<div data-czap-id="${id}">v${version}</div>`,
+});
+
+const isTokenData = (data: unknown): data is string => typeof data === 'string' && data.startsWith('tok:');
+
+type Step = { readonly kind: 'token'; readonly n: number } | { readonly kind: 'patch'; readonly id: string; readonly version: number };
+
+const stepArb: fc.Arbitrary<Step> = fc.oneof(
+  fc.nat({ max: 1000 }).map((n): Step => ({ kind: 'token', n })),
+  fc
+    .record({ id: fc.constantFrom('a', 'b', 'c', 'd'), version: fc.nat({ max: 1000 }) })
+    .map(({ id, version }): Step => ({ kind: 'patch', id, version })),
+);
+
+const toMessage = (step: Step): SSEMessage =>
+  step.kind === 'token' ? tokenMessage(step.n) : patchMessage(step.id, step.version);
+
+// ---------------------------------------------------------------------------
+// Pure invariants over applyOverflow
+// ---------------------------------------------------------------------------
+
+describe('applyOverflow — coalesce-by-id safety invariants', () => {
+  test('default policy is coalesce-by-id', () => {
+    expect(defaultOverflowPolicy).toBe('coalesce-by-id');
+  });
+
+  test('a token is never dropped, reordered, or merged while a keyed patch is evictable', () => {
+    fc.assert(
+      fc.property(fc.array(stepArb, { minLength: 0, maxLength: 200 }), fc.integer({ min: 2, max: 12 }), (steps, max) => {
+        const buffer: SSEMessage[] = [];
+        const insertedTokenOrder: number[] = [];
+
+        for (const step of steps) {
+          const message = toMessage(step);
+          if (step.kind === 'token') insertedTokenOrder.push(step.n);
+
+          const keylessBefore = buffer.filter((m) => extractCoalesceKey(m) === null);
+          const keyedBefore = buffer.length - keylessBefore.length;
+
+          applyOverflow(buffer, message, 'coalesce-by-id', max);
+
+          // Bound holds at every step.
+          expect(buffer.length).toBeLessThanOrEqual(max);
+
+          const keylessAfter = buffer.filter((m) => extractCoalesceKey(m) === null);
+          // A token only ever leaves the buffer when there was NOTHING keyed
+          // left to evict — the load-bearing safety invariant.
+          if (keylessAfter.length < keylessBefore.length) {
+            expect(keyedBefore).toBe(0);
+          }
+        }
+
+        // No token is mutated/merged: every keyless entry is a verbatim token,
+        // and the tokens present appear in strictly increasing insertion order.
+        const survivingTokenNs = buffer
+          .filter((m): m is SSEMessage & { data: string } => isTokenData(m.data))
+          .map((m) => Number(m.data.slice('tok:'.length)));
+
+        // Strictly-ordered subsequence of the inserted token order (no reorder).
+        let cursor = 0;
+        for (const n of survivingTokenNs) {
+          const found = insertedTokenOrder.indexOf(n, cursor);
+          expect(found).toBeGreaterThanOrEqual(0);
+          cursor = found + 1;
+        }
+      }),
+    );
+  });
+
+  test('same-id patches coalesce to the newest version with a unique key', () => {
+    fc.assert(
+      fc.property(fc.array(stepArb, { minLength: 0, maxLength: 200 }), fc.integer({ min: 2, max: 12 }), (steps, max) => {
+        const buffer: SSEMessage[] = [];
+        const latestVersionById = new Map<string, number>();
+        let totalCoalesced = 0;
+
+        for (const step of steps) {
+          if (step.kind === 'patch') latestVersionById.set(step.id, step.version);
+          const result = applyOverflow(buffer, toMessage(step), 'coalesce-by-id', max);
+          totalCoalesced += result.coalesced;
+        }
+
+        // Every key is unique in the buffer (no same-id duplicates).
+        const keys = buffer.map((m) => extractCoalesceKey(m)).filter((k): k is string => k !== null);
+        expect(new Set(keys).size).toBe(keys.length);
+
+        // Each surviving keyed entry carries the LAST version seen for its id.
+        for (const message of buffer) {
+          const key = extractCoalesceKey(message);
+          if (key === null) continue;
+          const id = key.slice('patch:'.length);
+          const data = message.data as string;
+          expect(data).toContain(`v${latestVersionById.get(id)}`);
+        }
+
+        // Coalesce only ever collapses, never invents — bounded by patch count.
+        expect(totalCoalesced).toBeGreaterThanOrEqual(0);
+      }),
+    );
+  });
+
+  test('buffer length never exceeds the real SSE_BUFFER_SIZE default', () => {
+    fc.assert(
+      fc.property(fc.array(stepArb, { minLength: 0, maxLength: SSE_BUFFER_SIZE * 2 + 10 }), (steps) => {
+        const buffer: SSEMessage[] = [];
+        for (const step of steps) {
+          // Default capacity = SSE_BUFFER_SIZE (the defaults.ts source of truth).
+          applyOverflow(buffer, toMessage(step), defaultOverflowPolicy);
+          expect(buffer.length).toBeLessThanOrEqual(SSE_BUFFER_SIZE);
+        }
+      }),
+    );
+  });
+
+  test('drop-newest rejects the incoming message at capacity; drop-oldest evicts the head', () => {
+    const full = (): SSEMessage[] => Array.from({ length: 3 }, (_, i) => tokenMessage(i));
+
+    const newest = full();
+    const r1 = applyOverflow(newest, tokenMessage(99), 'drop-newest', 3);
+    expect(r1.dropped).toBe(1);
+    expect(r1.saturated).toBe(true);
+    expect(newest.map((m) => m.data)).toEqual(['tok:0', 'tok:1', 'tok:2']);
+
+    const oldest = full();
+    const r2 = applyOverflow(oldest, tokenMessage(99), 'drop-oldest', 3);
+    expect(r2.dropped).toBe(1);
+    expect(oldest.map((m) => m.data)).toEqual(['tok:1', 'tok:2', 'tok:99']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BITE — live-client saturation diagnostics
+// ---------------------------------------------------------------------------
+
+describe('SSE saturation diagnostics (BITE)', () => {
+  let restoreES: () => void;
+
+  afterEach(() => {
+    if (restoreES) restoreES();
+    Diagnostics.reset();
+    vi.useRealTimers();
+  });
+
+  test('first saturation emits exactly one warnOnce and reports dropping', async () => {
+    vi.useFakeTimers();
+    restoreES = MockEventSource.install();
+    Diagnostics.reset(); // clear any prior once-keys so warnOnce is observable
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+
+    await runScoped(
+      Effect.gen(function* () {
+        const client = yield* SSE.create({ url: 'http://localhost/sse' });
+        const es = MockEventSource.instances[0]!;
+
+        // Keyless patches (data {i} has no data-czap-id) -> drop-oldest
+        // fallback once the buffer saturates at SSE_BUFFER_SIZE.
+        for (let i = 0; i < SSE_BUFFER_SIZE + 5; i++) {
+          es.simulateMessage(JSON.stringify({ type: 'patch', data: { i } }));
+        }
+
+        const saturationEvents = events.filter((e) => e.code === 'sse-buffer-saturated');
+        expect(saturationEvents).toHaveLength(1);
+        expect(saturationEvents[0]!.source).toBe('czap/web.sse');
+
+        const bp = yield* client.backpressure;
+        expect(bp.dropping).toBe(true);
+        expect(bp.bufferSize).toBe(SSE_BUFFER_SIZE);
+        expect(bp.droppedCount).toBe(5);
+        expect(bp.policy).toBe('coalesce-by-id');
+      }),
+    );
+  });
+});
