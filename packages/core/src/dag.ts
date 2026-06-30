@@ -177,7 +177,26 @@ export const checkForkRule = (dag: ReceiptDAG, envelope: ReceiptEnvelope): ForkV
   if (prevHash === GENESIS) return null;
 
   const parentNode = dag.nodes.get(prevHash);
-  if (!parentNode) return null;
+  if (!parentNode) {
+    // Parent absent — either not yet merged (out-of-order) or compacted away
+    // beneath a checkpoint watermark. The anti-fork rule still applies in BOTH
+    // cases: scan the retained nodes for a same-actor sibling that already names
+    // this parent. Dropping a watermark must not silently weaken fork detection
+    // for its retained children (a `previous === W` fork must still be rejected
+    // after `W` is compacted). Needs no extra DAG state, so the spliced graph
+    // stays equal to a fresh reload. O(n) only on the rare missing-parent path;
+    // an out-of-order parent simply has no children yet, so no false fork.
+    for (const node of dag.nodes.values()) {
+      if (
+        node.envelope.previous === prevHash &&
+        actorOf(node.envelope) === actor &&
+        node.envelope.hash !== attemptedHash
+      ) {
+        return { actor, prevHash, existing: node.envelope.hash, attempted: attemptedHash };
+      }
+    }
+    return null;
+  }
 
   for (const childHash of parentNode.children) {
     const childNode = dag.nodes.get(childHash);

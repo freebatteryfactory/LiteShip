@@ -133,6 +133,28 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(liveSourceCount()).toBe(1);
   });
 
+  test('czap:reinit reseeds the new connection with the last cursor (resumes the tail, not restart)', async () => {
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/feed',
+      'data-czap-stream-artifact': 'doc-1',
+    });
+
+    streamDirective(noop, {}, el);
+    const first = latestSource();
+    // A message advances the cursor on the live connection.
+    first.simulateMessage(patchFrame('hero', 0), 'evt-7');
+
+    el.dispatchEvent(new CustomEvent('czap:reinit'));
+    await tick();
+
+    const next = latestSource();
+    expect(next).not.toBe(first);
+    // The reinit'd connection resumes from the cursor rather than restarting from
+    // the top: `SSE.create` tracks `lastEventId` per-connection, so the directive
+    // carries it across the swap and re-seeds the replacement.
+    expect(next.url).toContain('lastEventId=evt-7');
+  });
+
   test('heartbeat timeout reconnects a silent stream (watchdog → backoff re-open)', () => {
     vi.useFakeTimers();
     // Zero jitter so the backoff delay === initialDelay (1000ms).

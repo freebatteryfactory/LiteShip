@@ -21,6 +21,7 @@ The `@czap/astro` receipt tracker auto-compacts below `_lastAckReceiptId` minus 
 - The checkpoint is a **sibling-root attestation, not an ancestor** of the retained frontier (`isAncestor(checkpoint, retained) === false`). Under drop-only it cannot be one without re-minting; for memory reclamation it does not need to be.
 - A compacted tail is verifiable ONLY against its checkpoint — base alone proves nothing.
 - Reload round-trip equality, tail-identity, ancestor/fork invariance above the watermark, and replica-deterministic checkpoint hashes are property-pinned.
+- **The anti-fork rule survives compaction.** Dropping `W` does not weaken fork detection: `checkForkRule` falls back to scanning the retained nodes that still name a missing (compacted) parent, so a later `previous === W` fork by an actor that already has a retained child of `W` is still rejected. This needs no extra DAG state — the retained children carry the boundary — so reload-equality holds.
 
 ## Rejected alternatives
 
@@ -35,7 +36,7 @@ The `@czap/astro` receipt tracker auto-compacts below `_lastAckReceiptId` minus 
 
 - `packages/core/src/dag.ts` (`checkpoint`, `spliceCheckpoint`, `DAG.Checkpoint`), `receipt.ts` (`ChainValidationOptions`, the checkpoint-gated genesis predicate, `checkpoint_invalid`), `packages/_spine/core.d.ts` (mirrored types).
 - `packages/astro/src/runtime/{receipt-chain,llm-receipt-tracker}.ts` (auto-compact + concurrent-ingest abort).
-- `tests/property/dag-compaction.prop.test.ts` — A–G (boundary validation incl. base-requires-checkpoint, reload round-trip, tail-identity, ancestor/fork invariance, replica determinism, preconditions, max-HLC).
+- `tests/property/dag-compaction.prop.test.ts` — A–H (boundary validation incl. base-requires-checkpoint, reload round-trip, tail-identity, ancestor/fork invariance, replica determinism, preconditions, max-HLC, and the anti-fork rule surviving compaction).
 
 ## References
 

@@ -1,4 +1,4 @@
-import { Effect, Scope, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
+import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
 import { wallClock } from '@czap/core';
 import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
@@ -6,7 +6,6 @@ import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
-import { makeDirectiveScheduler } from './effect-scheduler.js';
 
 type Locator =
   | { readonly type: 'slot'; readonly value: string }
@@ -224,7 +223,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   let runtime: ManagedRuntime.ManagedRuntime<never, never> | null = null;
   let scope: Scope.Closeable | null = null;
   let client: SSEClient | null = null;
-  let drainFibers: Fiber.Fiber<void, never>[] = [];
+  // Cursor carried ACROSS connections (reinit / VT-swap). `SSE.create` tracks
+  // `lastEventId` per-connection, so a fresh connection opened on reinit must be
+  // re-seeded with the last message's cursor — otherwise the tail restarts from
+  // the top instead of resuming where the swapped-out connection left off.
+  let lastCursor: string | null = null;
 
   const bindReinit = (nextTarget: HTMLElement): void => {
     if (reinitTarget === nextTarget) {
@@ -329,6 +332,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   const handleMessage = (message: SSEMessage): void => {
     const currentEventId = client ? Effect.runSync(client.lastEventId) : null;
     if (currentEventId) {
+      lastCursor = currentEventId;
       saveResumptionState(artifactId, currentEventId);
       if (recoveryPending && artifactId) {
         recoveryPending = false;
@@ -405,6 +409,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         SSE.create({
           url: streamUrl,
           ...(artifactId ? { artifactId } : {}),
+          ...(lastCursor ? { lastEventId: lastCursor } : {}),
           onMessage: handleMessage,
           onStateChange: handleEdge,
         }),
@@ -412,32 +417,25 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       ),
     );
     client = created;
-    drainFibers = [];
   };
 
   const closeClient = (): void => {
     if (scope && runtime) {
       const closing = scope;
       const closingRuntime = runtime;
-      const fibers = drainFibers;
       scope = null;
       runtime = null;
       client = null;
-      drainFibers = [];
-      void closingRuntime
-        .runPromise(
-          Effect.gen(function* () {
-            for (const fiber of fibers) {
-              yield* Fiber.interrupt(fiber);
-            }
-            yield* Scope.close(closing, Exit.void);
-          }),
-          { scheduler: makeDirectiveScheduler() },
-        )
-        .catch(() => undefined)
-        .finally(() => {
-          void closingRuntime.dispose().catch(() => undefined);
-        });
+      // Close the Scope SYNCHRONOUSLY before the replacement opens: its finalizer
+      // closes the EventSource, nulls the primitive's `source`, and shuts the
+      // queues in one pass, so a frame from the old generation cannot morph stale
+      // HTML into the new one on reinit (P1) and SSE.create's onmessage ignores
+      // any straggler whose source is no longer current (P2). All finalizers are
+      // synchronous; the owned runtime is then disposed asynchronously. (Running
+      // both `client.close()` AND `Scope.close` would double-shut the queues and
+      // surface an async rejection in a later turn.)
+      closingRuntime.runSync(Scope.close(closing, Exit.void));
+      void closingRuntime.dispose().catch(() => undefined);
     }
   };
 

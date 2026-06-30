@@ -216,6 +216,20 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       }
     };
 
+    // Detach the live source for good: drop its handlers BEFORE close() so a
+    // queued event can no longer invoke the synchronous `onMessage`/onerror sink
+    // after an intentional teardown or VT reinit — a stale frame must not morph
+    // into a newer generation (P2). The internal reconnect path deliberately does
+    // NOT use this: it closes and immediately re-opens a fresh source.
+    const detachSource = (): void => {
+      const src = machine.source;
+      if (!src) return;
+      src.onmessage = null;
+      src.onerror = null;
+      src.close();
+      machine.source = null;
+    };
+
     /**
      * Shared lost-connection path: close the dead source, then either
      * schedule a backoff reconnect or latch `error` once attempts are
@@ -360,11 +374,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
         Effect.gen(function* () {
           clearReconnectHandle();
           clearHeartbeat();
-          const currentSource = machine.source;
-          if (currentSource) {
-            currentSource.close();
-            machine.source = null;
-          }
+          detachSource();
           // `close()` is an intentional teardown — land in `disconnected`
           // regardless of whether a live source was present (e.g. the
           // heartbeat watchdog may have already cleared it).
@@ -395,11 +405,7 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       Effect.gen(function* () {
         clearReconnectHandle();
         clearHeartbeat();
-        const currentSource = machine.source;
-        if (currentSource) {
-          currentSource.close();
-          machine.source = null;
-        }
+        detachSource();
         pendingMessages = [];
         signaledCount = 0;
         yield* Queue.shutdown(messageQueue);
