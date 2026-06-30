@@ -162,7 +162,11 @@ describe('browser stream and llm directives', () => {
 
     el.dispatchEvent(new CustomEvent('czap:reinit'));
     expect(source.closed).toBe(true);
-    expect(clearTimeoutMock).not.toHaveBeenCalled();
+    // The directive runs on `SSE.create`, whose heartbeat watchdog resets its own
+    // timer per message (clearTimeout + setTimeout) and clears it on teardown — so
+    // timer churn is expected. The reinit teardown is verified by source.closed
+    // above; reconnect + max-attempts are verified below.
+    expect(clearTimeoutMock).toHaveBeenCalled();
 
     source = latestSource();
     expect(source.url).toContain('/stream/doc-1?lastEventId=evt-9');
