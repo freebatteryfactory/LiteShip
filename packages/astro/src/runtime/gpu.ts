@@ -52,6 +52,35 @@ function readShaderDeclarations(boundaryJson: string | null, key: 'glslDeclarati
 }
 
 /**
+ * Warn (once) when a `client:gpu` host has no layout at boot: `clientWidth`/
+ * `clientHeight` resolve to 0, so the canvas backing store falls to the HTML
+ * default (CANVAS_FALLBACK_WIDTH x CANVAS_FALLBACK_HEIGHT) and the shader renders
+ * into a tiny offscreen buffer with no console error. Covers BOTH the
+ * wrapper-element path (the directive sizes a created canvas from the host) and a
+ * directly-passed `<canvas>` whose own layout is 0 (the render loops also fall
+ * back per-frame). Same silent-boot family as the directive-collision warn.
+ */
+function warnIfHostUnsized(host: HTMLElement): void {
+  if (host.clientWidth !== 0 && host.clientHeight !== 0) return;
+  Diagnostics.warnOnce({
+    source: 'czap/astro.gpu',
+    code: 'canvas-default-size',
+    message:
+      `client:gpu host had no layout at boot (clientWidth/clientHeight = 0); the canvas falls back to ` +
+      `${CANVAS_FALLBACK_WIDTH}x${CANVAS_FALLBACK_HEIGHT} (the HTML default), so the shader renders at a tiny ` +
+      `default size instead of filling its host. ` +
+      `Fix: give the host explicit CSS width/height (or a sized parent) before client:gpu mounts, or put ` +
+      `client:gpu on a <canvas> you size directly.`,
+    detail: {
+      clientWidth: host.clientWidth,
+      clientHeight: host.clientHeight,
+      fallbackWidth: CANVAS_FALLBACK_WIDTH,
+      fallbackHeight: CANVAS_FALLBACK_HEIGHT,
+    },
+  });
+}
+
+/**
  * Prepend the compiler's emitted `declarations` preamble (`#define STATE_*` +
  * `uniform <type> u_*;` lines) into a GLSL ES 3.00 fragment source so the
  * runtime's uniform vocabulary is the compiler's, never a hand-typed mirror.
@@ -259,6 +288,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
       canvas.style.height = '100%';
       el.appendChild(canvas);
     }
+    warnIfHostUnsized(el);
 
     // F-3: arm the reinit teardown SYNCHRONOUSLY, before the first await, through
     // a mutable Disposer cell. `initWGSLRuntime` is async, so a `czap:reinit` that
@@ -315,6 +345,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     canvas.style.height = '100%';
     el.appendChild(canvas);
   }
+  warnIfHostUnsized(el);
 
   const gl = canvas.getContext('webgl2');
   if (!gl) {
