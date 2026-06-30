@@ -1,6 +1,6 @@
 {
   "name": "@czap/assets",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Asset capsules + analysis projections (audio waveform, beat markers, ...)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

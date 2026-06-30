@@ -1,6 +1,6 @@
 {
   "name": "@czap/canonical",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Self-contained bytes kernel: RFC 8949 §4.2.1 CBOR, FNV-1a labels, sync `AddressedDigest` (no Effect/spine in-package)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
