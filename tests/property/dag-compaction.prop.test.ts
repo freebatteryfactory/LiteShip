@@ -114,6 +114,42 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     const bound = await Effect.runPromise(Receipt.validateChainDetailed(tail, { base: watermark, checkpoint }));
     expect(bound).toBe(true);
   });
+
+  test('an empty chain cannot bypass checkpoint authorization', async () => {
+    const chain = await buildLinearChain(6);
+    const dag = DAG.fromReceipts(chain);
+    const watermark = chain[2]!.hash;
+    const { checkpoint } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
+
+    // Empty chain + base but NO checkpoint is rejected — the empty-chain fast path
+    // runs AFTER checkpoint authorization, so an empty tail cannot launder a base.
+    const noCheckpoint = await Effect.runPromise(
+      Receipt.validateChainDetailed([], { base: watermark }).pipe(Effect.flip),
+    );
+    expect(noCheckpoint.type).toBe('checkpoint_invalid');
+
+    // Empty chain with the verified checkpoint is vacuously valid; with no options
+    // it stays trivially valid.
+    expect(await Effect.runPromise(Receipt.validateChainDetailed([], { base: watermark, checkpoint }))).toBe(true);
+    expect(await Effect.runPromise(Receipt.validateChainDetailed([]))).toBe(true);
+  });
+
+  test('a genesis-shaped receipt with a non-checkpoint kind does NOT authorize a compacted tail', async () => {
+    const chain = await buildLinearChain(6);
+    const dag = DAG.fromReceipts(chain);
+    const watermark = chain[2]!.hash;
+    const { dropped } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
+    const droppedSet = new Set(dropped);
+    const tail = chain.filter((e) => !droppedSet.has(e.hash));
+
+    // chain[0] is genesis-shaped with a VALID hash, but kind = "step-0", not
+    // "checkpoint" — a non-checkpoint receipt must never authorize a compacted tail,
+    // even when it otherwise mimics the attestation shape.
+    const rejected = await Effect.runPromise(
+      Receipt.validateChainDetailed(tail, { base: watermark, checkpoint: chain[0]! }).pipe(Effect.flip),
+    );
+    expect(rejected.type).toBe('checkpoint_invalid');
+  });
 });
 
 // ---------------------------------------------------------------------------

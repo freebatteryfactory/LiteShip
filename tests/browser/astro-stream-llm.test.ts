@@ -173,7 +173,10 @@ describe('browser stream and llm directives', () => {
 
     for (let attempt = 0; attempt < 10; attempt++) {
       source.onerror?.(new Event('error'));
-      const reconnect = scheduled.shift();
+      // Fire the freshly-scheduled RECONNECT timer (newest), not an older heartbeat
+      // timer left in the queue by the stubbed clearTimeout — otherwise the retry
+      // budget never advances and the terminal error never fires.
+      const reconnect = scheduled.pop();
       expect(reconnect).toBeTypeOf('function');
       reconnect?.();
       source = latestSource();
