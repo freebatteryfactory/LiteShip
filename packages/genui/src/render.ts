@@ -1,14 +1,19 @@
 /**
  * Trusted catalog renderer — no model HTML, allowlisted attributes only.
  *
- * Interaction props (`onClick`, …) carry opaque action-id strings; the host
- * interprets them via `genui:interaction` CustomEvents.
+ * One-interaction contract: genui serves exactly `onClick` -> an opaque string
+ * action-id, dispatched as a `genui:interaction` CustomEvent the host resolves.
+ * Any other handler-shaped `on*` prop is rejected at validation (see
+ * ./interaction.ts), so by the time a tree renders, every interaction prop is a
+ * string-valued `onClick` — the renderer's interaction branch never silently
+ * drops author intent.
  *
  * @module
  */
 
-import type { ComponentCatalog, GeneratedUINode } from './types.js';
+import type { ComponentCatalog, GeneratedUINode, GeneratedUIValidationError } from './types.js';
 import { validateGeneratedUITree } from './validate.js';
+import { isInteractionProp } from './interaction.js';
 
 /** Options for {@link renderFromCatalog}. */
 export interface RenderFromCatalogOptions {
@@ -41,8 +46,6 @@ const ALLOWED_ATTRS = new Set([
 
 const isAllowedAttr = (name: string): boolean =>
   ALLOWED_ATTRS.has(name) || name.startsWith('data-') || name.startsWith('aria-');
-
-const isInteractionProp = (key: string): boolean => key === 'onClick' || key.startsWith('on');
 
 /** Prior render interaction listeners keyed by mount target — aborted on re-render. */
 const renderInteractionScopes = new WeakMap<HTMLElement, AbortController>();
@@ -124,13 +127,25 @@ const renderNode = (
 };
 
 /**
- * Validate and render a generated UI tree into `target`.
- * Returns `false` when validation fails (target left unchanged unless `clear` already ran).
+ * Result of {@link renderFromCatalog} — mirrors `ValidateGeneratedUIResult` so a
+ * rejected render surfaces WHY (the validation error) instead of a bare `false`.
  */
-export function renderFromCatalog(node: GeneratedUINode, options: RenderFromCatalogOptions): boolean {
+export type RenderFromCatalogResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly error: GeneratedUIValidationError };
+
+/**
+ * Validate and render a generated UI tree into `target`.
+ * Returns `{ ok: false, error }` when validation fails (target left unchanged
+ * unless `clear` already ran), `{ ok: true }` on success.
+ */
+export function renderFromCatalog(
+  node: GeneratedUINode,
+  options: RenderFromCatalogOptions,
+): RenderFromCatalogResult {
   const result = validateGeneratedUITree(node, options.catalog);
   if (!result.ok) {
-    return false;
+    return { ok: false, error: result.error };
   }
 
   const eventRoot = options.eventRoot ?? options.target;
@@ -142,5 +157,5 @@ export function renderFromCatalog(node: GeneratedUINode, options: RenderFromCata
   }
 
   options.target.appendChild(renderNode(node, options.catalog, eventRoot, interactionScope.signal));
-  return true;
+  return { ok: true };
 }

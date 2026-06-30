@@ -5,6 +5,7 @@
  */
 
 import type { ComponentCatalog, GeneratedUIValidationError, GeneratedUINode } from './types.js';
+import { isInteractionProp } from './interaction.js';
 
 export type ValidateGeneratedUIResult =
   { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
@@ -73,6 +74,33 @@ const validateNode = (node: GeneratedUINode, catalog: ComponentCatalog, path: st
         };
       }
       continue;
+    }
+    // One-interaction contract (see ./interaction.ts): genui serves only
+    // `onClick` -> opaque string action-id. A registered handler-shaped prop that
+    // the node SUPPLIES is rejected LOUDLY here rather than silently dropped at
+    // render — either it isn't onClick, or its value isn't the required action-id
+    // string. Usage-gated: a registered-but-unused handler does not red.
+    if (isInteractionProp(key)) {
+      if (key !== 'onClick') {
+        return {
+          ok: false,
+          error: {
+            code: 'genui/invalid-prop',
+            message: `Handler "${key}" on "${node.name}" is not supported — genui serves a single interaction (onClick -> opaque action-id, dispatched as genui:interaction). Move the behavior onto onClick with an action-id the host resolves.`,
+            path: `${path}.props.${key}`,
+          },
+        };
+      }
+      if (typeof value !== 'string') {
+        return {
+          ok: false,
+          error: {
+            code: 'genui/invalid-prop',
+            message: `onClick on "${node.name}" must be a string action-id (the host resolves it via genui:interaction).`,
+            path: `${path}.props.${key}`,
+          },
+        };
+      }
     }
     if (!propMatches(value, schema.type)) {
       return {
