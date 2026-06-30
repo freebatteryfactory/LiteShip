@@ -10,7 +10,7 @@ import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, renderFromCatalog } fro
 describe('@czap/genui renderFromCatalog', () => {
   it('renders trusted components without executing script-like prop strings', () => {
     const target = document.createElement('div');
-    const ok = renderFromCatalog(
+    const { ok } = renderFromCatalog(
       {
         name: 'Text',
         props: { text: '<img src=x onerror=alert(1)>' },
@@ -25,14 +25,14 @@ describe('@czap/genui renderFromCatalog', () => {
   it('rejects unknown components without mutating the target', () => {
     const target = document.createElement('div');
     target.textContent = 'keep';
-    const ok = renderFromCatalog({ name: 'Missing', props: {} }, { catalog: DEMO_COMPONENT_CATALOG, target, clear: false });
+    const { ok } = renderFromCatalog({ name: 'Missing', props: {} }, { catalog: DEMO_COMPONENT_CATALOG, target, clear: false });
     expect(ok).toBe(false);
     expect(target.textContent).toBe('keep');
   });
 
   it('renders named slots under data-czap-genui-slot containers', () => {
     const target = document.createElement('div');
-    const ok = renderFromCatalog(
+    const { ok } = renderFromCatalog(
       {
         name: 'Card',
         props: { title: 'Hello' },
@@ -101,7 +101,7 @@ describe('@czap/genui renderFromCatalog', () => {
       },
     });
     const target = document.createElement('div');
-    const ok = renderFromCatalog(
+    const { ok } = renderFromCatalog(
       {
         name: 'Link',
         props: {
@@ -144,7 +144,7 @@ describe('@czap/genui renderFromCatalog', () => {
     expect(target.querySelector('button')?.textContent).toBe('Press');
   });
 
-  it('ignores an on* interaction prop that is not onClick', () => {
+  it('rejects a registered non-onClick handler at validation (loud, not silently dropped)', () => {
     const catalog = defineComponentCatalog({
       version: 'evt-1',
       components: {
@@ -152,17 +152,16 @@ describe('@czap/genui renderFromCatalog', () => {
       },
     });
     const target = document.createElement('div');
-    const eventRoot = document.createElement('div');
-    let fired = 0;
-    eventRoot.addEventListener('genui:interaction', () => {
-      fired += 1;
-    });
-    renderFromCatalog({ name: 'Box', props: { onHover: 'noop' } }, { catalog, target, eventRoot });
-    target.querySelector('div')?.dispatchEvent(new Event('click', { bubbles: true }));
-    expect(fired).toBe(0);
+    const result = renderFromCatalog({ name: 'Box', props: { onHover: 'noop' } }, { catalog, target });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('genui/invalid-prop');
+      expect(result.error.message).toMatch(/onHover/);
+    }
+    expect(target.childElementCount).toBe(0);
   });
 
-  it('ignores a non-string onClick prop', () => {
+  it('rejects a non-string onClick at validation', () => {
     const catalog = defineComponentCatalog({
       version: 'evt-2',
       components: {
@@ -170,17 +169,13 @@ describe('@czap/genui renderFromCatalog', () => {
       },
     });
     const target = document.createElement('div');
-    const eventRoot = document.createElement('div');
-    let fired = 0;
-    eventRoot.addEventListener('genui:interaction', () => {
-      fired += 1;
-    });
-    renderFromCatalog(
+    const result = renderFromCatalog(
       { name: 'Box', props: { onClick: 5 as unknown as string } },
-      { catalog, target, eventRoot },
+      { catalog, target },
     );
-    target.querySelector('div')?.click();
-    expect(fired).toBe(0);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('genui/invalid-prop');
+    expect(target.childElementCount).toBe(0);
   });
 
   it('renders an array slot value into a single slot host', () => {
@@ -192,7 +187,7 @@ describe('@czap/genui renderFromCatalog', () => {
       },
     });
     const target = document.createElement('div');
-    const ok = renderFromCatalog(
+    const { ok } = renderFromCatalog(
       {
         name: 'Panel',
         props: {},
@@ -213,7 +208,7 @@ describe('@czap/genui renderFromCatalog', () => {
 
   it('renders child nodes under the parent element', () => {
     const target = document.createElement('div');
-    const ok = renderFromCatalog(
+    const { ok } = renderFromCatalog(
       {
         name: 'Card',
         props: { title: 'T' },

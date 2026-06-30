@@ -3,8 +3,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { ComponentCatalog } from '@czap/genui';
+import type { ComponentCatalog, GeneratedUINode } from '@czap/genui';
 import { defineComponentCatalog, DEMO_COMPONENT_CATALOG, validateGeneratedUITree } from '@czap/genui';
+import { isInteractionProp } from '../../../packages/genui/src/interaction.js';
 
 describe('validateGeneratedUITree', () => {
   it('accepts a known demo tree', () => {
@@ -232,3 +233,35 @@ function slotCatalog(): ComponentCatalog {
     },
   });
 }
+
+describe('genui one-interaction contract (A4)', () => {
+  // Source-of-truth coverage: validate REJECTS a SUPPLIED registered prop iff it
+  // is a handler-shaped prop (isInteractionProp) that is NOT a string-valued
+  // onClick. `expected` derives from the shared predicate + the wire rule, so the
+  // validator and the renderer's interaction branch can never silently drift.
+  const cases: { key: string; value: unknown }[] = [
+    { key: 'onClick', value: 'go' }, // string onClick -> accept
+    { key: 'onClick', value: 5 }, // non-string onClick -> reject
+    { key: 'onHover', value: 'x' }, // non-onClick handler -> reject
+    { key: 'onSubmit', value: 'x' }, // non-onClick handler -> reject
+    { key: 'online', value: 'yes' }, // data prop, NOT handler-shaped -> accept
+    { key: 'once', value: 'y' }, // data prop, NOT handler-shaped -> accept
+  ];
+
+  it.each(cases)('validate matches the predicate+wire rule for $key=$value', ({ key, value }) => {
+    const catalog = defineComponentCatalog({
+      version: `cov-${key}-${String(value)}`,
+      components: {
+        Box: {
+          tag: 'div',
+          props: { [key]: { type: typeof value === 'string' ? 'string' : 'number' } },
+          children: 'none',
+        },
+      },
+    });
+    const node = { name: 'Box', props: { [key]: value } } as unknown as GeneratedUINode;
+    const result = validateGeneratedUITree(node, catalog);
+    const expectedReject = isInteractionProp(key) && !(key === 'onClick' && typeof value === 'string');
+    expect(result.ok, `${key}=${String(value)} expected reject=${expectedReject}`).toBe(!expectedReject);
+  });
+});

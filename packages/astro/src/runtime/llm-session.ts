@@ -1,4 +1,5 @@
 import type { ContentAddress, Receipt, UIFrame } from '@czap/core';
+import { Diagnostics } from '@czap/core';
 import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '@czap/genui';
 import {
   LLMChunkNormalization,
@@ -236,15 +237,26 @@ export function createDOMLLMSessionHost(
       if (!genuiCatalog) {
         return false;
       }
-      const ok = renderFromCatalog(node, {
+      const result = renderFromCatalog(node, {
         catalog: genuiCatalog,
         target: currentTarget,
         eventRoot: element,
       });
-      if (ok) {
-        currentTarget.dataset.czapGenuiRenderHash = String(renderId);
+      if (!result.ok) {
+        // Surface the validation rejection through the existing Diagnostics
+        // channel instead of dropping a bare boolean (genui itself stays
+        // @czap/core-free; the astro layer does the emission). The host contract
+        // stays boolean.
+        Diagnostics.warnOnce({
+          source: 'czap/astro.llm-session',
+          code: 'genui-render-rejected',
+          message: `Generated UI tree rejected before render: ${result.error.message}`,
+          detail: { code: result.error.code, path: result.error.path, renderId: String(renderId) },
+        });
+        return false;
       }
-      return ok;
+      currentTarget.dataset.czapGenuiRenderHash = String(renderId);
+      return true;
     },
 
     emitGeneratedUI(node, renderId) {
