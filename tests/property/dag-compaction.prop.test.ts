@@ -50,7 +50,7 @@ const fingerprint = (dag: DAG.Graph) => ({
 // ---------------------------------------------------------------------------
 
 describe('DAG.checkpoint — boundary validation (A)', () => {
-  test('bare retained tail fails not_genesis without a base; passes with { base: W }', async () => {
+  test('a compacted tail needs BOTH base and a verified checkpoint (base alone is rejected)', async () => {
     await fc.assert(
       fc.asyncProperty(fc.integer({ min: 4, max: 12 }), fc.integer({ min: 1, max: 8 }), async (n, kRaw) => {
         const chain = await buildLinearChain(n);
@@ -58,20 +58,26 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
         const dag = DAG.fromReceipts(chain);
         const watermark = chain[k]!.hash;
 
-        const { dropped } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
+        const { checkpoint, dropped } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
         const droppedSet = new Set(dropped);
         const tail = chain.filter((e) => !droppedSet.has(e.hash));
 
-        // The retained tail's first envelope points at W, not GENESIS.
+        // No base: the retained tail's first envelope points at W, not GENESIS.
         const without = await Effect.runPromise(Receipt.validateChainDetailed(tail).pipe(Effect.flip));
-        const withBase = await Effect.runPromise(Receipt.validateChainDetailed(tail, { base: watermark }));
+        // base WITHOUT a checkpoint is REJECTED — base alone proves nothing about
+        // the omitted prefix, so it must not authorize a truncated chain (Codex #3).
+        const baseAlone = await Effect.runPromise(
+          Receipt.validateChainDetailed(tail, { base: watermark }).pipe(Effect.flip),
+        );
+        // base bound to the VERIFIED checkpoint authorizes the compacted tail.
+        const bound = await Effect.runPromise(Receipt.validateChainDetailed(tail, { base: watermark, checkpoint }));
 
-        return without.type === 'not_genesis' && withBase === true;
+        return without.type === 'not_genesis' && baseAlone.type === 'checkpoint_invalid' && bound === true;
       }),
     );
   });
 
-  test('the checkpoint validates standalone; a wrong base still fails not_genesis', async () => {
+  test('the checkpoint validates standalone; a base without a checkpoint is rejected', async () => {
     const chain = await buildLinearChain(6);
     const dag = DAG.fromReceipts(chain);
     const watermark = chain[2]!.hash;
@@ -82,11 +88,12 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     // Genesis-shaped attestation validates as a single-element chain.
     expect(await Effect.runPromise(Receipt.validateChain([checkpoint]))).toBe(true);
 
-    // A base that is NOT the tail's actual predecessor does not satisfy the predicate.
+    // A base with NO checkpoint to authorize it is rejected — wrong base or the
+    // real watermark, base alone never proves the omitted prefix was compacted.
     const wrong = await Effect.runPromise(
       Receipt.validateChainDetailed(tail, { base: chain[0]!.hash }).pipe(Effect.flip),
     );
-    expect(wrong.type).toBe('not_genesis');
+    expect(wrong.type).toBe('checkpoint_invalid');
   });
 
   test('a checkpoint whose subject.id does not commit the base fails checkpoint_invalid', async () => {
