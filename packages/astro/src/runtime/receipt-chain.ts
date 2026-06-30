@@ -121,10 +121,18 @@ export function createReceiptChain(): ReceiptChainShape {
         // Cheap guards: nothing to reclaim, or the watermark was never ingested.
         if (DAG.size(dag) === 0 || !dag.nodes.has(watermark)) return;
 
-        const { checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: watermark });
+        // Snapshot the DAG identity BEFORE the async mint. `dag` is reassigned
+        // copy-on-write by ingestEnvelope; if a concurrent ingest lands during the
+        // crypto mint, the `dropped` set computed from the pre-mint DAG is STALE —
+        // splicing the new DAG by it could drop a late envelope's parent while
+        // retaining the child (an orphan whose previous is neither the watermark
+        // nor in the DAG, violating dominance). Compaction is best-effort /
+        // footprint-only, so ABORT on a concurrent change and let the next trigger
+        // retry against a consistent DAG. (Codex finding #4.)
+        const before = dag;
+        const { checkpoint, dropped } = yield* DAG.checkpoint(before, { below: watermark });
+        if (dag !== before) return;
 
-        // Re-splice against the CURRENT dag (drop-only is monotonic) so any
-        // envelope ingested during the async mint is still retained.
         const droppedSet = new Set(dropped);
         dag = DAG.spliceCheckpoint(dag, droppedSet);
         lastCheckpoint = checkpoint;

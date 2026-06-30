@@ -328,13 +328,20 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
             bubbles: true,
           }),
         );
-        cleanupSource();
+        // Terminal: a server-sent error ends the stream. Fully tear down (close
+        // the scope + interrupt the drain fiber + shut the queue), not just the
+        // EventSource — otherwise the queue + fiber leak until a later
+        // teardown/reinit. (Codex finding #2.)
+        closeScope();
         return;
       case 'ignored':
         return;
       case 'chunk':
+        // Terminal 'done': the response is complete — fully tear down the scope,
+        // not just the EventSource (Codex finding #2). The rendered content stays
+        // (closeScope does not dispose the session).
         if (session.ingest(decoded.chunk) === 'done') {
-          cleanupSource();
+          closeScope();
         }
         return;
     }

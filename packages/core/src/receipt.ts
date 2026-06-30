@@ -241,6 +241,18 @@ export const validateChainDetailed = (
     const base = options?.base;
     const checkpoint = options?.checkpoint;
 
+    // A `base` watermark widens the index-0 genesis predicate to accept a
+    // compacted tail — but ONLY a verified checkpoint attestation authorizes that.
+    // Accepting `base` alone would let any caller validate a TRUNCATED chain by
+    // passing `base = tail[0].previous` with no proof the omitted prefix was ever
+    // checkpointed. Require the checkpoint. (Codex finding #3.)
+    if (base !== undefined && checkpoint === undefined) {
+      return yield* Effect.fail({
+        type: 'checkpoint_invalid' as const,
+        reason: 'a base watermark requires a checkpoint attestation to authorize compacted-tail validation',
+      });
+    }
+
     // When a checkpoint is supplied, bind it to `base`: verify its content hash,
     // genesis shape, and that its subject commits exactly this watermark. This is
     // what authorizes the widened index-0 predicate below.
