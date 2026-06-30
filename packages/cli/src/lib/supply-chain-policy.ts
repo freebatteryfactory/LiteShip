@@ -74,7 +74,7 @@ export const LITESHIP_LOCKFILE_POLICY: LockfilePolicy = {
     {
       dependency: 'effect',
       reason:
-        'effect is the monorepo-wide algebraic-effect substrate, published upstream only as a bounded `>=4.0.0-beta.32 <5` prerelease line and declared identically across @czap/cli + @czap/command; a reviewed seam, not drift. The lockfile freezes it to a single resolved version with an integrity hash, so reproducibility holds.',
+        'effect is the monorepo-wide algebraic-effect substrate, published upstream only as a bounded `>=4.0.0-beta.32 <5` prerelease line and declared identically across every published @czap package (every effect peer, plus the @czap/cli + @czap/command direct deps), with the root pnpm.overrides.effect pinning one resolved version; a reviewed seam, not drift. The lockfile freezes it to a single resolved version with an integrity hash, so reproducibility holds.',
     },
   ],
 };

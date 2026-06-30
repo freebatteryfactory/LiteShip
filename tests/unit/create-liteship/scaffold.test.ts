@@ -72,7 +72,7 @@ describe('create-liteship scaffold', () => {
     // Every dependency must be a plain published range — workspace:/file:/link:
     // specs cannot install outside this monorepo.
     expect(Object.keys(manifest.dependencies)).toEqual(
-      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'typescript']),
+      expect.arrayContaining(['@czap/astro', '@czap/core', 'astro', 'effect', 'typescript']),
     );
     for (const [dep, spec] of Object.entries(manifest.dependencies)) {
       expect(spec, dep).toMatch(/^\^\d+\.\d+\.\d+/);
@@ -162,6 +162,25 @@ describe('create-liteship scaffold', () => {
         `${rootMajor}.${rootMinor}`,
       );
     }
+  });
+
+  // A2 gate: the scaffold must ship `effect` (the @czap/core/@czap/astro peer),
+  // pinned to the caret floor of core's published peer range — otherwise a fresh
+  // `npm create liteship` lands with an unmet peer dependency. Derive `expected`
+  // from @czap/core's manifest (the source of truth), not a literal.
+  it('template effect pins the caret floor of @czap/core\'s published peer (A2)', () => {
+    const corePkg = JSON.parse(
+      readFileSync(join(defaultTemplateDir(), '../../../core/package.json'), 'utf8'),
+    ) as { peerDependencies: Record<string, string> };
+    const floor = corePkg.peerDependencies.effect.match(/>=(\S+)/)?.[1];
+    expect(floor, '@czap/core must declare an effect peer floor').toBeTruthy();
+    const manifest = JSON.parse(
+      readFileSync(join(defaultTemplateDir(), 'package.json'), 'utf8'),
+    ) as { dependencies: Record<string, string> };
+    expect(
+      manifest.dependencies.effect,
+      "template effect must be the caret floor of @czap/core's effect peer",
+    ).toBe(`^${floor}`);
   });
 });
 
