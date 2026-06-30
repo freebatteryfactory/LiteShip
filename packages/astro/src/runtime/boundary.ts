@@ -386,6 +386,68 @@ export function readSignalValue(input: string): number | undefined {
 }
 
 /**
+ * How a signal `input` fares against the runtime on THIS directive surface:
+ * - `served` — `inputToSource` recognizes it AND {@link readSignalValue} has a
+ *   live producer for it here (`viewport.*` / `scroll.*` / `audio.amplitude` /
+ *   `audio.beat`).
+ * - `frozen-unserved` — recognized vocabulary, but NO live producer on this
+ *   surface (`pointer.*` / `time.*` / `media:*` / `custom:*` / `audio.sample` /
+ *   `audio.normalized`), so it reads `undefined` forever and the directive
+ *   FREEZES at its seed state.
+ * - `unknown-typo` — outside the {@link inputToSource} vocabulary entirely.
+ *
+ * The two failure modes are DISJOINT by construction: a typo requires
+ * `inputToSource(input) === undefined`; a frozen-unserved input requires it to
+ * be `!== undefined`. So a single input can never be classified as both.
+ */
+export type SignalServing = 'served' | 'frozen-unserved' | 'unknown-typo';
+
+/**
+ * Classify a signal `input` against the runtime. `isServedLive` defaults to the
+ * real {@link readSignalValue} liveness probe and is injectable so a gate can
+ * derive `expected` from the same source of truth the warner uses.
+ */
+export function classifySignalServing(
+  input: string,
+  isServedLive: (i: string) => boolean = (i) => readSignalValue(i) !== undefined,
+): SignalServing {
+  if (inputToSource(input) === undefined) return 'unknown-typo';
+  return isServedLive(input) ? 'served' : 'frozen-unserved';
+}
+
+/**
+ * Warn ONCE (deduped across reinit by {@link Diagnostics.warnOnce}) when a
+ * directive is wired to a signal `input` that will never update: either a typo
+ * outside the vocabulary, or a recognized signal with no live producer on this
+ * surface (the silent-freeze Wave-2 only half-caught — it MISLABELED recognized
+ * vocabulary as a typo). A `served` input warns nothing; SSR is inert.
+ *
+ * Call this once at the directive's SETUP site, never per-frame.
+ */
+export function warnIfSignalUnserved(
+  input: string,
+  ctx: { readonly source: string; readonly what: string },
+  isServedLive?: (i: string) => boolean,
+): void {
+  if (typeof window === 'undefined') return;
+  const serving = classifySignalServing(input, isServedLive);
+  if (serving === 'served') return;
+  if (serving === 'unknown-typo') {
+    Diagnostics.warnOnce({
+      source: ctx.source,
+      code: 'signal-input-unknown',
+      message: `${ctx.what} "${input}" is not in the SignalSource vocabulary (likely a typo; see signal-input.ts) — no updates will be emitted.`,
+    });
+    return;
+  }
+  Diagnostics.warnOnce({
+    source: ctx.source,
+    code: 'signal-input-unserved-here',
+    message: `${ctx.what} "${input}" is a recognized signal but has no live producer on this directive — it will freeze. Drive it with a served input (viewport.width/height, scroll.x/y/progress, audio.amplitude/beat).`,
+  });
+}
+
+/**
  * Evaluate a {@link RuntimeBoundary} against a signal value, applying
  * hysteresis when `previousState` is provided and the boundary has a
  * hysteresis band.

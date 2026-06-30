@@ -4,6 +4,7 @@ import {
   evaluateBoundary,
   parseBoundary,
   readSignalValue,
+  warnIfSignalUnserved,
 } from './boundary.js';
 
 /**
@@ -60,6 +61,7 @@ export function initSatelliteDirective(load: () => Promise<unknown>, element: HT
   const init = (): void => {
     updateState();
     if (runtimeBoundary) {
+      warnIfSignalUnserved(runtimeBoundary.input, { source: 'czap/astro.satellite', what: 'boundary signal' });
       cleanupObserver = attachSignalObserver(runtimeBoundary.input, updateState);
     }
   };

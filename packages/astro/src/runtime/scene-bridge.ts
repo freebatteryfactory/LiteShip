@@ -39,7 +39,7 @@
 
 import { GraphPatch, sealNode, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
 import type { SceneRuntime } from '@czap/scene';
-import { attachSignalObserver, readSignalValue } from './boundary.js';
+import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { graphRuntimeInternals, type EntityElementResolver, type GraphRuntimeHandle } from './graph-runtime.js';
 
 /**
@@ -343,6 +343,9 @@ export function bridgeSceneToGraph(
     // signal change, tick the signed DELTA to reach the new position. Negative
     // deltas are intentional: scroll/signal scrubbing must be able to move the
     // scene back to an earlier timeline position.
+    // Warn once at setup if the clock signal will never tick (typo or no live
+    // producer here) — self-guarded for SSR so the inert-on-server contract holds.
+    warnIfSignalUnserved(clock.input, { source: 'czap/astro.scene-bridge', what: 'scene signal clock' });
     let lastPositionMs = 0;
     const cleanup =
       typeof window === 'undefined'
