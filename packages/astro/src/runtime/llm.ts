@@ -1,4 +1,5 @@
-import { Diagnostics } from '@czap/core';
+import { Effect, Stream, Scope, Queue, Exit, Fiber } from 'effect';
+import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
 import type { Receipt } from '@czap/core';
 import type { LLMChunk } from '@czap/web';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
@@ -255,7 +256,6 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
 
   const genuiCatalog = element.hasAttribute('data-czap-genui') ? DEMO_COMPONENT_CATALOG : undefined;
 
-  let source: EventSource | null = null;
   const session = createLLMSession({
     element,
     target: resolveTarget(),
@@ -265,6 +265,26 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     allowTrustedHtml: htmlPolicy.allowTrustedHtml,
     genuiCatalog,
   });
+
+  // Lifecycle is Scope-bridged (mirrors `stream.ts` and `packages/scene/src/runtime.ts`):
+  // one `Scope` owns the per-connection `EventSource`, a bounded raw-frame
+  // buffer, and the forked drain fiber; `Scope.close` disposes them together.
+  //
+  // SECURITY (owner-locked): `SSE.create`'s mandatory `parseMessage` preflight
+  // drops bare-string payloads — and LLM tokens ARE bare strings — so this path
+  // deliberately does NOT route through `SSE.create.messages`. It inherits the
+  // A3 hardening (bounded buffer + overflow policy + `warnOnce`) by composing
+  // its OWN already-guarded `decodeLLMEventData` over RAW frames internally;
+  // there is NO public decode/preflight-bypass knob on the primitive. Overflow
+  // is `drop-oldest` (LLM tokens are distinct, ordered, keyless — coalesce-by-id
+  // would be wrong); saturation is lossy and surfaced via `Diagnostics.warnOnce`
+  // plus a `czap:llm-backpressure` diagnostic carrying the dropped count.
+  let scope: Scope.Closeable | null = null;
+  let source: EventSource | null = null;
+  let drainFiber: Fiber.Fiber<void, never> | null = null;
+  let offer: ((raw: unknown) => void) | null = null;
+  let droppedCount = 0;
+  let saturated = false;
 
   const cleanupSource = (): void => {
     if (source) {
@@ -276,8 +296,52 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     source = null;
   };
 
+  const closeScope = (): void => {
+    if (scope) {
+      const closing = scope;
+      const fiber = drainFiber;
+      scope = null;
+      offer = null;
+      drainFiber = null;
+      // Stop the live EventSource synchronously BEFORE the async scope close so
+      // a freshly-opened connection (reinit) is never torn down by the previous
+      // generation's teardown.
+      cleanupSource();
+      // Interrupt the drain fiber + shut the buffer queue (scope finalizer).
+      if (fiber) {
+        Effect.runFork(Fiber.interrupt(fiber));
+      }
+      Effect.runFork(Scope.close(closing, Exit.void));
+    }
+  };
+
+  const handleFrame = (raw: unknown): void => {
+    const decoded = decodeLLMEventData(raw);
+    switch (decoded.type) {
+      case 'receipt':
+        session.rememberEnvelope(decoded.envelope);
+        return;
+      case 'error':
+        element.dispatchEvent(
+          new CustomEvent('czap:llm-error', {
+            detail: { message: decoded.message },
+            bubbles: true,
+          }),
+        );
+        cleanupSource();
+        return;
+      case 'ignored':
+        return;
+      case 'chunk':
+        if (session.ingest(decoded.chunk) === 'done') {
+          cleanupSource();
+        }
+        return;
+    }
+  };
+
   const cleanup = (): void => {
-    cleanupSource();
+    closeScope();
     session.dispose();
   };
 
@@ -299,10 +363,59 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   };
 
   const connect = (): void => {
-    cleanupSource();
+    closeScope();
     const target = resolveTarget();
     resetTarget(target);
     session.reset(target);
+    droppedCount = 0;
+    saturated = false;
+
+    const next = Effect.runSync(Scope.make());
+    scope = next;
+
+    // Sliding queue == native drop-oldest: a saturated buffer evicts the oldest
+    // unprocessed frame and never blocks the synchronous `onmessage` callback.
+    // The scope owns its shutdown finalizer; the drain runs on the live runtime
+    // via `Effect.runFork` (a `forkScoped` fiber registered through `runSync`
+    // would not be pumped once `runSync` returns) and is interrupted on close.
+    const rawQueue = Effect.runSync(
+      Scope.use(
+        Effect.gen(function* () {
+          const queue = yield* Queue.sliding<unknown>(SSE_BUFFER_SIZE);
+          yield* Effect.addFinalizer(() => Queue.shutdown(queue));
+          return queue;
+        }),
+        next,
+      ),
+    );
+    drainFiber = Effect.runFork(
+      Stream.runForEach(Stream.fromQueue(rawQueue), (raw) => Effect.sync(() => handleFrame(raw))),
+    );
+
+    offer = (raw: unknown): void => {
+      // Source-of-truth occupancy: a full sliding queue means the incoming
+      // frame will evict the oldest one. Count + surface that loss.
+      if (Queue.sizeUnsafe(rawQueue) >= SSE_BUFFER_SIZE) {
+        droppedCount += 1;
+        if (!saturated) {
+          saturated = true;
+          Diagnostics.warnOnce({
+            source: 'czap/astro.llm',
+            code: 'llm-buffer-saturated',
+            message: 'LLM receive buffer saturated; dropping oldest tokens (drop-oldest overflow policy).',
+            detail: { policy: 'drop-oldest', maxBufferSize: SSE_BUFFER_SIZE },
+          });
+        }
+        element.dispatchEvent(
+          new CustomEvent('czap:llm-backpressure', {
+            detail: { policy: 'drop-oldest', droppedCount, maxBufferSize: SSE_BUFFER_SIZE },
+            bubbles: true,
+          }),
+        );
+      }
+      Queue.offerUnsafe(rawQueue, raw);
+    };
+
     source = new EventSource(llmUrl);
 
     source.onopen = () => {
@@ -311,28 +424,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     };
 
     source.onmessage = (event: MessageEvent) => {
-      const decoded = decodeLLMEventData(event.data);
-      switch (decoded.type) {
-        case 'receipt':
-          session.rememberEnvelope(decoded.envelope);
-          return;
-        case 'error':
-          element.dispatchEvent(
-            new CustomEvent('czap:llm-error', {
-              detail: { message: decoded.message },
-              bubbles: true,
-            }),
-          );
-          cleanupSource();
-          return;
-        case 'ignored':
-          return;
-        case 'chunk':
-          if (session.ingest(decoded.chunk) === 'done') {
-            cleanupSource();
-          }
-          return;
-      }
+      offer?.(event.data);
     };
 
     source.onerror = () => {

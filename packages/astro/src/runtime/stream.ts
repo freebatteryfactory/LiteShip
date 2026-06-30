@@ -1,7 +1,7 @@
-import { Effect } from 'effect';
-import { Millis, SSE_RECONNECT_INITIAL_MS, SSE_RECONNECT_MAX_MS, wallClock } from '@czap/core';
+import { Effect, Stream, Scope, Exit, Fiber } from 'effect';
+import { wallClock } from '@czap/core';
 import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
-import type { ResumeResponse, SSEMessage } from '@czap/web';
+import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
@@ -207,19 +207,23 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       endpointPolicy,
     ) ?? undefined;
 
-  let source: EventSource | null = null;
-  let reconnectAttempt = 0;
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  let lastEventId: string | null = null;
   let recoveryPending = false;
   let pendingLocator: Locator | null = null;
 
-  const reconnectConfig = {
-    maxAttempts: 10,
-    initialDelay: Millis(SSE_RECONNECT_INITIAL_MS),
-    maxDelay: Millis(SSE_RECONNECT_MAX_MS),
-    factor: 2,
-  } as const;
+  // The hardened SSE primitive (`@czap/web` `SSE.create`) now owns the
+  // `EventSource`, exponential-backoff reconnect, the heartbeat watchdog, and
+  // the bounded overflow buffer (default `coalesce-by-id` — stream patches are
+  // `data-czap-id`-addressed). This directive owns an explicit `Scope` and
+  // drains `messages` / `stateChanges` through `Effect.runFork` fibers running
+  // on the live default runtime. (A `forkScoped` fiber registered inside a
+  // `runSync(Scope.use(...))` block is NOT pumped by the ambient event loop once
+  // `runSync` returns — the documented imperative-bridge alternative is a
+  // top-level forked drain. `Scope.close` disposes the EventSource + Queue +
+  // timers; the drain fibers are interrupted alongside it.) See ADR-0005
+  // §Category 4 and the imperative-Scope bridge in `packages/scene/src/runtime.ts`.
+  let scope: Scope.Closeable | null = null;
+  let client: SSEClient | null = null;
+  let drainFibers: Fiber.Fiber<void, never>[] = [];
 
   const bindReinit = (nextTarget: HTMLElement): void => {
     if (reinitTarget === nextTarget) {
@@ -315,95 +319,118 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
   };
 
-  const buildUrl = (): string => SSE.buildUrl(streamUrl, artifactId, lastEventId ?? undefined);
-
-  const connect = (): void => {
-    source = new EventSource(buildUrl());
-
-    source.onopen = () => {
-      reconnectAttempt = 0;
-      patchScheduler.activate();
-      target.dispatchEvent(new CustomEvent('czap:stream-connected', { bubbles: true }));
-    };
-
-    source.onmessage = (event: MessageEvent) => {
-      if (event.lastEventId) {
-        lastEventId = event.lastEventId;
-        saveResumptionState(artifactId, event.lastEventId);
-      }
-
-      if (recoveryPending && artifactId && event.lastEventId) {
+  // Consumer side: fold each pulled SSE message into the render scheduler. The
+  // cursor is read from the primitive (`client.lastEventId`) rather than a raw
+  // `event.lastEventId` — `SSE.create` tracks it internally and re-sends it on
+  // reconnect. `saveResumptionState`/`reconcileResumption` are driven exactly
+  // as before, but resumption is now armed by the `reconnecting` edge instead
+  // of `onerror` (see `handleEdge`).
+  const handleMessage = (message: SSEMessage): void => {
+    const currentEventId = client ? Effect.runSync(client.lastEventId) : null;
+    if (currentEventId) {
+      saveResumptionState(artifactId, currentEventId);
+      if (recoveryPending && artifactId) {
         recoveryPending = false;
-        void reconcileResumption(event.lastEventId);
+        void reconcileResumption(currentEventId);
       }
+    }
 
-      const message = SSE.parseMessage(event);
-      if (!message) {
+    if (message.type === 'signal') {
+      target.dispatchEvent(
+        new CustomEvent('czap:signal', {
+          detail: message.data,
+          bubbles: true,
+        }),
+      );
+      return;
+    }
+
+    if (message.type === 'heartbeat' || message.type === 'receipt') {
+      return;
+    }
+
+    const html = messageHtml(message);
+    if (html) {
+      void enqueueHtml(html);
+    }
+  };
+
+  // Edge side: map connection-state transitions onto the directive's public
+  // lifecycle CustomEvents. `connected` fires once per `connecting/reconnecting
+  // -> connected` transition (first message after (re)open), `reconnecting`
+  // once per lost connection (transport `onerror` OR the heartbeat watchdog),
+  // and `error` only when the primitive exhausts its backoff budget.
+  const handleEdge = (state: SSEState): void => {
+    switch (state) {
+      case 'connected':
+        patchScheduler.activate();
+        target.dispatchEvent(new CustomEvent('czap:stream-connected', { bubbles: true }));
         return;
-      }
-
-      if (message.type === 'signal') {
+      case 'reconnecting':
+        recoveryPending = artifactId !== undefined && (client ? Effect.runSync(client.lastEventId) !== null : false);
+        patchScheduler.beginReconnect();
+        target.dispatchEvent(new CustomEvent('czap:stream-disconnected', { bubbles: true }));
+        return;
+      case 'error':
         target.dispatchEvent(
-          new CustomEvent('czap:signal', {
-            detail: message.data,
+          new CustomEvent('czap:stream-error', {
+            detail: { reason: 'max-reconnect-attempts' },
             bubbles: true,
           }),
         );
         return;
-      }
-
-      if (message.type === 'heartbeat' || message.type === 'receipt') {
+      default:
+        // 'connecting' (initial) and 'disconnected' (intentional close) carry
+        // no directive-level event.
         return;
-      }
+    }
+  };
 
-      const html = messageHtml(message);
-      if (html) {
-        void enqueueHtml(html);
-      }
-    };
-
-    source.onerror = () => {
-      source?.close();
-      source = null;
-      recoveryPending = artifactId !== undefined && lastEventId !== null;
-      patchScheduler.beginReconnect();
-
-      target.dispatchEvent(new CustomEvent('czap:stream-disconnected', { bubbles: true }));
-
-      if (reconnectAttempt < reconnectConfig.maxAttempts) {
-        const delay = SSE.calculateDelay(reconnectAttempt, reconnectConfig);
-        reconnectAttempt += 1;
-        reconnectTimer = patchScheduler.setReconnectTimer(connect, delay);
-        return;
-      }
-
-      target.dispatchEvent(
-        new CustomEvent('czap:stream-error', {
-          detail: { reason: 'max-reconnect-attempts' },
-          bubbles: true,
+  const openClient = (): void => {
+    const next = Effect.runSync(Scope.make());
+    scope = next;
+    // `SSE.create` requires a Scope; `Scope.use` builds it and registers its
+    // finalizer (EventSource close + Queue shutdown + timer clear) in `next`.
+    const created = Effect.runSync(
+      Scope.use(
+        SSE.create({
+          url: streamUrl,
+          ...(artifactId ? { artifactId } : {}),
         }),
-      );
-    };
+        next,
+      ),
+    );
+    client = created;
+    drainFibers = [
+      Effect.runFork(Stream.runForEach(created.messages, (m) => Effect.sync(() => handleMessage(m)))),
+      Effect.runFork(Stream.runForEach(created.stateChanges, (s) => Effect.sync(() => handleEdge(s)))),
+    ];
   };
 
-  const cleanup = (): void => {
-    reconnectTimer = patchScheduler.clearReconnectTimer(reconnectTimer);
-
-    source?.close();
-    source = null;
+  const closeClient = (): void => {
+    if (scope) {
+      const closing = scope;
+      const fibers = drainFibers;
+      scope = null;
+      client = null;
+      drainFibers = [];
+      for (const fiber of fibers) {
+        Effect.runFork(Fiber.interrupt(fiber));
+      }
+      Effect.runFork(Scope.close(closing, Exit.void));
+    }
   };
 
-  const handleReinit = (): void => {
-    cleanup();
-    reconnectAttempt = 0;
+  function handleReinit(): void {
+    closeClient();
     recoveryPending = false;
-    connect();
-  };
+    openClient();
+  }
 
   bindReinit(target);
-  connect();
+  openClient();
   element.addEventListener('czap:teardown', () => {
-    cleanup();
+    closeClient();
     patchScheduler.dispose();
   });
   load();
