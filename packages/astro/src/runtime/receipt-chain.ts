@@ -1,3 +1,4 @@
+import { Effect } from 'effect';
 import { DAG, Diagnostics } from '@czap/core';
 import type { Receipt, UIFrame } from '@czap/core';
 
@@ -11,6 +12,12 @@ interface ReceiptChainShape {
   getFramesAfter(receiptId: string | null): readonly UIFrame[];
   latestReceiptId(): string | null;
   trustMode(): ReceiptTrustMode;
+  /** Canonical linearization of the ingested DAG as a flat hash list (drives compaction watermark math). */
+  linearizedHashes(): readonly string[];
+  /** Drop-only compaction below an ingested watermark; reclaims frames + ordered ids, stashes the attestation. */
+  compactBelow(watermark: string): Effect.Effect<void>;
+  /** The most recent checkpoint attestation minted by {@link compactBelow}, or null. */
+  latestCheckpoint(): ReceiptEnvelope | null;
 }
 
 /**
@@ -23,6 +30,7 @@ interface ReceiptChainShape {
  */
 export function createReceiptChain(): ReceiptChainShape {
   let dag = DAG.empty();
+  let lastCheckpoint: ReceiptEnvelope | null = null;
   const framesByReceipt = new Map<string, UIFrame>();
   const orderedReceipts: string[] = [];
 
@@ -101,6 +109,36 @@ export function createReceiptChain(): ReceiptChainShape {
 
     trustMode() {
       return 'advisory-unverified';
+    },
+
+    linearizedHashes() {
+      if (DAG.size(dag) === 0) return [];
+      return DAG.linearize(dag).map((envelope) => envelope.hash);
+    },
+
+    compactBelow(watermark) {
+      return Effect.gen(function* () {
+        // Cheap guards: nothing to reclaim, or the watermark was never ingested.
+        if (DAG.size(dag) === 0 || !dag.nodes.has(watermark)) return;
+
+        const { checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: watermark });
+
+        // Re-splice against the CURRENT dag (drop-only is monotonic) so any
+        // envelope ingested during the async mint is still retained.
+        const droppedSet = new Set(dropped);
+        dag = DAG.spliceCheckpoint(dag, droppedSet);
+        lastCheckpoint = checkpoint;
+
+        for (const hash of dropped) {
+          framesByReceipt.delete(hash);
+        }
+        const kept = orderedReceipts.filter((id) => !droppedSet.has(id));
+        orderedReceipts.splice(0, orderedReceipts.length, ...kept);
+      });
+    },
+
+    latestCheckpoint() {
+      return lastCheckpoint;
     },
   };
 }
