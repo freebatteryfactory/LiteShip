@@ -1,4 +1,4 @@
-import { Effect, Stream, Scope, Queue, Exit, Fiber } from 'effect';
+import { Effect, Stream, Scope, Queue, Exit, Fiber, ManagedRuntime, Layer } from 'effect';
 import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
 import type { Receipt } from '@czap/core';
 import type { LLMChunk } from '@czap/web';
@@ -6,6 +6,7 @@ import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { makeDirectiveScheduler } from './effect-scheduler.js';
 
 const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-czap-target="[-:A-Za-z0-9_]+"\])$/;
 
@@ -267,8 +268,10 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   });
 
   // Lifecycle is Scope-bridged (mirrors `stream.ts` and `packages/scene/src/runtime.ts`):
-  // one `Scope` owns the per-connection `EventSource`, a bounded raw-frame
-  // buffer, and the forked drain fiber; `Scope.close` disposes them together.
+  // one owned ManagedRuntime drives one connection Scope; that Scope owns the
+  // per-connection `EventSource` and bounded raw-frame buffer. Teardown
+  // explicitly interrupts the drain fiber, closes the Scope, then disposes the
+  // owned runtime.
   //
   // SECURITY (owner-locked): `SSE.create`'s mandatory `parseMessage` preflight
   // drops bare-string payloads — and LLM tokens ARE bare strings — so this path
@@ -279,6 +282,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   // is `drop-oldest` (LLM tokens are distinct, ordered, keyless — coalesce-by-id
   // would be wrong); saturation is lossy and surfaced via `Diagnostics.warnOnce`
   // plus a `czap:llm-backpressure` diagnostic carrying the dropped count.
+  let runtime: ManagedRuntime.ManagedRuntime<never, never> | null = null;
   let scope: Scope.Closeable | null = null;
   let source: EventSource | null = null;
   let drainFiber: Fiber.Fiber<void, never> | null = null;
@@ -297,21 +301,34 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
   };
 
   const closeScope = (): void => {
-    if (scope) {
+    if (scope && runtime) {
       const closing = scope;
+      const closingRuntime = runtime;
       const fiber = drainFiber;
       scope = null;
-      offer = null;
+      runtime = null;
       drainFiber = null;
+      offer = null;
       // Stop the live EventSource synchronously BEFORE the async scope close so
       // a freshly-opened connection (reinit) is never torn down by the previous
       // generation's teardown.
       cleanupSource();
-      // Interrupt the drain fiber + shut the buffer queue (scope finalizer).
-      if (fiber) {
-        Effect.runFork(Fiber.interrupt(fiber));
-      }
-      Effect.runFork(Scope.close(closing, Exit.void));
+      // Interrupt the drain fiber, shut the buffer queue (scope finalizer), then
+      // dispose the owned runtime.
+      void closingRuntime
+        .runPromise(
+          Effect.gen(function* () {
+            if (fiber) {
+              yield* Fiber.interrupt(fiber);
+            }
+            yield* Scope.close(closing, Exit.void);
+          }),
+          { scheduler: makeDirectiveScheduler() },
+        )
+        .catch(() => undefined)
+        .finally(() => {
+          void closingRuntime.dispose().catch(() => undefined);
+        });
     }
   };
 
@@ -377,16 +394,18 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
     droppedCount = 0;
     saturated = false;
 
-    const next = Effect.runSync(Scope.make());
+    const nextRuntime = ManagedRuntime.make(Layer.empty);
+    const scheduler = makeDirectiveScheduler();
+    const next = nextRuntime.runSync(Scope.make());
+    runtime = nextRuntime;
     scope = next;
 
     // Sliding queue == native drop-oldest: a saturated buffer evicts the oldest
     // unprocessed frame and never blocks the synchronous `onmessage` callback.
-    // The scope owns its shutdown finalizer; the drain runs on the live runtime
-    // via `Effect.runFork` (a `forkScoped` fiber registered through `runSync`
-    // would not be pumped once `runSync` returns) and is interrupted on close.
-    const rawQueue = Effect.runSync(
-      Scope.use(
+    // The scope owns its shutdown finalizer; the drain runs on an owned runtime
+    // and closeScope interrupts it before shutting the queue down.
+    const rawQueue = nextRuntime.runSync(
+      Scope.provide(
         Effect.gen(function* () {
           const queue = yield* Queue.sliding<unknown>(SSE_BUFFER_SIZE);
           yield* Effect.addFinalizer(() => Queue.shutdown(queue));
@@ -395,8 +414,9 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
         next,
       ),
     );
-    drainFiber = Effect.runFork(
+    drainFiber = nextRuntime.runFork(
       Stream.runForEach(Stream.fromQueue(rawQueue), (raw) => Effect.sync(() => handleFrame(raw))),
+      { scheduler },
     );
 
     offer = (raw: unknown): void => {
