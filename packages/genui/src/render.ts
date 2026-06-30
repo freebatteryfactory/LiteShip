@@ -131,18 +131,14 @@ const renderNode = (
  * rejected render surfaces WHY (the validation error) instead of a bare `false`.
  */
 export type RenderFromCatalogResult =
-  | { readonly ok: true }
-  | { readonly ok: false; readonly error: GeneratedUIValidationError };
+  { readonly ok: true } | { readonly ok: false; readonly error: GeneratedUIValidationError };
 
 /**
  * Validate and render a generated UI tree into `target`.
  * Returns `{ ok: false, error }` when validation fails (target left unchanged
  * unless `clear` already ran), `{ ok: true }` on success.
  */
-export function renderFromCatalog(
-  node: GeneratedUINode,
-  options: RenderFromCatalogOptions,
-): RenderFromCatalogResult {
+export function renderFromCatalog(node: GeneratedUINode, options: RenderFromCatalogOptions): RenderFromCatalogResult {
   const result = validateGeneratedUITree(node, options.catalog);
   if (!result.ok) {
     return { ok: false, error: result.error };
