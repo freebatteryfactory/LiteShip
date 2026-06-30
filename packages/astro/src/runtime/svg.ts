@@ -43,6 +43,7 @@ import {
   evaluateBoundary,
   parseBoundary,
   readSignalValue,
+  warnIfSignalUnserved,
   type RuntimeBoundary,
 } from './boundary.js';
 
@@ -211,6 +212,7 @@ export function attachSvgRuntime(
 
     // Apply once at boot so an authored initial state reaches the DOM even
     // before the first signal crossing.
+    warnIfSignalUnserved(entity.boundary.input, { source: 'czap/astro.svg', what: 'boundary signal' });
     const initialValue = readSignalValue(entity.boundary.input);
     if (initialValue !== undefined) {
       const initialState = evaluateBoundary(entity.boundary, initialValue, previousState || undefined);

@@ -7,6 +7,7 @@ import {
   normalizeBoundaryState,
   parseBoundary,
   readSignalValue,
+  warnIfSignalUnserved,
   type BoundaryStateDetail,
 } from './boundary.js';
 
@@ -270,6 +271,9 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
   };
 
   const init = (): void => {
+    if (runtimeBoundary) {
+      warnIfSignalUnserved(runtimeBoundary.input, { source: 'czap/astro.worker', what: 'boundary signal' });
+    }
     if (!canUseWorkerRuntime()) {
       Diagnostics.warnOnce({
         source: 'czap/astro.worker',

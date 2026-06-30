@@ -45,7 +45,13 @@ import {
   type DocumentGraphNode,
   type DocumentGraphEdge,
 } from '@czap/core';
-import { applyBoundaryState, evaluateBoundary, readSignalValue, attachSignalObserver } from './boundary.js';
+import {
+  applyBoundaryState,
+  evaluateBoundary,
+  readSignalValue,
+  attachSignalObserver,
+  warnIfSignalUnserved,
+} from './boundary.js';
 import { lowerGraph, type LoweredBinding } from './graph-lower.js';
 
 /** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
@@ -163,6 +169,7 @@ function applyEntityState(
 
 /** Seed (or re-seed) a binding's initial state from the live signal value and apply it to the element. */
 function seedBinding(active: ActiveBinding, eventName: string): void {
+  warnIfSignalUnserved(active.binding.boundary.input, { source: 'czap/astro.graph', what: 'boundary signal' });
   const value = readSignalValue(active.binding.boundary.input);
   if (value === undefined) return;
   const state = evaluateBoundary(active.binding.boundary, value);
