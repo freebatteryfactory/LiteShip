@@ -10,6 +10,7 @@ import {
   warnIfSignalUnserved,
   type BoundaryStateDetail,
 } from './boundary.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 function sameStringRecord(left: Record<string, string>, right: Record<string, string>): boolean {
   const leftKeys = Object.keys(left);
@@ -321,3 +322,10 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
   init();
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the worker runtime. */
+export const workerDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('worker', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initWorkerDirective(runtimeLoad, runtimeEl);
+  });
+};

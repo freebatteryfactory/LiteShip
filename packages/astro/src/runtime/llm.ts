@@ -5,6 +5,7 @@ import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-czap-target="[-:A-Za-z0-9_]+"\])$/;
 
@@ -386,3 +387,10 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
 
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the LLM runtime. */
+export const llmDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('llm', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initLLMDirective(runtimeLoad, runtimeEl);
+  });
+};

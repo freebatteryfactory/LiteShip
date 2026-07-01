@@ -81,6 +81,8 @@ Run `pnpm dev`, open the page, and drag the window edge: the element's `data-cza
 
 `satelliteAttrs` serializes the boundary plus a `data-czap-directive="satellite"` marker; the integration's injected boot scanner activates the boundary evaluator on the client (only the evaluator — not a whole framework tree). The `Satellite` component (`import Satellite from '@czap/astro/Satellite'`) wraps the same attributes around a div for you. Always go through `satelliteAttrs` or `Satellite` — the `data-czap-*` attributes are an internal serialization contract, not a hand-authoring surface; writing them by hand drifts the moment that contract changes.
 
+Plain elements, not just islands. `client:stream` / `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now boot on any plain element, not only framework islands — the integration scans for the directive's runtime attribute and activates it. `data-czap-boundary` is the exception: it's also a worker/GPU payload, so it stays explicit (`data-czap-directive` / `Satellite`), and you'll get a one-time console warning if you leave one bare.
+
 That's the whole layer-1 loop: define states, attach them to an element, let CSS respond.
 
 ## Generated UI with a component catalog
