@@ -95,6 +95,41 @@ function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
   };
 }
 
+function skippedConsumerStructureAudit(profile: DevopsProfile): AuditSectionResult<StructureSummary> {
+  const packageCount = profile.packageRoots ? Object.keys(profile.packageRoots).length : 0;
+  return {
+    section: 'structure',
+    summary: {
+      packageCount,
+      sourceFileCount: 0,
+      internalImportEdges: 0,
+      externalImportCount: 0,
+      publicExportCount: 0,
+      orphanCandidateCount: 0,
+      defaultExportCount: 0,
+      packageEdges: [],
+      coverageClassification: {
+        topology: [],
+        orphan: {
+          coverage: 'file-proxy-only',
+          candidateCount: 0,
+          note: 'Consumer aggregate mode skips the source-structure pass; run runStructureAudit(profile) explicitly to inspect installed-package source topology.',
+        },
+        symbol: {
+          coverage: 'symbol-evidenced',
+          consumedCount: 0,
+          starCoveredCount: 0,
+          candidateCount: 0,
+          note: 'Consumer aggregate mode skips symbol-orphan structure evidence.',
+        },
+        allowlistUnexercised: [],
+      },
+    },
+    findings: [],
+    suppressed: [],
+  };
+}
+
 /**
  * Run all three engine passes against a profile and merge their findings. This
  * is the reusable, repo-agnostic audit — it does NOT compute the LiteShip HICP
@@ -106,14 +141,17 @@ function nothingAuditedFinding(profile: DevopsProfile): AuditFinding {
  */
 export function runAuditPasses(profile: Partial<DevopsProfile> = liteshipDevopsProfile): AuditPassResult {
   const resolved = resolveDevopsProfile(profile);
-  const structure = runStructureAudit(resolved);
+  const structure = resolved.packageRoots ? skippedConsumerStructureAudit(resolved) : runStructureAudit(resolved);
   const integrity = runIntegrityAudit(resolved);
   const surface = runSurfaceAudit(resolved);
+  const auditedPackageCount = resolved.packageRoots
+    ? Object.keys(resolved.packageRoots).length
+    : structure.summary.packageCount;
   const findings = [
     ...structure.findings,
     ...integrity.findings,
     ...surface.findings,
-    ...(structure.summary.packageCount === 0 ? [nothingAuditedFinding(resolved)] : []),
+    ...(auditedPackageCount === 0 ? [nothingAuditedFinding(resolved)] : []),
     ...consumerMissingFindings(resolved),
   ];
   const suppressed = [...structure.suppressed, ...integrity.suppressed, ...surface.suppressed];
