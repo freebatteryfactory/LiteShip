@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:566](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L566)
+Defined in: [core/src/receipt.ts:604](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L604)
 
 Receipt namespace -- chain validation and envelope construction.
 

@@ -333,11 +333,18 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     const currentEventId = client ? Effect.runSync(client.lastEventId) : null;
     if (currentEventId) {
       lastCursor = currentEventId;
-      saveResumptionState(artifactId, currentEventId);
+      // Reconcile the disconnect gap BEFORE persisting the current cursor. On the
+      // first post-reconnect frame, `Resumption.resume` synchronously loads the
+      // PRE-disconnect persisted cursor (`loadState` is `Effect.sync`) to size the
+      // replay gap `parsed.sequence - (prevState.lastSequence + 1)`. Persisting
+      // `currentEventId` first would set `lastSequence` to the current sequence,
+      // collapsing the gap to `<= 0` and silently dropping every patch missed
+      // while disconnected. Reconcile first (reads the old cursor), then persist.
       if (recoveryPending && artifactId) {
         recoveryPending = false;
         void reconcileResumption(currentEventId);
       }
+      saveResumptionState(artifactId, currentEventId);
     }
 
     if (message.type === 'signal') {

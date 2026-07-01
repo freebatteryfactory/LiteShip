@@ -246,7 +246,15 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       clearReconnectHandle();
       const currentSource = machine.source;
       machine.source = null;
-      currentSource?.close();
+      if (currentSource) {
+        // Detach BEFORE close: a frame or error already queued on this dying
+        // source must not fire its handler against the NEXT generation. Combined
+        // with the per-source identity guard in `setupSource`, a stale callback is
+        // inert on both ends.
+        currentSource.onmessage = null;
+        currentSource.onerror = null;
+        currentSource.close();
+      }
       clearHeartbeat();
       setStatus('reconnecting');
 
@@ -277,6 +285,12 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       resetHeartbeat();
 
       source.onmessage = (event: MessageEvent) => {
+        // Identity guard: a frame queued on a source that has since been replaced
+        // (reconnect / manual `reconnect()`) or closed (teardown) must not
+        // resurrect a dead generation — advance the cursor, flip status to
+        // `connected`, reset the backoff, or morph a stale frame into the live
+        // stream. Guard on source IDENTITY, not liveness.
+        if (machine.source !== source) return;
         const message = parseMessage(event);
         if (message) {
           if (event.lastEventId) {
@@ -292,6 +306,11 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
       };
 
       source.onerror = () => {
+        // A stale error from an already-replaced source would otherwise drive
+        // `handleConnectionLoss` (which reads the CURRENT `machine.source`) and
+        // tear down the HEALTHY replacement, scheduling a spurious reconnect.
+        // Ignore errors that are not from the live generation.
+        if (machine.source !== source) return;
         handleConnectionLoss();
       };
     };

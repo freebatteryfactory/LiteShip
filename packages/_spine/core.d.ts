@@ -796,6 +796,14 @@ export type ChainValidationError =
 export interface ChainValidationOptions {
   readonly base?: string;
   readonly checkpoint?: ReceiptEnvelope;
+  /**
+   * Provenance verifier for the checkpoint attestation (injected capability). The
+   * structural checks prove the checkpoint is well-formed but not that it attests to
+   * the real dropped set; inject a verifier (e.g. a signature check) to close the
+   * residual forgery vector in an adversarial setting. Absent, the structural floor
+   * applies (sound for trusted self-compaction). See ADR-0026.
+   */
+  readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Effect.Effect<boolean>;
 }
 
 export declare const Receipt: {
@@ -815,10 +823,7 @@ export declare const Receipt: {
    * violation arrives on the `Error` channel as a human-readable message.
    * @see validateChainDetailed for typed ChainValidationError handling.
    */
-  validateChain(
-    chain: ReadonlyArray<ReceiptEnvelope>,
-    options?: ChainValidationOptions,
-  ): Effect.Effect<boolean, Error>;
+  validateChain(chain: ReadonlyArray<ReceiptEnvelope>, options?: ChainValidationOptions): Effect.Effect<boolean, Error>;
   /**
    * Typed taxonomy for programmatic handling: fails with the
    * `ChainValidationError` discriminated union

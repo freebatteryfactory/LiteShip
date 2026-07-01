@@ -205,6 +205,42 @@ describe('SSE reconnection', () => {
       }),
     );
   });
+
+  test('a stale error from a replaced source does not tear down the live replacement', async () => {
+    // Regression (Greptile T-Rex repro): a queued `onerror` from EventSource A,
+    // delivered AFTER a reconnect installed replacement B, must not drive
+    // `handleConnectionLoss` (which reads the CURRENT `machine.source` = B),
+    // close B, and schedule a spurious third connection. The per-source identity
+    // guard makes the stale callback inert. Manual `reconnect()` is used because
+    // it closes A WITHOUT detaching its handlers — the path the guard protects.
+    await runScoped(
+      Effect.gen(function* () {
+        const client = yield* SSE.create(baseConfig);
+        const staleES = MockEventSource.instances[0]!;
+        staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-1');
+        expect(yield* client.state).toBe('connected');
+
+        // Replace A with B (handlers on A are left installed by manual reconnect).
+        yield* client.reconnect();
+        expect(MockEventSource.instances).toHaveLength(2);
+        const liveES = MockEventSource.instances[1]!;
+        liveES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'live-2');
+        expect(yield* client.state).toBe('connected');
+        expect(yield* client.lastEventId).toBe('live-2');
+
+        // The stale error + a stale frame from A fire after B is live.
+        staleES.simulateError();
+        staleES.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'stale-999');
+
+        // B is untouched: still connected, cursor uncorrupted, no third source
+        // even after any backoff timer would have elapsed.
+        vi.advanceTimersByTime(2000);
+        expect(yield* client.state).toBe('connected');
+        expect(yield* client.lastEventId).toBe('live-2');
+        expect(MockEventSource.instances).toHaveLength(2);
+      }),
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

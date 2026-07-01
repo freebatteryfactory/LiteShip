@@ -26,7 +26,9 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { Effect } from 'effect';
 import { Diagnostics, SSE_BUFFER_SIZE } from '@czap/core';
+import { Resumption } from '@czap/web';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import llmDirective from '../../../packages/astro/src/client-directives/llm.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
@@ -160,6 +162,50 @@ describe('A3b — client:stream Scope-bridged onto SSE.create', () => {
     expect(next.url).toContain('lastEventId=evt-7');
   });
 
+  test('reconnect reconciles the gap against the PRE-disconnect cursor (persist after resume, not before)', async () => {
+    // Regression (Codex P1): on the first post-reconnect frame, handleMessage must
+    // reconcile the replay gap BEFORE persisting the new cursor. `Resumption.resume`
+    // synchronously loads the persisted cursor (`loadState` is `Effect.sync`) to
+    // size the gap `seq(current) - (persisted.lastSequence + 1)`. Persisting the
+    // current cursor first would set `lastSequence` to the current sequence,
+    // collapse the gap to `<= 0`, and silently drop every patch missed while
+    // disconnected. We assert the cursor RESUME OBSERVES is the pre-disconnect one.
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // zero jitter → deterministic backoff
+
+    let cursorSeenByResume: string | null | undefined;
+    const resumeSpy = vi.spyOn(Resumption, 'resume').mockImplementation((artifactId: string) => {
+      // What `loadState` would read at this instant IS the gap baseline.
+      cursorSeenByResume = Effect.runSync(Resumption.loadState(artifactId))?.lastEventId ?? null;
+      return Effect.succeed({ type: 'replay' as const, patches: [] });
+    });
+
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/feed',
+      'data-czap-stream-artifact': 'doc-9',
+    });
+    streamDirective(noop, {}, el);
+    const first = latestSource();
+
+    // Pre-disconnect frame at sequence 5 persists cursor 'evt-5' (not a recovery).
+    first.simulateMessage(patchFrame('hero', 0), 'evt-5');
+    expect(resumeSpy).not.toHaveBeenCalled();
+
+    // Transport error → 'reconnecting' (arms recovery), backoff re-opens a source.
+    first.simulateError();
+    vi.advanceTimersByTime(2_000); // past the 1s backoff, well short of the heartbeat
+    const next = latestSource();
+    expect(next).not.toBe(first);
+
+    // First post-reconnect frame at sequence 9 → handleMessage reconciles.
+    next.simulateMessage(patchFrame('hero', 1), 'evt-9');
+
+    expect(resumeSpy).toHaveBeenCalledWith('doc-9', 'evt-9', expect.anything());
+    // resume saw the OLD cursor (5), so the real gap 9-(5+1)=3 is replayed — not
+    // the collapsed gap a persist-first ordering would have produced.
+    expect(cursorSeenByResume).toBe('evt-5');
+  });
+
   test('heartbeat timeout reconnects a silent stream (watchdog → backoff re-open)', () => {
     vi.useFakeTimers();
     // Zero jitter so the backoff delay === initialDelay (1000ms).
@@ -231,7 +277,8 @@ describe('A3b — client:llm synchronous frame processing', () => {
 
     const el = makeEl('section', { 'data-czap-llm-url': '/api/chat' });
     const backpressure: unknown[] = [];
-    el.addEventListener('czap:llm-backpressure', ((event: CustomEvent) => backpressure.push(event.detail)) as EventListener);
+    el.addEventListener('czap:llm-backpressure', ((event: CustomEvent) =>
+      backpressure.push(event.detail)) as EventListener);
 
     llmDirective(noop, {}, el);
     const source = latestSource();

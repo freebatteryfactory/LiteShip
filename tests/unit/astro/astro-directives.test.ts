@@ -220,13 +220,10 @@ describe('stream directive', () => {
       }),
     );
 
-    vi.stubGlobal(
-      'setTimeout',
-      ((callback: () => void) => {
-        scheduled.push(callback);
-        return scheduled.length;
-      }) as never,
-    );
+    vi.stubGlobal('setTimeout', ((callback: () => void) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    }) as never);
     vi.stubGlobal('clearTimeout', clearTimeoutMock as never);
 
     const el = makeEl('div', {
@@ -304,13 +301,10 @@ describe('stream directive', () => {
 
   test('tracks semantic-id targets across outerHTML replacement and replay patch objects', async () => {
     const scheduled: Array<() => void> = [];
-    vi.stubGlobal(
-      'setTimeout',
-      ((callback: () => void) => {
-        scheduled.push(callback);
-        return scheduled.length;
-      }) as never,
-    );
+    vi.stubGlobal('setTimeout', ((callback: () => void) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    }) as never);
     vi.stubGlobal('clearTimeout', vi.fn() as never);
 
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
@@ -346,7 +340,10 @@ describe('stream directive', () => {
     await Promise.resolve();
 
     source.simulateError();
-    scheduled.shift()?.();
+    // Fire the RECONNECT timer (the last-scheduled, like the sibling resume tests),
+    // not the boot heartbeat: the recovery frame arrives on the reconnected source,
+    // and `SSE.create` ignores a frame from the dead generation by design.
+    scheduled.pop()?.();
 
     source = MockEventSource.instances.at(-1)!;
     source.simulateOpen();
@@ -362,13 +359,10 @@ describe('stream directive', () => {
 
   test('passes same-origin allowlists into stream resumption and tolerates id targets disappearing across outerHTML swaps', async () => {
     const scheduled: Array<() => void> = [];
-    vi.stubGlobal(
-      'setTimeout',
-      ((callback: () => void) => {
-        scheduled.push(callback);
-        return scheduled.length;
-      }) as never,
-    );
+    vi.stubGlobal('setTimeout', ((callback: () => void) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    }) as never);
     vi.stubGlobal('clearTimeout', vi.fn() as never);
     configureRuntimePolicy({
       endpointPolicy: {
@@ -397,12 +391,18 @@ describe('stream directive', () => {
     mod.default(noop, {}, el);
 
     let source = MockEventSource.instances[0]!;
-    source.simulateMessage(JSON.stringify({ type: 'patch', data: '<section><div class="outer">outer</div></section>' }), 'evt-1');
+    source.simulateMessage(
+      JSON.stringify({ type: 'patch', data: '<section><div class="outer">outer</div></section>' }),
+      'evt-1',
+    );
     await Promise.resolve();
     await Promise.resolve();
 
     source.simulateError();
-    scheduled.shift()?.();
+    // Fire the RECONNECT timer (the last-scheduled), not the boot heartbeat: the
+    // recovery frame arrives on the reconnected source; a frame from the dead
+    // generation is ignored by design.
+    scheduled.pop()?.();
     source = MockEventSource.instances.at(-1)!;
     source.simulateOpen();
     source.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'evt-2');
@@ -425,13 +425,10 @@ describe('stream directive', () => {
 
   test('treats per-kind same-origin allowlists as custom stream endpoint policy metadata during replay recovery', async () => {
     const scheduled: Array<() => void> = [];
-    vi.stubGlobal(
-      'setTimeout',
-      ((callback: () => void) => {
-        scheduled.push(callback);
-        return scheduled.length;
-      }) as never,
-    );
+    vi.stubGlobal('setTimeout', ((callback: () => void) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    }) as never);
     vi.stubGlobal('clearTimeout', vi.fn() as never);
     configureRuntimePolicy({
       endpointPolicy: {
@@ -593,7 +590,8 @@ describe('llm directive', () => {
     });
 
     const errors: Array<{ message: string }> = [];
-    el.addEventListener('czap:llm-error', ((event: CustomEvent<{ message: string }>) => errors.push(event.detail)) as EventListener);
+    el.addEventListener('czap:llm-error', ((event: CustomEvent<{ message: string }>) =>
+      errors.push(event.detail)) as EventListener);
 
     const mod = await import('../../../packages/astro/src/client-directives/llm.js');
     mod.default(noop, {}, el);
