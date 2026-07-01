@@ -209,6 +209,13 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   /** `data-czap-tier`/`data-czap-motion`/`data-czap-design` string for `<html>` (one per `CAP_AXES`). */
   readonly htmlAttributes: string;
+  /**
+   * Spreadable map form of {@link htmlAttributes}, keyed by full attribute name
+   * (`data-czap-<axis>`) and built from the canonical `CAP_AXES` registry, so a
+   * new axis appears automatically. Astro: `<html {...htmlAttributesMap}>` — a
+   * consumer that spreads it can never silently miss an axis (vs hand-writing).
+   */
+  readonly htmlAttributesMap: Readonly<Record<string, string>>;
   /** Response headers to send back so the browser will supply hints next time. */
   readonly responseHeaders: {
     /** `Accept-CH` header value. */
@@ -479,6 +486,7 @@ export function createEdgeHostAdapter(config: EdgeHostAdapterConfig = {}): EdgeH
         ...(assetUrl ? { assetUrl } : {}),
         boundaries,
         htmlAttributes: EdgeTier.tierDataAttributes(tier),
+        htmlAttributesMap: EdgeTier.tierDataAttributesMap(tier),
         responseHeaders,
         cacheStatus,
       };
