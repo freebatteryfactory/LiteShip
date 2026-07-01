@@ -88,6 +88,27 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(sqKey).toBe(dqKey);
   });
 
+  test('the coalesce key comes from a real attribute, not a substring in text or another attribute', () => {
+    // data-czap-id appears only inside a title attribute's VALUE and as text — never as
+    // a real attribute — so it must NOT produce a key (fail-safe: treated as keyless).
+    const decoy: SSEMessage = {
+      type: 'patch',
+      data: `<div title='literal data-czap-id="x"'>data-czap-id="y"</div>`,
+    };
+    expect(extractCoalesceKey(decoy)).toBeNull();
+    const real: SSEMessage = { type: 'patch', data: `<div data-czap-id="hero">x</div>` };
+    expect(extractCoalesceKey(real)).not.toBeNull();
+  });
+
+  test('a saturated all-ordered buffer rejects an incoming keyed patch (never sheds an ordered message)', () => {
+    const max = 3;
+    const buffer: SSEMessage[] = [tokenMessage(0), tokenMessage(1), tokenMessage(2)];
+    const result = applyOverflow(buffer, patchMessage('a', 1), 'coalesce-by-id', max);
+    // The idempotent keyed patch is dropped; every ordered message is preserved.
+    expect(result.dropped).toBe(1);
+    expect(result.buffer).toEqual([tokenMessage(0), tokenMessage(1), tokenMessage(2)]);
+  });
+
   test('a token is never dropped, reordered, or merged while a keyed patch is evictable', () => {
     fc.assert(
       fc.property(fc.array(stepArb, { minLength: 0, maxLength: 200 }), fc.integer({ min: 2, max: 12 }), (steps, max) => {

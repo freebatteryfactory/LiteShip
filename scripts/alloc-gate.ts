@@ -167,15 +167,20 @@ export function measureLiveBytesPerOp(
   // REPS short windows + a median, instead of one long single-shot window. A shorter
   // window is also individually LESS likely to catch a stray background GC event, and
   // the median discards the few that do.
+  // At most one rep per requested batch (a tiny gate is not split into empty reps),
+  // and the batches are distributed EXACTLY across the reps — the first `batches %
+  // reps` reps take one extra — so the total work equals the caller's request, never
+  // `ceil(batches / REPS) * REPS` (which could run up to REPS-1 batches too many).
   const REPS = 5;
-  const batchesPerRep = Math.max(1, Math.ceil(batches / REPS));
+  const reps = Math.max(1, Math.min(REPS, batches));
   const perOpSamples: number[] = [];
   let totalOps = 0;
-  for (let r = 0; r < REPS; r++) {
+  for (let r = 0; r < reps; r++) {
+    const batchesThisRep = Math.floor(batches / reps) + (r < batches % reps ? 1 : 0);
     forceGc();
     const before = process.memoryUsage().heapUsed;
     let ops = 0;
-    for (let b = 0; b < batchesPerRep; b++) {
+    for (let b = 0; b < batchesThisRep; b++) {
       for (let i = 0; i < opsPerBatch; i++) op();
       ops += opsPerBatch;
       // Force GC between batches too, so transient garbage from one batch never
@@ -185,7 +190,7 @@ export function measureLiveBytesPerOp(
     forceGc();
     const after = process.memoryUsage().heapUsed;
     perOpSamples.push((after - before) / ops);
-    totalOps = ops;
+    totalOps += ops; // accumulate the ACTUAL total work run, not just one rep
   }
 
   perOpSamples.sort((a, b) => a - b);
@@ -264,8 +269,7 @@ export function measureTransientBytesPerOp(
 
   perOp.sort((a, b) => a - b);
   const mid = Math.floor(perOp.length / 2);
-  const median =
-    perOp.length % 2 === 0 ? (perOp[mid - 1]! + perOp[mid]!) / 2 : perOp[mid]!;
+  const median = perOp.length % 2 === 0 ? (perOp[mid - 1]! + perOp[mid]!) / 2 : perOp[mid]!;
   return {
     label,
     totalOps,
@@ -668,9 +672,7 @@ function main(): void {
   const results = runAllocGate();
   for (const r of results) {
     const verdict = r.withinBudget ? 'PASS' : 'INFO';
-    process.stdout.write(
-      `RESULT\t${r.label}\t${r.liveBytesPerOp.toFixed(4)}\t${r.budgetBytesPerOp}\t${verdict}\n`,
-    );
+    process.stdout.write(`RESULT\t${r.label}\t${r.liveBytesPerOp.toFixed(4)}\t${r.budgetBytesPerOp}\t${verdict}\n`);
     process.stdout.write(
       `  ${r.label}: ${r.liveDeltaBytes} live bytes over ${r.totalOps} ops = ` +
         `${r.liveBytesPerOp.toFixed(4)} bytes/op (linux-cal. budget ${r.budgetBytesPerOp}) ⇒ ${verdict}\n`,
@@ -697,9 +699,7 @@ function main(): void {
   for (const r of relativeResults) {
     const verdict = r.withinRatio ? 'PASS' : 'FAIL';
     if (!r.withinRatio) allWithin = false;
-    process.stdout.write(
-      `RELATIVE\t${r.label}\t${r.ratio.toFixed(4)}\t${r.maxRatio}\t${verdict}\n`,
-    );
+    process.stdout.write(`RELATIVE\t${r.label}\t${r.ratio.toFixed(4)}\t${r.maxRatio}\t${verdict}\n`);
     process.stdout.write(
       `  ${r.label}: candidate ${r.candidateBytesPerOp.toFixed(4)} B/op vs reference ` +
         `${r.referenceBytesPerOp.toFixed(4)} B/op = ratio ${r.ratio.toFixed(4)} ` +
