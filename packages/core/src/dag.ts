@@ -11,7 +11,7 @@ import { InvariantViolationError } from '@czap/error';
 import { compare as hlcCompare, HLC } from './hlc.js';
 import { TypedRef } from './typed-ref.js';
 import type { ReceiptEnvelope } from './receipt.js';
-import { GENESIS, createEnvelope } from './receipt.js';
+import { GENESIS, createEnvelope, CHECKPOINT_ATTESTATION_SCHEMA } from './receipt.js';
 
 /** Single vertex in a {@link ReceiptDAG}: an envelope plus its parent and child hashes. */
 export interface DAGNode {
@@ -604,7 +604,7 @@ export const checkpoint = (dag: ReceiptDAG, options: { readonly below: string })
       if (maxTs === null || hlcCompare(ts, maxTs) > 0) maxTs = ts;
     }
 
-    const payload = yield* TypedRef.create('czap/checkpoint-summary/v1', {
+    const payload = yield* TypedRef.create(CHECKPOINT_ATTESTATION_SCHEMA, {
       watermark,
       dropped: [...dropSet].sort(),
       count: dropSet.size,

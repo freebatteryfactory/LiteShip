@@ -8,4 +8,4 @@
 
 > **ValidateGeneratedUIResult** = \{ `ok`: `true`; \} \| \{ `error`: [`GeneratedUIValidationError`](GeneratedUIValidationError.md); `ok`: `false`; \}
 
-Defined in: [genui/src/validate.ts:9](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L9)
+Defined in: [genui/src/validate.ts:10](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/validate.ts#L10)

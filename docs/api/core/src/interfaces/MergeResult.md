@@ -6,7 +6,7 @@
 
 # Interface: MergeResult
 
-Defined in: [core/src/dag.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L32)
+Defined in: [core/src/dag.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L34)
 
 Result of a DAG merge: the updated graph, the hashes that were newly added, and whether a fork was observed.
 
@@ -16,7 +16,7 @@ Result of a DAG merge: the updated graph, the hashes that were newly added, and 
 
 > `readonly` **added**: readonly `string`[]
 
-Defined in: [core/src/dag.ts:34](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L34)
+Defined in: [core/src/dag.ts:36](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L36)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [core/src/dag.ts:34](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **dag**: [`ReceiptDAG`](ReceiptDAG.md)
 
-Defined in: [core/src/dag.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L33)
+Defined in: [core/src/dag.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L35)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [core/src/dag.ts:33](https://github.com/freebatteryfactory/LiteShip/
 
 > `readonly` **forked**: `boolean`
 
-Defined in: [core/src/dag.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L35)
+Defined in: [core/src/dag.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L37)

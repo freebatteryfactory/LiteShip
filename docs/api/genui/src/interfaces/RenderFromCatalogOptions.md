@@ -6,7 +6,7 @@
 
 # Interface: RenderFromCatalogOptions
 
-Defined in: [genui/src/render.ts:14](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L14)
+Defined in: [genui/src/render.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L19)
 
 Options for [renderFromCatalog](../functions/renderFromCatalog.md).
 
@@ -16,7 +16,7 @@ Options for [renderFromCatalog](../functions/renderFromCatalog.md).
 
 > `readonly` **catalog**: `ComponentCatalog`
 
-Defined in: [genui/src/render.ts:15](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L15)
+Defined in: [genui/src/render.ts:20](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L20)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [genui/src/render.ts:15](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **clear?**: `boolean`
 
-Defined in: [genui/src/render.ts:19](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L19)
+Defined in: [genui/src/render.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L24)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [genui/src/render.ts:19](https://github.com/freebatteryfactory/LiteS
 
 > `readonly` `optional` **eventRoot?**: `HTMLElement`
 
-Defined in: [genui/src/render.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L18)
+Defined in: [genui/src/render.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L23)
 
 Root element that receives `genui:interaction` events. Defaults to `target`.
 
@@ -42,4 +42,4 @@ Root element that receives `genui:interaction` events. Defaults to `target`.
 
 > `readonly` **target**: `HTMLElement`
 
-Defined in: [genui/src/render.ts:16](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L16)
+Defined in: [genui/src/render.ts:21](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/genui/src/render.ts#L21)

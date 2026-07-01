@@ -8,6 +8,6 @@
 
 > **ResumeResponse** = \{ `patches`: readonly `unknown`[]; `type`: `"replay"`; \} \| \{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}
 
-Defined in: [web/src/types.ts:313](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L313)
+Defined in: [web/src/types.ts:362](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L362)
 
 Resume response from the server.

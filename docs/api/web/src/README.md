@@ -69,6 +69,7 @@ It ships:
 - [LLMChunkType](type-aliases/LLMChunkType.md)
 - [MatchPriority](type-aliases/MatchPriority.md)
 - [MorphResult](type-aliases/MorphResult.md)
+- [OverflowPolicy](type-aliases/OverflowPolicy.md)
 - [RenderFn](type-aliases/RenderFn.md)
 - [ResumeResponse](type-aliases/ResumeResponse.md)
 - [ResumptionStateInput](type-aliases/ResumptionStateInput.md)

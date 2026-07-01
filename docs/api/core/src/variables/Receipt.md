@@ -8,7 +8,7 @@
 
 > `const` **Receipt**: `object`
 
-Defined in: [core/src/receipt.ts:437](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L437)
+Defined in: [core/src/receipt.ts:566](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L566)
 
 Receipt namespace -- chain validation and envelope construction.
 
@@ -349,7 +349,7 @@ const first = Receipt.tail(chain);
 
 ### validateChain
 
-> **validateChain**: (`chain`) => `Effect`\<`boolean`, `Error`\>
+> **validateChain**: (`chain`, `options?`) => `Effect`\<`boolean`, `Error`\>
 
 Validate a receipt chain: genesis link, hash integrity, chain continuity, HLC ordering.
 
@@ -361,6 +361,10 @@ violation through the `Error` channel with a human-readable message.
 ##### chain
 
 readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
+
+##### options?
+
+[`ChainValidationOptions`](../interfaces/ChainValidationOptions.md)
 
 #### Returns
 
@@ -380,7 +384,7 @@ validateChainDetailed for typed `ChainValidationError` handling.
 
 ### validateChainDetailed
 
-> **validateChainDetailed**: (`chain`) => `Effect`\<`true`, [`ChainValidationError`](../type-aliases/ChainValidationError.md)\>
+> **validateChainDetailed**: (`chain`, `options?`) => `Effect`\<`true`, [`ChainValidationError`](../type-aliases/ChainValidationError.md)\>
 
 Validate a receipt chain with detailed, structured error reporting.
 
@@ -393,6 +397,10 @@ or fails with a `ChainValidationError` discriminated union
 ##### chain
 
 readonly [`ReceiptEnvelope`](../interfaces/ReceiptEnvelope.md)[]
+
+##### options?
+
+[`ChainValidationOptions`](../interfaces/ChainValidationOptions.md)
 
 #### Returns
 

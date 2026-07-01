@@ -22,11 +22,14 @@ const ARTIFACT_ID_PATTERN = /^[A-Za-z0-9:_-]+$/;
 export const defaultOverflowPolicy: OverflowPolicy = 'coalesce-by-id';
 
 /**
- * Sniff the first `data-czap-id="..."` attribute out of a serialized HTML
- * patch. Built from the canonical {@link SEMANTIC_ID_ATTR} constant so the
- * coalesce key tracks the same attribute Morph uses for node identity.
+ * Sniff the first `data-czap-id="..."` (or single-quoted `'...'`) attribute out
+ * of a serialized HTML patch. Built from the canonical {@link SEMANTIC_ID_ATTR}
+ * constant so the coalesce key tracks the same attribute Morph uses for node
+ * identity. Both quote styles are valid HTML, so a single-quoted addressed patch
+ * must NOT be misclassified as keyless (which would let the saturation fallback
+ * shed ordered messages instead of the idempotent patch).
  */
-const COALESCE_ID_ATTR_PATTERN = new RegExp(`${SEMANTIC_ID_ATTR}="([^"]+)"`);
+const COALESCE_ID_ATTR_PATTERN = new RegExp(`${SEMANTIC_ID_ATTR}=["']([^"']+)["']`);
 
 /**
  * Coalesce key for an SSE message, or `null` when the message is

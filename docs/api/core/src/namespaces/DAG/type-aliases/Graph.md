@@ -8,6 +8,6 @@
 
 > **Graph** = [`ReceiptDAG`](../../../interfaces/ReceiptDAG.md)
 
-Defined in: [core/src/dag.ts:524](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L524)
+Defined in: [core/src/dag.ts:672](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L672)
 
 Alias for [ReceiptDAG](../../../interfaces/ReceiptDAG.md).

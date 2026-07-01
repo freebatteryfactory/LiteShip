@@ -8,6 +8,6 @@
 
 > **Subject** = [`ReceiptSubject`](../../../interfaces/ReceiptSubject.md)
 
-Defined in: [core/src/receipt.ts:457](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L457)
+Defined in: [core/src/receipt.ts:586](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/receipt.ts#L586)
 
 Alias for [ReceiptSubject](../../../interfaces/ReceiptSubject.md).

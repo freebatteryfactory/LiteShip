@@ -150,6 +150,32 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     );
     expect(rejected.type).toBe('checkpoint_invalid');
   });
+
+  test('a checkpoint with the wrong subject.type does NOT authorize a compacted tail', async () => {
+    const chain = await buildLinearChain(6);
+    const dag = DAG.fromReceipts(chain);
+    const watermark = chain[2]!.hash;
+    const { checkpoint, dropped } = await Effect.runPromise(DAG.checkpoint(dag, { below: watermark }));
+    const droppedSet = new Set(dropped);
+    const tail = chain.filter((e) => !droppedSet.has(e.hash));
+
+    // Identical kind / subject.id / payload / genesis shape as the real checkpoint,
+    // but subject.type "effect" instead of the minted "run" — a structural forgery
+    // must NOT authorize a truncated tail (bound to the minted shape).
+    const forged = await Effect.runPromise(
+      Receipt.createEnvelope(
+        'checkpoint',
+        { type: 'effect', id: checkpoint.subject.id },
+        checkpoint.payload,
+        checkpoint.timestamp,
+        checkpoint.previous,
+      ),
+    );
+    const rejected = await Effect.runPromise(
+      Receipt.validateChainDetailed(tail, { base: watermark, checkpoint: forged }).pipe(Effect.flip),
+    );
+    expect(rejected.type).toBe('checkpoint_invalid');
+  });
 });
 
 // ---------------------------------------------------------------------------

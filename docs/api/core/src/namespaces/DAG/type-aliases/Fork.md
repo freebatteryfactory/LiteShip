@@ -8,6 +8,6 @@
 
 > **Fork** = [`ForkViolation`](../../../interfaces/ForkViolation.md)
 
-Defined in: [core/src/dag.ts:528](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L528)
+Defined in: [core/src/dag.ts:676](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L676)
 
 Alias for [ForkViolation](../../../interfaces/ForkViolation.md).
