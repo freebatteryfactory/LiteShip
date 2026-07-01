@@ -3,14 +3,14 @@
   "_version": 1,
   "source": {
     "kind": "ci-truth-linux",
-    "runId": "28413170218",
-    "commit": "eef9b388cc4297512a09a05045c2dd17c604fe12",
-    "capturedAt": "2026-06-30T01:20:35.381Z",
+    "runId": "28506238242",
+    "commit": "7d457936",
+    "capturedAt": "2026-07-01T09:21:11.319Z",
     "env": "linux x64, Node 22"
   },
   "gauntlet": {
     "status": "passed",
-    "durationFormatted": "14m52s"
+    "durationFormatted": "15m42s"
   },
   "benchGate": {
     "hardGateCount": 7,
@@ -20,59 +20,59 @@
   "hardGatedPairs": [
     {
       "label": "satellite",
-      "medianDirectiveNs": 2655,
-      "medianBaselineNs": 2573,
-      "medianOverheadPct": 3.19,
+      "medianDirectiveNs": 2699,
+      "medianBaselineNs": 2612,
+      "medianOverheadPct": 3.33,
       "thresholdPct": 15
     },
     {
       "label": "stream",
-      "medianDirectiveNs": 748310,
-      "medianBaselineNs": 743316,
-      "medianOverheadPct": 0.67,
+      "medianDirectiveNs": 776063,
+      "medianBaselineNs": 788187,
+      "medianOverheadPct": -1.54,
       "thresholdPct": 15
     },
     {
       "label": "llm",
-      "medianDirectiveNs": 781601,
-      "medianBaselineNs": 752270,
-      "medianOverheadPct": 4.04,
+      "medianDirectiveNs": 823421,
+      "medianBaselineNs": 775031,
+      "medianOverheadPct": 6.2,
       "thresholdPct": 15
     },
     {
       "label": "worker",
-      "medianDirectiveNs": 2926,
-      "medianBaselineNs": 2793,
-      "medianOverheadPct": 4.76,
+      "medianDirectiveNs": 2982,
+      "medianBaselineNs": 2832,
+      "medianOverheadPct": 5.33,
       "thresholdPct": 15
     },
     {
       "label": "llm-startup-shared",
-      "medianDirectiveNs": 70420,
-      "medianBaselineNs": 70879,
-      "medianOverheadPct": -1.48,
+      "medianDirectiveNs": 76604,
+      "medianBaselineNs": 75313,
+      "medianOverheadPct": 1.96,
       "thresholdPct": 25
     },
     {
       "label": "llm-promoted-startup-shared",
-      "medianDirectiveNs": 234639,
-      "medianBaselineNs": 245149,
-      "medianOverheadPct": -3.46,
+      "medianDirectiveNs": 244095,
+      "medianBaselineNs": 251687,
+      "medianOverheadPct": 2.58,
       "thresholdPct": 25
     },
     {
       "label": "worker-runtime-startup-shared",
-      "medianDirectiveNs": 1213,
-      "medianBaselineNs": 3528,
-      "medianOverheadPct": -68.03,
+      "medianDirectiveNs": 1075,
+      "medianBaselineNs": 3553,
+      "medianOverheadPct": -69.88,
       "thresholdPct": 25
     }
   ],
   "diagnosticWatch": {
     "label": "llm-runtime-steady",
-    "directiveP99Ns": 380229,
+    "directiveP99Ns": 380064,
     "absoluteP99BudgetNs": 1000000,
-    "pctOfBudget": 38.02,
-    "p99ToBaselineRatio": 36.6
+    "pctOfBudget": 38.01,
+    "p99ToBaselineRatio": 34.93
   }
 }
