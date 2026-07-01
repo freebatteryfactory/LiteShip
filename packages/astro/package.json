@@ -122,7 +122,7 @@
     "effect": ">=4.0.0-beta.32 <5"
   },
   "devDependencies": {
-    "astro": "^7.0.0",
+    "astro": "^7.0.4",
     "effect": "4.0.0-beta.32"
   },
   "engines": {
