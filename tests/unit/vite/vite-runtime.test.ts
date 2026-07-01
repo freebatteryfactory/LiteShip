@@ -13,6 +13,7 @@ import { compileQuantizeBlock, parseQuantizeBlocks } from '../../../packages/vit
 import * as CSSQuantizeModule from '../../../packages/vite/src/css-quantize.js';
 import { buildEnvironments, getEnvironmentConfig } from '../../../packages/vite/src/environments.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
+import { collectBoundaryManifest } from '../../../packages/vite/src/boundary-manifest.js';
 import * as StyleTransformModule from '../../../packages/vite/src/style-transform.js';
 import * as ThemeTransformModule from '../../../packages/vite/src/theme-transform.js';
 import * as TokenTransformModule from '../../../packages/vite/src/token-transform.js';
@@ -521,8 +522,9 @@ describe('@czap/vite plugin', () => {
     await vitePlugin.transform?.(css, join(srcDir, 'app.css'));
     await vitePlugin.transform?.(css, join(srcDir, 'app.css'));
 
-    // 4 kinds resolved on first pass, 0 on second (all cached)
-    expect(resolvePrimitiveSpy).toHaveBeenCalledTimes(4);
+    // Token/theme/style still use per-file primitive resolution; @quantize
+    // boundaries now come from the manifest-discovered map instead.
+    expect(resolvePrimitiveSpy).toHaveBeenCalledTimes(3);
   });
 
   test('leaves malformed at-rule blocks unchanged when their opening brace is missing', async () => {
@@ -556,6 +558,7 @@ describe('@czap/vite plugin', () => {
       input: 'viewport.width',
       at: [[0, 'compact']] as const,
     });
+    writeModule(join(root, 'src'), 'boundaries.ts', 'layout', boundary);
 
     vi.spyOn(CSSQuantizeModule, 'parseQuantizeBlocks').mockReturnValue([
       {
@@ -1368,7 +1371,7 @@ describe('@czap/vite plugin', () => {
     expect(vitePlugin.hotUpdate?.call(context as never, { file: 'src/tokens.ts' } as never)).toBeUndefined();
   });
 
-  test('warns for unresolved theme, style, and boundary definitions independently', async () => {
+  test('warns for unresolved theme and style, then hard-errors an undeclared @quantize boundary', async () => {
     const root = makeTempDir();
     const cssFile = join(root, 'src', 'missing.css');
     mkdirSync(join(root, 'src'), { recursive: true });
@@ -1377,25 +1380,67 @@ describe('@czap/vite plugin', () => {
     const vitePlugin = plugin();
     vitePlugin.configResolved?.({ root } as never);
 
-    await vitePlugin.transform?.call(
+    await expect(
+      vitePlugin.transform?.call(
+        {
+          warn(message: string) {
+            warnings.push(message);
+          },
+        },
+        [
+          '@theme missingTheme { color: red; }',
+          '@style missingStyle { compact { color: blue; } }',
+          '@quantize missingBoundary { compact { display: block; } }',
+        ].join('\n\n'),
+        cssFile,
+      ),
+    ).rejects.toThrow('boundary "missingBoundary" referenced in @quantize not found (declare it with Boundary.make)');
+
+    expect(warnings).toEqual([
+      expect.stringContaining('Could not resolve theme "missingTheme"'),
+      expect.stringContaining('Could not resolve style "missingStyle"'),
+    ]);
+  });
+
+  test('compiles @quantize against manifest-discovered boundaries outside convention dirs', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    const boundaryDir = join(srcDir, 'lib');
+    mkdirSync(boundaryDir, { recursive: true });
+
+    const boundary = Boundary.make({
+      input: 'viewport.width',
+      at: [
+        [0, 'compact'],
+        [768, 'wide'],
+      ] as const,
+    });
+    writeModule(boundaryDir, 'boundaries.ts', 'layout', boundary);
+
+    const manifest = await collectBoundaryManifest(root);
+    const [boundaryName] = Object.keys(manifest);
+    expect(boundaryName).toBeDefined();
+
+    const cssFile = join(srcDir, 'app.css');
+    const warnings: string[] = [];
+    const vitePlugin = plugin();
+    vitePlugin.configResolved?.({ root } as never);
+
+    const result = await vitePlugin.transform?.call(
       {
         warn(message: string) {
           warnings.push(message);
         },
       },
-      [
-        '@theme missingTheme { color: red; }',
-        '@style missingStyle { compact { color: blue; } }',
-        '@quantize missingBoundary { compact { display: block; } }',
-      ].join('\n\n'),
+      `@quantize ${boundaryName} { compact { display: block; } wide { display: grid; } }`,
       cssFile,
     );
 
-    expect(warnings).toEqual([
-      expect.stringContaining('Could not resolve theme "missingTheme"'),
-      expect.stringContaining('Could not resolve style "missingStyle"'),
-      expect.stringContaining('Could not resolve boundary "missingBoundary"'),
-    ]);
+    expect(warnings).toEqual([]);
+    expect(result).toEqual(expect.objectContaining({ code: expect.any(String) }));
+    const code = (result as { code: string }).code;
+    expect(code).not.toContain(`@quantize ${boundaryName}`);
+    expect(code).toContain('@container');
   });
 
   test('transforms mixed at-rules with comments, single quotes, and unquoted url braces', async () => {

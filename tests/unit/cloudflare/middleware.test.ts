@@ -210,6 +210,55 @@ describe('cloudflareMiddleware', () => {
     expect(tagKeys.some((key) => key.includes(boundary.id))).toBe(true);
   });
 
+  test('manifest path warns once when a selected boundary has empty outputs', () => {
+    const { kv } = makeKVStore();
+    const boundary = makeBoundary();
+    const manifest: BoundaryManifest = {
+      hero: { id: boundary.id, outputs: [], outputsByTier: {} },
+    };
+    const [manifestBoundary] = Object.keys(manifest);
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+
+    cloudflareMiddleware({
+      binding: 'KV',
+      manifest,
+      boundary: manifestBoundary,
+      env: { KV: kv },
+    });
+    cloudflareMiddleware({
+      binding: 'KV',
+      manifest,
+      boundary: manifestBoundary,
+      env: { KV: kv },
+    });
+
+    const emptyOutputEvents = events.filter((event) => event.code === 'manifest-boundary-empty-outputs');
+    expect(emptyOutputEvents).toHaveLength(1);
+    expect(emptyOutputEvents[0]).toMatchObject({
+      level: 'warn',
+      source: 'czap/cloudflare.middleware',
+      detail: { boundary: manifestBoundary },
+    });
+  });
+
+  test('manifest path does not warn when selected boundary has tier outputs', () => {
+    const { kv } = makeKVStore();
+    const { manifest } = makeManifest();
+    const [manifestBoundary] = Object.keys(manifest);
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+
+    cloudflareMiddleware({
+      binding: 'KV',
+      manifest,
+      boundary: manifestBoundary,
+      env: { KV: kv },
+    });
+
+    expect(events.filter((event) => event.code === 'manifest-boundary-empty-outputs')).toEqual([]);
+  });
+
   test('per-boundary tag maps require a manifest name or a default entry', () => {
     const { kv } = makeKVStore();
     const boundary = makeBoundary();

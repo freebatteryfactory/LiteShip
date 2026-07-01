@@ -23,7 +23,12 @@ import type { EnvironmentModuleGraph, EnvironmentModuleNode, Plugin, UserConfig 
 import { ValidationError } from '@czap/error';
 import { contentAddressOf } from '@czap/core';
 import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@czap/edge';
-import { collectBoundaryManifest, serializeBoundaryOutput } from './boundary-manifest.js';
+import {
+  collectBoundaryDefinitions,
+  collectBoundaryManifest,
+  serializeBoundaryOutput,
+  type BoundaryDefinitionMap,
+} from './boundary-manifest.js';
 import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 import { resolveVirtualId, loadVirtualModule, type BoundaryAssetUrlMap } from './virtual-modules.js';
 import { buildEnvironments, type CzapEnvironmentName } from './environments.js';
@@ -186,6 +191,7 @@ export function plugin(config?: PluginConfig): Plugin {
   let isBuild = false;
   let publicBase = '/';
   let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
+  let boundaryDefinitions: Promise<BoundaryDefinitionMap> | null = null;
 
   function ensureBoundaryManifest(): Promise<BoundaryManifest> {
     if (!cache.boundaryManifest.value) {
@@ -195,6 +201,15 @@ export function plugin(config?: PluginConfig): Plugin {
       });
     }
     return cache.boundaryManifest.value;
+  }
+
+  function ensureBoundaryDefinitions(): Promise<BoundaryDefinitionMap> {
+    if (!boundaryDefinitions) {
+      boundaryDefinitions = collectBoundaryDefinitions(projectRoot, {
+        boundaryDir: config?.dirs?.boundary,
+      });
+    }
+    return boundaryDefinitions;
   }
 
   function ensureBoundaryAssets(emitAsset: EmitAssetFile): Promise<BoundaryAssetState> {
@@ -385,12 +400,14 @@ export function plugin(config?: PluginConfig): Plugin {
       // Only process CSS files
       if (!id.endsWith('.css')) return null;
 
+      const discoveredBoundaries = code.includes('@quantize') ? await ensureBoundaryDefinitions() : undefined;
       const transformed = await transformCss(code, id, {
         warn: (message) => this.warn(message),
         addWatchFile: typeof this.addWatchFile === 'function' ? (file) => this.addWatchFile(file) : undefined,
         cache,
         projectRoot,
         dirs: config?.dirs,
+        boundaryDefinitions: discoveredBoundaries,
         quantizeContainer: config?.quantize?.container,
       });
 
@@ -425,6 +442,7 @@ export function plugin(config?: PluginConfig): Plugin {
       if (isDefFile) {
         // Clear all caches since definitions may cross-reference
         invalidateAllPrimitives(cache);
+        boundaryDefinitions = null;
 
         const moduleGraph = this.environment.moduleGraph;
         const transformModules = Array.from(moduleGraph.idToModuleMap.values()).filter((mod) => {
