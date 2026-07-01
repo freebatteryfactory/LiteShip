@@ -90,7 +90,14 @@ export async function audit(
     timestamp: result.timestamp,
     ...payload,
   };
-  emit(receipt);
+  if (opts.findings) {
+    process.stderr.write(JSON.stringify(receipt) + '\n');
+    for (const finding of payload.findings ?? []) {
+      process.stdout.write(JSON.stringify(finding) + '\n');
+    }
+  } else {
+    emit(receipt);
+  }
 
   const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
   if (wantPretty) {

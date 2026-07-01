@@ -247,16 +247,20 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     expect(code).toBe(1);
   });
 
-  it('--findings includes the shaped findings array; the default receipt stays findings-free', async () => {
+  it('--findings streams shaped finding objects as NDJSON; the default receipt stays findings-free', async () => {
     const { root, profilePath } = acmeFixture('json');
 
-    const withFindings = await captureStdout(() =>
+    const withFindings = await captureStdio(() =>
       audit({ profile: profilePath, cwd: root, findings: true, pretty: false }),
     );
-    const receipt = JSON.parse(withFindings.stdout.trim().split('\n').pop()!);
-    expect(Array.isArray(receipt.findings)).toBe(true);
-    expect(receipt.findings.length).toBe(receipt.findingCount);
-    for (const finding of receipt.findings as Array<Record<string, unknown>>) {
+    const summary = JSON.parse(withFindings.stderr.trim().split('\n')[0]!) as { findingCount: number };
+    const findings = withFindings.stdout
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    expect(findings).toHaveLength(summary.findingCount);
+    for (const finding of findings) {
       expect(finding).toMatchObject({
         id: expect.any(String),
         section: expect.any(String),
@@ -266,6 +270,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
         summary: expect.any(String),
       });
     }
+    expect(findings.every((finding) => !('findingCount' in finding))).toBe(true);
 
     // Receipt-shape stability: without the flag, no findings key at all.
     const without = await captureStdout(() => audit({ profile: profilePath, cwd: root, pretty: false }));
@@ -294,6 +299,7 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     // read as the single no-packages-discovered error — clean must never be
     // confused with unchecked (CUT A0).
     expect(receipt.errorCount).toBe(1);
+    expect(receipt.passFindingCounts.structure).toBe(0);
     expect(receipt.status).toBe('failed');
     expect(result).toBe(1);
   });
@@ -309,8 +315,14 @@ describe('D9b-2 — czap audit (CLI adapter)', () => {
     const { stdout, stderr } = await captureStdio(() =>
       audit({ profile: profilePath, cwd: root, findings: true, pretty: true }),
     );
-    const receipt = JSON.parse(stdout.trim().split('\n').pop()!);
+    const receipt = JSON.parse(stderr.trim().split('\n')[0]!);
+    const findings = stdout
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
     expect(receipt.warningCount).toBeGreaterThanOrEqual(1);
+    expect(findings.length).toBe(receipt.findingCount);
     expect(stderr).toMatch(/audit: \d+ error\(s\)/);
     expect(stderr).toMatch(/\[warning\] packages\/core\/src\/extra\.ts:\d+:\d+ default-export — /);
   });

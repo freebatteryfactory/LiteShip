@@ -85,11 +85,11 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(Object.keys(discovery.packageRoots).sort()).toEqual(['@acme/app', '@acme/core']);
     expect(discovery.missing).toEqual([]);
 
-    const result = runAuditPasses(consumerDevopsProfile(root, acmeBase()));
-    expect(result.structure.summary.packageCount).toBe(2);
-    expect(result.structure.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/core', count: 1 });
+    const result = runStructureAudit(consumerDevopsProfile(root, acmeBase()));
+    expect(result.summary.packageCount).toBe(2);
+    expect(result.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/core', count: 1 });
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package')).toHaveLength(0);
-    expect(result.counts.error).toBe(0);
+    expect(result.findings.filter((f) => f.severity === 'error')).toHaveLength(0);
   });
 
   it('does NOT flag unknown-internal-package for a not-discovered transitive @scope import (consumer-scoping fix)', () => {
@@ -113,12 +113,11 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       ...acmeBase(),
       packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
     };
-    const result = runAuditPasses(consumerDevopsProfile(root, base));
-    expect(result.structure.summary.packageCount).toBe(1); // only @acme/app discovered
+    const result = runStructureAudit(consumerDevopsProfile(root, base));
+    expect(result.summary.packageCount).toBe(1); // only @acme/app discovered
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package')).toHaveLength(0);
-    expect(result.counts.error).toBe(0);
     // The suppressed-but-real edge is still recorded in the graph (Greptile P1).
-    expect(result.structure.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/error', count: 1 });
+    expect(result.summary.packageEdges).toContainEqual({ from: '@acme/app', to: '@acme/error', count: 1 });
   });
 
   it('STILL flags a NOT-declared (typo/missing) internal import in consumer mode (Codex P2)', () => {
@@ -136,7 +135,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       ...acmeBase(),
       packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
     };
-    const result = runAuditPasses(consumerDevopsProfile(root, base));
+    const result = runStructureAudit(consumerDevopsProfile(root, base));
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
   });
 
@@ -155,7 +154,7 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       ...acmeBase(),
       packageTopology: { '@acme/app': { allowedInternalImports: [], kind: 'core' } },
     };
-    const result = runAuditPasses(consumerDevopsProfile(root, base));
+    const result = runStructureAudit(consumerDevopsProfile(root, base));
     expect(result.findings.filter((f) => f.rule === 'unknown-internal-package').length).toBeGreaterThan(0);
   });
 
@@ -176,12 +175,30 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
       'node_modules/@acme/core/src/index.ts':
         "import { appThing } from '@acme/app';\nexport const coreThing = appThing;\n",
     });
-    const result = runAuditPasses(consumerDevopsProfile(root, acmeBase()));
+    const result = runStructureAudit(consumerDevopsProfile(root, acmeBase()));
     expect(
       result.findings.filter((f) => f.rule === 'package-topology').length,
       'a disallowed @acme/core -> @acme/app edge must red as package-topology in consumer mode',
     ).toBeGreaterThan(0);
-    expect(result.counts.error).toBeGreaterThan(0);
+  });
+
+  it('runAuditPasses skips the structure pass in consumer aggregate mode', () => {
+    const root = makeFixture({
+      'package.json': JSON.stringify({ name: 'consumer-site', private: true, type: 'module' }),
+      'node_modules/@acme/app/package.json': PKG('@acme/app', { '@acme/core': '0.0.0' }),
+      'node_modules/@acme/app/src/index.ts': 'export const appThing = 1;\n',
+      'node_modules/@acme/core/package.json': PKG('@acme/core', { '@acme/app': '0.0.0' }),
+      'node_modules/@acme/core/src/index.ts':
+        "import { appThing } from '@acme/app';\nexport const coreThing = appThing;\n",
+    });
+    const profile = consumerDevopsProfile(root, acmeBase());
+
+    expect(runStructureAudit(profile).findings.filter((f) => f.rule === 'package-topology').length).toBeGreaterThan(0);
+
+    const aggregate = runAuditPasses(profile);
+    expect(aggregate.structure.findings).toHaveLength(0);
+    expect(aggregate.findings.filter((f) => f.rule === 'package-topology')).toHaveLength(0);
+    expect(aggregate.counts.error).toBe(0);
   });
 
   it('STILL flags unknown-internal-package in SOURCE mode (the suppression is consumer-specific, not a blanket removal)', () => {
@@ -227,9 +244,9 @@ describe('consumer mode — discovery walks node_modules to a fixpoint', () => {
     expect(discovery.packageRoots['@acme/app']).toContain('.pnpm');
     expect(discovery.packageRoots['@acme/core']).toContain('.pnpm');
 
-    const result = runAuditPasses(consumerDevopsProfile(root, acmeBase()));
-    expect(result.structure.summary.packageCount).toBe(2);
-    expect(result.counts.error).toBe(0);
+    const result = runStructureAudit(consumerDevopsProfile(root, acmeBase()));
+    expect(result.summary.packageCount).toBe(2);
+    expect(result.findings.filter((f) => f.severity === 'error')).toHaveLength(0);
   });
 
   it('prunes host-surface policy for packages the consumer never installed', () => {
