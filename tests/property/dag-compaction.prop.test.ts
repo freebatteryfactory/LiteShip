@@ -176,6 +176,76 @@ describe('DAG.checkpoint — boundary validation (A)', () => {
     );
     expect(rejected.type).toBe('checkpoint_invalid');
   });
+
+  test('the verifyCheckpoint provenance seam rejects a forged checkpoint the structural floor accepts', async () => {
+    // The residual limit (ADR-0026): the structural checks prove a checkpoint is
+    // WELL-FORMED but not that it attests to the real dropped set — a compacted-tail
+    // validator lacks that set, so it cannot recompute the summary content_hash. A
+    // forger can therefore mint a genesis-shaped kind:"checkpoint" for an arbitrary
+    // truncation point and authorize a MORE-truncated tail than was ever compacted.
+    // The injected `verifyCheckpoint` capability closes it — engine owns the seam,
+    // host owns the key. (Mirrors Greptile's T-Rex forgery repro.)
+    const chain = await buildLinearChain(6);
+    const truncateAt = chain[3]!.hash; // attacker claims everything <= chain[3] was compacted
+    const tail = chain.slice(4); // tail[0] = chain[4], previous === truncateAt
+
+    // Forged: correct shape (kind / subject.type / schema / genesis / subject.id),
+    // a VALID self-hash, timestamp well below tail[0] — but NEVER produced by
+    // DAG.checkpoint over a real dropped set.
+    const [forged] = await Effect.runPromise(
+      Receipt.buildChain([
+        {
+          kind: 'checkpoint',
+          subject: { type: 'run' as const, id: `czap/checkpoint:${truncateAt}` },
+          payload: { schema_hash: 'czap/checkpoint-summary/v1', content_hash: 'fabricated' },
+          timestamp: { wall_ms: 1, counter: 0, node_id: 'attacker' } as HLC.Shape,
+        },
+      ]),
+    );
+
+    // (1) The structural floor ACCEPTS the forgery — the documented residual limit.
+    expect(
+      await Effect.runPromise(Receipt.validateChainDetailed(tail, { base: truncateAt, checkpoint: forged! })),
+    ).toBe(true);
+
+    // (2) An injected provenance verifier that rejects it CLOSES the gap.
+    const rejecting = await Effect.runPromise(
+      Receipt.validateChainDetailed(tail, {
+        base: truncateAt,
+        checkpoint: forged!,
+        verifyCheckpoint: () => Effect.succeed(false),
+      }).pipe(Effect.flip),
+    );
+    expect(rejecting.type).toBe('checkpoint_invalid');
+    expect(rejecting.type === 'checkpoint_invalid' && rejecting.reason).toContain('provenance verifier');
+
+    // (3) A verifier that attests provenance still accepts — the seam delegates the
+    // trust decision to the host, it is not a blanket denial.
+    expect(
+      await Effect.runPromise(
+        Receipt.validateChainDetailed(tail, {
+          base: truncateAt,
+          checkpoint: forged!,
+          verifyCheckpoint: () => Effect.succeed(true),
+        }),
+      ),
+    ).toBe(true);
+
+    // (4) The verifier receives the exact checkpoint under scrutiny (so a real
+    // implementation can check its signature / recompute its summary).
+    let seen: Receipt.Envelope | null = null;
+    await Effect.runPromise(
+      Receipt.validateChainDetailed(tail, {
+        base: truncateAt,
+        checkpoint: forged!,
+        verifyCheckpoint: (cp) => {
+          seen = cp;
+          return Effect.succeed(true);
+        },
+      }),
+    );
+    expect(seen).toBe(forged);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -240,14 +310,34 @@ describe('DAG.checkpoint — structural invariance above W (D)', () => {
     const watermark = trunk[2]!.hash;
     const branch = await Effect.runPromise(
       Effect.gen(function* () {
-        const a1 = yield* Receipt.createEnvelope('a1', { type: 'effect', id: 'a' }, payload,
-          { wall_ms: 2000, counter: 0, node_id: 'a' } as HLC.Shape, watermark);
-        const a2 = yield* Receipt.createEnvelope('a2', { type: 'effect', id: 'a' }, payload,
-          { wall_ms: 2001, counter: 0, node_id: 'a' } as HLC.Shape, a1.hash);
-        const b1 = yield* Receipt.createEnvelope('b1', { type: 'effect', id: 'b' }, payload,
-          { wall_ms: 2000, counter: 0, node_id: 'b' } as HLC.Shape, watermark);
-        const b2 = yield* Receipt.createEnvelope('b2', { type: 'effect', id: 'b' }, payload,
-          { wall_ms: 2001, counter: 0, node_id: 'b' } as HLC.Shape, b1.hash);
+        const a1 = yield* Receipt.createEnvelope(
+          'a1',
+          { type: 'effect', id: 'a' },
+          payload,
+          { wall_ms: 2000, counter: 0, node_id: 'a' } as HLC.Shape,
+          watermark,
+        );
+        const a2 = yield* Receipt.createEnvelope(
+          'a2',
+          { type: 'effect', id: 'a' },
+          payload,
+          { wall_ms: 2001, counter: 0, node_id: 'a' } as HLC.Shape,
+          a1.hash,
+        );
+        const b1 = yield* Receipt.createEnvelope(
+          'b1',
+          { type: 'effect', id: 'b' },
+          payload,
+          { wall_ms: 2000, counter: 0, node_id: 'b' } as HLC.Shape,
+          watermark,
+        );
+        const b2 = yield* Receipt.createEnvelope(
+          'b2',
+          { type: 'effect', id: 'b' },
+          payload,
+          { wall_ms: 2001, counter: 0, node_id: 'b' } as HLC.Shape,
+          b1.hash,
+        );
         return { a1, a2, b1, b2 };
       }),
     );
@@ -313,9 +403,9 @@ describe('DAG.checkpoint — preconditions (F)', () => {
   test('unknown watermark throws', async () => {
     const chain = await buildLinearChain(4);
     const dag = DAG.fromReceipts(chain);
-    await expect(
-      Effect.runPromise(DAG.checkpoint(dag, { below: 'sha256:not-a-real-node' })),
-    ).rejects.toThrow(/dag\.checkpoint\.unknown-watermark/);
+    await expect(Effect.runPromise(DAG.checkpoint(dag, { below: 'sha256:not-a-real-node' }))).rejects.toThrow(
+      /dag\.checkpoint\.unknown-watermark/,
+    );
   });
 
   test('a non-dominated watermark throws', async () => {
@@ -324,13 +414,18 @@ describe('DAG.checkpoint — preconditions (F)', () => {
     const genesisHash = trunk[0]!.hash;
     const watermark = trunk[2]!.hash;
     const stray = await Effect.runPromise(
-      Receipt.createEnvelope('y', { type: 'effect', id: 'y' }, payload,
-        { wall_ms: 1500, counter: 0, node_id: 'y' } as HLC.Shape, genesisHash),
+      Receipt.createEnvelope(
+        'y',
+        { type: 'effect', id: 'y' },
+        payload,
+        { wall_ms: 1500, counter: 0, node_id: 'y' } as HLC.Shape,
+        genesisHash,
+      ),
     );
     const dag = DAG.fromReceipts([...trunk, stray]);
-    await expect(
-      Effect.runPromise(DAG.checkpoint(dag, { below: watermark })),
-    ).rejects.toThrow(/dag\.checkpoint\.not-dominated/);
+    await expect(Effect.runPromise(DAG.checkpoint(dag, { below: watermark }))).rejects.toThrow(
+      /dag\.checkpoint\.not-dominated/,
+    );
   });
 });
 
@@ -375,21 +470,33 @@ describe('DAG.checkpoint — anti-fork survives compaction (H)', () => {
     // A single retained child of W by actor 'a' (dominance holds: the only edge
     // crossing the drop boundary lands on W).
     const c1 = await Effect.runPromise(
-      Receipt.createEnvelope('c1', { type: 'effect', id: 'a' }, payload, {
-        wall_ms: 3000,
-        counter: 0,
-        node_id: 'a',
-      } as HLC.Shape, watermark),
+      Receipt.createEnvelope(
+        'c1',
+        { type: 'effect', id: 'a' },
+        payload,
+        {
+          wall_ms: 3000,
+          counter: 0,
+          node_id: 'a',
+        } as HLC.Shape,
+        watermark,
+      ),
     );
     const dag = DAG.fromReceipts([...trunk, c1]);
 
     // A SECOND child of W by the same actor is a fork — detected pre-compaction.
     const c2 = await Effect.runPromise(
-      Receipt.createEnvelope('c2', { type: 'effect', id: 'a' }, payload, {
-        wall_ms: 3001,
-        counter: 0,
-        node_id: 'a',
-      } as HLC.Shape, watermark),
+      Receipt.createEnvelope(
+        'c2',
+        { type: 'effect', id: 'a' },
+        payload,
+        {
+          wall_ms: 3001,
+          counter: 0,
+          node_id: 'a',
+        } as HLC.Shape,
+        watermark,
+      ),
     );
     expect(DAG.checkForkRule(dag, c2)).not.toBeNull();
 

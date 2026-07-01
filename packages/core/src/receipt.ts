@@ -59,10 +59,33 @@ export type ChainValidationError =
  * - `checkpoint`: the genesis-shaped checkpoint attestation that authorizes
  *   `base`. When supplied it is integrity-checked (hash + genesis shape +
  *   `subject.id === "czap/checkpoint:<base>"`); a mismatch fails `checkpoint_invalid`.
+ * - `verifyCheckpoint`: an OPTIONAL provenance verifier for the checkpoint — the
+ *   injectable capability that closes the one gap the structural checks cannot.
  */
 export interface ChainValidationOptions {
   readonly base?: string;
   readonly checkpoint?: ReceiptEnvelope;
+  /**
+   * Provenance verifier for the checkpoint attestation (injected capability).
+   *
+   * The structural checks prove the checkpoint is WELL-FORMED (hash, `kind`,
+   * `subject.type`, payload schema, genesis shape, `subject.id`, HLC-advance) but
+   * NOT that it was minted by `DAG.checkpoint` over the real dropped set — a
+   * compacted-tail validator does not hold the dropped set, so it cannot recompute
+   * the summary `content_hash`. A forged genesis-shaped `kind:"checkpoint"` envelope
+   * with the right subject id and an older timestamp therefore passes the structural
+   * floor and could authorize an arbitrarily TRUNCATED tail.
+   *
+   * In a TRUSTED setting (single-actor self-compaction — you validate the checkpoint
+   * YOU minted) the structural floor is sufficient and no verifier is needed. In an
+   * ADVERSARIAL setting (an untrusted remote supplies the checkpoint) inject a
+   * verifier that establishes provenance — e.g. checks a signature (a trusted
+   * compactor's `Receipt.macEnvelope` over the attestation), or recomputes the
+   * summary against a locally-held dropped set. It resolves `true` to accept, `false`
+   * to reject (fails the chain `checkpoint_invalid`); any verification failure must
+   * resolve `false`, not raise. Absent, only the structural floor applies.
+   */
+  readonly verifyCheckpoint?: (checkpoint: ReceiptEnvelope) => Effect.Effect<boolean>;
 }
 
 /** Sentinel `previous` value marking the root of a receipt chain. */
@@ -315,6 +338,21 @@ export const validateChainDetailed = (
           type: 'checkpoint_invalid' as const,
           reason: `checkpoint subject "${checkpoint.subject.id}" does not commit base watermark (expected "${expectedSubjectId}")`,
         });
+      }
+      // Provenance gate (injected capability): the structural checks above prove the
+      // checkpoint is well-formed but not that it attests to the REAL dropped set —
+      // `validateChain` lacks that set, so it cannot recompute the summary
+      // `content_hash`. An adversarial caller closes the residual forgery vector by
+      // injecting `verifyCheckpoint` (e.g. a signature check); absent one, the
+      // structural floor stands (sound for trusted self-compaction). See ADR-0026.
+      if (options?.verifyCheckpoint !== undefined) {
+        const attested = yield* options.verifyCheckpoint(checkpoint);
+        if (!attested) {
+          return yield* Effect.fail({
+            type: 'checkpoint_invalid' as const,
+            reason: 'checkpoint failed the injected provenance verifier (not attested by a trusted compactor)',
+          });
+        }
       }
     }
 
