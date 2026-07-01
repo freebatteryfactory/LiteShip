@@ -180,6 +180,18 @@ function resolveAssetUrlsByTier(entry: BoundaryManifestEntry): Readonly<Partial<
   return Object.keys(urls).length > 0 ? urls : undefined;
 }
 
+function warnEmptyManifestOutputs(boundary: string, entry: BoundaryManifestEntry): void {
+  if (entry.outputs.length > 0 || Object.keys(entry.outputsByTier).length > 0) return;
+  Diagnostics.warnOnce({
+    source: 'czap/cloudflare.middleware',
+    code: 'manifest-boundary-empty-outputs',
+    message:
+      `boundary "${boundary}" is in the manifest but has no servable CSS. ` +
+      'Fix: emit it via a @quantize block or precompile its Style.',
+    detail: { boundary },
+  });
+}
+
 /**
  * Resolve the cache identity + outputs source from the middleware config:
  * manifest-derived (preferred, name-keyed multi-boundary form) or the
@@ -224,6 +236,7 @@ function resolveCacheSource(config: CloudflareMiddlewareConfig):
             `\`${name}\` from a boundaries.ts / *.boundaries.ts module and rebuild.`,
         );
       }
+      warnEmptyManifestOutputs(name, entry);
       // Inflate the deduplicated v2 entry (outputs pool + index cells) once
       // at construction; per-request lookups stay a plain map access.
       boundaries[name] = {

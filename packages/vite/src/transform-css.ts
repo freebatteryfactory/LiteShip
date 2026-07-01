@@ -18,6 +18,7 @@
  */
 
 import type { Boundary, Token, Theme, Style } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import { parseQuantizeBlocks, compileQuantizeBlock, viewportContainmentRule } from './css-quantize.js';
 import { blankCssCommentsAndStrings, braceDepthDelta, cssPrologueEnd } from './css-scan.js';
 import { resolvePrimitive, unresolvedPrimitiveWarning } from './primitive-resolve.js';
@@ -26,6 +27,7 @@ import { parseThemeBlocks, compileThemeBlock } from './theme-transform.js';
 import { parseStyleBlocks, compileStyleBlock } from './style-transform.js';
 import { normalizeCssLineEndings } from './normalize-css-eol.js';
 import type { PrimitiveResolutionCache } from './primitive-resolution-cache.js';
+import type { BoundaryDefinitionMap } from './boundary-manifest.js';
 
 /** Convention source directory overrides per primitive kind. */
 export interface PrimitiveDirs {
@@ -53,6 +55,7 @@ export interface TransformCssContext {
   readonly cache: PrimitiveResolutionCache;
   readonly projectRoot: string;
   readonly dirs?: PrimitiveDirs;
+  readonly boundaryDefinitions?: BoundaryDefinitionMap;
   /** Selector for the auto-emitted viewport `@container` containment (default `:root`). */
   readonly quantizeContainer?: string;
 }
@@ -292,10 +295,20 @@ export async function transformCss(code: string, id: string, ctx: TransformCssCo
 
     for (const block of quantizeBlocks) {
       const cacheKey = `${block.boundaryName}:${id}`;
+      const discovered = ctx.boundaryDefinitions?.get(block.boundaryName);
+      if (ctx.boundaryDefinitions && !discovered) {
+        throw ValidationError(
+          'vite-plugin',
+          `boundary "${block.boundaryName}" referenced in @quantize not found (declare it with Boundary.make). ` +
+            `Source: ${id}:${block.line}. ` +
+            `Fix: export \`const ${block.boundaryName} = Boundary.make({ ... })\` from a boundary module in this project.`,
+        );
+      }
       let boundary: Boundary.Shape | null | undefined = cache.boundary.get(cacheKey);
 
       if (boundary === undefined) {
-        const resolution = await resolvePrimitive('boundary', block.boundaryName, id, projectRoot, dirs?.boundary);
+        const resolution =
+          discovered ?? (await resolvePrimitive('boundary', block.boundaryName, id, projectRoot, dirs?.boundary));
         boundary = resolution?.primitive ?? null;
         cache.boundary.set(cacheKey, boundary);
         if (resolution) cache.source.set(cacheKey, resolution.source);

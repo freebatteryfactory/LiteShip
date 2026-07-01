@@ -58,6 +58,12 @@ interface ProjectScan {
   readonly cssFiles: readonly string[];
 }
 
+/** Project-wide boundary definitions keyed by export name, including their source module path. */
+export type BoundaryDefinitionMap = ReadonlyMap<
+  string,
+  { readonly primitive: Boundary.Shape; readonly source: string }
+>;
+
 function isBoundaryModuleFile(fileName: string): boolean {
   return fileName === 'boundaries.ts' || fileName.endsWith('.boundaries.ts');
 }
@@ -168,6 +174,55 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
     }
   }
   return found;
+}
+
+async function collectBoundaryDefinitionsFromScan(
+  projectRoot: string,
+  scan: ProjectScan,
+  options?: Pick<CollectBoundaryManifestOptions, 'boundaryDir'>,
+): Promise<Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>> {
+  const boundaryFiles = new Set<string>(scan.boundaryFiles);
+  if (options?.boundaryDir) {
+    const dir = path.resolve(projectRoot, options.boundaryDir);
+    const direct = path.join(dir, 'boundaries.ts');
+    if (fs.existsSync(direct)) boundaryFiles.add(direct);
+    for (const file of findConventionFiles(dir, '.boundaries.ts', DIAGNOSTIC_SOURCE)) {
+      boundaryFiles.add(file);
+    }
+  }
+
+  // Resolve every exported boundary definition, keyed by export name.
+  const boundariesByName = new Map<string, { readonly primitive: Boundary.Shape; readonly source: string }>();
+  for (const file of boundaryFiles) {
+    for (const [exportName, boundary] of await importBoundaryExports(file)) {
+      const existing = boundariesByName.get(exportName);
+      if (existing && existing.primitive.id !== boundary.id) {
+        Diagnostics.warnOnce({
+          source: DIAGNOSTIC_SOURCE,
+          code: 'duplicate-boundary-name',
+          message:
+            `Two boundary modules export "${exportName}" with different definitions ` +
+            `(${existing.primitive.id} vs ${boundary.id}); the first one found wins in the manifest. ` +
+            `Fix: rename one export so each boundary name is unique within the project.`,
+        });
+        continue;
+      }
+      boundariesByName.set(exportName, { primitive: boundary, source: file });
+    }
+  }
+  return boundariesByName;
+}
+
+/**
+ * Internal helper used by the Vite transform to share the manifest's
+ * project-wide boundary discovery instead of falling back to per-file
+ * convention resolution for `@quantize`.
+ */
+export async function collectBoundaryDefinitions(
+  projectRoot: string,
+  options?: Pick<CollectBoundaryManifestOptions, 'boundaryDir'>,
+): Promise<BoundaryDefinitionMap> {
+  return collectBoundaryDefinitionsFromScan(projectRoot, scanProject(projectRoot), options);
 }
 
 /** The slice of {@link CompiledOutputs} the non-CSS cast loop populates. */
@@ -415,36 +470,9 @@ export async function collectBoundaryManifest(
   options?: CollectBoundaryManifestOptions,
 ): Promise<BoundaryManifest> {
   const scan = scanProject(projectRoot);
-
-  const boundaryFiles = new Set<string>(scan.boundaryFiles);
-  if (options?.boundaryDir) {
-    const dir = path.resolve(projectRoot, options.boundaryDir);
-    const direct = path.join(dir, 'boundaries.ts');
-    if (fs.existsSync(direct)) boundaryFiles.add(direct);
-    for (const file of findConventionFiles(dir, '.boundaries.ts', DIAGNOSTIC_SOURCE)) {
-      boundaryFiles.add(file);
-    }
-  }
-
-  // Resolve every exported boundary definition, keyed by export name.
-  const boundariesByName = new Map<string, Boundary.Shape>();
-  for (const file of boundaryFiles) {
-    for (const [exportName, boundary] of await importBoundaryExports(file)) {
-      const existing = boundariesByName.get(exportName);
-      if (existing && existing.id !== boundary.id) {
-        Diagnostics.warnOnce({
-          source: DIAGNOSTIC_SOURCE,
-          code: 'duplicate-boundary-name',
-          message:
-            `Two boundary modules export "${exportName}" with different definitions ` +
-            `(${existing.id} vs ${boundary.id}); the first one found wins in the manifest. ` +
-            `Fix: rename one export so each boundary name is unique within the project.`,
-        });
-        continue;
-      }
-      boundariesByName.set(exportName, boundary);
-    }
-  }
+  const boundaryDefinitions = await collectBoundaryDefinitionsFromScan(projectRoot, scan, {
+    boundaryDir: options?.boundaryDir,
+  });
 
   // Merge @quantize states per boundary across all CSS files.
   const statesByBoundary = new Map<string, Record<string, QuantizeStateBody>>();
@@ -468,7 +496,7 @@ export async function collectBoundaryManifest(
     }
     if (!css.includes('@quantize')) continue;
     for (const block of parseQuantizeBlocks(css, cssFile)) {
-      if (!boundariesByName.has(block.boundaryName)) {
+      if (!boundaryDefinitions.has(block.boundaryName)) {
         Diagnostics.warnOnce({
           source: DIAGNOSTIC_SOURCE,
           code: 'unresolved-quantize-boundary',
@@ -546,7 +574,8 @@ export async function collectBoundaryManifest(
   }
 
   const manifest: Record<string, BoundaryManifestEntry> = {};
-  for (const [name, boundary] of boundariesByName) {
+  for (const [name, definition] of boundaryDefinitions) {
+    const boundary = definition.primitive;
     const states = statesByBoundary.get(name);
     manifest[name] = {
       id: boundary.id,
