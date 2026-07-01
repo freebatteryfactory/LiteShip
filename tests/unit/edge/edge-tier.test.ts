@@ -4,6 +4,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { EdgeTier, ClientHints } from '@czap/edge';
+import { CAP_AXES, capAxisAttr } from '@czap/detect';
 
 describe('EdgeTier', () => {
   test('detectTier returns all three tier axes', () => {
@@ -46,6 +47,35 @@ describe('EdgeTier', () => {
     };
     const attrs = EdgeTier.tierDataAttributes(result);
     expect(attrs).toBe('data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"');
+  });
+
+  test('tierDataAttributesMap is the spreadable form, one key per CAP_AXES axis (auto-includes new axes)', () => {
+    const result = {
+      capTier: 'reactive' as const,
+      motionTier: 'animations' as const,
+      designTier: 'enhanced' as const,
+    };
+    const map = EdgeTier.tierDataAttributesMap(result);
+    // Exactly the canonical registry, keyed by the FULL attribute name — so a
+    // consumer spreading `{...map}` gets every axis, and a future CAP_AXES
+    // addition appears here automatically (never hand-written, never missed).
+    expect(Object.keys(map).sort()).toEqual(CAP_AXES.map(capAxisAttr).sort());
+    expect(map).toEqual({
+      'data-czap-tier': 'reactive',
+      'data-czap-motion': 'animations',
+      'data-czap-design': 'enhanced',
+    });
+  });
+
+  test('tierDataAttributes serializes EXACTLY tierDataAttributesMap (string and map cannot drift)', () => {
+    const result = EdgeTier.detectTier({ 'sec-ch-ua-mobile': '?0', 'device-memory': '8' });
+    const map = EdgeTier.tierDataAttributesMap(result);
+    const rebuilt = Object.entries(map)
+      .map(([attr, val]) => `${attr}="${val}"`)
+      .join(' ');
+    // The string form is derived from the map form; this pins that they can
+    // never disagree (add an axis to one without the other and this reds).
+    expect(EdgeTier.tierDataAttributes(result)).toBe(rebuilt);
   });
 
   test('tierFromParsed matches detectTier for the same headers', () => {

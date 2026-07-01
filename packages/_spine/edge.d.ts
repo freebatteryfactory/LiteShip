@@ -47,6 +47,7 @@ export declare const EdgeTier: {
   detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult;
   tierFromParsed(caps: ExtendedDeviceCapabilities): EdgeTierResult;
   tierDataAttributes(result: EdgeTierResult): string;
+  tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<string, string>>;
 };
 
 export declare namespace EdgeTier {
@@ -232,6 +233,8 @@ export interface EdgeHostResolution extends EdgeHostContext {
   readonly assetUrl?: string;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryResolution>>;
   readonly htmlAttributes: string;
+  /** Spreadable map form of {@link htmlAttributes}, keyed by `data-czap-<axis>` (auto-includes every `CAP_AXES` axis). */
+  readonly htmlAttributesMap: Readonly<Record<string, string>>;
   readonly responseHeaders: {
     readonly acceptCH: string;
     readonly criticalCH: string;
