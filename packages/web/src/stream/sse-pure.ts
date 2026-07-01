@@ -22,14 +22,22 @@ const ARTIFACT_ID_PATTERN = /^[A-Za-z0-9:_-]+$/;
 export const defaultOverflowPolicy: OverflowPolicy = 'coalesce-by-id';
 
 /**
- * Sniff the first `data-czap-id="..."` (or single-quoted `'...'`) attribute out
- * of a serialized HTML patch. Built from the canonical {@link SEMANTIC_ID_ATTR}
- * constant so the coalesce key tracks the same attribute Morph uses for node
- * identity. Both quote styles are valid HTML, so a single-quoted addressed patch
- * must NOT be misclassified as keyless (which would let the saturation fallback
- * shed ordered messages instead of the idempotent patch).
+ * Read one attribute's value from the FIRST start tag of a serialized HTML patch.
+ * Tokenizes actual `name="value"` (or single-quoted) attribute pairs — keyed on the
+ * canonical {@link SEMANTIC_ID_ATTR} — so a literal that merely LOOKS like the
+ * attribute inside text content or another attribute's value can NOT produce a
+ * false coalesce key. Both quote styles are valid HTML and are handled.
  */
-const COALESCE_ID_ATTR_PATTERN = new RegExp(`${SEMANTIC_ID_ATTR}=["']([^"']+)["']`);
+const firstStartTagAttr = (html: string, attr: string): string | null => {
+  const tag = /<[a-zA-Z][^>]*>/.exec(html)?.[0];
+  if (tag === undefined) return null;
+  const attrPattern = /([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+  let m: RegExpExecArray | null;
+  while ((m = attrPattern.exec(tag)) !== null) {
+    if (m[1] === attr) return m[2] ?? m[3] ?? null;
+  }
+  return null;
+};
 
 /**
  * Coalesce key for an SSE message, or `null` when the message is
@@ -60,8 +68,8 @@ export const extractCoalesceKey = (message: SSEMessage): string | null => {
   }
 
   if (typeof data === 'string') {
-    const match = COALESCE_ID_ATTR_PATTERN.exec(data);
-    return match ? `patch:${match[1]}` : null;
+    const id = firstStartTagAttr(data, SEMANTIC_ID_ATTR);
+    return id !== null && id.length > 0 ? `patch:${id}` : null;
   }
 
   return null;
@@ -142,10 +150,18 @@ export const applyOverflow = (
       buffer.push(message);
       return { buffer, dropped: 1, coalesced: 0, saturated: true };
     }
-    // Buffer is all keyless/ordered messages -> fall through to drop-oldest.
+    // No keyed victim: the buffer holds ONLY ordered/keyless messages. If the
+    // incoming message is itself a keyed (idempotent) patch, REJECT it rather than
+    // shed an ordered message for it — the selective policy sheds keyed patches
+    // first and never drops an ordered message while a keyed one is in play.
+    if (extractCoalesceKey(message) !== null) {
+      return { buffer, dropped: 1, coalesced: 0, saturated: true };
+    }
+    // The incoming message is also ordered/keyless -> unavoidable drop-oldest below.
   }
 
-  // drop-oldest (also the coalesce fallback when no keyed entry exists).
+  // drop-oldest (the drop-oldest policy, or coalesce's fallback when BOTH the buffer
+  // and the incoming message are ordered/keyless).
   buffer.shift();
   buffer.push(message);
   return { buffer, dropped: 1, coalesced: 0, saturated: true };

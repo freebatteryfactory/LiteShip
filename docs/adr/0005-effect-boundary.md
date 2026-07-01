@@ -86,6 +86,6 @@ Extends Category 1 (setup/teardown) and Category 4 (state-machine wrapping) to t
 
 ### Evidence (addendum)
 
-- `packages/web/src/{types,stream/sse-pure,stream/sse}.ts`, `packages/_spine/web.d.ts`; `packages/astro/src/runtime/{stream,llm,effect-scheduler}.ts`.
+- `packages/web/src/{types,stream/sse-pure,stream/sse}.ts`, `packages/_spine/web.d.ts`; `packages/astro/src/runtime/{stream,llm}.ts`.
 - `tests/property/sse-overflow.test.ts`, `tests/component/sse-client.test.ts`, `tests/unit/astro/stream-llm-lifecycle.test.ts`.
 - Precedent: `packages/scene/src/runtime.ts` (imperative Scope bridge).
