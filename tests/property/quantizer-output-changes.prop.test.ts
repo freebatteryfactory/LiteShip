@@ -1,0 +1,100 @@
+/**
+ * Property test: quantizer outputChanges dispatches every configured target.
+ *
+ * The expected target set is derived from the quantizer config's per-state
+ * output tables, while the crossing state comes from the core Boundary
+ * evaluator. The stream under test only supplies the actual emitted record.
+ */
+
+import { describe, expect, test } from 'vitest';
+import fc from 'fast-check';
+import { Effect, Fiber, Stream } from 'effect';
+import { Boundary, type OutputsFor, type StateUnion } from '@czap/core';
+import { Q, type OutputTarget, type QuantizerConfig, type QuantizerOutputs } from '@czap/quantizer';
+
+const outputTargets = ['css', 'glsl', 'wgsl', 'aria', 'ai'] as const satisfies readonly OutputTarget[];
+
+type ShaderBoundary = ReturnType<typeof shaderBoundary>;
+type ShaderState = StateUnion<ShaderBoundary>;
+
+function shaderBoundary() {
+  return Boundary.make({
+    input: 'viewport.width',
+    at: [
+      [0, 'compact'],
+      [768, 'expanded'],
+    ] as const,
+  });
+}
+
+function targetsForState<B extends Boundary.Shape>(outputs: QuantizerOutputs<B>, state: StateUnion<B>): OutputTarget[] {
+  return outputTargets.filter((target) => {
+    const table = outputs[target] as Record<string, Record<string, unknown>> | undefined;
+    return table?.[state as string] !== undefined;
+  });
+}
+
+async function emittedAfterCrossing<B extends Boundary.Shape, O extends QuantizerOutputs<B>>(
+  config: QuantizerConfig<B, O>,
+  value: number,
+): Promise<Partial<{ [K in OutputTarget]: Record<string, unknown> }>> {
+  return Effect.runPromise(
+    Effect.scoped(
+      Effect.gen(function* () {
+        const live = yield* config.create();
+        const fiber = yield* Effect.forkScoped(Stream.runCollect(Stream.take(live.outputChanges, 2)));
+
+        yield* Effect.yieldNow;
+        yield* Effect.sync(() => {
+          live.evaluate(value);
+        });
+
+        const events = Array.from(yield* Fiber.join(fiber));
+        return events[1] ?? {};
+      }),
+    ),
+  );
+}
+
+describe('quantizer outputChanges target dispatch properties', () => {
+  test('emits every configured output target for a boundary crossing', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.record({
+          cssGap: fc.integer({ min: 0, max: 4096 }),
+          glslScale: fc.integer({ min: -4096, max: 4096 }),
+          wgslScale: fc.integer({ min: -4096, max: 4096 }),
+        }),
+        async ({ cssGap, glslScale, wgslScale }) => {
+          const boundary = shaderBoundary();
+          const outputs = {
+            css: {
+              compact: { '--gap': 0 },
+              expanded: { '--gap': cssGap },
+            } satisfies OutputsFor<ShaderBoundary, Record<string, string | number>>,
+            glsl: {
+              compact: { u_scale: 0 },
+              expanded: { u_scale: glslScale },
+            } satisfies OutputsFor<ShaderBoundary, Record<string, number>>,
+            wgsl: {
+              compact: { u_scale: 0 },
+              expanded: { u_scale: wgslScale },
+            } satisfies OutputsFor<ShaderBoundary, Record<string, number>>,
+          };
+          const config = Q.from(boundary).outputs(outputs);
+          const crossingValue = 1024;
+          const crossingState = Boundary.evaluateResult(boundary, crossingValue).state as ShaderState;
+
+          const expectedTargets = targetsForState(config.outputs, crossingState).sort();
+          const emitted = await emittedAfterCrossing(config, crossingValue);
+
+          expect(Object.keys(emitted).sort()).toEqual(expectedTargets);
+          for (const target of expectedTargets) {
+            expect(emitted[target]).toEqual(config.outputs[target]?.[crossingState]);
+          }
+        },
+      ),
+      { numRuns: 80, seed: 0x60cafe },
+    );
+  });
+});
