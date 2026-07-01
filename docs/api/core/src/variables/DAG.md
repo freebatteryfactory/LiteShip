@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: [core/src/dag.ts:502](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L502)
+Defined in: [core/src/dag.ts:648](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L648)
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 
@@ -98,6 +98,54 @@ const violation = DAG.checkForkRule(dag, envelope);
 if (violation) {
   console.error(`Fork by actor ${violation.actor}`);
 }
+```
+
+### checkpoint
+
+> **checkpoint**: (`dag`, `options`) => `Effect`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
+
+Compact the DAG below a watermark, returning a checkpoint attestation.
+
+DROP-ONLY reclamation: drops the watermark `W` plus all of its transitive
+ancestors, leaving every retained node's content-addressed identity intact.
+Async because minting the checkpoint hashes via `crypto.subtle` — kept off the
+hot path by construction.
+
+Preconditions:
+- `W` must be a known node (`dag.checkpoint.unknown-watermark` otherwise).
+- DOMINANCE: every parent edge that crosses the drop boundary (a dropped
+  parent of a retained child) must land on `W`, else `W` does not dominate the
+  dropped region and reclaiming it would orphan a survivor
+  (`dag.checkpoint.not-dominated`).
+
+The checkpoint is a real genesis-shaped [ReceiptEnvelope](../interfaces/ReceiptEnvelope.md)
+(`previous = GENESIS`, `subject.id = "czap/checkpoint:<W>"` committing the
+watermark, `timestamp` = HLC-max over the dropped envelopes), hashed via
+`Receipt.hashEnvelope` so two replicas that reach the same `W` mint a
+byte-identical attestation. It is RETURNED OUT-OF-BAND, never inserted as a
+node (which would spuriously read as a second head / fork).
+
+#### Parameters
+
+##### dag
+
+[`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+##### options
+
+###### below
+
+`string`
+
+#### Returns
+
+`Effect`\<[`CheckpointResult`](../interfaces/CheckpointResult.md)\>
+
+#### Example
+
+```ts
+const { dag: compacted, checkpoint, dropped } = yield* DAG.checkpoint(dag, { below: W });
+// compacted has `dropped.length` fewer nodes; `checkpoint.subject.id` commits W
 ```
 
 ### commonAncestor
@@ -415,6 +463,40 @@ Return the number of nodes in the DAG.
 ```ts
 const n = DAG.size(dag);
 // n === dag.nodes.size
+```
+
+### spliceCheckpoint
+
+> **spliceCheckpoint**: (`dag`, `dropSet`) => [`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+Splice a checkpoint out of the DAG by REBUILDING FROM THE SURVIVORS.
+
+DROP-ONLY — never re-points a retained node's parents (a node's parents are
+derived from the content-hash-bearing `previous`, a SHA-256 input; mutating
+them would forge identity). We instead collect every retained envelope and
+`fromReceipts` them afresh, so the spliced DAG EQUALS a fresh reload by
+construction. `genesis` collapses to `null` naturally once the old root is
+dropped — `dag.genesis` has no production readers.
+
+#### Parameters
+
+##### dag
+
+[`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+##### dropSet
+
+`ReadonlySet`\<`string`\>
+
+#### Returns
+
+[`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+#### Example
+
+```ts
+const compacted = DAG.spliceCheckpoint(dag, new Set([oldRoot, ...ancestors]));
+// compacted deep-equals DAG.fromReceipts(retainedEnvelopes)
 ```
 
 ## Example

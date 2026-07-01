@@ -69,6 +69,14 @@ export interface ChainValidationOptions {
 export const GENESIS: string = 'genesis';
 
 /**
+ * The schema id `DAG.checkpoint` stamps on its summary payload's `TypedRef`
+ * (`schema_hash`). Compacted-tail validation binds authorization to this minted
+ * shape — single source of truth, imported by `dag.ts` so the mint and the
+ * verifier can never drift.
+ */
+export const CHECKPOINT_ATTESTATION_SCHEMA = 'czap/checkpoint-summary/v1';
+
+/**
  * Compute the content hash of a receipt envelope.
  *
  * Normalizes the `previous` field (sorts array form), canonicalizes the
@@ -275,6 +283,24 @@ export const validateChainDetailed = (
         return yield* Effect.fail({
           type: 'checkpoint_invalid' as const,
           reason: `checkpoint attestation has kind "${checkpoint.kind}" (expected "checkpoint")`,
+        });
+      }
+      // Bind to the MINTED checkpoint shape, not just kind + subject id: DAG.checkpoint
+      // stamps subject.type "run" and a "czap/checkpoint-summary" payload. Otherwise a
+      // forger could mint a genesis-shaped kind:"checkpoint" envelope with the right
+      // subject id but an arbitrary payload + an older timestamp to authorize a
+      // truncated tail. (Full cryptographic provenance would need a signature; this
+      // rejects the structural forgeries.)
+      if (checkpoint.subject.type !== 'run') {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: `checkpoint subject.type is "${checkpoint.subject.type}" (expected "run")`,
+        });
+      }
+      if (checkpoint.payload.schema_hash !== CHECKPOINT_ATTESTATION_SCHEMA) {
+        return yield* Effect.fail({
+          type: 'checkpoint_invalid' as const,
+          reason: `checkpoint payload schema is "${checkpoint.payload.schema_hash}" (expected "${CHECKPOINT_ATTESTATION_SCHEMA}")`,
         });
       }
       if (!isGenesis(checkpoint)) {

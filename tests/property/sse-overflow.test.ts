@@ -77,6 +77,17 @@ describe('applyOverflow — coalesce-by-id safety invariants', () => {
     expect(result.buffer).toEqual([tokenMessage(7), patchMessage('a', 2)]);
   });
 
+  test('a single-quoted data-czap-id patch is still keyed (both quote styles coalesce)', () => {
+    const doubleQuoted: SSEMessage = { type: 'patch', data: `<div data-czap-id="hero">v1</div>` };
+    const singleQuoted: SSEMessage = { type: 'patch', data: `<div data-czap-id='hero'>v2</div>` };
+    const dqKey = extractCoalesceKey(doubleQuoted);
+    const sqKey = extractCoalesceKey(singleQuoted);
+    // Both quote styles are valid HTML — a single-quoted addressed patch must NOT be
+    // misclassified as keyless (which would let the fallback shed ordered messages).
+    expect(sqKey).not.toBeNull();
+    expect(sqKey).toBe(dqKey);
+  });
+
   test('a token is never dropped, reordered, or merged while a keyed patch is evictable', () => {
     fc.assert(
       fc.property(fc.array(stepArb, { minLength: 0, maxLength: 200 }), fc.integer({ min: 2, max: 12 }), (steps, max) => {

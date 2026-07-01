@@ -77,6 +77,8 @@ plan graph, ECS, capsule factory).
 - [CastContextOptions](interfaces/CastContextOptions.md)
 - [CellEnvelope](interfaces/CellEnvelope.md)
 - [CellMeta](interfaces/CellMeta.md)
+- [ChainValidationOptions](interfaces/ChainValidationOptions.md)
+- [CheckpointResult](interfaces/CheckpointResult.md)
 - [Clock](interfaces/Clock.md)
 - [ComponentNode](interfaces/ComponentNode.md)
 - [ComposableEntity](interfaces/ComposableEntity.md)

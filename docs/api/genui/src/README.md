@@ -21,6 +21,7 @@
 - [ContentAddress](type-aliases/ContentAddress.md)
 - [GeneratedUINode](type-aliases/GeneratedUINode.md)
 - [GeneratedUIValidationError](type-aliases/GeneratedUIValidationError.md)
+- [RenderFromCatalogResult](type-aliases/RenderFromCatalogResult.md)
 - [ValidateGeneratedUIResult](type-aliases/ValidateGeneratedUIResult.md)
 
 ## Variables

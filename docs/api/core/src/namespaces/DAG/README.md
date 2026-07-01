@@ -25,6 +25,8 @@ const result = DAG.merge(dag, remoteEnvelopes);
 
 ## Type Aliases
 
+- [Checkpoint](type-aliases/Checkpoint.md)
+- [CompactResult](type-aliases/CompactResult.md)
 - [Fork](type-aliases/Fork.md)
 - [Graph](type-aliases/Graph.md)
 - [Merge](type-aliases/Merge.md)

@@ -345,9 +345,16 @@ export const create = (config: SSEConfig): Effect.Effect<SSEClient, never, Scope
     yield* createConnection;
 
     const messages: Stream.Stream<SSEMessage> = Stream.fromQueue(messageQueue).pipe(
-      Stream.map(() => {
+      Stream.flatMap(() => {
         signaledCount = Math.max(0, signaledCount - 1);
-        return pendingMessages.shift()!;
+        // A wakeup token can outlive its message: coalesce-by-id supersedes an
+        // already-signaled patch and a saturating drop evicts one, either of
+        // which can leave one more token than pending message. Emit nothing for a
+        // stale token rather than deliver `undefined` to consumers; the next
+        // ingest re-signals any messages still pending, so the queue self-heals.
+        // (P1.)
+        const message = pendingMessages.shift();
+        return message === undefined ? Stream.empty : Stream.succeed(message);
       }),
     );
     const stateChanges: Stream.Stream<SSEState> = Stream.fromQueue(transitionQueue);
