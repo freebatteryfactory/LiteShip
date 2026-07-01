@@ -1,5 +1,3 @@
-import { initSvgDirective } from '../runtime/svg.js';
+import { svgDirective } from '../runtime/svg.js';
 
-export default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {
-  initSvgDirective(load, el);
-};
+export default svgDirective;

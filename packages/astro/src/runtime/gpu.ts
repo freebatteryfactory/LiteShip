@@ -10,6 +10,7 @@ import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 const DEFAULT_VERTEX_SHADER = `#version 300 es
 precision mediump float;
@@ -652,3 +653,17 @@ void main() {
   void initShader();
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the GPU runtime. */
+export const gpuDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('gpu', load, opts, el, (runtimeLoad, runtimeOpts, runtimeEl) => {
+    // Astro hands custom client directives their expression on `opts.value`
+    // (`client:gpu={{ force: true }}` -> `{ name: 'gpu', value: { force: true } }`),
+    // matching its built-in directives. The `?? opts` fallback also accepts a value
+    // passed directly (the plain-div boot scanner / unit tests). `{ force: true }`
+    // boots the shader even in low/headless tiers (see the initGPUDirective force
+    // escape hatch).
+    const value = (runtimeOpts?.['value'] ?? runtimeOpts) as Record<string, unknown> | undefined;
+    initGPUDirective(runtimeLoad, runtimeEl, value);
+  });
+};

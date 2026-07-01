@@ -13,6 +13,7 @@
 
 import type { ContentAddress } from '@czap/core';
 import { loadGraphRuntime, type GraphRuntimeHandle } from './graph-runtime.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 /** Resolve an entity id to the `[data-czap-entity]` element in (or at) the directive root. */
 function entityResolver(root: HTMLElement): (entityId: ContentAddress) => HTMLElement | null {
@@ -47,3 +48,10 @@ export function initGraphDirective(load: () => Promise<unknown>, element: HTMLEl
 
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the graph runtime. */
+export const graphDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('graph', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initGraphDirective(runtimeLoad, runtimeEl);
+  });
+};

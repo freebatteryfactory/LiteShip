@@ -1,5 +1,3 @@
-import { initLLMDirective } from '../runtime/llm.js';
+import { llmDirective } from '../runtime/llm.js';
 
-export default (load: () => Promise<unknown>, _opts: Record<string, unknown>, el: HTMLElement) => {
-  initLLMDirective(load, el);
-};
+export default llmDirective;

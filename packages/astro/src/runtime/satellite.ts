@@ -6,6 +6,7 @@ import {
   readSignalValue,
   warnIfSignalUnserved,
 } from './boundary.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 /**
  * Entry point used by the `client:satellite` directive. Parses the
@@ -80,3 +81,14 @@ export function initSatelliteDirective(load: () => Promise<unknown>, element: HT
   init();
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the satellite runtime. */
+export const satelliteDirective = (
+  load: () => Promise<unknown>,
+  opts: Record<string, unknown>,
+  el: HTMLElement,
+): void => {
+  bootDirectiveEntry('satellite', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initSatelliteDirective(runtimeLoad, runtimeEl);
+  });
+};

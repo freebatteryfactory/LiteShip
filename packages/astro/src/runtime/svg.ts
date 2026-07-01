@@ -46,6 +46,7 @@ import {
   warnIfSignalUnserved,
   type RuntimeBoundary,
 } from './boundary.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 /** Attribute carrying the entity id an SVG element is bound to. */
 const ENTITY_ATTRIBUTE = 'data-czap-entity';
@@ -271,3 +272,10 @@ export function initSvgDirective(load: () => Promise<unknown>, element: HTMLElem
 
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the SVG runtime. */
+export const svgDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('svg', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initSvgDirective(runtimeLoad, runtimeEl);
+  });
+};

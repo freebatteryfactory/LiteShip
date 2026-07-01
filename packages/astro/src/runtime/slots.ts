@@ -1,4 +1,5 @@
 import { SlotRegistry } from '@czap/web';
+import type { DirectiveName } from './directive-boot.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 interface RuntimeWindow extends Window {
@@ -10,8 +11,53 @@ interface RuntimeWindow extends Window {
   };
 }
 
-const REINIT_SELECTOR =
-  '[data-czap-boundary],[data-czap-stream-url],[data-czap-llm-url],[data-czap-wasm],[data-czap-shader-src],[data-czap-directive]';
+/** The explicit cross-directive marker used by the plain-element boot scanner. */
+export const DIRECTIVE_MARKER_ATTRIBUTE = 'data-czap-directive';
+
+/** One directive-owned root attribute and whether it is unambiguous enough for implicit boot. */
+export interface DirectiveRootAttribute {
+  readonly attribute: string;
+  readonly implicitBoot: boolean;
+}
+
+/**
+ * Canonical directive-root attribute registry. `slots.ts` owns this because its
+ * reinit/teardown selector is the broad runtime-root discovery source; the boot
+ * scanner derives its implicit plain-element selectors from the same data.
+ */
+export const DIRECTIVE_ATTRIBUTE_REGISTRY = {
+  satellite: [{ attribute: 'data-czap-boundary', implicitBoot: false }],
+  stream: [{ attribute: 'data-czap-stream-url', implicitBoot: true }],
+  llm: [{ attribute: 'data-czap-llm-url', implicitBoot: true }],
+  worker: [{ attribute: 'data-czap-boundary', implicitBoot: false }],
+  gpu: [{ attribute: 'data-czap-shader-src', implicitBoot: true }],
+  wasm: [{ attribute: 'data-czap-wasm', implicitBoot: true }],
+  graph: [{ attribute: 'data-czap-graph', implicitBoot: true }],
+  svg: [],
+} as const satisfies Record<DirectiveName, readonly DirectiveRootAttribute[]>;
+
+function attributeSelector(attribute: string): string {
+  return `[${attribute}]`;
+}
+
+function uniqueDirectiveAttributes(): readonly string[] {
+  return [
+    ...new Set(
+      Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
+        .flat()
+        .map((entry) => entry.attribute),
+    ),
+  ];
+}
+
+/** Return the unambiguous attribute selectors that implicitly boot `name` on plain elements. */
+export function implicitDirectiveSelectors(name: DirectiveName): readonly string[] {
+  return DIRECTIVE_ATTRIBUTE_REGISTRY[name]
+    .filter((entry) => entry.implicitBoot)
+    .map((entry) => attributeSelector(entry.attribute));
+}
+
+const REINIT_SELECTOR = [...uniqueDirectiveAttributes(), DIRECTIVE_MARKER_ATTRIBUTE].map(attributeSelector).join(',');
 
 function isSlotRegistryShape(value: unknown): value is SlotRegistry.Shape {
   if (typeof value !== 'object' || value === null) return false;

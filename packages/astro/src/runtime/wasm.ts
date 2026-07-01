@@ -2,6 +2,7 @@ import { WASMDispatch, Diagnostics } from '@czap/core';
 import { writeRuntimeGlobal } from './globals.js';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 const ROOT_WASM_ATTR = 'data-czap-wasm-url';
 
@@ -85,3 +86,11 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
     );
   }
 }
+
+/** Astro client directive entry that marks the host before starting the WASM runtime. */
+export const wasmDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('wasm', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    void loadWasmRuntime(runtimeEl);
+    runtimeLoad();
+  });
+};

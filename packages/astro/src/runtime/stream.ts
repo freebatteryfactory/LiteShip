@@ -6,6 +6,7 @@ import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
+import { bootDirectiveEntry } from './directive-boot.js';
 
 type Locator =
   | { readonly type: 'slot'; readonly value: string }
@@ -460,3 +461,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   });
   load();
 }
+
+/** Astro client directive entry that marks the host before starting the stream runtime. */
+export const streamDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
+  bootDirectiveEntry('stream', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
+    initStreamDirective(runtimeLoad, runtimeEl);
+  });
+};

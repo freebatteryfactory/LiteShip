@@ -23,6 +23,7 @@
  */
 
 import { Diagnostics } from '@czap/core';
+import { DIRECTIVE_ATTRIBUTE_REGISTRY, DIRECTIVE_MARKER_ATTRIBUTE, implicitDirectiveSelectors } from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
 /** Directive names the integration can register, in escalation order. */
@@ -94,6 +95,23 @@ function markBound(element: HTMLElement, name: DirectiveName): void {
   element.setAttribute(BOUND_ATTRIBUTE, [...names].join(' '));
 }
 
+/** Mark an element as already activated for `name`, sharing the scanner's idempotence guard. */
+export function markDirectiveBound(element: HTMLElement, name: DirectiveName): void {
+  markBound(element, name);
+}
+
+/** Shared client-directive entry boot: Astro island entries mark the host before initializing runtime code. */
+export function bootDirectiveEntry(
+  name: DirectiveName,
+  load: () => Promise<unknown>,
+  opts: Record<string, unknown>,
+  element: HTMLElement,
+  init: (load: () => Promise<unknown>, opts: Record<string, unknown>, element: HTMLElement) => void,
+): void {
+  markBound(element, name);
+  init(load, opts, element);
+}
+
 function unmarkBound(element: HTMLElement, name: DirectiveName): void {
   const names = boundNames(element);
   names.delete(name);
@@ -109,7 +127,7 @@ function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLEleme
   // DirectiveName union, never from page content.
   const canonical = `[data-czap-directive~="${name}"]`;
   const legacy = `[client\\:${name}]`;
-  const selector = `${canonical},${legacy}`;
+  const selector = [canonical, legacy, ...implicitDirectiveSelectors(name)].join(',');
   const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
   // querySelectorAll only sees descendants; a marked element passed AS the
   // scan root (e.g. a freshly swapped-in fragment) must activate too.
@@ -117,6 +135,52 @@ function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLEleme
     matches.unshift(root);
   }
   return matches;
+}
+
+function collectElements(root: ParentNode, selector: string): HTMLElement[] {
+  const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
+  if (root instanceof HTMLElement && root.matches(selector)) {
+    matches.unshift(root);
+  }
+  return matches;
+}
+
+function hasDirectiveMarker(element: HTMLElement): boolean {
+  if (element.hasAttribute(DIRECTIVE_MARKER_ATTRIBUTE)) {
+    return true;
+  }
+  return DIRECTIVE_NAMES.some((name) => element.hasAttribute(`client:${name}`));
+}
+
+function hasImplicitDirectiveAttribute(element: HTMLElement): boolean {
+  return Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
+    .flat()
+    .some((entry) => entry.implicitBoot && element.hasAttribute(entry.attribute));
+}
+
+function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
+  const explicitAttributes = new Set(
+    Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
+      .flat()
+      .filter((entry) => !entry.implicitBoot)
+      .map((entry) => entry.attribute),
+  );
+
+  for (const attribute of explicitAttributes) {
+    for (const element of collectElements(root, `[${attribute}]`)) {
+      if (hasDirectiveMarker(element) || hasImplicitDirectiveAttribute(element)) {
+        continue;
+      }
+      Diagnostics.warnOnce({
+        source: 'czap/astro.directive-boot',
+        code: `directive-attribute-requires-marker:${attribute}`,
+        message:
+          `Found ${attribute} without a czap directive marker, so the runtime will not infer which directive to boot. ` +
+          `Fix: spread satelliteAttrs({ boundary }) / <Satellite>, or add data-czap-directive="satellite" or "worker".`,
+        detail: { attribute },
+      });
+    }
+  }
 }
 
 /**
@@ -134,6 +198,8 @@ export async function scanAndBootDirectives(
   enabled: readonly DirectiveName[],
   root: ParentNode = document,
 ): Promise<void> {
+  warnExplicitOnlyDirectiveAttributes(root);
+
   const enabledSet = new Set(enabled.filter(isDirectiveName));
 
   const activations: Promise<void>[] = [];
