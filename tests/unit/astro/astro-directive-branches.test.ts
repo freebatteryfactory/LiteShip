@@ -528,9 +528,12 @@ describe('astro directive branch coverage', () => {
       }),
     );
 
-    vi.stubGlobal('fetch', vi.fn(async () => {
-      throw new Error('network boom');
-    }) as never);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('network boom');
+      }) as never,
+    );
     gpuDirective(async () => {}, {}, canvas);
     await Promise.resolve();
     await Promise.resolve();
@@ -841,10 +844,7 @@ describe('astro directive branch coverage', () => {
       getAttribLocation: vi.fn(() => 0),
       enableVertexAttribArray: vi.fn(),
       vertexAttribPointer: vi.fn(),
-      getActiveUniform: vi
-        .fn()
-        .mockReturnValueOnce({ name: 'u_state' })
-        .mockReturnValueOnce({ name: 'u_gap' }),
+      getActiveUniform: vi.fn().mockReturnValueOnce({ name: 'u_state' }).mockReturnValueOnce({ name: 'u_gap' }),
       getUniformLocation: vi.fn((_: unknown, name: string) => name),
       uniform1f: vi.fn((name: string, value: number) => {
         uniformCalls.push([name, value]);
@@ -1084,7 +1084,8 @@ describe('astro directive branch coverage', () => {
     );
 
     const canvas = makeEl('canvas', {
-      'data-czap-shader-src': '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main(){ fragColor = vec4(1.0); }',
+      'data-czap-shader-src':
+        '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main(){ fragColor = vec4(1.0); }',
       'data-czap-boundary': JSON.stringify({ states: ['idle', 'active'] }),
     }) as HTMLCanvasElement;
     stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
@@ -1233,8 +1234,10 @@ describe('astro directive branch coverage', () => {
 
       const morphs: unknown[] = [];
       const errors: unknown[] = [];
-      document.addEventListener('czap:stream-morph', ((event: CustomEvent) => morphs.push(event.type)) as EventListener);
-      document.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+      document.addEventListener('czap:stream-morph', ((event: CustomEvent) =>
+        morphs.push(event.type)) as EventListener);
+      document.addEventListener('czap:stream-error', ((event: CustomEvent) =>
+        errors.push(event.detail)) as EventListener);
 
       streamDirective(async () => {}, {}, el);
 
@@ -1282,6 +1285,10 @@ describe('astro directive branch coverage', () => {
   test('stream directive surfaces resumption failures and keeps signal messages on the shared path', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    // Zero the reconnect-backoff jitter so the 1000ms advance deterministically
+    // fires the reconnect and the recovery frame lands on the LIVE reconnected
+    // source — SSE.create now ignores a frame from the dead (pre-reconnect) source.
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(Effect.fail(new Error('resume boom')));
 
     try {
@@ -1312,11 +1319,7 @@ describe('astro directive branch coverage', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(resumeSpy).toHaveBeenCalledWith(
-        'hero',
-        'evt-2',
-        expect.objectContaining({}),
-      );
+      expect(resumeSpy).toHaveBeenCalledWith('hero', 'evt-2', expect.objectContaining({}));
       expect(errors).toContainEqual({ reason: 'resume-failed', message: 'resume boom' });
     } finally {
       vi.useRealTimers();
@@ -1454,6 +1457,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive replays patch data payloads during successful resumption without attaching the default endpoint policy', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
       Effect.succeed({
         type: 'replay',
@@ -1479,11 +1483,7 @@ describe('astro directive branch coverage', () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(resumeSpy).toHaveBeenCalledWith(
-        'hero',
-        'evt-2',
-        {},
-      );
+      expect(resumeSpy).toHaveBeenCalledWith('hero', 'evt-2', {});
     } finally {
       vi.useRealTimers();
     }
@@ -1492,6 +1492,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive forwards custom endpoint policy plus snapshot and replay urls during resumption', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     configureRuntimePolicy({
       endpointPolicy: {
         mode: 'same-origin',
@@ -1503,11 +1504,7 @@ describe('astro directive branch coverage', () => {
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(
       Effect.succeed({
         type: 'replay',
-        patches: [
-          '<div class="string-replay">string</div>',
-          { data: '<div class="data-replay">data</div>' },
-          42,
-        ],
+        patches: ['<div class="string-replay">string</div>', { data: '<div class="data-replay">data</div>' }, 42],
       }),
     );
 
@@ -1554,6 +1551,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive forwards allowOrigins-only policy during resumption and skips resume when no artifact id is present', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     configureRuntimePolicy({
       endpointPolicy: {
         mode: 'same-origin',
@@ -1622,6 +1620,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive forwards byKind-only endpoint policy during resumption', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     configureRuntimePolicy({
       endpointPolicy: {
         mode: 'same-origin',
@@ -1675,6 +1674,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive keeps the same reinit binding across stable targets and surfaces non-Error resume failures', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     const resumeSpy = vi.spyOn(Resumption, 'resume').mockReturnValue(Effect.fail('resume string failure'));
 
     try {
@@ -1719,6 +1719,7 @@ describe('astro directive branch coverage', () => {
   test('stream directive forwards non-default endpoint modes during resumption', async () => {
     cleanupEventSource = MockEventSource.install();
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5); // deterministic reconnect backoff - recovery frame lands on the LIVE source
     configureRuntimePolicy({
       endpointPolicy: {
         mode: 'allowlist',
@@ -1804,8 +1805,10 @@ describe('astro directive branch coverage', () => {
     el.addEventListener('czap:worker-ready', () => {
       readyCount++;
     });
-    el.addEventListener('czap:worker-state', ((event: CustomEvent) => workerStates.push(event.detail)) as EventListener);
-    el.addEventListener('czap:uniform-update', ((event: CustomEvent) => uniformStates.push(event.detail)) as EventListener);
+    el.addEventListener('czap:worker-state', ((event: CustomEvent) =>
+      workerStates.push(event.detail)) as EventListener);
+    el.addEventListener('czap:uniform-update', ((event: CustomEvent) =>
+      uniformStates.push(event.detail)) as EventListener);
 
     workerDirective(load, {}, el);
 
