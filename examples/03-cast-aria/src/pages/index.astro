@@ -7,13 +7,17 @@
  * below casts those same states to TWO targets from a single source:
  *
  *   - CSS   — the menu's layout (a stacked rail vs a full row);
- *   - @aria — the disclosure's `aria-expanded`, so assistive tech reads the same
- *     truth the pixels do.
+ *   - @aria — `aria-expanded`, so assistive tech reads the same truth the pixels do.
  *
- * No duplicated breakpoint, no JS syncing an attribute to a media query. Change
- * the threshold once and BOTH the layout and the semantics follow.
+ * The <Satellite> shell carries the boundary and joins the authored `@aria` from
+ * the build manifest by content address — so `aria-expanded` is SSR'd for first
+ * paint and then updated live by the satellite runtime on every crossing. Bare
+ * `satelliteAttrs()` would only serialize ARIA you pass by hand; <Satellite> does
+ * the manifest join, so the authored @aria below is the single source. No
+ * duplicated breakpoint, no JS syncing an attribute to a media query — change the
+ * threshold once and BOTH the layout and the semantics follow.
  */
-import { satelliteAttrs } from '@czap/astro';
+import Satellite from '@czap/astro/Satellite';
 import { nav } from '../boundaries/nav.boundaries.ts';
 ---
 
@@ -32,12 +36,12 @@ import { nav } from '../boundaries/nav.boundaries.ts';
         inspect the <code>&lt;nav&gt;</code> and watch <code>aria-expanded</code> flip with the breakpoint.
       </p>
 
-      <nav class="menu" aria-label="Primary" {...satelliteAttrs({ boundary: nav, initialState: 'wide' })}>
+      <Satellite boundary={nav} initialState="wide" class="menu">
         <a href="#">Docs</a>
         <a href="#">Examples</a>
         <a href="#">Reference</a>
         <a href="#">Blog</a>
-      </nav>
+      </Satellite>
     </main>
 
     <style>
