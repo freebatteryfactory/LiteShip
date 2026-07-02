@@ -4,6 +4,65 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.6.0] - 2026-07-01
+
+"Make-it-loud, round 2": a second dogfooding pass that turns more silent
+degradations into loud diagnostics through the existing channel, unifies the
+Vite boundary-discovery seam, and adds vector WGSL uniforms so the WebGPU cast
+reaches GLSL parity.
+
+### Added
+
+- **`@czap/edge` — spreadable tier attributes.** `EdgeTier.tierDataAttributesMap`
+  and `EdgeHostResolution.htmlAttributesMap` expose the root `data-czap-*`
+  attributes as a `Record` keyed by the full attribute name, built from the
+  `CAP_AXES` registry so a new axis appears automatically. `tierDataAttributes`
+  (the pre-serialized string) is now derived from the map, so the two forms
+  cannot drift. See ADR-0018.
+- **`@czap/compiler` / `@czap/astro` — vector WGSL uniforms.** Authored `@wgsl`
+  values accept `vec2`/`vec3`/`vec4` (emitted `vec2f`/`vec3f`/`vec4f`); the WebGPU
+  runtime derives its uniform-buffer byte layout from the bound struct declaration
+  (WGSL alignment, 16-byte stride, bounded 64-byte buffer). `u_resolution` is a
+  real `vec2<f32>`, closing the GLSL/WGSL parity gap; an overflowing declaration
+  warns once (`wgsl-uniform-buffer-full`) instead of silently truncating.
+  See ADR-0029.
+- **`@czap/astro` — directives boot on plain elements.** `client:stream` /
+  `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now activate on
+  plain elements, not only framework islands, via a scanner whose selectors derive
+  from `DIRECTIVE_ATTRIBUTE_REGISTRY` (a new directive is scannable by construction).
+  A bare `data-czap-boundary` — also a worker/GPU payload — stays explicit and
+  warns once when found bare instead of silently doing nothing. See ADR-0028.
+
+### Fixed
+
+- **`@czap/vite` — unified boundary discovery.** The `@quantize` CSS transform
+  resolves boundary names from the same module-graph discovery as the manifest
+  (previously only `dirs.boundary`), and an unknown `@quantize <name>` is now a
+  hard error naming the boundary instead of a generic lightningcss "Unknown at
+  rule". A manifest-covered boundary with no precompiled outputs warns
+  (`manifest-boundary-empty-outputs`) instead of silently serving empty CSS.
+- **`@czap/audit` — consumer mode.** `czap audit --consumer` skips the internal
+  structure pass entirely (previously ~437 info findings against a consumer's own
+  app); `czap audit --findings` streams parseable NDJSON to stdout for tooling.
+- **`@czap/quantizer` — shader outputs in the change stream.** `outputChanges`
+  surfaces `glsl` and `wgsl` output tables alongside `css` — previously only css
+  reached the stream and shader outputs sidestepped it.
+
+### Changed
+
+- **`@czap/compiler` / `@czap/edge` — WGSL binding value type widened.**
+  `CompiledWGSLOutput.bindingValues` (and the compiler's `WGSLCompileResult`) now
+  carry `WGSLUniformValue` (`number | readonly number[]`) end to end — manifest,
+  edge KV cache, satellite payload, boundary event `detail`, WebGPU writer — to
+  represent vectors. Pre-1.0 minor; a consumer that narrowed the type to `number`
+  must widen it.
+
+### Internal
+
+- `driveUniformFromSignal` continuous-signal tracking on the `SharedArrayBuffer`
+  worker (off-thread) path is now pinned by a non-vacuous gate. api-surface
+  snapshot regenerated for the new exports.
+
 ## [0.5.0] - 2026-06-30
 
 A "make-it-loud" release: every fix turns a silent degradation into a loud
@@ -216,6 +275,16 @@ dev/status/stop` delegates to Astro background dev-server management, and `czap 
 - `@czap/core` — factored the DocumentGraph node well-formedness reader (`isWellFormedNode`,
   `DocumentGraphNodeSchema`) out of `ai-cast.ts` into `document-graph-schema.ts` so the
   runtime loader and the AI seam share one trust gate.
+
+### Breaking (documented retroactively in 0.6.0)
+
+- **`@czap/astro` — shader SRI is mandatory.** As of 0.4.0, a `data-czap-shader-src`
+  external shader requires a matching `data-czap-shader-integrity` (subresource-integrity)
+  attribute; without it the shader is refused at boot. This shipped in 0.4.0 undocumented —
+  capability-gating hid it (a green `astro check`/`build`, dead WebGL only on a real GPU).
+  **Migration:** compute the SRI over the shader's `?raw` source at build and emit it as
+  `data-czap-shader-integrity` alongside `data-czap-shader-src`. Behavior is unchanged since
+  0.4.0; only the documentation is new.
 
 ## [0.3.1] - 2026-06-19
 
