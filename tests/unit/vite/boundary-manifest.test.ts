@@ -194,6 +194,7 @@ describe('collectBoundaryManifest', () => {
     @wgsl {
       res: vec2<f32>(1, 2);
       bad: vec3f(1, 2);
+      junk: 10px;
     }
   }
 }
@@ -213,6 +214,10 @@ describe('collectBoundaryManifest', () => {
     // is dropped, not silently reshaped -- and the drop is loud.
     expect(withWgsl!.wgsl!.bindingValues).not.toHaveProperty('bad');
     expect(events.some((event) => event.code === 'wgsl-cast-value-malformed:bad')).toBe(true);
+    // Arbitrary text with stray digits (`10px`) must NOT scan into a false uniform;
+    // it is dropped and warned, not compiled as a scalar `10`.
+    expect(withWgsl!.wgsl!.bindingValues).not.toHaveProperty('junk');
+    expect(events.some((event) => event.code === 'wgsl-cast-value-malformed:junk')).toBe(true);
   });
 
   test('@wgsl blocks parse scalar and vec2/vec3/vec4 values into manifest stateBindings', async () => {
@@ -298,9 +303,7 @@ ${Object.entries(attrs)
     // strictly smaller than the pre-dedupe per-cell format.
     expect(entry.outputs).toHaveLength(2);
     const resolved = resolveOutputsByTier(entry);
-    expect(JSON.stringify(entry).length).toBeLessThan(
-      JSON.stringify({ id: entry.id, outputsByTier: resolved }).length,
-    );
+    expect(JSON.stringify(entry).length).toBeLessThan(JSON.stringify({ id: entry.id, outputsByTier: resolved }).length);
 
     const standard = resolved[tierKey({ motionTier: 'transitions', designTier: 'standard' })]!;
     expect(standard.containerQueries).toContain('@container');
@@ -653,10 +656,9 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     // dev-server importers keep serving the stale outputsByTier.
     writeModule(srcDir, 'styles.css', QUANTIZE_CSS.replace('--gap: 24px', '--gap: 64px'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
-    const affected = (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
-      { environment: { moduleGraph } },
-      { file: join(srcDir, 'styles.css'), modules: [] },
-    );
+    const affected = (
+      vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown
+    ).call({ environment: { moduleGraph } }, { file: join(srcDir, 'styles.css'), modules: [] });
     expect(invalidated).toContain('\0virtual:czap/boundaries');
     expect(affected).toContainEqual(expect.objectContaining({ id: '\0virtual:czap/boundaries' }));
 

@@ -587,6 +587,25 @@ describe('astro directive branch coverage', () => {
     expect(forcedAttr.querySelector('canvas')).not.toBeNull();
   });
 
+  test('gpu force boots even after a prior scanner no-op already bound the host', () => {
+    // The double-boot idempotence guard must NOT swallow the force hatch: the scanner
+    // can bind gpu at a provisional tier (where it only defers to detect-ready), and a
+    // later `client:gpu={{ force: true }}` has to upgrade that no-op, not be skipped.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => null);
+    document.documentElement.setAttribute('data-czap-tier', 'styled');
+
+    const el = makeEl('div');
+    // Prior scanner pass: marks the host bound but only defers (no canvas yet).
+    gpuDirective(async () => {}, {}, el);
+    expect(el.querySelector('canvas'), 'scanner no-op at the provisional tier').toBeNull();
+    expect(el.getAttribute('data-czap-directive-bound')).toContain('gpu');
+
+    // Astro then hydrates the same host with the force hatch.
+    gpuDirective(async () => {}, { name: 'gpu', value: { force: true } }, el);
+    expect(el.querySelector('canvas'), 'force upgrades the prior scanner bind').not.toBeNull();
+    expect(getContext).toHaveBeenCalled();
+  });
+
   test('gpu directive re-boots when the async probe upgrades the tier (czap:detect-ready)', () => {
     // The fix for the force-hatch root cause: a directive that bails on the
     // conservative PROVISIONAL tier must re-boot when the GPU probe settles a
@@ -1970,7 +1989,7 @@ describe('astro directive branch coverage', () => {
       }
 
       const progressedUniforms = uniformStates
-        .map((detail) => (detail as { glsl?: Record<string, number>; wgsl?: Record<string, number> }))
+        .map((detail) => detail as { glsl?: Record<string, number>; wgsl?: Record<string, number> })
         .filter((detail) => detail.wgsl?.u_progress !== undefined);
       expect(progressedUniforms.at(-1)?.glsl?.u_progress).toBeCloseTo(progressFor(progressedScrollY), 6);
       expect(progressedUniforms.at(-1)?.wgsl?.u_progress).toBeCloseTo(progressFor(progressedScrollY), 6);

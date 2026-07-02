@@ -270,6 +270,12 @@ function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undef
   const declaredArity = ctor ? Number(ctor[1]) : undefined;
   // Constructor args, or a bare CSS-authored component list (`1 2`, `1, 2`).
   const componentSource = ctor ? ctor[2]! : trimmed;
+  // The component source must be a PURE numeric list -- never arbitrary text with
+  // stray digits. Without this, `10px` / `calc(100% - 1px)` / `var(--scale-2)` would
+  // scan their digits into a false scalar/vector uniform and change the struct layout.
+  const numericList =
+    /^[\s,]*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?(?:[\s,]+[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)*[\s,]*$/i;
+  if (!numericList.test(componentSource)) return 'invalid';
   const parts = [...componentSource.matchAll(/[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)]
     .map((match) => Number(match[0]))
     .filter((part) => Number.isFinite(part));
@@ -296,9 +302,10 @@ function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUnifor
         source: 'czap/vite.wgsl-cast',
         code: `wgsl-cast-value-malformed:${key}`,
         message:
-          `@wgsl uniform "${key}" value "${value}" is a malformed vector -- its component count ` +
-          `does not match the declared vecN (or is outside vec2/vec3/vec4). It was dropped instead ` +
-          `of shipped as a silently-wrong offset. Fix: author a matching count, e.g. vec2<f32>(x, y).`,
+          `@wgsl uniform "${key}" value "${value}" is not a valid uniform -- expected a number, a ` +
+          `numeric component list, or a vec2/vec3/vec4 constructor with a matching component count ` +
+          `(not arbitrary text like "10px" or "calc(...)"). It was dropped instead of shipped as a ` +
+          `silently-wrong offset. Fix: author a number or vecN, e.g. vec2<f32>(x, y).`,
         detail: { key, value },
       });
       continue;
