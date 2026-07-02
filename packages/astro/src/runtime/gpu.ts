@@ -12,6 +12,15 @@ import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
 import { bootDirectiveEntry, unmarkBound } from './directive-bound.js';
 
+/**
+ * Elements whose GPU shader has actually started (a canvas committed past the tier
+ * gate). Guards the detect-ready re-run: a forced boot can start the shader BEFORE an
+ * earlier provisional-tier bail's armed `onDetectReady` fires, and without this the
+ * upgrade would append a SECOND canvas / render loop for the same host. Kept OFF the
+ * DOM (engine state never leaks onto the host); a `WeakSet` so a torn-down host is GC'd.
+ */
+const gpuStarted = new WeakSet<HTMLElement>();
+
 const DEFAULT_VERTEX_SHADER = `#version 300 es
 precision mediump float;
 in vec2 a_position;
@@ -270,12 +279,20 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
     // tierAdmitsGpu re-reads the fresh data-czap-tier.
     onDetectReady(() => {
       if (!el.isConnected) return;
+      // A forced boot may have started the shader while this retry was armed; the
+      // tier upgrade must not append a second canvas over it.
+      if (gpuStarted.has(el)) return;
       if (tierAdmitsGpu()) {
         initGPUDirective(() => Promise.resolve(), el, { ...(opts ?? {}), force: true });
       }
     });
     return;
   }
+
+  // Past the tier gate: this activation commits to appending a canvas. Mark the host so
+  // a pending detect-ready retry (armed by an earlier provisional-tier bail) observes
+  // the shader already started and does not double-boot it.
+  gpuStarted.add(el);
 
   if (shaderType === 'wgsl') {
     let canvas: HTMLCanvasElement;
