@@ -21,6 +21,7 @@ import { pathToFileURL } from 'node:url';
 import { Diagnostics } from '@czap/core';
 import type { Boundary } from '@czap/core';
 import { CSSCompiler, dispatch } from '@czap/compiler';
+import type { WGSLUniformValue, WGSLUniformVector } from '@czap/compiler';
 import { DESIGN_TIERS, MOTION_TIERS, dedupeOutputsByTier, tierKey } from '@czap/edge';
 import type { BoundaryManifest, BoundaryManifestEntry, CompiledOutputs, TierKey } from '@czap/edge';
 import {
@@ -229,16 +230,53 @@ export async function collectBoundaryDefinitions(
 type CastOutputs = Pick<CompiledOutputs, 'aria' | 'glsl' | 'wgsl'>;
 
 /**
- * Coerce a `@glsl`/`@wgsl` segment's authored string values into the numeric
- * uniform map the shader compilers consume. Non-numeric values are dropped
- * (the segment authored `1.0`, `0`, `-2` etc.); the shader compilers then
- * infer a stable type across states.
+ * Coerce a `@glsl` segment's authored string values into the scalar uniform map
+ * the GLSL compiler consumes. Non-numeric values are dropped (the segment
+ * authored `1.0`, `0`, `-2` etc.); the compiler then infers a stable type
+ * across states.
  */
 function numericCastState(attrs: Record<string, string>): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [key, value] of Object.entries(attrs)) {
     const n = Number(value);
     if (value.trim() !== '' && Number.isFinite(n)) out[key] = n;
+  }
+  return out;
+}
+
+function wgslVector(parts: readonly number[]): WGSLUniformVector | undefined {
+  if (parts.length === 2) return [parts[0]!, parts[1]!];
+  if (parts.length === 3) return [parts[0]!, parts[1]!, parts[2]!];
+  if (parts.length === 4) return [parts[0]!, parts[1]!, parts[2]!, parts[3]!];
+  return undefined;
+}
+
+function parseWgslCastValue(value: string): WGSLUniformValue | undefined {
+  const trimmed = value.trim();
+  if (trimmed === '') return undefined;
+  const scalar = Number(trimmed);
+  if (Number.isFinite(scalar)) return scalar;
+  // Accept CSS-authored vector component lists (`1 2`, `1, 2`) and WGSL-style
+  // constructors (`vec2f(1, 2)`) without treating the constructor's `2/3/4` as a
+  // component. GLSL stays scalar-only above.
+  const componentSource = trimmed.replace(/\bvec[234][fiu]?\s*\(/gi, '(');
+  const parts = [...componentSource.matchAll(/[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)]
+    .map((match) => Number(match[0]))
+    .filter((part) => Number.isFinite(part));
+  if (parts.length === 1) return parts[0]!;
+  return wgslVector(parts);
+}
+
+/**
+ * Coerce a `@wgsl` segment's authored string values into the scalar/vector map
+ * the WGSL compiler consumes. Non-numeric values are dropped; vector component
+ * counts outside vec2/vec3/vec4 are dropped instead of guessed.
+ */
+function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUniformValue> {
+  const out: Record<string, WGSLUniformValue> = {};
+  for (const [key, value] of Object.entries(attrs)) {
+    const parsed = parseWgslCastValue(value);
+    if (parsed !== undefined) out[key] = parsed;
   }
   return out;
 }
@@ -306,10 +344,10 @@ const NON_CSS_CASTS: readonly CastDescriptor[] = [
   {
     target: 'wgsl',
     compile: (boundary, perState) => {
-      const numericStates = Object.fromEntries(
-        Object.entries(perState).map(([state, attrs]) => [state, numericCastState(attrs)]),
+      const wgslStates = Object.fromEntries(
+        Object.entries(perState).map(([state, attrs]) => [state, wgslCastState(attrs)]),
       );
-      const result = dispatch({ _tag: 'WGSLCompiler', boundary, states: numericStates });
+      const result = dispatch({ _tag: 'WGSLCompiler', boundary, states: wgslStates });
       return result.target === 'wgsl'
         ? {
             declarations: result.result.declarations,

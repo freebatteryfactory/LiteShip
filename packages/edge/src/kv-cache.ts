@@ -97,6 +97,13 @@ export interface CompiledGLSLOutput {
   readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
+/** JSON-safe authored WGSL vector value carried through edge cache payloads. */
+type WGSLUniformVector =
+  readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
+
+/** JSON-safe authored WGSL uniform value carried through edge cache payloads. */
+type WGSLUniformValue = number | WGSLUniformVector;
+
 /**
  * Serialized WGSL cast artifact stored on {@link CompiledOutputs.wgsl}: the
  * WebGPU preamble plus default binding values. JSON-round-trippable subset of
@@ -106,14 +113,14 @@ export interface CompiledWGSLOutput {
   /** State consts + uniform struct + `@group/@binding` preamble block. */
   readonly declarations: string;
   /** Default binding values keyed by WGSL struct field name. */
-  readonly bindingValues: Readonly<Record<string, number>>;
+  readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
   /**
    * Per-state authored binding values keyed by state name then field name — the
    * WGSL analog of {@link CompiledGLSLOutput.stateUniforms}. Rides the satellite
    * payload so the runtime resolves `stateBindings[currentState]` and updates
    * struct fields on each crossing. Absent when no per-state values were authored.
    */
-  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
 }
 
 /**
@@ -399,6 +406,44 @@ function asNestedNumberRecord(value: unknown): Readonly<Record<string, Readonly<
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+function asWGSLUniformValue(value: unknown): WGSLUniformValue | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (!Array.isArray(value)) return undefined;
+  const parts = value.filter((part): part is number => typeof part === 'number' && Number.isFinite(part));
+  if (parts.length !== value.length) return undefined;
+  if (parts.length === 2) return [parts[0]!, parts[1]!];
+  if (parts.length === 3) return [parts[0]!, parts[1]!, parts[2]!];
+  if (parts.length === 4) return [parts[0]!, parts[1]!, parts[2]!, parts[3]!];
+  return undefined;
+}
+
+/** Coerce an `unknown` JSON value into a WGSL scalar/vector value record. */
+function asWGSLUniformValueRecord(value: unknown): Record<string, WGSLUniformValue> {
+  const out: Record<string, WGSLUniformValue> = {};
+  if (typeof value === 'object' && value !== null) {
+    for (const [k, v] of Object.entries(value)) {
+      const parsed = asWGSLUniformValue(v);
+      if (parsed !== undefined) out[k] = parsed;
+    }
+  }
+  return out;
+}
+
+/**
+ * Coerce an `unknown` JSON value into a per-state
+ * `Record<state, Record<field, WGSLUniformValue>>` (drops malformed leaves).
+ */
+function asNestedWGSLUniformValueRecord(
+  value: unknown,
+): Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>> | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const out: Record<string, Record<string, WGSLUniformValue>> = {};
+  for (const [state, inner] of Object.entries(value)) {
+    out[state] = asWGSLUniformValueRecord(inner);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 /** Coerce an `unknown` JSON value into a `Record<string, number>` (drops non-numeric). */
 function asNumberRecord(value: unknown): Record<string, number> {
   const out: Record<string, number> = {};
@@ -411,9 +456,9 @@ function asNumberRecord(value: unknown): Record<string, number> {
 }
 
 /**
- * Parse a serialized GLSL/WGSL cast artifact: a `declarations` string plus a
- * numeric values map under `valuesKey` (`uniformValues` for GLSL,
- * `bindingValues` for WGSL). Returns `null` for absent/malformed entries so
+ * Parse a serialized scalar shader cast artifact: a `declarations` string plus
+ * a numeric values map under `valuesKey` (`uniformValues` for GLSL). Returns
+ * `null` for absent/malformed entries so
  * the caller treats them as "no cast authored" rather than throwing — the
  * same lenient policy the `aria` field follows.
  */
@@ -434,6 +479,15 @@ function parseShaderCast<K extends 'uniformValues' | 'bindingValues'>(
     declarations,
     [valuesKey]: values,
   } as { readonly declarations: string } & { readonly [P in K]: Readonly<Record<string, number>> };
+}
+
+function parseWGSLShaderCast(value: unknown): CompiledWGSLOutput | null {
+  if (typeof value !== 'object' || value === null || !('declarations' in value)) return null;
+  const declarations = (value as { declarations: unknown }).declarations;
+  if (typeof declarations !== 'string' || declarations.length === 0) return null;
+  const bindingValues = asWGSLUniformValueRecord((value as { bindingValues?: unknown }).bindingValues);
+  if (Object.keys(bindingValues).length === 0) return null;
+  return { declarations, bindingValues };
 }
 
 // ---------------------------------------------------------------------------
@@ -535,10 +589,10 @@ export function createBoundaryCache(kv: KVNamespace, options?: CacheOptions): Bo
         const glsl = glslBase
           ? { ...glslBase, ...(glslStateUniforms ? { stateUniforms: glslStateUniforms } : {}) }
           : null;
-        const wgslBase = parseShaderCast((parsed as { wgsl?: unknown }).wgsl, 'bindingValues');
+        const wgslBase = parseWGSLShaderCast((parsed as { wgsl?: unknown }).wgsl);
         // Per-state authored bindings ride the WGSL cast so the live runtime can
         // resolve `stateBindings[currentState]` — the WGSL analog of stateUniforms.
-        const wgslStateBindings = asNestedNumberRecord(
+        const wgslStateBindings = asNestedWGSLUniformValueRecord(
           (parsed as { wgsl?: { stateBindings?: unknown } }).wgsl?.stateBindings,
         );
         const wgsl = wgslBase

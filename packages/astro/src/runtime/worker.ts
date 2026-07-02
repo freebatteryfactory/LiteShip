@@ -9,6 +9,7 @@ import {
   readSignalValue,
   warnIfSignalUnserved,
   type BoundaryStateDetail,
+  type WgslUniformValue,
 } from './boundary.js';
 import { bootDirectiveEntry } from './directive-boot.js';
 
@@ -44,6 +45,33 @@ function sameNumberRecord(left: Record<string, number>, right: Record<string, nu
   return true;
 }
 
+function sameWgslValue(left: WgslUniformValue, right: WgslUniformValue): boolean {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false;
+    }
+    return left.every((value, index) => value === right[index]);
+  }
+  return left === right;
+}
+
+function sameWgslRecord(left: Record<string, WgslUniformValue>, right: Record<string, WgslUniformValue>): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  for (const key of leftKeys) {
+    const rightValue = right[key];
+    if (rightValue === undefined || !sameWgslValue(left[key]!, rightValue)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function sameBoundaryDetail(left: BoundaryStateDetail | null, right: BoundaryStateDetail): boolean {
   if (!left) {
     return false;
@@ -57,7 +85,7 @@ function sameBoundaryDetail(left: BoundaryStateDetail | null, right: BoundarySta
       Object.fromEntries(Object.entries(right.css).map(([key, value]) => [key, String(value)])),
     ) &&
     sameNumberRecord(left.glsl, right.glsl) &&
-    sameNumberRecord(left.wgsl, right.wgsl)
+    sameWgslRecord(left.wgsl, right.wgsl)
   );
 }
 

@@ -2,7 +2,7 @@
  * WGSL Compiler -- `BoundaryDef` to struct definitions + `@group`/`@binding` declarations.
  *
  * Generates WebGPU Shading Language code from boundary definitions,
- * mapping JS number types to WGSL types and producing struct layouts
+ * mapping JS scalar/vector values to WGSL types and producing struct layouts
  * suitable for uniform buffer bindings.
  *
  * @module
@@ -32,6 +32,13 @@ export type WGSLType =
 
 /** A binding's type is either a WGSL primitive type or a user-declared struct name. */
 export type WGSLBindingType = WGSLType | string;
+
+/** JSON-safe authored WGSL vector value. */
+export type WGSLUniformVector =
+  readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
+
+/** JSON-safe authored WGSL uniform value. */
+export type WGSLUniformValue = number | WGSLUniformVector;
 
 /** A single `@group(G) @binding(B) var<uniform> …` declaration. */
 export interface WGSLBinding {
@@ -65,14 +72,14 @@ export interface WGSLCompileResult {
   /** Uniform buffer bindings. */
   readonly bindings: readonly WGSLBinding[];
   /** Default field values keyed by WGSL field name. */
-  readonly bindingValues: Record<string, number>;
+  readonly bindingValues: Record<string, WGSLUniformValue>;
   /**
    * Per-state binding values keyed by state name then snake_case field name —
    * the WGSL analog of `GLSLCompileResult.stateUniforms`. Built alongside the
    * merged `bindingValues` so the live runtime can resolve
    * `stateBindings[currentState]` and update struct fields on each crossing.
    */
-  readonly stateBindings: Record<string, Record<string, number>>;
+  readonly stateBindings: Record<string, Record<string, WGSLUniformValue>>;
   /** Pre-serialized WGSL preamble string. */
   readonly declarations: string;
 }
@@ -93,12 +100,25 @@ function toFieldName(key: string): string {
 
 /**
  * Infer a stable WGSL type from a collection of values for a single field.
- * Promotes to f32 if any value is a float, to i32 if any value is negative,
- * otherwise u32. This ensures type consistency across all states for a field.
+ * Vector values promote to a f32 vector wide enough for every authored state;
+ * scalar values promote to f32 if any value is a float, to i32 if any value is
+ * negative, otherwise u32. This ensures type consistency across all states.
  */
-function inferStableWGSLType(values: readonly number[]): WGSLType {
-  if (values.some((v) => !Number.isInteger(v))) return 'f32';
-  if (values.some((v) => v < 0)) return 'i32';
+function inferStableWGSLType(values: readonly WGSLUniformValue[]): WGSLType {
+  let vectorLength = 0;
+  for (const value of values) {
+    if (Array.isArray(value)) {
+      vectorLength = Math.max(vectorLength, value.length);
+    }
+  }
+  if (vectorLength > 0) {
+    if (vectorLength <= 2) return 'vec2f';
+    if (vectorLength === 3) return 'vec3f';
+    return 'vec4f';
+  }
+  const scalars = values as readonly number[];
+  if (scalars.some((v) => !Number.isInteger(v))) return 'f32';
+  if (scalars.some((v) => v < 0)) return 'i32';
   return 'u32';
 }
 
@@ -121,7 +141,7 @@ function toStructName(input: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compile a boundary definition and per-state numeric value maps into
+ * Compile a boundary definition and per-state scalar/vector value maps into
  * WGSL struct definitions, `@group/@binding` declarations, and state constants.
  *
  * @example
@@ -143,12 +163,12 @@ function toStructName(input: string): string {
  * ```
  *
  * @param boundary - The boundary definition with states
- * @param states   - Per-state numeric value maps
+ * @param states   - Per-state scalar/vector value maps
  * @returns A {@link WGSLCompileResult} with structs, bindings, and declarations
  */
 function compile<B extends Boundary.Shape>(
   boundary: B,
-  states: { [S in StateUnion<B> & string]: Record<string, number> },
+  states: { [S in StateUnion<B> & string]: Record<string, WGSLUniformValue> },
 ): WGSLCompileResult {
   // Reinterpret the runtime tuple as the keyed state-name array so each element
   // is a valid index into `states` without per-site casts.
@@ -163,14 +183,14 @@ function compile<B extends Boundary.Shape>(
   // are keyed by FIELD name, so they need it as much as the state-keyed
   // `stateBindings` — a plain `{}` would silently drop a `__proto__`-named field
   // (prototype write → `Object.keys` empty), losing the binding entirely.
-  const fieldValues = new Map<string, number[]>();
-  const mergedValues: Record<string, number> = Object.create(null);
-  const stateBindings: Record<string, Record<string, number>> = Object.create(null);
+  const fieldValues = new Map<string, WGSLUniformValue[]>();
+  const mergedValues: Record<string, WGSLUniformValue> = Object.create(null);
+  const stateBindings: Record<string, Record<string, WGSLUniformValue>> = Object.create(null);
 
   for (const stateName of stateNames) {
     const stateValues = states[stateName];
     if (!stateValues) continue;
-    const perState: Record<string, number> = Object.create(null);
+    const perState: Record<string, WGSLUniformValue> = Object.create(null);
     for (const [key, val] of Object.entries(stateValues)) {
       const fieldName = toFieldName(key);
       if (!fieldValues.has(fieldName)) fieldValues.set(fieldName, []);

@@ -299,4 +299,30 @@ describe('parseShaderCast degradation — malformed shader payload omits the cas
     expect(result!.glsl?.uniformValues).toEqual({ u_state: 0 });
     expect(result!.wgsl).toBeUndefined();
   });
+
+  test('WGSL vec2/vec3/vec4 binding values survive JSON cache rehydrate', async () => {
+    const kv = createMockKV();
+    const cache = createBoundaryCache(kv);
+    const wgsl = {
+      declarations: 'struct S { state_index: u32, uv: vec2f, normal: vec3f, color: vec4f }',
+      bindingValues: {
+        state_index: 0,
+        uv: [0.25, 0.5],
+        normal: [1, 2, 3],
+        color: [0.1, 0.2, 0.3, 0.4],
+      },
+      stateBindings: {
+        compact: { uv: [0.25, 0.5], normal: [1, 2, 3], color: [0.1, 0.2, 0.3, 0.4] },
+        wide: { uv: [0.75, 1], normal: [4, 5, 6], color: [0.5, 0.6, 0.7, 0.8] },
+      },
+    } as const;
+
+    await cache.putCompiledOutputs(boundaryId, tierResult, {
+      ...baseEntry,
+      wgsl,
+    });
+    const result = await cache.getCompiledOutputs(boundaryId, tierResult);
+
+    expect(result!.wgsl).toEqual(wgsl);
+  });
 });

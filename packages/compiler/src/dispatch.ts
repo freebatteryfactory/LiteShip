@@ -10,7 +10,7 @@
 import type { Boundary, Config } from '@czap/core';
 import type { CSSCompileResult, CSSStateInput } from './css.js';
 import type { GLSLCompileResult } from './glsl.js';
-import type { WGSLCompileResult } from './wgsl.js';
+import type { WGSLCompileResult, WGSLUniformValue } from './wgsl.js';
 import type { ARIACompileResult } from './aria.js';
 import type { AIManifestCompileResult, AIManifestInput } from './ai-manifest.js';
 import { assertNever } from '@czap/error';
@@ -33,8 +33,8 @@ import { AIManifestCompiler } from './ai-manifest.js';
 export type CSSStates = Readonly<Record<string, CSSStateInput>>;
 /** Per-state GLSL uniform values keyed by state name (numeric only). */
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
-/** Per-state WGSL uniform values keyed by state name (numeric only). */
-export type WGSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
+/** Per-state WGSL uniform values keyed by state name (scalar or vec2/3/4). */
+export type WGSLStates = Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
 
 /**
  * ARIA compile input — per-state attribute map plus the currently-active state.
@@ -80,7 +80,7 @@ const ConfigTemplateCompiler = {
  * - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
  *                      Bare properties target `selector` (default `.czap-boundary`).
  * - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
- * - `WGSLCompiler`   — boundary + per-state numeric uniforms → WGSL bindings.
+ * - `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
  * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.

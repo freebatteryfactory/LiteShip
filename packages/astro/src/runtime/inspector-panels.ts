@@ -207,12 +207,16 @@ export function snapshotElementCasts(element: HTMLElement, detail: BoundaryState
 
 /**
  * Format one cast-value row `key = value` for the active-casts panel. Numbers
- * are rounded to 3 decimals (uniforms are floats); strings pass through.
+ * are rounded to 3 decimals (uniforms are floats); vec values format component
+ * lists; strings pass through.
  */
-export function formatCastValueRow(key: string, value: string | number): string {
+export function formatCastValueRow(key: string, value: string | number | readonly number[]): string {
   if (typeof value === 'number') {
     const rounded = Math.round(value * 1000) / 1000;
     return `${key} = ${rounded}`;
+  }
+  if (Array.isArray(value)) {
+    return `${key} = [${value.map((part) => Math.round(part * 1000) / 1000).join(', ')}]`;
   }
   return `${key} = ${value}`;
 }
@@ -220,7 +224,7 @@ export function formatCastValueRow(key: string, value: string | number): string 
 /** Collect the emitted value rows for a target from a `czap:uniform-update` detail. */
 export function castValueRows(target: CastTarget, detail: BoundaryStateDetail | null): readonly string[] {
   if (!detail) return [];
-  const map: Record<string, string | number> =
+  const map: Record<string, string | number | readonly number[]> =
     target === 'css'
       ? detail.css
       : target === 'glsl'

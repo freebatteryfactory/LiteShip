@@ -210,6 +210,25 @@ describe('authored @wgsl: serialize → parse → apply (live uniform binding)',
     expect(seen[1]).toEqual({ blur_radius: 0.0 });
   });
 
+  test('vec2 stateWgsl values round-trip through payload parse into detail.wgsl', () => {
+    const authored = {
+      mobile: { uv: [0.25, 0.5] },
+      tablet: { uv: [0.75, 1] },
+      desktop: { uv: [1.25, 1.5] },
+    } as const;
+    const attrs = satelliteAttrs({ boundary: widthBoundary, wgsl: authored });
+    const runtime = parseBoundary(attrs['data-czap-boundary']!)!;
+    const el = document.createElement('div');
+    const seen: unknown[] = [];
+    el.addEventListener('czap:uniform-update', (e) => {
+      seen.push((e as CustomEvent<{ wgsl: Record<string, unknown> }>).detail.wgsl.uv);
+    });
+
+    applyBoundaryState(el, runtime, { discrete: { [runtime.name]: 'tablet' } }, 'czap:state');
+
+    expect(seen).toEqual([authored.tablet.uv]);
+  });
+
   test('compositor outputs.wgsl flows through applyBoundaryState into detail.wgsl', () => {
     // The other half: a live compositor `outputs.wgsl` map (state index) reaches
     // the event detail unchanged, so a runtime with no authored values still
