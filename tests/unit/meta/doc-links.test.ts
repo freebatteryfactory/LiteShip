@@ -10,8 +10,10 @@
  * of on the deployed site.
  *
  * Scope: hand-authored prose only — root `*.md`, `docs/**` (minus generated TypeDoc
- * under `docs/api`), and each package's published `README.md`. External `http(s)` and
- * pure `#anchor` links are out of scope (no network / heading-slug fragility).
+ * under `docs/api`), each package's published `README.md`, and the examples ladder
+ * (`examples/README.md` + each example's `README.md`, now load-bearing navigation).
+ * External `http(s)` and pure `#anchor` links are out of scope (no network /
+ * heading-slug fragility).
  */
 import { describe, test, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
@@ -32,7 +34,7 @@ function walkMarkdown(dir: string, out: string[]): void {
   }
 }
 
-/** Root docs + docs/** (minus docs/api) + every package README. */
+/** Root docs + docs/** (minus docs/api) + every package README + the examples ladder. */
 function collectDocs(): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(REPO)) {
@@ -41,6 +43,13 @@ function collectDocs(): string[] {
   walkMarkdown(join(REPO, 'docs'), out);
   for (const pkg of readdirSync(join(REPO, 'packages'))) {
     const readme = join(REPO, 'packages', pkg, 'README.md');
+    if (existsSync(readme)) out.push(readme);
+  }
+  const examplesRoot = join(REPO, 'examples');
+  const examplesIndex = join(examplesRoot, 'README.md');
+  if (existsSync(examplesIndex)) out.push(examplesIndex);
+  for (const example of readdirSync(examplesRoot)) {
+    const readme = join(examplesRoot, example, 'README.md');
     if (existsSync(readme)) out.push(readme);
   }
   return out;
