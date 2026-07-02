@@ -10,6 +10,7 @@ import gpuDirective from '../../../packages/astro/src/client-directives/gpu.js';
 import streamDirective from '../../../packages/astro/src/client-directives/stream.js';
 import workerDirective from '../../../packages/astro/src/client-directives/worker.js';
 import { configureRuntimePolicy, _resetRuntimePolicyForTests } from '../../../packages/astro/src/runtime/policy.js';
+import { driveUniformFromSignal } from '../../../packages/astro/src/runtime/uniform-signal.js';
 import { isSameOriginRuntimeUrl } from '../../../packages/astro/src/runtime/url-policy.js';
 import { MockEventSource } from '../../helpers/mock-event-source.js';
 import { MockWorker } from '../../helpers/mock-worker.js';
@@ -1881,6 +1882,101 @@ describe('astro directive branch coverage', () => {
     firstWorker.simulateMessage({ type: 'ready' });
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  test('worker mode keeps continuous uniform signals flowing on the SAB path', async () => {
+    restoreWorker = MockWorker.install();
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-worker');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    stubs.define(self, 'crossOriginIsolated', { configurable: true, value: true });
+    if (typeof SharedArrayBuffer === 'undefined') {
+      vi.stubGlobal('SharedArrayBuffer', class MockSharedArrayBuffer {} as never);
+    }
+
+    const rafQueue: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', ((callback: FrameRequestCallback): number => {
+      rafQueue.push(callback);
+      return rafQueue.length;
+    }) as never);
+    vi.stubGlobal('cancelAnimationFrame', vi.fn() as never);
+
+    const scrollGeometry = { scrollHeight: 1500, innerHeight: 500 };
+    const progressFor = (scrollY: number): number =>
+      scrollY / (scrollGeometry.scrollHeight - scrollGeometry.innerHeight);
+    const initialScrollY = 250;
+    const progressedScrollY = 750;
+    stubs.define(window, 'innerHeight', { configurable: true, value: scrollGeometry.innerHeight });
+    stubs.define(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: scrollGeometry.scrollHeight,
+    });
+    stubs.define(window, 'scrollY', { configurable: true, value: initialScrollY });
+
+    const load = vi.fn(async () => {});
+    const el = makeEl('div', {
+      'data-czap-boundary': JSON.stringify({
+        id: 'hero',
+        input: 'scroll.progress',
+        thresholds: [0, 0.5],
+        states: ['top', 'bottom'],
+      }),
+    });
+
+    const uniformStates: unknown[] = [];
+    el.addEventListener('czap:uniform-update', ((event: CustomEvent) =>
+      uniformStates.push(event.detail)) as EventListener);
+
+    workerDirective(load, {}, el);
+    expect(MockWorker.instances).toHaveLength(1);
+    const worker = MockWorker.instances[0]!;
+    expect(worker.postedMessages.map((entry) => (entry.data as { type: string }).type)).toEqual([
+      'init',
+      'bootstrap-quantizers',
+      'bootstrap-resolved-state',
+    ]);
+
+    worker.simulateMessage({
+      type: 'state',
+      state: {
+        discrete: { hero: 'top' },
+        outputs: {
+          css: {},
+          glsl: { u_worker_state: 1 },
+          wgsl: { worker_state: 1 },
+          aria: {},
+        },
+      },
+      resolvedStateGenerations: { hero: 1 },
+    });
+
+    const stop = driveUniformFromSignal(el, 'scroll.progress', 'u_progress');
+    try {
+      const seededUniform = uniformStates.find(
+        (detail) => (detail as { wgsl?: Record<string, number> }).wgsl?.u_progress !== undefined,
+      ) as { glsl: Record<string, number>; wgsl: Record<string, number> } | undefined;
+      expect(seededUniform?.glsl.u_progress).toBeCloseTo(progressFor(initialScrollY), 6);
+      expect(seededUniform?.wgsl.u_progress).toBeCloseTo(progressFor(initialScrollY), 6);
+
+      stubs.define(window, 'scrollY', { configurable: true, value: progressedScrollY });
+      window.dispatchEvent(new Event('scroll'));
+      while (rafQueue.length > 0) {
+        rafQueue.shift()!(16);
+      }
+
+      const progressedUniforms = uniformStates
+        .map((detail) => (detail as { glsl?: Record<string, number>; wgsl?: Record<string, number> }))
+        .filter((detail) => detail.wgsl?.u_progress !== undefined);
+      expect(progressedUniforms.at(-1)?.glsl?.u_progress).toBeCloseTo(progressFor(progressedScrollY), 6);
+      expect(progressedUniforms.at(-1)?.wgsl?.u_progress).toBeCloseTo(progressFor(progressedScrollY), 6);
+      expect(uniformStates).toContainEqual(
+        expect.objectContaining({
+          glsl: expect.objectContaining({ u_worker_state: 1 }),
+          wgsl: expect.objectContaining({ worker_state: 1 }),
+        }),
+      );
+    } finally {
+      stop();
+    }
   });
 
   test('worker directive skips malformed boundaries and unsupported signal inputs gracefully', () => {

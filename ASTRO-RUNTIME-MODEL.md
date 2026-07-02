@@ -234,6 +234,14 @@ Use when the visual meaning depends on shader execution, not merely decoration. 
 
 Use when off-main-thread coordination is part of the surface's runtime need.
 
+When `workers: { enabled: true }` and the page is cross-origin isolated,
+`client:worker` routes boundary evaluation through `@czap/worker` and its
+`SharedArrayBuffer`-capable path, but it does not own the continuous GPU-uniform
+channel. Worker state deliveries and `driveUniformFromSignal(...)` both dispatch
+the same `czap:uniform-update` event on the host element, so a continuous signal
+uniform keeps updating while worker-mode discrete state is active. The worker is
+the discrete-state evaluator; the continuous signal driver remains a leaf write.
+
 ### `wasm`
 
 Use when compute cost meaningfully exceeds what the normal runtime should carry. The `czap-compute` kernel ships inside `@czap/core` (0.2.1+) and `@czap/vite` resolves it from `node_modules`, so enabling `wasm` needs no hand-built artifact (monorepo dev: `pnpm run build:wasm`). `czap({ wasm: { enabled: true } })` auto-loads the kernel at the document level (0.2.2+) and fires `czap:wasm-ready` — no per-element `client:wasm` directive required (that directive still works for element-scoped loads). Worth noting: every directive past `satellite` is additive. The surface should still be coherent if `wasm` doesn't load and the worker falls back to TypeScript kernels (`packages/core/src/wasm-fallback.ts`). The escalation path is a budget, not a dependency.
