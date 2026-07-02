@@ -2,6 +2,10 @@
 
 Minimal Astro + `@czap/*` starter from `create-liteship`.
 
+The mental model in one line: a continuous **signal** crosses a **boundary** into named
+states, those states seal into a **graph**, and **casts** project that graph to outputs
+(CSS, ARIA, GPU, video). See [the authoring model](https://github.com/freebatteryfactory/LiteShip/blob/main/AUTHORING-MODEL.md).
+
 ## Run
 
 ```sh
