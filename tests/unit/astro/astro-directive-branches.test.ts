@@ -604,6 +604,12 @@ describe('astro directive branch coverage', () => {
     gpuDirective(async () => {}, { name: 'gpu', value: { force: true } }, el);
     expect(el.querySelector('canvas'), 'force upgrades the prior scanner bind').not.toBeNull();
     expect(getContext).toHaveBeenCalled();
+
+    // The scanner's bail armed an onDetectReady retry. When the tier upgrades it must
+    // NOT append a second canvas over the shader the force hatch already started.
+    document.documentElement.setAttribute('data-czap-tier', 'gpu');
+    document.dispatchEvent(new Event('czap:detect-ready'));
+    expect(el.querySelectorAll('canvas'), 'the stale retry must not double-boot').toHaveLength(1);
   });
 
   test('gpu directive re-boots when the async probe upgrades the tier (czap:detect-ready)', () => {
