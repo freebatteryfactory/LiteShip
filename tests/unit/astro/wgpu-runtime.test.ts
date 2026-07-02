@@ -317,10 +317,10 @@ const UNIFORM_SHADER =
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0, 0.0, 0.0, 1.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(boundary_state.blur_radius); }';
 
-// Declares 9 scalar fields (36 bytes); the buffer holds 32, so the 9th overflows
-// at binding setup with a warnOnce.
+// Declares enough vec4 fields to overflow the 64-byte runtime buffer: state_index
+// at 0, then v0@16, v1@32, v2@48, and v3@64 overflows.
 const OVERFLOW_SHADER =
-  'struct BS { state_index: u32, a: f32, b: f32, c: f32, d: f32, e: f32, f: f32, g: f32, h: f32 }\n' +
+  'struct BS { state_index: u32, v0: vec4<f32>, v1: vec4<f32>, v2: vec4<f32>, v3: vec4<f32> }\n' +
   '@group(0) @binding(0) var<uniform> bs: BS;\n' +
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }';
@@ -398,7 +398,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    // OVERFLOW_SHADER declares 5 fields; the buffer holds 4, so the 5th overflows
+    // OVERFLOW_SHADER's fourth vec4 starts at byte 64, outside the 64-byte buffer,
     // and is dropped with a warnOnce at binding setup (layout-derived from the
     // declared struct, not from event payload order).
     const dispose = await initWGSLRuntime(canvas, OVERFLOW_SHADER, el);
@@ -491,6 +491,55 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const last = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
     expect(last.getFloat32(8, true)).toBe(320); // u_resolution.x at aligned offset 8
     expect(last.getFloat32(12, true)).toBe(200); // u_resolution.y at offset 12
+    dispose!();
+  });
+
+  it('writes vec2, vec3, and vec4 fields at WGSL-aligned byte offsets', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    const { canvas } = makeCanvas(true);
+    const el = document.createElement('div');
+
+    const VECTOR_SHADER =
+      'struct S { state_index: u32, uv: vec2<f32>, normal: vec3<f32>, color: vec4<f32> }\n' +
+      '@group(0) @binding(0) var<uniform> s: S;\n' +
+      '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
+      '@fragment fn fs_main() -> @location(0) vec4<f32> { return s.color + vec4<f32>(s.uv, s.normal.x, 0.0); }';
+
+    const dispose = await initWGSLRuntime(canvas, VECTOR_SHADER, el);
+    expect(dispose).not.toBeNull();
+
+    // Independent WGSL layout facts for this struct:
+    // state_index: u32 align4 size4 → offset 0
+    // uv: vec2<f32> align8 size8 → offset 8
+    // normal: vec3<f32> align16 size12 → offset 16
+    // color: vec4<f32> align16 size16 → offset 32
+    expect(harness.calls.bufferWrites.at(-1)!.length).toBe(48);
+
+    el.dispatchEvent(
+      new CustomEvent('czap:uniform-update', {
+        detail: {
+          wgsl: {
+            state_index: 2,
+            uv: [0.25, 0.5],
+            normal: [1, 2, 3],
+            color: [0.1, 0.2, 0.3, 0.4],
+          },
+        },
+      }),
+    );
+    const bytes = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(bytes.getUint32(0, true)).toBe(2);
+    expect(bytes.getFloat32(8, true)).toBeCloseTo(0.25, 6);
+    expect(bytes.getFloat32(12, true)).toBeCloseTo(0.5, 6);
+    expect(bytes.getFloat32(16, true)).toBeCloseTo(1, 6);
+    expect(bytes.getFloat32(20, true)).toBeCloseTo(2, 6);
+    expect(bytes.getFloat32(24, true)).toBeCloseTo(3, 6);
+    expect(bytes.getFloat32(32, true)).toBeCloseTo(0.1, 6);
+    expect(bytes.getFloat32(36, true)).toBeCloseTo(0.2, 6);
+    expect(bytes.getFloat32(40, true)).toBeCloseTo(0.3, 6);
+    expect(bytes.getFloat32(44, true)).toBeCloseTo(0.4, 6);
     dispose!();
   });
 

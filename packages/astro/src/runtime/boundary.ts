@@ -12,6 +12,13 @@
 import { Boundary, BoundaryAttribute, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
+/** JSON-safe authored WGSL vector value carried in boundary payloads. */
+export type WgslUniformVector =
+  readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
+
+/** JSON-safe authored WGSL uniform value carried in boundary payloads. */
+export type WgslUniformValue = number | WgslUniformVector;
+
 /**
  * JSON shape produced on the server by `satelliteAttrs()` and read back
  * on the client via {@link parseBoundary}. Every field corresponds
@@ -53,7 +60,7 @@ export interface SerializedBoundary {
    * from the build manifest by content address. Absent for boundaries with no
    * `@wgsl` — optional, so old payloads need no `_version` bump.
    */
-  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, WgslUniformValue>>>>;
   /**
    * Optional emitted GLSL preamble (`GLSLCompileResult.declarations`: state
    * `#define`s + `uniform <type> u_*;` lines). Joined onto the satellite from the
@@ -102,7 +109,7 @@ export interface RuntimeBoundary {
    * so the WGSL `client:gpu` runtime rebinds the live uniform buffer on every
    * state crossing (not SSR-frozen).
    */
-  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  readonly stateWgsl?: Readonly<Record<string, Readonly<Record<string, WgslUniformValue>>>>;
 }
 
 /**
@@ -118,7 +125,7 @@ export interface BoundaryStateDetail {
   /** GLSL uniform map (`u_*`). */
   readonly glsl: Record<string, number>;
   /** WGSL uniform-struct field map (bare snake_case, e.g. `blur_radius`). */
-  readonly wgsl: Record<string, number>;
+  readonly wgsl: Record<string, WgslUniformValue>;
   /** Whitelisted ARIA attribute map. */
   readonly aria: Record<string, string>;
 }
@@ -492,12 +499,12 @@ export function normalizeBoundaryState(state: {
   readonly discrete?: Record<string, string>;
   readonly css?: Record<string, string | number>;
   readonly glsl?: Record<string, number>;
-  readonly wgsl?: Record<string, number>;
+  readonly wgsl?: Record<string, WgslUniformValue>;
   readonly aria?: Record<string, string>;
   readonly outputs?: {
     readonly css?: Record<string, string | number>;
     readonly glsl?: Record<string, number>;
-    readonly wgsl?: Record<string, number>;
+    readonly wgsl?: Record<string, WgslUniformValue>;
     readonly aria?: Record<string, string>;
   };
 }): BoundaryStateDetail {
@@ -526,12 +533,12 @@ export function applyBoundaryState(
     readonly discrete?: Record<string, string>;
     readonly css?: Record<string, string | number>;
     readonly glsl?: Record<string, number>;
-    readonly wgsl?: Record<string, number>;
+    readonly wgsl?: Record<string, WgslUniformValue>;
     readonly aria?: Record<string, string>;
     readonly outputs?: {
       readonly css?: Record<string, string | number>;
       readonly glsl?: Record<string, number>;
-      readonly wgsl?: Record<string, number>;
+      readonly wgsl?: Record<string, WgslUniformValue>;
       readonly aria?: Record<string, string>;
     };
   },

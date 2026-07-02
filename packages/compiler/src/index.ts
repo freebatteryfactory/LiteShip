@@ -12,7 +12,14 @@ export { GLSLCompiler } from './glsl.js';
 export type { GLSLType, GLSLUniform, GLSLDefine, GLSLCompileResult } from './glsl.js';
 
 export { WGSLCompiler } from './wgsl.js';
-export type { WGSLType, WGSLBinding, WGSLStruct, WGSLCompileResult } from './wgsl.js';
+export type {
+  WGSLType,
+  WGSLBinding,
+  WGSLStruct,
+  WGSLCompileResult,
+  WGSLUniformVector,
+  WGSLUniformValue,
+} from './wgsl.js';
 
 export { ARIACompiler } from './aria.js';
 export type { ARIACompileResult } from './aria.js';

@@ -30,6 +30,7 @@
  */
 
 import { satelliteAttrs, type SatelliteProps } from './Satellite.js';
+import type { WgslUniformValue } from './runtime/boundary.js';
 
 export interface Props extends SatelliteProps {}
 
@@ -67,7 +68,7 @@ if (
           outputs: ReadonlyArray<{
             aria?: Record<string, Record<string, string>>;
             glsl?: { stateUniforms?: Record<string, Record<string, number>>; declarations?: string };
-            wgsl?: { stateBindings?: Record<string, Record<string, number>>; declarations?: string };
+            wgsl?: { stateBindings?: Record<string, Record<string, WgslUniformValue>>; declarations?: string };
           }>;
         }
       >;

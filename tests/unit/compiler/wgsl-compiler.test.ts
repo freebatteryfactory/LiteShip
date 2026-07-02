@@ -101,6 +101,34 @@ describe('WGSLCompiler.compile', () => {
     expect(ratioField!.type).toBe('f32');
   });
 
+  test('vec2/vec3/vec4 values infer f32 vector fields and preserve per-state values', () => {
+    const authored = {
+      dark: {
+        uv: [0.25, 0.5],
+        normal: [1, 2, 3],
+        color: [0.1, 0.2, 0.3, 0.4],
+      },
+      light: {
+        uv: [0.75, 1],
+        normal: [4, 5, 6],
+        color: [0.5, 0.6, 0.7, 0.8],
+      },
+    } as const;
+    const result = WGSLCompiler.compile(simpleBoundary, authored);
+    const fields = new Map(result.structs[0]!.fields.map((field) => [field.name, field.type]));
+    const expectedTypes = Object.fromEntries(
+      Object.entries(authored.dark).map(([key, value]) => [
+        key,
+        value.length === 2 ? 'vec2f' : value.length === 3 ? 'vec3f' : 'vec4f',
+      ]),
+    );
+
+    expect(Object.fromEntries([...fields].filter(([key]) => key in expectedTypes))).toEqual(expectedTypes);
+    expect(result.stateBindings.dark).toEqual(authored.dark);
+    expect(result.stateBindings.light).toEqual(authored.light);
+    expect(result.bindingValues['color']).toEqual(authored.light.color);
+  });
+
   test('camelCase field names convert to snake_case', () => {
     const result = WGSLCompiler.compile(simpleBoundary, {
       dark: { borderRadius: 4 },

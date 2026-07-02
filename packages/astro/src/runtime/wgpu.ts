@@ -12,6 +12,7 @@ import {
   DEFAULT_SHADER_INTEGRITY_MODE,
 } from '@czap/web';
 import type { ShaderIntegrity } from '@czap/web';
+import type { WgslUniformValue } from './boundary.js';
 
 const FULLSCREEN_WGSL = `@vertex
 fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
@@ -151,11 +152,11 @@ async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
 
 /**
  * Max bytes in the boundary uniform buffer. WGSL uniform buffers stride at 16
- * bytes; 32 holds `state_index` + the standard `u_time` (f32) / `u_resolution`
- * (vec2, 8-byte aligned) feeds + a handful of authored scalar fields. Widen to
+ * bytes; 64 holds `state_index` + the standard `u_time` (f32) / `u_resolution`
+ * (vec2, 8-byte aligned) feeds + authored vec2/vec3/vec4 fields. Widen to
  * admit more authored fields.
  */
-const UNIFORM_BUFFER_MAX_BYTES = 32;
+const UNIFORM_BUFFER_MAX_BYTES = 64;
 
 /** Kind of a WGSL uniform field — drives both its buffer alignment and its write. */
 type WgslUniformKind = 'int' | 'float' | 'vec2' | 'vec3' | 'vec4';
@@ -187,7 +188,7 @@ function wgslTypeInfo(type: string): { readonly align: number; readonly size: nu
 
 /**
  * Live binding between the compositor's `detail.wgsl` map (bare snake_case field
- * names → numbers) and a WebGPU uniform buffer. `state_index` always occupies
+ * names → scalar/vector values) and a WebGPU uniform buffer. `state_index` always occupies
  * slot 0; authored fields claim later slots in first-seen order so a stable
  * field gets a stable offset across crossings. Returns the bound buffer plus an
  * `apply` that writes a fresh `detail.wgsl` snapshot into it.
@@ -200,7 +201,7 @@ export interface WgslUniformBinding {
    * vector fields (e.g. `u_resolution: vec2<f32>`) take a component array
    * (`[w, h]`). Fields the struct doesn't declare are ignored.
    */
-  apply(values: Record<string, number | readonly number[]>): void;
+  apply(values: Record<string, WgslUniformValue>): void;
 }
 
 /** A parsed WGSL uniform field: its name and declared scalar type, in struct order. */
@@ -280,7 +281,7 @@ function createUniformBinding(
   return {
     buffer,
     bindGroup,
-    apply(values: Record<string, number | readonly number[]>): void {
+    apply(values: Record<string, WgslUniformValue>): void {
       // Fresh snapshot: zero the struct first so a field dropped by a later state
       // reverts to 0 instead of leaving the shader sampling a stale value.
       bytes.fill(0);
@@ -309,7 +310,7 @@ function createUniformBinding(
  * Initialize a WebGPU render loop for a WGSL shader source.
  *
  * Subscribes `element` (when provided) to `czap:uniform-update`: each event's
- * `detail.wgsl` (bare snake_case field → number, from the compositor's
+ * `detail.wgsl` (bare snake_case field → scalar/vector value, from the compositor's
  * `emit-wgsl` cast) is written into a `@group(0) @binding(0)` uniform buffer the
  * render loop binds every frame, so boundary crossings drive the live shader.
  * `element`-less callers (e.g. the static-render path / tests) still render the
@@ -470,7 +471,7 @@ export async function initWGSLRuntime(
   const startTime = systemClock.now();
   // The latest boundary-crossing signal snapshot. Animated shaders merge it with
   // the per-frame clock so the time feed never clobbers signal fields.
-  let latestSignal: Record<string, number> = {};
+  let latestSignal: Record<string, WgslUniformValue> = {};
 
   // Subscribe to boundary crossings: map detail.wgsl → uniform buffer. The rAF
   // loop already redraws every frame, so writing the buffer here is enough — the
@@ -479,7 +480,7 @@ export async function initWGSLRuntime(
     /* v8 ignore next — `czap:uniform-update` is always dispatched via `new CustomEvent(...)`;
        the guard narrows the generic `Event` parameter for TypeScript's typed `.detail` access. */
     if (!(event instanceof CustomEvent)) return;
-    const wgsl = event.detail?.wgsl as Record<string, number> | undefined;
+    const wgsl = event.detail?.wgsl as Record<string, WgslUniformValue> | undefined;
     if (wgsl) {
       latestSignal = wgsl;
       // Static shaders apply on the crossing (unchanged). Standard-uniform shaders
@@ -508,7 +509,7 @@ export async function initWGSLRuntime(
       binding.apply({
         ...latestSignal,
         u_time: (systemClock.now() - startTime) / 1000,
-        u_resolution: [w, h],
+        u_resolution: [w, h] as const,
       });
     }
 

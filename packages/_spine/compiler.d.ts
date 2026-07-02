@@ -118,6 +118,11 @@ export interface WGSLBinding {
   readonly type: WGSLType;
 }
 
+export type WGSLUniformVector =
+  readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
+
+export type WGSLUniformValue = number | WGSLUniformVector;
+
 export interface WGSLStruct {
   readonly name: string;
   readonly fields: readonly { readonly name: string; readonly type: WGSLType }[];
@@ -126,14 +131,15 @@ export interface WGSLStruct {
 export interface WGSLCompileResult {
   readonly structs: readonly WGSLStruct[];
   readonly bindings: readonly WGSLBinding[];
-  readonly bindingValues: Record<string, number>;
+  readonly bindingValues: Record<string, WGSLUniformValue>;
+  readonly stateBindings: Record<string, Record<string, WGSLUniformValue>>;
   readonly declarations: string;
 }
 
 export declare const WGSLCompiler: {
   compile<B extends Boundary.Shape>(
     boundary: B,
-    states: { [S in StateUnion<B> & string]: Record<string, number> },
+    states: { [S in StateUnion<B> & string]: Record<string, WGSLUniformValue> },
   ): WGSLCompileResult;
 
   serialize(result: WGSLCompileResult): string;
@@ -261,7 +267,7 @@ import type { Config } from './config.d.ts';
 
 export type CSSStates  = Readonly<Record<string, Readonly<Record<string, string>>>>;
 export type GLSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
-export type WGSLStates = Readonly<Record<string, Readonly<Record<string, number>>>>;
+export type WGSLStates = Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
 export interface ARIAStates {
   readonly states: Record<string, Record<string, string>>;
   /** Defaults to the boundary's first state. */

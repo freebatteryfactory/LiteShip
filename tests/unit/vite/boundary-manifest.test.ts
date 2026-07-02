@@ -181,6 +181,67 @@ describe('collectBoundaryManifest', () => {
     expect(restored!.glsl).toEqual(withGlsl!.glsl);
   });
 
+  test('@wgsl blocks parse scalar and vec2/vec3/vec4 values into manifest stateBindings', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    const authoredWgsl = {
+      compact: {
+        uv: [0.25, 0.5],
+        normal: [1, 2, 3],
+        color: [0.1, 0.2, 0.3, 0.4],
+      },
+      wide: {
+        uv: [0.75, 1],
+        normal: [4, 5, 6],
+        color: [0.5, 0.6, 0.7, 0.8],
+      },
+    } as const;
+    const renderValue = (value: number | readonly number[]): string =>
+      Array.isArray(value) ? `vec${value.length}f(${value.join(', ')})` : String(value);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+${Object.entries(authoredWgsl)
+  .map(
+    ([state, attrs]) => `  ${state} {
+    @wgsl {
+${Object.entries(attrs)
+  .map(([name, value]) => `      ${name}: ${renderValue(value)};`)
+  .join('\n')}
+    }
+  }`,
+  )
+  .join('\n')}
+}
+`,
+    );
+
+    const manifest = await collectBoundaryManifest(root);
+    const withWgsl = manifest['viewport']!.outputs.find((output) => output.wgsl);
+    expect(withWgsl?.wgsl?.stateBindings).toEqual(authoredWgsl);
+    expect(withWgsl!.wgsl!.bindingValues['color']).toEqual(authoredWgsl.wide.color);
+
+    const struct = /struct\s+\w+\s*\{([\s\S]*?)\}/.exec(withWgsl!.wgsl!.declarations);
+    const fieldTypes = new Map(
+      [...(struct?.[1] ?? '').matchAll(/([A-Za-z_]\w*)\s*:\s*([A-Za-z_][\w<>]*)/g)].map((match) => [
+        match[1]!,
+        match[2]!,
+      ]),
+    );
+    const expectedTypes = Object.fromEntries(
+      Object.entries(authoredWgsl.compact).map(([key, value]) => [
+        key,
+        value.length === 2 ? 'vec2f' : value.length === 3 ? 'vec3f' : 'vec4f',
+      ]),
+    );
+    for (const [field, expectedType] of Object.entries(expectedTypes)) {
+      expect(fieldTypes.get(field)).toBe(expectedType);
+    }
+  });
+
   test('derives entries with minted ids and full tier-grid outputs from boundary modules + @quantize CSS', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

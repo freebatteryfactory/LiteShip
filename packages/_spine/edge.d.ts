@@ -83,10 +83,15 @@ export interface CompiledGLSLOutput {
   readonly stateUniforms?: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }
 
+type WGSLUniformVector =
+  readonly [number, number] | readonly [number, number, number] | readonly [number, number, number, number];
+
+type WGSLUniformValue = number | WGSLUniformVector;
+
 export interface CompiledWGSLOutput {
   readonly declarations: string;
-  readonly bindingValues: Readonly<Record<string, number>>;
-  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  readonly bindingValues: Readonly<Record<string, WGSLUniformValue>>;
+  readonly stateBindings?: Readonly<Record<string, Readonly<Record<string, WGSLUniformValue>>>>;
 }
 
 export interface BoundaryCache {

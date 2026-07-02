@@ -11,6 +11,7 @@
 
 import type { Boundary, Component } from '@czap/core';
 import type { DirectiveName } from './runtime/directive-boot.js';
+import type { WgslUniformValue } from './runtime/boundary.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,7 +64,7 @@ export interface SatelliteProps {
    * uniform-buffer values for the current state on every crossing — never
    * SSR-frozen.
    */
-  readonly wgsl?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+  readonly wgsl?: Readonly<Record<string, Readonly<Record<string, WgslUniformValue>>>>;
   /**
    * Emitted GLSL preamble (`GLSLCompileResult.declarations`: `#define STATE_*` +
    * `uniform <type> u_*;` lines) for this boundary's `@glsl` cast. The
