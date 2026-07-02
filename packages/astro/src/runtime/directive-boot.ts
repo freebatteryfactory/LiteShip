@@ -25,9 +25,15 @@
 import { Diagnostics } from '@czap/core';
 import { DIRECTIVE_ATTRIBUTE_REGISTRY, DIRECTIVE_MARKER_ATTRIBUTE, implicitDirectiveSelectors } from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
+import { boundNames, markBound, unmarkBound } from './directive-bound.js';
+import type { DirectiveName, DirectiveEntry } from './directive-bound.js';
 
-/** Directive names the integration can register, in escalation order. */
-export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'svg';
+// The bound-marker primitives live in the dependency-free leaf `./directive-bound.js`
+// so a runtime directive that only needs to mark its host does NOT drag this
+// scanner's code-split `LOADERS` graph into its bundle. Re-exported here so existing
+// importers of `./directive-boot.js` keep resolving them.
+export type { DirectiveName } from './directive-bound.js';
+export { bootDirectiveEntry, markDirectiveBound } from './directive-bound.js';
 
 const DIRECTIVE_CONFIG_KEYS: Partial<Record<DirectiveName, string>> = {
   stream: 'stream',
@@ -58,11 +64,6 @@ const DIRECTIVE_NAMES: readonly DirectiveName[] = [
   'svg',
 ];
 
-/** Tracks which directives already initialized an element across re-scans. */
-const BOUND_ATTRIBUTE = 'data-czap-directive-bound';
-
-type DirectiveEntry = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement) => void;
-
 // Static thunk map so the bundler code-splits each directive into the
 // same chunk Astro's island path would load.
 const LOADERS: Record<DirectiveName, () => Promise<{ readonly default: DirectiveEntry }>> = {
@@ -82,44 +83,6 @@ function isDirectiveName(value: string): value is DirectiveName {
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
-}
-
-function boundNames(element: HTMLElement): Set<string> {
-  const raw = element.getAttribute(BOUND_ATTRIBUTE);
-  return new Set(raw ? raw.split(/\s+/).filter(Boolean) : []);
-}
-
-function markBound(element: HTMLElement, name: DirectiveName): void {
-  const names = boundNames(element);
-  names.add(name);
-  element.setAttribute(BOUND_ATTRIBUTE, [...names].join(' '));
-}
-
-/** Mark an element as already activated for `name`, sharing the scanner's idempotence guard. */
-export function markDirectiveBound(element: HTMLElement, name: DirectiveName): void {
-  markBound(element, name);
-}
-
-/** Shared client-directive entry boot: Astro island entries mark the host before initializing runtime code. */
-export function bootDirectiveEntry(
-  name: DirectiveName,
-  load: () => Promise<unknown>,
-  opts: Record<string, unknown>,
-  element: HTMLElement,
-  init: (load: () => Promise<unknown>, opts: Record<string, unknown>, element: HTMLElement) => void,
-): void {
-  markBound(element, name);
-  init(load, opts, element);
-}
-
-function unmarkBound(element: HTMLElement, name: DirectiveName): void {
-  const names = boundNames(element);
-  names.delete(name);
-  if (names.size === 0) {
-    element.removeAttribute(BOUND_ATTRIBUTE);
-  } else {
-    element.setAttribute(BOUND_ATTRIBUTE, [...names].join(' '));
-  }
 }
 
 function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {

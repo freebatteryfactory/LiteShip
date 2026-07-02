@@ -6,7 +6,7 @@ import {
   readSignalValue,
   warnIfSignalUnserved,
 } from './boundary.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 /**
  * Entry point used by the `client:satellite` directive. Parses the

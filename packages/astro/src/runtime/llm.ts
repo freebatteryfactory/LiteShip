@@ -5,7 +5,7 @@ import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 const SAFE_LLM_TARGET_SELECTOR = /^(?:#[A-Za-z][\w-]*|\.[A-Za-z_][\w-]*|\[data-czap-target="[-:A-Za-z0-9_]+"\])$/;
 

@@ -46,7 +46,7 @@ import {
   warnIfSignalUnserved,
   type RuntimeBoundary,
 } from './boundary.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 /** Attribute carrying the entity id an SVG element is bound to. */
 const ENTITY_ATTRIBUTE = 'data-czap-entity';

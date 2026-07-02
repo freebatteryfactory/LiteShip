@@ -13,7 +13,7 @@
 
 import type { ContentAddress } from '@czap/core';
 import { loadGraphRuntime, type GraphRuntimeHandle } from './graph-runtime.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 /** Resolve an entity id to the `[data-czap-entity]` element in (or at) the directive root. */
 function entityResolver(root: HTMLElement): (entityId: ContentAddress) => HTMLElement | null {

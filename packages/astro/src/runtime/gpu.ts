@@ -10,7 +10,7 @@ import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 const DEFAULT_VERTEX_SHADER = `#version 300 es
 precision mediump float;
