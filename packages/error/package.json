@@ -1,6 +1,6 @@
 {
   "name": "@czap/error",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Composable tagged-error algebra: a closed variant coproduct over an open `TaggedError` contract — value AND type, Effect- and throw-compatible (the foundational zero-dep leaf)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

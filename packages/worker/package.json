@@ -1,6 +1,6 @@
 {
   "name": "@czap/worker",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Off-thread: SPSC ring buffer, compositor worker, render worker, OffscreenCanvas",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
