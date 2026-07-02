@@ -119,12 +119,6 @@ function hasDirectiveMarker(element: HTMLElement): boolean {
   return DIRECTIVE_NAMES.some((name) => element.hasAttribute(`client:${name}`));
 }
 
-function hasImplicitDirectiveAttribute(element: HTMLElement): boolean {
-  return Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
-    .flat()
-    .some((entry) => entry.implicitBoot && element.hasAttribute(entry.attribute));
-}
-
 function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
   const explicitAttributes = new Set(
     Object.values(DIRECTIVE_ATTRIBUTE_REGISTRY)
@@ -135,7 +129,11 @@ function warnExplicitOnlyDirectiveAttributes(root: ParentNode): void {
 
   for (const attribute of explicitAttributes) {
     for (const element of collectElements(root, `[${attribute}]`)) {
-      if (hasDirectiveMarker(element) || hasImplicitDirectiveAttribute(element)) {
+      // Suppress ONLY when an explicit directive marker is present. An implicit peer
+      // attribute (e.g. `data-czap-shader-src` for gpu) does NOT consume the boundary
+      // payload -- only satellite/worker evaluate it -- so a bare boundary sitting next
+      // to a gpu shader still needs its marker warning, not silence.
+      if (hasDirectiveMarker(element)) {
         continue;
       }
       Diagnostics.warnOnce({

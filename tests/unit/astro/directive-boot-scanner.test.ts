@@ -155,6 +155,28 @@ describe('Astro directive boot scanner', () => {
     expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary')).toBe(false);
   });
 
+  test('warns for a bare boundary payload even beside a non-consuming implicit peer (gpu)', async () => {
+    const { Diagnostics } = await import('@czap/core');
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.clearOnce();
+    Diagnostics.setSink(sink);
+
+    const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
+
+    // data-czap-boundary (a satellite/worker payload) beside a gpu shader attr, but NO
+    // satellite/worker marker. gpu does not evaluate the boundary, so it stays inert --
+    // the marker warning must still fire, not be suppressed by the non-consuming peer.
+    const el = document.createElement('div');
+    el.setAttribute('data-czap-boundary', '{}');
+    el.setAttribute('data-czap-shader-src', '/shader.frag');
+    document.body.appendChild(el);
+
+    await scanAndBootDirectives([]);
+
+    const warnings = events.filter((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary');
+    expect(warnings).toHaveLength(1);
+  });
+
   test('bootDirectiveEntry initializes once; a second call for the same directive is a no-op', async () => {
     // Guards the double-boot: the scanner can activate an implicit-attribute element
     // before Astro hydrates the same node as an island. Both paths route through
