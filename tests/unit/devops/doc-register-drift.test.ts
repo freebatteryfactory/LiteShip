@@ -64,14 +64,16 @@ describe('B6b — STATUS.md points at the canonical phase source instead of mirr
   });
 });
 
-describe('B6b — roster docs name the real package set (command + audit present)', () => {
-  for (const rel of ['ARCHITECTURE.md', 'README.md']) {
-    it(`${rel} lists @czap/command and @czap/audit`, () => {
-      const src = read(rel);
-      expect(src, `${rel} must list @czap/command`).toMatch(/@czap\/command/);
-      expect(src, `${rel} must list @czap/audit`).toMatch(/@czap\/audit/);
-    });
-  }
+describe('B6b — the roster doc names the real package set (command + audit present)', () => {
+  // The full package roster lives in ARCHITECTURE.md (the generated PACKAGES table). As
+  // of the 0.6.0 front-door cut the README no longer enumerates packages — its aperture
+  // is pinned separately by tests/unit/meta/front-door.test.ts — so ARCHITECTURE.md is
+  // the single roster doc that must name the real package set.
+  it('ARCHITECTURE.md lists @czap/command and @czap/audit', () => {
+    const src = read('ARCHITECTURE.md');
+    expect(src, 'ARCHITECTURE.md must list @czap/command').toMatch(/@czap\/command/);
+    expect(src, 'ARCHITECTURE.md must list @czap/audit').toMatch(/@czap\/audit/);
+  });
   it('the CLI README documents the `czap audit` verb (added in D9b)', () => {
     expect(read('packages/cli/README.md')).toMatch(/czap audit/);
   });
