@@ -251,31 +251,58 @@ function wgslVector(parts: readonly number[]): WGSLUniformVector | undefined {
   return undefined;
 }
 
-function parseWgslCastValue(value: string): WGSLUniformValue | undefined {
+/**
+ * Parse a `@wgsl` cast value into a scalar or vector. Returns `'invalid'` when the
+ * author wrote a vector constructor whose component count does not match the
+ * declared arity (or a count outside vec2/vec3/vec4) — the caller turns that into a
+ * loud diagnostic instead of a silently-wrong offset (ADR-0029).
+ */
+function parseWgslCastValue(value: string): WGSLUniformValue | 'invalid' | undefined {
   const trimmed = value.trim();
   if (trimmed === '') return undefined;
   const scalar = Number(trimmed);
   if (Number.isFinite(scalar)) return scalar;
-  // Accept CSS-authored vector component lists (`1 2`, `1, 2`) and WGSL-style
-  // constructors (`vec2f(1, 2)`) without treating the constructor's `2/3/4` as a
-  // component. GLSL stays scalar-only above.
-  const componentSource = trimmed.replace(/\bvec[234][fiu]?\s*\(/gi, '(');
+  // Match a WGSL vector constructor in either the shorthand (`vec2f(...)`) or the
+  // generic (`vec2<f32>(...)`) form, capturing the DECLARED arity and the argument
+  // list. The generic `<...>` must be stripped whole, or its digits (`f32` -> 32)
+  // leak into the component scan and mis-shape the vector.
+  const ctor = /^vec([234])(?:[fiu]|<[^>]*>)?\s*\(([^)]*)\)$/i.exec(trimmed);
+  const declaredArity = ctor ? Number(ctor[1]) : undefined;
+  // Constructor args, or a bare CSS-authored component list (`1 2`, `1, 2`).
+  const componentSource = ctor ? ctor[2]! : trimmed;
   const parts = [...componentSource.matchAll(/[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)]
     .map((match) => Number(match[0]))
     .filter((part) => Number.isFinite(part));
+  if (parts.length === 0) return undefined;
+  // A constructor pins the arity: a component-count mismatch is an authoring error,
+  // not something to silently reshape into a different vecN.
+  if (declaredArity !== undefined && parts.length !== declaredArity) return 'invalid';
   if (parts.length === 1) return parts[0]!;
-  return wgslVector(parts);
+  return wgslVector(parts) ?? 'invalid';
 }
 
 /**
  * Coerce a `@wgsl` segment's authored string values into the scalar/vector map
- * the WGSL compiler consumes. Non-numeric values are dropped; vector component
- * counts outside vec2/vec3/vec4 are dropped instead of guessed.
+ * the WGSL compiler consumes. Non-numeric values are dropped silently; a malformed
+ * vector (component count mismatched to the declared vecN, or outside vec2/vec3/vec4)
+ * is dropped LOUDLY via `warnOnce` rather than shipped as a silently-wrong offset.
  */
 function wgslCastState(attrs: Record<string, string>): Record<string, WGSLUniformValue> {
   const out: Record<string, WGSLUniformValue> = {};
   for (const [key, value] of Object.entries(attrs)) {
     const parsed = parseWgslCastValue(value);
+    if (parsed === 'invalid') {
+      Diagnostics.warnOnce({
+        source: 'czap/vite.wgsl-cast',
+        code: `wgsl-cast-value-malformed:${key}`,
+        message:
+          `@wgsl uniform "${key}" value "${value}" is a malformed vector -- its component count ` +
+          `does not match the declared vecN (or is outside vec2/vec3/vec4). It was dropped instead ` +
+          `of shipped as a silently-wrong offset. Fix: author a matching count, e.g. vec2<f32>(x, y).`,
+        detail: { key, value },
+      });
+      continue;
+    }
     if (parsed !== undefined) out[key] = parsed;
   }
   return out;

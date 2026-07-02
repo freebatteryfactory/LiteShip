@@ -12,6 +12,8 @@
  * @module
  */
 
+import { Diagnostics } from '@czap/core';
+
 /** Directive names the integration can register, in escalation order. */
 export type DirectiveName = 'satellite' | 'stream' | 'llm' | 'worker' | 'gpu' | 'wasm' | 'graph' | 'svg';
 
@@ -50,7 +52,20 @@ export function markDirectiveBound(element: HTMLElement, name: DirectiveName): v
   markBound(element, name);
 }
 
-/** Shared client-directive entry boot: Astro island entries mark the host before initializing runtime code. */
+/**
+ * Shared client-directive entry boot -- marks the host bound and initializes the
+ * runtime, exactly ONCE per element+directive.
+ *
+ * - Idempotence: returns without re-initializing when the element is already bound
+ *   for `name`. Both the plain-element scanner and Astro's island hydration route
+ *   through here; without this guard, an island that also carries the directive's
+ *   implicit attribute would be booted by both, and the stream/LLM/worker/GPU
+ *   initializers are not idempotent (a second call opens a duplicate EventSource /
+ *   worker / shader session).
+ * - Collision: when a DIFFERENT czap directive already claimed the element, warns
+ *   once (the boot still proceeds) -- two directives take over one host and one
+ *   silently loses.
+ */
 export function bootDirectiveEntry(
   name: DirectiveName,
   load: () => Promise<unknown>,
@@ -58,6 +73,21 @@ export function bootDirectiveEntry(
   element: HTMLElement,
   init: (load: () => Promise<unknown>, opts: Record<string, unknown>, element: HTMLElement) => void,
 ): void {
+  const claimed = boundNames(element);
+  if (claimed.has(name)) return;
+  if (claimed.size > 0) {
+    // Sort the conflicting names ONCE so the dedup `code` is order-independent.
+    const conflicting = [...claimed, name].sort();
+    Diagnostics.warnOnce({
+      source: 'czap/astro.directive-boot',
+      code: `directive-collision:${conflicting.join('+')}`,
+      message:
+        `Element carries conflicting czap directives (${conflicting.join(', ')}) -- ` +
+        `each directive takes over the element, so they collide and one silently loses ` +
+        `(e.g. a satellite consumes the node a GPU shader needs). ` +
+        `Fix: put each directive on its own element.`,
+    });
+  }
   markBound(element, name);
   init(load, opts, element);
 }

@@ -181,7 +181,12 @@ function resolveAssetUrlsByTier(entry: BoundaryManifestEntry): Readonly<Partial<
 }
 
 function warnEmptyManifestOutputs(boundary: string, entry: BoundaryManifestEntry): void {
-  if (entry.outputs.length > 0 || Object.keys(entry.outputsByTier).length > 0) return;
+  // A boundary can carry a non-empty outputs pool that still serializes to no CSS
+  // (an @quantize block emitting only @wgsl/@glsl/@aria, say). Check for SERVABLE
+  // CSS, not just pool existence -- otherwise Cloudflare serves an empty stylesheet
+  // with no warning and no compile fallback.
+  const hasServableCss = entry.outputs.some((output) => output.css.trim() !== '');
+  if (hasServableCss) return;
   Diagnostics.warnOnce({
     source: 'czap/cloudflare.middleware',
     code: 'manifest-boundary-empty-outputs',

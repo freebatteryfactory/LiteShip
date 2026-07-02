@@ -25,7 +25,7 @@
 import { Diagnostics } from '@czap/core';
 import { DIRECTIVE_ATTRIBUTE_REGISTRY, DIRECTIVE_MARKER_ATTRIBUTE, implicitDirectiveSelectors } from './slots.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
-import { boundNames, markBound, unmarkBound } from './directive-bound.js';
+import { boundNames, unmarkBound } from './directive-bound.js';
 import type { DirectiveName, DirectiveEntry } from './directive-bound.js';
 
 // The bound-marker primitives live in the dependency-free leaf `./directive-bound.js`
@@ -186,33 +186,11 @@ export async function scanAndBootDirectives(
       if (boundNames(element).has(name)) {
         continue;
       }
-      // Directive COLLISION: this element is already claimed by a DIFFERENT
-      // directive. Each directive takes over the element (a satellite consumes
-      // the very node a GPU shader needs), so two on one element silently fight
-      // and one loses without a trace -- the exact trap where `client:gpu` +
-      // `satelliteAttrs()` on one canvas booted the satellite and the shader
-      // never started. Make it loud (the activation still proceeds as before;
-      // the warning is the fix the author was missing).
-      const alreadyBound = [...boundNames(element)];
-      if (alreadyBound.length > 0) {
-        // Sort the conflicting names ONCE and reuse the ordered list for both the
-        // dedup `code` and the `message`, so the warning is deterministic and
-        // dedupes correctly regardless of which directive bound first (CodeRabbit).
-        const conflicting = [...alreadyBound, name].sort();
-        Diagnostics.warnOnce({
-          source: 'czap/astro.directive-boot',
-          code: `directive-collision:${conflicting.join('+')}`,
-          message:
-            `Element carries conflicting czap directives (${conflicting.join(', ')}) -- ` +
-            `each directive takes over the element, so they collide and one silently loses ` +
-            `(e.g. a satellite consumes the node a GPU shader needs). ` +
-            `Fix: put each directive on its own element.`,
-        });
-      }
-      // Pre-mark so overlapping scans can't double-activate; a failed
-      // activation unmarks below so a later re-scan (astro:after-swap)
-      // can retry after a transient chunk-load error.
-      markBound(element, name);
+      // Boot through the shared directive entry, which owns the idempotence guard
+      // AND the collision warning -- so Astro's island hydration of the same element
+      // cannot double-boot it, and two directives on one host still warn. A failed
+      // activation unmarks below so a later re-scan (astro:after-swap) can retry
+      // after a transient chunk-load error.
       activations.push(
         LOADERS[name]()
           .then((mod) => {

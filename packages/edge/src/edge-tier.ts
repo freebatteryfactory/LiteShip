@@ -77,7 +77,7 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
  * // => { 'data-czap-tier': 'reactive', 'data-czap-motion': 'animations', 'data-czap-design': 'enhanced' }
  * ```
  */
-function tierDataAttributesMap(result: EdgeTierResult): Record<`data-czap-${CapAxis}`, string> {
+function tierDataAttributesMap(result: EdgeTierResult): Readonly<Record<`data-czap-${CapAxis}`, string>> {
   // The canonical axis registry is the single source: attribute names can never
   // drift from the `Astro.locals.czap.tiers` field names / runtime readers.
   const value: Record<CapAxis, string> = {
@@ -85,9 +85,8 @@ function tierDataAttributesMap(result: EdgeTierResult): Record<`data-czap-${CapA
     motion: result.motionTier,
     design: result.designTier,
   };
-  return Object.fromEntries(CAP_AXES.map((axis) => [capAxisAttr(axis), value[axis]])) as Record<
-    `data-czap-${CapAxis}`,
-    string
+  return Object.fromEntries(CAP_AXES.map((axis) => [capAxisAttr(axis), value[axis]])) as Readonly<
+    Record<`data-czap-${CapAxis}`, string>
   >;
 }
 

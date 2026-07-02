@@ -535,7 +535,13 @@ describe('astro directive branch coverage', () => {
         throw new Error('network boom');
       }) as never,
     );
-    gpuDirective(async () => {}, {}, canvas);
+    // A fresh host: re-booting the SAME element is now an idempotent no-op
+    // (bootDirectiveEntry guards double-boot), so the throw path needs an unbound
+    // canvas to activate.
+    const throwingCanvas = makeEl('canvas', {
+      'data-czap-shader-src': '/shader.frag',
+    }) as HTMLCanvasElement;
+    gpuDirective(async () => {}, {}, throwingCanvas);
     await Promise.resolve();
     await Promise.resolve();
 

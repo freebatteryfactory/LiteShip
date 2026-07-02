@@ -152,4 +152,51 @@ describe('Astro directive boot scanner', () => {
 
     expect(events.some((event) => event.code === 'directive-attribute-requires-marker:data-czap-boundary')).toBe(false);
   });
+
+  test('bootDirectiveEntry initializes once; a second call for the same directive is a no-op', async () => {
+    // Guards the double-boot: the scanner can activate an implicit-attribute element
+    // before Astro hydrates the same node as an island. Both paths route through
+    // bootDirectiveEntry, and the runtime initializers are not idempotent (a second
+    // call opens a duplicate EventSource / worker / shader session).
+    const { bootDirectiveEntry, boundNames } = await import('../../../packages/astro/src/runtime/directive-bound.js');
+
+    const el = document.createElement('div');
+    let inits = 0;
+    const init = (): void => {
+      inits += 1;
+    };
+
+    bootDirectiveEntry('stream', () => Promise.resolve(), {}, el, init);
+    bootDirectiveEntry('stream', () => Promise.resolve(), {}, el, init);
+
+    expect(inits).toBe(1);
+    expect(boundNames(el).has('stream')).toBe(true);
+  });
+
+  test('bootDirectiveEntry warns once when a different directive already claimed the element', async () => {
+    const { Diagnostics } = await import('@czap/core');
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.clearOnce();
+    Diagnostics.setSink(sink);
+
+    const { bootDirectiveEntry } = await import('../../../packages/astro/src/runtime/directive-bound.js');
+
+    const el = document.createElement('div');
+    let satelliteInits = 0;
+    let streamInits = 0;
+    bootDirectiveEntry('satellite', () => Promise.resolve(), {}, el, () => {
+      satelliteInits += 1;
+    });
+    bootDirectiveEntry('stream', () => Promise.resolve(), {}, el, () => {
+      streamInits += 1;
+    });
+
+    // The collision does not block either activation ...
+    expect(satelliteInits).toBe(1);
+    expect(streamInits).toBe(1);
+    // ... but it is loud, once, with an order-independent dedup code.
+    const collisions = events.filter((event) => event.code === 'directive-collision:satellite+stream');
+    expect(collisions).toHaveLength(1);
+    expect(collisions[0]?.message).toContain('Fix:');
+  });
 });

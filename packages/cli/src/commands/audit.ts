@@ -99,7 +99,10 @@ export async function audit(
     emit(receipt);
   }
 
-  const wantPretty = opts.pretty ?? Boolean(process.stderr.isTTY);
+  // Under `--findings` the receipt JSON already goes to stderr and each finding to
+  // stdout as NDJSON, so the pretty per-finding lines would duplicate them in a TTY.
+  // Keep stderr clean there unless `--pretty` is explicit.
+  const wantPretty = opts.pretty ?? (opts.findings ? false : Boolean(process.stderr.isTTY));
   if (wantPretty) {
     process.stderr.write(
       `audit: ${payload.errorCount} error(s), ${payload.warningCount} warning(s), ${payload.infoCount} info — ` +

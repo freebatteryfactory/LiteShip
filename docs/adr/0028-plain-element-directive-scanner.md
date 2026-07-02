@@ -27,7 +27,7 @@ entrypoint marks its host `data-czap-directive-bound` on hydrate — so the scan
 islands Astro already ran (idempotent, no double-boot).
 
 Attributes that are ALSO payloads for other surfaces — `data-czap-boundary`, which feeds
-worker/GPU surfaces — are not auto-booted; they stay explicit (`data-czap-directive` /
+satellite/worker surfaces — are not auto-booted; they stay explicit (`data-czap-directive` /
 `Satellite` / `satelliteAttrs`). When the scanner finds one bare, it emits a
 `Diagnostics.warnOnce` naming the fix, so the deliberate skip is loud instead of another
 silent no-op.
@@ -54,7 +54,7 @@ silent no-op.
 ## Rejected alternatives
 
 - **Docs-only correction ("directives only work on islands").** Documents the footgun instead of removing it; leaves the silent no-op — fails the make-it-loud bar.
-- **Auto-boot every `data-czap-*`, including `data-czap-boundary`.** Boots a worker/GPU payload as if it were a directive — wrong intent, and unbounded.
+- **Auto-boot every `data-czap-*`, including `data-czap-boundary`.** Boots a satellite/worker payload as if it were a directive — wrong intent, and unbounded.
 - **Require `data-czap-directive` on every plain element.** Kills the ergonomic win (`client:stream` on a `<div>` should just work); keep explicit only where the attribute is genuinely multi-surface.
 - **Re-list the directive attributes inline in the scanner and this ADR.** A hand-maintained mirror that drifts when a directive is added — the registry-derived selector removes the second copy.
 
