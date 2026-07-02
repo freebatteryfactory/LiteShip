@@ -8,6 +8,15 @@ Shared vocabulary (LiteShip / CZAP / `@czap/*`): [GLOSSARY.md](./GLOSSARY.md).
 
 ---
 
+## Four layers
+
+Docs sort into four layers by how deep you're going. Stop at the one that answers you.
+
+1. **Use** — build a page. [GETTING-STARTED.md](./GETTING-STARTED.md) · `npm create liteship`.
+2. **Author** — tokens, styles, themes, casts. [AUTHORING-MODEL.md](./AUTHORING-MODEL.md).
+3. **Extend / host** — Astro, Vite, edge, workers, AI. [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md) · [HOSTING.md](./HOSTING.md).
+4. **Engine room** — the IR, the package DAG, the gauntlet. [ARCHITECTURE.md](./ARCHITECTURE.md) · [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Start Here
 
 ### If the question is "What is LiteShip?"
