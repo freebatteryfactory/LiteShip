@@ -6,7 +6,7 @@ import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
 import { createStreamScheduler } from './stream-session.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 type Locator =
   | { readonly type: 'slot'; readonly value: string }

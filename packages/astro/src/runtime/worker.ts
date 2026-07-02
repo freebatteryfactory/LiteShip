@@ -11,7 +11,7 @@ import {
   type BoundaryStateDetail,
   type WgslUniformValue,
 } from './boundary.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 function sameStringRecord(left: Record<string, string>, right: Record<string, string>): boolean {
   const leftKeys = Object.keys(left);

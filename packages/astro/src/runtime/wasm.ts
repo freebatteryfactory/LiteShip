@@ -2,7 +2,7 @@ import { WASMDispatch, Diagnostics } from '@czap/core';
 import { writeRuntimeGlobal } from './globals.js';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
-import { bootDirectiveEntry } from './directive-boot.js';
+import { bootDirectiveEntry } from './directive-bound.js';
 
 const ROOT_WASM_ATTR = 'data-czap-wasm-url';
 

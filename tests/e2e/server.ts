@@ -56,7 +56,21 @@ async function buildBundle(entry: string): Promise<string> {
   });
 
   const output = Array.isArray(result) ? result[0] : result;
-  const chunk = output.output.find((o: { type: string }) => o.type === 'chunk');
+  const chunks = output.output.filter((o: { type: string }) => o.type === 'chunk');
+  // This server serves ONE file per entry. If a fixture's import graph pulls in a
+  // dynamic import(), Vite code-splits into sibling chunks this server never serves;
+  // the entry's static imports of them 404 in the browser and the bundle never runs
+  // (globals like __streamPromise silently stay undefined). Fail LOUD at build.
+  if (chunks.length > 1) {
+    throw new Error(
+      `E2E bundle "${entry}" code-split into ${chunks.length} chunks (` +
+        chunks.map((c: { fileName: string }) => c.fileName).join(', ') +
+        `). E2E lib bundles must be a single self-contained chunk — a fixture import introduced a ` +
+        `dynamic import(). Fix: import shared primitives from a leaf module without dynamic import() ` +
+        `(e.g. './directive-bound.js', not './directive-boot.js').`,
+    );
+  }
+  const chunk = chunks[0];
   if (!chunk || chunk.type !== 'chunk') throw new Error('No bundle output');
   return chunk.code;
 }
@@ -117,9 +131,7 @@ const server = createServer(async (req, res) => {
   // The built HTML references its hashed assets root-absolute (/_astro/*),
   // so that prefix maps into the same dist.
   if (path === '/astro-example' || path.startsWith('/astro-example/') || path.startsWith('/_astro/')) {
-    const sub = path.startsWith('/_astro/')
-      ? path.slice(1)
-      : path.replace(/^\/astro-example\/?/, '') || 'index.html';
+    const sub = path.startsWith('/_astro/') ? path.slice(1) : path.replace(/^\/astro-example\/?/, '') || 'index.html';
     const astroPath = resolve(ASTRO_DIST, sub);
     // Containment via path.relative, not a string prefix — a prefix check
     // admits sibling dirs like dist-evil and traversal that resolves back
