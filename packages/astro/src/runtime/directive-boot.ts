@@ -85,12 +85,16 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
-  // CSS.escape is unnecessary: both selectors are built from the fixed
-  // DirectiveName union, never from page content.
+// CSS.escape is unnecessary: every selector is built from the fixed DirectiveName
+// union, never from page content.
+function directiveSelector(name: DirectiveName): string {
   const canonical = `[data-czap-directive~="${name}"]`;
   const legacy = `[client\\:${name}]`;
-  const selector = [canonical, legacy, ...implicitDirectiveSelectors(name)].join(',');
+  return [canonical, legacy, ...implicitDirectiveSelectors(name)].join(',');
+}
+
+function collectMarkedElements(name: DirectiveName, root: ParentNode): HTMLElement[] {
+  const selector = directiveSelector(name);
   const matches = Array.from(root.querySelectorAll<HTMLElement>(selector));
   // querySelectorAll only sees descendants; a marked element passed AS the
   // scan root (e.g. a freshly swapped-in fragment) must activate too.
@@ -186,11 +190,28 @@ export async function scanAndBootDirectives(
       if (boundNames(element).has(name)) {
         continue;
       }
+      // Directive COLLISION (marker-based, so it fires even for a directive whose
+      // own tier/capability gate no-ops before it ever boots): if this element ALSO
+      // carries a marker for another ENABLED directive, warn -- each directive takes
+      // over the host, so two on one element silently fight and one loses.
+      const colliding = [...enabledSet].filter((other) => other !== name && element.matches(directiveSelector(other)));
+      if (colliding.length > 0) {
+        // Sort the conflicting names ONCE so the dedup `code` is order-independent.
+        const conflicting = [...colliding, name].sort();
+        Diagnostics.warnOnce({
+          source: 'czap/astro.directive-boot',
+          code: `directive-collision:${conflicting.join('+')}`,
+          message:
+            `Element carries conflicting czap directives (${conflicting.join(', ')}) -- ` +
+            `each directive takes over the element, so they collide and one silently loses ` +
+            `(e.g. a satellite consumes the node a GPU shader needs). ` +
+            `Fix: put each directive on its own element.`,
+        });
+      }
       // Boot through the shared directive entry, which owns the idempotence guard
-      // AND the collision warning -- so Astro's island hydration of the same element
-      // cannot double-boot it, and two directives on one host still warn. A failed
-      // activation unmarks below so a later re-scan (astro:after-swap) can retry
-      // after a transient chunk-load error.
+      // (so Astro's island hydration of the same element cannot double-boot it). A
+      // failed activation unmarks below so a later re-scan (astro:after-swap) can
+      // retry after a transient chunk-load error.
       activations.push(
         LOADERS[name]()
           .then((mod) => {
