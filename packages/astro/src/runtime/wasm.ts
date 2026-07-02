@@ -91,6 +91,6 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
 export const wasmDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
   bootDirectiveEntry('wasm', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
     void loadWasmRuntime(runtimeEl);
-    runtimeLoad();
+    void runtimeLoad();
   });
 };

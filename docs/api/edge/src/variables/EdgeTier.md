@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L131)
+Defined in: [edge/src/edge-tier.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L130)
 
 Edge tier detection namespace.
 
@@ -66,7 +66,7 @@ tierDataAttributes(result)
 
 ### tierDataAttributesMap
 
-> **tierDataAttributesMap**: (`result`) => `Record`\<`` `data-czap-${CapAxis}` ``, `string`\>
+> **tierDataAttributesMap**: (`result`) => `Readonly`\<`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>\>
 
 Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every CAP_AXES axis).
 
@@ -87,7 +87,7 @@ point of exposing it alongside the pre-serialized string.
 
 #### Returns
 
-`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>
+`Readonly`\<`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>\>
 
 #### Example
 

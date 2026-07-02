@@ -181,6 +181,40 @@ describe('collectBoundaryManifest', () => {
     expect(restored!.glsl).toEqual(withGlsl!.glsl);
   });
 
+  test('@wgsl parses the generic vec2<f32>(...) form and drops a malformed vector loudly', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(
+      srcDir,
+      'styles.css',
+      `
+@quantize viewport {
+  compact {
+    @wgsl {
+      res: vec2<f32>(1, 2);
+      bad: vec3f(1, 2);
+    }
+  }
+}
+`,
+    );
+
+    const { manifest, events } = await captureDiagnosticsAsync(async ({ events: captured }) => ({
+      manifest: await collectBoundaryManifest(root),
+      events: [...captured],
+    }));
+
+    const withWgsl = manifest['viewport']!.outputs.find((output) => output.wgsl);
+    // The generic constructor's declared type (`<f32>`) must NOT leak into the
+    // numeric scan: vec2<f32>(1, 2) is [1, 2], never [2, 32, 1, 2].
+    expect(withWgsl!.wgsl!.bindingValues['res']).toEqual([1, 2]);
+    // A component count that disagrees with the declared vecN (vec3f with 2 args)
+    // is dropped, not silently reshaped -- and the drop is loud.
+    expect(withWgsl!.wgsl!.bindingValues).not.toHaveProperty('bad');
+    expect(events.some((event) => event.code === 'wgsl-cast-value-malformed:bad')).toBe(true);
+  });
+
   test('@wgsl blocks parse scalar and vec2/vec3/vec4 values into manifest stateBindings', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');

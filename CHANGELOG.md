@@ -30,7 +30,7 @@ reaches GLSL parity.
   `client:llm` / `client:gpu` / `client:wasm` / `client:graph` now activate on
   plain elements, not only framework islands, via a scanner whose selectors derive
   from `DIRECTIVE_ATTRIBUTE_REGISTRY` (a new directive is scannable by construction).
-  A bare `data-czap-boundary` — also a worker/GPU payload — stays explicit and
+  A bare `data-czap-boundary` — also a satellite/worker payload — stays explicit and
   warns once when found bare instead of silently doing nothing. See ADR-0028.
 
 ### Fixed
