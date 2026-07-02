@@ -6,7 +6,7 @@
 
 # Interface: WGSLBinding
 
-Defined in: [compiler/src/wgsl.ts:37](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L37)
+Defined in: [compiler/src/wgsl.ts:44](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L44)
 
 A single `@group(G) @binding(B) var<uniform> …` declaration.
 
@@ -16,7 +16,7 @@ A single `@group(G) @binding(B) var<uniform> …` declaration.
 
 > `readonly` **binding**: `number`
 
-Defined in: [compiler/src/wgsl.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L41)
+Defined in: [compiler/src/wgsl.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L48)
 
 Binding index within the group.
 
@@ -26,7 +26,7 @@ Binding index within the group.
 
 > `readonly` **group**: `number`
 
-Defined in: [compiler/src/wgsl.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L39)
+Defined in: [compiler/src/wgsl.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L46)
 
 Bind group index.
 
@@ -36,7 +36,7 @@ Bind group index.
 
 > `readonly` **name**: `string`
 
-Defined in: [compiler/src/wgsl.ts:43](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L43)
+Defined in: [compiler/src/wgsl.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L50)
 
 Binding variable name.
 
@@ -46,6 +46,6 @@ Binding variable name.
 
 > `readonly` **type**: `string`
 
-Defined in: [compiler/src/wgsl.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L45)
+Defined in: [compiler/src/wgsl.ts:52](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L52)
 
 Resolved primitive or struct type.

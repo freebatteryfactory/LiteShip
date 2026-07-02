@@ -56,6 +56,8 @@ and per-bearing values into **cast** output (CSS, GLSL, WGSL, ARIA, AI, …).
 - [GLSLType](type-aliases/GLSLType.md)
 - [WGSLStates](type-aliases/WGSLStates.md)
 - [WGSLType](type-aliases/WGSLType.md)
+- [WGSLUniformValue](type-aliases/WGSLUniformValue.md)
+- [WGSLUniformVector](type-aliases/WGSLUniformVector.md)
 
 ## Variables
 

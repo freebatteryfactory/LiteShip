@@ -6,7 +6,7 @@
 
 # Interface: BoundaryCache
 
-Defined in: [edge/src/kv-cache.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L123)
+Defined in: [edge/src/kv-cache.ts:130](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L130)
 
 Content-addressed cache for boundary compilation results keyed by
 tier combination.
@@ -17,7 +17,7 @@ tier combination.
 
 > **getCompiledOutputs**(`boundaryId`, `tierResult`, `qualifier?`, `themeFp?`): `Promise`\<[`CompiledOutputs`](CompiledOutputs.md) \| `null`\>
 
-Defined in: [edge/src/kv-cache.ts:132](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L132)
+Defined in: [edge/src/kv-cache.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L139)
 
 `qualifier` joins the key when two NAMES share one boundary
 `ContentAddress` but carry different compiled CSS (the same
@@ -54,7 +54,7 @@ themes (a per-request theme is a real input to the cached CSS).
 
 > **invalidateByPath**(`boundaryId`): `Promise`\<`number`\>
 
-Defined in: [edge/src/kv-cache.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L154)
+Defined in: [edge/src/kv-cache.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L161)
 
 Active purge by content address: delete every cached tier × theme variant of
 one boundary (the passive answer is to mint a new `ContentAddress` and wait
@@ -77,7 +77,7 @@ it emits a diagnostic and returns 0. Resolves to the number of keys deleted.
 
 > **invalidateByTag**(`tag`): `Promise`\<`number`\>
 
-Defined in: [edge/src/kv-cache.ts:164](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L164)
+Defined in: [edge/src/kv-cache.ts:171](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L171)
 
 Active purge by tag (Astro 7 `Astro.cache` tag parity): delete every entry
 stored with `tag` via [putCompiledOutputs](#putcompiledoutputs)'s `tags`, across all of their
@@ -102,7 +102,7 @@ diagnostic and returns 0. Resolves to the number of keys deleted.
 
 > **putCompiledOutputs**(`boundaryId`, `tierResult`, `outputs`, `qualifier?`, `themeFp?`, `tags?`): `Promise`\<`void`\>
 
-Defined in: [edge/src/kv-cache.ts:139](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L139)
+Defined in: [edge/src/kv-cache.ts:146](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/kv-cache.ts#L146)
 
 #### Parameters
 

@@ -44,7 +44,7 @@ Per-boundary outcomes, keyed by name; present with the `boundaries` cache form.
 
 > `readonly` **cacheStatus**: [`EdgeHostCacheStatus`](../type-aliases/EdgeHostCacheStatus.md)
 
-Defined in: [edge/src/host-adapter.ts:225](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L225)
+Defined in: [edge/src/host-adapter.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L232)
 
 Whether boundary outputs came from cache, were computed and stored,
 or caching is off. With multiple boundaries this is the worst case
@@ -89,11 +89,24 @@ Defined in: [edge/src/host-adapter.ts:211](https://github.com/freebatteryfactory
 
 ***
 
+### htmlAttributesMap
+
+> `readonly` **htmlAttributesMap**: `Readonly`\<`Record`\<`string`, `string`\>\>
+
+Defined in: [edge/src/host-adapter.ts:218](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L218)
+
+Spreadable map form of [htmlAttributes](#htmlattributes), keyed by full attribute name
+(`data-czap-<axis>`) and built from the canonical `CAP_AXES` registry, so a
+new axis appears automatically. Astro: `<html {...htmlAttributesMap}>` — a
+consumer that spreads it can never silently miss an axis (vs hand-writing).
+
+***
+
 ### responseHeaders
 
 > `readonly` **responseHeaders**: `object`
 
-Defined in: [edge/src/host-adapter.ts:213](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L213)
+Defined in: [edge/src/host-adapter.ts:220](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/host-adapter.ts#L220)
 
 Response headers to send back so the browser will supply hints next time.
 
