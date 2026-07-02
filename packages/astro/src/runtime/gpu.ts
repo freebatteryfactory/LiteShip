@@ -10,7 +10,7 @@ import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
 import { initWGSLRuntime, warnWebGpuUnavailable } from './wgpu.js';
-import { bootDirectiveEntry } from './directive-bound.js';
+import { bootDirectiveEntry, unmarkBound } from './directive-bound.js';
 
 const DEFAULT_VERTEX_SHADER = `#version 300 es
 precision mediump float;
@@ -656,14 +656,22 @@ void main() {
 
 /** Astro client directive entry that marks the host before starting the GPU runtime. */
 export const gpuDirective = (load: () => Promise<unknown>, opts: Record<string, unknown>, el: HTMLElement): void => {
-  bootDirectiveEntry('gpu', load, opts, el, (runtimeLoad, runtimeOpts, runtimeEl) => {
-    // Astro hands custom client directives their expression on `opts.value`
-    // (`client:gpu={{ force: true }}` -> `{ name: 'gpu', value: { force: true } }`),
-    // matching its built-in directives. The `?? opts` fallback also accepts a value
-    // passed directly (the plain-div boot scanner / unit tests). `{ force: true }`
-    // boots the shader even in low/headless tiers (see the initGPUDirective force
-    // escape hatch).
-    const value = (runtimeOpts?.['value'] ?? runtimeOpts) as Record<string, unknown> | undefined;
+  // Astro hands custom client directives their expression on `opts.value`
+  // (`client:gpu={{ force: true }}` -> `{ name: 'gpu', value: { force: true } }`),
+  // matching its built-in directives. The `?? opts` fallback also accepts a value
+  // passed directly (the plain-div boot scanner / unit tests). `{ force: true }`
+  // boots the shader even in low/headless tiers (see the initGPUDirective force hatch).
+  const value = (opts?.['value'] ?? opts) as Record<string, unknown> | undefined;
+  const forced = value?.['force'] === true || el.hasAttribute('data-czap-gpu-force');
+  // A forced boot must win even when a prior scanner pass already marked the host bound
+  // at a provisional (static/styled) tier, where the shader only deferred to
+  // detect-ready. Clear that bind so the force hatch re-enters the boot instead of
+  // being swallowed by the idempotence guard; initGPUDirective is re-entry-safe (its
+  // own detect-ready upgrade path re-runs it the same way).
+  if (forced) {
+    unmarkBound(el, 'gpu');
+  }
+  bootDirectiveEntry('gpu', load, opts, el, (runtimeLoad, _runtimeOpts, runtimeEl) => {
     initGPUDirective(runtimeLoad, runtimeEl, value);
   });
 };
