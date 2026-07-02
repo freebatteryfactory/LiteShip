@@ -9,11 +9,14 @@
  *   - CSS   — the menu's layout (a stacked rail vs a full row);
  *   - @aria — `aria-expanded`, so assistive tech reads the same truth the pixels do.
  *
- * The <Satellite> shell carries the boundary and joins the authored `@aria` from
- * the build manifest by content address — so `aria-expanded` is SSR'd for first
- * paint and then updated live by the satellite runtime on every crossing. Bare
- * `satelliteAttrs()` would only serialize ARIA you pass by hand; <Satellite> does
- * the manifest join, so the authored @aria below is the single source. No
+ * The <Satellite> shell (inside a real <nav> landmark) carries the boundary and
+ * joins the authored `@aria` from the build manifest by content address — so
+ * `aria-expanded` is SSR'd for first paint and then updated live by the satellite
+ * runtime on every crossing. Bare `satelliteAttrs()` would only serialize ARIA you
+ * pass by hand; <Satellite> does the manifest join, so the authored @aria below is
+ * the single source. First paint is mobile-first (`compact`); the client corrects
+ * layout AND `aria-expanded` together off the SAME `data-czap-state`, so the pixels
+ * and the assistive-tech reading never disagree — even before hydration. No
  * duplicated breakpoint, no JS syncing an attribute to a media query — change the
  * threshold once and BOTH the layout and the semantics follow.
  */
@@ -33,15 +36,18 @@ import { nav } from '../boundaries/nav.boundaries.ts';
       <p>
         Resize the window. The <code>nav</code> boundary drives the menu's layout (CSS) and its
         <code>aria-expanded</code> (accessibility) from the <strong>same</strong> definition —
-        inspect the <code>&lt;nav&gt;</code> and watch <code>aria-expanded</code> flip with the breakpoint.
+        inspect the <code>.menu</code> element inside the <code>&lt;nav&gt;</code> landmark and
+        watch <code>aria-expanded</code> flip with the breakpoint.
       </p>
 
-      <Satellite boundary={nav} initialState="wide" class="menu">
-        <a href="#">Docs</a>
-        <a href="#">Examples</a>
-        <a href="#">Reference</a>
-        <a href="#">Blog</a>
-      </Satellite>
+      <nav aria-label="Primary">
+        <Satellite boundary={nav} initialState="compact" class="menu">
+          <a href="#">Docs</a>
+          <a href="#">Examples</a>
+          <a href="#">Reference</a>
+          <a href="#">Blog</a>
+        </Satellite>
+      </nav>
     </main>
 
     <style>
