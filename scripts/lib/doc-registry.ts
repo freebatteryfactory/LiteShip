@@ -146,7 +146,7 @@ export function renderExamplesBlock(): string {
     { dir: 'showcase', shows: 'The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI' },
     {
       dir: '03-cast-aria',
-      shows: 'One boundary cast to CSS **and** `@aria` from a single `@quantize` block — define-once-cast-many, for accessibility',
+      shows: 'One boundary cast to CSS **and** ARIA from a single `@quantize` block — define-once-cast-many, for accessibility',
     },
     {
       dir: '05-ai-patch-refused',

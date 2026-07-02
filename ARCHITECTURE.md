@@ -98,8 +98,6 @@ You don't install these directly — they back the CLI, the MCP server, and the 
 | [`@czap/gauntlet`](./packages/gauntlet) | Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected) |
 <!-- END PACKAGES -->
 
-Plus `crates/czap-compute/`: a Rust `#![no_std]` WASM crate (spring, boundary, blend kernels) for the working-line compute escape hatch.
-
 ## Graceful degradation
 
 Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`packages/core/src/compositor.ts:146`), `Boundary.evaluate` past 4 thresholds (`packages/core/src/boundary.ts:86`).
