@@ -1,0 +1,67 @@
+---
+/**
+ * 03 — Cast the same state to ARIA, not just CSS.
+ *
+ * The define-once-cast-many thesis, applied to accessibility. ONE boundary
+ * (`nav`) quantizes viewport width into `compact` / `wide`. The @quantize block
+ * below casts those same states to TWO targets from a single source:
+ *
+ *   - CSS   — the menu's layout (a stacked rail vs a full row);
+ *   - @aria — the disclosure's `aria-expanded`, so assistive tech reads the same
+ *     truth the pixels do.
+ *
+ * No duplicated breakpoint, no JS syncing an attribute to a media query. Change
+ * the threshold once and BOTH the layout and the semantics follow.
+ */
+import { satelliteAttrs } from '@czap/astro';
+import { nav } from '../boundaries/nav.boundaries.ts';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiteShip — one boundary, cast to CSS and ARIA</title>
+  </head>
+  <body>
+    <main>
+      <h1>One boundary, cast to CSS <em>and</em> ARIA</h1>
+      <p>
+        Resize the window. The <code>nav</code> boundary drives the menu's layout (CSS) and its
+        <code>aria-expanded</code> (accessibility) from the <strong>same</strong> definition —
+        inspect the <code>&lt;nav&gt;</code> and watch <code>aria-expanded</code> flip with the breakpoint.
+      </p>
+
+      <nav class="menu" aria-label="Primary" {...satelliteAttrs({ boundary: nav, initialState: 'wide' })}>
+        <a href="#">Docs</a>
+        <a href="#">Examples</a>
+        <a href="#">Reference</a>
+        <a href="#">Blog</a>
+      </nav>
+    </main>
+
+    <style>
+      body { font: 16px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1.25rem; }
+      h1 { font-size: 1.5rem; }
+      code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+      .menu { display: flex; border: 1px solid color-mix(in oklab, Canvas 75%, CanvasText); border-radius: 0.6rem; padding: 0.75rem 1rem; }
+      .menu a { text-decoration: none; }
+
+      /* ONE @quantize block casts the `nav` states to CSS *and* @aria. */
+      @quantize nav {
+        compact {
+          /* CSS: stack into a compact rail. */
+          .menu { flex-direction: column; gap: 0.4rem; }
+          /* ARIA: the disclosure reads as collapsed to assistive tech. */
+          @aria { aria-expanded: "false"; }
+        }
+        wide {
+          /* CSS: a full horizontal menu. */
+          .menu { flex-direction: row; gap: 1.25rem; }
+          /* ARIA: expanded — the same truth as the pixels, from the same source. */
+          @aria { aria-expanded: "true"; }
+        }
+      }
+    </style>
+  </body>
+</html>

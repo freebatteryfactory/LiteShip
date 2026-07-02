@@ -145,6 +145,10 @@ export function renderExamplesBlock(): string {
     { dir: 'tutorial', shows: 'The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming' },
     { dir: 'showcase', shows: 'The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI' },
     {
+      dir: '03-cast-aria',
+      shows: 'One boundary cast to CSS **and** `@aria` from a single `@quantize` block — define-once-cast-many, for accessibility',
+    },
+    {
       dir: '05-ai-patch-refused',
       shows: 'The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph',
     },

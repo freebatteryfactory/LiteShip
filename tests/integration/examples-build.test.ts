@@ -96,6 +96,7 @@ describe.sequential('examples build', () => {
     expect(buildable).toContain('tutorial');
     expect(buildable).toContain('showcase');
     expect(buildable).toContain('cloudflare-astro');
+    expect(buildable).toContain('03-cast-aria');
     expect(buildable).toContain('05-ai-patch-refused');
   });
 
