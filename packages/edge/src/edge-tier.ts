@@ -65,7 +65,7 @@ function detectTier(headers: Headers | ClientHintsHeaders): EdgeTierResult {
  * spreadable form of {@link tierDataAttributes}.
  *
  * Keyed by the FULL attribute name (`data-czap-<axis>`), built by iterating the
- * canonical {@link CAP_AXES} registry, so a newly-added capability axis appears
+ * canonical CAP_AXES registry, so a newly-added capability axis appears
  * automatically. A consumer that spreads this map (`<html {...map}>`) can never
  * silently MISS an axis the way a hand-written attribute list does — the whole
  * point of exposing it alongside the pre-serialized string.
@@ -135,7 +135,7 @@ export const EdgeTier = {
   tierFromParsed,
   /** Render an `EdgeTierResult` into a `data-czap-*` attribute STRING for the root HTML element. */
   tierDataAttributes,
-  /** Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every {@link CAP_AXES} axis). */
+  /** Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every CAP_AXES axis). */
   tierDataAttributesMap,
 } as const;
 

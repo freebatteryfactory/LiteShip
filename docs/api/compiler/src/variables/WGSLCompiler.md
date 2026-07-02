@@ -8,7 +8,7 @@
 
 > `const` **WGSLCompiler**: `object`
 
-Defined in: [compiler/src/wgsl.ts:270](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L270)
+Defined in: [compiler/src/wgsl.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/wgsl.ts#L290)
 
 WGSL compiler namespace.
 
@@ -22,7 +22,7 @@ state index values.
 
 > **compile**: \<`B`\>(`boundary`, `states`) => [`WGSLCompileResult`](../interfaces/WGSLCompileResult.md)
 
-Compile a boundary definition and per-state numeric value maps into
+Compile a boundary definition and per-state scalar/vector value maps into
 WGSL struct definitions, `@group/@binding` declarations, and state constants.
 
 #### Type Parameters
@@ -41,9 +41,9 @@ The boundary definition with states
 
 ##### states
 
-`{ [S in string]: Record<string, number> }`
+`{ [S in string]: Record<string, WGSLUniformValue> }`
 
-Per-state numeric value maps
+Per-state scalar/vector value maps
 
 #### Returns
 

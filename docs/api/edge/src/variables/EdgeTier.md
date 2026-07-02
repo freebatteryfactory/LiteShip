@@ -8,7 +8,7 @@
 
 > `const` **EdgeTier**: `object`
 
-Defined in: [edge/src/edge-tier.ts:103](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L103)
+Defined in: [edge/src/edge-tier.ts:131](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L131)
 
 Edge tier detection namespace.
 
@@ -41,9 +41,11 @@ and the same pure tier mapping functions used on the client.
 
 > **tierDataAttributes**: (`result`) => `string`
 
-Render an `EdgeTierResult` into `data-czap-*` attributes for the root HTML element.
+Render an `EdgeTierResult` into a `data-czap-*` attribute STRING for the root HTML element.
 
-Generate HTML data attribute string for injection into the `<html>` element.
+Generate the HTML data-attribute STRING for injection into the `<html>`
+element. Serialized from [tierDataAttributesMap](#tierdataattributesmap), so the string and
+spreadable-map forms can never disagree.
 
 #### Parameters
 
@@ -60,6 +62,39 @@ Generate HTML data attribute string for injection into the `<html>` element.
 ```
 tierDataAttributes(result)
 // => 'data-czap-tier="reactive" data-czap-motion="animations" data-czap-design="enhanced"'
+```
+
+### tierDataAttributesMap
+
+> **tierDataAttributesMap**: (`result`) => `Record`\<`` `data-czap-${CapAxis}` ``, `string`\>
+
+Structured, spreadable `data-czap-*` map for the root HTML element (auto-includes every CAP_AXES axis).
+
+Structured `data-czap-*` attribute map for the root `<html>` element — the
+spreadable form of [tierDataAttributes](#tierdataattributes).
+
+Keyed by the FULL attribute name (`data-czap-<axis>`), built by iterating the
+canonical CAP_AXES registry, so a newly-added capability axis appears
+automatically. A consumer that spreads this map (`<html {...map}>`) can never
+silently MISS an axis the way a hand-written attribute list does — the whole
+point of exposing it alongside the pre-serialized string.
+
+#### Parameters
+
+##### result
+
+[`EdgeTierResult`](../interfaces/EdgeTierResult.md)
+
+#### Returns
+
+`Record`\<`` `data-czap-${CapAxis}` ``, `string`\>
+
+#### Example
+
+```ts
+// Astro: <html {...EdgeTier.tierDataAttributesMap(result)}>
+tierDataAttributesMap(result)
+// => { 'data-czap-tier': 'reactive', 'data-czap-motion': 'animations', 'data-czap-design': 'enhanced' }
 ```
 
 ### tierFromParsed

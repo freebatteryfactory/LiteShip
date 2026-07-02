@@ -8,6 +8,6 @@
 
 > **Result** = [`EdgeTierResult`](../../../interfaces/EdgeTierResult.md)
 
-Defined in: [edge/src/edge-tier.ts:114](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L114)
+Defined in: [edge/src/edge-tier.ts:144](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/edge-tier.ts#L144)
 
 Alias for [EdgeTierResult](../../../interfaces/EdgeTierResult.md).

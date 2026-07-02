@@ -20,7 +20,7 @@ Arms:
 - `CSSCompiler`    — boundary + per-state CSS property maps → `@container` rules.
                      Bare properties target `selector` (default `.czap-boundary`).
 - `GLSLCompiler`   — boundary + per-state numeric uniforms → GLSL uniform block.
-- `WGSLCompiler`   — boundary + per-state numeric uniforms → WGSL bindings.
+- `WGSLCompiler`   — boundary + per-state scalar/vector uniforms → WGSL bindings.
 - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
 - `AICompiler`     — an [AIManifestInput](../interfaces/AIManifestInput.md) → tool-call-ready manifest JSON.
 - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.

@@ -6,7 +6,7 @@
 
 # Interface: SatelliteProps
 
-Defined in: [astro/src/Satellite.ts:23](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L23)
+Defined in: [astro/src/Satellite.ts:24](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L24)
 
 Server-render props for a satellite container. Astro components
 typically destructure these and pass them to [satelliteAttrs](../functions/satelliteAttrs.md).
@@ -17,7 +17,7 @@ typically destructure these and pass them to [satelliteAttrs](../functions/satel
 
 > `readonly` `optional` **aria?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `string`\>\>\>\>
 
-Defined in: [astro/src/Satellite.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L47)
+Defined in: [astro/src/Satellite.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L48)
 
 Authored per-state ARIA/data attributes (`@aria` blocks) for this boundary,
 keyed by state then attribute. The `<Satellite>` component supplies this
@@ -31,7 +31,7 @@ attributes are SSR'd onto the element; the client updates them live.
 
 > `readonly` `optional` **boundary?**: [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>
 
-Defined in: [astro/src/Satellite.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L25)
+Defined in: [astro/src/Satellite.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L26)
 
 Boundary whose state the satellite tracks.
 
@@ -41,7 +41,7 @@ Boundary whose state the satellite tracks.
 
 > `readonly` `optional` **class?**: `string`
 
-Defined in: [astro/src/Satellite.ts:29](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L29)
+Defined in: [astro/src/Satellite.ts:30](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L30)
 
 Extra CSS class names to merge with `czap-satellite`.
 
@@ -51,7 +51,7 @@ Extra CSS class names to merge with `czap-satellite`.
 
 > `readonly` `optional` **component?**: [`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Component/type-aliases/Shape.md)\<[`Shape`](https://github.com/freebatteryfactory/LiteShip/blob/main/docs/api/core/src/namespaces/Boundary/type-aliases/Shape.md)\<`string`, readonly \[`string`, `string`\]\>, readonly `string`[]\>
 
-Defined in: [astro/src/Satellite.ts:27](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L27)
+Defined in: [astro/src/Satellite.ts:28](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L28)
 
 Component definition used to identify the satellite on the client.
 
@@ -61,7 +61,7 @@ Component definition used to identify the satellite on the client.
 
 > `readonly` `optional` **directive?**: `false` \| `DirectiveName`
 
-Defined in: [astro/src/Satellite.ts:39](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L39)
+Defined in: [astro/src/Satellite.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L40)
 
 Which client directive the boot scanner should activate for this
 satellite (serialised into `data-czap-directive`). Defaults to
@@ -75,7 +75,7 @@ for a CSS-only shell that ships zero runtime.
 
 > `readonly` `optional` **glsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
 
-Defined in: [astro/src/Satellite.ts:56](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L56)
+Defined in: [astro/src/Satellite.ts:57](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L57)
 
 Authored per-state GLSL uniform values (`@glsl` blocks) for this boundary,
 keyed by state then `u_*` uniform name. The `<Satellite>` component supplies
@@ -90,7 +90,7 @@ updates uniforms live on every crossing — the GLSL analog of `aria`.
 
 > `readonly` `optional` **glslDeclarations?**: `string`
 
-Defined in: [astro/src/Satellite.ts:79](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L79)
+Defined in: [astro/src/Satellite.ts:80](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L80)
 
 Emitted GLSL preamble (`GLSLCompileResult.declarations`: `#define STATE_*` +
 `uniform <type> u_*;` lines) for this boundary's `@glsl` cast. The
@@ -109,7 +109,7 @@ truth (the compiler) produces both the declarations and the per-state values.
 
 > `readonly` `optional` **initialState?**: `string`
 
-Defined in: [astro/src/Satellite.ts:31](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L31)
+Defined in: [astro/src/Satellite.ts:32](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L32)
 
 Server-side initial state (serialised into `data-czap-state`).
 
@@ -117,9 +117,9 @@ Server-side initial state (serialised into `data-czap-state`).
 
 ### wgsl?
 
-> `readonly` `optional` **wgsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `number`\>\>\>\>
+> `readonly` `optional` **wgsl?**: `Readonly`\<`Record`\<`string`, `Readonly`\<`Record`\<`string`, `WgslUniformValue`\>\>\>\>
 
-Defined in: [astro/src/Satellite.ts:66](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L66)
+Defined in: [astro/src/Satellite.ts:67](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L67)
 
 Authored per-state WGSL uniform binding values (`@wgsl` blocks) for this
 boundary, keyed by state then bare snake_case field name (e.g.
@@ -135,7 +135,7 @@ SSR-frozen.
 
 > `readonly` `optional` **wgslDeclarations?**: `string`
 
-Defined in: [astro/src/Satellite.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L88)
+Defined in: [astro/src/Satellite.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/Satellite.ts#L89)
 
 Emitted WGSL preamble (`WGSLCompileResult.declarations`: state consts + the
 uniform struct + `@group(0) @binding(0)`) for this boundary's `@wgsl` cast.
