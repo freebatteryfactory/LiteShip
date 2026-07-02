@@ -20,6 +20,8 @@ afterEach(() => {
   vi.doUnmock('../../../packages/astro/src/runtime/llm.js');
   vi.doUnmock('../../../packages/astro/src/runtime/stream.js');
   vi.doUnmock('../../../packages/astro/src/runtime/wasm.js');
+  vi.doUnmock('../../../packages/astro/src/client-directives/satellite.js');
+  vi.doUnmock('../../../packages/astro/src/client-directives/gpu.js');
 });
 
 describe('Astro directive boot scanner', () => {
@@ -173,29 +175,27 @@ describe('Astro directive boot scanner', () => {
     expect(boundNames(el).has('stream')).toBe(true);
   });
 
-  test('bootDirectiveEntry warns once when a different directive already claimed the element', async () => {
+  test('scanAndBootDirectives warns once when one element carries two enabled directive markers', async () => {
+    // Collision is marker-based and detected at scan time, so it fires even for a
+    // directive whose own tier gate would no-op it before boot. Mock the entrypoints
+    // so the warning is isolated from real directive side effects.
+    vi.doMock('../../../packages/astro/src/client-directives/satellite.js', () => ({ default: vi.fn() }));
+    vi.doMock('../../../packages/astro/src/client-directives/gpu.js', () => ({ default: vi.fn() }));
+
     const { Diagnostics } = await import('@czap/core');
     const { sink, events } = Diagnostics.createBufferSink();
     Diagnostics.clearOnce();
     Diagnostics.setSink(sink);
 
-    const { bootDirectiveEntry } = await import('../../../packages/astro/src/runtime/directive-bound.js');
+    const { scanAndBootDirectives } = await import('../../../packages/astro/src/runtime/directive-boot.js');
 
     const el = document.createElement('div');
-    let satelliteInits = 0;
-    let streamInits = 0;
-    bootDirectiveEntry('satellite', () => Promise.resolve(), {}, el, () => {
-      satelliteInits += 1;
-    });
-    bootDirectiveEntry('stream', () => Promise.resolve(), {}, el, () => {
-      streamInits += 1;
-    });
+    el.setAttribute('data-czap-directive', 'satellite gpu');
+    document.body.appendChild(el);
 
-    // The collision does not block either activation ...
-    expect(satelliteInits).toBe(1);
-    expect(streamInits).toBe(1);
-    // ... but it is loud, once, with an order-independent dedup code.
-    const collisions = events.filter((event) => event.code === 'directive-collision:satellite+stream');
+    await scanAndBootDirectives(['satellite', 'gpu']);
+
+    const collisions = events.filter((event) => event.code === 'directive-collision:gpu+satellite');
     expect(collisions).toHaveLength(1);
     expect(collisions[0]?.message).toContain('Fix:');
   });
