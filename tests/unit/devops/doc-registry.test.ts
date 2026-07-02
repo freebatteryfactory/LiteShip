@@ -27,18 +27,19 @@ import { renderBenchBlock } from '../../../scripts/lib/bench-snapshot.js';
 // Normalize CRLF so a Windows checkout (autocrlf) doesn't fail the block match
 // against the `\n`-joined render output.
 const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
+const ARCHITECTURE = readFileSync(resolve(REPO_ROOT, 'ARCHITECTURE.md'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Extract the inner content of a `<!-- BEGIN NAME ... --> ... <!-- END NAME -->` block. */
-function blockInner(name: string): string {
+function blockInner(name: string, source: string = README): string {
   const re = new RegExp(`<!-- BEGIN ${name}[^]*?-->\\n([^]*?)\\n<!-- END ${name} -->`);
-  const m = README.match(re);
-  if (!m) throw new Error(`README block "${name}" not found`);
+  const m = source.match(re);
+  if (!m) throw new Error(`block "${name}" not found`);
   return m[1]!;
 }
 
-describe('doc-registry — generated README blocks match their source of truth', () => {
-  it('the PACKAGES block matches a regenerate (run `pnpm run docs:gen`)', () => {
-    expect(blockInner('PACKAGES')).toBe(renderPackagesBlock());
+describe('doc-registry — generated blocks match their source of truth', () => {
+  it('the PACKAGES block (in ARCHITECTURE.md) matches a regenerate (run `pnpm run docs:gen`)', () => {
+    expect(blockInner('PACKAGES', ARCHITECTURE)).toBe(renderPackagesBlock());
   });
   it('the EXAMPLES block matches a regenerate (run `pnpm run docs:gen`)', () => {
     expect(blockInner('EXAMPLES')).toBe(renderExamplesBlock());
