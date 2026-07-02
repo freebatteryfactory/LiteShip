@@ -54,7 +54,8 @@ export interface CollectBoundaryManifestOptions {
   readonly container?: string;
 }
 
-interface ProjectScan {
+/** The set of scannable files (boundary modules + stylesheets) from one project walk. */
+export interface ProjectScan {
   readonly boundaryFiles: readonly string[];
   readonly cssFiles: readonly string[];
 }
@@ -69,7 +70,12 @@ function isBoundaryModuleFile(fileName: string): boolean {
   return fileName === 'boundaries.ts' || fileName.endsWith('.boundaries.ts');
 }
 
-function scanProject(projectRoot: string): ProjectScan {
+/**
+ * Walk the project once, collecting boundary-definition modules and stylesheets.
+ * Package-internal (not re-exported from the entry): the Vite plugin shares one scan
+ * across the manifest + definitions derivations instead of walking the tree twice.
+ */
+export function scanProject(projectRoot: string): ProjectScan {
   const boundaryFiles: string[] = [];
   const cssFiles: string[] = [];
   const stack: string[] = [projectRoot];
@@ -177,7 +183,11 @@ async function importBoundaryExports(modulePath: string): Promise<ReadonlyMap<st
   return found;
 }
 
-async function collectBoundaryDefinitionsFromScan(
+/**
+ * Collect boundary definitions over a pre-computed {@link ProjectScan} (shared with the
+ * manifest derivation so the project tree is walked once). Package-internal.
+ */
+export async function collectBoundaryDefinitionsFromScan(
   projectRoot: string,
   scan: ProjectScan,
   options?: Pick<CollectBoundaryManifestOptions, 'boundaryDir'>,
@@ -541,7 +551,20 @@ export async function collectBoundaryManifest(
   projectRoot: string,
   options?: CollectBoundaryManifestOptions,
 ): Promise<BoundaryManifest> {
-  const scan = scanProject(projectRoot);
+  return collectBoundaryManifestFromScan(projectRoot, scanProject(projectRoot), options);
+}
+
+/**
+ * {@link collectBoundaryManifest} over a pre-computed {@link ProjectScan}. Lets the Vite
+ * plugin walk the project tree ONCE and share the scan with
+ * {@link collectBoundaryDefinitionsFromScan}, instead of each derivation re-scanning.
+ * Package-internal (not re-exported from the entry).
+ */
+export async function collectBoundaryManifestFromScan(
+  projectRoot: string,
+  scan: ProjectScan,
+  options?: CollectBoundaryManifestOptions,
+): Promise<BoundaryManifest> {
   const boundaryDefinitions = await collectBoundaryDefinitionsFromScan(projectRoot, scan, {
     boundaryDir: options?.boundaryDir,
   });

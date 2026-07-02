@@ -16,7 +16,12 @@ import type { ContentAddress } from '@czap/core';
 import { Boundary, Diagnostics } from '@czap/core';
 import { createBoundaryCache, enumerateTierKeys, resolveOutputsByTier, tierKey } from '@czap/edge';
 import type { KVNamespace } from '@czap/edge';
-import { collectBoundaryManifest, serializeBoundaryOutput } from '../../../packages/vite/src/boundary-manifest.js';
+import {
+  collectBoundaryManifest,
+  collectBoundaryManifestFromScan,
+  scanProject,
+  serializeBoundaryOutput,
+} from '../../../packages/vite/src/boundary-manifest.js';
 import { plugin } from '../../../packages/vite/src/plugin.js';
 import { loadVirtualModule } from '../../../packages/vite/src/virtual-modules.js';
 
@@ -94,6 +99,24 @@ describe('collectBoundaryManifest', () => {
         '.x { gap: var(--gap); }',
       ].join('\n\n'),
     );
+  });
+
+  test('collectBoundaryManifestFromScan derives over the PASSED scan, not a fresh disk walk', async () => {
+    const root = makeTempDir();
+    const srcDir = join(root, 'src');
+    writeModule(srcDir, 'boundaries.ts', BOUNDARY_MODULE);
+    writeModule(srcDir, 'styles.css', QUANTIZE_CSS);
+
+    // Full walk: viewport carries @quantize outputs from styles.css.
+    const full = await collectBoundaryManifest(root);
+    expect((full['viewport']?.outputs ?? []).length).toBeGreaterThan(0);
+
+    // A scan that OMITS the stylesheet -> the shared-scan variant must reflect it (no
+    // outputs), proving it derives from the PASSED scan and never re-walks disk. If it
+    // ignored the scan and re-scanned, viewport would still pick up styles.css.
+    const scan = scanProject(root);
+    const withoutCss = await collectBoundaryManifestFromScan(root, { ...scan, cssFiles: [] });
+    expect((withoutCss['viewport']?.outputs ?? []).length).toBe(0);
   });
 
   test('@aria blocks compile into CompiledOutputs.aria via the dispatch caster', async () => {
@@ -480,13 +503,19 @@ describe('plugin virtual:czap/boundaries wiring', () => {
     expect(first).toContain(referenceBoundary.id);
     expect(first).not.toBe('export const boundaries = {};');
 
-    // A new definition file appears; hotUpdate must drop the cached
-    // manifest and invalidate the virtual module so importers reload.
+    // A new definition file appears; hotUpdate must drop the cached manifest AND the
+    // shared project scan (its file list changed), and invalidate the virtual module so
+    // importers reload. A newly-appearing file is a `create` in Vite's hotUpdate hook.
     writeModule(srcDir, 'extra.boundaries.ts', BOUNDARY_MODULE.replace('viewport', 'sidebar'));
     const { invalidated, moduleGraph } = makeModuleGraphMock();
-    (vitePlugin.hotUpdate as (this: unknown, options: { file: string; modules: unknown[] }) => unknown).call(
+    (
+      vitePlugin.hotUpdate as (
+        this: unknown,
+        options: { type: string; file: string; modules: unknown[] },
+      ) => unknown
+    ).call(
       { environment: { moduleGraph } },
-      { file: join(srcDir, 'extra.boundaries.ts'), modules: [] },
+      { type: 'create', file: join(srcDir, 'extra.boundaries.ts'), modules: [] },
     );
     expect(invalidated).toContain('\0virtual:czap/boundaries');
 

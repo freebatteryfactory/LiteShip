@@ -24,10 +24,12 @@ import { ValidationError } from '@czap/error';
 import { contentAddressOf } from '@czap/core';
 import type { BoundaryManifest, BoundaryManifestEntry, BoundaryManifestFile } from '@czap/edge';
 import {
-  collectBoundaryDefinitions,
-  collectBoundaryManifest,
+  collectBoundaryDefinitionsFromScan,
+  collectBoundaryManifestFromScan,
+  scanProject,
   serializeBoundaryOutput,
   type BoundaryDefinitionMap,
+  type ProjectScan,
 } from './boundary-manifest.js';
 import { collectTokenManifest, collectThemeManifest } from './token-manifest.js';
 import { resolveVirtualId, loadVirtualModule, type BoundaryAssetUrlMap } from './virtual-modules.js';
@@ -192,10 +194,19 @@ export function plugin(config?: PluginConfig): Plugin {
   let publicBase = '/';
   let boundaryAssetState: Promise<BoundaryAssetState> | null = null;
   let boundaryDefinitions: Promise<BoundaryDefinitionMap> | null = null;
+  // One project tree-walk shared across the manifest + definitions derivations. The
+  // scan is a FILE LIST, so it survives content edits and is only invalidated when a
+  // scannable file is created/deleted (see hotUpdate) -- no re-scan on every save.
+  let projectScan: ProjectScan | null = null;
+
+  function ensureProjectScan(): ProjectScan {
+    if (!projectScan) projectScan = scanProject(projectRoot);
+    return projectScan;
+  }
 
   function ensureBoundaryManifest(): Promise<BoundaryManifest> {
     if (!cache.boundaryManifest.value) {
-      cache.boundaryManifest.value = collectBoundaryManifest(projectRoot, {
+      cache.boundaryManifest.value = collectBoundaryManifestFromScan(projectRoot, ensureProjectScan(), {
         boundaryDir: config?.dirs?.boundary,
         container: config?.quantize?.container,
       });
@@ -205,7 +216,7 @@ export function plugin(config?: PluginConfig): Plugin {
 
   function ensureBoundaryDefinitions(): Promise<BoundaryDefinitionMap> {
     if (!boundaryDefinitions) {
-      boundaryDefinitions = collectBoundaryDefinitions(projectRoot, {
+      boundaryDefinitions = collectBoundaryDefinitionsFromScan(projectRoot, ensureProjectScan(), {
         boundaryDir: config?.dirs?.boundary,
       });
     }
@@ -427,6 +438,18 @@ export function plugin(config?: PluginConfig): Plugin {
       if (!hmrEnabled) return;
 
       const file = options.file;
+
+      // A created/deleted scannable file changes the shared scan's FILE LIST (a content
+      // edit does not), so drop the shared scan only here -- it survives every .css /
+      // .astro save, skipping a redundant project tree-walk.
+      if (options.type === 'create' || options.type === 'delete') {
+        const scannable =
+          file.endsWith('.boundaries.ts') ||
+          file.endsWith('/boundaries.ts') ||
+          file.endsWith('.css') ||
+          file.endsWith('.astro');
+        if (scannable) projectScan = null;
+      }
 
       // Invalidate definition caches when source files change
       const isDefFile =
