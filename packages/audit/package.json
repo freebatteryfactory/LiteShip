@@ -1,6 +1,6 @@
 {
   "name": "@czap/audit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Profile-driven structure / integrity / surface audit engine + the host that builds the gauntlet's repo-IR + oracles (deps `@czap/canonical` / `@czap/error` / `@czap/gauntlet` / `typescript`)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

@@ -1,6 +1,6 @@
 {
   "name": "@czap/detect",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Device capability probes, GPU tier, design/motion-tier mapping",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

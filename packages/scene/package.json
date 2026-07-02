@@ -1,6 +1,6 @@
 {
   "name": "@czap/scene",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "ECS-backed scene composition + timeline authoring",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
