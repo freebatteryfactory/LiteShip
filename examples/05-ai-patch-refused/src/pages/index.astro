@@ -9,10 +9,13 @@
  *   2. applyValidatedPatch(graph, proposal)      — a SEPARATE, host-authorized step
  *      whose ONLY input is a validation-minted `ValidatedProposal`.
  *
- * There is no public constructor for `ValidatedProposal`, so a host cannot fabricate
- * one — raw model output is physically un-appliable. This page runs four "model
- * proposals" (one valid, three hallucinated) through the same seam and shows that
- * every refusal leaves the graph BYTE-IDENTICAL.
+ * `applyValidatedPatch`'s only input is a validation-minted `ValidatedProposal` — its
+ * apply token is minted into a module-private registry (no public constructor; a
+ * look-alike fails the runtime membership check), so no raw model patch reaches `apply`
+ * through this seam. (The graph stays mutable via the lower-level `GraphPatch.apply`
+ * kernel — the AI cast just routes through validation by construction.) This page runs
+ * four "model proposals" (one valid, three hallucinated) through the same seam and shows
+ * that every refusal leaves the graph BYTE-IDENTICAL.
  */
 import { AICast, GraphPatch, sealNode, sealGraph } from '@czap/core';
 import type { SignalNode, DocumentGraphNode, DocumentGraphEdge, DocumentGraph, CellMeta } from '@czap/core';
@@ -88,7 +91,8 @@ const rows: Row[] = [
     <p class="lede">
       LiteShip casts a graph <em>out</em> to an AI as a schema, then casts proposals <em>in</em> through
       <code>validateGraphPatchProposal</code>. <code>applyValidatedPatch</code> accepts only a
-      validation-minted witness, so raw model output is physically un-appliable.
+      validation-minted witness — an unforgeable token — so no raw model patch can reach it:
+      validation is the one way through the seam.
     </p>
 
     <p>The current truth — a content-addressed graph with one signal:</p>

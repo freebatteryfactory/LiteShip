@@ -12,9 +12,15 @@ The AI cast is two steps that cannot be collapsed into one:
 2. **`AICast.applyValidatedPatch(graph, proposal)`** — a separate, host-authorized step
    whose _only_ input is a validation-minted `ValidatedProposal`.
 
-There is no public constructor for `ValidatedProposal`, so a host cannot fabricate one.
-Raw model output is **physically un-appliable** — the type system and the runtime both
-refuse the bypass.
+`applyValidatedPatch` takes only a `ValidatedProposal`, whose apply token the validators
+mint into a module-private registry — there is no public constructor, and even a
+look-alike object fails the runtime membership check. So a raw or hallucinated model patch
+cannot reach `apply` **through this seam**: validation is the only way in.
+
+That guarantee is about the AI seam, not global immutability — `@czap/core` still exports
+the lower-level `GraphPatch.apply` kernel for a host running its own validation. The point
+is that the AI cast routes through validation _by construction_, so a model proposal can
+only ever arrive at the graph already validated.
 
 The page runs four "model proposals" through the same seam:
 
