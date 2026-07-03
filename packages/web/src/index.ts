@@ -56,6 +56,7 @@ export type {
 export { Morph } from './morph/diff.js';
 export { SemanticId } from './morph/semantic-id.js';
 export { Hints } from './morph/hints.js';
+export { MorphOpaque } from './morph/opaque.js';
 export { bindGraphForm } from './mutation/graph-form.js';
 export type { BindGraphFormOptions } from './mutation/graph-form.js';
 export { createHtmlFragment, resolveHtmlString, sanitizeHTML } from './security/html-trust.js';

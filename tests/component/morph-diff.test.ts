@@ -9,7 +9,7 @@
 import { describe, test, expect, beforeAll, vi } from 'vitest';
 import { Effect } from 'effect';
 import { Diagnostics } from '@czap/core';
-import { Morph, SemanticId, Hints } from '@czap/web';
+import { Morph, SemanticId, Hints, MorphOpaque } from '@czap/web';
 
 // jsdom lacks CSS.escape — polyfill for tests
 beforeAll(() => {
@@ -461,6 +461,171 @@ describe('Morph idempotency', () => {
     const after2 = root.innerHTML;
 
     expect(after1).toBe(after2);
+    root.remove();
+  });
+});
+
+describe('morph-opaque subtrees', () => {
+  test('L1 matched opaque keeps identity, children, attributes, and input state untouched', () => {
+    const root = el(
+      `<div><section data-czap-id="island" ${MorphOpaque.ATTR} class="client"><input value="server"><span>client child</span></section></div>`,
+    );
+    document.body.appendChild(root);
+    const island = root.querySelector('section')!;
+    const input = island.querySelector('input') as HTMLInputElement;
+    input.value = 'user typed';
+
+    run(
+      Morph.morph(
+        root,
+        `<section data-czap-id="island" ${MorphOpaque.ATTR} class="server"><input value="reset"><span>server child</span></section>`,
+      ),
+    );
+
+    expect(root.querySelector('section')).toBe(island);
+    expect(island.getAttribute('class')).toBe('client');
+    expect(island.querySelector('span')?.textContent).toBe('client child');
+    expect(input.value).toBe('user typed');
+    root.remove();
+  });
+
+  test('L2 omitting an old opaque island never removes it', () => {
+    const root = el(`<div><section ${MorphOpaque.ATTR} data-czap-id="owned">client</section><p>old</p></div>`);
+    document.body.appendChild(root);
+    const island = root.querySelector('section')!;
+
+    run(Morph.morph(root, '<p>new</p>'));
+
+    expect(island.isConnected).toBe(true);
+    expect(root.contains(island)).toBe(true);
+    expect(root.querySelector('p')?.textContent).toBe('new');
+    root.remove();
+  });
+
+  test('L3 new opaque subtrees insert wholesale after sanitized parse', () => {
+    const root = el('<div><p>old</p></div>');
+    document.body.appendChild(root);
+
+    run(Morph.morph(root, `<p>old</p><section ${MorphOpaque.ATTR}><span>fresh</span></section>`));
+
+    const island = root.querySelector(`[${MorphOpaque.ATTR}]`)!;
+    expect(island).not.toBeNull();
+    expect(island.querySelector('span')?.textContent).toBe('fresh');
+    root.remove();
+  });
+
+  test('L4 opaque roots are a total no-op', () => {
+    const root = el(`<section ${MorphOpaque.ATTR} class="client"><span>keep</span></section>`);
+    document.body.appendChild(root);
+    const before = root.outerHTML;
+
+    run(Morph.morph(root, '<article class="server"><span>replace</span></article>', { morphStyle: 'outerHTML' }));
+
+    expect(root.outerHTML).toBe(before);
+    expect(root.isConnected).toBe(true);
+    root.remove();
+  });
+
+  test('L5 non-opaque siblings still morph beside an opaque island', () => {
+    const root = el(`<div><section ${MorphOpaque.ATTR}>client</section><p>old</p></div>`);
+    document.body.appendChild(root);
+    const island = root.querySelector('section')!;
+
+    run(Morph.morph(root, `<section ${MorphOpaque.ATTR}>server</section><p>new</p>`));
+
+    expect(root.querySelector('section')).toBe(island);
+    expect(island.textContent).toBe('client');
+    expect(root.querySelector('p')?.textContent).toBe('new');
+    root.remove();
+  });
+});
+
+describe('morph callbacks', () => {
+  test('beforeRemove veto keeps the node', () => {
+    const root = el('<div><p data-keep>keep</p><span>remove</span></div>');
+    document.body.appendChild(root);
+    const keep = root.querySelector('p')!;
+
+    run(
+      Morph.morph(root, '<span>remove</span>', {
+        callbacks: {
+          beforeRemove: (node) => node instanceof Element && !node.hasAttribute('data-keep'),
+        },
+      }),
+    );
+
+    expect(keep.isConnected).toBe(true);
+    expect(root.contains(keep)).toBe(true);
+    root.remove();
+  });
+
+  test('beforeRemove true or absent allows removal', () => {
+    const root = el('<div><p>gone</p><span>stay</span></div>');
+    document.body.appendChild(root);
+
+    run(
+      Morph.morph(root, '<span>stay</span>', {
+        callbacks: {
+          beforeRemove: () => true,
+        },
+      }),
+    );
+
+    expect(root.querySelector('p')).toBeNull();
+    root.remove();
+  });
+
+  test('afterAdd fires for inserted elements and text nodes', () => {
+    const root = el('<div><p>old</p></div>');
+    document.body.appendChild(root);
+    const added: string[] = [];
+
+    run(
+      Morph.morph(root, 'lead<p>old</p><span>new</span>', {
+        callbacks: {
+          afterAdd: (node) => added.push(node.nodeType === Node.TEXT_NODE ? `text:${node.textContent}` : `element:${(node as Element).tagName}`),
+        },
+      }),
+    );
+
+    expect(added).toEqual(expect.arrayContaining(['text:lead', 'element:SPAN']));
+    root.remove();
+  });
+
+  test('callbacks reach nested levels', () => {
+    const root = el('<div><section><p>old</p></section></div>');
+    document.body.appendChild(root);
+    const added: string[] = [];
+    const removed: string[] = [];
+
+    run(
+      Morph.morph(root, '<section><span>new</span></section>', {
+        callbacks: {
+          beforeRemove: (node) => {
+            removed.push((node as Element).tagName);
+            return true;
+          },
+          afterAdd: (node) => {
+            if (node instanceof Element) added.push(node.tagName);
+          },
+        },
+      }),
+    );
+
+    expect(removed).toContain('P');
+    expect(added).toContain('SPAN');
+    root.remove();
+  });
+
+  test('opaque removals bypass beforeRemove', () => {
+    const root = el(`<div><section ${MorphOpaque.ATTR}>client</section></div>`);
+    document.body.appendChild(root);
+    const beforeRemove = vi.fn(() => true);
+
+    run(Morph.morph(root, '<p>server</p>', { callbacks: { beforeRemove } }));
+
+    expect(beforeRemove).not.toHaveBeenCalled();
+    expect(root.querySelector('section')).not.toBeNull();
     root.remove();
   });
 });
