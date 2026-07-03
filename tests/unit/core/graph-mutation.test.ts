@@ -126,6 +126,39 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     if (b.status === 'refused') expect(b.errors[0]).toContain('concurrent modification');
     expect(store.saves).toBe(1); // B did NOT clobber A
   });
+
+  test('a valid add-edge APPLIES — regression guard for the extraneous-field fix', async () => {
+    const a = node('a.signal');
+    const b = node('b.signal');
+    const base = graph([a, b]);
+    const store = memStore(base);
+    const patch = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } }]);
+
+    const res = await handleGraphMutation({ patch: overTheWire(patch) }, store);
+
+    expect(res.status).toBe('applied');
+    expect(store.saves).toBe(1);
+  });
+
+  test('an edge carrying an extra nested field is REFUSED — no un-addressed bytes reach the store', async () => {
+    const a = node('a.signal');
+    const b = node('b.signal');
+    const base = graph([a, b]);
+    const store = memStore(base);
+    // The edge itself is structurally valid (real endpoints, real type). An attacker smuggles an
+    // off-contract field onto it in the raw wire payload — the digest addresses only [from, to, type],
+    // so without the nested additionalProperties gate this rides into the sealed graph UN-ADDRESSED.
+    const clean = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: b.id, type: 'seq' } }]);
+    const wire = overTheWire(clean) as { ops: { edge?: Record<string, unknown> }[] };
+    wire.ops[0].edge!.smuggled = 'arbitrary-unaddressed-bytes';
+
+    const res = await handleGraphMutation({ patch: wire }, store);
+
+    expect(res.status).toBe('refused');
+    if (res.status === 'refused') expect(res.errors.join(' ')).toMatch(/smuggled|does not model/);
+    expect(store.saves).toBe(0); // never persisted
+    expect(store.current.id).toBe(base.id); // byte-identical
+  });
 });
 
 describe('graph mutation channel — sendGraphMutation (client → wire → server)', () => {

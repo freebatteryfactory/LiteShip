@@ -319,6 +319,7 @@ export function graphPatchProposalSchema(base: ContentAddress): ProposalSchema {
                   edge: {
                     type: 'object',
                     required: ['from', 'to', 'type'],
+                    additionalProperties: false,
                     properties: { from: { type: 'string' }, to: { type: 'string' }, type: { type: 'string' } },
                   },
                 },
@@ -573,6 +574,28 @@ function extraneousFieldErrors(op: Record<string, unknown>, variant: JsonSchemaO
         `Patch op[${i}] carries the field ${JSON.stringify(field)}, which the advertised op variant does not model ` +
           '(additionalProperties: false). Off-contract fields are rejected, never preserved in the validated payload.',
       );
+    }
+  }
+  // Recurse into object-typed modeled properties that pin `additionalProperties: false` — today the
+  // `edge` object (from/to/type). WITHOUT this, a nested off-contract field (a smuggled blob, or a
+  // `__proto__` key from JSON.parse) passes validation and rides into the applied graph UN-ADDRESSED:
+  // the digest covers only [from, to, type] (addressDocumentGraph), so `sealGraph` returns edges that
+  // still carry the extra bytes while the id/digest do not — the persisted graph diverges from its
+  // own content address. Rejecting here keeps "validated-in shape == advertised schema" true at every
+  // depth, so nothing off-contract survives to be sealed.
+  for (const [field, propSchema] of Object.entries(variant.properties ?? {})) {
+    if (propSchema.additionalProperties !== false) continue;
+    const value = op[field];
+    if (value === null || typeof value !== 'object') continue;
+    const nestedModeled = new Set(Object.keys(propSchema.properties ?? {}));
+    for (const nestedField of Object.keys(value as Record<string, unknown>)) {
+      if (!nestedModeled.has(nestedField)) {
+        errors.push(
+          `Patch op[${i}] field ${JSON.stringify(field)} carries the nested field ${JSON.stringify(nestedField)}, ` +
+            'which the advertised schema does not model (additionalProperties: false). Off-contract fields are ' +
+            'rejected, never preserved in the validated payload.',
+        );
+      }
     }
   }
   return errors;
