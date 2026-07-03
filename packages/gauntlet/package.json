@@ -1,6 +1,6 @@
 {
   "name": "@czap/gauntlet",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Self-proving rigor engine: gates, findings, assurance levels, the authority ratchet, and `defineFactGate` (evidence-bound gates) — lean (no `typescript`; oracles host-injected)",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",

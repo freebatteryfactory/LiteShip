@@ -251,6 +251,9 @@ const STANDALONE_FUNCTIONS = [
   'sealGraph',
   'validateGraph',
   'linearizeGraph',
+  // Client→server graph-mutation channel (0.7.0): the server core + the client sender.
+  'handleGraphMutation',
+  'sendGraphMutation',
   // Version-aware, fail-closed reader for an untrusted DocumentGraph value
   // (Slice C artifact-migration): gates `_tag`/`_version` + per-node
   // well-formedness, rejecting a future-version/malformed graph with one tagged

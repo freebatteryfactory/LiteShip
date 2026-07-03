@@ -1,0 +1,95 @@
+---
+/**
+ * 06 — The client→server round-trip (the return leg of the stream).
+ *
+ * The stream pushes server→client (SSE). This is the other direction: the client
+ * PROPOSES a change (a GraphPatch) and the server VALIDATES it against its own truth
+ * before applying — the AI-cast refuse-seam, now bidirectional and human-driven.
+ *
+ * Server side is one line: `POST = graphMutationRoute(store)` (see api/graph.ts).
+ * Client side is `sendGraphMutation(url, patch)`. A patch cast against a stale base
+ * is REFUSED (optimistic concurrency for free); only a validated patch mutates the
+ * server graph, which re-addresses to a new content hash.
+ */
+export const prerender = false;
+import { currentGraph } from '../server/graph-store';
+const graph = currentGraph();
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiteShip — client→server round-trip</title>
+  </head>
+  <body>
+    <main>
+      <h1>Client proposes, server validates, graph mutates</h1>
+      <p>
+        The server holds the truth. The client sends a <code>GraphPatch</code>; the server
+        runs it through the same <code>validateGraphPatchProposal → applyValidatedPatch</code>
+        seam as an AI proposal. Watch the graph id re-address on a valid patch, and stay
+        <strong>byte-identical</strong> on a refused one.
+      </p>
+
+      <p class="truth">Server graph: <code id="graph-id">{graph.id}</code> · {graph.nodes.length} nodes</p>
+
+      <div class="row">
+        <button id="valid">Propose a valid add (viewport.height)</button>
+        <button id="stale">Propose a stale patch (should be REFUSED)</button>
+      </div>
+      <pre id="out">Click a button to send a patch.</pre>
+
+      <!-- The SSR'd base graph, handed to the client so it can propose against it. -->
+      <script type="application/json" id="base" set:html={JSON.stringify(graph)}></script>
+    </main>
+
+    <style>
+      body { font: 16px/1.6 system-ui, sans-serif; max-width: 48rem; margin: 3rem auto; padding: 0 1.25rem; }
+      h1 { font-size: 1.5rem; }
+      code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+      .truth { background: color-mix(in oklab, Canvas 90%, CanvasText); padding: 0.5rem 0.75rem; border-radius: 0.5rem; }
+      .row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
+      button { font: inherit; padding: 0.5rem 0.9rem; border-radius: 0.5rem; cursor: pointer; }
+      pre { background: color-mix(in oklab, Canvas 85%, CanvasText); padding: 1rem; border-radius: 0.6rem; white-space: pre-wrap; word-break: break-word; }
+    </style>
+
+    <script type="module">
+      import { decodeDocumentGraph, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
+
+      const out = document.getElementById('out');
+      const idEl = document.getElementById('graph-id');
+      const base = decodeDocumentGraph(JSON.parse(document.getElementById('base').textContent));
+
+      // A validated, content-addressed node built the same way the server does.
+      const signal = (input) =>
+        sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: base.meta, input });
+
+      async function send(patch, label) {
+        out.textContent = `sending ${label}…`;
+        const res = await sendGraphMutation('/api/graph', patch);
+        if (res.status === 'applied') {
+          out.textContent = `APPLIED — server graph re-addressed to ${res.graph.id} (${res.graph.nodes.length} nodes)`;
+          idEl.textContent = res.graph.id; // the server truth advanced
+        } else {
+          out.textContent = `REFUSED — ${res.errors.join(' · ')}\n(server graph unchanged)`;
+        }
+      }
+
+      document.getElementById('valid').addEventListener('click', () => {
+        // Proposed against the CURRENT server base → validates.
+        const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal('viewport.height') }]);
+        send(patch, 'a valid add');
+      });
+
+      document.getElementById('stale').addEventListener('click', () => {
+        // Proposed against a DIFFERENT graph → patch.base !== server graph.id → REFUSED.
+        const other = decodeDocumentGraph(JSON.parse(document.getElementById('base').textContent));
+        const stalePatch = GraphPatch.propose({ ...other, id: 'fnv1a:deadbeef' }, [
+          { op: 'add', family: 'signal', node: signal('never.applied') },
+        ]);
+        send(stalePatch, 'a stale patch');
+      });
+    </script>
+  </body>
+</html>

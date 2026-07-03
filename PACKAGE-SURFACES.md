@@ -151,6 +151,15 @@ Cast a graph *out* to a model and accept its reply safely ([ADR-0015](./docs/adr
 
 Main surfaces: `AICast.castContext`, `summarizeGraph`, `validateGraphPatchProposal`, `validateGeneratedUIProposal`, `applyValidatedPatch`, `ValidatedProposal`, `ApplyToken`. The primitive is pure — zero network, zero provider imports — and `mintValidated` is denied at the package subpath, so a consumer cannot forge a proposal. The host owns the model call and the authority to apply.
 
+### Client→server mutation channel
+
+The return leg of the stream (SSE pushes server→client; this comes back). Reach for it when a client needs to change the server's graph — a sort, a filter, an edit:
+
+- the server core — `handleGraphMutation(request, { loadGraph, saveGraph })`: decode a client-proposed `GraphPatch` → `validateGraphPatchProposal` → `applyValidatedPatch` → persist
+- the client sender — `sendGraphMutation(url, patch)`
+
+Main surfaces: `handleGraphMutation`, `sendGraphMutation`, `GraphStore`, `GraphMutationRequest`, `GraphMutationResponse`. It rides the AI-cast refuse-seam, so a human client's edit is validated exactly like a model's proposal: a patch cast against a stale base is refused (optimistic concurrency for free), and only a validated patch mutates the graph, which re-addresses. Transport-agnostic; the host owns the `GraphStore` (the authority boundary) and wires the endpoint (`@czap/astro`'s `graphMutationRoute` for Astro). Added 0.7.0.
+
 ### WASM compute
 
 The Rust `czap-compute` kernel (spring / boundary / blend) ships inside `@czap/core`'s `dist/` as of 0.2.1. `@czap/vite` locates it through the module graph (pnpm-nesting-safe) when you set `czap({ wasm: { enabled: true } })` — no hand-built or hand-copied artifact. Reach for it when you need:
@@ -346,6 +355,7 @@ Main surfaces:
 - `@czap/astro/middleware-entry` — the auto-wired detection middleware registered by `czap({ middleware: true })`; populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` via an `App.Locals` augmentation
 - `czapFetchLayer` / `serializeBoundaryCss` (also `@czap/astro/fetch-layer`) — request-time adaptation as a layer in FRONT of Astro (Astro 7 `src/fetch.ts`): shares the one `createEdgeHostAdapter().resolve()` with `czapMiddleware` and, on an opt-in `serveFromEdge` predicate, serves boundary CSS from the edge and skips Astro entirely; Astro `Fetchable` / Hono-compatible (ADR-0024, 0.4.0)
 - `bridgeDiagnosticsToAstroLogger` / `installDiagnosticsBridge` — route `@czap/*` runtime diagnostics through Astro's logger for structured `astro dev --json` output; wired in `astro:config:setup` (0.4.0)
+- `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@czap/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST = graphMutationRoute(store)`). 200 on apply, 422 on refusal. `@czap/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0)
 
 Host-owned shared runtime surfaces:
 

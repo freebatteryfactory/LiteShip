@@ -52,6 +52,7 @@ The [`examples/`](./examples) directory has a runnable app per surface. They're 
 | [`showcase`](./examples/showcase) | The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI |
 | [`03-cast-aria`](./examples/03-cast-aria) | One boundary cast to CSS **and** ARIA from a single `@quantize` block — define-once-cast-many, for accessibility |
 | [`05-ai-patch-refused`](./examples/05-ai-patch-refused) | The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph |
+| [`06-mutation-roundtrip`](./examples/06-mutation-roundtrip) | The client→server round-trip — a client proposes a `GraphPatch`, the server validates + applies it (stale-base patches refused); the return leg of the stream |
 | [`default`](./examples/default) | The minimal `npm create liteship` starter |
 | [`cloudflare-astro`](./examples/cloudflare-astro) | Edge KV boundary cache + Astro middleware on Cloudflare |
 | [`remotion-demo`](./examples/remotion-demo) | Headless video export from the same DocumentGraph (standalone: `cd examples/remotion-demo && pnpm install`) |

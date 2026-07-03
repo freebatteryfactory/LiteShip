@@ -1,6 +1,6 @@
 {
   "name": "@czap/mcp-server",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Model Context Protocol server for AI tooling integration",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
