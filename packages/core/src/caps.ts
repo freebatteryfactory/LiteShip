@@ -39,6 +39,22 @@ export interface CapSet {
 const _canonicalLevels = (levels: Iterable<CapTier>): readonly CapTier[] =>
   [...new Set(levels)].sort((a, b) => LEVEL_ORD[a] - LEVEL_ORD[b]);
 
+/**
+ * Whether a CapSet's `levels` are already canonical — STRICTLY ascending by ladder order,
+ * which is deduped + sorted in a single predicate. `Cap`'s combinators always produce this,
+ * but an UNTRUSTED wire payload (a policy patch over the mutation channel) can carry any array
+ * of valid tiers. The graph-node schema demands canonical levels so a non-canonical array
+ * (`['gpu','static']`, or a dup) cannot seal and content-address DIFFERENTLY from the same
+ * logical set built via {@link Cap.from} — the identity law holds at the untrusted boundary too.
+ * Not re-exported from `@czap/core`: it is the schema's internal gate, not public surface.
+ */
+export const isCanonicalCapSet = (caps: { readonly levels: readonly CapTier[] }): boolean => {
+  for (let i = 1; i < caps.levels.length; i++) {
+    if (LEVEL_ORD[caps.levels[i]!] <= LEVEL_ORD[caps.levels[i - 1]!]) return false;
+  }
+  return true;
+};
+
 const _empty = (): CapSet => ({ _tag: 'CapSet', levels: [] });
 
 const _from = (levels: ReadonlyArray<CapTier>): CapSet => ({ _tag: 'CapSet', levels: _canonicalLevels(levels) });
