@@ -237,10 +237,22 @@ export async function sendGraphMutation(
           message: 'server returned an applied graph whose id/digest does not address its content',
         };
       }
+      // Uniqueness / normalization: the server only emits NORMALIZED graphs — GraphPatch.apply dedups
+      // nodes by id and edges by their (from,to,type) key into Maps. A wire graph with a duplicate node
+      // id or edge triple is not a base the server would hand out: the next apply would silently collapse
+      // the dupes and re-address to different content, so even a no-op proposal would be stamped from a
+      // base that immediately normalizes away. Reject it.
+      const nodeIds = resealed.nodes.map((node) => node.id);
+      const edgeKeys = resealed.edges.map((edge) => `${edge.from} ${edge.to} ${edge.type}`);
+      if (new Set(nodeIds).size !== nodeIds.length || new Set(edgeKeys).size !== edgeKeys.length) {
+        return {
+          status: 'error',
+          message: 'server returned an applied graph with duplicate nodes or edges (not a normalized base)',
+        };
+      }
       // Topology: a graph a correct server would have produced has no dangling edge and no cycle.
       // decode + reseal cover shape + identity but NOT structure, so a miswired endpoint could still
-      // hand back a graph the mutation seam itself would have refused. This completes the adopt trio
-      // (shape → identity → topology) — the full "is this a graph the server would produce?" contract.
+      // hand back a graph the mutation seam itself would have refused.
       if (!validateGraph(resealed).ok) {
         return {
           status: 'error',

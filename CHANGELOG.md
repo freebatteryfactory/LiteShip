@@ -18,10 +18,10 @@ human client's edit is validated exactly like a model's proposal.
   persist, returning `applied` (new graph), `refused` (invalid patch — validation or a
   concurrent-write CAS miss), or `error` (a server-side store failure, retryable).
   `sendGraphMutation(url, patch)` is the client sender: it validates the response shape, then re-seals
-  and structurally re-validates the applied graph — its id AND digest must address its content, with no
-  dangling edge or cycle — before adopting it (a forged, miswired, or malformed base is refused, not
-  stamped against), and maps a transport failure or a non-JSON body to `error` — one shape to consume,
-  never a raw throw. A patch cast against a stale base is
+  and re-validates the applied graph — it must be the NORMALIZED form the server emits (deduped unique
+  nodes/edges, id and digest addressing its content, no dangling edge or cycle) — before adopting it (a
+  forged, miswired, or malformed base is refused, not stamped against), and maps a transport failure or
+  a non-JSON body to `error` — one shape to consume, never a raw throw. A patch cast against a stale base is
   refused (optimistic concurrency for free); only a validated patch mutates the graph, which
   re-addresses. The host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns
   the gate. Full rationale: ADR-0030.
