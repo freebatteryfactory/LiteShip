@@ -165,6 +165,21 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
     expect(res.status).toBe('error');
   });
+
+  test('a transport failure (network down / fetch rejects) → error status, never a raw throw', async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('request failed');
+  });
+
+  test('a status with MISSING required fields is rejected (a bare {status:"applied"} without graph is not accepted)', async () => {
+    const fetchImpl: typeof fetch = async () => ({ status: 200, json: async () => ({ status: 'applied' }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error'); // no `graph` → not a well-formed applied response
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {
