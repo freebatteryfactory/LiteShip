@@ -126,6 +126,22 @@ export function isAlreadyPublishedFailure(output: string): boolean {
   return ALREADY_PUBLISHED_PATTERN.test(output);
 }
 
+/**
+ * Build the argv for the publish handoff. ship publishes each ALREADY-PACKED,
+ * `workspace:*`-rewritten tarball via the **npm CLI** (>= 11.5.1) rather than
+ * `pnpm publish`: npm performs npm's OIDC trusted-publishing token exchange natively in
+ * CI, which pnpm does not (pnpm#11513 / pnpm#9812) — that gap was the `ENEEDAUTH` at every
+ * OIDC cut. The tarball is tool-agnostic: pnpm packed it (rewriting `workspace:` specs,
+ * still enforced by `findWorkspaceSpecLeaks`), npm just uploads it. `--access public` is
+ * required for scoped packages on a free org; provenance/otp ride through when requested.
+ */
+export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boolean; otp?: string }): string[] {
+  const args = ['publish', tarballPath, '--access', 'public'];
+  if (opts.provenance) args.push('--provenance');
+  if (opts.otp !== undefined) args.push('--otp', opts.otp);
+  return args;
+}
+
 const readWorkspacePackagesGlobs = (cwd: string): string[] => {
   const ymlPath = join(cwd, 'pnpm-workspace.yaml');
   if (!existsSync(ymlPath)) return [];
@@ -296,6 +312,9 @@ export async function ship(args: readonly string[]): Promise<number> {
   // Per-package emission loop. Any failure aborts before we hand off to
   // `pnpm publish` — we never publish without a capsule.
   const mintedNames: string[] = [];
+  // The already-packed tarball path for each minted package — the publish handoff
+  // uploads exactly these (npm publish <tgz>), not the workspace dir.
+  const mintedTarballs: string[] = [];
   let skippedCount = 0;
   for (let i = 0; i < targets.length; i++) {
     const pkg = targets[i]!;
@@ -464,6 +483,7 @@ export async function ship(args: readonly string[]): Promise<number> {
     };
     emit(receipt);
     mintedNames.push(name);
+    mintedTarballs.push(tarballPath);
   }
 
   if (opts.dryRun) return 0;
@@ -478,26 +498,26 @@ export async function ship(args: readonly string[]): Promise<number> {
     return 1;
   }
 
-  // Hand off to pnpm publish — publish exactly the packages we just
-  // addressed by passing each as a global --filter, plus -r to make
-  // pnpm iterate. `--access public` is required for scoped packages
-  // on a free npm org; `--no-git-checks` matches the documented release
-  // workflow (we publish from a release branch, not main).
-  const filterArgs = mintedNames.flatMap((n) => ['--filter', n]);
-  const publishArgs = [...filterArgs, '-r', 'publish', '--access', 'public', '--no-git-checks'];
-  if (opts.otp !== undefined) {
-    publishArgs.push('--otp', opts.otp);
-  }
-  if (opts.provenance) {
-    publishArgs.push('--provenance');
-  }
-  const publishRes = await spawnArgv('pnpm', publishArgs);
-  if (publishRes.exitCode !== 0) {
-    emitError(
-      'ship',
-      `pnpm publish exited ${publishRes.exitCode}${publishRes.stderrTail ? `: ${publishRes.stderrTail.trim()}` : ''}`,
+  // Hand off to the npm CLI — publish each already-packed tarball via
+  // `npm publish <tgz>` (see buildNpmPublishArgv). npm does the OIDC trusted-publishing
+  // token exchange natively in CI; `pnpm publish` does not, which is why every OIDC cut
+  // hit ENEEDAUTH. One publish per tarball (release.yml already ships one package per
+  // ship invocation; a local no-filter ship loops). The pnpm dry-run pre-check above
+  // already skipped anything already on the registry, but we still treat an
+  // already-published error here as an idempotent skip so a retry racing the gate can't
+  // fail the batch.
+  for (let i = 0; i < mintedTarballs.length; i++) {
+    const tarballPath = mintedTarballs[i]!;
+    const publishRes = await spawnArgv(
+      'npm',
+      buildNpmPublishArgv(tarballPath, { provenance: opts.provenance, otp: opts.otp }),
     );
-    return 2;
+    if (publishRes.exitCode !== 0) {
+      const tail = publishRes.stderrTail?.trim() ?? '';
+      if (isAlreadyPublishedFailure(tail)) continue;
+      emitError('ship', `npm publish exited ${publishRes.exitCode} for ${mintedNames[i]}${tail ? `: ${tail}` : ''}`);
+      return 2;
+    }
   }
   return 0;
 }
