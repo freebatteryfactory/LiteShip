@@ -700,7 +700,10 @@ describe('integration', () => {
 
     expect(nextCalled).toBe(true);
     expect(headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
-    expect(headers.get('Critical-CH')).toBe('Sec-CH-Viewport-Width');
+    // Derived from @czap/edge's single critical-hint source (exact equality pinned by
+    // critical-ch-drift.test.ts); here we just assert the dev middleware, like production,
+    // marks viewport-width critical.
+    expect(headers.get('Critical-CH')).toContain('Sec-CH-Viewport-Width');
     expect(headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
     expect(headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
     expect(logs).toContain('@czap dev server middleware active');

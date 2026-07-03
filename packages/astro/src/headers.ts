@@ -8,14 +8,22 @@
  * @module
  */
 
+import { ClientHints } from '@czap/edge';
+
 /**
- * Default `Accept-CH` / `Critical-CH` response headers czap requests
- * so the browser sends viewport width, device memory, motion
- * preference, and DPR on the next navigation.
+ * Default `Accept-CH` / `Critical-CH` response headers czap requests so the browser
+ * sends the hints on the next navigation (and resends the critical ones before the first
+ * render).
+ *
+ * DERIVED from `@czap/edge`'s single source (`ClientHints.acceptCHHeader()` /
+ * `criticalCHHeader()`) — NOT a hand-kept copy. This module is read by the dev-server
+ * middleware while the production middleware calls `ClientHints` directly; deriving both
+ * from one list is the only way they can't request different hints. Pinned by
+ * tests/unit/astro/critical-ch-drift.test.ts.
  */
 export const CLIENT_HINTS_HEADERS: Record<string, string> = {
-  'Accept-CH': 'Sec-CH-Viewport-Width, Sec-CH-Device-Memory, Sec-CH-Prefers-Reduced-Motion, Sec-CH-DPR',
-  'Critical-CH': 'Sec-CH-Viewport-Width',
+  'Accept-CH': ClientHints.acceptCHHeader(),
+  'Critical-CH': ClientHints.criticalCHHeader(),
 };
 
 /**
