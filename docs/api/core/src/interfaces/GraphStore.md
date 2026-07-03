@@ -6,7 +6,7 @@
 
 # Interface: GraphStore
 
-Defined in: [core/src/graph-mutation.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L74)
+Defined in: [core/src/graph-mutation.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L88)
 
 The host's graph store — the authority boundary. LiteShip reads the current
 truth and hands back the applied truth; the host decides where it lives (memory,
@@ -19,7 +19,7 @@ the client's patch will be validated against.
 
 > `readonly` **loadGraph**: () => [`DocumentGraph`](DocumentGraph.md) \| `Promise`\<[`DocumentGraph`](DocumentGraph.md)\>
 
-Defined in: [core/src/graph-mutation.ts:75](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L75)
+Defined in: [core/src/graph-mutation.ts:89](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L89)
 
 #### Returns
 
@@ -31,7 +31,7 @@ Defined in: [core/src/graph-mutation.ts:75](https://github.com/freebatteryfactor
 
 > `readonly` **saveGraph**: (`next`, `expected`) => `boolean` \| `Promise`\<`boolean`\>
 
-Defined in: [core/src/graph-mutation.ts:88](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L88)
+Defined in: [core/src/graph-mutation.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L102)
 
 Compare-and-swap the graph: commit `next` ONLY if the store's current graph is still
 `expected` — the base the patch was validated against, compared by its content
