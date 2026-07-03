@@ -56,6 +56,35 @@ function releaseExpectedCount(): number {
   return Number(match[1]);
 }
 
+/** The publish-loop list in the ORDER it publishes (unsorted) — for the topo-order check. */
+function releaseLoopOrder(): string[] {
+  const match = readFileSync(RELEASE_YML, 'utf8').match(/for pkg in ([^;]+); do/);
+  if (!match) throw new Error('release.yml: could not find the `for pkg in ...; do` publish loop');
+  return match[1]!.trim().split(/\s+/);
+}
+
+/** Each publishable package → its in-workspace (publishable) dependency names. */
+function publishableDeps(): Map<string, readonly string[]> {
+  const publishable = new Set(derivePublishableNames());
+  const map = new Map<string, readonly string[]>();
+  for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    let manifest: { name?: string; private?: boolean; dependencies?: Record<string, string> };
+    try {
+      manifest = JSON.parse(readFileSync(join(PACKAGES_DIR, entry.name, 'package.json'), 'utf8'));
+    } catch {
+      continue; // no manifest → not a package
+    }
+    if (manifest.private !== true && manifest.name) {
+      map.set(
+        manifest.name,
+        Object.keys(manifest.dependencies ?? {}).filter((dep) => publishable.has(dep)),
+      );
+    }
+  }
+  return map;
+}
+
 describe('release.yml publish roster matches the workspace (the 4th roster location)', () => {
   it('the publish loop lists exactly the non-private packages on disk', () => {
     // Derived, never hand-counted: a newly-public package missing from the loop fails here.
@@ -68,6 +97,26 @@ describe('release.yml publish roster matches the workspace (the 4th roster locat
 
   it('@czap/stage is in the publish loop (the package whose promotion drifted release.yml)', () => {
     expect(releaseLoopNames()).toContain('@czap/stage');
+  });
+
+  it('publishes every dependency BEFORE its dependent (topological order)', () => {
+    // The tag release ships one package per `czap ship --filter` invocation, so the LOOP
+    // ORDER — not any in-process sort — decides registry order. A dependent published
+    // before its same-version dependency leaves a window where it is installable but
+    // unresolvable. Pin the order topological so a hand-edit that reintroduces a violation
+    // (e.g. @czap/core before @czap/canonical) fails here instead of on a live tag.
+    const order = releaseLoopOrder();
+    const pos = new Map(order.map((name, i) => [name, i] as const));
+    const deps = publishableDeps();
+    const violations: string[] = [];
+    for (const name of order) {
+      for (const dep of deps.get(name) ?? []) {
+        if ((pos.get(dep) ?? -1) > (pos.get(name) ?? -1)) {
+          violations.push(`${name} (pos ${pos.get(name)}) publishes before its dependency ${dep} (pos ${pos.get(dep)})`);
+        }
+      }
+    }
+    expect(violations, `release.yml publish order is not topological:\n${violations.join('\n')}`).toEqual([]);
   });
 
   it('the trusted-publisher checklist (RELEASING.md) states the right publishable count', () => {
