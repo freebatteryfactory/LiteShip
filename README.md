@@ -71,6 +71,8 @@ pnpm add @czap/core @czap/astro effect@beta
 
 `effect` is `@czap/core`'s one peer dependency, and it must be the Effect **4 beta** (`effect@beta`) — the peer range is `>=4.0.0-beta.0`, while a bare `pnpm add effect` installs the 3.x `latest` tag and fails the peer check. See the [support matrix](#support-matrix) for the pin and the stabilization plan. That's the whole install for the snippets below; further packages arrive when you first import them.
 
+Prefer the whole stack in a single version-locked dependency? `npm install liteship` — the umbrella that pins **every** `@czap/*` package to one matched version. It's heavier (it pulls the tooling scopes too — CLI, audit, gauntlet), so most apps want just the two above; reach for it when you'd rather lock the fleet together than add packages as you import them.
+
 Define a boundary — a mapping from a continuous signal to named states:
 
 ```ts

@@ -13,8 +13,10 @@ Operator checklist for public npm and GitHub releases. Run destructive git steps
   `@czap/*` scope, installs the tarballs in a throwaway consumer, verifies export
   imports, runs the CLI, and fails if a packed manifest still contains
   `workspace:*`.
-- Publish with pnpm workspace tooling only. Plain `npm publish` does not rewrite
-  `workspace:*` specs for downstream consumers.
+- Let `czap ship` do the publish. It packs each package with `pnpm pack` (which rewrites
+  `workspace:*` to concrete versions in the tarball), then uploads that tarball with the
+  npm CLI (`npm publish <tgz>`). Do NOT `npm publish` a workspace *directory* directly —
+  npm won't rewrite `workspace:*`; the rewrite only happens in the `pnpm pack` step.
 - Run `pnpm run release:notes` so `RELEASE_NOTES_vX.Y.Z.md` matches the canonical `## [X.Y.Z]` block in `CHANGELOG.md`. Do not paste the full changelog into GitHub Releases.
 
 ## Build the WASM artifact (0.2.1+)
@@ -42,7 +44,7 @@ gh release create vX.Y.Z --title "vX.Y.Z" --notes-file RELEASE_NOTES_vX.Y.Z.md
 
 ## Publish packages
 
-Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then hands the matching tarballs to `pnpm publish` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package; the publish handoff passes one `--filter <pkg>` per minted package plus `-r` so pnpm publishes exactly the set we addressed.
+Publish via `czap ship`, which mints a `ShipCapsule` for every non-private `packages/*` workspace, then uploads each already-packed tarball with `npm publish <tgz> --provenance` (ADR-0011). A **ShipCapsule** is a content-addressed release receipt: a `.cbor` (binary) manifest that pins each package's tarball to the exact commit and build that produced it, so a consumer can verify what they install independently of npm. The default (no filter) is every publishable workspace package. `pnpm pack` rewrites `workspace:*` to concrete versions in the tarball; the npm CLI (>= 11.5.1) uploads it and performs npm's OIDC trusted-publishing token exchange in CI — which `pnpm publish` does not (pnpm#11513 / pnpm#9812), the gap that `ENEEDAUTH`'d the 0.4.0 and 0.6.0 cuts.
 
 Dry-run first so the receipts and `pnpm publish --dry-run` outputs are both observable without uploading:
 
@@ -117,13 +119,15 @@ trusted publisher). From v0.1.1 onward, releases run through
 v0.1.x authenticated via the `NPM_TOKEN` repo secret — a granular access
 token with `bypass_2fa: true`, installed into `~/.npmrc` before the
 `czap ship` step. That token has been revoked. **v0.2 onward uses OIDC
-trusted publishing**: the workflow carries `id-token: write`, pnpm
-(>= 10.13; we pin 10.32) exchanges the GitHub Actions OIDC token for a
-short-lived publish credential at publish time, and `czap ship` runs
-with `--provenance` so every tarball links back to its workflow run.
-There are no publish tokens anywhere — nothing to rotate, leak, or
-revoke. The one remaining prerequisite is configuring a trusted
-publisher per package, form values below.
+trusted publishing**: the workflow carries `id-token: write`, and
+`czap ship` publishes each packed tarball with the **npm CLI** (>= 11.5.1,
+installed in `release.yml` before the ship loop), which exchanges the
+GitHub Actions OIDC token for a short-lived publish credential at publish
+time — with `--provenance` so every tarball links back to its workflow
+run. (`pnpm publish` does NOT perform the OIDC exchange — pnpm#11513 —
+which is why the handoff uses npm.) There are no publish tokens anywhere —
+nothing to rotate, leak, or revoke. The one remaining prerequisite is
+configuring a trusted publisher per package, form values below.
 
 ### One-time trusted-publisher setup (per package, REQUIRED before v0.2)
 
@@ -136,7 +140,7 @@ with these exact values:
 | Field | Value |
 |---|---|
 | Publisher | GitHub Actions |
-| Organization or user | `heyoub` |
+| Organization or user | `freebatteryfactory` |
 | Repository | `LiteShip` |
 | Workflow filename | `release.yml` |
 | Environment name | (leave blank) |
