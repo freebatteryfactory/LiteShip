@@ -106,7 +106,7 @@ export const LITESHIP_WAIVERS: readonly Waiver[] = [
   {
     ruleId: 'gauntlet/no-silent-catch',
     file: 'packages/cli/src/commands/ship.ts',
-    line: 185,
+    line: 169,
     owner: 'heyoub',
     reason:
       'Best-effort workspace-glob enumeration: an entry that cannot be statSync-d (permission/race) is skipped during package discovery. Non-corrupting (a genuinely unreadable directory entry is not a publishable package) and conservative (skip rather than crash the whole ship). Documented, not empty.',
