@@ -28,6 +28,7 @@
  */
 
 import type { DocumentGraph } from './document-graph.js';
+import { decodeDocumentGraph } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
 import { validateGraphPatchProposal, applyValidatedPatch } from './ai-cast.js';
 
@@ -206,6 +207,18 @@ export async function sendGraphMutation(
   // route, a different endpoint) — surface it as an error rather than a bad cast.
   if (!isGraphMutationResponse(body)) {
     return { status: 'error', message: `server returned an unexpected response shape (HTTP ${response.status})` };
+  }
+  if (body.status === 'applied') {
+    // The shape guard only proved `graph` is SOME object. The client is about to ADOPT this graph
+    // as its new truth, so run it through the SAME fail-closed reader a host uses to lower an
+    // untrusted graph. A miswired endpoint returning `{ status: 'applied', graph: {} }` clears the
+    // guard but is not a DocumentGraph — decode it to an `error` rather than hand back a graph that
+    // throws on the first `.nodes` deref. On success the caller gets a validated, canonical graph.
+    try {
+      return { status: 'applied', graph: decodeDocumentGraph(body.graph) };
+    } catch (error) {
+      return { status: 'error', message: `server returned a malformed applied graph: ${messageOf(error)}` };
+    }
   }
   return body;
 }

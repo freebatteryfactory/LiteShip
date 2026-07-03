@@ -8,7 +8,7 @@
 
 > **GraphMutationResponse** = \{ `graph`: [`DocumentGraph`](../interfaces/DocumentGraph.md); `status`: `"applied"`; \} \| \{ `errors`: readonly `string`[]; `status`: `"refused"`; \} \| \{ `message`: `string`; `status`: `"error"`; \}
 
-Defined in: [core/src/graph-mutation.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L53)
+Defined in: [core/src/graph-mutation.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L54)
 
 The server's response. Three outcomes, one shape to consume:
   - `applied` — the new sealed graph (the client swaps its view to it);
