@@ -17,35 +17,50 @@ human client's edit is validated exactly like a model's proposal.
   `GraphPatch` → `validateGraphPatchProposal` → compare-and-swap `applyValidatedPatch` →
   persist, returning `applied` (new graph), `refused` (invalid patch — validation or a
   concurrent-write CAS miss), or `error` (a server-side store failure, retryable).
-  `sendGraphMutation(url, patch)` is the client sender (shape-validated, non-JSON-safe). A
-  patch cast against a stale base is refused (optimistic
-  concurrency for free); only a validated patch mutates the graph, which re-addresses. The
-  host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns the gate.
+  `sendGraphMutation(url, patch)` is the client sender: it validates the response shape, decodes
+  the applied graph through the fail-closed reader, and maps a transport failure or a non-JSON
+  body to `error` — one shape to consume, never a raw throw. A patch cast against a stale base is
+  refused (optimistic concurrency for free); only a validated patch mutates the graph, which
+  re-addresses. The host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns
+  the gate. Full rationale: ADR-0030.
 - **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain
   `(request) => Response` (the `czapFetchLayer` shape) that drops into an Astro API route
   (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)`). 200
-  on apply, 422 on refusal, 400 on a malformed JSON body, and 415 on a non-`application/json`
-  body — requiring the JSON content type forces cross-origin POSTs through a CORS preflight,
-  so a simple-request can't smuggle a patch to a cookie-authed mount (CSRF hardening; the host
-  still owns session/origin auth). `@czap/astro` injects no route — the endpoint, store, and
-  authority are the host's.
-- **`CapSet.levels` is now a canonical JSON-safe array (was a `Set`).** A `Set` `JSON.stringify`s to
-  `{}` — so a policy patch over the mutation channel silently lost its grants — and its insertion order
-  mis-addressed the same logical set. `levels` is now a deduped, ladder-sorted array: JSON-faithful and
-  content-address-deterministic. A policy node's `grants` is now a **validated** CapSet schema (not
-  opaque) that also requires the levels be **canonical** (deduped, ladder-sorted), so a malformed OR
-  non-canonical grants is rejected by `isWellFormedNode` at the root — an untrusted client cannot seal
-  a wire-ordered CapSet under a divergent content address. Never silently sealed.
-  `Cap`'s combinators (`has`/`union`/`intersection`/…) are unchanged; only direct `.levels` access moves
-  from `Set` (`.has`/`.size`) to array (`.includes`/`.length`).
+  on apply, 422 on refusal, 400 on a malformed JSON body, 415 on a non-`application/json` body.
+  `@czap/astro` injects no route — the endpoint, store, and authority are the host's.
+- **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
+  (client proposes → server validates + applies + persists → the stale re-proposal is refused).
+
+### Security
+
+- **CSRF hardening on the route.** `graphMutationRoute` requires `Content-Type: application/json`
+  (415 otherwise), forcing cross-origin POSTs through a CORS preflight so a simple-request can't
+  smuggle a patch to a cookie-authed mount. `Request.json()` would otherwise parse a `text/plain`
+  body just fine. Host session/origin auth remains the host's.
 - **Refuse-seam hardening — off-contract nested edge fields.** The AI-cast validator now enforces
   `additionalProperties: false` on the edge object (from/to/type), not just the op envelope. Before,
   a patch could smuggle an extra field onto an edge (a blob, or a `__proto__` key); the graph digest
   addresses only `[from, to, type]`, so the field rode into the sealed graph **un-addressed** — the
-  persisted bytes diverging from the content address. Now rejected as a refusal at every schema depth,
-  on both the channel and the AI-apply paths. Surfaced by the channel's untrusted HTTP boundary.
-- **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
-  (client proposes → server validates + applies + persists → the stale re-proposal is refused).
+  persisted bytes diverging from the content address. Now rejected at every schema depth, on both
+  the channel and the AI-apply paths.
+- **Policy-grant corruption closed at the root.** A policy node's `grants` is now a **validated**,
+  **canonical** CapSet schema (was opaque): a malformed or non-canonical grants is rejected by
+  `isWellFormedNode` on the channel and AI-apply paths alike, so an untrusted client cannot seal a
+  wire-ordered CapSet under a divergent content address. (See Breaking — the underlying type change.)
+
+### Breaking
+
+- **`CapSet.levels` is a canonical array, was a `Set`.** A `Set` `JSON.stringify`s to `{}` (so a
+  policy patch over the channel silently lost its grants) and its insertion order mis-addressed the
+  same logical set. `levels` is now a deduped, ladder-sorted array: JSON-faithful and
+  content-address-deterministic. `Cap`'s combinators (`has`/`union`/`intersection`/…) are unchanged;
+  only direct `.levels` access moves from `Set` (`.has`/`.size`) to array (`.includes`/`.length`).
+
+### Internal
+
+- **Bench directive-overhead gate: window-invariant estimator.** The hot-path overhead ratio is now
+  the median of per-sample PAIRED ratios (each pair timed adjacently), not the ratio of medians —
+  robust to the whole-sample load bursts on contended CI runners where the old estimator false-positived.
 
 ## [0.6.0] - 2026-07-01
 
