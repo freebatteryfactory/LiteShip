@@ -59,7 +59,19 @@ export type GraphMutationResponse =
  */
 export interface GraphStore {
   readonly loadGraph: () => DocumentGraph | Promise<DocumentGraph>;
-  readonly saveGraph: (graph: DocumentGraph) => void | Promise<void>;
+  /**
+   * Compare-and-swap the graph: commit `next` ONLY if the store's current graph is still
+   * `expected` — the base the patch was validated against, compared by its content
+   * address (`id`). Return `false` if the store moved since `loadGraph` (a concurrent
+   * commit won); the channel then REFUSES so the client reloads and retries.
+   *
+   * This is where the optimistic-concurrency guarantee is actually enforced. The
+   * base-match validation stops a client that proposed against a STALE base; the CAS
+   * stops two clients that both loaded the SAME base from clobbering each other (the
+   * lost-update race). In-memory, compare the ids and swap only on a match; a DB/KV host
+   * does a version-conditional UPDATE.
+   */
+  readonly saveGraph: (next: DocumentGraph, expected: DocumentGraph) => boolean | Promise<boolean>;
 }
 
 /**
@@ -89,7 +101,16 @@ export async function handleGraphMutation(
   }
 
   const next = applyValidatedPatch(base, result.proposal);
-  await store.saveGraph(next);
+  // Compare-and-swap: if a concurrent request already advanced the store past `base`,
+  // the commit is rejected and the patch is refused (reload + retry). The base-match
+  // validation above guards a STALE client; this guards two clients racing the SAME base.
+  const committed = await store.saveGraph(next, base);
+  if (!committed) {
+    return {
+      status: 'refused',
+      errors: ['concurrent modification: the graph advanced since this patch was proposed — reload and retry'],
+    };
+  }
   return { status: 'applied', graph: next };
 }
 
@@ -109,5 +130,14 @@ export async function sendGraphMutation(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ patch } satisfies GraphMutationRequest),
   });
-  return (await response.json()) as GraphMutationResponse;
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch (error) {
+    // Infrastructure error (proxy 502/504, an HTML error page) — keep the one-shape
+    // contract: the caller always gets a GraphMutationResponse, never a raw parse throw.
+    const reason = error instanceof Error ? error.message : String(error);
+    return { status: 'refused', errors: [`server did not return valid JSON (HTTP ${response.status}): ${reason}`] };
+  }
+  return body as GraphMutationResponse;
 }

@@ -21,9 +21,9 @@ human client's edit is validated exactly like a model's proposal.
   host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns the gate.
 - **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain
   `(request) => Response` (the `czapFetchLayer` shape) that drops into an Astro API route
-  (`export const POST = graphMutationRoute(store)`). 200 on apply, 422 on refusal, 400 on a
-  non-JSON body. `@czap/astro` injects no route — the endpoint, store, and authority are the
-  host's.
+  (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)`). 200
+  on apply, 422 on refusal, 400 on a non-JSON body. `@czap/astro` injects no route — the
+  endpoint, store, and authority are the host's.
 - **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
   (client proposes → server validates + applies + persists → the stale re-proposal is refused).
 

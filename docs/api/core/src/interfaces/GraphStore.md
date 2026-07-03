@@ -29,16 +29,31 @@ Defined in: [core/src/graph-mutation.ts:61](https://github.com/freebatteryfactor
 
 ### saveGraph
 
-> `readonly` **saveGraph**: (`graph`) => `void` \| `Promise`\<`void`\>
+> `readonly` **saveGraph**: (`next`, `expected`) => `boolean` \| `Promise`\<`boolean`\>
 
-Defined in: [core/src/graph-mutation.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L62)
+Defined in: [core/src/graph-mutation.ts:74](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L74)
+
+Compare-and-swap the graph: commit `next` ONLY if the store's current graph is still
+`expected` — the base the patch was validated against, compared by its content
+address (`id`). Return `false` if the store moved since `loadGraph` (a concurrent
+commit won); the channel then REFUSES so the client reloads and retries.
+
+This is where the optimistic-concurrency guarantee is actually enforced. The
+base-match validation stops a client that proposed against a STALE base; the CAS
+stops two clients that both loaded the SAME base from clobbering each other (the
+lost-update race). In-memory, compare the ids and swap only on a match; a DB/KV host
+does a version-conditional UPDATE.
 
 #### Parameters
 
-##### graph
+##### next
+
+[`DocumentGraph`](DocumentGraph.md)
+
+##### expected
 
 [`DocumentGraph`](DocumentGraph.md)
 
 #### Returns
 
-`void` \| `Promise`\<`void`\>
+`boolean` \| `Promise`\<`boolean`\>

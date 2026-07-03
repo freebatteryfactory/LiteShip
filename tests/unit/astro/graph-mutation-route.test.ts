@@ -25,9 +25,11 @@ function memStore(initial: DocumentGraph): GraphStore & { current: DocumentGraph
     current: initial,
     saves: 0,
     loadGraph: () => store.current,
-    saveGraph: (g: DocumentGraph) => {
-      store.current = g;
+    saveGraph: (next: DocumentGraph, expected: DocumentGraph) => {
+      if (store.current.id !== expected.id) return false;
+      store.current = next;
       store.saves += 1;
+      return true;
     },
   };
   return store;
