@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { Effect } from 'effect';
 import { Morph } from '../../packages/web/src/morph/diff.js';
+import { MorphOpaque } from '../../packages/web/src/morph/opaque.js';
 import {
   isSameNode,
   syncAttributes,
@@ -176,6 +177,34 @@ describe('browser morph with real DOM', () => {
     expect(root.querySelector('p')).toBe(keepEl);
     expect(keepEl.textContent).toBe('keep updated');
     expect(root.querySelector('span')).toBeNull();
+  });
+
+  test('morph opaque subtrees preserve matched and omitted client-owned DOM', async () => {
+    root.innerHTML = `
+      <section data-czap-id="island" ${MorphOpaque.ATTR}><span>client</span></section>
+      <aside ${MorphOpaque.ATTR}><input value="initial"></aside>
+      <p>old</p>
+    `;
+    const matched = root.querySelector('section')!;
+    const omitted = root.querySelector('aside')!;
+    const input = omitted.querySelector('input') as HTMLInputElement;
+    input.value = 'user';
+
+    await Effect.runPromise(
+      Morph.morph(
+        root,
+        `
+          <section data-czap-id="island" ${MorphOpaque.ATTR}><span>server</span></section>
+          <p>new</p>
+        `,
+      ),
+    );
+
+    expect(root.querySelector('section')).toBe(matched);
+    expect(matched.querySelector('span')?.textContent).toBe('client');
+    expect(omitted.isConnected).toBe(true);
+    expect(input.value).toBe('user');
+    expect(root.querySelector('p')?.textContent).toBe('new');
   });
 
   test('findBestMatch prefers semantic ID over DOM id over tag match', () => {

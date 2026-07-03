@@ -14,9 +14,20 @@ if (typeof globalThis.HTMLInputElement === 'undefined') {
   (globalThis as Record<string, unknown>).HTMLTextAreaElement = class HTMLTextAreaElement {};
   (globalThis as Record<string, unknown>).HTMLSelectElement = class HTMLSelectElement {};
 }
+if (typeof globalThis.Element === 'undefined') {
+  (globalThis as Record<string, unknown>).Element = class Element {
+    readonly attrs = new Set<string>();
+    hasAttribute(name: string): boolean {
+      return this.attrs.has(name);
+    }
+    setAttribute(name: string): void {
+      this.attrs.add(name);
+    }
+  };
+}
 
 import { describe, test, expect } from 'vitest';
-import { SemanticId, Hints, Morph } from '@czap/web';
+import { SemanticId, Hints, Morph, MorphOpaque } from '@czap/web';
 
 // ---------------------------------------------------------------------------
 // Minimal DOM Mocks
@@ -68,6 +79,22 @@ function mockElement(
 describe('SemanticId.ATTR', () => {
   test('is the data-czap-id attribute name', () => {
     expect(SemanticId.ATTR).toBe('data-czap-id');
+  });
+});
+
+describe('MorphOpaque', () => {
+  test('ATTR is the data-czap-morph-opaque marker', () => {
+    expect(MorphOpaque.ATTR).toBe('data-czap-morph-opaque');
+  });
+
+  test('isOpaque recognizes marked elements only', () => {
+    const marked = new (globalThis.Element as { new (): Element })();
+    marked.setAttribute(MorphOpaque.ATTR, '');
+    const unmarked = new (globalThis.Element as { new (): Element })();
+
+    expect(MorphOpaque.isOpaque(marked as unknown as Node)).toBe(true);
+    expect(MorphOpaque.isOpaque(unmarked as unknown as Node)).toBe(false);
+    expect(MorphOpaque.isOpaque({} as Node)).toBe(false);
   });
 });
 
@@ -374,4 +401,3 @@ describe('Morph.defaultConfig', () => {
     expect(Morph.defaultConfig.morphStyle).toBe('innerHTML');
   });
 });
-

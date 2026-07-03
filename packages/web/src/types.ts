@@ -139,10 +139,15 @@ export interface MorphConfig {
 }
 
 /**
- * Morph lifecycle callbacks.
+ * Morph lifecycle callbacks. `beforeRemove` runs before a non-opaque Element is
+ * removed; returning `false` vetoes that removal. `afterAdd` runs immediately
+ * after a new Element or Text node is inserted. Attribute callbacks run before
+ * an attribute is added, updated, or removed.
  */
 export interface MorphCallbacks {
+  /** Return `false` to keep the element in place; opaque elements bypass this callback and are always kept. */
   beforeRemove?(node: Node): boolean;
+  /** Fires immediately after a newly inserted Element or Text node is connected. */
   afterAdd?(node: Node): void;
   beforeAttributeUpdate?(element: Element, name: string, value: string | null): boolean;
 }

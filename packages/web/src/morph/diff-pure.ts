@@ -12,6 +12,7 @@
 import type { MorphConfig, MorphHints, MorphCallbacks } from '../types.js';
 import { createHtmlFragment } from '../security/html-trust.js';
 import * as SemanticIdModule from './semantic-id.js';
+import { isOpaque } from './opaque.js';
 
 /**
  * Default morph configuration.
@@ -117,10 +118,18 @@ export const syncAttributes = (oldNode: Element, newNode: Element, callbacks?: M
 
 /**
  * Morph a single element (attributes + children).
+ *
+ * Morph-opaque laws:
+ * L1 A matched old↔new pair where EITHER side is opaque keeps the old element verbatim.
+ * L2 An unmatched old opaque element is never removed.
+ * L3 A new opaque element with no old match inserts wholesale.
+ * L4 An opaque morph root is a total no-op for every entry point.
+ * L5 Non-opaque siblings/ancestors morph exactly as before.
  */
-export function morphElement(oldElement: Element, newElement: Element, hints?: MorphHints): void {
-  syncAttributes(oldElement, newElement);
-  syncChildren(oldElement, newElement, hints);
+export function morphElement(oldElement: Element, newElement: Element, hints?: MorphHints, callbacks?: MorphCallbacks): void {
+  if (isOpaque(oldElement) || isOpaque(newElement)) return;
+  syncAttributes(oldElement, newElement, callbacks);
+  syncChildren(oldElement, newElement, hints, callbacks);
 }
 
 function insertBeforeOrAppend(parent: Element, node: Node, referenceNode?: Node): void {
@@ -179,7 +188,7 @@ export const findBestMatch = (node: Element, candidates: Element[], hints?: Morp
 /**
  * Synchronize children between nodes using diff algorithm.
  */
-export const syncChildren = (oldParent: Element, newParent: Element, hints?: MorphHints): void => {
+export const syncChildren = (oldParent: Element, newParent: Element, hints?: MorphHints, callbacks?: MorphCallbacks): void => {
   const oldChildren = Array.from(oldParent.childNodes);
   const newChildren = Array.from(newParent.childNodes);
 
@@ -217,6 +226,7 @@ export const syncChildren = (oldParent: Element, newParent: Element, hints?: Mor
 
       const textNode = document.createTextNode(newText);
       insertBeforeOrAppend(oldParent, textNode, oldChildren[oldIdx]);
+      callbacks?.afterAdd?.(textNode);
       continue;
     }
 
@@ -227,7 +237,7 @@ export const syncChildren = (oldParent: Element, newParent: Element, hints?: Mor
       if (semanticId && oldSemanticIndex.has(semanticId)) {
         const oldElement = oldSemanticIndex.get(semanticId)!;
 
-        morphElement(oldElement, newElement, hints);
+        morphElement(oldElement, newElement, hints, callbacks);
         matched.add(oldElement);
 
         moveChildIntoPosition(oldParent, oldChildren, oldIdx, oldElement);
@@ -239,7 +249,7 @@ export const syncChildren = (oldParent: Element, newParent: Element, hints?: Mor
       const bestMatch = findBestMatch(newElement, remainingOldChildren, hints);
 
       if (bestMatch) {
-        morphElement(bestMatch, newElement, hints);
+        morphElement(bestMatch, newElement, hints, callbacks);
         matched.add(bestMatch);
 
         moveChildIntoPosition(oldParent, oldChildren, oldIdx, bestMatch);
@@ -253,6 +263,7 @@ export const syncChildren = (oldParent: Element, newParent: Element, hints?: Mor
          instanceof guard narrows the DOM `Node` return type for TypeScript. */
       if (clonedElement instanceof Element) {
         insertBeforeOrAppend(oldParent, clonedElement, oldChildren[oldIdx]);
+        callbacks?.afterAdd?.(clonedElement);
       }
       continue;
     }
@@ -262,6 +273,12 @@ export const syncChildren = (oldParent: Element, newParent: Element, hints?: Mor
 
   for (const oldChild of oldChildren) {
     if (!matched.has(oldChild) && oldChild.parentNode === oldParent) {
+      if (oldChild instanceof Element && isOpaque(oldChild)) {
+        continue;
+      }
+      if (oldChild instanceof Element && callbacks?.beforeRemove?.(oldChild) === false) {
+        continue;
+      }
       oldParent.removeChild(oldChild);
     }
   }
@@ -278,6 +295,7 @@ export const morphPure = (
   hints?: MorphHints,
 ): void => {
   const finalConfig = { ...defaultConfig, ...config };
+  if (isOpaque(oldNode)) return;
   const fragment = parseHTML(newHTML);
   const newNodes = Array.from(fragment.childNodes);
 
@@ -298,7 +316,7 @@ export const morphPure = (
     if (newNodes.length === 1 && firstNode instanceof Element) {
       if (isSameNode(oldNode, firstNode, hints)) {
         syncAttributes(oldNode, firstNode, finalConfig.callbacks);
-        syncChildren(oldNode, firstNode, hints);
+        syncChildren(oldNode, firstNode, hints, finalConfig.callbacks);
       } else {
         oldNode.replaceWith(firstNode);
       }
@@ -306,6 +324,6 @@ export const morphPure = (
   } else {
     const tempParent = document.createElement(oldNode.tagName);
     tempParent.append(parseHTML(newHTML));
-    syncChildren(oldNode, tempParent, hints);
+    syncChildren(oldNode, tempParent, hints, finalConfig.callbacks);
   }
 };

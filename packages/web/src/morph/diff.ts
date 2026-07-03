@@ -16,6 +16,7 @@ import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
 import * as PhysicalRestore from '../physical/restore.js';
+import { isOpaque } from './opaque.js';
 
 // Import pure functions from diff-pure.ts (Effect-free)
 import { defaultConfig, parseHTML, isSameNode, syncAttributes, syncChildren, findBestMatch } from './diff-pure.js';
@@ -40,6 +41,7 @@ export const morph = (
   hints?: MorphHints,
 ): Effect.Effect<void> =>
   Effect.sync(() => {
+    if (isOpaque(oldNode)) return;
     const finalConfig = { ...defaultConfig, ...config };
     const fragment = parseHTML(newHTML);
     const newNodes = Array.from(fragment.childNodes);
@@ -61,7 +63,7 @@ export const morph = (
       if (newNodes.length === 1 && firstNode instanceof Element) {
         if (isSameNode(oldNode, firstNode, hints)) {
           syncAttributes(oldNode, firstNode, finalConfig.callbacks);
-          syncChildren(oldNode, firstNode, hints);
+          syncChildren(oldNode, firstNode, hints, finalConfig.callbacks);
         } else {
           oldNode.replaceWith(firstNode);
         }
@@ -69,7 +71,7 @@ export const morph = (
     } else {
       const tempParent = document.createElement(oldNode.tagName);
       tempParent.append(parseHTML(newHTML));
-      syncChildren(oldNode, tempParent, hints);
+      syncChildren(oldNode, tempParent, hints, finalConfig.callbacks);
     }
   });
 
