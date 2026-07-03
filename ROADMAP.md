@@ -84,6 +84,23 @@ then a v0.2.0 tag fails its publish step loudly with an auth error
 (re-runs are safe and idempotent). Afterwards, delete the dead
 `NPM_TOKEN` secret from repo settings.
 
+### 5. Client→server channel (0.7.0) — deferred nits
+
+The channel shipped hardened against its untrusted HTTP boundary: a CSRF content-type gate,
+off-contract nested edge-field rejection, canonical-CapSet grants, and a full applied-graph adopt
+guard (decode → reseal → id/digest → topology → uniqueness — the normalized form the server emits).
+These smaller items were consciously NOT done in the 0.7.0 cut and are tracked here rather than lost:
+
+- **Example `06-mutation-roundtrip` store contract** — show the compare-and-swap `expected` argument
+  inline in the store snippet (review nit). Pure doc-comment polish; no behavior change.
+- **`spine-conformance` guard is non-comprehensive** — it pins only an explicit SUBSET of
+  `@czap/_spine` types, which is why the `CapSet.levels` Set→array drift slipped past it (a review bot
+  caught it, the gate did not). Make it cover every exported spine type, or auto-derive the
+  bidirectional contract, so no future spine drift can hide behind a green gate.
+
+Success condition:
+- the doc nit is folded into the example, and the spine guard can no longer carry a blind spot.
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
@@ -194,7 +211,7 @@ Entry criteria:
 
 - built-in auth/session system
 - ORM/storage/queue stack
-- RPC/server-action mutation layer
+- general RPC/server-action framework (the 0.7.0 mutation channel is one validated graph-patch seam, not arbitrary remote calls)
 - backend/router stack expansion
 - stateful edge AI substrate implementation
 - component-local data loading implementation
