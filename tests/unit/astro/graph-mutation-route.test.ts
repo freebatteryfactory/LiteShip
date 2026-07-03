@@ -2,8 +2,9 @@
 /**
  * The Astro/host route adapter for the client→server mutation channel — proves the
  * real HTTP round-trip: a POSTed GraphPatch becomes a validated apply (200 + new
- * graph) or a refusal (422 + errors), and a non-JSON body is a 400. Same seam
- * guarantees as the pure core handler, now over real `Request`/`Response`.
+ * graph) or a refusal (422 + errors), a non-application/json body is rejected 415
+ * (CSRF hardening), and a malformed JSON body is a 400. Same seam guarantees as the
+ * pure core handler, now over real `Request`/`Response`.
  */
 import { describe, test, expect } from 'vitest';
 import { graphMutationRoute } from '../../../packages/astro/src/graph-mutation-route.js';
@@ -74,15 +75,63 @@ describe('graphMutationRoute — real HTTP Request → Response', () => {
     expect(store.current.id).toBe(base.id);
   });
 
-  test('POST a non-JSON body → 400 refused (surfaced, not swallowed)', async () => {
+  test('POST application/json with a malformed body → 400 refused (surfaced, not swallowed)', async () => {
     const store = memStore(graph([node('scroll.y')]));
     const res = await graphMutationRoute(store)(
-      new Request('http://host/api/graph', { method: 'POST', body: 'definitely not json {' }),
+      new Request('http://host/api/graph', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: 'definitely not json {',
+      }),
     );
     expect(res.status).toBe(400);
     const body = (await res.json()) as { status: string; errors?: readonly string[] };
     expect(body.status).toBe('refused');
     expect(store.saves).toBe(0);
+  });
+
+  test('CSRF gate: a text/plain body (cross-site simple request) → 415, never parsed, store untouched', async () => {
+    const base = graph([node('scroll.y')]);
+    const store = memStore(base);
+    // A perfectly valid patch envelope — but smuggled with a simple-request content type that
+    // dodges the CORS preflight. The gate rejects it before handleGraphMutation ever sees it.
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('viewport.width') }]);
+    const res = await graphMutationRoute(store)(
+      new Request('http://host/api/graph', {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ patch: wire(patch) }),
+      }),
+    );
+    expect(res.status).toBe(415);
+    const body = (await res.json()) as { status: string; errors?: readonly string[] };
+    expect(body.status).toBe('refused');
+    expect(store.saves).toBe(0);
+    expect(store.current.id).toBe(base.id); // byte-identical: the smuggled patch never applied
+  });
+
+  test('CSRF gate: a missing content-type → 415 (a form/no-CORS POST defaults away from JSON)', async () => {
+    const store = memStore(graph([node('scroll.y')]));
+    const res = await graphMutationRoute(store)(
+      new Request('http://host/api/graph', { method: 'POST', body: '{"patch":{}}' }),
+    );
+    expect(res.status).toBe(415);
+    expect(store.saves).toBe(0);
+  });
+
+  test('content-type with a charset (application/json; charset=utf-8) is accepted', async () => {
+    const base = graph([node('scroll.y')]);
+    const store = memStore(base);
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('viewport.width') }]);
+    const res = await graphMutationRoute(store)(
+      new Request('http://host/api/graph', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({ patch: wire(patch) }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(store.saves).toBe(1);
   });
 
   test('a store I/O failure → 500 with the structured error shape (not a raw 500)', async () => {
