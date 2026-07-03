@@ -222,6 +222,18 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('malformed applied graph');
   });
+
+  test('an applied graph whose id does not address its content → error (forged base is not adopted)', async () => {
+    const base = graph([node('scroll.y')]);
+    // Shape-valid, but the top-level id is FORGED (does not match the content). Without re-deriving
+    // identity, the client would adopt this and then have every proposal refused as stale by the real server.
+    const forged = { ...base, id: 'fnv1a:deadbeef' };
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: forged }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(base, []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('does not address its content');
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {

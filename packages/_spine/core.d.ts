@@ -695,7 +695,7 @@ export type CapTier = 'static' | 'styled' | 'reactive' | 'animated' | 'gpu';
 
 export interface CapSet {
   readonly _tag: 'CapSet';
-  readonly levels: ReadonlySet<CapTier>;
+  readonly levels: readonly CapTier[];
 }
 
 export declare const Cap: {

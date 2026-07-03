@@ -28,7 +28,7 @@
  */
 
 import type { DocumentGraph } from './document-graph.js';
-import { decodeDocumentGraph } from './document-graph-address.js';
+import { decodeDocumentGraph, sealNode, sealGraph } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
 import { validateGraphPatchProposal, applyValidatedPatch } from './ai-cast.js';
 
@@ -209,13 +209,21 @@ export async function sendGraphMutation(
     return { status: 'error', message: `server returned an unexpected response shape (HTTP ${response.status})` };
   }
   if (body.status === 'applied') {
-    // The shape guard only proved `graph` is SOME object. The client is about to ADOPT this graph
-    // as its new truth, so run it through the SAME fail-closed reader a host uses to lower an
-    // untrusted graph. A miswired endpoint returning `{ status: 'applied', graph: {} }` clears the
-    // guard but is not a DocumentGraph — decode it to an `error` rather than hand back a graph that
-    // throws on the first `.nodes` deref. On success the caller gets a validated, canonical graph.
+    // The shape guard only proved `graph` is SOME object. The client is about to ADOPT this graph as
+    // its new truth and stamp future proposals against its id, so decode it through the fail-closed
+    // reader AND re-derive its identity locally: re-seal every node + re-address the graph, then require
+    // the wire's claimed id to match. A miswired/forged endpoint returning shape-valid nodes under a
+    // FORGED id would otherwise be adopted as a base the real server then refuses as stale on every
+    // proposal. On success the caller gets the re-sealed canonical graph; any id/content mismatch is
+    // an `error`, not a poisoned base. Re-sealing is idempotent (addressNode hashes the payload), so a
+    // legitimate server graph passes unchanged.
     try {
-      return { status: 'applied', graph: decodeDocumentGraph(body.graph) };
+      const decoded = decodeDocumentGraph(body.graph);
+      const resealed = sealGraph({ ...decoded, nodes: decoded.nodes.map((node) => sealNode(node)) });
+      if (resealed.id !== decoded.id) {
+        return { status: 'error', message: 'server returned an applied graph whose id does not address its content' };
+      }
+      return { status: 'applied', graph: resealed };
     } catch (error) {
       return { status: 'error', message: `server returned a malformed applied graph: ${messageOf(error)}` };
     }

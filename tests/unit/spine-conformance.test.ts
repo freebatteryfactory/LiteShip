@@ -26,6 +26,7 @@ import type { CompiledOutputs as RtEdgeCompiledOutputs } from '../../packages/ed
 import type { Token as RtToken } from '../../packages/core/src/token.js';
 import type { Theme as RtTheme } from '../../packages/core/src/theme.js';
 import type { Style as RtStyle } from '../../packages/core/src/style.js';
+import type { CapSet as RtCapSet } from '../../packages/core/src/caps.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type-level conformance: the @czap/core SPINE mirror (`core.d.ts`) and the
@@ -53,6 +54,8 @@ function __coreSpineTypeContract(
   bVideoConfig: RtVideoConfig,
   aCaptureResult: SpineCore.CaptureResult,
   bCaptureResult: RtCaptureResult,
+  aCapSet: SpineCore.CapSet,
+  bCapSet: RtCapSet,
   bConfig: ReturnType<typeof CoreImpl.Config.make>,
 ): void {
   // CompositeState — `outputs` carries css/glsl/wgsl/aria; the `wgsl` channel had
@@ -70,6 +73,11 @@ function __coreSpineTypeContract(
   const _captureResultS2R: RtCaptureResult = aCaptureResult;
   const _captureResultR2S: SpineCore.CaptureResult = bCaptureResult;
 
+  // CapSet — `levels` is a canonical CapTier ARRAY in the 0.7.0 runtime; the spine had drifted to
+  // `ReadonlySet<CapTier>`, so a consumer's `levels.has(...)` type-checked then crashed on the array.
+  const _capSetS2R: RtCapSet = aCapSet;
+  const _capSetR2S: SpineCore.CapSet = bCapSet;
+
   // Config.Shape — owned by the config SPINE (`config.d.ts`), which composes the
   // design-spine mirrors (`Token`/`Theme`/`Style.Shape`). Pinned RUNTIME → SPINE
   // only. The reverse (spine → runtime) is asserted in `__designSpineTypeContract`
@@ -84,6 +92,8 @@ function __coreSpineTypeContract(
   void _videoConfigR2S;
   void _captureResultS2R;
   void _captureResultR2S;
+  void _capSetS2R;
+  void _capSetR2S;
   void _configR2S;
 }
 void __coreSpineTypeContract;
