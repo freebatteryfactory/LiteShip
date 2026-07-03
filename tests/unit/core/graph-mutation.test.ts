@@ -147,4 +147,53 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(store.saves).toBe(1); // the client's proposal round-tripped and mutated the server truth
     expect(store.current.nodes.length).toBe(2);
   });
+
+  test('a non-JSON response (proxy 502 / HTML error page) → error status, never a raw throw', async () => {
+    const fetchImpl: typeof fetch = async () =>
+      ({
+        status: 502,
+        json: async () => {
+          throw new SyntaxError('Unexpected token < in JSON');
+        },
+      }) as unknown as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error');
+  });
+
+  test('a JSON payload that is not a channel reply → error status (shape-validated, not blind-cast)', async () => {
+    const fetchImpl: typeof fetch = async () => ({ status: 200, json: async () => ({ notAStatus: true }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error');
+  });
+});
+
+describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {
+  const validPatch = (base: DocumentGraph) =>
+    overTheWire(GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('x.signal') }]));
+
+  test('a loadGraph failure → error (server-side), not refused and not a crash', async () => {
+    const base = graph([node('scroll.y')]);
+    const store: GraphStore = {
+      loadGraph: () => {
+        throw new Error('KV read failed');
+      },
+      saveGraph: () => true,
+    };
+    const res = await handleGraphMutation({ patch: validPatch(base) }, store);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('loadGraph');
+  });
+
+  test('a saveGraph failure → error, not applied (the store never silently loses the write)', async () => {
+    const base = graph([node('scroll.y')]);
+    const store: GraphStore = {
+      loadGraph: () => base,
+      saveGraph: () => {
+        throw new Error('KV write failed');
+      },
+    };
+    const res = await handleGraphMutation({ patch: validPatch(base) }, store);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('saveGraph');
+  });
 });

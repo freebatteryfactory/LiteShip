@@ -84,4 +84,22 @@ describe('graphMutationRoute — real HTTP Request → Response', () => {
     expect(body.status).toBe('refused');
     expect(store.saves).toBe(0);
   });
+
+  test('a store I/O failure → 500 with the structured error shape (not a raw 500)', async () => {
+    const base = graph([node('scroll.y')]);
+    const store: GraphStore = {
+      loadGraph: () => base,
+      saveGraph: () => {
+        throw new Error('db unavailable');
+      },
+    };
+    const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('x') }]);
+
+    const res = await graphMutationRoute(store)(postPatch(wire(patch)));
+
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { status: string; message?: string };
+    expect(body.status).toBe('error');
+    expect(body.message).toContain('saveGraph');
+  });
 });

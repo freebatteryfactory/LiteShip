@@ -14,9 +14,11 @@ human client's edit is validated exactly like a model's proposal.
 
 - **`@czap/core` — the client→server graph-mutation channel.** `handleGraphMutation(request,
   { loadGraph, saveGraph })` is the transport-agnostic server core: decode a client-proposed
-  `GraphPatch` → `validateGraphPatchProposal` → `applyValidatedPatch` → persist, returning
-  `{ status: 'applied', graph }` or `{ status: 'refused', errors }`. `sendGraphMutation(url,
-  patch)` is the client sender. A patch cast against a stale base is refused (optimistic
+  `GraphPatch` → `validateGraphPatchProposal` → compare-and-swap `applyValidatedPatch` →
+  persist, returning `applied` (new graph), `refused` (invalid patch — validation or a
+  concurrent-write CAS miss), or `error` (a server-side store failure, retryable).
+  `sendGraphMutation(url, patch)` is the client sender (shape-validated, non-JSON-safe). A
+  patch cast against a stale base is refused (optimistic
   concurrency for free); only a validated patch mutates the graph, which re-addresses. The
   host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns the gate.
 - **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain

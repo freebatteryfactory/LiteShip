@@ -8,7 +8,7 @@
 
 > **sendGraphMutation**(`url`, `patch`, `fetchImpl?`): `Promise`\<[`GraphMutationResponse`](../type-aliases/GraphMutationResponse.md)\>
 
-Defined in: [core/src/graph-mutation.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L123)
+Defined in: [core/src/graph-mutation.ts:150](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L150)
 
 Client-side sender: POST a proposed [GraphPatch](../variables/GraphPatch.md) to the host's mutation
 endpoint and resolve the server's [GraphMutationResponse](../type-aliases/GraphMutationResponse.md). A thin `fetch`
