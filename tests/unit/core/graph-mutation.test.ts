@@ -277,6 +277,17 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('id/digest');
   });
+
+  test('an applied graph with duplicate node ids → error (not a normalized base the server emits)', async () => {
+    const a = node('a.signal');
+    // Two entries with the SAME node id — the apply-Map would collapse them; the server never emits it.
+    const dup = graph([a, a]);
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: dup }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([a]), []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('duplicate');
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {
