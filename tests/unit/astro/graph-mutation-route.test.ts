@@ -2,7 +2,7 @@
 /**
  * The Astro/host route adapter for the client→server mutation channel — proves the
  * real HTTP round-trip: a POSTed GraphPatch becomes a validated apply (200 + new
- * graph) or a refusal (422 + errors), a non-application/json body is rejected 415
+ * graph), a stale refusal (409), or an invalid refusal (422), a non-application/json body is rejected 415
  * (CSRF hardening), and a malformed JSON body is a 400. Same seam guarantees as the
  * pure core handler, now over real `Request`/`Response`.
  */
@@ -60,16 +60,34 @@ describe('graphMutationRoute — real HTTP Request → Response', () => {
     expect(store.current.id).toBe(body.graph!.id);
   });
 
-  test('POST a stale-base patch → 422 refused, graph byte-identical, no save', async () => {
+  test('POST a stale-base patch → 409 refused with staleBase, graph byte-identical, no save', async () => {
     const base = graph([node('scroll.y')]);
     const store = memStore(base);
     const stale = GraphPatch.propose(graph([node('other.graph')]), [{ op: 'add', family: 'signal', node: node('x') }]);
 
     const res = await graphMutationRoute(store)(postPatch(wire(stale)));
 
-    expect(res.status).toBe(422);
-    const body = (await res.json()) as { status: string; errors?: readonly string[] };
+    expect(res.status).toBe(409);
+    const body = (await res.json()) as { status: string; errors?: readonly string[]; staleBase?: true };
     expect(body.status).toBe('refused');
+    expect(body.staleBase).toBe(true);
+    expect(body.errors!.length).toBeGreaterThan(0);
+    expect(store.saves).toBe(0);
+    expect(store.current.id).toBe(base.id);
+  });
+
+  test('POST an invalid current-base patch → 422 refused without staleBase', async () => {
+    const a = node('a.signal');
+    const base = graph([a]);
+    const store = memStore(base);
+    const invalid = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } }]);
+
+    const res = await graphMutationRoute(store)(postPatch(wire(invalid)));
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { status: string; errors?: readonly string[]; staleBase?: true };
+    expect(body.status).toBe('refused');
+    expect(body.staleBase).toBeUndefined();
     expect(body.errors!.length).toBeGreaterThan(0);
     expect(store.saves).toBe(0);
     expect(store.current.id).toBe(base.id);

@@ -35,7 +35,8 @@ function jsonResponse(body: GraphMutationResponse, status: number): Response {
  * Build a POST handler that validates + applies a client-proposed `GraphPatch`
  * against the host's current graph:
  *   - **200** on apply — body is `{ status: 'applied', graph }` (the new sealed graph);
- *   - **422** on refusal — body is `{ status: 'refused', errors }` (validation reasons);
+ *   - **409** on a stale-base / lost-update refusal (body carries `staleBase: true`);
+ *   - **422** on other refusals — body is `{ status: 'refused', errors }` (validation reasons);
  *   - **415** on a non-`application/json` body (see the CSRF note below);
  *   - **400** on an unparseable JSON body.
  *
@@ -79,7 +80,7 @@ export function graphMutationRoute(store: GraphStore): (request: Request) => Pro
       const reason = error instanceof Error ? error.message : String(error);
       result = { status: 'error', message: `mutation failed: ${reason}` };
     }
-    const status = result.status === 'applied' ? 200 : result.status === 'refused' ? 422 : 500;
+    const status = result.status === 'applied' ? 200 : result.status === 'refused' ? (result.staleBase === true ? 409 : 422) : 500;
     return jsonResponse(result, status);
   };
 }
