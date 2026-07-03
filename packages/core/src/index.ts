@@ -313,6 +313,8 @@ export { assertTokenBinds, unwrapValidated, proposalSubject, proposalReceiptSubj
 // `sendGraphMutation` is the client sender. Host owns the GraphStore (authority).
 export { handleGraphMutation, sendGraphMutation, verifyAppliedGraph } from './graph-mutation.js';
 export type { GraphMutationRequest, GraphMutationResponse, GraphStore, AppliedGraphVerification } from './graph-mutation.js';
+export { createGraphMutationClient } from './graph-mutation-client.js';
+export type { GraphMutationClient, GraphMutationClientOptions, GraphMutationOps } from './graph-mutation-client.js';
 
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
