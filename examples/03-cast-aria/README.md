@@ -34,26 +34,35 @@ reading move together, nothing hand-synced.
 }
 ```
 
-## No first-paint drift — the server resolves the viewport
+## First paint is server-resolved, not guessed
 
 `@quantize` compiles the CSS to a **container query** that reacts to the real viewport
 _instantly_, with no JavaScript. `aria-hidden`, though, is an attribute — CSS can't set it.
-If the page SSR'd a fixed guess, the two would disagree on first paint for whichever
-viewport the guess got wrong (desktop sees the tagline; a screen reader is told it's
+If the page SSR'd a fixed default, the two would disagree on first paint for whichever
+viewport the default got wrong (desktop sees the tagline; a screen reader is told it's
 hidden), until hydration reconciled them. That's the exact drift this example is about.
 
-So the page is **server-rendered** and resolves the state per request:
+So the page is **server-rendered** and resolves the state per request, walking the same
+ladder `resolveInitialState` uses everywhere:
 
 ```ts
 const initialState = resolveInitialState(nav, { clientHints, userAgent });
-// -> reads Sec-CH-Viewport-Width; the czap middleware asks for it via Critical-CH,
-//    so the browser resends it BEFORE the first render — cold visits included.
 <Satellite boundary={nav} initialState={initialState} class="extra"> … </Satellite>
 ```
 
-Now the SSR'd `data-czap-state` (and the `aria-hidden` it carries) already matches the
-container-query CSS at byte one. The pixels and the accessibility state agree from the
-first paint, not after a client reconcile.
+1. **The exact `Sec-CH-Viewport-Width` client hint** when the browser sends it. Chromium
+   does, and the czap middleware's `Critical-CH` makes it resend the hint _before_ the
+   first render — so the SSR'd `data-czap-state` (and the `aria-hidden` it carries)
+   matches the container-query CSS at byte one, cold visits included.
+2. **A `User-Agent` estimate** when it doesn't — Firefox and Safari send no viewport hint,
+   and no server can know their exact width. This nails the device class, not the window.
+3. **The satellite runtime reconciles** whatever the server couldn't nail, on load.
+
+The common path — a hint-sending browser — is drift-free at first paint. The rest degrade
+to a device-class estimate and a client reconcile, never a permanent disagreement. That
+ladder _is_ the honest ceiling: an attribute the browser won't tell the server can't be
+server-perfect for every client, so LiteShip gets it exact where it can and reconciles the
+rest — instead of shipping a fixed guess and hoping.
 
 ## Run it
 
@@ -62,5 +71,5 @@ pnpm --filter @czap/example-cast-aria dev
 ```
 
 Resize the window and inspect the `.extra` element — `aria-hidden` flips with the
-breakpoint, driven by the same boundary as the CSS, and it's already right for your
-viewport on the very first paint.
+breakpoint, driven by the same boundary as the CSS. On a hint-sending browser it's already
+right on the very first paint; elsewhere the satellite makes it right on load.

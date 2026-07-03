@@ -19,14 +19,18 @@
  * hand-synced. (aria-expanded would be wrong here — nothing is disclosed, the
  * layout just reflows; aria-hidden is the honest cast for show/hide.)
  *
- * ...and no first-paint drift, because the server resolves the initial state.
+ * ...and the server resolves the state so first paint isn't a blind guess.
  * `@quantize` compiles the CSS to a container query that reacts to the real
- * viewport instantly, so `aria-hidden` has to match the real viewport instantly
- * too — not a fixed SSR guess the client fixes up later. `resolveInitialState`
- * reads the `Sec-CH-Viewport-Width` client hint (requested via `Critical-CH`, so
- * the browser sends it before the first render) and picks the state the viewport
- * is actually in. The SSR'd `data-czap-state` — and the `aria-hidden` it carries —
- * therefore agrees with the container-query CSS at byte one.
+ * viewport instantly, so `aria-hidden` has to be resolved to the real viewport
+ * too — not a fixed SSR default the client fixes up later. `resolveInitialState`
+ * walks a ladder: the exact `Sec-CH-Viewport-Width` client hint when the browser
+ * sends it (Chromium does, and `Critical-CH` makes it resend before first render,
+ * so the SSR'd `aria-hidden` matches the container-query CSS at byte one); a
+ * `User-Agent` estimate when it doesn't (Firefox/Safari send no viewport hint —
+ * no server can know their exact width); and the satellite runtime reconciles
+ * whatever the server couldn't nail, on load. The common path is drift-free at
+ * first paint; the rest degrade to a device-class estimate + a client reconcile,
+ * never a permanent disagreement.
  *
  * <Satellite> carries the boundary and joins the authored @aria from the build
  * manifest by content address; bare `satelliteAttrs()` would only serialize ARIA
@@ -60,10 +64,11 @@ const initialState = resolveInitialState(nav, {
       <p>
         Resize the window. On <code>wide</code> the tagline shows; on <code>compact</code> it
         collapses — and its <code>aria-hidden</code> flips in lockstep, from the
-        <strong>same</strong> definition. The first paint is already correct for your
-        viewport (the server read the <code>Sec-CH-Viewport-Width</code> hint), so the
-        pixels and the accessibility state never disagree — not even before hydration.
-        Inspect the <code>.extra</code> element and watch <code>aria-hidden</code> track the breakpoint.
+        <strong>same</strong> definition. When your browser sends the
+        <code>Sec-CH-Viewport-Width</code> hint (Chromium does, before first paint), the
+        accessibility state is already right at byte one; otherwise the server estimates
+        from the <code>User-Agent</code> and the satellite reconciles on load. Inspect the
+        <code>.extra</code> element and watch <code>aria-hidden</code> track the breakpoint.
       </p>
 
       <nav class="bar" aria-label="Primary">
