@@ -253,6 +253,30 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
     expect(res.status).toBe('error'); // the guard rejects a malformed refused payload, never a bad cast
   });
+
+  test('an applied graph with an invalid edge type → error (decode enforces the EdgeType enum)', async () => {
+    const a = node('a.signal');
+    const b = node('b.signal');
+    // Real endpoints, but a bogus `type` string that is not an EdgeType — sealed so its id is valid.
+    const bad = graph([a, b], [{ from: a.id, to: b.id, type: 'bogus' } as unknown as DocumentGraphEdge]);
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: bad }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([a]), []), fetchImpl);
+    expect(res.status).toBe('error');
+  });
+
+  test('an applied graph whose digest does not match its content → error (digest verified, not just id)', async () => {
+    const base = graph([node('scroll.y')]);
+    const other = graph([node('other.signal')]);
+    // The id is correct (addresses base's content), but the digest is ANOTHER graph's — a
+    // forged/inconsistent response the id-only check would have waved through.
+    const forged = { ...base, digest: other.digest };
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: forged }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(base, []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('id/digest');
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {

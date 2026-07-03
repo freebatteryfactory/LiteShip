@@ -187,8 +187,10 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
     }
     nodes.push(candidate);
   }
-  // Validate + narrow each edge's structural triple (from/to are addresses, type
-  // is an EdgeType string) so the constructed graph is typed from real reads.
+  // Validate + narrow each edge's structural triple: from/to are addresses, and `type` must be a
+  // real EdgeType — not merely a string. A bogus type string (`"bogus"`) would otherwise seal and
+  // adopt as a structurally-invalid edge the routing layer can't interpret. Fail-closed here.
+  const EDGE_TYPES = new Set<string>(['seq', 'par', 'choice_then', 'choice_else']);
   const edges: DocumentGraphEdge[] = [];
   for (let i = 0; i < value.edges.length; i++) {
     const edge: unknown = value.edges[i];
@@ -196,9 +198,10 @@ export function decodeDocumentGraph(value: unknown): DocGraph {
       !isRecord(edge) ||
       typeof edge.from !== 'string' ||
       typeof edge.to !== 'string' ||
-      typeof edge.type !== 'string'
+      typeof edge.type !== 'string' ||
+      !EDGE_TYPES.has(edge.type)
     ) {
-      throw ParseError('DocumentGraph', `edge at index ${i} is not a well-formed { from, to, type } triple`, {
+      throw ParseError('DocumentGraph', `edge at index ${i} is not a well-formed { from, to, type: EdgeType } triple`, {
         code: 'malformed_edge',
       });
     }

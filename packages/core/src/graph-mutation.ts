@@ -220,8 +220,22 @@ export async function sendGraphMutation(
     try {
       const decoded = decodeDocumentGraph(body.graph);
       const resealed = sealGraph({ ...decoded, nodes: decoded.nodes.map((node) => sealNode(node)) });
-      if (resealed.id !== decoded.id) {
-        return { status: 'error', message: 'server returned an applied graph whose id does not address its content' };
+      // Identity: BOTH the id (fnv1a) and the digest (fnv1a+sha256) must address the content. They
+      // derive from the same canonical bytes, so a legitimate graph matches both; a forged endpoint
+      // could match one and not the other. Reject the inconsistency loudly rather than silently
+      // canonicalize a graph whose own claimed digest disagrees with its bytes.
+      const d = decoded.digest;
+      const r = resealed.digest;
+      const identityMatches =
+        resealed.id === decoded.id &&
+        r.display_id === d.display_id &&
+        r.integrity_digest === d.integrity_digest &&
+        r.algo === d.algo;
+      if (!identityMatches) {
+        return {
+          status: 'error',
+          message: 'server returned an applied graph whose id/digest does not address its content',
+        };
       }
       // Topology: a graph a correct server would have produced has no dangling edge and no cycle.
       // decode + reseal cover shape + identity but NOT structure, so a miswired endpoint could still

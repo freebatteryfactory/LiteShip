@@ -18,10 +18,10 @@ human client's edit is validated exactly like a model's proposal.
   persist, returning `applied` (new graph), `refused` (invalid patch — validation or a
   concurrent-write CAS miss), or `error` (a server-side store failure, retryable).
   `sendGraphMutation(url, patch)` is the client sender: it validates the response shape, then re-seals
-  and structurally re-validates the applied graph — its id must address its content, with no dangling
-  edge or cycle — before adopting it (a forged, miswired, or malformed base is refused, not stamped
-  against), and maps a transport failure or a non-JSON body to `error` — one shape to consume, never a
-  raw throw. A patch cast against a stale base is
+  and structurally re-validates the applied graph — its id AND digest must address its content, with no
+  dangling edge or cycle — before adopting it (a forged, miswired, or malformed base is refused, not
+  stamped against), and maps a transport failure or a non-JSON body to `error` — one shape to consume,
+  never a raw throw. A patch cast against a stale base is
   refused (optimistic concurrency for free); only a validated patch mutates the graph, which
   re-addresses. The host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns
   the gate. Full rationale: ADR-0030.
@@ -45,6 +45,9 @@ human client's edit is validated exactly like a model's proposal.
   addresses only `[from, to, type]`, so the field rode into the sealed graph **un-addressed** — the
   persisted bytes diverging from the content address. Now rejected at every schema depth, on both
   the channel and the AI-apply paths.
+- **Fail-closed reader rejects invalid edge types.** `decodeDocumentGraph` now validates an edge's
+  `type` against the `EdgeType` enum (`seq`/`par`/`choice_then`/`choice_else`), not just that it is a
+  string — closing a shape gap for ANY host lowering an untrusted graph, not only the mutation channel.
 - **Policy-grant corruption closed at the root.** A policy node's `grants` is now a **validated**,
   **canonical** CapSet schema (was opaque): a malformed or non-canonical grants is rejected by
   `isWellFormedNode` on the channel and AI-apply paths alike, so an untrusted client cannot seal a
