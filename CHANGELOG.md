@@ -33,7 +33,9 @@ human client's edit is validated exactly like a model's proposal.
   `{}` — so a policy patch over the mutation channel silently lost its grants — and its insertion order
   mis-addressed the same logical set. `levels` is now a deduped, ladder-sorted array: JSON-faithful and
   content-address-deterministic. A policy node's `grants` is now a **validated** CapSet schema (not
-  opaque), so a malformed grants is rejected by `isWellFormedNode` at the root, never silently sealed.
+  opaque) that also requires the levels be **canonical** (deduped, ladder-sorted), so a malformed OR
+  non-canonical grants is rejected by `isWellFormedNode` at the root — an untrusted client cannot seal
+  a wire-ordered CapSet under a divergent content address. Never silently sealed.
   `Cap`'s combinators (`has`/`union`/`intersection`/…) are unchanged; only direct `.levels` access moves
   from `Set` (`.has`/`.size`) to array (`.includes`/`.length`).
 - **Refuse-seam hardening — off-contract nested edge fields.** The AI-cast validator now enforces

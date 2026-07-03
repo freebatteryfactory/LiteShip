@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import { Cap } from '@czap/core';
+import { Cap, isWellFormedNode } from '@czap/core';
 import type { CapTier } from '@czap/core';
 
 describe('Cap', () => {
@@ -188,5 +188,39 @@ describe('Cap', () => {
         }
       }
     });
+  });
+});
+
+describe('CapSet canonical form at the untrusted node boundary', () => {
+  // A policy node an untrusted client could POST over the mutation channel. `grants` is a validated
+  // CapSet, so the graph-node schema must demand CANONICAL levels — else the same logical set could
+  // seal under two different content addresses depending on wire order/dups.
+  const META = {
+    created: { wall_ms: 0, counter: 0, node_id: 't' },
+    updated: { wall_ms: 0, counter: 0, node_id: 't' },
+    version: 1,
+  };
+  const policyNode = (levels: readonly CapTier[]): unknown => ({
+    _tag: 'DocGraphPolicyNode',
+    _version: 1,
+    family: 'policy',
+    id: 'fnv1a:test',
+    meta: META,
+    appliesTo: [],
+    requires: 'static',
+    grants: { _tag: 'CapSet', levels },
+    sites: ['browser'],
+  });
+
+  test('canonical grants (deduped, ladder-ascending) is well-formed', () => {
+    expect(isWellFormedNode(policyNode(['static', 'gpu']))).toBe(true);
+    expect(isWellFormedNode(policyNode([]))).toBe(true);
+    expect(isWellFormedNode(policyNode(Cap.from(['gpu', 'static', 'gpu']).levels))).toBe(true); // Cap.from canonicalizes
+  });
+
+  test('non-canonical grants is REJECTED — unsorted or duplicated levels cannot seal', () => {
+    expect(isWellFormedNode(policyNode(['gpu', 'static']))).toBe(false); // wrong order
+    expect(isWellFormedNode(policyNode(['static', 'static']))).toBe(false); // duplicate
+    expect(isWellFormedNode(policyNode(['static', 'gpu', 'styled']))).toBe(false); // out of ladder order
   });
 });

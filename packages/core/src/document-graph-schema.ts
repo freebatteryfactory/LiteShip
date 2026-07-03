@@ -28,6 +28,7 @@
  */
 
 import { Schema } from 'effect';
+import { isCanonicalCapSet } from './caps.js';
 import type { DocumentGraphNode, NodeFamily } from './document-graph.js';
 
 /** Branded-string fields validate as plain strings (brand + format are compile-time / invariant laws). */
@@ -122,7 +123,18 @@ const CapTierSchema = Schema.Union([
 const CapSetSchema = Schema.Struct({
   _tag: Schema.Literal('CapSet'),
   levels: Schema.Array(CapTierSchema),
-});
+}).pipe(
+  // Levels must be CANONICAL (deduped, ladder-ascending), not merely an array of valid tiers —
+  // else an untrusted policy patch could seal a non-canonical CapSet that content-addresses
+  // DIFFERENTLY from the same logical set built via Cap.from, breaking the identity law at the wire.
+  Schema.check(
+    Schema.makeFilter((cs) =>
+      isCanonicalCapSet(cs)
+        ? undefined
+        : 'CapSet.levels must be canonical: deduped and ascending by the capability ladder (static < styled < reactive < animated < gpu)',
+    ),
+  ),
+);
 const PolicyNodeSchema = Schema.Struct({
   _tag: Schema.Literal('DocGraphPolicyNode'),
   _version: Schema.Literal(1),
