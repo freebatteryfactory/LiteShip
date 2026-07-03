@@ -19,13 +19,33 @@
  * hand-synced. (aria-expanded would be wrong here — nothing is disclosed, the
  * layout just reflows; aria-hidden is the honest cast for show/hide.)
  *
+ * ...and no first-paint drift, because the server resolves the initial state.
+ * `@quantize` compiles the CSS to a container query that reacts to the real
+ * viewport instantly, so `aria-hidden` has to match the real viewport instantly
+ * too — not a fixed SSR guess the client fixes up later. `resolveInitialState`
+ * reads the `Sec-CH-Viewport-Width` client hint (requested via `Critical-CH`, so
+ * the browser sends it before the first render) and picks the state the viewport
+ * is actually in. The SSR'd `data-czap-state` — and the `aria-hidden` it carries —
+ * therefore agrees with the container-query CSS at byte one.
+ *
  * <Satellite> carries the boundary and joins the authored @aria from the build
  * manifest by content address; bare `satelliteAttrs()` would only serialize ARIA
- * you pass by hand. First paint is mobile-first (`compact`, tagline hidden); the
- * client corrects on hydration.
+ * you pass by hand.
  */
 import Satellite from '@czap/astro/Satellite';
+import { resolveInitialState } from '@czap/astro';
 import { nav } from '../boundaries/nav.boundaries.ts';
+
+// Server-resolve the state from the request's viewport hint (falls back to a
+// UA estimate, then a synthetic default, when no hint is present yet).
+const clientHints: Record<string, string> = {};
+for (const [name, value] of Astro.request.headers) {
+  if (name.startsWith('sec-ch-')) clientHints[name] = value;
+}
+const initialState = resolveInitialState(nav, {
+  clientHints,
+  userAgent: Astro.request.headers.get('user-agent') ?? '',
+});
 ---
 
 <html lang="en">
@@ -40,8 +60,10 @@ import { nav } from '../boundaries/nav.boundaries.ts';
       <p>
         Resize the window. On <code>wide</code> the tagline shows; on <code>compact</code> it
         collapses — and its <code>aria-hidden</code> flips in lockstep, from the
-        <strong>same</strong> definition. Inspect the <code>.extra</code> element and watch
-        <code>aria-hidden</code> track the breakpoint.
+        <strong>same</strong> definition. The first paint is already correct for your
+        viewport (the server read the <code>Sec-CH-Viewport-Width</code> hint), so the
+        pixels and the accessibility state never disagree — not even before hydration.
+        Inspect the <code>.extra</code> element and watch <code>aria-hidden</code> track the breakpoint.
       </p>
 
       <nav class="bar" aria-label="Primary">
@@ -49,7 +71,7 @@ import { nav } from '../boundaries/nav.boundaries.ts';
         <a href="#">Examples</a>
         <a href="#">Reference</a>
         <a href="#">Blog</a>
-        <Satellite boundary={nav} initialState="compact" class="extra">Signals in, named states out.</Satellite>
+        <Satellite boundary={nav} initialState={initialState} class="extra">Signals in, named states out.</Satellite>
       </nav>
     </main>
 
