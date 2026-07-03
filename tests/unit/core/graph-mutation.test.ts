@@ -234,6 +234,25 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('does not address its content');
   });
+
+  test('an applied graph with a dangling edge → error (invalid topology the server would refuse)', async () => {
+    const a = node('a.signal');
+    // Sealed so its id DOES address its content (passes decode + reseal), but the edge points at a node
+    // that isn't in the graph — a topology the mutation seam would never have produced.
+    const dangling = graph([a], [{ from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' }]);
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 200, json: async () => ({ status: 'applied', graph: dangling }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([a]), []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('invalid topology');
+  });
+
+  test('a refused reply whose errors are not all strings → error (payload fields validated)', async () => {
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 422, json: async () => ({ status: 'refused', errors: ['ok', { not: 'a string' }] }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error'); // the guard rejects a malformed refused payload, never a bad cast
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {
