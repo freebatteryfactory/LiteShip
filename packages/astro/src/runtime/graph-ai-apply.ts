@@ -43,7 +43,7 @@
  * @module
  */
 
-import { AICast, type AIContext, type CastContextOptions, type DocumentGraph } from '@czap/core';
+import { AICast, verifyAppliedGraph, type AIContext, type CastContextOptions, type DocumentGraph } from '@czap/core';
 import { graphRuntimeInternals, type GraphRuntimeHandle } from './graph-runtime.js';
 
 /**
@@ -128,4 +128,33 @@ export function admitGraphPatchProposal(handle: GraphRuntimeHandle, candidate: u
   internals.advance(next);
 
   return { ok: true, graph: next };
+}
+
+/**
+ * Adopt a SERVER-APPLIED graph onto the live runtime — the channel counterpart of
+ * {@link admitGraphPatchProposal}. Where `admit` validates a client-side CANDIDATE PATCH
+ * locally, `adopt` takes the full graph a mutation endpoint returned (`status: 'applied'`),
+ * re-proves it through the same adopt guard the sender uses (`verifyAppliedGraph` — decode,
+ * reseal, id/digest, uniqueness, topology), then re-casts the delta and advances the handle.
+ * `value` is `unknown` on purpose: never trust a wire graph, even one you asked for.
+ *
+ * `advance` runs the runtime's structural delta cast before swapping the handle's graph.
+ * The next graph need not descend from the current graph: a missed intervening update is
+ * absorbed as a full structural difference and the live cast state advances to the server's
+ * applied truth.
+ */
+export function adoptAppliedGraph(handle: GraphRuntimeHandle, value: unknown): AdmitPatchResult {
+  const internals = graphRuntimeInternals(handle);
+  if (internals === null) {
+    return {
+      ok: false,
+      errors: ['adoptAppliedGraph: handle is not a loadGraphRuntime handle (no runtime internals).'],
+    };
+  }
+  const verified = verifyAppliedGraph(value);
+  if (!verified.ok) {
+    return { ok: false, errors: [verified.message] };
+  }
+  internals.advance(verified.graph);
+  return { ok: true, graph: verified.graph };
 }

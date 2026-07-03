@@ -28,8 +28,8 @@ import type {
   ContentAddress,
   CellMeta,
 } from '@czap/core';
-import { loadGraphRuntime } from '../../../packages/astro/src/runtime/graph-runtime.js';
-import { castGraphContext, admitGraphPatchProposal } from '../../../packages/astro/src/runtime/graph-ai-apply.js';
+import { loadGraphRuntime, type GraphRuntimeHandle } from '../../../packages/astro/src/runtime/graph-runtime.js';
+import { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from '../../../packages/astro/src/runtime/graph-ai-apply.js';
 
 const ts = HLC.increment(HLC.create('test'), 1);
 const meta: CellMeta = { created: ts, updated: ts, version: 1 };
@@ -312,5 +312,72 @@ describe('admitGraphPatchProposal — apply a validated patch to a live runtime 
     // Graph UNCHANGED by the stale replay.
     expect(handle.graph.id).toBe(advancedId);
     handle.release();
+  });
+
+  test('adoptAppliedGraph rejects a non-loadGraphRuntime handle', () => {
+    const graph = buildGraph();
+    const handle: GraphRuntimeHandle = {
+      graph,
+      recast: () => graph,
+      release: () => {},
+    };
+
+    const result = adoptAppliedGraph(handle, graph);
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual([
+      'adoptAppliedGraph: handle is not a loadGraphRuntime handle (no runtime internals).',
+    ]);
+  });
+
+  test('adoptAppliedGraph rejects malformed wire graphs through the shared verifier', () => {
+    const graph = buildGraph();
+    fixtureEls = { [entityIdFor(graph, 'card')!]: elA };
+    const handle = loadGraphRuntime(graph, resolver)!;
+
+    const result = adoptAppliedGraph(handle, {});
+
+    expect(result.ok).toBe(false);
+    expect(result.errors?.[0]).toContain('server returned a malformed applied graph');
+    expect(handle.graph.id).toBe(graph.id);
+    handle.release();
+  });
+
+  test('adoptAppliedGraph advances the live graph and re-casts the applied delta', () => {
+    window.innerWidth = 500;
+    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 1000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+    const graph = buildGraph();
+    const idA = entityIdFor(graph, 'card')!;
+    fixtureEls = { [idA]: elA };
+    const handle = loadGraphRuntime(graph, resolver)!;
+    const patch = GraphPatch.propose(handle.graph, addEntityBOps());
+    const next = GraphPatch.apply(handle.graph, patch);
+    const idB = entityIdFor(next, 'rail')!;
+    fixtureEls[idB] = elB;
+
+    const result = adoptAppliedGraph(handle, JSON.parse(JSON.stringify(next)));
+
+    expect(result.ok).toBe(true);
+    expect(result.graph!.id).toBe(next.id);
+    expect(handle.graph.id).toBe(next.id);
+    expect(elB.getAttribute('data-czap-state')).toBe('top');
+    expect(elB.style.getPropertyValue('--czap-rail')).toBe('0');
+
+    document.documentElement.style.height = '5000px';
+    Object.defineProperty(window, 'scrollY', { value: 4000, configurable: true });
+    Object.defineProperty(document.documentElement, 'scrollHeight', { value: 5000, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true });
+    window.dispatchEvent(new Event('scroll'));
+
+    return new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        expect(elB.getAttribute('data-czap-state')).toBe('bottom');
+        expect(elB.style.getPropertyValue('--czap-rail')).toBe('1');
+        handle.release();
+        resolve();
+      });
+    });
   });
 });

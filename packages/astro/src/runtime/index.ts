@@ -28,7 +28,7 @@ export type { LoweredBinding, LoweredTarget } from './graph-lower.js';
 // token-witness validation chain (`AICast.validateGraphPatchProposal` →
 // `applyValidatedPatch`) and re-casting only the delta via item B's seam. LiteShip
 // exposes the seam; the producer that calls a model is downstream / out of scope.
-export { castGraphContext, admitGraphPatchProposal } from './graph-ai-apply.js';
+export { castGraphContext, admitGraphPatchProposal, adoptAppliedGraph } from './graph-ai-apply.js';
 export type { AdmitPatchResult } from './graph-ai-apply.js';
 // Scene → live-runtime bridge (0.4.0 item C): drive the live graph runtime from a
 // signal-indexed `@czap/scene`, splitting DISCRETE crossings (→ recast) from the
