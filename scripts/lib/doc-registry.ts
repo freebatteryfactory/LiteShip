@@ -152,6 +152,10 @@ export function renderExamplesBlock(): string {
       dir: '05-ai-patch-refused',
       shows: 'The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph',
     },
+    {
+      dir: '06-mutation-roundtrip',
+      shows: 'The client→server round-trip — a client proposes a `GraphPatch`, the server validates + applies it (stale-base patches refused); the return leg of the stream',
+    },
     { dir: 'default', shows: 'The minimal `npm create liteship` starter' },
     { dir: 'cloudflare-astro', shows: 'Edge KV boundary cache + Astro middleware on Cloudflare' },
     { dir: 'remotion-demo', shows: 'Headless video export from the same DocumentGraph (standalone: `cd examples/remotion-demo && pnpm install`)' },

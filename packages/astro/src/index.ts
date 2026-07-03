@@ -31,6 +31,9 @@ export { czapMiddleware } from './middleware.js';
 export type { CzapLocals, CzapMiddlewareConfig } from './middleware.js';
 export { czapFetchLayer, serializeBoundaryCss } from './fetch-layer.js';
 export type { CzapFetchLayer, CzapFetchLayerConfig, FetchLayerNext } from './fetch-layer.js';
+// Client→server graph-mutation channel: the host route adapter over @czap/core's
+// `handleGraphMutation`. `POST: APIRoute = ({request}) => graphMutationRoute(store)(request)`.
+export { graphMutationRoute } from './graph-mutation-route.js';
 export { bridgeDiagnosticsToAstroLogger, installDiagnosticsBridge } from './diagnostics-bridge.js';
 export type { AstroLoggerLike } from './diagnostics-bridge.js';
 export type { CrossOriginEmbedderPolicy } from './headers.js';

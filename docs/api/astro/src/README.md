@@ -47,6 +47,7 @@ const config = defineConfig({
 - [bridgeDiagnosticsToAstroLogger](functions/bridgeDiagnosticsToAstroLogger.md)
 - [czapFetchLayer](functions/czapFetchLayer.md)
 - [czapMiddleware](functions/czapMiddleware.md)
+- [graphMutationRoute](functions/graphMutationRoute.md)
 - [installDiagnosticsBridge](functions/installDiagnosticsBridge.md)
 - [integration](functions/integration.md)
 - [resolveInitialState](functions/resolveInitialState.md)

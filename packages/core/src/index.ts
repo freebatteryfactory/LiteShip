@@ -306,6 +306,14 @@ export type { ValidatedProposal, ApplyToken, ProposalTarget } from './validated-
 export { assertTokenBinds, unwrapValidated, proposalSubject, proposalReceiptSubject } from './validated-output.js';
 // ── end AI cast ─────────────────────────────────────────────────────────────
 
+// ── Client→server mutation channel — the return leg (SSE's mirror) ───────────
+// The AI-cast refuse-seam turned into a transport-agnostic request/response so a
+// client can propose a GraphPatch back to the server, which validates against its
+// own truth before applying. `handleGraphMutation` is the host-wired server core;
+// `sendGraphMutation` is the client sender. Host owns the GraphStore (authority).
+export { handleGraphMutation, sendGraphMutation } from './graph-mutation.js';
+export type { GraphMutationRequest, GraphMutationResponse, GraphStore } from './graph-mutation.js';
+
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
 export type { RuntimePhase, RuntimeCoordinatorConfig } from './runtime-coordinator.js';

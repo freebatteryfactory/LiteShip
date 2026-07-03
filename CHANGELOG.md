@@ -4,6 +4,29 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.7.0] - 2026-07-03
+
+The **client→server mutation channel** — the return leg of the stream. SSE pushes
+server→client; this is the other direction, and it rides the AI-cast refuse-seam so a
+human client's edit is validated exactly like a model's proposal.
+
+### Added
+
+- **`@czap/core` — the client→server graph-mutation channel.** `handleGraphMutation(request,
+  { loadGraph, saveGraph })` is the transport-agnostic server core: decode a client-proposed
+  `GraphPatch` → `validateGraphPatchProposal` → `applyValidatedPatch` → persist, returning
+  `{ status: 'applied', graph }` or `{ status: 'refused', errors }`. `sendGraphMutation(url,
+  patch)` is the client sender. A patch cast against a stale base is refused (optimistic
+  concurrency for free); only a validated patch mutates the graph, which re-addresses. The
+  host owns the `GraphStore` (the authority boundary, ADR-0015); LiteShip owns the gate.
+- **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain
+  `(request) => Response` (the `czapFetchLayer` shape) that drops into an Astro API route
+  (`export const POST = graphMutationRoute(store)`). 200 on apply, 422 on refusal, 400 on a
+  non-JSON body. `@czap/astro` injects no route — the endpoint, store, and authority are the
+  host's.
+- **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
+  (client proposes → server validates + applies + persists → the stale re-proposal is refused).
+
 ## [0.6.0] - 2026-07-01
 
 "Make-it-loud, round 2": a second dogfooding pass that turns more silent

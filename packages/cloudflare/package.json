@@ -1,6 +1,6 @@
 {
   "name": "@czap/cloudflare",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Cloudflare Workers siteAdapter: KV boundary cache + Astro middleware glue",
   "license": "MIT",
   "author": "Eassa Ayoub <eassa@heyoub.dev>",
