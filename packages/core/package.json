@@ -62,6 +62,7 @@
     "@czap/_spine": "workspace:*",
     "@czap/canonical": "workspace:*",
     "@czap/error": "workspace:*",
+    "@standard-schema/spec": "^1.1.0",
     "@noble/hashes": "^1.8.0",
     "cborg": "^4.2.0"
   },
