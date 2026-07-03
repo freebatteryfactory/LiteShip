@@ -6,7 +6,7 @@
 
 # Interface: GraphStore
 
-Defined in: core/src/graph-mutation.ts:60
+Defined in: [core/src/graph-mutation.ts:60](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L60)
 
 The host's graph store — the authority boundary. LiteShip reads the current
 truth and hands back the applied truth; the host decides where it lives (memory,
@@ -19,7 +19,7 @@ the client's patch will be validated against.
 
 > `readonly` **loadGraph**: () => [`DocumentGraph`](DocumentGraph.md) \| `Promise`\<[`DocumentGraph`](DocumentGraph.md)\>
 
-Defined in: core/src/graph-mutation.ts:61
+Defined in: [core/src/graph-mutation.ts:61](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L61)
 
 #### Returns
 
@@ -31,7 +31,7 @@ Defined in: core/src/graph-mutation.ts:61
 
 > `readonly` **saveGraph**: (`graph`) => `void` \| `Promise`\<`void`\>
 
-Defined in: core/src/graph-mutation.ts:62
+Defined in: [core/src/graph-mutation.ts:62](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L62)
 
 #### Parameters
 
