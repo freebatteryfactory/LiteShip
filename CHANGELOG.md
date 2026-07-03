@@ -29,6 +29,12 @@ human client's edit is validated exactly like a model's proposal.
   so a simple-request can't smuggle a patch to a cookie-authed mount (CSRF hardening; the host
   still owns session/origin auth). `@czap/astro` injects no route — the endpoint, store, and
   authority are the host's.
+- **Refuse-seam hardening — off-contract nested edge fields.** The AI-cast validator now enforces
+  `additionalProperties: false` on the edge object (from/to/type), not just the op envelope. Before,
+  a patch could smuggle an extra field onto an edge (a blob, or a `__proto__` key); the graph digest
+  addresses only `[from, to, type]`, so the field rode into the sealed graph **un-addressed** — the
+  persisted bytes diverging from the content address. Now rejected as a refusal at every schema depth,
+  on both the channel and the AI-apply paths. Surfaced by the channel's untrusted HTTP boundary.
 - **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
   (client proposes → server validates + applies + persists → the stale re-proposal is refused).
 
