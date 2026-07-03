@@ -20,46 +20,52 @@ const LEVEL_ORD: Record<CapTier, number> = {
   gpu: 4,
 };
 
-/** Immutable set of {@link CapTier}s — the tagged value returned by {@link Cap} combinators. */
+/**
+ * Immutable set of {@link CapTier}s — the tagged value returned by {@link Cap} combinators.
+ *
+ * `levels` is a canonical **sorted, deduped array** (ladder order via `LEVEL_ORD`), NOT a
+ * `Set`. A `CapSet` rides inside a content-addressed graph node and travels over JSON
+ * transports (the client→server mutation channel), and a `Set` is neither: `JSON.stringify`
+ * turns it into `{}` (silent loss), and its insertion order made the content address
+ * nondeterministic for the same logical set. The sorted array is JSON-faithful and gives one
+ * canonical form. `Cap`'s combinators keep it deduped + sorted; treat it as a set.
+ */
 export interface CapSet {
   readonly _tag: 'CapSet';
-  readonly levels: ReadonlySet<CapTier>;
+  readonly levels: readonly CapTier[];
 }
 
-const _empty = (): CapSet => ({ _tag: 'CapSet', levels: new Set() });
+/** Deduped + ladder-sorted — the ONE canonical form of a level collection (address/wire stable). */
+const _canonicalLevels = (levels: Iterable<CapTier>): readonly CapTier[] =>
+  [...new Set(levels)].sort((a, b) => LEVEL_ORD[a] - LEVEL_ORD[b]);
 
-const _from = (levels: ReadonlyArray<CapTier>): CapSet => ({
-  _tag: 'CapSet',
-  levels: new Set(levels),
-});
+const _empty = (): CapSet => ({ _tag: 'CapSet', levels: [] });
+
+const _from = (levels: ReadonlyArray<CapTier>): CapSet => ({ _tag: 'CapSet', levels: _canonicalLevels(levels) });
 
 const _grant = (caps: CapSet, level: CapTier): CapSet => ({
   _tag: 'CapSet',
-  levels: new Set([...caps.levels, level]),
+  levels: _canonicalLevels([...caps.levels, level]),
 });
 
+// filter preserves the already-canonical order, so the result stays sorted + deduped.
 const _revoke = (caps: CapSet, level: CapTier): CapSet => ({
   _tag: 'CapSet',
-  levels: new Set([...caps.levels].filter((l) => l !== level)),
+  levels: caps.levels.filter((l) => l !== level),
 });
 
-const _has = (caps: CapSet, level: CapTier): boolean => caps.levels.has(level);
+const _has = (caps: CapSet, level: CapTier): boolean => caps.levels.includes(level);
 
-const _superset = (a: CapSet, b: CapSet): boolean => {
-  for (const level of b.levels) {
-    if (!a.levels.has(level)) return false;
-  }
-  return true;
-};
+const _superset = (a: CapSet, b: CapSet): boolean => b.levels.every((level) => a.levels.includes(level));
 
 const _union = (a: CapSet, b: CapSet): CapSet => ({
   _tag: 'CapSet',
-  levels: new Set([...a.levels, ...b.levels]),
+  levels: _canonicalLevels([...a.levels, ...b.levels]),
 });
 
 const _intersection = (a: CapSet, b: CapSet): CapSet => ({
   _tag: 'CapSet',
-  levels: new Set([...a.levels].filter((l) => b.levels.has(l))),
+  levels: a.levels.filter((l) => b.levels.includes(l)),
 });
 
 const _atLeast = (a: CapTier, b: CapTier): boolean => LEVEL_ORD[a] >= LEVEL_ORD[b];

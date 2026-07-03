@@ -29,10 +29,13 @@ human client's edit is validated exactly like a model's proposal.
   so a simple-request can't smuggle a patch to a cookie-authed mount (CSRF hardening; the host
   still owns session/origin auth). `@czap/astro` injects no route — the endpoint, store, and
   authority are the host's.
-- **Wire-safety guard on the sender.** `sendGraphMutation` refuses a patch carrying a non-JSON value
-  (a `Set`/`Map`/`bigint`) before it serializes — a `CapSet`'s `levels` is a `Set` that `JSON.stringify`
-  drops to `{}`, and `grants` is schema-opaque, so an un-guarded policy patch would corrupt silently.
-  Loud `error` at the sender, never a quiet wrong-write. (A faithful CapSet wire contract is a follow-up.)
+- **`CapSet.levels` is now a canonical JSON-safe array (was a `Set`).** A `Set` `JSON.stringify`s to
+  `{}` — so a policy patch over the mutation channel silently lost its grants — and its insertion order
+  mis-addressed the same logical set. `levels` is now a deduped, ladder-sorted array: JSON-faithful and
+  content-address-deterministic. A policy node's `grants` is now a **validated** CapSet schema (not
+  opaque), so a malformed grants is rejected by `isWellFormedNode` at the root, never silently sealed.
+  `Cap`'s combinators (`has`/`union`/`intersection`/…) are unchanged; only direct `.levels` access moves
+  from `Set` (`.has`/`.size`) to array (`.includes`/`.length`).
 - **Refuse-seam hardening — off-contract nested edge fields.** The AI-cast validator now enforces
   `additionalProperties: false` on the edge object (from/to/type), not just the op envelope. Before,
   a patch could smuggle an extra field onto an edge (a blob, or a `__proto__` key); the graph digest

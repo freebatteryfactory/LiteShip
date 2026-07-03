@@ -109,6 +109,20 @@ const ProjectionNodeSchema = Schema.Struct({
   keys: Opaque,
   resultDigest: Opaque,
 });
+const CapTierSchema = Schema.Union([
+  Schema.Literal('static'),
+  Schema.Literal('styled'),
+  Schema.Literal('reactive'),
+  Schema.Literal('animated'),
+  Schema.Literal('gpu'),
+]);
+// grants is a CapSet: a tagged, deduped level ARRAY. Validated (not Opaque) so a corrupted
+// grants — e.g. a Set that JSON-serialized to {} over the mutation channel — is REJECTED by
+// isWellFormedNode at the root, never silently accepted into the sealed graph.
+const CapSetSchema = Schema.Struct({
+  _tag: Schema.Literal('CapSet'),
+  levels: Schema.Array(CapTierSchema),
+});
 const PolicyNodeSchema = Schema.Struct({
   _tag: Schema.Literal('DocGraphPolicyNode'),
   _version: Schema.Literal(1),
@@ -116,14 +130,8 @@ const PolicyNodeSchema = Schema.Struct({
   id: Addr,
   meta: Opaque,
   appliesTo: Schema.Array(Addr),
-  requires: Schema.Union([
-    Schema.Literal('static'),
-    Schema.Literal('styled'),
-    Schema.Literal('reactive'),
-    Schema.Literal('animated'),
-    Schema.Literal('gpu'),
-  ]),
-  grants: Opaque,
+  requires: CapTierSchema,
+  grants: CapSetSchema,
   sites: Schema.Array(
     Schema.Union([Schema.Literal('node'), Schema.Literal('browser'), Schema.Literal('worker'), Schema.Literal('edge')]),
   ),
