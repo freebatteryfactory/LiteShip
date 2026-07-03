@@ -39,6 +39,7 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0027](./0027-cell-value-dom-boundary.md) | Reactive primitives are value→wire, never value→DOM | Accepted |
 | [0028](./0028-plain-element-directive-scanner.md) | DIRECTIVE_ATTRIBUTE_REGISTRY: directives boot on plain elements | Accepted |
 | [0029](./0029-wgsl-uniform-buffer-layout.md) | WGSL uniform buffer layout is declaration-derived, not a fixed scalar block | Accepted |
+| [0030](./0030-client-server-mutation-channel.md) | Client→server graph-mutation channel (the return leg) | Accepted |
 
 ## Template
 

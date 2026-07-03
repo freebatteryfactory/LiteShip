@@ -16,7 +16,7 @@
  * ```
  *
  * ...OR a `czapFetchLayer` branch. `@czap/astro` injects NO routes on purpose
- * (ADR-0022): the host owns the endpoint, the graph store, and thus the authority.
+ * (ADR-0030): the host owns the endpoint, the graph store, and thus the authority.
  * This adapter is pure transport glue over the already-validated AI-cast seam — no
  * new validation, no persistence, no model or network code (fullsend-in-scope).
  *
