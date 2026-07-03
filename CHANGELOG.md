@@ -24,8 +24,11 @@ human client's edit is validated exactly like a model's proposal.
 - **`@czap/astro` — `graphMutationRoute(store)`.** The host route adapter: a plain
   `(request) => Response` (the `czapFetchLayer` shape) that drops into an Astro API route
   (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)`). 200
-  on apply, 422 on refusal, 400 on a non-JSON body. `@czap/astro` injects no route — the
-  endpoint, store, and authority are the host's.
+  on apply, 422 on refusal, 400 on a malformed JSON body, and 415 on a non-`application/json`
+  body — requiring the JSON content type forces cross-origin POSTs through a CORS preflight,
+  so a simple-request can't smuggle a patch to a cookie-authed mount (CSRF hardening; the host
+  still owns session/origin auth). `@czap/astro` injects no route — the endpoint, store, and
+  authority are the host's.
 - **`examples/06-mutation-roundtrip`** — a runnable SSR app proving the round-trip end to end
   (client proposes → server validates + applies + persists → the stale re-proposal is refused).
 

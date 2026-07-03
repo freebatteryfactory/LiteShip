@@ -36,14 +36,32 @@ function jsonResponse(body: GraphMutationResponse, status: number): Response {
  * against the host's current graph:
  *   - **200** on apply — body is `{ status: 'applied', graph }` (the new sealed graph);
  *   - **422** on refusal — body is `{ status: 'refused', errors }` (validation reasons);
- *   - **400** on an unparseable request body.
+ *   - **415** on a non-`application/json` body (see the CSRF note below);
+ *   - **400** on an unparseable JSON body.
  *
  * The host supplies the `GraphStore` (its authority boundary); everything the
  * seam guarantees — a stale-base / dangling-edge / malformed patch never mutates the
  * graph — holds unchanged over HTTP.
+ *
+ * **CSRF hardening.** This route requires `Content-Type: application/json`. `Request.json()`
+ * will parse a `text/plain` or form-encoded body just fine, so without this a cross-site
+ * "simple request" (no CORS preflight) could smuggle a crafted `GraphPatch` to a
+ * cookie-authed mount — the base-match/CAS is integrity, NOT a CSRF token (the graph id
+ * is discoverable). Demanding `application/json` forces every cross-origin POST into a
+ * preflighted request the browser blocks by default. This closes the parse-level bypass;
+ * it does not replace host session/origin auth (ADR-0015) — the host still owns that.
  */
 export function graphMutationRoute(store: GraphStore): (request: Request) => Promise<Response> {
   return async (request: Request): Promise<Response> => {
+    // Reject anything that isn't application/json BEFORE parsing (see the CSRF note above).
+    // `sendGraphMutation` always sends application/json, so the legitimate client is unaffected.
+    const contentType = (request.headers.get('content-type') ?? '').toLowerCase();
+    if (!contentType.startsWith('application/json')) {
+      return jsonResponse(
+        { status: 'refused', errors: ['unsupported content-type: this endpoint requires application/json'] },
+        415,
+      );
+    }
     let body: GraphMutationRequest;
     try {
       body = (await request.json()) as GraphMutationRequest;
