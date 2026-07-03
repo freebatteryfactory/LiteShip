@@ -195,6 +195,48 @@ export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boo
   return args;
 }
 
+/**
+ * Topologically sort ship targets so each package publishes AFTER its in-batch `@czap/*`
+ * dependencies. `pnpm -r publish` did this implicitly (dependencies before dependents);
+ * the per-tarball `npm publish` handoff must preserve it, or a no-filter ship could push
+ * a dependent — notably the `liteship` umbrella — before a same-version dependency exists
+ * on the registry, leaving a window where the dependent is installable but unresolvable.
+ * Ties keep input (workspace-path) order; a dependency cycle degrades to input order for
+ * the cycle members (publish still happens, just unsorted among them). The manifests were
+ * already parsed by the workspace loader, so `JSON.parse` here needs no guard.
+ */
+export function topoSortByDependencies(targets: readonly WorkspacePackage[]): WorkspacePackage[] {
+  const byName = new Map<string, WorkspacePackage>();
+  for (const t of targets) {
+    if (typeof t.packageJson.name === 'string') byName.set(t.packageJson.name, t);
+  }
+  const inBatchDeps = (t: WorkspacePackage): string[] => {
+    const manifest = JSON.parse(new TextDecoder().decode(t.packageJsonBytes)) as {
+      dependencies?: Record<string, string>;
+    };
+    return Object.keys(manifest.dependencies ?? {}).filter((dep) => byName.has(dep));
+  };
+  const sorted: WorkspacePackage[] = [];
+  const state = new Map<string, 'visiting' | 'done'>();
+  const visit = (t: WorkspacePackage): void => {
+    const name = t.packageJson.name;
+    if (typeof name !== 'string') {
+      sorted.push(t);
+      return;
+    }
+    if (state.has(name)) return; // 'done' → placed; 'visiting' → cycle, don't recurse
+    state.set(name, 'visiting');
+    for (const dep of inBatchDeps(t)) {
+      const depTarget = byName.get(dep);
+      if (depTarget) visit(depTarget);
+    }
+    state.set(name, 'done');
+    sorted.push(t);
+  };
+  for (const t of targets) visit(t);
+  return sorted;
+}
+
 const loadWorkspace = (cwd: string): WorkspacePackage[] => {
   const globs = readWorkspacePackagesGlobs(cwd);
   const seen = new Set<string>();
@@ -301,7 +343,10 @@ export async function ship(args: readonly string[]): Promise<number> {
     return 1;
   }
 
-  const targets = selectTargets(workspace, opts.filter);
+  // Dependency order so the per-tarball npm publish loop pushes deps before dependents
+  // (pnpm -r did this implicitly). No-op for the release path (one package per ship
+  // invocation) — matters for a local no-filter ship of the whole workspace.
+  const targets = topoSortByDependencies(selectTargets(workspace, opts.filter));
   if (targets.length === 0) {
     emitError('ship', `no packages matched${opts.filter !== undefined ? ` --filter ${opts.filter}` : ''}`);
     return 1;

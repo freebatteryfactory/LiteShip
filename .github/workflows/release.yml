@@ -75,7 +75,12 @@ jobs:
   publish:
     name: Publish 21 @czap/* packages + create-liteship + the liteship umbrella + attach ShipCapsules
     needs: release-certified
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    # MUST be a GitHub-hosted runner: npm OIDC trusted publishing rejects self-hosted
+    # runners (the token's runner_environment claim) — docs.npmjs.com/trusted-publishers
+    # (#supported-cicd-providers). A Blacksmith runner passes the OIDC preflight but the
+    # registry then declines the token, so the publish would ENEEDAUTH/403. This job is
+    # tag-triggered (not hot-path), so the GitHub-hosted runner's speed cost is irrelevant.
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6

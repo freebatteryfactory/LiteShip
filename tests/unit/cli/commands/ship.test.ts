@@ -6,8 +6,25 @@
  * this file just exercises the clean error path and asserts receipt shape.
  */
 import { describe, it, expect } from 'vitest';
-import { ship, isAlreadyPublishedFailure, buildNpmPublishArgv } from '../../../../packages/cli/src/commands/ship.js';
+import {
+  ship,
+  isAlreadyPublishedFailure,
+  buildNpmPublishArgv,
+  topoSortByDependencies,
+} from '../../../../packages/cli/src/commands/ship.js';
+import type { WorkspacePackage } from '@czap/command';
 import { captureCli } from '../../../integration/cli/capture.js';
+
+/** Synthetic workspace package for the topo-sort tests. */
+function pkgFixture(name: string, deps: readonly string[]): WorkspacePackage {
+  const manifest = { name, version: '0.6.0', dependencies: Object.fromEntries(deps.map((d) => [d, 'workspace:*'])) };
+  return {
+    absolutePath: `/repo/packages/${name}`,
+    relativePath: `packages/${name}`,
+    packageJsonBytes: new TextEncoder().encode(JSON.stringify(manifest)),
+    packageJson: { name, version: '0.6.0' },
+  };
+}
 
 describe('ship command (smoke)', () => {
   it('is importable and returns a numeric exit code', async () => {
@@ -128,5 +145,31 @@ describe('buildNpmPublishArgv (OIDC publish handoff — npm CLI, not pnpm)', () 
       '--otp',
       '123456',
     ]);
+  });
+});
+
+describe('topoSortByDependencies (deps publish before dependents)', () => {
+  // pnpm -r publish sorted topologically; the per-tarball npm handoff must too, or a
+  // no-filter ship could push the liteship umbrella before its same-version deps exist.
+  it('orders an in-batch dependency before its dependent even when input is reversed', () => {
+    const input = [
+      pkgFixture('liteship', ['@czap/core', '@czap/astro']),
+      pkgFixture('@czap/astro', ['@czap/core']),
+      pkgFixture('@czap/core', []),
+    ];
+    const order = topoSortByDependencies(input).map((t) => t.packageJson.name);
+    expect(order.indexOf('@czap/core')).toBeLessThan(order.indexOf('@czap/astro'));
+    expect(order.indexOf('@czap/astro')).toBeLessThan(order.indexOf('liteship'));
+  });
+
+  it('only orders packages present in the batch (out-of-batch deps like effect are ignored)', () => {
+    const order = topoSortByDependencies([pkgFixture('@czap/core', ['effect'])]).map((t) => t.packageJson.name);
+    expect(order).toEqual(['@czap/core']);
+  });
+
+  it('degrades to input order on a dependency cycle instead of looping', () => {
+    const input = [pkgFixture('@czap/a', ['@czap/b']), pkgFixture('@czap/b', ['@czap/a'])];
+    const order = topoSortByDependencies(input).map((t) => t.packageJson.name);
+    expect(order.sort()).toEqual(['@czap/a', '@czap/b']); // both present, no infinite loop
   });
 });
