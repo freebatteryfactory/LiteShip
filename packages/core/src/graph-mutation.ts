@@ -28,7 +28,7 @@
  */
 
 import type { DocumentGraph } from './document-graph.js';
-import { decodeDocumentGraph, sealNode, sealGraph } from './document-graph-address.js';
+import { decodeDocumentGraph, sealNode, sealGraph, validateGraph } from './document-graph-address.js';
 import { GraphPatch } from './graph-patch.js';
 import { validateGraphPatchProposal, applyValidatedPatch } from './ai-cast.js';
 
@@ -72,7 +72,7 @@ function isGraphMutationResponse(value: unknown): value is GraphMutationResponse
     case 'applied':
       return typeof record.graph === 'object' && record.graph !== null;
     case 'refused':
-      return Array.isArray(record.errors);
+      return Array.isArray(record.errors) && record.errors.every((entry) => typeof entry === 'string');
     case 'error':
       return typeof record.message === 'string';
     default:
@@ -222,6 +222,16 @@ export async function sendGraphMutation(
       const resealed = sealGraph({ ...decoded, nodes: decoded.nodes.map((node) => sealNode(node)) });
       if (resealed.id !== decoded.id) {
         return { status: 'error', message: 'server returned an applied graph whose id does not address its content' };
+      }
+      // Topology: a graph a correct server would have produced has no dangling edge and no cycle.
+      // decode + reseal cover shape + identity but NOT structure, so a miswired endpoint could still
+      // hand back a graph the mutation seam itself would have refused. This completes the adopt trio
+      // (shape → identity → topology) — the full "is this a graph the server would produce?" contract.
+      if (!validateGraph(resealed).ok) {
+        return {
+          status: 'error',
+          message: 'server returned an applied graph with invalid topology (dangling edge or cycle)',
+        };
       }
       return { status: 'applied', graph: resealed };
     } catch (error) {
