@@ -109,6 +109,13 @@ export interface GraphStore {
  *   - a bad proposal (malformed envelope, validation rejection, CAS miss) → `refused`;
  *   - a store I/O failure (loadGraph / saveGraph reject) → `error` (not the client's
  *     fault; a raw persistence error must not escape as an unstructured 500).
+ *
+ * The `error.message` is surfaced to the caller (and, via `graphMutationRoute`, to the
+ * HTTP client) — deliberately: a blanket "internal error" would strand a host debugging a
+ * failed mutation, the silent degradation LiteShip refuses to ship. LiteShip surfaces what
+ * the host's store throws; it does not redact it. A `GraphStore` whose errors could carry
+ * secrets (connection strings, internal paths) MUST therefore catch and re-throw a redacted
+ * message inside the store — the store is the host's authority boundary (ADR-0015).
  */
 export async function handleGraphMutation(
   request: GraphMutationRequest,
@@ -135,7 +142,16 @@ export async function handleGraphMutation(
     return { status: 'refused', errors: result.errors };
   }
 
-  const next = applyValidatedPatch(base, result.proposal);
+  // Defense-in-depth: validation above binds the proposal to THIS base, so apply cannot
+  // fail by construction. But the module's contract is UNCONDITIONAL ("never throws"), so
+  // a post-validation invariant break (e.g. a future refactor of the validate/apply pair)
+  // still maps to `error` rather than escaping as a rejected promise the caller can't shape.
+  let next: DocumentGraph;
+  try {
+    next = applyValidatedPatch(base, result.proposal);
+  } catch (error) {
+    return { status: 'error', message: `apply failed: ${messageOf(error)}` };
+  }
 
   // Compare-and-swap: if a concurrent request already advanced the store past `base`,
   // the commit is rejected and the patch is refused (reload + retry). The base-match
