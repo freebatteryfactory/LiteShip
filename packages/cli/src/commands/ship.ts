@@ -126,22 +126,6 @@ export function isAlreadyPublishedFailure(output: string): boolean {
   return ALREADY_PUBLISHED_PATTERN.test(output);
 }
 
-/**
- * Build the argv for the publish handoff. ship publishes each ALREADY-PACKED,
- * `workspace:*`-rewritten tarball via the **npm CLI** (>= 11.5.1) rather than
- * `pnpm publish`: npm performs npm's OIDC trusted-publishing token exchange natively in
- * CI, which pnpm does not (pnpm#11513 / pnpm#9812) — that gap was the `ENEEDAUTH` at every
- * OIDC cut. The tarball is tool-agnostic: pnpm packed it (rewriting `workspace:` specs,
- * still enforced by `findWorkspaceSpecLeaks`), npm just uploads it. `--access public` is
- * required for scoped packages on a free org; provenance/otp ride through when requested.
- */
-export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boolean; otp?: string }): string[] {
-  const args = ['publish', tarballPath, '--access', 'public'];
-  if (opts.provenance) args.push('--provenance');
-  if (opts.otp !== undefined) args.push('--otp', opts.otp);
-  return args;
-}
-
 const readWorkspacePackagesGlobs = (cwd: string): string[] => {
   const ymlPath = join(cwd, 'pnpm-workspace.yaml');
   if (!existsSync(ymlPath)) return [];
@@ -192,6 +176,24 @@ const resolveGlob = (cwd: string, pattern: string): string[] => {
   if (existsSync(abs) && existsSync(join(abs, 'package.json'))) return [pattern];
   return [];
 };
+
+/**
+ * Build the argv for the publish handoff. ship publishes each ALREADY-PACKED,
+ * `workspace:*`-rewritten tarball via the **npm CLI** (>= 11.5.1) rather than
+ * `pnpm publish`: npm performs npm's OIDC trusted-publishing token exchange natively in
+ * CI, which pnpm does not (pnpm#11513 / pnpm#9812) — that gap was the `ENEEDAUTH` at every
+ * OIDC cut. The tarball is tool-agnostic: pnpm packed it (rewriting `workspace:` specs,
+ * still enforced by `findWorkspaceSpecLeaks`), npm just uploads it. `--access public` is
+ * required for scoped packages on a free org; provenance/otp ride through when requested.
+ * (Defined below the glob helpers so it never shifts the line-anchored no-silent-catch
+ * waiver in `resolveGlob` — traceability/standards-waivers.json.)
+ */
+export function buildNpmPublishArgv(tarballPath: string, opts: { provenance: boolean; otp?: string }): string[] {
+  const args = ['publish', tarballPath, '--access', 'public'];
+  if (opts.provenance) args.push('--provenance');
+  if (opts.otp !== undefined) args.push('--otp', opts.otp);
+  return args;
+}
 
 const loadWorkspace = (cwd: string): WorkspacePackage[] => {
   const globs = readWorkspacePackagesGlobs(cwd);
