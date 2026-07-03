@@ -39,9 +39,6 @@ const graph = currentGraph();
         <button id="stale">Propose a stale patch (should be REFUSED)</button>
       </div>
       <pre id="out">Click a button to send a patch.</pre>
-
-      <!-- The SSR'd base graph, handed to the client so it can propose against it. -->
-      <script type="application/json" id="base" set:html={JSON.stringify(graph)}></script>
     </main>
 
     <style>
@@ -59,11 +56,13 @@ const graph = currentGraph();
 
       const out = document.getElementById('out');
       const idEl = document.getElementById('graph-id');
-      const base = decodeDocumentGraph(JSON.parse(document.getElementById('base').textContent));
 
-      // A validated, content-addressed node built the same way the server does.
-      const signal = (input) =>
-        sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: base.meta, input });
+      // Fetch the CURRENT server graph to propose against — no host-mutated data is inlined
+      // into the page, so a signal input can never smuggle a closing script tag into the markup.
+      const currentBase = async () => decodeDocumentGraph(await (await fetch('/api/graph')).json());
+
+      // A validated, content-addressed node, built the same way the server does.
+      const signal = (meta, input) => sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta, input });
 
       async function send(patch, label) {
         out.textContent = `sending ${label}…`;
@@ -76,17 +75,17 @@ const graph = currentGraph();
         }
       }
 
-      document.getElementById('valid').addEventListener('click', () => {
-        // Proposed against the CURRENT server base → validates.
-        const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal('viewport.height') }]);
+      document.getElementById('valid').addEventListener('click', async () => {
+        const base = await currentBase(); // propose against the live server truth
+        const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal(base.meta, 'viewport.height') }]);
         send(patch, 'a valid add');
       });
 
-      document.getElementById('stale').addEventListener('click', () => {
-        // Proposed against a DIFFERENT graph → patch.base !== server graph.id → REFUSED.
-        const other = decodeDocumentGraph(JSON.parse(document.getElementById('base').textContent));
-        const stalePatch = GraphPatch.propose({ ...other, id: 'fnv1a:deadbeef' }, [
-          { op: 'add', family: 'signal', node: signal('never.applied') },
+      document.getElementById('stale').addEventListener('click', async () => {
+        const base = await currentBase();
+        // Point the patch at a base that doesn't match the server's → REFUSED.
+        const stalePatch = GraphPatch.propose({ ...base, id: 'fnv1a:deadbeef' }, [
+          { op: 'add', family: 'signal', node: signal(base.meta, 'never.applied') },
         ]);
         send(stalePatch, 'a stale patch');
       });

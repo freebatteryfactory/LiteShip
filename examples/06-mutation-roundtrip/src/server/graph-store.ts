@@ -25,8 +25,12 @@ let current: DocumentGraph = build([signal('scroll.y'), signal('viewport.width')
 
 export const store: GraphStore = {
   loadGraph: () => current,
-  saveGraph: (next) => {
+  // Compare-and-swap: reject a write whose base has been superseded by a concurrent
+  // commit (trivial in-memory; a real host does a version-conditional DB/KV update).
+  saveGraph: (next, expected) => {
+    if (current.id !== expected.id) return false;
     current = next;
+    return true;
   },
 };
 

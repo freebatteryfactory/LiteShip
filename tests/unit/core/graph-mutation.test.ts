@@ -31,15 +31,39 @@ const node = (input: string): SignalNode =>
 const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
   sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
 
-/** An in-memory host graph store — the authority boundary, with a save counter. */
+/** An in-memory host graph store — the authority boundary, with a compare-and-swap save. */
 function memStore(initial: DocumentGraph): GraphStore & { current: DocumentGraph; saves: number } {
   const store = {
     current: initial,
     saves: 0,
     loadGraph: () => store.current,
-    saveGraph: (graphToSave: DocumentGraph) => {
-      store.current = graphToSave;
+    saveGraph: (next: DocumentGraph, expected: DocumentGraph) => {
+      if (store.current.id !== expected.id) return false; // the store moved — reject the stale write
+      store.current = next;
       store.saves += 1;
+      return true;
+    },
+  };
+  return store;
+}
+
+/**
+ * A store that simulates the concurrent-read race: `loadGraph` always returns the ORIGINAL
+ * base (as if two requests read it before either wrote), while `saveGraph` compare-and-swaps
+ * against the REAL current. So both requests validate against the same base, but only the
+ * first commit wins — the second's CAS fails.
+ */
+function racyStore(initial: DocumentGraph): GraphStore & { current: DocumentGraph; saves: number } {
+  const store = {
+    original: initial,
+    current: initial,
+    saves: 0,
+    loadGraph: () => store.original,
+    saveGraph: (next: DocumentGraph, expected: DocumentGraph) => {
+      if (store.current.id !== expected.id) return false;
+      store.current = next;
+      store.saves += 1;
+      return true;
     },
   };
   return store;
@@ -85,6 +109,22 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     expect(res.status).toBe('refused');
     if (res.status === 'refused') expect(res.errors.length).toBeGreaterThan(0);
     expect(store.saves).toBe(0);
+  });
+
+  test('two commits racing the SAME base: the second is REFUSED by compare-and-swap (no lost update)', async () => {
+    const base = graph([node('scroll.y')]);
+    const store = racyStore(base); // both requests read `base` before either writes
+    const patchA = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('a.signal') }]);
+    const patchB = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: node('b.signal') }]);
+
+    const a = await handleGraphMutation({ patch: overTheWire(patchA) }, store);
+    const b = await handleGraphMutation({ patch: overTheWire(patchB) }, store);
+
+    // Both validated against the same base; A's CAS wins, B's stale write is rejected.
+    expect(a.status).toBe('applied');
+    expect(b.status).toBe('refused');
+    if (b.status === 'refused') expect(b.errors[0]).toContain('concurrent modification');
+    expect(store.saves).toBe(1); // B did NOT clobber A
   });
 });
 

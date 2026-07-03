@@ -355,7 +355,7 @@ Main surfaces:
 - `@czap/astro/middleware-entry` — the auto-wired detection middleware registered by `czap({ middleware: true })`; populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` via an `App.Locals` augmentation
 - `czapFetchLayer` / `serializeBoundaryCss` (also `@czap/astro/fetch-layer`) — request-time adaptation as a layer in FRONT of Astro (Astro 7 `src/fetch.ts`): shares the one `createEdgeHostAdapter().resolve()` with `czapMiddleware` and, on an opt-in `serveFromEdge` predicate, serves boundary CSS from the edge and skips Astro entirely; Astro `Fetchable` / Hono-compatible (ADR-0024, 0.4.0)
 - `bridgeDiagnosticsToAstroLogger` / `installDiagnosticsBridge` — route `@czap/*` runtime diagnostics through Astro's logger for structured `astro dev --json` output; wired in `astro:config:setup` (0.4.0)
-- `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@czap/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST = graphMutationRoute(store)`). 200 on apply, 422 on refusal. `@czap/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0)
+- `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@czap/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)` — Astro hands the handler an `APIContext`, so unwrap `request`). 200 on apply, 422 on refusal. `@czap/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0)
 
 Host-owned shared runtime surfaces:
 
