@@ -8,7 +8,7 @@
 
 > **graphMutationRoute**(`store`): (`request`) => `Promise`\<`Response`\>
 
-Defined in: astro/src/graph-mutation-route.ts:45
+Defined in: [astro/src/graph-mutation-route.ts:45](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/graph-mutation-route.ts#L45)
 
 Build a POST handler that validates + applies a client-proposed `GraphPatch`
 against the host's current graph:
