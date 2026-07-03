@@ -242,7 +242,7 @@ describe('dogfood — the hygiene gates over the real packages/*/src tree', () =
     const scopedSeen = (outcome?.findings ?? []).map((f) => locOf(f.location?.file, f.location?.line)).sort();
     expect(scopedSeen).toEqual([
       'packages/cli/src/commands/doctor/probes-workspace.ts:250',
-      'packages/cli/src/commands/ship.ts:169',
+      'packages/cli/src/commands/ship.ts:185',
       'packages/cli/src/commands/version.ts:47',
       'packages/web/src/stream/resumption-pure.ts:29',
     ]);

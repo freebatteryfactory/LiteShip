@@ -5,18 +5,20 @@ name: Release (OIDC trusted publishing)
 #   git tag -a v0.2.0 -m "v0.2.0"
 #   git push origin v0.2.0
 #
-# v0.2 auth: OIDC trusted publishing — no tokens anywhere. pnpm >= 10.13
-# (we pin 10.32 via packageManager) exchanges the GitHub Actions OIDC
-# token (id-token: write below) for a short-lived publish credential at
-# publish time. PREREQUISITE: every publishable package must have a
-# trusted publisher configured at
-# https://www.npmjs.com/package/<name>/access (org: freebatteryfactory/LiteShip,
-# workflow: release.yml — see RELEASING.md §Trusted publishing). A
-# package without one fails its publish loudly with an auth error; fix
-# the npm-side config and re-run the workflow — `czap ship` treats
-# already-published versions as idempotent success, so re-runs are safe.
-# The NPM_TOKEN repo secret is dead (its token was revoked) and is no
-# longer read.
+# auth: OIDC trusted publishing — no tokens anywhere. `czap ship` packs each
+# package with pnpm (which rewrites `workspace:*` to concrete versions) and then
+# hands the tarball to the **npm CLI** (`npm publish <tgz> --provenance`) for the
+# upload. npm >= 11.5.1 performs npm's OIDC trusted-publishing token exchange
+# natively in CI (id-token: write below); `pnpm publish` does NOT do the exchange
+# (pnpm#11513 / pnpm#9812) — that gap was the ENEEDAUTH at 0.4.0 and 0.6.0's first
+# cut. So we upgrade the runner's npm to >= 11.5.1 (Node 22 ships npm 10) before the
+# ship loop. PREREQUISITE: every publishable package must have a trusted publisher
+# configured at https://www.npmjs.com/package/<name>/access (org+repo:
+# freebatteryfactory/LiteShip, workflow filename: release.yml — see RELEASING.md
+# §Trusted publishing). A package without one fails its publish loudly with an auth
+# error; fix the npm-side config and re-run — `czap ship` treats already-published
+# versions as idempotent success, so re-runs are safe. The NPM_TOKEN repo secret is
+# dead (its token was revoked) and is no longer read.
 
 on:
   push:
@@ -85,13 +87,23 @@ jobs:
       # No registry-url here: setup-node's registry-url writes an
       # `_authToken=${NODE_AUTH_TOKEN}` line into ~/.npmrc, and with no
       # token in the env that dangling reference breaks npmrc parsing
-      # before OIDC ever runs. pnpm's trusted-publishing flow needs no
-      # npmrc auth at all — it exchanges the runner's OIDC token at
-      # publish time (registry defaults to registry.npmjs.org).
+      # before OIDC ever runs. Trusted publishing needs no npmrc auth at
+      # all — the npm CLI exchanges the runner's OIDC token at publish
+      # time (registry defaults to registry.npmjs.org). Node >= 22.14 is a
+      # trusted-publishing requirement; node-version 22 resolves to latest 22.x.
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
+
+      # npm's OIDC trusted publishing needs npm CLI >= 11.5.1, but Node 22 ships
+      # npm 10. Upgrade it globally so the `npm publish <tgz>` handoff in `czap ship`
+      # (packages/cli/src/commands/ship.ts) performs the OIDC token exchange. `pnpm
+      # publish` does NOT do this (pnpm#11513) — hence the ENEEDAUTH at prior cuts.
+      - name: Upgrade npm CLI for OIDC trusted publishing (>= 11.5.1)
+        run: |
+          npm install -g npm@^11.5.1
+          echo "npm $(npm --version) will exchange the OIDC token at publish time."
 
       # Fail loud BEFORE minting anything if the OIDC environment is
       # absent (id-token: write missing or running outside Actions) —
@@ -103,7 +115,7 @@ jobs:
             echo "::error::No OIDC token endpoint in the job environment (id-token: write missing?). Trusted publishing cannot authenticate."
             exit 1
           fi
-          echo "OIDC endpoint present; pnpm $(pnpm --version) will exchange the token at publish time."
+          echo "OIDC endpoint present; the npm CLI will exchange the token at publish time."
 
       - run: pnpm install --frozen-lockfile
 

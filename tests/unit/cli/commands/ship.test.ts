@@ -6,7 +6,7 @@
  * this file just exercises the clean error path and asserts receipt shape.
  */
 import { describe, it, expect } from 'vitest';
-import { ship, isAlreadyPublishedFailure } from '../../../../packages/cli/src/commands/ship.js';
+import { ship, isAlreadyPublishedFailure, buildNpmPublishArgv } from '../../../../packages/cli/src/commands/ship.js';
 import { captureCli } from '../../../integration/cli/capture.js';
 
 describe('ship command (smoke)', () => {
@@ -92,5 +92,41 @@ describe('isAlreadyPublishedFailure (ship idempotency contract, ROADMAP §4)', (
       false,
     );
     expect(isAlreadyPublishedFailure('')).toBe(false);
+  });
+});
+
+describe('buildNpmPublishArgv (OIDC publish handoff — npm CLI, not pnpm)', () => {
+  // The publish handoff uploads the already-packed tarball via the npm CLI so npm's
+  // native OIDC trusted-publishing token exchange runs (pnpm publish does not do it —
+  // pnpm#11513 — which was the ENEEDAUTH at prior cuts). Pin the argv shape.
+  const tgz = '/repo/packages/core/czap-core-0.6.0.tgz';
+
+  it('publishes the tarball path with public access (no pnpm --filter / -r / --no-git-checks)', () => {
+    const argv = buildNpmPublishArgv(tgz, { provenance: false });
+    expect(argv).toEqual(['publish', tgz, '--access', 'public']);
+    expect(argv).not.toContain('--filter');
+    expect(argv).not.toContain('-r');
+    expect(argv).not.toContain('--no-git-checks');
+  });
+
+  it('adds --provenance for the OIDC/CI path', () => {
+    expect(buildNpmPublishArgv(tgz, { provenance: true })).toEqual([
+      'publish',
+      tgz,
+      '--access',
+      'public',
+      '--provenance',
+    ]);
+  });
+
+  it('threads an OTP through when supplied (local 2FA publish)', () => {
+    expect(buildNpmPublishArgv(tgz, { provenance: false, otp: '123456' })).toEqual([
+      'publish',
+      tgz,
+      '--access',
+      'public',
+      '--otp',
+      '123456',
+    ]);
   });
 });
