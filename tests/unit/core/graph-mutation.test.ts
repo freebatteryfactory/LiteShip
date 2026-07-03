@@ -9,7 +9,14 @@
  * byte-identical — the same refuse-seam the AI cast enforces, now bidirectional.
  */
 import { describe, test, expect } from 'vitest';
-import { GraphPatch, sealNode, sealGraph, handleGraphMutation, sendGraphMutation } from '../../../packages/core/src/index.js';
+import {
+  GraphPatch,
+  sealNode,
+  sealGraph,
+  handleGraphMutation,
+  sendGraphMutation,
+  verifyAppliedGraph,
+} from '../../../packages/core/src/index.js';
 import type {
   DocumentGraph,
   DocumentGraphNode,
@@ -97,6 +104,7 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     const res = await handleGraphMutation({ patch: overTheWire(stale) }, store);
 
     expect(res.status).toBe('refused');
+    if (res.status === 'refused') expect(res.staleBase).toBe(true);
     expect(store.current.id).toBe(base.id); // unchanged
     expect(store.saves).toBe(0); // never persisted
   });
@@ -123,7 +131,10 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     // Both validated against the same base; A's CAS wins, B's stale write is rejected.
     expect(a.status).toBe('applied');
     expect(b.status).toBe('refused');
-    if (b.status === 'refused') expect(b.errors[0]).toContain('concurrent modification');
+    if (b.status === 'refused') {
+      expect(b.errors[0]).toContain('concurrent modification');
+      expect(b.staleBase).toBe(true);
+    }
     expect(store.saves).toBe(1); // B did NOT clobber A
   });
 
@@ -158,6 +169,22 @@ describe('graph mutation channel — handleGraphMutation (server)', () => {
     if (res.status === 'refused') expect(res.errors.join(' ')).toMatch(/smuggled|does not model/);
     expect(store.saves).toBe(0); // never persisted
     expect(store.current.id).toBe(base.id); // byte-identical
+  });
+
+  test('an invalid proposal against the CURRENT base is REFUSED without staleBase', async () => {
+    const a = node('a.signal');
+    const base = graph([a]);
+    const store = memStore(base);
+    const invalid = GraphPatch.propose(base, [{ op: 'add', edge: { from: a.id, to: 'fnv1a:ghost' as typeof a.id, type: 'seq' } }]);
+
+    const res = await handleGraphMutation({ patch: overTheWire(invalid) }, store);
+
+    expect(res.status).toBe('refused');
+    if (res.status === 'refused') {
+      expect(res.errors.length).toBeGreaterThan(0);
+      expect(res.staleBase).toBeUndefined();
+    }
+    expect(store.saves).toBe(0);
   });
 });
 
@@ -254,6 +281,14 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(res.status).toBe('error'); // the guard rejects a malformed refused payload, never a bad cast
   });
 
+  test('a refused reply whose staleBase is not true → error (payload fields fail closed)', async () => {
+    const fetchImpl: typeof fetch = async () =>
+      ({ status: 409, json: async () => ({ status: 'refused', errors: ['stale'], staleBase: 'yes' }) }) as Response;
+    const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([node('scroll.y')]), []), fetchImpl);
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('unexpected response shape');
+  });
+
   test('an applied graph with an invalid edge type → error (decode enforces the EdgeType enum)', async () => {
     const a = node('a.signal');
     const b = node('b.signal');
@@ -287,6 +322,24 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     const res = await sendGraphMutation('/api/graph', GraphPatch.propose(graph([a]), []), fetchImpl);
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('duplicate');
+  });
+
+  test('verifyAppliedGraph accepts a sealed graph and returns the canonical graph', () => {
+    const base = graph([node('scroll.y')]);
+
+    const verified = verifyAppliedGraph(overTheWire(base));
+
+    expect(verified.ok).toBe(true);
+    if (verified.ok) expect(verified.graph.id).toBe(base.id);
+  });
+
+  test('verifyAppliedGraph rejects a forged applied graph id', () => {
+    const base = graph([node('scroll.y')]);
+
+    const verified = verifyAppliedGraph({ ...overTheWire(base), id: 'fnv1a:deadbeef' });
+
+    expect(verified.ok).toBe(false);
+    if (!verified.ok) expect(verified.message).toContain('does not address its content');
   });
 });
 

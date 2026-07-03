@@ -46,15 +46,21 @@ export interface GraphMutationRequest {
  * The server's response. Three outcomes, one shape to consume:
  *   - `applied` — the new sealed graph (the client swaps its view to it);
  *   - `refused` — the patch did not validate (base mismatch, dangling edge, version skew,
- *     malformed envelope, or a lost-update CAS miss); the graph is byte-identical. The
- *     client's proposal was wrong — reload and re-propose, don't blindly retry;
+ *     malformed envelope, or a lost-update CAS miss); the graph is byte-identical.
+ *     `staleBase` is present (and `true`) exactly when the refusal is base-staleness /
+ *     lost-update: reload the base and re-propose. It is absent for invalid proposals,
+ *     where retrying the same patch cannot succeed;
  *   - `error` — a SERVER-side failure (store I/O, an unexpected throw), distinct from a
  *     refusal: the proposal may be fine, so a retry can succeed.
  */
 export type GraphMutationResponse =
   | { readonly status: 'applied'; readonly graph: DocumentGraph }
-  | { readonly status: 'refused'; readonly errors: readonly string[] }
+  | { readonly status: 'refused'; readonly errors: readonly string[]; readonly staleBase?: true }
   | { readonly status: 'error'; readonly message: string };
+
+export type AppliedGraphVerification =
+  | { readonly ok: true; readonly graph: DocumentGraph }
+  | { readonly ok: false; readonly message: string };
 
 /** Normalize a thrown value to a message string (catches surface it, never swallow it). */
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -72,7 +78,11 @@ function isGraphMutationResponse(value: unknown): value is GraphMutationResponse
     case 'applied':
       return typeof record.graph === 'object' && record.graph !== null;
     case 'refused':
-      return Array.isArray(record.errors) && record.errors.every((entry) => typeof entry === 'string');
+      return (
+        Array.isArray(record.errors) &&
+        record.errors.every((entry) => typeof entry === 'string') &&
+        (record.staleBase === undefined || record.staleBase === true)
+      );
     case 'error':
       return typeof record.message === 'string';
     default:
@@ -138,9 +148,12 @@ export async function handleGraphMutation(
     return { status: 'error', message: `loadGraph failed: ${messageOf(error)}` };
   }
 
+  const stale = patch.base !== base.id;
   const result = validateGraphPatchProposal(base, patch);
   if (!result.ok) {
-    return { status: 'refused', errors: result.errors };
+    return stale
+      ? { status: 'refused', errors: result.errors, staleBase: true }
+      : { status: 'refused', errors: result.errors };
   }
 
   // Defense-in-depth: validation above binds the proposal to THIS base, so apply cannot
@@ -167,9 +180,64 @@ export async function handleGraphMutation(
     return {
       status: 'refused',
       errors: ['concurrent modification: the graph advanced since this patch was proposed — reload and retry'],
+      staleBase: true,
     };
   }
   return { status: 'applied', graph: next };
+}
+
+/**
+ * The applied-graph adopt guard — proves a wire graph is a normalized,
+ * self-addressed base the server's own pipeline would emit. Shared by
+ * `sendGraphMutation` and `@czap/astro`'s `adoptAppliedGraph`.
+ */
+export function verifyAppliedGraph(value: unknown): AppliedGraphVerification {
+  try {
+    const decoded = decodeDocumentGraph(value);
+    const resealed = sealGraph({ ...decoded, nodes: decoded.nodes.map((node) => sealNode(node)) });
+    // Identity: BOTH the id (fnv1a) and the digest (fnv1a+sha256) must address the content. They
+    // derive from the same canonical bytes, so a legitimate graph matches both; a forged endpoint
+    // could match one and not the other. Reject the inconsistency loudly rather than silently
+    // canonicalize a graph whose own claimed digest disagrees with its bytes.
+    const d = decoded.digest;
+    const r = resealed.digest;
+    const identityMatches =
+      resealed.id === decoded.id &&
+      r.display_id === d.display_id &&
+      r.integrity_digest === d.integrity_digest &&
+      r.algo === d.algo;
+    if (!identityMatches) {
+      return {
+        ok: false,
+        message: 'server returned an applied graph whose id/digest does not address its content',
+      };
+    }
+    // Uniqueness / normalization: the server only emits NORMALIZED graphs — GraphPatch.apply dedups
+    // nodes by id and edges by their (from,to,type) key into Maps. A wire graph with a duplicate node
+    // id or edge triple is not a base the server would hand out: the next apply would silently collapse
+    // the dupes and re-address to different content, so even a no-op proposal would be stamped from a
+    // base that immediately normalizes away. Reject it.
+    const nodeIds = resealed.nodes.map((node) => node.id);
+    const edgeKeys = resealed.edges.map((edge) => `${edge.from} ${edge.to} ${edge.type}`);
+    if (new Set(nodeIds).size !== nodeIds.length || new Set(edgeKeys).size !== edgeKeys.length) {
+      return {
+        ok: false,
+        message: 'server returned an applied graph with duplicate nodes or edges (not a normalized base)',
+      };
+    }
+    // Topology: a graph a correct server would have produced has no dangling edge and no cycle.
+    // decode + reseal cover shape + identity but NOT structure, so a miswired endpoint could still
+    // hand back a graph the mutation seam itself would have refused.
+    if (!validateGraph(resealed).ok) {
+      return {
+        ok: false,
+        message: 'server returned an applied graph with invalid topology (dangling edge or cycle)',
+      };
+    }
+    return { ok: true, graph: resealed };
+  } catch (error) {
+    return { ok: false, message: `server returned a malformed applied graph: ${messageOf(error)}` };
+  }
 }
 
 /**
@@ -209,60 +277,8 @@ export async function sendGraphMutation(
     return { status: 'error', message: `server returned an unexpected response shape (HTTP ${response.status})` };
   }
   if (body.status === 'applied') {
-    // The shape guard only proved `graph` is SOME object. The client is about to ADOPT this graph as
-    // its new truth and stamp future proposals against its id, so decode it through the fail-closed
-    // reader AND re-derive its identity locally: re-seal every node + re-address the graph, then require
-    // the wire's claimed id to match. A miswired/forged endpoint returning shape-valid nodes under a
-    // FORGED id would otherwise be adopted as a base the real server then refuses as stale on every
-    // proposal. On success the caller gets the re-sealed canonical graph; any id/content mismatch is
-    // an `error`, not a poisoned base. Re-sealing is idempotent (addressNode hashes the payload), so a
-    // legitimate server graph passes unchanged.
-    try {
-      const decoded = decodeDocumentGraph(body.graph);
-      const resealed = sealGraph({ ...decoded, nodes: decoded.nodes.map((node) => sealNode(node)) });
-      // Identity: BOTH the id (fnv1a) and the digest (fnv1a+sha256) must address the content. They
-      // derive from the same canonical bytes, so a legitimate graph matches both; a forged endpoint
-      // could match one and not the other. Reject the inconsistency loudly rather than silently
-      // canonicalize a graph whose own claimed digest disagrees with its bytes.
-      const d = decoded.digest;
-      const r = resealed.digest;
-      const identityMatches =
-        resealed.id === decoded.id &&
-        r.display_id === d.display_id &&
-        r.integrity_digest === d.integrity_digest &&
-        r.algo === d.algo;
-      if (!identityMatches) {
-        return {
-          status: 'error',
-          message: 'server returned an applied graph whose id/digest does not address its content',
-        };
-      }
-      // Uniqueness / normalization: the server only emits NORMALIZED graphs — GraphPatch.apply dedups
-      // nodes by id and edges by their (from,to,type) key into Maps. A wire graph with a duplicate node
-      // id or edge triple is not a base the server would hand out: the next apply would silently collapse
-      // the dupes and re-address to different content, so even a no-op proposal would be stamped from a
-      // base that immediately normalizes away. Reject it.
-      const nodeIds = resealed.nodes.map((node) => node.id);
-      const edgeKeys = resealed.edges.map((edge) => `${edge.from} ${edge.to} ${edge.type}`);
-      if (new Set(nodeIds).size !== nodeIds.length || new Set(edgeKeys).size !== edgeKeys.length) {
-        return {
-          status: 'error',
-          message: 'server returned an applied graph with duplicate nodes or edges (not a normalized base)',
-        };
-      }
-      // Topology: a graph a correct server would have produced has no dangling edge and no cycle.
-      // decode + reseal cover shape + identity but NOT structure, so a miswired endpoint could still
-      // hand back a graph the mutation seam itself would have refused.
-      if (!validateGraph(resealed).ok) {
-        return {
-          status: 'error',
-          message: 'server returned an applied graph with invalid topology (dangling edge or cycle)',
-        };
-      }
-      return { status: 'applied', graph: resealed };
-    } catch (error) {
-      return { status: 'error', message: `server returned a malformed applied graph: ${messageOf(error)}` };
-    }
+    const verified = verifyAppliedGraph(body.graph);
+    return verified.ok ? { status: 'applied', graph: verified.graph } : { status: 'error', message: verified.message };
   }
   return body;
 }

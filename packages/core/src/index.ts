@@ -311,8 +311,8 @@ export { assertTokenBinds, unwrapValidated, proposalSubject, proposalReceiptSubj
 // client can propose a GraphPatch back to the server, which validates against its
 // own truth before applying. `handleGraphMutation` is the host-wired server core;
 // `sendGraphMutation` is the client sender. Host owns the GraphStore (authority).
-export { handleGraphMutation, sendGraphMutation } from './graph-mutation.js';
-export type { GraphMutationRequest, GraphMutationResponse, GraphStore } from './graph-mutation.js';
+export { handleGraphMutation, sendGraphMutation, verifyAppliedGraph } from './graph-mutation.js';
+export type { GraphMutationRequest, GraphMutationResponse, GraphStore, AppliedGraphVerification } from './graph-mutation.js';
 
 // Runtime coordination
 export { RuntimeCoordinator } from './runtime-coordinator.js';
