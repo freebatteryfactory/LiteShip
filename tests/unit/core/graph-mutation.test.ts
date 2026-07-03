@@ -222,6 +222,28 @@ describe('graph mutation channel — sendGraphMutation (client → wire → serv
     expect(res.status).toBe('error');
     if (res.status === 'error') expect(res.message).toContain('malformed applied graph');
   });
+
+  test('a patch carrying a non-wire-safe value (a Set, e.g. a CapSet) → error before any serialize/network', async () => {
+    let called = false;
+    const fetchImpl: typeof fetch = async () => {
+      called = true;
+      return { json: async () => ({ status: 'applied', graph: {} }) } as Response;
+    };
+    // A Set nested in a policy node's grants — JSON.stringify would turn it into {} and silently
+    // drop the levels. The sender must refuse it, not corrupt the server's graph.
+    const patch = {
+      _tag: 'GraphPatch',
+      _version: 1,
+      base: 'fnv1a:abc',
+      ops: [{ op: 'add', family: 'policy', node: { grants: { _tag: 'CapSet', levels: new Set(['high']) } } }],
+    } as unknown as GraphPatch;
+
+    const res = await sendGraphMutation('/api/graph', patch, fetchImpl);
+
+    expect(res.status).toBe('error');
+    if (res.status === 'error') expect(res.message).toContain('wire-safe');
+    expect(called).toBe(false); // refused BEFORE the lossy serialize and the network call
+  });
 });
 
 describe('graph mutation channel — server/store failures map to `error` (retryable), not a throw', () => {

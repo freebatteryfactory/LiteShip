@@ -60,6 +60,40 @@ export type GraphMutationResponse =
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
+ * The first path within `value` that JSON cannot carry faithfully — a `Set`/`Map`
+ * (`JSON.stringify` turns it into `{}`, silently losing its contents), or a
+ * `bigint`/`function`/`symbol` (thrown or dropped). The channel wire is JSON, so a
+ * patch built with the typed `@czap/core` API can smuggle a non-JSON value: a
+ * `CapSet`'s `levels` is a `Set`, and a policy node's `grants` is schema-opaque, so a
+ * corrupted `{}` would decode server-side with NOTHING to catch it — a silent wrong-write.
+ * We surface it as an `error` at the SENDER (loud, before the lossy serialize), never a
+ * quiet corruption. The proper cure is a CapSet wire contract (Set↔array); until then,
+ * the sender must reduce such values to plain JSON (a `CapSet`'s levels → an array).
+ */
+function firstUnwireableValue(value: unknown, path = 'patch'): string | null {
+  if (value === null) return null;
+  const kind = typeof value;
+  if (kind === 'bigint' || kind === 'function' || kind === 'symbol') return `${path} is a ${kind}`;
+  if (value instanceof Set || value instanceof Map) {
+    return `${path} is a ${value instanceof Set ? 'Set' : 'Map'} — JSON serializes it to {}, losing its contents`;
+  }
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const found = firstUnwireableValue(value[i], `${path}[${i}]`);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (kind === 'object') {
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      const found = firstUnwireableValue(nested, `${path}.${key}`);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
  * Shape guard for an untrusted server response — a proxy/error page, or a miswired
  * endpoint returning `{ status: 'applied' }` with no `graph`, is NOT a channel reply.
  * Validates the fields REQUIRED by each status, so a caller can dereference `graph` /
@@ -183,6 +217,18 @@ export async function sendGraphMutation(
   patch: GraphPatch,
   fetchImpl: typeof fetch = fetch,
 ): Promise<GraphMutationResponse> {
+  // Fail LOUD, before the lossy serialize: a patch carrying a non-JSON value (a CapSet's
+  // `levels` Set, say) would `JSON.stringify` to `{}` and reach the server as a silently
+  // corrupted node. Refuse it here rather than write garbage the opaque grants schema won't catch.
+  const unwireable = firstUnwireableValue(patch);
+  if (unwireable) {
+    return {
+      status: 'error',
+      message:
+        `patch is not wire-safe: ${unwireable}. The channel is JSON — reduce non-JSON values to plain data ` +
+        `before sending (e.g. a CapSet's levels must be an array on the wire, not a Set).`,
+    };
+  }
   let response: Response;
   try {
     response = await fetchImpl(url, {
