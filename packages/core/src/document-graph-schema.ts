@@ -185,17 +185,24 @@ const NODE_FAMILY_SCHEMAS = {
 const _familyExhaustiveness: Record<NodeFamily, unknown> = NODE_FAMILY_SCHEMAS;
 void _familyExhaustiveness;
 
-/** The single source of truth for "is this a well-formed DocumentGraph node?" */
-export const DocumentGraphNodeSchema = Schema.Union([
-  SignalNodeSchema,
-  EntityNodeSchema,
-  ComponentNodeSchema,
-  PoseNodeSchema,
-  TransitionNodeSchema,
-  ProjectionNodeSchema,
-  PolicyNodeSchema,
-  ExportNodeSchema,
-]);
+/**
+ * The single source of truth for "is this a well-formed DocumentGraph node?".
+ * Carries the Standard Schema V1 `~standard` interop property, so any
+ * Standard-Schema-aware consumer can use the same node gate directly.
+ * `Schema.is` / {@link isWellFormedNode} behavior is unchanged.
+ */
+export const DocumentGraphNodeSchema = Schema.toStandardSchemaV1(
+  Schema.Union([
+    SignalNodeSchema,
+    EntityNodeSchema,
+    ComponentNodeSchema,
+    PoseNodeSchema,
+    TransitionNodeSchema,
+    ProjectionNodeSchema,
+    PolicyNodeSchema,
+    ExportNodeSchema,
+  ]),
+);
 
 /**
  * Type guard: does this untrusted value conform to ONE of the eight
