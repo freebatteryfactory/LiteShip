@@ -1,0 +1,82 @@
+---
+/**
+ * 03 — Cast the same state to ARIA, not just CSS.
+ *
+ * The define-once-cast-many thesis, applied to accessibility. ONE boundary
+ * (`nav`) quantizes viewport width into `compact` / `wide`. The @quantize block
+ * below casts those same states to TWO targets from a single source — and keeps
+ * them in lockstep:
+ *
+ *   - CSS   — the tagline collapses (clipped) on `compact`, expands on `wide`;
+ *   - @aria — `aria-hidden` flips with it, so a screen reader stops announcing the
+ *     tagline exactly when it leaves the screen.
+ *
+ * That sync is the whole point. Clipping with `max-height: 0` hides the tagline
+ * from sighted users but leaves it in the accessibility tree, so a screen reader
+ * would still read it — the classic "visually gone, still announced" bug. The
+ * @aria cast closes the gap from the SAME boundary: change the one threshold and
+ * both the pixels and the assistive-tech reading move together, nothing
+ * hand-synced. (aria-expanded would be wrong here — nothing is disclosed, the
+ * layout just reflows; aria-hidden is the honest cast for show/hide.)
+ *
+ * <Satellite> carries the boundary and joins the authored @aria from the build
+ * manifest by content address; bare `satelliteAttrs()` would only serialize ARIA
+ * you pass by hand. First paint is mobile-first (`compact`, tagline hidden); the
+ * client corrects on hydration.
+ */
+import Satellite from '@czap/astro/Satellite';
+import { nav } from '../boundaries/nav.boundaries.ts';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiteShip — one boundary, cast to CSS and ARIA</title>
+  </head>
+  <body>
+    <main>
+      <h1>One boundary, cast to CSS <em>and</em> ARIA</h1>
+      <p>
+        Resize the window. On <code>wide</code> the tagline shows; on <code>compact</code> it
+        collapses — and its <code>aria-hidden</code> flips in lockstep, from the
+        <strong>same</strong> definition. Inspect the <code>.extra</code> element and watch
+        <code>aria-hidden</code> track the breakpoint.
+      </p>
+
+      <nav class="bar" aria-label="Primary">
+        <a href="#">Docs</a>
+        <a href="#">Examples</a>
+        <a href="#">Reference</a>
+        <a href="#">Blog</a>
+        <Satellite boundary={nav} initialState="compact" class="extra">Signals in, named states out.</Satellite>
+      </nav>
+    </main>
+
+    <style>
+      body { font: 16px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1.25rem; }
+      h1 { font-size: 1.5rem; }
+      code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+      .bar { display: flex; align-items: center; flex-wrap: wrap; gap: 1.25rem; border: 1px solid color-mix(in oklab, Canvas 75%, CanvasText); border-radius: 0.6rem; padding: 0.75rem 1rem; }
+      .bar a { text-decoration: none; }
+      /* The tagline is non-interactive text: clipping it can't strand keyboard focus. */
+      .extra { max-height: 2rem; overflow: hidden; opacity: 1; margin-left: auto; font-style: italic; color: color-mix(in oklab, CanvasText 60%, Canvas); transition: max-height 0.2s ease, opacity 0.2s ease; }
+
+      /* ONE @quantize block casts the `nav` states to CSS *and* @aria on .extra. */
+      @quantize nav {
+        compact {
+          /* CSS: clip the tagline out of view. */
+          .extra { max-height: 0; opacity: 0; }
+          /* ARIA: and drop it from the accessibility tree too — same source. */
+          @aria { aria-hidden: "true"; }
+        }
+        wide {
+          /* CSS: reveal the tagline. */
+          .extra { max-height: 2rem; opacity: 1; }
+          /* ARIA: and expose it to assistive tech — in lockstep. */
+          @aria { aria-hidden: "false"; }
+        }
+      }
+    </style>
+  </body>
+</html>

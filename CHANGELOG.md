@@ -63,6 +63,24 @@ reaches GLSL parity.
   worker (off-thread) path is now pinned by a non-vacuous gate. api-surface
   snapshot regenerated for the new exports.
 
+### Docs / DX
+
+- **Front door.** The README opens with an `## I want to…` router and a single canonical
+  `signal → boundary → graph → cast → patch` diagram, placed byte-identically in README,
+  `GLOSSARY.md`, and `AUTHORING-MODEL.md` and pinned by a drift guard so the three copies
+  can't diverge. `DOCS.md` gains a four-layer routing preamble (Use / Author / Extend /
+  Engine-room). The demoted package table now lives in `ARCHITECTURE.md`, generated from
+  the workspace and drift-gated.
+- **Examples ladder.** `examples/README.md` orders the examples as a learning path
+  (author → cast-to-ARIA → cast-to-GPU → the AI-patch keystone → cast-to-video); the
+  showcase is banner-marked "not the starting point."
+- **Two new keystone examples.** `examples/05-ai-patch-refused` (a model's invalid
+  `GraphPatch` is refused; only a validated proposal mutates the graph) and
+  `examples/03-cast-aria` (one `@quantize` block casts a boundary to CSS **and** ARIA).
+- **New gates.** A relative-link checker across root/docs/package READMEs and a front-door
+  aperture gate (≤3 `@czap/*` package names above the first install line) — both caught
+  real drift on arrival.
+
 ## [0.5.0] - 2026-06-30
 
 A "make-it-loud" release: every fix turns a silent degradation into a loud

@@ -144,6 +144,14 @@ export function renderExamplesBlock(): string {
   const rows: readonly { dir: string; shows: string }[] = [
     { dir: 'tutorial', shows: 'The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming' },
     { dir: 'showcase', shows: 'The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI' },
+    {
+      dir: '03-cast-aria',
+      shows: 'One boundary cast to CSS **and** ARIA from a single `@quantize` block — define-once-cast-many, for accessibility',
+    },
+    {
+      dir: '05-ai-patch-refused',
+      shows: 'The AI-safety seam made visible — an invalid model `GraphPatch` is refused; only a validated proposal changes the graph',
+    },
     { dir: 'default', shows: 'The minimal `npm create liteship` starter' },
     { dir: 'cloudflare-astro', shows: 'Edge KV boundary cache + Astro middleware on Cloudflare' },
     { dir: 'remotion-demo', shows: 'Headless video export from the same DocumentGraph (standalone: `cd examples/remotion-demo && pnpm install`)' },

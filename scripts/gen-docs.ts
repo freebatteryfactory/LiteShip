@@ -23,7 +23,7 @@ interface Block {
 }
 
 const BLOCKS: readonly Block[] = [
-  { name: 'PACKAGES', file: 'README.md', render: renderPackagesBlock },
+  { name: 'PACKAGES', file: 'ARCHITECTURE.md', render: renderPackagesBlock },
   { name: 'EXAMPLES', file: 'README.md', render: renderExamplesBlock },
   { name: 'BENCH', file: 'README.md', render: renderBenchBlock },
 ];

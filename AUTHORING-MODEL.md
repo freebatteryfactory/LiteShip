@@ -8,6 +8,22 @@ Naming: [GLOSSARY.md](./GLOSSARY.md).
 
 This is about construction, not migration. It assumes the mental model in [ASTRO-STATIC-MENTAL-MODEL.md](./ASTRO-STATIC-MENTAL-MODEL.md).
 
+## The shape
+
+<!-- BEGIN DIAGRAM (canonical mental model — keep byte-identical across README / GLOSSARY / AUTHORING-MODEL; pinned by tests/unit/meta/diagram-drift.test.ts) -->
+
+```text
+signal ─▶ boundary ─▶ graph ─▶ cast ─▶ patch
+```
+
+- **signal** — a continuous input from the world (viewport, scroll, audio…)
+- **boundary** — quantizes it into a few named states
+- **graph** — seals boundaries, tokens, and styles into one content-addressed truth
+- **cast** — projects (verb) that truth to CSS, GPU, ARIA, AI, TypeScript, and video
+- **patch** — the only way to change the truth: a validated mutation
+
+<!-- END DIAGRAM -->
+
 ## First-time reader vocabulary
 
 For designers, brand directors, and agency PMs reading alongside an engineer. Engineering-fluent readers can skip this section.
