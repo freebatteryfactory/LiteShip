@@ -47,6 +47,14 @@ reaches GLSL parity.
 - **`@czap/quantizer` — shader outputs in the change stream.** `outputChanges`
   surfaces `glsl` and `wgsl` output tables alongside `css` — previously only css
   reached the stream and shader outputs sidestepped it.
+- **`@czap/edge` / `@czap/astro` — `Sec-CH-Viewport-Width` is now a `Critical-CH`
+  hint, single-sourced.** The production middleware asks for it critically, so a cold
+  browser resends the viewport hint _before_ the first render and server-side
+  `resolveInitialState` picks the right initial state instead of a User-Agent estimate.
+  `@czap/astro`'s `CLIENT_HINTS_HEADERS` now derives from `@czap/edge`'s single
+  `Accept-CH`/`Critical-CH` source rather than a hand-kept copy that had silently
+  diverged (dev asked for viewport-width critically, production did not); a drift guard
+  pins that the two can never disagree again.
 
 ### Changed
 

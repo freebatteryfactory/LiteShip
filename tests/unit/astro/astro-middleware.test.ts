@@ -61,13 +61,17 @@ describe('czapMiddleware', () => {
     expect(response.headers.get('Accept-CH')).toContain('Sec-CH-Viewport-Width');
   });
 
-  test('sets Critical-CH response header', async () => {
+  test('sets Critical-CH response header including the viewport-width boot hint', async () => {
     const middleware = czapMiddleware();
     const context = makeContext();
 
     const response = await middleware(context, makeNext());
 
     expect(response.headers.get('Critical-CH')).toBeTruthy();
+    // The production middleware must mark viewport-width critical so a cold browser
+    // resends it before the first render — SSR boundary resolution reads it. (Regression
+    // guard for the astro/edge Critical-CH drift; see critical-ch-drift.test.ts.)
+    expect(response.headers.get('Critical-CH')).toContain('Sec-CH-Viewport-Width');
   });
 
   test('sets COOP and COEP headers when workers are enabled', async () => {

@@ -154,7 +154,16 @@ const ALL_HINTS = [
   'RTT',
 ] as const;
 
+// Boot-required hints: listed in `Critical-CH` so the browser RESENDS them before the
+// first render if they were absent (one retry, all at once). `Sec-CH-Viewport-Width` is
+// here because SSR boundary resolution (`resolveInitialState`) reads it to pick the
+// initial state — with it omitted, a cold first paint fell back to a User-Agent estimate
+// that could disagree with the container-query CSS. Every entry MUST also be in
+// `ALL_HINTS` (the `Accept-CH` set), and `@czap/astro`'s `CLIENT_HINTS_HEADERS` derives
+// from here (one source, no hand-mirrored list) — both pinned by
+// tests/unit/astro/critical-ch-drift.test.ts.
 const CRITICAL_HINTS = [
+  'Sec-CH-Viewport-Width',
   'Sec-CH-Prefers-Reduced-Motion',
   'Sec-CH-Prefers-Color-Scheme',
   'Sec-CH-UA-Mobile',
