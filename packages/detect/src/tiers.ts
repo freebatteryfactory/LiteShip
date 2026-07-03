@@ -49,9 +49,11 @@ export function capSetFromCapabilities(caps: DeviceCapabilities): CapSet {
   const tierIndex = CAP_TIER_ORDER.indexOf(tier);
   const granted = CAP_TIER_ORDER.slice(0, tierIndex + 1);
 
+  // `granted` is a prefix of the ladder order (CAP_TIER_ORDER), so it is already the canonical
+  // deduped+sorted level array a CapSet holds — no Set (which JSON drops and mis-addresses).
   return {
     _tag: 'CapSet' as const,
-    levels: new Set(granted) as ReadonlySet<CapTier>,
+    levels: [...granted],
   };
 }
 

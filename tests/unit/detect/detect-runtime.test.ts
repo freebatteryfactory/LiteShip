@@ -187,7 +187,7 @@ describe('device detection runtime', () => {
       saveData: false,
     });
     expect(result.capTier).toBe('gpu');
-    expect(result.capSet.levels.has('gpu')).toBe(true);
+    expect(result.capSet.levels.includes('gpu')).toBe(true);
     expect(result.designTier).toBe('rich');
     expect(result.motionTier).toBe('compute');
     expect(result.confidence).toBeCloseTo(1, 10);

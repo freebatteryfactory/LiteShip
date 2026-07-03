@@ -11,14 +11,14 @@ describe('Cap', () => {
     test('empty creates CapSet with no levels', () => {
       const caps = Cap.empty();
       expect(caps._tag).toBe('CapSet');
-      expect(caps.levels.size).toBe(0);
+      expect(caps.levels.length).toBe(0);
     });
 
     test('from creates CapSet with specified levels', () => {
       const caps = Cap.from(['static', 'reactive']);
-      expect(caps.levels.has('static')).toBe(true);
-      expect(caps.levels.has('reactive')).toBe(true);
-      expect(caps.levels.has('gpu')).toBe(false);
+      expect(caps.levels.includes('static')).toBe(true);
+      expect(caps.levels.includes('reactive')).toBe(true);
+      expect(caps.levels.includes('gpu')).toBe(false);
     });
 
     test('grant adds a level', () => {
@@ -104,7 +104,7 @@ describe('Cap', () => {
       const a = Cap.from(['static', 'styled']);
       const b = Cap.from(['reactive', 'animated']);
       const u = Cap.union(a, b);
-      expect(u.levels.size).toBe(4);
+      expect(u.levels.length).toBe(4);
       expect(Cap.has(u, 'static')).toBe(true);
       expect(Cap.has(u, 'styled')).toBe(true);
       expect(Cap.has(u, 'reactive')).toBe(true);
@@ -114,20 +114,20 @@ describe('Cap', () => {
     test('union with empty returns same set', () => {
       const caps = Cap.from(['gpu', 'reactive']);
       const u = Cap.union(caps, Cap.empty());
-      expect(u.levels.size).toBe(2);
+      expect(u.levels.length).toBe(2);
     });
 
     test('union with self is idempotent', () => {
       const caps = Cap.from(['static', 'animated']);
       const u = Cap.union(caps, caps);
-      expect(u.levels.size).toBe(2);
+      expect(u.levels.length).toBe(2);
     });
 
     test('union deduplicates overlapping levels', () => {
       const a = Cap.from(['static', 'styled', 'reactive']);
       const b = Cap.from(['styled', 'reactive', 'gpu']);
       const u = Cap.union(a, b);
-      expect(u.levels.size).toBe(4);
+      expect(u.levels.length).toBe(4);
     });
   });
 
@@ -136,7 +136,7 @@ describe('Cap', () => {
       const a = Cap.from(['static', 'styled', 'reactive']);
       const b = Cap.from(['styled', 'reactive', 'gpu']);
       const i = Cap.intersection(a, b);
-      expect(i.levels.size).toBe(2);
+      expect(i.levels.length).toBe(2);
       expect(Cap.has(i, 'styled')).toBe(true);
       expect(Cap.has(i, 'reactive')).toBe(true);
       expect(Cap.has(i, 'static')).toBe(false);
@@ -146,20 +146,20 @@ describe('Cap', () => {
     test('intersection with empty is empty', () => {
       const caps = Cap.from(['static', 'gpu']);
       const i = Cap.intersection(caps, Cap.empty());
-      expect(i.levels.size).toBe(0);
+      expect(i.levels.length).toBe(0);
     });
 
     test('intersection with self returns same set', () => {
       const caps = Cap.from(['reactive', 'animated']);
       const i = Cap.intersection(caps, caps);
-      expect(i.levels.size).toBe(2);
+      expect(i.levels.length).toBe(2);
     });
 
     test('intersection of disjoint sets is empty', () => {
       const a = Cap.from(['static', 'styled']);
       const b = Cap.from(['animated', 'gpu']);
       const i = Cap.intersection(a, b);
-      expect(i.levels.size).toBe(0);
+      expect(i.levels.length).toBe(0);
     });
   });
 

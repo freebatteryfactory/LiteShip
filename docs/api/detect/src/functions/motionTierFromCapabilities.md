@@ -8,7 +8,7 @@
 
 > **motionTierFromCapabilities**(`caps`): `MotionTier`
 
-Defined in: [detect/src/tiers.ts:102](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L102)
+Defined in: [detect/src/tiers.ts:104](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/detect/src/tiers.ts#L104)
 
 Map extended device capabilities to a motion complexity tier.
 Reduced-motion &rarr; `none`; GPU tier and core count gate the upper levels;
