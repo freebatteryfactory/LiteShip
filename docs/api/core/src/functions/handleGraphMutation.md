@@ -8,7 +8,7 @@
 
 > **handleGraphMutation**(`request`, `store`): `Promise`\<[`GraphMutationResponse`](../type-aliases/GraphMutationResponse.md)\>
 
-Defined in: [core/src/graph-mutation.ts:99](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L99)
+Defined in: [core/src/graph-mutation.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation.ts#L113)
 
 Process one client mutation against the host's current graph. Pure of transport:
 decode → load → validate → apply → save. NEVER throws — every failure maps to a
