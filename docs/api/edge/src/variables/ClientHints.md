@@ -8,7 +8,7 @@
 
 > `const` **ClientHints**: `object`
 
-Defined in: [edge/src/client-hints.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L326)
+Defined in: [edge/src/client-hints.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/edge/src/client-hints.ts#L335)
 
 Client Hints namespace.
 
