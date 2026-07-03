@@ -51,7 +51,10 @@ const graph = currentGraph();
       pre { background: color-mix(in oklab, Canvas 85%, CanvasText); padding: 1rem; border-radius: 0.6rem; white-space: pre-wrap; word-break: break-word; }
     </style>
 
-    <script type="module">
+    <!-- Plain <script> (no type/is:inline): Astro processes + bundles the @czap/core
+         imports and emits it as a module. A `type="module"` attribute would opt OUT of
+         bundling, shipping the bare import to the browser unresolved. -->
+    <script>
       import { decodeDocumentGraph, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
 
       const out = document.getElementById('out');

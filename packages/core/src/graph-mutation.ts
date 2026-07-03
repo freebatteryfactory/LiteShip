@@ -58,11 +58,25 @@ export type GraphMutationResponse =
 /** Normalize a thrown value to a message string (catches surface it, never swallow it). */
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** Shape guard for an untrusted server response (a proxy/error page is not a channel reply). */
+/**
+ * Shape guard for an untrusted server response — a proxy/error page, or a miswired
+ * endpoint returning `{ status: 'applied' }` with no `graph`, is NOT a channel reply.
+ * Validates the fields REQUIRED by each status, so a caller can dereference `graph` /
+ * `errors` / `message` safely after branching on `status`.
+ */
 function isGraphMutationResponse(value: unknown): value is GraphMutationResponse {
   if (typeof value !== 'object' || value === null || !('status' in value)) return false;
-  const status = (value as { status: unknown }).status;
-  return status === 'applied' || status === 'refused' || status === 'error';
+  const record = value as Record<string, unknown>;
+  switch (record.status) {
+    case 'applied':
+      return typeof record.graph === 'object' && record.graph !== null;
+    case 'refused':
+      return Array.isArray(record.errors);
+    case 'error':
+      return typeof record.message === 'string';
+    default:
+      return false;
+  }
 }
 
 /**
@@ -152,11 +166,18 @@ export async function sendGraphMutation(
   patch: GraphPatch,
   fetchImpl: typeof fetch = fetch,
 ): Promise<GraphMutationResponse> {
-  const response = await fetchImpl(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ patch } satisfies GraphMutationRequest),
-  });
+  let response: Response;
+  try {
+    response = await fetchImpl(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ patch } satisfies GraphMutationRequest),
+    });
+  } catch (error) {
+    // Transport failure (network down, CORS abort, DNS) — the one-shape contract holds:
+    // the caller gets a GraphMutationResponse, never a rejected promise to unwrap.
+    return { status: 'error', message: `request failed: ${messageOf(error)}` };
+  }
   let body: unknown;
   try {
     body = await response.json();
