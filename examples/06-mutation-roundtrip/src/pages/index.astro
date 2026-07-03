@@ -70,8 +70,10 @@ const graph = currentGraph();
         if (res.status === 'applied') {
           out.textContent = `APPLIED — server graph re-addressed to ${res.graph.id} (${res.graph.nodes.length} nodes)`;
           idEl.textContent = res.graph.id; // the server truth advanced
-        } else {
+        } else if (res.status === 'refused') {
           out.textContent = `REFUSED — ${res.errors.join(' · ')}\n(server graph unchanged)`;
+        } else {
+          out.textContent = `ERROR — ${res.message}\n(server-side failure; a retry may help)`;
         }
       }
 

@@ -158,7 +158,7 @@ The return leg of the stream (SSE pushes server→client; this comes back). Reac
 - the server core — `handleGraphMutation(request, { loadGraph, saveGraph })`: decode a client-proposed `GraphPatch` → `validateGraphPatchProposal` → `applyValidatedPatch` → persist
 - the client sender — `sendGraphMutation(url, patch)`
 
-Main surfaces: `handleGraphMutation`, `sendGraphMutation`, `GraphStore`, `GraphMutationRequest`, `GraphMutationResponse`. It rides the AI-cast refuse-seam, so a human client's edit is validated exactly like a model's proposal: a patch cast against a stale base is refused (optimistic concurrency for free), and only a validated patch mutates the graph, which re-addresses. Transport-agnostic; the host owns the `GraphStore` (the authority boundary) and wires the endpoint (`@czap/astro`'s `graphMutationRoute` for Astro). Added 0.7.0.
+Main surfaces: `handleGraphMutation`, `sendGraphMutation`, `GraphStore`, `GraphMutationRequest`, `GraphMutationResponse`. It rides the AI-cast refuse-seam, so a human client's edit is validated exactly like a model's proposal. Three outcomes: `applied` (new sealed graph), `refused` (invalid patch — a stale base, dangling edge, or a concurrent-write compare-and-swap miss; optimistic concurrency for free), and `error` (a server-side store failure — retryable, never a raw 500). `saveGraph` is a compare-and-swap (`saveGraph(next, expected)`) so two clients racing the same base can't lose-update; the client sender validates the response shape. Transport-agnostic; the host owns the `GraphStore` (the authority boundary) and wires the endpoint (`@czap/astro`'s `graphMutationRoute` for Astro). Added 0.7.0.
 
 ### WASM compute
 

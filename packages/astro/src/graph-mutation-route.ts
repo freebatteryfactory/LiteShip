@@ -52,7 +52,16 @@ export function graphMutationRoute(store: GraphStore): (request: Request) => Pro
       const reason = error instanceof Error ? error.message : String(error);
       return jsonResponse({ status: 'refused', errors: [`request body is not valid JSON: ${reason}`] }, 400);
     }
-    const result = await handleGraphMutation(body, store);
-    return jsonResponse(result, result.status === 'applied' ? 200 : 422);
+    let result: GraphMutationResponse;
+    try {
+      result = await handleGraphMutation(body, store);
+    } catch (error) {
+      // handleGraphMutation maps store failures to `error` itself; this is belt-and-
+      // suspenders so any future unexpected throw still yields the structured shape.
+      const reason = error instanceof Error ? error.message : String(error);
+      result = { status: 'error', message: `mutation failed: ${reason}` };
+    }
+    const status = result.status === 'applied' ? 200 : result.status === 'refused' ? 422 : 500;
+    return jsonResponse(result, status);
   };
 }

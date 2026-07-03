@@ -42,14 +42,28 @@ export interface GraphMutationRequest {
 }
 
 /**
- * The server's response. `applied` carries the new sealed graph (the client swaps
- * its view to this content-addressed truth); `refused` carries the structured
- * reasons the patch did not validate (base mismatch, dangling edge, version skew,
- * malformed envelope) — the graph is byte-identical to before.
+ * The server's response. Three outcomes, one shape to consume:
+ *   - `applied` — the new sealed graph (the client swaps its view to it);
+ *   - `refused` — the patch did not validate (base mismatch, dangling edge, version skew,
+ *     malformed envelope, or a lost-update CAS miss); the graph is byte-identical. The
+ *     client's proposal was wrong — reload and re-propose, don't blindly retry;
+ *   - `error` — a SERVER-side failure (store I/O, an unexpected throw), distinct from a
+ *     refusal: the proposal may be fine, so a retry can succeed.
  */
 export type GraphMutationResponse =
   | { readonly status: 'applied'; readonly graph: DocumentGraph }
-  | { readonly status: 'refused'; readonly errors: readonly string[] };
+  | { readonly status: 'refused'; readonly errors: readonly string[] }
+  | { readonly status: 'error'; readonly message: string };
+
+/** Normalize a thrown value to a message string (catches surface it, never swallow it). */
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/** Shape guard for an untrusted server response (a proxy/error page is not a channel reply). */
+function isGraphMutationResponse(value: unknown): value is GraphMutationResponse {
+  if (typeof value !== 'object' || value === null || !('status' in value)) return false;
+  const status = (value as { status: unknown }).status;
+  return status === 'applied' || status === 'refused' || status === 'error';
+}
 
 /**
  * The host's graph store — the authority boundary. LiteShip reads the current
@@ -76,10 +90,11 @@ export interface GraphStore {
 
 /**
  * Process one client mutation against the host's current graph. Pure of transport:
- * decode → validate → apply → save, returning `applied` (new sealed graph) or
- * `refused` (structured errors). Never throws for a bad proposal — a malformed
- * envelope becomes a `refused` response, exactly like a validation rejection, so
- * the caller has one shape to serialize.
+ * decode → load → validate → apply → save. NEVER throws — every failure maps to a
+ * response shape, so the caller has exactly one thing to serialize:
+ *   - a bad proposal (malformed envelope, validation rejection, CAS miss) → `refused`;
+ *   - a store I/O failure (loadGraph / saveGraph reject) → `error` (not the client's
+ *     fault; a raw persistence error must not escape as an unstructured 500).
  */
 export async function handleGraphMutation(
   request: GraphMutationRequest,
@@ -89,22 +104,34 @@ export async function handleGraphMutation(
   try {
     patch = GraphPatch.decode(request.patch);
   } catch (error) {
-    // A malformed envelope is a refusal, not a crash — same shape as a validation
-    // rejection. The decode error's message is the structured reason.
-    return { status: 'refused', errors: [error instanceof Error ? error.message : String(error)] };
+    // A malformed envelope is a refusal (the client's proposal), not a crash.
+    return { status: 'refused', errors: [messageOf(error)] };
   }
 
-  const base = await store.loadGraph();
+  let base: DocumentGraph;
+  try {
+    base = await store.loadGraph();
+  } catch (error) {
+    // A store read failure is a SERVER error, not a refusal — the patch may be fine.
+    return { status: 'error', message: `loadGraph failed: ${messageOf(error)}` };
+  }
+
   const result = validateGraphPatchProposal(base, patch);
   if (!result.ok) {
     return { status: 'refused', errors: result.errors };
   }
 
   const next = applyValidatedPatch(base, result.proposal);
+
   // Compare-and-swap: if a concurrent request already advanced the store past `base`,
   // the commit is rejected and the patch is refused (reload + retry). The base-match
   // validation above guards a STALE client; this guards two clients racing the SAME base.
-  const committed = await store.saveGraph(next, base);
+  let committed: boolean;
+  try {
+    committed = await store.saveGraph(next, base);
+  } catch (error) {
+    return { status: 'error', message: `saveGraph failed: ${messageOf(error)}` };
+  }
   if (!committed) {
     return {
       status: 'refused',
@@ -134,10 +161,14 @@ export async function sendGraphMutation(
   try {
     body = await response.json();
   } catch (error) {
-    // Infrastructure error (proxy 502/504, an HTML error page) — keep the one-shape
+    // Infrastructure failure (proxy 502/504, an HTML error page) — keep the one-shape
     // contract: the caller always gets a GraphMutationResponse, never a raw parse throw.
-    const reason = error instanceof Error ? error.message : String(error);
-    return { status: 'refused', errors: [`server did not return valid JSON (HTTP ${response.status}): ${reason}`] };
+    return { status: 'error', message: `server did not return JSON (HTTP ${response.status}): ${messageOf(error)}` };
   }
-  return body as GraphMutationResponse;
+  // Don't trust a JSON payload that isn't actually a channel reply (a misconfigured
+  // route, a different endpoint) — surface it as an error rather than a bad cast.
+  if (!isGraphMutationResponse(body)) {
+    return { status: 'error', message: `server returned an unexpected response shape (HTTP ${response.status})` };
+  }
+  return body;
 }
