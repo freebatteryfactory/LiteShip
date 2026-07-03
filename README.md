@@ -199,7 +199,7 @@ LiteShip is intentionally not, in the current wave:
 
 - a built-in auth / session stack
 - an ORM / storage / queue stack
-- an RPC / server-action mutation layer
+- a general RPC / server-action framework — the mutation channel is one validated graph-patch seam, not arbitrary remote calls
 - a backend / router stack
 - a stateful edge AI runtime substrate
 
