@@ -1885,6 +1885,7 @@ export function measurePairedOverhead(directiveFn: () => void, baselineFn: () =>
   }
   const directiveSamplesNs: number[] = [];
   const baselineSamplesNs: number[] = [];
+  const pairedRatios: number[] = [];
   for (let sample = 0; sample < PAIRED_SAMPLE_COUNT; sample++) {
     const directiveFirst = (sample & 1) === 0;
     const first = directiveFirst ? directiveFn : baselineFn;
@@ -1896,12 +1897,25 @@ export function measurePairedOverhead(directiveFn: () => void, baselineFn: () =>
     const t2 = currentTimeNs();
     const firstNs = (t1 - t0) / PAIRED_INNER_REPEAT;
     const secondNs = (t2 - t1) / PAIRED_INNER_REPEAT;
-    directiveSamplesNs.push(directiveFirst ? firstNs : secondNs);
-    baselineSamplesNs.push(directiveFirst ? secondNs : firstNs);
+    const directiveThisSampleNs = directiveFirst ? firstNs : secondNs;
+    const baselineThisSampleNs = directiveFirst ? secondNs : firstNs;
+    directiveSamplesNs.push(directiveThisSampleNs);
+    baselineSamplesNs.push(baselineThisSampleNs);
+    // Per-sample paired ratio: both blocks are timed ADJACENTLY (t0->t1->t2) within this sample,
+    // so a whole-sample load burst inflates both and cancels here. The window-invariance the
+    // interleaving buys is only realized if the ratio is taken PER sample, not across two medians.
+    if (baselineThisSampleNs > 0) pairedRatios.push(directiveThisSampleNs / baselineThisSampleNs);
   }
   const directiveNs = median(directiveSamplesNs) ?? 0;
   const baselineNs = median(baselineSamplesNs) ?? 0;
-  const overhead = baselineNs > 0 ? directiveNs / baselineNs - 1 : 0;
+  // Overhead is the median of the per-sample ratios, NOT the ratio of the medians. Ratio-of-medians
+  // divides two independently-noisy aggregates, so on a contended runner a load burst landing in one
+  // function's sample window skews it into phantom overhead — a false positive at the hard gate
+  // (identical work measured 0.28 on GHA against a 0.15 threshold, ~15x its unloaded noise floor).
+  // Median-of-paired-ratios is window-invariant: identical work stays ~0 under load, a real 3x tax
+  // still reads ~2.0. directiveNs / baselineNs are retained for the diagnostic report only.
+  const medianRatio = median(pairedRatios);
+  const overhead = medianRatio != null ? medianRatio - 1 : 0;
   return {
     overhead: Number(overhead.toFixed(4)),
     directiveNs: Number(directiveNs.toFixed(2)),
