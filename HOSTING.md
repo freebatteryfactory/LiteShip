@@ -115,6 +115,8 @@ cd examples/cloudflare-astro
 pnpm run dev
 ```
 
+If a Cloudflare `run_worker_first` config is present, exclude Vite dev-infrastructure prefixes (`/@vite/*`, `/@id/*`, `/@fs/*`, `/src/*`, `/node_modules/*`) in addition to LiteShip boundary assets (`/_czap/*`). Otherwise `astro dev` routes those module URLs into the worker and they 404 under workerd. The example `wrangler.jsonc` is the reference pattern, and `pnpm run test:cloudflare-dev` guards it.
+
 ### astro.config.mjs
 
 ```javascript
