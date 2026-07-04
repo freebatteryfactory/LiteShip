@@ -188,7 +188,48 @@ Give `result.raw` a home in the page — paste it into a `<style is:global>` blo
 
 The compile step and the page must share one definition (that's why step 2 put the boundary in `src/boundaries.ts`): the boundary's content address changes whenever the definition does, and CSS emitted against a stale definition stops matching.
 
-## 5. Where to go from here
+## 5. The return leg (accept edits from the client)
+
+Everything so far flows server → client. The mutation channel is the other
+direction: a client proposes a `GraphPatch`, and the server validates it
+against its own current truth before anything mutates — the same refuse-seam an
+AI proposal passes through ([`examples/05-ai-patch-refused`](./examples/05-ai-patch-refused)).
+
+Server side is one route; you own the endpoint and the store:
+
+```ts
+// src/pages/api/graph.ts
+import type { APIRoute } from 'astro';
+import { graphMutationRoute } from '@czap/astro';
+import { store } from '../../server/graph-store'; // your GraphStore: loadGraph + compare-and-swap saveGraph
+
+export const prerender = false;
+export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request);
+```
+
+Client side, `createGraphMutationClient` tracks the current base and serializes
+submits, and `bindGraphForm` (from `@czap/web`) turns a form submit into a
+validated patch:
+
+```ts
+import { createGraphMutationClient } from '@czap/core';
+import { bindGraphForm } from '@czap/web';
+
+const client = createGraphMutationClient({ url: '/api/graph', base, refreshBase });
+bindGraphForm(form, { client, toOps: (data, base) => [/* your sealed ops */] });
+```
+
+Three outcomes, one shape: `applied` (the new sealed graph — the client adopts
+it), `refused` (invalid proposal — the server graph is byte-identical), and
+`error`. A refusal carrying `staleBase: true` (HTTP 409) means the server's
+truth moved past your base; with `refreshBase` wired, the client reloads and
+re-proposes automatically, within a bound. Two users editing the same dashboard
+stop clobbering each other for free.
+
+The worked, runnable version is [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip);
+the design is [ADR-0031](./docs/adr/0031-form-mutation-binding-primitive.md).
+
+## 6. Where to go from here
 
 - [`examples/README.md`](./examples/README.md): the examples ladder — start with [`examples/tutorial`](./examples/tutorial) (five guided pages from boundaries to streaming/LLM), climb to the AI-refusal keystone, and finish at [`examples/06-mutation-roundtrip`](./examples/06-mutation-roundtrip), where a form submit becomes a validated `GraphPatch` via `createGraphMutationClient` + `bindGraphForm` — the client→server return leg
 - [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): tokens, styles, and themes — the layer above boundaries (axis-varying values, per-state property sets, multi-variant theming), opening with a one-paragraph "what it feels like to author"

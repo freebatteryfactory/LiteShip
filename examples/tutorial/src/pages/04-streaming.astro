@@ -247,6 +247,18 @@ res.write(`data: ${'{'}&br;JSON.stringify({'{'}&br;
     this automatically.
   </div>
 
+  <div class="note">
+    <strong>Key idea — opting a subtree out entirely:</strong> some DOM is not
+    the server's to morph. A CodeMirror editor, a canvas, a chart — after first
+    paint, the <em>client</em> owns them. Mark the element
+    <code>data-czap-morph-opaque</code> and the morph never syncs its
+    attributes, never descends into its children, and never removes it — even
+    when the server HTML omits it entirely. Sanitization still runs on incoming
+    HTML: opacity exempts a subtree from <em>diffing</em>, never from the trust
+    boundary. (The marker lives in <code>@czap/web</code> as
+    <code>MorphOpaque</code>.)
+  </div>
+
   <!-- ============================================================
        STEP 6: Reconnection
 
