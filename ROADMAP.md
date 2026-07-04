@@ -77,12 +77,10 @@ for already-published versions so workflow re-runs need no shell
 fallback, and the deprecated `attachViewportObserver` alias is removed
 (superseded by `attachSignalObserver` in 0.1.5).
 
-**Remaining (maintainer, one-time, npm-side):** configure a trusted
-publisher for each of the 23 publishable packages at
-`npmjs.com/package/<name>/access` — form values in RELEASING.md. Until
-then a v0.2.0 tag fails its publish step loudly with an auth error
-(re-runs are safe and idempotent). Afterwards, delete the dead
-`NPM_TOKEN` secret from repo settings.
+**Closed (verified during the 0.8.0 cut):** the npm-side trusted publishers are
+configured and proven — the 0.6.0 and 0.7.0 releases (2026-07-03) both published
+every package via OIDC with provenance and zero tokens, and the dead `NPM_TOKEN`
+repo secret was deleted on 2026-07-04. Nothing remains in this epic.
 
 ### 5. Client→server channel (0.7.0) — deferred nits
 
