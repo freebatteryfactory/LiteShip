@@ -6,7 +6,7 @@
 
 # Interface: BackpressureHint
 
-Defined in: [web/src/types.ts:295](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L295)
+Defined in: [web/src/types.ts:300](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L300)
 
 Backpressure hint emitted when SSE buffer fills.
 
@@ -16,7 +16,7 @@ Backpressure hint emitted when SSE buffer fills.
 
 > `readonly` **bufferSize**: `number`
 
-Defined in: [web/src/types.ts:296](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L296)
+Defined in: [web/src/types.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L301)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:296](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **coalescedCount**: `number`
 
-Defined in: [web/src/types.ts:305](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L305)
+Defined in: [web/src/types.ts:310](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L310)
 
 Cumulative count of same-id `patch` supersessions (coalesce hits).
 
@@ -34,7 +34,7 @@ Cumulative count of same-id `patch` supersessions (coalesce hits).
 
 > `readonly` **droppedCount**: `number`
 
-Defined in: [web/src/types.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L303)
+Defined in: [web/src/types.ts:308](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L308)
 
 Cumulative count of messages evicted/rejected by the overflow policy.
 
@@ -44,7 +44,7 @@ Cumulative count of messages evicted/rejected by the overflow policy.
 
 > `readonly` **dropping**: `boolean`
 
-Defined in: [web/src/types.ts:299](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L299)
+Defined in: [web/src/types.ts:304](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L304)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [web/src/types.ts:299](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxBufferSize**: `number`
 
-Defined in: [web/src/types.ts:297](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L297)
+Defined in: [web/src/types.ts:302](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L302)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [web/src/types.ts:297](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **percentFull**: `number`
 
-Defined in: [web/src/types.ts:298](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L298)
+Defined in: [web/src/types.ts:303](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L303)
 
 ***
 
@@ -68,6 +68,6 @@ Defined in: [web/src/types.ts:298](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **policy**: [`OverflowPolicy`](../type-aliases/OverflowPolicy.md)
 
-Defined in: [web/src/types.ts:301](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L301)
+Defined in: [web/src/types.ts:306](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L306)
 
 The active [OverflowPolicy](../type-aliases/OverflowPolicy.md) (the rule governing `dropping`).

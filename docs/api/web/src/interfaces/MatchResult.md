@@ -6,7 +6,7 @@
 
 # Interface: MatchResult
 
-Defined in: [web/src/types.ts:378](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L378)
+Defined in: [web/src/types.ts:383](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L383)
 
 Result of matching two nodes.
 
@@ -16,7 +16,7 @@ Result of matching two nodes.
 
 > `readonly` `optional` **matchedId?**: `string`
 
-Defined in: [web/src/types.ts:381](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L381)
+Defined in: [web/src/types.ts:386](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L386)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:381](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **matches**: `boolean`
 
-Defined in: [web/src/types.ts:379](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L379)
+Defined in: [web/src/types.ts:384](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L384)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [web/src/types.ts:379](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **priority**: [`MatchPriority`](../type-aliases/MatchPriority.md)
 
-Defined in: [web/src/types.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L380)
+Defined in: [web/src/types.ts:385](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L385)

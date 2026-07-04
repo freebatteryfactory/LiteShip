@@ -6,7 +6,7 @@
 
 # Interface: ResumptionConfig
 
-Defined in: [web/src/types.ts:326](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L326)
+Defined in: [web/src/types.ts:331](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L331)
 
 Resumption configuration for gap detection and recovery.
 
@@ -16,7 +16,7 @@ Resumption configuration for gap detection and recovery.
 
 > `readonly` `optional` **endpointPolicy?**: [`RuntimeEndpointPolicy`](RuntimeEndpointPolicy.md)
 
-Defined in: [web/src/types.ts:337](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L337)
+Defined in: [web/src/types.ts:342](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L342)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:337](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxGapSize**: `number`
 
-Defined in: [web/src/types.ts:333](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L333)
+Defined in: [web/src/types.ts:338](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L338)
 
 Maximum number of missed events recoverable via patch replay before
 falling back to a full snapshot.
@@ -37,7 +37,7 @@ Default: 50 — see `defaultResumptionConfig`; `Resumption.resume` accepts a `Pa
 
 > `readonly` `optional` **replayUrl?**: `string`
 
-Defined in: [web/src/types.ts:335](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L335)
+Defined in: [web/src/types.ts:340](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L340)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [web/src/types.ts:335](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **snapshotUrl?**: `string`
 
-Defined in: [web/src/types.ts:334](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L334)
+Defined in: [web/src/types.ts:339](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L339)
 
 ***
 
@@ -53,4 +53,4 @@ Defined in: [web/src/types.ts:334](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **timeout?**: `Millis`
 
-Defined in: [web/src/types.ts:336](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L336)
+Defined in: [web/src/types.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L341)

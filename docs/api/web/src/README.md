@@ -33,6 +33,7 @@ It ships:
 
 - [AudioProcessor](interfaces/AudioProcessor.md)
 - [BackpressureHint](interfaces/BackpressureHint.md)
+- [BindGraphFormOptions](interfaces/BindGraphFormOptions.md)
 - [FocusState](interfaces/FocusState.md)
 - [IMEState](interfaces/IMEState.md)
 - [LLMAdapterShape](interfaces/LLMAdapterShape.md)
@@ -89,6 +90,7 @@ It ships:
 - [LLMAdapter](variables/LLMAdapter.md)
 - [LLMChunkNormalization](variables/LLMChunkNormalization.md)
 - [Morph](variables/Morph.md)
+- [MorphOpaque](variables/MorphOpaque.md)
 - [Physical](variables/Physical.md)
 - [Resumption](variables/Resumption.md)
 - [SemanticId](variables/SemanticId.md)
@@ -100,6 +102,7 @@ It ships:
 
 ## Functions
 
+- [bindGraphForm](functions/bindGraphForm.md)
 - [captureVideo](functions/captureVideo.md)
 - [createAudioProcessor](functions/createAudioProcessor.md)
 - [createHtmlFragment](functions/createHtmlFragment.md)

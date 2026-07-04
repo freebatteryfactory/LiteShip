@@ -6,7 +6,7 @@
 
 # Interface: ReconnectConfig
 
-Defined in: [web/src/types.ts:285](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L285)
+Defined in: [web/src/types.ts:290](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L290)
 
 Reconnection configuration. Engine defaults live in
 `defaultReconnectConfig` (`./stream/sse-pure.js`); `SSEConfig.reconnect`
@@ -18,7 +18,7 @@ accepts a partial and merges over those defaults.
 
 > `readonly` **factor**: `number`
 
-Defined in: [web/src/types.ts:289](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L289)
+Defined in: [web/src/types.ts:294](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L294)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [web/src/types.ts:289](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **initialDelay**: `Millis`
 
-Defined in: [web/src/types.ts:287](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L287)
+Defined in: [web/src/types.ts:292](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L292)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [web/src/types.ts:287](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxAttempts**: `number`
 
-Defined in: [web/src/types.ts:286](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L286)
+Defined in: [web/src/types.ts:291](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L291)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [web/src/types.ts:286](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **maxDelay**: `Millis`
 
-Defined in: [web/src/types.ts:288](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L288)
+Defined in: [web/src/types.ts:293](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L293)

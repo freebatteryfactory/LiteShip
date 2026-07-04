@@ -8,7 +8,7 @@
 
 > `const` **Morph**: `object`
 
-Defined in: [web/src/morph/diff.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L159)
+Defined in: [web/src/morph/diff.ts:161](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/diff.ts#L161)
 
 DOM morph namespace.
 

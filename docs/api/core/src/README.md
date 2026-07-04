@@ -104,6 +104,8 @@ plan graph, ECS, capsule factory).
 - [ExportNode](interfaces/ExportNode.md)
 - [ForkViolation](interfaces/ForkViolation.md)
 - [FrameCapture](interfaces/FrameCapture.md)
+- [GraphMutationClient](interfaces/GraphMutationClient.md)
+- [GraphMutationClientOptions](interfaces/GraphMutationClientOptions.md)
 - [GraphMutationRequest](interfaces/GraphMutationRequest.md)
 - [GraphPatch](interfaces/GraphPatch.md)
 - [GraphStore](interfaces/GraphStore.md)
@@ -145,6 +147,7 @@ plan graph, ECS, capsule factory).
 ## Type Aliases
 
 - [AddressedDigest](type-aliases/AddressedDigest.md)
+- [AppliedGraphVerification](type-aliases/AppliedGraphVerification.md)
 - [AssemblyKind](type-aliases/AssemblyKind.md)
 - [BoundaryCrossing](type-aliases/BoundaryCrossing.md)
 - [CapsuleCommandDescriptor](type-aliases/CapsuleCommandDescriptor.md)
@@ -170,6 +173,7 @@ plan graph, ECS, capsule factory).
 - [FrameType](type-aliases/FrameType.md)
 - [GapStrategy](type-aliases/GapStrategy.md)
 - [GeneratedUIValidator](type-aliases/GeneratedUIValidator.md)
+- [GraphMutationOps](type-aliases/GraphMutationOps.md)
 - [GraphMutationResponse](type-aliases/GraphMutationResponse.md)
 - [IntegrityDigest](type-aliases/IntegrityDigest.md)
 - [LadderTarget](type-aliases/LadderTarget.md)
@@ -310,6 +314,7 @@ plan graph, ECS, capsule factory).
 - [chooseRung](functions/chooseRung.md)
 - [compositeStateToRgba](functions/compositeStateToRgba.md)
 - [contentAddressOf](functions/contentAddressOf.md)
+- [createGraphMutationClient](functions/createGraphMutationClient.md)
 - [decodeDocumentGraph](functions/decodeDocumentGraph.md)
 - [defineCapsule](functions/defineCapsule.md)
 - [defineConfig](functions/defineConfig.md)
@@ -341,4 +346,5 @@ plan graph, ECS, capsule factory).
 - [tupleMap](functions/tupleMap.md)
 - [unwrapValidated](functions/unwrapValidated.md)
 - [validateGraph](functions/validateGraph.md)
+- [verifyAppliedGraph](functions/verifyAppliedGraph.md)
 - [wgslIdent](functions/wgslIdent.md)

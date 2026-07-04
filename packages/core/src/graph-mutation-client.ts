@@ -15,6 +15,7 @@ import type { DocumentGraph } from './document-graph.js';
 import { GraphPatch, type PatchOp } from './graph-patch.js';
 import { sendGraphMutation, type GraphMutationResponse } from './graph-mutation.js';
 
+/** Configuration for {@link createGraphMutationClient} — endpoint, initial base, and stale-recovery policy. */
 export interface GraphMutationClientOptions {
   /** The mutation endpoint `sendGraphMutation` POSTs to. */
   readonly url: string;
@@ -32,8 +33,19 @@ export interface GraphMutationClientOptions {
   readonly maxStaleRetries?: number;
 }
 
+/**
+ * The ops a submit proposes: a fixed op array, or a builder invoked with the CURRENT base —
+ * the builder form re-derives ops after a stale-base refresh, so retried proposals never
+ * carry nodes computed against a graph the server has already moved past.
+ */
 export type GraphMutationOps = readonly PatchOp[] | ((base: DocumentGraph) => readonly PatchOp[]);
 
+/**
+ * The client-side half of the mutation channel: a base-tracking state machine over
+ * `sendGraphMutation`. Submits are strictly serialized (no self-inflicted CAS races),
+ * an `applied` response advances the base, and a `staleBase` refusal reloads +
+ * re-proposes within the configured bound.
+ */
 export interface GraphMutationClient {
   /** The current client-side base (advances on every applied submit / adopt). */
   readonly base: () => DocumentGraph;
@@ -53,6 +65,11 @@ export interface GraphMutationClient {
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
+/**
+ * Build a {@link GraphMutationClient}. The returned client never rejects: every failure —
+ * ops-builder throw, propose throw, transport error, `refreshBase` throw — settles to the
+ * channel's `{ status: 'error' }` shape, mirroring `sendGraphMutation`'s one-shape contract.
+ */
 export function createGraphMutationClient(options: GraphMutationClientOptions): GraphMutationClient {
   let currentBase = options.base;
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -82,7 +99,12 @@ export function createGraphMutationClient(options: GraphMutationClientOptions): 
         currentBase = response.graph;
         return response;
       }
-      if (response.status === 'refused' && response.staleBase === true && options.refreshBase && retries < maxStaleRetries) {
+      if (
+        response.status === 'refused' &&
+        response.staleBase === true &&
+        options.refreshBase &&
+        retries < maxStaleRetries
+      ) {
         retries += 1;
         try {
           currentBase = await options.refreshBase();

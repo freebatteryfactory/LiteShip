@@ -80,7 +80,8 @@ export function graphMutationRoute(store: GraphStore): (request: Request) => Pro
       const reason = error instanceof Error ? error.message : String(error);
       result = { status: 'error', message: `mutation failed: ${reason}` };
     }
-    const status = result.status === 'applied' ? 200 : result.status === 'refused' ? (result.staleBase === true ? 409 : 422) : 500;
+    const status =
+      result.status === 'applied' ? 200 : result.status === 'refused' ? (result.staleBase === true ? 409 : 422) : 500;
     return jsonResponse(result, status);
   };
 }

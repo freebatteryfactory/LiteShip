@@ -8,7 +8,7 @@
 
 > **isZap**\<`T`\>(`p`): `p is Shape<T>`
 
-Defined in: [core/src/index.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L387)
+Defined in: [core/src/index.ts:394](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L394)
 
 Narrow a [Primitive](../type-aliases/Primitive.md) to a [Zap](../namespaces/Zap/README.md).
 

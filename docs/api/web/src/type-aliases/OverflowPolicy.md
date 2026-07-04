@@ -8,7 +8,7 @@
 
 > **OverflowPolicy** = `"drop-newest"` \| `"drop-oldest"` \| `"coalesce-by-id"`
 
-Defined in: [web/src/types.ts:231](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L231)
+Defined in: [web/src/types.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L236)
 
 Policy applied when the SSE receive buffer is saturated.
 

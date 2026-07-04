@@ -6,7 +6,7 @@
 
 # Interface: ResumptionState
 
-Defined in: [web/src/types.ts:343](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L343)
+Defined in: [web/src/types.ts:348](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L348)
 
 Resumption state stored in sessionStorage.
 
@@ -16,7 +16,7 @@ Resumption state stored in sessionStorage.
 
 > `readonly` **artifactId**: `string`
 
-Defined in: [web/src/types.ts:346](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L346)
+Defined in: [web/src/types.ts:351](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L351)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [web/src/types.ts:346](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **lastEventId**: `string`
 
-Defined in: [web/src/types.ts:344](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L344)
+Defined in: [web/src/types.ts:349](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L349)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [web/src/types.ts:344](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **lastSequence**: `number`
 
-Defined in: [web/src/types.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L345)
+Defined in: [web/src/types.ts:350](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L350)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [web/src/types.ts:345](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` **timestamp**: `number`
 
-Defined in: [web/src/types.ts:347](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L347)
+Defined in: [web/src/types.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L352)

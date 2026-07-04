@@ -8,6 +8,6 @@
 
 > **MorphResult** = \{ `type`: `"success"`; \} \| \{ `rejection`: [`MorphRejection`](../interfaces/MorphRejection.md); `type`: `"rejected"`; \}
 
-Defined in: [web/src/types.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L153)
+Defined in: [web/src/types.ts:158](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L158)
 
 Result of a morph operation.
