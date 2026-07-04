@@ -8,7 +8,7 @@
 
 > **createGraphMutationClient**(`options`): [`GraphMutationClient`](../interfaces/GraphMutationClient.md)
 
-Defined in: [core/src/graph-mutation-client.ts:73](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L73)
+Defined in: [core/src/graph-mutation-client.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L97)
 
 Build a [GraphMutationClient](../interfaces/GraphMutationClient.md). The returned client never rejects: every failure —
 ops-builder throw, propose throw, transport error, `refreshBase` throw — settles to the

@@ -61,7 +61,20 @@ export function bindGraphForm(form: HTMLFormElement, options: BindGraphFormOptio
       })
       .then((response) => {
         settleState(response);
-        options.onOutcome?.(response);
+        // Contain a throwing host hook: the chain is deliberately un-awaited (`void`),
+        // so an escaping throw here would surface as an unhandled rejection instead of
+        // a contained, loud failure — and the `czap:mutation` event must still fire.
+        try {
+          options.onOutcome?.(response);
+        } catch (error) {
+          Diagnostics.warn({
+            source: 'czap/web.graphForm',
+            code: 'on-outcome-threw',
+            message:
+              'Graph form onOutcome threw while handling a mutation response. Fix: keep onOutcome non-throwing; the czap:mutation event still fired.',
+            detail: { message: error instanceof Error ? error.message : String(error) },
+          });
+        }
         form.dispatchEvent(new CustomEvent('czap:mutation', { detail: response, bubbles: true }));
       });
   };

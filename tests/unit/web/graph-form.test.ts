@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { bindGraphForm } from '@czap/web';
 import { Diagnostics, type DocumentGraph, type GraphMutationClient } from '@czap/core';
-import type { GraphMutationResponse, PatchOp } from '@czap/core';
+import type { GraphMutationResponse, PatchOp, SignalNode } from '@czap/core';
 import { node, graph } from '../../helpers/graph-fixtures.js';
 
 const base = graph([node('base')]);
@@ -155,6 +155,37 @@ describe('bindGraphForm', () => {
 
     expect(submits).toBe(1);
     expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+  });
+
+  test('a throwing onOutcome is contained loudly and the czap:mutation event still fires', async () => {
+    const form = fixtureForm();
+    const { sink, events } = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink);
+    const client: GraphMutationClient = {
+      base: () => base,
+      adopt: () => {},
+      submit: () => Promise.resolve(applied()),
+    };
+    let eventFired = false;
+    form.addEventListener('czap:mutation', () => {
+      eventFired = true;
+    });
+    bindGraphForm(form, {
+      client,
+      toOps: () => [],
+      onOutcome: () => {
+        throw new Error('host hook exploded');
+      },
+    });
+
+    dispatchSubmit(form);
+    await flush();
+
+    expect(eventFired).toBe(true);
+    expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
+    expect(events).toHaveLength(1);
+    expect(events[0]!.code).toBe('on-outcome-threw');
+    expect(events[0]!.message).toContain('Fix:');
   });
 
   test('the clicked submitter lands in the FormData, matching native submission', async () => {

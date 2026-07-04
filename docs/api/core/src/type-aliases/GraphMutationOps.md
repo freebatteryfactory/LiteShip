@@ -8,7 +8,7 @@
 
 > **GraphMutationOps** = readonly [`PatchOp`](PatchOp.md)[] \| ((`base`) => readonly [`PatchOp`](PatchOp.md)[])
 
-Defined in: [core/src/graph-mutation-client.ts:41](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L41)
+Defined in: [core/src/graph-mutation-client.ts:65](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L65)
 
 The ops a submit proposes: a fixed op array, or a builder invoked with the CURRENT base —
 the builder form re-derives ops after a stale-base refresh, so retried proposals never

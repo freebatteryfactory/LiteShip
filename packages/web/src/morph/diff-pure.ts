@@ -337,7 +337,7 @@ export const morphPure = (
         // A root replace is a remove+add: L2's ancestor rule wins first (replacing a root
         // whose subtree holds an opaque island would cascade-destroy the island, exactly
         // like the removal loop), then the beforeRemove veto, then afterAdd on the new
-        // root — same order as any other reconciled node.
+        // root — the same order every other reconciled node gets.
         oldNode.replaceWith(firstNode);
         finalConfig.callbacks?.afterAdd?.(firstNode);
       }

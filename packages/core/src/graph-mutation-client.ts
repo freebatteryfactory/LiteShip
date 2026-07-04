@@ -31,7 +31,31 @@ export interface GraphMutationClientOptions {
   readonly refreshBase?: () => Promise<DocumentGraph>;
   /** Bounded stale-base retries. Default: 1 when `refreshBase` is provided, else 0. */
   readonly maxStaleRetries?: number;
+  /**
+   * Abort a submit's request after this many milliseconds, settling it to the channel's
+   * `{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
+   * queue for as long as the runtime's own fetch deadline (minutes in some browsers) —
+   * every queued submit on this client waits behind it. Default: no client-side timeout.
+   */
+  readonly timeoutMs?: number;
 }
+
+/** Wrap a fetch with an AbortController deadline; the abort reason names the timeout. */
+const withTimeout = (impl: typeof fetch, timeoutMs: number | undefined): typeof fetch => {
+  if (timeoutMs === undefined) return impl;
+  return async (input, init) => {
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () => controller.abort(new Error(`mutation request timed out after ${timeoutMs}ms`)),
+      timeoutMs,
+    );
+    try {
+      return await impl(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+};
 
 /**
  * The ops a submit proposes: a fixed op array, or a builder invoked with the CURRENT base —
@@ -72,7 +96,7 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  */
 export function createGraphMutationClient(options: GraphMutationClientOptions): GraphMutationClient {
   let currentBase = options.base;
-  const fetchImpl = options.fetchImpl ?? fetch;
+  const fetchImpl = withTimeout(options.fetchImpl ?? fetch, options.timeoutMs);
   const maxStaleRetries = options.maxStaleRetries ?? (options.refreshBase ? 1 : 0);
   let queue: Promise<void> = Promise.resolve();
 

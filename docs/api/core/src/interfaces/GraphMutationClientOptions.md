@@ -98,6 +98,19 @@ LiteShip does not dictate the read endpoint's shape — the host owns it (ADR-00
 
 ***
 
+### timeoutMs?
+
+> `readonly` `optional` **timeoutMs?**: `number`
+
+Defined in: [core/src/graph-mutation-client.ts:40](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/graph-mutation-client.ts#L40)
+
+Abort a submit's request after this many milliseconds, settling it to the channel's
+`{ status: 'error' }` shape. Without it, a hung request holds the SERIALIZED submit
+queue for as long as the runtime's own fetch deadline (minutes in some browsers) —
+every queued submit on this client waits behind it. Default: no client-side timeout.
+
+***
+
 ### url
 
 > `readonly` **url**: `string`
