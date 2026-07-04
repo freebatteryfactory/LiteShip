@@ -3170,7 +3170,7 @@
         {
           "name": "MorphOpaque",
           "kind": "namespace",
-          "signature": "ATTR:const,isOpaque:function"
+          "signature": "ATTR:const,containsOpaque:function,isOpaque:function"
         },
         {
           "name": "Physical",

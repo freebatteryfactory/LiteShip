@@ -12,7 +12,7 @@
 import type { MorphConfig, MorphHints, MorphCallbacks } from '../types.js';
 import { createHtmlFragment } from '../security/html-trust.js';
 import * as SemanticIdModule from './semantic-id.js';
-import { isOpaque } from './opaque.js';
+import { isOpaque, containsOpaque } from './opaque.js';
 
 /**
  * Default morph configuration.
@@ -121,7 +121,8 @@ export const syncAttributes = (oldNode: Element, newNode: Element, callbacks?: M
  *
  * Morph-opaque laws:
  * L1 A matched old↔new pair where EITHER side is opaque keeps the old element verbatim.
- * L2 An unmatched old opaque element is never removed.
+ * L2 An unmatched old opaque element is never removed — nor is an unmatched ancestor
+ *    whose subtree contains one (a cascade removal would destroy the island).
  * L3 A new opaque element with no old match inserts wholesale.
  * L4 An opaque morph root is a total no-op for every entry point.
  * L5 Non-opaque siblings/ancestors morph exactly as before.
@@ -283,7 +284,9 @@ export const syncChildren = (
 
   for (const oldChild of oldChildren) {
     if (!matched.has(oldChild) && oldChild.parentNode === oldParent) {
-      if (oldChild instanceof Element && isOpaque(oldChild)) {
+      // L2, including ancestors: removing a container whose subtree holds an opaque island
+      // would destroy the island via cascade — the container is preserved with it.
+      if (oldChild instanceof Element && (isOpaque(oldChild) || containsOpaque(oldChild))) {
         continue;
       }
       if (oldChild instanceof Element && callbacks?.beforeRemove?.(oldChild) === false) {
@@ -325,10 +328,14 @@ export const morphPure = (
     const firstNode = newNodes[0];
     if (newNodes.length === 1 && firstNode instanceof Element) {
       if (isSameNode(oldNode, firstNode, hints)) {
-        syncAttributes(oldNode, firstNode, finalConfig.callbacks);
-        syncChildren(oldNode, firstNode, hints, finalConfig.callbacks);
-      } else {
+        // Route the ROOT pair through morphElement so the opaque law (L1) holds by
+        // construction at the root, not by a hand-mirrored per-entry-point guard.
+        morphElement(oldNode, firstNode, hints, finalConfig.callbacks);
+      } else if (finalConfig.callbacks?.beforeRemove?.(oldNode) ?? true) {
+        // A root replace is a remove+add: honor the beforeRemove veto and fire afterAdd,
+        // same as any other reconciled node.
         oldNode.replaceWith(firstNode);
+        finalConfig.callbacks?.afterAdd?.(firstNode);
       }
     }
   } else {

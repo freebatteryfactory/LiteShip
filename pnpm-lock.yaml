@@ -237,6 +237,9 @@ importers:
       astro:
         specifier: '>=7.0.0 <8'
         version: 7.0.3(@astrojs/markdown-remark@7.2.0)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.13.2)(jiti@2.6.1)(rollup@4.59.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.8.3)
+      effect:
+        specifier: 4.0.0-beta.32
+        version: 4.0.0-beta.32
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

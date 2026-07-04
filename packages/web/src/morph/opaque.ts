@@ -14,5 +14,12 @@ export const ATTR = 'data-czap-morph-opaque';
 export const isOpaque = (node: Node): node is Element =>
   typeof Element !== 'undefined' && node instanceof Element && node.hasAttribute(ATTR);
 
+/**
+ * True when `el`'s SUBTREE (excluding `el` itself) contains an opaque element. The removal
+ * path uses this to extend L2 to ancestors: removing a container would cascade-destroy the
+ * island inside it, so the container is preserved along with the island.
+ */
+export const containsOpaque = (el: Element): boolean => el.querySelector(`[${ATTR}]`) !== null;
+
 /** Namespace bundle for the morph-opaque marker (house pattern, like `SemanticId`). */
-export const MorphOpaque = { ATTR, isOpaque } as const;
+export const MorphOpaque = { ATTR, isOpaque, containsOpaque } as const;

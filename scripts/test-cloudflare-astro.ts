@@ -3,22 +3,16 @@
  *
  * Run: pnpm run test:cloudflare
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { runPnpm } from './support/pnpm-process.ts';
+import { cloudflareChildEnv } from './support/cloudflare-env.ts';
 import { doctor } from '../packages/cli/src/commands/doctor.js';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = resolve(REPO_ROOT, 'examples/cloudflare-astro');
 const DIST_DIR = resolve(EXAMPLE_DIR, 'dist');
-/** Writable XDG config root so workerd/wrangler never touch ~/.config in CI sandboxes. */
-const WRANGLER_CONFIG_HOME = resolve(REPO_ROOT, '.czap', 'wrangler-test');
-
-function cloudflareChildEnv(): Record<string, string> {
-  mkdirSync(WRANGLER_CONFIG_HOME, { recursive: true });
-  return { FORCE_COLOR: '0', XDG_CONFIG_HOME: WRANGLER_CONFIG_HOME };
-}
 
 function assert(condition: boolean, message: string): void {
   if (!condition) {

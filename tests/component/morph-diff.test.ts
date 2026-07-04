@@ -538,9 +538,77 @@ describe('morph-opaque subtrees', () => {
     expect(root.querySelector('p')?.textContent).toBe('new');
     root.remove();
   });
+
+  test('L2 extends to ancestors: removing a wrapper that CONTAINS an opaque island preserves the wrapper', () => {
+    const root = el(
+      `<div><article class="wrapper"><section ${MorphOpaque.ATTR}><span>island</span></section></article><p>old</p></div>`,
+    );
+    document.body.appendChild(root);
+    const wrapper = root.querySelector('article')!;
+    const island = root.querySelector('section')!;
+
+    // Server HTML drops the wrapper entirely — a cascade removal would destroy the island.
+    run(Morph.morph(root, '<p>new</p>'));
+
+    expect(wrapper.isConnected).toBe(true);
+    expect(island.isConnected).toBe(true);
+    expect(root.contains(island)).toBe(true);
+    expect(root.querySelector('p')?.textContent).toBe('new');
+    root.remove();
+  });
+
+  test('L1 holds at an outerHTML root: a same-node pair with the NEW side opaque keeps the old root verbatim', () => {
+    const root = el('<section class="client"><span>client child</span></section>');
+    document.body.appendChild(root);
+    const before = root.outerHTML;
+
+    run(
+      Morph.morph(root, `<section ${MorphOpaque.ATTR} class="server"><span>server child</span></section>`, {
+        morphStyle: 'outerHTML',
+      }),
+    );
+
+    expect(root.outerHTML).toBe(before);
+    expect(root.querySelector('span')?.textContent).toBe('client child');
+    root.remove();
+  });
 });
 
 describe('morph callbacks', () => {
+  test('an outerHTML root replace honors the beforeRemove veto', () => {
+    const root = el('<section class="client">keep me</section>');
+    document.body.appendChild(root);
+
+    run(
+      Morph.morph(root, '<article>replacement</article>', {
+        morphStyle: 'outerHTML',
+        callbacks: { beforeRemove: () => false },
+      }),
+    );
+
+    expect(root.isConnected).toBe(true);
+    expect(root.textContent).toBe('keep me');
+    root.remove();
+  });
+
+  test('an outerHTML root replace fires afterAdd with the inserted root', () => {
+    const root = el('<section class="client">old</section>');
+    document.body.appendChild(root);
+    const added: Node[] = [];
+
+    run(
+      Morph.morph(root, '<article>replacement</article>', {
+        morphStyle: 'outerHTML',
+        callbacks: { afterAdd: (node) => added.push(node) },
+      }),
+    );
+
+    expect(root.isConnected).toBe(false);
+    expect(added).toHaveLength(1);
+    expect((added[0] as Element).tagName).toBe('ARTICLE');
+    (added[0] as Element).remove();
+  });
+
   test('beforeRemove veto keeps the node', () => {
     const root = el('<div><p data-keep>keep</p><span>remove</span></div>');
     document.body.appendChild(root);

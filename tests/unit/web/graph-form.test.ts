@@ -1,20 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { bindGraphForm } from '@czap/web';
-import { Diagnostics, sealGraph, sealNode, type CellMeta, type DocumentGraph, type GraphMutationClient } from '@czap/core';
-import type { DocumentGraphEdge, DocumentGraphNode, GraphMutationResponse, PatchOp, SignalNode } from '@czap/core';
-
-const META: CellMeta = {
-  created: { wall_ms: 0, counter: 0, node_id: 't' },
-  updated: { wall_ms: 0, counter: 0, node_id: 't' },
-  version: 1,
-};
-
-const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
-
-const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
-  sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
+import { Diagnostics, type DocumentGraph, type GraphMutationClient } from '@czap/core';
+import type { GraphMutationResponse, PatchOp } from '@czap/core';
+import { node, graph } from '../../helpers/graph-fixtures.js';
 
 const base = graph([node('base')]);
 const applied = (input = 'applied'): GraphMutationResponse => ({ status: 'applied', graph: graph([node(input)]) });

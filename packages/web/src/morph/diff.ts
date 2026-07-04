@@ -16,10 +16,16 @@ import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
 import * as PhysicalRestore from '../physical/restore.js';
-import { isOpaque } from './opaque.js';
-
 // Import pure functions from diff-pure.ts (Effect-free)
-import { defaultConfig, parseHTML, isSameNode, syncAttributes, syncChildren, findBestMatch } from './diff-pure.js';
+import {
+  defaultConfig,
+  parseHTML,
+  isSameNode,
+  syncAttributes,
+  syncChildren,
+  findBestMatch,
+  morphPure,
+} from './diff-pure.js';
 
 // Re-export pure functions for backwards compatibility
 export { defaultConfig, parseHTML, isSameNode, syncAttributes, syncChildren, findBestMatch };
@@ -40,40 +46,10 @@ export const morph = (
   config?: Partial<MorphConfig>,
   hints?: MorphHints,
 ): Effect.Effect<void> =>
-  Effect.sync(() => {
-    if (isOpaque(oldNode as Node)) return;
-    const finalConfig = { ...defaultConfig, ...config };
-    const fragment = parseHTML(newHTML);
-    const newNodes = Array.from(fragment.childNodes);
-
-    if (newNodes.length === 0) {
-      return;
-    }
-
-    if (hints?.idMap) {
-      for (const node of newNodes) {
-        if (node instanceof Element) {
-          SemanticIdModule.applyIdMap(node, hints.idMap);
-        }
-      }
-    }
-
-    if (finalConfig.morphStyle === 'outerHTML') {
-      const firstNode = newNodes[0];
-      if (newNodes.length === 1 && firstNode instanceof Element) {
-        if (isSameNode(oldNode, firstNode, hints)) {
-          syncAttributes(oldNode, firstNode, finalConfig.callbacks);
-          syncChildren(oldNode, firstNode, hints, finalConfig.callbacks);
-        } else {
-          oldNode.replaceWith(firstNode);
-        }
-      }
-    } else {
-      const tempParent = document.createElement(oldNode.tagName);
-      tempParent.append(parseHTML(newHTML));
-      syncChildren(oldNode, tempParent, hints, finalConfig.callbacks);
-    }
-  });
+  // ONE reconcile body: the Effect entry delegates to `morphPure` so the morph-opaque
+  // laws and callback wiring live in exactly one place and cannot drift between the
+  // Effect and Effect-free entry points.
+  Effect.sync(() => morphPure(oldNode, newHTML, config, hints));
 
 /**
  * Morph with physical state capture and restore — the default entry point.
