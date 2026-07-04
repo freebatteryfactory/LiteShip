@@ -7,9 +7,10 @@
  * before applying — the AI-cast refuse-seam, now bidirectional and human-driven.
  *
  * Server side is one line: `POST = graphMutationRoute(store)` (see api/graph.ts).
- * Client side is `sendGraphMutation(url, patch)`. A patch cast against a stale base
- * is REFUSED (optimistic concurrency for free); only a validated patch mutates the
- * server graph, which re-addresses to a new content hash.
+ * Client side is the transport-free state primitive (`createGraphMutationClient`)
+ * plus the DOM form binding (`bindGraphForm`). The raw channel stays visible below:
+ * a patch cast against a stale base is REFUSED, while the client primitive can
+ * refresh and re-propose from the new base.
  */
 export const prerender = false;
 import { currentGraph } from '../server/graph-store';
@@ -26,19 +27,28 @@ const graph = currentGraph();
     <main>
       <h1>Client proposes, server validates, graph mutates</h1>
       <p>
-        The server holds the truth. The client sends a <code>GraphPatch</code>; the server
-        runs it through the same <code>validateGraphPatchProposal → applyValidatedPatch</code>
-        seam as an AI proposal. Watch the graph id re-address on a valid patch, and stay
-        <strong>byte-identical</strong> on a refused one.
+        The server holds the truth. The form projects submitted data into graph ops, the
+        client primitive proposes and sends a <code>GraphPatch</code>, and the server runs
+        it through the same <code>validateGraphPatchProposal → applyValidatedPatch</code>
+        seam as an AI proposal. Watch the graph id re-address on apply and stay
+        <strong>byte-identical</strong> on refusal.
       </p>
 
       <p class="truth">Server graph: <code id="graph-id">{graph.id}</code> · {graph.nodes.length} nodes</p>
 
+      <form id="mutation-form">
+        <label>
+          Signal axis
+          <input name="axis" value="viewport.height" />
+        </label>
+        <button>Submit through client + form binding</button>
+      </form>
+
       <div class="row">
-        <button id="valid">Propose a valid add (viewport.height)</button>
-        <button id="stale">Propose a stale patch (should be REFUSED)</button>
+        <button id="stale">Raw stale patch (REFUSED)</button>
+        <button id="recover">Client stale recovery (refresh + apply)</button>
       </div>
-      <pre id="out">Click a button to send a patch.</pre>
+      <pre id="out">Submit the form or click a raw-channel button.</pre>
     </main>
 
     <style>
@@ -46,6 +56,10 @@ const graph = currentGraph();
       h1 { font-size: 1.5rem; }
       code { font-family: ui-monospace, monospace; font-size: 0.9em; }
       .truth { background: color-mix(in oklab, Canvas 90%, CanvasText); padding: 0.5rem 0.75rem; border-radius: 0.5rem; }
+      form { display: grid; gap: 0.75rem; margin: 1rem 0; }
+      label { display: grid; gap: 0.35rem; font-weight: 650; }
+      input { font: inherit; padding: 0.5rem 0.65rem; border: 1px solid color-mix(in oklab, CanvasText 25%, Canvas); border-radius: 0.4rem; }
+      form[data-czap-mutation-state="pending"] { opacity: 0.65; }
       .row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin: 1rem 0; }
       button { font: inherit; padding: 0.5rem 0.9rem; border-radius: 0.5rem; cursor: pointer; }
       pre { background: color-mix(in oklab, Canvas 85%, CanvasText); padding: 1rem; border-radius: 0.6rem; white-space: pre-wrap; word-break: break-word; }
@@ -55,10 +69,23 @@ const graph = currentGraph();
          imports and emits it as a module. A `type="module"` attribute would opt OUT of
          bundling, shipping the bare import to the browser unresolved. -->
     <script>
-      import { decodeDocumentGraph, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
+      import { createGraphMutationClient, decodeDocumentGraph, GraphPatch, sealNode, sendGraphMutation } from '@czap/core';
+      import { bindGraphForm } from '@czap/web';
 
       const out = document.getElementById('out');
       const idEl = document.getElementById('graph-id');
+      const form = document.getElementById('mutation-form');
+      const staleButton = document.getElementById('stale');
+      const recoverButton = document.getElementById('recover');
+      if (
+        out === null ||
+        idEl === null ||
+        !(form instanceof HTMLFormElement) ||
+        !(staleButton instanceof HTMLButtonElement) ||
+        !(recoverButton instanceof HTMLButtonElement)
+      ) {
+        throw new Error('mutation roundtrip example failed to find its controls');
+      }
 
       // Fetch the CURRENT server graph to propose against — no host-mutated data is inlined
       // into the page, so a signal input can never smuggle a closing script tag into the markup.
@@ -67,32 +94,57 @@ const graph = currentGraph();
       // A validated, content-addressed node, built the same way the server does.
       const signal = (meta, input) => sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta, input });
 
-      async function send(patch, label) {
-        out.textContent = `sending ${label}…`;
-        const res = await sendGraphMutation('/api/graph', patch);
+      function render(res, label) {
         if (res.status === 'applied') {
-          out.textContent = `APPLIED — server graph re-addressed to ${res.graph.id} (${res.graph.nodes.length} nodes)`;
+          out.textContent = `${label}\nAPPLIED — server graph re-addressed to ${res.graph.id} (${res.graph.nodes.length} nodes)`;
           idEl.textContent = res.graph.id; // the server truth advanced
         } else if (res.status === 'refused') {
-          out.textContent = `REFUSED — ${res.errors.join(' · ')}\n(server graph unchanged)`;
+          const stale = res.staleBase ? '\nstaleBase: true — reload the base and re-propose' : '';
+          out.textContent = `${label}\nREFUSED — ${res.errors.join(' · ')}${stale}\n(server graph unchanged)`;
         } else {
-          out.textContent = `ERROR — ${res.message}\n(server-side failure; a retry may help)`;
+          out.textContent = `${label}\nERROR — ${res.message}\n(server-side failure; a retry may help)`;
         }
       }
 
-      document.getElementById('valid').addEventListener('click', async () => {
-        const base = await currentBase(); // propose against the live server truth
-        const patch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal(base.meta, 'viewport.height') }]);
-        send(patch, 'a valid add');
+      const client = createGraphMutationClient({
+        url: '/api/graph',
+        base: await currentBase(),
+        refreshBase: currentBase,
       });
 
-      document.getElementById('stale').addEventListener('click', async () => {
+      bindGraphForm(form, {
+        client,
+        toOps: (data, base) => {
+          const axis = String(data.get('axis') || 'viewport.height');
+          return [{ op: 'add', family: 'signal', node: signal(base.meta, axis) }];
+        },
+      });
+
+      form.addEventListener('czap:mutation', (event) => {
+        render(event.detail, 'FORM CLIENT — submitted axis through bindGraphForm');
+      });
+
+      staleButton.addEventListener('click', async () => {
         const base = await currentBase();
         // Point the patch at a base that doesn't match the server's → REFUSED.
         const stalePatch = GraphPatch.propose({ ...base, id: 'fnv1a:deadbeef' }, [
           { op: 'add', family: 'signal', node: signal(base.meta, 'never.applied') },
         ]);
-        send(stalePatch, 'a stale patch');
+        out.textContent = 'sending raw stale patch…';
+        render(await sendGraphMutation('/api/graph', stalePatch), 'RAW CHANNEL — stale patch');
+      });
+
+      recoverButton.addEventListener('click', async () => {
+        const base = await currentBase();
+        // Advance the server outside this client; its cached base is now stale.
+        const outsidePatch = GraphPatch.propose(base, [{ op: 'add', family: 'signal', node: signal(base.meta, 'outside.advance') }]);
+        await sendGraphMutation('/api/graph', outsidePatch);
+
+        out.textContent = 'client submit starts stale, refreshes, then re-proposes…';
+        const res = await client.submit((freshBase) => [
+          { op: 'add', family: 'signal', node: signal(freshBase.meta, 'client.recovered') },
+        ]);
+        render(res, 'CLIENT PRIMITIVE — staleBase refusal recovered via refreshBase');
       });
     </script>
   </body>
