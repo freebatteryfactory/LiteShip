@@ -172,13 +172,19 @@ export interface BoundaryManifestFile {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface ThemeCompileConfig {
-  readonly themeName: string;
-  readonly tokens: Record<string, unknown>;
+  readonly tokens: Readonly<Record<string, string | number>>;
+  readonly prefix?: string;
+}
+
+interface ThemeDeclaration {
+  readonly property: string;
+  readonly value: string;
 }
 
 export interface ThemeCompileResult {
+  readonly declarations: readonly ThemeDeclaration[];
   readonly css: string;
-  readonly selector: string;
+  readonly inlineStyle: string;
 }
 
 export declare function compileTheme(config: ThemeCompileConfig): ThemeCompileResult;
@@ -198,11 +204,15 @@ export interface EdgeHostCompileContext extends EdgeHostContext {
   readonly boundaryName?: string;
 }
 
+export type EdgeHostCacheTags =
+  readonly string[] | ((context: EdgeHostCompileContext) => readonly string[] | null | undefined);
+
 export interface EdgeHostBoundaryConfig {
   readonly boundaryId: ContentAddress;
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  readonly tags?: EdgeHostCacheTags;
 }
 
 export interface EdgeHostCacheConfig {
@@ -211,6 +221,7 @@ export interface EdgeHostCacheConfig {
   readonly precompiled?: Readonly<Partial<Record<TierKey, CompiledOutputs>>>;
   readonly assetUrlsByTier?: Readonly<Partial<Record<TierKey, string>>>;
   readonly compile?: (context: EdgeHostCompileContext) => Promise<CompiledOutputs> | CompiledOutputs;
+  readonly tags?: EdgeHostCacheTags;
   readonly boundaries?: Readonly<Record<string, EdgeHostBoundaryConfig>>;
   readonly ttl?: number;
   readonly prefix?: string;
@@ -264,5 +275,6 @@ export declare namespace EdgeHostAdapter {
   export type Context = EdgeHostContext;
   export type CompileContext = EdgeHostCompileContext;
   export type BoundaryConfig = EdgeHostBoundaryConfig;
+  export type CacheTags = EdgeHostCacheTags;
   export type BoundaryResolution = EdgeHostBoundaryResolution;
 }
