@@ -110,6 +110,40 @@ Both are resolved in 0.8.0:
 Success condition:
 - the doc nit is folded into the example, and the spine guard can no longer carry a blind spot.
 
+### 6. 0.8.0 downstream dogfood — intake (2026-07-04)
+
+Both dogfood consumers are live on 0.8.0 the day of the cut (clean bumps from
+0.5.0, consumer audits at 0 errors / 0 warnings, prod verified headless). One
+validation and three parked items, recorded here so they are not lost:
+
+- **Validation — the loud-not-silent bet paid off downstream:** the 0.8.0
+  compile-without-content-version diagnostic fired on the dashboard consumer's
+  build and caught a real latent staleness hole in ITS config — its KV boundary
+  cache was keyed by `boundaryId` alone, not the full compiled output, so a
+  deploy changing container decls / clamp tracks / easings without touching the
+  boundary would have served day-stale CSS silently. The consumer now hashes the
+  full compiled output into a per-deploy prefix. The framework's own diagnostic
+  found the bug; no engine change needed.
+- **Upstream candidate — silently unfed shader uniform:** the WGSL runtime
+  auto-feeds only the uniforms named literally `u_time` / `u_resolution`
+  (`packages/astro/src/runtime/wgpu.ts:465-466`); a hand-authored shader
+  declaring a bare `time` field compiles and renders with a silently frozen
+  clock, because nothing feeds it. That is exactly the silent-degradation class
+  this repo hunts: emit a loud diagnostic when a shader declares uniform struct
+  fields the runtime will not feed.
+- **Still open from the 0.6.0 findings batch:** COEP is not overridable
+  (finding #6). Neither dogfood site is bitten today — both want
+  `crossOriginIsolated` — parked, not forgotten.
+- **Owner eyeball task:** the WGSL render path needs a real WebGPU device
+  (headless has no `navigator.gpu`): open
+  `https://heyoub.dev/?cast=wgsl&gl=force` and confirm the orbs animate and stay
+  round. The GLSL default path is already verified live.
+
+Honest scope note: neither consumer exercises the mutation channel or
+`bindGraphForm` yet — the dashboard's graph-write plane is its next build. The
+doc-05 loop closes when the dashboard ships ON the new primitives, not merely
+alongside them.
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
