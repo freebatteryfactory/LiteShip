@@ -68,6 +68,7 @@
     "test:flake": "pnpm exec tsx scripts/test-flake.ts",
     "test:astro": "pnpm exec tsx scripts/test-astro.ts",
     "test:cloudflare": "pnpm exec tsx scripts/test-cloudflare-astro.ts",
+    "test:cloudflare-dev": "pnpm exec tsx scripts/test-cloudflare-dev.ts",
     "test:vite": "pnpm exec tsx scripts/test-vite.ts",
     "test:tailwind": "pnpm exec tsx scripts/test-tailwind.ts",
     "package:smoke": "pnpm run build && pnpm exec tsx packages/cli/src/bin.ts package-smoke",
