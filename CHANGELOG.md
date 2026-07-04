@@ -4,6 +4,33 @@ All notable changes to czap. The format follows [Keep a Changelog](https://keepa
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0
 break policy is intentionally aggressive — minor version bumps may carry breaking changes.
 
+## [0.8.0] - 2026-07-04
+
+The **keystone client wave**: the mutation channel now has a client-side state machine, a form binding, and a live-runtime adopt path; morph gains explicit opaque subtrees; the document graph node schema carries Standard Schema V1 interop.
+
+### Added
+
+- **`@czap/core` — `createGraphMutationClient`.** A DOM-free mutation-channel client that owns the current base, serializes submits, advances on `applied`, never throws, and handles structured `staleBase: true` refusals with a bounded host-owned `refreshBase` retry. `GraphMutationResponse` now distinguishes stale-base/lost-update refusals without string-matching messages, and `verifyAppliedGraph` is the shared applied-graph guard used by senders and live adopters.
+- **`@czap/web` — `bindGraphForm`.** A form-submit binding for the mutation channel: capture `FormData`, let the host project it to `PatchOp[]`, drive the mutation client, set `data-czap-mutation-state`, and dispatch `czap:mutation`. LiteShip owns the rig; the host owns markup, domain projection, and error rendering.
+- **`@czap/astro` — `adoptAppliedGraph` and stale-base 409s.** `graphMutationRoute` now maps stale-base/lost-update refusals to HTTP 409 while other refusals remain 422. `adoptAppliedGraph` re-proves a server-applied graph through `verifyAppliedGraph` before advancing a live graph runtime and re-casting the delta.
+- **`@czap/web` — morph-opaque subtrees.** `MorphOpaque` exports the presence marker `data-czap-morph-opaque`; matched opaque nodes stay verbatim, unmatched old opaque nodes are kept, new opaque nodes insert after sanitization, and opaque roots are total no-ops.
+- **`@czap/core` — Standard Schema interop.** `DocumentGraphNodeSchema` now carries the Standard Schema V1 `~standard` property via Effect's converter; `isWellFormedNode` keeps the same behavior.
+
+### Fixed
+
+- **`@czap/web` — morph callbacks now match their public type.** `beforeRemove` is threaded through nested removals and can veto non-opaque element removal; `afterAdd` fires for inserted elements and text nodes, including nested insertions.
+- **`examples/cloudflare-astro` — Cloudflare `astro dev` module URLs no longer 404.** The example's `run_worker_first` config was routing Vite dev-infrastructure URLs (`/@vite/*`, `/@id/*`, `/@fs/*`, `/src/*`, `/node_modules/*`) into the worker, where `not_found_handling: "none"` made them 404. The config now excludes those dev prefixes while preserving worker-first app routes and `/_czap/*` asset-first boundary CSS.
+
+### Internal
+
+- **Spine conformance is broader.** The conformance test now names its coverage and pins more of the core/design/edge spine surface; the pass root-fixed drift in the theme compile and edge cache-tag mirrors.
+- **Cloudflare dev path is covered.** `pnpm run test:cloudflare-dev` boots the Cloudflare Astro example under `astro dev`, fetches the page's module URLs, classifies LiteShip-injected page scripts, fails on 404s, and cleans up the Astro/workerd daemon.
+- **Example 06 proves the primitives.** `examples/06-mutation-roundtrip` now uses `createGraphMutationClient` + `bindGraphForm`, keeps a raw-channel stale refusal demo, and demonstrates stale recovery through the client primitive.
+
+### Breaking
+
+- None.
+
 ## [0.7.0] - 2026-07-03
 
 The **client→server mutation channel** — the return leg of the stream. SSE pushes

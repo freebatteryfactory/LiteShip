@@ -40,6 +40,9 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0028](./0028-plain-element-directive-scanner.md) | DIRECTIVE_ATTRIBUTE_REGISTRY: directives boot on plain elements | Accepted |
 | [0029](./0029-wgsl-uniform-buffer-layout.md) | WGSL uniform buffer layout is declaration-derived, not a fixed scalar block | Accepted |
 | [0030](./0030-client-server-mutation-channel.md) | Client→server graph-mutation channel (the return leg) | Accepted |
+| [0031](./0031-form-mutation-binding-primitive.md) | Mutation clients and form bindings are rigging, not components | Accepted |
+| [0032](./0032-morph-opaque-subtrees.md) | Morph-opaque subtrees are diff-isolated, not trust-exempt | Accepted |
+| [0033](./0033-standard-schema-interop.md) | DocumentGraphNodeSchema carries Standard Schema V1 | Accepted |
 
 ## Template
 

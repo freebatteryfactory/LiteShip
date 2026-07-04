@@ -212,7 +212,7 @@ Entry criteria:
 
 - built-in auth/session system
 - ORM/storage/queue stack
-- general RPC/server-action framework (the 0.7.0 mutation channel is one validated graph-patch seam, not arbitrary remote calls)
+- general RPC/server-action framework (the 0.8.0 mutation client and form binding still submit one validated graph-patch seam, not arbitrary remote calls)
 - backend/router stack expansion
 - stateful edge AI substrate implementation
 - component-local data loading implementation
