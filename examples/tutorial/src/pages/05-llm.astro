@@ -218,8 +218,10 @@ data: {"type":"tool-call-end"}</code></pre>
   <h2>ABR Quality Tiers</h2>
 
   <p>
-    The directive reads <code>data-czap-tier</code> from <code>&lt;html&gt;</code>
-    (set by the detect script) to adapt rendering complexity:
+    The directive derives its tier from the canonical
+    <code>data-czap-motion</code> attribute, falling back to
+    <code>data-czap-tier</code> on <code>&lt;html&gt;</code> (set by the
+    detect script) until the probe completes, to adapt rendering complexity:
   </p>
 
   <div class="tier-grid">

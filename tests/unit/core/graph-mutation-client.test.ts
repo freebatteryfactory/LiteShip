@@ -240,3 +240,29 @@ describe('GraphMutationClient', () => {
     );
   });
 });
+
+describe('createGraphMutationClient — timeoutMs', () => {
+  test('a hung request is aborted at the deadline and settles to the error shape', async () => {
+    // A fetch that never settles EXCEPT on abort — deterministic: the promise resolves
+    // exactly when the client's own AbortController fires, no timing races.
+    const hangingFetch: typeof fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(init.signal?.reason ?? new Error('aborted'));
+        });
+      });
+    const client = createGraphMutationClient({
+      url: '/api/graph',
+      base: graph([node('a')]),
+      fetchImpl: hangingFetch,
+      timeoutMs: 5,
+    });
+
+    const res = await client.submit([]);
+
+    expect(res.status).toBe('error');
+    if (res.status === 'error') {
+      expect(res.message).toContain('timed out after 5ms');
+    }
+  });
+});
