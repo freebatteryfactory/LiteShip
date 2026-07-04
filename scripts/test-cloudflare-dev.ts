@@ -15,7 +15,7 @@ const REQUEST_TIMEOUT_MS = 30_000;
 const INJECTED_MARKERS = ['gpuTier', 'bootstrapSlots', 'installSwapPipeline'] as const;
 
 interface PageReference {
-  readonly kind: 'script' | 'modulepreload' | 'api';
+  readonly kind: 'script' | 'modulepreload' | 'stylesheet' | 'api';
   readonly source: string;
   readonly url: URL;
 }
@@ -39,7 +39,12 @@ function fail(message: string): never {
 }
 
 function spawnAstroDev(): ReturnType<typeof spawnPnpm> {
-  return spawnPnpm(['exec', 'astro', 'dev', '--host', '127.0.0.1'], {
+  // --background (verified against the installed astro 7.0.3): the CLI daemonizes the
+  // real dev server, prints its URL + pid in one line, and the launcher exits. That
+  // makes `astro dev stop` the sanctioned cross-platform shutdown of the ACTUAL server
+  // process — killing only the foreground pnpm/cmd wrapper (the pre-background behavior)
+  // could orphan the server child, especially on Windows.
+  return spawnPnpm(['exec', 'astro', 'dev', '--background', '--host', '127.0.0.1'], {
     cwd: EXAMPLE_DIR,
     env: devChildEnv(),
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -171,6 +176,19 @@ async function fetchText(url: URL): Promise<{ status: number; body: string }> {
   }
 }
 
+/** Retry a fetch across connection refusals while the daemonized server finishes binding. */
+async function fetchTextWithRetry(url: URL, budgetMs: number): Promise<{ status: number; body: string }> {
+  const deadline = Date.now() + budgetMs;
+  for (;;) {
+    try {
+      return await fetchText(url);
+    } catch (error) {
+      if (Date.now() >= deadline) throw error;
+      await delay(500);
+    }
+  }
+}
+
 function parseAttributes(tag: string): Readonly<Record<string, string>> {
   const attrs: Record<string, string> = {};
   const attrPattern = /([^\s"'=<>`]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
@@ -206,8 +224,14 @@ function discoverReferences(html: string, base: URL): readonly PageReference[] {
   for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
     const tag = match[0] ?? '';
     const attrs = parseAttributes(tag);
-    if ((attrs.rel ?? '').split(/\s+/).includes('modulepreload') && attrs.href !== undefined) {
+    const rels = (attrs.rel ?? '').split(/\s+/);
+    if (attrs.href === undefined) continue;
+    if (rels.includes('modulepreload')) {
       addReference(refs, base, 'modulepreload', attrs.href);
+    } else if (rels.includes('stylesheet')) {
+      // Dev-served CSS (imported styles, boundary CSS) is one of the asset classes the
+      // worker-first config can swallow — the harness must not be blind to it.
+      addReference(refs, base, 'stylesheet', attrs.href);
     }
   }
   for (const match of html.matchAll(/["'](\/api\/[^"']*)["']/g)) {
@@ -280,7 +304,9 @@ async function main(): Promise<void> {
 
     console.log('[3/4] Fetching / and discovering referenced dev assets...');
     const pageUrl = new URL('/', ready.url);
-    const page = await fetchText(pageUrl);
+    // The background CLI prints "running at" as it daemonizes; give the freshly
+    // spawned server a bounded window to accept its first connection.
+    const page = await fetchTextWithRetry(pageUrl, SERVER_READY_TIMEOUT_MS);
     if (page.status !== 200) {
       console.error(ready.output());
       fail(`GET ${pageUrl.href} returned ${page.status}`);
