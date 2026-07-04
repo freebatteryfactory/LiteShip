@@ -41,7 +41,7 @@ export const morph = (
   hints?: MorphHints,
 ): Effect.Effect<void> =>
   Effect.sync(() => {
-    if (isOpaque(oldNode)) return;
+    if (isOpaque(oldNode as Node)) return;
     const finalConfig = { ...defaultConfig, ...config };
     const fragment = parseHTML(newHTML);
     const newNodes = Array.from(fragment.childNodes);
