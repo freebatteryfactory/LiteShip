@@ -139,7 +139,7 @@ The content-addressed keystone every cast reads from ([ADR-0015](./docs/adr/0015
 - proof that two casts share one source (same content address)
 - typed graph mutation — `GraphPatch`: `diff` / `apply` / `validate` / `receipt`
 
-Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `sealNode` / `sealGraph`, `validateGraph`, `linearizeGraph`, `GraphPatch`. `apply` re-seals the graph, so a patched node's address stays honest.
+Main surfaces: `DocumentGraph`, `DocumentGraphNode`, `DocumentGraphEdge`, `DocumentGraphNodeSchema`, `sealNode` / `sealGraph`, `validateGraph`, `linearizeGraph`, `GraphPatch`. `apply` re-seals the graph, so a patched node's address stays honest. `DocumentGraphNodeSchema` carries Standard Schema V1 through `~standard` for host validators that consume that interop contract directly. Added 0.8.0.
 
 ### AI cast
 
@@ -157,8 +157,9 @@ The return leg of the stream (SSE pushes server→client; this comes back). Reac
 
 - the server core — `handleGraphMutation(request, { loadGraph, saveGraph })`: decode a client-proposed `GraphPatch` → `validateGraphPatchProposal` → `applyValidatedPatch` → persist
 - the client sender — `sendGraphMutation(url, patch)`
+- the client state machine — `createGraphMutationClient({ url, base, refreshBase })`
 
-Main surfaces: `handleGraphMutation`, `sendGraphMutation`, `GraphStore`, `GraphMutationRequest`, `GraphMutationResponse`. It rides the AI-cast refuse-seam, so a human client's edit is validated exactly like a model's proposal. Three outcomes: `applied` (new sealed graph), `refused` (invalid patch — a stale base, dangling edge, or a concurrent-write compare-and-swap miss; optimistic concurrency for free), and `error` (a server-side store failure — retryable, never a raw 500). `saveGraph` is a compare-and-swap (`saveGraph(next, expected)`) so two clients racing the same base can't lose-update; the client sender validates the response shape. Transport-agnostic; the host owns the `GraphStore` (the authority boundary) and wires the endpoint (`@czap/astro`'s `graphMutationRoute` for Astro). Added 0.7.0.
+Main surfaces: `handleGraphMutation`, `sendGraphMutation`, `createGraphMutationClient`, `verifyAppliedGraph`, `GraphStore`, `GraphMutationRequest`, `GraphMutationResponse`. It rides the AI-cast refuse-seam, so a human client's edit is validated exactly like a model's proposal. Three outcomes: `applied` (new sealed graph), `refused` (invalid patch — a stale base, dangling edge, or a concurrent-write compare-and-swap miss; optimistic concurrency for free), and `error` (a server-side store failure — retryable, never a raw 500). Stale-base/lost-update refusals carry `staleBase: true`, so a client can reload and re-propose without string-matching errors. `saveGraph` is a compare-and-swap (`saveGraph(next, expected)`) so two clients racing the same base can't lose-update; the sender and live adopters share `verifyAppliedGraph` before accepting a server-applied graph. Transport-agnostic; the host owns the `GraphStore` (the authority boundary) and wires the endpoint (`@czap/astro`'s `graphMutationRoute` for Astro). `createGraphMutationClient` and `verifyAppliedGraph` added 0.8.0; the channel added 0.7.0.
 
 ### WASM compute
 
@@ -245,6 +246,8 @@ Reach for it when you need:
 Main surfaces:
 
 - `Morph`
+- `MorphOpaque` (`data-czap-morph-opaque`) — diff-isolate self-owned DOM islands; opacity never bypasses sanitize-before-diff. Added 0.8.0.
+- `bindGraphForm(form, { client, toOps })` — bind a host-authored form to the graph mutation client, reflecting only `data-czap-mutation-state` and `czap:mutation`. Added 0.8.0.
 - `SemanticId`
 - `Hints`
 - `SlotRegistry`
@@ -355,7 +358,7 @@ Main surfaces:
 - `@czap/astro/middleware-entry` — the auto-wired detection middleware registered by `czap({ middleware: true })`; populates a typed `Astro.locals.czap.tiers.{tier,motion,design}` via an `App.Locals` augmentation
 - `czapFetchLayer` / `serializeBoundaryCss` (also `@czap/astro/fetch-layer`) — request-time adaptation as a layer in FRONT of Astro (Astro 7 `src/fetch.ts`): shares the one `createEdgeHostAdapter().resolve()` with `czapMiddleware` and, on an opt-in `serveFromEdge` predicate, serves boundary CSS from the edge and skips Astro entirely; Astro `Fetchable` / Hono-compatible (ADR-0024, 0.4.0)
 - `bridgeDiagnosticsToAstroLogger` / `installDiagnosticsBridge` — route `@czap/*` runtime diagnostics through Astro's logger for structured `astro dev --json` output; wired in `astro:config:setup` (0.4.0)
-- `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@czap/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)` — Astro hands the handler an `APIContext`, so unwrap `request`). 200 on apply, 422 on refusal, 400 on a malformed JSON body, 415 on a non-`application/json` body (requiring the JSON content type forces cross-origin POSTs through a CORS preflight — a CSRF-hardening gate; the host still owns session/origin auth). `@czap/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0)
+- `graphMutationRoute(store)` — the client→server mutation channel's host route adapter: wraps `@czap/core`'s `handleGraphMutation` into a `(request) => Response` that drops into an Astro API route (`export const POST: APIRoute = ({ request }) => graphMutationRoute(store)(request)` — Astro hands the handler an `APIContext`, so unwrap `request`). 200 on apply, 409 on stale-base/lost-update refusal (`staleBase: true`), 422 on other refusals, 400 on a malformed JSON body, 415 on a non-`application/json` body (requiring the JSON content type forces cross-origin POSTs through a CORS preflight — a CSRF-hardening gate; the host still owns session/origin auth). `@czap/astro` injects no route — the endpoint, `GraphStore`, and authority are the host's (0.7.0; 409 added 0.8.0)
 
 Host-owned shared runtime surfaces:
 
@@ -366,7 +369,7 @@ Host-owned shared runtime surfaces:
 - `@czap/astro/runtime` continuous signal→uniform driver (`driveUniformFromSignal`) — drive the existing `czap:uniform-update` GPU event continuously from a continuous signal (e.g. `scroll.progress`) into a GLSL/WGSL uniform, collapsing the hand-rolled scroll→uniform consumer bridge (0.4.0)
 - `@czap/astro/runtime` runtime DocumentGraph loader (`loadGraphRuntime`, `lowerGraph`, `castGraphDelta`) — lower a serialized `DocumentGraph` onto the live cast pipeline and apply a `GraphPatch` delta at runtime; the `client:graph` directive boots it from `data-czap-graph` (0.4.0)
 - `@czap/astro/runtime` scene→live bridge (`bridgeSceneToGraph`) — drive the live graph from a signal-indexed `@czap/scene`: a discrete crossing re-casts, the continuous tween writes a leaf CSS var / GPU uniform and never patches the graph (0.4.0)
-- `@czap/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, re-cast the delta; the model producer is downstream (0.4.0)
+- `@czap/astro/runtime` AI-apply seam (`castGraphContext`, `admitGraphPatchProposal`, `adoptAppliedGraph`) — cast the live graph OUT to a model-facing `AIContext`, admit a VALIDATED `GraphPatch` proposal IN through the un-bypassable validate→apply token chain, or adopt a server-applied graph after `verifyAppliedGraph`; re-cast the delta; the model producer is downstream (`adoptAppliedGraph` added 0.8.0, original seam 0.4.0)
 - `@czap/astro/runtime` SVG last-mile (`attachSvgRuntime`, `client:svg`) — resolve `data-czap-entity → SVGElement` and apply `@czap/scene`'s `applySvgAttrs` to the live DOM each frame (0.4.0)
 - internal runtime adapters for `satellite`, `stream`, `llm`, `worker`, `wasm`, `graph`, and `svg`
 
