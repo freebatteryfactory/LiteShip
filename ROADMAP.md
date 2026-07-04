@@ -89,11 +89,12 @@ then a v0.2.0 tag fails its publish step loudly with an auth error
 The channel shipped hardened against its untrusted HTTP boundary: a CSRF content-type gate,
 off-contract nested edge-field rejection, canonical-CapSet grants, and a full applied-graph adopt
 guard (decode → reseal → id/digest → topology → uniqueness — the normalized form the server emits).
-These smaller items were consciously NOT done in the 0.7.0 cut and are tracked here rather than lost:
+These smaller items were consciously NOT done in the 0.7.0 cut and are tracked here rather than lost.
+Both are resolved in 0.8.0:
 
-- **Example `06-mutation-roundtrip` store contract** — show the compare-and-swap `expected` argument
+- **Resolved in 0.8.0 — Example `06-mutation-roundtrip` store contract** — show the compare-and-swap `expected` argument
   inline in the store snippet (review nit). Pure doc-comment polish; no behavior change.
-- **`spine-conformance` guard is non-comprehensive** — it pins only an explicit SUBSET of
+- **Resolved in 0.8.0 — `spine-conformance` guard is non-comprehensive** — it pins only an explicit SUBSET of
   `@czap/_spine` types, which is why the `CapSet.levels` Set→array drift slipped past it (a review bot
   caught it, the gate did not). Make it cover every exported spine type, or auto-derive the
   bidirectional contract, so no future spine drift can hide behind a green gate.
