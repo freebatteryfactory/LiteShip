@@ -8,7 +8,7 @@
 
 > **HtmlPolicy** = `"text"` \| `"sanitized-html"` \| `"trusted-html"`
 
-Defined in: [web/src/types.ts:182](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L182)
+Defined in: [web/src/types.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L187)
 
 Trust level a slot applies to string content injected into it.
 

@@ -58,9 +58,12 @@ export type GraphMutationResponse =
   | { readonly status: 'refused'; readonly errors: readonly string[]; readonly staleBase?: true }
   | { readonly status: 'error'; readonly message: string };
 
+/**
+ * Outcome of {@link verifyAppliedGraph}: the re-sealed canonical graph on success, or the
+ * reason the wire value is not a graph the server's own pipeline would emit.
+ */
 export type AppliedGraphVerification =
-  | { readonly ok: true; readonly graph: DocumentGraph }
-  | { readonly ok: false; readonly message: string };
+  { readonly ok: true; readonly graph: DocumentGraph } | { readonly ok: false; readonly message: string };
 
 /** Normalize a thrown value to a message string (catches surface it, never swallow it). */
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));

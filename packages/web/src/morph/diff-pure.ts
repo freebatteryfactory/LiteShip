@@ -126,7 +126,12 @@ export const syncAttributes = (oldNode: Element, newNode: Element, callbacks?: M
  * L4 An opaque morph root is a total no-op for every entry point.
  * L5 Non-opaque siblings/ancestors morph exactly as before.
  */
-export function morphElement(oldElement: Element, newElement: Element, hints?: MorphHints, callbacks?: MorphCallbacks): void {
+export function morphElement(
+  oldElement: Element,
+  newElement: Element,
+  hints?: MorphHints,
+  callbacks?: MorphCallbacks,
+): void {
   if (isOpaque(oldElement as Node) || isOpaque(newElement as Node)) return;
   syncAttributes(oldElement, newElement, callbacks);
   syncChildren(oldElement, newElement, hints, callbacks);
@@ -188,7 +193,12 @@ export const findBestMatch = (node: Element, candidates: Element[], hints?: Morp
 /**
  * Synchronize children between nodes using diff algorithm.
  */
-export const syncChildren = (oldParent: Element, newParent: Element, hints?: MorphHints, callbacks?: MorphCallbacks): void => {
+export const syncChildren = (
+  oldParent: Element,
+  newParent: Element,
+  hints?: MorphHints,
+  callbacks?: MorphCallbacks,
+): void => {
   const oldChildren = Array.from(oldParent.childNodes);
   const newChildren = Array.from(newParent.childNodes);
 

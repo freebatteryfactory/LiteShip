@@ -8,7 +8,7 @@
 
 > **Primitive**\<`T`\> = [`Shape`](../namespaces/Cell/type-aliases/Shape.md)\<`T`\> \| [`Shape`](../namespaces/Derived/type-aliases/Shape.md)\<`T`\> \| [`Shape`](../namespaces/Zap/type-aliases/Shape.md)\<`T`\> \| [`Shape`](../namespaces/Wire/type-aliases/Shape.md)\<`T`\>
 
-Defined in: [core/src/index.ts:380](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L380)
+Defined in: [core/src/index.ts:387](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/index.ts#L387)
 
 Union of the four reactive primitives the CZAP graph exposes to user code.
 

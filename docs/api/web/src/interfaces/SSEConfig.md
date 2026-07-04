@@ -6,7 +6,7 @@
 
 # Interface: SSEConfig
 
-Defined in: [web/src/types.ts:236](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L236)
+Defined in: [web/src/types.ts:241](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L241)
 
 SSE client configuration.
 
@@ -16,7 +16,7 @@ SSE client configuration.
 
 > `readonly` `optional` **artifactId?**: `string`
 
-Defined in: [web/src/types.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L242)
+Defined in: [web/src/types.ts:247](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L247)
 
 Appended to the stream URL as a path segment; also the key the
 `Resumption` namespace uses for its `sessionStorage` state.
@@ -27,7 +27,7 @@ Appended to the stream URL as a path segment; also the key the
 
 > `readonly` `optional` **heartbeatInterval?**: `Millis`
 
-Defined in: [web/src/types.ts:254](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L254)
+Defined in: [web/src/types.ts:259](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L259)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [web/src/types.ts:254](https://github.com/freebatteryfactory/LiteShi
 
 > `readonly` `optional` **lastEventId?**: `string`
 
-Defined in: [web/src/types.ts:248](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L248)
+Defined in: [web/src/types.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L253)
 
 Initial cursor re-sent to the server on (re)connect. Seed it from
 `Resumption.loadState` on cold start so the stream resumes where
@@ -47,7 +47,7 @@ the previous session left off.
 
 > `readonly` `optional` **onMessage?**: (`message`) => `void`
 
-Defined in: [web/src/types.ts:271](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L271)
+Defined in: [web/src/types.ts:276](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L276)
 
 Synchronous message sink. When set, each parsed message is delivered to
 this callback *synchronously* inside the `EventSource` `onmessage` handler
@@ -73,7 +73,7 @@ complete within the dispatch turn (the live morph directives); use
 
 > `readonly` `optional` **onStateChange?**: (`state`) => `void`
 
-Defined in: [web/src/types.ts:277](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L277)
+Defined in: [web/src/types.ts:282](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L282)
 
 Synchronous state-transition sink — the callback form of `stateChanges`,
 fired synchronously as each edge is emitted. Pair with `onMessage` for
@@ -95,7 +95,7 @@ fully synchronous directive consumption.
 
 > `readonly` `optional` **overflow?**: [`OverflowPolicy`](../type-aliases/OverflowPolicy.md)
 
-Defined in: [web/src/types.ts:261](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L261)
+Defined in: [web/src/types.ts:266](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L266)
 
 Overflow policy applied when the receive buffer saturates. Partial
 over the engine default (`coalesce-by-id`, see `defaultOverflowPolicy`
@@ -108,7 +108,7 @@ knob without restating the rest.
 
 > `readonly` `optional` **reconnect?**: `Partial`\<[`ReconnectConfig`](ReconnectConfig.md)\>
 
-Defined in: [web/src/types.ts:253](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L253)
+Defined in: [web/src/types.ts:258](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L258)
 
 Partial overrides are merged over `defaultReconnectConfig`
 (maxAttempts 10, initialDelay 1000ms, maxDelay 30000ms, factor 2).
@@ -119,4 +119,4 @@ Partial overrides are merged over `defaultReconnectConfig`
 
 > `readonly` **url**: `string`
 
-Defined in: [web/src/types.ts:237](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L237)
+Defined in: [web/src/types.ts:242](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/types.ts#L242)

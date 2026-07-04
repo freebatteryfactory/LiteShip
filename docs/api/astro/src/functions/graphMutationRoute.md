@@ -8,12 +8,13 @@
 
 > **graphMutationRoute**(`store`): (`request`) => `Promise`\<`Response`\>
 
-Defined in: [astro/src/graph-mutation-route.ts:54](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/graph-mutation-route.ts#L54)
+Defined in: [astro/src/graph-mutation-route.ts:55](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/astro/src/graph-mutation-route.ts#L55)
 
 Build a POST handler that validates + applies a client-proposed `GraphPatch`
 against the host's current graph:
   - **200** on apply — body is `{ status: 'applied', graph }` (the new sealed graph);
-  - **422** on refusal — body is `{ status: 'refused', errors }` (validation reasons);
+  - **409** on a stale-base / lost-update refusal (body carries `staleBase: true`);
+  - **422** on other refusals — body is `{ status: 'refused', errors }` (validation reasons);
   - **415** on a non-`application/json` body (see the CSRF note below);
   - **400** on an unparseable JSON body.
 

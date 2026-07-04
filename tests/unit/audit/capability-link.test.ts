@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { scaledTimeout } from '../../../vitest.shared.js';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -70,7 +71,9 @@ describe('capability-link oracle — the dataflow proof', () => {
     ).toEqual([]);
     // The symbol table self-assembled from the canonical modules covers every declared capability.
     expect(facts.definedCapabilities.sort()).toEqual([...CAPABILITY_IDS].sort());
-  });
+    // Real-repo dataflow proof: the program closure grows with the repo, so the budget is
+    // load-scaled like the sibling real-repo oracle (ir-parity-and-divergence).
+  }, scaledTimeout(60_000));
 
   it('an UNRELATED runtime guard (if(Math.random())) claiming a capability links to NOTHING (caught)', () => {
     const dir = mkdtempSync(join(tmpdir(), 'caplink-adv-'));
@@ -107,7 +110,8 @@ describe('capability-link oracle — the dataflow proof', () => {
     });
     expect(facts.results[0]?.linked).toBe(false);
     expect(facts.results[0]?.linkedCapabilities).toEqual(['ffmpeg-absent']);
-  });
+    // Same real-repo-sized program as the suite above — same load-scaled budget.
+  }, scaledTimeout(60_000));
 });
 
 describe('capability-link oracle — codex round-9: proves GATED-BY, not MENTIONS', () => {

@@ -12,6 +12,7 @@
 import { Diagnostics } from '@czap/core';
 import type { DocumentGraph, GraphMutationClient, GraphMutationResponse, PatchOp } from '@czap/core';
 
+/** Wiring for {@link bindGraphForm}: the channel client, the host's ops projection, and an optional outcome hook. */
 export interface BindGraphFormOptions {
   readonly client: GraphMutationClient;
   /** Project the submitted form into patch ops. Host-owned domain logic (nodes must be sealed by the host via sealNode). */

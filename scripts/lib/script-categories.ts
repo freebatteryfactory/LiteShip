@@ -47,6 +47,7 @@ export const CATEGORIES: readonly CategorySpec[] = [
       'test:vite',
       'test:astro',
       'test:cloudflare',
+      'test:cloudflare-dev',
       'test:tailwind',
     ],
   },

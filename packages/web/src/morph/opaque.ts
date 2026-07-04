@@ -14,4 +14,5 @@ export const ATTR = 'data-czap-morph-opaque';
 export const isOpaque = (node: Node): node is Element =>
   typeof Element !== 'undefined' && node instanceof Element && node.hasAttribute(ATTR);
 
+/** Namespace bundle for the morph-opaque marker (house pattern, like `SemanticId`). */
 export const MorphOpaque = { ATTR, isOpaque } as const;
