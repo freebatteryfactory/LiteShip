@@ -322,12 +322,14 @@ async function main(): Promise<void> {
     }
     printResults(results);
 
-    const missing = results.filter((result) => result.status === 404);
-    if (missing.length > 0) {
-      console.log('\n404 URLs:');
-      for (const result of missing) {
+    // Any non-2xx is a broken dev asset — a Vite transform error surfaces as a 500,
+    // an auth/routing misfire as a 403; a gate that only catches 404s is blind to both.
+    const broken = results.filter((result) => result.status < 200 || result.status >= 300);
+    if (broken.length > 0) {
+      console.log('\nBroken referenced URLs (non-2xx):');
+      for (const result of broken) {
         console.log(
-          `  ${result.reference.kind} ${result.reference.source} -> ${result.reference.url.href} -> ${classify(result)}`,
+          `  ${result.reference.kind} ${result.reference.source} -> ${result.reference.url.href} -> HTTP ${result.status} -> ${classify(result)}`,
         );
       }
       process.exitCode = 1;
