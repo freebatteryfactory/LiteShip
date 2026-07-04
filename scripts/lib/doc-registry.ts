@@ -142,7 +142,7 @@ export function renderExamplesBlock(): string {
   const byDir = new Map(loadExampleManifests().map((e) => [e.dir, e]));
   // Curated order + what-it-shows blurbs (examples have no rich package.json description).
   const rows: readonly { dir: string; shows: string }[] = [
-    { dir: 'tutorial', shows: 'The guided five-step intro: boundary → `satelliteAttrs` → tokens → themes → streaming' },
+    { dir: 'tutorial', shows: 'The guided five-page intro: boundaries → tokens → themes → streaming → LLM/genui' },
     { dir: 'showcase', shows: 'The cast family in one app — CSS/GPU boundaries, workers, streaming + generative-UI' },
     {
       dir: '03-cast-aria',
@@ -154,7 +154,7 @@ export function renderExamplesBlock(): string {
     },
     {
       dir: '06-mutation-roundtrip',
-      shows: 'The client→server round-trip — a client proposes a `GraphPatch`, the server validates + applies it (stale-base patches refused); the return leg of the stream',
+      shows: 'The client→server round-trip via `createGraphMutationClient` + `bindGraphForm` — the server validates + applies (stale-base patches refused with auto-recovery); the return leg of the stream',
     },
     { dir: 'default', shows: 'The minimal `npm create liteship` starter' },
     { dir: 'cloudflare-astro', shows: 'Edge KV boundary cache + Astro middleware on Cloudflare' },

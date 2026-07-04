@@ -1,21 +1,15 @@
 /**
- * Ambient module declarations for peer dependencies.
+ * Ambient module declaration for the `remotion` peer dependency -- users bring
+ * their own; this minimal stub covers the two hooks this package calls.
  *
- * React and Remotion are peer deps -- users bring their own.
- * These declarations provide minimal type stubs for compilation.
+ * React is NOT stubbed here (it was, minimally, until 0.8.0): a fake
+ * `declare module 'react'` can never carry `ReactNode`/`ReactElement` without
+ * colliding with a consumer's real `@types/react` (type aliases don't merge),
+ * which forced `Provider` into JSX-unusable `unknown` typings. The package now
+ * compiles against the real `@types/react` (a types-only devDependency; react
+ * itself remains a peer), so the emitted declarations reference the real types
+ * every React consumer already has.
  */
-
-declare module 'react' {
-  export function createContext<T>(defaultValue: T): React.Context<T>;
-  export function useContext<T>(context: React.Context<T>): T;
-  export function createElement(type: unknown, props: unknown, ...children: unknown[]): unknown;
-
-  namespace React {
-    interface Context<T> {
-      Provider: unknown;
-    }
-  }
-}
 
 declare module 'remotion' {
   export function useCurrentFrame(): number;

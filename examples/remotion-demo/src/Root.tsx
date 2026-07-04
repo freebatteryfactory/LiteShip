@@ -13,9 +13,12 @@ import type { VideoFrameOutput } from '@czap/core';
 import { CzapDemo } from './CzapDemo';
 import { buildFrames, FPS, DURATION_MS, WIDTH, HEIGHT } from './setup';
 
-interface CzapDemoProps {
+// A type alias (not an interface): Remotion's `Composition` component prop wants
+// props assignable to `Record<string, unknown>`, and only aliases get the implicit
+// index signature that satisfies it.
+type CzapDemoProps = {
   readonly frames: ReadonlyArray<VideoFrameOutput>;
-}
+};
 
 function CzapDemoWithProvider({ frames }: CzapDemoProps) {
   return (

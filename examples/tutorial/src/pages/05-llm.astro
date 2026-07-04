@@ -193,13 +193,17 @@ data: {"type":"tool-call-end"}</code></pre>
        ABR = Adaptive Bitrate Rendering. The czap detect script
        evaluates the device's capabilities and assigns a tier:
 
-         "static"      -- Very constrained device. No LLM content rendered.
-         "styled"      -- Plain text, minimal styling.
-         "reactive"    -- Styled text with transitions. Default for most devices.
-         "interactive" -- Full interactivity, animations, rich rendering.
+         "static"    -- Very constrained device. No LLM content rendered.
+         "styled"    -- Plain text, minimal styling.
+         "reactive"  -- Styled text with transitions. Default for most devices.
+         "animated"  -- Full animation budget: rich streamed rendering.
+         "gpu"       -- Everything above, plus GPU-tier effects.
 
-       The client:llm directive reads data-czap-tier from <html>
-       and gates rendering accordingly:
+       That is the canonical capability ladder (CapTier in @czap/core:
+       static < styled < reactive < animated < gpu). The client:llm
+       directive derives its device tier from the canonical
+       data-czap-motion attribute, falling back to this data-czap-tier
+       ladder until the probe completes, and gates rendering accordingly:
 
          - In "static" tier: text from the LLM is NOT rendered at
            all (the element stays in its skeleton/placeholder state).
@@ -242,10 +246,17 @@ data: {"type":"tool-call-end"}</code></pre>
       </p>
     </div>
     <div class="tier-card">
-      <h3>interactive</h3>
+      <h3>animated</h3>
       <p>
-        Full rendering: animations, interactive elements, rich formatting.
+        Full animation budget: rich streamed formatting and motion.
         For powerful devices with plenty of headroom.
+      </p>
+    </div>
+    <div class="tier-card">
+      <h3>gpu</h3>
+      <p>
+        Everything <code>animated</code> allows, plus GPU-tier effects —
+        the top of the capability ladder.
       </p>
     </div>
   </div>
@@ -266,7 +277,8 @@ data: {"type":"tool-call-end"}</code></pre>
   animation: czap-fade 0.15s ease-out;
 }
 
-[data-czap-tier="interactive"] .llm-output {
+[data-czap-tier="animated"] .llm-output,
+[data-czap-tier="gpu"] .llm-output {
   /* Rich rendering with typing cursor animation */
   animation: czap-type 0.05s steps(1);
 }</code></pre>
@@ -315,6 +327,7 @@ data: {"type":"tool-call-end"}</code></pre>
   <div
     class="llm-target"
     id="llm-demo"
+    client:llm
     data-czap-llm-url="/api/chat"
     data-czap-llm-mode="append"
   >

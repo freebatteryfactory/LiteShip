@@ -100,14 +100,16 @@ export const viewport = Boundary.make({'{'}&br;
 
   <p>
     Import the boundary and spread <code>satelliteAttrs</code> onto your
-    container (plus <code>data-czap="viewport"</code> for macro resolution):
+    container — that alone serializes the boundary onto the element. (The
+    <code>data-czap="viewport"</code> macro is the <em>no-import</em>
+    alternative that resolves a named boundary at build time; you don't
+    need both, and the scaffold uses <code>satelliteAttrs</code> only.)
   </p>
 
   <pre><code>import {'{'} satelliteAttrs {'}'} from '@czap/astro';
 import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
 
 &lt;div
-  data-czap="viewport"
   {'{'}...satelliteAttrs({'{'} boundary: viewport, initialState: 'compact' {'}'}){'}'}
 &gt;
   ...content that adapts...
@@ -135,7 +137,6 @@ import {'{'} viewport {'}'} from '../boundaries/viewport.boundaries.js';
   </p>
 
   <div
-    data-czap="viewport"
     {...satelliteAttrs({ boundary: viewport, initialState: 'compact', class: 'boundary-demo' })}
   >
     <!-- --------------------------------------------------------

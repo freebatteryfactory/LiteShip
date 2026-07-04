@@ -9,11 +9,10 @@
  * @module
  */
 
-import { Effect, Scope } from 'effect';
-import { Boundary, Compositor, VideoRenderer } from '@czap/core';
+import { Effect } from 'effect';
+import { Boundary, Compositor, Millis, VideoRenderer } from '@czap/core';
 import type { VideoFrameOutput } from '@czap/core';
 import { Q } from '@czap/quantizer';
-import { precomputeFrames } from '@czap/remotion';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -54,8 +53,6 @@ const scaleQuantizerConfig = Q.from(scaleBoundary).outputs({
 // ---------------------------------------------------------------------------
 
 export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
-  const totalFrames = Math.ceil((DURATION_MS / 1000) * FPS);
-
   // Run the Effect pipeline: create compositor + quantizer in a managed scope
   const compositor = Effect.runSync(Effect.scoped(Compositor.create()));
 
@@ -66,7 +63,7 @@ export async function buildFrames(): Promise<ReadonlyArray<VideoFrameOutput>> {
   Effect.runSync(compositor.add('scale', quantizer));
 
   // Create the VideoRenderer
-  const renderer = VideoRenderer.make({ fps: FPS, width: WIDTH, height: HEIGHT, durationMs: DURATION_MS }, compositor);
+  const renderer = VideoRenderer.make({ fps: FPS, width: WIDTH, height: HEIGHT, durationMs: Millis(DURATION_MS) }, compositor);
 
   // Drive the quantizer through the progress range (0-100) across frames
   // so each frame evaluates the boundary at the correct progress value

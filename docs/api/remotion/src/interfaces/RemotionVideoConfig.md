@@ -6,7 +6,7 @@
 
 # Interface: RemotionVideoConfig
 
-Defined in: [remotion/src/composition.ts:46](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L46)
+Defined in: [remotion/src/composition.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L47)
 
 The timing/resolution shape Remotion already holds — exactly what
 `useVideoConfig()` and `calculateMetadata` return (extra fields ignored).
@@ -17,7 +17,7 @@ The timing/resolution shape Remotion already holds — exactly what
 
 > `readonly` **durationInFrames**: `number`
 
-Defined in: [remotion/src/composition.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L50)
+Defined in: [remotion/src/composition.ts:51](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L51)
 
 ***
 
@@ -25,7 +25,7 @@ Defined in: [remotion/src/composition.ts:50](https://github.com/freebatteryfacto
 
 > `readonly` **fps**: `number`
 
-Defined in: [remotion/src/composition.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L47)
+Defined in: [remotion/src/composition.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L48)
 
 ***
 
@@ -33,7 +33,7 @@ Defined in: [remotion/src/composition.ts:47](https://github.com/freebatteryfacto
 
 > `readonly` **height**: `number`
 
-Defined in: [remotion/src/composition.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L49)
+Defined in: [remotion/src/composition.ts:50](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L50)
 
 ***
 
@@ -41,4 +41,4 @@ Defined in: [remotion/src/composition.ts:49](https://github.com/freebatteryfacto
 
 > `readonly` **width**: `number`
 
-Defined in: [remotion/src/composition.ts:48](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L48)
+Defined in: [remotion/src/composition.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L49)

@@ -104,3 +104,37 @@ describe('doc-registry — PACKAGE-SURFACES.md covers every import surface', () 
     }
   });
 });
+
+describe('doc-registry — example README version-pin advice tracks the release line', () => {
+  // The 0.8.0 audit found the ladder saying `^0.7.0` while five child READMEs said
+  // `^0.4.0` — every install instruction a copying user read was wrong, and they
+  // disagreed with each other. Source of truth is the workspace version: any
+  // "pin `@czap/*` … at `^X.Y.Z`" sentence in an example README must carry the
+  // workspace major.minor.
+  const workspace = JSON.parse(readFileSync(resolve(REPO_ROOT, 'package.json'), 'utf8')) as { version: string };
+  const [major, minor] = workspace.version.split('.');
+  const pinPattern = /pin `@czap\/\*`[^`]*`\^(\d+)\.(\d+)\.(\d+)`/g;
+
+  it('every example README pin matches the workspace major.minor', () => {
+    const readmes = [
+      'examples/README.md',
+      ...['default', 'tutorial', 'showcase', 'cloudflare-astro', 'remotion-demo', '03-cast-aria', '05-ai-patch-refused', '06-mutation-roundtrip'].map(
+        (d) => `examples/${d}/README.md`,
+      ),
+    ].filter((p) => existsSync(resolve(REPO_ROOT, p)));
+
+    let pinsSeen = 0;
+    for (const rel of readmes) {
+      const text = readFileSync(resolve(REPO_ROOT, rel), 'utf8');
+      for (const m of text.matchAll(pinPattern)) {
+        pinsSeen += 1;
+        expect(
+          `${m[1]}.${m[2]}`,
+          `${rel} advises pinning @czap/* at ^${m[1]}.${m[2]}.${m[3]}, but the workspace release line is ${workspace.version} — update the sentence`,
+        ).toBe(`${major}.${minor}`);
+      }
+    }
+    // The guard must never green by matching nothing: the pin sentences exist today.
+    expect(pinsSeen).toBeGreaterThanOrEqual(6);
+  });
+});
