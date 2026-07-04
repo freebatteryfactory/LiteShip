@@ -8,7 +8,7 @@
 
 > `const` **MorphOpaque**: `object`
 
-Defined in: [web/src/morph/opaque.ts:18](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/opaque.ts#L18)
+Defined in: [web/src/morph/opaque.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/morph/opaque.ts#L25)
 
 Namespace bundle for the morph-opaque marker (house pattern, like `SemanticId`).
 
@@ -26,6 +26,24 @@ children, and never removes it — even when the server HTML omits it entirely. 
 attribute is presence-based (any value). Sanitization is NOT skipped: new opaque content
 arriving via morph still passes the `sanitized-html` policy at parse time — opacity
 exempts a subtree from DIFFING, never from the trust boundary.
+
+### containsOpaque
+
+> **containsOpaque**: (`el`) => `boolean`
+
+True when `el`'s SUBTREE (excluding `el` itself) contains an opaque element. The removal
+path uses this to extend L2 to ancestors: removing a container would cascade-destroy the
+island inside it, so the container is preserved along with the island.
+
+#### Parameters
+
+##### el
+
+`Element`
+
+#### Returns
+
+`boolean`
 
 ### isOpaque
 

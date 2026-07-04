@@ -4,28 +4,11 @@ import fc from 'fast-check';
 import {
   GraphPatch,
   createGraphMutationClient,
-  sealGraph,
-  sealNode,
-  type CellMeta,
   type DocumentGraph,
-  type DocumentGraphEdge,
-  type DocumentGraphNode,
   type GraphMutationResponse,
   type PatchOp,
-  type SignalNode,
 } from '../../../packages/core/src/index.js';
-
-const META: CellMeta = {
-  created: { wall_ms: 0, counter: 0, node_id: 't' },
-  updated: { wall_ms: 0, counter: 0, node_id: 't' },
-  version: 1,
-};
-
-const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
-
-const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
-  sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
+import { node, graph } from '../../helpers/graph-fixtures.js';
 
 const response = (body: GraphMutationResponse, status = 200): Response =>
   ({ status, json: async () => body }) as unknown as Response;

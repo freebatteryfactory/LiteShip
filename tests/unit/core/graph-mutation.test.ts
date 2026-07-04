@@ -11,32 +11,12 @@
 import { describe, test, expect } from 'vitest';
 import {
   GraphPatch,
-  sealNode,
-  sealGraph,
   handleGraphMutation,
   sendGraphMutation,
   verifyAppliedGraph,
 } from '../../../packages/core/src/index.js';
-import type {
-  DocumentGraph,
-  DocumentGraphNode,
-  DocumentGraphEdge,
-  SignalNode,
-  CellMeta,
-  GraphStore,
-} from '../../../packages/core/src/index.js';
-
-const META: CellMeta = {
-  created: { wall_ms: 0, counter: 0, node_id: 't' },
-  updated: { wall_ms: 0, counter: 0, node_id: 't' },
-  version: 1,
-};
-
-const node = (input: string): SignalNode =>
-  sealNode({ _tag: 'DocGraphSignalNode', _version: 1, family: 'signal', id: '', meta: META, input } as unknown as SignalNode);
-
-const graph = (nodes: DocumentGraphNode[], edges: DocumentGraphEdge[] = []): DocumentGraph =>
-  sealGraph({ _tag: 'DocumentGraph', _version: 1, meta: META, nodes, edges } as Omit<DocumentGraph, 'id' | 'digest'>);
+import type { DocumentGraph, GraphStore } from '../../../packages/core/src/index.js';
+import { node, graph } from '../../helpers/graph-fixtures.js';
 
 /** An in-memory host graph store — the authority boundary, with a compare-and-swap save. */
 function memStore(initial: DocumentGraph): GraphStore & { current: DocumentGraph; saves: number } {

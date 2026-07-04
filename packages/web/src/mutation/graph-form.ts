@@ -39,17 +39,24 @@ export function bindGraphForm(form: HTMLFormElement, options: BindGraphFormOptio
     form.setAttribute('data-czap-mutation-state', 'pending');
 
     void options.client
-      .submit((base) => options.toOps(data, base))
-      .then((response) => {
-        if (response.status === 'error' && response.message.startsWith('ops builder threw')) {
+      .submit((base) => {
+        // Detect a throwing toOps HERE, at the boundary that owns it, instead of
+        // string-matching the client's error message after the fact. The rethrow keeps
+        // the client's contract: it maps the throw to its `{ status: 'error' }` shape.
+        try {
+          return options.toOps(data, base);
+        } catch (error) {
           Diagnostics.warn({
             source: 'czap/web.graphForm',
             code: 'to-ops-threw',
             message:
               'Graph form toOps threw while projecting submitted FormData. Fix: keep toOps pure and return valid GraphPatch ops for the submitted form data.',
-            detail: { message: response.message },
+            detail: { message: error instanceof Error ? error.message : String(error) },
           });
+          throw error;
         }
+      })
+      .then((response) => {
         settleState(response);
         options.onOutcome?.(response);
         form.dispatchEvent(new CustomEvent('czap:mutation', { detail: response, bubbles: true }));

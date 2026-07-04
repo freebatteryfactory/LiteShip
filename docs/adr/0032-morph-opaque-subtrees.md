@@ -16,7 +16,7 @@ The public `MorphCallbacks` type also claimed `beforeRemove` and `afterAdd`, but
 Ship `MorphOpaque` in `@czap/web` with the presence marker `data-czap-morph-opaque`. The morph laws are:
 
 - **L1:** A matched old/new pair where either side is opaque keeps the old element verbatim: no attribute sync, no child sync, no input/checked/value sync.
-- **L2:** An unmatched old opaque element is never removed.
+- **L2:** An unmatched old opaque element is never removed — and neither is an unmatched ancestor whose subtree contains one, because a cascade removal would destroy the island (`MorphOpaque.containsOpaque` guards the removal path).
 - **L3:** A new opaque element with no old match inserts wholesale after sanitize-time parsing.
 - **L4:** An opaque morph root is a total no-op for every public morph entry point.
 - **L5:** Non-opaque siblings and ancestors morph as before.
@@ -32,12 +32,14 @@ Wire `MorphCallbacks` through the pure recursion at the same time. `beforeRemove
 - Opaque roots become a predictable no-op across `morph`, `morphPure`, and `morphWithState`.
 - Callback behavior now matches the public type claim, including nested recursion.
 - The marker is presence-based and deliberately small: no ownership registry, no component lifecycle, no sanitizer bypass.
+- A matched opaque island may still be MOVED when the server reorders its siblings: identity and content are preserved, but a DOM move re-runs `connectedCallback` and reloads `<iframe>`s. Hosts with move-sensitive islands should keep the island's position stable in server HTML.
+- A container preserved by the extended L2 keeps its non-opaque content too — the morph deliberately deviates from server truth for the whole preserved subtree rather than reparent a client-owned island.
 
 ## Evidence
 
-- `packages/web/src/morph/opaque.ts` — `MorphOpaque.ATTR` and `MorphOpaque.isOpaque`.
-- `packages/web/src/morph/diff-pure.ts` — L1-L5 and recursive callback threading.
-- `packages/web/src/morph/diff.ts` — opaque root guard for the Effect entry point.
+- `packages/web/src/morph/opaque.ts` — `MorphOpaque.ATTR`, `MorphOpaque.isOpaque`, and `MorphOpaque.containsOpaque`.
+- `packages/web/src/morph/diff-pure.ts` — L1-L5, recursive callback threading, and the single reconcile body every entry point routes through.
+- `packages/web/src/morph/diff.ts` — the Effect entry point delegates to `morphPure` (one body, no drift).
 - `packages/web/src/types.ts` — callback JSDoc for veto/add semantics.
 - `tests/component/morph-diff.test.ts` — opaque laws and callback behavior.
 - `tests/unit/web/morph.test.ts` — namespace pins.

@@ -3,15 +3,13 @@
  *
  * Run: pnpm run test:cloudflare-dev
  */
-import { mkdirSync } from 'node:fs';
 import { delimiter, resolve } from 'node:path';
 import { runPnpm, spawnPnpm } from './support/pnpm-process.ts';
+import { cloudflareChildEnv } from './support/cloudflare-env.ts';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = resolve(REPO_ROOT, 'examples/cloudflare-astro');
 const EXAMPLE_BIN_DIR = resolve(EXAMPLE_DIR, 'node_modules/.bin');
-/** Writable XDG config root so workerd/wrangler never touch ~/.config in CI sandboxes. */
-const WRANGLER_CONFIG_HOME = resolve(REPO_ROOT, '.czap', 'wrangler-test');
 const SERVER_READY_TIMEOUT_MS = 120_000;
 const REQUEST_TIMEOUT_MS = 30_000;
 const INJECTED_MARKERS = ['gpuTier', 'bootstrapSlots', 'installSwapPipeline'] as const;
@@ -28,14 +26,11 @@ interface FetchResult {
   readonly body: string;
 }
 
-function cloudflareChildEnv(): Record<string, string> {
-  mkdirSync(WRANGLER_CONFIG_HOME, { recursive: true });
-  return {
+function devChildEnv(): Record<string, string> {
+  return cloudflareChildEnv({
     ASTRO_TELEMETRY_DISABLED: '1',
-    FORCE_COLOR: '0',
     PATH: `${EXAMPLE_BIN_DIR}${delimiter}${process.env.PATH ?? ''}`,
-    XDG_CONFIG_HOME: WRANGLER_CONFIG_HOME,
-  };
+  });
 }
 
 function fail(message: string): never {
@@ -46,7 +41,7 @@ function fail(message: string): never {
 function spawnAstroDev(): ReturnType<typeof spawnPnpm> {
   return spawnPnpm(['exec', 'astro', 'dev', '--host', '127.0.0.1'], {
     cwd: EXAMPLE_DIR,
-    env: cloudflareChildEnv(),
+    env: devChildEnv(),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 }
@@ -55,8 +50,8 @@ function extractReady(output: string): { readonly url: URL; readonly daemonPid?:
   const urlMatch = output.match(/https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\/?/);
   if (!urlMatch) return null;
   const pidMatch = output.match(/\bpid\s+(\d+)\b/i);
-  const daemonPid = pidMatch?.[1] !== undefined ? Number(pidMatch[1]) : undefined;
-  return { url: new URL(urlMatch[0]), daemonPid: Number.isInteger(daemonPid) ? daemonPid : undefined };
+  // The capture group is all-digits, so Number() is always a (safe-range) integer here.
+  return { url: new URL(urlMatch[0]), daemonPid: pidMatch?.[1] !== undefined ? Number(pidMatch[1]) : undefined };
 }
 
 function isProcessGoneError(err: unknown): boolean {
@@ -93,7 +88,7 @@ function delay(ms: number): Promise<void> {
 async function stopAstroDev(daemonPid: number | undefined): Promise<void> {
   const stop = await runPnpm(['exec', 'astro', 'dev', 'stop'], {
     cwd: EXAMPLE_DIR,
-    env: cloudflareChildEnv(),
+    env: devChildEnv(),
   });
   if (stop.code !== 0 && daemonPid === undefined) {
     console.error(stop.stderr || stop.stdout);
@@ -154,13 +149,10 @@ function waitForDevServer(child: ReturnType<typeof spawnPnpm>): Promise<{ url: U
     });
     child.once('exit', (code, signal) => {
       if (settled) return;
-      const ready = extractReady(output);
-      if (ready !== null) {
-        settled = true;
-        clearTimeout(timer);
-        resolveReady({ ...ready, output: () => output });
-        return;
-      }
+      // A daemonizing `astro dev` exits after printing the URL — settle via the one
+      // shared resolver before treating the exit as a failure.
+      tryResolve();
+      if (settled) return;
       settled = true;
       clearTimeout(timer);
       rejectReady(new Error(`astro dev exited before listening (code=${code ?? 'null'}, signal=${signal ?? 'null'})\n${output}`));
