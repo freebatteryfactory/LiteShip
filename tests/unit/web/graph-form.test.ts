@@ -156,4 +156,38 @@ describe('bindGraphForm', () => {
     expect(submits).toBe(1);
     expect(form.getAttribute('data-czap-mutation-state')).toBe('applied');
   });
+
+  test('the clicked submitter lands in the FormData, matching native submission', async () => {
+    document.body.innerHTML =
+      '<form><input name="axis" value="viewport.height">' +
+      '<button name="action" value="save">Save</button>' +
+      '<button name="action" value="delete">Delete</button></form>';
+    const form = document.querySelector('form')!;
+    const deleteButton = form.querySelectorAll('button')[1]!;
+
+    let seen: FormData | null = null;
+    const client: GraphMutationClient = {
+      base: () => base,
+      adopt: () => {},
+      submit: (ops) => {
+        void (typeof ops === 'function' ? ops(base) : ops);
+        return Promise.resolve(applied());
+      },
+    };
+    bindGraphForm(form, {
+      client,
+      toOps: (data) => {
+        seen = data;
+        return [];
+      },
+    });
+
+    form.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true, submitter: deleteButton }));
+    await flush();
+
+    expect(seen).not.toBeNull();
+    expect(seen!.get('axis')).toBe('viewport.height');
+    // A Save-vs-Delete form must project the intent the user actually chose.
+    expect(seen!.get('action')).toBe('delete');
+  });
 });
