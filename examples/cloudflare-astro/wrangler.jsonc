@@ -6,7 +6,10 @@
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "none",
-    "run_worker_first": ["/*", "!/_czap/*"]
+    // Worker-first for app routes; never for /_czap/* boundary assets
+    // (ADR-0025) or Vite dev-infrastructure URLs, which must reach Vite
+    // middleware in astro dev. The dev prefixes are production-inert.
+    "run_worker_first": ["/*", "!/_czap/*", "!/@vite/*", "!/@id/*", "!/@fs/*", "!/src/*", "!/node_modules/*"]
   },
   "kv_namespaces": [
     {
