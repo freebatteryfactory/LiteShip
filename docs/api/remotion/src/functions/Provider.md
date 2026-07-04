@@ -6,9 +6,9 @@
 
 # Function: Provider()
 
-> **Provider**(`props`): `unknown`
+> **Provider**(`props`): `ReactElement`
 
-Defined in: [remotion/src/composition.ts:123](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L123)
+Defined in: [remotion/src/composition.ts:124](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/remotion/src/composition.ts#L124)
 
 React context provider that makes precomputed frames available to
 [useCzapState](useCzapState.md) anywhere in the subtree. Use this when you prefer
@@ -20,7 +20,7 @@ implicit frame lookup over threading the `frames` array through props.
 
 #### children
 
-`unknown`
+`ReactNode`
 
 #### frames
 
@@ -28,7 +28,7 @@ readonly [`VideoFrameOutput`](https://github.com/freebatteryfactory/LiteShip/blo
 
 ## Returns
 
-`unknown`
+`ReactElement`
 
 ## Example
 

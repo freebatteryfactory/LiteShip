@@ -139,7 +139,7 @@ Read [CHANGELOG.md](./CHANGELOG.md). For shipping npm/GitHub releases, see
 
 ### If you're authoring with LiteShip in your app
 
-1. [GETTING-STARTED.md](./GETTING-STARTED.md): clone to a runnable boundary in ten minutes
+1. [GETTING-STARTED.md](./GETTING-STARTED.md): add LiteShip to your project and reach a runnable boundary in about five minutes
 2. [AUTHORING-MODEL.md](./AUTHORING-MODEL.md): the shape of day-to-day authoring
 3. [PACKAGE-SURFACES.md](./PACKAGE-SURFACES.md): which package owns what you need to import
 4. [ASTRO-RUNTIME-MODEL.md](./ASTRO-RUNTIME-MODEL.md): when escalation makes sense
@@ -204,6 +204,11 @@ For agents and grep-first humans, here is where the canonical answer lives:
 | Where is the canonical signal-input vocabulary? | `SignalSource` + `sourceToInput`/`inputToSource` in `packages/core/src/signal-input.ts` (source of truth for `viewport.width`, `scroll.progress`, `audio.amplitude`, ...) |
 | How do I open the dev boundary inspector? | the Astro dev-toolbar (czap toolbar icon) in `astro dev`; opt out with `czap({ inspector: false })` |
 | How do I skip the manual `src/middleware.ts`? | `czap({ middleware: true })` auto-wires detection (`@czap/astro/middleware-entry`); typed `Astro.locals.czap.tiers` |
+| How does a client send an edit back to the server? | `createGraphMutationClient` + `sendGraphMutation` (`packages/core/src/graph-mutation-client.ts`, `graph-mutation.ts`); the host route is `graphMutationRoute` (ARCHITECTURE.md § "The mutation channel"; `examples/06-mutation-roundtrip`) |
+| How do I bind a form to the mutation channel? | `bindGraphForm` from `@czap/web` (`packages/web/src/mutation/graph-form.ts`; ADR-0031; `examples/06-mutation-roundtrip`) |
+| How do I keep the morph out of a client-owned subtree (CodeMirror, canvas)? | mark it `data-czap-morph-opaque` — `MorphOpaque` in `@czap/web` (`packages/web/src/morph/opaque.ts`; ADR-0032) |
+| How do I use LiteShip's node schema with a Standard-Schema-aware library? | `DocumentGraphNodeSchema` carries `~standard` (Standard Schema V1) (`packages/core/src/document-graph-schema.ts`; ADR-0033) |
+| What does a `staleBase` refusal / HTTP 409 mean? | the mutation was proposed against a base the server has moved past — reload and re-propose (the client does this automatically with `refreshBase`); `packages/core/src/graph-mutation.ts`, ADR-0031 |
 
 ---
 

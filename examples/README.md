@@ -14,7 +14,7 @@ states, those states seal into a graph, and casts project that graph to outputs.
 | 2 · cast to ARIA | [`03-cast-aria/`](./03-cast-aria) | one `@quantize` block casts a boundary to CSS **and** ARIA at once |
 | 3 · cast to the GPU | [`showcase/`](./showcase) | drive a WGSL shader uniform from a boundary (plus workers, streaming, LLM) |
 | 4 · **the keystone** | [`05-ai-patch-refused/`](./05-ai-patch-refused) | a model's invalid `GraphPatch` is **refused**; only a validated proposal changes the graph |
-| 5 · the return leg | [`06-mutation-roundtrip/`](./06-mutation-roundtrip) | a client proposes a `GraphPatch`; the server validates + applies it — SSE's mirror, the refuse-seam both ways |
+| 5 · the return leg | [`06-mutation-roundtrip/`](./06-mutation-roundtrip) | `createGraphMutationClient` + `bindGraphForm`: a form submit becomes a validated `GraphPatch`; stale bases are refused (`staleBase`/409) and auto-recovered — the refuse-seam both ways |
 | 6 · cast to video | [`remotion-demo/`](./remotion-demo) | the same DocumentGraph renders to video, headless |
 
 If you only open one, open **[`05-ai-patch-refused/`](./05-ai-patch-refused)** — it's the
@@ -36,4 +36,4 @@ pnpm --filter <example-package-name> dev   # or: cd examples/<folder> && pnpm de
 ```
 
 Inside the monorepo the examples resolve the workspace `@czap/*`. Copying an example out
-standalone, pin `@czap/*` at `^0.7.0`.
+standalone, pin `@czap/*` at `^0.8.0`.

@@ -364,6 +364,7 @@ Host-owned shared runtime surfaces:
 
 - `@czap/astro/runtime` slot bootstrap and swap reinit helpers
 - `@czap/astro/runtime` directive boot scanner (`bootstrapDirectives`, `scanAndBootDirectives`) — activates `data-czap-directive` / legacy `client:*` markers on plain elements and `.astro` output
+- `@czap/astro/runtime` programmatic LLM session (`createLLMSession`, `LLMSessionConfig`) — the documented catalog-wiring path (GETTING-STARTED § Generated UI): build a session over a host-owned element/target with a host-owned genui catalog; the `client:llm` directive composes the same factory internally (export added 0.8.0 — the docs taught this import before the barrel carried it)
 - `@czap/astro/runtime` wasm runtime configuration and loading
 - `@czap/astro/runtime` audio-signal producer/readers (`driveAudioFromAnalyser`, `readAudioSignal`, `attachAudioObserver`) — wire a live `AnalyserNode` so `audio.amplitude`/`audio.beat` boundaries carve
 - `@czap/astro/runtime` continuous signal→uniform driver (`driveUniformFromSignal`) — drive the existing `czap:uniform-update` GPU event continuously from a continuous signal (e.g. `scroll.progress`) into a GLSL/WGSL uniform, collapsing the hand-rolled scroll→uniform consumer bridge (0.4.0)

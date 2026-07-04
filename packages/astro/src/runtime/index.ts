@@ -9,6 +9,14 @@ export {
 // lights up through the existing source-agnostic carve-path.
 export { driveAudioFromAnalyser, readAudioSignal, attachAudioObserver } from './audio-signal.js';
 export { driveUniformFromSignal } from './uniform-signal.js';
+// Programmatic LLM session (the documented catalog-wiring path in GETTING-STARTED):
+// GETTING-STARTED and the scaffold README have taught this import since the genui
+// wave, but the symbol was never re-exported here — the documented path did not
+// resolve. Completion, not a new capability: the host builds a session over its own
+// element/target with a host-owned genui catalog; the directive runtime composes the
+// same factory internally (`runtime/llm.ts`).
+export { createLLMSession } from './llm-session.js';
+export type { LLMSessionConfig, LLMSessionShape } from './llm-session.js';
 export { bootstrapSlots, getSlotRegistry, reinitializeDirectives, teardownDirectives, rescanSlots } from './slots.js';
 export { bootstrapDirectives, scanAndBootDirectives } from './directive-boot.js';
 export type { DirectiveName } from './directive-boot.js';

@@ -728,6 +728,10 @@ importers:
       remotion:
         specifier: 4.0.484
         version: 4.0.484(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.2
+        version: 19.2.14
 
   packages/scene:
     dependencies:

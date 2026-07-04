@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "remotion studio",
+    "build": "tsc -p tsconfig.json",
     "render": "tsx render.ts"
   },
   "dependencies": {

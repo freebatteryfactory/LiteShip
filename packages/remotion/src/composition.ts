@@ -7,6 +7,7 @@
 import type { Compositor, Signal, VideoFrameOutput, CompositeState } from '@czap/core';
 import { Diagnostics, Millis, VideoRenderer } from '@czap/core';
 import { createContext, useContext, createElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useCurrentFrame } from 'remotion';
 import { stateAtFrame } from './hooks.js';
 
@@ -120,7 +121,11 @@ const CzapContext = createContext<ReadonlyArray<VideoFrameOutput>>([]);
  * </Provider>
  * ```
  */
-export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; children: unknown }): unknown {
+export function Provider(props: { frames: ReadonlyArray<VideoFrameOutput>; children: ReactNode }): ReactElement {
+  // React is already a peer/runtime dependency (`createElement` above) — the previous
+  // `unknown` children/return typing made Provider unusable as a JSX component under
+  // strict JSX element typing (React 18/19 `@types/react`), which the demo's own
+  // typecheck could never pass. Real types, identical runtime.
   return createElement(CzapContext.Provider, { value: props.frames }, props.children);
 }
 
