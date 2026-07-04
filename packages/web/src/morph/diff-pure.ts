@@ -122,7 +122,9 @@ export const syncAttributes = (oldNode: Element, newNode: Element, callbacks?: M
  * Morph-opaque laws:
  * L1 A matched old↔new pair where EITHER side is opaque keeps the old element verbatim.
  * L2 An unmatched old opaque element is never removed — nor is an unmatched ancestor
- *    whose subtree contains one (a cascade removal would destroy the island).
+ *    whose subtree contains one (a cascade removal would destroy the island). The same
+ *    rule guards the outerHTML root-replace path: a root containing an opaque island is
+ *    kept, not replaced.
  * L3 A new opaque element with no old match inserts wholesale.
  * L4 An opaque morph root is a total no-op for every entry point.
  * L5 Non-opaque siblings/ancestors morph exactly as before.
@@ -331,9 +333,11 @@ export const morphPure = (
         // Route the ROOT pair through morphElement so the opaque law (L1) holds by
         // construction at the root, not by a hand-mirrored per-entry-point guard.
         morphElement(oldNode, firstNode, hints, finalConfig.callbacks);
-      } else if (finalConfig.callbacks?.beforeRemove?.(oldNode) ?? true) {
-        // A root replace is a remove+add: honor the beforeRemove veto and fire afterAdd,
-        // same as any other reconciled node.
+      } else if (!containsOpaque(oldNode) && (finalConfig.callbacks?.beforeRemove?.(oldNode) ?? true)) {
+        // A root replace is a remove+add: L2's ancestor rule wins first (replacing a root
+        // whose subtree holds an opaque island would cascade-destroy the island, exactly
+        // like the removal loop), then the beforeRemove veto, then afterAdd on the new
+        // root — same order as any other reconciled node.
         oldNode.replaceWith(firstNode);
         finalConfig.callbacks?.afterAdd?.(firstNode);
       }

@@ -34,7 +34,10 @@ export function bindGraphForm(form: HTMLFormElement, options: BindGraphFormOptio
 
   const onSubmit = (event: SubmitEvent): void => {
     event.preventDefault();
-    const data = new FormData(form);
+    // Pass the submitter so the clicked button's name/value lands in the FormData,
+    // matching native submission — a Save-vs-Delete form must project the intent
+    // the user actually chose. `submitter` is null for form.submit()/Enter paths.
+    const data = new FormData(form, event.submitter);
     inFlight += 1;
     form.setAttribute('data-czap-mutation-state', 'pending');
 

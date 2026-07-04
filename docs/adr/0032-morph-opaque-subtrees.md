@@ -16,7 +16,7 @@ The public `MorphCallbacks` type also claimed `beforeRemove` and `afterAdd`, but
 Ship `MorphOpaque` in `@czap/web` with the presence marker `data-czap-morph-opaque`. The morph laws are:
 
 - **L1:** A matched old/new pair where either side is opaque keeps the old element verbatim: no attribute sync, no child sync, no input/checked/value sync.
-- **L2:** An unmatched old opaque element is never removed — and neither is an unmatched ancestor whose subtree contains one, because a cascade removal would destroy the island (`MorphOpaque.containsOpaque` guards the removal path).
+- **L2:** An unmatched old opaque element is never removed — and neither is an unmatched ancestor whose subtree contains one, because a cascade removal would destroy the island (`MorphOpaque.containsOpaque` guards both the removal loop and the outerHTML root-replacement path).
 - **L3:** A new opaque element with no old match inserts wholesale after sanitize-time parsing.
 - **L4:** An opaque morph root is a total no-op for every public morph entry point.
 - **L5:** Non-opaque siblings and ancestors morph as before.

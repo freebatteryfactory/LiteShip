@@ -557,6 +557,21 @@ describe('morph-opaque subtrees', () => {
     root.remove();
   });
 
+  test('L2 guards the outerHTML root replace: a root CONTAINING an opaque island is kept, not replaced', () => {
+    const root = el(`<section class="old"><div ${MorphOpaque.ATTR}><span>island</span></div></section>`);
+    document.body.appendChild(root);
+    const island = root.querySelector('div')!;
+    const before = root.outerHTML;
+
+    // Tag change → not the same node → the replace path; the opaque descendant must win.
+    run(Morph.morph(root, '<article class="new">replacement</article>', { morphStyle: 'outerHTML' }));
+
+    expect(root.isConnected).toBe(true);
+    expect(root.outerHTML).toBe(before);
+    expect(island.isConnected).toBe(true);
+    root.remove();
+  });
+
   test('L1 holds at an outerHTML root: a same-node pair with the NEW side opaque keeps the old root verbatim', () => {
     const root = el('<section class="client"><span>client child</span></section>');
     document.body.appendChild(root);
