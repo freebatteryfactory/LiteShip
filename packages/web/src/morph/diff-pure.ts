@@ -127,7 +127,7 @@ export const syncAttributes = (oldNode: Element, newNode: Element, callbacks?: M
  * L5 Non-opaque siblings/ancestors morph exactly as before.
  */
 export function morphElement(oldElement: Element, newElement: Element, hints?: MorphHints, callbacks?: MorphCallbacks): void {
-  if (isOpaque(oldElement) || isOpaque(newElement)) return;
+  if (isOpaque(oldElement as Node) || isOpaque(newElement as Node)) return;
   syncAttributes(oldElement, newElement, callbacks);
   syncChildren(oldElement, newElement, hints, callbacks);
 }
@@ -295,7 +295,7 @@ export const morphPure = (
   hints?: MorphHints,
 ): void => {
   const finalConfig = { ...defaultConfig, ...config };
-  if (isOpaque(oldNode)) return;
+  if (isOpaque(oldNode as Node)) return;
   const fragment = parseHTML(newHTML);
   const newNodes = Array.from(fragment.childNodes);
 
