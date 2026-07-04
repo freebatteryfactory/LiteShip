@@ -4,15 +4,23 @@
 
 ## Current Phase
 
-The current wave is a pre-1.0 hardening pass, not a feature land-grab.
+The pre-1.0 hardening arc closed through 0.6.0 (gates, fail-closed security defaults,
+CI/release truth, the front-door cut). 0.7.0 and 0.8.0 were dogfood-driven keystone
+waves: the client→server mutation channel, the form/mutation-binding primitive,
+morph-opaque subtrees, Standard Schema interop, and the Cloudflare dev-path fix —
+the five dashboard-blocking upstreams, all landed. The current phase is road-to-1.0
+stabilization: prove the keystones downstream, then freeze what has earned it.
 
 Active priorities:
 
-1. Keep runtime correctness and hotspot coverage moving until the remaining low-branch runtime files are no longer structural laggards.
-2. Keep security defaults fail-closed for HTML, URL, selector, style, and boundary-state surfaces.
-3. Keep CI truth aligned with the canonical local gauntlet.
-4. Keep packaging truth aligned with what ships to consumers.
-5. Keep dogfooding friction feeding back into LiteShip tests, telemetry, and docs instead of app-local hacks.
+1. Downstream dogfood on 0.8.0 — the keystone wave is finished only when the consuming
+   app stops producing structural product feedback, not when the packages publish.
+2. Keep runtime correctness and hotspot coverage moving (standing watch on
+   `reports/runtime-seams.*`).
+3. Keep security defaults fail-closed for HTML, URL, selector, style, and boundary-state surfaces.
+4. Keep CI truth aligned with the canonical local gauntlet, and packaging truth aligned
+   with what ships to consumers.
+5. Stability ledger toward 1.0: `_spine` as the freeze ledger; freeze less than tempted.
 
 ## Already Promoted
 
@@ -32,6 +40,8 @@ These are no longer roadmap aspirations; they are current repo reality:
 - production middleware parity for worker-isolation headers
 - live-runtime DocumentGraph (0.4.0): `loadGraphRuntime` + `castGraphDelta`, the scene→live bridge, the AI-apply seam, the `client:svg` last-mile, and headless `dualExportNode` — the cast/signal substrate is now plumbed onto the live runtime, not test-only
 - the plumb-completeness gate (0.4.0): a package-plumb ledger + unwired-capsule floor as gauntlet phase `plumb:gate`, so a built-not-plumbed primitive fails CI instead of shipping green
+- the front-door cut (0.6.0): the Layer-1 README with the "I want to…" router and the ≤3-package front-door budget gate, the examples ladder index, the `05-ai-patch-refused` keystone example, the four-layer DOCS preamble, and the `liteship` umbrella package
+- the doc-05 keystone set (0.7.0–0.8.0): the client→server mutation channel + client/form-binding primitives, morph-opaque subtrees, Standard Schema interop on the node schema, and the Cloudflare adapter dev-path fix — all five dashboard-blocking upstreams shipped
 
 ## Near-Term Hardening Epics
 
