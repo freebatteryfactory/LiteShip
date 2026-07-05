@@ -131,6 +131,39 @@ validation and three parked items, recorded here so they are not lost:
   clock, because nothing feeds it. That is exactly the silent-degradation class
   this repo hunts: emit a loud diagnostic when a shader declares uniform struct
   fields the runtime will not feed.
+- **Upstream candidate — `@property` initial-value override:**
+  `CSSCompiler.generatePropertyRegistrations(states)`
+  (`packages/compiler/src/css.ts:352`) always mints `initial-value` from the
+  inferred syntax's zero (`0px` / `transparent` / `0deg`), with no per-property
+  override — so a consumer whose true resting value is not the zero (a brand
+  color, a non-zero radius) regex-patches the emitted CSS text, fragile glue
+  over our output format. Fix shape: an additive
+  `options?: { initialValues }` second parameter that validates each override
+  parses under the inferred syntax (loud on mismatch), threaded through the
+  second call site in the vite boundary manifest
+  (`packages/vite/src/boundary-manifest.ts:495`).
+- **Upstream candidate — `htmlAttributesMap` dropped one hop from home:**
+  `@czap/edge` builds the spreadable map expressly for the Astro spread — its
+  own docstring says `<html {...htmlAttributesMap}>`
+  (`packages/edge/src/host-adapter.ts:213`) — but `czapMiddleware` copies six
+  fields off the edge resolution into `locals.czap.edge` and drops exactly that
+  one (`packages/astro/src/middleware.ts:140-147`); only the pre-joined
+  `htmlAttributes` string survives, which cannot be spread. SSR shells rebuild
+  the map by hand from `tiers` with hand-prefixed `data-czap-`, reintroducing
+  the silent-axis-miss the map exists to prevent. One-field plumb:
+  `CzapLocals['edge']` + the middleware copy + api-surface snapshot.
+- **Rest of the consumer's upstream backlog, re-baselined against source:** a
+  `computeShaderIntegrity` producer is a real thin gap (`@czap/web` ships
+  parse / verify / classify / decide but no source→`sha256-…` producer; the
+  digest kernel already lives inside `verifyShaderIntegrity`); a
+  Boundary→DocumentGraph node helper is real and corroborated in-repo — our own
+  `tests/helpers/graph-fixtures.ts` carries the same `as unknown as SignalNode`
+  cast it self-describes as deliberately fragile glue, so the root gap is
+  public node constructors, not just a Boundary converter; a tier-aware
+  reveal/stagger primitive and a Save-Data/DPR responsive-image primitive are
+  net-new surface whose ingredients exist (Client Hints already parse
+  `Save-Data`; tiers ride `locals.czap`) but which sit on the
+  primitive-vs-UI-kit thesis line — owner design fork, not intake nods.
 - **Still open from the 0.6.0 findings batch:** COEP is not overridable
   (finding #6). Neither dogfood site is bitten today — both want
   `crossOriginIsolated` — parked, not forgotten.
