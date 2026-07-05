@@ -177,6 +177,91 @@ Honest scope note: neither consumer exercises the mutation channel or
 doc-05 loop closes when the dashboard ships ON the new primitives, not merely
 alongside them.
 
+### 7. Platform-primitive intake — HTTP QUERY + Declarative Partial Updates (2026-07-04)
+
+Two new platform primitives swept against every package (ten recon shards, all
+claims source-anchored or empirically tested). They compose rather than
+compete: QUERY is the request side (a safe, idempotent HTTP method with a
+body — RFC 10008, standards track), DPU is the response side (out-of-order
+HTML streaming into `<?marker?>` slots + sanitize-by-default insertion APIs —
+Chrome 148 behind a flag, WICG, cross-browser ~2027). The verifiable-patch
+envelope below is transport-agnostic and rides both.
+
+**HTTP QUERY — adoptable now; candidate 0.9.0 keystone (the read leg).**
+Empirically verified end-to-end: Astro 7.0.3 dispatches `export const QUERY`
+(generic `mod[method]`, no verb allowlist), Node/undici round-trips it,
+workerd 1.20260603.1 passes it with body intact. Method string must be
+uppercase `'QUERY'` (lowercase dies at the parser); Cloudflare front-line
+proxy passthrough is workerd-verified but needs one deployed-worker test.
+
+- **The read-leg bundle:** `handleGraphQuery` in core + `graphQueryRoute`
+  factory in astro mirroring the mutation channel's 415/400/422 discipline
+  (ADR-0030 posture: host mounts). The factory injects only
+  `Pick<GraphStore, 'loadGraph'>` — write-freedom proven at the type level.
+  Conditional reads: `If-None-Match` on the graph digest → 304, so
+  `refreshBase` becomes near-free polling (today the read side is a
+  hand-rolled unconditional full-graph GET, `examples/06-mutation-roundtrip`).
+  Plus a retrying read sender (spec-idempotent; the POST submit correctly
+  never retries) and a loud QUERY→POST-with-`X-Czap-Query` fallback ladder.
+- **Validator law (all four shards independently):** the wire validator and
+  any body-derived cache key MUST be the sha256 `integrity_digest` /
+  canonical-body digest — never 32-bit fnv1a (silent-stale-304 and
+  cache-poisoning vector when the input is attacker-supplied). Corollary:
+  the digest excludes `meta`, so host projections must never surface meta
+  fields or the 304 lies.
+- **The write-free gate:** NOT a taint extension (a constant write has zero
+  tainted dataflow yet still lies to every cache) — a new region-rooted
+  sink-reachability fact class (handler root → `saveGraph`/`kv.put`/
+  `writeFileSync`…), hard on syntactic call paths, advisory past checker
+  bounds, honestly named write-sink-unreachability. ADR-0034 is next free.
+- **Hard nos:** an LLM completion endpoint must never be QUERY (transparent
+  intermediary replay = silent double-generation); never QUERY-ify
+  content-addressed immutable assets (strict downgrade); no CDN body-keyed
+  caching exists in 2026 (Cache API `put` throws on non-GET — tested);
+  SSE stays GET (EventSource); QUERY does not fix the navigation Vary gap.
+
+**DPU — watch-and-prepare; adopt-under, never a morph replacement.** DPU
+replaces, morph reconciles — different operations; identity preservation,
+opaque islands, and the recovery protocol all survive. Chrome-148-flag-only
+means every rung must feature-detect with today's path as the permanent floor.
+
+- **The differentiator:** stamped verifiable HTML patches — marker names from
+  the stable `logicalKey` (never node ContentAddresses, which self-invalidate),
+  fragments stamped with base/result graph ids + sha256 digest = `staleBase`
+  lifted to the DOM layer. Nothing in the Turbo/htmx/LiveView class has it.
+- **Adopt-under candidates:** native Sanitizer as a wrapped backend beneath
+  html-trust (intersection of both, differential drift guard — never
+  subsume); a `data-czap-sink` stream-to-element primitive composing with
+  morph-opaque (fallback path is the tested default, useful in every browser
+  today); `streamHTML()` as an LLM htmlPolicy rung (also cures the O(n²)
+  full-string re-parse per frame); split-resolve (sync shell + per-boundary
+  promises — only pays on KV-miss/compile; precompiled is already
+  zero-latency); zero-JS progressive reveal for stage static exports
+  (requires the template-mover shim or it is a content-loss bug).
+- **Threats to pin in any adoption ADR:** parser-moved `<template for>`
+  content bypasses html-trust entirely; no client hint advertises DPU support
+  (fail-closed dual-emit only); the post-navigation runtime keys solely on
+  `astro:after-swap`, which platform same-document navigation would not fire;
+  late `@property` registration flips `var()` fallbacks forever (any late CSS
+  must land as one atomic style+content patch).
+- **Declined with evidence:** per-tier CSS patch delivery (≤185 B best case,
+  0 B typical — the stylesheet is tier-invariant by design); Critical-CH
+  replacement (hint acquisition mid-stream is structurally impossible);
+  HTML-patch responses replacing the JSON graph (breaks the CAS base chain).
+
+**Free defects both sweeps surfaced (actionable now, primitive-independent):**
+`html-trust.ts` scheme check misses embedded `[\t\n\r]` obfuscation of
+`javascript:` (the URL parser strips them — our own `runtime-url.ts` documents
+the class); `insertAdjacentHTML`/`document.write` are in no taint registry
+(SECURITY.md's "no third unguarded path" claim is machine-unproven) and the
+`*Unsafe` DPU family belongs beside them; KV write-back on boundary-cache miss
+is awaited on the request path (`waitUntil` it); CDN caching emits no `Vary`
+on any client hint while HTML is tier-varying (latent wrong-tier serving);
+`ResumptionConfig.timeout` is write-only dead config (no AbortSignal, no
+retry, on already-idempotent recovery GETs); `czap:request-snapshot` is
+dispatched with zero listeners repo-wide; no audit surface ever reads
+consumer app code (the `*Unsafe` sinks are exactly what consumers will copy).
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
