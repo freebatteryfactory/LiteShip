@@ -33,7 +33,11 @@ type TransitionField = (typeof TRANSITION_REQUIRED_FIELDS)[number];
 const TRANSITION_READER_FILES = [
   'packages/astro/src/runtime/graph-lower.ts',
   'packages/astro/src/runtime/graph-runtime.ts',
+  'packages/core/src/interpret-transition.ts',
 ] as const;
+
+/** Dedicated interpreter files — scan whole file for transition field reads (no switch/case). */
+const TRANSITION_DEDICATED_READER_FILES = new Set<string>(['packages/core/src/interpret-transition.ts']);
 
 /** Injected inputs for {@link buildActiveSurfaceFacts}. */
 export interface ActiveSurfaceReaderOptions {
@@ -96,10 +100,39 @@ function transitionReadsInSourceFile(sf: ts.SourceFile): Set<TransitionField> {
   return reads;
 }
 
+/** Scan a dedicated interpreter file for any transition field property access. */
+function transitionReadsInDedicatedFile(sf: ts.SourceFile): Set<TransitionField> {
+  const reads = new Set<TransitionField>();
+  const isField = (name: string): name is TransitionField =>
+    (TRANSITION_REQUIRED_FIELDS as readonly string[]).includes(name);
+
+  const visit = (node: ts.Node): void => {
+    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name) && isField(node.name.text)) {
+      reads.add(node.name.text);
+    }
+    if (ts.isBindingElement(node) && ts.isIdentifier(node.name) && isField(node.name.text)) {
+      reads.add(node.name.text);
+    }
+    if (
+      ts.isElementAccessExpression(node) &&
+      ts.isStringLiteral(node.argumentExpression) &&
+      isField(node.argumentExpression.text)
+    ) {
+      reads.add(node.argumentExpression.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sf);
+  return reads;
+}
+
 /** Scan one reader file; returns fields read in transition contexts. */
-function readsInFile(absPath: string, program: ts.Program): Set<TransitionField> {
+function readsInFile(relPath: string, absPath: string, program: ts.Program): Set<TransitionField> {
   const sf = program.getSourceFile(absPath);
   if (sf === undefined) return new Set();
+  if (TRANSITION_DEDICATED_READER_FILES.has(relPath)) {
+    return transitionReadsInDedicatedFile(sf);
+  }
   return transitionReadsInSourceFile(sf);
 }
 
@@ -132,8 +165,8 @@ export function buildActiveSurfaceFacts(opts: ActiveSurfaceReaderOptions): Activ
   const program = createTypeDirectedProgram(readerAbs, opts.repoRoot);
 
   const allReads = new Set<TransitionField>();
-  for (const abs of readerAbs) {
-    for (const f of readsInFile(abs, program)) allReads.add(f);
+  for (let i = 0; i < readerAbs.length; i++) {
+    for (const f of readsInFile(TRANSITION_READER_FILES[i]!, readerAbs[i]!, program)) allReads.add(f);
   }
 
   return Object.freeze({
