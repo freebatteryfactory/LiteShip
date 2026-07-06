@@ -172,6 +172,48 @@ validation and three parked items, recorded here so they are not lost:
   `https://heyoub.dev/?cast=wgsl&gl=force` and confirm the orbs animate and stay
   round. The GLSL default path is already verified live.
 
+Second batch (2026-07-05, production site live on 0.8.0 — scroll-choreography
+work; every claim below re-verified against source before recording):
+
+- **Validation — the satellite/SSR resolution chain works as designed:** the
+  site fixed a mobile hero-fade bug by keying its tuck animation off the
+  boundary's `data-czap-state` attribute and switching SSR to the
+  request-aware `resolveInitialState` (UA + Client Hints + edge tier) — regime
+  detection and server-side state resolution doing their designed jobs in
+  production. Also a live confirmation of the parked height-axis trap:
+  height-axis viewport boundaries impose `:root` size containment
+  (`packages/vite/src/css-quantize.ts:515-525`) that clamps page wrappers, so
+  the site's card-deck pinning had to route around `viewport.height` entirely.
+- **Upstream candidate — `CzapLocals.tiers` erases the tier unions:**
+  `packages/astro/src/middleware.ts:39` types tiers as
+  `Readonly<Record<CapAxis, string>>`, discarding `CapTier`, `MotionTier`, and
+  `DesignTier` (`packages/detect/src/tiers.ts:71-72`) — consumers switch on
+  tier values with zero exhaustiveness or typo protection. A `Record` cannot
+  express per-axis value types; the fix is the keyed struct
+  `{ tier: CapTier; motion: MotionTier; design: DesignTier }`.
+- **Upstream candidate + docs bug — raw `Request` silently degrades to a
+  synthetic 960px:** `ASTRO-RUNTIME-MODEL.md`'s quickstart passes
+  `context.request` to `resolveInitialState`; `ServerIslandContext` is
+  all-optional (`packages/astro/src/quantize.ts:22-29`) so a `Request`
+  type-checks structurally, every field reads `undefined`, and resolution
+  falls through to `syntheticValueFromCapTier('reactive')` = 960
+  (`quantize.ts:150-156`) — silently. Two fixes: correct the snippet, and
+  make the wrong way loud or unrepresentable (detect a Request-shaped
+  argument and warn, or require at least one context field).
+- **Upstream candidate — `@quantize` state bodies cannot nest
+  `@supports`/`@media`:** the state-body parser has no at-rule handling
+  (`packages/vite/src/css-quantize.ts`); the consumer correctly used the
+  documented attr-selector escape hatch. Fork to decide: support nesting, or
+  refuse loudly at compile time — silent mis-emission is the only wrong
+  option.
+- **Upstream design input — no first-party CSS scroll-driven-animations
+  story:** zero `scroll-timeline`/`view-timeline`/`animation-timeline`
+  surface anywhere in packages, while the repo's own topics advertise
+  scroll-driven-animations and `scroll.progress` is a first-class signal. The
+  site now pairs native `view()` timelines with boundary regimes by hand —
+  that pairing (timeline rides the compiled state machine, reduced-motion
+  guarded) is the shape a first-party primitive should take.
+
 Honest scope note: neither consumer exercises the mutation channel or
 `bindGraphForm` yet — the dashboard's graph-write plane is its next build. The
 doc-05 loop closes when the dashboard ships ON the new primitives, not merely
