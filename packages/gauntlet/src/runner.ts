@@ -32,6 +32,7 @@ import type { StandardsIntegrityFacts } from './standards-facts.js';
 import type { FuzzCorpusFacts } from './fuzz-facts.js';
 import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
+import type { ActiveSurfaceFacts } from './active-surface-facts.js';
 import { runGates, type GauntletResult, type RunGatesOptions } from './engine.js';
 import type { GateVerdictCache } from './verdict-cache.js';
 import { nodeContext } from './node-context.js';
@@ -53,6 +54,7 @@ import { crdtLawsGate } from './gates/crdt-laws.js';
 import { performanceContractsGate } from './gates/performance-contracts.js';
 import { perfClaimBenchGate } from './gates/perf-claim-bench.js';
 import { claimPropertyGate } from './gates/claim-property.js';
+import { activeModeledSurfaceReaderGate } from './gates/active-modeled-surface-reader.js';
 
 /**
  * LiteShip's built-in gate set — the gates the repo runs against itself. The two
@@ -117,6 +119,7 @@ export const LITESHIP_IR_GATES: readonly Gate[] = [
   // content-address round-trip test) is a finding. Same lean byte-fold shape as the
   // perf-claim gate (no IR); rides the IR-host set alongside it, never the lean cut.
   claimPropertyGate,
+  activeModeledSurfaceReaderGate,
 ];
 
 /** Options for {@link runGauntletOnRepo}. */
@@ -468,6 +471,10 @@ export function litelaunchGauntletWithIR(
       // analysis) when supplied — `compositionCoverageGate` folds them. Omitted ⇒
       // absent ⇒ the gate is not in the set (composition is opt-in: `--composition`).
       ...(cacheOpts.composition !== undefined ? { composition: cacheOpts.composition } : {}),
+      // Inject the host-computed active-surface field-read facts (#132) when supplied —
+      // `activeModeledSurfaceReaderGate` folds them. Omitted ⇒ absent ⇒ the gate folds
+      // an empty verdict.
+      ...(cacheOpts.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: cacheOpts.activeSurfaceFacts } : {}),
       // Inject the host-built SOUND AST skip detector (`detectSkipsAST`) when supplied — the
       // no-skipped-test gate uses it via `(context.skipDetector ?? detectSkips)`, gaining the
       // line-agnostic multi-line/ASI/inner-describe coverage + the structural F2 conditionality.
@@ -598,6 +605,13 @@ export interface LitelaunchCacheOptions {
    * gate. The composition MODE namespaces the verdict cache key.
    */
   readonly composition?: CompositionFacts;
+  /**
+   * OPTIONAL host-computed active-surface field-read facts (#132) threaded onto the
+   * {@link GateContext} for `activeModeledSurfaceReaderGate` to fold. Supplied
+   * ALWAYS-ON on the `--ir` path (the TS-AST scan is cheap); live TransitionNode
+   * orphan reports as advisory until #130.
+   */
+  readonly activeSurfaceFacts?: ActiveSurfaceFacts;
   /**
    * OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s `detectSkipsAST`) threaded onto
    * the {@link GateContext} as `skipDetector`. The no-skipped-test gate uses it via

@@ -68,6 +68,7 @@ export const FACT_CHANNELS = [
   'proof',
   'composition',
   'skipSites',
+  'activeSurfaceFacts',
 ] as const;
 
 /** One injected-fact channel name — derived from {@link FACT_CHANNELS}, never re-typed. */

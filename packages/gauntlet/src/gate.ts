@@ -32,6 +32,7 @@ import type { ProofFacts } from './proof-facts.js';
 import type { CompositionFacts } from './composition-facts.js';
 import type { SkipMatch } from './gates/skip-detect.js';
 import type { SkipSiteFacts } from './skip-site-facts.js';
+import type { ActiveSurfaceFacts } from './active-surface-facts.js';
 import { factAccessEvidenceDigest, stableEvidenceDigest } from './verdict-cache.js';
 
 /**
@@ -309,6 +310,14 @@ export interface GateContext {
    * the original closure gate is unaffected. See {@link SkipSiteFacts}.
    */
   readonly skipSites?: SkipSiteFacts;
+  /**
+   * Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
+   * The HOST ({@link @czap/audit}'s `buildActiveSurfaceFacts`) scans reader paths with
+   * TS-AST and lands flat {@link ActiveSurfaceFacts}; the
+   * {@link activeModeledSurfaceReaderGate} decides over them. When ABSENT the gate
+   * folds an empty verdict. See {@link ActiveSurfaceFacts}.
+   */
+  readonly activeSurfaceFacts?: ActiveSurfaceFacts;
 }
 
 /**
@@ -438,7 +447,7 @@ export interface Gate {
  * host-produced FactPack channel — a field on {@link FactBundle} and an optional key on
  * {@link GateContext}.
  */
-export const FACT_KINDS = ['skipSites'] as const;
+export const FACT_KINDS = ['skipSites', 'activeSurfaceFacts'] as const;
 
 /** One FactKind — derived from {@link FACT_KINDS}, never re-typed. */
 export type FactKind = (typeof FACT_KINDS)[number];
@@ -450,6 +459,7 @@ export type FactKind = (typeof FACT_KINDS)[number];
  */
 export interface FactBundle {
   readonly skipSites?: SkipSiteFacts;
+  readonly activeSurfaceFacts?: ActiveSurfaceFacts;
 }
 
 const SKIP_SITE_FORMS = new Set(['call', 'conditional', 'alias', 'computed', 'aliased']);
@@ -511,6 +521,53 @@ function normalizeSkipSiteFacts(value: SkipSiteFacts | undefined): SkipSiteFacts
     });
   });
   return Object.freeze({ sites: Object.freeze(normalized) });
+}
+
+const ACTIVE_SURFACE_PROMOTIONS = new Set(['advisory', 'blocking']);
+
+function normalizeActiveSurfaceFacts(value: ActiveSurfaceFacts | undefined): ActiveSurfaceFacts | undefined {
+  if (value === undefined) return undefined;
+  assertPlainFactRecord(value, 'activeSurfaceFacts');
+  const surfaces = ownDataField(value, 'surfaces');
+  if (!Array.isArray(surfaces)) {
+    throw ValidationError('FactGate', 'activeSurfaceFacts.surfaces must be an array');
+  }
+  const normalized = surfaces.map((entry, index) => {
+    assertPlainFactRecord(entry, `activeSurfaceFacts.surfaces[${index}]`);
+    const family = ownDataField(entry, 'family');
+    const requiredFields = ownDataField(entry, 'requiredFields');
+    const readFields = ownDataField(entry, 'readFields');
+    const active = ownDataField(entry, 'active');
+    const readerFiles = ownDataField(entry, 'readerFiles');
+    const unreadFields = ownDataField(entry, 'unreadFields');
+    const promotion = ownDataField(entry, 'promotion');
+    if (
+      typeof family !== 'string' ||
+      !Array.isArray(requiredFields) ||
+      !requiredFields.every((f) => typeof f === 'string') ||
+      !Array.isArray(readFields) ||
+      !readFields.every((f) => typeof f === 'string') ||
+      typeof active !== 'boolean' ||
+      !Array.isArray(readerFiles) ||
+      !readerFiles.every((f) => typeof f === 'string') ||
+      !Array.isArray(unreadFields) ||
+      !unreadFields.every((f) => typeof f === 'string') ||
+      typeof promotion !== 'string' ||
+      !ACTIVE_SURFACE_PROMOTIONS.has(promotion)
+    ) {
+      throw ValidationError('FactGate', `activeSurfaceFacts.surfaces[${index}] is malformed`);
+    }
+    return Object.freeze({
+      family,
+      requiredFields: Object.freeze([...requiredFields]),
+      readFields: Object.freeze([...readFields]),
+      active,
+      readerFiles: Object.freeze([...readerFiles]),
+      unreadFields: Object.freeze([...unreadFields]),
+      promotion: promotion as ActiveSurfaceFacts['surfaces'][number]['promotion'],
+    });
+  });
+  return Object.freeze({ surfaces: Object.freeze(normalized) });
 }
 
 /**
@@ -597,11 +654,14 @@ export interface FactGateSpec {
  * boundary: `decide` sees this bundle, never the context.
  */
 export function pickFacts(context: GateContext, requires: readonly FactKind[]): FactBundle {
-  const bundle: { skipSites?: SkipSiteFacts } = {};
+  const bundle: { skipSites?: SkipSiteFacts; activeSurfaceFacts?: ActiveSurfaceFacts } = {};
   for (const kind of requires) {
     switch (kind) {
       case 'skipSites':
         bundle.skipSites = normalizeSkipSiteFacts(context.skipSites);
+        break;
+      case 'activeSurfaceFacts':
+        bundle.activeSurfaceFacts = normalizeActiveSurfaceFacts(context.activeSurfaceFacts);
         break;
       default: {
         // Exhaustiveness: adding a FactKind without teaching this pick fails to compile here
@@ -627,6 +687,11 @@ export function factBundleDigest(context: GateContext, requires: readonly FactKi
     switch (kind) {
       case 'skipSites':
         fact = normalizeSkipSiteFacts(context.skipSites);
+        break;
+      case 'activeSurfaceFacts':
+        // Raw fold for cache soundness — normalization strips unknown keys (e.g. the
+        // evidence-law perturbation salt) that must still flip the digest.
+        fact = context.activeSurfaceFacts;
         break;
       default: {
         // Exhaustiveness: a new FactKind must be folded here, or the build fails — never a
