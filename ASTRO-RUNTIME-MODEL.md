@@ -210,7 +210,14 @@ import { resolveInitialState } from '@czap/astro';
 import { heroLayout } from './boundaries.js';
 
 export const onRequest = async (context, next) => {
-  const initial = resolveInitialState(heroLayout, context.request);
+  // Build the context from the request — do NOT pass the raw `Request`.
+  // ServerIslandContext fields are all-optional, so a bare Request
+  // type-checks but every field reads undefined and resolution silently
+  // falls back to a synthetic 960px tier.
+  const initial = resolveInitialState(heroLayout, {
+    userAgent: context.request.headers.get('user-agent') ?? '',
+    clientHints: Object.fromEntries(context.request.headers),
+  });
   context.locals.heroState = initial;
   return next();
 };

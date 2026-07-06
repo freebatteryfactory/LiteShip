@@ -108,11 +108,11 @@ You don't install these directly — they back the CLI, the MCP server, and the 
 
 ## Graceful degradation
 
-Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`packages/core/src/compositor.ts:146`), `Boundary.evaluate` past 4 thresholds (`packages/core/src/boundary.ts:86`).
+Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`packages/core/src/dirty.ts`), `Boundary.evaluate` past 4 thresholds (`packages/core/src/boundary-f32.ts:51`).
 
 ## Architectural decisions
 
-Full index + accepted set (0001–0015): [`docs/adr/README.md`](./docs/adr/README.md).
+Full index + accepted set (0001–0033): [`docs/adr/README.md`](./docs/adr/README.md).
 
 Capsule factory + video stack: [CAPSULE-FACTORY.md](./CAPSULE-FACTORY.md).
 

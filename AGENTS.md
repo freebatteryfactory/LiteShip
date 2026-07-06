@@ -4,6 +4,7 @@ This file is the entry point for AI coding tools that read `AGENTS.md` (Codex, s
 
 **Read these for full context:**
 
+- [SKILL.md](./SKILL.md) — the **battle-scars playbook**: how to reason in this repo (no-silent-drift, complete-don't-nerf, root-fix-not-guard, the operating hazards). Read before changing engine code, records, or docs — no training data covers this.
 - [DOCS.md](./DOCS.md) — the documentation map + a grep-first **discovery index** (where the canonical answer to common questions lives). Start here.
 - [STATUS.md](./STATUS.md) — gates, remaining work, runtime steering
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — package topology and seams; the **document graph IR** + **AI cast** every surface reads from

@@ -10,7 +10,7 @@ Landed by spec `2026-04-23-capsule-factory-video-stack-design.md` (the spec itse
 - `packages/core/src/assembly.ts`: 7-arm catalog (`pureTransform`, `receiptedMutation`, `stateMachine`, `siteAdapter`, `policyGate`, `cachedProjection`, `sceneComposition`) + `defineCapsule` factory + module-level registry.
 - `packages/core/src/harness/*`: per-arm harness templates emit property tests, benches, docs, audit receipts.
 - `scripts/capsule-compile.ts`: AST walk of every `defineCapsule(...)` call, dispatches to harness templates, emits `reports/capsule-manifest.json`.
-- `scripts/capsule-verify.ts`: re-runs generated tests, checks manifest integrity.
+- `packages/command/src/commands/capsule-verify.ts` (run via `pnpm capsule:verify` / the `capsule-verify` CLI command): re-runs generated tests, checks manifest integrity.
 - ADR-0008 governs the catalog; adding an 8th arm requires amendment + first instance in the same PR.
 
 ## Scene stack

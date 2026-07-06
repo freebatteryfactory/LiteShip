@@ -158,15 +158,25 @@ validation and three parked items, recorded here so they are not lost:
   digest kernel already lives inside `verifyShaderIntegrity`); a
   Boundary→DocumentGraph node helper is real and corroborated in-repo — our own
   `tests/helpers/graph-fixtures.ts` carries the same `as unknown as SignalNode`
-  cast it self-describes as deliberately fragile glue, so the root gap is
-  public node constructors, not just a Boundary converter; a tier-aware
+  cast it self-describes as deliberately fragile glue — though (verified) the
+  fixture *does* call the public `sealNode`/`sealGraph`; the cast bridges a raw
+  literal lacking the computed `id`/`digest` into a sealable node. So the real
+  gap is a from-parts node builder that computes `id`/`digest` for you, not
+  "no constructors" — `sealNode` seals a pre-formed node, it doesn't build one
+  from fields; a tier-aware
   reveal/stagger primitive and a Save-Data/DPR responsive-image primitive are
   net-new surface whose ingredients exist (Client Hints already parse
   `Save-Data`; tiers ride `locals.czap`) but which sit on the
   primitive-vs-UI-kit thesis line — owner design fork, not intake nods.
-- **Still open from the 0.6.0 findings batch:** COEP is not overridable
-  (finding #6). Neither dogfood site is bitten today — both want
-  `crossOriginIsolated` — parked, not forgotten.
+- **Correction to the 0.6.0 findings batch (finding #6, COEP):** the original
+  "COEP is not overridable" framing is inverted (memory flagged it, source
+  confirms). COEP *is* consumer-overridable — it lives in
+  `CONSUMER_OVERRIDABLE_HEADERS` (`packages/astro/src/headers.ts:48-51,111`),
+  set-only-when-absent, with an `options.coep` selector. What is *not* possible
+  is *disabling* COEP while workers are enabled — cross-origin isolation is
+  required for SharedArrayBuffer, so that floor is intentional. The only real
+  gap is a first-party escape for the workers-off isolation case; neither
+  dogfood site is bitten (both want `crossOriginIsolated`). Parked, not forgotten.
 - **Owner eyeball task:** the WGSL render path needs a real WebGPU device
   (headless has no `navigator.gpu`): open
   `https://heyoub.dev/?cast=wgsl&gl=force` and confirm the orbs animate and stay
@@ -186,8 +196,9 @@ work; every claim below re-verified against source before recording):
   the site's card-deck pinning had to route around `viewport.height` entirely.
 - **Upstream candidate — `CzapLocals.tiers` erases the tier unions:**
   `packages/astro/src/middleware.ts:39` types tiers as
-  `Readonly<Record<CapAxis, string>>`, discarding `CapTier`, `MotionTier`, and
-  `DesignTier` (`packages/detect/src/tiers.ts:71-72`) — consumers switch on
+  `Readonly<Record<CapAxis, string>>`, discarding `CapTier`
+  (`packages/core/src/caps.ts:13`), `MotionTier` (re-exported from `@czap/core`),
+  and `DesignTier` (`packages/detect/src/tiers.ts:71`) — consumers switch on
   tier values with zero exhaustiveness or typo protection. A `Record` cannot
   express per-axis value types; the fix is the keyed struct
   `{ tier: CapTier; motion: MotionTier; design: DesignTier }`.
@@ -197,9 +208,12 @@ work; every claim below re-verified against source before recording):
   all-optional (`packages/astro/src/quantize.ts:22-29`) so a `Request`
   type-checks structurally, every field reads `undefined`, and resolution
   falls through to `syntheticValueFromCapTier('reactive')` = 960
-  (`quantize.ts:150-156`) — silently. Two fixes: correct the snippet, and
-  make the wrong way loud or unrepresentable (detect a Request-shaped
-  argument and warn, or require at least one context field).
+  (`quantize.ts:150-156`) — silently. **Snippet fixed 2026-07-06** — the
+  `ASTRO-RUNTIME-MODEL.md` quickstart now builds the context from request
+  headers (`Object.fromEntries(context.request.headers)`) and names the trap.
+  Remaining build task: make the wrong way loud or unrepresentable in the API
+  itself (detect a Request-shaped argument and warn, or require at least one
+  context field) so the footgun can't recur.
 - **Upstream candidate — `@quantize` state bodies cannot nest
   `@supports`/`@media`:** the state-body parser has no at-rule handling
   (`packages/vite/src/css-quantize.ts`); the consumer correctly used the
@@ -338,8 +352,115 @@ is awaited on the request path (`waitUntil` it); CDN caching emits no `Vary`
 on any client hint while HTML is tier-varying (latent wrong-tier serving);
 `ResumptionConfig.timeout` is write-only dead config (no AbortSignal, no
 retry, on already-idempotent recovery GETs); `czap:request-snapshot` is
-dispatched with zero listeners repo-wide; no audit surface ever reads
+dispatched with no shipping-runtime listener (only a component test subscribes —
+dead dispatch); no audit surface ever reads
 consumer app code (the `*Unsafe` sinks are exactly what consumers will copy).
+
+### 8. Cross-reference + staleness intake (2026-07-06)
+
+A four-agent cross-reference of this roadmap **and** persistent memory against an
+external LiteShip audit, plus a whole-doc staleness sweep (every root doc read
+cover-to-cover, not grepped). Every claim below was verified against current
+source. Corrections were folded into the Epic-6/7 bullets in place — COEP finding
+#6 (inverted framing fixed), the `CzapLocals.tiers` union anchors, the
+node-builder framing (the fixture *does* use `sealNode`; the gap is a from-parts
+builder), the `czap:request-snapshot` listener wording, and the resolved
+`resolveInitialState` doc snippet. New items are recorded here.
+
+Guiding rule for this whole section (per owner directive): where a doc "overclaims,"
+the cure is to **build the behavior up to the claim** — usually a few LOC of
+plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
+
+**Net-new engine candidates (external audit, source-checked):**
+
+- **SSR resolution receipt.** Generalize the raw-`Request` fix into a
+  fallback-reason artifact: `resolveInitialState` (and the SSR path) should be
+  able to report which source drove initial state — explicit context / UA /
+  Client Hints / edge tier / synthetic fallback — so the *whole* silent-fallback
+  class goes loud, not just the 960px case. Anchor: `resolveInitialState` +
+  `syntheticValueFromCapTier` (`packages/astro/src/quantize.ts`). Regression:
+  a test asserting the receipt names `synthetic` when no signal is present.
+- **Docs-bundle content-hash manifest + staleness gate.** Extends the filed
+  Docs-MCP item (batch 3). The emitter should stamp a versioned,
+  content-addressed manifest (package version + source-file list + sha256) and
+  run a stale-doc detection pass before emit, so agents consume sealed,
+  provenance-carrying docs instead of scraping. Premise (verified): no
+  docs-bundle generator exists — `scripts/gen-docs.ts` fills README registry
+  blocks only. Shape: `docs:bundle` emitter → `docsMcpRoute(bundle)`.
+- **Consumer-audit doctor mode.** Concretize the "no audit surface reads
+  consumer app code" free defect: a scoped, read-only `czap doctor`/
+  `audit --consumer-app` mode that scans consumer *source* for known LiteShip
+  integration smells — unsafe HTML sinks, raw-`Request` `resolveInitialState`,
+  missing `Vary`, boundary shadowing, module-scope Worker `Date`, hand-built
+  `data-czap-*`, direct graph mutation. Seed: the taint registry
+  (`packages/cli/src/lib/taint-policy.ts`); today the corpus is framework
+  packages only (`packages/gauntlet/src/node-context.ts`), never arbitrary
+  consumer app code.
+
+**Staleness-derived build items (build to the claim; do not nerf the doc):**
+
+- **Route the dev inspector through the trust pipeline.** SECURITY.md asserts
+  "no third unguarded `innerHTML` path." The dev-only boundary inspector
+  (`packages/astro/src/runtime/inspector/panel.ts` — four raw `el.innerHTML = …`
+  writes, one interpolating a `data-czap-state` attribute; registered `astro dev`
+  only, `integration.ts`) is a third path. Route those writes through
+  `createHtmlFragment`/`assignInnerHTML` so the claim is literally true
+  everywhere. Small (4 sites), dev-only, low-risk — the point is the claim stays
+  ambitious and the code rises to it. (SECURITY.md was scoped to "in the shipped
+  runtime" 2026-07-06 as honest interim; this item removes the qualifier.)
+- **Canonicalize the URL scheme check (already Free Defect #1, restated as the
+  build target).** Strip `[\t\n\r]` from the normalized value before the
+  `startsWith('javascript:')` test in `isDangerousAttribute`
+  (`packages/web/src/security/html-trust.ts`) — the WHATWG URL parser strips
+  them, so `java\tscript:` currently survives and later executes (documented in
+  `runtime-url.ts`). Red-team regression in
+  `tests/regression/red-team-runtime.test.ts` covering the embedded-whitespace
+  variants. Makes SECURITY.md's scheme-strip claim true.
+- **Add `insertAdjacentHTML`/`document.write` to the taint registry** as
+  defense-in-depth — `packages/cli/src/lib/taint-policy.ts` lists only
+  `innerHTML`/`outerHTML` as assignment sinks. No live sink uses them today, so
+  this is a gate that catches a future one (and the DPU `*Unsafe` family when it
+  lands). Makes SECURITY.md's "no third unguarded path" machine-checkable.
+- **Docs-plumbing debt (a subsystem isn't done until it's in the prose chain).**
+  The 0.8.0 seams are documented in README/GETTING-STARTED/GLOSSARY/
+  PACKAGE-SURFACES/DOCS, but ARCHITECTURE.md and ASTRO-RUNTIME-MODEL.md carry no
+  mutation-channel section, and ADR-0025 (Workers static-assets boundary-CSS),
+  ADR-0026 (Receipt-DAG compaction), ADR-0027 (Cell value→wire) have no prose
+  home in the three architecture docs. STATUS.md got a 0.7→0.8 feature refresh
+  2026-07-06; its test-count/timing snapshots still carry the 2026-06-25
+  baseline (re-capture from a fresh gauntlet). Confirm exact placement before
+  writing — docs are sacred.
+
+**Forgotten-from-memory (verified against source; minor / decisions):**
+
+- **WGSL integer/unsigned vector coercion.** `vec2i`/`vec2<u32>` may silently
+  coerce to float (PR #94 re-review). Possibly partly addressed already —
+  `packages/compiler/src/wgsl.ts:21-26` now defines `u32`/`vec2i` and infers
+  `i32`/`u32` for scalars. **Owner source-check needed** before filing; this is
+  the only cross-ref item not yet source-confirmed either way.
+- **`audit --findings` stdout/stderr contract.** The flag puts findings on stdout
+  + receipt on stderr, diverging from the CLI's "one JSON receipt on stdout"
+  contract. A 1.0 API-stability decision to settle, not a bug.
+- **`audit --consumer --skip-structure` opt-out.** Shipped as surgical-suppress;
+  make the choice stated, not a silent default (`upstream-findings-post-040` #4).
+
+**Invariant-drift watch (not a defect yet):**
+
+- **Boundary-CSS self-containment.** LAW: `CompiledOutputs.css` is the full
+  ordered stylesheet. `serializeBoundaryCss` (`packages/astro/src/fetch-layer.ts:87-94`)
+  now *conditionally* prepends `propertyRegistrations`/`containerQueries` guarded
+  by a `!outputs.css.includes(...)` substring check. No doubling today, but a
+  whitespace-normalization false-negative on that check re-introduces the
+  double-emit. Reassert "emit only `css`," or replace the substring check with a
+  structural one.
+
+**External-dep note.** The QUERY `mod[method]` dispatch claim (Astro dispatches
+`export const QUERY` with no verb allowlist) is not re-verifiable in-repo (no
+`astro` in the tree, only `@czap/astro`); it stays recorded as empirically
+verified end-to-end. The read-leg factory it implies
+(`graphQueryRoute`/`handleGraphQuery`) is confirmed **absent** — correct, it is a
+proposal — and would mirror the existing `graphMutationRoute`
+(`packages/astro/src/graph-mutation-route.ts`; 415/400/422 discipline).
 
 ## Completed Since Last Revision (2026-05-17)
 

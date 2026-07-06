@@ -113,6 +113,14 @@ This is the reality document:
 - benchmark policy
 - current limitations
 
+### If the question is "How should I reason in this repo / what did we learn the hard way?"
+
+Read [SKILL.md](./SKILL.md).
+
+This is the tacit-knowledge playbook — the laws we learned by breaking things
+(no-silent-drift, complete-don't-nerf, root-fix-not-guard, identity-is-a-digest,
+the clock substrate law) plus the operating hazards. No training data covers it.
+
 ### If the question is "Where is the project headed?"
 
 Read [ROADMAP.md](./ROADMAP.md).
@@ -147,11 +155,12 @@ Read [CHANGELOG.md](./CHANGELOG.md). For shipping npm/GitHub releases, see
 
 ### If you're contributing to LiteShip
 
-1. [ARCHITECTURE.md](./ARCHITECTURE.md): the package DAG and where things live
-2. [ADR-0001 namespace pattern](./docs/adr/0001-namespace-pattern.md) + [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md): the load-bearing conventions
-3. [AUDIT.md](./AUDIT.md): the advisory pipeline that watches for drift
-4. [STATUS.md](./STATUS.md): live gates, watch items, runtime seam hotspots
-5. [../CONTRIBUTING.md](./CONTRIBUTING.md): the gauntlet, PR conventions, code style
+1. [SKILL.md](./SKILL.md): the battle-scars playbook — read first, it's how not to reintroduce a scar we already paid for
+2. [ARCHITECTURE.md](./ARCHITECTURE.md): the package DAG and where things live
+3. [ADR-0001 namespace pattern](./docs/adr/0001-namespace-pattern.md) + [ADR-0002 zero-alloc](./docs/adr/0002-zero-alloc.md): the load-bearing conventions
+4. [AUDIT.md](./AUDIT.md): the advisory pipeline that watches for drift
+5. [STATUS.md](./STATUS.md): live gates, watch items, runtime seam hotspots
+6. [../CONTRIBUTING.md](./CONTRIBUTING.md): the gauntlet, PR conventions, code style
 
 ### If you're operating LiteShip in production
 

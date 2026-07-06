@@ -1,10 +1,12 @@
 # LiteShip — status and remaining work
 
-Last updated: 2026-06-25
+Last updated: 2026-07-06 (feature/ADR refresh; timing + test-count snapshots still carry their 2026-06-25 baseline — re-capture from a fresh gauntlet run).
 
 Coverage stack standardized on Vitest 4.1.2 + Playwright browser mode.
-Current node lane: **6903 tests** across **559 files** (6896 passed, 7 skipped; baseline 2026-06-25).
+Current node lane: **6903 tests** across **559 files** (6896 passed, 7 skipped; baseline 2026-06-25 — the 0.8.0 workstreams added core/web/astro suites since, so the live count is higher; re-capture from a fresh `pnpm test`).
 Current browser lane: shared-runtime suites run against a Chromium + Firefox + WebKit matrix, with capability-specific browser tests remaining Chromium-first where the platform surface is intentionally non-uniform.
+
+**Shipped since this baseline (0.7.0 → 0.8.0 cut):** the client→server mutation channel (`graphMutationRoute` / `createGraphMutationClient` / `sendGraphMutation`, ADR-0030), form-to-mutation binding (`bindGraphForm`, ADR-0031), morph-opaque client-owned subtrees (`data-czap-morph-opaque`, ADR-0032), Standard Schema interop on the node schema (`DocumentGraphNodeSchema.~standard`, ADR-0033), the Workers static-assets boundary-CSS dev path (ADR-0025), Receipt-DAG compaction (ADR-0026), and the Cell value→wire boundary (ADR-0027). Publishing is OIDC trusted publishing with provenance (no `NPM_TOKEN`). Neither dogfood consumer exercises the mutation channel or `bindGraphForm` in production yet — that surface is proven by tests + `examples/06-mutation-roundtrip`, not yet by a live consumer.
 
 Product naming for prose elsewhere: [GLOSSARY.md](./GLOSSARY.md). Tables below stay operational. Identifiers like `host-wired` and `pnpm exec czap` are literal gate vocabulary, not marketing rename targets.
 
@@ -190,7 +192,7 @@ or read `gauntlet-phases.ts` directly. The per-phase timing table below is a cap
 
 ### Per-phase wall-time ranges
 
-Total across all 39 phases (the count is pinned by `tests/unit/devops/gauntlet-profile.test.ts` against `gauntletPhases.length` — never hand-counted here): roughly 15–22 minutes on a fast 8-vCPU local box, ~40 minutes under CI (cold browser-coverage cache). The README's gauntlet snapshot carries the latest CI datapoint, distilled from the `truth-artifacts-linux` artifact by `scripts/refresh-bench-snapshot.ts`. Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
+Total across all 40 phases (the count is pinned by `tests/unit/devops/gauntlet-profile.test.ts` against `gauntletPhases.length` — never hand-counted here): roughly 15–22 minutes on a fast 8-vCPU local box, ~40 minutes under CI (cold browser-coverage cache). The README's gauntlet snapshot carries the latest CI datapoint, distilled from the `truth-artifacts-linux` artifact by `scripts/refresh-bench-snapshot.ts`. Phase 0 is `rig-check` (`doctor --preflight --ci`); phase 8 is `audit:floor` (rule-inventory gate before the long test tranche).
 
 `scripts/gauntlet.ts` writes `benchmarks/gauntlet-phase-timings.json` after every run (success or failure), so the live ledger for a 3am operator is the latest artifact, not this static table. Re-run `pnpm run gauntlet:full` and the artifact updates automatically. The numbers below are a captured snapshot from one Linux run, useful as anchors when the artifact isn't fresh.
 
@@ -235,7 +237,7 @@ Phase 23 (`coverage:browser`) is the only phase with a meaningfully bimodal cost
 
 For the canonical, current truth, read `benchmarks/gauntlet-phase-timings.json` after a fresh `pnpm run gauntlet:full`. The snapshot above is a reference anchor, not the live ledger.
 
-**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 39 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
+**For 3am operators without a local repo:** the `truth-linux` job in `.github/workflows/ci.yml` uploads `benchmarks/` (including `gauntlet-phase-timings.json`) as the `truth-artifacts-linux` artifact on every push to `main` and every pull request. That artifact carries all 40 phases measured under CI conditions and is the single source of truth without needing to re-run anything locally — find the most recent successful CI run on the relevant branch in the GitHub Actions UI, download the artifact, read the JSON. The static table above is for orientation; the artifact is for decisions.
 
 ---
 
