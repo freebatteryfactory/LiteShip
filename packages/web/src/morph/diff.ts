@@ -12,6 +12,7 @@
 import { Diagnostics } from '@czap/core';
 import { Effect } from 'effect';
 import type { MorphConfig, MorphHints, MorphResult } from '../types.js';
+import { dispatchCzapEvent } from '../wire/dispatch.js';
 import * as SemanticIdModule from './semantic-id.js';
 import * as HintsModule from './hints.js';
 import * as Physical from '../physical/capture.js';
@@ -91,24 +92,12 @@ export const morphWithState = (
 
     const rejection = HintsModule.rejectIfMissing(hints ?? {}, oldNode);
     if (rejection) {
-      oldNode.dispatchEvent(
-        new CustomEvent('czap:morph-rejected', {
-          // `recovery` is additive and only true on this path — bare
-          // rejectIfMissing callers get no snapshot dispatch.
-          detail: {
-            ...rejection,
-            recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
-          },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(oldNode, 'czap:morph-rejected', {
+        ...rejection,
+        recovery: 'A czap:request-snapshot event was dispatched to recover — listen for it to fetch fresh state.',
+      });
 
-      oldNode.dispatchEvent(
-        new CustomEvent('czap:request-snapshot', {
-          detail: { reason: rejection.reason },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(oldNode, 'czap:request-snapshot', { reason: rejection.reason });
 
       return { type: 'rejected' as const, rejection };
     }

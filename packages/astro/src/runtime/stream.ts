@@ -1,6 +1,15 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
 import { wallClock } from '@czap/core';
-import { Morph, Resumption, SSE, SlotAddressing, SlotRegistry, resolveHtmlString } from '@czap/web';
+import {
+  Morph,
+  Resumption,
+  SSE,
+  SlotAddressing,
+  SlotRegistry,
+  resolveHtmlString,
+  dispatchCzapEvent,
+  streamWireAttr,
+} from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
@@ -164,7 +173,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   let target = element;
   let reinitTarget: HTMLElement | null = null;
   const streamUrl = allowRuntimeEndpointUrl(
-    target.getAttribute('data-czap-stream-url'),
+    target.getAttribute(streamWireAttr('url')),
     'stream',
     'czap/astro.stream',
     {
@@ -179,11 +188,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     return;
   }
 
-  const artifactId = target.getAttribute('data-czap-stream-artifact') ?? undefined;
-  const morphStyle = (target.getAttribute('data-czap-stream-morph') ?? 'innerHTML') as 'innerHTML' | 'outerHTML';
+  const artifactId = target.getAttribute(streamWireAttr('artifact')) ?? undefined;
+  const morphStyle = (target.getAttribute(streamWireAttr('morph')) ?? 'innerHTML') as 'innerHTML' | 'outerHTML';
   const snapshotUrl =
     allowRuntimeEndpointUrl(
-      target.getAttribute('data-czap-snapshot-url'),
+      target.getAttribute(streamWireAttr('snapshotUrl')),
       'snapshot',
       'czap/astro.stream',
       {
@@ -196,7 +205,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     ) ?? undefined;
   const replayUrl =
     allowRuntimeEndpointUrl(
-      target.getAttribute('data-czap-replay-url'),
+      target.getAttribute(streamWireAttr('replayUrl')),
       'replay',
       'czap/astro.stream',
       {
@@ -265,11 +274,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       target = findTarget(pendingLocator) ?? target;
       bindReinit(target);
       for (let index = 0; index < patchCount; index++) {
-        target.dispatchEvent(
-          new CustomEvent('czap:stream-morph', {
-            bubbles: true,
-          }),
-        );
+        dispatchCzapEvent(target, 'czap:stream-morph');
       }
       pendingLocator = null;
     },
@@ -312,15 +317,10 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       );
       await applyResumeResponse(response);
     } catch (error) {
-      target.dispatchEvent(
-        new CustomEvent('czap:stream-error', {
-          detail: {
-            reason: 'resume-failed',
-            message: error instanceof Error ? error.message : String(error),
-          },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(target, 'czap:stream-error', {
+        reason: 'resume-failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -349,12 +349,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
 
     if (message.type === 'signal') {
-      target.dispatchEvent(
-        new CustomEvent('czap:signal', {
-          detail: message.data,
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(target, 'czap:signal', message.data);
       return;
     }
 
@@ -377,20 +372,15 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     switch (state) {
       case 'connected':
         patchScheduler.activate();
-        target.dispatchEvent(new CustomEvent('czap:stream-connected', { bubbles: true }));
+        dispatchCzapEvent(target, 'czap:stream-connected');
         return;
       case 'reconnecting':
         recoveryPending = artifactId !== undefined && (client ? Effect.runSync(client.lastEventId) !== null : false);
         patchScheduler.beginReconnect();
-        target.dispatchEvent(new CustomEvent('czap:stream-disconnected', { bubbles: true }));
+        dispatchCzapEvent(target, 'czap:stream-disconnected');
         return;
       case 'error':
-        target.dispatchEvent(
-          new CustomEvent('czap:stream-error', {
-            detail: { reason: 'max-reconnect-attempts' },
-            bubbles: true,
-          }),
-        );
+        dispatchCzapEvent(target, 'czap:stream-error', { reason: 'max-reconnect-attempts' });
         return;
       default:
         // 'connecting' (initial) and 'disconnected' (intentional close) carry

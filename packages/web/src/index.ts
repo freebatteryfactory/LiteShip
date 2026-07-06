@@ -118,3 +118,26 @@ export type { AudioProcessor } from './audio/processor.js';
 
 // Capsules
 export { streamReceiptCapsule } from './capsules/stream-receipt.js';
+
+// Wire contract (typed czap:* events + stream data-czap-* attributes)
+export type {
+  CzapEventDetailMap,
+  CzapEventDisposer,
+  CzapEventName,
+  CzapMorphRejectedDetail,
+  CzapStreamErrorDetail,
+  CzapUniformUpdateDetail,
+  StreamWireAttrKey,
+  StreamWireAttribute,
+} from './wire/index.js';
+export {
+  CZAP_EVENT_DOCS,
+  CZAP_EVENT_NAMES,
+  STREAM_WIRE_ATTRIBUTE_DOCS,
+  STREAM_WIRE_ATTRIBUTES,
+  STREAM_WIRE_ATTR_KEYS,
+  dispatchCzapEvent,
+  onCzap,
+  renderWireContractDoc,
+  streamWireAttr,
+} from './wire/index.js';

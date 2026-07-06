@@ -10,14 +10,14 @@
  * injects this scanner on every page to activate directive markers the
  * Astro runtime never sees.
  *
- * Two marker forms are scanned:
+ * Two marker forms are scanned (both first-class per ADR-0028):
  *
- * - `data-czap-directive="satellite"` -- the canonical form, emitted by
+ * - `data-czap-directive="satellite"` -- explicit marker, emitted by
  *   `satelliteAttrs()`; space-separated tokens allowed.
- * - literal `client:satellite`-style attributes -- best-effort
- *   back-compat for plain-element authoring. Astro strips `client:*`
- *   from real framework islands at render time, so the scanner cannot
- *   double-activate an island.
+ * - literal `client:satellite`-style attributes -- compiled to runtime
+ *   `data-czap-*` roots and booted on plain elements. Astro strips
+ *   `client:*` from real framework islands at render time, so the
+ *   scanner cannot double-activate an island.
  *
  * @module
  */
