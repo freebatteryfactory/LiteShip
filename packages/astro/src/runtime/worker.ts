@@ -1,4 +1,5 @@
 import { Diagnostics, StateName } from '@czap/core';
+import { dispatchCzapEvent } from '@czap/web';
 import { WorkerHost } from '@czap/worker';
 import {
   applyBoundaryState,
@@ -220,7 +221,7 @@ export function initWorkerDirective(load: () => Promise<unknown>, element: HTMLE
 
     const onWorkerMessage = (event: MessageEvent<{ type?: string }>): void => {
       if (event.data?.type === 'ready') {
-        element.dispatchEvent(new CustomEvent('czap:worker-ready', { bubbles: true }));
+        dispatchCzapEvent(element, 'czap:worker-ready');
       }
     };
     workerMessageHandler = onWorkerMessage;

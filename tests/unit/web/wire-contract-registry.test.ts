@@ -49,6 +49,36 @@ function collectRuntimeCzapEventLiterals(): readonly string[] {
   return [...found].sort();
 }
 
+/** Raw `new CustomEvent('czap:…')` bypasses — only `wire/dispatch.ts` may construct. */
+function collectRawCzapCustomEventDispatches(): readonly string[] {
+  const roots = [
+    resolve(REPO_ROOT, 'packages/web/src'),
+    resolve(REPO_ROOT, 'packages/astro/src/runtime'),
+  ];
+  const pattern = /new\s+CustomEvent\s*\(\s*['"]czap:[a-z0-9-]+['"]/g;
+  const violations: string[] = [];
+
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = resolve(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'wire') continue;
+        walk(path);
+        continue;
+      }
+      if (!entry.name.endsWith('.ts')) continue;
+      const rel = path.slice(REPO_ROOT.length + 1);
+      const src = readFileSync(path, 'utf8');
+      for (const match of src.matchAll(pattern)) {
+        violations.push(`${rel}: ${match[0]}`);
+      }
+    }
+  };
+
+  for (const root of roots) walk(root);
+  return violations.sort();
+}
+
 describe('wire-contract registry — typed czap:* union + stream attributes', () => {
   test('CZAP_EVENT_NAMES matches CZAP_EVENT_DOCS and every name is czap:-prefixed', () => {
     expect(Object.keys(CZAP_EVENT_DOCS).sort()).toEqual([...CZAP_EVENT_NAMES].sort());
@@ -94,5 +124,13 @@ describe('wire-contract registry — typed czap:* union + stream attributes', ()
 
   test('fabricated stream event names are not in the registry (the dogfood bug class)', () => {
     expect(CZAP_EVENT_NAMES).not.toContain('czap:stream-reconnecting');
+  });
+
+  test('runtime czap:* dispatches route through dispatchCzapEvent (no raw CustomEvent bypass)', () => {
+    const violations = collectRawCzapCustomEventDispatches();
+    expect(
+      violations,
+      `use dispatchCzapEvent instead of raw CustomEvent:\n${violations.join('\n')}`,
+    ).toEqual([]);
   });
 });
