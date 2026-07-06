@@ -42,6 +42,7 @@ export type { AdmitPatchResult } from './graph-ai-apply.js';
 // signal-indexed `@czap/scene`, splitting DISCRETE crossings (→ recast) from the
 // CONTINUOUS tween (→ leaf CSS var / GPU uniform). Continuous motion never recasts.
 export { bridgeSceneToGraph } from './scene-bridge.js';
+export { writeContinuousMap } from './write-continuous-map.js';
 export type {
   BridgeableScene,
   BridgeClock,
