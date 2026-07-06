@@ -32,6 +32,9 @@ export interface CzapStreamErrorDetail {
   readonly message?: string;
 }
 
+/** `czap:llm-error` — terminal stream error or unrecoverable connection loss. */
+export type CzapLlmErrorDetail = { readonly message: string } | { readonly reason: string; readonly strategy: string };
+
 /**
  * Canonical `czap:*` event names and their `CustomEvent.detail` shapes.
  * Events with `undefined` detail omit `detail` on dispatch.
@@ -40,7 +43,7 @@ export interface CzapEventDetailMap {
   'czap:graph-state': CzapUniformUpdateDetail;
   'czap:gpu-ready': undefined;
   'czap:llm-done': { readonly accumulated: string };
-  'czap:llm-error': { readonly message: string };
+  'czap:llm-error': CzapLlmErrorDetail;
   'czap:llm-frame': UIFrame;
   'czap:llm-genui': { readonly node: GeneratedUINode; readonly renderHash: string };
   'czap:llm-start': undefined;

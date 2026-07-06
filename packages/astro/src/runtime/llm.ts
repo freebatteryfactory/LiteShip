@@ -1,6 +1,6 @@
 import { Diagnostics } from '@czap/core';
 import type { Receipt } from '@czap/core';
-import type { LLMChunk } from '@czap/web';
+import { dispatchCzapEvent, type LLMChunk } from '@czap/web';
 import { DEMO_COMPONENT_CATALOG } from '@czap/genui';
 import { createLLMSession } from './llm-session.js';
 import { readRuntimeHtmlPolicy, readRuntimeEndpointPolicy } from './policy.js';
@@ -295,12 +295,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
         session.rememberEnvelope(decoded.envelope);
         return;
       case 'error':
-        element.dispatchEvent(
-          new CustomEvent('czap:llm-error', {
-            detail: { message: decoded.message },
-            bubbles: true,
-          }),
-        );
+        dispatchCzapEvent(element, 'czap:llm-error', { message: decoded.message });
         // Terminal: a server-sent error ends the stream — close the live
         // EventSource so it stops delivering frames. The rendered content stays;
         // the session is not disposed.
@@ -332,12 +327,10 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
       return;
     }
 
-    element.dispatchEvent(
-      new CustomEvent('czap:llm-error', {
-        detail: { reason: 'connection-error', strategy: strategy.type },
-        bubbles: true,
-      }),
-    );
+    dispatchCzapEvent(element, 'czap:llm-error', {
+      reason: 'connection-error',
+      strategy: strategy.type,
+    });
   };
 
   const connect = (): void => {
@@ -350,7 +343,7 @@ export function initLLMDirective(load: () => Promise<unknown>, element: HTMLElem
 
     source.onopen = () => {
       session.activate();
-      element.dispatchEvent(new CustomEvent('czap:llm-start', { bubbles: true }));
+      dispatchCzapEvent(element, 'czap:llm-start');
     };
 
     // Process each frame SYNCHRONOUSLY within the dispatch turn: `decodeLLMEventData`

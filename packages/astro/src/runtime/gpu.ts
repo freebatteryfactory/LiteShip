@@ -5,6 +5,7 @@ import {
   isExternalShaderSource,
   decideShaderIntegrity,
   DEFAULT_SHADER_INTEGRITY_MODE,
+  dispatchCzapEvent,
 } from '@czap/web';
 import { onDetectReady } from '@czap/detect';
 import { readRuntimeEndpointPolicy } from './policy.js';
@@ -344,7 +345,7 @@ export function initGPUDirective(load: () => Promise<unknown>, el: HTMLElement, 
         // runtime that just resolved is orphaned, so tear it down immediately.
         dispose();
       } else {
-        el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
+        dispatchCzapEvent(el, 'czap:gpu-ready');
         wgslDisposer = dispose;
       }
     })();
@@ -661,7 +662,7 @@ void main() {
     el.addEventListener('czap:uniform-update', onElementUniformUpdate);
     document.addEventListener('czap:uniform-update', onDocumentUniformUpdate);
 
-    el.dispatchEvent(new CustomEvent('czap:gpu-ready', { bubbles: true }));
+    dispatchCzapEvent(el, 'czap:gpu-ready');
     render();
 
     glDisposer = teardown;

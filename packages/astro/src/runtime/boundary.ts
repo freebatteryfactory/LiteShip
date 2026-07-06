@@ -10,6 +10,7 @@
  * @module
  */
 import { Boundary, BoundaryAttribute, Diagnostics, inputToSource, wallClock, type Clock } from '@czap/core';
+import { dispatchCzapEvent, type CzapEventName } from '@czap/web';
 import { readAudioSignal, attachAudioObserver } from './audio-signal.js';
 
 /** JSON-safe authored WGSL vector value carried in boundary payloads. */
@@ -129,6 +130,12 @@ export interface BoundaryStateDetail {
   /** Whitelisted ARIA attribute map. */
   readonly aria: Record<string, string>;
 }
+
+/** Boundary state events that share {@link BoundaryStateDetail} / uniform payloads. */
+export type BoundaryStateEventName = Extract<
+  CzapEventName,
+  'czap:state' | 'czap:satellite-state' | 'czap:graph-state' | 'czap:worker-state'
+>;
 
 function isAllowedBoundaryCssProperty(property: string): boolean {
   return property.startsWith('--czap-');
@@ -542,7 +549,7 @@ export function applyBoundaryState(
       readonly aria?: Record<string, string>;
     };
   },
-  eventName: string,
+  eventName: BoundaryStateEventName,
 ): void {
   const normalized = normalizeBoundaryState(state);
   const stateName = normalized.discrete[boundary.name];
@@ -587,17 +594,6 @@ export function applyBoundaryState(
     element.setAttribute(attribute, value);
   }
 
-  element.dispatchEvent(
-    new CustomEvent(eventName, {
-      detail,
-      bubbles: true,
-    }),
-  );
-
-  element.dispatchEvent(
-    new CustomEvent('czap:uniform-update', {
-      detail,
-      bubbles: true,
-    }),
-  );
+  dispatchCzapEvent(element, eventName, detail);
+  dispatchCzapEvent(element, 'czap:uniform-update', detail);
 }

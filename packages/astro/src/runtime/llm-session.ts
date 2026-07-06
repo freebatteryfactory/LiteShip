@@ -4,6 +4,7 @@ import { renderFromCatalog, type ComponentCatalog, type GeneratedUINode } from '
 import {
   LLMChunkNormalization,
   createHtmlFragment,
+  dispatchCzapEvent,
   type HtmlPolicy,
   type LLMChunk,
   type ToolCallAccumulator,
@@ -189,48 +190,23 @@ export function createDOMLLMSessionHost(
     },
 
     emitToken(text, accumulated) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-token', {
-          detail: { text, accumulated },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-token', { text, accumulated });
     },
 
     emitFrame(frame) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-frame', {
-          detail: frame,
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-frame', frame);
     },
 
     emitToolStart(name) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-tool-start', {
-          detail: { name },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-tool-start', { name });
     },
 
     emitToolEnd(name, args) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-tool-end', {
-          detail: { name, args },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-tool-end', { name, args });
     },
 
     emitDone(accumulated) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-done', {
-          detail: { accumulated },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-done', { accumulated });
     },
 
     renderGeneratedUI(node, renderId) {
@@ -260,12 +236,7 @@ export function createDOMLLMSessionHost(
     },
 
     emitGeneratedUI(node, renderId) {
-      element.dispatchEvent(
-        new CustomEvent('czap:llm-genui', {
-          detail: { node, renderHash: renderId },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(element, 'czap:llm-genui', { node, renderHash: renderId });
     },
   };
 }

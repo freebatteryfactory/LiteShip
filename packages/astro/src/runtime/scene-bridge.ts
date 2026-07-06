@@ -38,6 +38,7 @@
  */
 
 import { GraphPatch, sealNode, type ContentAddress, type DocumentGraph, type PoseNode } from '@czap/core';
+import { dispatchCzapEvent } from '@czap/web';
 import type { SceneRuntime } from '@czap/scene';
 import { attachSignalObserver, readSignalValue, warnIfSignalUnserved } from './boundary.js';
 import { graphRuntimeInternals, type EntityElementResolver, type GraphRuntimeHandle } from './graph-runtime.js';
@@ -203,12 +204,7 @@ function crossingPatch(graph: DocumentGraph, entityId: ContentAddress, nextState
 function writeContinuous(element: HTMLElement, cssVar: string, blend: number): void {
   const value = String(blend);
   element.style.setProperty(cssVar, value);
-  element.dispatchEvent(
-    new CustomEvent('czap:uniform-update', {
-      detail: { css: { [cssVar]: value } },
-      bubbles: true,
-    }),
-  );
+  dispatchCzapEvent(element, 'czap:uniform-update', { css: { [cssVar]: value } });
 }
 
 /** The custom-event name the discrete crossing dispatches on (mirrors the graph runtime's default). */
@@ -225,12 +221,7 @@ function applyDiscreteState(element: HTMLElement, state: string): void {
   if (element.getAttribute('data-czap-state') !== state) {
     element.setAttribute('data-czap-state', state);
   }
-  element.dispatchEvent(
-    new CustomEvent(GRAPH_STATE_EVENT, {
-      detail: { discrete: { [state]: state }, state },
-      bubbles: true,
-    }),
-  );
+  dispatchCzapEvent(element, GRAPH_STATE_EVENT, { discrete: { [state]: state }, state });
 }
 
 /**

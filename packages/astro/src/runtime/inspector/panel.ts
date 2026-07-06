@@ -12,6 +12,7 @@
  */
 
 import { boundaryParseFailureMessage, parseBoundary, readSignalValue, type BoundaryStateDetail } from '../boundary.js';
+import { dispatchCzapEvent } from '@czap/web';
 import {
   castValueRows,
   deriveActiveTargets,
@@ -168,7 +169,7 @@ function renderBoundaryPanel(element: HTMLElement, container: HTMLElement): Pane
           element.setAttribute('data-czap-boundary', rewritten);
           notch.style.left = `${(next / max) * 100}%`;
           notch.title = `${next}px → ${states[index] ?? ''}`;
-          element.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+          dispatchCzapEvent(element, 'czap:reinit');
         };
         const up = (): void => {
           window.removeEventListener('pointermove', move);

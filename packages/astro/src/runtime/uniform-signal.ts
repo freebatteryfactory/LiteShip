@@ -18,6 +18,7 @@
  */
 
 import type { BoundaryStateDetail } from './boundary.js';
+import { dispatchCzapEvent } from '@czap/web';
 import { readSignalValue, attachSignalObserver, warnIfSignalUnserved } from './boundary.js';
 
 /**
@@ -57,7 +58,7 @@ export function driveUniformFromSignal(element: HTMLElement, input: string, unif
       wgsl: { [uniform]: value },
       aria: {},
     };
-    element.dispatchEvent(new CustomEvent('czap:uniform-update', { detail, bubbles: true }));
+    dispatchCzapEvent(element, 'czap:uniform-update', detail);
   };
 
   emit(); // seed the initial frame so the uniform is correct before the first change

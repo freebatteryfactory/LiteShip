@@ -1,4 +1,5 @@
 import { WASMDispatch, Diagnostics } from '@czap/core';
+import { dispatchCzapEvent } from '@czap/web';
 import { writeRuntimeGlobal } from './globals.js';
 import { readRuntimeEndpointPolicy } from './policy.js';
 import { allowRuntimeEndpointUrl } from './url-policy.js';
@@ -61,11 +62,7 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
     const kernels = await WASMDispatch.load(wasmUrl);
     writeRuntimeGlobal('__CZAP_WASM__', kernels);
 
-    document.dispatchEvent(
-      new CustomEvent('czap:wasm-ready', {
-        detail: { url: wasmUrl },
-      }),
-    );
+    dispatchCzapEvent(document, 'czap:wasm-ready', { url: wasmUrl });
   } catch (error) {
     Diagnostics.warn({
       source: 'czap/astro.wasm',
@@ -76,14 +73,10 @@ export async function loadWasmRuntime(element: HTMLElement): Promise<void> {
       detail: error instanceof Error ? error.message : 'load-failed',
       cause: error,
     });
-    document.dispatchEvent(
-      new CustomEvent('czap:wasm-error', {
-        detail: {
-          url: wasmUrl,
-          reason: error instanceof Error ? error.message : 'load-failed',
-        },
-      }),
-    );
+    dispatchCzapEvent(document, 'czap:wasm-error', {
+      url: wasmUrl,
+      reason: error instanceof Error ? error.message : 'load-failed',
+    });
   }
 }
 
