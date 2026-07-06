@@ -1,8 +1,9 @@
 # Design note: Authored Motion + Self-Managing State over DocumentGraph
 
-Status: **design / pre-ADR** (maintainer working note; not canon). When Step 0 is
-ratified it graduates to an ADR (next free is 0035 — 0034 is reserved for the
-QUERY write-sink-unreachability gate).
+Status: **ratified** — the taxonomy decision (§1) is now **ADR-0035**
+(`docs/adr/0035-motion-is-intent-not-target.md`); this note remains the impl-ready
+spec, the ADR is the canonical decision record. (ADR-0034 stays reserved for the
+QUERY write-sink-unreachability gate.)
 
 Origin: three independent investigations (a 4-agent repo deep-read + two external
 passes) converged on one keystone without coordinating — so it is recorded here as
