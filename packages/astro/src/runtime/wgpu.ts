@@ -159,18 +159,29 @@ async function fetchShaderSource(shaderSrc: string): Promise<string | null> {
 const UNIFORM_BUFFER_MAX_BYTES = 64;
 
 /** Kind of a WGSL uniform field — drives both its buffer alignment and its write. */
-type WgslUniformKind = 'int' | 'float' | 'vec2' | 'vec3' | 'vec4';
+type WgslUniformKind =
+  'int' | 'float' | 'vec2' | 'vec3' | 'vec4' | 'ivec2' | 'ivec3' | 'ivec4' | 'uvec2' | 'uvec3' | 'uvec4';
+
+/** WGSL struct fields the runtime auto-feeds every frame when declared with these exact names. */
+const AUTO_FED_WGSL_UNIFORM_FIELDS = new Set(['u_time', 'u_resolution']);
+
+/** WGSL struct field the compositor feeds on boundary crossings via `emit-wgsl`. */
+const COMPOSITOR_FED_WGSL_UNIFORM_FIELDS = new Set(['state_index']);
 
 /**
  * WGSL uniform-struct alignment + size (bytes) per type. Alignment is what a flat
  * `i*4` layout gets wrong: a `vec2<f32>` must sit on an 8-byte boundary and a
  * `vec3`/`vec4` on a 16-byte one, so `u_resolution: vec2<f32>` lands correctly.
  */
-function wgslTypeInfo(type: string): { readonly align: number; readonly size: number; readonly kind: WgslUniformKind } {
+function wgslTypeInfo(
+  type: string,
+): { readonly align: number; readonly size: number; readonly kind: WgslUniformKind } | null {
   switch (type) {
     case 'u32':
     case 'i32':
       return { align: 4, size: 4, kind: 'int' };
+    case 'f32':
+      return { align: 4, size: 4, kind: 'float' };
     case 'vec2<f32>':
     case 'vec2f':
       return { align: 8, size: 8, kind: 'vec2' };
@@ -180,10 +191,85 @@ function wgslTypeInfo(type: string): { readonly align: number; readonly size: nu
     case 'vec4<f32>':
     case 'vec4f':
       return { align: 16, size: 16, kind: 'vec4' };
+    case 'vec2i':
+    case 'vec2<i32>':
+      return { align: 8, size: 8, kind: 'ivec2' };
+    case 'vec3i':
+    case 'vec3<i32>':
+      return { align: 16, size: 12, kind: 'ivec3' };
+    case 'vec4i':
+    case 'vec4<i32>':
+      return { align: 16, size: 16, kind: 'ivec4' };
+    case 'vec2<u32>':
+      return { align: 8, size: 8, kind: 'uvec2' };
+    case 'vec3<u32>':
+      return { align: 16, size: 12, kind: 'uvec3' };
+    case 'vec4<u32>':
+      return { align: 16, size: 16, kind: 'uvec4' };
+    case 'bool':
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-uniform-bool-unsupported',
+        message:
+          `WGSL uniform struct field type "bool" is not host-shareable in a uniform buffer; ` +
+          `use u32 (0/1) instead. Field layout skipped.`,
+      });
+      return null;
     default:
-      // f32 and any unrecognized scalar — a 4-byte float.
+      Diagnostics.warnOnce({
+        source: 'czap/astro.gpu',
+        code: 'wgsl-uniform-type-unrecognized',
+        message:
+          `Unrecognized WGSL uniform struct field type "${type}"; ` +
+          `layout/write may be wrong until the type is supported.`,
+      });
+      // Unrecognized scalars fall back to f32 so later fields still get offsets.
       return { align: 4, size: 4, kind: 'float' };
   }
+}
+
+/**
+ * Emit one `warnOnce` per declared uniform field that has no feed path: not
+ * auto-fed (`u_time`/`u_resolution`), not compositor-fed (`state_index`), not
+ * supplied in a `detail.wgsl` crossing, and not covered by a compiler preamble
+ * (`declarations`) that binds the boundary's `@wgsl` values.
+ */
+function warnUnfedWgslUniformFields(
+  layout: readonly WgslUniformField[],
+  fedFields: ReadonlySet<string>,
+  compilerIntegrated: boolean,
+): void {
+  if (compilerIntegrated) return;
+  for (const field of layout) {
+    if (fedFields.has(field.name)) continue;
+    const renameHint =
+      field.name === 'time'
+        ? ' Rename to u_time for runtime auto-feed.'
+        : field.name === 'resolution'
+          ? ' Rename to u_resolution for runtime auto-feed.'
+          : ' Supply it via czap:uniform-update detail.wgsl, or use u_time / u_resolution for auto-feed.';
+    Diagnostics.warnOnce({
+      source: 'czap/astro.gpu',
+      code: 'wgsl-uniform-unfed',
+      message: `WGSL uniform field "${field.name}" is declared but has no feed path.${renameHint}`,
+    });
+  }
+}
+
+/** Seed feed-path coverage from auto/compositor feeds plus any crossing payload keys. */
+function collectFedWgslUniformFields(
+  layout: readonly WgslUniformField[],
+  wgsl?: Record<string, WgslUniformValue>,
+): Set<string> {
+  const fed = new Set<string>();
+  for (const field of layout) {
+    if (AUTO_FED_WGSL_UNIFORM_FIELDS.has(field.name)) fed.add(field.name);
+    if (COMPOSITOR_FED_WGSL_UNIFORM_FIELDS.has(field.name)) fed.add(field.name);
+  }
+  if (wgsl) {
+    for (const key of Object.keys(wgsl)) fed.add(key);
+  }
+  return fed;
 }
 
 /**
@@ -247,7 +333,9 @@ function createUniformBinding(
   const slots = new Map<string, { offset: number; kind: WgslUniformKind }>();
   let cursor = 0;
   for (const field of layout) {
-    const { align, size, kind } = wgslTypeInfo(field.type);
+    const info = wgslTypeInfo(field.type);
+    if (!info) continue;
+    const { align, size, kind } = info;
     const offset = Math.ceil(cursor / align) * align;
     if (offset + size > UNIFORM_BUFFER_MAX_BYTES) {
       // Struct outgrows the buffer — drop the overflowing field.
@@ -292,8 +380,20 @@ function createUniformBinding(
           view.setUint32(slot.offset, (value as number) >>> 0, true);
         } else if (slot.kind === 'float') {
           view.setFloat32(slot.offset, value as number, true);
+        } else if (slot.kind === 'ivec2' || slot.kind === 'ivec3' || slot.kind === 'ivec4') {
+          const comps = Array.isArray(value) ? value : [value as number];
+          const count = slot.kind === 'ivec2' ? 2 : slot.kind === 'ivec3' ? 3 : 4;
+          for (let c = 0; c < count && c < comps.length; c += 1) {
+            view.setInt32(slot.offset + c * 4, comps[c]!, true);
+          }
+        } else if (slot.kind === 'uvec2' || slot.kind === 'uvec3' || slot.kind === 'uvec4') {
+          const comps = Array.isArray(value) ? value : [value as number];
+          const count = slot.kind === 'uvec2' ? 2 : slot.kind === 'uvec3' ? 3 : 4;
+          for (let c = 0; c < count && c < comps.length; c += 1) {
+            view.setUint32(slot.offset + c * 4, comps[c]! >>> 0, true);
+          }
         } else {
-          // vec2/vec3/vec4: write the provided f32 components (e.g. `[w, h]`).
+          // vec2/vec3/vec4 f32: write the provided components (e.g. `[w, h]`).
           const comps = Array.isArray(value) ? value : [value as number];
           const count = slot.kind === 'vec2' ? 2 : slot.kind === 'vec3' ? 3 : 4;
           for (let c = 0; c < count && c < comps.length; c += 1) {
@@ -428,6 +528,9 @@ export async function initWGSLRuntime(
   // parsed layout drives BOTH the binding decision and the field offsets/types.
   const uniformLayout = parseWgslUniformLayout(wgslSource);
   const hasUniformBinding = uniformLayout.length > 0;
+  const compilerIntegrated = Boolean(declarations?.trim());
+  let fedUniformFields = collectFedWgslUniformFields(uniformLayout);
+  warnUnfedWgslUniformFields(uniformLayout, fedUniformFields, compilerIntegrated);
   const shaderModule = device.createShaderModule({ code: wgslSource });
 
   const format = nav.gpu.getPreferredCanvasFormat();
@@ -483,6 +586,8 @@ export async function initWGSLRuntime(
     const wgsl = event.detail?.wgsl as Record<string, WgslUniformValue> | undefined;
     if (wgsl) {
       latestSignal = wgsl;
+      fedUniformFields = collectFedWgslUniformFields(uniformLayout, wgsl);
+      warnUnfedWgslUniformFields(uniformLayout, fedUniformFields, compilerIntegrated);
       // Static shaders apply on the crossing (unchanged). Standard-uniform shaders
       // apply per-frame in the render loop, so the event only refreshes the snapshot.
       if (!feedsStandard) binding?.apply(wgsl);
