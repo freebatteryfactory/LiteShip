@@ -133,6 +133,38 @@ URL parser strips them, so a naive `startsWith` is bypassable). Never add a seco
 authority or a second unguarded `innerHTML` path. New platform primitives (QUERY, DPU)
 are adopted _under_ these seams, never beside them.
 
+### 16. Completeness is machine-defined — "done" is a green gate, not a model's word
+
+An **active** modeled surface whose load-bearing fields no interpreter/lowerer/runtime
+path reads is a **blocking** Finding — dead data inside a live type (a `TransitionNode`
+with `routing`/`durationMs` that nothing reads). Do not phase a declaration ahead of its
+consumer; that is how orphaned turtles are born. "Done" is not a doc, an issue, or an
+agent saying so — it is: the compiler names the types, the gauntlet proves the fields are
+read, and a **red fixture reproduces the orphan** the gate prevents. No default cases on
+must-handle unions (exhaustive + `assertNever` → an unhandled arm is a red compiler). The
+obligation list **derives from the type unions and exported source** — never a
+hand-maintained second list of symbol names (that is a drift-prone mirror; where a
+contract must name a symbol, reference the real imported symbol, not a string).
+
+**Mechanical certainties block; heuristics advise.** A field-level orphan blocks; a
+high-ambition/low-proof smell is a diagnostic/watch until it becomes mechanical. That line
+keeps the gauntlet a seatbelt, not a cage — which is the whole point of the rigor
+taxonomy (name a thing by what it may do, so not everything becomes an "invariant"):
+
+- **Law** — never break (security, graph identity, validation, no silent drift); blocking.
+- **Contract** — a public/accepted promise; blocking when violated.
+- **Receipt** — evidence that something happened.
+- **Diagnostic** — a loud signal; not always blocking.
+- **Watch item** — a known risk under observation; promotable to Law.
+- **Recipe** — an example; never blocks completeness.
+- **Preset** — data over canonical intent; never behavior authority.
+
+Reuse the engine, sharpen the oracle: the gauntlet already has the authority ratchet
+(gates earn blocking only via red/green/mutation fixtures), FactGate, the evidence
+recorder, and symbol-level orphan detection. The gap is field-level — see #132. And the
+gate proves **wired, not correct**: semantic correctness stays with red-green + a
+differential oracle, never the compiler alone.
+
 ---
 
 ## Operating hazards (workstation safety)

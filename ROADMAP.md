@@ -483,8 +483,10 @@ proposal — and would mirror the existing `graphMutationRoute`
 
 The keystone direction, from the convergence of a four-agent repo deep-read and two
 external passes — all three landed on the same finding independently. Full
-impl-ready spec lives in `docs/internal/design-authored-motion-state.md` (local
-working note; graduates to ADR-0035 when the taxonomy decision is ratified).
+impl-ready spec lives in `docs/internal/design-authored-motion-state.md`
+(committed working note — `docs/internal/` is normally local, force-committed here
+because a canonical doc references it; graduates to ADR-0035 when the taxonomy
+decision is ratified).
 Tracked as epic **#130**; taxonomy decision **#131**; children **#124**
 (reveal/stagger), **#126** (scroll-timeline); sibling **#125** (responsive-media).
 
@@ -550,14 +552,27 @@ backplane; QUERY (#119) + GraphMutation are the collaborative-editing sync
 skeleton; DPU (#120) is the future live-preview path. Each is a follow-on *after* the
 motion/state spine proves — not a parallel build.
 
-**Proposed doctrine — the rigor taxonomy** (candidate for `SKILL.md`, pending owner
-signoff): **Law** (never break: security, graph identity, validation, no silent
+**Doctrine — the rigor taxonomy** (now in `SKILL.md` §16): **Law** (never break: security, graph identity, validation, no silent
 drift) · **Contract** (public API promise) · **Receipt** (evidence) · **Diagnostic**
 (loud, not always blocking) · **Watch item** (known risk) · **Recipe** (example, not
 law) · **Preset** (data over intent, not behavior authority). The cure for "models
 call everything an invariant and cage the product" — only Laws are inviolable; rigor
 is a seatbelt that lets the product carry more expressive UI/media safely, not a
 speed limiter.
+
+**Completeness gate (do not build a FeatureContract subsystem).** The gauntlet/audit
+machinery already has the authority ratchet (gates earn blocking only via
+red/green/mutation fixtures, `authority.ts`), FactGate, the evidence recorder,
+`ambition-proof` (the advisory high-ambition/low-proof heat map), and symbol-level
+orphan detection (`audit` `OrphanCoverage`). The missing oracle is **field-level**:
+an *active* modeled surface must have readers for its load-bearing fields, else a
+blocking Finding — a `TransitionNode` with `routing`/`durationMs` that no interpreter
+reads is dead data in a live type. First red fixture is the current repo state.
+Mechanical certainties block; heuristics advise. Tracked as **#132** (the acceptance
+gate for #130 — "done" = this gate green). Obligations derive from the `NodeFamily`
+union + a status tag, never a hand-maintained string mirror. `@czap/audit` produces
+the field-reader facts; `@czap/gauntlet` decides over them (no `typescript` dep in
+gauntlet); ast-grep is a fast smoke detector, not the authority.
 
 ## Completed Since Last Revision (2026-05-17)
 
