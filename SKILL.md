@@ -165,6 +165,21 @@ recorder, and symbol-level orphan detection. The gap is field-level — see #132
 gate proves **wired, not correct**: semantic correctness stays with red-green + a
 differential oracle, never the compiler alone.
 
+**Lean on the compiler first — the gate is the backstop, not the front line.** Push each
+completeness obligation as high as it will go before it becomes a gauntlet fact: make it
+_unrepresentable_ (a node family you can't add to the union without its interpreter case;
+a signal typed `discrete | continuous` so a continuous value cannot type-pass into a
+replay path — which makes the old-brain "widen the SSE replay payload" fix _uncompilable_),
+then _uncompilable_ (exhaustive unions + `assertNever`; a typed `dispatchCzapEvent(name,
+detail)` over a source-derived event union, so a fabricated event name like
+`czap:stream-reconnecting` is a compile error, not a shipped bug), and only then
+_unmergeable_ (#132 reachability, for the cross-module cases types can't see). **Generate**
+docs and wire-contracts from the typed source so drift is impossible by construction —
+never a prose mirror to police. Keep the types load-bearing and readable: a type-level
+metaprogramming cathedral is its own ceremony. The proof-brain asks not "did a test pass"
+but "is every active modeled surface completed by a reader/projection" — **projection must
+complete.**
+
 ---
 
 ## Operating hazards (workstation safety)
