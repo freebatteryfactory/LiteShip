@@ -38,24 +38,23 @@ describe('activeModeledSurfaceReaderGate — field-level orphan (#132)', () => {
   });
 });
 
-describe('buildActiveSurfaceFacts — live repo TransitionNode orphan (advisory)', () => {
-  it('detects routing/durationMs unread in enrolled reader paths', () => {
-    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'advisory' });
+describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', () => {
+  it('reads all four TransitionNode fields in enrolled reader paths', () => {
+    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'blocking' });
     const transition = facts.surfaces.find((s) => s.family === 'transition');
     expect(transition).toBeDefined();
     expect(transition?.active).toBe(true);
     expect(transition?.readFields).toContain('fromPose');
     expect(transition?.readFields).toContain('toPose');
-    expect(transition?.unreadFields).toContain('routing');
-    expect(transition?.unreadFields).toContain('durationMs');
-    expect(transition?.promotion).toBe('advisory');
+    expect(transition?.readFields).toContain('routing');
+    expect(transition?.readFields).toContain('durationMs');
+    expect(transition?.unreadFields).toHaveLength(0);
   });
 
-  it('live orphan folds to advisory (does not block main)', () => {
-    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'advisory' });
+  it('live repo emits no findings when all fields are read (blocking promotion)', () => {
+    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'blocking' });
     const ctx = { repoRoot: REPO_ROOT, readFile: () => undefined, files: () => [], activeSurfaceFacts: facts };
     const findings = activeModeledSurfaceReaderGate.run(ctx);
-    expect(findings.length).toBeGreaterThanOrEqual(1);
-    expect(findings.every((f) => f.severity === 'advisory')).toBe(true);
+    expect(findings).toHaveLength(0);
   });
 });

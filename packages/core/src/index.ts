@@ -113,6 +113,19 @@ export { Easing } from './easing.js';
 // Animation
 export { Animation } from './animation.js';
 
+// Typed interpolation + TransitionNode interpreter (#130 children 1–2)
+export { interpolate, interpolateTyped, parseTypedBinding, formatTypedValue } from './interpolate.js';
+export type { TypedValue, TransformPart } from './interpolate.js';
+export { interpretTransition } from './interpret-transition.js';
+export type {
+  LoweredMotionPlan,
+  CssMotionPlan,
+  RuntimeWritePlan,
+  RuntimeWriteProperty,
+  MotionPropertyTween,
+  CssKeyframeStep,
+} from './interpret-transition.js';
+
 // Timeline
 export { Timeline } from './timeline.js';
 
