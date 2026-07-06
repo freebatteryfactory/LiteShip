@@ -273,6 +273,7 @@ export function scopeContextByLevel(
     // them — the same scoped-context drop (the codeOnly drop, the mutation drop) the
     // pass-throughs above fix.
     ...(context.skipSites !== undefined ? { skipSites: context.skipSites } : {}),
+    ...(context.activeSurfaceFacts !== undefined ? { activeSurfaceFacts: context.activeSurfaceFacts } : {}),
   };
 }
 

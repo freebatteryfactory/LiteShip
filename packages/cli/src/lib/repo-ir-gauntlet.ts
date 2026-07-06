@@ -44,6 +44,7 @@ import {
   parseEquivalentMutants,
   buildRepoIRTaint,
   buildCapabilityLinkFacts,
+  buildActiveSurfaceFacts,
   type EquivalentMutantRegistry,
 } from '@czap/audit';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
@@ -60,6 +61,7 @@ import {
   capabilityGateLinkGate,
   proofPropagationGate,
   compositionCoverageGate,
+  activeModeledSurfaceReaderGate,
   LITESHIP_IR_GATES,
   type Fact,
   type FileId,
@@ -77,6 +79,7 @@ import {
   type StandardsIntegrityFacts,
   type ProofFacts,
   type CompositionFacts,
+  type ActiveSurfaceFacts,
 } from '@czap/gauntlet';
 import { buildProofFacts, buildCompositionFacts } from './local-vs-global.js';
 import { buildTraceabilityFacts } from './traceability.js';
@@ -454,6 +457,12 @@ export async function runGauntletWithRepoIR(
     compositionFacts = buildCompositionFacts(repoRoot, ir);
   }
 
+  // The active-surface field-read oracle (#132) is ALWAYS-ON on the `--ir` path:
+  // the host scans enrolled reader paths with TS-AST (cheap) and injects facts for
+  // `activeModeledSurfaceReaderGate`. Live TransitionNode orphan is advisory until #130.
+  gateSet.push(activeModeledSurfaceReaderGate);
+  const activeSurfaceFacts: ActiveSurfaceFacts = buildActiveSurfaceFacts({ repoRoot, promotion: 'advisory' });
+
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,
     // The SOUND AST skip detector — ALWAYS-ON on the `--ir` path (the host deps `@czap/audit`, the
@@ -482,6 +491,7 @@ export async function runGauntletWithRepoIR(
     ...(capabilityLinkFacts !== undefined ? { capabilityLink: capabilityLinkFacts } : {}),
     ...(proofFacts !== undefined ? { proof: proofFacts } : {}),
     ...(compositionFacts !== undefined ? { composition: compositionFacts } : {}),
+    activeSurfaceFacts,
   };
   const effectiveGlobs = globs ?? DEFAULT_GAUNTLET_GLOBS_SENTINEL;
   return effectiveGlobs === DEFAULT_GAUNTLET_GLOBS_SENTINEL

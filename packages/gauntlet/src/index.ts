@@ -323,6 +323,12 @@ export { noDefaultExportDivergenceGate } from './gates/no-default-export-diverge
 export { noVarDivergenceGate } from './gates/no-var-divergence.js';
 export { noRequireDivergenceGate } from './gates/no-require-divergence.js';
 export { symbolOrphanDivergenceGate } from './gates/symbol-orphan-divergence.js';
+export { activeModeledSurfaceReaderGate, decideActiveSurfaceReaders } from './gates/active-modeled-surface-reader.js';
+export {
+  type ActiveSurfaceFacts,
+  type ActiveSurfaceEntry,
+  type ActiveSurfacePromotion,
+} from './active-surface-facts.js';
 export { crdtLawsGate } from './gates/crdt-laws.js';
 
 // The avionics-tier (Slice C) performance-contracts gate — a LEAN, deterministic
