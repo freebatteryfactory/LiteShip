@@ -485,8 +485,8 @@ The keystone direction, from the convergence of a four-agent repo deep-read and 
 external passes — all three landed on the same finding independently. Full
 impl-ready spec lives in `docs/internal/design-authored-motion-state.md`
 (committed working note — `docs/internal/` is normally local, force-committed here
-because a canonical doc references it; graduates to ADR-0035 when the taxonomy
-decision is ratified).
+because a canonical doc references it; ratified as ADR-0035 —
+`docs/adr/0035-motion-is-intent-not-target.md`).
 Tracked as epic **#130**; taxonomy decision **#131**; children **#124**
 (reveal/stagger), **#126** (scroll-timeline); sibling **#125** (responsive-media).
 
@@ -495,8 +495,8 @@ Tracked as epic **#130**; taxonomy decision **#131**; children **#124**
 competes with Webflow/Flash by owning the authoring model, projection graph,
 runtime, media surfaces, AI-safe patch seam, and compiler — not a button zoo. The
 "projection truth engine" framing was academic smoke; the honest boundary is
-"no component zoo," not "not a UI framework." (Tagline change to the doc chain is a
-docs-sacred edit pending owner signoff on exact wording.)
+"no component zoo," not "not a UI framework." (Tagline threaded through README /
+ARCHITECTURE / SKILL 2026-07-06; ratified as ADR-0035.)
 
 **The keystone (named in source):** `TransitionNode` is typed, content-addressed,
 and in the graph — and **nothing reads it**. `graph-lower.ts` lowers `PoseNode`s to

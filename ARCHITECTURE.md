@@ -2,6 +2,8 @@
 
 The structural map: what the pieces are and how they fit. This doc explains the system on its own — the ADRs record *why* each choice was made, but you shouldn't need them to understand it.
 
+**LiteShip is a multimedia-native adaptive UI compiler/runtime — not a component library.**
+
 *LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection), distributed as `@czap/*` packages on npm.*
 
 Prose vocabulary: [GLOSSARY.md](./GLOSSARY.md).
@@ -112,7 +114,7 @@ Fast paths fall back honestly past their regime — `DirtyFlags` past 31 keys (`
 
 ## Architectural decisions
 
-Full index + accepted set (0001–0033): [`docs/adr/README.md`](./docs/adr/README.md).
+Full index + accepted set (0001–0035; 0034 reserved): [`docs/adr/README.md`](./docs/adr/README.md).
 
 Capsule factory + video stack: [CAPSULE-FACTORY.md](./CAPSULE-FACTORY.md).
 

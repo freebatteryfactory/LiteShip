@@ -8,6 +8,8 @@ Your UI only needs a few states out: mobile/tablet/desktop, light/dark, reduced/
 
 From one definition, the system can emit a CSS variable, a GLSL preamble, an ARIA attribute on the body, an AI manifest, and a TypeScript union. Same boundary, five surfaces, no silent drift between projection layers. Every output is computed from a content address of the definition, so if it renders right once, it renders right everywhere — the engine can prove it ([ADR-0003](./docs/adr/0003-content-addressing.md)).
 
+**LiteShip is a multimedia-native adaptive UI compiler/runtime — not a component library.** The host owns the UI; LiteShip owns the adaptive state and compiles it to every surface.
+
 *LiteShip — powered by the CZAP engine (Content-Zoned Adaptive Projection, "see-zap"), distributed as `@czap/*` packages on npm.* The nautical vocabulary the deeper docs use (rig, signal, bearing, cast, surface) lives in [GLOSSARY.md](./GLOSSARY.md) — you don't need it for the quick start.
 
 This is a real pre-1.0 hull being hardened on dogfooded sites and a CRM UI.

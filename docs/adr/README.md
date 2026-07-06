@@ -43,6 +43,8 @@ Prose vocabulary: [../GLOSSARY.md](../../GLOSSARY.md).
 | [0031](./0031-form-mutation-binding-primitive.md) | Mutation clients and form bindings are rigging, not components | Accepted |
 | [0032](./0032-morph-opaque-subtrees.md) | Morph-opaque subtrees are diff-isolated, not trust-exempt | Accepted |
 | [0033](./0033-standard-schema-interop.md) | DocumentGraphNodeSchema carries Standard Schema V1 | Accepted |
+| 0034 | *(reserved — QUERY write-sink-unreachability gate; not yet written)* | Proposed |
+| [0035](./0035-motion-is-intent-not-target.md) | Motion is an authored intent, not a projection target | Accepted |
 
 ## Template
 

@@ -9,8 +9,8 @@ Read it before you change engine code, records, or docs. It is deliberately abou
 _how to reason here_, not _where things live_ — for that, start at
 [AGENTS.md](./AGENTS.md) → [DOCS.md](./DOCS.md).
 
-The through-line: **LiteShip is an adaptive projection engine whose mortal enemy is
-silent drift.** One definition projects to CSS, GPU, ARIA, TypeScript, AI manifests,
+The through-line: **LiteShip is a multimedia-native adaptive UI compiler/runtime — not
+a component library — whose mortal enemy is silent drift.** One definition projects to CSS, GPU, ARIA, TypeScript, AI manifests,
 and SSR. The dangerous failure is never a crash — it is one surface quietly ceasing
 to match another while the UI smiles like nothing is wrong. Every law below is a way
 of refusing that.
