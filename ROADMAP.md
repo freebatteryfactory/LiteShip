@@ -431,13 +431,30 @@ plumbing/types — not to nerf the claim. Nerf only what is wrong in intent.
   baseline (re-capture from a fresh gauntlet). Confirm exact placement before
   writing — docs are sacred.
 
-**Forgotten-from-memory (verified against source; minor / decisions):**
+**Forgotten-from-memory (cross-ref against memory, source-traced):**
 
-- **WGSL integer/unsigned vector coercion.** `vec2i`/`vec2<u32>` may silently
-  coerce to float (PR #94 re-review). Possibly partly addressed already —
-  `packages/compiler/src/wgsl.ts:21-26` now defines `u32`/`vec2i` and infers
-  `i32`/`u32` for scalars. **Owner source-check needed** before filing; this is
-  the only cross-ref item not yet source-confirmed either way.
+- **WGSL integer/unsigned vector uniforms mis-laid-out and mis-written
+  (CONFIRMED 2026-07-06, source-traced).** Scalars are fine end-to-end — the
+  compiler infers `i32`/`u32` (`packages/compiler/src/wgsl.ts:120-122`) and the
+  runtime writes them via `setUint32` (`packages/astro/src/runtime/wgpu.ts:292`).
+  The gap is integer/unsigned *vectors*: `wgslTypeInfo` (`wgpu.ts:169-185`) has
+  cases only for `vecNf`, so `vec2i`/`vec3i`/`vec4i` and the
+  `vec2<u32>`/`vec2<i32>` spellings fall to `default` →
+  `{ align: 4, size: 4, kind: 'float' }`. Three failures at once: (1) layout — a
+  `vec2i` is 8 B / 8-align, a `vec4i` 16 B, so 4/4 under-sizes the field and
+  miscomputes every later field's offset; (2) write — `kind: 'float'` routes to
+  `setFloat32(offset, value as number)` (`wgpu.ts:294`) but the value is an
+  array, so `[x,y] as number` → NaN; (3) silent — the `default` swallows the
+  unknown type with no warning. Not reachable via inference (the compiler only
+  emits `vecNf`, `wgsl.ts:114-117`); reachable only through a hand-authored
+  `@wgsl` struct field — the same surface as the unfed-uniform finding. Fix,
+  loud-first: (a) `warnOnce` in the `default` branch on any unrecognized uniform
+  type (converts the whole class to loud even before support lands); (b) add
+  `wgslTypeInfo` cases for the integer-vector types with correct align/size +
+  integer kinds, and per-component `setInt32`/`setUint32` write branches
+  (`wgpu.ts:296-301`). Compiler side needs no change. Aside: `bool` is in the
+  `WGSLType` union but isn't host-shareable in a uniform buffer; it also falls to
+  `default` — reject it explicitly.
 - **`audit --findings` stdout/stderr contract.** The flag puts findings on stdout
   + receipt on stderr, diverging from the CLI's "one JSON receipt on stdout"
   contract. A 1.0 API-stability decision to settle, not a bug.
