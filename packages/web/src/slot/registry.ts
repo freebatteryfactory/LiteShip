@@ -7,6 +7,7 @@
 import { Effect } from 'effect';
 import type { Scope } from 'effect';
 import type { SlotPath, SlotEntry, SlotEntryInput, IslandMode } from '../types.js';
+import { dispatchCzapEvent } from '../wire/dispatch.js';
 import { Diagnostics } from '@czap/core';
 import { SlotAddressing, SlotPath as mkSlotPath } from './addressing.js';
 
@@ -80,24 +81,17 @@ export const create = (): SlotRegistryShape => {
         return;
       }
       registry.set(normalized.path, normalized);
-      normalized.element.dispatchEvent(
-        new CustomEvent('czap:slot-mounted', {
-          detail: { path: normalized.path, mode: normalized.mode },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(normalized.element, 'czap:slot-mounted', {
+        path: normalized.path,
+        mode: normalized.mode,
+      });
     },
 
     /** Unregisters a slot. Dispatches `czap:slot-unmounted` on document (element may be detached). */
     unregister: (path: SlotPath) => {
       const entry = registry.get(path);
       registry.delete(path);
-      document.dispatchEvent(
-        new CustomEvent('czap:slot-unmounted', {
-          detail: { path, mode: entry?.mode },
-          bubbles: true,
-        }),
-      );
+      dispatchCzapEvent(document, 'czap:slot-unmounted', { path, mode: entry?.mode });
     },
 
     has: (path: SlotPath) => registry.has(path),

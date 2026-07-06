@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { REPO_ROOT, renderPackagesBlock, renderExamplesBlock } from './lib/doc-registry.js';
 import { renderBenchBlock } from './lib/bench-snapshot.js';
+import { renderWireContractDoc } from '../packages/web/src/wire/render-contract-doc.js';
 
 interface Block {
   readonly name: string;
@@ -26,6 +27,11 @@ const BLOCKS: readonly Block[] = [
   { name: 'PACKAGES', file: 'ARCHITECTURE.md', render: renderPackagesBlock },
   { name: 'EXAMPLES', file: 'README.md', render: renderExamplesBlock },
   { name: 'BENCH', file: 'README.md', render: renderBenchBlock },
+  {
+    name: 'WIRE-CONTRACT',
+    file: 'packages/web/README.md',
+    render: renderWireContractDoc,
+  },
 ];
 
 /** Replace the inner content of one delimited block; throws if the markers are absent. */

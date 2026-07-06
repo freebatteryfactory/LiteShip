@@ -1,4 +1,4 @@
-import { SlotRegistry } from '@czap/web';
+import { SlotRegistry, dispatchCzapEvent } from '@czap/web';
 import type { DirectiveName } from './directive-boot.js';
 import { readRuntimeGlobal, writeRuntimeGlobal } from './globals.js';
 
@@ -167,7 +167,7 @@ export function bootstrapSlots(): SlotRegistry.Shape {
  */
 export function reinitializeDirectives(): void {
   document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:reinit', { bubbles: true }));
+    dispatchCzapEvent(element, 'czap:reinit');
   });
 }
 
@@ -179,6 +179,6 @@ export function reinitializeDirectives(): void {
  */
 export function teardownDirectives(): void {
   document.querySelectorAll<HTMLElement>(REINIT_SELECTOR).forEach((element) => {
-    element.dispatchEvent(new CustomEvent('czap:teardown', { bubbles: true }));
+    dispatchCzapEvent(element, 'czap:teardown');
   });
 }

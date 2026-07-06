@@ -11,6 +11,7 @@
 
 import { Diagnostics } from '@czap/core';
 import type { DocumentGraph, GraphMutationClient, GraphMutationResponse, PatchOp } from '@czap/core';
+import { dispatchCzapEvent } from '../wire/dispatch.js';
 
 /** Wiring for {@link bindGraphForm}: the channel client, the host's ops projection, and an optional outcome hook. */
 export interface BindGraphFormOptions {
@@ -75,7 +76,7 @@ export function bindGraphForm(form: HTMLFormElement, options: BindGraphFormOptio
             detail: { message: error instanceof Error ? error.message : String(error) },
           });
         }
-        form.dispatchEvent(new CustomEvent('czap:mutation', { detail: response, bubbles: true }));
+        dispatchCzapEvent(form, 'czap:mutation', response);
       });
   };
 

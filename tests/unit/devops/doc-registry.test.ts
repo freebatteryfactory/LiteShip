@@ -23,11 +23,13 @@ import {
   NO_SURFACE_SECTION,
 } from '../../../scripts/lib/doc-registry.js';
 import { renderBenchBlock } from '../../../scripts/lib/bench-snapshot.js';
+import { renderWireContractDoc } from '../../../packages/web/src/wire/render-contract-doc.js';
 
 // Normalize CRLF so a Windows checkout (autocrlf) doesn't fail the block match
 // against the `\n`-joined render output.
 const README = readFileSync(resolve(REPO_ROOT, 'README.md'), 'utf8').replace(/\r\n/g, '\n');
 const ARCHITECTURE = readFileSync(resolve(REPO_ROOT, 'ARCHITECTURE.md'), 'utf8').replace(/\r\n/g, '\n');
+const WEB_README = readFileSync(resolve(REPO_ROOT, 'packages/web/README.md'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Extract the inner content of a `<!-- BEGIN NAME ... --> ... <!-- END NAME -->` block. */
 function blockInner(name: string, source: string = README): string {
@@ -46,6 +48,9 @@ describe('doc-registry — generated blocks match their source of truth', () => 
   });
   it('the BENCH block matches a regenerate from benchmarks/readme-snapshot.json', () => {
     expect(blockInner('BENCH')).toBe(renderBenchBlock());
+  });
+  it('the WIRE-CONTRACT block (in packages/web/README.md) matches a regenerate (run `pnpm run docs:gen`)', () => {
+    expect(blockInner('WIRE-CONTRACT', WEB_README)).toBe(renderWireContractDoc());
   });
 });
 
