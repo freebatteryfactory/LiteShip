@@ -574,6 +574,36 @@ union + a status tag, never a hand-maintained string mirror. `@czap/audit` produ
 the field-reader facts; `@czap/gauntlet` decides over them (no `typescript` dep in
 gauntlet); ast-grep is a fast smoke detector, not the authority.
 
+**New-brain re-frame of the upstream ledger (2026-07-06).** A dogfood consumer
+(signals-only feed) surfaced three stream gaps; re-examined from where LiteShip is
+going, not where it is now. **Load-bearing reframe: stop treating stream resumption
+as its own recovery protocol — it is the same problem as multi-client collab-sync.**
+The mutation channel (`graph-mutation-client.ts`: `currentBase`/`adopt`/`refreshBase`,
+`GraphPatch` base/result identity + chained receipts) is already a content-addressed,
+receipt-carrying replay machine; the QUERY read-leg (#119) is its read side. The
+**discrete/continuous law is the replay discriminator**: only discrete crossings are
+replayable graph events; continuous transients (`scroll.progress`/`pointer`/`audio`/
+`time`) are correctly ephemeral and must NOT replay. So:
+- **#133 (signal gap-replay):** do NOT widen the SSE `{ patches }` payload to carry
+  signals — that manufactures a divergent second substrate AND blindly replays
+  ephemeral transients. Interim: wire the dead `czap:request-snapshot` to
+  `refreshBase`/`adopt` + snapshot re-sync for missed discrete crossings. Full: signals
+  as `StateCell`s, patch/receipt-chain replay via #119. The consumer's app-side "WO-8"
+  is the workaround until this is native.
+- **#134 (wire-contract):** the `czap:*`/`data-czap-*` contract has zero docs coverage
+  → GENERATE it from a source registry + drift guard (ADR-0028/0018 pattern), never a
+  hand-written page (SKILL §16). Same issue folds gap-3: fix the stale "back-compat"
+  docstring — ADR-0028 already decided plain-element `client:*` is first-class.
+- **Old-brain corrections applied:** #122's "…or remove it" options for
+  `ResumptionConfig.timeout` and `czap:request-snapshot` were struck (both are
+  unfinished features, not dead code — complete-don't-nerf); #119 reframed from a
+  "polling perf nicety" to the collab-sync/gap-replay substrate.
+- **Motion-epic-shaped (build per #130, not standalone):** #112 (node builder, a
+  lowering prerequisite), #118 (SSR receipt = proto-`ProjectionState`), #108 (tiers
+  struct = typed-state-authority down-payment), #110 (`@quantize` nesting = decide with
+  the `MotionCompiler` arm). **Subsumed:** #104 scroll-warning + batch-2 scroll story →
+  #126.
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
