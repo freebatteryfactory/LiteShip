@@ -77,6 +77,15 @@ export type { StyleCSSResult } from './style-css.js';
 
 export { ComponentCSSCompiler } from './component-css.js';
 
+export { MotionCompiler } from './motion.js';
+export type {
+  MotionCompileInput,
+  MotionCompileResult,
+  MotionEasing,
+  MotionSpringConfig,
+  MotionViewTimeline,
+} from './motion.js';
+
 // ── Capsule declarations — cast-compiler hardening (property + bench + budget) ──
 // Concrete `pureTransform` instances of the 7-arm capsule factory, exported here
 // so they register in the live `getCapsuleCatalog()` and the type-directed

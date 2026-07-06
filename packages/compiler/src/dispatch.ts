@@ -19,6 +19,8 @@ import { GLSLCompiler } from './glsl.js';
 import { WGSLCompiler } from './wgsl.js';
 import { ARIACompiler } from './aria.js';
 import { AIManifestCompiler } from './ai-manifest.js';
+import { MotionCompiler } from './motion.js';
+import type { MotionCompileInput, MotionCompileResult } from './motion.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Compiler-specific state types
@@ -84,6 +86,7 @@ const ConfigTemplateCompiler = {
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
  * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
+ * - `MotionCompiler`  — a {@link CssMotionPlan} → `@property` / `@keyframes` / transitions.
  */
 export type CompilerDef =
   | {
@@ -97,7 +100,8 @@ export type CompilerDef =
   | { readonly _tag: 'WGSLCompiler'; readonly boundary: Boundary.Shape; readonly states: WGSLStates }
   | { readonly _tag: 'ARIACompiler'; readonly boundary: Boundary.Shape; readonly states: ARIAStates }
   | { readonly _tag: 'AICompiler'; readonly manifest: AIManifestInput }
-  | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape };
+  | { readonly _tag: 'ConfigCompiler'; readonly config: Config.Shape }
+  | { readonly _tag: 'MotionCompiler'; readonly input: MotionCompileInput };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CompileResult — discriminated by target string
@@ -115,7 +119,8 @@ export type CompileResult =
   | { readonly target: 'wgsl'; readonly result: WGSLCompileResult }
   | { readonly target: 'aria'; readonly result: ARIACompileResult }
   | { readonly target: 'ai'; readonly result: AIManifestCompileResult }
-  | { readonly target: 'config'; readonly result: ConfigTemplateResult };
+  | { readonly target: 'config'; readonly result: ConfigTemplateResult }
+  | { readonly target: 'motion'; readonly result: MotionCompileResult };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dispatch
@@ -182,6 +187,8 @@ export function dispatch(def: CompilerDef): CompileResult {
       return { target: 'ai', result: AIManifestCompiler.compile(def.manifest) };
     case 'ConfigCompiler':
       return { target: 'config', result: ConfigTemplateCompiler.compile(def.config) };
+    case 'MotionCompiler':
+      return { target: 'motion', result: MotionCompiler.compile(def.input) };
     default:
       // Statement-level exhaustiveness guard (the twin of the type-level
       // narrowing above): every arm is handled, so `def` is `never` here and
