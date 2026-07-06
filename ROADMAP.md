@@ -214,6 +214,43 @@ work; every claim below re-verified against source before recording):
   that pairing (timeline rides the compiled state machine, reduced-motion
   guarded) is the shape a first-party primitive should take.
 
+Third batch (2026-07-05, same production site — agent-tooling + doctor gaps;
+premises re-verified, one corrected):
+
+- **Docs-MCP — highest value, pattern proven downstream:** the consumer lost
+  time assuming `@czap/mcp-server` was a docs server (it exposes the czap
+  COMMAND catalog — its README says so in line one, but the package name
+  invites the misread; one "what this is not" line is cheap insurance), then
+  hand-built a stateless Streamable-HTTP docs MCP (list/search/get_doc +
+  `docs://` resources) over an R2-hosted bundle. Premise correction from
+  source: NO first-party docs-bundle generator exists (`docs:gen` fills
+  README registry blocks only; the command catalog has no docs verb) — so
+  the upstream shape is two parts, not one: a docs-bundle emitter plus a
+  bundle→`/mcp` endpoint helper, making every czap docs site agent-callable
+  for free. The consumer's working reference impl is the design input.
+- **Boundary-shadowing diagnostic — the consumer's crown bug, still
+  unfiled (tracker checked: only #104/#105 exist):** a hand-authored
+  `@media`/`@container` rule at equal specificity, loading after the
+  boundary's inline `<style>`, silently overrode it — layout flipped at the
+  wrong breakpoint while JS reported the right state. No specificity or
+  shadowing lint exists anywhere in vite/audit. Candidate: a dev-time
+  diagnostic — "non-boundary rule shadows boundary `<id>` output at equal
+  specificity" — closing a whole class of silent failure.
+- **Workers module-scope Date probe:** module-scope `new Date()`/`Date.now()`
+  in Workers reads frozen/epoch time (the 1970 bug, hit live on a czap
+  site). The engine-side clock law exists (doctor's own timestamp is
+  wallClock-injected, `packages/cli/src/commands/doctor/doctor.ts:67`) but
+  no consumer-facing doctor/audit probe flags top-level ambient time reads
+  in Workers-targeted code.
+- **`czap doctor --deployed <url>` — doctor names this gap itself:**
+  `packages/cli/src/commands/doctor/probes-cloudflare.ts:295-298` emits the
+  'CSP / isolation' probe as `advisory — doctor cannot read deployed
+  response headers` with only a static hint (worker-src/connect-src +
+  COOP/COEP for `client:worker`). A `--deployed` mode that fetches the live
+  site and verifies CSP/COOP/COEP — and the Accept-CH/Critical-CH pair while
+  it's there — closes the self-admitted gap and operationalizes the
+  verify-production-not-dev lesson.
+
 Honest scope note: neither consumer exercises the mutation channel or
 `bindGraphForm` yet — the dashboard's graph-write plane is its next build. The
 doc-05 loop closes when the dashboard ships ON the new primitives, not merely
