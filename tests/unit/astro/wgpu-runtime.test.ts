@@ -333,6 +333,11 @@ const TIME_SHADER =
   '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
   '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(s.u_time); }';
 
+// Compiler-integrated preamble — suppresses unfed-uniform warnings for boundary-fed fields.
+const UNIFORM_DECLARATIONS =
+  'struct BoundaryState { state_index: u32, blur_radius: f32, scale: f32, pad: f32 }\n' +
+  '@group(0) @binding(0) var<uniform> boundary_state: BoundaryState;';
+
 describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL live cast)', () => {
   it('binds detail.wgsl field values into the uniform buffer on every crossing', async () => {
     const harness = makeGpuHarness();
@@ -341,7 +346,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
     expect(dispose).not.toBeNull();
     // The render loop binds group 0 each frame (the shader declares @binding(0)).
     expect(harness.calls.bindGroups[0]).toBe(0);
@@ -381,7 +386,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
     const writesBefore = harness.calls.bufferWrites.length;
     // No `wgsl` key → the handler is a no-op (no extra buffer write).
     el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { glsl: { u_layout: 1 } } }));
@@ -416,7 +421,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     const { canvas } = makeCanvas(true);
     const el = document.createElement('div');
 
-    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
     el.dispatchEvent(new CustomEvent('czap:uniform-update', { detail: { wgsl: { scale: 7.5 } } }));
     const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
     expect(dv.getFloat32(8, true)).toBe(7.5); // scale → declared slot 2 (offset 8)
@@ -460,7 +465,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
 
     // UNIFORM_SHADER declares no u_time, so the per-frame feed stays off and the
     // event-only write path is preserved (no per-frame perf cost / no churn).
-    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el);
+    const dispose = await initWGSLRuntime(canvas, UNIFORM_SHADER, el, UNIFORM_DECLARATIONS);
     const writesAfterInit = harness.calls.bufferWrites.length;
     frames[0]!();
     frames[1]!();
@@ -507,7 +512,11 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
       '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
       '@fragment fn fs_main() -> @location(0) vec4<f32> { return s.color + vec4<f32>(s.uv, s.normal.x, 0.0); }';
 
-    const dispose = await initWGSLRuntime(canvas, VECTOR_SHADER, el);
+    const VECTOR_DECLARATIONS =
+      'struct S { state_index: u32, uv: vec2<f32>, normal: vec3<f32>, color: vec4<f32> }\n' +
+      '@group(0) @binding(0) var<uniform> s: S;';
+
+    const dispose = await initWGSLRuntime(canvas, VECTOR_SHADER, el, VECTOR_DECLARATIONS);
     expect(dispose).not.toBeNull();
 
     // Independent WGSL layout facts for this struct:
