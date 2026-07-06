@@ -479,6 +479,86 @@ verified end-to-end. The read-leg factory it implies
 proposal — and would mirror the existing `graphMutationRoute`
 (`packages/astro/src/graph-mutation-route.ts`; 415/400/422 discipline).
 
+### 9. Authored Motion + Self-Managing State over DocumentGraph (2026-07-06)
+
+The keystone direction, from the convergence of a four-agent repo deep-read and two
+external passes — all three landed on the same finding independently. Full
+impl-ready spec lives in `docs/internal/design-authored-motion-state.md` (local
+working note; graduates to ADR-0035 when the taxonomy decision is ratified).
+Tracked as epic **#130**; taxonomy decision **#131**; children **#124**
+(reveal/stagger), **#126** (scroll-timeline); sibling **#125** (responsive-media).
+
+**Thesis correction (kill "not a UI framework").** LiteShip is a
+**multimedia-native adaptive UI compiler/runtime — not a *component library*.** It
+competes with Webflow/Flash by owning the authoring model, projection graph,
+runtime, media surfaces, AI-safe patch seam, and compiler — not a button zoo. The
+"projection truth engine" framing was academic smoke; the honest boundary is
+"no component zoo," not "not a UI framework." (Tagline change to the doc chain is a
+docs-sacred edit pending owner signoff on exact wording.)
+
+**The keystone (named in source):** `TransitionNode` is typed, content-addressed,
+and in the graph — and **nothing reads it**. `graph-lower.ts` lowers `PoseNode`s to
+discrete per-state channels but never consults `TransitionNode.routing`/`durationMs`.
+LiteShip is not missing an animation library; it is missing the **interpreter** that
+turns the motion data it already models into motion. The substrate is present but
+orphaned: `PoseNode` (keyframe), `TransitionNode` (tween) + `EdgeType`
+seq/par/choice (sequencing algebra), `PolicyNode` (reduced-motion/tier/budget gate),
+`Easing.springToLinearCSS` (spring→CSS `linear()`, works in miniature),
+`scene-bridge.writeContinuous` (live per-frame eased→DOM CSS-var writer, ships but
+one scalar), `@starting-style`/`@property` emission. Law already type-encoded: a
+Pose is content-addressed, per-frame transients are not → continuous writes never
+patch the graph per frame. The one real GSAP-core gap: `interpolate` is numeric-only
+(no color/unit/transform).
+
+**Step-0 decision (made): motion is an authored INTENT, not a projection target.**
+`ProjectionNode.target` (`css/glsl/wgsl/aria/ai/config/svg`), `ExportNode.carrier`
+(`astro-page/video/svg/ship-capsule/receipt`), `LadderTarget`
+(`css/glsl/wgsl/aria/ai`), and `RuntimePhase` all lack `motion` — deliberately. A
+`MotionIntent` lowers into a `css` projection plan + a runtime leaf-write plan
+(+ optional gpu/adapter). No change to any target/ladder/phase union.
+
+**The vertical slice (build this first, nothing else):** (1) typed value model
+`interpolateTyped` (fix numeric-only), (2) `TransitionNode` interpreter
+`interpretTransition` (the keystone), (3) N-property `writeContinuousMap`
+(generalize the one-scalar writer), (4) native-CSS `MotionCompiler` arm (reuse
+`springToLinearCSS` + `@starting-style`), (5) `StateCell`/`ProjectionState` — a typed
+authority over the EXISTING coarse graph/boundary/quantizer/dirty model, **NOT a new
+fine-grained reactive runtime (do not build SolidJS)**, (6) one reveal end to end as
+proof. Done = that reveal compiles from graph and runs, gauntlet-gated. Then expand.
+
+**Guardrails (Laws):** continuous-write-never-patches; sugar is data over canonical
+intent, no behavior authority (precedent: `@czap/scene` already ships
+`fade`/`pulse`/`ease`/`syncTo` sugar over primitives); native CSS first + typed
+runtime floor forever; **GSAP barred as a first-party dep** (its license restricts
+Webflow-competitive no-code animation builders — exactly this product), Motion
+(motion.dev, MIT, vanilla, no React) is the eventual optional adapter, **AOS
+absorbed not depended-on** (its data-attr+IO+CSS pattern is already LiteShip's, done
+better); WGSL honesty (**#106/#107** — unfed-uniform diagnostic + integer-vector
+mis-layout) lands **before** motion sugar, because a multimedia-native framework
+cannot ship silent shader lies.
+
+**Named "free batteries" (downstream, not yet built — recorded so they are not
+lost):** `DocumentGraph` is already the creative-document/design-file format
+(content-addressed, `GraphPatch` = undo/redo/collab/AI-edit substrate); `Component`
+is a Webflow-symbol-shaped primitive (binds boundary/styles/slots), not a React
+component; `@czap/stage` is the export dock (one graph → page + video, proven to
+share a source digest); `assets` beat/onset/waveform + `scene` beat-binding = an
+audio-reactive path (flagship demo candidate: audio-reactive adaptive landing page
+→ web + video from one graph); `cap-ladder` is a capability-aware-design product
+engine, not just a guard; `command`/`mcp-server`/docs-bundle is the AI co-author
+backplane; QUERY (#119) + GraphMutation are the collaborative-editing sync
+skeleton; DPU (#120) is the future live-preview path. Each is a follow-on *after* the
+motion/state spine proves — not a parallel build.
+
+**Proposed doctrine — the rigor taxonomy** (candidate for `SKILL.md`, pending owner
+signoff): **Law** (never break: security, graph identity, validation, no silent
+drift) · **Contract** (public API promise) · **Receipt** (evidence) · **Diagnostic**
+(loud, not always blocking) · **Watch item** (known risk) · **Recipe** (example, not
+law) · **Preset** (data over intent, not behavior authority). The cure for "models
+call everything an invariant and cage the product" — only Laws are inviolable; rigor
+is a seatbelt that lets the product carry more expressive UI/media safely, not a
+speed limiter.
+
 ## Completed Since Last Revision (2026-05-17)
 
 **Epics #1 + #2 — hotspot sweep and advisory floor (closed 2026-06-10, PR #11).**
