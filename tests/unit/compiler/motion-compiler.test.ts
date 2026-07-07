@@ -181,6 +181,42 @@ describe('MotionCompiler', () => {
     expect(supportedBlock).toMatch(/animation-timing-function:\s*linear\(/);
   });
 
+  test('percent endpoints register @property with length-percentage syntax', () => {
+    const base = revealCssPlan();
+    const plan: CssMotionPlan = {
+      ...base,
+      properties: [
+        {
+          property: '--czap-hero-y',
+          from: { k: 'length', v: 0, unit: '%' },
+          to: { k: 'length', v: 100, unit: '%' },
+        },
+      ],
+    };
+    const result = MotionCompiler.compile({ plan });
+    expect(result.propertyRegistrations).toContain('syntax: "<length-percentage>"');
+    expect(result.propertyRegistrations).not.toMatch(/syntax: "<length>"/);
+  });
+
+  test('from-state persists in base rule outside @starting-style only', () => {
+    const plan = revealCssPlan();
+    const result = MotionCompiler.compile({ plan });
+    expect(result.raw).toMatch(/\[data-czap-boundary="hero"\] \{[^}]*opacity: 0/);
+    expect(result.startingStyle).toContain('opacity: 0');
+    expect(result.transition).toContain('[data-czap-state="after"]');
+    expect(result.transition).toContain('opacity: 1');
+  });
+
+  test('view-timeline block includes animation-fill-mode: both', () => {
+    const plan = revealCssPlan();
+    const result = MotionCompiler.compile({
+      plan,
+      viewTimeline: { range: ['entry 0%', 'cover 60%'] },
+    });
+    const supportedBlock = result.scrollTimeline.split('@supports not')[0] ?? '';
+    expect(supportedBlock).toContain('animation-fill-mode: both');
+  });
+
   test('distinct targets do not collide on @keyframes names', () => {
     const heroPlan = revealCssPlan();
     const footerPlan = {
