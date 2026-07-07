@@ -16,10 +16,12 @@ Injected inputs for [buildActiveSurfaceFacts](../functions/buildActiveSurfaceFac
 
 > `readonly` `optional` **promotion?**: `ActiveSurfacePromotion`
 
-Defined in: [audit/src/active-surface-reader.ts:47](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L47)
+Defined in: [audit/src/active-surface-reader.ts:49](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L49)
 
-When `'advisory'`, unread fields surface but do not block (live orphan until #130).
-Fixtures pass `'blocking'` to prove the ratchet's teeth.
+The live `--ir` path now injects `'blocking'` (#130 landed the `interpretTransition`
+reader, so the TransitionNode surface has readers and the gate is green at blocking).
+`'advisory'` surfaces unread fields without blocking; fixtures also pass `'blocking'`
+to prove the ratchet's teeth.
 
 ***
 

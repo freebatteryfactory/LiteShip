@@ -8,7 +8,7 @@
 
 > **interpolate**\<`T`\>(`from`, `to`, `eased`, `defaults?`): `T`
 
-Defined in: [core/src/interpolate.ts:115](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpolate.ts#L115)
+Defined in: [core/src/interpolate.ts:118](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/interpolate.ts#L118)
 
 Interpolate between two numeric records using an eased value [0..1].
 Returns a new record with each property lerped: from[k] + (to[k] - from[k]) * eased.

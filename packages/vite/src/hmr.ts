@@ -7,6 +7,8 @@
  * @module
  */
 
+import { dispatchCzapEvent } from '@czap/web';
+
 declare global {
   interface HTMLCanvasElement {
     /**
@@ -64,79 +66,30 @@ function applyCSSUpdate(boundary: string, css: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Boundary targeting
-// ---------------------------------------------------------------------------
-
-/** Resolve live satellite roots for a compiled boundary name (satelliteAttrs shape). */
-function boundaryRootsFor(boundary: string): HTMLElement[] {
-  const roots: HTMLElement[] = [];
-
-  for (const el of Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-boundary="${boundary}"]`))) {
-    roots.push(el);
-  }
-
-  for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-czap-boundary]'))) {
-    if (roots.includes(el)) continue;
-    const raw = el.getAttribute('data-czap-boundary');
-    if (!raw?.startsWith('{')) continue;
-    try {
-      const parsed = JSON.parse(raw) as { id?: string };
-      if (parsed.id === boundary) roots.push(el);
-    } catch {
-      // Malformed boundary payloads are ignored — HMR must not throw mid-dev.
-    }
-  }
-
-  for (const el of Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-satellite="${boundary}"]`))) {
-    if (!roots.includes(el)) roots.push(el);
-  }
-
-  return roots;
-}
-
-/** Dispatch uniform updates on the boundary root only — never bubble to `document`. */
-function dispatchBoundaryUniformUpdate(target: EventTarget, uniforms: Record<string, number>): void {
-  target.dispatchEvent(
-    new CustomEvent('czap:uniform-update', {
-      detail: { glsl: uniforms },
-      bubbles: false,
-    }),
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Shader Uniform Hot Update
 // ---------------------------------------------------------------------------
 
 /**
- * Update shader uniform values on canvases within the target boundary only.
+ * Update shader uniform values on all canvases that have a czap-boundary
+ * attribute matching the boundary name.
  *
- * Events are dispatched on the boundary root with `bubbles: false` so unrelated
- * `document` listeners (other GPU runtimes on the page) are not mutated.
+ * This works by dispatching a custom event that the czap runtime shader
+ * system listens for, passing the uniform map for in-place updates.
  */
 function applyUniformUpdate(boundary: string, uniforms: Record<string, number>): void {
-  const boundaryRoots = boundaryRootsFor(boundary);
+  const boundaryRoots = Array.from(document.querySelectorAll<HTMLElement>(`[data-czap-boundary="${boundary}"]`));
 
   for (const root of boundaryRoots) {
-    dispatchBoundaryUniformUpdate(root, uniforms);
+    dispatchCzapEvent(root, 'czap:uniform-update', { glsl: uniforms });
   }
 
-  const canvases = new Set<HTMLCanvasElement>();
-  for (const root of boundaryRoots) {
-    for (const canvas of Array.from(root.querySelectorAll<HTMLCanvasElement>('canvas'))) {
-      canvases.add(canvas);
-    }
-  }
-  for (const canvas of Array.from(
-    document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`),
-  )) {
-    canvases.add(canvas);
-  }
-
+  // Direct update: find canvas elements with matching boundary data attribute
+  const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>(`canvas[data-czap-boundary="${boundary}"]`));
   for (const canvas of canvases) {
     const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
     if (!gl) continue;
 
+    // Look up the program stored on the canvas element via a custom property
     const program = canvas.__czapProgram;
     if (!program) continue;
 

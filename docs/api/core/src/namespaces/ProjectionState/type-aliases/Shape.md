@@ -8,7 +8,7 @@
 
 > **Shape**\<`S`\> = [`ProjectionState`](../../../interfaces/ProjectionState.md)\<`S`\>
 
-Defined in: [core/src/state-cell.ts:345](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L345)
+Defined in: [core/src/state-cell.ts:357](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L357)
 
 Structural shape of a [ProjectionState](../../../variables/ProjectionState.md).
 

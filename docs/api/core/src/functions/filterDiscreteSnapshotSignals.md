@@ -8,7 +8,7 @@
 
 > **filterDiscreteSnapshotSignals**(`signals`): readonly `unknown`[]
 
-Defined in: [core/src/stream-recovery.ts:122](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stream-recovery.ts#L122)
+Defined in: [core/src/stream-recovery.ts:133](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/stream-recovery.ts#L133)
 
 Extract replayable discrete signal payloads from a snapshot `signals` field.
 

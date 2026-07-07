@@ -639,6 +639,13 @@ void main() {
       const detail = event.detail;
       if (!detail) return;
 
+      if (detail.uniform && detail.value !== undefined) {
+        const loc = uniforms.get(detail.uniform);
+        if (loc && typeof detail.value === 'number' && !Number.isNaN(detail.value)) {
+          setScalarUniform(detail.uniform, loc, detail.value);
+        }
+      }
+
       if (detail.glsl) {
         for (const [uniformName, value] of Object.entries(detail.glsl)) {
           const loc = uniforms.get(uniformName);
