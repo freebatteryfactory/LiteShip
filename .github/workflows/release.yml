@@ -46,7 +46,7 @@ concurrency:
 jobs:
   release-certified:
     name: Release certification (publishability gate)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     # The full gauntlet (gauntlet:full — bench / coverage / e2e /
     # timing-sensitive lanes) runs on every PR and on main via
