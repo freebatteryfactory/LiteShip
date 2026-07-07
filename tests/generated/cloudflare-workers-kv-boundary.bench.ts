@@ -1,17 +1,28 @@
 // GENERATED — do not edit by hand
 import { bench } from 'vitest';
-import * as fc from 'fast-check';
-import { cloudflareAdapterCapsule } from '../../packages/cloudflare/src/capsules/cloudflare-adapter.js';
-import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
-import { CanonicalCbor } from '../../packages/core/src/cbor.js';
-import { decode } from '../../packages/canonical/src/cbor-decode.js';
+import { Boundary } from '../../packages/core/src/boundary.js';
+import { createEdgeHostAdapter } from '../../packages/edge/src/host-adapter.js';
 
-const cap = cloudflareAdapterCapsule as { output: unknown };
-const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
-const natives = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
-let i = 0;
+const boundary = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ] as const,
+});
 
-bench(`cloudflare.workers-kv-boundary — native -> czap -> native round trip`, () => {
-  const native = natives[i++ % natives.length];
-  decode(CanonicalCbor.encode(native));
+const adapter = createEdgeHostAdapter({
+  cache: {
+    boundaryId: boundary.id,
+    precompiled: {
+      core: { css: '.hero { color: red; }', states: { mobile: {}, tablet: {}, desktop: {} } },
+    },
+  },
+});
+
+const headers = { 'sec-ch-viewport-width': '800' };
+
+bench(`cloudflare.workers-kv-boundary — EdgeHostAdapter.resolve round trip`, async () => {
+  await adapter.resolve(headers);
 }, { time: 500 });

@@ -4,13 +4,35 @@
 
 import { Bench } from 'tinybench';
 import { Effect } from 'effect';
-import { Scheduler, VideoRenderer, Compositor, Millis } from '@czap/core';
+import { Scheduler, VideoRenderer, Compositor, Boundary, Millis } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 50 });
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
+
+const widthBoundary = Boundary.make({
+  input: 'viewport.width',
+  at: [
+    [0, 'mobile'],
+    [768, 'tablet'],
+    [1024, 'desktop'],
+  ] as const,
+});
+
+function makeQuantizer(boundary: Boundary.Shape) {
+  let currentState = boundary.states[0] as string;
+  return {
+    boundary,
+    state: Effect.succeed(currentState),
+    changes: null as never,
+    evaluate(value: number) {
+      currentState = Boundary.evaluate(boundary, value) as string;
+      return currentState;
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Benchmarks
@@ -44,6 +66,22 @@ bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
   for await (const _ of renderer.frames()) {
     /* consume */
   }
+});
+
+bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 calls)', () => {
+  Effect.runSync(
+    Effect.scoped(
+      Effect.gen(function* () {
+        const c = yield* Compositor.create();
+        yield* c.add('viewport', makeQuantizer(widthBoundary));
+        yield* c.add('layout', makeQuantizer(widthBoundary));
+        yield* c.add('theme', makeQuantizer(widthBoundary));
+        for (let i = 0; i < 100; i++) {
+          yield* c.compute();
+        }
+      }),
+    ),
+  );
 });
 
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {
