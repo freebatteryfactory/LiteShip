@@ -139,6 +139,20 @@ export type {
   RevealSsrPaint,
 } from './reveal.js';
 
+// StateCell / ProjectionState — typed authority over coarse runtime state (#130 child 5)
+export { StateCell, ProjectionState, StateCellStore } from './state-cell.js';
+export type {
+  StateAuthority,
+  StateCellKind,
+  StateCell as StateCellShape,
+  StateResolutionReceipt,
+  ProjectionState as ProjectionStateShape,
+  ResolvedStateSnapshot,
+  StateCellRegisterOptions,
+  ProjectionStateOptions,
+  StateCellStoreShape,
+} from './state-cell.js';
+
 // Timeline
 export { Timeline } from './timeline.js';
 
