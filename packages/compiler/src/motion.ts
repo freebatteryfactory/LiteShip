@@ -151,7 +151,9 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
   const supported = [
     `@supports (animation-timeline: view()) {`,
     `  ${plan.selector} {`,
-    `    animation: ${name} 1 ${easingFn};`,
+    `    animation-name: ${name};`,
+    `    animation-duration: auto;`,
+    `    animation-timing-function: ${easingFn};`,
     `    animation-timeline: view();`,
     `    animation-range: ${start} ${end};`,
     `  }`,

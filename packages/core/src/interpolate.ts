@@ -77,8 +77,11 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
   }
 
   if (TRANSFORM_FNS.some((fn) => key === fn || key.startsWith(fn))) {
-    const asLength = parseTypedBinding(key, trimmed.includes('(') ? trimmed : `${key}(${trimmed})`);
-    if (asLength.k === 'transform') return asLength;
+    if (!trimmed.includes('(')) {
+      const wrapped = `${key}(${trimmed})`;
+      const asTransform = parseTypedBinding(key, wrapped);
+      if (asTransform.k === 'transform') return asTransform;
+    }
   }
 
   const asNumber = Number.parseFloat(trimmed);
@@ -86,6 +89,7 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
     return { k: 'number', v: asNumber };
   }
 
+  warnInterpolate('unparseable-binding', `could not parse binding value: "${value}"`, { key, value });
   return { k: 'number', v: 0 };
 }
 

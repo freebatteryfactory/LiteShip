@@ -29,6 +29,24 @@ describe('parseTypedBinding', () => {
       expect(parsed.parts[0]?.fn).toBe('translateY');
     }
   });
+
+  test('warns on unparseable binding instead of silently defaulting to zero', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    const parsed = parseTypedBinding('--czap-hero-y', 'not-a-value');
+    expect(parsed).toEqual({ k: 'number', v: 0 });
+    expect(sink.events.some((e) => e.code === 'unparseable-binding')).toBe(true);
+    Diagnostics.reset();
+  });
+
+  test('does not recurse when transform-like value already contains parentheses', () => {
+    const sink = Diagnostics.createBufferSink();
+    Diagnostics.setSink(sink.sink);
+    const parsed = parseTypedBinding('translateY', '(24px)');
+    expect(parsed.k).not.toBe('transform');
+    expect(sink.events.some((e) => e.code === 'unparseable-binding')).toBe(true);
+    Diagnostics.reset();
+  });
 });
 
 describe('interpolateTyped', () => {

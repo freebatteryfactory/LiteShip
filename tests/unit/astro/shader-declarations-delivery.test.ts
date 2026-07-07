@@ -391,4 +391,79 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     expect(uniform1i).toHaveBeenCalledWith('u_state', 1);
     expect(uniform1f).not.toHaveBeenCalledWith('u_state', expect.anything());
   });
+
+  test('document-level legacy uniform/value updates route through int scalar handling', async () => {
+    const INT = 0x1404;
+    const uniform1i = vi.fn();
+    const uniform1f = vi.fn();
+    const gl = {
+      COMPILE_STATUS: 1,
+      LINK_STATUS: 2,
+      ACTIVE_UNIFORMS: 3,
+      TRIANGLES: 4,
+      ARRAY_BUFFER: 5,
+      STATIC_DRAW: 6,
+      FLOAT: 7,
+      VERTEX_SHADER: 8,
+      FRAGMENT_SHADER: 9,
+      INT,
+      BOOL: 0x8b56,
+      createShader: vi.fn(() => ({})),
+      shaderSource: vi.fn(),
+      compileShader: vi.fn(),
+      getShaderParameter: vi.fn(() => true),
+      getShaderInfoLog: vi.fn(() => ''),
+      deleteShader: vi.fn(),
+      createProgram: vi.fn(() => ({})),
+      attachShader: vi.fn(),
+      linkProgram: vi.fn(),
+      getProgramInfoLog: vi.fn(() => ''),
+      deleteProgram: vi.fn(),
+      useProgram: vi.fn(),
+      createVertexArray: vi.fn(() => ({})),
+      bindVertexArray: vi.fn(),
+      createBuffer: vi.fn(() => ({})),
+      bindBuffer: vi.fn(),
+      bufferData: vi.fn(),
+      getAttribLocation: vi.fn(() => 0),
+      enableVertexAttribArray: vi.fn(),
+      vertexAttribPointer: vi.fn(),
+      getProgramParameter: vi.fn((_: unknown, key: number) => (key === 3 ? 1 : true)),
+      getActiveUniform: vi.fn().mockReturnValueOnce({ name: 'u_state', type: INT }),
+      getUniformLocation: vi.fn((_: unknown, name: string) => name),
+      uniform1i,
+      uniform1f,
+      uniform2f: vi.fn(),
+      viewport: vi.fn(),
+      drawArrays: vi.fn(),
+    };
+
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 11) as never);
+    vi.stubGlobal('cancelAnimationFrame', vi.fn() as never);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((kind: string) =>
+      kind === 'webgl2' ? (gl as never) : null,
+    );
+
+    const canvas = document.createElement('canvas');
+    canvas.setAttribute(
+      'data-czap-shader-src',
+      '#version 300 es\nprecision mediump float;\nout vec4 fragColor;\nvoid main() { fragColor = vec4(float(u_state)); }',
+    );
+    document.body.appendChild(canvas);
+    stubs.define(canvas, 'clientWidth', { configurable: true, value: 300 });
+    stubs.define(canvas, 'clientHeight', { configurable: true, value: 150 });
+
+    initGPUDirective(async () => {}, canvas, { force: true });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    document.dispatchEvent(
+      new CustomEvent('czap:uniform-update', {
+        detail: { uniform: 'u_state', value: 2 },
+      }),
+    );
+
+    expect(uniform1i).toHaveBeenCalledWith('u_state', 2);
+    expect(uniform1f).not.toHaveBeenCalledWith('u_state', expect.anything());
+  });
 });

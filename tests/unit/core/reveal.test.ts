@@ -100,6 +100,16 @@ describe('Reveal graph → CSS equivalence', () => {
     expect(compiled.motion.css?.durationMs).toBe(interpreted.css?.durationMs);
     expect(compiled.motion.css?.routing).toBe(interpreted.css?.routing);
     expect(compiled.resultDigest.integrity_digest.length).toBeGreaterThan(0);
+
+    const projection = compiled.graph.nodes.find(
+      (n) => n.family === 'projection' && n.sourceRef === lowered.transitionId,
+    );
+    expect(projection?.family).toBe('projection');
+    if (projection?.family === 'projection') {
+      expect(projection.id).not.toBe(lowered.projectionId);
+      expect(projection.resultDigest.integrity_digest).toBe(compiled.resultDigest.integrity_digest);
+      expect(projection.resultDigest.integrity_digest.length).toBeGreaterThan(0);
+    }
   });
 
   test('spring easing compiles to linear() timing function', () => {
