@@ -316,10 +316,22 @@ export const DEFAULT_MAX_DAG_NODES = 10_000;
  * the canonical linear order. Used by long-lived LLM sessions to cap memory shape.
  */
 export const pruneToBound = (dag: ReceiptDAG, maxNodes: number = DEFAULT_MAX_DAG_NODES): ReceiptDAG => {
+  if (maxNodes < 1) return empty();
   const count = size(dag);
   if (count <= maxNodes) return dag;
   const ordered = linearize(dag);
-  return fromReceipts(ordered.slice(ordered.length - maxNodes));
+  const keptHashes = new Set(ordered.slice(ordered.length - maxNodes).map((envelope) => envelope.hash));
+  const newNodes = new Map<string, DAGNode>();
+  for (const hash of keptHashes) {
+    const node = dag.nodes.get(hash);
+    if (node === undefined) continue;
+    const parents = node.parents.filter((parent) => keptHashes.has(parent));
+    const children = node.children.filter((child) => keptHashes.has(child));
+    newNodes.set(hash, { ...node, parents, children });
+  }
+  const heads = [...newNodes.entries()].filter(([, node]) => node.children.length === 0).map(([hash]) => hash);
+  const genesis = dag.genesis !== null && keptHashes.has(dag.genesis) ? dag.genesis : null;
+  return { nodes: newNodes, heads, genesis };
 };
 
 /**

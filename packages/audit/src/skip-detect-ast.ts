@@ -1330,9 +1330,28 @@ function collectEarlyReturns(node: ts.Node, sourceFile: ts.SourceFile, out: Earl
 
 function recognizeTestEarlyReturns(node: ts.Node, sourceFile: ts.SourceFile, out: EarlyReturnMatch[]): void {
   if (!ts.isCallExpression(node)) return;
+  if (!isTestRunnerInvocation(node)) return;
   const callback = testCallbackFromCall(node);
   if (callback?.body === undefined) return;
   scanCallbackForEarlyReturn(callback.body, sourceFile, out);
+}
+
+/** True when `call` is (possibly chained) `it` / `test` / `describe` / … — not `beforeEach`, `.map`, helpers. */
+function isTestRunnerInvocation(call: ts.CallExpression): boolean {
+  let expr: ts.Expression = call.expression;
+  while (ts.isCallExpression(expr)) {
+    expr = expr.expression;
+  }
+  if (ts.isIdentifier(expr) && RUNNER_ROOTS.has(expr.text)) {
+    return true;
+  }
+  if (ts.isPropertyAccessExpression(expr) || ts.isElementAccessExpression(expr)) {
+    const peeled = peelAccessChain(expr);
+    if (peeled !== undefined && RUNNER_ROOTS.has(peeled.rootName)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Peel `it.skipIf(c)('title', fn)` / `test('title', fn)` down to the callback function. */

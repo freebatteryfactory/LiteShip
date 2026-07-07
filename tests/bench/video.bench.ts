@@ -3,7 +3,7 @@
  */
 
 import { Bench } from 'tinybench';
-import { Effect } from 'effect';
+import { Effect, Scope } from 'effect';
 import { Scheduler, VideoRenderer, Compositor, Boundary, Millis } from '@czap/core';
 
 const bench = new Bench({ warmupIterations: 50 });
@@ -68,20 +68,21 @@ bench.add('VideoRenderer -- 300 frames @ 60fps', async () => {
   }
 });
 
+const blendTreeScope = Effect.runSync(Scope.make());
+const blendTreeCompositor = Effect.runSync(
+  Effect.gen(function* () {
+    const c = yield* Compositor.create();
+    yield* c.add('viewport', makeQuantizer(widthBoundary));
+    yield* c.add('layout', makeQuantizer(widthBoundary));
+    yield* c.add('theme', makeQuantizer(widthBoundary));
+    return c;
+  }).pipe(Effect.provideService(Scope.Scope, blendTreeScope)),
+);
+
 bench.add('Compositor.compute() -- hot loop with 3-quantizer blend tree (100 calls)', () => {
-  Effect.runSync(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const c = yield* Compositor.create();
-        yield* c.add('viewport', makeQuantizer(widthBoundary));
-        yield* c.add('layout', makeQuantizer(widthBoundary));
-        yield* c.add('theme', makeQuantizer(widthBoundary));
-        for (let i = 0; i < 100; i++) {
-          yield* c.compute();
-        }
-      }),
-    ),
-  );
+  for (let i = 0; i < 100; i++) {
+    Effect.runSync(blendTreeCompositor.compute());
+  }
 });
 
 bench.add('Compositor.compute() -- hot loop (100 calls)', () => {

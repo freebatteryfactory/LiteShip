@@ -24,6 +24,15 @@ function splitCsvList(value: string): readonly string[] {
     .filter((part) => part.length > 0);
 }
 
+function takeFlagValue(argv: readonly string[], index: number, flag: string, unexpected: string[]): string | undefined {
+  const value = argv[index + 1];
+  if (value === undefined || value.length === 0 || value.startsWith('--')) {
+    unexpected.push(flag);
+    return undefined;
+  }
+  return value;
+}
+
 /**
  * Allow `--dry-run`, `--help`, and Tier 6 parallel selectors (`--profile`,
  * `--only`, `--skip`, `--skip-build`). Everything else is unexpected.
@@ -46,29 +55,28 @@ export function parseGauntletArgv(argv: readonly string[]): GauntletArgv {
     } else if (arg === '--skip-build') {
       skipBuild = true;
     } else if (arg === '--profile') {
-      const value = argv[++i];
-      if (value === undefined || value.startsWith('--')) {
-        unexpected.push(arg);
-      } else {
+      const value = takeFlagValue(argv, i, arg, unexpected);
+      if (value !== undefined) {
         profile = value;
+        i++;
       }
     } else if (arg.startsWith('--profile=')) {
-      profile = arg.slice('--profile='.length);
+      const value = arg.slice('--profile='.length);
+      if (value.length === 0) unexpected.push(arg);
+      else profile = value;
     } else if (arg === '--only') {
-      const value = argv[++i];
-      if (value === undefined || value.startsWith('--')) {
-        unexpected.push(arg);
-      } else {
+      const value = takeFlagValue(argv, i, arg, unexpected);
+      if (value !== undefined) {
         only = splitCsvList(value);
+        i++;
       }
     } else if (arg.startsWith('--only=')) {
       only = splitCsvList(arg.slice('--only='.length));
     } else if (arg === '--skip') {
-      const value = argv[++i];
-      if (value === undefined || value.startsWith('--')) {
-        unexpected.push(arg);
-      } else {
+      const value = takeFlagValue(argv, i, arg, unexpected);
+      if (value !== undefined) {
         skip = splitCsvList(value);
+        i++;
       }
     } else if (arg.startsWith('--skip=')) {
       skip = splitCsvList(arg.slice('--skip='.length));

@@ -143,9 +143,34 @@ export const CI_PARALLEL_FINAL_LABELS: readonly string[] = [
 
 export const CI_PARALLEL_TEST_SHARD_COUNT = 4;
 
+export const CI_PARALLEL_PREFLIGHT_LABELS: readonly string[] = [
+  'rig-check',
+  'typecheck',
+  'lint',
+  'lint:structural',
+  'docs:check',
+  'invariants',
+  'audit:floor',
+];
+
+export const CI_PARALLEL_INTEGRATION_LABELS: readonly string[] = [
+  'test:vite',
+  'test:astro',
+  'test:cloudflare',
+  'test:cloudflare-dev',
+  'test:tailwind',
+  'test:e2e',
+  'test:e2e:stress',
+  'test:e2e:stream-stress',
+  'test:flake',
+  'test:redteam',
+];
+
 const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
   ...CI_PARALLEL_SETUP_LABELS,
+  ...CI_PARALLEL_PREFLIGHT_LABELS,
   CI_PARALLEL_SHARDED_TEST_LABEL,
+  ...CI_PARALLEL_INTEGRATION_LABELS,
   ...CI_PARALLEL_BENCH_LABELS,
   ...CI_PARALLEL_MUTATING_LABELS,
   'coverage:wipe-subprocess',
@@ -155,27 +180,8 @@ const CI_PARALLEL_EXCLUDED_FROM_MID = new Set<string>([
 ]);
 
 export const gauntletPhaseProfiles: Readonly<Record<string, readonly string[]>> = {
-  'ci-parallel-preflight': [
-    'rig-check',
-    'typecheck',
-    'lint',
-    'lint:structural',
-    'docs:check',
-    'invariants',
-    'audit:floor',
-  ],
-  'ci-parallel-integration': [
-    'test:vite',
-    'test:astro',
-    'test:cloudflare',
-    'test:cloudflare-dev',
-    'test:tailwind',
-    'test:e2e',
-    'test:e2e:stress',
-    'test:e2e:stream-stress',
-    'test:flake',
-    'test:redteam',
-  ],
+  'ci-parallel-preflight': CI_PARALLEL_PREFLIGHT_LABELS,
+  'ci-parallel-integration': CI_PARALLEL_INTEGRATION_LABELS,
   'ci-parallel-bench': CI_PARALLEL_BENCH_LABELS,
   'ci-parallel-mutating': CI_PARALLEL_MUTATING_LABELS,
   'ci-parallel-coverage': CI_PARALLEL_COVERAGE_LABELS,

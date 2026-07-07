@@ -1,18 +1,17 @@
 // GENERATED — do not edit by hand
 import { bench } from 'vitest';
-import { Effect } from 'effect';
-import { Compositor, Millis } from '../../packages/core/src/index.js';
-import { rendererFromRemotionConfig, precomputeFrames } from '../../packages/remotion/src/composition.js';
+import * as fc from 'fast-check';
+import { remotionAdapterCapsule } from '../../packages/remotion/src/capsules/remotion-adapter.js';
+import { schemaToArbitrary } from '../../packages/core/src/harness/arbitrary-from-schema.js';
+import { CanonicalCbor } from '../../packages/core/src/cbor.js';
+import { decode } from '../../packages/canonical/src/cbor-decode.js';
 
-const renderer = Effect.runSync(
-  Effect.scoped(
-    Effect.gen(function* () {
-      const compositor = yield* Compositor.create();
-      return rendererFromRemotionConfig({ fps: 30, width: 64, height: 64, durationMs: Millis(100) }, compositor);
-    }),
-  ),
-);
+const cap = remotionAdapterCapsule as { output: unknown };
+const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
+const natives = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
+let i = 0;
 
-bench(`remotion.video-frame-output — precomputeFrames round trip`, async () => {
-  await precomputeFrames(renderer);
+bench(`remotion.video-frame-output — native -> czap -> native round trip`, () => {
+  const native = natives[i++ % natives.length];
+  decode(CanonicalCbor.encode(native));
 }, { time: 500 });

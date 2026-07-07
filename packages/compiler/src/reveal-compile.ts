@@ -82,7 +82,7 @@ function appendTranslateConsumer(css: MotionCompileResult, plan: CssMotionPlan):
   if (target === undefined) return css;
 
   const hasTranslateAxis = plan.properties.some(
-    (prop) => /^--czap-[^-]+-[xyz]$/.test(prop.property) && prop.property.startsWith(`--czap-${target}-`),
+    (prop) => prop.property.startsWith(`--czap-${target}-`) && /-[xyz]$/.test(prop.property),
   );
   if (!hasTranslateAxis) return css;
 
