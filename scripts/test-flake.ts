@@ -1,19 +1,30 @@
 import { resolve } from 'node:path';
+import { stat } from 'node:fs/promises';
 import { runPnpm } from './support/pnpm-process.js';
+import { FLAKE_BROWSER_TARGETS, FLAKE_NODE_TARGETS } from './test-flake-targets.js';
 
 const root = resolve(import.meta.dirname, '..');
-const nodeTargets = [
-  'tests/unit/animation.test.ts',
-  'tests/unit/astro-runtime.test.ts',
-  'tests/unit/astro-directives.test.ts',
-  'tests/unit/llm-adapter.test.ts',
-  'tests/component/worker-host.test.ts',
-];
-const browserTargets = ['tests/browser/astro-stream-llm.test.ts'];
+
 const repetitions = 5;
 const browserFlakeEnv = {
   CZAP_VITEST_BROWSERS: process.env.CZAP_VITEST_BROWSERS ?? 'chromium',
 };
+
+async function assertTargetsExist(label: string, targets: readonly string[]): Promise<void> {
+  const missing: string[] = [];
+  for (const rel of targets) {
+    try {
+      await stat(resolve(root, rel));
+    } catch {
+      missing.push(rel);
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `[flake] ${label}: ${missing.length} target(s) missing on disk — vitest silently skips missing paths when mixed with valid ones. Missing: ${missing.join(', ')}`,
+    );
+  }
+}
 
 async function runSuite(
   label: string,
@@ -31,23 +42,29 @@ async function runSuite(
   }
 }
 
+await assertTargetsExist('node runtime-sensitive tests', FLAKE_NODE_TARGETS);
 await runSuite('node runtime-sensitive tests', [
   'exec',
   'vitest',
   'run',
   '--config',
   'vitest.config.ts',
-  ...nodeTargets,
+  ...FLAKE_NODE_TARGETS,
 ]);
-await runSuite('browser runtime-sensitive tests', [
-  'exec',
-  'vitest',
-  'run',
-  '--config',
-  'vitest.browser.config.ts',
-  ...browserTargets,
-], {
-  env: browserFlakeEnv,
-});
+await assertTargetsExist('browser runtime-sensitive tests', FLAKE_BROWSER_TARGETS);
+await runSuite(
+  'browser runtime-sensitive tests',
+  [
+    'exec',
+    'vitest',
+    'run',
+    '--config',
+    'vitest.browser.config.ts',
+    ...FLAKE_BROWSER_TARGETS,
+  ],
+  {
+    env: browserFlakeEnv,
+  },
+);
 
 console.log('[flake] all runtime-sensitive repetitions passed cleanly.');
