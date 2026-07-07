@@ -199,7 +199,7 @@ export function interpretTransition(graph: DocumentGraph, transitionId: ContentA
       code: 'not-found',
       message: `transition node not found: ${transitionId}`,
     });
-    return emptyPlan(transitionId, diagnostics);
+    return emptyPlan(graph.id, diagnostics);
   }
 
   const transition: TransitionNode = node;

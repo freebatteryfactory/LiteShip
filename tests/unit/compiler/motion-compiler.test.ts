@@ -163,6 +163,22 @@ describe('MotionCompiler', () => {
     expect(result.scrollTimeline).toContain('--czap-hero-y 420ms ease');
     expect(result.scrollTimeline).not.toMatch(/opacity, --czap-hero-y 420ms/);
   });
+
+  test('view-timeline supported path declares explicit animation-duration (not iteration-count shorthand)', () => {
+    const plan = revealCssPlan();
+    const result = MotionCompiler.compile({
+      plan,
+      easing: 'spring',
+      spring: { stiffness: 200, damping: 15 },
+      viewTimeline: { range: ['entry 0%', 'cover 60%'] },
+    });
+
+    const supportedBlock = result.scrollTimeline.split('@supports not')[0] ?? '';
+    expect(supportedBlock).toContain('animation-duration: auto');
+    expect(supportedBlock).toContain('animation-timing-function:');
+    expect(supportedBlock).not.toMatch(/animation:\s*czap-motion/);
+    expect(supportedBlock).toMatch(/animation-timing-function:\s*linear\(/);
+  });
 });
 
 describe('dispatch() MotionCompiler arm', () => {

@@ -641,8 +641,8 @@ void main() {
 
       if (detail.uniform && detail.value !== undefined) {
         const loc = uniforms.get(detail.uniform);
-        if (loc) {
-          webgl.uniform1f(loc, detail.value);
+        if (loc && typeof detail.value === 'number' && !Number.isNaN(detail.value)) {
+          setScalarUniform(detail.uniform, loc, detail.value);
         }
       }
 

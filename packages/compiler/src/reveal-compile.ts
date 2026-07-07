@@ -10,9 +10,12 @@
 import {
   AddressedDigest,
   interpretTransition,
+  sealGraph,
+  sealNode,
   type DocumentGraph,
   type ContentAddress,
   type LoweredMotionPlan,
+  type ProjectionNode,
   type RevealIntent,
   type RevealTrigger,
 } from '@czap/core';
@@ -23,8 +26,27 @@ import type { MotionCompileResult, MotionEasing, MotionViewTimeline } from './mo
 export interface CompiledReveal {
   readonly css: MotionCompileResult;
   readonly motion: LoweredMotionPlan;
+  readonly graph: DocumentGraph;
+  readonly projectionId: ContentAddress;
   readonly viewTimeline?: MotionViewTimeline;
   readonly resultDigest: ReturnType<typeof AddressedDigest.of>;
+}
+
+function sealProjectionDigest(
+  graph: DocumentGraph,
+  transitionId: ContentAddress,
+  resultDigest: ReturnType<typeof AddressedDigest.of>,
+): { graph: DocumentGraph; projectionId: ContentAddress } {
+  let projectionId = '' as ContentAddress;
+  const nodes = graph.nodes.map((node) => {
+    if (node.family !== 'projection') return node;
+    const projection = node as ProjectionNode;
+    if (projection.sourceRef !== transitionId) return node;
+    const resealed = sealNode({ ...projection, resultDigest });
+    projectionId = resealed.id;
+    return resealed;
+  });
+  return { graph: sealGraph({ ...graph, nodes }), projectionId };
 }
 
 function viewTimelineFromTrigger(trigger: RevealTrigger): MotionViewTimeline | undefined {
@@ -61,10 +83,13 @@ export function compileReveal(
   });
 
   const resultDigest = AddressedDigest.of(new TextEncoder().encode(css.raw));
+  const { graph: graphWithDigest, projectionId } = sealProjectionDigest(graph, transitionId, resultDigest);
 
   return Object.freeze({
     css,
     motion,
+    graph: graphWithDigest,
+    projectionId,
     ...(viewTimeline ? { viewTimeline } : {}),
     resultDigest,
   });
