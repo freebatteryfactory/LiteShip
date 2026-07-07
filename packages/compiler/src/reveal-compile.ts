@@ -7,6 +7,7 @@
  * @module
  */
 
+import { ValidationError } from '@czap/error';
 import {
   AddressedDigest,
   interpretTransition,
@@ -72,7 +73,7 @@ export function compileReveal(
 ): CompiledReveal {
   const motion = interpretTransition(graph, transitionId);
   if (!motion.css) {
-    throw new Error('compileReveal: interpretTransition produced no css plan');
+    throw ValidationError('compileReveal', 'interpretTransition produced no css plan');
   }
 
   const viewTimeline = viewTimelineFromTrigger(intent.trigger);

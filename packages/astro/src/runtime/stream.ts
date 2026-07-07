@@ -1,5 +1,6 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
 import { wallClock, validateSnapshotSignalsField, replayDroppedSignals } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import {
   Morph,
   Resumption,
@@ -328,7 +329,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         );
         const signalsError = validateSnapshotSignalsField(snapshot.signals);
         if (signalsError) {
-          throw new Error(signalsError);
+          throw ValidationError('StreamRuntime', signalsError);
         }
         recoveredSignals = snapshot.signals;
       } catch (error) {

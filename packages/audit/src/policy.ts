@@ -115,7 +115,10 @@ export const packageTopology: Record<string, PackagePolicy> = {
     // edge added for the boundary-manifest contract (ADR-0003 build-to-edge
     // handoff): the build derives BoundaryManifest entries (tier grid +
     // CompiledOutputs types live in @czap/edge) that edge hosts consume.
-    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/edge'],
+    // web added for the typed wire-event dispatcher (#134): the HMR virtual
+    // module + hmr client dispatch `czap:*` events via `dispatchCzapEvent`
+    // (the single-source event registry lives in @czap/web/wire).
+    allowedInternalImports: ['@czap/core', '@czap/compiler', '@czap/edge', '@czap/web'],
     kind: 'host-adjacent',
   },
   '@czap/astro': {
