@@ -323,6 +323,17 @@ function parseWgslUniformLayout(source: string): readonly WgslUniformField[] {
   return fields;
 }
 
+function wgslStructLayout(type: string): { readonly align: number; readonly size: number } | null {
+  const writable = wgslTypeInfo(type);
+  if (writable) {
+    return { align: writable.align, size: writable.size };
+  }
+  if (type === 'bool') {
+    return { align: 4, size: 4 };
+  }
+  return null;
+}
+
 function createUniformBinding(
   device: WebGpuDevice,
   pipeline: WebGpuPipeline,
@@ -335,9 +346,10 @@ function createUniformBinding(
   const slots = new Map<string, { offset: number; kind: WgslUniformKind }>();
   let cursor = 0;
   for (const field of layout) {
+    const layoutInfo = wgslStructLayout(field.type);
+    if (!layoutInfo) continue;
     const info = wgslTypeInfo(field.type);
-    if (!info) continue;
-    const { align, size, kind } = info;
+    const { align, size } = layoutInfo;
     const offset = Math.ceil(cursor / align) * align;
     if (offset + size > UNIFORM_BUFFER_MAX_BYTES) {
       // Struct outgrows the buffer — drop the overflowing field.
@@ -350,7 +362,9 @@ function createUniformBinding(
       });
       continue;
     }
-    slots.set(field.name, { offset, kind });
+    if (info) {
+      slots.set(field.name, { offset, kind: info.kind });
+    }
     cursor = offset + size;
   }
   // Uniform buffers stride at 16 bytes; round the struct size up to that.

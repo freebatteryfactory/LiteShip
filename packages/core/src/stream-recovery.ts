@@ -105,6 +105,17 @@ export const replayDroppedSignals = (patches: readonly unknown[]): boolean =>
     (patch) => patch !== null && typeof patch === 'object' && (patch as Record<string, unknown>).type === 'signal',
   );
 
+/** Unwrap SSE-frame-shaped snapshot entries before discrete/continuous classification. */
+function unwrapSnapshotSignalEntry(entry: unknown): unknown {
+  if (entry !== null && typeof entry === 'object' && !Array.isArray(entry)) {
+    const record = entry as Record<string, unknown>;
+    if (record.type === 'signal' && 'data' in record) {
+      return record.data;
+    }
+  }
+  return entry;
+}
+
 /** Extract discrete keys from a snapshot signal record — continuous keys are stripped. */
 function discreteKeysFromRecord(record: Record<string, unknown>): Record<string, unknown> {
   const discrete: Record<string, unknown> = {};
@@ -126,7 +137,8 @@ export function filterDiscreteSnapshotSignals(signals: unknown): readonly unknow
 
   if (Array.isArray(signals)) {
     const discrete: unknown[] = [];
-    for (const entry of signals) {
+    for (const rawEntry of signals) {
+      const entry = unwrapSnapshotSignalEntry(rawEntry);
       if (entry !== null && typeof entry === 'object' && !Array.isArray(entry)) {
         const stripped = discreteKeysFromRecord(entry as Record<string, unknown>);
         if (Object.keys(stripped).length > 0) {
@@ -161,10 +173,10 @@ export function filterDiscreteSnapshotSignals(signals: unknown): readonly unknow
  * Returns an error message when the field is missing or not an object/array.
  */
 export function validateSnapshotSignalsField(signals: unknown): string | null {
-  if (signals === undefined) {
+  if (signals === undefined || signals === null) {
     return 'snapshot response missing required signals field';
   }
-  if (signals !== null && typeof signals !== 'object') {
+  if (typeof signals !== 'object') {
     return 'snapshot response signals must be an object or array';
   }
   return null;

@@ -392,7 +392,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
     expect(uniform1f).not.toHaveBeenCalledWith('u_state', expect.anything());
   });
 
-  test('document-level legacy uniform/value updates route through int scalar handling', async () => {
+  test('document-level glsl uniform updates route through int scalar handling', async () => {
     const INT = 0x1404;
     const uniform1i = vi.fn();
     const uniform1f = vi.fn();
@@ -459,7 +459,7 @@ void main() { fragColor = vec4(u_blur_radius, u_brightness, float(u_state), 1.0)
 
     document.dispatchEvent(
       new CustomEvent('czap:uniform-update', {
-        detail: { uniform: 'u_state', value: 2 },
+        detail: { glsl: { u_state: 2 } },
       }),
     );
 

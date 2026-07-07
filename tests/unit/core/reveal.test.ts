@@ -89,7 +89,7 @@ describe('Reveal graph → CSS equivalence', () => {
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
 
     expect(compiled.css.raw).toContain('@property --czap-hero-y');
-    expect(compiled.css.keyframes).toContain('@keyframes czap-motion-before-after');
+    expect(compiled.css.keyframes).toContain('@keyframes czap-motion-hero-before-after');
     expect(compiled.css.startingStyle).toContain('@starting-style');
     expect(compiled.css.startingStyle).toContain('[data-czap-boundary="hero"]');
     expect(compiled.css.transition).toContain('420ms');
@@ -110,6 +110,13 @@ describe('Reveal graph → CSS equivalence', () => {
       expect(projection.resultDigest.integrity_digest).toBe(compiled.resultDigest.integrity_digest);
       expect(projection.resultDigest.integrity_digest.length).toBeGreaterThan(0);
     }
+
+    const staleEdge = compiled.graph.edges.some((edge) => edge.to === lowered.projectionId);
+    expect(staleEdge).toBe(false);
+    expect(compiled.graph.edges.some((edge) => edge.to === compiled.projectionId)).toBe(true);
+    expect(compiled.graph.edges.some((edge) => edge.from === lowered.componentId && edge.to === compiled.projectionId)).toBe(
+      true,
+    );
   });
 
   test('spring easing compiles to linear() timing function', () => {

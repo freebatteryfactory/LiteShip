@@ -149,7 +149,7 @@ describe('interpretTransition', () => {
     const { graph: g, transitionId } = revealFixture();
     const plan = interpretTransition(g, transitionId);
 
-    const opacityVar = plan.runtime?.properties.find((p) => p.cssVar === '--czap-opacity');
+    const opacityVar = plan.runtime?.properties.find((p) => p.cssVar === 'opacity');
     expect(opacityVar?.from).toEqual({ k: 'opacity', v: 0 });
     expect(opacityVar?.to).toEqual({ k: 'opacity', v: 1 });
 

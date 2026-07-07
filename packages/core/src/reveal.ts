@@ -285,6 +285,7 @@ export function lowerRevealIntent(intent: RevealIntent): LoweredReveal {
 
   const edges: DocumentGraphEdge[] = [
     { from: signal.id, to: component.id, type: 'seq' },
+    { from: component.id, to: projection.id, type: 'seq' },
     { from: transition.id, to: projection.id, type: 'seq' },
   ];
 

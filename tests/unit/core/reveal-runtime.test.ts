@@ -8,7 +8,7 @@
 import { describe, test, expect } from 'vitest';
 import { Reveal, lowerRevealIntent, interpretTransition } from '@czap/core';
 import { compileReveal } from '@czap/compiler';
-import { writeContinuousMap } from '@czap/astro/runtime';
+import { writeContinuousMap, loadGraphRuntime, lowerGraph } from '@czap/astro/runtime';
 
 function heroIntent() {
   return Reveal.intent({
@@ -34,7 +34,7 @@ describe('Reveal end-to-end runtime floor', () => {
     el.setAttribute('data-czap-boundary', 'hero');
     writeContinuousMap(el, plan.runtime, 0.5);
 
-    expect(el.style.getPropertyValue('--czap-opacity')).toBe('0.5');
+    expect(el.style.opacity).toBe('0.5');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('12px');
   });
 
@@ -53,8 +53,8 @@ describe('Reveal end-to-end runtime floor', () => {
     }
 
     expect(events).toHaveLength(5);
-    expect(events[0]!.detail.css['--czap-opacity']).toBe('0');
-    expect(events[4]!.detail.css['--czap-opacity']).toBe('1');
+    expect(events[0]!.detail.css.opacity).toBe('0');
+    expect(events[4]!.detail.css.opacity).toBe('1');
     expect(events[4]!.detail.css['--czap-hero-y']).toBe('0px');
   });
 
@@ -67,12 +67,33 @@ describe('Reveal end-to-end runtime floor', () => {
     const el = document.createElement('div');
     writeContinuousMap(el, plan.runtime, 1);
 
-    expect(el.style.getPropertyValue('--czap-opacity')).toBe('1');
+    expect(el.style.opacity).toBe('1');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('0px');
   });
 });
 
 describe('Reveal compile → runtime contract', () => {
+  test('compiled graph re-links projection edges so loadGraphRuntime resolves css channel', () => {
+    const intent = heroIntent();
+    const lowered = lowerRevealIntent(intent);
+    const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
+
+    const entity = compiled.graph.nodes.find((n) => n.id === lowered.entityId);
+    expect(entity?.family).toBe('entity');
+
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+
+    const bindings = lowerGraph(compiled.graph);
+    expect(bindings.some((binding) => binding.entityId === lowered.entityId && binding.targets.includes('css'))).toBe(
+      true,
+    );
+
+    const handle = loadGraphRuntime(compiled.graph, (id) => (id === lowered.entityId ? el : null));
+    expect(handle).not.toBeNull();
+    handle?.release();
+  });
+
   test('compiled CSS selector matches runtime boundary attr', () => {
     const intent = heroIntent();
     const lowered = lowerRevealIntent(intent);

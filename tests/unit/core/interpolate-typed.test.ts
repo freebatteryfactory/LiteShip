@@ -93,3 +93,11 @@ describe('interpolateTyped', () => {
     expect(formatTypedValue(value)).toBe('12.5px');
   });
 });
+
+describe('parseTypedBinding unitless decimals', () => {
+  test('parses unitless decimal strings like "1.0" without silent zero fallback', () => {
+    expect(parseTypedBinding('weight', '1.0')).toEqual({ k: 'number', v: 1 });
+    expect(parseTypedBinding('opacity', '1.0')).toEqual({ k: 'opacity', v: 1 });
+    expect(formatTypedValue(parseTypedBinding('weight', '1.0'))).toBe('1');
+  });
+});

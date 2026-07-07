@@ -189,6 +189,12 @@ function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
       if (entry.kind !== 'discrete') {
         throw ValidationError('StateCellStore.applyDiscrete', `"${name}" is continuous, not discrete`);
       }
+      if (!entry.states.includes(state)) {
+        throw ValidationError(
+          'StateCellStore.applyDiscrete',
+          `unknown discrete state "${state}" for "${name}" (known: ${entry.states.join(', ')})`,
+        );
+      }
 
       const prevIndex = coordinator.getStateIndex(name);
       const nextIndex = coordinator.applyState(name, state);
@@ -218,6 +224,12 @@ function _createStore(runtime?: RuntimeCoordinatorShape): StateCellStoreShape {
       const entry = requireEntry(name, 'StateCellStore.hydrateDiscrete');
       if (entry.kind !== 'discrete') {
         throw ValidationError('StateCellStore.hydrateDiscrete', `"${name}" is continuous, not discrete`);
+      }
+      if (!entry.states.includes(state)) {
+        throw ValidationError(
+          'StateCellStore.hydrateDiscrete',
+          `unknown discrete state "${state}" for "${name}" (known: ${entry.states.join(', ')})`,
+        );
       }
 
       coordinator.applyState(name, state);

@@ -117,7 +117,7 @@ describe('writeContinuousMap', () => {
     const el = document.createElement('div');
     writeContinuousMap(el, plan, 0.5);
 
-    expect(el.style.getPropertyValue('--czap-opacity')).toBe('0.5');
+    expect(el.style.opacity).toBe('0.5');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('12px');
   });
 
@@ -132,7 +132,7 @@ describe('writeContinuousMap', () => {
     expect(spy).toHaveBeenCalledTimes(1);
     const detail = (spy.mock.calls[0]![0] as CustomEvent).detail;
     expect(detail.css).toEqual({
-      '--czap-opacity': '0.25',
+      opacity: '0.25',
       '--czap-hero-y': '18px',
     });
     expect(detail.wgsl).toEqual({ opacity: 0.25 });
@@ -144,11 +144,11 @@ describe('writeContinuousMap', () => {
     const el = document.createElement('div');
 
     writeContinuousMap(el, plan, 0);
-    expect(el.style.getPropertyValue('--czap-opacity')).toBe('0');
+    expect(el.style.opacity).toBe('0');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('24px');
 
     writeContinuousMap(el, plan, 1);
-    expect(el.style.getPropertyValue('--czap-opacity')).toBe('1');
+    expect(el.style.opacity).toBe('1');
     expect(el.style.getPropertyValue('--czap-hero-y')).toBe('0px');
   });
 });

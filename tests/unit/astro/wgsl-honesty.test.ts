@@ -206,7 +206,7 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
       }),
     );
     const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
-    expect(dv.getFloat32(4, true)).toBeCloseTo(1.25, 6);
+    expect(dv.getFloat32(8, true)).toBeCloseTo(1.25, 6);
     dispose!();
   });
 

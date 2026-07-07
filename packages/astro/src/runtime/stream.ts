@@ -1,6 +1,5 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
 import { wallClock, validateSnapshotSignalsField, replayDroppedSignals } from '@czap/core';
-import { ValidationError } from '@czap/error';
 import {
   Morph,
   Resumption,
@@ -317,7 +316,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
     }
 
     const dropped = artifactId !== undefined && replayDroppedSignals(response.patches);
-    let recoveredSignals: unknown = null;
+    let recoveredSignals: unknown = undefined;
 
     if (dropped) {
       try {
@@ -329,7 +328,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
         );
         const signalsError = validateSnapshotSignalsField(snapshot.signals);
         if (signalsError) {
-          throw ValidationError('StreamRuntime', signalsError);
+          dispatchCzapEvent(target, 'czap:stream-error', {
+            reason: 'resume-failed',
+            message: signalsError,
+          });
+          return;
         }
         recoveredSignals = snapshot.signals;
       } catch (error) {
@@ -337,7 +340,6 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
           reason: 'resume-failed',
           message: error instanceof Error ? error.message : String(error),
         });
-        return;
       }
     }
 
@@ -351,7 +353,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     await patchScheduler.enqueueBatch(patches);
 
-    if (recoveredSignals !== null) {
+    if (recoveredSignals !== undefined) {
       applyDiscreteSnapshotSignals(recoveredSignals, (payload) => {
         dispatchCzapEvent(target, 'czap:signal', payload);
       });
