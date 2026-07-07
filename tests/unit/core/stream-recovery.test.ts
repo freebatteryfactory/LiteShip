@@ -10,6 +10,7 @@ import {
   replayDroppedSignals,
   signalPayloadKind,
   signalSourceKind,
+  validateSnapshotSignalsField,
 } from '@czap/core';
 
 describe('stream-recovery replay law', () => {
@@ -74,5 +75,12 @@ describe('stream-recovery replay law', () => {
         { 'scroll.progress': 0.1 },
       ]),
     ).toEqual([{ state: 'ready' }]);
+  });
+
+  test('validateSnapshotSignalsField rejects missing or unexpected signals shapes', () => {
+    expect(validateSnapshotSignalsField(undefined)).toContain('missing required signals');
+    expect(validateSnapshotSignalsField('state-only')).toContain('object or array');
+    expect(validateSnapshotSignalsField({ state: 'open' })).toBeNull();
+    expect(validateSnapshotSignalsField([])).toBeNull();
   });
 });

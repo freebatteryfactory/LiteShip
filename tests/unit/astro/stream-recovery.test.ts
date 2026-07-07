@@ -199,4 +199,46 @@ describe('stream directive graph-native recovery (#133)', () => {
       expect(signals).toEqual([{ state: 'discrete-ok' }]);
     });
   });
+
+  test('snapshot without signals field surfaces czap:stream-error and keeps stale discrete state', async () => {
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({
+        type: 'snapshot',
+        html: '<main>no-signals</main>',
+        signals: undefined as unknown as Record<string, unknown>,
+        lastEventId: 'evt-2',
+      }),
+    );
+
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/feed',
+      'data-czap-stream-artifact': 'hero',
+    });
+    el.innerHTML = '<main>stale</main>';
+
+    const signals: unknown[] = [];
+    const errors: Array<{ reason: string; message?: string }> = [];
+    el.addEventListener('czap:signal', ((event: CustomEvent) => signals.push(event.detail)) as EventListener);
+    el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+
+    streamDirective(noop, {}, el);
+
+    el.dispatchEvent(
+      new CustomEvent('czap:request-snapshot', {
+        detail: { reason: 'test' },
+        bubbles: true,
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(errors).toEqual([
+        expect.objectContaining({
+          reason: 'snapshot-recovery-failed',
+          message: expect.stringContaining('missing required signals'),
+        }),
+      ]);
+    });
+    expect(signals).toEqual([]);
+    expect(el.innerHTML).toContain('stale');
+  });
 });

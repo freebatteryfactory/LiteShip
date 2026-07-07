@@ -8,7 +8,7 @@
  * @module
  */
 
-import type { ContentAddress, StateName } from './brands.js';
+import type { ContentAddress, IntegrityDigest, StateName } from './brands.js';
 import { Cap, type CapTier } from './caps.js';
 import { sealGraph, sealNode } from './document-graph-address.js';
 import type {
@@ -278,7 +278,7 @@ export function lowerRevealIntent(intent: RevealIntent): LoweredReveal {
     keys: projectionKeys(intent.target),
     resultDigest: {
       display_id: '' as ContentAddress,
-      integrity_digest: '' as import('./brands.js').IntegrityDigest,
+      integrity_digest: '' as IntegrityDigest,
       algo: 'sha256',
     },
   } as unknown as ProjectionNode);

@@ -127,3 +127,17 @@ export function filterDiscreteSnapshotSignals(signals: unknown): readonly unknow
 
   return signalPayloadKind(signals) === 'discrete' ? [signals] : [];
 }
+
+/**
+ * Validate the snapshot `signals` field before graph-native recovery applies HTML.
+ * Returns an error message when the field is missing or not an object/array.
+ */
+export function validateSnapshotSignalsField(signals: unknown): string | null {
+  if (signals === undefined) {
+    return 'snapshot response missing required signals field';
+  }
+  if (signals !== null && typeof signals !== 'object') {
+    return 'snapshot response signals must be an object or array';
+  }
+  return null;
+}

@@ -7,10 +7,10 @@
 
 import { Effect } from 'effect';
 import type { DocumentGraph, GraphMutationClient } from '@czap/core';
-import { filterDiscreteSnapshotSignals, replayDroppedSignals } from '@czap/core';
+import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
 import type { LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumeResponse } from '../types.js';
-import { onCzap } from '../wire/dispatch.js';
+import { onCzap, dispatchCzapEvent } from '../wire/dispatch.js';
 import { Resumption } from './resumption.js';
 
 type SnapshotResponse = Extract<ResumeResponse, { readonly type: 'snapshot' }>;
@@ -82,6 +82,11 @@ export const applyGraphNativeSnapshot = async (
   snapshot: SnapshotResponse,
   handlers: StreamRecoveryHandlers,
 ): Promise<void> => {
+  const signalsError = validateSnapshotSignalsField(snapshot.signals);
+  if (signalsError) {
+    throw new Error(signalsError);
+  }
+
   await handlers.applyHtml(snapshot.html);
   applyDiscreteSnapshotSignals(snapshot.signals, handlers.applyDiscreteSignal);
 };
@@ -102,6 +107,11 @@ export const supplementReplayIfSignalsDropped = async (
 
   const snapshot = await Effect.runPromise(fetchSnapshot(options.artifactId, snapshotConfig(options)));
 
+  const signalsError = validateSnapshotSignalsField(snapshot.signals);
+  if (signalsError) {
+    throw new Error(signalsError);
+  }
+
   applyDiscreteSnapshotSignals(snapshot.signals, options.handlers.applyDiscreteSignal);
 };
 
@@ -111,5 +121,10 @@ export const supplementReplayIfSignalsDropped = async (
  */
 export const bindRequestSnapshotRecovery = (target: EventTarget, options: StreamRecoveryOptions): (() => void) =>
   onCzap(target, 'czap:request-snapshot', () => {
-    void runGraphNativeRecovery(options).catch(() => undefined);
+    void runGraphNativeRecovery(options).catch((error) => {
+      dispatchCzapEvent(target, 'czap:stream-error', {
+        reason: 'snapshot-recovery-failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
   });

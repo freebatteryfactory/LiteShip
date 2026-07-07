@@ -40,7 +40,7 @@ const isResumptionState = (v: unknown): v is ResumptionState => {
  */
 const isSnapshotPayload = (v: unknown): v is { html: string; signals: unknown; lastEventId: string } => {
   if (v === null || typeof v !== 'object') return false;
-  if (!('html' in v) || !('lastEventId' in v)) return false;
+  if (!('html' in v) || !('lastEventId' in v) || !('signals' in v)) return false;
   return typeof v.html === 'string' && typeof v.lastEventId === 'string';
 };
 

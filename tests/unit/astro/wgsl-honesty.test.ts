@@ -226,4 +226,31 @@ describe('WGSL honesty — #107 integer vector layout + write', () => {
     expect(events).toContainEqual(expect.objectContaining({ code: 'wgsl-uniform-type-unrecognized' }));
     dispose!();
   });
+
+  it('lays out vec2u at 8-byte alignment and writes u32 components', async () => {
+    const harness = makeGpuHarness();
+    stubGpu(harness.gpu);
+    stubRaf();
+    const el = document.createElement('div');
+
+    const VEC2U_SHADER =
+      'struct S { state_index: u32, flags: vec2u }\n' +
+      '@group(0) @binding(0) var<uniform> s: S;\n' +
+      '@vertex fn vs_main() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }\n' +
+      '@fragment fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(f32(s.flags.x), f32(s.flags.y), 0.0, 1.0); }';
+
+    const dispose = await initWGSLRuntime(makeCanvas(), VEC2U_SHADER, el);
+    expect(dispose).not.toBeNull();
+
+    el.dispatchEvent(
+      new CustomEvent('czap:uniform-update', {
+        detail: { wgsl: { state_index: 1, flags: [3, 7] } },
+      }),
+    );
+    const dv = new DataView(harness.calls.bufferWrites.at(-1)!.buffer);
+    expect(dv.getUint32(0, true)).toBe(1);
+    expect(dv.getUint32(8, true)).toBe(3);
+    expect(dv.getUint32(12, true)).toBe(7);
+    dispose!();
+  });
 });

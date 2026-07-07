@@ -161,6 +161,7 @@ export {
   isReplayHtmlPatch,
   replayDroppedSignals,
   filterDiscreteSnapshotSignals,
+  validateSnapshotSignalsField,
 } from './stream-recovery.js';
 export type { ReplayableRecoveryCell } from './stream-recovery.js';
 

@@ -53,6 +53,22 @@ describe('@czap/vite HMR handler', () => {
     expect(uniformCalls).toEqual([['u_progress', 0.75]]);
   });
 
+  test('uniform broadcast detail.glsl matches WebGL document listener contract', () => {
+    const listenerCalls: unknown[] = [];
+    document.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
+      listenerCalls.push(event.detail);
+    }) as EventListener);
+
+    handleHMR({
+      type: 'czap:update',
+      boundary: 'hero',
+      uniforms: { u_progress: 0.42 },
+    });
+
+    expect(listenerCalls).toEqual([{ glsl: { u_progress: 0.42 } }]);
+    expect(Object.keys(listenerCalls[0] as { glsl: Record<string, number> })).toEqual(['glsl']);
+  });
+
   test('ignores updates when document is unavailable and skips canvases without a usable GL program', () => {
     const originalDocument = globalThis.document;
     vi.stubGlobal('document', undefined);

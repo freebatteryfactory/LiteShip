@@ -636,10 +636,22 @@ void main() {
       /* v8 ignore next — `czap:uniform-update` is always dispatched via `new CustomEvent(...)`;
          the guard narrows the generic `Event` parameter for TypeScript's typed `.detail` access. */
       if (!(event instanceof CustomEvent)) return;
-      if (event.detail?.uniform && event.detail?.value !== undefined) {
-        const loc = uniforms.get(event.detail.uniform);
+      const detail = event.detail;
+      if (!detail) return;
+
+      if (detail.uniform && detail.value !== undefined) {
+        const loc = uniforms.get(detail.uniform);
         if (loc) {
-          webgl.uniform1f(loc, event.detail.value);
+          webgl.uniform1f(loc, detail.value);
+        }
+      }
+
+      if (detail.glsl) {
+        for (const [uniformName, value] of Object.entries(detail.glsl)) {
+          const loc = uniforms.get(uniformName);
+          if (loc && typeof value === 'number' && !Number.isNaN(value)) {
+            setScalarUniform(uniformName, loc, value);
+          }
         }
       }
     };

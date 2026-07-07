@@ -1,5 +1,5 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
-import { wallClock } from '@czap/core';
+import { wallClock, validateSnapshotSignalsField } from '@czap/core';
 import {
   Morph,
   Resumption,
@@ -293,6 +293,15 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
   const applyResumeResponse = async (response: ResumeResponse): Promise<void> => {
     if (response.type === 'snapshot') {
+      const signalsError = validateSnapshotSignalsField(response.signals);
+      if (signalsError) {
+        dispatchCzapEvent(target, 'czap:stream-error', {
+          reason: 'snapshot-signals-invalid',
+          message: signalsError,
+        });
+        return;
+      }
+
       await enqueueHtml(response.html);
       applyDiscreteSnapshotSignals(response.signals, (payload) => {
         dispatchCzapEvent(target, 'czap:signal', payload);
