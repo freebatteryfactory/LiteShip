@@ -7,7 +7,8 @@
  * @module
  */
 
-/** Blocking promotion — gates earn blocking via fixtures; live orphans stay advisory until #130. */
+/** Blocking promotion — gates earn blocking via fixtures. The live TransitionNode path is now
+ * `'blocking'` (#130 landed `interpretTransition`, which reads the fields — the gate self-proves green). */
 export type ActiveSurfacePromotion = 'advisory' | 'blocking';
 
 /**
@@ -29,8 +30,9 @@ export interface ActiveSurfaceEntry {
   /** Required fields with no observed read — empty when inactive or fully wired. */
   readonly unreadFields: readonly string[];
   /**
-   * Severity floor for unread fields. `'advisory'` for the live TransitionNode orphan
-   * until #130 lands the real interpreter; `'blocking'` in self-proof fixtures.
+   * Severity floor for unread fields. Now `'blocking'` for the live TransitionNode path —
+   * #130 landed the `interpretTransition` reader, so the gate self-proves green at blocking.
+   * (`'advisory'` remains available; self-proof fixtures also exercise `'blocking'`.)
    */
   readonly promotion: ActiveSurfacePromotion;
 }
