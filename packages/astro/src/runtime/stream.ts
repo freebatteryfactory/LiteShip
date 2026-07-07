@@ -9,6 +9,9 @@ import {
   resolveHtmlString,
   dispatchCzapEvent,
   streamWireAttr,
+  bindRequestSnapshotRecovery,
+  supplementReplayIfSignalsDropped,
+  applyDiscreteSnapshotSignals,
 } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
 import { bootstrapSlots, rescanSlots } from './slots.js';
@@ -291,6 +294,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   const applyResumeResponse = async (response: ResumeResponse): Promise<void> => {
     if (response.type === 'snapshot') {
       await enqueueHtml(response.html);
+      applyDiscreteSnapshotSignals(response.signals, (payload) => {
+        dispatchCzapEvent(target, 'czap:signal', payload);
+      });
       return;
     }
 
@@ -303,6 +309,20 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       }));
 
     await patchScheduler.enqueueBatch(patches);
+
+    if (artifactId) {
+      await supplementReplayIfSignalsDropped(response.patches, {
+        artifactId,
+        ...(snapshotUrl ? { snapshotUrl } : {}),
+        ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+        handlers: {
+          applyHtml: enqueueHtml,
+          applyDiscreteSignal: (payload) => {
+            dispatchCzapEvent(target, 'czap:signal', payload);
+          },
+        },
+      });
+    }
   };
 
   const reconcileResumption = async (currentEventId: string): Promise<void> => {
@@ -444,8 +464,25 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   }
 
   bindReinit(target);
+
+  const unbindSnapshotRecovery =
+    artifactId !== undefined
+      ? bindRequestSnapshotRecovery(target, {
+          artifactId,
+          ...(snapshotUrl ? { snapshotUrl } : {}),
+          ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+          handlers: {
+            applyHtml: enqueueHtml,
+            applyDiscreteSignal: (payload) => {
+              dispatchCzapEvent(target, 'czap:signal', payload);
+            },
+          },
+        })
+      : null;
+
   openClient();
   element.addEventListener('czap:teardown', () => {
+    unbindSnapshotRecovery?.();
     closeClient();
     patchScheduler.dispose();
   });
