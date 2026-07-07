@@ -404,6 +404,9 @@ importers:
       '@czap/edge':
         specifier: workspace:*
         version: link:../edge
+      '@czap/error':
+        specifier: workspace:*
+        version: link:../error
       '@czap/genui':
         specifier: workspace:*
         version: link:../genui

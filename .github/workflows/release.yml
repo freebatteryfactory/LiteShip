@@ -208,7 +208,7 @@ jobs:
             exit 1
           fi
 
-          for pkg in @czap/_spine @czap/error @czap/canonical @czap/core @czap/assets @czap/compiler @czap/detect @czap/edge @czap/vite @czap/genui @czap/scene @czap/web @czap/worker @czap/astro @czap/gauntlet @czap/audit @czap/command @czap/cli @czap/cloudflare @czap/mcp-server @czap/quantizer @czap/remotion @czap/stage create-liteship liteship; do
+          for pkg in @czap/_spine @czap/error @czap/canonical @czap/core @czap/assets @czap/compiler @czap/detect @czap/edge @czap/genui @czap/web @czap/vite @czap/scene @czap/worker @czap/astro @czap/gauntlet @czap/audit @czap/command @czap/cli @czap/cloudflare @czap/mcp-server @czap/quantizer @czap/remotion @czap/stage create-liteship liteship; do
             echo "::group::$pkg"
             node packages/cli/bin/czap.mjs ship --filter "$pkg" --provenance $DRY_RUN_FLAG
             if [ "$ATTACH" = "true" ]; then

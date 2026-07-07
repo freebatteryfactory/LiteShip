@@ -8,6 +8,7 @@
 import { Effect } from 'effect';
 import type { DocumentGraph, GraphMutationClient } from '@czap/core';
 import { filterDiscreteSnapshotSignals, replayDroppedSignals, validateSnapshotSignalsField } from '@czap/core';
+import { ValidationError } from '@czap/error';
 import type { LiteShipError } from '@czap/error';
 import type { ResumptionConfig, ResumeResponse } from '../types.js';
 import { onCzap, dispatchCzapEvent } from '../wire/dispatch.js';
@@ -84,7 +85,7 @@ export const applyGraphNativeSnapshot = async (
 ): Promise<void> => {
   const signalsError = validateSnapshotSignalsField(snapshot.signals);
   if (signalsError) {
-    throw new Error(signalsError);
+    throw ValidationError('StreamRecovery', signalsError);
   }
 
   await handlers.applyHtml(snapshot.html);
@@ -109,7 +110,7 @@ export const supplementReplayIfSignalsDropped = async (
 
   const signalsError = validateSnapshotSignalsField(snapshot.signals);
   if (signalsError) {
-    throw new Error(signalsError);
+    throw ValidationError('StreamRecovery', signalsError);
   }
 
   applyDiscreteSnapshotSignals(snapshot.signals, options.handlers.applyDiscreteSignal);
