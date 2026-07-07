@@ -30,6 +30,8 @@ import {
 import {
   foldDeclaredDistributions,
   verifyDeclaredDistributions,
+  benchScriptTargets,
+  distributionFilesWithoutExecutionPath,
 } from '../../../scripts/bench/contract-coverage.ts';
 import { ACCEPTED_COMPLEXITY_CEILINGS } from '../../../packages/gauntlet/src/gates/performance-contracts.ts';
 import { commentsBlanked } from '../../../packages/gauntlet/src/gates/code-only.ts';
@@ -155,6 +157,16 @@ describe('LIVE committed artifacts — the real registry + map, pinned against d
     // uncomparable number (undeclared) or a declaration silently rotted (orphan).
     expect(result.issues).toEqual([]);
     expect(result.discoveredBenchCount).toBeGreaterThan(0);
+  });
+
+  it('benchmarks/distributions.json — every declared file is executed by pnpm bench or generated benches', () => {
+    const registry = readDistributionRegistry(repoRoot);
+    expect(registry).not.toBeNull();
+    const uncovered = distributionFilesWithoutExecutionPath(
+      registry!.distributions,
+      benchScriptTargets(repoRoot),
+    );
+    expect(uncovered, `distribution files without bench execution path: ${uncovered.join(', ')}`).toEqual([]);
   });
 
   it('benchmarks/complexity-map.json holds a recognized, well-fitted class per ceiling-pinned path', () => {

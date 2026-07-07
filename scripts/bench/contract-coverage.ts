@@ -114,6 +114,34 @@ export function foldDeclaredDistributions(
 }
 
 /**
+ * Bench `.bench.ts` paths invoked by the root `pnpm bench` script (tsx targets only).
+ * Used by meta guards to ensure declared distributions are executed somewhere.
+ */
+export function benchScriptTargets(repoRoot: string): readonly string[] {
+  const pkgPath = resolve(repoRoot, 'package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: Record<string, string> };
+  const scripts = [pkg.scripts?.bench ?? '', pkg.scripts?.['bench:alloc'] ?? ''].join(' ');
+  const matches = scripts.match(/tests\/bench\/[^\s'"]+\.bench\.ts/g) ?? [];
+  if (pkg.scripts?.['bench:alloc']) {
+    matches.push('tests/bench/allocation.bench.ts');
+  }
+  return [...new Set(matches)].sort();
+}
+
+/**
+ * Declared distribution files with no execution path — neither `pnpm bench` nor the
+ * generated capsule bench lane (`tests/generated/*.bench.ts`).
+ */
+export function distributionFilesWithoutExecutionPath(
+  declared: readonly BenchDistribution[],
+  benchScriptFiles: readonly string[],
+): readonly string[] {
+  const scriptSet = new Set(benchScriptFiles);
+  const unique = [...new Set(declared.map((d) => d.file))];
+  return unique.filter((file) => !scriptSet.has(file) && !file.startsWith('tests/generated/')).sort();
+}
+
+/**
  * The FILESYSTEM wrapper the bench-contracts script uses: read every governed
  * bench file under `tests/bench/`, strip comments via the ONE shared
  * {@link codeOnly}, and run the pure fold. The gate uses {@link foldDeclaredDistributions}
