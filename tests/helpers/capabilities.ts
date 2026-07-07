@@ -29,7 +29,13 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { getCapsuleManifestPath } from '@czap/command/host';
+
+/** Default capsule manifest location (mirrors `@czap/command/host` manifest-path — no import here). */
+function capsuleManifestPath(cwd: string): string {
+  const raw = process.env.CZAP_CAPSULE_MANIFEST?.trim();
+  if (!raw) return join(cwd, 'reports/capsule-manifest.json');
+  return resolve(cwd, raw);
+}
 
 /** Repo root, two levels up from `tests/helpers/` — every probe path resolves against it. */
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
@@ -71,7 +77,7 @@ export const astroExampleNotBuilt = !existsSync(ASTRO_EXAMPLE_INDEX);
 export const fixtureAbsent = !existsSync(INTRO_BED_FIXTURE);
 
 /** `capsule-manifest-absent` — capsule:compile has not produced the corpus manifest for bench-exec proof. */
-export const capsuleManifestAbsent = !existsSync(getCapsuleManifestPath(REPO_ROOT));
+export const capsuleManifestAbsent = !existsSync(capsuleManifestPath(REPO_ROOT));
 
 /** `symlink-unprivileged` — this process cannot create symlinks (typically Windows without privilege). */
 export const symlinkUnprivileged = !canCreateSymlink();
