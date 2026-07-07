@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:b8e144d1",
+  "address": "fnv1a:38d44470",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -302,6 +302,15 @@
       "ruleId": "gauntlet/no-ts-ignore",
       "set": "LITESHIP_GATES",
       "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/active-modeled-surface-reader",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
