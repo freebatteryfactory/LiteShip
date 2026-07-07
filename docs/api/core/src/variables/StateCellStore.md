@@ -8,7 +8,7 @@
 
 > `const` **StateCellStore**: `object`
 
-Defined in: [core/src/state-cell.ts:329](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L329)
+Defined in: [core/src/state-cell.ts:341](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L341)
 
 Namespace entry point for the coarse authority store.
 

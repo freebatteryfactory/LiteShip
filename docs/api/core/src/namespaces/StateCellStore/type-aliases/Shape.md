@@ -8,6 +8,6 @@
 
 > **Shape** = [`StateCellStoreShape`](../../../interfaces/StateCellStoreShape.md)
 
-Defined in: [core/src/state-cell.ts:352](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L352)
+Defined in: [core/src/state-cell.ts:364](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/state-cell.ts#L364)
 
 Structural shape of a [StateCellStore](../../../variables/StateCellStore.md).

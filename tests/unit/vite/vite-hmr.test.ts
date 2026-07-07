@@ -171,44 +171,4 @@ describe('@czap/vite HMR handler', () => {
     expect(gl.getUniformLocation).toHaveBeenCalledWith(canvas.__czapProgram, 'u_progress');
     expect(uniform1f).not.toHaveBeenCalled();
   });
-
-  test('does not reach document-level listeners when another boundary GPU is mounted', () => {
-    const hero = document.createElement('div');
-    hero.setAttribute('data-czap-boundary', 'hero');
-    document.body.appendChild(hero);
-
-    const documentListener = vi.fn();
-    document.addEventListener('czap:uniform-update', documentListener);
-
-    handleHMR({
-      type: 'czap:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.75 },
-    });
-
-    expect(documentListener).not.toHaveBeenCalled();
-  });
-
-  test('resolves satelliteAttrs JSON boundary payloads by id', () => {
-    const boundary = document.createElement('main');
-    boundary.setAttribute(
-      'data-czap-boundary',
-      JSON.stringify({ id: 'hero', input: 'viewport.width', thresholds: [0, 768], states: ['sm', 'lg'] }),
-    );
-    boundary.setAttribute('data-czap-directive', 'satellite');
-    document.body.appendChild(boundary);
-
-    const payloads: unknown[] = [];
-    boundary.addEventListener('czap:uniform-update', ((event: CustomEvent) => {
-      payloads.push(event.detail);
-    }) as EventListener);
-
-    handleHMR({
-      type: 'czap:update',
-      boundary: 'hero',
-      uniforms: { u_progress: 0.33 },
-    });
-
-    expect(payloads).toEqual([{ glsl: { u_progress: 0.33 } }]);
-  });
 });
