@@ -282,6 +282,20 @@
       "replicates": 1
     },
     {
+      "name": "Compositor.compute() -- hot loop with 3-quantizer blend tree (100 calls)",
+      "file": "tests/bench/video.bench.ts",
+      "inputSize": 100,
+      "shape": "compute-calls",
+      "replicates": 1
+    },
+    {
+      "name": "WASM blend_normalize -- 3 weights × 1000",
+      "file": "tests/bench/wasm-compute.bench.ts",
+      "inputSize": 3000,
+      "shape": "wasm-kernel",
+      "replicates": 1
+    },
+    {
       "name": "[COMPETE] Boundary.evaluate -- 3 thresholds",
       "file": "tests/bench/self-measure.bench.ts",
       "inputSize": 3,
