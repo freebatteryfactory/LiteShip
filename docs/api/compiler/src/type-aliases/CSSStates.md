@@ -8,7 +8,7 @@
 
 > **CSSStates** = `Readonly`\<`Record`\<`string`, [`CSSStateInput`](CSSStateInput.md)\>\>
 
-Defined in: [compiler/src/dispatch.ts:33](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L33)
+Defined in: [compiler/src/dispatch.ts:35](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L35)
 
 Per-state CSS inputs keyed by state name: each value is either a flat
 property map or a structured [CSSStateBody](../interfaces/CSSStateBody.md) carrying nested selector

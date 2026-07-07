@@ -8,7 +8,7 @@
 
 > `const` **ABSENT\_SUFFIX**: `":absent"`
 
-Defined in: [gauntlet/src/evidence-recorder.ts:97](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L97)
+Defined in: [gauntlet/src/evidence-recorder.ts:98](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L98)
 
 The marker suffix the recorder appends when a gate ACCESSES a fact channel and
 finds it ABSENT (`undefined`) — a read that DEPENDS on the channel's ABSENCE. It is

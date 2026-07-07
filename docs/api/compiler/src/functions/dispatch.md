@@ -8,7 +8,7 @@
 
 > **dispatch**(`def`): [`CompileResult`](../type-aliases/CompileResult.md)
 
-Defined in: [compiler/src/dispatch.ts:154](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L154)
+Defined in: [compiler/src/dispatch.ts:159](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L159)
 
 Dispatch a [CompilerDef](../type-aliases/CompilerDef.md) to the matching compiler and return a
 tagged [CompileResult](../type-aliases/CompileResult.md).

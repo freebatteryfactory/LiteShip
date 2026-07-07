@@ -10,6 +10,10 @@ Defined in: [web/src/types.ts:164](https://github.com/freebatteryfactory/LiteShi
 
 Morph rejection when preserve constraints are violated.
 
+## Extended by
+
+- [`CzapMorphRejectedDetail`](CzapMorphRejectedDetail.md)
+
 ## Properties
 
 ### hint?

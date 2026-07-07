@@ -8,7 +8,7 @@
 
 > `const` **Resumption**: `object`
 
-Defined in: [web/src/stream/resumption.ts:407](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L407)
+Defined in: [web/src/stream/resumption.ts:415](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/stream/resumption.ts#L415)
 
 SSE resumption protocol namespace.
 
@@ -68,6 +68,26 @@ import { Effect } from 'effect';
 
 Effect.runSync(Resumption.clearState('article-123'));
 ```
+
+### fetchSnapshot
+
+> **fetchSnapshot**: (`artifactId`, `config?`) => `Effect`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}, `LiteShipError`\>
+
+Request a snapshot when resumption is not possible.
+
+#### Parameters
+
+##### artifactId
+
+`string`
+
+##### config?
+
+`Partial`\<`Pick`\<[`ResumptionConfig`](../interfaces/ResumptionConfig.md), `"snapshotUrl"` \| `"endpointPolicy"`\>\>
+
+#### Returns
+
+`Effect`\<\{ `html`: `string`; `lastEventId`: `string`; `signals`: `unknown`; `type`: `"snapshot"`; \}, `LiteShipError`\>
 
 ### loadState
 

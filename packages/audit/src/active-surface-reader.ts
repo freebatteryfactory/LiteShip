@@ -5,7 +5,7 @@
  * detection). For each enrolled active modeled surface, scans designated reader paths
  * (interpreter / lowerer / runtime) and records which load-bearing fields are READ.
  *
- * Emits {@link ActiveSurfaceFacts} for the gauntlet FactGate — gauntlet stays lean
+ * Emits `ActiveSurfaceFacts` for the gauntlet FactGate — gauntlet stays lean
  * (no `typescript` dep); this module lives in `@czap/audit`.
  *
  * @module
@@ -156,7 +156,7 @@ function makeTransitionEntry(
 }
 
 /**
- * Build {@link ActiveSurfaceFacts} — the HOST's job for #132. Pure given the source on
+ * Build `ActiveSurfaceFacts` — the HOST's job for #132. Pure given the source on
  * disk: a deterministic `ts.Program` over the reader paths yields the same field-read
  * verdict every run.
  */

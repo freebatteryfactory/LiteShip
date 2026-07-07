@@ -62,7 +62,7 @@ function easingFromIntent(intent: RevealIntent): MotionEasing | undefined {
 /**
  * Compile a lowered reveal graph into native CSS + a runtime write plan.
  *
- * Reads `TransitionNode.routing` / `durationMs` via {@link interpretTransition}
+ * Reads `TransitionNode.routing` / `durationMs` via `interpretTransition`
  * and emits `@property`, `@keyframes`, `@starting-style`, and state-keyed
  * transitions through {@link MotionCompiler}.
  */

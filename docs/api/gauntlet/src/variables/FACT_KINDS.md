@@ -6,9 +6,9 @@
 
 # Variable: FACT\_KINDS
 
-> `const` **FACT\_KINDS**: readonly \[`"skipSites"`\]
+> `const` **FACT\_KINDS**: readonly \[`"skipSites"`, `"activeSurfaceFacts"`\]
 
-Defined in: [gauntlet/src/gate.ts:441](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L441)
+Defined in: [gauntlet/src/gate.ts:450](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L450)
 
 The runtime tuple of FactKinds a [FactGate](../interfaces/FactGate.md) may require — the SINGLE SOURCE for the
 [FactKind](../type-aliases/FactKind.md) type (derived below, never re-typed) AND the runtime allowlist
