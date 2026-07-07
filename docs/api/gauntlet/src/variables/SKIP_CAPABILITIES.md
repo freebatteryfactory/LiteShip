@@ -6,7 +6,7 @@
 
 # Variable: SKIP\_CAPABILITIES
 
-> `const` **SKIP\_CAPABILITIES**: readonly \[`"ffmpeg-absent"`, `"wasm-absent"`, `"wasm-dist-staged"`, `"shared-array-buffer-absent"`, `"coverage-instrumentation"`, `"astro-example-not-built"`, `"offscreen-canvas-absent"`, `"gpu-absent"`, `"eacces-untestable-as-root"`\]
+> `const` **SKIP\_CAPABILITIES**: readonly \[`"ffmpeg-absent"`, `"wasm-absent"`, `"wasm-dist-staged"`, `"shared-array-buffer-absent"`, `"coverage-instrumentation"`, `"astro-example-not-built"`, `"offscreen-canvas-absent"`, `"webcodecs-absent"`, `"gpu-absent"`, `"eacces-untestable-as-root"`\]
 
 Defined in: [gauntlet/src/gates/skip-allowlist.ts:53](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L53)
 

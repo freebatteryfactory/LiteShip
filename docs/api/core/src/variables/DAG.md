@@ -8,7 +8,7 @@
 
 > `const` **DAG**: `object`
 
-Defined in: [core/src/dag.ts:648](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L648)
+Defined in: [core/src/dag.ts:662](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L662)
 
 DAG namespace -- receipt DAG merge and canonical linearization.
 
@@ -441,6 +441,27 @@ const result = DAG.merge(localDag, remoteEnvelopes);
 // result.added -- newly ingested hashes
 // result.forked -- true if DAG has multiple heads
 ```
+
+### pruneToBound
+
+> **pruneToBound**: (`dag`, `maxNodes`) => [`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+Prune a DAG to at most `maxNodes` envelopes, retaining the most recent tail of
+the canonical linear order. Used by long-lived LLM sessions to cap memory shape.
+
+#### Parameters
+
+##### dag
+
+[`ReceiptDAG`](../interfaces/ReceiptDAG.md)
+
+##### maxNodes?
+
+`number` = `DEFAULT_MAX_DAG_NODES`
+
+#### Returns
+
+[`ReceiptDAG`](../interfaces/ReceiptDAG.md)
 
 ### size
 

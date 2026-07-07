@@ -8,7 +8,7 @@
 
 > **buildActiveSurfaceFacts**(`opts`): `ActiveSurfaceFacts`
 
-Defined in: [audit/src/active-surface-reader.ts:145](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L145)
+Defined in: [audit/src/active-surface-reader.ts:187](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/audit/src/active-surface-reader.ts#L187)
 
 Build `ActiveSurfaceFacts` — the HOST's job for #132. Pure given the source on
 disk: a deterministic `ts.Program` over the reader paths yields the same field-read

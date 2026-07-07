@@ -8,7 +8,7 @@
 
 > `const` **MotionCompiler**: `object`
 
-Defined in: [compiler/src/motion.ts:215](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L215)
+Defined in: [compiler/src/motion.ts:232](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/motion.ts#L232)
 
 Native-CSS motion compiler namespace.
 

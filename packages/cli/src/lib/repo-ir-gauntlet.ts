@@ -48,7 +48,7 @@ import {
   buildActiveSurfaceFacts,
   type EquivalentMutantRegistry,
 } from '@czap/audit';
-import { LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
+import { LITESHIP_EXPORT_REQUIRED_FIELDS, LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
 import { LITESHIP_CAPABILITY_MODULES, LITESHIP_CAPABILITY_IDS, resolveCapabilitySites } from './capability-policy.js';
 import {
@@ -467,6 +467,7 @@ export async function runGauntletWithRepoIR(
     repoRoot,
     promotion: 'blocking',
     transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+    exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
   });
 
   const launchOpts: LitelaunchCacheOptions = {

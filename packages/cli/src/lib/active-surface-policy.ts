@@ -5,7 +5,7 @@
  *
  * @module
  */
-import type { TransitionNode } from '@czap/core';
+import type { ExportNode, TransitionNode } from '@czap/core';
 
 /** Load-bearing TransitionNode fields — derived from the real type, not string literals. */
 export const LITESHIP_TRANSITION_REQUIRED_FIELDS = [
@@ -14,3 +14,9 @@ export const LITESHIP_TRANSITION_REQUIRED_FIELDS = [
   'routing',
   'durationMs',
 ] as const satisfies readonly (keyof TransitionNode)[];
+
+/** Load-bearing ExportNode fields read by enrolled export interpreter paths. */
+export const LITESHIP_EXPORT_REQUIRED_FIELDS = [
+  'sourceRefs',
+  'artifactDigest',
+] as const satisfies readonly (keyof ExportNode)[];
