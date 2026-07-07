@@ -174,9 +174,25 @@ export function loadVirtualModule(id: string, data?: VirtualModuleData): string 
  * CSS or shader uniform updates surgically without full reload.
  */
 const HMR_CLIENT_SOURCE = `
-import { dispatchCzapEvent } from '@czap/web';
-
 if (import.meta.hot) {
+  function boundaryRootsFor(boundary) {
+    const roots = [];
+    document.querySelectorAll('[data-czap-boundary="' + boundary + '"]').forEach((el) => roots.push(el));
+    document.querySelectorAll('[data-czap-boundary]').forEach((el) => {
+      if (roots.includes(el)) return;
+      const raw = el.getAttribute('data-czap-boundary');
+      if (!raw || raw.charAt(0) !== '{') return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.id === boundary) roots.push(el);
+      } catch {}
+    });
+    document.querySelectorAll('[data-czap-satellite="' + boundary + '"]').forEach((el) => {
+      if (!roots.includes(el)) roots.push(el);
+    });
+    return roots;
+  }
+
   import.meta.hot.on('czap:update', (payload) => {
     if (typeof document === 'undefined') return;
     if (payload.css !== undefined) {
@@ -190,10 +206,23 @@ if (import.meta.hot) {
       el.textContent = payload.css;
     }
     if (payload.uniforms !== undefined) {
-      document.querySelectorAll('[data-czap-boundary="' + payload.boundary + '"]').forEach((boundaryEl) => {
-        dispatchCzapEvent(boundaryEl, 'czap:uniform-update', { glsl: payload.uniforms });
+      const roots = boundaryRootsFor(payload.boundary);
+      roots.forEach((boundaryEl) => {
+        boundaryEl.dispatchEvent(
+          new CustomEvent('czap:uniform-update', {
+            detail: { glsl: payload.uniforms },
+            bubbles: false,
+          }),
+        );
+      });
+      const canvases = new Set();
+      roots.forEach((root) => {
+        root.querySelectorAll('canvas').forEach((canvas) => canvases.add(canvas));
       });
       document.querySelectorAll('canvas[data-czap-boundary="' + payload.boundary + '"]').forEach((canvas) => {
+        canvases.add(canvas);
+      });
+      canvases.forEach((canvas) => {
         const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
         if (!gl) return;
         const program = canvas.__czapProgram;

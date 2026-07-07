@@ -91,8 +91,32 @@ describe('stream-recovery replay law', () => {
 
   test('validateSnapshotSignalsField rejects missing or unexpected signals shapes', () => {
     expect(validateSnapshotSignalsField(undefined)).toContain('missing required signals');
+    expect(validateSnapshotSignalsField(null)).toContain('missing required signals');
     expect(validateSnapshotSignalsField('state-only')).toContain('object or array');
     expect(validateSnapshotSignalsField({ state: 'open' })).toBeNull();
     expect(validateSnapshotSignalsField([])).toBeNull();
+  });
+
+  test('null signals must never silently drop discrete crossings', () => {
+    expect(filterDiscreteSnapshotSignals(null)).toEqual([]);
+    expect(validateSnapshotSignalsField(null)).not.toBeNull();
+  });
+
+  test('filterDiscreteSnapshotSignals unwraps SSE-frame-shaped array entries', () => {
+    expect(
+      filterDiscreteSnapshotSignals([
+        { type: 'signal', data: { state: 'open' } },
+        { type: 'signal', data: { width: 800, state: 'ready' } },
+      ]),
+    ).toEqual([{ state: 'open' }, { state: 'ready' }]);
+  });
+
+  test('filterDiscreteSnapshotSignals strips continuous keys from array-form object entries', () => {
+    expect(
+      filterDiscreteSnapshotSignals([
+        { state: 'ready', width: 800, 'scroll.progress': 0.1 },
+        { type: 'signal', data: { state: 'framed', 'audio.amplitude': 0.5 } },
+      ]),
+    ).toEqual([{ state: 'ready' }, { state: 'framed' }]);
   });
 });

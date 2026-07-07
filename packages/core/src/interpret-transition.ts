@@ -112,7 +112,7 @@ function resolveSignal(
 
 function cssVarForProperty(property: string): string {
   if (property.startsWith('--')) return property;
-  if (property === 'opacity') return '--czap-opacity';
+  if (property === 'opacity') return 'opacity';
   return `--czap-${property.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
 }
 

@@ -460,11 +460,11 @@ export async function runGauntletWithRepoIR(
 
   // The active-surface field-read oracle (#132) is ALWAYS-ON on the `--ir` path:
   // the host scans enrolled reader paths with TS-AST (cheap) and injects facts for
-  // `activeModeledSurfaceReaderGate`. Live TransitionNode orphan is advisory until #130.
+  // `activeModeledSurfaceReaderGate`. Live TransitionNode field-read orphan is BLOCKING on `--ir`.
   gateSet.push(activeModeledSurfaceReaderGate);
   const activeSurfaceFacts: ActiveSurfaceFacts = buildActiveSurfaceFacts({
     repoRoot,
-    promotion: 'advisory',
+    promotion: 'blocking',
     transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
   });
 

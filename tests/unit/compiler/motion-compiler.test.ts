@@ -116,7 +116,7 @@ describe('MotionCompiler', () => {
 
     expect(result.propertyRegistrations).toContain('@property --czap-hero-y');
     expect(result.propertyRegistrations).toContain('syntax: "<length>"');
-    expect(result.keyframes).toContain('@keyframes czap-motion-before-after');
+    expect(result.keyframes).toContain('@keyframes czap-motion-hero-before-after');
     expect(result.keyframes).toContain('0% {');
     expect(result.keyframes).toContain('opacity: 0');
     expect(result.keyframes).toContain('100% {');
@@ -124,6 +124,7 @@ describe('MotionCompiler', () => {
     expect(result.startingStyle).toContain('@starting-style');
     expect(result.startingStyle).toContain('[data-czap-boundary="hero"]');
     expect(result.transition).toContain('[data-czap-state="after"]');
+    expect(result.transition).toContain('opacity: 1');
     expect(result.transition).toContain('420ms');
     expect(result.raw).toContain(result.keyframes);
   });
@@ -178,6 +179,21 @@ describe('MotionCompiler', () => {
     expect(supportedBlock).toContain('animation-timing-function:');
     expect(supportedBlock).not.toMatch(/animation:\s*czap-motion/);
     expect(supportedBlock).toMatch(/animation-timing-function:\s*linear\(/);
+  });
+
+  test('distinct targets do not collide on @keyframes names', () => {
+    const heroPlan = revealCssPlan();
+    const footerPlan = {
+      ...heroPlan,
+      selector: '[data-czap-boundary="footer"]',
+    };
+
+    const hero = MotionCompiler.compile({ plan: heroPlan });
+    const footer = MotionCompiler.compile({ plan: footerPlan });
+
+    expect(hero.keyframes).toContain('@keyframes czap-motion-hero-before-after');
+    expect(footer.keyframes).toContain('@keyframes czap-motion-footer-before-after');
+    expect(hero.keyframes).not.toContain('@keyframes czap-motion-footer-before-after');
   });
 });
 

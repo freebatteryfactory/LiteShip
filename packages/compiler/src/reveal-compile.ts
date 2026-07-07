@@ -39,15 +39,31 @@ function sealProjectionDigest(
   resultDigest: ReturnType<typeof AddressedDigest.of>,
 ): { graph: DocumentGraph; projectionId: ContentAddress } {
   let projectionId = '' as ContentAddress;
+  let previousProjectionId = '' as ContentAddress;
   const nodes = graph.nodes.map((node) => {
     if (node.family !== 'projection') return node;
     const projection = node as ProjectionNode;
     if (projection.sourceRef !== transitionId) return node;
+    previousProjectionId = projection.id;
     const resealed = sealNode({ ...projection, resultDigest });
     projectionId = resealed.id;
     return resealed;
   });
-  return { graph: sealGraph({ ...graph, nodes }), projectionId };
+
+  const edges =
+    previousProjectionId.length > 0
+      ? graph.edges.map((edge) => {
+          if (edge.to === previousProjectionId) {
+            return { ...edge, to: projectionId };
+          }
+          if (edge.from === previousProjectionId) {
+            return { ...edge, from: projectionId };
+          }
+          return edge;
+        })
+      : graph.edges;
+
+  return { graph: sealGraph({ ...graph, nodes, edges }), projectionId };
 }
 
 function viewTimelineFromTrigger(trigger: RevealTrigger): MotionViewTimeline | undefined {

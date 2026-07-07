@@ -85,7 +85,10 @@ export function parseTypedBinding(key: string, value: number | string): TypedVal
   }
 
   const asNumber = Number.parseFloat(trimmed);
-  if (!Number.isNaN(asNumber) && trimmed === String(asNumber)) {
+  if (!Number.isNaN(asNumber) && /^-?(?:\d+\.?\d*|\.\d+)$/.test(trimmed)) {
+    if (key === 'opacity' || key.endsWith('-opacity')) {
+      return { k: 'opacity', v: asNumber };
+    }
     return { k: 'number', v: asNumber };
   }
 

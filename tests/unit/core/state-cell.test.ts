@@ -83,6 +83,14 @@ describe('StateCellStore', () => {
     expect(() => store.applyDiscrete('scroll.progress', 'live')).toThrow(/continuous, not discrete/i);
   });
 
+  test('applyDiscrete rejects unknown discrete state names loudly', () => {
+    const store = StateCellStore.create();
+    store.register('layout', ['mobile', 'tablet', 'desktop']);
+
+    expect(() => store.applyDiscrete('layout', 'phablet' as never)).toThrow(/unknown discrete state/i);
+    expect(() => store.hydrateDiscrete('layout', 'phablet' as never, 1)).toThrow(/unknown discrete state/i);
+  });
+
   test('hydrateDiscrete restores generation for replay/bootstrap paths', () => {
     const store = StateCellStore.create();
     store.register('layout', ['mobile', 'tablet', 'desktop']);

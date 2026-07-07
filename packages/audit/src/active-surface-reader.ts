@@ -96,29 +96,9 @@ function transitionReadsInSourceFile(sf: ts.SourceFile, requiredFields: readonly
   return reads;
 }
 
-/** Scan a dedicated interpreter file for any transition field property access. */
+/** Scan a dedicated interpreter file for transition-node field property access. */
 function transitionReadsInDedicatedFile(sf: ts.SourceFile, requiredFields: readonly string[]): Set<TransitionField> {
-  const reads = new Set<TransitionField>();
-  const isField = (name: string): name is TransitionField => requiredFields.includes(name);
-
-  const visit = (node: ts.Node): void => {
-    if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name) && isField(node.name.text)) {
-      reads.add(node.name.text);
-    }
-    if (ts.isBindingElement(node) && ts.isIdentifier(node.name) && isField(node.name.text)) {
-      reads.add(node.name.text);
-    }
-    if (
-      ts.isElementAccessExpression(node) &&
-      ts.isStringLiteral(node.argumentExpression) &&
-      isField(node.argumentExpression.text)
-    ) {
-      reads.add(node.argumentExpression.text);
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(sf);
-  return reads;
+  return fieldReadsInBlock('transition', sf, requiredFields);
 }
 
 /** Scan one reader file; returns fields read in transition contexts. */

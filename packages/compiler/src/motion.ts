@@ -66,7 +66,8 @@ function syntaxForTypedValue(value: TypedValue): string | null {
 }
 
 function keyframeName(plan: CssMotionPlan): string {
-  return `czap-motion-${plan.fromState}-${plan.toState}`;
+  const target = plan.selector.match(/data-czap-boundary="([^"]+)"/)?.[1] ?? 'motion';
+  return `czap-motion-${target}-${plan.fromState}-${plan.toState}`;
 }
 
 function emitPropertyRegistrations(properties: readonly MotionPropertyTween[]): string {
@@ -137,8 +138,17 @@ function transitionDecls(plan: CssMotionPlan, easingFn: string): string {
 }
 
 function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
+  const end = plan.keyframes.find((k) => k.offset === 1) ?? plan.keyframes.at(-1);
+  const baseDecls =
+    end && Object.keys(end.properties).length > 0
+      ? Object.entries(end.properties)
+          .map(([k, v]) => `  ${k}: ${v};`)
+          .join('\n')
+      : '';
+
   return [
     `${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    ...(baseDecls.length > 0 ? [baseDecls] : []),
     `  transition: ${transitionDecls(plan, easingFn)};`,
     `}`,
   ].join('\n');
