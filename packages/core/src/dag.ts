@@ -308,6 +308,20 @@ export const linearizeFrom = (dag: ReceiptDAG, afterHash: string): ReadonlyArray
   return full.slice(idx + 1);
 };
 
+/** Default bound for long-lived session DAG growth — pins the pruning policy. */
+export const DEFAULT_MAX_DAG_NODES = 10_000;
+
+/**
+ * Prune a DAG to at most `maxNodes` envelopes, retaining the most recent tail of
+ * the canonical linear order. Used by long-lived LLM sessions to cap memory shape.
+ */
+export const pruneToBound = (dag: ReceiptDAG, maxNodes: number = DEFAULT_MAX_DAG_NODES): ReceiptDAG => {
+  const count = size(dag);
+  if (count <= maxNodes) return dag;
+  const ordered = linearize(dag);
+  return fromReceipts(ordered.slice(ordered.length - maxNodes));
+};
+
 /**
  * Get all head (childless) envelopes in the DAG.
  *
@@ -653,6 +667,7 @@ export const DAG = {
   checkForkRule,
   linearize,
   linearizeFrom,
+  pruneToBound,
   getHeads,
   canonicalHead,
   isFork,

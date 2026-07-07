@@ -158,6 +158,20 @@ describe('DAG', () => {
       expect(DAG.linearizeFrom(dag, 'missing-hash').map((entry) => entry.hash)).toEqual(chain.map((entry) => entry.hash));
     });
 
+    test('pruneToBound retains the tail and caps node count', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 20, 1000);
+      const dag = DAG.fromReceipts(chain);
+      const pruned = DAG.pruneToBound(dag, 10);
+      expect(DAG.size(pruned)).toBe(10);
+      expect(DAG.linearize(pruned).map((e) => e.hash)).toEqual(chain.slice(-10).map((e) => e.hash));
+    });
+
+    test('pruneToBound is a no-op when under the bound', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 5, 1000);
+      const dag = DAG.fromReceipts(chain);
+      expect(DAG.pruneToBound(dag, 10)).toBe(dag);
+    });
+
     test('linearize ignores missing parent references when the referenced node is absent', async () => {
       const timestamp = HLC.increment(HLC.create('node-a'), 1000);
       const envelope = await Effect.runPromise(

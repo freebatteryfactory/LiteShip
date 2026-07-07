@@ -58,6 +58,7 @@ export const SKIP_CAPABILITIES = [
   'coverage-instrumentation', // the test is REDUNDANT (and crash-prone) under v8 coverage; the in-process unit covers the same path
   'astro-example-not-built', // the built Astro example dist is absent (the integration build runs before the e2e lane)
   'offscreen-canvas-absent', // OffscreenCanvas / transferControlToOffscreen is unavailable in the browser harness
+  'webcodecs-absent', // VideoEncoder / VideoFrame unavailable in the browser harness
   'gpu-absent', // a real WebGPU device is unavailable in the CI/jsdom harness
   'eacces-untestable-as-root', // chmod 0o000 EACCES semantics are not enforceable when the test process runs as root
 ] as const;
@@ -185,6 +186,7 @@ const CAPABILITY_KEYWORDS: ReadonlyMap<SkipCapability, readonly string[]> = new 
   ['coverage-instrumentation', ['coverage']],
   ['astro-example-not-built', ['astro', 'built']],
   ['offscreen-canvas-absent', ['offscreen', 'canvas', 'transfercontrol']],
+  ['webcodecs-absent', ['webcodecs', 'videoencoder', 'videoframe']],
   ['gpu-absent', ['webgpu', 'gpu', 'navigator']],
   ['eacces-untestable-as-root', ['eacces', 'chmod', 'root', 'permission']],
 ]);
@@ -369,6 +371,12 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     site: "describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {",
     capability: 'offscreen-canvas-absent',
     why: 'OffscreenCanvas transfer/render browser tests need transferControlToOffscreen; absent it skips (the in-process component suite covers the worker protocol).',
+  },
+  {
+    file: 'tests/browser/webcodecs-capture.test.ts',
+    site: "describe.skipIf(!webCodecsAvailable)('WebCodecsCapture — browser lane', () => {",
+    capability: 'webcodecs-absent',
+    why: 'WebCodecs VideoEncoder/VideoFrame lane runs only when the browser harness exposes WebCodecs.',
   },
   {
     file: 'tests/unit/astro/wgpu-runtime.test.ts',
