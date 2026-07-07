@@ -86,7 +86,7 @@ const ConfigTemplateCompiler = {
  * - `ARIACompiler`   — boundary + per-state attribute maps + active state → ARIA attributes.
  * - `AICompiler`     — an {@link AIManifestInput} → tool-call-ready manifest JSON.
  * - `ConfigCompiler` — a `Config.Shape` → pretty-printed JSON template.
- * - `MotionCompiler`  — a {@link CssMotionPlan} → `@property` / `@keyframes` / transitions.
+ * - `MotionCompiler`  — a `CssMotionPlan` → `@property` / `@keyframes` / transitions.
  */
 export type CompilerDef =
   | {

@@ -312,7 +312,7 @@ export interface GateContext {
   readonly skipSites?: SkipSiteFacts;
   /**
    * Pre-computed ACTIVE-SURFACE field-read evidence — an INJECTED FactPack (#132).
-   * The HOST ({@link @czap/audit}'s `buildActiveSurfaceFacts`) scans reader paths with
+   * The HOST (`@czap/audit`'s `buildActiveSurfaceFacts`) scans reader paths with
    * TS-AST and lands flat {@link ActiveSurfaceFacts}; the
    * {@link activeModeledSurfaceReaderGate} decides over them. When ABSENT the gate
    * folds an empty verdict. See {@link ActiveSurfaceFacts}.

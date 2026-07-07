@@ -2,7 +2,7 @@
  * Native-CSS motion compiler — emits `@property`, `@keyframes`, `@starting-style`,
  * state-keyed transitions, and an `@supports`-gated `animation-timeline` path.
  *
- * Consumes a {@link CssMotionPlan} from `interpretTransition` (#130 child 4).
+ * Consumes a `CssMotionPlan` from `interpretTransition` (#130 child 4).
  *
  * @module
  */
@@ -198,7 +198,7 @@ function compile(input: MotionCompileInput): MotionCompileResult {
 /**
  * Native-CSS motion compiler namespace.
  *
- * Compiles a {@link CssMotionPlan} into `@property` registrations, `@keyframes`,
+ * Compiles a `CssMotionPlan` into `@property` registrations, `@keyframes`,
  * `@starting-style`, state-keyed transitions, and an optional `@supports`-gated
  * scroll/view timeline path with spring easing via {@link Easing.springToLinearCSS}.
  */
