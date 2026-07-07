@@ -1,5 +1,5 @@
 {
-  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 17 entries below are the branch-local weakenings vs the snapshot's birth commit (d0c214b7): 15 enumerated capability-gate skips (each conditional — the test BODY runs when the capability is present) + 2 relocated no-nondeterminism boundary waivers (the SAME waiver shifted one line, not a new deferral). Derived from the live-vs-birth diff, not hand-guessed.",
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 21 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, gpu-absent, eacces-untestable-as-root). Derived from the live-vs-birth diff, not hand-guessed.",
   "signoffs": [
     {
       "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
@@ -104,6 +104,34 @@
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
       "justification": "Sanctioned capability-gated skip (ffmpeg + libx264 on PATH). the real ffmpeg+libx264 encode BODY runs when the codec is on PATH and skips only when absent. The title names the capability (codec not on PATH), never a TODO — a runtime capability gate, not a placeholder. Enumerated in SANCTIONED_SKIPS at site granularity; signed vs the snapshot's birth baseline (the bootstrap window).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/browser/render-worker-browser.test.ts::describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted silent early-return to describe.skipIf. OffscreenCanvas-dependent browser worker tests BODY runs when OffscreenCanvas is defined; skips only when absent (a runtime capability gate, not a placeholder). Replaces a lying early-return pass.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/astro/wgpu-runtime.test.ts::it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. WebGPU runtime tests BODY runs when navigator.gpu is present; skips only when absent (a runtime capability gate, not a placeholder). Replaces a lying early-return pass.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/cli/lib/gauntlet-verdict-cache.test.ts::it.skipIf(!CAN_TEST_EACCES)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. EACCES permission test BODY runs only when chmod 000 is testable (non-root); skips on root where EACCES cannot be provoked (a runtime capability gate, not a placeholder).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/cli/lib/gauntlet-verdict-cache.test.ts::it.skipIf(!CAN_TEST_EACCES)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted silent early-return to it.skipIf. Mutation-cache EACCES test BODY runs only when chmod 000 is testable (non-root); skips on root where EACCES cannot be provoked (a runtime capability gate, not a placeholder).",
       "expiry": "2027-06-20"
     },
     {

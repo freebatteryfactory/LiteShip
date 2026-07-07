@@ -1,7 +1,11 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:38d44470",
+  "address": "fnv1a:ff6b4d56",
   "elements": [
+    {
+      "_tag": "always-blocking",
+      "ruleId": "gauntlet/no-early-return-test"
+    },
     {
       "_tag": "always-blocking",
       "ruleId": "gauntlet/no-placeholder"
@@ -263,6 +267,15 @@
     },
     {
       "_tag": "gate",
+      "ruleId": "gauntlet/no-early-return-test",
+      "set": "LITESHIP_GATES",
+      "level": "L2",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
       "ruleId": "gauntlet/no-nondeterminism",
       "set": "LITESHIP_GATES",
       "level": "L3",
@@ -347,6 +360,15 @@
       "ruleId": "gauntlet/no-default-export-divergence",
       "set": "LITESHIP_IR_GATES",
       "level": "L1",
+      "redFixtureCount": 1,
+      "greenFixtureCount": 1,
+      "mutationFixtureCount": 1
+    },
+    {
+      "_tag": "gate",
+      "ruleId": "gauntlet/no-early-return-test",
+      "set": "LITESHIP_IR_GATES",
+      "level": "L2",
       "redFixtureCount": 1,
       "greenFixtureCount": 1,
       "mutationFixtureCount": 1
@@ -599,6 +621,12 @@
     },
     {
       "_tag": "skip-allowlist",
+      "file": "tests/browser/render-worker-browser.test.ts",
+      "site": "describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {",
+      "capability": "offscreen-canvas-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
       "file": "tests/browser/spsc-ring-browser.test.ts",
       "site": "describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
       "capability": "shared-array-buffer-absent"
@@ -638,6 +666,24 @@
       "file": "tests/smoke/intro-render.test.ts",
       "site": "it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});",
       "capability": "ffmpeg-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/astro/wgpu-runtime.test.ts",
+      "site": "it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(",
+      "capability": "gpu-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts",
+      "site": "it.skipIf(!CAN_TEST_EACCES)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "capability": "eacces-untestable-as-root"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts",
+      "site": "it.skipIf(!CAN_TEST_EACCES)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "capability": "eacces-untestable-as-root"
     },
     {
       "_tag": "skip-allowlist",

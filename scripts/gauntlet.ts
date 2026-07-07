@@ -11,7 +11,7 @@
 import { execSync, spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { gauntletPhases } from '../packages/cli/src/gauntlet-phases.js';
+import { selectGauntletPhases } from '../packages/cli/src/gauntlet-phases.js';
 import { formatUnexpectedArgvReceipt, parseGauntletArgv } from '../packages/cli/src/gauntlet-argv.js';
 import { isDirectExecution } from './audit/shared.js';
 
@@ -211,10 +211,29 @@ function writePhaseTimingsArtifact(
 }
 
 async function main() {
-  const { unexpected } = parseGauntletArgv(process.argv.slice(2));
-  if (unexpected.length > 0) {
-    process.stderr.write(formatUnexpectedArgvReceipt(unexpected));
+  const parsed = parseGauntletArgv(process.argv.slice(2));
+  if (parsed.unexpected.length > 0) {
+    process.stderr.write(formatUnexpectedArgvReceipt(parsed.unexpected));
     process.exit(1);
+  }
+
+  if (parsed.help) {
+    console.log('Usage: pnpm run gauntlet:full [--dry-run] [--profile <name>] [--only a,b] [--skip a,b] [--skip-build]');
+    process.exit(0);
+  }
+
+  const phases = selectGauntletPhases({
+    profile: parsed.profile,
+    only: parsed.only,
+    skip: parsed.skip,
+    skipBuild: parsed.skipBuild,
+  });
+
+  if (parsed.dryRun) {
+    for (const phase of phases) {
+      console.log(phase.label);
+    }
+    process.exit(0);
   }
 
   const gauntletStart = Date.now();
@@ -222,9 +241,9 @@ async function main() {
   try {
     // CUT D8: the phase sequence is the ONE canonical list in
     // packages/cli/src/gauntlet-phases.ts (the CLI dry-run projects the same
-    // source). The executor loops it; global concerns (env, cwd, watchdog,
-    // timings, exit) stay here in run()/main().
-    for (const phase of gauntletPhases) {
+    // source). The executor loops the selected subset; global concerns (env,
+    // cwd, watchdog, timings, exit) stay here in run()/main().
+    for (const phase of phases) {
       await run(
         phase.label,
         phase.command,

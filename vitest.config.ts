@@ -13,6 +13,10 @@ import { alias, coverageExclude, coverageInclude, nodeTestInclude, scaledTimeout
 // likely to hit the default wall without an explicit per-suite timeout; heavy
 // suites still set per-test timeouts where needed.
 const coverageEnabled = process.argv.includes('--coverage');
+const coverageReportsDirectory =
+  process.env.CZAP_COVERAGE_SHARD_DIR !== undefined && process.env.CZAP_COVERAGE_SHARD_DIR.length > 0
+    ? process.env.CZAP_COVERAGE_SHARD_DIR
+    : './coverage/node';
 
 export default defineConfig({
   resolve: {
@@ -28,7 +32,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reportOnFailure: true,
-      reportsDirectory: './coverage/node',
+      reportsDirectory: coverageReportsDirectory,
       reporter: ['text', 'html', 'lcov', 'json'],
       include: coverageInclude,
       exclude: coverageExclude,

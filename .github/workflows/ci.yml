@@ -117,6 +117,320 @@ jobs:
             reports
             benchmarks
 
+  # Tier 6 — parallel truth-linux lane (runs ALONGSIDE serial truth-linux until
+  # proven green-for-green + red-for-red). Build once, fan out: vitest shards N=4,
+  # isolated bench, quarantined capsule:verify. Bench is NEVER sharded.
+  truth-linux-parallel-setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm run build && pnpm run capsule:compile
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-packages
+          path: |
+            packages/*/dist
+          retention-days: 1
+
+  truth-linux-parallel-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - name: Configure git identity for doctor --ci
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-preflight --skip-build
+        env:
+          CI: true
+
+  truth-linux-parallel-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: truth-linux-parallel-setup
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: pnpm run test:shard
+        env:
+          CI: true
+          CZAP_SHARD_INDEX: ${{ matrix.shard }}
+          CZAP_SHARD_TOTAL: 4
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: |
+            coverage/node-shard-${{ matrix.shard }}
+            coverage/subprocess-raw-shard/${{ matrix.shard }}
+          retention-days: 1
+
+  truth-linux-parallel-bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-bench --skip-build
+        env:
+          CI: true
+
+  truth-linux-parallel-mutating:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-mutating --skip-build
+        env:
+          CI: true
+
+  truth-linux-parallel-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-integration --skip-build
+        env:
+          CI: true
+
+  truth-linux-parallel-mid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-mid --skip-build
+        env:
+          CI: true
+
+  truth-linux-parallel-coverage-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: truth-linux-parallel-setup
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - run: pnpm exec playwright install --with-deps chromium chromium-headless-shell
+      - run: rimraf coverage/subprocess-raw
+      - run: pnpm run coverage:browser
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-browser-parallel
+          path: coverage/browser
+          retention-days: 1
+
+  truth-linux-parallel-merge-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - truth-linux-parallel-setup
+      - truth-linux-parallel-test
+      - truth-linux-parallel-coverage-browser
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+          path: coverage
+      - uses: actions/download-artifact@v7
+        with:
+          name: coverage-browser-parallel
+          path: coverage
+      - run: pnpm run coverage:merge-shards
+        env:
+          CI: true
+
+  truth-linux-parallel-final:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs:
+      - truth-linux-parallel-setup
+      - truth-linux-parallel-preflight
+      - truth-linux-parallel-test
+      - truth-linux-parallel-bench
+      - truth-linux-parallel-mutating
+      - truth-linux-parallel-integration
+      - truth-linux-parallel-mid
+      - truth-linux-parallel-merge-coverage
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: dist-packages
+          path: packages
+      - name: Configure git identity for doctor --ci
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+      - name: Resolve standards-integrity base ref
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            echo "CZAP_STANDARDS_BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          else
+            ZERO="0000000000000000000000000000000000000000"
+            BASE="$PUSH_BEFORE"
+            if [ "$BASE" = "$ZERO" ] || [ -z "$BASE" ]; then
+              git fetch --no-tags origin main || true
+              if MB="$(git merge-base origin/main HEAD 2>/dev/null)" \
+                 && git cat-file -e "$MB:traceability/standards-snapshot.json" 2>/dev/null; then
+                BASE="$MB"
+              else
+                BASE="$ZERO"
+              fi
+            else
+              git fetch --no-tags origin "$BASE" || true
+            fi
+            echo "CZAP_STANDARDS_BASE_REF=$BASE" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: coverage-shard-*
+          merge-multiple: true
+          path: coverage
+      - uses: actions/download-artifact@v7
+        with:
+          name: coverage-browser-parallel
+          path: coverage
+      - run: pnpm run coverage:merge-shards
+        env:
+          CI: true
+      - run: pnpm run gauntlet:full -- --profile ci-parallel-final --skip-build
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        continue-on-error: true
+        with:
+          name: truth-artifacts-linux-parallel
+          path: |
+            coverage
+            reports
+            benchmarks
+
+  truth-linux-parallel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - truth-linux-parallel-final
+    steps:
+      - run: echo "Parallel truth-linux lane passed."
+
   browser-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -280,6 +594,7 @@ jobs:
     needs:
       - format
       - truth-linux
+      - truth-linux-parallel
       - browser-e2e
       - windows-smoke
       - rust-wasm-parity

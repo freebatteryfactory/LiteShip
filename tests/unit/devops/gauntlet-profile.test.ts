@@ -91,10 +91,10 @@ describe('D8 — canonical gauntlet phase profile', () => {
 });
 
 describe('D8 — every projection derives from the canonical list (no copies remain)', () => {
-  it('the executor imports the canonical phases and loops them — no inline phase literals', () => {
+  it('the executor imports the canonical phases and loops the selected subset — no inline phase literals', () => {
     const src = readFileSync(resolve(REPO, 'scripts/gauntlet.ts'), 'utf8');
-    expect(src).toContain("import { gauntletPhases } from '../packages/cli/src/gauntlet-phases.js'");
-    expect(src).toContain('for (const phase of gauntletPhases)');
+    expect(src).toContain("import { selectGauntletPhases } from '../packages/cli/src/gauntlet-phases.js'");
+    expect(src).toContain('for (const phase of phases)');
     // The inline `await run('build', …)` phase sequence must be gone.
     expect(src).not.toMatch(/await run\('build'/);
     expect(src).not.toMatch(/await run\('flex:verify'/);

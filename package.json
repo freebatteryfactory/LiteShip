@@ -25,6 +25,7 @@
     "typecheck:tests": "tsc --project tsconfig.tests.json",
     "typecheck:spine": "tsc --noEmit --project packages/_spine/tsconfig.json",
     "test": "vitest run --config vitest.config.ts",
+    "test:shard": "tsx scripts/test-shard.ts",
     "test:unit": "vitest run --config vitest.config.ts tests/unit/",
     "test:smoke": "vitest run --config vitest.config.ts tests/smoke/",
     "test:property": "vitest run --config vitest.config.ts tests/property/",
