@@ -78,6 +78,8 @@ describe('Reveal.intent → graph', () => {
   test('motionPropToBinding preserves opacity and maps motion axes', () => {
     expect(motionPropToBinding('hero', 'opacity')).toBe('opacity');
     expect(motionPropToBinding('hero', 'translateY')).toBe('--czap-hero-y');
+    expect(motionPropToBinding('hero', 'translateX')).toBe('--czap-hero-x');
+    expect(motionPropToBinding('hero', 'translateZ')).toBe('--czap-hero-z');
     expect(motionPropToBinding('hero', '--czap-custom')).toBe('--czap-custom');
   });
 });

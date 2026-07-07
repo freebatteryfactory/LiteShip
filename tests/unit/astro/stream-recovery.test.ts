@@ -365,7 +365,7 @@ describe('stream directive graph-native recovery (#133)', () => {
         }),
       ]);
     });
-    expect(el.innerHTML).toContain('html-patch-applied');
+    expect(el.innerHTML).not.toContain('html-patch-applied');
 
     vi.useRealTimers();
   });

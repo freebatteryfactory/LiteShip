@@ -28,8 +28,8 @@ describe('Benchmark smoke tests', () => {
     await micro.run();
     expect(micro.results.length).toBeGreaterThan(0);
     const firstResult = micro.results[0]!;
-    expect(typeof firstResult.mean).toBe('number');
-    expect(Number.isFinite(firstResult.mean)).toBe(true);
+    expect(firstResult.latency.samplesCount).toBeGreaterThan(0);
+    expect(Number.isFinite(firstResult.latency.mean)).toBe(true);
   });
 
   it('bench files exist on disk', async () => {

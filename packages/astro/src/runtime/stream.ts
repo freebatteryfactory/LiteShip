@@ -340,6 +340,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
           reason: 'resume-failed',
           message: error instanceof Error ? error.message : String(error),
         });
+        return;
       }
     }
 

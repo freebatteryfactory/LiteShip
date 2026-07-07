@@ -57,7 +57,7 @@ function syntaxForTypedValue(value: TypedValue): string | null {
     case 'opacity':
       return '<number>';
     case 'length':
-      return '<length>';
+      return value.unit === '%' ? '<length-percentage>' : '<length>';
     case 'angle':
       return '<angle>';
     case 'transform':
@@ -114,6 +114,15 @@ function emitStartingStyle(plan: CssMotionPlan): string {
   return [`@starting-style {`, `    ${plan.selector} {`, decls, `    }`, `}`].join('\n');
 }
 
+/** From-state declarations for the base rule (persist outside starting-style only). */
+function fromStateDecls(plan: CssMotionPlan): string {
+  const start = plan.keyframes.find((k) => k.offset === 0);
+  if (!start || Object.keys(start.properties).length === 0) return '';
+  return Object.entries(start.properties)
+    .map(([k, v]) => `  ${k}: ${v};`)
+    .join('\n');
+}
+
 function resolveEasing(easing: MotionEasing | undefined, spring?: MotionSpringConfig): string {
   switch (easing ?? 'ease') {
     case 'linear':
@@ -137,9 +146,15 @@ function transitionDecls(plan: CssMotionPlan, easingFn: string): string {
     : `all ${duration} ${easingFn}`;
 }
 
+function emitBaseRule(plan: CssMotionPlan): string {
+  const fromDecls = fromStateDecls(plan);
+  if (fromDecls.length === 0) return '';
+  return [`${plan.selector} {`, fromDecls, `}`].join('\n');
+}
+
 function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
   const end = plan.keyframes.find((k) => k.offset === 1) ?? plan.keyframes.at(-1);
-  const baseDecls =
+  const endDecls =
     end && Object.keys(end.properties).length > 0
       ? Object.entries(end.properties)
           .map(([k, v]) => `  ${k}: ${v};`)
@@ -148,7 +163,7 @@ function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
 
   return [
     `${plan.selector}[data-czap-state="${plan.toState}"] {`,
-    ...(baseDecls.length > 0 ? [baseDecls] : []),
+    ...(endDecls.length > 0 ? [endDecls] : []),
     `  transition: ${transitionDecls(plan, easingFn)};`,
     `}`,
   ].join('\n');
@@ -164,6 +179,7 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
     `    animation-name: ${name};`,
     `    animation-duration: auto;`,
     `    animation-timing-function: ${easingFn};`,
+    `    animation-fill-mode: both;`,
     `    animation-timeline: view();`,
     `    animation-range: ${start} ${end};`,
     `  }`,
@@ -188,10 +204,11 @@ function compile(input: MotionCompileInput): MotionCompileResult {
   const propertyRegistrations = emitPropertyRegistrations(plan.properties);
   const keyframes = emitKeyframes(plan);
   const startingStyle = emitStartingStyle(plan);
+  const baseRule = emitBaseRule(plan);
   const transition = emitTransitionRule(plan, easingFn);
   const scrollTimeline = viewTimeline ? emitScrollTimeline(plan, viewTimeline, easingFn) : '';
 
-  const sections = [propertyRegistrations, keyframes, startingStyle, transition, scrollTimeline].filter(
+  const sections = [propertyRegistrations, keyframes, startingStyle, baseRule, transition, scrollTimeline].filter(
     (s) => s.length > 0,
   );
 
