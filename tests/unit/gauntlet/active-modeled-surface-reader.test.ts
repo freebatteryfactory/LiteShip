@@ -10,7 +10,10 @@ import {
   verifyGate,
 } from '@czap/gauntlet';
 import { buildActiveSurfaceFacts } from '@czap/audit';
-import { LITESHIP_TRANSITION_REQUIRED_FIELDS } from '../../../packages/cli/src/lib/active-surface-policy.js';
+import {
+  LITESHIP_EXPORT_REQUIRED_FIELDS,
+  LITESHIP_TRANSITION_REQUIRED_FIELDS,
+} from '../../../packages/cli/src/lib/active-surface-policy.js';
 import { resolve } from 'node:path';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
@@ -45,6 +48,7 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
       repoRoot: REPO_ROOT,
       promotion: 'blocking',
       transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+      exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
     });
     const transition = facts.surfaces.find((s) => s.family === 'transition');
     expect(transition).toBeDefined();
@@ -54,6 +58,20 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
     expect(transition?.readFields).toContain('routing');
     expect(transition?.readFields).toContain('durationMs');
     expect(transition?.unreadFields).toHaveLength(0);
+  });
+
+  it('reads enrolled ExportNode fields in reader paths', () => {
+    const facts = buildActiveSurfaceFacts({
+      repoRoot: REPO_ROOT,
+      promotion: 'blocking',
+      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+      exportRequiredFields: LITESHIP_EXPORT_REQUIRED_FIELDS,
+    });
+    const exportSurface = facts.surfaces.find((s) => s.family === 'export');
+    expect(exportSurface).toBeDefined();
+    expect(exportSurface?.readFields).toContain('sourceRefs');
+    expect(exportSurface?.readFields).toContain('artifactDigest');
+    expect(exportSurface?.unreadFields).toHaveLength(0);
   });
 
   it('live repo emits no findings when all fields are read (blocking promotion)', () => {

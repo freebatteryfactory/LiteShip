@@ -8,6 +8,6 @@
 
 > **CompactResult** = [`CheckpointResult`](../../../interfaces/CheckpointResult.md)
 
-Defined in: [core/src/dag.ts:684](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L684)
+Defined in: [core/src/dag.ts:699](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/core/src/dag.ts#L699)
 
 Alias for [CheckpointResult](../../../interfaces/CheckpointResult.md).

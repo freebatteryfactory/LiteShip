@@ -18,7 +18,14 @@ import { createTypeDirectedProgram } from './ts-program.js';
 /** The oracle id every active-surface fact is tagged with (traceability). */
 export const ACTIVE_SURFACE_ORACLE_ID = 'ts-active-surface-reader';
 
-type TransitionField = string;
+type SurfaceField = string;
+
+interface EnrolledSurface {
+  readonly family: string;
+  readonly switchCaseLabel: string;
+  readonly readerFiles: readonly string[];
+  readonly dedicatedReaderFiles: ReadonlySet<string>;
+}
 
 /** Reader paths that MUST consume an active TransitionNode when present. */
 const TRANSITION_READER_FILES = [
@@ -27,8 +34,26 @@ const TRANSITION_READER_FILES = [
   'packages/core/src/interpret-transition.ts',
 ] as const;
 
-/** Dedicated interpreter files — scan whole file for transition field reads (no switch/case). */
-const TRANSITION_DEDICATED_READER_FILES = new Set<string>(['packages/core/src/interpret-transition.ts']);
+/** Reader paths that MUST consume an active ExportNode when present. */
+const EXPORT_READER_FILES = [
+  'packages/stage/src/dual-export.ts',
+  'packages/astro/src/runtime/graph-runtime.ts',
+] as const;
+
+const ENROLLED_SURFACES: readonly EnrolledSurface[] = [
+  {
+    family: 'transition',
+    switchCaseLabel: 'transition',
+    readerFiles: TRANSITION_READER_FILES,
+    dedicatedReaderFiles: new Set(['packages/core/src/interpret-transition.ts']),
+  },
+  {
+    family: 'export',
+    switchCaseLabel: 'export',
+    readerFiles: EXPORT_READER_FILES,
+    dedicatedReaderFiles: new Set(['packages/stage/src/dual-export.ts']),
+  },
+] as const;
 
 /** Injected inputs for {@link buildActiveSurfaceFacts}. */
 export interface ActiveSurfaceReaderOptions {
@@ -41,6 +66,11 @@ export interface ActiveSurfaceReaderOptions {
    */
   readonly transitionRequiredFields: readonly string[];
   /**
+   * Load-bearing field names for the active `export` surface — injected by the
+   * HOST from the real `@czap/core` type (`keyof ExportNode`).
+   */
+  readonly exportRequiredFields?: readonly string[];
+  /**
    * The live `--ir` path now injects `'blocking'` (#130 landed the `interpretTransition`
    * reader, so the TransitionNode surface has readers and the gate is green at blocking).
    * `'advisory'` surfaces unread fields without blocking; fixtures also pass `'blocking'`
@@ -50,9 +80,9 @@ export interface ActiveSurfaceReaderOptions {
 }
 
 /** Collect property names read on `subject` inside `body` (direct access + destructuring). */
-function fieldReadsInBlock(subject: string, body: ts.Node, requiredFields: readonly string[]): Set<TransitionField> {
-  const reads = new Set<TransitionField>();
-  const isField = (name: string): name is TransitionField => requiredFields.includes(name);
+function fieldReadsInBlock(subject: string, body: ts.Node, requiredFields: readonly string[]): Set<SurfaceField> {
+  const reads = new Set<SurfaceField>();
+  const isField = (name: string): name is SurfaceField => requiredFields.includes(name);
 
   const visit = (node: ts.Node): void => {
     if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === subject) {
@@ -72,9 +102,13 @@ function fieldReadsInBlock(subject: string, body: ts.Node, requiredFields: reado
   return reads;
 }
 
-/** Find `switch (X.family) { case 'transition': ... }` blocks and collect reads on X. */
-function transitionReadsInSourceFile(sf: ts.SourceFile, requiredFields: readonly string[]): Set<TransitionField> {
-  const reads = new Set<TransitionField>();
+/** Find `switch (X.family) { case '<label>': ... }` blocks and collect reads on X. */
+function familyReadsInSourceFile(
+  sf: ts.SourceFile,
+  switchCaseLabel: string,
+  requiredFields: readonly string[],
+): Set<SurfaceField> {
+  const reads = new Set<SurfaceField>();
 
   const visitSwitch = (stmt: ts.SwitchStatement): void => {
     const expr = stmt.expression;
@@ -85,7 +119,7 @@ function transitionReadsInSourceFile(sf: ts.SourceFile, requiredFields: readonly
     for (const clause of stmt.caseBlock.clauses) {
       if (!ts.isCaseClause(clause)) continue;
       const label = clause.expression;
-      if (!ts.isStringLiteral(label) || label.text !== 'transition') continue;
+      if (!ts.isStringLiteral(label) || label.text !== switchCaseLabel) continue;
       for (const f of fieldReadsInBlock(subject, clause, requiredFields)) reads.add(f);
     }
   };
@@ -98,40 +132,48 @@ function transitionReadsInSourceFile(sf: ts.SourceFile, requiredFields: readonly
   return reads;
 }
 
-/** Scan a dedicated interpreter file for transition-node field property access. */
-function transitionReadsInDedicatedFile(sf: ts.SourceFile, requiredFields: readonly string[]): Set<TransitionField> {
-  return fieldReadsInBlock('transition', sf, requiredFields);
+/** Scan a dedicated interpreter file for node field property access. */
+function familyReadsInDedicatedFile(
+  sf: ts.SourceFile,
+  subject: string,
+  requiredFields: readonly string[],
+): Set<SurfaceField> {
+  return fieldReadsInBlock(subject, sf, requiredFields);
 }
 
-/** Scan one reader file; returns fields read in transition contexts. */
+/** Scan one reader file; returns fields read in enrolled family contexts. */
 function readsInFile(
   relPath: string,
   absPath: string,
   program: ts.Program,
+  surface: EnrolledSurface,
   requiredFields: readonly string[],
-): Set<TransitionField> {
+): Set<SurfaceField> {
   const sf = program.getSourceFile(absPath);
   if (sf === undefined) return new Set();
-  if (TRANSITION_DEDICATED_READER_FILES.has(relPath)) {
-    return transitionReadsInDedicatedFile(sf, requiredFields);
+  if (surface.dedicatedReaderFiles.has(relPath)) {
+    const subject = surface.family === 'export' ? 'exportNode' : surface.family;
+    return familyReadsInDedicatedFile(sf, subject, requiredFields);
   }
-  return transitionReadsInSourceFile(sf, requiredFields);
+  return familyReadsInSourceFile(sf, surface.switchCaseLabel, requiredFields);
 }
 
-function makeTransitionEntry(
-  readFields: readonly TransitionField[],
+function makeSurfaceEntry(
+  family: string,
+  readFields: readonly SurfaceField[],
   requiredFields: readonly string[],
+  readerFiles: readonly string[],
   promotion: ActiveSurfacePromotion,
 ): ActiveSurfaceEntry {
   const required = [...requiredFields];
   const readSet = new Set(readFields);
   const unread = required.filter((f) => !readSet.has(f));
   return Object.freeze({
-    family: 'transition',
+    family,
     requiredFields: Object.freeze(required),
     readFields: Object.freeze([...readSet].sort()),
     active: true,
-    readerFiles: Object.freeze([...TRANSITION_READER_FILES]),
+    readerFiles: Object.freeze([...readerFiles]),
     unreadFields: Object.freeze(unread),
     promotion,
   });
@@ -144,18 +186,34 @@ function makeTransitionEntry(
  */
 export function buildActiveSurfaceFacts(opts: ActiveSurfaceReaderOptions): ActiveSurfaceFacts {
   const promotion = opts.promotion ?? 'advisory';
-  const requiredFields = [...opts.transitionRequiredFields];
-  const readerAbs = TRANSITION_READER_FILES.map((f) => resolve(opts.repoRoot, f));
+  const fieldObligations: Record<string, readonly string[]> = {
+    transition: [...opts.transitionRequiredFields],
+    ...(opts.exportRequiredFields ? { export: [...opts.exportRequiredFields] } : {}),
+  };
+
+  const allReaderFiles = ENROLLED_SURFACES.flatMap((s) => [...s.readerFiles]);
+  const readerAbs = allReaderFiles.map((f) => resolve(opts.repoRoot, f));
   const program = createTypeDirectedProgram(readerAbs, opts.repoRoot);
 
-  const allReads = new Set<TransitionField>();
-  for (let i = 0; i < readerAbs.length; i++) {
-    for (const f of readsInFile(TRANSITION_READER_FILES[i]!, readerAbs[i]!, program, requiredFields)) {
-      allReads.add(f);
+  const surfaces: ActiveSurfaceEntry[] = [];
+  for (const surface of ENROLLED_SURFACES) {
+    const requiredFields = fieldObligations[surface.family];
+    if (!requiredFields) continue;
+
+    const allReads = new Set<SurfaceField>();
+    for (let i = 0; i < surface.readerFiles.length; i++) {
+      const rel = surface.readerFiles[i]!;
+      const abs = resolve(opts.repoRoot, rel);
+      for (const f of readsInFile(rel, abs, program, surface, requiredFields)) {
+        allReads.add(f);
+      }
     }
+    surfaces.push(
+      makeSurfaceEntry(surface.family, [...allReads].sort(), requiredFields, surface.readerFiles, promotion),
+    );
   }
 
   return Object.freeze({
-    surfaces: Object.freeze([makeTransitionEntry([...allReads].sort(), requiredFields, promotion)]),
+    surfaces: Object.freeze(surfaces),
   });
 }

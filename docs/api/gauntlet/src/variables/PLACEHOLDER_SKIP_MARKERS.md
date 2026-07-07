@@ -8,7 +8,7 @@
 
 > `const` **PLACEHOLDER\_SKIP\_MARKERS**: readonly `string`[]
 
-Defined in: [gauntlet/src/gates/skip-allowlist.ts:128](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L128)
+Defined in: [gauntlet/src/gates/skip-allowlist.ts:129](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gates/skip-allowlist.ts#L129)
 
 The PLACEHOLDER-MARKER vocabulary — the tells of an unfinished-work skip (a TODO stub),
 which a sign-off can NEVER sanction. This is the SAME family the always-blocking
