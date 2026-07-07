@@ -58,7 +58,7 @@ export interface ProjectionState<S extends string = string> {
   readonly resolution?: StateResolutionReceipt;
 }
 
-/** Worker/bootstrap interop — mirrors {@link ResolvedStateEntry} in `@czap/worker`. */
+/** Worker/bootstrap interop — mirrors `ResolvedStateEntry` in `@czap/worker`. */
 export interface ResolvedStateSnapshot {
   readonly name: string;
   readonly state: StateName;
