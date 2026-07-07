@@ -47,6 +47,7 @@ import {
   buildActiveSurfaceFacts,
   type EquivalentMutantRegistry,
 } from '@czap/audit';
+import { LITESHIP_TRANSITION_REQUIRED_FIELDS } from './active-surface-policy.js';
 import { LITESHIP_TAINT_REGISTRY } from './taint-policy.js';
 import { LITESHIP_CAPABILITY_MODULES, LITESHIP_CAPABILITY_IDS, resolveCapabilitySites } from './capability-policy.js';
 import {
@@ -461,7 +462,11 @@ export async function runGauntletWithRepoIR(
   // the host scans enrolled reader paths with TS-AST (cheap) and injects facts for
   // `activeModeledSurfaceReaderGate`. Live TransitionNode orphan is advisory until #130.
   gateSet.push(activeModeledSurfaceReaderGate);
-  const activeSurfaceFacts: ActiveSurfaceFacts = buildActiveSurfaceFacts({ repoRoot, promotion: 'advisory' });
+  const activeSurfaceFacts: ActiveSurfaceFacts = buildActiveSurfaceFacts({
+    repoRoot,
+    promotion: 'advisory',
+    transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+  });
 
   const launchOpts: LitelaunchCacheOptions = {
     ...cache,

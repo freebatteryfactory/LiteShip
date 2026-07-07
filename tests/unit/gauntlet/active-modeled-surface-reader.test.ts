@@ -10,6 +10,7 @@ import {
   verifyGate,
 } from '@czap/gauntlet';
 import { buildActiveSurfaceFacts } from '@czap/audit';
+import { LITESHIP_TRANSITION_REQUIRED_FIELDS } from '../../../packages/cli/src/lib/active-surface-policy.js';
 import { resolve } from 'node:path';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..', '..', '..');
@@ -40,7 +41,11 @@ describe('activeModeledSurfaceReaderGate — field-level orphan (#132)', () => {
 
 describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', () => {
   it('reads all four TransitionNode fields in enrolled reader paths', () => {
-    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'blocking' });
+    const facts = buildActiveSurfaceFacts({
+      repoRoot: REPO_ROOT,
+      promotion: 'blocking',
+      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+    });
     const transition = facts.surfaces.find((s) => s.family === 'transition');
     expect(transition).toBeDefined();
     expect(transition?.active).toBe(true);
@@ -52,7 +57,11 @@ describe('buildActiveSurfaceFacts — live repo TransitionNode (#132 green)', ()
   });
 
   it('live repo emits no findings when all fields are read (blocking promotion)', () => {
-    const facts = buildActiveSurfaceFacts({ repoRoot: REPO_ROOT, promotion: 'blocking' });
+    const facts = buildActiveSurfaceFacts({
+      repoRoot: REPO_ROOT,
+      promotion: 'blocking',
+      transitionRequiredFields: LITESHIP_TRANSITION_REQUIRED_FIELDS,
+    });
     const ctx = { repoRoot: REPO_ROOT, readFile: () => undefined, files: () => [], activeSurfaceFacts: facts };
     const findings = activeModeledSurfaceReaderGate.run(ctx);
     expect(findings).toHaveLength(0);

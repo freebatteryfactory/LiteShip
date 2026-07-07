@@ -293,6 +293,11 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
   };
 
   const applyResumeResponse = async (response: ResumeResponse): Promise<void> => {
+    const locator = targetLocator(target);
+    if (locator) {
+      target = findTarget(locator) ?? target;
+    }
+
     if (response.type === 'snapshot') {
       const signalsError = validateSnapshotSignalsField(response.signals);
       if (signalsError) {

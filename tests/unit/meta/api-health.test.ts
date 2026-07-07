@@ -142,7 +142,9 @@ const API_REGISTRY: Record<string, { methods: string[]; values?: string[] }> = {
   Codec: { methods: ['make'] },
   Plan: { methods: ['make', 'validate', 'topoSort'] },
   // GraphPatch — typed graph mutation + structural differ (P5b).
-  GraphPatch: { methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'decode', 'patchId', 'receipt', 'forkOf'] },
+  GraphPatch: {
+    methods: ['propose', 'apply', 'preview', 'validate', 'diff', 'decode', 'patchId', 'receipt', 'forkOf'],
+  },
   RuntimeCoordinator: { methods: ['create'] },
   Diagnostics: {
     methods: ['warn', 'error', 'warnOnce', 'setSink', 'resetSink', 'clearOnce', 'reset', 'createBufferSink'],
@@ -304,6 +306,25 @@ const STANDALONE_FUNCTIONS = [
   // source of truth both ffmpeg backends composite through, so a given CompositeState
   // always yields byte-identical, content-addressable pixels. Pure function.
   'compositeStateToRgba',
+  // Authored-motion + self-managing-state surface (Epic 9). Typed interpolation +
+  // TransitionNode interpreter (#130 c1-2), reveal intent sugar (#124), and the
+  // stream-recovery discrete/continuous helpers (#133). All standalone functions.
+  'interpolate',
+  'interpolateTyped',
+  'parseTypedBinding',
+  'formatTypedValue',
+  'interpretTransition',
+  'lowerRevealIntent',
+  'resolveRevealInitialState',
+  'ssrRevealPaint',
+  'motionPropToBinding',
+  'asReplayableRecoveryCell',
+  'signalSourceKind',
+  'signalPayloadKind',
+  'isReplayHtmlPatch',
+  'replayDroppedSignals',
+  'filterDiscreteSnapshotSignals',
+  'validateSnapshotSignalsField',
 ];
 
 // ── Error classes ───────────────────────────────────────────────────
@@ -348,6 +369,13 @@ const STANDALONE_OBJECTS = [
   // DocumentGraph node schema: the effect/Schema union (the single source of
   // truth `isWellFormedNode` reads) surfaced so hosts can decode/validate nodes.
   'DocumentGraphNodeSchema',
+  // Authored-motion + self-managing-state namespace objects (Epic 9): reveal intent
+  // sugar (#124) and the StateCell/ProjectionState typed-authority surface (#130 c5).
+  // `export const X = { ... }` value-objects, not functions.
+  'Reveal',
+  'StateCell',
+  'ProjectionState',
+  'StateCellStore',
 ];
 
 // ── Centralized default constants (re-exported from defaults.ts) ────

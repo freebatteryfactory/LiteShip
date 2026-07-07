@@ -57,6 +57,13 @@ describe('stream-recovery replay law', () => {
         { type: 'signal', data: { state: 'open' } },
       ]),
     ).toBe(true);
+    expect(
+      replayDroppedSignals([
+        { data: '<section>a</section>' },
+        { html: '<section>b</section>' },
+        { html: 123 },
+      ]),
+    ).toBe(false);
   });
 
   test('filterDiscreteSnapshotSignals replays discrete only — continuous transients excluded', () => {
