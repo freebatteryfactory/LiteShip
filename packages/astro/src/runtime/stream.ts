@@ -1,5 +1,5 @@
 import { Effect, Scope, Exit, ManagedRuntime, Layer } from 'effect';
-import { wallClock, validateSnapshotSignalsField } from '@czap/core';
+import { wallClock, validateSnapshotSignalsField, replayDroppedSignals } from '@czap/core';
 import {
   Morph,
   Resumption,
@@ -10,7 +10,7 @@ import {
   dispatchCzapEvent,
   streamWireAttr,
   bindRequestSnapshotRecovery,
-  supplementReplayIfSignalsDropped,
+  fetchSnapshot,
   applyDiscreteSnapshotSignals,
 } from '@czap/web';
 import type { ResumeResponse, SSEClient, SSEMessage, SSEState } from '@czap/web';
@@ -276,6 +276,7 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
       target = findTarget(pendingLocator) ?? target;
       bindReinit(target);
+      bindSnapshotRecovery(target);
       for (let index = 0; index < patchCount; index++) {
         dispatchCzapEvent(target, 'czap:stream-morph');
       }
@@ -309,6 +310,31 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
       return;
     }
 
+    const dropped = artifactId !== undefined && replayDroppedSignals(response.patches);
+    let recoveredSignals: unknown = null;
+
+    if (dropped) {
+      try {
+        const snapshot = await Effect.runPromise(
+          fetchSnapshot(artifactId!, {
+            ...(snapshotUrl ? { snapshotUrl } : {}),
+            ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+          }),
+        );
+        const signalsError = validateSnapshotSignalsField(snapshot.signals);
+        if (signalsError) {
+          throw new Error(signalsError);
+        }
+        recoveredSignals = snapshot.signals;
+      } catch (error) {
+        dispatchCzapEvent(target, 'czap:stream-error', {
+          reason: 'resume-failed',
+          message: error instanceof Error ? error.message : String(error),
+        });
+        return;
+      }
+    }
+
     const patches = response.patches
       .map((patch) => replayHtml(patch))
       .filter((html): html is string => html !== null)
@@ -319,17 +345,9 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
     await patchScheduler.enqueueBatch(patches);
 
-    if (artifactId) {
-      await supplementReplayIfSignalsDropped(response.patches, {
-        artifactId,
-        ...(snapshotUrl ? { snapshotUrl } : {}),
-        ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
-        handlers: {
-          applyHtml: enqueueHtml,
-          applyDiscreteSignal: (payload) => {
-            dispatchCzapEvent(target, 'czap:signal', payload);
-          },
-        },
+    if (recoveredSignals !== null) {
+      applyDiscreteSnapshotSignals(recoveredSignals, (payload) => {
+        dispatchCzapEvent(target, 'czap:signal', payload);
       });
     }
   };
@@ -474,20 +492,27 @@ export function initStreamDirective(load: () => Promise<unknown>, element: HTMLE
 
   bindReinit(target);
 
-  const unbindSnapshotRecovery =
-    artifactId !== undefined
-      ? bindRequestSnapshotRecovery(target, {
-          artifactId,
-          ...(snapshotUrl ? { snapshotUrl } : {}),
-          ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
-          handlers: {
-            applyHtml: enqueueHtml,
-            applyDiscreteSignal: (payload) => {
-              dispatchCzapEvent(target, 'czap:signal', payload);
-            },
-          },
-        })
-      : null;
+  let unbindSnapshotRecovery: (() => void) | null = null;
+  const bindSnapshotRecovery = (nextTarget: HTMLElement): void => {
+    if (artifactId === undefined) {
+      return;
+    }
+
+    unbindSnapshotRecovery?.();
+    unbindSnapshotRecovery = bindRequestSnapshotRecovery(nextTarget, {
+      artifactId,
+      ...(snapshotUrl ? { snapshotUrl } : {}),
+      ...(hasCustomEndpointPolicy(endpointPolicy) ? { endpointPolicy } : {}),
+      handlers: {
+        applyHtml: enqueueHtml,
+        applyDiscreteSignal: (payload) => {
+          dispatchCzapEvent(target, 'czap:signal', payload);
+        },
+      },
+    });
+  };
+
+  bindSnapshotRecovery(target);
 
   openClient();
   element.addEventListener('czap:teardown', () => {

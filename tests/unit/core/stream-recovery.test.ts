@@ -75,6 +75,11 @@ describe('stream-recovery replay law', () => {
         { 'scroll.progress': 0.1 },
       ]),
     ).toEqual([{ state: 'ready' }]);
+    expect(
+      filterDiscreteSnapshotSignals([
+        { state: 'ready', 'scroll.progress': 0.1 },
+      ]),
+    ).toEqual([{ state: 'ready' }]);
   });
 
   test('validateSnapshotSignalsField rejects missing or unexpected signals shapes', () => {

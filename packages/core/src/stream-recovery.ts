@@ -103,6 +103,19 @@ export function isReplayHtmlPatch(patch: unknown): boolean {
 export const replayDroppedSignals = (patches: readonly unknown[]): boolean =>
   patches.some((patch) => !isReplayHtmlPatch(patch));
 
+/** Extract discrete keys from a snapshot signal record — continuous keys are stripped. */
+function discreteKeysFromRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const discrete: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(record)) {
+    const source = inputToSource(key);
+    const kind = source ? signalSourceKind(source) : signalPayloadKind({ [key]: value });
+    if (kind === 'discrete') {
+      discrete[key] = value;
+    }
+  }
+  return discrete;
+}
+
 /** Extract replayable discrete signal payloads from a snapshot `signals` field. */
 export function filterDiscreteSnapshotSignals(signals: unknown): readonly unknown[] {
   if (signals === null || signals === undefined) {
@@ -110,7 +123,20 @@ export function filterDiscreteSnapshotSignals(signals: unknown): readonly unknow
   }
 
   if (Array.isArray(signals)) {
-    return signals.filter((entry) => signalPayloadKind(entry) === 'discrete');
+    const discrete: unknown[] = [];
+    for (const entry of signals) {
+      if (entry !== null && typeof entry === 'object' && !Array.isArray(entry)) {
+        const stripped = discreteKeysFromRecord(entry as Record<string, unknown>);
+        if (Object.keys(stripped).length > 0) {
+          discrete.push(stripped);
+        }
+        continue;
+      }
+      if (signalPayloadKind(entry) === 'discrete') {
+        discrete.push(entry);
+      }
+    }
+    return discrete;
   }
 
   if (typeof signals === 'object') {
