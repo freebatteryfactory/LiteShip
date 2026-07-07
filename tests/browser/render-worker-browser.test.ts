@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { offscreenCanvasAbsent } from '../helpers/capabilities.browser.js';
 import { RenderWorker } from '../../packages/worker/src/render-worker.js';
 
 function waitForWorkerReady(worker: RenderWorker, timeoutMs = 5000): Promise<void> {
@@ -36,7 +37,7 @@ describe('browser RenderWorker with real Worker and OffscreenCanvas', () => {
     rw.dispose();
   });
 
-  describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {
+  describe.skipIf(offscreenCanvasAbsent)('OffscreenCanvas-dependent flows', () => {
   test('transferCanvas sends OffscreenCanvas to the worker', async () => {
     const worker = RenderWorker.create();
 

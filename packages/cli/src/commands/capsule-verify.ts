@@ -259,31 +259,6 @@ export async function runCapsuleGateScan(root: string): Promise<CapsuleGateSumma
         benches,
       };
     }
-
-    const realBenchPaths = manifest.capsules
-      .map((cap) => cap.generated.benchFile)
-      .filter((rel) => {
-        const benchPath = resolve(root, rel);
-        if (!existsSync(benchPath)) return false;
-        return classifyBenchSource(readFileSync(benchPath, 'utf8')) === 'real';
-      });
-
-    if (realBenchPaths.length > 0) {
-      try {
-        execSync(`pnpm exec vitest run ${realBenchPaths.map((p) => JSON.stringify(p)).join(' ')}`, {
-          cwd: root,
-          stdio: ['ignore', process.stderr, process.stderr],
-          shell: '/bin/sh',
-        });
-      } catch (err) {
-        return {
-          status: 'failed',
-          errors: [`generated benches failed: ${err instanceof Error ? err.message : String(err)}`],
-          capsuleCount: manifest.capsules.length,
-          benches,
-        };
-      }
-    }
   }
 
   return { status: 'ok', errors: [], capsuleCount: manifest.capsules.length, benches };

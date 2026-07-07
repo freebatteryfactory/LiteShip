@@ -1,6 +1,6 @@
 {
   "snapshotFormat": 1,
-  "address": "fnv1a:ff6b4d56",
+  "address": "fnv1a:798c6b9f",
   "elements": [
     {
       "_tag": "always-blocking",
@@ -622,7 +622,7 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/browser/render-worker-browser.test.ts",
-      "site": "describe.skipIf(typeof OffscreenCanvas === 'undefined')('OffscreenCanvas-dependent flows', () => {",
+      "site": "describe.skipIf(offscreenCanvasAbsent)('OffscreenCanvas-dependent flows', () => {",
       "capability": "offscreen-canvas-absent"
     },
     {
@@ -630,6 +630,12 @@
       "file": "tests/browser/spsc-ring-browser.test.ts",
       "site": "describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
       "capability": "shared-array-buffer-absent"
+    },
+    {
+      "_tag": "skip-allowlist",
+      "file": "tests/browser/webcodecs-capture.test.ts",
+      "site": "describe.skipIf(webcodecsAbsent)('WebCodecsCapture — browser lane', () => {",
+      "capability": "webcodecs-absent"
     },
     {
       "_tag": "skip-allowlist",
@@ -670,19 +676,19 @@
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/astro/wgpu-runtime.test.ts",
-      "site": "it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(",
+      "site": "it.skipIf(gpuAbsent)(",
       "capability": "gpu-absent"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts",
-      "site": "it.skipIf(!CAN_TEST_EACCES)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "site": "it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
       "capability": "eacces-untestable-as-root"
     },
     {
       "_tag": "skip-allowlist",
       "file": "tests/unit/cli/lib/gauntlet-verdict-cache.test.ts",
-      "site": "it.skipIf(!CAN_TEST_EACCES)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
+      "site": "it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
       "capability": "eacces-untestable-as-root"
     },
     {

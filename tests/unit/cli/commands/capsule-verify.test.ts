@@ -158,7 +158,7 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
     expect(summary.errors).toContain('dishonest: bench marker drift');
   });
 
-  it('runs vitest on classified-real generated bench files after the test suite', async () => {
+  it('does not spawn vitest for classified-real bench files (bench execution is meta-tested)', async () => {
     const cap = freshCapsule('bench-exec');
     writeManifest({ generatorVersion: 'gen-v1', capsules: [cap] });
     classifyBenchSourceMock.mockReturnValue('real');
@@ -169,8 +169,8 @@ describe('runCapsuleGateScan — in-process branches (no spawn)', () => {
     });
     const summary = await runCapsuleGateScan(root);
     expect(summary.status).toBe('ok');
-    expect(vitestCalls.length).toBe(2);
-    expect(vitestCalls[1]).toContain('.bench.ts');
+    expect(vitestCalls.length).toBe(1);
+    expect(vitestCalls[0]).not.toContain('.bench.ts');
   });
 });
 

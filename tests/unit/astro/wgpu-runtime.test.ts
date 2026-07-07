@@ -11,6 +11,7 @@
  * @module
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { gpuAbsent } from '../../helpers/capabilities.browser.js';
 import { Diagnostics } from '@czap/core';
 import { parseShaderIntegrity } from '@czap/web';
 import { initWGSLRuntime, warnWebGpuUnavailable } from '../../../packages/astro/src/runtime/wgpu.js';
@@ -567,7 +568,7 @@ describe('initWGSLRuntime — czap:uniform-update → uniform buffer (D1-WGSL li
     expect(harness.calls.bufferWrites.length).toBe(writesAfterDispose);
   });
 
-  it.skipIf(!(globalThis.navigator as Navigator & { gpu?: unknown })?.gpu)(
+  it.skipIf(gpuAbsent)(
     'GUARD: a real WebGPU device drives the buffer; absent, it logs a skip (never faked)',
     async () => {
     /* v8 ignore start — only runs where a real WebGPU device exists (not the CI harness). */

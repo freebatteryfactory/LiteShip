@@ -1066,7 +1066,7 @@
         {
           "name": "DAG",
           "kind": "namespace",
-          "signature": "ancestors:function,canonicalHead:function,checkForkRule:function,checkpoint:function,commonAncestor:function,empty:function,fromReceipts:function,getHeads:function,ingest:function,ingestAll:function,isAncestor:function,isFork:function,linearize:function,linearizeFrom:function,merge:function,size:function,spliceCheckpoint:function"
+          "signature": "ancestors:function,canonicalHead:function,checkForkRule:function,checkpoint:function,commonAncestor:function,empty:function,fromReceipts:function,getHeads:function,ingest:function,ingestAll:function,isAncestor:function,isFork:function,linearize:function,linearizeFrom:function,merge:function,pruneToBound:function,size:function,spliceCheckpoint:function"
         },
         {
           "name": "DEFAULT_TARGET_FPS",

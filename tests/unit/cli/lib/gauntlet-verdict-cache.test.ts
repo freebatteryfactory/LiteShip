@@ -30,9 +30,7 @@ import {
   TOOLCHAIN_PACKAGES,
   type ToolchainPackageSegment,
 } from '../../../../packages/cli/src/lib/gauntlet-verdict-cache.js';
-
-/** True only when this process can actually be denied read by a 0o000 chmod (not root). */
-const CAN_TEST_EACCES = process.getuid !== undefined && process.getuid() !== 0;
+import { eaccesUntestableAsRoot } from '../../../helpers/capabilities.js';
 
 let dir: string;
 
@@ -333,7 +331,7 @@ describe('makeFsVerdictCache.read — the EISDIR/EACCES sound-MISS arm (uncertai
     expect(cache.read('eisdir-key')).toBeNull(); // EISDIR ⇒ MISS
   });
 
-  it.skipIf(!CAN_TEST_EACCES)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+  it.skipIf(eaccesUntestableAsRoot)('a cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsVerdictCache(dir);
     cache.write('eacces-key', SAMPLE);
     const gdir = join(dir, '.czap', 'cache', 'gauntlet');
@@ -394,7 +392,7 @@ describe('makeFsMutantVerdictCache — the B2 content-addressed mutant-verdict s
     expect(cache.read('m-eisdir')).toBeNull();
   });
 
-  it.skipIf(!CAN_TEST_EACCES)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
+  it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {
     const cache = makeFsMutantVerdictCache(dir);
     cache.write('m-eacces', 'killed');
     const mdir = join(dir, '.czap', 'cache', 'mutation');

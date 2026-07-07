@@ -8,7 +8,7 @@
  * - `LITESHIP_IR_GATES` (the host composition) re-expresses no-bare-throw as the
  *   IR fold AND adds the divergence gate, with NO duplicate ruleid double-counting.
  * - `litelaunchGauntletWithIR` runs the IR-fold gates over an injected IR.
- * - `litelaunchGauntlet` with NO ir runs the six regex gates and never throws on
+ * - `litelaunchGauntlet` with NO ir runs the seven regex gates and never throws on
  *   the absent IR (the lean path is unaffected).
  *
  * @module
@@ -41,7 +41,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
     }
   });
 
-  it('has exactly the six regex gates', () => {
+  it('has exactly the seven regex gates', () => {
     expect(ids(LITESHIP_GATES)).toEqual([
       'gauntlet/no-bare-throw',
       'gauntlet/no-ts-ignore',
@@ -49,6 +49,7 @@ describe('the lean LITESHIP_GATES default is IR-free', () => {
       'gauntlet/no-silent-catch',
       'gauntlet/no-skipped-test',
       'gauntlet/no-placeholder',
+      'gauntlet/no-early-return-test',
     ]);
   });
 });
@@ -104,10 +105,10 @@ describe('litelaunchGauntletWithIR runs the IR-fold gates over the injected IR',
 });
 
 describe('the lean path is unaffected — litelaunchGauntlet with NO ir', () => {
-  it('runs the six regex gates IR-free and never throws on the absent IR', () => {
+  it('runs the seven regex gates IR-free and never throws on the absent IR', () => {
     const result = litelaunchGauntlet(REPO_ROOT, new Date(0), ['packages/gauntlet/src/**/*.ts']);
     const outcomeIds = result.outcomes.map((o) => o.gateId);
-    // The six lean gates ran...
+    // The seven lean gates ran...
     expect(outcomeIds).toContain('gauntlet/no-bare-throw');
     // ...and the IR-requiring divergence gate did NOT (it is not in the lean set).
     expect(outcomeIds).not.toContain('gauntlet/no-default-export-divergence');
