@@ -89,6 +89,94 @@ describe('web stream recovery (#133)', () => {
     dispose();
   });
 
+  test('bindRequestSnapshotRecovery ignores overlapping snapshot requests while recovery is in flight', async () => {
+    let resolveFetch: ((value: unknown) => void) | undefined;
+    const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.promise(
+        () =>
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          }),
+      ) as never,
+    );
+
+    const host = document.createElement('div');
+    const htmlApplied: string[] = [];
+
+    const dispose = bindRequestSnapshotRecovery(host, {
+      artifactId: 'doc-1',
+      handlers: {
+        applyHtml: async (html) => {
+          htmlApplied.push(html);
+        },
+        applyDiscreteSignal: () => undefined,
+      },
+    });
+
+    host.dispatchEvent(
+      new CustomEvent('czap:request-snapshot', {
+        detail: { reason: 'preserve-missing' },
+        bubbles: true,
+      }),
+    );
+    host.dispatchEvent(
+      new CustomEvent('czap:request-snapshot', {
+        detail: { reason: 'preserve-missing' },
+        bubbles: true,
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    resolveFetch?.({
+      type: 'snapshot',
+      html: '<main>once</main>',
+      signals: { state: 'ok' },
+      lastEventId: 'evt-1',
+    });
+
+    await vi.waitFor(() => {
+      expect(htmlApplied).toEqual(['<main>once</main>']);
+    });
+
+    dispose();
+  });
+
+  test('bindRequestSnapshotRecovery dispatches czap:stream-error when recovery fails', async () => {
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(Effect.fail({ _tag: 'NetworkError', message: 'offline' }) as never);
+
+    const host = document.createElement('div');
+    const errors: Array<{ reason: string; message?: string }> = [];
+    host.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+
+    const dispose = bindRequestSnapshotRecovery(host, {
+      artifactId: 'doc-1',
+      handlers: {
+        applyHtml: async () => undefined,
+        applyDiscreteSignal: () => undefined,
+      },
+    });
+
+    host.dispatchEvent(
+      new CustomEvent('czap:request-snapshot', {
+        detail: { reason: 'preserve-missing' },
+        bubbles: true,
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(errors).toEqual([
+        expect.objectContaining({
+          reason: 'snapshot-recovery-failed',
+        }),
+      ]);
+    });
+
+    dispose();
+  });
+
   test('supplementReplayIfSignalsDropped recovers missed discrete crossing after HTML-only replay', async () => {
     const fetchSpy = vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
       Effect.succeed({

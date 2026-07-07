@@ -119,12 +119,24 @@ export const supplementReplayIfSignalsDropped = async (
  * Wire the production listener for `czap:request-snapshot` (morph rejection recovery).
  * Returns a disposer for teardown.
  */
-export const bindRequestSnapshotRecovery = (target: EventTarget, options: StreamRecoveryOptions): (() => void) =>
-  onCzap(target, 'czap:request-snapshot', () => {
-    void runGraphNativeRecovery(options).catch((error) => {
-      dispatchCzapEvent(target, 'czap:stream-error', {
-        reason: 'snapshot-recovery-failed',
-        message: error instanceof Error ? error.message : String(error),
+export const bindRequestSnapshotRecovery = (target: EventTarget, options: StreamRecoveryOptions): (() => void) => {
+  let inFlight = false;
+
+  return onCzap(target, 'czap:request-snapshot', () => {
+    if (inFlight) {
+      return;
+    }
+
+    inFlight = true;
+    void runGraphNativeRecovery(options)
+      .catch((error) => {
+        dispatchCzapEvent(target, 'czap:stream-error', {
+          reason: 'snapshot-recovery-failed',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      })
+      .finally(() => {
+        inFlight = false;
       });
-    });
   });
+};

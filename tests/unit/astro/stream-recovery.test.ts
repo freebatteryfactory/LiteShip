@@ -241,4 +241,71 @@ describe('stream directive graph-native recovery (#133)', () => {
     expect(signals).toEqual([]);
     expect(el.innerHTML).toContain('stale');
   });
+
+  test('replay with dropped signals validates snapshot before applying HTML patches', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          patches: [
+            '<p>should-not-apply</p>',
+            { type: 'signal', data: { state: 'missed-discrete' } },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    vi.spyOn(Resumption, 'fetchSnapshot').mockReturnValue(
+      Effect.succeed({
+        type: 'snapshot',
+        html: '<p>unused</p>',
+        signals: undefined as unknown as Record<string, unknown>,
+        lastEventId: 'evt-45',
+      }),
+    );
+
+    const el = makeEl('div', {
+      'data-czap-stream-url': '/api/feed',
+      'data-czap-stream-artifact': 'hero',
+    });
+    el.innerHTML = '<p>stale</p>';
+
+    const errors: Array<{ reason: string; message?: string }> = [];
+    el.addEventListener('czap:stream-error', ((event: CustomEvent) => errors.push(event.detail)) as EventListener);
+
+    streamDirective(noop, {}, el);
+
+    const firstSource = MockEventSource.instances[0]!;
+    firstSource.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'evt-42');
+    firstSource.simulateError();
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    const secondSource = MockEventSource.instances.at(-1)!;
+    secondSource.simulateOpen();
+    secondSource.simulateMessage(JSON.stringify({ type: 'heartbeat' }), 'evt-45');
+
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    await flushPromises();
+    await flushPromises();
+
+    await vi.waitFor(() => {
+      expect(errors).toEqual([
+        expect.objectContaining({
+          reason: 'resume-failed',
+          message: expect.stringContaining('missing required signals'),
+        }),
+      ]);
+    });
+    expect(el.innerHTML).toContain('stale');
+    expect(el.innerHTML).not.toContain('should-not-apply');
+
+    vi.useRealTimers();
+  });
 });
