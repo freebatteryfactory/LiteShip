@@ -66,46 +66,45 @@ async function quiet<T>(fn: () => Promise<T>): Promise<T> {
 describe('Spec 1.1 E2E smoke — intro scene render', () => {
   if (!FFMPEG_RENDER_CAPABLE) {
     it.skip('skipped — ffmpeg libx264 render probe failed (see czap doctor)', () => {});
-    return;
+  } else {
+    it('renders examples/scenes/intro.ts to a non-empty mp4 via ffmpeg', async () => {
+      const out = resolve('tests/smoke/.out-intro-smoke.mp4');
+      if (existsSync(out)) unlinkSync(out);
+      if (!existsSync(dirname(out))) mkdirSync(dirname(out), { recursive: true });
+
+      // --force bypasses the idempotency cache so a stale cache entry from a
+      // previous invocation can't masquerade as a successful render.
+      const exit = await quiet(() =>
+        run(['scene', 'render', 'examples/scenes/intro.ts', '-o', out, '--force']),
+      );
+      expect(exit).toBe(0);
+
+      expect(existsSync(out)).toBe(true);
+      const sz = statSync(out).size;
+      // libx264 yuv420p mp4 of a 240-frame 1280x720 clip is at minimum a few KiB
+      // (even all-black). 1 KiB floor is the load-bearing "non-empty" check.
+      expect(sz).toBeGreaterThan(1024);
+
+      if (FFPROBE_AVAILABLE) {
+        const probe = execSync(
+          `ffprobe -v error -show_entries format=duration,size -of json "${out}"`,
+          { stdio: ['ignore', 'pipe', 'pipe'] },
+        ).toString();
+        const meta = JSON.parse(probe) as {
+          format?: { duration?: string; size?: string };
+        };
+        const duration = parseFloat(meta.format?.duration ?? '0');
+        // intro contract is 4 seconds; allow generous slack for container rounding.
+        expect(duration).toBeGreaterThan(0);
+        expect(duration).toBeLessThan(10);
+      }
+
+      // Cleanup output file but leave dir for next run.
+      try {
+        rmSync(out, { force: true });
+      } catch {
+        // Ignore — Windows file locks occasionally prevent immediate unlink.
+      }
+    }, scaledTimeout(240_000));
   }
-
-  it('renders examples/scenes/intro.ts to a non-empty mp4 via ffmpeg', async () => {
-    const out = resolve('tests/smoke/.out-intro-smoke.mp4');
-    if (existsSync(out)) unlinkSync(out);
-    if (!existsSync(dirname(out))) mkdirSync(dirname(out), { recursive: true });
-
-    // --force bypasses the idempotency cache so a stale cache entry from a
-    // previous invocation can't masquerade as a successful render.
-    const exit = await quiet(() =>
-      run(['scene', 'render', 'examples/scenes/intro.ts', '-o', out, '--force']),
-    );
-    expect(exit).toBe(0);
-
-    expect(existsSync(out)).toBe(true);
-    const sz = statSync(out).size;
-    // libx264 yuv420p mp4 of a 240-frame 1280x720 clip is at minimum a few KiB
-    // (even all-black). 1 KiB floor is the load-bearing "non-empty" check.
-    expect(sz).toBeGreaterThan(1024);
-
-    if (FFPROBE_AVAILABLE) {
-      const probe = execSync(
-        `ffprobe -v error -show_entries format=duration,size -of json "${out}"`,
-        { stdio: ['ignore', 'pipe', 'pipe'] },
-      ).toString();
-      const meta = JSON.parse(probe) as {
-        format?: { duration?: string; size?: string };
-      };
-      const duration = parseFloat(meta.format?.duration ?? '0');
-      // intro contract is 4 seconds; allow generous slack for container rounding.
-      expect(duration).toBeGreaterThan(0);
-      expect(duration).toBeLessThan(10);
-    }
-
-    // Cleanup output file but leave dir for next run.
-    try {
-      rmSync(out, { force: true });
-    } catch {
-      // Ignore — Windows file locks occasionally prevent immediate unlink.
-    }
-  }, scaledTimeout(240_000));
 });

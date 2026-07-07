@@ -26,8 +26,10 @@
  *
  * @module
  */
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { getCapsuleManifestPath } from '@czap/command/host';
 
 /** Repo root, two levels up from `tests/helpers/` — every probe path resolves against it. */
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
@@ -38,6 +40,23 @@ const WASM_BUILD_ARTIFACT = join(REPO_ROOT, 'crates/czap-compute/target/wasm32-u
 const WASM_DIST_ARTIFACT = join(REPO_ROOT, 'packages/core/dist/czap-compute.wasm');
 /** The built Astro example's entry HTML (the e2e directive-boot fixture). */
 const ASTRO_EXAMPLE_INDEX = join(REPO_ROOT, 'tests/integration/astro/dist/index.html');
+/** The shipped intro-bed fixture used by audio/scene smoke tests. */
+const INTRO_BED_FIXTURE = join(REPO_ROOT, 'examples/scenes/intro-bed.wav');
+
+function canCreateSymlink(): boolean {
+  const dir = mkdtempSync(join(tmpdir(), 'czap-symlink-probe-'));
+  try {
+    const target = join(dir, 'target');
+    const link = join(dir, 'link');
+    mkdirSync(target);
+    symlinkSync(target, link, 'dir');
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 /** `wasm-absent` — the cargo-built wasm kernel is not present (run `build:wasm`); parity self-skips. */
 export const wasmAbsent = !existsSync(WASM_BUILD_ARTIFACT);
@@ -47,6 +66,15 @@ export const wasmDistStaged = existsSync(WASM_DIST_ARTIFACT);
 
 /** `astro-example-not-built` — the Astro example is not built (`index.html` absent); the e2e self-skips. */
 export const astroExampleNotBuilt = !existsSync(ASTRO_EXAMPLE_INDEX);
+
+/** `fixture-absent` — the shipped intro-bed fixture is absent in this checkout. */
+export const fixtureAbsent = !existsSync(INTRO_BED_FIXTURE);
+
+/** `capsule-manifest-absent` — capsule:compile has not produced the corpus manifest for bench-exec proof. */
+export const capsuleManifestAbsent = !existsSync(getCapsuleManifestPath(REPO_ROOT));
+
+/** `symlink-unprivileged` — this process cannot create symlinks (typically Windows without privilege). */
+export const symlinkUnprivileged = !canCreateSymlink();
 
 /** `coverage-instrumentation` — running under V8 coverage; the subprocess-spawning dev test is redundant there. */
 export const coverageInstrumentation = process.env.NODE_V8_COVERAGE !== undefined;

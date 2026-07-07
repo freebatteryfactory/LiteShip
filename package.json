@@ -64,6 +64,7 @@
     "capsule:compile": "pnpm exec tsx scripts/capsule-compile.ts",
     "capsule:verify": "pnpm exec tsx packages/cli/src/bin.ts capsule-verify",
     "check": "pnpm run lint && pnpm run typecheck",
+    "check:gates": "pnpm exec tsx packages/cli/src/bin.ts check",
     "test:e2e": "pnpm exec playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:stress": "pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/capture.e2e.ts --workers 1 --repeat-each 10",
     "test:e2e:stream-stress": "pnpm exec playwright test --config tests/e2e/playwright.config.ts tests/e2e/stream.e2e.ts --workers 1 --repeat-each 10",

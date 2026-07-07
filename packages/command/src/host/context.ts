@@ -17,7 +17,7 @@ import { pathToFileURL } from 'node:url';
 import { Effect } from 'effect';
 import { Compositor, VideoRenderer, wallClock, type Millis } from '@czap/core';
 import { AssetRegistry, detectBeats, detectOnsets, computeWaveform, type DecodedAudio } from '@czap/assets';
-import { litelaunchGauntlet, type SkipMatch } from '@czap/gauntlet';
+import { litelaunchGauntlet, type EarlyReturnMatch, type SkipMatch } from '@czap/gauntlet';
 import type { CommandContext } from '../registry.js';
 import { spawnArgvCapture } from './spawn.js';
 import { VitestRunner } from './vitest-runner.js';
@@ -41,17 +41,21 @@ const DEFAULT_HEIGHT = 720;
  * capability resolves against it (manifest, cache, file reads, asset/scene
  * loading, CZAP_CAPSULE_MANIFEST) — not just manifest + cache.
  *
- * `skipDetector` is the OPTIONAL host-built SOUND AST skip detector (`@czap/audit`'s
- * `detectSkipsAST`). It is injected by the ADAPTER, not imported here: `@czap/command`
- * must NOT depend on `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`).
- * So the CLI adapter — which already deps `@czap/audit` — passes `detectSkipsAST`, and
- * BOTH the in-process `runGauntlet` (`czap check`) and `runPlumb` capabilities gain the
- * line-agnostic alias/multi-line/inner-describe detection + the structural conditionality
- * proof. The MCP adapter omits it → the lean token fallback (the documented degradation,
- * exactly like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
+ * `skipDetector` and `earlyReturnDetector` are OPTIONAL host-built SOUND AST detectors
+ * (`@czap/audit`'s `detectSkipsAST` / `detectEarlyReturnBeforeExpectAST`). They are
+ * injected by the ADAPTER, not imported here: `@czap/command` must NOT depend on
+ * `@czap/audit` (it would drag the TS compiler into `@czap/mcp-server`). So the CLI
+ * adapter — which already deps `@czap/audit` — passes them, and the in-process
+ * `runGauntlet` (`czap check`) gains parser-backed skip and early-return detection. The
+ * MCP adapter omits them → the lean token fallback (the documented degradation, exactly
+ * like `runCheckInvariants`, which is likewise CLI-only because it needs `@czap/audit`).
  */
 export function createNodeCommandContext(
-  opts: { readonly cwd?: string; readonly skipDetector?: (source: string) => readonly SkipMatch[] } = {},
+  opts: {
+    readonly cwd?: string;
+    readonly skipDetector?: (source: string) => readonly SkipMatch[];
+    readonly earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[];
+  } = {},
 ): CommandContext {
   const cwd = opts.cwd ?? process.cwd();
   const resolveFrom = (path: string): string => resolve(cwd, path);
@@ -102,7 +106,7 @@ export function createNodeCommandContext(
     // feeding it into `new Date()` would land near 1970 and silently mis-expire
     // every waiver).
     runGauntlet: async (globs) =>
-      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector),
+      litelaunchGauntlet(cwd, new Date(wallClock.now()), globs, undefined, opts.skipDetector, opts.earlyReturnDetector),
     // NOTE: `runCheckInvariants` is NOT provisioned here — unlike runPlumb, the
     // invariant scan needs `@czap/audit`'s `normalizeRepoPath` (the one B5b
     // slash-normalize home), and `@czap/command` must not import `@czap/audit`

@@ -375,6 +375,10 @@ export const DEFAULT_GAUNTLET_GLOBS: readonly string[] = ['packages/*/src/**/*.t
  *                 detection + the structural conditionality proof. Omitted on the
  *                 no-`@czap/audit` path (MCP) → the token fallback (the documented lean
  *                 degradation, like `runCheckInvariants`).
+ * @param earlyReturnDetector Optional host-built SOUND AST early-return detector
+ *                 (`@czap/audit`'s `detectEarlyReturnBeforeExpectAST`). The
+ *                 no-early-return-test gate uses it via
+ *                 `(context.earlyReturnDetector ?? detectEarlyReturnBeforeExpect)`.
  */
 export function litelaunchGauntlet(
   repoRoot: string,
@@ -382,6 +386,7 @@ export function litelaunchGauntlet(
   globs: readonly string[] = DEFAULT_GAUNTLET_GLOBS,
   ir?: RepoIR,
   skipDetector?: (source: string) => readonly SkipMatch[],
+  earlyReturnDetector?: (source: string) => readonly EarlyReturnMatch[],
   codeOnly?: (source: string) => string,
 ): GauntletResult {
   return runGauntletOnRepo(
@@ -391,6 +396,7 @@ export function litelaunchGauntlet(
       globs,
       ...(ir !== undefined ? { ir } : {}),
       ...(skipDetector !== undefined ? { skipDetector } : {}),
+      ...(earlyReturnDetector !== undefined ? { earlyReturnDetector } : {}),
       ...(codeOnly !== undefined ? { codeOnly } : {}),
     },
     { assuranceMap: LITESHIP_ASSURANCE_MAP, waivers: LITESHIP_WAIVERS, now },

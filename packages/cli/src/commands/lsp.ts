@@ -34,7 +34,7 @@
 
 import { wallClock } from '@czap/core';
 import { litelaunchGauntlet } from '@czap/gauntlet';
-import { detectSkipsAST } from '@czap/audit';
+import { detectEarlyReturnBeforeExpectAST, detectSkipsAST } from '@czap/audit';
 import { runGauntletWithRepoIR } from '../lib/repo-ir-gauntlet.js';
 import { emitError } from '../receipts.js';
 import { readCliVersion } from './version.js';
@@ -72,10 +72,9 @@ export async function lsp(opts: LspOptions = {}): Promise<number> {
       const result = await runGauntletWithRepoIR(cwd, now, globs, { noCache: false, withSymbolReferences: false });
       return { findings: result.findings, blocked: result.blocked };
     }
-    // Inject the host-built SOUND AST skip detector (the CLI deps `@czap/audit`) so the LEAN LSP
-    // path matches the no-skip rigor of `czap check` — the editor diagnostics see the same
-    // alias/multi-line/inner-describe skips + structural conditionality the gate fold does.
-    const result = litelaunchGauntlet(cwd, now, globs, undefined, detectSkipsAST);
+    // Inject the host-built SOUND AST detectors (the CLI deps `@czap/audit`) so the LEAN LSP
+    // path matches the no-skip/no-early-return rigor of `czap check`.
+    const result = litelaunchGauntlet(cwd, now, globs, undefined, detectSkipsAST, detectEarlyReturnBeforeExpectAST);
     return { findings: result.findings, blocked: result.blocked };
   };
 

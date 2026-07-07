@@ -11,6 +11,7 @@ import { mkdtempSync, mkdirSync, rmSync, symlinkSync, utimesSync, writeFileSync 
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Diagnostics, Token, Theme } from '@czap/core';
+import { symlinkUnprivileged } from '../../helpers/capabilities.js';
 import {
   collectTokenManifest,
   collectThemeManifest,
@@ -119,15 +120,11 @@ describe('collectTokenManifest', () => {
     expect(manifest.accent!.id).toBe(referenceToken.id);
   });
 
-  test('scan terminates on circular directory symlinks and still derives entries', async () => {
+  test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {
     const root = makeTempDir();
     const srcDir = join(root, 'src');
     writeModule(srcDir, 'tokens.ts', TOKEN_MODULE);
-    try {
-      symlinkSync(root, join(srcDir, 'loop'), 'dir');
-    } catch {
-      return;
-    }
+    symlinkSync(root, join(srcDir, 'loop'), 'dir');
 
     const manifest = await collectTokenManifest(root);
     expect(manifest.accent!.id).toBe(referenceToken.id);

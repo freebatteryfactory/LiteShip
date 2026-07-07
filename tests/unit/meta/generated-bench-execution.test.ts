@@ -9,14 +9,15 @@
  * @module
  */
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import * as fc from 'fast-check';
 import { CanonicalCbor } from '@czap/core';
 import { decode } from '@czap/canonical';
 import { classifyBenchSource, schemaToArbitrary } from '@czap/core/harness';
 import { getCapsuleManifestPath } from '@czap/command/host';
 import { repoRoot, scaledTimeout } from '../../../vitest.shared.ts';
+import { capsuleManifestAbsent } from '../../helpers/capabilities.js';
 
 const BENCH_SAMPLE_OPTS = { numRuns: 64, seed: 0x5eed } as const;
 const INTRO_BED_FIXTURE = resolve(repoRoot, 'examples/scenes/intro-bed.wav');
@@ -51,30 +52,13 @@ function loadManifest(): CapsuleManifest | null {
   return JSON.parse(readFileSync(path, 'utf8')) as CapsuleManifest;
 }
 
-function catalogRealBenchEntries(): ManifestEntry[] {
-  const manifest = loadManifest();
-  if (manifest !== null) {
-    return manifest.capsules.filter((entry) => {
-      if (entry.benchExemption !== undefined) return false;
-      const benchPath = resolve(repoRoot, entry.generated.benchFile);
-      if (!existsSync(benchPath)) return false;
-      return isRealBenchSource(readFileSync(benchPath, 'utf8'));
-    });
-  }
-
-  const generatedDir = resolve(repoRoot, 'tests/generated');
-  if (!existsSync(generatedDir)) return [];
-
-  return readdirSync(generatedDir)
-    .filter((name) => name.endsWith('.bench.ts'))
-    .map((name) => join('tests/generated', name))
-    .filter((rel) => isRealBenchSource(readFileSync(resolve(repoRoot, rel), 'utf8')))
-    .map((benchFile) => ({
-      name: basename(benchFile, '.bench.ts'),
-      kind: 'unknown',
-      source: '',
-      generated: { benchFile },
-    }));
+function catalogRealBenchEntries(manifest: CapsuleManifest): ManifestEntry[] {
+  return manifest.capsules.filter((entry) => {
+    if (entry.benchExemption !== undefined) return false;
+    const benchPath = resolve(repoRoot, entry.generated.benchFile);
+    if (!existsSync(benchPath)) return false;
+    return isRealBenchSource(readFileSync(benchPath, 'utf8'));
+  });
 }
 
 async function loadCapsule(entry: ManifestEntry): Promise<CapsuleRecord> {
@@ -212,18 +196,24 @@ async function exerciseCapsuleBench(entry: ManifestEntry): Promise<void> {
   throw new Error(`no exercise path for ${entry.name} (kind=${resolvedKind})`);
 }
 
-describe('generated bench execution — catalog-driven smoke', () => {
-  const entries = catalogRealBenchEntries();
+describe.skipIf(capsuleManifestAbsent)(
+  'generated bench execution — catalog-driven smoke (requires capsule:compile manifest)',
+  () => {
+    const manifest = loadManifest();
+    if (manifest !== null) {
+      const entries = catalogRealBenchEntries(manifest);
 
-  it('catalog is non-empty (at least one real generated bench exists)', () => {
-    expect(entries.length).toBeGreaterThan(0);
-  });
+      it('catalog is non-empty (at least one real generated bench exists)', () => {
+        expect(entries.length).toBeGreaterThan(0);
+      });
 
-  it.each(entries.map((entry) => [entry.name, entry.generated.benchFile, entry] as const))(
-    '%s (%s) exercises its declared hot path once',
-    async (_name, benchFile, entry) => {
-      await exerciseCapsuleBench(entry);
-    },
-    scaledTimeout(60_000),
-  );
-});
+      it.each(entries.map((entry) => [entry.name, entry.generated.benchFile, entry] as const))(
+        '%s (%s) exercises its declared hot path once',
+        async (_name, benchFile, entry) => {
+          await exerciseCapsuleBench(entry);
+        },
+        scaledTimeout(60_000),
+      );
+    }
+  },
+);

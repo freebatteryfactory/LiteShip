@@ -1,5 +1,5 @@
 {
-  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 22 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root). Derived from the live-vs-birth diff, not hand-guessed.",
+  "$comment": "Owner sign-offs for the AGENT-SAFETY META-GAUNTLET (the raccoon rule). A weakening of the gauntlet's own rigor standards is permitted ONLY via an explicit, owner-signed entry here. Each sign-off names the EXACT element being weakened (elementKey), the weakening CLASS it authorizes, the owner, a justification, and an expiry (ISO yyyy-mm-dd; past the run date re-reds). An always-blocking weakening (the placeholder/skip floor) can NEVER be signed (void), and a skip-allowlist-add whose SITE carries a placeholder marker (TODO/FIXME/not implemented/stub/...) is non-signable (it is unfinished work, not a capability gate). The 28 entries below include the branch-local weakenings vs the snapshot's birth commit (d0c214b7) plus Tier 0.2 skipIf conversions (offscreen-canvas, webcodecs, gpu-absent, eacces-untestable-as-root, symlink-unprivileged, fixture-absent, capsule-manifest-absent). Derived from the live-vs-birth diff, not hand-guessed.",
   "signoffs": [
     {
       "elementKey": "skip-allowlist::tests/browser/spsc-ring-browser.test.ts::describe.skipIf(!canUseSAB)('browser SPSCRing with real SharedArrayBuffer and Atomics', () => {",
@@ -139,6 +139,48 @@
       "weakening": "skip-allowlist-added",
       "owner": "heyoub",
       "justification": "Tier 0.2 — converted silent early-return to it.skipIf. Mutation-cache EACCES test BODY runs only when chmod 000 is testable (non-root); skips on root where EACCES cannot be provoked (a runtime capability gate, not a placeholder).",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/devops/audit-consumer-mode.test.ts::it.skipIf(symlinkUnprivileged)('resolves the pnpm virtual-store layout via realpath re-seeding', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted silent symlink-privilege return to it.skipIf. The pnpm virtual-store realpath BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; npm-shaped consumer discovery still covers the non-symlink path.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/meta/generated-bench-execution.test.ts::describe.skipIf(capsuleManifestAbsent)(",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — honest smoke-lane skip for the generated-bench corpus proof. The BODY runs when capsule:compile has produced the manifest; lanes without that manifest skip the catalog-derived proof instead of throwing or silently fabricating sources.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/riff-walker.test.ts::it.skipIf(fixtureAbsent)('decodes the shipped intro-bed.wav fixture cleanly', () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted fixture-absent early return to it.skipIf. The real RIFF fixture BODY runs when intro-bed.wav is present; synthetic RIFF coverage still runs when the optional asset is absent.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/vite/boundary-manifest.test.ts::test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted circular-directory symlink early return to test.skipIf. The traversal BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; ordinary boundary scanning remains covered.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/vite/boundary-manifest.test.ts::test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted external-definition symlink early return to test.skipIf. The symlinked boundary definition BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; boundaryDir override coverage remains the non-symlink proof.",
+      "expiry": "2027-06-20"
+    },
+    {
+      "elementKey": "skip-allowlist::tests/unit/vite/token-manifest.test.ts::test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {",
+      "weakening": "skip-allowlist-added",
+      "owner": "heyoub",
+      "justification": "Tier 0.2 — converted token-manifest circular-directory symlink early return to test.skipIf. The traversal BODY runs when directory symlinks are available and skips only on unprivileged symlink hosts; ordinary token manifest coverage remains active.",
       "expiry": "2027-06-20"
     },
     {

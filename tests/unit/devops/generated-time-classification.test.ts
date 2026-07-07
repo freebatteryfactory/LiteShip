@@ -77,8 +77,12 @@ describe('generated-time — the committed artifact JSON keys are UNCHANGED (no 
   // 1a explicitly preserves the runtime/JSON key; only the TS type gains the alias.
   for (const rel of ['reports/gauntlet-context.json', 'reports/codebase-audit.json']) {
     it(`${rel} still carries the "generatedAt" key`, () => {
-      if (!existsSync(resolve(REPO, rel))) return; // committed artifact may be regenerated, not always present
-      expect(read(rel)).toMatch(/"generatedAt"/);
+      const present = existsSync(resolve(REPO, rel));
+      if (present) {
+        expect(read(rel)).toMatch(/"generatedAt"/);
+      } else {
+        expect(present, `${rel} absent in this checkout; artifact key check is not applicable`).toBe(false);
+      }
     });
   }
 });

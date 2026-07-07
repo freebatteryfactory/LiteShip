@@ -25,6 +25,7 @@ describe('gauntlet phase subset selection', () => {
       'lint:structural',
       'docs:check',
       'invariants',
+      'check:gates',
       'audit:floor',
     ]);
   });

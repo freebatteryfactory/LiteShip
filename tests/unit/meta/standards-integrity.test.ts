@@ -110,13 +110,13 @@ describe('standards-snapshot drift gate', () => {
       const serialized = serializeStandardsSurface(live);
       if (process.env.CZAP_UPDATE_STANDARDS_SNAPSHOT === '1') {
         writeCommittedSnapshot(REPO_ROOT, live);
-        return;
+      } else {
+        const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
+        expect(
+          serialized === committed,
+          'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
+        ).toBe(true);
       }
-      const committed = serializeStandardsSurface(readCommittedSnapshot(REPO_ROOT));
-      expect(
-        serialized === committed,
-        'The live standards surface drifted from the committed snapshot. If this is an intended change, regenerate it (CZAP_UPDATE_STANDARDS_SNAPSHOT=1) and review the diff — an accidental WEAKENING must never pass silently (the raccoon rule).',
-      ).toBe(true);
     },
   );
 
@@ -481,25 +481,28 @@ describe('the base snapshot read is FAIL-CLOSED (refuse, never fall back to the 
     // unreachable in this checkout (the hermetic birth-baseline tests prove the classification).
     const probe = defaultGitShow(REPO_ROOT, 'origin/main', STANDARDS_BASE_PROBE_PATH);
     const snapAtBase = defaultGitShow(REPO_ROOT, 'origin/main', STANDARDS_SNAPSHOT_PATH);
-    if (probe === undefined || snapAtBase !== undefined) return;
-    const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
-      env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
-      gitShow: defaultGitShow,
-    });
-    // If the birth commit is not reachable here, the result is inactive (the never-committed
-    // edge) — accept that environment; otherwise it MUST be ACTIVE with zero unsigned (17 signed).
-    if (result._tag === 'inactive') {
-      expect(result.message).toContain('INACTIVE');
-      return;
+    if (probe === undefined || snapAtBase !== undefined) {
+      expect(probe === undefined || snapAtBase !== undefined).toBe(true);
+    } else {
+      const result = buildStandardsIntegrityFacts(REPO_ROOT, NOW, {
+        env: { [STANDARDS_BASE_REF_ENV]: 'origin/main' },
+        gitShow: defaultGitShow,
+      });
+      // If the birth commit is not reachable here, the result is inactive (the never-committed
+      // edge) — accept that environment; otherwise it MUST be ACTIVE with zero unsigned (17 signed).
+      if (result._tag === 'inactive') {
+        expect(result.message).toContain('INACTIVE');
+      } else {
+        expect(result._tag).toBe('active');
+        expect(result.facts.unsignedWeakenings).toEqual([]);
+        expect(result.facts.forbiddenSignoffs).toEqual([]);
+        expect(result.facts.expiredSignoffs).toEqual([]);
+        // The 17 committed sign-offs are exactly the live-vs-birth weakenings.
+        expect(result.facts.signedWeakenings.length).toBe(readStandardsWaivers(REPO_ROOT).length);
+        const ctx = { ...memoryContext({}), standards: result.facts };
+        expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(false);
+      }
     }
-    expect(result._tag).toBe('active');
-    expect(result.facts.unsignedWeakenings).toEqual([]);
-    expect(result.facts.forbiddenSignoffs).toEqual([]);
-    expect(result.facts.expiredSignoffs).toEqual([]);
-    // The 17 committed sign-offs are exactly the live-vs-birth weakenings.
-    expect(result.facts.signedWeakenings.length).toBe(readStandardsWaivers(REPO_ROOT).length);
-    const ctx = { ...memoryContext({}), standards: result.facts };
-    expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(false);
   });
 });
 
@@ -1139,43 +1142,49 @@ describe('FINDING 3 — the committed 17 sign-offs are EXACTLY the live-vs-birth
 
   test('the 17 committed sign-offs convert every live-vs-birth weakening to signed (zero unsigned)', async () => {
     const birth = await realBirthElements();
-    if (birth === undefined) return; // the birth commit is not reachable in this checkout
-    const live = readLiveStandardsSurface(REPO_ROOT, NOW);
-    const signoffs = readStandardsWaivers(REPO_ROOT);
-    const changes = diffStandardsSurface(birth, live.elements);
-    const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-    // THE portable safety property — every live-vs-birth weakening is signed (the test's namesake),
-    // and no sign-off is forbidden or expired. Holds on a feature branch (17 weakenings, all signed) AND
-    // on post-squash main (0 weakenings — birth == live — vacuously zero unsigned).
-    expect(part.unsignedWeakenings).toEqual([]);
-    expect(part.forbiddenSignoffs).toEqual([]);
-    expect(part.expiredSignoffs).toEqual([]);
-    // We deliberately do NOT assert `signedWeakenings.length === signoffs.length` ("every sign-off is
-    // load-bearing"). That equality only holds against a PRE-erosion baseline (a feature branch where
-    // birth predates the skips); after a squash to main the snapshot's birth already CONTAINS the skips,
-    // so the bootstrap sign-offs are legitimately orphaned vs birth (birth == live → 0 weakenings), and
-    // a later VALID standards change (a strengthening gate, a newly-signed weakening) would re-red it
-    // though nothing is wrong (codex PR#58 review — my first `changes.length > 0` guard was too broad).
-    // And `signedWeakenings ⊆ signoffs` ALWAYS, so the equality can never CATCH a bug, only false-red —
-    // orphan sign-offs are the standards:gate base-ref diff's job, not this birth test's.
+    if (birth === undefined) {
+      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
+    } else {
+      const live = readLiveStandardsSurface(REPO_ROOT, NOW);
+      const signoffs = readStandardsWaivers(REPO_ROOT);
+      const changes = diffStandardsSurface(birth, live.elements);
+      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
+      // THE portable safety property — every live-vs-birth weakening is signed (the test's namesake),
+      // and no sign-off is forbidden or expired. Holds on a feature branch (17 weakenings, all signed) AND
+      // on post-squash main (0 weakenings — birth == live — vacuously zero unsigned).
+      expect(part.unsignedWeakenings).toEqual([]);
+      expect(part.forbiddenSignoffs).toEqual([]);
+      expect(part.expiredSignoffs).toEqual([]);
+      // We deliberately do NOT assert `signedWeakenings.length === signoffs.length` ("every sign-off is
+      // load-bearing"). That equality only holds against a PRE-erosion baseline (a feature branch where
+      // birth predates the skips); after a squash to main the snapshot's birth already CONTAINS the skips,
+      // so the bootstrap sign-offs are legitimately orphaned vs birth (birth == live → 0 weakenings), and
+      // a later VALID standards change (a strengthening gate, a newly-signed weakening) would re-red it
+      // though nothing is wrong (codex PR#58 review — my first `changes.length > 0` guard was too broad).
+      // And `signedWeakenings ⊆ signoffs` ALWAYS, so the equality can never CATCH a bug, only false-red —
+      // orphan sign-offs are the standards:gate base-ref diff's job, not this birth test's.
+    }
   });
 
   test('an 18th UNSIGNED fake skip (a probe) BLOCKS vs the birth baseline (the no-grandfather floor)', async () => {
     const birth = await realBirthElements();
-    if (birth === undefined) return;
-    const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
-    const fake18th: StandardsElement = {
-      _tag: 'skip-allowlist',
-      file: 'tests/unit/fake/an-eighteenth-unsigned-skip.test.ts',
-      site: "it.skip('an unsigned capability gate probe', () => {});",
-      capability: 'ffmpeg-absent',
-    };
-    const signoffs = readStandardsWaivers(REPO_ROOT); // the committed 17 — NOT covering the 18th.
-    const changes = diffStandardsSurface(birth, [...live, fake18th]);
-    const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
-    // The 18th is unsigned → blocking; the original 17 are still signed.
-    expect(part.unsignedWeakenings.some((c) => c.elementKey.includes('an-eighteenth-unsigned-skip'))).toBe(true);
-    const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
-    expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
+    if (birth === undefined) {
+      expect(birth, 'the birth commit is not reachable in this checkout').toBeUndefined();
+    } else {
+      const live = [...readLiveStandardsSurface(REPO_ROOT, NOW).elements];
+      const fake18th: StandardsElement = {
+        _tag: 'skip-allowlist',
+        file: 'tests/unit/fake/an-eighteenth-unsigned-skip.test.ts',
+        site: "it.skip('an unsigned capability gate probe', () => {});",
+        capability: 'ffmpeg-absent',
+      };
+      const signoffs = readStandardsWaivers(REPO_ROOT); // the committed 17 — NOT covering the 18th.
+      const changes = diffStandardsSurface(birth, [...live, fake18th]);
+      const part = applyStandardsWaivers(changes, signoffs, NOW, new Set(ALWAYS_BLOCKING_RULES));
+      // The 18th is unsigned → blocking; the original 17 are still signed.
+      expect(part.unsignedWeakenings.some((c) => c.elementKey.includes('an-eighteenth-unsigned-skip'))).toBe(true);
+      const ctx = { ...memoryContext({}), standards: { ...part, committedAddress: 'x', liveAddress: 'y' } };
+      expect(runGates([standardsIntegrityGate], ctx, { now: NOW }).blocked).toBe(true);
+    }
   });
 });

@@ -6,9 +6,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { walkRiff, type WavChunk } from '@czap/assets';
+import { fixtureAbsent } from '../helpers/capabilities.js';
 
 /** Encode an ASCII fourCC into a 4-byte slice at `dst[off..off+4]`. */
 function writeFourCC(dst: Uint8Array, off: number, cc: string): void {
@@ -164,12 +165,8 @@ describe('walkRiff', () => {
     expect(() => [...walkRiff(buf.buffer)]).toThrow(/truncated-chunk/);
   });
 
-  it('decodes the shipped intro-bed.wav fixture cleanly', () => {
+  it.skipIf(fixtureAbsent)('decodes the shipped intro-bed.wav fixture cleanly', () => {
     const path = resolve('examples/scenes/intro-bed.wav');
-    if (!existsSync(path)) {
-      // fixture not present in this checkout — skip rather than fail
-      return;
-    }
     const buf = readFileSync(path);
     const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
     const chunks = [...walkRiff(ab as ArrayBuffer)];

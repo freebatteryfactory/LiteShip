@@ -61,6 +61,9 @@ export const SKIP_CAPABILITIES = [
   'webcodecs-absent', // VideoEncoder / VideoFrame unavailable in the browser harness
   'gpu-absent', // a real WebGPU device is unavailable in the CI/jsdom harness
   'eacces-untestable-as-root', // chmod 0o000 EACCES semantics are not enforceable when the test process runs as root
+  'symlink-unprivileged', // directory symlink creation is unavailable (typically Windows without Developer Mode/admin)
+  'fixture-absent', // a committed optional fixture asset is absent in this checkout
+  'capsule-manifest-absent', // capsule:compile has not produced the manifest needed for corpus-derived proofs
 ] as const;
 
 /** The closed capability union — derived from the single-source {@link SKIP_CAPABILITIES} list. */
@@ -189,6 +192,9 @@ const CAPABILITY_KEYWORDS: ReadonlyMap<SkipCapability, readonly string[]> = new 
   ['webcodecs-absent', ['webcodecs', 'videoencoder', 'videoframe']],
   ['gpu-absent', ['webgpu', 'gpu', 'navigator']],
   ['eacces-untestable-as-root', ['eacces', 'chmod', 'root', 'permission']],
+  ['symlink-unprivileged', ['symlink', 'privilege', 'windows', 'developer']],
+  ['fixture-absent', ['fixture', 'asset', 'wav']],
+  ['capsule-manifest-absent', ['capsule', 'manifest', 'compile', 'corpus']],
 ]);
 
 /**
@@ -337,6 +343,12 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     why: 'renderScene-through-ffmpeg runs only when libx264 is available (a `runIf` gate on the real backend).',
   },
   {
+    file: 'tests/unit/devops/audit-consumer-mode.test.ts',
+    site: "it.skipIf(symlinkUnprivileged)('resolves the pnpm virtual-store layout via realpath re-seeding', () => {",
+    capability: 'symlink-unprivileged',
+    why: 'the pnpm virtual-store realpath proof needs directory symlinks; Windows without symlink privilege skips while npm-shaped consumer discovery still runs.',
+  },
+  {
     file: 'tests/unit/core/wasm-parity.test.ts',
     site: "describe.skipIf(!wasmPresent)('WASM/TS kernel parity (czap-compute vs fallbackKernels)', () => {",
     capability: 'wasm-absent',
@@ -353,6 +365,18 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     site: "it.skipIf(!staged)('resolves @czap/core dist/czap-compute.wasm via the module graph', () => {",
     capability: 'wasm-dist-staged',
     why: 'the module-graph resolution of @czap/core dist/czap-compute.wasm runs only when the built artifact is staged (a publish-shape probe).',
+  },
+  {
+    file: 'tests/unit/meta/generated-bench-execution.test.ts',
+    site: 'describe.skipIf(capsuleManifestAbsent)(',
+    capability: 'capsule-manifest-absent',
+    why: 'the generated-bench execution proof is catalog-driven from the capsule manifest; smoke lanes that do not run capsule:compile skip this corpus proof honestly.',
+  },
+  {
+    file: 'tests/unit/riff-walker.test.ts',
+    site: "it.skipIf(fixtureAbsent)('decodes the shipped intro-bed.wav fixture cleanly', () => {",
+    capability: 'fixture-absent',
+    why: 'the real RIFF fixture check needs the optional shipped intro-bed.wav asset; synthetic RIFF coverage still runs when the fixture is absent.',
   },
   {
     file: 'tests/unit/stage/dual-export-node.test.ts',
@@ -395,6 +419,24 @@ export const SANCTIONED_SKIPS: readonly SanctionedSkip[] = [
     site: "it.skipIf(eaccesUntestableAsRoot)('a mutation cache file with the read bit cleared (EACCES) reads as a MISS, not a throw', () => {",
     capability: 'eacces-untestable-as-root',
     why: 'the mutation-cache EACCES sound-MISS arm needs a non-root process so chmod 0o000 is enforceable.',
+  },
+  {
+    file: 'tests/unit/vite/boundary-manifest.test.ts',
+    site: "test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives the right entries', async () => {",
+    capability: 'symlink-unprivileged',
+    why: 'the circular-directory traversal proof needs directory symlinks; Windows without symlink privilege skips while the non-symlink scan coverage still runs.',
+  },
+  {
+    file: 'tests/unit/vite/boundary-manifest.test.ts',
+    site: "test.skipIf(symlinkUnprivileged)('follows symlinked directories to boundary definitions outside the project tree', async () => {",
+    capability: 'symlink-unprivileged',
+    why: 'the external-boundary-definition traversal proof needs directory symlinks; boundaryDir override coverage still proves the external-definition path without symlinks.',
+  },
+  {
+    file: 'tests/unit/vite/token-manifest.test.ts',
+    site: "test.skipIf(symlinkUnprivileged)('scan terminates on circular directory symlinks and still derives entries', async () => {",
+    capability: 'symlink-unprivileged',
+    why: 'the token-manifest circular-directory traversal proof needs directory symlinks; non-symlink token manifest coverage still runs.',
   },
 ];
 
