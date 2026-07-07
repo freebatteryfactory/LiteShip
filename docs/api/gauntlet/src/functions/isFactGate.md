@@ -8,7 +8,7 @@
 
 > **isFactGate**(`gate`): `gate is FactGate`
 
-Defined in: [gauntlet/src/gate.ts:723](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L723)
+Defined in: [gauntlet/src/gate.ts:788](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/gate.ts#L788)
 
 Narrow a [Gate](../interfaces/Gate.md) to the [FactGate](../interfaces/FactGate.md) variant — by UNFORGEABLE `FACT_GATES`
 membership, NOT the public `form` string and NOT an on-object brand. A hand-built

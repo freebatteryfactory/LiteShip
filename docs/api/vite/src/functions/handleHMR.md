@@ -8,7 +8,7 @@
 
 > **handleHMR**(`payload`): `void`
 
-Defined in: [vite/src/hmr.ts:111](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L111)
+Defined in: [vite/src/hmr.ts:113](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/vite/src/hmr.ts#L113)
 
 Handle a czap:update HMR payload.
 Dispatches to CSS replacement or shader uniform updates based on payload content.

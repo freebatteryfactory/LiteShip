@@ -8,7 +8,7 @@
 
 > **recordingContext**(`base`): [`EvidenceRecorder`](../interfaces/EvidenceRecorder.md)
 
-Defined in: [gauntlet/src/evidence-recorder.ts:152](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L152)
+Defined in: [gauntlet/src/evidence-recorder.ts:153](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/gauntlet/src/evidence-recorder.ts#L153)
 
 Wrap `base` in an instrumented [GateContext](../interfaces/GateContext.md) that records every out-of-IR /
 fact-channel read into a live set — including an access of a channel that turns out

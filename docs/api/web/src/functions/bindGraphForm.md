@@ -8,7 +8,7 @@
 
 > **bindGraphForm**(`form`, `options`): () => `void`
 
-Defined in: [web/src/mutation/graph-form.ts:25](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L25)
+Defined in: [web/src/mutation/graph-form.ts:26](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/web/src/mutation/graph-form.ts#L26)
 
 Bind a form's submit to the mutation channel. Returns an unbind function.
 

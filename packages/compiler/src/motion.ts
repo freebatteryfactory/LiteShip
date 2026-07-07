@@ -16,7 +16,7 @@ import {
   type TypedValue,
 } from '@czap/core';
 
-/** Spring physics config — mirrors {@link Easing.spring} input. */
+/** Spring physics config — mirrors `Easing.spring` input. */
 export interface MotionSpringConfig {
   readonly stiffness?: number;
   readonly damping?: number;
@@ -200,7 +200,7 @@ function compile(input: MotionCompileInput): MotionCompileResult {
  *
  * Compiles a `CssMotionPlan` into `@property` registrations, `@keyframes`,
  * `@starting-style`, state-keyed transitions, and an optional `@supports`-gated
- * scroll/view timeline path with spring easing via {@link Easing.springToLinearCSS}.
+ * scroll/view timeline path with spring easing via `Easing.springToLinearCSS`.
  */
 export const MotionCompiler = {
   compile,

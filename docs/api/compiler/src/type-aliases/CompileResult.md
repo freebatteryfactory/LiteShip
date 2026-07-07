@@ -6,9 +6,9 @@
 
 # Type Alias: CompileResult
 
-> **CompileResult** = \{ `result`: [`CSSCompileResult`](../interfaces/CSSCompileResult.md); `target`: `"css"`; \} \| \{ `result`: [`GLSLCompileResult`](../interfaces/GLSLCompileResult.md); `target`: `"glsl"`; \} \| \{ `result`: [`WGSLCompileResult`](../interfaces/WGSLCompileResult.md); `target`: `"wgsl"`; \} \| \{ `result`: [`ARIACompileResult`](../interfaces/ARIACompileResult.md); `target`: `"aria"`; \} \| \{ `result`: [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md); `target`: `"ai"`; \} \| \{ `result`: [`ConfigTemplateResult`](../interfaces/ConfigTemplateResult.md); `target`: `"config"`; \}
+> **CompileResult** = \{ `result`: [`CSSCompileResult`](../interfaces/CSSCompileResult.md); `target`: `"css"`; \} \| \{ `result`: [`GLSLCompileResult`](../interfaces/GLSLCompileResult.md); `target`: `"glsl"`; \} \| \{ `result`: [`WGSLCompileResult`](../interfaces/WGSLCompileResult.md); `target`: `"wgsl"`; \} \| \{ `result`: [`ARIACompileResult`](../interfaces/ARIACompileResult.md); `target`: `"aria"`; \} \| \{ `result`: [`AIManifestCompileResult`](../interfaces/AIManifestCompileResult.md); `target`: `"ai"`; \} \| \{ `result`: [`ConfigTemplateResult`](../interfaces/ConfigTemplateResult.md); `target`: `"config"`; \} \| \{ `result`: [`MotionCompileResult`](../interfaces/MotionCompileResult.md); `target`: `"motion"`; \}
 
-Defined in: [compiler/src/dispatch.ts:112](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L112)
+Defined in: [compiler/src/dispatch.ts:116](https://github.com/freebatteryfactory/LiteShip/blob/main/packages/compiler/src/dispatch.ts#L116)
 
 Tagged compile output returned by [dispatch](../functions/dispatch.md).
 

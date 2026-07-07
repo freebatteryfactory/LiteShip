@@ -25,6 +25,8 @@ change underneath them.
 
 ## Interfaces
 
+- [ActiveSurfaceEntry](interfaces/ActiveSurfaceEntry.md)
+- [ActiveSurfaceFacts](interfaces/ActiveSurfaceFacts.md)
 - [ActualChange](interfaces/ActualChange.md)
 - [AlwaysBlockingSurface](interfaces/AlwaysBlockingSurface.md)
 - [AmbitionProofHeatmap](interfaces/AmbitionProofHeatmap.md)
@@ -124,6 +126,7 @@ change underneath them.
 ## Type Aliases
 
 - [AbsentRead](type-aliases/AbsentRead.md)
+- [ActiveSurfacePromotion](type-aliases/ActiveSurfacePromotion.md)
 - [AssuranceLevel](type-aliases/AssuranceLevel.md)
 - [Authority](type-aliases/Authority.md)
 - [ChangeClass](type-aliases/ChangeClass.md)
@@ -159,6 +162,7 @@ change underneath them.
 
 - [ABSENT\_SUFFIX](variables/ABSENT_SUFFIX.md)
 - [ACCESSED\_ABSENT\_MARKER](variables/ACCESSED_ABSENT_MARKER.md)
+- [activeModeledSurfaceReaderGate](variables/activeModeledSurfaceReaderGate.md)
 - [ALWAYS\_BLOCKING\_RULES](variables/ALWAYS_BLOCKING_RULES.md)
 - [ASSURANCE](variables/ASSURANCE.md)
 - [ASSURANCE\_LEVELS](variables/ASSURANCE_LEVELS.md)
@@ -233,6 +237,7 @@ change underneath them.
 - [computeHeatmap](functions/computeHeatmap.md)
 - [coverageClassSeverity](functions/coverageClassSeverity.md)
 - [coverageDigestOf](functions/coverageDigestOf.md)
+- [decideActiveSurfaceReaders](functions/decideActiveSurfaceReaders.md)
 - [decideSkips](functions/decideSkips.md)
 - [decideSkipSite](functions/decideSkipSite.md)
 - [defineFactGate](functions/defineFactGate.md)

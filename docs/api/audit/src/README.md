@@ -15,6 +15,7 @@ package — it stays repo-local and composes these passes.
 
 ## Interfaces
 
+- [ActiveSurfaceReaderOptions](interfaces/ActiveSurfaceReaderOptions.md)
 - [AllowlistUnexercisedEntry](interfaces/AllowlistUnexercisedEntry.md)
 - [AuditAllowlistEntry](interfaces/AuditAllowlistEntry.md)
 - [AuditCounts](interfaces/AuditCounts.md)
@@ -81,6 +82,7 @@ package — it stays repo-local and composes these passes.
 
 ## Variables
 
+- [ACTIVE\_SURFACE\_ORACLE\_ID](variables/ACTIVE_SURFACE_ORACLE_ID.md)
 - [auditAllowlist](variables/auditAllowlist.md)
 - [auditIgnoreGlobs](variables/auditIgnoreGlobs.md)
 - [auditSourceGlobs](variables/auditSourceGlobs.md)
@@ -105,6 +107,7 @@ package — it stays repo-local and composes these passes.
 - [applyConditionMutant](functions/applyConditionMutant.md)
 - [applyMutant](functions/applyMutant.md)
 - [asOrphanValue](functions/asOrphanValue.md)
+- [buildActiveSurfaceFacts](functions/buildActiveSurfaceFacts.md)
 - [buildCapabilityLinkFacts](functions/buildCapabilityLinkFacts.md)
 - [buildMcdcFacts](functions/buildMcdcFacts.md)
 - [buildMutationFacts](functions/buildMutationFacts.md)
