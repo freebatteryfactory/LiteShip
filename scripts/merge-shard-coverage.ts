@@ -82,10 +82,10 @@ function mergeShardCoverage(): void {
   );
 }
 
-function runScript(script: string): void {
-  const result = spawnArgvVisible('pnpm', ['exec', 'tsx', script], { cwd: repoRoot });
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+async function runScript(script: string): Promise<void> {
+  const result = await spawnArgvVisible('pnpm', ['exec', 'tsx', script], { cwd: repoRoot });
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode ?? 1);
   }
 }
 
@@ -94,5 +94,7 @@ const staged = stageSubprocessDumps();
 if (staged > 0) {
   console.log(`[merge-shard-coverage] staged ${staged} subprocess dump(s) into ${subprocessTargetDir}`);
 }
-runScript('scripts/merge-subprocess-v8.ts');
-runScript('scripts/merge-coverage.ts');
+void (async () => {
+  await runScript('scripts/merge-subprocess-v8.ts');
+  await runScript('scripts/merge-coverage.ts');
+})();

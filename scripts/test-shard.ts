@@ -32,27 +32,31 @@ const subprocessShardDir = resolve(repoRoot, `coverage/subprocess-raw-shard/${sh
 mkdirSync(coverageShardDir, { recursive: true });
 mkdirSync(subprocessShardDir, { recursive: true });
 
-console.log(`[test-shard] running shard ${shardIndex}/${shardTotal}`);
-const result = spawnArgvVisible(
-  'pnpm',
-  [
-    'exec',
-    'vitest',
-    'run',
-    '--config',
-    'vitest.config.ts',
-    '--coverage',
-    `--shard=${shardIndex}/${shardTotal}`,
-  ],
-  {
-    cwd: repoRoot,
-    env: {
-      ...process.env,
-      CZAP_COVERAGE_SHARD_DIR: `coverage/node-shard-${shardIndex}`,
-      NODE_V8_COVERAGE: `coverage/subprocess-raw-shard/${shardIndex}`,
+async function main(): Promise<void> {
+  console.log(`[test-shard] running shard ${shardIndex}/${shardTotal}`);
+  const result = await spawnArgvVisible(
+    'pnpm',
+    [
+      'exec',
+      'vitest',
+      'run',
+      '--config',
+      'vitest.config.ts',
+      '--coverage',
+      `--shard=${shardIndex}/${shardTotal}`,
+    ],
+    {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        CZAP_COVERAGE_SHARD_DIR: `coverage/node-shard-${shardIndex}`,
+        NODE_V8_COVERAGE: `coverage/subprocess-raw-shard/${shardIndex}`,
+      },
     },
-  },
-);
-if (result.status !== 0) {
-  process.exit(result.status ?? 1);
+  );
+  if (result.exitCode !== 0) {
+    process.exit(result.exitCode ?? 1);
+  }
 }
+
+void main();

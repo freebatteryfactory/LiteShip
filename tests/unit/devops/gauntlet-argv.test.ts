@@ -24,4 +24,10 @@ describe('parseGauntletArgv', () => {
     const parsed = parseGauntletArgv(['--wat']);
     expect(parsed.unexpected).toEqual(['--wat']);
   });
+
+  it('does not swallow a following flag when --profile has no value', () => {
+    const parsed = parseGauntletArgv(['--profile', '--skip-build']);
+    expect(parsed.unexpected).toEqual(['--profile']);
+    expect(parsed.skipBuild).toBe(true);
+  });
 });

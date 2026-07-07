@@ -14,6 +14,13 @@ describe('detectEarlyReturnBeforeExpectAST', () => {
       "it('y', () => { expect(true).toBe(true); });\n";
     expect(detectEarlyReturnBeforeExpectAST(src)).toEqual([]);
   });
+
+  it('does not flag beforeEach or array callbacks (non-runner invocations)', () => {
+    const src =
+      "beforeEach(() => {\n  if (!CAP) {\n    return;\n  }\n  expect(1).toBe(1);\n});\n" +
+      "[1].map(() => {\n  if (x) return;\n  expect(1).toBe(1);\n});\n";
+    expect(detectEarlyReturnBeforeExpectAST(src)).toEqual([]);
+  });
 });
 
 describe('noEarlyReturnTestGate fixtures', () => {

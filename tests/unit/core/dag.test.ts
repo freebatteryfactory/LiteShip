@@ -172,6 +172,12 @@ describe('DAG', () => {
       expect(DAG.pruneToBound(dag, 10)).toBe(dag);
     });
 
+    test('pruneToBound with maxNodes < 1 returns an empty DAG', async () => {
+      const chain = await makeChain('actor-1', 'node-a', 5, 1000);
+      const dag = DAG.fromReceipts(chain);
+      expect(DAG.pruneToBound(dag, 0)).toEqual(DAG.empty());
+    });
+
     test('linearize ignores missing parent references when the referenced node is absent', async () => {
       const timestamp = HLC.increment(HLC.create('node-a'), 1000);
       const envelope = await Effect.runPromise(

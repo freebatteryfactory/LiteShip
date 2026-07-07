@@ -128,6 +128,23 @@ describe('Reveal graph → CSS equivalence', () => {
     const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
     expect(compiled.css.transition).toMatch(/linear\(/);
   });
+
+  test('hyphenated targets emit a translate3d consumer on their custom axes', () => {
+    const intent = Reveal.intent({
+      target: 'hero-card',
+      trigger: { type: 'view', range: ['entry 0%', 'cover 60%'] },
+      from: { opacity: 0, translateY: '12px' },
+      to: { opacity: 1, translateY: '0px' },
+      transition: { durationMs: 300, easing: 'ease' },
+      policy: { reducedMotion: 'settle', motionTier: 'transitions' },
+    });
+    const lowered = lowerRevealIntent(intent);
+    const compiled = compileReveal(lowered.graph, lowered.transitionId, intent);
+    expect(compiled.css.raw).toContain('@property --czap-hero-card-y');
+    expect(compiled.css.raw).toContain(
+      'transform: translate3d(var(--czap-hero-card-x,0px),var(--czap-hero-card-y,0px),var(--czap-hero-card-z,0px))',
+    );
+  });
 });
 
 describe('Reveal reduced-motion settle', () => {

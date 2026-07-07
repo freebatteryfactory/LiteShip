@@ -10,7 +10,18 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { gauntletPhases, gauntletPhaseLabels } from '../../../packages/cli/src/gauntlet-phases.js';
+import {
+  gauntletPhases,
+  gauntletPhaseLabels,
+  gauntletPhaseProfiles,
+  CI_PARALLEL_PREFLIGHT_LABELS,
+  CI_PARALLEL_INTEGRATION_LABELS,
+  CI_PARALLEL_BENCH_LABELS,
+  CI_PARALLEL_MUTATING_LABELS,
+  CI_PARALLEL_COVERAGE_LABELS,
+  CI_PARALLEL_FINAL_LABELS,
+  CI_PARALLEL_SHARDED_TEST_LABEL,
+} from '../../../packages/cli/src/gauntlet-phases.js';
 
 const REPO = resolve(import.meta.dirname, '..', '..', '..');
 
@@ -104,5 +115,36 @@ describe('D8 — every projection derives from the canonical list (no copies rem
     const src = readFileSync(resolve(REPO, 'packages/cli/src/commands/gauntlet.ts'), 'utf8');
     expect(src).toContain('gauntletPhaseLabels');
     expect(src).not.toMatch(/const PHASES\s*=\s*\[/);
+  });
+});
+
+describe('Tier 6 — ci-parallel profile partitioning', () => {
+  const dedicatedProfiles = [
+    CI_PARALLEL_PREFLIGHT_LABELS,
+    CI_PARALLEL_INTEGRATION_LABELS,
+    CI_PARALLEL_BENCH_LABELS,
+    CI_PARALLEL_MUTATING_LABELS,
+    CI_PARALLEL_COVERAGE_LABELS,
+    CI_PARALLEL_FINAL_LABELS,
+    [CI_PARALLEL_SHARDED_TEST_LABEL],
+  ] as const;
+
+  it('ci-parallel-mid does not duplicate preflight, integration, or other dedicated lanes', () => {
+    const mid = new Set(gauntletPhaseProfiles['ci-parallel-mid']);
+    for (const labels of dedicatedProfiles) {
+      for (const label of labels) {
+        expect(mid.has(label), `mid must not re-run dedicated phase ${label}`).toBe(false);
+      }
+    }
+  });
+
+  it('dedicated parallel profiles do not overlap each other', () => {
+    const seen = new Set<string>();
+    for (const labels of dedicatedProfiles) {
+      for (const label of labels) {
+        expect(seen.has(label), `duplicate dedicated phase ${label}`).toBe(false);
+        seen.add(label);
+      }
+    }
   });
 });

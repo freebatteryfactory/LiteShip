@@ -1,20 +1,30 @@
 /**
  * Tier 0.4 guard — every manifest capsule with a classified-real generated bench
- * presamples inputs and its handler runs without throwing (fast meta lane; no
- * `vitest run *.bench.ts` inside the mutating capsule:verify gate).
+ * exercises its declared hot path once (fast meta lane; no `vitest run *.bench.ts`
+ * inside the mutating capsule:verify gate).
+ *
+ * Catalog-driven from the manifest + capsule modules — NOT regex mirrors of the
+ * generated `.bench.ts` text (those drift from the harness templates).
  *
  * @module
  */
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import * as fc from 'fast-check';
+import { CanonicalCbor } from '@czap/core';
+import { decode } from '@czap/canonical';
 import { classifyBenchSource, schemaToArbitrary } from '@czap/core/harness';
 import { getCapsuleManifestPath } from '@czap/command/host';
 import { repoRoot, scaledTimeout } from '../../../vitest.shared.ts';
 
+const BENCH_SAMPLE_OPTS = { numRuns: 64, seed: 0x5eed } as const;
+const INTRO_BED_FIXTURE = resolve(repoRoot, 'examples/scenes/intro-bed.wav');
+
 interface ManifestEntry {
   readonly name: string;
+  readonly kind: string;
+  readonly source: string;
   readonly generated: { readonly benchFile: string };
   readonly benchExemption?: { readonly reason: string };
 }
@@ -23,19 +33,16 @@ interface CapsuleManifest {
   readonly capsules: readonly ManifestEntry[];
 }
 
-const PRESAMPLE_RE = /fc\.sample\(\s*arb\s*,\s*\{\s*numRuns:\s*64\s*,\s*seed:\s*0x5eed\s*\}\s*\)/;
-const CAP_IMPORT_RE = /import\s+\{\s*(\w+)\s*\}\s+from\s+['"]([^'"]+)['"]/g;
-const CAP_BINDING_RE = /const\s+cap\s*=\s*(\w+)\s*;/;
-const HANDLER_RE = /const\s+(\w+)\s*=\s*cap\.(\w+)!;/;
+type CapsuleRecord = Record<string, unknown> & {
+  readonly name?: string;
+  readonly _kind?: string;
+  readonly input?: unknown;
+  readonly output?: unknown;
+  readonly initialState?: unknown;
+};
 
-function parseCapsuleImport(src: string): { exportName: string; importPath: string } | null {
-  for (const match of src.matchAll(CAP_IMPORT_RE)) {
-    const [, exportName, importPath] = match;
-    if (importPath.includes('vitest') || importPath.includes('fast-check')) continue;
-    if (exportName === undefined || importPath === undefined) continue;
-    return { exportName, importPath };
-  }
-  return null;
+function isRealBenchSource(src: string): boolean {
+  return classifyBenchSource(src) === 'real' && !src.includes('BENCH-NOT-APPLICABLE');
 }
 
 function loadManifest(): CapsuleManifest | null {
@@ -44,88 +51,179 @@ function loadManifest(): CapsuleManifest | null {
   return JSON.parse(readFileSync(path, 'utf8')) as CapsuleManifest;
 }
 
-function catalogRealPresampleBenches(): readonly { benchFile: string }[] {
+function catalogRealBenchEntries(): ManifestEntry[] {
   const manifest = loadManifest();
   if (manifest !== null) {
-    return manifest.capsules
-      .filter((cap) => cap.benchExemption === undefined)
-      .map((cap) => cap.generated.benchFile)
-      .filter((rel) => {
-        const abs = resolve(repoRoot, rel);
-        if (!existsSync(abs)) return false;
-        const src = readFileSync(abs, 'utf8');
-        return classifyBenchSource(src) === 'real' && PRESAMPLE_RE.test(src);
-      })
-      .map((benchFile) => ({ benchFile }));
+    return manifest.capsules.filter((entry) => {
+      if (entry.benchExemption !== undefined) return false;
+      const benchPath = resolve(repoRoot, entry.generated.benchFile);
+      if (!existsSync(benchPath)) return false;
+      return isRealBenchSource(readFileSync(benchPath, 'utf8'));
+    });
   }
 
-  return readdirSync(resolve(repoRoot, 'tests/generated'))
+  const generatedDir = resolve(repoRoot, 'tests/generated');
+  if (!existsSync(generatedDir)) return [];
+
+  return readdirSync(generatedDir)
     .filter((name) => name.endsWith('.bench.ts'))
     .map((name) => join('tests/generated', name))
-    .filter((rel) => {
-      const src = readFileSync(resolve(repoRoot, rel), 'utf8');
-      return classifyBenchSource(src) === 'real' && PRESAMPLE_RE.test(src);
-    })
-    .map((benchFile) => ({ benchFile }));
+    .filter((rel) => isRealBenchSource(readFileSync(resolve(repoRoot, rel), 'utf8')))
+    .map((benchFile) => ({
+      name: basename(benchFile, '.bench.ts'),
+      kind: 'unknown',
+      source: '',
+      generated: { benchFile },
+    }));
 }
 
-async function invokeHandler(
-  cap: Record<string, unknown>,
-  handlerKey: string,
-  sample: unknown,
-): Promise<void> {
-  const handler = cap[handlerKey];
-  expect(typeof handler).toBe('function');
-  if (handlerKey === 'step' && cap.initialState !== undefined) {
-    const state = structuredClone(cap.initialState);
-    const result = (handler as (s: unknown, e: unknown) => unknown)(state, sample);
-    if (result instanceof Promise) await result;
-    return;
+async function loadCapsule(entry: ManifestEntry): Promise<CapsuleRecord> {
+  if (entry.source.length === 0) {
+    throw new Error(`${entry.generated.benchFile}: manifest-less fallback requires a source path`);
   }
-  const result = (handler as (input: unknown) => unknown)(sample);
+  const mod = (await import(resolve(repoRoot, entry.source.replace(/\.ts$/, '.js')))) as Record<string, unknown>;
+  for (const value of Object.values(mod)) {
+    if (value !== null && typeof value === 'object' && (value as CapsuleRecord).name === entry.name) {
+      return value as CapsuleRecord;
+    }
+  }
+  throw new Error(`capsule export for ${entry.name} not found in ${entry.source}`);
+}
+
+async function exerciseSceneTick(entry: ManifestEntry): Promise<void> {
+  const { compileIntro } = await import('../../../examples/scenes/intro.js');
+  const { SceneRuntime } = await import('../../../packages/scene/src/runtime.js');
+  const compiled = compileIntro();
+  const dtMs = 1000 / (compiled as { fps: number }).fps;
+  const handle = await SceneRuntime.build(
+    compiled,
+    entry.name === 'examples.intro' ? { sampleRate: 48000 } : undefined,
+  );
+  try {
+    await handle.tick(dtMs);
+  } finally {
+    await handle.release();
+  }
+}
+
+async function exerciseCachedProjection(cap: CapsuleRecord, entry: ManifestEntry): Promise<void> {
+  expect(typeof cap.derive, `${entry.name}: derive handler`).toBe('function');
+  if (!existsSync(INTRO_BED_FIXTURE)) {
+    throw new Error(
+      `${entry.name}: fixture missing at ${INTRO_BED_FIXTURE} — restore intro-bed.wav or run capsule:compile after assets land`,
+    );
+  }
+  const bytes = readFileSync(INTRO_BED_FIXTURE);
+  const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const result = (cap.derive as (input: unknown) => unknown)(buffer);
   if (result instanceof Promise) await result;
 }
 
-async function exercisePresampleBench(benchFile: string): Promise<void> {
-  const src = readFileSync(resolve(repoRoot, benchFile), 'utf8');
-  const capImport = parseCapsuleImport(src);
-  const bindingMatch = CAP_BINDING_RE.exec(src);
-  const handlerMatch = HANDLER_RE.exec(src);
-  expect(capImport, `${benchFile}: missing capsule import`).not.toBeNull();
-  expect(bindingMatch, `${benchFile}: missing cap binding`).not.toBeNull();
-  expect(handlerMatch, `${benchFile}: missing handler binding`).not.toBeNull();
-
-  const { exportName, importPath } = capImport!;
-  const [, boundName] = bindingMatch!;
-  const [, , handlerKey] = handlerMatch!;
-  expect(boundName, `${benchFile}: cap binding must match import`).toBe(exportName);
-
-  const mod = (await import(resolve(dirname(resolve(repoRoot, benchFile)), importPath))) as Record<
-    string,
-    unknown
-  >;
-  const cap = mod[exportName] as Record<string, unknown>;
-  expect(cap, `${benchFile}: capsule export ${exportName}`).toBeDefined();
-
-  const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
-  const samples = fc.sample(arb, { numRuns: 64, seed: 0x5eed });
-  expect(samples.length, `${benchFile}: presampled inputs`).toBeGreaterThan(0);
-
-  await invokeHandler(cap, handlerKey!, samples[0]!);
+async function exerciseSiteAdapter(cap: CapsuleRecord, entry: ManifestEntry): Promise<void> {
+  const arb = schemaToArbitrary(cap.output as never) as fc.Arbitrary<unknown>;
+  const natives = fc.sample(arb, BENCH_SAMPLE_OPTS);
+  expect(natives.length, `${entry.name}: presampled natives`).toBeGreaterThan(0);
+  decode(CanonicalCbor.encode(natives[0]));
 }
 
-describe('generated bench execution — presample + handler smoke', () => {
-  const benches = catalogRealPresampleBenches();
+async function exerciseHandler(
+  cap: CapsuleRecord,
+  entry: ManifestEntry,
+  handlerKey: 'run' | 'derive' | 'mutate' | 'decide',
+  schema: unknown,
+): Promise<void> {
+  const handler = cap[handlerKey];
+  expect(typeof handler, `${entry.name}: cap.${handlerKey}`).toBe('function');
+  const arb = schemaToArbitrary(schema as never) as fc.Arbitrary<unknown>;
+  const samples = fc.sample(arb, BENCH_SAMPLE_OPTS);
+  expect(samples.length, `${entry.name}: presampled inputs`).toBeGreaterThan(0);
+  const result = (handler as (input: unknown) => unknown)(samples[0]);
+  if (result instanceof Promise) await result;
+}
 
-  it('catalog is non-empty (at least one real presample bench exists)', () => {
-    expect(benches.length).toBeGreaterThan(0);
+async function exerciseStep(cap: CapsuleRecord, entry: ManifestEntry): Promise<void> {
+  expect(typeof cap.step, `${entry.name}: cap.step`).toBe('function');
+  const arb = schemaToArbitrary(cap.input as never) as fc.Arbitrary<unknown>;
+  const events = fc.sample(arb, BENCH_SAMPLE_OPTS);
+  expect(events.length, `${entry.name}: presampled events`).toBeGreaterThan(0);
+  const state = structuredClone(cap.initialState);
+  (cap.step as (s: unknown, e: unknown) => unknown)(state, events[0]);
+}
+
+async function exerciseCapsuleBench(entry: ManifestEntry): Promise<void> {
+  const kind = entry.kind === 'unknown' ? undefined : entry.kind;
+
+  if (entry.name === 'scene.runtime' || entry.name === 'examples.intro') {
+    await exerciseSceneTick(entry);
+    return;
+  }
+
+  const cap = await loadCapsule(entry);
+  const resolvedKind = kind ?? (cap._kind as string | undefined);
+  expect(resolvedKind, `${entry.name}: capsule kind`).toBeDefined();
+
+  switch (resolvedKind) {
+    case 'siteAdapter':
+      await exerciseSiteAdapter(cap, entry);
+      return;
+    case 'cachedProjection':
+      await exerciseCachedProjection(cap, entry);
+      return;
+    case 'stateMachine':
+      if (typeof cap.step === 'function') {
+        await exerciseStep(cap, entry);
+        return;
+      }
+      break;
+    case 'policyGate':
+      await exerciseHandler(cap, entry, 'decide', cap.input);
+      return;
+    case 'receiptedMutation':
+      await exerciseHandler(cap, entry, 'mutate', cap.input);
+      return;
+    case 'pureTransform':
+      await exerciseHandler(cap, entry, 'run', cap.input);
+      return;
+    default:
+      break;
+  }
+
+  if (typeof cap.run === 'function') {
+    await exerciseHandler(cap, entry, 'run', cap.input);
+    return;
+  }
+  if (typeof cap.derive === 'function') {
+    await exerciseHandler(cap, entry, 'derive', cap.input);
+    return;
+  }
+  if (typeof cap.mutate === 'function') {
+    await exerciseHandler(cap, entry, 'mutate', cap.input);
+    return;
+  }
+  if (typeof cap.decide === 'function') {
+    await exerciseHandler(cap, entry, 'decide', cap.input);
+    return;
+  }
+  if (typeof cap.step === 'function') {
+    await exerciseStep(cap, entry);
+    return;
+  }
+
+  throw new Error(`no exercise path for ${entry.name} (kind=${resolvedKind})`);
+}
+
+describe('generated bench execution — catalog-driven smoke', () => {
+  const entries = catalogRealBenchEntries();
+
+  it('catalog is non-empty (at least one real generated bench exists)', () => {
+    expect(entries.length).toBeGreaterThan(0);
   });
 
-  it.each(benches.map((b) => [basename(b.benchFile), b.benchFile] as const))(
-    '%s presamples inputs and runs its handler once',
-    async (_label, benchFile) => {
-      await exercisePresampleBench(benchFile);
+  it.each(entries.map((entry) => [entry.name, entry.generated.benchFile, entry] as const))(
+    '%s (%s) exercises its declared hot path once',
+    async (_name, benchFile, entry) => {
+      await exerciseCapsuleBench(entry);
     },
-    scaledTimeout(30_000),
+    scaledTimeout(60_000),
   );
 });

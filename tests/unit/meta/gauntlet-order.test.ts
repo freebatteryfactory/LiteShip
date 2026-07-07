@@ -68,7 +68,11 @@ describe('gauntlet ordering', () => {
     // pull_request; `github.event.before` (the SHA the ref pointed at BEFORE the push) for
     // a push, so the diff covers the ENTIRE pushed range and an earlier-commit weakening in
     // a multi-commit push cannot sail through (the HEAD~1 form only caught the LAST commit).
-    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=origin/${{ github.base_ref }}');
+    // The PR base flows through an `env:` var and is referenced as `$BASE_REF` in the shell
+    // (never spliced as `${{ github.base_ref }}` inside `run:`) — the template-injection-safe
+    // form; pin both halves so the safe indirection can't silently regress to interpolation.
+    expect(ci).toContain('BASE_REF: ${{ github.base_ref }}');
+    expect(ci).toContain('CZAP_STANDARDS_BASE_REF=origin/$BASE_REF');
     expect(ci).toContain('PUSH_BEFORE: ${{ github.event.before }}');
     expect(ci).toContain('CZAP_STANDARDS_BASE_REF=$BASE');
     // The legacy HEAD~1 push base (which MISSED earlier-commit weakenings in a multi-commit
