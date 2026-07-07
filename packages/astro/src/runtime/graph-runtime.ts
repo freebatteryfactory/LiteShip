@@ -51,11 +51,12 @@ import {
   readSignalValue,
   attachSignalObserver,
   warnIfSignalUnserved,
+  type BoundaryStateEventName,
 } from './boundary.js';
 import { lowerGraph, type LoweredBinding } from './graph-lower.js';
 
 /** Default custom-event name the seeded/recomputed state dispatches on (mirrors the satellite directive). */
-const DEFAULT_EVENT_NAME = 'czap:graph-state';
+const DEFAULT_EVENT_NAME: BoundaryStateEventName = 'czap:graph-state';
 const EDGE_TYPES = new Set(['seq', 'par', 'choice_then', 'choice_else']);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -139,7 +140,7 @@ export interface GraphRuntimeHandle {
 }
 
 /** Apply a discrete state to a binding's element, threading the lowered per-state CSS into `state.css`. */
-function applyBindingState(active: ActiveBinding, state: string, eventName: string): void {
+function applyBindingState(active: ActiveBinding, state: string, eventName: BoundaryStateEventName): void {
   const css = active.binding.stateCss?.[state];
   applyBoundaryState(
     active.element,
@@ -153,7 +154,7 @@ function applyEntityState(
   state: GraphCastState,
   entityId: ContentAddress,
   nextState: string,
-  eventName: string,
+  eventName: BoundaryStateEventName,
 ): boolean {
   const entries = state.active.get(entityId);
   if (!entries) return false;
@@ -168,7 +169,7 @@ function applyEntityState(
 }
 
 /** Seed (or re-seed) a binding's initial state from the live signal value and apply it to the element. */
-function seedBinding(active: ActiveBinding, eventName: string): void {
+function seedBinding(active: ActiveBinding, eventName: BoundaryStateEventName): void {
   warnIfSignalUnserved(active.binding.boundary.input, { source: 'czap/astro.graph', what: 'boundary signal' });
   const value = readSignalValue(active.binding.boundary.input);
   if (value === undefined) return;
@@ -178,7 +179,7 @@ function seedBinding(active: ActiveBinding, eventName: string): void {
 }
 
 /** Attach the signal observer for a binding, recomputing + applying state on every change. */
-function observeBinding(active: ActiveBinding, eventName: string): void {
+function observeBinding(active: ActiveBinding, eventName: BoundaryStateEventName): void {
   active.cleanup = attachSignalObserver(active.binding.boundary.input, () => {
     const value = readSignalValue(active.binding.boundary.input);
     if (value === undefined) return;
@@ -190,7 +191,11 @@ function observeBinding(active: ActiveBinding, eventName: string): void {
 }
 
 /** Resolve, seed, and observe one lowered binding; returns the ActiveBinding or null if the element is missing. */
-function castBinding(binding: LoweredBinding, resolve: EntityElementResolver, eventName: string): ActiveBinding | null {
+function castBinding(
+  binding: LoweredBinding,
+  resolve: EntityElementResolver,
+  eventName: BoundaryStateEventName,
+): ActiveBinding | null {
   const element = resolve(binding.entityId);
   if (!element) return null;
   const initialState = element.getAttribute('data-czap-state') ?? '';
@@ -221,7 +226,7 @@ export function castGraphDelta(
   next: DocumentGraph,
   state: GraphCastState,
   resolve: EntityElementResolver,
-  eventName: string = DEFAULT_EVENT_NAME,
+  eventName: BoundaryStateEventName = DEFAULT_EVENT_NAME,
 ): void {
   const active = state.active;
   // One entity can own MULTIPLE bindings (multiple components → multiple
@@ -480,7 +485,7 @@ const ZERO_META = {
 export interface GraphRuntimeInternals {
   readonly state: GraphCastState;
   readonly resolve: EntityElementResolver;
-  readonly eventName: string;
+  readonly eventName: BoundaryStateEventName;
   /** Apply one discrete state through the active lowered binding(s) for an entity. */
   applyState(entityId: ContentAddress, nextState: string): boolean;
   /** Re-cast the delta from the current graph to `next`, then make `next` current. */
@@ -514,7 +519,7 @@ export function graphRuntimeInternals(handle: GraphRuntimeHandle): GraphRuntimeI
 export function loadGraphRuntime(
   serialized: string | DocumentGraph,
   resolve: EntityElementResolver,
-  opts?: { readonly eventName?: string },
+  opts?: { readonly eventName?: BoundaryStateEventName },
 ): GraphRuntimeHandle | null {
   const sealed = parseAndSealGraph(serialized);
   if (!sealed) return null;
