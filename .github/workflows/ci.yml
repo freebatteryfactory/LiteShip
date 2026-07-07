@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   format:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +28,7 @@ jobs:
       - run: pnpm run format:check
 
   truth-linux:
-    runs-on: blacksmith-16vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       # fetch-depth: 0 brings the FULL history so the standards:gate phase can run
@@ -118,7 +118,7 @@ jobs:
             benchmarks
 
   browser-e2e:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -163,7 +163,7 @@ jobs:
   # property suite running against that fresh artifact — the "build truth"
   # doctrine applied to the compute kernels (nothing prebuilt is trusted).
   rust-wasm-parity:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -219,7 +219,7 @@ jobs:
           CI: true
 
   windows-smoke:
-    runs-on: blacksmith-4vcpu-windows-2025
+    runs-on: windows-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
@@ -250,7 +250,7 @@ jobs:
   # add to ci-summary needs) requires the smoke passing reliably for
   # a full release cycle on a fresh `macos-latest` image.
   macos-smoke:
-    runs-on: blacksmith-6vcpu-macos-15
+    runs-on: macos-latest
     timeout-minutes: 60
     continue-on-error: true
     steps:
@@ -275,7 +275,7 @@ jobs:
       - run: pnpm run package:smoke
 
   ci-summary:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
       - format
