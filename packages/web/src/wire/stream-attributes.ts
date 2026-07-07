@@ -9,6 +9,7 @@
 /** Logical keys for stream directive host attributes (not the DOM suffix alone). */
 export const STREAM_WIRE_ATTR_KEYS = ['url', 'artifact', 'morph', 'snapshotUrl', 'replayUrl'] as const;
 
+/** Logical stream wire attribute keys (url, artifact, morph, snapshotUrl, replayUrl). */
 export type StreamWireAttrKey = (typeof STREAM_WIRE_ATTR_KEYS)[number];
 
 const STREAM_ATTR_SUFFIX: Record<StreamWireAttrKey, string> = {
@@ -24,6 +25,7 @@ export function streamWireAttr(key: StreamWireAttrKey): `data-czap-${string}` {
   return `data-czap-${STREAM_ATTR_SUFFIX[key]}`;
 }
 
+/** Canonical `data-czap-*` attribute names for the stream directive. */
 export type StreamWireAttribute = ReturnType<typeof streamWireAttr>;
 
 /** Exhaustive attribute list — drift guards compute `expected` from this. */

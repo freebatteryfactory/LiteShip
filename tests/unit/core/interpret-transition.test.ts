@@ -157,7 +157,7 @@ describe('interpretTransition', () => {
     expect(yVar?.cssVar).toBe('--czap-hero-y');
   });
 
-  test('par routing differs from seq keyframe structure', () => {
+  test('par routing keeps from-pose at 0% and to-pose at 100%', () => {
     const { graph: g, transitionId: baseId } = revealFixture();
     const transitionNode = g.nodes.find((n) => n.id === baseId);
     expect(transitionNode?.family).toBe('transition');
@@ -172,7 +172,9 @@ describe('interpretTransition', () => {
     const plan = interpretTransition(parGraph, parTransition.id);
 
     expect(plan.css?.routing).toBe('par');
-    expect(plan.css?.keyframes[0]?.properties.opacity).toBeDefined();
+    expect(plan.css?.keyframes[0]?.properties.opacity).toBe('0');
+    expect(plan.css?.keyframes[1]?.properties.opacity).toBe('1');
+    expect(plan.css?.keyframes[0]?.properties.opacity).not.toBe(plan.css?.keyframes[1]?.properties.opacity);
   });
 
   test('returns diagnostics when transition id is missing', () => {

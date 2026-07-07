@@ -124,19 +124,24 @@ function resolveEasing(easing: MotionEasing | undefined, spring?: MotionSpringCo
   }
 }
 
-function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
+function transitionDecls(plan: CssMotionPlan, easingFn: string): string {
   const duration = `${plan.durationMs}ms`;
-  const props =
-    plan.transitionProperty.trim().length > 0
-      ? plan.transitionProperty
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean)
-          .map((p) => `${p} ${duration} ${easingFn}`)
-          .join(', ')
-      : `all ${duration} ${easingFn}`;
+  return plan.transitionProperty.trim().length > 0
+    ? plan.transitionProperty
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p) => `${p} ${duration} ${easingFn}`)
+        .join(', ')
+    : `all ${duration} ${easingFn}`;
+}
 
-  return [`${plan.selector}[data-czap-state="${plan.toState}"] {`, `  transition: ${props};`, `}`].join('\n');
+function emitTransitionRule(plan: CssMotionPlan, easingFn: string): string {
+  return [
+    `${plan.selector}[data-czap-state="${plan.toState}"] {`,
+    `  transition: ${transitionDecls(plan, easingFn)};`,
+    `}`,
+  ].join('\n');
 }
 
 function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimeline, easingFn: string): string {
@@ -156,7 +161,7 @@ function emitScrollTimeline(plan: CssMotionPlan, viewTimeline: MotionViewTimelin
   const fallback = [
     `@supports not (animation-timeline: view()) {`,
     `  ${plan.selector}[data-czap-state="${plan.toState}"] {`,
-    `    transition: ${plan.transitionProperty || 'all'} ${plan.durationMs}ms ${easingFn};`,
+    `    transition: ${transitionDecls(plan, easingFn)};`,
     `  }`,
     `}`,
   ].join('\n');

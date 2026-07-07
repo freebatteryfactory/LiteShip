@@ -201,10 +201,13 @@ function wgslTypeInfo(
     case 'vec4<i32>':
       return { align: 16, size: 16, kind: 'ivec4' };
     case 'vec2<u32>':
+    case 'vec2u':
       return { align: 8, size: 8, kind: 'uvec2' };
     case 'vec3<u32>':
+    case 'vec3u':
       return { align: 16, size: 12, kind: 'uvec3' };
     case 'vec4<u32>':
+    case 'vec4u':
       return { align: 16, size: 16, kind: 'uvec4' };
     case 'bool':
       Diagnostics.warnOnce({
@@ -221,10 +224,9 @@ function wgslTypeInfo(
         code: 'wgsl-uniform-type-unrecognized',
         message:
           `Unrecognized WGSL uniform struct field type "${type}"; ` +
-          `layout/write may be wrong until the type is supported.`,
+          `field layout skipped until the type is supported.`,
       });
-      // Unrecognized scalars fall back to f32 so later fields still get offsets.
-      return { align: 4, size: 4, kind: 'float' };
+      return null;
   }
 }
 

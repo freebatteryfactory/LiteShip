@@ -23,21 +23,10 @@ export type TypedValue =
   | { readonly k: 'angle'; readonly v: number; readonly unit: 'deg' | 'rad' | 'turn' }
   | { readonly k: 'transform'; readonly parts: readonly TransformPart[] };
 
-const LENGTH_UNITS = ['px', 'rem', '%', 'vw', 'vh'] as const;
-type LengthUnit = (typeof LENGTH_UNITS)[number];
-
-const ANGLE_UNITS = ['deg', 'rad', 'turn'] as const;
-type AngleUnit = (typeof ANGLE_UNITS)[number];
+type LengthUnit = 'px' | 'rem' | '%' | 'vw' | 'vh';
+type AngleUnit = 'deg' | 'rad' | 'turn';
 
 const TRANSFORM_FNS = ['translate', 'translateX', 'translateY', 'translateZ', 'scale', 'rotate'] as const;
-
-function isLengthUnit(unit: string): unit is LengthUnit {
-  return (LENGTH_UNITS as readonly string[]).includes(unit);
-}
-
-function isAngleUnit(unit: string): unit is AngleUnit {
-  return (ANGLE_UNITS as readonly string[]).includes(unit);
-}
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;

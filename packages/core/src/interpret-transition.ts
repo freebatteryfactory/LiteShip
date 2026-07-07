@@ -90,18 +90,6 @@ function incomingEdges(graph: DocumentGraph): Map<ContentAddress, ContentAddress
   return incoming;
 }
 
-function entityOfComponent(graph: DocumentGraph): Map<ContentAddress, EntityNode> {
-  const map = new Map<ContentAddress, EntityNode>();
-  for (const node of graph.nodes) {
-    if (node.family === 'entity') {
-      for (const componentId of node.components) {
-        map.set(componentId, node);
-      }
-    }
-  }
-  return map;
-}
-
 function resolveComponent(entity: EntityNode, byId: Map<ContentAddress, DocumentGraphNode>): ComponentNode | undefined {
   for (const componentId of entity.components) {
     const node = byId.get(componentId);
@@ -161,7 +149,7 @@ function keyframesForRouting(
       ];
     case 'par':
       return [
-        { offset: 0, properties: { ...atStart, ...atEnd } },
+        { offset: 0, properties: atStart },
         { offset: 1, properties: atEnd },
       ];
     case 'choice_then':

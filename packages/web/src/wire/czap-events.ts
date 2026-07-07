@@ -104,6 +104,7 @@ export const CZAP_EVENT_NAMES = [
   'czap:worker-state',
 ] as const satisfies readonly (keyof CzapEventDetailMap)[];
 
+/** Union of all canonical `czap:*` event names. */
 export type CzapEventName = (typeof CZAP_EVENT_NAMES)[number];
 
 /** Short human descriptions for generated wire-contract docs. */

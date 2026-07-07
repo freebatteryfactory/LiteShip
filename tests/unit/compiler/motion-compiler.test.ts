@@ -151,6 +151,18 @@ describe('MotionCompiler', () => {
     expect(result.scrollTimeline).toContain('animation-range: entry 0% cover 60%');
     expect(result.scrollTimeline).toContain('@supports not (animation-timeline: view())');
   });
+
+  test('view-timeline fallback emits per-property transition durations', () => {
+    const plan = revealCssPlan();
+    const result = MotionCompiler.compile({
+      plan,
+      viewTimeline: { range: ['entry 0%', 'cover 60%'] },
+    });
+
+    expect(result.scrollTimeline).toContain('opacity 420ms ease');
+    expect(result.scrollTimeline).toContain('--czap-hero-y 420ms ease');
+    expect(result.scrollTimeline).not.toMatch(/opacity, --czap-hero-y 420ms/);
+  });
 });
 
 describe('dispatch() MotionCompiler arm', () => {
