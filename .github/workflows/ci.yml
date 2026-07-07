@@ -588,6 +588,26 @@ jobs:
       - run: pnpm run test:redteam
       - run: pnpm run package:smoke
 
+  # Milestone-2: Playwright browser lane on macOS — proves green for a cycle
+  # before promotion to tier-1 (drop continue-on-error + add to ci-summary).
+  macos-browser:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: brew install ffmpeg || true
+      - run: pnpm run build
+      - run: pnpm run test:e2e
+      - run: pnpm run coverage:browser
+
   ci-summary:
     runs-on: ubuntu-latest
     timeout-minutes: 5

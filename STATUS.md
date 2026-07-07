@@ -30,7 +30,7 @@ macOS (tier-2, best-effort, real CI signal):
 Promotion path to tier-1 has two milestones:
 
 1. `macos-smoke` (current scope: build / typecheck / lint / invariants / non-browser tests / package:smoke) stays green for a release cycle on a fresh `macos-latest` image.
-2. A second job, `macos-browser`, lands with a Playwright-with-deps Homebrew install path, runs `test:e2e` and `coverage:browser`, and stays green for a release cycle.
+2. **`macos-browser` landed** (milestone-2 job in `.github/workflows/ci.yml`): Playwright + Homebrew ffmpeg, runs `test:e2e` + `coverage:browser`, `continue-on-error: true`. Proving green for a release cycle before tier-1 promotion.
 
 When both are met, `continue-on-error` drops and macOS jobs join `ci-summary` needs. Until then, the gap is explicit: macOS authoring is safe; macOS browser-runtime testing is at-your-own-risk territory and won't catch a Safari-specific regression before merge.
 
@@ -180,7 +180,7 @@ Startup steering now follows a generic `paired-truth` model:
 - raw bench formatter tone is an operator-experience watch item; the output should stay honest without implying release danger where the verified gate posture is green.
 - partial pasted transcripts are not authoritative; fresh shell output plus verified artifacts are the source of truth.
 - Capsule catalog closure -- any new assembly arm proposal must go through an ADR amendment with first concrete instance in the same PR (ADR-0008). Governance watch, not a bench watch.
-- `ReceiptDAG.nodes` has no pruning, TTL, or max-size guard; per-session DAGs grow until `tracker.reset()` on session close. Bounded by user behavior in normal flows, but worth a future `linearizeFrom`-or-pruning policy if long-lived LLM sessions become common. Not a bench watch; a memory-shape watch.
+- `ReceiptDAG.pruneToBound` caps per-session DAG growth at `DEFAULT_MAX_DAG_NODES` (10_000), retaining the canonical linear tail — bound-pinning test in `tests/unit/core/dag.test.ts`.
 
 `pnpm run gauntlet:full` runs the canonical phase sequence. That sequence has ONE
 source of truth — `packages/cli/src/gauntlet-phases.ts` — and `scripts/gauntlet.ts`
