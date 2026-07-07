@@ -10,8 +10,24 @@
  * notification path (null per §4.1).
  */
 import { describe, it, expect } from 'vitest';
+import { mcpExposedDescriptors } from '@czap/command';
 import { dispatch, dispatchToolCall, listTools } from '../../../packages/mcp-server/src/dispatch.js';
 import type { JsonRpcRequest, JsonRpcNotification } from '../../../packages/mcp-server/src/jsonrpc.js';
+import { validateStructural, type StructuralSchema } from '../../support/structural-schema.js';
+
+/** Minimal arguments that exercise each MCP tool's dispatch path (ok or structured failure — never throw). */
+const MCP_DISPATCH_ARGS: Record<string, Record<string, unknown>> = {
+  'asset.analyze': { asset: '__mcp-dispatch-probe__', projection: 'beat' },
+  'asset.verify': { asset: '__mcp-dispatch-probe__' },
+  'capsule.inspect': { id: '__mcp-dispatch-probe__' },
+  'capsule.list': {},
+  'capsule.verify': { id: '__mcp-dispatch-probe__' },
+  check: {},
+  plumb: {},
+  'scene.compile': { scene: '__mcp-dispatch-probe__.ts' },
+  'scene.render': { scene: '__mcp-dispatch-probe__.ts' },
+  'scene.verify': { scene: '__mcp-dispatch-probe__.ts' },
+};
 
 function makeRequest(method: string, params?: unknown, id: string | number = 1): JsonRpcRequest {
   return params === undefined
@@ -95,6 +111,31 @@ describe('dispatchToolCall — structuredContent (no stdout capture, no buildArg
     await dispatchToolCall({ name: 'glossary', arguments: {} });
     expect(process.stdout.write).toBe(original);
   });
+});
+
+describe('dispatchToolCall — all mcpExposed tools (catalog-driven matrix)', () => {
+  const descriptors = mcpExposedDescriptors();
+
+  it('test count matches mcpExposedDescriptors().length', () => {
+    expect(descriptors.length).toBe(10);
+    expect(Object.keys(MCP_DISPATCH_ARGS).sort()).toEqual(descriptors.map((d) => d.name).sort());
+  });
+
+  for (const descriptor of descriptors) {
+    it(`${descriptor.name}: returns structured MCP result conforming to outputSchema`, async () => {
+      const result = await dispatchToolCall({
+        name: descriptor.name,
+        arguments: MCP_DISPATCH_ARGS[descriptor.name] ?? {},
+      });
+      expect(result.structuredContent).toBeDefined();
+      expect(typeof result.isError).toBe('boolean');
+      expect(result.content[0]!.text).toBe(JSON.stringify(result.structuredContent));
+      if (descriptor.outputSchema && !result.isError) {
+        const errors = validateStructural(descriptor.outputSchema as StructuralSchema, result.structuredContent);
+        expect(errors, `${descriptor.name} payload vs outputSchema: ${errors.join('; ')}`).toEqual([]);
+      }
+    });
+  }
 });
 
 describe('listTools — registry-projected catalog', () => {
