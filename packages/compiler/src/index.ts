@@ -86,6 +86,9 @@ export type {
   MotionViewTimeline,
 } from './motion.js';
 
+export { compileReveal } from './reveal-compile.js';
+export type { CompiledReveal } from './reveal-compile.js';
+
 // ── Capsule declarations — cast-compiler hardening (property + bench + budget) ──
 // Concrete `pureTransform` instances of the 7-arm capsule factory, exported here
 // so they register in the live `getCapsuleCatalog()` and the type-directed
