@@ -126,6 +126,19 @@ export type {
   CssKeyframeStep,
 } from './interpret-transition.js';
 
+// Reveal intent sugar + graph lowering (#124)
+export { Reveal, lowerRevealIntent, resolveRevealInitialState, ssrRevealPaint, motionPropToBinding } from './reveal.js';
+export type {
+  RevealIntent,
+  RevealIntentInput,
+  RevealTrigger,
+  RevealTransition,
+  RevealPolicy,
+  RevealReducedMotion,
+  LoweredReveal,
+  RevealSsrPaint,
+} from './reveal.js';
+
 // Timeline
 export { Timeline } from './timeline.js';
 
